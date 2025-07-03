@@ -13,19 +13,19 @@
   --card-foreground: hsl(20, 14.3%, 4.1%);
   --border: hsl(20, 5.9%, 90%);
   --input: hsl(20, 5.9%, 90%);
-  --primary: hsl(247, 88%, 68%);
+  --primary: hsl(142, 76%, 36%);
   --primary-foreground: hsl(0, 0%, 100%);
-  --secondary: hsl(269, 71%, 69%);
-  --secondary-foreground: hsl(0, 0%, 100%);
+  --secondary: hsl(142, 10%, 94%);
+  --secondary-foreground: hsl(240, 10%, 3.9%);
   --accent: hsl(158, 64%, 52%);
   --accent-foreground: hsl(0, 0%, 100%);
   --destructive: hsl(0, 84.2%, 60.2%);
   --destructive-foreground: hsl(60, 9.1%, 97.8%);
-  --ring: hsl(20, 14.3%, 4.1%);
-  --radius: 0.5rem;
-  --chart-1: hsl(247, 88%, 68%);
-  --chart-2: hsl(269, 71%, 69%);
-  --chart-3: hsl(158, 64%, 52%);
+  --ring: hsl(142, 76%, 36%);
+  --radius: 0.75rem;
+  --chart-1: hsl(142, 76%, 36%);
+  --chart-2: hsl(158, 64%, 52%);
+  --chart-3: hsl(120, 60%, 45%);
   --chart-4: hsl(43, 96%, 56%);
   --chart-5: hsl(347, 77%, 64%);
   --sidebar-background: hsl(0, 0%, 100%);
@@ -76,6 +76,70 @@
   body {
     @apply font-sans antialiased bg-background text-foreground;
   }
+}
+
+/* Vendzz Custom Styles - Modern Futuristic Theme */
+.vendzz-gradient {
+  background: linear-gradient(135deg, hsl(142, 76%, 36%) 0%, hsl(158, 64%, 52%) 100%);
+}
+
+.vendzz-glow {
+  box-shadow: 0 0 20px hsla(142, 76%, 36%, 0.3);
+}
+
+.vendzz-card {
+  background: linear-gradient(145deg, rgba(255,255,255,0.95), rgba(142, 181, 165, 0.05));
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(142, 181, 165, 0.2);
+}
+
+.vendzz-button {
+  background: linear-gradient(135deg, hsl(142, 76%, 36%) 0%, hsl(158, 64%, 52%) 100%);
+  transition: all 0.3s ease;
+}
+
+.vendzz-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px hsla(142, 76%, 36%, 0.3);
+}
+
+.vendzz-text-gradient {
+  background: linear-gradient(135deg, hsl(142, 76%, 36%) 0%, hsl(158, 64%, 52%) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.vendzz-sidebar {
+  background: linear-gradient(180deg, rgba(255,255,255,0.98) 0%, rgba(142, 181, 165, 0.02) 100%);
+  border-right: 1px solid rgba(142, 181, 165, 0.15);
+}
+
+/* Futuristic animations */
+@keyframes vendzz-pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+  }
+}
+
+.vendzz-pulse {
+  animation: vendzz-pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+@keyframes vendzz-float {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-5px);
+  }
+}
+
+.vendzz-float {
+  animation: vendzz-float 3s ease-in-out infinite;
 }
 
 @layer components {

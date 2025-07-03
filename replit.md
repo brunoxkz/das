@@ -1,8 +1,8 @@
-# Quiz Builder Application
+# Vendzz - Quiz Funnel Platform
 
 ## Overview
 
-This is a full-stack quiz builder application that enables users to create, customize, and deploy interactive quizzes for lead generation. Built with React, Express, and PostgreSQL, it features a modern UI with shadcn/ui components, Stripe integration for subscriptions, and Replit authentication.
+Vendzz is a modern, futuristic SaaS quiz funnel platform focused on lead generation. Built with React, Express, and PostgreSQL, it features a sleek green-themed UI with shadcn/ui components, optional Stripe integration for subscriptions, and Replit authentication. The platform enables users to create interactive quizzes for lead capture with comprehensive analytics.
 
 ## System Architecture
 
@@ -120,6 +120,9 @@ This is a full-stack quiz builder application that enables users to create, cust
 ```
 Changelog:
 - July 03, 2025. Initial setup
+- July 03, 2025. Rebrand to Vendzz with green futuristic theme
+- July 03, 2025. Fixed 404 errors for "Meus Quizzes" and "Configurações" pages
+- July 03, 2025. Implemented Vendzz logo and modern green color scheme
 ```
 
 ## User Preferences

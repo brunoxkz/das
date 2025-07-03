@@ -12,6 +12,7 @@ import Quizzes from "@/pages/quizzes";
 import Templates from "@/pages/templates";
 import Analytics from "@/pages/analytics";
 import Subscribe from "@/pages/subscribe";
+import Settings from "@/pages/settings";
 import { Navbar } from "@/components/navbar";
 import { Sidebar } from "@/components/sidebar";
 
@@ -45,6 +46,7 @@ function Router() {
                   <Route path="/templates" component={Templates} />
                   <Route path="/analytics" component={Analytics} />
                   <Route path="/subscribe" component={Subscribe} />
+                  <Route path="/settings" component={Settings} />
                   <Route component={NotFound} />
                 </Switch>
               </main>

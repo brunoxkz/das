@@ -1,0 +1,268 @@
+import { useState } from "react";
+import { useAuth } from "@/hooks/useAuth";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
+import { Separator } from "@/components/ui/separator";
+import { Badge } from "@/components/ui/badge";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { 
+  User, 
+  Bell, 
+  Shield, 
+  CreditCard, 
+  Download,
+  Trash2,
+  Mail,
+  Phone,
+  Globe,
+  Eye,
+  EyeOff
+} from "lucide-react";
+
+export default function Settings() {
+  const { user } = useAuth();
+  const userData = user as any;
+  const [notifications, setNotifications] = useState({
+    email: true,
+    push: false,
+    marketing: false,
+    analytics: true
+  });
+  const [showApiKey, setShowApiKey] = useState(false);
+
+  const handleNotificationChange = (key: string, value: boolean) => {
+    setNotifications(prev => ({ ...prev, [key]: value }));
+  };
+
+  return (
+    <div className="max-w-4xl mx-auto p-6 space-y-6">
+      <div className="flex items-center space-x-4">
+        <div className="w-2 h-8 bg-gradient-to-b from-green-500 to-green-600 rounded-full"></div>
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">Configurações</h1>
+          <p className="text-gray-600">Gerencie suas preferências e configurações da conta</p>
+        </div>
+      </div>
+
+      {/* Profile Section */}
+      <Card className="border-l-4 border-l-green-500">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <User className="w-5 h-5 text-green-600" />
+            Perfil
+          </CardTitle>
+          <CardDescription>
+            Informações básicas da sua conta
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          <div className="flex items-center space-x-4">
+            <Avatar className="w-20 h-20">
+              <AvatarImage src={userData?.profileImageUrl || ""} alt="Profile" />
+              <AvatarFallback className="text-lg bg-green-100 text-green-700">
+                {userData?.firstName?.[0] || userData?.email?.[0]?.toUpperCase() || "U"}
+              </AvatarFallback>
+            </Avatar>
+            <div className="flex-1">
+              <h3 className="text-lg font-semibold">
+                {userData?.firstName && userData?.lastName 
+                  ? `${userData.firstName} ${userData.lastName}` 
+                  : userData?.email
+                }
+              </h3>
+              <p className="text-gray-600">{userData?.email}</p>
+              <Badge variant="outline" className="mt-2">
+                <CreditCard className="w-3 h-3 mr-1" />
+                Plano Gratuito
+              </Badge>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <Label htmlFor="firstName">Nome</Label>
+              <Input 
+                id="firstName" 
+                defaultValue={userData?.firstName || ""} 
+                placeholder="Seu nome"
+              />
+            </div>
+            <div>
+              <Label htmlFor="lastName">Sobrenome</Label>
+              <Input 
+                id="lastName" 
+                defaultValue={userData?.lastName || ""} 
+                placeholder="Seu sobrenome"
+              />
+            </div>
+          </div>
+
+          <div>
+            <Label htmlFor="email">Email</Label>
+            <Input 
+              id="email" 
+              type="email" 
+              defaultValue={userData?.email || ""} 
+              placeholder="seu@email.com"
+              disabled
+            />
+            <p className="text-xs text-gray-500 mt-1">
+              O email não pode ser alterado
+            </p>
+          </div>
+
+          <Button className="bg-green-600 hover:bg-green-700">
+            Salvar Alterações
+          </Button>
+        </CardContent>
+      </Card>
+
+      {/* Notifications Section */}
+      <Card className="border-l-4 border-l-blue-500">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Bell className="w-5 h-5 text-blue-600" />
+            Notificações
+          </CardTitle>
+          <CardDescription>
+            Configure quando e como você deseja receber notificações
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="flex items-center justify-between">
+            <div className="space-y-0.5">
+              <Label>Notificações por email</Label>
+              <p className="text-sm text-gray-600">
+                Receba updates sobre seus quizzes e leads
+              </p>
+            </div>
+            <Switch 
+              checked={notifications.email}
+              onCheckedChange={(value) => handleNotificationChange('email', value)}
+            />
+          </div>
+
+          <Separator />
+
+          <div className="flex items-center justify-between">
+            <div className="space-y-0.5">
+              <Label>Notificações push</Label>
+              <p className="text-sm text-gray-600">
+                Receba notificações no navegador
+              </p>
+            </div>
+            <Switch 
+              checked={notifications.push}
+              onCheckedChange={(value) => handleNotificationChange('push', value)}
+            />
+          </div>
+
+          <Separator />
+
+          <div className="flex items-center justify-between">
+            <div className="space-y-0.5">
+              <Label>Relatórios de analytics</Label>
+              <p className="text-sm text-gray-600">
+                Relatórios semanais sobre performance
+              </p>
+            </div>
+            <Switch 
+              checked={notifications.analytics}
+              onCheckedChange={(value) => handleNotificationChange('analytics', value)}
+            />
+          </div>
+
+          <Separator />
+
+          <div className="flex items-center justify-between">
+            <div className="space-y-0.5">
+              <Label>Marketing e novidades</Label>
+              <p className="text-sm text-gray-600">
+                Receba dicas e novidades sobre a plataforma
+              </p>
+            </div>
+            <Switch 
+              checked={notifications.marketing}
+              onCheckedChange={(value) => handleNotificationChange('marketing', value)}
+            />
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* API Section */}
+      <Card className="border-l-4 border-l-purple-500">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Shield className="w-5 h-5 text-purple-600" />
+            API e Integrações
+          </CardTitle>
+          <CardDescription>
+            Configure integrações externas e acesso à API
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div>
+            <Label htmlFor="apiKey">Chave da API</Label>
+            <div className="flex items-center space-x-2 mt-1">
+              <Input 
+                id="apiKey" 
+                type={showApiKey ? "text" : "password"}
+                value="vz_sk_live_********************************"
+                disabled
+                className="font-mono"
+              />
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={() => setShowApiKey(!showApiKey)}
+              >
+                {showApiKey ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+              </Button>
+            </div>
+            <p className="text-xs text-gray-500 mt-1">
+              Use esta chave para integrar com sistemas externos
+            </p>
+          </div>
+
+          <div className="flex space-x-2">
+            <Button variant="outline" size="sm">
+              Gerar Nova Chave
+            </Button>
+            <Button variant="outline" size="sm">
+              <Download className="w-4 h-4 mr-2" />
+              Documentação
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Danger Zone */}
+      <Card className="border-l-4 border-l-red-500">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-red-600">
+            <Trash2 className="w-5 h-5" />
+            Zona de Perigo
+          </CardTitle>
+          <CardDescription>
+            Ações irreversíveis que afetam permanentemente sua conta
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
+            <h4 className="font-semibold text-red-800 mb-2">Excluir Conta</h4>
+            <p className="text-sm text-red-700 mb-4">
+              Esta ação não pode ser desfeita. Todos os seus quizzes, leads e dados serão permanentemente excluídos.
+            </p>
+            <Button variant="destructive" size="sm">
+              <Trash2 className="w-4 h-4 mr-2" />
+              Excluir Conta
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}

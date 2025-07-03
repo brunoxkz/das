@@ -76,16 +76,22 @@ export function Sidebar() {
 
   return (
     <div className={cn(
-      "bg-white border-r border-gray-200 flex flex-col transition-all duration-300",
+      "vendzz-sidebar flex flex-col transition-all duration-300",
       isCollapsed ? "w-16" : "w-64"
     )}>
       {/* Header */}
       <div className="p-4 border-b border-gray-200">
         <div className="flex items-center justify-between">
           {!isCollapsed && (
-            <div className="flex items-center space-x-2">
-              <Vote className="w-6 h-6 text-primary" />
-              <span className="text-xl font-bold text-gray-900">QuizFlow</span>
+            <div className="flex items-center space-x-3">
+              <img 
+                src="https://vendzz.com.br/wp-content/uploads/2024/12/logo-vendzz.png" 
+                alt="Vendzz" 
+                className="w-8 h-8 object-contain"
+              />
+              <span className="text-xl font-bold bg-gradient-to-r from-green-600 to-green-500 bg-clip-text text-transparent">
+                Vendzz
+              </span>
             </div>
           )}
           <Button
