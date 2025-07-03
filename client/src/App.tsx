@@ -8,6 +8,7 @@ import NotFound from "@/pages/not-found";
 import Landing from "@/pages/landing";
 import Dashboard from "@/pages/dashboard";
 import QuizBuilder from "@/pages/quiz-builder";
+import Quizzes from "@/pages/quizzes";
 import Templates from "@/pages/templates";
 import Analytics from "@/pages/analytics";
 import Subscribe from "@/pages/subscribe";
@@ -38,6 +39,7 @@ function Router() {
               <main className="flex-1 overflow-y-auto">
                 <Switch>
                   <Route path="/" component={Dashboard} />
+                  <Route path="/quizzes" component={Quizzes} />
                   <Route path="/quizzes/new" component={QuizBuilder} />
                   <Route path="/quizzes/:id/edit" component={QuizBuilder} />
                   <Route path="/templates" component={Templates} />

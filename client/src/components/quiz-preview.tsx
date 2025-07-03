@@ -291,7 +291,11 @@ export function QuizPreview({ quiz }: QuizPreviewProps) {
         <Card className="min-h-[400px]">
           <CardContent className="p-8 flex items-center justify-center">
             {/* Questions */}
-            {questions.map((question, index) => renderQuestion(question, index))}
+            {questions.map((question, index) => (
+              <div key={question.id || index}>
+                {renderQuestion(question, index)}
+              </div>
+            ))}
             
             {/* Lead Capture */}
             {renderLeadCapture()}
