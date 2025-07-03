@@ -129,7 +129,7 @@ export default function QuizBuilder() {
   }, [isAuthenticated, authLoading, toast]);
 
   const handleSave = () => {
-    if (!quizData.title.trim()) {
+    if (!quizData.title?.trim()) {
       toast({
         title: "Título obrigatório",
         description: "Por favor, adicione um título ao seu quiz.",
@@ -221,7 +221,7 @@ export default function QuizBuilder() {
             <Button
               size="sm"
               onClick={handlePublish}
-              disabled={saveMutation.isPending || !quizData.title.trim()}
+              disabled={saveMutation.isPending || !quizData.title?.trim()}
             >
               <Globe className="w-4 h-4 mr-2" />
               Publicar
@@ -265,7 +265,7 @@ export default function QuizBuilder() {
                   <Label htmlFor="title">Título do Quiz</Label>
                   <Input
                     id="title"
-                    value={quizData.title}
+                    value={quizData.title || ""}
                     onChange={(e) => setQuizData(prev => ({ ...prev, title: e.target.value }))}
                     placeholder="Digite o título do quiz"
                     className="mt-2"
@@ -276,7 +276,7 @@ export default function QuizBuilder() {
                   <Label htmlFor="description">Descrição</Label>
                   <Textarea
                     id="description"
-                    value={quizData.description}
+                    value={quizData.description || ""}
                     onChange={(e) => setQuizData(prev => ({ ...prev, description: e.target.value }))}
                     placeholder="Descreva o objetivo do quiz"
                     className="mt-2"
