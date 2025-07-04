@@ -58,6 +58,11 @@ export default function Dashboard() {
   const totalLeads = responsesList.length;
   const totalViews = quizzesList.reduce((sum: number, quiz: any) => sum + (quiz.totalViews || 0), 0);
   const avgConversionRate = totalViews > 0 ? Math.round((totalLeads / totalViews) * 100) : 0;
+  
+  // Debug: verificar dados
+  console.log('Dashboard Data:', dashboardData);
+  console.log('Quizzes:', quizzesList);
+  console.log('Responses:', responsesList);
 
   // Redirect if not authenticated
   useEffect(() => {

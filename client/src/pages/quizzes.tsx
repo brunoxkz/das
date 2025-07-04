@@ -54,6 +54,7 @@ export default function Quizzes() {
         description: "O quiz foi excluído com sucesso.",
       });
       queryClient.invalidateQueries({ queryKey: ["/api/quizzes"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/dashboard/stats"] });
     },
     onError: (error: any) => {
       toast({
