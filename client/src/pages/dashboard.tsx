@@ -85,15 +85,15 @@ export default function Dashboard() {
   ];
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="p-4 md:p-6 space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
-          <p className="text-gray-600">Gerencie seus quizzes e acompanhe o desempenho</p>
+          <h1 className="text-2xl md:text-3xl font-bold text-gray-900">Dashboard</h1>
+          <p className="text-gray-600 text-sm md:text-base">Gerencie seus quizzes e acompanhe o desempenho</p>
         </div>
         <Link href="/quizzes/new">
-          <Button className="flex items-center gap-2">
+          <Button className="flex items-center gap-2 w-full sm:w-auto">
             <Plus className="w-4 h-4" />
             Criar Quiz
           </Button>
@@ -135,14 +135,14 @@ export default function Dashboard() {
           ) : (
             <div className="space-y-4">
               {quizzes.slice(0, 5).map((quiz: any) => (
-                <div key={quiz.id} className="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
+                <div key={quiz.id} className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors space-y-3 sm:space-y-0">
                   <div className="flex items-center space-x-4">
-                    <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center">
+                    <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center flex-shrink-0">
                       <BarChart3 className="w-5 h-5 text-primary" />
                     </div>
-                    <div>
-                      <h3 className="font-semibold text-gray-900">{quiz.title}</h3>
-                      <div className="flex items-center space-x-4 text-sm text-gray-600">
+                    <div className="min-w-0 flex-1">
+                      <h3 className="font-semibold text-gray-900 truncate">{quiz.title}</h3>
+                      <div className="flex flex-col sm:flex-row sm:items-center sm:space-x-4 text-sm text-gray-600 space-y-1 sm:space-y-0">
                         <span className="flex items-center">
                           <Calendar className="w-4 h-4 mr-1" />
                           {new Date(quiz.createdAt).toLocaleDateString('pt-BR')}
@@ -154,7 +154,7 @@ export default function Dashboard() {
                     </div>
                   </div>
                   
-                  <div className="flex items-center space-x-2">
+                  <div className="flex items-center space-x-2 sm:ml-4">
                     <Button variant="ghost" size="sm">
                       <Eye className="w-4 h-4" />
                     </Button>
@@ -186,29 +186,31 @@ export default function Dashboard() {
       </Card>
 
       {/* Quick Actions */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <Card className="cursor-pointer hover:shadow-lg transition-shadow">
-          <CardContent className="p-6">
-            <div className="flex items-center space-x-4">
-              <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
-                <Plus className="w-6 h-6 text-blue-600" />
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
+        <Link href="/quizzes/new">
+          <Card className="cursor-pointer hover:shadow-lg transition-shadow">
+            <CardContent className="p-4 md:p-6">
+              <div className="flex items-center space-x-4">
+                <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                  <Plus className="w-6 h-6 text-blue-600" />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <h3 className="font-semibold text-gray-900">Criar Quiz</h3>
+                  <p className="text-sm text-gray-600">Novo quiz do zero</p>
+                </div>
               </div>
-              <div>
-                <h3 className="font-semibold text-gray-900">Criar Quiz</h3>
-                <p className="text-sm text-gray-600">Novo quiz do zero</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+        </Link>
 
         <Link href="/templates">
           <Card className="cursor-pointer hover:shadow-lg transition-shadow">
-            <CardContent className="p-6">
+            <CardContent className="p-4 md:p-6">
               <div className="flex items-center space-x-4">
-                <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
+                <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center flex-shrink-0">
                   <BarChart3 className="w-6 h-6 text-green-600" />
                 </div>
-                <div>
+                <div className="min-w-0 flex-1">
                   <h3 className="font-semibold text-gray-900">Templates</h3>
                   <p className="text-sm text-gray-600">Usar template pronto</p>
                 </div>
@@ -219,12 +221,12 @@ export default function Dashboard() {
 
         <Link href="/analytics">
           <Card className="cursor-pointer hover:shadow-lg transition-shadow">
-            <CardContent className="p-6">
+            <CardContent className="p-4 md:p-6">
               <div className="flex items-center space-x-4">
-                <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
+                <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center flex-shrink-0">
                   <TrendingUp className="w-6 h-6 text-purple-600" />
                 </div>
-                <div>
+                <div className="min-w-0 flex-1">
                   <h3 className="font-semibold text-gray-900">Analytics</h3>
                   <p className="text-sm text-gray-600">Ver relatórios</p>
                 </div>
