@@ -188,6 +188,14 @@ Changelog:
   * Restored pixel tracking configurations in quiz settings (Facebook Pixel, Google Ads, GA4, custom scripts)
   * Added comprehensive tracking card with proper input validation and helpful placeholders
   * Visual improvements: opacity, scaling, and border highlighting during drag operations
+- July 04, 2025. Enhanced height, weight, and target weight elements with complete functionality:
+  * Improved quiz preview rendering with themed visual cards (purple, blue, orange) for each element type
+  * Added comprehensive text formatting options: font size, alignment, weight, and color customization
+  * Enhanced property panels with unit selection (cm/m for height, kg for weight), field IDs, and descriptions
+  * Added contextual information cards showing IMC calculation integration and automatic difference calculations
+  * Removed embedded continue buttons from form elements - navigation now controlled by separate dynamic continue button element
+  * Elements show proper placeholder values, validation ranges, and visual indicators for required fields
+  * Full integration with lead capture system through customizable field IDs for data collection
 ```
 
 ## User Preferences

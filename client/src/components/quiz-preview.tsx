@@ -12,7 +12,11 @@ import {
   Mail, 
   User, 
   Phone,
-  Sparkles
+  Sparkles,
+  ArrowUpDown,
+  Scale,
+  Target,
+  Activity
 } from "lucide-react";
 
 // Componente para textos alternantes
@@ -1029,23 +1033,166 @@ export function QuizPreview({ quiz }: QuizPreviewProps) {
             </div>
           )}
 
-          {(element.type === "height" || element.type === "current_weight" || element.type === "target_weight") && (
+          {element.type === "height" && (
             <div className="space-y-4">
-              <Input
-                type="number"
-                placeholder={element.placeholder || "Digite o valor..."}
-                value={answers[element.id] || ""}
-                onChange={(e) => handleAnswer(element.id, e.target.value)}
-                className="text-center"
-                min={element.min}
-                max={element.max}
-              />
-              <Button 
-                onClick={handleNext}
-                disabled={element.required && !answers[element.id]?.toString().trim()}
-              >
-                Próxima <ArrowRight className="w-4 h-4 ml-2" />
-              </Button>
+              <div className="bg-purple-50 border-2 border-dashed border-purple-200 rounded-lg p-6">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center">
+                    <ArrowUpDown className="w-6 h-6 text-purple-600" />
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-purple-800">Altura</h3>
+                    <p className="text-sm text-purple-600">Para cálculo do IMC</p>
+                  </div>
+                </div>
+                
+                <div className="bg-white rounded-lg p-4 shadow-sm">
+                  <div className="flex items-center gap-3">
+                    <div className="flex-1 relative">
+                      <Input
+                        type="number"
+                        step="0.01"
+                        placeholder={element.placeholder || (element.unit === "cm" ? "175" : "1.75")}
+                        value={answers[element.id] || ""}
+                        onChange={(e) => handleAnswer(element.id, e.target.value)}
+                        className="text-center text-lg font-semibold pr-12"
+                        min={element.unit === "cm" ? "120" : "1.20"}
+                        max={element.unit === "cm" ? "220" : "2.20"}
+                        style={{ fontSize: '18px' }}
+                      />
+                      <span className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 font-medium">
+                        {element.unit || "cm"}
+                      </span>
+                    </div>
+                    
+                    <div className="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center">
+                      <div className="text-center">
+                        <div className="text-xs text-purple-600 font-semibold mt-1">
+                          {element.unit === "cm" ? "CM" : "M"}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="mt-3 p-3 bg-purple-50 rounded-lg border border-purple-200">
+                  <div className="flex items-center gap-2 mb-1">
+                    <Activity className="w-4 h-4 text-purple-600" />
+                    <span className="text-sm font-medium text-purple-800">Altura para cálculo do IMC</span>
+                  </div>
+                  <div className="text-xs text-purple-700">
+                    Esta altura será usada para calcular automaticamente o IMC quando combinada com o peso
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {element.type === "current_weight" && (
+            <div className="space-y-4">
+              <div className="bg-blue-50 border-2 border-dashed border-blue-200 rounded-lg p-6">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
+                    <Scale className="w-6 h-6 text-blue-600" />
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-blue-800">Peso Atual</h3>
+                    <p className="text-sm text-blue-600">Peso corporal atual</p>
+                  </div>
+                </div>
+                
+                <div className="bg-white rounded-lg p-4 shadow-sm">
+                  <div className="flex items-center gap-3">
+                    <div className="flex-1 relative">
+                      <Input
+                        type="number"
+                        step="0.1"
+                        placeholder={element.placeholder || "70.5"}
+                        value={answers[element.id] || ""}
+                        onChange={(e) => handleAnswer(element.id, e.target.value)}
+                        className="text-center text-lg font-semibold pr-12"
+                        min="30"
+                        max="300"
+                        style={{ fontSize: '18px' }}
+                      />
+                      <span className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 font-medium">
+                        kg
+                      </span>
+                    </div>
+                    
+                    <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center">
+                      <div className="text-center">
+                        <div className="text-xs text-blue-600 font-semibold">PESO</div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                
+                {element.showBMICalculation && (
+                  <div className="mt-3 p-3 bg-green-50 rounded-lg border border-green-200">
+                    <div className="flex items-center gap-2 mb-1">
+                      <Activity className="w-4 h-4 text-green-600" />
+                      <span className="text-sm font-medium text-green-800">Cálculo do IMC habilitado</span>
+                    </div>
+                    <div className="text-xs text-green-700">
+                      Quando combinado com a altura, calculará automaticamente seu IMC
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {element.type === "target_weight" && (
+            <div className="space-y-4">
+              <div className="bg-orange-50 border-2 border-dashed border-orange-200 rounded-lg p-6">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="w-12 h-12 bg-orange-100 rounded-full flex items-center justify-center">
+                    <Target className="w-6 h-6 text-orange-600" />
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-orange-800">Peso Objetivo</h3>
+                    <p className="text-sm text-orange-600">Meta de peso desejada</p>
+                  </div>
+                </div>
+                
+                <div className="bg-white rounded-lg p-4 shadow-sm">
+                  <div className="flex items-center gap-3">
+                    <div className="flex-1 relative">
+                      <Input
+                        type="number"
+                        step="0.1"
+                        placeholder={element.placeholder || "65.0"}
+                        value={answers[element.id] || ""}
+                        onChange={(e) => handleAnswer(element.id, e.target.value)}
+                        className="text-center text-lg font-semibold pr-12"
+                        min="30"
+                        max="300"
+                        style={{ fontSize: '18px' }}
+                      />
+                      <span className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 font-medium">
+                        kg
+                      </span>
+                    </div>
+                    
+                    <div className="w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center">
+                      <div className="text-center">
+                        <div className="text-xs text-orange-600 font-semibold">META</div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="mt-3 p-3 bg-orange-50 rounded-lg border border-orange-200">
+                  <div className="flex items-center gap-2 mb-1">
+                    <Target className="w-4 h-4 text-orange-600" />
+                    <span className="text-sm font-medium text-orange-800">Objetivo de perda/ganho de peso</span>
+                  </div>
+                  <div className="text-xs text-orange-700">
+                    Diferença será calculada automaticamente quando comparado com o peso atual
+                  </div>
+                </div>
+              </div>
             </div>
           )}
 

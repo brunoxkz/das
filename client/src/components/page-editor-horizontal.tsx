@@ -2858,6 +2858,65 @@ const gameElementCategories = [
                     />
                   </div>
 
+                  {/* Formatação do Texto */}
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <Label className="text-xs">Tamanho da Fonte</Label>
+                      <select 
+                        className="w-full px-2 py-1 border rounded text-xs mt-1"
+                        value={selectedElementData.fontSize || "base"}
+                        onChange={(e) => updateElement(selectedElementData.id, { fontSize: e.target.value })}
+                      >
+                        <option value="xs">Muito Pequeno</option>
+                        <option value="sm">Pequeno</option>
+                        <option value="base">Normal</option>
+                        <option value="lg">Grande</option>
+                        <option value="xl">Muito Grande</option>
+                        <option value="2xl">Gigante</option>
+                      </select>
+                    </div>
+
+                    <div>
+                      <Label className="text-xs">Alinhamento</Label>
+                      <select 
+                        className="w-full px-2 py-1 border rounded text-xs mt-1"
+                        value={selectedElementData.textAlign || "left"}
+                        onChange={(e) => updateElement(selectedElementData.id, { textAlign: e.target.value })}
+                      >
+                        <option value="left">Esquerda</option>
+                        <option value="center">Centro</option>
+                        <option value="right">Direita</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <Label className="text-xs">Peso da Fonte</Label>
+                      <select 
+                        className="w-full px-2 py-1 border rounded text-xs mt-1"
+                        value={selectedElementData.fontWeight || "normal"}
+                        onChange={(e) => updateElement(selectedElementData.id, { fontWeight: e.target.value })}
+                      >
+                        <option value="light">Leve</option>
+                        <option value="normal">Normal</option>
+                        <option value="medium">Médio</option>
+                        <option value="semibold">Semi-negrito</option>
+                        <option value="bold">Negrito</option>
+                      </select>
+                    </div>
+
+                    <div>
+                      <Label className="text-xs">Cor do Texto</Label>
+                      <input
+                        type="color"
+                        value={selectedElementData.textColor || "#000000"}
+                        onChange={(e) => updateElement(selectedElementData.id, { textColor: e.target.value })}
+                        className="w-full h-8 border rounded mt-1"
+                      />
+                    </div>
+                  </div>
+
                   <div className="flex items-center space-x-2">
                     <input
                       type="checkbox"
@@ -2888,6 +2947,17 @@ const gameElementCategories = [
                       onChange={(e) => updateElement(selectedElementData.id, { fieldId: e.target.value })}
                       className="mt-1"
                       placeholder="altura"
+                    />
+                  </div>
+
+                  <div>
+                    <Label htmlFor="height-description">Descrição/Ajuda</Label>
+                    <Input
+                      id="height-description"
+                      value={selectedElementData.description || ""}
+                      onChange={(e) => updateElement(selectedElementData.id, { description: e.target.value })}
+                      className="mt-1"
+                      placeholder="Texto adicional para ajudar o usuário"
                     />
                   </div>
                 </div>
