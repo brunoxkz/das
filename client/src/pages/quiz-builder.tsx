@@ -40,16 +40,35 @@ export default function QuizBuilder() {
     title: "",
     description: "",
     structure: {
-      questions: [],
+      pages: [{
+        id: Date.now(),
+        title: "Página 1",
+        elements: []
+      }],
       settings: {
-        theme: "default",
+        theme: "vendzz",
         showProgressBar: true,
         collectEmail: true,
         collectName: true,
         collectPhone: false,
+        resultTitle: "",
+        resultDescription: ""
       }
     },
+    design: {
+      brandingLogo: "",
+      progressBarColor: "#10b981",
+      buttonColor: "#10b981",
+      favicon: "",
+      seoTitle: "",
+      seoDescription: "",
+      seoKeywords: ""
+    },
     isPublished: false,
+    facebookPixel: "",
+    googlePixel: "",
+    ga4Id: "",
+    customHeadScript: ""
   });
 
   const [activeTab, setActiveTab] = useState<"editor" | "preview" | "settings" | "design" | "analytics">("editor");
@@ -118,7 +137,20 @@ export default function QuizBuilder() {
             resultDescription: ""
           }
         },
-        isPublished: existingQuiz.isPublished,
+        design: {
+          brandingLogo: (existingQuiz as any).brandingLogo || "",
+          progressBarColor: (existingQuiz as any).progressBarColor || "#10b981",
+          buttonColor: (existingQuiz as any).buttonColor || "#10b981",
+          favicon: (existingQuiz as any).favicon || "",
+          seoTitle: (existingQuiz as any).seoTitle || "",
+          seoDescription: (existingQuiz as any).seoDescription || "",
+          seoKeywords: (existingQuiz as any).seoKeywords || ""
+        },
+        isPublished: existingQuiz.isPublished || false,
+        facebookPixel: (existingQuiz as any).facebookPixel || "",
+        googlePixel: (existingQuiz as any).googlePixel || "",
+        ga4Id: (existingQuiz as any).ga4Id || "",
+        customHeadScript: (existingQuiz as any).customHeadScript || ""
       });
       console.log("Dados carregados no estado:", {
         title: existingQuiz.title,
@@ -172,8 +204,27 @@ export default function QuizBuilder() {
       return;
     }
 
-    console.log("Salvando quiz com dados:", JSON.stringify(quizData, null, 2));
-    saveMutation.mutate(quizData);
+    // Prepare data for backend - match schema structure
+    const dataToSave = {
+      title: quizData.title,
+      description: quizData.description || "",
+      structure: quizData.structure,
+      isPublished: quizData.isPublished || false,
+      brandingLogo: quizData.design?.brandingLogo || "",
+      progressBarColor: quizData.design?.progressBarColor || "#10b981",
+      buttonColor: quizData.design?.buttonColor || "#10b981",
+      favicon: quizData.design?.favicon || "",
+      seoTitle: quizData.design?.seoTitle || "",
+      seoDescription: quizData.design?.seoDescription || "",
+      seoKeywords: quizData.design?.seoKeywords || "",
+      facebookPixel: quizData.facebookPixel || "",
+      googlePixel: quizData.googlePixel || "",
+      ga4Id: quizData.ga4Id || "",
+      customHeadScript: quizData.customHeadScript || ""
+    };
+
+    console.log("Salvando quiz com dados:", JSON.stringify(dataToSave, null, 2));
+    saveMutation.mutate(dataToSave);
   };
 
   const handlePublish = () => {
