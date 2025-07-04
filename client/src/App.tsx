@@ -11,6 +11,7 @@ import QuizBuilder from "@/pages/quiz-builder";
 import Quizzes from "@/pages/quizzes";
 import Templates from "@/pages/templates";
 import Analytics from "@/pages/analytics";
+import SuperAnalytics from "@/pages/super-analytics";
 import Subscribe from "@/pages/subscribe";
 import Settings from "@/pages/settings";
 import Admin from "@/pages/admin";
@@ -49,6 +50,7 @@ function Router() {
                   <Route path="/quizzes/:id/edit" component={QuizBuilder} />
                   <Route path="/templates" component={Templates} />
                   <Route path="/analytics" component={Analytics} />
+                  <Route path="/super-analytics/:quizId" component={SuperAnalytics} />
                   <Route path="/leads" component={Leads} />
                   <Route path="/premiacoes" component={Premiacoes} />
                   <Route path="/tutoriais" component={Tutoriais} />
