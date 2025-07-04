@@ -1,8 +1,9 @@
+
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import Stripe from "stripe";
 import { storage } from "./storage";
-import { setupAuth, isAuthenticated } from "./replitAuth";
+import { authenticateToken, generateTokens } from "./auth";
 import { 
   insertQuizSchema, 
   insertQuizResponseSchema, 
@@ -10,445 +11,420 @@ import {
   insertQuizAnalyticsSchema 
 } from "@shared/schema";
 import { z } from "zod";
+import bcrypt from "bcryptjs";
 
 if (!process.env.STRIPE_SECRET_KEY) {
   console.warn('STRIPE_SECRET_KEY not found - Stripe functionality will be disabled');
 }
 
-const stripe = process.env.STRIPE_SECRET_KEY ? new Stripe(process.env.STRIPE_SECRET_KEY, {
-  apiVersion: "2023-10-16",
-}) : null;
+const stripe = process.env.STRIPE_SECRET_KEY ? new Stripe(process.env.STRIPE_SECRET_KEY) : null;
 
-export async function registerRoutes(app: Express): Promise<Server> {
-  // Auth middleware
-  await setupAuth(app);
+export function registerRoutes(app: Express): Server {
+  const httpServer = createServer(app);
 
-  // Auth routes
-  app.get('/api/auth/user', isAuthenticated, async (req: any, res) => {
+  // Auth routes (JWT-based)
+  app.post("/api/auth/register", async (req, res) => {
     try {
-      const userId = req.user.claims.sub;
-      const user = await storage.getUser(userId);
-      res.json(user);
+      const { email, password, firstName, lastName } = req.body;
+      
+      if (!email || !password || !firstName) {
+        return res.status(400).json({ message: "Email, password, and first name are required" });
+      }
+
+      // Check if user exists
+      const existingUser = await storage.getUserByEmail(email);
+      if (existingUser) {
+        return res.status(400).json({ message: "User already exists" });
+      }
+
+      // Hash password
+      const hashedPassword = await bcrypt.hash(password, 12);
+
+      // Create user
+      const user = await storage.createUser({
+        email,
+        password: hashedPassword,
+        firstName,
+        lastName: lastName || "",
+        role: "user",
+        plan: "free"
+      });
+
+      // Generate tokens
+      const tokens = generateTokens(user);
+
+      res.json({
+        user: {
+          id: user.id,
+          email: user.email,
+          firstName: user.firstName,
+          lastName: user.lastName,
+          role: user.role,
+          plan: user.plan
+        },
+        ...tokens
+      });
     } catch (error) {
-      console.error("Error fetching user:", error);
-      res.status(500).json({ message: "Failed to fetch user" });
+      console.error("Registration error:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  app.post("/api/auth/login", async (req, res) => {
+    try {
+      const { email, password } = req.body;
+      
+      if (!email || !password) {
+        return res.status(400).json({ message: "Email and password are required" });
+      }
+
+      const user = await storage.getUserByEmail(email);
+      if (!user || !user.password) {
+        return res.status(401).json({ message: "Invalid credentials" });
+      }
+
+      const isValidPassword = await bcrypt.compare(password, user.password);
+      if (!isValidPassword) {
+        return res.status(401).json({ message: "Invalid credentials" });
+      }
+
+      const tokens = generateTokens(user);
+
+      res.json({
+        user: {
+          id: user.id,
+          email: user.email,
+          firstName: user.firstName,
+          lastName: user.lastName,
+          role: user.role,
+          plan: user.plan
+        },
+        ...tokens
+      });
+    } catch (error) {
+      console.error("Login error:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  app.post("/api/auth/refresh", async (req, res) => {
+    try {
+      const { refreshToken } = req.body;
+      
+      if (!refreshToken) {
+        return res.status(400).json({ message: "Refresh token required" });
+      }
+
+      const user = await storage.getUserByRefreshToken(refreshToken);
+      if (!user) {
+        return res.status(401).json({ message: "Invalid refresh token" });
+      }
+
+      const tokens = generateTokens(user);
+      
+      res.json(tokens);
+    } catch (error) {
+      console.error("Token refresh error:", error);
+      res.status(401).json({ message: "Invalid refresh token" });
+    }
+  });
+
+  app.post("/api/auth/logout", authenticateToken, async (req, res) => {
+    try {
+      const userId = req.user?.id;
+      if (userId) {
+        await storage.clearRefreshTokens(userId);
+      }
+      res.json({ message: "Logged out successfully" });
+    } catch (error) {
+      console.error("Logout error:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  app.get("/api/auth/user", authenticateToken, async (req, res) => {
+    try {
+      const user = await storage.getUser(req.user!.id);
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      res.json({
+        id: user.id,
+        email: user.email,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        role: user.role,
+        plan: user.plan,
+        subscriptionStatus: user.subscriptionStatus
+      });
+    } catch (error) {
+      console.error("Get user error:", error);
+      res.status(500).json({ message: "Internal server error" });
     }
   });
 
   // Quiz routes
-  app.get("/api/quizzes", isAuthenticated, async (req: any, res) => {
+  app.get("/api/quizzes", authenticateToken, async (req, res) => {
     try {
-      const userId = req.user.claims.sub;
-      const quizzes = await storage.getUserQuizzes(userId);
+      const quizzes = await storage.getUserQuizzes(req.user!.id);
       res.json(quizzes);
     } catch (error) {
       console.error("Error fetching quizzes:", error);
-      res.status(500).json({ message: "Failed to fetch quizzes" });
+      res.status(500).json({ message: "Internal server error" });
     }
   });
 
-  app.get("/api/quizzes/:id", isAuthenticated, async (req: any, res) => {
+  app.get("/api/quizzes/:id", async (req, res) => {
     try {
-      const { id } = req.params;
-      const userId = req.user.claims.sub;
-      
-      console.log("=== GET QUIZ DEBUG ===");
-      console.log("Fetching quiz ID:", id);
-      console.log("User ID:", userId);
-      
-      const quiz = await storage.getQuiz(id);
-      
+      const quiz = await storage.getQuiz(req.params.id);
       if (!quiz) {
-        console.log("Quiz not found in database");
         return res.status(404).json({ message: "Quiz not found" });
       }
-      
-      console.log("Found quiz:", JSON.stringify(quiz, null, 2));
-      
-      // Check if user owns this quiz
-      if (quiz.userId !== userId) {
-        console.log("Access denied - user doesn't own quiz");
-        return res.status(403).json({ message: "Access denied" });
-      }
-      
-      console.log("=== END GET QUIZ DEBUG ===");
       res.json(quiz);
     } catch (error) {
       console.error("Error fetching quiz:", error);
-      res.status(500).json({ message: "Failed to fetch quiz" });
+      res.status(500).json({ message: "Internal server error" });
     }
   });
 
-  app.post("/api/quizzes", isAuthenticated, async (req: any, res) => {
+  app.post("/api/quizzes", authenticateToken, async (req, res) => {
     try {
-      const userId = req.user.claims.sub;
       const quizData = insertQuizSchema.parse({
         ...req.body,
-        userId,
+        userId: req.user!.id,
       });
-      
       const quiz = await storage.createQuiz(quizData);
-      res.status(201).json(quiz);
+      res.json(quiz);
     } catch (error) {
       console.error("Error creating quiz:", error);
       if (error instanceof z.ZodError) {
         return res.status(400).json({ message: "Invalid quiz data", errors: error.errors });
       }
-      res.status(500).json({ message: "Failed to create quiz" });
+      res.status(500).json({ message: "Internal server error" });
     }
   });
 
-  app.put("/api/quizzes/:id", isAuthenticated, async (req: any, res) => {
+  app.put("/api/quizzes/:id", authenticateToken, async (req, res) => {
     try {
-      const { id } = req.params;
-      const userId = req.user.claims.sub;
-      
-      console.log("=== UPDATE QUIZ DEBUG ===");
-      console.log("Quiz ID:", id);
-      console.log("User ID:", userId);
-      console.log("Request body:", JSON.stringify(req.body, null, 2));
-      
-      // Check if quiz exists and user owns it
-      const existingQuiz = await storage.getQuiz(id);
-      if (!existingQuiz) {
+      const quiz = await storage.getQuiz(req.params.id);
+      if (!quiz) {
         return res.status(404).json({ message: "Quiz not found" });
       }
-      
-      console.log("Existing quiz:", JSON.stringify(existingQuiz, null, 2));
-      
-      if (existingQuiz.userId !== userId) {
+      if (quiz.userId !== req.user!.id) {
         return res.status(403).json({ message: "Access denied" });
       }
-      
-      const updateData = insertQuizSchema.partial().parse(req.body);
-      console.log("Parsed update data:", JSON.stringify(updateData, null, 2));
-      
-      const quiz = await storage.updateQuiz(id, updateData);
-      console.log("Updated quiz result:", JSON.stringify(quiz, null, 2));
-      console.log("=== END UPDATE QUIZ DEBUG ===");
-      
-      res.json(quiz);
+
+      const updatedQuiz = await storage.updateQuiz(req.params.id, req.body);
+      res.json(updatedQuiz);
     } catch (error) {
       console.error("Error updating quiz:", error);
-      if (error instanceof z.ZodError) {
-        console.error("Zod validation errors:", error.errors);
-        return res.status(400).json({ message: "Invalid quiz data", errors: error.errors });
-      }
-      res.status(500).json({ message: "Failed to update quiz" });
+      res.status(500).json({ message: "Internal server error" });
     }
   });
 
-  app.delete("/api/quizzes/:id", isAuthenticated, async (req: any, res) => {
+  app.delete("/api/quizzes/:id", authenticateToken, async (req, res) => {
     try {
-      const { id } = req.params;
-      const userId = req.user.claims.sub;
-      
-      // Check if quiz exists and user owns it
-      const existingQuiz = await storage.getQuiz(id);
-      if (!existingQuiz) {
+      const quiz = await storage.getQuiz(req.params.id);
+      if (!quiz) {
         return res.status(404).json({ message: "Quiz not found" });
       }
-      
-      if (existingQuiz.userId !== userId) {
+      if (quiz.userId !== req.user!.id) {
         return res.status(403).json({ message: "Access denied" });
       }
-      
-      await storage.deleteQuiz(id);
-      res.status(204).send();
+
+      await storage.deleteQuiz(req.params.id);
+      res.json({ message: "Quiz deleted successfully" });
     } catch (error) {
       console.error("Error deleting quiz:", error);
-      res.status(500).json({ message: "Failed to delete quiz" });
+      res.status(500).json({ message: "Internal server error" });
     }
   });
 
-  // Analytics reset route
-  app.delete("/api/analytics/:quizId/reset", isAuthenticated, async (req: any, res) => {
-    try {
-      const { quizId } = req.params;
-      const userId = req.user.claims.sub;
-      
-      // Verify quiz ownership
-      const quiz = await storage.getQuiz(quizId);
-      if (!quiz || quiz.userId !== userId) {
-        return res.status(404).json({ message: "Quiz not found" });
-      }
-      
-      // Reset analytics data - this would clear all analytics for the quiz
-      // For now, we'll just return success since we're using mock data
-      res.json({ message: "Analytics data reset successfully" });
-    } catch (error) {
-      console.error("Error resetting analytics:", error);
-      res.status(500).json({ message: "Failed to reset analytics data" });
-    }
-  });
-
-  // Quiz template routes
-  app.get("/api/templates", async (req, res) => {
+  // Quiz templates
+  app.get("/api/quiz-templates", async (req, res) => {
     try {
       const templates = await storage.getQuizTemplates();
       res.json(templates);
     } catch (error) {
-      console.error("Error fetching templates:", error);
-      res.status(500).json({ message: "Failed to fetch templates" });
+      console.error("Error fetching quiz templates:", error);
+      res.status(500).json({ message: "Internal server error" });
     }
   });
 
-  app.get("/api/templates/:id", async (req, res) => {
+  app.get("/api/quiz-templates/:id", async (req, res) => {
     try {
-      const { id } = req.params;
-      const template = await storage.getQuizTemplate(parseInt(id));
-      
+      const template = await storage.getQuizTemplate(parseInt(req.params.id));
       if (!template) {
         return res.status(404).json({ message: "Template not found" });
       }
-      
       res.json(template);
     } catch (error) {
-      console.error("Error fetching template:", error);
-      res.status(500).json({ message: "Failed to fetch template" });
+      console.error("Error fetching quiz template:", error);
+      res.status(500).json({ message: "Internal server error" });
     }
   });
 
-  // Quiz response routes (public - for quiz taking)
-  app.post("/api/quizzes/:id/responses", async (req, res) => {
+  // Quiz responses
+  app.post("/api/quiz-responses", async (req, res) => {
     try {
-      const { id } = req.params;
-      const responseData = insertQuizResponseSchema.parse({
-        ...req.body,
-        quizId: id,
-        ipAddress: req.ip,
-        userAgent: req.get('User-Agent'),
-      });
-      
+      const responseData = insertQuizResponseSchema.parse(req.body);
       const response = await storage.createQuizResponse(responseData);
-      res.status(201).json(response);
+      res.json(response);
     } catch (error) {
       console.error("Error creating quiz response:", error);
       if (error instanceof z.ZodError) {
         return res.status(400).json({ message: "Invalid response data", errors: error.errors });
       }
-      res.status(500).json({ message: "Failed to create response" });
+      res.status(500).json({ message: "Internal server error" });
     }
   });
 
-  // Analytics routes
-  app.get("/api/quizzes/:id/responses", isAuthenticated, async (req: any, res) => {
+  app.get("/api/quiz-responses", authenticateToken, async (req, res) => {
     try {
-      const { id } = req.params;
-      const userId = req.user.claims.sub;
-      
-      // Check if user owns this quiz
-      const quiz = await storage.getQuiz(id);
-      if (!quiz) {
-        return res.status(404).json({ message: "Quiz not found" });
-      }
-      
-      if (quiz.userId !== userId) {
-        return res.status(403).json({ message: "Access denied" });
-      }
-      
-      const responses = await storage.getQuizResponses(id);
+      const responses = await storage.getUserQuizResponses(req.user!.id);
       res.json(responses);
     } catch (error) {
-      console.error("Error fetching responses:", error);
-      res.status(500).json({ message: "Failed to fetch responses" });
+      console.error("Error fetching quiz responses:", error);
+      res.status(500).json({ message: "Internal server error" });
     }
   });
 
-  app.get("/api/quizzes/:id/analytics", isAuthenticated, async (req: any, res) => {
+  // Analytics
+  app.get("/api/analytics/:quizId", authenticateToken, async (req, res) => {
     try {
-      const { id } = req.params;
-      const userId = req.user.claims.sub;
-      
-      // Check if user owns this quiz
-      const quiz = await storage.getQuiz(id);
+      const quiz = await storage.getQuiz(req.params.quizId);
       if (!quiz) {
         return res.status(404).json({ message: "Quiz not found" });
       }
-      
-      if (quiz.userId !== userId) {
+      if (quiz.userId !== req.user!.id) {
         return res.status(403).json({ message: "Access denied" });
       }
-      
-      const analytics = await storage.getQuizAnalytics(id);
+
+      const analytics = await storage.getQuizAnalytics(req.params.quizId);
       res.json(analytics);
     } catch (error) {
       console.error("Error fetching analytics:", error);
-      res.status(500).json({ message: "Failed to fetch analytics" });
+      res.status(500).json({ message: "Internal server error" });
     }
   });
 
-  // Dashboard stats
-  app.get("/api/dashboard/stats", isAuthenticated, async (req: any, res) => {
+  // Admin routes
+  app.get("/api/admin/users", authenticateToken, async (req, res) => {
     try {
-      const userId = req.user.claims.sub;
-      const stats = await storage.getDashboardStats(userId);
-      res.json(stats);
+      if (req.user!.role !== "admin") {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+      const users = await storage.getAllUsers();
+      res.json(users);
     } catch (error) {
-      console.error("Error fetching dashboard stats:", error);
-      res.status(500).json({ message: "Failed to fetch dashboard stats" });
+      console.error("Error fetching users:", error);
+      res.status(500).json({ message: "Internal server error" });
     }
   });
 
-  // Stripe subscription routes
+  app.put("/api/admin/users/:id/role", authenticateToken, async (req, res) => {
+    try {
+      if (req.user!.role !== "admin") {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+      const { role } = req.body;
+      const user = await storage.updateUserRole(req.params.id, role);
+      res.json(user);
+    } catch (error) {
+      console.error("Error updating user role:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  // Stripe integration (if available)
   if (stripe) {
-    app.post('/api/create-subscription', isAuthenticated, async (req: any, res) => {
+    app.post("/api/create-checkout-session", authenticateToken, async (req, res) => {
       try {
-        const userId = req.user.claims.sub;
-        const user = await storage.getUser(userId);
+        const { priceId } = req.body;
+        const user = await storage.getUser(req.user!.id);
         
         if (!user) {
           return res.status(404).json({ message: "User not found" });
         }
 
-        if (user.stripeSubscriptionId) {
-          const subscription = await stripe.subscriptions.retrieve(user.stripeSubscriptionId);
-          
-          if (subscription.latest_invoice && typeof subscription.latest_invoice === 'object') {
-            const invoice = subscription.latest_invoice;
-            if (invoice.payment_intent && typeof invoice.payment_intent === 'object') {
-              const paymentIntent = invoice.payment_intent;
-              res.json({
-                subscriptionId: subscription.id,
-                clientSecret: paymentIntent.client_secret,
-              });
-              return;
-            }
-          }
-        }
+        let customerId = user.stripeCustomerId;
         
-        if (!user.email) {
-          return res.status(400).json({ message: 'No user email on file' });
+        if (!customerId) {
+          const customer = await stripe.customers.create({
+            email: user.email!,
+            name: `${user.firstName} ${user.lastName}`,
+          });
+          customerId = customer.id;
+          await storage.updateUserStripeInfo(user.id, customerId, "");
         }
 
-        const customer = await stripe.customers.create({
-          email: user.email,
-          name: user.firstName && user.lastName ? `${user.firstName} ${user.lastName}` : user.email,
+        const session = await stripe.checkout.sessions.create({
+          customer: customerId,
+          payment_method_types: ["card"],
+          line_items: [{ price: priceId, quantity: 1 }],
+          mode: "subscription",
+          success_url: `${req.headers.origin}/dashboard?session_id={CHECKOUT_SESSION_ID}`,
+          cancel_url: `${req.headers.origin}/subscribe`,
         });
 
-        const subscription = await stripe.subscriptions.create({
-          customer: customer.id,
-          items: [{
-            price: process.env.STRIPE_PRICE_ID || 'price_1234567890',
-          }],
-          payment_behavior: 'default_incomplete',
-          expand: ['latest_invoice.payment_intent'],
-        });
+        res.json({ sessionId: session.id });
+      } catch (error) {
+        console.error("Error creating checkout session:", error);
+        res.status(500).json({ message: "Internal server error" });
+      }
+    });
 
-        await storage.updateUserStripeInfo(userId, customer.id, subscription.id);
+    app.post("/api/webhook", express.raw({ type: "application/json" }), async (req, res) => {
+      const sig = req.headers["stripe-signature"] as string;
+      let event;
 
-        if (subscription.latest_invoice && typeof subscription.latest_invoice === 'object') {
-          const invoice = subscription.latest_invoice;
-          if (invoice.payment_intent && typeof invoice.payment_intent === 'object') {
-            const paymentIntent = invoice.payment_intent;
-            res.json({
-              subscriptionId: subscription.id,
-              clientSecret: paymentIntent.client_secret,
-            });
-            return;
-          }
+      try {
+        event = stripe.webhooks.constructEvent(req.body, sig, process.env.STRIPE_WEBHOOK_SECRET!);
+      } catch (err: any) {
+        console.error("Webhook signature verification failed:", err.message);
+        return res.status(400).send(`Webhook Error: ${err.message}`);
+      }
+
+      try {
+        switch (event.type) {
+          case "checkout.session.completed":
+            const session = event.data.object as any;
+            const customerId = session.customer;
+            const subscriptionId = session.subscription;
+            
+            const users = await storage.getAllUsers();
+            const user = users.find(u => u.stripeCustomerId === customerId);
+            
+            if (user) {
+              await storage.updateUserStripeInfo(user.id, customerId, subscriptionId);
+              await storage.updateUserPlan(user.id, "plus", "active");
+            }
+            break;
+
+          case "customer.subscription.updated":
+          case "customer.subscription.deleted":
+            const subscription = event.data.object as any;
+            const customerIdFromSub = subscription.customer;
+            
+            const allUsers = await storage.getAllUsers();
+            const userFromSub = allUsers.find(u => u.stripeCustomerId === customerIdFromSub);
+            
+            if (userFromSub) {
+              const status = subscription.status;
+              const plan = status === "active" ? "plus" : "free";
+              await storage.updateUserPlan(userFromSub.id, plan, status);
+            }
+            break;
         }
 
-        res.status(400).json({ message: 'Failed to create subscription' });
-      } catch (error: any) {
-        console.error("Error creating subscription:", error);
-        res.status(500).json({ message: error.message });
+        res.json({ received: true });
+      } catch (error) {
+        console.error("Error processing webhook:", error);
+        res.status(500).json({ message: "Internal server error" });
       }
     });
   }
 
-  // Admin middleware
-  const isAdmin = async (req: any, res: any, next: any) => {
-    try {
-      if (!req.isAuthenticated() || !req.user?.claims?.sub) {
-        return res.status(401).json({ message: "Unauthorized" });
-      }
-
-      const userId = req.user.claims.sub;
-      const user = await storage.getUser(userId);
-      
-      if (!user || user.role !== "admin") {
-        return res.status(403).json({ message: "Admin access required" });
-      }
-
-      next();
-    } catch (error) {
-      console.error("Admin middleware error:", error);
-      res.status(500).json({ message: "Internal server error" });
-    }
-  };
-
-  // Debug route to check current user info
-  app.get("/api/debug/user", isAuthenticated, async (req: any, res) => {
-    try {
-      const userId = req.user.claims.sub;
-      const user = await storage.getUser(userId);
-      res.json({
-        userId,
-        userFromDb: user,
-        claims: req.user.claims
-      });
-    } catch (error) {
-      console.error("Debug user error:", error);
-      res.status(500).json({ message: "Internal server error" });
-    }
-  });
-
-  // Temporary route to set user as admin (remove after fixing)
-  app.post("/api/debug/make-admin", isAuthenticated, async (req: any, res) => {
-    try {
-      const userId = req.user.claims.sub;
-      await storage.updateUserRole(userId, "admin");
-      res.json({ message: "User role updated to admin" });
-    } catch (error) {
-      console.error("Make admin error:", error);
-      res.status(500).json({ message: "Failed to update role" });
-    }
-  });
-
-  // Admin routes
-  app.get("/api/admin/users", isAuthenticated, isAdmin, async (req: any, res) => {
-    try {
-      const users = await storage.getAllUsers();
-      res.json(users);
-    } catch (error) {
-      console.error("Error fetching users:", error);
-      res.status(500).json({ message: "Failed to fetch users" });
-    }
-  });
-
-  app.patch("/api/admin/users/:id", isAuthenticated, isAdmin, async (req: any, res) => {
-    try {
-      const { id } = req.params;
-      const { role, plan } = req.body;
-
-      if (role) {
-        await storage.updateUserRole(id, role);
-      }
-      
-      if (plan) {
-        await storage.updateUserPlan(id, plan);
-      }
-
-      const updatedUser = await storage.getUser(id);
-      res.json(updatedUser);
-    } catch (error) {
-      console.error("Error updating user:", error);
-      res.status(500).json({ message: "Failed to update user" });
-    }
-  });
-
-  app.delete("/api/admin/users/:id", isAuthenticated, isAdmin, async (req: any, res) => {
-    try {
-      const { id } = req.params;
-      await storage.deleteUser(id);
-      res.json({ message: "User deleted successfully" });
-    } catch (error) {
-      console.error("Error deleting user:", error);
-      res.status(500).json({ message: "Failed to delete user" });
-    }
-  });
-
-  const httpServer = createServer(app);
   return httpServer;
 }

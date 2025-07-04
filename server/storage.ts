@@ -100,6 +100,49 @@ export class DatabaseStorage implements IStorage {
     return user;
   }
 
+  async getUserByEmail(email: string): Promise<User | null> {
+    const rows = await db.select().from(usersTable).where(eq(usersTable.email, email));
+    return rows[0] || null;
+  }
+
+  async createUserWithPassword(userData: {
+    email: string;
+    password: string;
+    firstName: string;
+    lastName: string;
+  }): Promise<User> {
+    const newUser = {
+      id: crypto.randomUUID(),
+      email: userData.email,
+      password: userData.password,
+      firstName: userData.firstName,
+      lastName: userData.lastName,
+      plan: "free",
+      role: "user",
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+
+    await db.insert(usersTable).values(newUser).returning();
+    return newUser;
+  }
+
+  async storeRefreshToken(userId: string, refreshToken: string): Promise<void> {
+    // Store in a refresh_tokens table or add to users table
+    // For simplicity, we'll store in a simple in-memory cache
+    // In production, use Redis or database table
+    refreshTokenStore.set(userId, refreshToken);
+  }
+
+  async isValidRefreshToken(userId: string, refreshToken: string): Promise<boolean> {
+    const storedToken = refreshTokenStore.get(userId);
+    return storedToken === refreshToken;
+  }
+
+  async invalidateRefreshTokens(userId: string): Promise<void> {
+    refreshTokenStore.delete(userId);
+  }
+
   async upsertUser(userData: UpsertUser): Promise<User> {
     const [user] = await db
       .insert(usersTable)
@@ -165,47 +208,6 @@ export class DatabaseStorage implements IStorage {
 
   async deleteUser(id: string): Promise<void> {
     await db.delete(usersTable).where(eq(usersTable.id, id));
-  }
-
-  // JWT Auth methods
-  async getUserByEmail(email: string): Promise<User | null> {
-    const rows = await db.select().from(usersTable).where(eq(usersTable.email, email));
-    return rows[0] || null;
-  }
-
-  async createUserWithPassword(userData: {
-    email: string;
-    password: string;
-    firstName: string;
-    lastName: string;
-  }): Promise<User> {
-    const newUser = {
-      id: crypto.randomUUID(),
-      ...userData,
-      plan: "free",
-      role: "user",
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    };
-
-    await db.insert(usersTable).values(newUser).returning();
-    return newUser;
-  }
-
-  async storeRefreshToken(userId: string, refreshToken: string): Promise<void> {
-    // Store in a refresh_tokens table or add to users table
-    // For simplicity, we'll store in a simple in-memory cache
-    // In production, use Redis or database table
-    refreshTokenStore.set(userId, refreshToken);
-  }
-
-  async isValidRefreshToken(userId: string, refreshToken: string): Promise<boolean> {
-    const storedToken = refreshTokenStore.get(userId);
-    return storedToken === refreshToken;
-  }
-
-  async invalidateRefreshTokens(userId: string): Promise<void> {
-    refreshTokenStore.delete(userId);
   }
 
   // Quiz operations
