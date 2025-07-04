@@ -488,12 +488,13 @@ export function PageEditor({ pages, onPagesChange }: PageEditorProps) {
       {/* Sidebar direito - Propriedades do elemento selecionado */}
       <div className="w-80 border-l bg-gray-50 flex-shrink-0 flex flex-col min-h-0 overflow-hidden">
         <div className="p-4 border-b bg-white flex-shrink-0">
-          <h3 className="font-semibold text-gray-900">Propriedades</h3>
+          <h3 className="font-semibold text-gray-900">
+            {selectedElementData ? `Editando: ${selectedElementData.type}` : 'Propriedades'}
+          </h3>
         </div>
         <div className="flex-1 overflow-y-auto p-4 min-h-0">
         {selectedElementData ? (
           <div className="space-y-4">
-            <h3 className="font-semibold text-gray-900">Editar Elemento</h3>
             
             {/* Propriedades básicas */}
             {selectedElementData.type === "heading" && (
