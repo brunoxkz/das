@@ -826,11 +826,6 @@ export default function QuizBuilder() {
 
 // Super Analytics Component Embedded
 function SuperAnalyticsEmbed({ quizId }: { quizId: string }) {
-  const { data: quizzes } = useQuery({
-    queryKey: ["/api/quizzes"],
-    enabled: true,
-  });
-
   const { data: analytics, isLoading: analyticsLoading } = useQuery({
     queryKey: ["/api/analytics", quizId],
     queryFn: async () => {
@@ -860,167 +855,60 @@ function SuperAnalyticsEmbed({ quizId }: { quizId: string }) {
     );
   }
 
-  if (!quizzes) {
-    return (
-      <div className="text-center py-8">
-        <p className="text-gray-600">Carregando dados do quiz...</p>
-      </div>
-    );
-  }
-
-  const quiz = quizzes?.find((q: any) => q.id === quizId);
-  if (!quiz) {
-    return (
-      <div className="text-center py-8">
-        <p className="text-gray-600">Quiz não encontrado</p>
-      </div>
-    );
-  }
-
-  // Prepare analytics data structure - use real data if available, otherwise show zeros
+  // Check if we have real analytics data
   const hasRealData = analytics?.quiz && analytics.analytics && analytics.analytics.length > 0;
-  
-  const totalViews = hasRealData ? analytics.analytics.reduce((sum: number, a: any) => sum + (a.views || 0), 0) : 0;
-  const totalCompletions = hasRealData ? analytics.analytics.reduce((sum: number, a: any) => sum + (a.completions || 0), 0) : 0;
-  const totalDropOffs = hasRealData ? analytics.analytics.reduce((sum: number, a: any) => sum + (a.dropOffs || 0), 0) : 0;
-  
-  const analyticsData = {
-    totalViews,
-    totalCompletions,
-    totalDropOffs,
-    completionRate: hasRealData && totalViews > 0 ? (totalCompletions / totalViews * 100) : 0,
-    avgCompletionTime: hasRealData ? analytics.analytics.reduce((sum: number, a: any) => sum + (a.avgTime || 0), 0) / analytics.analytics.length : 0,
-    pageAnalytics: quiz?.structure?.pages?.map((page: any, index: number) => ({
-      pageId: page.id,
-      pageName: page.title || `Página ${index + 1}`,
-      pageType: page.isGame ? 'game' : page.isTransition ? 'transition' : 'normal',
-      views: 0,
-      clicks: 0,
-      dropOffs: 0,
-      clickRate: 0,
-      dropOffRate: 0,
-      avgTimeOnPage: 0,
-      nextPageViews: 0
-    })) || []
-  };
 
-  const formatTime = (seconds: number) => {
-    const minutes = Math.floor(seconds / 60);
-    const remainingSeconds = seconds % 60;
-    return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
-  };
+  if (!hasRealData) {
+    return (
+      <div className="space-y-6">
+        {/* Header */}
+        <div className="bg-white rounded-lg shadow border p-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-2xl font-bold text-gray-900">Super Analytics</h1>
+              <p className="text-gray-600 mt-1">Análise detalhada do quiz</p>
+            </div>
+          </div>
+        </div>
 
-  const formatPercentage = (value: number) => `${value.toFixed(1)}%`;
+        {/* No Data Message */}
+        <Card>
+          <CardContent className="p-12 text-center">
+            <div className="flex flex-col items-center space-y-4">
+              <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center">
+                <BarChart3 className="w-8 h-8 text-gray-400" />
+              </div>
+              <h3 className="text-xl font-semibold text-gray-900">
+                Ainda não há dados registrados
+              </h3>
+              <p className="text-gray-600 max-w-md">
+                Os dados de analytics aparecerão aqui assim que o quiz começar a receber respostas.
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
+  // If we have data, redirect to the standalone SuperAnalytics page
   return (
     <div className="space-y-6">
-      {/* Header */}
       <div className="bg-white rounded-lg shadow border p-6">
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-2xl font-bold text-gray-900">Super Analytics</h1>
-            <p className="text-gray-600 mt-1">Análise detalhada do quiz "{quiz.title}"</p>
+            <p className="text-gray-600 mt-1">Dados de analytics disponíveis</p>
           </div>
+          <Button 
+            onClick={() => window.open(`/super-analytics?quiz=${quizId}`, '_blank')}
+            className="flex items-center gap-2"
+          >
+            <BarChart3 className="w-4 h-4" />
+            Ver Analytics Completo
+          </Button>
         </div>
       </div>
-
-      {/* Key Metrics */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total de Visualizações</CardTitle>
-            <Eye className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{analyticsData.totalViews.toLocaleString()}</div>
-            <p className="text-xs text-muted-foreground">
-              {hasRealData ? "+12% vs. período anterior" : "Aguardando dados"}
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Conversões</CardTitle>
-            <Users className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{(analyticsData?.totalCompletions || 0).toLocaleString()}</div>
-            <p className="text-xs text-muted-foreground">{formatPercentage(analyticsData?.completionRate || 0)} taxa de conversão</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Tempo Médio</CardTitle>
-            <Clock className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{formatTime(analyticsData?.avgCompletionTime || 0)}</div>
-            <p className="text-xs text-muted-foreground">-15s vs. período anterior</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Taxa de Evasão</CardTitle>
-            <UserMinus className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{formatPercentage(100 - (analyticsData?.completionRate || 0))}</div>
-            <p className="text-xs text-muted-foreground">{(analyticsData?.totalDropOffs || 0).toLocaleString()} desistências</p>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Page Analytics Table */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <BarChart3 className="w-5 h-5" />
-            Análise por Página
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="overflow-x-auto">
-            <table className="w-full border-collapse">
-              <thead>
-                <tr className="border-b bg-gray-50">
-                  <th className="text-left p-3 font-semibold">Página</th>
-                  <th className="text-right p-3 font-semibold">Visualizações</th>
-                  <th className="text-right p-3 font-semibold">Taxa de Clique</th>
-                  <th className="text-right p-3 font-semibold">Taxa de Evasão</th>
-                </tr>
-              </thead>
-              <tbody>
-                {(analyticsData?.pageAnalytics || []).map((page: any, index: number) => (
-                  <tr key={page.pageId} className="border-b hover:bg-gray-50">
-                    <td className="p-3">
-                      <div className="flex items-center gap-2">
-                        <span className="font-medium">{page.pageName}</span>
-                        <Badge variant="secondary" className="text-xs">
-                          #{index + 1}
-                        </Badge>
-                      </div>
-                    </td>
-                    <td className="p-3 text-right font-mono">{page.views.toLocaleString()}</td>
-                    <td className="p-3 text-right">
-                      <span className={`font-mono ${page.clickRate > 70 ? 'text-green-600' : page.clickRate > 40 ? 'text-yellow-600' : 'text-red-600'}`}>
-                        {formatPercentage(page.clickRate)}
-                      </span>
-                    </td>
-                    <td className="p-3 text-right">
-                      <span className={`font-mono ${page.dropOffRate > 20 ? 'text-red-600' : page.dropOffRate > 10 ? 'text-yellow-600' : 'text-green-600'}`}>
-                        {formatPercentage(page.dropOffRate)}
-                      </span>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </CardContent>
-      </Card>
     </div>
   );
 }
