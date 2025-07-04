@@ -23,12 +23,13 @@ import {
   Calendar,
   Hash,
   FileText as TextArea,
-  Upload
+  Upload,
+  Video
 } from "lucide-react";
 
 interface Element {
   id: number;
-  type: "multiple_choice" | "text" | "rating" | "email" | "checkbox" | "date" | "phone" | "number" | "textarea" | "image_upload" | "animated_transition" | "heading" | "paragraph" | "image" | "divider";
+  type: "multiple_choice" | "text" | "rating" | "email" | "checkbox" | "date" | "phone" | "number" | "textarea" | "image_upload" | "animated_transition" | "heading" | "paragraph" | "image" | "divider" | "video";
   content: string;
   question?: string;
   description?: string;
@@ -54,6 +55,7 @@ interface Element {
   optionImages?: string[];
   showIcons?: boolean;
   optionIcons?: string[];
+  optionIds?: string[];
   spacing?: string;
   borderStyle?: string;
   shadowStyle?: string;
@@ -74,6 +76,8 @@ interface PageEditorProps {
 export function PageEditorHorizontal({ pages, onPagesChange }: PageEditorProps) {
   const [activePage, setActivePage] = useState(0);
   const [selectedElement, setSelectedElement] = useState<number | null>(null);
+  const [activeTab, setActiveTab] = useState<'visual' | 'comportamento'>('visual');
+  const [showEmojiPicker, setShowEmojiPicker] = useState<number | null>(null);
 
   // Função para traduzir os tipos de elementos
   const getElementTypeName = (type: string) => {
@@ -81,6 +85,7 @@ export function PageEditorHorizontal({ pages, onPagesChange }: PageEditorProps) 
       heading: "Título",
       paragraph: "Parágrafo", 
       image: "Imagem",
+      video: "Vídeo",
       divider: "Divisória",
       multiple_choice: "Múltipla Escolha",
       text: "Campo de Texto",
@@ -97,6 +102,70 @@ export function PageEditorHorizontal({ pages, onPagesChange }: PageEditorProps) 
     return typeNames[type] || type;
   };
 
+  // Função para converter imagem para WebP
+  const convertToWebP = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+      const img = new Image();
+      
+      img.onload = () => {
+        canvas.width = img.width;
+        canvas.height = img.height;
+        ctx?.drawImage(img, 0, 0);
+        
+        canvas.toBlob((blob) => {
+          if (blob) {
+            const reader = new FileReader();
+            reader.onload = () => resolve(reader.result as string);
+            reader.onerror = reject;
+            reader.readAsDataURL(blob);
+          } else {
+            reject(new Error('Falha na conversão'));
+          }
+        }, 'image/webp', 0.8);
+      };
+      
+      img.onerror = reject;
+      img.src = URL.createObjectURL(file);
+    });
+  };
+
+  // Função para criar embed de vídeo automático
+  const getVideoEmbed = (url: string) => {
+    if (!url) return null;
+    
+    // YouTube
+    const youtubeMatch = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([^&\n?#]+)/);
+    if (youtubeMatch) {
+      const videoId = youtubeMatch[1];
+      return `https://www.youtube.com/embed/${videoId}`;
+    }
+    
+    // Vimeo
+    const vimeoMatch = url.match(/vimeo\.com\/(\d+)/);
+    if (vimeoMatch) {
+      const videoId = vimeoMatch[1];
+      return `https://player.vimeo.com/video/${videoId}`;
+    }
+    
+    // TikTok
+    const tiktokMatch = url.match(/tiktok\.com\/@[^\/]+\/video\/(\d+)/);
+    if (tiktokMatch) {
+      const videoId = tiktokMatch[1];
+      return `https://www.tiktok.com/embed/v2/${videoId}`;
+    }
+    
+    // Instagram
+    const instagramMatch = url.match(/instagram\.com\/p\/([A-Za-z0-9_-]+)/);
+    if (instagramMatch) {
+      const postId = instagramMatch[1];
+      return `https://www.instagram.com/p/${postId}/embed`;
+    }
+    
+    return null;
+  };
+
   const elementTypes = [
     { type: "heading", label: "Título", icon: <Type className="w-4 h-4" /> },
     { type: "paragraph", label: "Parágrafo", icon: <AlignLeft className="w-4 h-4" /> },
@@ -109,6 +178,8 @@ export function PageEditorHorizontal({ pages, onPagesChange }: PageEditorProps) 
     { type: "date", label: "Data", icon: <Calendar className="w-4 h-4" /> },
     { type: "textarea", label: "Área de Texto", icon: <TextArea className="w-4 h-4" /> },
     { type: "image", label: "Imagem", icon: <ImageIcon className="w-4 h-4" /> },
+    { type: "image_upload", label: "Upload Imagem", icon: <Upload className="w-4 h-4" /> },
+    { type: "video", label: "Vídeo", icon: <Video className="w-4 h-4" /> },
     { type: "divider", label: "Divisória", icon: <Minus className="w-4 h-4" /> },
   ];
 
@@ -414,12 +485,55 @@ export function PageEditorHorizontal({ pages, onPagesChange }: PageEditorProps) 
               {element.question || "Upload de Imagem"}
               {element.required && <span className="text-red-500 ml-1">*</span>}
             </label>
-            <div className="w-full h-32 border-2 border-dashed border-gray-300 rounded-lg flex items-center justify-center bg-gray-50 cursor-pointer hover:bg-gray-100">
-              <div className="text-center">
-                <Upload className="w-8 h-8 mx-auto text-gray-400 mb-2" />
-                <p className="text-sm text-gray-500">Clique para fazer upload</p>
+            {element.imageUrl ? (
+              <div className="relative">
+                <img 
+                  src={element.imageUrl} 
+                  alt="Imagem carregada" 
+                  className="max-w-full h-auto rounded-lg border max-h-64 object-cover"
+                />
+                <div className="absolute top-2 right-2">
+                  <Badge variant="secondary" className="text-xs">WebP</Badge>
+                </div>
               </div>
-            </div>
+            ) : (
+              <div className="w-full h-32 border-2 border-dashed border-gray-300 rounded-lg flex items-center justify-center bg-gray-50 cursor-pointer hover:bg-gray-100">
+                <div className="text-center">
+                  <Upload className="w-8 h-8 mx-auto text-gray-400 mb-2" />
+                  <p className="text-sm text-gray-500 mb-1">Clique para carregar imagem</p>
+                  <p className="text-xs text-gray-400">Máximo 5MB - Conversão automática para WebP</p>
+                </div>
+              </div>
+            )}
+          </div>
+        );
+      case "video":
+        const embedUrl = getVideoEmbed(element.content);
+        return (
+          <div className="space-y-2">
+            {embedUrl ? (
+              <div className="aspect-video w-full">
+                <iframe
+                  src={embedUrl}
+                  className="w-full h-full rounded-lg border"
+                  allowFullScreen
+                  frameBorder="0"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                />
+              </div>
+            ) : (
+              <div className="w-full h-48 border-2 border-dashed border-gray-300 rounded-lg flex items-center justify-center bg-gray-50">
+                <div className="text-center">
+                  <Video className="w-12 h-12 mx-auto text-gray-400 mb-2" />
+                  <p className="text-sm text-gray-500 mb-1">
+                    {element.content ? "URL de vídeo inválida" : "Adicione uma URL de vídeo"}
+                  </p>
+                  <p className="text-xs text-gray-400">
+                    Suporte: YouTube, Vimeo, TikTok, Instagram
+                  </p>
+                </div>
+              </div>
+            )}
           </div>
         );
       default:
@@ -1265,6 +1379,126 @@ export function PageEditorHorizontal({ pages, onPagesChange }: PageEditorProps) 
                       onChange={(e) => updateElement(selectedElementData.id, { fieldId: e.target.value })}
                       className="mt-1"
                       placeholder="campo_email"
+                    />
+                  </div>
+                </div>
+              )}
+
+              {selectedElementData.type === "video" && (
+                <div className="space-y-4">
+                  <div>
+                    <Label htmlFor="video-url">URL do Vídeo</Label>
+                    <Input
+                      id="video-url"
+                      value={selectedElementData.content || ""}
+                      onChange={(e) => updateElement(selectedElementData.id, { content: e.target.value })}
+                      className="mt-1"
+                      placeholder="https://youtube.com/watch?v=..."
+                    />
+                    <p className="text-xs text-gray-500 mt-1">
+                      Suporte para YouTube, Vimeo, TikTok e Instagram
+                    </p>
+                  </div>
+
+                  <div className="border rounded-lg p-4 bg-gray-50">
+                    <h4 className="font-semibold text-sm mb-3">Configurações</h4>
+                    <div>
+                      <Label className="text-xs">Alinhamento</Label>
+                      <select 
+                        className="w-full px-2 py-1 border rounded text-xs"
+                        value={selectedElementData.textAlign || "center"}
+                        onChange={(e) => updateElement(selectedElementData.id, { textAlign: e.target.value })}
+                      >
+                        <option value="left">Esquerda</option>
+                        <option value="center">Centro</option>
+                        <option value="right">Direita</option>
+                      </select>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {selectedElementData.type === "image_upload" && (
+                <div className="space-y-4">
+                  <div>
+                    <Label htmlFor="upload-question">Pergunta/Label</Label>
+                    <Input
+                      id="upload-question"
+                      value={selectedElementData.question || ""}
+                      onChange={(e) => updateElement(selectedElementData.id, { question: e.target.value })}
+                      className="mt-1"
+                      placeholder="Faça upload da sua foto"
+                    />
+                  </div>
+
+                  <div>
+                    <Label htmlFor="upload-button">Botão de Upload</Label>
+                    <Button
+                      onClick={() => {
+                        const input = document.createElement('input');
+                        input.type = 'file';
+                        input.accept = 'image/*';
+                        input.style.display = 'none';
+                        
+                        input.onchange = async (e) => {
+                          const file = (e.target as HTMLInputElement).files?.[0];
+                          if (file) {
+                            // Verificar tamanho máximo (5MB)
+                            if (file.size > 5 * 1024 * 1024) {
+                              alert('Arquivo muito grande! Máximo 5MB permitido.');
+                              return;
+                            }
+                            
+                            try {
+                              // Converter para WebP
+                              const webpDataUrl = await convertToWebP(file);
+                              updateElement(selectedElementData.id, { imageUrl: webpDataUrl });
+                            } catch (error) {
+                              alert('Erro ao processar imagem. Tente novamente.');
+                            }
+                          }
+                        };
+                        
+                        document.body.appendChild(input);
+                        input.click();
+                        document.body.removeChild(input);
+                      }}
+                      className="w-full"
+                      variant="outline"
+                    >
+                      <Upload className="w-4 h-4 mr-2" />
+                      Selecionar Imagem (Máx 5MB)
+                    </Button>
+                    {selectedElementData.imageUrl && (
+                      <Button
+                        onClick={() => updateElement(selectedElementData.id, { imageUrl: "" })}
+                        className="w-full mt-2"
+                        variant="destructive"
+                        size="sm"
+                      >
+                        Remover Imagem
+                      </Button>
+                    )}
+                  </div>
+
+                  <div className="flex items-center space-x-2">
+                    <input
+                      type="checkbox"
+                      id="upload-required"
+                      checked={selectedElementData.required || false}
+                      onChange={(e) => updateElement(selectedElementData.id, { required: e.target.checked })}
+                    />
+                    <Label htmlFor="upload-required" className="text-xs">Campo obrigatório</Label>
+                  </div>
+
+                  <div>
+                    <Label htmlFor="upload-field-id">ID do Campo (para captura de leads)</Label>
+                    <Input
+                      id="upload-field-id"
+                      value={selectedElementData.fieldId || ""}
+                      onChange={(e) => updateElement(selectedElementData.id, { fieldId: e.target.value })}
+                      className="mt-1"
+                      placeholder="campo_foto"
                     />
                   </div>
                 </div>
