@@ -57,6 +57,7 @@ interface Element {
   spacing?: string;
   borderStyle?: string;
   shadowStyle?: string;
+  hideInputs?: boolean;
 }
 
 interface QuizPage {
@@ -282,22 +283,24 @@ export function PageEditorHorizontal({ pages, onPagesChange }: PageEditorProps) 
             </label>
             <div className={`${containerClass} ${spacingClass}`}>
               {(element.options || []).map((option, index) => (
-                <div key={index} className={`flex items-center space-x-2 p-2 border border-gray-200 hover:border-vendzz-primary hover:bg-vendzz-primary/5 cursor-pointer ${optionClass} ${element.borderStyle === "thick" ? "border-2" : ""} ${element.shadowStyle === "sm" ? "shadow-sm" : element.shadowStyle === "md" ? "shadow-md" : ""}`}>
-                  {element.showImages && element.optionImages?.[index] && (
+                <div key={index} className={`flex items-center space-x-2 p-3 border border-gray-200 hover:border-vendzz-primary hover:bg-vendzz-primary/5 cursor-pointer ${optionClass} ${element.borderStyle === "thick" ? "border-2" : ""} ${element.shadowStyle === "sm" ? "shadow-sm" : element.shadowStyle === "md" ? "shadow-md" : ""} transition-all`}>
+                  {element.optionImages?.[index] && (
                     <img 
                       src={element.optionImages[index]} 
                       alt={option}
-                      className="w-[60px] h-[60px] object-cover rounded"
+                      className="w-[60px] h-[60px] object-cover rounded border"
                     />
                   )}
-                  <input 
-                    type={element.multipleSelection ? "checkbox" : "radio"} 
-                    name={`preview-${element.id}`} 
-                    className="rounded" 
-                  />
-                  <span className="text-sm flex-1">{option}</span>
-                  {element.showIcons && element.optionIcons?.[index] && (
-                    <span className="text-lg">{element.optionIcons[index]}</span>
+                  {!element.hideInputs && (
+                    <input 
+                      type={element.multipleSelection ? "checkbox" : "radio"} 
+                      name={`preview-${element.id}`} 
+                      className="rounded" 
+                    />
+                  )}
+                  <span className="text-sm flex-1 font-medium">{option}</span>
+                  {element.optionIcons?.[index] && (
+                    <span className="text-xl">{element.optionIcons[index]}</span>
                   )}
                 </div>
               ))}
@@ -1011,54 +1014,106 @@ export function PageEditorHorizontal({ pages, onPagesChange }: PageEditorProps) 
                       </div>
 
                       <div>
-                        <Label className="text-xs">Opções</Label>
-                        <div className="space-y-2 mt-2">
+                        <Label className="text-xs">Opções de Resposta</Label>
+                        <div className="space-y-3 mt-2">
                           {(selectedElementData.options || []).map((option, index) => (
-                            <div key={index} className="flex gap-2">
-                              <Input
-                                value={option}
-                                onChange={(e) => {
-                                  const newOptions = [...(selectedElementData.options || [])];
-                                  newOptions[index] = e.target.value;
-                                  updateElement(selectedElementData.id, { options: newOptions });
-                                }}
-                                className="flex-1 text-xs"
-                                placeholder={`Opção ${index + 1}`}
-                              />
-                              {selectedElementData.showImages && (
+                            <div key={index} className="border rounded-lg p-3 bg-white">
+                              <div className="flex gap-2 mb-2">
                                 <Input
-                                  value={selectedElementData.optionImages?.[index] || ""}
+                                  value={option}
                                   onChange={(e) => {
+                                    const newOptions = [...(selectedElementData.options || [])];
+                                    newOptions[index] = e.target.value;
+                                    updateElement(selectedElementData.id, { options: newOptions });
+                                  }}
+                                  className="flex-1 text-xs"
+                                  placeholder={`Opção ${index + 1}`}
+                                />
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => {
+                                    const newOptions = (selectedElementData.options || []).filter((_, i) => i !== index);
+                                    const newImages = (selectedElementData.optionImages || []).filter((_, i) => i !== index);
+                                    const newIcons = (selectedElementData.optionIcons || []).filter((_, i) => i !== index);
+                                    updateElement(selectedElementData.id, { 
+                                      options: newOptions,
+                                      optionImages: newImages,
+                                      optionIcons: newIcons
+                                    });
+                                  }}
+                                  className="text-red-500 hover:text-red-700"
+                                >
+                                  <Minus className="w-3 h-3" />
+                                </Button>
+                              </div>
+                              
+                              <div className="flex gap-2">
+                                {/* Botão de adicionar imagem */}
+                                <Button
+                                  size="sm"
+                                  variant={selectedElementData.optionImages?.[index] ? "default" : "outline"}
+                                  onClick={() => {
                                     const newImages = [...(selectedElementData.optionImages || [])];
-                                    newImages[index] = e.target.value;
-                                    updateElement(selectedElementData.id, { optionImages: newImages });
+                                    if (newImages[index]) {
+                                      newImages[index] = "";
+                                    } else {
+                                      newImages[index] = "https://via.placeholder.com/60x60";
+                                    }
+                                    updateElement(selectedElementData.id, { 
+                                      optionImages: newImages,
+                                      showImages: true
+                                    });
                                   }}
-                                  className="w-20 text-xs"
-                                  placeholder="URL"
-                                />
+                                  className="text-xs"
+                                >
+                                  <ImageIcon className="w-3 h-3 mr-1" />
+                                  {selectedElementData.optionImages?.[index] ? "Remover" : "IMG"}
+                                </Button>
+                                
+                                {/* Seletor de emoji */}
+                                <div className="flex gap-1">
+                                  {["📝", "✅", "❌", "⭐", "💡", "🎯", "🔥", "💎"].map((emoji) => (
+                                    <Button
+                                      key={emoji}
+                                      size="sm"
+                                      variant={selectedElementData.optionIcons?.[index] === emoji ? "default" : "outline"}
+                                      onClick={() => {
+                                        const newIcons = [...(selectedElementData.optionIcons || [])];
+                                        if (newIcons[index] === emoji) {
+                                          newIcons[index] = "";
+                                        } else {
+                                          newIcons[index] = emoji;
+                                        }
+                                        updateElement(selectedElementData.id, { 
+                                          optionIcons: newIcons,
+                                          showIcons: true
+                                        });
+                                      }}
+                                      className="text-xs p-1 w-8 h-8"
+                                    >
+                                      {emoji}
+                                    </Button>
+                                  ))}
+                                </div>
+                              </div>
+                              
+                              {/* URL da imagem se selecionada */}
+                              {selectedElementData.optionImages?.[index] && (
+                                <div className="mt-2">
+                                  <Label className="text-xs">URL da Imagem</Label>
+                                  <Input
+                                    value={selectedElementData.optionImages[index]}
+                                    onChange={(e) => {
+                                      const newImages = [...(selectedElementData.optionImages || [])];
+                                      newImages[index] = e.target.value;
+                                      updateElement(selectedElementData.id, { optionImages: newImages });
+                                    }}
+                                    className="text-xs mt-1"
+                                    placeholder="https://exemplo.com/imagem.jpg"
+                                  />
+                                </div>
                               )}
-                              {selectedElementData.showIcons && (
-                                <Input
-                                  value={selectedElementData.optionIcons?.[index] || ""}
-                                  onChange={(e) => {
-                                    const newIcons = [...(selectedElementData.optionIcons || [])];
-                                    newIcons[index] = e.target.value;
-                                    updateElement(selectedElementData.id, { optionIcons: newIcons });
-                                  }}
-                                  className="w-16 text-xs"
-                                  placeholder="📝"
-                                />
-                              )}
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={() => {
-                                  const newOptions = (selectedElementData.options || []).filter((_, i) => i !== index);
-                                  updateElement(selectedElementData.id, { options: newOptions });
-                                }}
-                              >
-                                <Minus className="w-3 h-3" />
-                              </Button>
                             </div>
                           ))}
                           <Button
@@ -1152,26 +1207,16 @@ export function PageEditorHorizontal({ pages, onPagesChange }: PageEditorProps) 
                         </div>
                       </div>
 
-                      {/* Opções de imagem e ícones */}
+                      {/* Opções de interação */}
                       <div className="space-y-2">
                         <div className="flex items-center space-x-2">
                           <input
                             type="checkbox"
-                            id="showImages"
-                            checked={selectedElementData.showImages || false}
-                            onChange={(e) => updateElement(selectedElementData.id, { showImages: e.target.checked })}
+                            id="hideInputs"
+                            checked={selectedElementData.hideInputs || false}
+                            onChange={(e) => updateElement(selectedElementData.id, { hideInputs: e.target.checked })}
                           />
-                          <Label htmlFor="showImages" className="text-xs">Adicionar imagens (60x60px)</Label>
-                        </div>
-                        
-                        <div className="flex items-center space-x-2">
-                          <input
-                            type="checkbox"
-                            id="showIcons"
-                            checked={selectedElementData.showIcons || false}
-                            onChange={(e) => updateElement(selectedElementData.id, { showIcons: e.target.checked })}
-                          />
-                          <Label htmlFor="showIcons" className="text-xs">Adicionar ícones</Label>
+                          <Label htmlFor="hideInputs" className="text-xs">Remover checkbox/radio (apenas texto)</Label>
                         </div>
                       </div>
                     </div>
