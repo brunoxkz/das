@@ -446,7 +446,7 @@ export function PageEditor({ pages, onPagesChange }: PageEditorProps) {
       </div>
 
       {/* Área central - Preview da página */}
-      <div className="flex-1 flex flex-col bg-white min-w-0 overflow-hidden">
+      <div className="flex-1 flex flex-col bg-white overflow-hidden" style={{ minWidth: '400px' }}>
         <div className="p-4 border-b flex-shrink-0">
           {currentPage && (
             <div className="flex items-center gap-2">
@@ -508,7 +508,7 @@ export function PageEditor({ pages, onPagesChange }: PageEditorProps) {
       </div>
 
       {/* Sidebar direito - Propriedades do elemento selecionado */}
-      <div className="w-80 border-l bg-gray-50 flex-shrink-0 flex flex-col min-h-0 overflow-hidden">
+      <div className="w-80 border-l bg-gray-50 flex-shrink-0 flex flex-col min-h-0 overflow-hidden" style={{ minWidth: '320px' }}>
         <div className="p-4 border-b bg-vendzz-primary text-white flex-shrink-0">
           <h3 className="font-semibold">
             {selectedElementData ? `Editando: ${getElementTypeName(selectedElementData.type)}` : 'Propriedades do Elemento'}
