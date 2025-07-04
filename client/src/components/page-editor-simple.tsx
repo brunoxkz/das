@@ -62,6 +62,28 @@ export function PageEditor({ pages, onPagesChange }: PageEditorProps) {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [activeTab, setActiveTab] = useState<'pages' | 'elements'>('pages');
 
+  // Função para traduzir os tipos de elementos
+  const getElementTypeName = (type: string) => {
+    const typeNames: Record<string, string> = {
+      heading: "Título",
+      paragraph: "Parágrafo", 
+      image: "Imagem",
+      divider: "Divisória",
+      multiple_choice: "Múltipla Escolha",
+      text: "Campo de Texto",
+      email: "Campo de Email",
+      phone: "Campo de Telefone",
+      number: "Campo Numérico",
+      rating: "Avaliação",
+      animated_transition: "Transição Animada",
+      checkbox: "Checkbox",
+      date: "Data",
+      textarea: "Área de Texto",
+      image_upload: "Upload de Imagem"
+    };
+    return typeNames[type] || type;
+  };
+
   const elementTypes = [
     { type: "heading" as const, label: "Título", icon: <Heading1 className="w-4 h-4" /> },
     { type: "paragraph" as const, label: "Parágrafo", icon: <FileText className="w-4 h-4" /> },
@@ -487,10 +509,15 @@ export function PageEditor({ pages, onPagesChange }: PageEditorProps) {
 
       {/* Sidebar direito - Propriedades do elemento selecionado */}
       <div className="w-80 border-l bg-gray-50 flex-shrink-0 flex flex-col min-h-0 overflow-hidden">
-        <div className="p-4 border-b bg-white flex-shrink-0">
-          <h3 className="font-semibold text-gray-900">
-            {selectedElementData ? `Editando: ${selectedElementData.type}` : 'Propriedades'}
+        <div className="p-4 border-b bg-vendzz-primary text-white flex-shrink-0">
+          <h3 className="font-semibold">
+            {selectedElementData ? `Editando: ${getElementTypeName(selectedElementData.type)}` : 'Propriedades do Elemento'}
           </h3>
+          {selectedElementData && (
+            <p className="text-xs text-green-100 mt-1">
+              Clique em outro elemento para editar suas propriedades
+            </p>
+          )}
         </div>
         <div className="flex-1 overflow-y-auto p-4 min-h-0">
         {selectedElementData ? (
