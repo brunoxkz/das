@@ -154,22 +154,107 @@ export function QuizPreview({ quiz }: QuizPreviewProps) {
   };
 
   const renderTransitionPage = (page: any, pageIndex: number) => {
-    // Auto-avançar após alguns segundos para páginas de transição
-    setTimeout(() => {
-      if (currentStep === pageIndex) {
-        handleNext();
+    // Buscar elemento de redirect se existir
+    const redirectElement = page.elements.find((el: any) => el.type === 'transition_redirect');
+    
+    // Só auto-avançar se houver elemento de redirect configurado
+    if (redirectElement && redirectElement.redirectDelay) {
+      setTimeout(() => {
+        if (currentStep === pageIndex) {
+          handleNext();
+        }
+      }, redirectElement.redirectDelay * 1000);
+    }
+
+    // Buscar elementos de fundo
+    const backgroundElement = page.elements.find((el: any) => el.type === 'transition_background');
+    const textElement = page.elements.find((el: any) => el.type === 'transition_text');
+    const counterElement = page.elements.find((el: any) => el.type === 'transition_counter');
+    const loaderElement = page.elements.find((el: any) => el.type === 'transition_loader');
+
+    // Aplicar estilo de fundo
+    let backgroundStyle: any = {};
+    if (backgroundElement) {
+      if (backgroundElement.backgroundType === 'solid') {
+        backgroundStyle.backgroundColor = backgroundElement.backgroundColor || '#ffffff';
+      } else if (backgroundElement.backgroundType === 'gradient') {
+        const direction = backgroundElement.gradientDirection || 'to-r';
+        const from = backgroundElement.gradientFrom || '#000000';
+        const to = backgroundElement.gradientTo || '#ffffff';
+        backgroundStyle.background = `linear-gradient(${direction.replace('to-', '')}, ${from}, ${to})`;
+      } else if (backgroundElement.backgroundType === 'image' && backgroundElement.backgroundImage) {
+        backgroundStyle.backgroundImage = `url(${backgroundElement.backgroundImage})`;
+        backgroundStyle.backgroundSize = 'cover';
+        backgroundStyle.backgroundPosition = 'center';
       }
-    }, 3000);
+    }
 
     return (
-      <div className="max-w-2xl mx-auto text-center">
-        <div className="mb-8">
-          <h2 className="text-2xl md:text-3xl font-bold text-gray-900 mb-4">
-            Página de Transição
-          </h2>
-          <p className="text-gray-600">
-            Aguarde um momento...
-          </p>
+      <div 
+        className="fixed inset-0 flex items-center justify-center"
+        style={backgroundStyle}
+      >
+        <div className="max-w-2xl mx-auto text-center p-8">
+          {/* Texto de transição */}
+          {textElement && (
+            <h2 
+              className={`text-2xl md:text-3xl font-bold mb-6`}
+              style={{ 
+                color: textElement.textColor || '#000000',
+                fontSize: textElement.fontSize === 'xs' ? '1rem' :
+                          textElement.fontSize === 'sm' ? '1.25rem' :
+                          textElement.fontSize === 'base' ? '1.5rem' :
+                          textElement.fontSize === 'lg' ? '2rem' :
+                          textElement.fontSize === 'xl' ? '2.5rem' : '3rem',
+                fontWeight: textElement.fontWeight || 'bold',
+                textAlign: textElement.textAlign || 'center'
+              }}
+            >
+              {textElement.content || 'Aguarde um momento...'}
+            </h2>
+          )}
+
+          {/* Contador */}
+          {counterElement && (
+            <div className="mb-6">
+              <div 
+                className="text-4xl font-bold"
+                style={{ color: counterElement.color || '#000000' }}
+              >
+                {counterElement.counterType === 'countdown' 
+                  ? `${counterElement.counterStartValue || 10}s` 
+                  : `${counterElement.chronometerHours || '00'}:${counterElement.chronometerMinutes || '00'}:${counterElement.chronometerSeconds || '00'}`
+                }
+              </div>
+            </div>
+          )}
+
+          {/* Loader */}
+          {loaderElement && (
+            <div className="mb-6 flex justify-center">
+              <div 
+                className={`animate-spin rounded-full border-4 border-t-transparent ${
+                  loaderElement.loaderSize === 'sm' ? 'w-8 h-8' :
+                  loaderElement.loaderSize === 'lg' ? 'w-16 h-16' : 'w-12 h-12'
+                }`}
+                style={{ 
+                  borderColor: `${loaderElement.loaderColor || '#000000'} transparent transparent transparent`
+                }}
+              />
+            </div>
+          )}
+
+          {/* Fallback se não tiver elementos */}
+          {!textElement && !counterElement && !loaderElement && (
+            <div>
+              <h2 className="text-2xl md:text-3xl font-bold text-gray-900 mb-4">
+                Página de Transição
+              </h2>
+              <p className="text-gray-600">
+                Aguarde um momento...
+              </p>
+            </div>
+          )}
         </div>
       </div>
     );
