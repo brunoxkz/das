@@ -167,6 +167,25 @@ export default function QuizBuilder() {
     }));
   };
 
+  const addQuestion = (type: "multiple_choice" | "text" | "rating" | "email") => {
+    const newQuestion = {
+      id: Date.now(),
+      type,
+      question: "Nova pergunta",
+      description: "",
+      options: type === "multiple_choice" ? ["Opção 1", "Opção 2"] : undefined,
+      required: true
+    };
+
+    setQuizData(prev => ({
+      ...prev,
+      structure: {
+        ...prev.structure,
+        questions: [...prev.structure.questions, newQuestion]
+      }
+    }));
+  };
+
   if (authLoading || (isEditing && quizLoading)) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -287,17 +306,32 @@ export default function QuizBuilder() {
                 <div>
                   <h3 className="font-semibold text-gray-900 mb-2">Elementos</h3>
                   <div className="grid grid-cols-1 gap-2">
-                    <Button variant="outline" size="sm" className="justify-start">
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      className="justify-start"
+                      onClick={() => addQuestion("multiple_choice")}
+                    >
                       <span className="mr-2">❓</span>
                       Pergunta
                     </Button>
-                    <Button variant="outline" size="sm" className="justify-start">
-                      <span className="mr-2">🖼️</span>
-                      Imagem
-                    </Button>
-                    <Button variant="outline" size="sm" className="justify-start">
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      className="justify-start"
+                      onClick={() => addQuestion("text")}
+                    >
                       <span className="mr-2">📝</span>
                       Texto
+                    </Button>
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      className="justify-start"
+                      onClick={() => addQuestion("email")}
+                    >
+                      <span className="mr-2">✉️</span>
+                      Email
                     </Button>
                   </div>
                 </div>
