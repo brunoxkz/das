@@ -1,4 +1,5 @@
 import { QueryClient, QueryFunction } from "@tanstack/react-query";
+import { localCache } from "./performance";
 
 async function throwIfResNotOk(res: Response) {
   if (!res.ok) {
@@ -134,17 +135,92 @@ export const getQueryFn: <T>(options: {
     return await res.json();
   };
 
+// Rate limiting e deduplicação para 100k+ usuários simultâneos
+const requestQueue = new Map<string, Promise<any>>();
+
+async function deduplicatedFetch(url: string, options: RequestInit = {}) {
+  const cacheKey = `${options.method || 'GET'}:${url}:${JSON.stringify(options.body || {})}`;
+  
+  // Verificar cache local primeiro para GET requests
+  if (!options.method || options.method === 'GET') {
+    const cached = localCache.get(cacheKey);
+    if (cached) return cached;
+  }
+  
+  // Deduplicar requisições simultâneas
+  if (requestQueue.has(cacheKey)) {
+    return requestQueue.get(cacheKey);
+  }
+
+  const promise = fetch(url, {
+    ...options,
+    headers: {
+      "Accept-Encoding": "gzip, deflate, br",
+      "Cache-Control": options.method === 'GET' ? "max-age=300" : "no-cache",
+      ...options.headers,
+    },
+  }).then(async (response) => {
+    // Handle rate limiting
+    if (response.status === 429) {
+      const retryAfter = response.headers.get("retry-after");
+      const delay = retryAfter ? parseInt(retryAfter) * 1000 : 2000;
+      await new Promise(resolve => setTimeout(resolve, delay));
+      throw new Error("Rate limit exceeded, retrying...");
+    }
+    
+    const result = response.ok ? await response.json() : response;
+    
+    // Cache successful GET requests
+    if (response.ok && (!options.method || options.method === 'GET')) {
+      const cacheTime = response.headers.get("X-Cache") === "HIT" ? 30000 : 300000;
+      localCache.set(cacheKey, result, cacheTime);
+    }
+    
+    return result;
+  }).finally(() => {
+    requestQueue.delete(cacheKey);
+  });
+
+  requestQueue.set(cacheKey, promise);
+  return promise;
+}
+
 export const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
       queryFn: getQueryFn({ on401: "throw" }),
       refetchInterval: false,
       refetchOnWindowFocus: false,
-      staleTime: Infinity,
-      retry: false,
+      staleTime: 30 * 1000, // 30 segundos (otimizado para sincronização rápida)
+      gcTime: 5 * 60 * 1000, // 5 minutos no garbage collector
+      retry: (failureCount, error: any) => {
+        // Retry otimizado para alta concorrência
+        if (error?.message?.includes("Rate limit")) {
+          return failureCount < 3; // Retry até 3x para rate limit
+        }
+        if (error?.message?.includes("500") || error?.message?.includes("502")) {
+          return failureCount < 2; // Retry para erros de servidor
+        }
+        return false; // Não retry para outros erros
+      },
+      retryDelay: (attemptIndex) => {
+        // Exponential backoff com jitter para evitar thundering herd
+        const baseDelay = Math.min(1000 * Math.pow(2, attemptIndex), 30000);
+        const jitter = Math.random() * 1000; // 0-1000ms de jitter
+        return baseDelay + jitter;
+      },
     },
     mutations: {
-      retry: false,
+      retry: (failureCount, error: any) => {
+        if (error?.message?.includes("Rate limit")) {
+          return failureCount < 2;
+        }
+        return false;
+      },
+      retryDelay: 2000,
+      onError: (error) => {
+        console.error("Mutation error:", error);
+      },
     },
   },
 });

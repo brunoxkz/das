@@ -1,11 +1,59 @@
 import express, { type Request, Response, NextFunction } from "express";
+import compression from "compression";
+import helmet from "helmet";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 import { setupJWTAuth } from "./auth-jwt";
 
 const app = express();
-app.use(express.json());
-app.use(express.urlencoded({ extended: false }));
+
+// Configurações de segurança para alta performance
+app.use(helmet({
+  contentSecurityPolicy: false, // Desabilita CSP para dev
+  crossOriginEmbedderPolicy: false
+}));
+
+// Compressão gzip/deflate para reduzir tamanho das respostas
+app.use(compression({
+  filter: (req, res) => {
+    if (req.headers['x-no-compression']) {
+      return false;
+    }
+    return compression.filter(req, res);
+  },
+  level: 6, // Nível de compressão balanceado
+  threshold: 1024 // Só comprime se > 1KB
+}));
+
+// Configurações otimizadas para JSON
+app.use(express.json({ 
+  limit: '10mb', // Limite de 10MB para uploads
+  inflate: true,
+  strict: true,
+  type: 'application/json'
+}));
+
+app.use(express.urlencoded({ 
+  extended: false,
+  limit: '10mb',
+  parameterLimit: 1000
+}));
+
+// Headers para performance e cache
+app.use((req, res, next) => {
+  // Headers de performance
+  res.setHeader('X-Powered-By', 'Vendzz');
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('X-Frame-Options', 'SAMEORIGIN');
+  res.setHeader('X-XSS-Protection', '1; mode=block');
+  
+  // Cache para assets estáticos
+  if (req.url.match(/\.(css|js|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot)$/)) {
+    res.setHeader('Cache-Control', 'public, max-age=31536000'); // 1 ano
+  }
+  
+  next();
+});
 
 app.use((req, res, next) => {
   const start = Date.now();

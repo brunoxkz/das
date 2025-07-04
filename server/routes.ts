@@ -4,6 +4,8 @@ import "./types"; // Import global types
 import Stripe from "stripe";
 import { storage } from "./storage";
 import { verifyJWT as authenticateToken } from "./auth-jwt";
+import { cache } from "./cache";
+import { rateLimiters } from "./rate-limiter";
 import { 
   requireAdmin, 
   requireEditor, 
@@ -35,10 +37,22 @@ const stripe = process.env.STRIPE_SECRET_KEY ? new Stripe(process.env.STRIPE_SEC
 export function registerRoutes(app: Express): Server {
   const httpServer = createServer(app);
 
-  // Quiz routes
-  app.get("/api/quizzes", authenticateToken, async (req, res) => {
+  // Quiz routes with rate limiting
+  app.get("/api/quizzes", rateLimiters.general.middleware(), authenticateToken, async (req, res) => {
     try {
-      const quizzes = await storage.getUserQuizzes(req.user!.id);
+      const userId = req.user!.id;
+      
+      // Cache otimizado para quizzes
+      const cachedQuizzes = cache.getQuizzes(userId);
+      if (cachedQuizzes) {
+        res.setHeader('X-Cache', 'HIT');
+        return res.json(cachedQuizzes);
+      }
+      
+      const quizzes = await storage.getUserQuizzes(userId);
+      cache.setQuizzes(userId, quizzes);
+      
+      res.setHeader('X-Cache', 'MISS');
       res.json(quizzes);
     } catch (error) {
       console.error("Error fetching quizzes:", error);
@@ -59,7 +73,7 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
-  app.post("/api/quizzes", authenticateToken, async (req, res) => {
+  app.post("/api/quizzes", rateLimiters.quizCreation.middleware(), authenticateToken, async (req, res) => {
     try {
       // Check plan limits
       const userQuizzes = await storage.getUserQuizzes(req.user!.id);
@@ -80,6 +94,10 @@ export function registerRoutes(app: Express): Server {
         userId: req.user!.id,
       });
       const quiz = await storage.createQuiz(quizData);
+      
+      // Invalidar caches após criação para manter consistência
+      cache.invalidateUserCaches(req.user!.id);
+      
       res.json(quiz);
     } catch (error) {
       console.error("Error creating quiz:", error);
@@ -394,11 +412,21 @@ export function registerRoutes(app: Express): Server {
     res.redirect("/");
   });
 
-  // Dashboard stats route (optimized single call)
-  app.get("/api/dashboard/stats", authenticateToken, async (req, res) => {
+  // Dashboard stats route (optimized with cache for 100k+ users)
+  app.get("/api/dashboard/stats", rateLimiters.dashboard.middleware(), authenticateToken, async (req, res) => {
     try {
+      const userId = req.user!.id;
+      
+      // Tentar obter dados do cache primeiro
+      const cachedData = cache.getDashboardStats(userId);
+      if (cachedData) {
+        res.setHeader('X-Cache', 'HIT');
+        return res.json(cachedData);
+      }
+      
+      // Se não estiver em cache, buscar no banco
       const [quizzes, allResponses] = await Promise.all([
-        storage.getUserQuizzes(req.user!.id),
+        storage.getUserQuizzes(userId),
         storage.getQuizResponses("") 
       ]);
       
@@ -407,12 +435,62 @@ export function registerRoutes(app: Express): Server {
       const userResponses = Array.isArray(allResponses) ? 
         allResponses.filter(r => userQuizIds.includes(r.quizId)) : [];
       
-      res.json({
+      const responseData = {
         quizzes,
         responses: userResponses
-      });
+      };
+      
+      // Armazenar no cache
+      cache.setDashboardStats(userId, responseData);
+      
+      res.setHeader('X-Cache', 'MISS');
+      res.json(responseData);
     } catch (error) {
       console.error("Error fetching dashboard stats:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  // Endpoint de monitoramento de performance (apenas admin)
+  app.get("/api/admin/performance", requireAdmin, async (req, res) => {
+    try {
+      const memoryUsage = process.memoryUsage();
+      const uptime = process.uptime();
+      
+      res.json({
+        server: {
+          uptime: Math.floor(uptime),
+          memory: {
+            used: Math.round(memoryUsage.heapUsed / 1024 / 1024), // MB
+            total: Math.round(memoryUsage.heapTotal / 1024 / 1024), // MB
+            external: Math.round(memoryUsage.external / 1024 / 1024), // MB
+            rss: Math.round(memoryUsage.rss / 1024 / 1024) // MB
+          },
+          cpu: {
+            loadAverage: process.platform !== 'win32' ? require('os').loadavg() : [0, 0, 0],
+            platform: process.platform,
+            arch: process.arch,
+            version: process.version
+          }
+        },
+        cache: cache.getStats(),
+        rateLimiters: {
+          general: rateLimiters.general.getStats(),
+          auth: rateLimiters.auth.getStats(),
+          dashboard: rateLimiters.dashboard.getStats(),
+          quizCreation: rateLimiters.quizCreation.getStats(),
+          upload: rateLimiters.upload.getStats()
+        },
+        database: {
+          // Pool de conexões do PostgreSQL
+          totalConnections: 20, // Configurado no db.ts
+          minConnections: 5,
+          maxConnections: 20
+        },
+        timestamp: new Date().toISOString()
+      });
+    } catch (error) {
+      console.error("Error fetching performance stats:", error);
       res.status(500).json({ message: "Internal server error" });
     }
   });
