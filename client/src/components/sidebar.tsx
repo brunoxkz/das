@@ -17,7 +17,8 @@ import {
   FileText,
   Users,
   Zap,
-  Shield
+  Shield,
+  Trophy
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -66,6 +67,13 @@ export function Sidebar() {
       icon: <Users className="w-4 h-4" />,
       active: location === "/leads",
       badge: "New"
+    },
+    {
+      title: "Premiações",
+      href: "/premiacoes",
+      icon: <Trophy className="w-4 h-4" />,
+      active: location === "/premiacoes",
+      badge: "🏆"
     }
   ];
 
