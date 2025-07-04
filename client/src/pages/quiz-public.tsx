@@ -17,6 +17,20 @@ export default function QuizPublicPage() {
     }
   }, [match, params?.id]);
 
+  const trackQuizView = async (quizId: string) => {
+    try {
+      await fetch(`/api/analytics/${quizId}/view`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+      console.log('Quiz view tracked successfully');
+    } catch (error) {
+      console.error('Error tracking quiz view:', error);
+    }
+  };
+
   const fetchQuiz = async (quizId: string) => {
     try {
       setLoading(true);
@@ -42,6 +56,9 @@ export default function QuizPublicPage() {
       }
       
       setQuiz(quizData);
+      
+      // Track view when quiz is loaded successfully
+      trackQuizView(quizId);
     } catch (err) {
       console.error("Error fetching quiz:", err);
       setError("Erro ao carregar o quiz");

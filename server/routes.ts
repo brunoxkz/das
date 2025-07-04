@@ -275,6 +275,40 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
+  // Track quiz view (public endpoint)
+  app.post("/api/analytics/:quizId/view", async (req, res) => {
+    try {
+      const { quizId } = req.params;
+      
+      // Verify quiz exists
+      const quiz = await storage.getQuiz(quizId);
+      if (!quiz) {
+        return res.status(404).json({ message: "Quiz not found" });
+      }
+
+      // Only track for published quizzes
+      if (!quiz.isPublished) {
+        return res.status(403).json({ message: "Quiz not published" });
+      }
+
+      // Update quiz analytics (increment totalViews)
+      await storage.updateQuizAnalytics(quizId, {
+        quizId,
+        date: new Date(),
+        views: 1,
+        completions: 0,
+        leads: 0,
+        avgCompletionTime: 0
+      });
+
+      console.log(`Quiz view tracked for quiz: ${quizId}`);
+      res.status(200).json({ message: "View tracked successfully" });
+    } catch (error) {
+      console.error("Error tracking quiz view:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
   // Admin routes
   app.get("/api/admin/users", authenticateToken, async (req, res) => {
     try {
