@@ -455,6 +455,233 @@ export function QuizPreview({ quiz }: QuizPreviewProps) {
           </div>
         );
       
+      case 'spacer':
+        const spacerSize = element.spacerSize || "medium";
+        const spacerHeight = spacerSize === "small" ? "20px" : 
+                            spacerSize === "large" ? "60px" : "40px";
+        return <div style={{ height: spacerHeight }} />;
+
+      case 'text':
+        return (
+          <div className="mb-6">
+            {element.question && (
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                {element.question}
+              </label>
+            )}
+            <input
+              type="text"
+              placeholder={element.placeholder || "Digite sua resposta..."}
+              className="w-full px-4 py-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+            />
+          </div>
+        );
+
+      case 'email':
+        return (
+          <div className="mb-6">
+            {element.question && (
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                {element.question}
+              </label>
+            )}
+            <input
+              type="email"
+              placeholder={element.placeholder || "seu@email.com"}
+              className="w-full px-4 py-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+            />
+          </div>
+        );
+
+      case 'phone':
+        return (
+          <div className="mb-6">
+            {element.question && (
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                {element.question}
+              </label>
+            )}
+            <input
+              type="tel"
+              placeholder={element.placeholder || "(11) 99999-9999"}
+              className="w-full px-4 py-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+            />
+          </div>
+        );
+
+      case 'number':
+        return (
+          <div className="mb-6">
+            {element.question && (
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                {element.question}
+              </label>
+            )}
+            <input
+              type="number"
+              min={element.min || undefined}
+              max={element.max || undefined}
+              placeholder={element.placeholder || "Digite um número..."}
+              className="w-full px-4 py-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+            />
+          </div>
+        );
+
+      case 'rating':
+        return (
+          <div className="mb-6">
+            {element.question && (
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                {element.question}
+              </label>
+            )}
+            <div className="flex space-x-2">
+              {[1, 2, 3, 4, 5].map((star) => (
+                <button
+                  key={star}
+                  className="text-2xl text-gray-300 hover:text-yellow-400 transition-colors"
+                >
+                  ⭐
+                </button>
+              ))}
+            </div>
+          </div>
+        );
+
+      case 'date':
+        return (
+          <div className="mb-6">
+            {element.question && (
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                {element.question}
+              </label>
+            )}
+            <input
+              type="date"
+              placeholder={element.placeholder || "dd/mm/aaaa"}
+              className="w-full px-4 py-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+            />
+          </div>
+        );
+
+      case 'textarea':
+        return (
+          <div className="mb-6">
+            {element.question && (
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                {element.question}
+              </label>
+            )}
+            <textarea
+              placeholder={element.placeholder || "Digite sua mensagem..."}
+              rows={4}
+              className="w-full px-4 py-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 resize-none"
+            />
+          </div>
+        );
+
+      case 'image_upload':
+        return (
+          <div className="mb-6">
+            {element.question && (
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                {element.question}
+              </label>
+            )}
+            <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center">
+              <div className="text-4xl mb-4">📁</div>
+              <p className="text-gray-500 mb-2">Clique para enviar uma imagem</p>
+              <p className="text-xs text-gray-400">PNG, JPG até 5MB</p>
+            </div>
+          </div>
+        );
+
+      case 'video':
+        if (element.imageUrl) {
+          const videoId = element.imageUrl.includes('youtube.com') || element.imageUrl.includes('youtu.be') ?
+            element.imageUrl.split('v=')[1]?.split('&')[0] || element.imageUrl.split('/').pop() :
+            null;
+          
+          if (videoId) {
+            return (
+              <div className="mb-6">
+                <div className="aspect-video">
+                  <iframe
+                    src={`https://www.youtube.com/embed/${videoId}`}
+                    className="w-full h-full rounded-lg"
+                    allowFullScreen
+                  />
+                </div>
+              </div>
+            );
+          }
+        }
+        return (
+          <div className="mb-6">
+            <div className="bg-gray-100 rounded-lg p-8 text-center">
+              <div className="text-4xl mb-4">🎥</div>
+              <p className="text-gray-500">Vídeo será carregado aqui</p>
+            </div>
+          </div>
+        );
+
+      case 'audio':
+        return (
+          <div className="mb-6">
+            <div className="bg-gray-50 rounded-lg p-6 text-center border">
+              <div className="text-3xl mb-3">🔊</div>
+              <p className="text-gray-700 font-medium mb-3">
+                {element.audioTitle || "Mensagem de Áudio"}
+              </p>
+              <div className="flex justify-center">
+                <button className="bg-green-500 hover:bg-green-600 text-white px-6 py-2 rounded-full flex items-center gap-2 transition-colors">
+                  ▶️ Reproduzir
+                </button>
+              </div>
+            </div>
+          </div>
+        );
+
+      case 'multiple_choice':
+        return (
+          <div className="mb-6">
+            {element.question && (
+              <label className="block text-lg font-medium text-gray-700 mb-4">
+                {element.question}
+              </label>
+            )}
+            {element.description && (
+              <p className="text-gray-600 mb-4 text-sm">{element.description}</p>
+            )}
+            <div className={`space-y-3 ${element.optionLayout === 'grid' ? 'grid grid-cols-2 gap-3' : ''}`}>
+              {element.options?.map((option: string, index: number) => {
+                const buttonStyle = element.buttonStyle || 'rectangular';
+                const baseClasses = "w-full p-4 border text-left transition-all duration-200 hover:bg-green-50 hover:border-green-500";
+                const styleClasses = buttonStyle === 'rounded' ? 'rounded-lg' : 
+                                  buttonStyle === 'pills' ? 'rounded-full' : 'rounded-md';
+                
+                return (
+                  <button
+                    key={index}
+                    className={`${baseClasses} ${styleClasses} border-gray-300 bg-white`}
+                  >
+                    <div className="flex items-center">
+                      {element.optionImages?.[index] && (
+                        <img 
+                          src={element.optionImages[index]} 
+                          alt={option}
+                          className="w-8 h-8 object-cover rounded mr-3"
+                        />
+                      )}
+                      <span className="text-gray-700">{option}</span>
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        );
+
       default:
         return null;
     }
