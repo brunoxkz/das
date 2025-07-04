@@ -3,7 +3,7 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import Stripe from "stripe";
 import { storage } from "./storage";
-import { authenticateToken, generateTokens } from "./auth";
+import { verifyJWT, generateTokens } from "./auth";
 import { 
   insertQuizSchema, 
   insertQuizResponseSchema, 
@@ -129,7 +129,7 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
-  app.post("/api/auth/logout", authenticateToken, async (req, res) => {
+  app.post("/api/auth/logout", verifyJWT, async (req, res) => {
     try {
       const userId = req.user?.id;
       if (userId) {
@@ -142,7 +142,7 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
-  app.get("/api/auth/user", authenticateToken, async (req, res) => {
+  app.get("/api/auth/user", verifyJWT, async (req, res) => {
     try {
       const user = await storage.getUser(req.user!.id);
       if (!user) {
@@ -165,7 +165,7 @@ export function registerRoutes(app: Express): Server {
   });
 
   // Quiz routes
-  app.get("/api/quizzes", authenticateToken, async (req, res) => {
+  app.get("/api/quizzes", verifyJWT, async (req, res) => {
     try {
       const quizzes = await storage.getUserQuizzes(req.user!.id);
       res.json(quizzes);
@@ -188,7 +188,7 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
-  app.post("/api/quizzes", authenticateToken, async (req, res) => {
+  app.post("/api/quizzes", verifyJWT, async (req, res) => {
     try {
       const quizData = insertQuizSchema.parse({
         ...req.body,
@@ -205,7 +205,7 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
-  app.put("/api/quizzes/:id", authenticateToken, async (req, res) => {
+  app.put("/api/quizzes/:id", verifyJWT, async (req, res) => {
     try {
       const quiz = await storage.getQuiz(req.params.id);
       if (!quiz) {
@@ -223,7 +223,7 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
-  app.delete("/api/quizzes/:id", authenticateToken, async (req, res) => {
+  app.delete("/api/quizzes/:id", verifyJWT, async (req, res) => {
     try {
       const quiz = await storage.getQuiz(req.params.id);
       if (!quiz) {
@@ -280,7 +280,7 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
-  app.get("/api/quiz-responses", authenticateToken, async (req, res) => {
+  app.get("/api/quiz-responses", verifyJWT, async (req, res) => {
     try {
       const responses = await storage.getUserQuizResponses(req.user!.id);
       res.json(responses);
@@ -291,7 +291,7 @@ export function registerRoutes(app: Express): Server {
   });
 
   // Analytics
-  app.get("/api/analytics/:quizId", authenticateToken, async (req, res) => {
+  app.get("/api/analytics/:quizId", verifyJWT, async (req, res) => {
     try {
       const quiz = await storage.getQuiz(req.params.quizId);
       if (!quiz) {
@@ -310,7 +310,7 @@ export function registerRoutes(app: Express): Server {
   });
 
   // Admin routes
-  app.get("/api/admin/users", authenticateToken, async (req, res) => {
+  app.get("/api/admin/users", verifyJWT, async (req, res) => {
     try {
       if (req.user!.role !== "admin") {
         return res.status(403).json({ message: "Admin access required" });
@@ -323,7 +323,7 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
-  app.put("/api/admin/users/:id/role", authenticateToken, async (req, res) => {
+  app.put("/api/admin/users/:id/role", verifyJWT, async (req, res) => {
     try {
       if (req.user!.role !== "admin") {
         return res.status(403).json({ message: "Admin access required" });
@@ -339,7 +339,7 @@ export function registerRoutes(app: Express): Server {
 
   // Stripe integration (if available)
   if (stripe) {
-    app.post("/api/create-checkout-session", authenticateToken, async (req, res) => {
+    app.post("/api/create-checkout-session", verifyJWT, async (req, res) => {
       try {
         const { priceId } = req.body;
         const user = await storage.getUser(req.user!.id);
