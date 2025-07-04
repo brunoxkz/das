@@ -81,7 +81,7 @@ export function setupJWTAuth(app: Express) {
       });
 
       // Generate tokens
-      const { accessToken, refreshToken } = generateTokens(user.id);
+      const { accessToken, refreshToken } = generateTokens(user);
       
       // Store refresh token (optional - for token blacklisting)
       await storage.storeRefreshToken(user.id, refreshToken);
@@ -124,7 +124,7 @@ export function setupJWTAuth(app: Express) {
       }
 
       // Generate tokens
-      const { accessToken, refreshToken } = generateTokens(user.id);
+      const { accessToken, refreshToken } = generateTokens(user);
       
       // Store refresh token
       await storage.storeRefreshToken(user.id, refreshToken);
