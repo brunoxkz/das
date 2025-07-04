@@ -157,11 +157,25 @@ interface Element {
   // Propriedades específicas para carregamento + pergunta
   loadingDuration?: number; // duração em segundos
   loadingBarColor?: string;
+  loadingBarBackgroundColor?: string;
   loadingBarWidth?: "thin" | "medium" | "thick";
+  loadingBarHeight?: "thin" | "small" | "medium" | "large" | "extra_large";
+  loadingBarStyle?: "square" | "slightly_rounded" | "rounded" | "very_rounded";
   loadingText?: string;
+  loadingTextSize?: "small" | "medium" | "large";
+  loadingTextColor?: string;
   popupQuestion?: string;
   popupYesText?: string;
   popupNoText?: string;
+  animationType?: "smooth" | "fast" | "bouncy" | "elastic";
+  showGlow?: boolean;
+  showPercentage?: boolean;
+  showTimeRemaining?: boolean;
+  showStripes?: boolean;
+  animateStripes?: boolean;
+  percentageColor?: string;
+  additionalText?: string;
+  additionalTextColor?: string;
 }
 
 interface QuizPage {
@@ -581,12 +595,26 @@ const gameElementCategories = [
       ...(type === "loading_question" && {
         loadingDuration: 3,
         loadingBarColor: "#10B981",
+        loadingBarBackgroundColor: "#E5E7EB",
         loadingBarWidth: "medium" as const,
+        loadingBarHeight: "medium" as const,
+        loadingBarStyle: "rounded" as const,
         loadingText: "Carregando...",
+        loadingTextSize: "medium" as const,
+        loadingTextColor: "#374151",
         popupQuestion: "Você gostaria de continuar?",
         popupYesText: "Sim",
         popupNoText: "Não",
-        responseId: `pergunta_${Date.now()}`
+        responseId: `pergunta_${Date.now()}`,
+        animationType: "smooth" as const,
+        showGlow: true,
+        showPercentage: true,
+        showTimeRemaining: false,
+        showStripes: false,
+        animateStripes: false,
+        percentageColor: "#6B7280",
+        additionalText: "",
+        additionalTextColor: "#9CA3AF"
       })
     };
 
@@ -4630,63 +4658,229 @@ const gameElementCategories = [
               )}
 
               {selectedElementData.type === "loading_question" && (
-                <div className="space-y-4">
+                <div className="space-y-4 max-h-96 overflow-y-auto">
                   <div className="bg-green-50 p-3 rounded-lg">
                     <h4 className="text-sm font-semibold text-green-800 mb-2">⏳ Carregamento + Pergunta</h4>
                     <p className="text-xs text-green-700">
-                      Exibe uma barra de carregamento que, ao completar, mostra um popup com pergunta sim/não.
+                      Barra de carregamento visual com opções avançadas de personalização e popup com pergunta.
                     </p>
                   </div>
 
-                  <div>
-                    <Label>Duração do Carregamento (segundos)</Label>
-                    <Input
-                      type="number"
-                      min="1"
-                      max="30"
-                      value={selectedElementData.loadingDuration || 3}
-                      onChange={(e) => updateElement(selectedElementData.id, { loadingDuration: parseInt(e.target.value) })}
-                      placeholder="3"
-                      className="mt-1"
-                    />
-                    <div className="text-xs text-gray-500 mt-1">Tempo que a barra levará para carregar (1-30 segundos)</div>
+                  <div className="border-b pb-4">
+                    <h5 className="font-semibold text-sm mb-3">⚙️ Configurações Gerais</h5>
+                    
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <Label>Duração (segundos)</Label>
+                        <Input
+                          type="number"
+                          min="1"
+                          max="30"
+                          value={selectedElementData.loadingDuration || 3}
+                          onChange={(e) => updateElement(selectedElementData.id, { loadingDuration: parseInt(e.target.value) })}
+                          placeholder="3"
+                          className="mt-1"
+                        />
+                      </div>
+                      <div>
+                        <Label>Tipo de Animação</Label>
+                        <select
+                          value={selectedElementData.animationType || "smooth"}
+                          onChange={(e) => updateElement(selectedElementData.id, { animationType: e.target.value })}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md mt-1"
+                        >
+                          <option value="smooth">Suave</option>
+                          <option value="fast">Rápida</option>
+                          <option value="bouncy">Elástica</option>
+                          <option value="elastic">Dinâmica</option>
+                        </select>
+                      </div>
+                    </div>
+
+                    <div>
+                      <Label>Texto Durante o Carregamento</Label>
+                      <Input
+                        value={selectedElementData.loadingText || ""}
+                        onChange={(e) => updateElement(selectedElementData.id, { loadingText: e.target.value })}
+                        placeholder="Carregando..."
+                        className="mt-1"
+                      />
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <Label>Tamanho do Texto</Label>
+                        <select
+                          value={selectedElementData.loadingTextSize || "medium"}
+                          onChange={(e) => updateElement(selectedElementData.id, { loadingTextSize: e.target.value })}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md mt-1"
+                        >
+                          <option value="small">Pequeno</option>
+                          <option value="medium">Médio</option>
+                          <option value="large">Grande</option>
+                        </select>
+                      </div>
+                      <div>
+                        <Label>Cor do Texto</Label>
+                        <Input
+                          type="color"
+                          value={selectedElementData.loadingTextColor || "#374151"}
+                          onChange={(e) => updateElement(selectedElementData.id, { loadingTextColor: e.target.value })}
+                          className="mt-1 h-10"
+                        />
+                      </div>
+                    </div>
                   </div>
 
-                  <div>
-                    <Label>Texto Durante o Carregamento</Label>
-                    <Input
-                      value={selectedElementData.loadingText || ""}
-                      onChange={(e) => updateElement(selectedElementData.id, { loadingText: e.target.value })}
-                      placeholder="Carregando..."
-                      className="mt-1"
-                    />
+                  <div className="border-b pb-4">
+                    <h5 className="font-semibold text-sm mb-3">🎨 Estilo da Barra</h5>
+                    
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <Label>Altura da Barra</Label>
+                        <select
+                          value={selectedElementData.loadingBarHeight || "medium"}
+                          onChange={(e) => updateElement(selectedElementData.id, { loadingBarHeight: e.target.value })}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md mt-1"
+                        >
+                          <option value="thin">Muito Fina</option>
+                          <option value="small">Fina</option>
+                          <option value="medium">Média</option>
+                          <option value="large">Grossa</option>
+                          <option value="extra_large">Muito Grossa</option>
+                        </select>
+                      </div>
+                      <div>
+                        <Label>Estilo das Bordas</Label>
+                        <select
+                          value={selectedElementData.loadingBarStyle || "rounded"}
+                          onChange={(e) => updateElement(selectedElementData.id, { loadingBarStyle: e.target.value })}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md mt-1"
+                        >
+                          <option value="square">Quadrada</option>
+                          <option value="slightly_rounded">Levemente Arredondada</option>
+                          <option value="rounded">Arredondada</option>
+                          <option value="very_rounded">Muito Arredondada</option>
+                        </select>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <Label>Cor da Barra</Label>
+                        <Input
+                          type="color"
+                          value={selectedElementData.loadingBarColor || "#10B981"}
+                          onChange={(e) => updateElement(selectedElementData.id, { loadingBarColor: e.target.value })}
+                          className="mt-1 h-10"
+                        />
+                      </div>
+                      <div>
+                        <Label>Cor de Fundo</Label>
+                        <Input
+                          type="color"
+                          value={selectedElementData.loadingBarBackgroundColor || "#E5E7EB"}
+                          onChange={(e) => updateElement(selectedElementData.id, { loadingBarBackgroundColor: e.target.value })}
+                          className="mt-1 h-10"
+                        />
+                      </div>
+                    </div>
                   </div>
 
-                  <div>
-                    <Label>Largura da Barra</Label>
-                    <select
-                      value={selectedElementData.loadingBarWidth || "medium"}
-                      onChange={(e) => updateElement(selectedElementData.id, { loadingBarWidth: e.target.value as "thin" | "medium" | "thick" })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md mt-1"
-                    >
-                      <option value="thin">Fina</option>
-                      <option value="medium">Média</option>
-                      <option value="thick">Grossa</option>
-                    </select>
+                  <div className="border-b pb-4">
+                    <h5 className="font-semibold text-sm mb-3">✨ Efeitos Visuais</h5>
+                    
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between">
+                        <Label>Efeito de Brilho</Label>
+                        <input
+                          type="checkbox"
+                          checked={selectedElementData.showGlow !== false}
+                          onChange={(e) => updateElement(selectedElementData.id, { showGlow: e.target.checked })}
+                          className="h-4 w-4 text-green-600 border-gray-300 rounded focus:ring-green-500"
+                        />
+                      </div>
+                      
+                      <div className="flex items-center justify-between">
+                        <Label>Mostrar Porcentagem</Label>
+                        <input
+                          type="checkbox"
+                          checked={selectedElementData.showPercentage !== false}
+                          onChange={(e) => updateElement(selectedElementData.id, { showPercentage: e.target.checked })}
+                          className="h-4 w-4 text-green-600 border-gray-300 rounded focus:ring-green-500"
+                        />
+                      </div>
+
+                      <div className="flex items-center justify-between">
+                        <Label>Mostrar Tempo Restante</Label>
+                        <input
+                          type="checkbox"
+                          checked={selectedElementData.showTimeRemaining || false}
+                          onChange={(e) => updateElement(selectedElementData.id, { showTimeRemaining: e.target.checked })}
+                          className="h-4 w-4 text-green-600 border-gray-300 rounded focus:ring-green-500"
+                        />
+                      </div>
+
+                      <div className="flex items-center justify-between">
+                        <Label>Listras Animadas</Label>
+                        <input
+                          type="checkbox"
+                          checked={selectedElementData.showStripes || false}
+                          onChange={(e) => updateElement(selectedElementData.id, { showStripes: e.target.checked })}
+                          className="h-4 w-4 text-green-600 border-gray-300 rounded focus:ring-green-500"
+                        />
+                      </div>
+
+                      {selectedElementData.showStripes && (
+                        <div className="flex items-center justify-between pl-6">
+                          <Label>Animar Listras</Label>
+                          <input
+                            type="checkbox"
+                            checked={selectedElementData.animateStripes || false}
+                            onChange={(e) => updateElement(selectedElementData.id, { animateStripes: e.target.checked })}
+                            className="h-4 w-4 text-green-600 border-gray-300 rounded focus:ring-green-500"
+                          />
+                        </div>
+                      )}
+                      
+                      <div>
+                        <Label>Cor da Porcentagem</Label>
+                        <Input
+                          type="color"
+                          value={selectedElementData.percentageColor || "#6B7280"}
+                          onChange={(e) => updateElement(selectedElementData.id, { percentageColor: e.target.value })}
+                          className="mt-1 h-10"
+                        />
+                      </div>
+                    </div>
                   </div>
 
-                  <div>
-                    <Label>Cor da Barra de Carregamento</Label>
-                    <Input
-                      type="color"
-                      value={selectedElementData.loadingBarColor || "#10B981"}
-                      onChange={(e) => updateElement(selectedElementData.id, { loadingBarColor: e.target.value })}
-                      className="mt-1 h-10"
-                    />
+                  <div className="border-b pb-4">
+                    <h5 className="font-semibold text-sm mb-3">📝 Texto Adicional</h5>
+                    
+                    <div>
+                      <Label>Texto Adicional (opcional)</Label>
+                      <Input
+                        value={selectedElementData.additionalText || ""}
+                        onChange={(e) => updateElement(selectedElementData.id, { additionalText: e.target.value })}
+                        placeholder="Texto que aparece abaixo da barra"
+                        className="mt-1"
+                      />
+                    </div>
+
+                    <div>
+                      <Label>Cor do Texto Adicional</Label>
+                      <Input
+                        type="color"
+                        value={selectedElementData.additionalTextColor || "#9CA3AF"}
+                        onChange={(e) => updateElement(selectedElementData.id, { additionalTextColor: e.target.value })}
+                        className="mt-1 h-10"
+                      />
+                    </div>
                   </div>
 
-                  <div className="border-t pt-4">
-                    <h5 className="font-semibold text-sm mb-3">💬 Configurações do Popup</h5>
+                  <div className="border-b pb-4">
+                    <h5 className="font-semibold text-sm mb-3">💬 Configuração do Popup</h5>
                     
                     <div>
                       <Label>Pergunta do Popup</Label>
@@ -4720,7 +4914,7 @@ const gameElementCategories = [
                     </div>
                   </div>
 
-                  <div className="border-t pt-4">
+                  <div>
                     <h5 className="font-semibold text-sm mb-3">🎯 Captura de Resposta</h5>
                     <div>
                       <Label>ID da Variável</Label>

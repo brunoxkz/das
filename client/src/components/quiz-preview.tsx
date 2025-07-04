@@ -2047,27 +2047,51 @@ const LoadingQuestionElement = ({ element, onAnswer }: {
   const [isLoading, setIsLoading] = useState(true);
   const [progress, setProgress] = useState(0);
   const [showPopup, setShowPopup] = useState(false);
-  const [loadingText, setLoadingText] = useState(element.loadingText || "Carregando...");
 
-  const loadingDuration = (element.loadingDuration || 3) * 1000; // converter para ms
+  const loadingDuration = (element.loadingDuration || 3) * 1000;
   const barColor = element.loadingBarColor || "#10B981";
-  const barWidth = element.loadingBarWidth || "medium";
+  const backgroundColor = element.loadingBarBackgroundColor || "#E5E7EB";
+  const barHeight = element.loadingBarHeight || "medium";
+  const barStyle = element.loadingBarStyle || "rounded";
+  const showPercentage = element.showPercentage !== false;
+  const showGlow = element.showGlow !== false;
+  const animationType = element.animationType || "smooth";
+  const loadingText = processVariables(element.loadingText || "Carregando...");
   const popupQuestion = element.popupQuestion || "Você gostaria de continuar?";
   const yesText = element.popupYesText || "Sim";
   const noText = element.popupNoText || "Não";
 
-  // Classes para largura da barra
-  const barWidthClasses = {
-    thin: "h-2",
+  // Classes para altura da barra
+  const barHeightClasses = {
+    thin: "h-1",
+    small: "h-2",
     medium: "h-4", 
-    thick: "h-6"
+    large: "h-6",
+    extra_large: "h-8"
+  };
+
+  // Classes para estilo da barra
+  const barStyleClasses = {
+    rounded: "rounded-full",
+    square: "rounded-none",
+    slightly_rounded: "rounded-sm",
+    very_rounded: "rounded-lg"
+  };
+
+  // Classes para animação
+  const animationClasses = {
+    smooth: "transition-all duration-100 ease-out",
+    fast: "transition-all duration-50 ease-linear",
+    bouncy: "transition-all duration-200 ease-bounce",
+    elastic: "transition-all duration-300 ease-in-out"
   };
 
   useEffect(() => {
     let progressInterval: NodeJS.Timeout;
     
     if (isLoading) {
-      const incrementValue = 100 / (loadingDuration / 50); // atualizar a cada 50ms
+      const updateFrequency = animationType === 'fast' ? 30 : animationType === 'smooth' ? 50 : 100;
+      const incrementValue = 100 / (loadingDuration / updateFrequency);
       
       progressInterval = setInterval(() => {
         setProgress(prev => {
@@ -2081,7 +2105,7 @@ const LoadingQuestionElement = ({ element, onAnswer }: {
           
           return newProgress;
         });
-      }, 50);
+      }, updateFrequency);
     }
 
     return () => {
@@ -2089,35 +2113,113 @@ const LoadingQuestionElement = ({ element, onAnswer }: {
         clearInterval(progressInterval);
       }
     };
-  }, [isLoading, loadingDuration]);
+  }, [isLoading, loadingDuration, animationType]);
 
   const handlePopupAnswer = (answer: "sim" | "não") => {
     setShowPopup(false);
     onAnswer(answer);
   };
 
+  const barHeightClass = barHeightClasses[barHeight as keyof typeof barHeightClasses] || barHeightClasses.medium;
+  const barStyleClass = barStyleClasses[barStyle as keyof typeof barStyleClasses] || barStyleClasses.rounded;
+  const animationClass = animationClasses[animationType as keyof typeof animationClasses] || animationClasses.smooth;
+
   return (
     <div className="mb-6">
       {/* Barra de Carregamento */}
       {isLoading && (
-        <div className="text-center">
-          <div className="mb-4">
-            <p className="text-lg font-medium text-gray-700 mb-4">
-              {processVariables(loadingText)}
+        <div className="text-center px-4">
+          <div className="mb-6">
+            {/* Texto de carregamento */}
+            <p 
+              className="text-lg font-medium mb-6"
+              style={{ 
+                color: element.loadingTextColor || "#374151",
+                fontSize: element.loadingTextSize === 'small' ? '14px' : 
+                         element.loadingTextSize === 'large' ? '20px' : '16px'
+              }}
+            >
+              {loadingText}
             </p>
             
-            <div className={`w-full bg-gray-200 rounded-full ${barWidthClasses[barWidth as keyof typeof barWidthClasses]} mx-auto max-w-md`}>
+            {/* Container da barra */}
+            <div className="max-w-lg mx-auto">
+              {/* Barra de fundo */}
               <div 
-                className={`${barWidthClasses[barWidth as keyof typeof barWidthClasses]} rounded-full transition-all duration-100 ease-out`}
-                style={{
-                  width: `${progress}%`,
-                  backgroundColor: barColor
-                }}
-              />
-            </div>
-            
-            <div className="mt-2 text-sm text-gray-500">
-              {Math.round(progress)}%
+                className={`w-full ${barHeightClass} ${barStyleClass} relative overflow-hidden`}
+                style={{ backgroundColor }}
+              >
+                {/* Barra de progresso */}
+                <div 
+                  className={`${barHeightClass} ${barStyleClass} ${animationClass} relative`}
+                  style={{
+                    width: `${progress}%`,
+                    backgroundColor: barColor,
+                    boxShadow: showGlow ? `0 0 10px ${barColor}40` : 'none'
+                  }}
+                >
+                  {/* Efeito de brilho na barra */}
+                  {showGlow && (
+                    <div 
+                      className={`absolute inset-0 ${barStyleClass}`}
+                      style={{
+                        background: `linear-gradient(90deg, transparent, ${barColor}60, transparent)`,
+                        animation: 'shimmer 2s infinite'
+                      }}
+                    />
+                  )}
+                </div>
+                
+                {/* Padrão de listras (opcional) */}
+                {element.showStripes && (
+                  <div 
+                    className={`absolute inset-0 ${barStyleClass}`}
+                    style={{
+                      backgroundImage: `repeating-linear-gradient(
+                        45deg,
+                        transparent,
+                        transparent 10px,
+                        rgba(255,255,255,0.2) 10px,
+                        rgba(255,255,255,0.2) 20px
+                      )`,
+                      animation: element.animateStripes ? 'stripes 1s linear infinite' : 'none'
+                    }}
+                  />
+                )}
+              </div>
+              
+              {/* Indicadores adicionais */}
+              <div className="flex justify-between items-center mt-3">
+                {/* Porcentagem */}
+                {showPercentage && (
+                  <div 
+                    className="text-sm font-medium"
+                    style={{ color: element.percentageColor || "#6B7280" }}
+                  >
+                    {Math.round(progress)}%
+                  </div>
+                )}
+                
+                {/* Tempo restante (opcional) */}
+                {element.showTimeRemaining && (
+                  <div 
+                    className="text-sm"
+                    style={{ color: element.percentageColor || "#6B7280" }}
+                  >
+                    {Math.ceil((loadingDuration - (progress * loadingDuration / 100)) / 1000)}s
+                  </div>
+                )}
+              </div>
+              
+              {/* Texto adicional (opcional) */}
+              {element.additionalText && (
+                <p 
+                  className="text-sm mt-2"
+                  style={{ color: element.additionalTextColor || "#9CA3AF" }}
+                >
+                  {processVariables(element.additionalText)}
+                </p>
+              )}
             </div>
           </div>
         </div>
@@ -2125,12 +2227,15 @@ const LoadingQuestionElement = ({ element, onAnswer }: {
 
       {/* Popup de Pergunta */}
       {showPopup && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4 shadow-xl">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg p-6 max-w-md w-full shadow-xl animate-in zoom-in duration-300">
             <div className="text-center">
               <div className="mb-4">
-                <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <CheckCircle className="w-8 h-8 text-green-600" />
+                <div 
+                  className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4"
+                  style={{ backgroundColor: `${barColor}20` }}
+                >
+                  <CheckCircle className="w-8 h-8" style={{ color: barColor }} />
                 </div>
                 
                 <h3 className="text-lg font-semibold text-gray-900 mb-2">
@@ -2141,7 +2246,7 @@ const LoadingQuestionElement = ({ element, onAnswer }: {
               <div className="flex gap-3 justify-center">
                 <Button
                   onClick={() => handlePopupAnswer("sim")}
-                  className="px-6 py-2"
+                  className="px-6 py-2 hover:opacity-90 transition-opacity"
                   style={{ backgroundColor: barColor }}
                 >
                   {yesText}
@@ -2150,7 +2255,7 @@ const LoadingQuestionElement = ({ element, onAnswer }: {
                 <Button
                   onClick={() => handlePopupAnswer("não")}
                   variant="outline"
-                  className="px-6 py-2"
+                  className="px-6 py-2 hover:bg-gray-50 transition-colors border-gray-300"
                 >
                   {noText}
                 </Button>
@@ -2163,14 +2268,31 @@ const LoadingQuestionElement = ({ element, onAnswer }: {
       {/* Estado após resposta */}
       {!isLoading && !showPopup && (
         <div className="text-center">
-          <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-            <CheckCircle className="w-8 h-8 text-green-600" />
+          <div 
+            className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4"
+            style={{ backgroundColor: `${barColor}20` }}
+          >
+            <CheckCircle className="w-8 h-8" style={{ color: barColor }} />
           </div>
-          <p className="text-green-700 font-medium">
+          <p className="font-medium" style={{ color: barColor }}>
             Resposta registrada!
           </p>
         </div>
       )}
+      
+      <style dangerouslySetInnerHTML={{
+        __html: `
+          @keyframes shimmer {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
+          }
+          
+          @keyframes stripes {
+            0% { background-position: 0 0; }
+            100% { background-position: 40px 0; }
+          }
+        `
+      }} />
     </div>
   );
 };
