@@ -87,7 +87,7 @@ export function Sidebar() {
       title: "Analytics",
       href: "/analytics",
       icon: <TrendingUp className="w-4 h-4" />,
-      active: location === "/analytics" || location === "/super-analytics"
+      active: location === "/analytics"
     },
     {
       title: "Leads",
