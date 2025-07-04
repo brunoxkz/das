@@ -39,6 +39,8 @@ interface Element {
   placeholder?: string;
   fontSize?: string;
   textAlign?: "left" | "center" | "right";
+  min?: number;
+  max?: number;
 }
 
 interface QuizPage {
@@ -172,9 +174,10 @@ export function PageEditor({ pages, onPagesChange }: PageEditorProps) {
           <div className="space-y-2">
             <label className="block text-sm font-medium text-gray-700">
               {element.question || "Pergunta"}
+              {element.required && <span className="text-red-500 ml-1">*</span>}
             </label>
             <div className="space-y-2">
-              {(element.options || []).map((option, index) => (
+              {(element.options || ["Opção 1", "Opção 2"]).map((option, index) => (
                 <div key={index} className="flex items-center space-x-2">
                   <input type="radio" name={`preview-${element.id}`} disabled />
                   <span className="text-sm">{option}</span>
@@ -408,7 +411,7 @@ export function PageEditor({ pages, onPagesChange }: PageEditorProps) {
               </div>
             )}
 
-            {["multiple_choice", "text", "email", "phone", "number", "rating"].includes(selectedElementData.type) && (
+            {["multiple_choice", "text", "email", "phone", "number", "rating", "textarea", "checkbox", "date"].includes(selectedElementData.type) && (
               <>
                 <div>
                   <Label htmlFor="question-text">Pergunta</Label>
@@ -420,6 +423,19 @@ export function PageEditor({ pages, onPagesChange }: PageEditorProps) {
                   />
                 </div>
                 
+                {selectedElementData.type !== "rating" && (
+                  <div>
+                    <Label htmlFor="placeholder">Placeholder</Label>
+                    <Input
+                      id="placeholder"
+                      value={selectedElementData.placeholder || ""}
+                      onChange={(e) => updateElement(selectedElementData.id, { placeholder: e.target.value })}
+                      className="mt-1"
+                      placeholder="Texto de exemplo..."
+                    />
+                  </div>
+                )}
+                
                 <div>
                   <Label htmlFor="field-id">ID do Campo</Label>
                   <Input
@@ -430,6 +446,84 @@ export function PageEditor({ pages, onPagesChange }: PageEditorProps) {
                     placeholder="nome, email, empresa..."
                   />
                 </div>
+
+                <div className="flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    id="required"
+                    checked={selectedElementData.required || false}
+                    onChange={(e) => updateElement(selectedElementData.id, { required: e.target.checked })}
+                  />
+                  <Label htmlFor="required">Campo obrigatório</Label>
+                </div>
+
+                {selectedElementData.type === "multiple_choice" && (
+                  <div>
+                    <Label>Opções de Resposta</Label>
+                    <div className="space-y-2 mt-2">
+                      {(selectedElementData.options || []).map((option, index) => (
+                        <div key={index} className="flex gap-2">
+                          <Input
+                            value={option}
+                            onChange={(e) => {
+                              const newOptions = [...(selectedElementData.options || [])];
+                              newOptions[index] = e.target.value;
+                              updateElement(selectedElementData.id, { options: newOptions });
+                            }}
+                            placeholder={`Opção ${index + 1}`}
+                          />
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => {
+                              const newOptions = [...(selectedElementData.options || [])];
+                              newOptions.splice(index, 1);
+                              updateElement(selectedElementData.id, { options: newOptions });
+                            }}
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      ))}
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => {
+                          const newOptions = [...(selectedElementData.options || []), `Opção ${(selectedElementData.options?.length || 0) + 1}`];
+                          updateElement(selectedElementData.id, { options: newOptions });
+                        }}
+                      >
+                        <Plus className="w-4 h-4 mr-1" />
+                        Adicionar Opção
+                      </Button>
+                    </div>
+                  </div>
+                )}
+
+                {selectedElementData.type === "number" && (
+                  <>
+                    <div>
+                      <Label htmlFor="min-value">Valor Mínimo</Label>
+                      <Input
+                        id="min-value"
+                        type="number"
+                        value={selectedElementData.min || ""}
+                        onChange={(e) => updateElement(selectedElementData.id, { min: parseInt(e.target.value) || undefined })}
+                        className="mt-1"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="max-value">Valor Máximo</Label>
+                      <Input
+                        id="max-value"
+                        type="number"
+                        value={selectedElementData.max || ""}
+                        onChange={(e) => updateElement(selectedElementData.id, { max: parseInt(e.target.value) || undefined })}
+                        className="mt-1"
+                      />
+                    </div>
+                  </>
+                )}
               </>
             )}
           </div>
