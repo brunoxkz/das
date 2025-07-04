@@ -8,20 +8,50 @@ async function throwIfResNotOk(res: Response) {
   }
 }
 
+// Overloaded function signatures for backward compatibility
+export async function apiRequest(method: string, url: string, data?: any): Promise<any>;
+export async function apiRequest(url: string, options?: RequestInit): Promise<any>;
+
 export async function apiRequest(
-  url: string,
-  options: RequestInit = {}
+  methodOrUrl: string,
+  urlOrOptions?: string | RequestInit,
+  data?: any
 ): Promise<any> {
   const token = localStorage.getItem("accessToken");
 
-  const response = await fetch(url, {
-    headers: {
-      "Content-Type": "application/json",
-      ...(token && { "Authorization": `Bearer ${token}` }),
-      ...options.headers,
-    },
-    ...options,
-  });
+  let method: string;
+  let url: string;
+  let options: RequestInit;
+
+  // Handle both signature styles
+  if (typeof urlOrOptions === "string") {
+    // New style: apiRequest(method, url, data)
+    method = methodOrUrl;
+    url = urlOrOptions;
+    options = {
+      method,
+      headers: {
+        "Content-Type": "application/json",
+        ...(token && { "Authorization": `Bearer ${token}` }),
+      },
+    };
+    if (data && (method === "POST" || method === "PUT" || method === "PATCH")) {
+      options.body = JSON.stringify(data);
+    }
+  } else {
+    // Old style: apiRequest(url, options)
+    url = methodOrUrl;
+    options = {
+      headers: {
+        "Content-Type": "application/json",
+        ...(token && { "Authorization": `Bearer ${token}` }),
+      },
+      ...urlOrOptions,
+    };
+    method = options.method || "GET";
+  }
+
+  const response = await fetch(url, options);
 
   if (!response.ok) {
     // Handle token refresh for expired tokens
@@ -42,14 +72,15 @@ export async function apiRequest(
             localStorage.setItem("refreshToken", tokens.refreshToken);
 
             // Retry original request with new token
-            const retryResponse = await fetch(url, {
-              headers: {
-                "Content-Type": "application/json",
-                "Authorization": `Bearer ${tokens.accessToken}`,
-                ...options.headers,
-              },
+            const retryOptions: RequestInit = {
               ...options,
-            });
+              headers: {
+                ...options.headers,
+                "Authorization": `Bearer ${tokens.accessToken}`,
+              },
+            };
+
+            const retryResponse = await fetch(url, retryOptions);
 
             if (retryResponse.ok) {
               return retryResponse.json();
