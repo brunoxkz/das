@@ -48,6 +48,7 @@ interface Element {
   options?: string[];
   required?: boolean;
   fieldId?: string;
+  responseId?: string; // ID único para referenciar a resposta como variável
   placeholder?: string;
   fontSize?: string;
   textAlign?: string;
@@ -63,6 +64,7 @@ interface Element {
   multipleSelection?: boolean;
   optionLayout?: "vertical" | "horizontal" | "grid";
   buttonStyle?: "rectangular" | "rounded" | "pills";
+  requireContinueButton?: boolean; // Para múltipla escolha - se deve aguardar botão continuar
   showImages?: boolean;
   optionImages?: string[];
   showIcons?: boolean;
@@ -2237,6 +2239,20 @@ const gameElementCategories = [
                       placeholder="campo_comentario"
                     />
                   </div>
+
+                  <div>
+                    <Label htmlFor="response-id-custom">ID da Resposta (para uso como variável)</Label>
+                    <Input
+                      id="response-id-custom"
+                      value={selectedElementData.responseId || ""}
+                      onChange={(e) => updateElement(selectedElementData.id, { responseId: e.target.value })}
+                      className="mt-1"
+                      placeholder="var_comentario"
+                    />
+                    <p className="text-xs text-gray-500 mt-1">
+                      Use esse ID para referenciar a resposta em outros elementos. Ex: {{var_comentario}}
+                    </p>
+                  </div>
                 </div>
               )}
 
@@ -2350,6 +2366,60 @@ const gameElementCategories = [
                           />
                         </div>
                       </div>
+                    </div>
+                  </div>
+
+                  {/* Configurações de Dados */}
+                  <div className="border rounded-lg p-4 bg-blue-50">
+                    <h4 className="font-semibold text-sm mb-3">📊 Configurações de Dados</h4>
+                    
+                    <div className="space-y-3">
+                      <div>
+                        <Label className="text-xs">ID do Campo (captura de leads)</Label>
+                        <Input
+                          value={selectedElementData.fieldId || ""}
+                          onChange={(e) => updateElement(selectedElementData.id, { fieldId: e.target.value })}
+                          className="text-xs mt-1"
+                          placeholder="campo_escolha"
+                        />
+                      </div>
+
+                      <div>
+                        <Label className="text-xs">ID da Resposta (para usar como variável)</Label>
+                        <Input
+                          value={selectedElementData.responseId || ""}
+                          onChange={(e) => updateElement(selectedElementData.id, { responseId: e.target.value })}
+                          className="text-xs mt-1"
+                          placeholder="var_escolha"
+                        />
+                        <p className="text-xs text-gray-500 mt-1">
+                          Use {`{{var_escolha}}`} para referenciar a resposta selecionada em outros elementos
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Controle de Navegação */}
+                  <div className="border rounded-lg p-4 bg-orange-50">
+                    <h4 className="font-semibold text-sm mb-3">🎯 Navegação e Ação</h4>
+                    
+                    <div className="space-y-3">
+                      <div className="flex items-center space-x-2">
+                        <input
+                          type="checkbox"
+                          id="require-continue"
+                          checked={selectedElementData.requireContinueButton || false}
+                          onChange={(e) => updateElement(selectedElementData.id, { requireContinueButton: e.target.checked })}
+                        />
+                        <Label htmlFor="require-continue" className="text-xs">Aguardar botão "Continuar"</Label>
+                      </div>
+                      
+                      <p className="text-xs text-gray-500 bg-white p-2 rounded border">
+                        {selectedElementData.requireContinueButton 
+                          ? "⚠️ Usuário deve clicar em botão 'Continuar' após selecionar. Adicione um elemento 'Botão Continuar' na página."
+                          : "✅ Usuário será redirecionado automaticamente ao clicar na opção."
+                        }
+                      </p>
                     </div>
                   </div>
 

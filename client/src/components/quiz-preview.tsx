@@ -18,6 +18,7 @@ import {
   Target,
   Activity
 } from "lucide-react";
+import { globalVariableProcessor, processVariables, setQuizResponse, addCalculationRule, VariableProcessor } from "@/lib/variables";
 
 // Componente para textos alternantes
 const AlternatingText = ({ texts, color, fontSize }: { 
@@ -192,6 +193,43 @@ export function QuizPreview({ quiz }: QuizPreviewProps) {
   const allPages = pages || [];
   const totalSteps = allPages.length + (settings.collectEmail || settings.collectName || settings.collectPhone ? 1 : 0) + 1; // +1 for result
   const progress = ((currentStep + 1) / totalSteps) * 100;
+
+  // Configurar cálculos automáticos quando o quiz carrega
+  useEffect(() => {
+    // Limpar cálculos anteriores
+    globalVariableProcessor.clear();
+    
+    // Encontrar elementos com responseId para configurar cálculos automáticos
+    const allElements: any[] = [];
+    allPages.forEach(page => {
+      if (page.elements) {
+        allElements.push(...page.elements);
+      }
+    });
+
+    // Detectar elementos de altura, peso atual e peso alvo
+    const heightElement = allElements.find(el => el.type === 'height' && el.responseId);
+    const currentWeightElement = allElements.find(el => el.type === 'current_weight' && el.responseId);
+    const targetWeightElement = allElements.find(el => el.type === 'target_weight' && el.responseId);
+
+    // Configurar cálculo de IMC se altura e peso atual existem
+    if (heightElement?.responseId && currentWeightElement?.responseId) {
+      addCalculationRule(VariableProcessor.createBMICalculation(
+        heightElement.responseId,
+        currentWeightElement.responseId,
+        'imc'
+      ));
+    }
+
+    // Configurar cálculo de diferença de peso se peso atual e alvo existem
+    if (currentWeightElement?.responseId && targetWeightElement?.responseId) {
+      addCalculationRule(VariableProcessor.createWeightDifferenceCalculation(
+        currentWeightElement.responseId,
+        targetWeightElement.responseId,
+        'diferenca_peso'
+      ));
+    }
+  }, [quiz]);
   
   // Determinar se é página de transição e encontrar elemento de fundo
   const currentPage = allPages[currentStep];
@@ -222,8 +260,20 @@ export function QuizPreview({ quiz }: QuizPreviewProps) {
     }
   };
 
-  const handleAnswer = (questionId: number, answer: any) => {
+  const handleAnswer = (questionId: number, answer: any, element?: any) => {
     setAnswers(prev => ({ ...prev, [questionId]: answer }));
+    
+    // Se o elemento tem responseId, registra a resposta no sistema de variáveis
+    if (element?.responseId) {
+      const responseType = element.type === 'multiple_choice' ? 'choice' :
+                          element.type === 'number' || element.type === 'rating' ? 'number' :
+                          element.type === 'email' ? 'email' :
+                          element.type === 'phone' ? 'phone' :
+                          element.type === 'date' || element.type === 'birth_date' ? 'date' :
+                          'text';
+      
+      setQuizResponse(element.responseId, answer, responseType, questionId);
+    }
   };
 
   const handleNext = () => {
@@ -294,7 +344,7 @@ export function QuizPreview({ quiz }: QuizPreviewProps) {
             className={`font-bold text-gray-900 mb-4 text-${element.textAlign || 'left'}`}
             style={{ color: element.textColor }}
           >
-            {element.content}
+            {processVariables(element.content || '')}
           </HeadingTag>
         );
       
@@ -304,7 +354,7 @@ export function QuizPreview({ quiz }: QuizPreviewProps) {
             className={`text-gray-600 mb-4 text-${element.textAlign || 'left'}`}
             style={{ color: element.textColor }}
           >
-            {element.content}
+            {processVariables(element.content || '')}
           </p>
         );
       
@@ -381,19 +431,32 @@ export function QuizPreview({ quiz }: QuizPreviewProps) {
           <div className="mb-6">
             {(element.question && element.question.trim() !== '') && (
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                {element.question}
+                {processVariables(element.question || '')}
                 {element.required && <span className="text-red-500 ml-1">*</span>}
               </label>
             )}
-            <div className="flex items-center space-x-2">
-              <input
-                type="number"
-                min="30"
-                max="300"
-                placeholder={element.placeholder || "70"}
-                className="flex-1 px-4 py-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
-              />
-              <span className="text-gray-600">kg</span>
+            <div className="bg-blue-50 border-2 border-dashed border-blue-200 rounded-lg p-4">
+              <div className="flex items-center gap-3 mb-3">
+                <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+                  <Scale className="w-5 h-5 text-blue-600" />
+                </div>
+                <div>
+                  <h4 className="font-semibold text-blue-800">Peso Atual</h4>
+                  <p className="text-xs text-blue-600">Seu peso corporal atual</p>
+                </div>
+              </div>
+              <div className="flex items-center space-x-2">
+                <input
+                  type="number"
+                  min="30"
+                  max="300"
+                  step="0.1"
+                  placeholder={element.placeholder || "70.0"}
+                  className="flex-1 px-4 py-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-center font-semibold"
+                  onChange={(e) => handleAnswer(element.id, parseFloat(e.target.value) || 0, element)}
+                />
+                <span className="text-gray-600 font-medium">kg</span>
+              </div>
             </div>
           </div>
         );
@@ -403,19 +466,32 @@ export function QuizPreview({ quiz }: QuizPreviewProps) {
           <div className="mb-6">
             {(element.question && element.question.trim() !== '') && (
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                {element.question}
+                {processVariables(element.question || '')}
                 {element.required && <span className="text-red-500 ml-1">*</span>}
               </label>
             )}
-            <div className="flex items-center space-x-2">
-              <input
-                type="number"
-                min="30"
-                max="300"
-                placeholder={element.placeholder || "65"}
-                className="flex-1 px-4 py-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
-              />
-              <span className="text-gray-600">kg</span>
+            <div className="bg-orange-50 border-2 border-dashed border-orange-200 rounded-lg p-4">
+              <div className="flex items-center gap-3 mb-3">
+                <div className="w-10 h-10 bg-orange-100 rounded-full flex items-center justify-center">
+                  <Target className="w-5 h-5 text-orange-600" />
+                </div>
+                <div>
+                  <h4 className="font-semibold text-orange-800">Peso Objetivo</h4>
+                  <p className="text-xs text-orange-600">Meta de peso que deseja atingir</p>
+                </div>
+              </div>
+              <div className="flex items-center space-x-2">
+                <input
+                  type="number"
+                  min="30"
+                  max="300"
+                  step="0.1"
+                  placeholder={element.placeholder || "65.0"}
+                  className="flex-1 px-4 py-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500 text-center font-semibold"
+                  onChange={(e) => handleAnswer(element.id, parseFloat(e.target.value) || 0, element)}
+                />
+                <span className="text-gray-600 font-medium">kg</span>
+              </div>
             </div>
           </div>
         );
@@ -497,6 +573,7 @@ export function QuizPreview({ quiz }: QuizPreviewProps) {
               type="text"
               placeholder={element.placeholder || "Digite sua resposta..."}
               className="w-full px-4 py-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+              onChange={(e) => handleAnswer(element.id, e.target.value, element)}
             />
           </div>
         );
@@ -513,6 +590,7 @@ export function QuizPreview({ quiz }: QuizPreviewProps) {
               type="email"
               placeholder={element.placeholder || "seu@email.com"}
               className="w-full px-4 py-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+              onChange={(e) => handleAnswer(element.id, e.target.value, element)}
             />
           </div>
         );
@@ -529,6 +607,7 @@ export function QuizPreview({ quiz }: QuizPreviewProps) {
               type="tel"
               placeholder={element.placeholder || "(11) 99999-9999"}
               className="w-full px-4 py-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+              onChange={(e) => handleAnswer(element.id, e.target.value, element)}
             />
           </div>
         );
@@ -547,6 +626,7 @@ export function QuizPreview({ quiz }: QuizPreviewProps) {
               max={element.max || undefined}
               placeholder={element.placeholder || "Digite um número..."}
               className="w-full px-4 py-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+              onChange={(e) => handleAnswer(element.id, parseFloat(e.target.value) || 0, element)}
             />
           </div>
         );
