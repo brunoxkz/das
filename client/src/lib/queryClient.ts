@@ -77,12 +77,57 @@ export const getQueryFn: <T>(options: {
 }) => QueryFunction<T> =
   ({ on401: unauthorizedBehavior }) =>
   async ({ queryKey }) => {
+    const token = localStorage.getItem("accessToken");
+    
     const res = await fetch(queryKey[0] as string, {
-      credentials: "include",
+      headers: {
+        "Content-Type": "application/json",
+        ...(token && { "Authorization": `Bearer ${token}` }),
+      },
     });
 
     if (unauthorizedBehavior === "returnNull" && res.status === 401) {
       return null;
+    }
+
+    // Handle token refresh for expired tokens
+    if (res.status === 401 && token) {
+      const refreshToken = localStorage.getItem("refreshToken");
+
+      if (refreshToken) {
+        try {
+          const refreshResponse = await fetch("/api/auth/refresh", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ refreshToken }),
+          });
+
+          if (refreshResponse.ok) {
+            const tokens = await refreshResponse.json();
+            localStorage.setItem("accessToken", tokens.accessToken);
+            localStorage.setItem("refreshToken", tokens.refreshToken);
+
+            // Retry original request with new token
+            const retryResponse = await fetch(queryKey[0] as string, {
+              headers: {
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${tokens.accessToken}`,
+              },
+            });
+
+            if (retryResponse.ok) {
+              return retryResponse.json();
+            }
+          }
+        } catch (error) {
+          console.error("Token refresh failed:", error);
+        }
+      }
+
+      // Clear invalid tokens and redirect to login
+      localStorage.removeItem("accessToken");
+      localStorage.removeItem("refreshToken");
+      window.location.href = "/login";
     }
 
     await throwIfResNotOk(res);

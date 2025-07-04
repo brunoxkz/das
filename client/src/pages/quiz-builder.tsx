@@ -11,7 +11,7 @@ import { PageEditorHorizontal } from "@/components/page-editor-horizontal";
 import { QuizPreview } from "@/components/quiz-preview";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
-import { useAuth } from "@/hooks/useAuth";
+import { useAuth } from "@/hooks/useAuth-jwt";
 import { isUnauthorizedError } from "@/lib/authUtils";
 import { 
   Save, 
