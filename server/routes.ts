@@ -62,10 +62,18 @@ export function registerRoutes(app: Express): Server {
 
   app.get("/api/quizzes/:id", async (req, res) => {
     try {
+      console.log("SERVIDOR - Buscando quiz ID:", req.params.id);
       const quiz = await storage.getQuiz(req.params.id);
       if (!quiz) {
+        console.log("SERVIDOR - Quiz não encontrado");
         return res.status(404).json({ message: "Quiz not found" });
       }
+      console.log("SERVIDOR - Quiz encontrado:", {
+        id: quiz.id,
+        title: quiz.title,
+        structure: quiz.structure ? "presente" : "ausente",
+        structureSize: quiz.structure ? JSON.stringify(quiz.structure).length : 0
+      });
       res.json(quiz);
     } catch (error) {
       console.error("Error fetching quiz:", error);

@@ -157,9 +157,10 @@ export default function QuizBuilder() {
         ga4Id: (existingQuiz as any).ga4Id || "",
         customHeadScript: (existingQuiz as any).customHeadScript || ""
       });
-      console.log("Dados carregados no estado:", {
+      console.log("QUIZ BUILDER DEBUG - Dados carregados:", {
         title: existingQuiz.title,
-        structure: existingQuiz.structure
+        structure: existingQuiz.structure,
+        fullQuiz: existingQuiz
       });
     } else {
       // Initialize with default page structure for new quiz
