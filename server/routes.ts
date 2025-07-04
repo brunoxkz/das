@@ -280,26 +280,30 @@ export function registerRoutes(app: Express): Server {
     try {
       const { quizId } = req.params;
       
-      // Verify quiz exists
-      const quiz = await storage.getQuiz(quizId);
-      if (!quiz) {
+      // Verify quiz exists and is published
+      const quizData = await storage.getQuiz(quizId);
+      if (!quizData) {
         return res.status(404).json({ message: "Quiz not found" });
       }
 
       // Only track for published quizzes
-      if (!quiz.isPublished) {
+      if (!quizData.isPublished) {
         return res.status(403).json({ message: "Quiz not published" });
       }
 
       // Update quiz analytics (increment totalViews)
       await storage.updateQuizAnalytics(quizId, {
         quizId,
-        date: new Date(),
         views: 1,
         completions: 0,
         leads: 0,
-        avgCompletionTime: 0
+        conversionRate: "0"
       });
+
+      // Invalidate cache to show updated analytics immediately
+      if (quizData && quizData.userId) {
+        cache.invalidateUserCaches(quizData.userId);
+      }
 
       console.log(`Quiz view tracked for quiz: ${quizId}`);
       res.status(200).json({ message: "View tracked successfully" });

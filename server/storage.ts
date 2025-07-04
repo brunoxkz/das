@@ -338,31 +338,34 @@ export class DatabaseStorage implements IStorage {
 
   // Analytics operations
   async getQuizAnalytics(quizId: string, startDate?: Date, endDate?: Date): Promise<QuizAnalytics[]> {
-    let query = db
-      .select()
-      .from(quizAnalytics)
-      .where(eq(quizAnalytics.quizId, quizId));
+    let whereConditions = [eq(quizAnalytics.quizId, quizId)];
 
     if (startDate && endDate) {
-      query = query.where(
-        and(
-          eq(quizAnalytics.quizId, quizId),
-          gte(quizAnalytics.date, startDate),
-          lte(quizAnalytics.date, endDate)
-        )
+      whereConditions.push(
+        gte(quizAnalytics.date, startDate),
+        lte(quizAnalytics.date, endDate)
       );
     }
 
-    return await query.orderBy(desc(quizAnalytics.date));
+    return await db
+      .select()
+      .from(quizAnalytics)
+      .where(and(...whereConditions))
+      .orderBy(desc(quizAnalytics.date));
   }
 
   async updateQuizAnalytics(quizId: string, analytics: InsertQuizAnalytics): Promise<void> {
+    // Simply insert a new analytics record for each view
     await db
       .insert(quizAnalytics)
-      .values({ ...analytics, quizId })
-      .onConflictDoUpdate({
-        target: [quizAnalytics.quizId, quizAnalytics.date],
-        set: analytics,
+      .values({ 
+        quizId,
+        date: new Date(),
+        views: analytics.views || 0,
+        starts: analytics.starts || 0,
+        completions: analytics.completions || 0,
+        leads: analytics.leads || 0,
+        conversionRate: analytics.conversionRate || "0"
       });
   }
 
