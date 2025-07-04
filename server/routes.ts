@@ -284,5 +284,14 @@ export function registerRoutes(app: Express): Server {
     });
   }
 
+  // Remove old Replit auth routes - now handled by JWT
+  app.get("/api/login", (req, res) => {
+    res.redirect("/login");
+  });
+
+  app.get("/api/logout", (req, res) => {
+    res.redirect("/");
+  });
+
   return httpServer;
 }

@@ -10,22 +10,42 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { 
   Bell, 
-  Search, 
-  Settings, 
-  User, 
+  Crown, 
   LogOut, 
-  Crown,
+  Settings, 
+  User,
   HandHelping,
   ChevronDown
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { Input } from "@/components/ui/input";
+import { Link } from "react-router-dom";
 
 export default function Navbar() {
   const { user, logout } = useAuth();
 
-  const handleLogout = () => {
-    window.location.href = "/api/logout";
+  const handleLogout = async () => {
+    try {
+      const token = localStorage.getItem("accessToken");
+      if (token) {
+        await fetch("/api/auth/logout", {
+          method: "POST",
+          headers: {
+            "Authorization": `Bearer ${token}`
+          }
+        });
+      }
+
+      localStorage.removeItem("accessToken");
+      localStorage.removeItem("refreshToken");
+      window.location.href = "/";
+    } catch (error) {
+      console.error("Logout error:", error);
+      // Even if logout fails, clear local storage
+      localStorage.removeItem("accessToken");
+      localStorage.removeItem("refreshToken");
+      window.location.href = "/";
+    }
   };
 
   const getUserInitials = () => {
@@ -129,7 +149,7 @@ export default function Navbar() {
 
               <DropdownMenuSeparator />
 
-              <DropdownMenuItem onClick={logout} className="text-red-600">
+              <DropdownMenuItem onClick={handleLogout} className="text-red-600">
                 <LogOut className="w-4 h-4 mr-2" />
                 Sair
               </DropdownMenuItem>

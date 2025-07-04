@@ -24,6 +24,7 @@ import {
   ArrowRight,
   Zap
 } from "lucide-react";
+import { Link } from "react-router-dom";
 
 export default function Landing() {
   const features = [
@@ -174,11 +175,15 @@ export default function Landing() {
                 <Globe className="w-4 h-4 mr-1" />
                 PT
               </Button>
-              <Button variant="ghost" size="sm" onClick={() => window.location.href = '/api/login'}>
-                Entrar
+              <Button variant="ghost" size="sm">
+                <Link to="/login">
+                  Entrar
+                </Link>
               </Button>
-              <Button size="sm" onClick={() => window.location.href = '/api/login'}>
-                Teste Grátis
+              <Button size="sm">
+                <Link to="/login">
+                  Teste Grátis
+                </Link>
               </Button>
             </div>
           </div>
@@ -201,11 +206,12 @@ export default function Landing() {
                 <Button 
                   size="lg" 
                   variant="secondary" 
-                  onClick={() => window.location.href = '/api/login'}
                   className="bg-white text-primary hover:bg-gray-50"
                 >
-                  <Play className="w-4 h-4 mr-2" />
-                  Começar Agora
+                  <Link to="/login">
+                    <Play className="w-4 h-4 mr-2" />
+                    Começar Agora
+                  </Link>
                 </Button>
                 <Button 
                   size="lg" 
@@ -440,9 +446,10 @@ export default function Landing() {
                     className="w-full" 
                     variant={plan.buttonVariant}
                     size="lg"
-                    onClick={() => window.location.href = '/api/login'}
                   >
-                    {plan.buttonText}
+                    <Link to="/login">
+                      {plan.buttonText}
+                    </Link>
                   </Button>
                 </CardContent>
               </Card>
@@ -494,9 +501,11 @@ export default function Landing() {
           </div>
 
           <div className="text-center mt-12">
-            <Button size="lg" onClick={() => window.location.href = '/api/login'}>
-              Ver Todos os Templates
-              <ArrowRight className="w-4 h-4 ml-2" />
+            <Button size="lg">
+              <Link to="/login">
+                Ver Todos os Templates
+                <ArrowRight className="w-4 h-4 ml-2" />
+              </Link>
             </Button>
           </div>
         </div>
@@ -515,10 +524,11 @@ export default function Landing() {
             <Button 
               size="lg" 
               variant="secondary" 
-              onClick={() => window.location.href = '/api/login'}
               className="bg-white text-primary hover:bg-gray-50"
             >
-              Teste Grátis por 14 Dias
+              <Link to="/login">
+                Teste Grátis por 14 Dias
+              </Link>
             </Button>
             <Button 
               size="lg" 
