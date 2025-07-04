@@ -38,9 +38,11 @@ interface Element {
   fieldId?: string;
   placeholder?: string;
   fontSize?: string;
-  textAlign?: "left" | "center" | "right";
+  textAlign?: string;
   min?: number;
   max?: number;
+  color?: string;
+  imageUrl?: string;
 }
 
 interface QuizPage {
@@ -147,24 +149,70 @@ export function PageEditor({ pages, onPagesChange }: PageEditorProps) {
     : null;
 
   function renderElementPreview(element: Element) {
+    // Helper function to get font size classes
+    const getFontSizeClass = (size?: string) => {
+      switch (size) {
+        case "xs": return "text-xs";
+        case "sm": return "text-sm";
+        case "base": return "text-base";
+        case "lg": return "text-lg";
+        case "xl": return "text-xl";
+        case "2xl": return "text-2xl";
+        case "3xl": return "text-3xl";
+        case "4xl": return "text-4xl";
+        default: return "text-base";
+      }
+    };
+
+    // Helper function to get text alignment classes
+    const getAlignClass = (align?: string) => {
+      switch (align) {
+        case "left": return "text-left";
+        case "center": return "text-center";
+        case "right": return "text-right";
+        default: return "text-left";
+      }
+    };
+
     switch (element.type) {
       case "heading":
         return (
-          <h2 className={`font-bold text-${element.fontSize || "xl"} text-${element.textAlign || "left"}`}>
+          <h2 
+            className={`font-bold ${getFontSizeClass(element.fontSize || "xl")} ${getAlignClass(element.textAlign)}`}
+            style={{ color: element.color || "#000000" }}
+          >
             {element.content || "Título"}
           </h2>
         );
       case "paragraph":
         return (
-          <p className={`text-${element.fontSize || "base"} text-${element.textAlign || "left"} text-gray-700`}>
+          <p 
+            className={`${getFontSizeClass(element.fontSize)} ${getAlignClass(element.textAlign)}`}
+            style={{ color: element.color || "#374151" }}
+          >
             {element.content || "Parágrafo de texto"}
           </p>
         );
       case "image":
         return (
-          <div className="w-full h-32 bg-gray-200 rounded border-2 border-dashed border-gray-300 flex items-center justify-center">
-            <ImageIcon className="w-8 h-8 text-gray-400" />
-            <span className="ml-2 text-sm text-gray-500">Imagem</span>
+          <div className={`w-full ${getAlignClass(element.textAlign)}`}>
+            {element.imageUrl ? (
+              <img 
+                src={element.imageUrl} 
+                alt={element.content || "Imagem"} 
+                className="max-w-full h-auto rounded"
+                onError={(e) => {
+                  e.currentTarget.style.display = 'none';
+                  e.currentTarget.nextElementSibling?.classList.remove('hidden');
+                }}
+              />
+            ) : null}
+            <div className={`${element.imageUrl ? 'hidden' : ''} w-full h-32 bg-gray-200 rounded border-2 border-dashed border-gray-300 flex items-center justify-center`}>
+              <ImageIcon className="w-8 h-8 text-gray-400" />
+              <span className="ml-2 text-sm text-gray-500">
+                {element.imageUrl ? 'Erro ao carregar' : 'Adicione URL da imagem'}
+              </span>
+            </div>
           </div>
         );
       case "divider":
@@ -395,6 +443,44 @@ export function PageEditor({ pages, onPagesChange }: PageEditorProps) {
                   onChange={(e) => updateElement(selectedElementData.id, { content: e.target.value })}
                   className="mt-1"
                 />
+                
+                {/* Opções de formatação */}
+                <div className="mt-4 space-y-2">
+                  <Label>Formatação</Label>
+                  <div className="flex gap-2">
+                    <select 
+                      className="px-2 py-1 border rounded text-sm"
+                      value={selectedElementData.fontSize || "xl"}
+                      onChange={(e) => updateElement(selectedElementData.id, { fontSize: e.target.value })}
+                    >
+                      <option value="lg">Pequeno</option>
+                      <option value="xl">Normal</option>
+                      <option value="2xl">Grande</option>
+                      <option value="3xl">Muito Grande</option>
+                      <option value="4xl">Gigante</option>
+                    </select>
+                    
+                    <select 
+                      className="px-2 py-1 border rounded text-sm"
+                      value={selectedElementData.textAlign || "left"}
+                      onChange={(e) => updateElement(selectedElementData.id, { textAlign: e.target.value })}
+                    >
+                      <option value="left">Esquerda</option>
+                      <option value="center">Centro</option>
+                      <option value="right">Direita</option>
+                    </select>
+                  </div>
+                  
+                  <div className="flex gap-2">
+                    <input 
+                      type="color" 
+                      className="w-8 h-8 border rounded"
+                      value={selectedElementData.color || "#000000"}
+                      onChange={(e) => updateElement(selectedElementData.id, { color: e.target.value })}
+                    />
+                    <Label className="text-sm">Cor do Texto</Label>
+                  </div>
+                </div>
               </div>
             )}
 
@@ -408,6 +494,82 @@ export function PageEditor({ pages, onPagesChange }: PageEditorProps) {
                   className="mt-1"
                   rows={4}
                 />
+                
+                {/* Opções de formatação */}
+                <div className="mt-4 space-y-2">
+                  <Label>Formatação</Label>
+                  <div className="flex gap-2">
+                    <select 
+                      className="px-2 py-1 border rounded text-sm"
+                      value={selectedElementData.fontSize || "base"}
+                      onChange={(e) => updateElement(selectedElementData.id, { fontSize: e.target.value })}
+                    >
+                      <option value="xs">Muito Pequeno</option>
+                      <option value="sm">Pequeno</option>
+                      <option value="base">Normal</option>
+                      <option value="lg">Grande</option>
+                      <option value="xl">Muito Grande</option>
+                      <option value="2xl">Gigante</option>
+                    </select>
+                    
+                    <select 
+                      className="px-2 py-1 border rounded text-sm"
+                      value={selectedElementData.textAlign || "left"}
+                      onChange={(e) => updateElement(selectedElementData.id, { textAlign: e.target.value })}
+                    >
+                      <option value="left">Esquerda</option>
+                      <option value="center">Centro</option>
+                      <option value="right">Direita</option>
+                    </select>
+                  </div>
+                  
+                  <div className="flex gap-2">
+                    <input 
+                      type="color" 
+                      className="w-8 h-8 border rounded"
+                      value={selectedElementData.color || "#000000"}
+                      onChange={(e) => updateElement(selectedElementData.id, { color: e.target.value })}
+                    />
+                    <Label className="text-sm">Cor do Texto</Label>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {selectedElementData.type === "image" && (
+              <div>
+                <Label htmlFor="image-url">URL da Imagem</Label>
+                <Input
+                  id="image-url"
+                  value={selectedElementData.imageUrl || ""}
+                  onChange={(e) => updateElement(selectedElementData.id, { imageUrl: e.target.value })}
+                  className="mt-1"
+                  placeholder="https://exemplo.com/imagem.jpg"
+                />
+                
+                <div className="mt-4">
+                  <Label htmlFor="image-alt">Texto Alternativo</Label>
+                  <Input
+                    id="image-alt"
+                    value={selectedElementData.content || ""}
+                    onChange={(e) => updateElement(selectedElementData.id, { content: e.target.value })}
+                    className="mt-1"
+                    placeholder="Descrição da imagem"
+                  />
+                </div>
+                
+                <div className="mt-4">
+                  <Label>Alinhamento</Label>
+                  <select 
+                    className="w-full px-2 py-1 border rounded mt-1"
+                    value={selectedElementData.textAlign || "center"}
+                    onChange={(e) => updateElement(selectedElementData.id, { textAlign: e.target.value })}
+                  >
+                    <option value="left">Esquerda</option>
+                    <option value="center">Centro</option>
+                    <option value="right">Direita</option>
+                  </select>
+                </div>
               </div>
             )}
 
