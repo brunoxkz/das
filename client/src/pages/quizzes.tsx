@@ -27,6 +27,21 @@ export default function Quizzes() {
   
   const { data: quizzes, isLoading, error } = useQuery({
     queryKey: ["/api/quizzes"],
+    queryFn: async () => {
+      const token = localStorage.getItem("accessToken");
+      const response = await fetch("/api/quizzes", {
+        headers: {
+          "Authorization": `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      });
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      return response.json();
+    },
   });
 
   const deleteMutation = useMutation({

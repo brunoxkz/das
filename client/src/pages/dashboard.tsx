@@ -30,6 +30,21 @@ export default function Dashboard() {
 
   const { data: dashboardData, isLoading: dashboardLoading } = useQuery({
     queryKey: ["/api/dashboard/stats"],
+    queryFn: async () => {
+      const token = localStorage.getItem("accessToken");
+      const response = await fetch("/api/dashboard/stats", {
+        headers: {
+          "Authorization": `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      });
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      return response.json();
+    },
     retry: false,
     staleTime: 30000, // 30 segundos de cache
     enabled: isAuthenticated,

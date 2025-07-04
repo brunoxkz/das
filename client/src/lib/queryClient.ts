@@ -225,7 +225,6 @@ async function deduplicatedFetch(url: string, options: RequestInit = {}) {
 export const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      queryFn: getQueryFn({ on401: "throw" }),
       refetchInterval: false,
       refetchOnWindowFocus: false,
       staleTime: 30 * 1000, // 30 segundos (otimizado para sincronização rápida)
