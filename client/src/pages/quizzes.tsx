@@ -251,12 +251,6 @@ export default function Quizzes() {
                         Editar
                       </Button>
                     </Link>
-                    <Link href={`/super-analytics/${quiz.id}`}>
-                      <Button size="sm" variant="outline" className="flex-1">
-                        <BarChart3 className="w-3 h-3 mr-1" />
-                        Analytics
-                      </Button>
-                    </Link>
                     <Button 
                       size="sm" 
                       variant="outline" 
