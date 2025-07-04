@@ -54,7 +54,7 @@ export default function QuizBuilder() {
 
   // Fetch quiz data if editing
   const { data: existingQuiz, isLoading: quizLoading } = useQuery({
-    queryKey: ["/api/quizzes", quizId],
+    queryKey: [`/api/quizzes/${quizId}`],
     enabled: !!isEditing && !!quizId,
     retry: false,
   });
@@ -96,10 +96,11 @@ export default function QuizBuilder() {
   // Load existing quiz data
   useEffect(() => {
     if (existingQuiz) {
+      console.log("Carregando quiz existente:", JSON.stringify(existingQuiz, null, 2));
       setQuizData({
         title: existingQuiz.title,
         description: existingQuiz.description || "",
-        structure: existingQuiz.structure || {
+        structure: existingQuiz.structure ? existingQuiz.structure : {
           pages: [{
             id: Date.now(),
             title: "Página 1",
@@ -116,6 +117,10 @@ export default function QuizBuilder() {
           }
         },
         isPublished: existingQuiz.isPublished,
+      });
+      console.log("Dados carregados no estado:", {
+        title: existingQuiz.title,
+        structure: existingQuiz.structure
       });
     } else {
       // Initialize with default page structure for new quiz
