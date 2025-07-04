@@ -75,7 +75,7 @@ export default function QuizBuilder() {
     customHeadScript: ""
   });
 
-  const [activeTab, setActiveTab] = useState<"editor" | "preview" | "settings" | "design" | "analytics">("editor");
+  const [activeTab, setActiveTab] = useState<"editor" | "preview" | "settings" | "design">("editor");
 
   // Fetch quiz data if editing
   console.log("QUIZ BUILDER - Estados:", { isEditing, quizId, shouldFetch: !!isEditing && !!quizId });
@@ -361,7 +361,7 @@ export default function QuizBuilder() {
             { id: "preview", label: "Preview", icon: <Play className="w-4 h-4" /> },
             { id: "design", label: "Design", icon: <Palette className="w-4 h-4" /> },
             { id: "settings", label: "Configurações", icon: <Settings className="w-4 h-4" /> },
-            { id: "analytics", label: "Super Analytics", icon: <BarChart3 className="w-4 h-4" /> },
+
           ].map((tab) => (
             <button
               key={tab.id}
@@ -812,103 +812,10 @@ export default function QuizBuilder() {
           </div>
         )}
 
-        {activeTab === "analytics" && (
-          <div className="h-full overflow-y-auto p-6">
-            <div className="max-w-6xl mx-auto">
-              <SuperAnalyticsEmbed quizId={quizId} />
-            </div>
-          </div>
-        )}
+
       </div>
     </div>
   );
 }
 
-// Super Analytics Component Embedded
-function SuperAnalyticsEmbed({ quizId }: { quizId: string }) {
-  const { data: analytics, isLoading: analyticsLoading } = useQuery({
-    queryKey: ["/api/analytics", quizId],
-    queryFn: async () => {
-      const token = localStorage.getItem("accessToken");
-      const response = await fetch(`/api/analytics/${quizId}`, {
-        headers: {
-          "Authorization": `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-      });
-      
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-      
-      return response.json();
-    },
-    enabled: !!quizId,
-    retry: false,
-  });
 
-  if (analyticsLoading) {
-    return (
-      <div className="min-h-[400px] flex items-center justify-center">
-        <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full" />
-      </div>
-    );
-  }
-
-  // Check if we have real analytics data
-  const hasRealData = analytics?.quiz && analytics.analytics && analytics.analytics.length > 0;
-
-  if (!hasRealData) {
-    return (
-      <div className="space-y-6">
-        {/* Header */}
-        <div className="bg-white rounded-lg shadow border p-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900">Super Analytics</h1>
-              <p className="text-gray-600 mt-1">Análise detalhada do quiz</p>
-            </div>
-          </div>
-        </div>
-
-        {/* No Data Message */}
-        <Card>
-          <CardContent className="p-12 text-center">
-            <div className="flex flex-col items-center space-y-4">
-              <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center">
-                <BarChart3 className="w-8 h-8 text-gray-400" />
-              </div>
-              <h3 className="text-xl font-semibold text-gray-900">
-                Ainda não há dados registrados
-              </h3>
-              <p className="text-gray-600 max-w-md">
-                Os dados de analytics aparecerão aqui assim que o quiz começar a receber respostas.
-              </p>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
-
-  // If we have data, redirect to the standalone SuperAnalytics page
-  return (
-    <div className="space-y-6">
-      <div className="bg-white rounded-lg shadow border p-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900">Super Analytics</h1>
-            <p className="text-gray-600 mt-1">Dados de analytics disponíveis</p>
-          </div>
-          <Button 
-            onClick={() => window.open(`/super-analytics?quiz=${quizId}`, '_blank')}
-            className="flex items-center gap-2"
-          >
-            <BarChart3 className="w-4 h-4" />
-            Ver Analytics Completo
-          </Button>
-        </div>
-      </div>
-    </div>
-  );
-}
