@@ -125,6 +125,20 @@ export const insertQuizSchema = createInsertSchema(quizzes).omit({
   id: true,
   createdAt: true,
   updatedAt: true,
+}).extend({
+  structure: z.object({
+    pages: z.array(z.any()).optional(),
+    questions: z.array(z.any()).optional(),
+    settings: z.object({
+      theme: z.string().optional(),
+      showProgressBar: z.boolean().optional(),
+      collectEmail: z.boolean().optional(),
+      collectName: z.boolean().optional(),
+      collectPhone: z.boolean().optional(),
+      resultTitle: z.string().optional(),
+      resultDescription: z.string().optional(),
+    }).optional(),
+  }).optional(),
 });
 
 export const insertQuizResponseSchema = createInsertSchema(quizResponses).omit({

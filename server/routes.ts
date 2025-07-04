@@ -200,7 +200,42 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
-  // Analytics
+  // Analytics geral e por quiz
+  app.get("/api/analytics", authenticateToken, async (req, res) => {
+    try {
+      const userId = req.user!.id;
+      const { quizId } = req.query;
+
+      if (quizId) {
+        // Analytics específico de um quiz
+        const quiz = await storage.getQuiz(quizId as string);
+        if (!quiz) {
+          return res.status(404).json({ message: "Quiz not found" });
+        }
+        if (quiz.userId !== userId) {
+          return res.status(403).json({ message: "Access denied" });
+        }
+
+        const analytics = await storage.getQuizAnalytics(quizId as string);
+        res.json({ quiz, analytics });
+      } else {
+        // Analytics geral do usuário
+        const userQuizzes = await storage.getUserQuizzes(userId);
+        const dashboardStats = await storage.getDashboardStats(userId);
+        
+        res.json({
+          totalQuizzes: userQuizzes.length,
+          quizzes: userQuizzes,
+          stats: dashboardStats
+        });
+      }
+    } catch (error) {
+      console.error("Error fetching analytics:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  // Analytics por quiz (compatibilidade)
   app.get("/api/analytics/:quizId", authenticateToken, async (req, res) => {
     try {
       const quiz = await storage.getQuiz(req.params.quizId);
@@ -212,7 +247,7 @@ export function registerRoutes(app: Express): Server {
       }
 
       const analytics = await storage.getQuizAnalytics(req.params.quizId);
-      res.json(analytics);
+      res.json({ quiz, analytics });
     } catch (error) {
       console.error("Error fetching analytics:", error);
       res.status(500).json({ message: "Internal server error" });
@@ -365,28 +400,7 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
-  // Admin routes
-  app.get("/api/admin/users", authenticateToken, async (req, res) => {
-    // Check if user is admin
-    if (req.user!.role !== 'admin') {
-      return res.status(403).json({ message: 'Acesso negado. Apenas administradores.' });
-    }
-    try {
-      const users = await storage.getAllUsers();
-      res.json(users.map(u => ({
-        id: u.id,
-        email: u.email,
-        firstName: u.firstName,
-        lastName: u.lastName,
-        role: u.role,
-        plan: u.plan,
-        createdAt: u.createdAt
-      })));
-    } catch (error) {
-      console.error("Error fetching users:", error);
-      res.status(500).json({ message: "Internal server error" });
-    }
-  });
+
 
   app.put("/api/admin/users/:id/role", authenticateToken, async (req, res) => {
     // Check if user is admin

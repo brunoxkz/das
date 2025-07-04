@@ -36,8 +36,8 @@ export default function Dashboard() {
   });
 
   // Calcular estatísticas em tempo real
-  const quizzesList = Array.isArray(dashboardData?.quizzes) ? dashboardData.quizzes : [];
-  const responsesList = Array.isArray(dashboardData?.responses) ? dashboardData.responses : [];
+  const quizzesList = Array.isArray((dashboardData as any)?.quizzes) ? (dashboardData as any).quizzes : [];
+  const responsesList = Array.isArray((dashboardData as any)?.responses) ? (dashboardData as any).responses : [];
   
   const totalQuizzes = quizzesList.length;
   const totalLeads = responsesList.length;

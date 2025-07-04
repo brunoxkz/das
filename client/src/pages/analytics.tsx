@@ -23,15 +23,20 @@ export default function Analytics() {
   const { toast } = useToast();
   const { isAuthenticated, isLoading: authLoading } = useAuth();
 
-  const { data: stats, isLoading: statsLoading } = useQuery({
-    queryKey: ["/api/dashboard/stats"],
+  // Get quiz data from URL params  
+  const params = new URLSearchParams(window.location.search);
+  const selectedQuizId = params.get('quiz');
+
+  const { data: analyticsData, isLoading: analyticsLoading } = useQuery({
+    queryKey: selectedQuizId ? ["/api/analytics", { quizId: selectedQuizId }] : ["/api/analytics"],
+    enabled: isAuthenticated,
     retry: false,
   });
 
-  const { data: quizzes, isLoading: quizzesLoading } = useQuery({
-    queryKey: ["/api/quizzes"],
-    retry: false,
-  });
+  // Extract data from response
+  const stats = (analyticsData as any)?.stats || {};
+  const quizzes = (analyticsData as any)?.quizzes || [];
+  const selectedQuiz = (analyticsData as any)?.quiz;
 
   // Auth check
   useEffect(() => {
@@ -47,7 +52,7 @@ export default function Analytics() {
     }
   }, [isAuthenticated, authLoading, toast]);
 
-  if (authLoading || statsLoading || quizzesLoading) {
+  if (authLoading || analyticsLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full" />
