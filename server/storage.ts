@@ -1,5 +1,5 @@
 import {
-  users,
+  users as usersTable,
   quizzes,
   quizTemplates,
   quizResponses,
@@ -17,6 +17,7 @@ import {
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, and, sql, gte, lte } from "drizzle-orm";
+import crypto from "crypto";
 
 export interface IStorage {
   // User operations (required for Replit Auth)
@@ -24,28 +25,28 @@ export interface IStorage {
   upsertUser(user: UpsertUser): Promise<User>;
   updateUserStripeInfo(userId: string, stripeCustomerId: string, stripeSubscriptionId: string): Promise<User>;
   updateUserPlan(userId: string, plan: string, subscriptionStatus?: string): Promise<User>;
-  
+
   // Admin operations
   getAllUsers(): Promise<User[]>;
   updateUserRole(userId: string, role: string): Promise<User>;
   deleteUser(userId: string): Promise<void>;
-  
+
   // Quiz operations
   getUserQuizzes(userId: string): Promise<Quiz[]>;
   getQuiz(id: string): Promise<Quiz | undefined>;
   createQuiz(quiz: InsertQuiz): Promise<Quiz>;
   updateQuiz(id: string, updates: Partial<InsertQuiz>): Promise<Quiz>;
   deleteQuiz(id: string): Promise<void>;
-  
+
   // Quiz template operations
   getQuizTemplates(): Promise<QuizTemplate[]>;
   getQuizTemplate(id: number): Promise<QuizTemplate | undefined>;
   createQuizTemplate(template: InsertQuizTemplate): Promise<QuizTemplate>;
-  
+
   // Quiz response operations
   getQuizResponses(quizId: string): Promise<QuizResponse[]>;
   createQuizResponse(response: InsertQuizResponse): Promise<QuizResponse>;
-  
+
   // Analytics operations
   getQuizAnalytics(quizId: string, startDate?: Date, endDate?: Date): Promise<QuizAnalytics[]>;
   updateQuizAnalytics(quizId: string, analytics: InsertQuizAnalytics): Promise<void>;
@@ -55,21 +56,56 @@ export interface IStorage {
     totalViews: number;
     avgConversionRate: number;
   }>;
+
+    // JWT Auth methods
+  getUserByEmail(email: string): Promise<User | null>;
+  createUserWithPassword(userData: {
+    email: string;
+    password: string;
+    firstName: string;
+    lastName: string;
+  }): Promise<User>;
+  storeRefreshToken(userId: string, refreshToken: string): Promise<void>;
+  isValidRefreshToken(userId: string, refreshToken: string): Promise<boolean>;
+  invalidateRefreshTokens(userId: string): Promise<void>;
+}
+
+export interface User {
+  id: string;
+  email: string;
+  firstName: string;
+  lastName: string;
+  profileImageUrl?: string;
+  password?: string; // For JWT auth
+  stripeCustomerId?: string;
+  stripeSubscriptionId?: string;
+  plan: string;
+  role: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface UpsertUser {
+  id: string;
+  email: string;
+  firstName: string;
+  lastName: string;
+  profileImageUrl?: string;
 }
 
 export class DatabaseStorage implements IStorage {
   // User operations
   async getUser(id: string): Promise<User | undefined> {
-    const [user] = await db.select().from(users).where(eq(users.id, id));
+    const [user] = await db.select().from(usersTable).where(eq(usersTable.id, id));
     return user;
   }
 
   async upsertUser(userData: UpsertUser): Promise<User> {
     const [user] = await db
-      .insert(users)
+      .insert(usersTable)
       .values(userData)
       .onConflictDoUpdate({
-        target: users.id,
+        target: usersTable.id,
         set: {
           ...userData,
           updatedAt: new Date(),
@@ -81,13 +117,13 @@ export class DatabaseStorage implements IStorage {
 
   async updateUserStripeInfo(userId: string, stripeCustomerId: string, stripeSubscriptionId: string): Promise<User> {
     const [user] = await db
-      .update(users)
+      .update(usersTable)
       .set({ 
         stripeCustomerId, 
         stripeSubscriptionId,
         updatedAt: new Date()
       })
-      .where(eq(users.id, userId))
+      .where(eq(usersTable.id, userId))
       .returning();
     return user;
   }
@@ -97,38 +133,79 @@ export class DatabaseStorage implements IStorage {
       plan,
       updatedAt: new Date(),
     };
-    
+
     if (subscriptionStatus) {
       updateData.subscriptionStatus = subscriptionStatus;
     }
 
     const [user] = await db
-      .update(users)
+      .update(usersTable)
       .set(updateData)
-      .where(eq(users.id, userId))
+      .where(eq(usersTable.id, userId))
       .returning();
     return user;
   }
 
   // Admin operations
   async getAllUsers(): Promise<User[]> {
-    return await db.select().from(users).orderBy(users.createdAt);
+    return await db.select().from(usersTable).orderBy(usersTable.createdAt);
   }
 
   async updateUserRole(userId: string, role: string): Promise<User> {
     const [user] = await db
-      .update(users)
+      .update(usersTable)
       .set({
         role,
         updatedAt: new Date(),
       })
-      .where(eq(users.id, userId))
+      .where(eq(usersTable.id, userId))
       .returning();
     return user;
   }
 
-  async deleteUser(userId: string): Promise<void> {
-    await db.delete(users).where(eq(users.id, userId));
+  async deleteUser(id: string): Promise<void> {
+    await db.delete(usersTable).where(eq(usersTable.id, id));
+  }
+
+  // JWT Auth methods
+  async getUserByEmail(email: string): Promise<User | null> {
+    const rows = await db.select().from(usersTable).where(eq(usersTable.email, email));
+    return rows[0] || null;
+  }
+
+  async createUserWithPassword(userData: {
+    email: string;
+    password: string;
+    firstName: string;
+    lastName: string;
+  }): Promise<User> {
+    const newUser = {
+      id: crypto.randomUUID(),
+      ...userData,
+      plan: "free",
+      role: "user",
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+
+    await db.insert(usersTable).values(newUser).returning();
+    return newUser;
+  }
+
+  async storeRefreshToken(userId: string, refreshToken: string): Promise<void> {
+    // Store in a refresh_tokens table or add to users table
+    // For simplicity, we'll store in a simple in-memory cache
+    // In production, use Redis or database table
+    refreshTokenStore.set(userId, refreshToken);
+  }
+
+  async isValidRefreshToken(userId: string, refreshToken: string): Promise<boolean> {
+    const storedToken = refreshTokenStore.get(userId);
+    return storedToken === refreshToken;
+  }
+
+  async invalidateRefreshTokens(userId: string): Promise<void> {
+    refreshTokenStore.delete(userId);
   }
 
   // Quiz operations
@@ -277,4 +354,6 @@ export class DatabaseStorage implements IStorage {
   }
 }
 
+// Simple in-memory refresh token store (use Redis in production)
+const refreshTokenStore = new Map<string, string>();
 export const storage = new DatabaseStorage();
