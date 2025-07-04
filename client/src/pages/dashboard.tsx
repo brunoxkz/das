@@ -256,7 +256,7 @@ export default function Dashboard() {
           </Card>
         </Link>
 
-        <Link href="/super-analytics">
+        <Link href="/analytics">
           <Card className="cursor-pointer hover:shadow-lg transition-shadow">
             <CardContent className="p-4 md:p-6">
               <div className="flex items-center space-x-4">
