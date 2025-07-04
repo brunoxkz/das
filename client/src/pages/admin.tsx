@@ -68,11 +68,9 @@ export default function AdminPage() {
     queryKey: ['/api/admin/users'],
     queryFn: async () => {
       console.log("ADMIN - Buscando usuários...");
-      const response = await apiRequest('GET', '/api/admin/users');
-      console.log("ADMIN - Response status:", response.status);
-      const data = await response.json();
+      const data = await apiRequest('GET', '/api/admin/users');
       console.log("ADMIN - Users data:", data);
-      return data;
+      return Array.isArray(data) ? data : [];
     },
     enabled: user?.role === 'admin'
   });
