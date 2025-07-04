@@ -145,6 +145,11 @@ export function registerRoutes(app: Express): Server {
       }
 
       await storage.deleteQuiz(req.params.id);
+      
+      // Limpar caches do servidor
+      cache.invalidateUserCaches(req.user!.id);
+      cache.invalidateQuizCaches(req.params.id, req.user!.id);
+      
       res.json({ message: "Quiz deleted successfully" });
     } catch (error) {
       console.error("Error deleting quiz:", error);

@@ -53,6 +53,9 @@ export default function Quizzes() {
         title: "Quiz excluído",
         description: "O quiz foi excluído com sucesso.",
       });
+      // Limpar cache completamente e forçar nova busca
+      queryClient.removeQueries({ queryKey: ["/api/quizzes"] });
+      queryClient.removeQueries({ queryKey: ["/api/dashboard/stats"] });
       queryClient.invalidateQueries({ queryKey: ["/api/quizzes"] });
       queryClient.invalidateQueries({ queryKey: ["/api/dashboard/stats"] });
     },
