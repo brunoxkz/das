@@ -3,10 +3,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Plus,
   Trash2,
@@ -19,13 +17,11 @@ import {
   Hash,
   AlignLeft,
   Star,
-  CheckSquare,
   Image as ImageIcon,
   Minus,
   Sparkles,
   FileText,
   Heading1,
-  Heading2,
   Menu,
   ChevronLeft,
   ChevronRight
@@ -41,16 +37,8 @@ interface Element {
   required?: boolean;
   fieldId?: string;
   placeholder?: string;
-  min?: number;
-  max?: number;
-  transitionContent?: string;
-  transitionBackground?: string;
-  transitionDuration?: number;
-  redirectUrl?: string;
-  imageUrl?: string;
   fontSize?: string;
   textAlign?: "left" | "center" | "right";
-  color?: string;
 }
 
 interface QuizPage {
@@ -70,19 +58,17 @@ export function PageEditor({ pages, onPagesChange }: PageEditorProps) {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
   const elementTypes = [
-    { type: "heading" as const, label: "Título", icon: <Heading1 className="w-4 h-4" />, description: "Título grande" },
-    { type: "paragraph" as const, label: "Parágrafo", icon: <FileText className="w-4 h-4" />, description: "Texto descritivo" },
-    { type: "image" as const, label: "Imagem", icon: <ImageIcon className="w-4 h-4" />, description: "Imagem ou foto" },
-    { type: "divider" as const, label: "Divisória", icon: <Minus className="w-4 h-4" />, description: "Linha separadora" },
-    { type: "multiple_choice" as const, label: "Múltipla Escolha", icon: <MessageSquare className="w-4 h-4" />, description: "Pergunta com opções" },
-    { type: "text" as const, label: "Texto Curto", icon: <Type className="w-4 h-4" />, description: "Campo de texto" },
-    { type: "textarea" as const, label: "Texto Longo", icon: <AlignLeft className="w-4 h-4" />, description: "Área de texto" },
-    { type: "email" as const, label: "Email", icon: <Mail className="w-4 h-4" />, description: "Campo de email" },
-    { type: "phone" as const, label: "Telefone", icon: <Phone className="w-4 h-4" />, description: "Campo de telefone" },
-    { type: "number" as const, label: "Número", icon: <Hash className="w-4 h-4" />, description: "Campo numérico" },
-    { type: "date" as const, label: "Data", icon: <Calendar className="w-4 h-4" />, description: "Seletor de data" },
-    { type: "rating" as const, label: "Avaliação", icon: <Star className="w-4 h-4" />, description: "Escala de estrelas" },
-    { type: "animated_transition" as const, label: "Transição Animada", icon: <Sparkles className="w-4 h-4" />, description: "Tela de carregamento" }
+    { type: "heading" as const, label: "Título", icon: <Heading1 className="w-4 h-4" /> },
+    { type: "paragraph" as const, label: "Parágrafo", icon: <FileText className="w-4 h-4" /> },
+    { type: "image" as const, label: "Imagem", icon: <ImageIcon className="w-4 h-4" /> },
+    { type: "divider" as const, label: "Divisória", icon: <Minus className="w-4 h-4" /> },
+    { type: "multiple_choice" as const, label: "Múltipla Escolha", icon: <MessageSquare className="w-4 h-4" /> },
+    { type: "text" as const, label: "Texto", icon: <Type className="w-4 h-4" /> },
+    { type: "email" as const, label: "Email", icon: <Mail className="w-4 h-4" /> },
+    { type: "phone" as const, label: "Telefone", icon: <Phone className="w-4 h-4" /> },
+    { type: "number" as const, label: "Número", icon: <Hash className="w-4 h-4" /> },
+    { type: "rating" as const, label: "Avaliação", icon: <Star className="w-4 h-4" /> },
+    { type: "animated_transition" as const, label: "Transição", icon: <Sparkles className="w-4 h-4" /> }
   ];
 
   const addPage = () => {
@@ -116,16 +102,14 @@ export function PageEditor({ pages, onPagesChange }: PageEditorProps) {
     const newElement: Element = {
       id: Date.now(),
       type,
-      content: getDefaultContent(type),
-      question: isQuestionType(type) ? "Nova pergunta" : undefined,
-      description: "",
+      content: type === "heading" ? "Novo Título" : type === "paragraph" ? "Novo parágrafo" : "",
+      question: ["multiple_choice", "text", "email", "phone", "number", "rating"].includes(type) ? "Nova pergunta" : undefined,
       options: type === "multiple_choice" ? ["Opção 1", "Opção 2"] : undefined,
-      required: isQuestionType(type),
-      fieldId: isQuestionType(type) ? `campo_${Date.now()}` : undefined,
-      placeholder: getDefaultPlaceholder(type),
-      fontSize: type === "heading" ? "2xl" : "base",
-      textAlign: "left",
-      color: "#000000"
+      required: ["multiple_choice", "text", "email", "phone", "number", "rating"].includes(type),
+      fieldId: ["multiple_choice", "text", "email", "phone", "number", "rating"].includes(type) ? `campo_${Date.now()}` : undefined,
+      placeholder: type === "email" ? "seu@email.com" : type === "phone" ? "(11) 99999-9999" : "",
+      fontSize: type === "heading" ? "xl" : "base",
+      textAlign: "left"
     };
 
     const newPages = [...pages];
@@ -155,53 +139,88 @@ export function PageEditor({ pages, onPagesChange }: PageEditorProps) {
     setSelectedElement(null);
   };
 
-  const moveElement = (elementId: number, direction: "up" | "down") => {
-    const newPages = [...pages];
-    const elements = newPages[activePage].elements;
-    const index = elements.findIndex(el => el.id === elementId);
-    
-    if (direction === "up" && index > 0) {
-      [elements[index], elements[index - 1]] = [elements[index - 1], elements[index]];
-    } else if (direction === "down" && index < elements.length - 1) {
-      [elements[index], elements[index + 1]] = [elements[index + 1], elements[index]];
-    }
-    
-    onPagesChange(newPages);
-  };
-
-  const getDefaultContent = (type: Element["type"]): string => {
-    switch (type) {
-      case "heading": return "Título da Seção";
-      case "paragraph": return "Este é um parágrafo de exemplo. Você pode editar este texto.";
-      case "image": return "";
-      case "divider": return "";
-      default: return "";
-    }
-  };
-
-  const getDefaultPlaceholder = (type: Element["type"]): string => {
-    switch (type) {
-      case "email": return "seu@email.com";
-      case "phone": return "(11) 99999-9999";
-      case "text": return "Digite sua resposta";
-      case "textarea": return "Descreva em detalhes...";
-      case "number": return "0";
-      default: return "";
-    }
-  };
-
-  const isQuestionType = (type: Element["type"]): boolean => {
-    return ["multiple_choice", "text", "textarea", "email", "phone", "number", "date", "rating", "checkbox"].includes(type);
-  };
-
   const currentPage = pages[activePage];
   const selectedElementData = selectedElement 
     ? currentPage?.elements.find(el => el.id === selectedElement)
     : null;
 
+  function renderElementPreview(element: Element) {
+    switch (element.type) {
+      case "heading":
+        return (
+          <h2 className={`font-bold text-${element.fontSize || "xl"} text-${element.textAlign || "left"}`}>
+            {element.content || "Título"}
+          </h2>
+        );
+      case "paragraph":
+        return (
+          <p className={`text-${element.fontSize || "base"} text-${element.textAlign || "left"} text-gray-700`}>
+            {element.content || "Parágrafo de texto"}
+          </p>
+        );
+      case "image":
+        return (
+          <div className="w-full h-32 bg-gray-200 rounded border-2 border-dashed border-gray-300 flex items-center justify-center">
+            <ImageIcon className="w-8 h-8 text-gray-400" />
+            <span className="ml-2 text-sm text-gray-500">Imagem</span>
+          </div>
+        );
+      case "divider":
+        return <hr className="my-4 border-gray-300" />;
+      case "multiple_choice":
+        return (
+          <div className="space-y-2">
+            <label className="block text-sm font-medium text-gray-700">
+              {element.question || "Pergunta"}
+            </label>
+            <div className="space-y-2">
+              {(element.options || []).map((option, index) => (
+                <div key={index} className="flex items-center space-x-2">
+                  <input type="radio" name={`preview-${element.id}`} disabled />
+                  <span className="text-sm">{option}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        );
+      case "text":
+      case "email":
+      case "phone":
+      case "number":
+        return (
+          <div className="space-y-2">
+            <label className="block text-sm font-medium text-gray-700">
+              {element.question || "Pergunta"}
+            </label>
+            <input
+              type={element.type === "email" ? "email" : element.type === "number" ? "number" : "text"}
+              placeholder={element.placeholder}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md"
+              disabled
+            />
+          </div>
+        );
+      case "rating":
+        return (
+          <div className="space-y-2">
+            <label className="block text-sm font-medium text-gray-700">
+              {element.question || "Pergunta"}
+            </label>
+            <div className="flex space-x-1">
+              {[1, 2, 3, 4, 5].map((rating) => (
+                <Star key={rating} className="w-6 h-6 text-gray-300" />
+              ))}
+            </div>
+          </div>
+        );
+      default:
+        return <div className="text-sm text-gray-500">Elemento: {element.type}</div>;
+    }
+  }
+
   return (
     <div className="flex h-full">
-      {/* Sidebar esquerdo - Páginas e Elementos */}
+      {/* Sidebar esquerdo com funcionalidade de recolher */}
       <div className={`${sidebarCollapsed ? 'w-12' : 'w-80'} border-r bg-gray-50 transition-all duration-300 relative`}>
         {/* Botão de recolher/expandir */}
         <Button
@@ -215,73 +234,74 @@ export function PageEditor({ pages, onPagesChange }: PageEditorProps) {
 
         {!sidebarCollapsed && (
           <div className="p-4 space-y-4">
-        {/* Gerenciamento de Páginas */}
-        <div>
-          <div className="flex items-center justify-between mb-3">
-            <h3 className="font-semibold text-gray-900">Páginas</h3>
-            <Button size="sm" onClick={addPage}>
-              <Plus className="w-4 h-4 mr-1" />
-              Nova
-            </Button>
-          </div>
-          
-          <Tabs value={activePage.toString()} onValueChange={(value) => setActivePage(parseInt(value))}>
-            <TabsList className="grid w-full grid-cols-1 gap-1 h-auto p-1">
-              {pages.map((page, index) => (
-                <div key={page.id} className="flex items-center gap-2">
-                  <TabsTrigger value={index.toString()} className="flex-1 text-left">
-                    {page.title}
-                  </TabsTrigger>
-                  {pages.length > 1 && (
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      onClick={() => deletePage(index)}
-                      className="h-8 w-8 p-0"
-                    >
-                      <Trash2 className="w-3 h-3" />
-                    </Button>
-                  )}
-                </div>
-              ))}
-            </TabsList>
-          </Tabs>
-        </div>
+            {/* Gerenciamento de Páginas */}
+            <div>
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="font-semibold text-gray-900">Páginas</h3>
+                <Button size="sm" onClick={addPage}>
+                  <Plus className="w-4 h-4 mr-1" />
+                  Nova
+                </Button>
+              </div>
+              
+              <Tabs value={activePage.toString()} onValueChange={(value) => setActivePage(parseInt(value))}>
+                <TabsList className="grid w-full grid-cols-1 gap-1 h-auto p-1">
+                  {pages.map((page, index) => (
+                    <div key={page.id} className="flex items-center gap-2">
+                      <TabsTrigger value={index.toString()} className="flex-1 text-left">
+                        {page.title}
+                      </TabsTrigger>
+                      {pages.length > 1 && (
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => deletePage(index)}
+                          className="h-8 w-8 p-0"
+                        >
+                          <Trash2 className="w-3 h-3" />
+                        </Button>
+                      )}
+                    </div>
+                  ))}
+                </TabsList>
+              </Tabs>
+            </div>
 
-        {/* Título da Página Ativa */}
-        {currentPage && (
-          <div>
-            <Label htmlFor="page-title">Título da Página</Label>
-            <Input
-              id="page-title"
-              value={currentPage.title}
-              onChange={(e) => updatePageTitle(activePage, e.target.value)}
-              className="mt-1"
-            />
+            {/* Título da Página Ativa */}
+            {currentPage && (
+              <div>
+                <Label htmlFor="page-title">Título da Página</Label>
+                <Input
+                  id="page-title"
+                  value={currentPage.title}
+                  onChange={(e) => updatePageTitle(activePage, e.target.value)}
+                  className="mt-1"
+                />
+              </div>
+            )}
+
+            {/* Elementos Disponíveis */}
+            <div>
+              <h3 className="font-semibold text-gray-900 mb-3">Adicionar Elementos</h3>
+              <div className="grid grid-cols-1 gap-2">
+                {elementTypes.map((elementType) => (
+                  <Button
+                    key={elementType.type}
+                    variant="outline"
+                    size="sm"
+                    className="justify-start"
+                    onClick={() => addElement(elementType.type)}
+                  >
+                    {elementType.icon}
+                    <span className="ml-2">{elementType.label}</span>
+                  </Button>
+                ))}
+              </div>
+            </div>
           </div>
         )}
 
-        {/* Elementos Disponíveis */}
-        <div>
-          <h3 className="font-semibold text-gray-900 mb-3">Adicionar Elementos</h3>
-          <div className="grid grid-cols-1 gap-2">
-            {elementTypes.map((elementType) => (
-              <Button
-                key={elementType.type}
-                variant="outline"
-                size="sm"
-                className="justify-start"
-                onClick={() => addElement(elementType.type)}
-              >
-                {elementType.icon}
-                <span className="ml-2">{elementType.label}</span>
-              </Button>
-            ))}
-          </div>
-        </div>
-        )}
-
-        {/* Sidebar recolhido - mostrar apenas ícones */}
+        {/* Sidebar recolhido */}
         {sidebarCollapsed && (
           <div className="p-2 pt-12">
             <div className="space-y-2">
@@ -328,12 +348,6 @@ export function PageEditor({ pages, onPagesChange }: PageEditorProps) {
                     
                     {/* Controles do elemento */}
                     <div className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 flex gap-1">
-                      <Button size="sm" variant="ghost" onClick={() => moveElement(element.id, "up")}>
-                        ↑
-                      </Button>
-                      <Button size="sm" variant="ghost" onClick={() => moveElement(element.id, "down")}>
-                        ↓
-                      </Button>
                       <Button 
                         size="sm" 
                         variant="ghost" 
@@ -394,7 +408,7 @@ export function PageEditor({ pages, onPagesChange }: PageEditorProps) {
               </div>
             )}
 
-            {isQuestionType(selectedElementData.type) && (
+            {["multiple_choice", "text", "email", "phone", "number", "rating"].includes(selectedElementData.type) && (
               <>
                 <div>
                   <Label htmlFor="question-text">Pergunta</Label>
@@ -418,49 +432,6 @@ export function PageEditor({ pages, onPagesChange }: PageEditorProps) {
                 </div>
               </>
             )}
-
-            {/* Estilo */}
-            <div className="space-y-3">
-              <h4 className="font-medium text-sm">Estilo</h4>
-              
-              <div>
-                <Label htmlFor="text-align">Alinhamento</Label>
-                <Select
-                  value={selectedElementData.textAlign || "left"}
-                  onValueChange={(value: "left" | "center" | "right") => 
-                    updateElement(selectedElementData.id, { textAlign: value })
-                  }
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="left">Esquerda</SelectItem>
-                    <SelectItem value="center">Centro</SelectItem>
-                    <SelectItem value="right">Direita</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              
-              <div>
-                <Label htmlFor="font-size">Tamanho da Fonte</Label>
-                <Select
-                  value={selectedElementData.fontSize || "base"}
-                  onValueChange={(value) => updateElement(selectedElementData.id, { fontSize: value })}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="sm">Pequeno</SelectItem>
-                    <SelectItem value="base">Normal</SelectItem>
-                    <SelectItem value="lg">Grande</SelectItem>
-                    <SelectItem value="xl">Muito Grande</SelectItem>
-                    <SelectItem value="2xl">Gigante</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
           </div>
         ) : (
           <div className="flex items-center justify-center h-full text-gray-500">

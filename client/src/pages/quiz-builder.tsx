@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
-import { PageEditor } from "@/components/page-editor";
+import { PageEditor } from "@/components/page-editor-simple";
 import { QuizPreview } from "@/components/quiz-preview";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
