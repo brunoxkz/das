@@ -140,11 +140,8 @@ export function Sidebar() {
               <img 
                 src="https://vendzz.com.br/wp-content/uploads/2024/12/logo-vendzz.png" 
                 alt="Vendzz" 
-                className="w-8 h-8 object-contain"
+                className="w-12 h-12 object-contain"
               />
-              <span className="text-xl font-bold bg-gradient-to-r from-green-600 to-green-500 bg-clip-text text-transparent">
-                Vendzz
-              </span>
             </div>
           )}
           <Button

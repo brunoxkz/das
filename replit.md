@@ -232,6 +232,13 @@ Changelog:
   * Fixed dashboard statistics not updating after quiz operations by invalidating dashboard cache
   * Eliminated ghost quizzes appearing after deletion - all cache layers now properly synchronized
   * Quiz count and statistics now update immediately in both "Meus Quizzes" and Dashboard pages
+- July 04, 2025. COMPLETE REBRANDING TO VENDZZ - Finalized brand transition from QuizFlow/QuizMaster:
+  * Replaced all QuizFlow/QuizMaster text references with Vendzz logo image (https://vendzz.com.br/wp-content/uploads/2024/12/logo-vendzz.png)
+  * Increased logo sizes throughout application: sidebar (12x12), login (10 height), landing (8 height, 6 height)
+  * Removed text branding from sidebar header - now logo-only for cleaner appearance
+  * Updated navbar, sidebar, landing page, and login page with official Vendzz logo
+  * Fixed react-router-dom import error by changing to wouter for consistent routing
+  * All user-facing branding now consistently displays Vendzz logo instead of text
 ```
 
 ## User Preferences

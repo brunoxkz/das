@@ -156,7 +156,11 @@ export default function Landing() {
             <div className="flex items-center">
               <div className="flex-shrink-0 flex items-center">
                 <Vote className="text-primary text-2xl mr-2" />
-                <span className="text-xl font-bold text-neutral-900">QuizFlow</span>
+                <img 
+                  src="https://vendzz.com.br/wp-content/uploads/2024/12/logo-vendzz.png" 
+                  alt="Vendzz" 
+                  className="h-8 object-contain"
+                />
               </div>
             </div>
 
@@ -561,7 +565,11 @@ export default function Landing() {
             <div>
               <div className="flex items-center mb-4">
                 <Vote className="text-primary text-2xl mr-2" />
-                <span className="text-xl font-bold">QuizFlow</span>
+                <img 
+                  src="https://vendzz.com.br/wp-content/uploads/2024/12/logo-vendzz.png" 
+                  alt="Vendzz" 
+                  className="h-6 object-contain"
+                />
               </div>
               <p className="text-gray-400 mb-4">
                 A plataforma líder para criação de quiz funnels que convertem visitantes em leads qualificados.
@@ -612,7 +620,7 @@ export default function Landing() {
           </div>
 
           <div className="border-t border-gray-700 mt-12 pt-8 text-center text-gray-400">
-            <p>&copy; 2024 QuizFlow. Todos os direitos reservados.</p>
+            <p>&copy; 2024 Vendzz. Todos os direitos reservados.</p>
           </div>
         </div>
       </footer>

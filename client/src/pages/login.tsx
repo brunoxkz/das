@@ -76,7 +76,11 @@ export default function LoginPage() {
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
           <CardTitle className="text-2xl font-bold bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">
-            QuizMaster
+            <img 
+              src="https://vendzz.com.br/wp-content/uploads/2024/12/logo-vendzz.png" 
+              alt="Vendzz" 
+              className="h-10 object-contain"
+            />
           </CardTitle>
           <CardDescription>
             Entre na sua conta ou crie uma nova

@@ -15,11 +15,12 @@ import {
   Settings, 
   User,
   HandHelping,
-  ChevronDown
+  ChevronDown,
+  Search
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { Input } from "@/components/ui/input";
-import { Link } from "react-router-dom";
+import { Link } from "wouter";
 
 export default function Navbar() {
   const { user, logout } = useAuth();
