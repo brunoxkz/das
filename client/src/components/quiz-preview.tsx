@@ -191,71 +191,163 @@ export function QuizPreview({ quiz }: QuizPreviewProps) {
 
     return (
       <div 
-        className="fixed inset-0 flex items-center justify-center"
+        className="max-w-2xl mx-auto text-center min-h-[400px] flex flex-col justify-center"
         style={backgroundStyle}
       >
-        <div className="max-w-2xl mx-auto text-center p-8">
-          {/* Texto de transição */}
-          {textElement && (
-            <h2 
-              className={`text-2xl md:text-3xl font-bold mb-6`}
-              style={{ 
-                color: textElement.textColor || '#000000',
-                fontSize: textElement.fontSize === 'xs' ? '1rem' :
-                          textElement.fontSize === 'sm' ? '1.25rem' :
-                          textElement.fontSize === 'base' ? '1.5rem' :
-                          textElement.fontSize === 'lg' ? '2rem' :
-                          textElement.fontSize === 'xl' ? '2.5rem' : '3rem',
-                fontWeight: textElement.fontWeight || 'bold',
-                textAlign: textElement.textAlign || 'center'
-              }}
+        {/* Texto de transição */}
+        {textElement && textElement.content && (
+          <h2 
+            className="font-bold mb-6"
+            style={{ 
+              color: textElement.textColor || '#000000',
+              fontSize: textElement.fontSize === 'xs' ? '1rem' :
+                        textElement.fontSize === 'sm' ? '1.25rem' :
+                        textElement.fontSize === 'base' ? '1.5rem' :
+                        textElement.fontSize === 'lg' ? '2rem' :
+                        textElement.fontSize === 'xl' ? '2.5rem' : '3rem',
+              fontWeight: textElement.fontWeight || 'bold',
+              textAlign: textElement.textAlign || 'center'
+            }}
+          >
+            {textElement.content}
+          </h2>
+        )}
+
+        {/* Contador */}
+        {counterElement && (
+          <div className="mb-6">
+            <div 
+              className="text-4xl font-bold"
+              style={{ color: counterElement.color || '#000000' }}
             >
-              {textElement.content || 'Aguarde um momento...'}
-            </h2>
-          )}
-
-          {/* Contador */}
-          {counterElement && (
-            <div className="mb-6">
-              <div 
-                className="text-4xl font-bold"
-                style={{ color: counterElement.color || '#000000' }}
-              >
-                {counterElement.counterType === 'countdown' 
-                  ? `${counterElement.counterStartValue || 10}s` 
-                  : `${counterElement.chronometerHours || '00'}:${counterElement.chronometerMinutes || '00'}:${counterElement.chronometerSeconds || '00'}`
-                }
-              </div>
+              {counterElement.counterType === 'countdown' 
+                ? `${counterElement.counterStartValue || 10}s` 
+                : `${counterElement.chronometerHours || '00'}:${counterElement.chronometerMinutes || '00'}:${counterElement.chronometerSeconds || '00'}`
+              }
             </div>
-          )}
+          </div>
+        )}
 
-          {/* Loader */}
-          {loaderElement && (
-            <div className="mb-6 flex justify-center">
+        {/* Loader */}
+        {loaderElement && (
+          <div className="mb-6 flex justify-center">
+            {loaderElement.loaderType === 'spinner' && (
               <div 
                 className={`animate-spin rounded-full border-4 border-t-transparent ${
                   loaderElement.loaderSize === 'sm' ? 'w-8 h-8' :
                   loaderElement.loaderSize === 'lg' ? 'w-16 h-16' : 'w-12 h-12'
                 }`}
                 style={{ 
-                  borderColor: `${loaderElement.loaderColor || '#000000'} transparent transparent transparent`
+                  borderColor: `${loaderElement.loaderColor || '#10b981'} transparent transparent transparent`
                 }}
               />
-            </div>
-          )}
+            )}
+            
+            {loaderElement.loaderType === 'dots' && (
+              <div className="flex space-x-2">
+                {[0, 1, 2].map(i => (
+                  <div 
+                    key={i}
+                    className={`animate-bounce rounded-full ${
+                      loaderElement.loaderSize === 'sm' ? 'w-2 h-2' :
+                      loaderElement.loaderSize === 'lg' ? 'w-4 h-4' : 'w-3 h-3'
+                    }`}
+                    style={{ 
+                      backgroundColor: loaderElement.loaderColor || '#10b981',
+                      animationDelay: `${i * 0.1}s`
+                    }}
+                  />
+                ))}
+              </div>
+            )}
 
-          {/* Fallback se não tiver elementos */}
-          {!textElement && !counterElement && !loaderElement && (
-            <div>
-              <h2 className="text-2xl md:text-3xl font-bold text-gray-900 mb-4">
-                Página de Transição
-              </h2>
-              <p className="text-gray-600">
-                Aguarde um momento...
-              </p>
-            </div>
-          )}
-        </div>
+            {loaderElement.loaderType === 'bars' && (
+              <div className="flex space-x-1 items-end">
+                {[0, 1, 2, 3, 4].map(i => (
+                  <div 
+                    key={i}
+                    className={`animate-pulse ${
+                      loaderElement.loaderSize === 'sm' ? 'w-1 h-6' :
+                      loaderElement.loaderSize === 'lg' ? 'w-2 h-12' : 'w-1.5 h-8'
+                    }`}
+                    style={{ 
+                      backgroundColor: loaderElement.loaderColor || '#10b981',
+                      animationDelay: `${i * 0.1}s`
+                    }}
+                  />
+                ))}
+              </div>
+            )}
+
+            {loaderElement.loaderType === 'pulse' && (
+              <div 
+                className={`animate-pulse rounded-full ${
+                  loaderElement.loaderSize === 'sm' ? 'w-8 h-8' :
+                  loaderElement.loaderSize === 'lg' ? 'w-16 h-16' : 'w-12 h-12'
+                }`}
+                style={{ backgroundColor: loaderElement.loaderColor || '#10b981' }}
+              />
+            )}
+
+            {loaderElement.loaderType === 'ring' && (
+              <div 
+                className={`animate-spin rounded-full border-2 ${
+                  loaderElement.loaderSize === 'sm' ? 'w-8 h-8' :
+                  loaderElement.loaderSize === 'lg' ? 'w-16 h-16' : 'w-12 h-12'
+                }`}
+                style={{ 
+                  borderColor: `${loaderElement.loaderColor || '#10b981'}20`,
+                  borderTopColor: loaderElement.loaderColor || '#10b981'
+                }}
+              />
+            )}
+          </div>
+        )}
+
+        {/* Texto do loader alternado */}
+        {loaderElement && loaderElement.alternatingText1 && (
+          <div className="mb-4">
+            <p 
+              className="text-lg"
+              style={{ color: loaderElement.loaderColor || '#666666' }}
+            >
+              {loaderElement.alternatingText1}
+            </p>
+          </div>
+        )}
+
+        {/* Redirect com contador */}
+        {redirectElement && redirectElement.showRedirectCounter && (
+          <div className="mt-6">
+            <p className="text-sm text-gray-600">
+              Redirecionando em {redirectElement.redirectDelay || 5} segundos...
+            </p>
+          </div>
+        )}
+
+        {/* Fallback se não tiver elementos */}
+        {!textElement && !counterElement && !loaderElement && !redirectElement && (
+          <div>
+            <h2 className="text-2xl md:text-3xl font-bold text-gray-900 mb-4">
+              Página de Transição
+            </h2>
+            <p className="text-gray-600">
+              Configure elementos de transição no editor
+            </p>
+          </div>
+        )}
+
+        {/* Botão de pular (opcional) */}
+        {!redirectElement && (
+          <div className="mt-8">
+            <button 
+              onClick={handleNext}
+              className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors"
+            >
+              Continuar
+            </button>
+          </div>
+        )}
       </div>
     );
   };
