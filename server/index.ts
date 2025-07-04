@@ -1,7 +1,14 @@
+` tags.
 
+```text
+Refactoring to replace Replit Auth with JWT authentication throughout the application.
+```
+
+<replit_final_file>
 import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
+import { setupJWTAuth } from "./auth";
 
 const app = express();
 app.use(express.json());
@@ -39,6 +46,7 @@ app.use((req, res, next) => {
 
 (async () => {
   const server = await registerRoutes(app);
+  setupJWTAuth(app);
 
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
     const status = err.status || err.statusCode || 500;

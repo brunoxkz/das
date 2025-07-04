@@ -206,8 +206,60 @@ export class DatabaseStorage implements IStorage {
     return user;
   }
 
-  async deleteUser(id: string): Promise<void> {
-    await db.delete(usersTable).where(eq(usersTable.id, id));
+  async deleteUser(userId: string): Promise<void> {
+    await db.delete(usersTable).where(eq(usersTable.id, userId));
+  }
+
+  // JWT Auth implementations
+  async getUserByEmail(email: string): Promise<User | undefined> {
+    const users = await db.select().from(usersTable).where(eq(usersTable.email, email));
+    return users[0];
+  }
+
+  async createUserWithPassword(userData: { email: string; password: string; firstName: string; lastName: string }): Promise<User> {
+    const userId = crypto.randomUUID();
+    const user = {
+      id: userId,
+      email: userData.email,
+      password: userData.password,
+      firstName: userData.firstName,
+      lastName: userData.lastName,
+      role: "user" as const,
+      plan: "free" as const,
+    };
+
+    await db.insert(usersTable).values(user);
+    return user as User;
+  }
+
+  async storeRefreshToken(userId: string, refreshToken: string): Promise<void> {
+    await db.update(usersTable)
+      .set({ refreshToken })
+      .where(eq(usersTable.id, userId));
+  }
+
+  async isValidRefreshToken(userId: string, refreshToken: string): Promise<boolean> {
+    const users = await db.select().from(usersTable)
+      .where(and(eq(usersTable.id, userId), eq(usersTable.refreshToken, refreshToken)));
+    return users.length > 0;
+  }
+
+  async invalidateRefreshTokens(userId: string): Promise<void> {
+    await db.update(usersTable)
+      .set({ refreshToken: null })
+      .where(eq(usersTable.id, userId));
+  }
+
+  async getUserByRefreshToken(refreshToken: string): Promise<User | undefined> {
+    const users = await db.select().from(usersTable)
+      .where(eq(usersTable.refreshToken, refreshToken));
+    return users[0];
+  }
+
+  async clearRefreshTokens(userId: string): Promise<void> {
+    await db.update(usersTable)
+      .set({ refreshToken: null })
+      .where(eq(usersTable.id, userId));
   }
 
   // Quiz operations

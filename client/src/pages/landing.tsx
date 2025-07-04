@@ -159,7 +159,7 @@ export default function Landing() {
                 <span className="text-xl font-bold text-neutral-900">QuizFlow</span>
               </div>
             </div>
-            
+
             <div className="hidden md:block">
               <div className="ml-10 flex items-baseline space-x-8">
                 <a href="#features" className="text-gray-600 hover:text-primary transition-colors">Recursos</a>
@@ -168,7 +168,7 @@ export default function Landing() {
                 <a href="#contact" className="text-gray-600 hover:text-primary transition-colors">Contato</a>
               </div>
             </div>
-            
+
             <div className="flex items-center space-x-4">
               <Button variant="ghost" size="sm">
                 <Globe className="w-4 h-4 mr-1" />
@@ -227,7 +227,7 @@ export default function Landing() {
                 </span>
               </div>
             </div>
-            
+
             <div className="relative">
               <Card className="transform rotate-3 hover:rotate-0 transition-transform duration-300 shadow-2xl">
                 <CardContent className="p-6">
@@ -239,7 +239,7 @@ export default function Landing() {
                       <div className="w-3 h-3 bg-green-400 rounded-full"></div>
                     </div>
                   </div>
-                  
+
                   <div className="grid grid-cols-2 gap-4 mb-6">
                     {stats.map((stat, index) => (
                       <div key={index} className={`p-4 rounded-lg ${index === 0 ? 'bg-blue-50' : 'bg-green-50'}`}>
@@ -250,7 +250,7 @@ export default function Landing() {
                       </div>
                     ))}
                   </div>
-                  
+
                   <div className="bg-gray-50 h-32 rounded-lg flex items-center justify-center">
                     <BarChart3 className="w-8 h-8 text-gray-400" />
                   </div>
@@ -272,7 +272,7 @@ export default function Landing() {
               Tudo que você precisa para criar quiz funnels profissionais e capturar leads qualificados
             </p>
           </div>
-          
+
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {features.map((feature, index) => (
               <Card key={index} className="card-hover">
@@ -300,7 +300,7 @@ export default function Landing() {
               Interface visual e intuitiva para criar quiz funnels que convertem
             </p>
           </div>
-          
+
           <Card className="bg-gray-50 shadow-lg">
             <CardContent className="p-8">
               <Card className="border border-gray-200 overflow-hidden">
@@ -324,7 +324,7 @@ export default function Landing() {
                     </div>
                   </div>
                 </div>
-                
+
                 <div className="grid grid-cols-1 lg:grid-cols-4 min-h-[500px]">
                   {/* Sidebar */}
                   <div className="lg:col-span-1 bg-gray-50 border-r border-gray-200 p-4">
@@ -347,7 +347,7 @@ export default function Landing() {
                           ))}
                         </div>
                       </div>
-                      
+
                       <div>
                         <h4 className="font-semibold text-gray-900 mb-2">Elementos</h4>
                         <div className="grid grid-cols-2 gap-2">
@@ -363,7 +363,7 @@ export default function Landing() {
                       </div>
                     </div>
                   </div>
-                  
+
                   {/* Main Editor */}
                   <div className="lg:col-span-3 p-6">
                     <div className="bg-white border-2 border-dashed border-gray-300 rounded-xl p-8 text-center">
@@ -373,7 +373,7 @@ export default function Landing() {
                         </div>
                         <h3 className="text-xl font-semibold mb-2 text-gray-900">Qual seu principal objetivo?</h3>
                         <p className="text-gray-600 mb-6">Selecione a opção que melhor descreve sua situação atual</p>
-                        
+
                         <div className="space-y-3">
                           {["Aumentar vendas online", "Capturar mais leads", "Melhorar engajamento"].map((option, index) => (
                             <Button
@@ -408,7 +408,7 @@ export default function Landing() {
               Escolha o plano ideal para suas necessidades
             </p>
           </div>
-          
+
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             {plans.map((plan, index) => (
               <Card key={index} className={`card-hover relative ${plan.popular ? 'ring-2 ring-primary shadow-lg' : ''}`}>
@@ -419,14 +419,14 @@ export default function Landing() {
                     </Badge>
                   </div>
                 )}
-                
+
                 <CardContent className="p-8">
                   <div className="text-center mb-8">
                     <h3 className="text-xl font-semibold mb-2 text-neutral-900">{plan.name}</h3>
                     <div className="text-4xl font-bold text-primary mb-2">{plan.price}</div>
                     <div className="text-gray-600">{plan.period}</div>
                   </div>
-                  
+
                   <ul className="space-y-4 mb-8">
                     {plan.features.map((feature, featureIndex) => (
                       <li key={featureIndex} className="flex items-center">
@@ -435,7 +435,7 @@ export default function Landing() {
                       </li>
                     ))}
                   </ul>
-                  
+
                   <Button 
                     className="w-full" 
                     variant={plan.buttonVariant}
@@ -462,7 +462,7 @@ export default function Landing() {
               Comece rapidamente com templates otimizados para conversão
             </p>
           </div>
-          
+
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {templates.map((template, index) => (
               <Card key={index} className="overflow-hidden card-hover">
@@ -492,7 +492,7 @@ export default function Landing() {
               </Card>
             ))}
           </div>
-          
+
           <div className="text-center mt-12">
             <Button size="lg" onClick={() => window.location.href = '/api/login'}>
               Ver Todos os Templates
@@ -572,7 +572,7 @@ export default function Landing() {
                 </Button>
               </div>
             </div>
-            
+
             {[
               {
                 title: "Produto",
@@ -601,7 +601,7 @@ export default function Landing() {
               </div>
             ))}
           </div>
-          
+
           <div className="border-t border-gray-700 mt-12 pt-8 text-center text-gray-400">
             <p>&copy; 2024 QuizFlow. Todos os direitos reservados.</p>
           </div>

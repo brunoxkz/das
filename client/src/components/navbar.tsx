@@ -21,8 +21,8 @@ import {
 import { useAuth } from "@/hooks/useAuth";
 import { Input } from "@/components/ui/input";
 
-export function Navbar() {
-  const { user } = useAuth();
+export default function Navbar() {
+  const { user, logout } = useAuth();
 
   const handleLogout = () => {
     window.location.href = "/api/logout";
@@ -99,7 +99,7 @@ export function Navbar() {
                 <ChevronDown className="w-4 h-4 text-gray-400" />
               </Button>
             </DropdownMenuTrigger>
-            
+
             <DropdownMenuContent align="end" className="w-56">
               <div className="px-2 py-1.5">
                 <div className="text-sm font-medium text-gray-900">
@@ -109,27 +109,27 @@ export function Navbar() {
                   {user?.email}
                 </div>
               </div>
-              
+
               <DropdownMenuSeparator />
-              
+
               <DropdownMenuItem>
                 <User className="w-4 h-4 mr-2" />
                 Perfil
               </DropdownMenuItem>
-              
+
               <DropdownMenuItem>
                 <Settings className="w-4 h-4 mr-2" />
                 Configurações
               </DropdownMenuItem>
-              
+
               <DropdownMenuItem>
                 <Crown className="w-4 h-4 mr-2" />
                 Planos e Cobrança
               </DropdownMenuItem>
-              
+
               <DropdownMenuSeparator />
-              
-              <DropdownMenuItem onClick={handleLogout} className="text-red-600">
+
+              <DropdownMenuItem onClick={logout} className="text-red-600">
                 <LogOut className="w-4 h-4 mr-2" />
                 Sair
               </DropdownMenuItem>

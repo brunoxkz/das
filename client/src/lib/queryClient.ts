@@ -8,19 +8,67 @@ async function throwIfResNotOk(res: Response) {
 }
 
 export async function apiRequest(
-  method: string,
   url: string,
-  data?: unknown | undefined,
-): Promise<Response> {
-  const res = await fetch(url, {
-    method,
-    headers: data ? { "Content-Type": "application/json" } : {},
-    body: data ? JSON.stringify(data) : undefined,
-    credentials: "include",
+  options: RequestInit = {}
+): Promise<any> {
+  const token = localStorage.getItem("accessToken");
+
+  const response = await fetch(url, {
+    headers: {
+      "Content-Type": "application/json",
+      ...(token && { "Authorization": `Bearer ${token}` }),
+      ...options.headers,
+    },
+    ...options,
   });
 
-  await throwIfResNotOk(res);
-  return res;
+  if (!response.ok) {
+    // Handle token refresh for expired tokens
+    if (response.status === 401 && token) {
+      const refreshToken = localStorage.getItem("refreshToken");
+
+      if (refreshToken) {
+        try {
+          const refreshResponse = await fetch("/api/auth/refresh", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ refreshToken }),
+          });
+
+          if (refreshResponse.ok) {
+            const tokens = await refreshResponse.json();
+            localStorage.setItem("accessToken", tokens.accessToken);
+            localStorage.setItem("refreshToken", tokens.refreshToken);
+
+            // Retry original request with new token
+            const retryResponse = await fetch(url, {
+              headers: {
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${tokens.accessToken}`,
+                ...options.headers,
+              },
+              ...options,
+            });
+
+            if (retryResponse.ok) {
+              return retryResponse.json();
+            }
+          }
+        } catch (error) {
+          console.error("Token refresh failed:", error);
+        }
+      }
+
+      // Clear invalid tokens and redirect to login
+      localStorage.removeItem("accessToken");
+      localStorage.removeItem("refreshToken");
+      window.location.href = "/login";
+    }
+
+    throw new Error(`${response.status}: ${response.statusText}`);
+  }
+
+  return response.json();
 }
 
 type UnauthorizedBehavior = "returnNull" | "throw";
