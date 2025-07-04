@@ -165,6 +165,7 @@ export default function QuizBuilder() {
       return;
     }
 
+    console.log("Salvando quiz com dados:", JSON.stringify(quizData, null, 2));
     saveMutation.mutate(quizData);
   };
 

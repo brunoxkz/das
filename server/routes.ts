@@ -92,22 +92,35 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { id } = req.params;
       const userId = req.user.claims.sub;
       
+      console.log("=== UPDATE QUIZ DEBUG ===");
+      console.log("Quiz ID:", id);
+      console.log("User ID:", userId);
+      console.log("Request body:", JSON.stringify(req.body, null, 2));
+      
       // Check if quiz exists and user owns it
       const existingQuiz = await storage.getQuiz(id);
       if (!existingQuiz) {
         return res.status(404).json({ message: "Quiz not found" });
       }
       
+      console.log("Existing quiz:", JSON.stringify(existingQuiz, null, 2));
+      
       if (existingQuiz.userId !== userId) {
         return res.status(403).json({ message: "Access denied" });
       }
       
       const updateData = insertQuizSchema.partial().parse(req.body);
+      console.log("Parsed update data:", JSON.stringify(updateData, null, 2));
+      
       const quiz = await storage.updateQuiz(id, updateData);
+      console.log("Updated quiz result:", JSON.stringify(quiz, null, 2));
+      console.log("=== END UPDATE QUIZ DEBUG ===");
+      
       res.json(quiz);
     } catch (error) {
       console.error("Error updating quiz:", error);
       if (error instanceof z.ZodError) {
+        console.error("Zod validation errors:", error.errors);
         return res.status(400).json({ message: "Invalid quiz data", errors: error.errors });
       }
       res.status(500).json({ message: "Failed to update quiz" });
