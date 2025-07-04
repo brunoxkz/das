@@ -553,6 +553,9 @@ export function QuizPreview({ quiz }: QuizPreviewProps) {
             </button>
           </div>
         );
+
+      case 'loading_question':
+        return <LoadingQuestionElement element={element} onAnswer={(answer) => handleAnswer(element.id, answer, element)} />;
       
       case 'spacer':
         const spacerSize = element.spacerSize || "medium";
@@ -1801,3 +1804,139 @@ export function QuizPreview({ quiz }: QuizPreviewProps) {
     </div>
   );
 }
+
+// Componente específico para elemento "Carregamento + Pergunta"
+const LoadingQuestionElement = ({ element, onAnswer }: { 
+  element: any, 
+  onAnswer: (answer: string) => void 
+}) => {
+  const [isLoading, setIsLoading] = useState(true);
+  const [progress, setProgress] = useState(0);
+  const [showPopup, setShowPopup] = useState(false);
+  const [loadingText, setLoadingText] = useState(element.loadingText || "Carregando...");
+
+  const loadingDuration = (element.loadingDuration || 3) * 1000; // converter para ms
+  const barColor = element.loadingBarColor || "#10B981";
+  const barWidth = element.loadingBarWidth || "medium";
+  const popupQuestion = element.popupQuestion || "Você gostaria de continuar?";
+  const yesText = element.popupYesText || "Sim";
+  const noText = element.popupNoText || "Não";
+
+  // Classes para largura da barra
+  const barWidthClasses = {
+    thin: "h-2",
+    medium: "h-4", 
+    thick: "h-6"
+  };
+
+  useEffect(() => {
+    let progressInterval: NodeJS.Timeout;
+    
+    if (isLoading) {
+      const incrementValue = 100 / (loadingDuration / 50); // atualizar a cada 50ms
+      
+      progressInterval = setInterval(() => {
+        setProgress(prev => {
+          const newProgress = prev + incrementValue;
+          
+          if (newProgress >= 100) {
+            setIsLoading(false);
+            setShowPopup(true);
+            return 100;
+          }
+          
+          return newProgress;
+        });
+      }, 50);
+    }
+
+    return () => {
+      if (progressInterval) {
+        clearInterval(progressInterval);
+      }
+    };
+  }, [isLoading, loadingDuration]);
+
+  const handlePopupAnswer = (answer: "sim" | "não") => {
+    setShowPopup(false);
+    onAnswer(answer);
+  };
+
+  return (
+    <div className="mb-6">
+      {/* Barra de Carregamento */}
+      {isLoading && (
+        <div className="text-center">
+          <div className="mb-4">
+            <p className="text-lg font-medium text-gray-700 mb-4">
+              {processVariables(loadingText)}
+            </p>
+            
+            <div className={`w-full bg-gray-200 rounded-full ${barWidthClasses[barWidth as keyof typeof barWidthClasses]} mx-auto max-w-md`}>
+              <div 
+                className={`${barWidthClasses[barWidth as keyof typeof barWidthClasses]} rounded-full transition-all duration-100 ease-out`}
+                style={{
+                  width: `${progress}%`,
+                  backgroundColor: barColor
+                }}
+              />
+            </div>
+            
+            <div className="mt-2 text-sm text-gray-500">
+              {Math.round(progress)}%
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Popup de Pergunta */}
+      {showPopup && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4 shadow-xl">
+            <div className="text-center">
+              <div className="mb-4">
+                <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <CheckCircle className="w-8 h-8 text-green-600" />
+                </div>
+                
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                  {processVariables(popupQuestion)}
+                </h3>
+              </div>
+              
+              <div className="flex gap-3 justify-center">
+                <Button
+                  onClick={() => handlePopupAnswer("sim")}
+                  className="px-6 py-2"
+                  style={{ backgroundColor: barColor }}
+                >
+                  {yesText}
+                </Button>
+                
+                <Button
+                  onClick={() => handlePopupAnswer("não")}
+                  variant="outline"
+                  className="px-6 py-2"
+                >
+                  {noText}
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Estado após resposta */}
+      {!isLoading && !showPopup && (
+        <div className="text-center">
+          <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <CheckCircle className="w-8 h-8 text-green-600" />
+          </div>
+          <p className="text-green-700 font-medium">
+            Resposta registrada!
+          </p>
+        </div>
+      )}
+    </div>
+  );
+};
