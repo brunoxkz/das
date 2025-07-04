@@ -27,12 +27,16 @@ import {
   Video,
   BarChart3,
   Volume2,
-  AlertCircle
+  AlertCircle,
+  Palette,
+  Loader,
+  ArrowRight,
+  Sparkles
 } from "lucide-react";
 
 interface Element {
   id: number;
-  type: "multiple_choice" | "text" | "rating" | "email" | "checkbox" | "date" | "phone" | "number" | "textarea" | "image_upload" | "animated_transition" | "heading" | "paragraph" | "image" | "divider" | "video" | "birth_date" | "height" | "current_weight" | "target_weight";
+  type: "multiple_choice" | "text" | "rating" | "email" | "checkbox" | "date" | "phone" | "number" | "textarea" | "image_upload" | "animated_transition" | "heading" | "paragraph" | "image" | "divider" | "video" | "birth_date" | "height" | "current_weight" | "target_weight" | "transition_background" | "transition_text" | "transition_counter" | "transition_loader" | "transition_redirect";
   content: string;
   question?: string;
   description?: string;
@@ -69,12 +73,32 @@ interface Element {
   showBMICalculation?: boolean; // Para peso
   minAge?: number;
   maxAge?: number;
+  
+  // Campos específicos para elementos de transição
+  backgroundType?: "solid" | "gradient" | "image";
+  gradientDirection?: "to-r" | "to-l" | "to-t" | "to-b" | "to-br" | "to-bl" | "to-tr" | "to-tl";
+  gradientFrom?: string;
+  gradientTo?: string;
+  backgroundImage?: string;
+  counterStartValue?: number;
+  counterEndValue?: number;
+  counterDuration?: number;
+  counterSuffix?: string;
+  loaderType?: "spinner" | "dots" | "bars" | "pulse" | "ring";
+  loaderColor?: string;
+  loaderSize?: "sm" | "md" | "lg";
+  redirectUrl?: string;
+  redirectDelay?: number;
+  showRedirectCounter?: boolean;
+  visualEffect?: "fade" | "slide" | "zoom" | "bounce" | "none";
+  effectDuration?: number;
 }
 
 interface QuizPage {
   id: number;
   title: string;
   elements: Element[];
+  isTransition?: boolean;
 }
 
 interface PageEditorProps {
@@ -220,6 +244,55 @@ export function PageEditorHorizontal({ pages, onPagesChange }: PageEditorProps) 
     }
   ];
 
+// Elementos específicos para páginas de transição
+const transitionElementCategories = [
+  {
+    name: "🎨 Fundo",
+    elements: [
+      {
+        type: "transition_background",
+        label: "Cor de Fundo",
+        icon: <Palette className="w-4 h-4" />,
+      },
+    ],
+  },
+  {
+    name: "📝 Conteúdo",
+    elements: [
+      {
+        type: "transition_text",
+        label: "Texto",
+        icon: <Type className="w-4 h-4" />,
+      },
+      {
+        type: "transition_counter",
+        label: "Contador",
+        icon: <Hash className="w-4 h-4" />,
+      },
+    ],
+  },
+  {
+    name: "⚡ Elementos Visuais",
+    elements: [
+      {
+        type: "transition_loader",
+        label: "Carregamento",
+        icon: <Loader className="w-4 h-4" />,
+      },
+    ],
+  },
+  {
+    name: "🔄 Navegação",
+    elements: [
+      {
+        type: "transition_redirect",
+        label: "Redirecionamento",
+        icon: <ArrowRight className="w-4 h-4" />,
+      },
+    ],
+  },
+];
+
   const currentPage = pages[activePage];
   const selectedElementData = selectedElement 
     ? currentPage?.elements.find(el => el.id === selectedElement)
@@ -230,6 +303,16 @@ export function PageEditorHorizontal({ pages, onPagesChange }: PageEditorProps) 
       id: Date.now(),
       title: `Página ${pages.length + 1}`,
       elements: []
+    };
+    onPagesChange([...pages, newPage]);
+  };
+
+  const addTransitionPage = () => {
+    const newPage: QuizPage = {
+      id: Date.now(),
+      title: `Transição ${pages.filter(p => p.isTransition).length + 1}`,
+      elements: [],
+      isTransition: true
     };
     onPagesChange([...pages, newPage]);
   };
@@ -685,6 +768,77 @@ export function PageEditorHorizontal({ pages, onPagesChange }: PageEditorProps) 
             </div>
           </div>
         );
+      case "transition_background":
+        return (
+          <div className="space-y-3 p-4 border-2 border-dashed border-purple-200 rounded-lg bg-gradient-to-r from-purple-50 to-pink-50">
+            <div className="flex items-center gap-2">
+              <Palette className="w-4 h-4 text-purple-600" />
+              <span className="font-medium text-purple-800">Fundo de Transição</span>
+            </div>
+            <div className="text-sm text-purple-600">
+              Tipo: {element.backgroundType || "Cor sólida"} • 
+              Cor: {element.textColor || "#8B5CF6"}
+            </div>
+          </div>
+        );
+      case "transition_text":
+        return (
+          <div className="space-y-3 p-4 border-2 border-dashed border-blue-200 rounded-lg bg-blue-50">
+            <div className="flex items-center gap-2">
+              <Type className="w-4 h-4 text-blue-600" />
+              <span className="font-medium text-blue-800">Texto de Transição</span>
+            </div>
+            <div className="text-lg font-medium text-center p-4 bg-white rounded border">
+              {element.content || "Preparando sua experiência..."}
+            </div>
+          </div>
+        );
+      case "transition_counter":
+        return (
+          <div className="space-y-3 p-4 border-2 border-dashed border-green-200 rounded-lg bg-green-50">
+            <div className="flex items-center gap-2">
+              <Hash className="w-4 h-4 text-green-600" />
+              <span className="font-medium text-green-800">Contador</span>
+            </div>
+            <div className="text-center">
+              <div className="text-3xl font-bold text-green-600">
+                {element.counterStartValue || 0} → {element.counterEndValue || 100}
+              </div>
+              <div className="text-sm text-green-600 mt-1">
+                {element.counterSuffix || "%"} • {element.counterDuration || 3}s
+              </div>
+            </div>
+          </div>
+        );
+      case "transition_loader":
+        return (
+          <div className="space-y-3 p-4 border-2 border-dashed border-orange-200 rounded-lg bg-orange-50">
+            <div className="flex items-center gap-2">
+              <Loader className="w-4 h-4 text-orange-600 animate-spin" />
+              <span className="font-medium text-orange-800">Carregamento</span>
+            </div>
+            <div className="flex justify-center p-4">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-600"></div>
+            </div>
+            <div className="text-sm text-orange-600 text-center">
+              Tipo: {element.loaderType || "spinner"} • Tamanho: {element.loaderSize || "md"}
+            </div>
+          </div>
+        );
+      case "transition_redirect":
+        return (
+          <div className="space-y-3 p-4 border-2 border-dashed border-red-200 rounded-lg bg-red-50">
+            <div className="flex items-center gap-2">
+              <ArrowRight className="w-4 h-4 text-red-600" />
+              <span className="font-medium text-red-800">Redirecionamento</span>
+            </div>
+            <div className="text-sm text-red-600">
+              URL: {element.redirectUrl || "https://exemplo.com"}<br/>
+              Delay: {element.redirectDelay || 5} segundos
+              {element.showRedirectCounter && " • Com contador"}
+            </div>
+          </div>
+        );
       default:
         return <div className="text-sm text-gray-500">Elemento: {element.type}</div>;
     }
@@ -714,7 +868,14 @@ export function PageEditorHorizontal({ pages, onPagesChange }: PageEditorProps) 
               >
                 <div className="flex items-center justify-between">
                   <div>
-                    <h4 className="font-medium text-sm">{page.title}</h4>
+                    <div className="flex items-center gap-2">
+                      <h4 className="font-medium text-sm">{page.title}</h4>
+                      {page.isTransition && (
+                        <span className="text-xs bg-gradient-to-r from-purple-100 to-pink-100 text-purple-700 px-2 py-1 rounded-full">
+                          ✨ Transição
+                        </span>
+                      )}
+                    </div>
                     <p className="text-xs text-gray-500">{page.elements.length} elementos</p>
                   </div>
                   <div className="flex gap-1">
@@ -736,15 +897,26 @@ export function PageEditorHorizontal({ pages, onPagesChange }: PageEditorProps) 
               </div>
             ))}
           </div>
-          <Button
-            onClick={addPage}
-            variant="outline"
-            size="sm"
-            className="w-full justify-center"
-          >
-            <Plus className="w-4 h-4 mr-2" />
-            Nova Página
-          </Button>
+          <div className="space-y-2">
+            <Button
+              onClick={addPage}
+              variant="outline"
+              size="sm"
+              className="w-full justify-center"
+            >
+              <Plus className="w-4 h-4 mr-2" />
+              Nova Página
+            </Button>
+            <Button
+              onClick={addTransitionPage}
+              variant="outline"
+              size="sm"
+              className="w-full justify-center bg-gradient-to-r from-purple-50 to-pink-50 border-purple-200 hover:border-purple-300"
+            >
+              <Sparkles className="w-4 h-4 mr-2" />
+              Nova Transição
+            </Button>
+          </div>
         </div>
       </div>
 
@@ -759,7 +931,7 @@ export function PageEditorHorizontal({ pages, onPagesChange }: PageEditorProps) 
         <div className="flex-1 overflow-y-auto min-h-0" style={{ maxHeight: 'calc(100vh - 73px)' }}>
           <div className="p-4">
             <div className="space-y-4 pb-4">
-              {elementCategories.map((category) => (
+              {(currentPage?.isTransition ? transitionElementCategories : elementCategories).map((category) => (
                 <div key={category.name}>
                   <h4 className="text-xs font-semibold text-gray-600 mb-2 px-2 sticky top-0 bg-white py-1 z-10">
                     {category.name}

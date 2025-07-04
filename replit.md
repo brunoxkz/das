@@ -150,6 +150,12 @@ Changelog:
   * Implemented automatic image upload for multiple choice options
   * Organized elements into visual categories (Conteúdo, Perguntas, Formulário, Mídia)
   * Added scrollable element panel with category headers for better organization
+- July 04, 2025. Transition pages feature:
+  * Added "+ Nova Transição" button to create special transition pages
+  * Created dedicated transition elements: background, text, counter, loader, redirect
+  * Transition pages have different element categories (Fundo, Conteúdo, Elementos Visuais, Navegação)
+  * Visual distinction for transition pages with ✨ badge in page list
+  * Dynamic element panel that switches based on page type (normal vs transition)
 ```
 
 ## User Preferences
