@@ -530,11 +530,7 @@ const gameElementCategories = [
       id: Date.now(),
       type,
       content: type === "heading" ? "Novo título" : type === "paragraph" ? "Novo parágrafo" : type === "continue_button" ? "Continuar" : "",
-      question: type === "multiple_choice" ? "Nova pergunta" : 
-                type === "birth_date" ? "Data de Nascimento" :
-                type === "height" ? "Qual sua altura?" :
-                type === "current_weight" ? "Qual seu peso atual?" :
-                type === "target_weight" ? "Qual seu peso desejado?" : undefined,
+      question: undefined,
       options: type === "multiple_choice" ? ["Opção 1", "Opção 2"] : undefined,
       required: false,
       fieldId: `campo_${Date.now()}`,
@@ -1162,6 +1158,64 @@ const gameElementCategories = [
           </div>
         );
 
+      case "continue_button":
+        const buttonText = element.buttonText || "Continuar";
+        const buttonAction = element.buttonAction || "next_page";
+        const buttonSize = element.buttonSize || "medium";
+        const buttonBorderRadius = element.buttonBorderRadius || "medium";
+        const buttonBgColor = element.buttonBackgroundColor || "#10B981";
+        const buttonTextColor = element.buttonTextColor || "#FFFFFF";
+        
+        const sizeClasses = {
+          small: "px-4 py-2 text-sm",
+          medium: "px-6 py-3 text-base",
+          large: "px-8 py-4 text-lg"
+        };
+        
+        const radiusClasses = {
+          none: "rounded-none",
+          small: "rounded-sm",
+          medium: "rounded-md",
+          large: "rounded-lg",
+          full: "rounded-full"
+        };
+        
+        return (
+          <div className="space-y-3 p-4 border-2 border-dashed border-blue-200 rounded-lg bg-blue-50">
+            <div className="flex items-center gap-2">
+              <ArrowRight className="w-4 h-4 text-blue-600" />
+              <span className="font-medium text-blue-800">Botão de Navegação</span>
+            </div>
+            
+            <div className="flex justify-center">
+              <button
+                style={{
+                  backgroundColor: buttonBgColor,
+                  color: buttonTextColor,
+                }}
+                className={`
+                  ${sizeClasses[buttonSize]} 
+                  ${radiusClasses[buttonBorderRadius]}
+                  font-medium shadow-lg transform transition-all duration-200
+                  hover:scale-105 hover:shadow-xl
+                  animate-pulse
+                  relative overflow-hidden
+                `}
+              >
+                <span className="relative z-10">{buttonText}</span>
+                <div className="absolute inset-0 bg-white opacity-20 animate-ping rounded-full"></div>
+              </button>
+            </div>
+            
+            <div className="text-xs text-blue-600 text-center">
+              Ação: {buttonAction === "next_page" ? "Próxima página" : "URL personalizada"}
+              {buttonAction === "url" && element.buttonUrl && (
+                <div className="text-gray-600 mt-1">→ {element.buttonUrl}</div>
+              )}
+            </div>
+          </div>
+        );
+
       case "transition_background":
         let backgroundStyle = {};
         if (element.backgroundType === "gradient") {
@@ -1643,47 +1697,7 @@ const gameElementCategories = [
           </div>
         );
 
-      case "continue_button":
-        const buttonText = element.buttonText || "Continuar";
-        const buttonBgColor = element.buttonBackgroundColor || "#10B981";
-        const buttonTextColor = element.buttonTextColor || "#FFFFFF";
-        const buttonRadius = element.buttonBorderRadius === "none" ? "0px" :
-                            element.buttonBorderRadius === "small" ? "4px" :
-                            element.buttonBorderRadius === "medium" ? "8px" :
-                            element.buttonBorderRadius === "large" ? "12px" :
-                            element.buttonBorderRadius === "full" ? "9999px" : "6px";
-        const buttonSize = element.buttonSize === "small" ? "px-4 py-2 text-sm" :
-                          element.buttonSize === "large" ? "px-8 py-4 text-lg" :
-                          "px-6 py-3 text-base";
-        const actionText = element.buttonAction === "url" ? 
-                          (element.buttonUrl ? `→ ${element.buttonUrl}` : "→ URL não definida") :
-                          "→ Próxima página";
-        
-        return (
-          <div className="space-y-3 p-4 border-2 border-dashed border-blue-200 rounded-lg bg-blue-50">
-            <div className="flex items-center gap-2">
-              <ArrowRight className="w-4 h-4 text-blue-600" />
-              <span className="font-medium text-blue-800">Botão Continuar</span>
-            </div>
-            
-            <div className="flex flex-col items-center space-y-3">
-              <button
-                className={`${buttonSize} font-semibold transition-all hover:scale-105 hover:shadow-lg`}
-                style={{
-                  backgroundColor: buttonBgColor,
-                  color: buttonTextColor,
-                  borderRadius: buttonRadius
-                }}
-              >
-                {buttonText}
-              </button>
-              
-              <div className="text-xs text-blue-600 text-center">
-                Ação: {actionText}
-              </div>
-            </div>
-          </div>
-        );
+
         
       default:
         return <div className="text-sm text-gray-500">Elemento: {element.type}</div>;

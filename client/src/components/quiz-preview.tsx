@@ -317,6 +317,143 @@ export function QuizPreview({ quiz }: QuizPreviewProps) {
       
       case 'divider':
         return <hr className="my-6 border-gray-300" />;
+
+      case 'birth_date':
+        return (
+          <div className="mb-6">
+            {element.question && (
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                {element.question}
+              </label>
+            )}
+            <input
+              type="date"
+              placeholder={element.placeholder || "dd/mm/aaaa"}
+              className="w-full px-4 py-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+            />
+          </div>
+        );
+
+      case 'height':
+        return (
+          <div className="mb-6">
+            {element.question && (
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                {element.question}
+              </label>
+            )}
+            <div className="flex items-center space-x-2">
+              <input
+                type="number"
+                min="100"
+                max="250"
+                placeholder={element.placeholder || "175"}
+                className="flex-1 px-4 py-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+              />
+              <span className="text-gray-600">{element.unit || "cm"}</span>
+            </div>
+          </div>
+        );
+
+      case 'current_weight':
+        return (
+          <div className="mb-6">
+            {element.question && (
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                {element.question}
+              </label>
+            )}
+            <div className="flex items-center space-x-2">
+              <input
+                type="number"
+                min="30"
+                max="300"
+                placeholder={element.placeholder || "70"}
+                className="flex-1 px-4 py-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+              />
+              <span className="text-gray-600">kg</span>
+            </div>
+          </div>
+        );
+
+      case 'target_weight':
+        return (
+          <div className="mb-6">
+            {element.question && (
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                {element.question}
+              </label>
+            )}
+            <div className="flex items-center space-x-2">
+              <input
+                type="number"
+                min="30"
+                max="300"
+                placeholder={element.placeholder || "65"}
+                className="flex-1 px-4 py-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+              />
+              <span className="text-gray-600">kg</span>
+            </div>
+          </div>
+        );
+
+      case 'continue_button':
+        const buttonText = element.buttonText || "Continuar";
+        const buttonSize = element.buttonSize || "medium";
+        const buttonBorderRadius = element.buttonBorderRadius || "medium";
+        const buttonBgColor = element.buttonBackgroundColor || "#10B981";
+        const buttonTextColor = element.buttonTextColor || "#FFFFFF";
+        const buttonHoverColor = element.buttonHoverColor || "#059669";
+        
+        const sizeClasses = {
+          small: "px-4 py-2 text-sm",
+          medium: "px-6 py-3 text-base",
+          large: "px-8 py-4 text-lg"
+        };
+        
+        const radiusClasses = {
+          none: "rounded-none",
+          small: "rounded-sm",
+          medium: "rounded-md",
+          large: "rounded-lg",
+          full: "rounded-full"
+        };
+        
+        return (
+          <div className="mb-6 flex justify-center">
+            <button
+              style={{
+                backgroundColor: buttonBgColor,
+                color: buttonTextColor,
+              }}
+              className={`
+                ${sizeClasses[buttonSize]} 
+                ${radiusClasses[buttonBorderRadius]}
+                font-medium shadow-lg transform transition-all duration-200
+                hover:scale-105 hover:shadow-xl
+                animate-pulse
+                relative overflow-hidden
+              `}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = buttonHoverColor;
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = buttonBgColor;
+              }}
+              onClick={() => {
+                if (element.buttonAction === "url" && element.buttonUrl) {
+                  window.open(element.buttonUrl, '_blank');
+                } else {
+                  // Próxima página
+                  handleNext();
+                }
+              }}
+            >
+              <span className="relative z-10">{buttonText}</span>
+              <div className="absolute inset-0 bg-white opacity-20 animate-ping rounded-full"></div>
+            </button>
+          </div>
+        );
       
       default:
         return null;
