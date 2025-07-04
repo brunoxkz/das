@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useLocation } from "wouter";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
@@ -26,6 +26,13 @@ export function Sidebar() {
   const [location] = useLocation();
   const { user } = useAuth();
   const userData = user as any;
+
+  // Auto-collapse when entering quiz builder
+  useEffect(() => {
+    if (location.includes('/quiz-builder')) {
+      setIsCollapsed(true);
+    }
+  }, [location]);
 
   const navItems = [
     {

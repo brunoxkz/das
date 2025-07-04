@@ -292,169 +292,11 @@ export default function QuizBuilder() {
       {/* Content */}
       <div className="flex-1 overflow-hidden">
         {activeTab === "editor" && (
-          <div className="h-full flex">
-            {/* Quiz Title and Description */}
-            <div className="w-80 bg-gray-50 border-r border-gray-200 p-6 overflow-y-auto">
-              <div className="space-y-6">
-                <div>
-                  <Label htmlFor="title">Título do Quiz</Label>
-                  <Input
-                    id="title"
-                    value={quizData.title || ""}
-                    onChange={(e) => setQuizData(prev => ({ ...prev, title: e.target.value }))}
-                    placeholder="Digite o título do quiz"
-                    className="mt-2"
-                  />
-                </div>
-                
-                <div>
-                  <Label htmlFor="description">Descrição</Label>
-                  <Textarea
-                    id="description"
-                    value={quizData.description || ""}
-                    onChange={(e) => setQuizData(prev => ({ ...prev, description: e.target.value }))}
-                    placeholder="Descreva o objetivo do quiz"
-                    className="mt-2"
-                    rows={3}
-                  />
-                </div>
-
-                <div>
-                  <h3 className="font-semibold text-gray-900 mb-2">Elementos</h3>
-                  <div className="grid grid-cols-2 gap-2">
-                    <Button 
-                      variant="outline" 
-                      size="sm" 
-                      className="justify-start"
-                      onClick={() => addQuestion("multiple_choice")}
-                    >
-                      <span className="mr-2">❓</span>
-                      Pergunta
-                    </Button>
-                    <Button 
-                      variant="outline" 
-                      size="sm" 
-                      className="justify-start"
-                      onClick={() => addQuestion("text")}
-                    >
-                      <span className="mr-2">📝</span>
-                      Texto
-                    </Button>
-                    <Button 
-                      variant="outline" 
-                      size="sm" 
-                      className="justify-start"
-                      onClick={() => addQuestion("email")}
-                    >
-                      <span className="mr-2">✉️</span>
-                      Email
-                    </Button>
-                    <Button 
-                      variant="outline" 
-                      size="sm" 
-                      className="justify-start"
-                      onClick={() => addQuestion("phone")}
-                    >
-                      <span className="mr-2">📞</span>
-                      Telefone
-                    </Button>
-                    <Button 
-                      variant="outline" 
-                      size="sm" 
-                      className="justify-start"
-                      onClick={() => addQuestion("textarea")}
-                    >
-                      <span className="mr-2">📄</span>
-                      Texto Longo
-                    </Button>
-                    <Button 
-                      variant="outline" 
-                      size="sm" 
-                      className="justify-start"
-                      onClick={() => addQuestion("number")}
-                    >
-                      <span className="mr-2">🔢</span>
-                      Número
-                    </Button>
-                    <Button 
-                      variant="outline" 
-                      size="sm" 
-                      className="justify-start"
-                      onClick={() => addQuestion("date")}
-                    >
-                      <span className="mr-2">📅</span>
-                      Data
-                    </Button>
-                    <Button 
-                      variant="outline" 
-                      size="sm" 
-                      className="justify-start"
-                      onClick={() => addQuestion("rating")}
-                    >
-                      <span className="mr-2">⭐</span>
-                      Avaliação
-                    </Button>
-                    <Button 
-                      variant="outline" 
-                      size="sm" 
-                      className="justify-start col-span-2"
-                      onClick={() => addQuestion("animated_transition")}
-                    >
-                      <span className="mr-2">✨</span>
-                      Transição Animada
-                    </Button>
-                  </div>
-                </div>
-
-                {/* Results Configuration */}
-                <div>
-                  <h3 className="font-semibold text-gray-900 mb-2">Resultado Personalizado</h3>
-                  <div className="space-y-3">
-                    <div>
-                      <Label htmlFor="result-title">Título do Resultado</Label>
-                      <Input
-                        id="result-title"
-                        placeholder="Parabéns {nome}! Seu resultado:"
-                        value={quizData.structure.settings.resultTitle || ""}
-                        onChange={(e) => handleSettingsChange({
-                          ...quizData.structure.settings,
-                          resultTitle: e.target.value
-                        })}
-                        className="mt-1"
-                      />
-                    </div>
-                    
-                    <div>
-                      <Label htmlFor="result-description">Descrição do Resultado</Label>
-                      <Textarea
-                        id="result-description"
-                        placeholder="Com base nas suas respostas, sua empresa {empresa} pode crescer {percentual}% usando nossa solução..."
-                        value={quizData.structure.settings.resultDescription || ""}
-                        onChange={(e) => handleSettingsChange({
-                          ...quizData.structure.settings,
-                          resultDescription: e.target.value
-                        })}
-                        className="mt-1"
-                        rows={3}
-                      />
-                    </div>
-                    
-                    <div className="text-xs text-gray-500">
-                      <p>Use {"{campo_id}"} para inserir respostas automaticamente.</p>
-                      <p>Exemplo: {"{nome}"}, {"{empresa}"}, {"{telefone}"}</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Page Editor */}
-            <div className="flex-1 overflow-y-auto">
-              <PageEditor
-                pages={quizData.structure.pages || []}
-                onPagesChange={handlePageChange}
-              />
-            </div>
+          <div className="h-full">
+            <PageEditor
+              pages={quizData.structure.pages || []}
+              onPagesChange={handlePageChange}
+            />
           </div>
         )}
 
@@ -467,6 +309,37 @@ export default function QuizBuilder() {
         {activeTab === "settings" && (
           <div className="h-full overflow-y-auto p-6">
             <div className="max-w-2xl mx-auto space-y-6">
+              {/* Quiz Info */}
+              <Card>
+                <CardHeader>
+                  <CardTitle>Informações do Quiz</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div>
+                    <Label htmlFor="title">Título do Quiz</Label>
+                    <Input
+                      id="title"
+                      value={quizData.title || ""}
+                      onChange={(e) => setQuizData(prev => ({ ...prev, title: e.target.value }))}
+                      placeholder="Digite o título do quiz"
+                      className="mt-2"
+                    />
+                  </div>
+                  
+                  <div>
+                    <Label htmlFor="description">Descrição</Label>
+                    <Textarea
+                      id="description"
+                      value={quizData.description || ""}
+                      onChange={(e) => setQuizData(prev => ({ ...prev, description: e.target.value }))}
+                      placeholder="Descreva o objetivo do quiz"
+                      className="mt-2"
+                      rows={3}
+                    />
+                  </div>
+                </CardContent>
+              </Card>
+
               <Card>
                 <CardHeader>
                   <CardTitle>Configurações do Quiz</CardTitle>
