@@ -77,15 +77,17 @@ export default function SuperAnalytics() {
   const [isDataReset, setIsDataReset] = useState(false);
   const queryClient = useQueryClient();
 
-  const { data: quiz, isLoading: quizLoading } = useQuery({
-    queryKey: ["/api/quizzes", quizId],
-    enabled: !!quizId,
+  const { data: quizzes } = useQuery({
+    queryKey: ["/api/quizzes"],
     retry: false,
   });
 
+  const quiz = quizzes?.find((q: any) => q.id === quizId);
+  const quizLoading = !quizzes;
+
   const { data: analytics, isLoading: analyticsLoading, refetch } = useQuery({
     queryKey: ["/api/analytics", quizId, timeRange],
-    enabled: !!quizId,
+    enabled: !!quizId && !!quiz,
     retry: false,
   });
 

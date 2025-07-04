@@ -794,11 +794,13 @@ export default function QuizBuilder() {
 
 // Super Analytics Component Embedded
 function SuperAnalyticsEmbed({ quizId }: { quizId: string }) {
-  const { data: quiz, isLoading: quizLoading } = useQuery({
-    queryKey: [`/api/quizzes/${quizId}`],
-    enabled: !!quizId,
+  const { data: quizzes } = useQuery({
+    queryKey: ["/api/quizzes"],
     retry: false,
   });
+
+  const quiz = quizzes?.find((q: any) => q.id === quizId);
+  const quizLoading = false;
 
   // Mock analytics data with real-time feel
   const mockAnalytics = {
