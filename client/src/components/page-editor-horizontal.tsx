@@ -41,7 +41,7 @@ import {
 
 interface Element {
   id: number;
-  type: "multiple_choice" | "text" | "rating" | "email" | "checkbox" | "date" | "phone" | "number" | "textarea" | "image_upload" | "animated_transition" | "heading" | "paragraph" | "image" | "divider" | "video" | "audio" | "birth_date" | "height" | "current_weight" | "target_weight" | "transition_background" | "transition_text" | "transition_counter" | "transition_loader" | "transition_redirect" | "spacer" | "game_wheel" | "game_scratch" | "game_color_pick" | "game_brick_break" | "game_memory_cards" | "game_slot_machine";
+  type: "multiple_choice" | "text" | "rating" | "email" | "checkbox" | "date" | "phone" | "number" | "textarea" | "image_upload" | "animated_transition" | "heading" | "paragraph" | "image" | "divider" | "video" | "audio" | "birth_date" | "height" | "current_weight" | "target_weight" | "transition_background" | "transition_text" | "transition_counter" | "transition_loader" | "transition_redirect" | "spacer" | "game_wheel" | "game_scratch" | "game_color_pick" | "game_brick_break" | "game_memory_cards" | "game_slot_machine" | "continue_button";
   content: string;
   question?: string;
   description?: string;
@@ -141,6 +141,16 @@ interface Element {
   audioTitle?: string;
   showWaveform?: boolean;
   autoPlay?: boolean;
+  
+  // Propriedades específicas para botão continuar
+  buttonText?: string;
+  buttonUrl?: string;
+  buttonAction?: "url" | "next_page";
+  buttonBackgroundColor?: string;
+  buttonTextColor?: string;
+  buttonHoverColor?: string;
+  buttonBorderRadius?: "none" | "small" | "medium" | "large" | "full";
+  buttonSize?: "small" | "medium" | "large";
 }
 
 interface QuizPage {
@@ -195,7 +205,8 @@ export function PageEditorHorizontal({ pages, onPagesChange }: PageEditorProps) 
       game_color_pick: "Escolha de Cor",
       game_brick_break: "Quebre o Muro",
       game_memory_cards: "Jogo da Memória",
-      game_slot_machine: "Caça-Níquel"
+      game_slot_machine: "Caça-Níquel",
+      continue_button: "Botão Continuar"
     };
     return typeNames[type] || type;
   };
@@ -303,6 +314,12 @@ export function PageEditorHorizontal({ pages, onPagesChange }: PageEditorProps) 
         { type: "image_upload", label: "Upload", icon: <Upload className="w-4 h-4" /> },
         { type: "video", label: "Vídeo", icon: <Video className="w-4 h-4" /> },
         { type: "audio", label: "Áudio", icon: <Volume2 className="w-4 h-4" /> },
+      ]
+    },
+    {
+      name: "🔄 Navegação",
+      elements: [
+        { type: "continue_button", label: "Botão", icon: <ArrowRight className="w-4 h-4" /> },
       ]
     }
   ];
@@ -1612,6 +1629,48 @@ const gameElementCategories = [
               
               <div className="text-xs text-red-600 text-center">
                 {reels} rolos • {symbols.length} símbolos • Combinação: {element.slotWinningCombination?.join(" ") || symbols.slice(0, reels).join(" ")}
+              </div>
+            </div>
+          </div>
+        );
+
+      case "continue_button":
+        const buttonText = element.buttonText || "Continuar";
+        const buttonBgColor = element.buttonBackgroundColor || "#10B981";
+        const buttonTextColor = element.buttonTextColor || "#FFFFFF";
+        const buttonRadius = element.buttonBorderRadius === "none" ? "0px" :
+                            element.buttonBorderRadius === "small" ? "4px" :
+                            element.buttonBorderRadius === "medium" ? "8px" :
+                            element.buttonBorderRadius === "large" ? "12px" :
+                            element.buttonBorderRadius === "full" ? "9999px" : "6px";
+        const buttonSize = element.buttonSize === "small" ? "px-4 py-2 text-sm" :
+                          element.buttonSize === "large" ? "px-8 py-4 text-lg" :
+                          "px-6 py-3 text-base";
+        const actionText = element.buttonAction === "url" ? 
+                          (element.buttonUrl ? `→ ${element.buttonUrl}` : "→ URL não definida") :
+                          "→ Próxima página";
+        
+        return (
+          <div className="space-y-3 p-4 border-2 border-dashed border-blue-200 rounded-lg bg-blue-50">
+            <div className="flex items-center gap-2">
+              <ArrowRight className="w-4 h-4 text-blue-600" />
+              <span className="font-medium text-blue-800">Botão Continuar</span>
+            </div>
+            
+            <div className="flex flex-col items-center space-y-3">
+              <button
+                className={`${buttonSize} font-semibold transition-all hover:scale-105 hover:shadow-lg`}
+                style={{
+                  backgroundColor: buttonBgColor,
+                  color: buttonTextColor,
+                  borderRadius: buttonRadius
+                }}
+              >
+                {buttonText}
+              </button>
+              
+              <div className="text-xs text-blue-600 text-center">
+                Ação: {actionText}
               </div>
             </div>
           </div>
@@ -4276,6 +4335,112 @@ const gameElementCategories = [
                       />
                       <Label htmlFor="autoPlay" className="text-sm">Reproduzir automaticamente</Label>
                     </div>
+                  </div>
+                </div>
+              )}
+
+              {selectedElementData.type === "continue_button" && (
+                <div className="space-y-4">
+                  <div className="bg-blue-50 p-3 rounded-lg">
+                    <h4 className="text-sm font-semibold text-blue-800 mb-2">🔄 Botão de Navegação</h4>
+                    <p className="text-xs text-blue-700">
+                      Configure um botão para navegar para a próxima página ou URL externa.
+                    </p>
+                  </div>
+
+                  <div>
+                    <Label>Texto do Botão</Label>
+                    <Input
+                      value={selectedElementData.buttonText || ""}
+                      onChange={(e) => updateElement(selectedElementData.id, { buttonText: e.target.value })}
+                      placeholder="Continuar"
+                      className="mt-1"
+                    />
+                  </div>
+
+                  <div>
+                    <Label>Ação do Botão</Label>
+                    <select
+                      value={selectedElementData.buttonAction || "next_page"}
+                      onChange={(e) => updateElement(selectedElementData.id, { buttonAction: e.target.value as "url" | "next_page" })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md mt-1"
+                    >
+                      <option value="next_page">Próxima página</option>
+                      <option value="url">URL personalizada</option>
+                    </select>
+                  </div>
+
+                  {selectedElementData.buttonAction === "url" && (
+                    <div>
+                      <Label>URL de Destino</Label>
+                      <Input
+                        value={selectedElementData.buttonUrl || ""}
+                        onChange={(e) => updateElement(selectedElementData.id, { buttonUrl: e.target.value })}
+                        placeholder="https://exemplo.com"
+                        className="mt-1"
+                      />
+                      <div className="text-xs text-gray-500 mt-1">
+                        URL completa incluindo https://
+                      </div>
+                    </div>
+                  )}
+
+                  <div>
+                    <Label>Tamanho do Botão</Label>
+                    <select
+                      value={selectedElementData.buttonSize || "medium"}
+                      onChange={(e) => updateElement(selectedElementData.id, { buttonSize: e.target.value as "small" | "medium" | "large" })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md mt-1"
+                    >
+                      <option value="small">Pequeno</option>
+                      <option value="medium">Médio</option>
+                      <option value="large">Grande</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <Label>Estilo da Borda</Label>
+                    <select
+                      value={selectedElementData.buttonBorderRadius || "medium"}
+                      onChange={(e) => updateElement(selectedElementData.id, { buttonBorderRadius: e.target.value as "none" | "small" | "medium" | "large" | "full" })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md mt-1"
+                    >
+                      <option value="none">Sem borda</option>
+                      <option value="small">Borda pequena</option>
+                      <option value="medium">Borda média</option>
+                      <option value="large">Borda grande</option>
+                      <option value="full">Borda redonda</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <Label>Cor de Fundo</Label>
+                    <Input
+                      type="color"
+                      value={selectedElementData.buttonBackgroundColor || "#10B981"}
+                      onChange={(e) => updateElement(selectedElementData.id, { buttonBackgroundColor: e.target.value })}
+                      className="mt-1 h-10"
+                    />
+                  </div>
+
+                  <div>
+                    <Label>Cor do Texto</Label>
+                    <Input
+                      type="color"
+                      value={selectedElementData.buttonTextColor || "#FFFFFF"}
+                      onChange={(e) => updateElement(selectedElementData.id, { buttonTextColor: e.target.value })}
+                      className="mt-1 h-10"
+                    />
+                  </div>
+
+                  <div>
+                    <Label>Cor ao Passar o Mouse</Label>
+                    <Input
+                      type="color"
+                      value={selectedElementData.buttonHoverColor || "#059669"}
+                      onChange={(e) => updateElement(selectedElementData.id, { buttonHoverColor: e.target.value })}
+                      className="mt-1 h-10"
+                    />
                   </div>
                 </div>
               )}

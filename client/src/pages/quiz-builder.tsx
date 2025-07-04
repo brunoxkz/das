@@ -21,7 +21,8 @@ import {
   Eye,
   Share,
   Code,
-  Globe
+  Globe,
+  Palette
 } from "lucide-react";
 import { Link } from "wouter";
 
@@ -271,6 +272,7 @@ export default function QuizBuilder() {
           {[
             { id: "editor", label: "Editor", icon: <Settings className="w-4 h-4" /> },
             { id: "preview", label: "Preview", icon: <Play className="w-4 h-4" /> },
+            { id: "design", label: "Design", icon: <Palette className="w-4 h-4" /> },
             { id: "settings", label: "Configurações", icon: <Settings className="w-4 h-4" /> },
           ].map((tab) => (
             <button
@@ -303,6 +305,213 @@ export default function QuizBuilder() {
         {activeTab === "preview" && (
           <div className="h-full overflow-y-auto bg-gray-50">
             <QuizPreview quiz={quizData} />
+          </div>
+        )}
+
+        {activeTab === "design" && (
+          <div className="h-full overflow-y-auto p-6">
+            <div className="max-w-2xl mx-auto space-y-6">
+              {/* Logo do Funil */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Globe className="w-5 h-5" />
+                    Logo do Funil
+                  </CardTitle>
+                  <p className="text-sm text-gray-600">Logo que aparece no topo de todas as páginas</p>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div>
+                    <Label htmlFor="logoUrl">URL da Logo</Label>
+                    <Input
+                      id="logoUrl"
+                      value={quizData.design?.logoUrl || ""}
+                      onChange={(e) => setQuizData(prev => ({ 
+                        ...prev, 
+                        design: { ...prev.design, logoUrl: e.target.value }
+                      }))}
+                      placeholder="https://exemplo.com/logo.png"
+                      className="mt-2"
+                    />
+                    <p className="text-xs text-gray-500 mt-1">Logo será redimensionada automaticamente para altura de 40px</p>
+                  </div>
+                  
+                  <div>
+                    <Label htmlFor="logoPosition">Posição da Logo</Label>
+                    <select
+                      id="logoPosition"
+                      value={quizData.design?.logoPosition || "center"}
+                      onChange={(e) => setQuizData(prev => ({ 
+                        ...prev, 
+                        design: { ...prev.design, logoPosition: e.target.value }
+                      }))}
+                      className="mt-2 w-full px-3 py-2 border border-gray-300 rounded-md"
+                    >
+                      <option value="left">Esquerda</option>
+                      <option value="center">Centro</option>
+                      <option value="right">Direita</option>
+                    </select>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Favicon */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Globe className="w-5 h-5" />
+                    Favicon
+                  </CardTitle>
+                  <p className="text-sm text-gray-600">Ícone que aparece na aba do navegador</p>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div>
+                    <Label htmlFor="faviconUrl">URL do Favicon</Label>
+                    <Input
+                      id="faviconUrl"
+                      value={quizData.design?.faviconUrl || ""}
+                      onChange={(e) => setQuizData(prev => ({ 
+                        ...prev, 
+                        design: { ...prev.design, faviconUrl: e.target.value }
+                      }))}
+                      placeholder="https://exemplo.com/favicon.ico"
+                      className="mt-2"
+                    />
+                    <p className="text-xs text-gray-500 mt-1">Formatos recomendados: .ico, .png (16x16 ou 32x32 pixels)</p>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Cores e Fundo */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Palette className="w-5 h-5" />
+                    Cores e Fundo
+                  </CardTitle>
+                  <p className="text-sm text-gray-600">Personalize as cores do seu funil</p>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div>
+                    <Label htmlFor="backgroundColor">Cor de Fundo</Label>
+                    <div className="flex items-center gap-3 mt-2">
+                      <input
+                        type="color"
+                        id="backgroundColor"
+                        value={quizData.design?.backgroundColor || "#f9fafb"}
+                        onChange={(e) => setQuizData(prev => ({ 
+                          ...prev, 
+                          design: { ...prev.design, backgroundColor: e.target.value }
+                        }))}
+                        className="w-12 h-12 border border-gray-300 rounded-md cursor-pointer"
+                      />
+                      <Input
+                        value={quizData.design?.backgroundColor || "#f9fafb"}
+                        onChange={(e) => setQuizData(prev => ({ 
+                          ...prev, 
+                          design: { ...prev.design, backgroundColor: e.target.value }
+                        }))}
+                        placeholder="#f9fafb"
+                        className="flex-1"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <Label htmlFor="primaryColor">Cor Primária (Botões)</Label>
+                    <div className="flex items-center gap-3 mt-2">
+                      <input
+                        type="color"
+                        id="primaryColor"
+                        value={quizData.design?.primaryColor || "#10b981"}
+                        onChange={(e) => setQuizData(prev => ({ 
+                          ...prev, 
+                          design: { ...prev.design, primaryColor: e.target.value }
+                        }))}
+                        className="w-12 h-12 border border-gray-300 rounded-md cursor-pointer"
+                      />
+                      <Input
+                        value={quizData.design?.primaryColor || "#10b981"}
+                        onChange={(e) => setQuizData(prev => ({ 
+                          ...prev, 
+                          design: { ...prev.design, primaryColor: e.target.value }
+                        }))}
+                        placeholder="#10b981"
+                        className="flex-1"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <Label htmlFor="progressBarColor">Cor da Barra de Progresso</Label>
+                    <div className="flex items-center gap-3 mt-2">
+                      <input
+                        type="color"
+                        id="progressBarColor"
+                        value={quizData.design?.progressBarColor || "#10b981"}
+                        onChange={(e) => setQuizData(prev => ({ 
+                          ...prev, 
+                          design: { ...prev.design, progressBarColor: e.target.value }
+                        }))}
+                        className="w-12 h-12 border border-gray-300 rounded-md cursor-pointer"
+                      />
+                      <Input
+                        value={quizData.design?.progressBarColor || "#10b981"}
+                        onChange={(e) => setQuizData(prev => ({ 
+                          ...prev, 
+                          design: { ...prev.design, progressBarColor: e.target.value }
+                        }))}
+                        placeholder="#10b981"
+                        className="flex-1"
+                      />
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Estilo da Barra de Progresso */}
+              <Card>
+                <CardHeader>
+                  <CardTitle>Estilo da Barra de Progresso</CardTitle>
+                  <p className="text-sm text-gray-600">Personalize a aparência da barra de progresso</p>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div>
+                    <Label htmlFor="progressBarStyle">Estilo</Label>
+                    <select
+                      id="progressBarStyle"
+                      value={quizData.design?.progressBarStyle || "rounded"}
+                      onChange={(e) => setQuizData(prev => ({ 
+                        ...prev, 
+                        design: { ...prev.design, progressBarStyle: e.target.value }
+                      }))}
+                      className="mt-2 w-full px-3 py-2 border border-gray-300 rounded-md"
+                    >
+                      <option value="rounded">Arredondada</option>
+                      <option value="square">Quadrada</option>
+                      <option value="thin">Fina</option>
+                      <option value="thick">Grossa</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <Label htmlFor="progressBarHeight">Altura (px)</Label>
+                    <Input
+                      type="number"
+                      id="progressBarHeight"
+                      value={quizData.design?.progressBarHeight || 8}
+                      onChange={(e) => setQuizData(prev => ({ 
+                        ...prev, 
+                        design: { ...prev.design, progressBarHeight: parseInt(e.target.value) }
+                      }))}
+                      min="4"
+                      max="20"
+                      className="mt-2"
+                    />
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
           </div>
         )}
 
