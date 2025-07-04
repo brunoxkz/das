@@ -156,6 +156,14 @@ Changelog:
   * Transition pages have different element categories (Fundo, Conteúdo, Elementos Visuais, Navegação)
   * Visual distinction for transition pages with ✨ badge in page list
   * Dynamic element panel that switches based on page type (normal vs transition)
+- July 04, 2025. Enhanced transition elements with full functionality:
+  * Background: RGB color picker, gradients with direction control, image backgrounds with live preview
+  * Text: Complete formatting options (size, weight, alignment, style, color) matching other elements
+  * Counter: Two types - countdown timer (seconds) and promotional chronometer (HH:MM:SS)
+  * Loader: Six spinner types (classic, dots, bars, pulse, ring, ripple) with colors and sizes
+  * Loader: Alternating text system with up to 3 customizable messages and durations
+  * Redirect: URL or next page options with customizable delay and optional countdown display
+  * All elements show live preview with applied properties in editor
 ```
 
 ## User Preferences

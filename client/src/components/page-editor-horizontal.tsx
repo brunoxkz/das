@@ -769,73 +769,228 @@ const transitionElementCategories = [
           </div>
         );
       case "transition_background":
+        let backgroundStyle = {};
+        if (element.backgroundType === "gradient") {
+          backgroundStyle = {
+            background: `linear-gradient(${element.gradientDirection || "to-r"}, ${element.gradientFrom || "#8B5CF6"}, ${element.gradientTo || "#EC4899"})`
+          };
+        } else if (element.backgroundType === "image" && element.backgroundImage) {
+          backgroundStyle = {
+            backgroundImage: `url(${element.backgroundImage})`,
+            backgroundSize: "cover",
+            backgroundPosition: "center"
+          };
+        } else {
+          backgroundStyle = {
+            backgroundColor: element.backgroundColor || "#8B5CF6"
+          };
+        }
+        
         return (
-          <div className="space-y-3 p-4 border-2 border-dashed border-purple-200 rounded-lg bg-gradient-to-r from-purple-50 to-pink-50">
-            <div className="flex items-center gap-2">
+          <div 
+            className="space-y-3 p-4 border-2 border-dashed border-purple-200 rounded-lg min-h-[120px] flex flex-col justify-center"
+            style={backgroundStyle}
+          >
+            <div className="flex items-center gap-2 bg-white/90 rounded px-2 py-1">
               <Palette className="w-4 h-4 text-purple-600" />
               <span className="font-medium text-purple-800">Fundo de Transição</span>
             </div>
-            <div className="text-sm text-purple-600">
-              Tipo: {element.backgroundType || "Cor sólida"} • 
-              Cor: {element.textColor || "#8B5CF6"}
+            <div className="text-sm text-white bg-black/50 rounded px-2 py-1">
+              Tipo: {element.backgroundType || "Cor sólida"}
             </div>
           </div>
         );
       case "transition_text":
+        const textStyle = {
+          fontSize: element.fontSize === "sm" ? "14px" : 
+                   element.fontSize === "base" ? "16px" :
+                   element.fontSize === "lg" ? "18px" :
+                   element.fontSize === "xl" ? "20px" :
+                   element.fontSize === "2xl" ? "24px" :
+                   element.fontSize === "3xl" ? "30px" :
+                   element.fontSize === "4xl" ? "36px" : "20px",
+          fontWeight: element.fontWeight || "semibold",
+          textAlign: (element.textAlign || "center") as "left" | "center" | "right",
+          fontStyle: element.fontStyle || "normal",
+          color: element.textColor || "#1F2937"
+        };
+        
         return (
           <div className="space-y-3 p-4 border-2 border-dashed border-blue-200 rounded-lg bg-blue-50">
             <div className="flex items-center gap-2">
               <Type className="w-4 h-4 text-blue-600" />
               <span className="font-medium text-blue-800">Texto de Transição</span>
             </div>
-            <div className="text-lg font-medium text-center p-4 bg-white rounded border">
+            <div 
+              className="p-4 bg-white rounded border"
+              style={textStyle}
+            >
               {element.content || "Preparando sua experiência..."}
             </div>
           </div>
         );
       case "transition_counter":
+        const counterColor = element.color || "#10B981";
+        const counterSize = element.fontSize === "xl" ? "text-xl" :
+                           element.fontSize === "2xl" ? "text-2xl" :
+                           element.fontSize === "3xl" ? "text-3xl" :
+                           element.fontSize === "4xl" ? "text-4xl" :
+                           element.fontSize === "5xl" ? "text-5xl" : "text-3xl";
+        
+        const isChronometer = (element as any).counterType === "chronometer";
+        
         return (
           <div className="space-y-3 p-4 border-2 border-dashed border-green-200 rounded-lg bg-green-50">
             <div className="flex items-center gap-2">
               <Hash className="w-4 h-4 text-green-600" />
-              <span className="font-medium text-green-800">Contador</span>
+              <span className="font-medium text-green-800">
+                {isChronometer ? "Cronômetro Promocional" : "Contador Regressivo"}
+              </span>
             </div>
             <div className="text-center">
-              <div className="text-3xl font-bold text-green-600">
-                {element.counterStartValue || 0} → {element.counterEndValue || 100}
-              </div>
-              <div className="text-sm text-green-600 mt-1">
-                {element.counterSuffix || "%"} • {element.counterDuration || 3}s
-              </div>
+              {isChronometer ? (
+                <div 
+                  className={`${counterSize} font-bold`}
+                  style={{ color: counterColor }}
+                >
+                  {String((element as any).chronometerHours || 0).padStart(2, '0')}:
+                  {String((element as any).chronometerMinutes || 15).padStart(2, '0')}:
+                  {String((element as any).chronometerSeconds || 30).padStart(2, '0')}
+                </div>
+              ) : (
+                <div 
+                  className={`${counterSize} font-bold`}
+                  style={{ color: counterColor }}
+                >
+                  {element.counterStartValue || 10}s
+                </div>
+              )}
             </div>
           </div>
         );
       case "transition_loader":
+        const loaderColor = element.loaderColor || "#F59E0B";
+        const loaderSize = element.loaderSize === "sm" ? "h-6 w-6" :
+                          element.loaderSize === "lg" ? "h-12 w-12" :
+                          element.loaderSize === "xl" ? "h-16 w-16" : "h-8 w-8";
+        
+        const renderSpinner = () => {
+          const loaderType = (element as any).loaderType || "spinner";
+          
+          switch (loaderType) {
+            case "dots":
+              return (
+                <div className="flex space-x-1">
+                  <div className={`${loaderSize} bg-current rounded-full animate-bounce`} style={{ color: loaderColor }}></div>
+                  <div className={`${loaderSize} bg-current rounded-full animate-bounce`} style={{ color: loaderColor, animationDelay: "0.1s" }}></div>
+                  <div className={`${loaderSize} bg-current rounded-full animate-bounce`} style={{ color: loaderColor, animationDelay: "0.2s" }}></div>
+                </div>
+              );
+            case "bars":
+              return (
+                <div className="flex space-x-1">
+                  <div className={`w-1 ${loaderSize} bg-current animate-pulse`} style={{ color: loaderColor }}></div>
+                  <div className={`w-1 ${loaderSize} bg-current animate-pulse`} style={{ color: loaderColor, animationDelay: "0.1s" }}></div>
+                  <div className={`w-1 ${loaderSize} bg-current animate-pulse`} style={{ color: loaderColor, animationDelay: "0.2s" }}></div>
+                </div>
+              );
+            case "pulse":
+              return (
+                <div className={`${loaderSize} bg-current rounded-full animate-ping`} style={{ color: loaderColor }}></div>
+              );
+            case "ring":
+              return (
+                <div className={`${loaderSize} border-4 border-gray-200 border-t-current rounded-full animate-spin`} style={{ borderTopColor: loaderColor }}></div>
+              );
+            case "ripple":
+              return (
+                <div className="relative inline-block">
+                  <div className={`${loaderSize} border-2 border-current rounded-full animate-ping absolute`} style={{ borderColor: loaderColor }}></div>
+                  <div className={`${loaderSize} border-2 border-current rounded-full animate-ping absolute`} style={{ borderColor: loaderColor, animationDelay: "0.5s" }}></div>
+                </div>
+              );
+            default:
+              return (
+                <div className={`${loaderSize} border-2 border-gray-200 border-t-current rounded-full animate-spin`} style={{ borderTopColor: loaderColor }}></div>
+              );
+          }
+        };
+        
+        const textColor = element.textColor || "#6B7280";
+        const textSize = element.fontSize === "sm" ? "text-sm" :
+                        element.fontSize === "lg" ? "text-lg" :
+                        element.fontSize === "xl" ? "text-xl" : "text-base";
+        
         return (
           <div className="space-y-3 p-4 border-2 border-dashed border-orange-200 rounded-lg bg-orange-50">
             <div className="flex items-center gap-2">
               <Loader className="w-4 h-4 text-orange-600 animate-spin" />
               <span className="font-medium text-orange-800">Carregamento</span>
             </div>
-            <div className="flex justify-center p-4">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-600"></div>
+            <div className="flex flex-col items-center space-y-3 p-4">
+              {renderSpinner()}
+              
+              {element.content && (
+                <div className={`${textSize} font-medium`} style={{ color: textColor }}>
+                  {element.content}
+                </div>
+              )}
+              
+              {((element as any).alternatingText1 || (element as any).alternatingText2) && (
+                <div className="text-center space-y-1">
+                  {(element as any).alternatingText1 && (
+                    <div className={`${textSize} animate-pulse`} style={{ color: textColor }}>
+                      {(element as any).alternatingText1} ({(element as any).alternatingDuration1 || 2}s)
+                    </div>
+                  )}
+                  {(element as any).alternatingText2 && (
+                    <div className={`${textSize} animate-pulse`} style={{ color: textColor, animationDelay: "1s" }}>
+                      {(element as any).alternatingText2} ({(element as any).alternatingDuration2 || 2}s)
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
-            <div className="text-sm text-orange-600 text-center">
-              Tipo: {element.loaderType || "spinner"} • Tamanho: {element.loaderSize || "md"}
+            <div className="text-xs text-orange-600 text-center">
+              Tipo: {(element as any).loaderType || "spinner"} • Tamanho: {element.loaderSize || "md"}
             </div>
           </div>
         );
       case "transition_redirect":
+        const redirectType = (element as any).redirectType || "url";
+        const redirectText = element.content || "Redirecionando em...";
+        const redirectTextColor = element.textColor || "#DC2626";
+        
         return (
           <div className="space-y-3 p-4 border-2 border-dashed border-red-200 rounded-lg bg-red-50">
             <div className="flex items-center gap-2">
               <ArrowRight className="w-4 h-4 text-red-600" />
               <span className="font-medium text-red-800">Redirecionamento</span>
             </div>
-            <div className="text-sm text-red-600">
-              URL: {element.redirectUrl || "https://exemplo.com"}<br/>
-              Delay: {element.redirectDelay || 5} segundos
-              {element.showRedirectCounter && " • Com contador"}
+            
+            <div className="text-center p-4 bg-white rounded border">
+              <div className="text-lg font-medium mb-2" style={{ color: redirectTextColor }}>
+                {redirectText}
+              </div>
+              
+              {element.showRedirectCounter && (
+                <div className="text-2xl font-bold text-red-600 mb-2">
+                  {element.redirectDelay || 5}
+                </div>
+              )}
+              
+              <div className="text-sm text-gray-600">
+                {redirectType === "url" ? (
+                  <>Para: {element.redirectUrl || "https://exemplo.com"}</>
+                ) : (
+                  <>Para: Próxima página</>
+                )}
+              </div>
+            </div>
+            
+            <div className="text-xs text-red-600 text-center">
+              Tipo: {redirectType === "url" ? "URL Externa" : "Próxima Página"} • 
+              Delay: {element.redirectDelay || 5}s
             </div>
           </div>
         );
@@ -2043,6 +2198,567 @@ const transitionElementCategories = [
                       className="mt-1"
                       placeholder="peso_meta"
                     />
+                  </div>
+                </div>
+              )}
+
+              {/* Propriedades para Fundo de Transição */}
+              {selectedElementData.type === "transition_background" && (
+                <div className="space-y-4">
+                  <div>
+                    <Label>Tipo de Fundo</Label>
+                    <select 
+                      className="w-full px-3 py-2 border rounded-md mt-1"
+                      value={selectedElementData.backgroundType || "solid"}
+                      onChange={(e) => updateElement(selectedElementData.id, { backgroundType: e.target.value })}
+                    >
+                      <option value="solid">Cor Sólida</option>
+                      <option value="gradient">Gradiente</option>
+                      <option value="image">Imagem</option>
+                    </select>
+                  </div>
+
+                  {selectedElementData.backgroundType === "solid" && (
+                    <div>
+                      <Label>Cor de Fundo (RGB)</Label>
+                      <div className="flex gap-2 mt-1">
+                        <Input
+                          type="color"
+                          value={selectedElementData.backgroundColor || "#8B5CF6"}
+                          onChange={(e) => updateElement(selectedElementData.id, { backgroundColor: e.target.value })}
+                          className="w-16 h-10 p-1"
+                        />
+                        <Input
+                          value={selectedElementData.backgroundColor || "#8B5CF6"}
+                          onChange={(e) => updateElement(selectedElementData.id, { backgroundColor: e.target.value })}
+                          placeholder="#8B5CF6"
+                          className="flex-1"
+                        />
+                      </div>
+                    </div>
+                  )}
+
+                  {selectedElementData.backgroundType === "gradient" && (
+                    <div className="space-y-3">
+                      <div>
+                        <Label>Direção do Gradiente</Label>
+                        <select 
+                          className="w-full px-3 py-2 border rounded-md mt-1"
+                          value={selectedElementData.gradientDirection || "to-r"}
+                          onChange={(e) => updateElement(selectedElementData.id, { gradientDirection: e.target.value })}
+                        >
+                          <option value="to-r">→ Esquerda para Direita</option>
+                          <option value="to-l">← Direita para Esquerda</option>
+                          <option value="to-t">↑ Baixo para Cima</option>
+                          <option value="to-b">↓ Cima para Baixo</option>
+                          <option value="to-br">↘ Diagonal (Baixo-Direita)</option>
+                          <option value="to-bl">↙ Diagonal (Baixo-Esquerda)</option>
+                        </select>
+                      </div>
+                      
+                      <div>
+                        <Label>Cor Inicial</Label>
+                        <div className="flex gap-2 mt-1">
+                          <Input
+                            type="color"
+                            value={selectedElementData.gradientFrom || "#8B5CF6"}
+                            onChange={(e) => updateElement(selectedElementData.id, { gradientFrom: e.target.value })}
+                            className="w-16 h-10 p-1"
+                          />
+                          <Input
+                            value={selectedElementData.gradientFrom || "#8B5CF6"}
+                            onChange={(e) => updateElement(selectedElementData.id, { gradientFrom: e.target.value })}
+                            placeholder="#8B5CF6"
+                            className="flex-1"
+                          />
+                        </div>
+                      </div>
+                      
+                      <div>
+                        <Label>Cor Final</Label>
+                        <div className="flex gap-2 mt-1">
+                          <Input
+                            type="color"
+                            value={selectedElementData.gradientTo || "#EC4899"}
+                            onChange={(e) => updateElement(selectedElementData.id, { gradientTo: e.target.value })}
+                            className="w-16 h-10 p-1"
+                          />
+                          <Input
+                            value={selectedElementData.gradientTo || "#EC4899"}
+                            onChange={(e) => updateElement(selectedElementData.id, { gradientTo: e.target.value })}
+                            placeholder="#EC4899"
+                            className="flex-1"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {selectedElementData.backgroundType === "image" && (
+                    <div>
+                      <Label>URL da Imagem</Label>
+                      <Input
+                        value={selectedElementData.backgroundImage || ""}
+                        onChange={(e) => updateElement(selectedElementData.id, { backgroundImage: e.target.value })}
+                        placeholder="https://exemplo.com/imagem.jpg"
+                        className="mt-1"
+                      />
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Propriedades para Texto de Transição */}
+              {selectedElementData.type === "transition_text" && (
+                <div className="space-y-4">
+                  <div>
+                    <Label>Texto</Label>
+                    <textarea
+                      className="w-full px-3 py-2 border rounded-md mt-1 resize-none"
+                      rows={3}
+                      value={selectedElementData.content || ""}
+                      onChange={(e) => updateElement(selectedElementData.id, { content: e.target.value })}
+                      placeholder="Preparando sua experiência..."
+                    />
+                  </div>
+
+                  <div className="border rounded-lg p-4 bg-gray-50">
+                    <h4 className="font-semibold text-sm mb-3">Formatação</h4>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <Label className="text-xs">Tamanho</Label>
+                        <select 
+                          className="w-full px-2 py-1 border rounded text-xs"
+                          value={selectedElementData.fontSize || "xl"}
+                          onChange={(e) => updateElement(selectedElementData.id, { fontSize: e.target.value })}
+                        >
+                          <option value="sm">Pequeno</option>
+                          <option value="base">Normal</option>
+                          <option value="lg">Grande</option>
+                          <option value="xl">Extra Grande</option>
+                          <option value="2xl">2X Grande</option>
+                          <option value="3xl">3X Grande</option>
+                          <option value="4xl">4X Grande</option>
+                        </select>
+                      </div>
+                      
+                      <div>
+                        <Label className="text-xs">Peso</Label>
+                        <select 
+                          className="w-full px-2 py-1 border rounded text-xs"
+                          value={selectedElementData.fontWeight || "semibold"}
+                          onChange={(e) => updateElement(selectedElementData.id, { fontWeight: e.target.value })}
+                        >
+                          <option value="normal">Normal</option>
+                          <option value="medium">Médio</option>
+                          <option value="semibold">Semi-negrito</option>
+                          <option value="bold">Negrito</option>
+                          <option value="extrabold">Extra Negrito</option>
+                        </select>
+                      </div>
+                      
+                      <div>
+                        <Label className="text-xs">Alinhamento</Label>
+                        <select 
+                          className="w-full px-2 py-1 border rounded text-xs"
+                          value={selectedElementData.textAlign || "center"}
+                          onChange={(e) => updateElement(selectedElementData.id, { textAlign: e.target.value })}
+                        >
+                          <option value="left">Esquerda</option>
+                          <option value="center">Centro</option>
+                          <option value="right">Direita</option>
+                        </select>
+                      </div>
+                      
+                      <div>
+                        <Label className="text-xs">Estilo</Label>
+                        <select 
+                          className="w-full px-2 py-1 border rounded text-xs"
+                          value={selectedElementData.fontStyle || "normal"}
+                          onChange={(e) => updateElement(selectedElementData.id, { fontStyle: e.target.value })}
+                        >
+                          <option value="normal">Normal</option>
+                          <option value="italic">Itálico</option>
+                        </select>
+                      </div>
+                    </div>
+
+                    <div className="mt-3">
+                      <Label className="text-xs">Cor do Texto</Label>
+                      <div className="flex gap-2 mt-1">
+                        <Input
+                          type="color"
+                          value={selectedElementData.textColor || "#1F2937"}
+                          onChange={(e) => updateElement(selectedElementData.id, { textColor: e.target.value })}
+                          className="w-16 h-8 p-1"
+                        />
+                        <Input
+                          value={selectedElementData.textColor || "#1F2937"}
+                          onChange={(e) => updateElement(selectedElementData.id, { textColor: e.target.value })}
+                          placeholder="#1F2937"
+                          className="flex-1 text-xs"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Propriedades para Contador */}
+              {selectedElementData.type === "transition_counter" && (
+                <div className="space-y-4">
+                  <div>
+                    <Label>Tipo de Contador</Label>
+                    <select 
+                      className="w-full px-3 py-2 border rounded-md mt-1"
+                      value={selectedElementData.counterType || "countdown"}
+                      onChange={(e) => updateElement(selectedElementData.id, { counterType: e.target.value })}
+                    >
+                      <option value="countdown">Contador Regressivo (segundos)</option>
+                      <option value="chronometer">Cronômetro Promocional</option>
+                    </select>
+                  </div>
+
+                  {selectedElementData.counterType === "countdown" && (
+                    <div className="space-y-3">
+                      <div>
+                        <Label>Valor Inicial (segundos)</Label>
+                        <Input
+                          type="number"
+                          min="0"
+                          value={selectedElementData.counterStartValue || "10"}
+                          onChange={(e) => updateElement(selectedElementData.id, { counterStartValue: parseInt(e.target.value) })}
+                          className="mt-1"
+                        />
+                      </div>
+                      
+                      <div>
+                        <Label>Valor Final</Label>
+                        <Input
+                          type="number"
+                          min="0"
+                          value={selectedElementData.counterEndValue || "0"}
+                          onChange={(e) => updateElement(selectedElementData.id, { counterEndValue: parseInt(e.target.value) })}
+                          className="mt-1"
+                        />
+                      </div>
+                    </div>
+                  )}
+
+                  {selectedElementData.counterType === "chronometer" && (
+                    <div className="space-y-3">
+                      <div>
+                        <Label>Horas</Label>
+                        <Input
+                          type="number"
+                          min="0"
+                          max="23"
+                          value={selectedElementData.chronometerHours || "0"}
+                          onChange={(e) => updateElement(selectedElementData.id, { chronometerHours: parseInt(e.target.value) })}
+                          className="mt-1"
+                        />
+                      </div>
+                      
+                      <div>
+                        <Label>Minutos</Label>
+                        <Input
+                          type="number"
+                          min="0"
+                          max="59"
+                          value={selectedElementData.chronometerMinutes || "15"}
+                          onChange={(e) => updateElement(selectedElementData.id, { chronometerMinutes: parseInt(e.target.value) })}
+                          className="mt-1"
+                        />
+                      </div>
+                      
+                      <div>
+                        <Label>Segundos</Label>
+                        <Input
+                          type="number"
+                          min="0"
+                          max="59"
+                          value={selectedElementData.chronometerSeconds || "30"}
+                          onChange={(e) => updateElement(selectedElementData.id, { chronometerSeconds: parseInt(e.target.value) })}
+                          className="mt-1"
+                        />
+                      </div>
+                    </div>
+                  )}
+
+                  <div>
+                    <Label>Cor do Contador</Label>
+                    <div className="flex gap-2 mt-1">
+                      <Input
+                        type="color"
+                        value={selectedElementData.color || "#10B981"}
+                        onChange={(e) => updateElement(selectedElementData.id, { color: e.target.value })}
+                        className="w-16 h-10 p-1"
+                      />
+                      <Input
+                        value={selectedElementData.color || "#10B981"}
+                        onChange={(e) => updateElement(selectedElementData.id, { color: e.target.value })}
+                        placeholder="#10B981"
+                        className="flex-1"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <Label>Tamanho do Contador</Label>
+                    <select 
+                      className="w-full px-3 py-2 border rounded-md mt-1"
+                      value={selectedElementData.fontSize || "3xl"}
+                      onChange={(e) => updateElement(selectedElementData.id, { fontSize: e.target.value })}
+                    >
+                      <option value="xl">Pequeno</option>
+                      <option value="2xl">Médio</option>
+                      <option value="3xl">Grande</option>
+                      <option value="4xl">Extra Grande</option>
+                      <option value="5xl">Gigante</option>
+                    </select>
+                  </div>
+                </div>
+              )}
+
+              {/* Propriedades para Carregamento */}
+              {selectedElementData.type === "transition_loader" && (
+                <div className="space-y-4">
+                  <div>
+                    <Label>Tipo de Spinner</Label>
+                    <select 
+                      className="w-full px-3 py-2 border rounded-md mt-1"
+                      value={selectedElementData.loaderType || "spinner"}
+                      onChange={(e) => updateElement(selectedElementData.id, { loaderType: e.target.value })}
+                    >
+                      <option value="spinner">Spinner Clássico</option>
+                      <option value="dots">Pontos Saltitantes</option>
+                      <option value="bars">Barras Animadas</option>
+                      <option value="pulse">Pulso</option>
+                      <option value="ring">Anel</option>
+                      <option value="ripple">Ondas</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <Label>Tamanho</Label>
+                    <select 
+                      className="w-full px-3 py-2 border rounded-md mt-1"
+                      value={selectedElementData.loaderSize || "md"}
+                      onChange={(e) => updateElement(selectedElementData.id, { loaderSize: e.target.value })}
+                    >
+                      <option value="sm">Pequeno</option>
+                      <option value="md">Médio</option>
+                      <option value="lg">Grande</option>
+                      <option value="xl">Extra Grande</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <Label>Cor do Spinner</Label>
+                    <div className="flex gap-2 mt-1">
+                      <Input
+                        type="color"
+                        value={selectedElementData.loaderColor || "#F59E0B"}
+                        onChange={(e) => updateElement(selectedElementData.id, { loaderColor: e.target.value })}
+                        className="w-16 h-10 p-1"
+                      />
+                      <Input
+                        value={selectedElementData.loaderColor || "#F59E0B"}
+                        onChange={(e) => updateElement(selectedElementData.id, { loaderColor: e.target.value })}
+                        placeholder="#F59E0B"
+                        className="flex-1"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <Label>Texto Principal</Label>
+                    <Input
+                      value={selectedElementData.content || ""}
+                      onChange={(e) => updateElement(selectedElementData.id, { content: e.target.value })}
+                      placeholder="Carregando..."
+                      className="mt-1"
+                    />
+                  </div>
+
+                  <div className="border rounded-lg p-3 bg-gray-50">
+                    <h4 className="font-semibold text-sm mb-3">Textos Alternativos (Piscantes)</h4>
+                    
+                    <div className="space-y-3">
+                      <div>
+                        <Label className="text-xs">Texto 1</Label>
+                        <div className="flex gap-2 mt-1">
+                          <Input
+                            value={selectedElementData.alternatingText1 || ""}
+                            onChange={(e) => updateElement(selectedElementData.id, { alternatingText1: e.target.value })}
+                            placeholder="Processando dados..."
+                            className="flex-1 text-xs"
+                          />
+                          <Input
+                            type="number"
+                            min="1"
+                            max="10"
+                            value={selectedElementData.alternatingDuration1 || "2"}
+                            onChange={(e) => updateElement(selectedElementData.id, { alternatingDuration1: parseInt(e.target.value) })}
+                            placeholder="2s"
+                            className="w-16 text-xs"
+                          />
+                        </div>
+                      </div>
+                      
+                      <div>
+                        <Label className="text-xs">Texto 2</Label>
+                        <div className="flex gap-2 mt-1">
+                          <Input
+                            value={selectedElementData.alternatingText2 || ""}
+                            onChange={(e) => updateElement(selectedElementData.id, { alternatingText2: e.target.value })}
+                            placeholder="Analisando respostas..."
+                            className="flex-1 text-xs"
+                          />
+                          <Input
+                            type="number"
+                            min="1"
+                            max="10"
+                            value={selectedElementData.alternatingDuration2 || "2"}
+                            onChange={(e) => updateElement(selectedElementData.id, { alternatingDuration2: parseInt(e.target.value) })}
+                            placeholder="2s"
+                            className="w-16 text-xs"
+                          />
+                        </div>
+                      </div>
+                      
+                      <div>
+                        <Label className="text-xs">Texto 3 (opcional)</Label>
+                        <div className="flex gap-2 mt-1">
+                          <Input
+                            value={selectedElementData.alternatingText3 || ""}
+                            onChange={(e) => updateElement(selectedElementData.id, { alternatingText3: e.target.value })}
+                            placeholder="Finalizando..."
+                            className="flex-1 text-xs"
+                          />
+                          <Input
+                            type="number"
+                            min="1"
+                            max="10"
+                            value={selectedElementData.alternatingDuration3 || "2"}
+                            onChange={(e) => updateElement(selectedElementData.id, { alternatingDuration3: parseInt(e.target.value) })}
+                            placeholder="2s"
+                            className="w-16 text-xs"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div>
+                    <Label>Tamanho do Texto</Label>
+                    <select 
+                      className="w-full px-3 py-2 border rounded-md mt-1"
+                      value={selectedElementData.fontSize || "base"}
+                      onChange={(e) => updateElement(selectedElementData.id, { fontSize: e.target.value })}
+                    >
+                      <option value="sm">Pequeno</option>
+                      <option value="base">Normal</option>
+                      <option value="lg">Grande</option>
+                      <option value="xl">Extra Grande</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <Label>Cor do Texto</Label>
+                    <div className="flex gap-2 mt-1">
+                      <Input
+                        type="color"
+                        value={selectedElementData.textColor || "#6B7280"}
+                        onChange={(e) => updateElement(selectedElementData.id, { textColor: e.target.value })}
+                        className="w-16 h-10 p-1"
+                      />
+                      <Input
+                        value={selectedElementData.textColor || "#6B7280"}
+                        onChange={(e) => updateElement(selectedElementData.id, { textColor: e.target.value })}
+                        placeholder="#6B7280"
+                        className="flex-1"
+                      />
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Propriedades para Redirecionamento */}
+              {selectedElementData.type === "transition_redirect" && (
+                <div className="space-y-4">
+                  <div>
+                    <Label>Tipo de Redirecionamento</Label>
+                    <select 
+                      className="w-full px-3 py-2 border rounded-md mt-1"
+                      value={selectedElementData.redirectType || "url"}
+                      onChange={(e) => updateElement(selectedElementData.id, { redirectType: e.target.value })}
+                    >
+                      <option value="url">URL Externa</option>
+                      <option value="next_page">Próxima Página</option>
+                    </select>
+                  </div>
+
+                  {selectedElementData.redirectType === "url" && (
+                    <div>
+                      <Label>URL de Destino</Label>
+                      <Input
+                        value={selectedElementData.redirectUrl || ""}
+                        onChange={(e) => updateElement(selectedElementData.id, { redirectUrl: e.target.value })}
+                        placeholder="https://exemplo.com"
+                        className="mt-1"
+                      />
+                    </div>
+                  )}
+
+                  <div>
+                    <Label>Tempo de Espera (segundos)</Label>
+                    <Input
+                      type="number"
+                      min="1"
+                      max="60"
+                      value={selectedElementData.redirectDelay || "5"}
+                      onChange={(e) => updateElement(selectedElementData.id, { redirectDelay: parseInt(e.target.value) })}
+                      className="mt-1"
+                    />
+                  </div>
+
+                  <div className="flex items-center space-x-2">
+                    <input
+                      type="checkbox"
+                      id="show-redirect-counter"
+                      checked={selectedElementData.showRedirectCounter || false}
+                      onChange={(e) => updateElement(selectedElementData.id, { showRedirectCounter: e.target.checked })}
+                    />
+                    <Label htmlFor="show-redirect-counter">Mostrar contador regressivo</Label>
+                  </div>
+
+                  <div>
+                    <Label>Texto do Redirecionamento</Label>
+                    <Input
+                      value={selectedElementData.content || ""}
+                      onChange={(e) => updateElement(selectedElementData.id, { content: e.target.value })}
+                      placeholder="Redirecionando em..."
+                      className="mt-1"
+                    />
+                  </div>
+
+                  <div>
+                    <Label>Cor do Texto</Label>
+                    <div className="flex gap-2 mt-1">
+                      <Input
+                        type="color"
+                        value={selectedElementData.textColor || "#DC2626"}
+                        onChange={(e) => updateElement(selectedElementData.id, { textColor: e.target.value })}
+                        className="w-16 h-10 p-1"
+                      />
+                      <Input
+                        value={selectedElementData.textColor || "#DC2626"}
+                        onChange={(e) => updateElement(selectedElementData.id, { textColor: e.target.value })}
+                        placeholder="#DC2626"
+                        className="flex-1"
+                      />
+                    </div>
                   </div>
                 </div>
               )}
