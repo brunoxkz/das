@@ -17,6 +17,7 @@ import LeadsPage from "@/pages/leads";
 import NotFoundPage from "@/pages/not-found";
 import TutoriaisPage from "@/pages/tutoriais";
 import PremiacoesPage from "@/pages/premiacoes";
+import QuizPublicPage from "@/pages/quiz-public";
 import { useAuth } from "@/hooks/useAuth-jwt";
 import { isUnauthorizedError } from "@/lib/authUtils";
 
@@ -34,7 +35,8 @@ function App() {
 
   // Public routes that don't require authentication
   const publicRoutes = ["/", "/login"];
-  const isPublicRoute = publicRoutes.includes(location);
+  const isQuizRoute = location.startsWith("/quiz/");
+  const isPublicRoute = publicRoutes.includes(location) || isQuizRoute;
 
   if (!isAuthenticated && !isPublicRoute) {
     return <LoginPage />;
@@ -46,6 +48,7 @@ function App() {
         {/* Public routes without sidebar */}
         <Route path="/" component={LandingPage} />
         <Route path="/login" component={LoginPage} />
+        <Route path="/quiz/:id" component={QuizPublicPage} />
         
         {/* Authenticated routes with sidebar */}
         <Route path="/dashboard">
