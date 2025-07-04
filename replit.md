@@ -224,6 +224,14 @@ Changelog:
   * All transition elements already implemented: background (gradients/images/colors), text (full formatting), counter (countdown/chronometer), loader (6 types with alternating text), redirect (URL/next page with delays)
   * Complete element coverage: Basic content (heading, paragraph, image, video, audio, divider, spacer), Questions (multiple choice, text, email, phone, number, rating, date, textarea, checkbox), Forms (birth_date, height, current_weight, target_weight, image_upload), Games (all 6 interactive games), Special (continue_button, loading_question, animated_transition), Transitions (all 5 transition types)
   * Every element defined in editor now has corresponding functional implementation in quiz preview with full feature parity
+- July 04, 2025. CACHE INVALIDATION FIXES - Resolved quiz deletion and dashboard update issues:
+  * Fixed React Query configuration issue preventing proper data fetching with JWT authentication
+  * Implemented comprehensive cache invalidation for quiz deletion - both frontend and backend
+  * Added removeQueries() calls to completely clear stale cache data before invalidation
+  * Enhanced server-side cache clearing in delete endpoint using cache.invalidateUserCaches() and cache.invalidateQuizCaches()
+  * Fixed dashboard statistics not updating after quiz operations by invalidating dashboard cache
+  * Eliminated ghost quizzes appearing after deletion - all cache layers now properly synchronized
+  * Quiz count and statistics now update immediately in both "Meus Quizzes" and Dashboard pages
 ```
 
 ## User Preferences
