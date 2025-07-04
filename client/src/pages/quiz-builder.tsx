@@ -877,42 +877,30 @@ function SuperAnalyticsEmbed({ quizId }: { quizId: string }) {
     );
   }
 
-  // Use analytics data if available, otherwise use sample data
-  const analyticsData = analytics?.quiz ? {
-    totalViews: analytics.analytics?.reduce((sum: number, a: any) => sum + (a.views || 0), 0) || 142,
-    totalCompletions: analytics.analytics?.reduce((sum: number, a: any) => sum + (a.completions || 0), 0) || 87,
-    totalDropOffs: analytics.analytics?.reduce((sum: number, a: any) => sum + (a.dropOffs || 0), 0) || 55,
-    completionRate: 61.3,
-    avgCompletionTime: 245,
+  // Prepare analytics data structure - use real data if available, otherwise show zeros
+  const hasRealData = analytics?.quiz && analytics.analytics && analytics.analytics.length > 0;
+  
+  const totalViews = hasRealData ? analytics.analytics.reduce((sum: number, a: any) => sum + (a.views || 0), 0) : 0;
+  const totalCompletions = hasRealData ? analytics.analytics.reduce((sum: number, a: any) => sum + (a.completions || 0), 0) : 0;
+  const totalDropOffs = hasRealData ? analytics.analytics.reduce((sum: number, a: any) => sum + (a.dropOffs || 0), 0) : 0;
+  
+  const analyticsData = {
+    totalViews,
+    totalCompletions,
+    totalDropOffs,
+    completionRate: hasRealData && totalViews > 0 ? (totalCompletions / totalViews * 100) : 0,
+    avgCompletionTime: hasRealData ? analytics.analytics.reduce((sum: number, a: any) => sum + (a.avgTime || 0), 0) / analytics.analytics.length : 0,
     pageAnalytics: quiz?.structure?.pages?.map((page: any, index: number) => ({
       pageId: page.id,
       pageName: page.title || `Página ${index + 1}`,
       pageType: page.isGame ? 'game' : page.isTransition ? 'transition' : 'normal',
-      views: Math.floor(Math.random() * 100) + 50,
-      clicks: Math.floor(Math.random() * 80) + 40,
-      dropOffs: Math.floor(Math.random() * 20) + 5,
-      clickRate: Math.floor(Math.random() * 30) + 60,
-      dropOffRate: Math.floor(Math.random() * 15) + 5,
-      avgTimeOnPage: Math.floor(Math.random() * 60) + 30,
-      nextPageViews: Math.floor(Math.random() * 70) + 30
-    })) || []
-  } : {
-    totalViews: 142,
-    totalCompletions: 87,
-    totalDropOffs: 55,
-    completionRate: 61.3,
-    avgCompletionTime: 245,
-    pageAnalytics: quiz?.structure?.pages?.map((page: any, index: number) => ({
-      pageId: page.id,
-      pageName: page.title || `Página ${index + 1}`,
-      pageType: page.isGame ? 'game' : page.isTransition ? 'transition' : 'normal',
-      views: Math.floor(Math.random() * 100) + 50,
-      clicks: Math.floor(Math.random() * 80) + 40,
-      dropOffs: Math.floor(Math.random() * 20) + 5,
-      clickRate: Math.floor(Math.random() * 30) + 60,
-      dropOffRate: Math.floor(Math.random() * 15) + 5,
-      avgTimeOnPage: Math.floor(Math.random() * 60) + 30,
-      nextPageViews: Math.floor(Math.random() * 70) + 30
+      views: 0,
+      clicks: 0,
+      dropOffs: 0,
+      clickRate: 0,
+      dropOffRate: 0,
+      avgTimeOnPage: 0,
+      nextPageViews: 0
     })) || []
   };
 
@@ -944,8 +932,10 @@ function SuperAnalyticsEmbed({ quizId }: { quizId: string }) {
             <Eye className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{(analyticsData?.totalViews || 0).toLocaleString()}</div>
-            <p className="text-xs text-muted-foreground">+12% vs. período anterior</p>
+            <div className="text-2xl font-bold">{analyticsData.totalViews.toLocaleString()}</div>
+            <p className="text-xs text-muted-foreground">
+              {hasRealData ? "+12% vs. período anterior" : "Aguardando dados"}
+            </p>
           </CardContent>
         </Card>
 
