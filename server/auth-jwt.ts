@@ -213,7 +213,7 @@ export function setupJWTAuth(app: Express) {
       }
 
       // Generate new tokens
-      const { accessToken, refreshToken: newRefreshToken } = generateTokens(user);
+      const { accessToken, refreshToken: newRefreshToken } = generateTokens(user.id);
       
       // Store new refresh token
       await storage.storeRefreshToken(user.id, newRefreshToken);

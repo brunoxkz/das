@@ -111,7 +111,8 @@ export const getQueryFn: <T>(options: {
   async ({ queryKey }) => {
     const token = localStorage.getItem("accessToken");
     
-    const res = await fetch(queryKey[0] as string, {
+    const res = await deduplicatedFetch(queryKey[0] as string, {
+      method: "GET",
       headers: {
         "Content-Type": "application/json",
         ...(token && { "Authorization": `Bearer ${token}` }),
