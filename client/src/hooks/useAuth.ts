@@ -1,93 +1,123 @@
-
 import { useState, useEffect } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useToast } from "@/hooks/use-toast";
 
-export interface User {
+interface User {
   id: string;
   email: string;
   firstName: string;
   lastName: string;
-  role?: string;
-  plan?: string;
-  planStatus?: string;
+  role: string;
+  plan: string;
+  profileImageUrl?: string;
+}
+
+interface AuthResponse {
+  accessToken: string;
+  refreshToken: string;
+  user: User;
 }
 
 export function useAuth() {
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
 
+  // Check if user is authenticated on mount
   useEffect(() => {
-    checkAuth();
-  }, []);
-
-  const checkAuth = async () => {
-    try {
-      const token = localStorage.getItem("accessToken");
-      
-      if (!token) {
-        setIsLoading(false);
-        return;
-      }
-
-      const response = await fetch("/api/auth/user", {
+    const token = localStorage.getItem("accessToken");
+    if (token) {
+      // Verify token with server
+      fetch("/api/auth/verify", {
         headers: {
-          "Authorization": `Bearer ${token}`
+          Authorization: `Bearer ${token}`
         }
-      });
-
-      if (response.ok) {
-        const userData = await response.json();
-        setUser(userData);
-      } else if (response.status === 401) {
-        // Token expired, try to refresh
-        await tryRefreshToken();
-      } else {
-        // Clear invalid tokens
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (data.user) {
+          setUser(data.user);
+          setIsAuthenticated(true);
+        } else {
+          // Token is invalid, remove it
+          localStorage.removeItem("accessToken");
+          localStorage.removeItem("refreshToken");
+        }
+      })
+      .catch(() => {
+        // Token verification failed, remove it
         localStorage.removeItem("accessToken");
         localStorage.removeItem("refreshToken");
-      }
-    } catch (error) {
-      console.error("Auth check error:", error);
-      localStorage.removeItem("accessToken");
-      localStorage.removeItem("refreshToken");
-    } finally {
+      })
+      .finally(() => {
+        setIsLoading(false);
+      });
+    } else {
       setIsLoading(false);
     }
-  };
+  }, []);
 
-  const tryRefreshToken = async () => {
-    try {
-      const refreshToken = localStorage.getItem("refreshToken");
-      
-      if (!refreshToken) {
-        return;
-      }
+  const login = async (email: string, password: string) => {
+    const response = await fetch("/api/auth/login", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, password }),
+    });
 
-      const response = await fetch("/api/auth/refresh", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({ refreshToken })
-      });
+    const data = await response.json();
 
-      if (response.ok) {
-        const data = await response.json();
-        localStorage.setItem("accessToken", data.accessToken);
-        localStorage.setItem("refreshToken", data.refreshToken);
-        
-        // Try to get user data again
-        await checkAuth();
-      } else {
-        // Refresh failed, clear tokens
-        localStorage.removeItem("accessToken");
-        localStorage.removeItem("refreshToken");
-      }
-    } catch (error) {
-      console.error("Token refresh error:", error);
-      localStorage.removeItem("accessToken");
-      localStorage.removeItem("refreshToken");
+    if (response.ok) {
+      localStorage.setItem("accessToken", data.accessToken);
+      localStorage.setItem("refreshToken", data.refreshToken);
+      setUser(data.user);
+      setIsAuthenticated(true);
+      return data;
+    } else {
+      throw new Error(data.message || "Login failed");
     }
   };
 
-  return { user, isLoading, checkAuth };
+  const register = async (userData: {
+    email: string;
+    password: string;
+    firstName: string;
+    lastName: string;
+  }) => {
+    const response = await fetch("/api/auth/register", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(userData),
+    });
+
+    const data = await response.json();
+
+    if (response.ok) {
+      localStorage.setItem("accessToken", data.accessToken);
+      localStorage.setItem("refreshToken", data.refreshToken);
+      setUser(data.user);
+      setIsAuthenticated(true);
+      return data;
+    } else {
+      throw new Error(data.message || "Registration failed");
+    }
+  };
+
+  const logout = () => {
+    localStorage.removeItem("accessToken");
+    localStorage.removeItem("refreshToken");
+    setUser(null);
+    setIsAuthenticated(false);
+    queryClient.clear();
+  };
+
+  return {
+    isAuthenticated,
+    user,
+    isLoading,
+    login,
+    register,
+    logout,
+  };
 }

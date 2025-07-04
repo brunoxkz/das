@@ -8,7 +8,6 @@ import {
   BarChart3, 
   Palette, 
   Code, 
-  Link, 
   Play, 
   Video,
   Check,
@@ -24,7 +23,7 @@ import {
   ArrowRight,
   Zap
 } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link as RouterLink } from "wouter";
 
 export default function Landing() {
   const features = [
@@ -59,7 +58,7 @@ export default function Landing() {
       color: "bg-pink-100 text-pink-600"
     },
     {
-      icon: <Link className="w-5 h-5" />,
+      icon: <Globe className="w-5 h-5" />,
       title: "Integrações",
       description: "Conecte com Mailchimp, HubSpot, Zapier e 1000+ ferramentas via API.",
       color: "bg-green-100 text-green-600"
@@ -176,14 +175,14 @@ export default function Landing() {
                 PT
               </Button>
               <Button variant="ghost" size="sm">
-                <Link to="/login">
+                <RouterLink to="/login">
                   Entrar
-                </Link>
+                </RouterLink>
               </Button>
               <Button size="sm">
-                <Link to="/login">
+                <RouterLink to="/login">
                   Teste Grátis
-                </Link>
+                </RouterLink>
               </Button>
             </div>
           </div>
@@ -208,10 +207,10 @@ export default function Landing() {
                   variant="secondary" 
                   className="bg-white text-primary hover:bg-gray-50"
                 >
-                  <Link to="/login">
+                  <RouterLink to="/login">
                     <Play className="w-4 h-4 mr-2" />
                     Começar Agora
-                  </Link>
+                  </RouterLink>
                 </Button>
                 <Button 
                   size="lg" 
@@ -447,9 +446,9 @@ export default function Landing() {
                     variant={plan.buttonVariant}
                     size="lg"
                   >
-                    <Link to="/login">
+                    <RouterLink to="/login">
                       {plan.buttonText}
-                    </Link>
+                    </RouterLink>
                   </Button>
                 </CardContent>
               </Card>
@@ -502,10 +501,10 @@ export default function Landing() {
 
           <div className="text-center mt-12">
             <Button size="lg">
-              <Link to="/login">
+              <RouterLink to="/login">
                 Ver Todos os Templates
                 <ArrowRight className="w-4 h-4 ml-2" />
-              </Link>
+              </RouterLink>
             </Button>
           </div>
         </div>
@@ -526,9 +525,9 @@ export default function Landing() {
               variant="secondary" 
               className="bg-white text-primary hover:bg-gray-50"
             >
-              <Link to="/login">
+              <RouterLink to="/login">
                 Teste Grátis por 14 Dias
-              </Link>
+              </RouterLink>
             </Button>
             <Button 
               size="lg" 

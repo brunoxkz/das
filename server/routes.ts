@@ -1,5 +1,6 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
+import "./types"; // Import global types
 import Stripe from "stripe";
 import { storage } from "./storage";
 import { verifyJWT as authenticateToken, generateTokens } from "./auth";
@@ -9,9 +10,12 @@ import {
   insertQuizSchema, 
   insertQuizResponseSchema, 
   insertQuizTemplateSchema,
-  insertQuizAnalyticsSchema 
+  insertQuizAnalyticsSchema,
+  type User
 } from "@shared/schema";
 import { z } from "zod";
+
+// Types are now handled in ./types.ts
 
 if (!process.env.STRIPE_SECRET_KEY) {
   console.warn('STRIPE_SECRET_KEY not found - Stripe functionality will be disabled');
@@ -140,7 +144,14 @@ export function registerRoutes(app: Express): Server {
 
   app.get("/api/quiz-responses", authenticateToken, async (req, res) => {
     try {
-      const responses = await storage.getUserQuizResponses(req.user!.id);
+      // Get all quizzes for this user first, then get responses for each quiz
+      const userQuizzes = await storage.getUserQuizzes(req.user!.id);
+      const allResponses = [];
+      for (const quiz of userQuizzes) {
+        const quizResponses = await storage.getQuizResponses(quiz.id);
+        allResponses.push(...quizResponses);
+      }
+      const responses = allResponses;
       res.json(responses);
     } catch (error) {
       console.error("Error fetching quiz responses:", error);

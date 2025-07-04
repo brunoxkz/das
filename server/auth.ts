@@ -46,7 +46,7 @@ export const verifyJWT: RequestHandler = async (req: any, res, next) => {
       return res.status(401).json({ message: 'Usuário não encontrado' });
     }
 
-    req.user = { claims: { sub: user.id }, ...user };
+    req.user = user;
     next();
   } catch (error) {
     if (error instanceof jwt.TokenExpiredError) {
@@ -190,7 +190,7 @@ export function setupJWTAuth(app: Express) {
   // Logout route
   app.post('/api/auth/logout', verifyJWT, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       
       // Invalidate all refresh tokens for this user
       await storage.invalidateRefreshTokens(userId);
@@ -202,10 +202,29 @@ export function setupJWTAuth(app: Express) {
     }
   });
 
+  // Verify token route
+  app.get('/api/auth/verify', verifyJWT, async (req: any, res) => {
+    try {
+      res.json({
+        user: {
+          id: req.user.id,
+          email: req.user.email,
+          firstName: req.user.firstName,
+          lastName: req.user.lastName,
+          role: req.user.role,
+          plan: req.user.plan
+        }
+      });
+    } catch (error) {
+      console.error('Verify token error:', error);
+      res.status(500).json({ message: 'Erro ao verificar token' });
+    }
+  });
+
   // Get current user (JWT version)
   app.get('/api/auth/user', verifyJWT, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const user = await storage.getUser(userId);
       res.json(user);
     } catch (error) {

@@ -1,10 +1,3 @@
-` tags.
-
-```text
-Refactoring to replace Replit Auth with JWT authentication throughout the application.
-```
-
-<replit_final_file>
 import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";

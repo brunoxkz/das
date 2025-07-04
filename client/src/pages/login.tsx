@@ -1,12 +1,13 @@
 
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/useAuth";
 import { Loader2, Mail, Lock, User } from "lucide-react";
 
 export default function LoginPage() {
@@ -18,44 +19,27 @@ export default function LoginPage() {
     firstName: "", 
     lastName: "" 
   });
-  const navigate = useNavigate();
+  const [, setLocation] = useLocation();
   const { toast } = useToast();
+  const { login, register } = useAuth();
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
 
     try {
-      const response = await fetch("/api/auth/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(loginData),
-      });
-
-      const data = await response.json();
-
-      if (response.ok) {
-        // Store tokens
-        localStorage.setItem("accessToken", data.accessToken);
-        localStorage.setItem("refreshToken", data.refreshToken);
-        
-        toast({
-          title: "Login realizado com sucesso!",
-          description: `Bem-vindo, ${data.user.firstName}!`,
-        });
-        
-        navigate("/dashboard");
-      } else {
-        toast({
-          title: "Erro no login",
-          description: data.message || "Credenciais inválidas",
-          variant: "destructive",
-        });
-      }
-    } catch (error) {
+      const data = await login(loginData.email, loginData.password);
+      
       toast({
-        title: "Erro de conexão",
-        description: "Não foi possível conectar ao servidor",
+        title: "Login realizado com sucesso!",
+        description: `Bem-vindo, ${data.user.firstName}!`,
+      });
+      
+      setLocation("/dashboard");
+    } catch (error: any) {
+      toast({
+        title: "Erro no login",
+        description: error.message || "Credenciais inválidas",
         variant: "destructive",
       });
     } finally {
@@ -68,36 +52,18 @@ export default function LoginPage() {
     setIsLoading(true);
 
     try {
-      const response = await fetch("/api/auth/register", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(registerData),
-      });
-
-      const data = await response.json();
-
-      if (response.ok) {
-        // Store tokens
-        localStorage.setItem("accessToken", data.accessToken);
-        localStorage.setItem("refreshToken", data.refreshToken);
-        
-        toast({
-          title: "Conta criada com sucesso!",
-          description: `Bem-vindo, ${data.user.firstName}!`,
-        });
-        
-        navigate("/dashboard");
-      } else {
-        toast({
-          title: "Erro no cadastro",
-          description: data.message || "Erro ao criar conta",
-          variant: "destructive",
-        });
-      }
-    } catch (error) {
+      const data = await register(registerData);
+      
       toast({
-        title: "Erro de conexão",
-        description: "Não foi possível conectar ao servidor",
+        title: "Conta criada com sucesso!",
+        description: `Bem-vindo, ${data.user.firstName}!`,
+      });
+      
+      setLocation("/dashboard");
+    } catch (error: any) {
+      toast({
+        title: "Erro no cadastro",
+        description: error.message || "Erro ao criar conta",
         variant: "destructive",
       });
     } finally {

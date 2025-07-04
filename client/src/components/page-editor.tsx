@@ -199,6 +199,120 @@ export function PageEditor({ pages, onPagesChange }: PageEditorProps) {
     ? currentPage?.elements.find(el => el.id === selectedElement)
     : null;
 
+  function renderElementPreview(element: Element) {
+    switch (element.type) {
+      case "heading":
+        return <h2 className="text-lg font-bold text-gray-900">{element.content}</h2>;
+      case "paragraph":
+        return <p className="text-gray-700">{element.content}</p>;
+      case "multiple_choice":
+        return (
+          <div className="space-y-2">
+            <p className="font-medium text-gray-900">{element.question}</p>
+            {element.options?.map((option, idx) => (
+              <div key={idx} className="flex items-center space-x-2">
+                <div className="w-4 h-4 border border-gray-300 rounded"></div>
+                <span className="text-gray-700">{option}</span>
+              </div>
+            ))}
+          </div>
+        );
+      case "text":
+      case "email":
+      case "phone":
+      case "number":
+        return (
+          <div className="space-y-2">
+            <p className="font-medium text-gray-900">{element.question}</p>
+            <input
+              type="text"
+              placeholder={element.placeholder || "Digite sua resposta..."}
+              className="w-full p-2 border border-gray-300 rounded"
+              disabled
+            />
+          </div>
+        );
+      case "textarea":
+        return (
+          <div className="space-y-2">
+            <p className="font-medium text-gray-900">{element.question}</p>
+            <textarea
+              placeholder={element.placeholder || "Digite sua resposta..."}
+              className="w-full p-2 border border-gray-300 rounded h-20"
+              disabled
+            />
+          </div>
+        );
+      case "rating":
+        return (
+          <div className="space-y-2">
+            <p className="font-medium text-gray-900">{element.question}</p>
+            <div className="flex space-x-2">
+              {Array.from({ length: element.max || 5 }, (_, i) => (
+                <div key={i} className="w-8 h-8 border border-gray-300 rounded flex items-center justify-center">
+                  {i + 1}
+                </div>
+              ))}
+            </div>
+          </div>
+        );
+      case "checkbox":
+        return (
+          <div className="space-y-2">
+            <p className="font-medium text-gray-900">{element.question}</p>
+            {element.options?.map((option, idx) => (
+              <div key={idx} className="flex items-center space-x-2">
+                <div className="w-4 h-4 border border-gray-300 rounded"></div>
+                <span className="text-gray-700">{option}</span>
+              </div>
+            ))}
+          </div>
+        );
+      case "date":
+        return (
+          <div className="space-y-2">
+            <p className="font-medium text-gray-900">{element.question}</p>
+            <input
+              type="date"
+              className="w-full p-2 border border-gray-300 rounded"
+              disabled
+            />
+          </div>
+        );
+      case "image_upload":
+        return (
+          <div className="space-y-2">
+            <p className="font-medium text-gray-900">{element.question}</p>
+            <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center">
+              <p className="text-gray-500">Clique para fazer upload de imagem</p>
+            </div>
+          </div>
+        );
+      case "image":
+        return (
+          <div className="space-y-2">
+            {element.imageUrl ? (
+              <img src={element.imageUrl} alt="Preview" className="max-w-full h-auto rounded" />
+            ) : (
+              <div className="w-full h-32 bg-gray-200 rounded flex items-center justify-center">
+                <span className="text-gray-500">Imagem</span>
+              </div>
+            )}
+          </div>
+        );
+      case "divider":
+        return <hr className="border-gray-300 my-4" />;
+      case "animated_transition":
+        return (
+          <div className="p-4 bg-gradient-to-r from-purple-500 to-blue-500 text-white rounded-lg">
+            <p className="text-center">{element.transitionContent || "Transição Animada"}</p>
+          </div>
+        );
+      default:
+        return <div className="p-2 bg-gray-100 rounded text-gray-600">Elemento: {element.type}</div>;
+    }
+  }
+
   return (
     <div className="flex h-full">
       {/* Sidebar esquerdo - Páginas e Elementos */}
