@@ -270,9 +270,9 @@ export function PageEditor({ pages, onPagesChange }: PageEditorProps) {
   }
 
   return (
-    <div className="flex h-full">
+    <div className="flex h-screen">
       {/* Sidebar esquerdo com funcionalidade de recolher */}
-      <div className={`${sidebarCollapsed ? 'w-12' : 'w-80'} border-r bg-gray-50 transition-all duration-300 relative`}>
+      <div className={`${sidebarCollapsed ? 'w-12' : 'w-80'} border-r bg-gray-50 transition-all duration-300 relative flex-shrink-0`}>
         {/* Botão de recolher/expandir */}
         <Button
           size="sm"
@@ -284,7 +284,7 @@ export function PageEditor({ pages, onPagesChange }: PageEditorProps) {
         </Button>
 
         {!sidebarCollapsed && (
-          <div className="p-4 space-y-4">
+          <div className="p-4 space-y-4 h-full overflow-y-auto">
             {/* Gerenciamento de Páginas */}
             <div>
               <div className="flex items-center justify-between mb-3">
@@ -371,7 +371,7 @@ export function PageEditor({ pages, onPagesChange }: PageEditorProps) {
       </div>
 
       {/* Área central - Preview da página */}
-      <div className="flex-1 p-6">
+      <div className="flex-1 overflow-y-auto p-6">
         {currentPage ? (
           <div className="max-w-2xl mx-auto">
             <div className="mb-4">
@@ -428,7 +428,8 @@ export function PageEditor({ pages, onPagesChange }: PageEditorProps) {
       </div>
 
       {/* Sidebar direito - Propriedades do elemento selecionado */}
-      <div className="w-80 border-l bg-gray-50 p-4">
+      <div className="w-80 border-l bg-gray-50 flex-shrink-0 overflow-y-auto">
+        <div className="p-4">
         {selectedElementData ? (
           <div className="space-y-4">
             <h3 className="font-semibold text-gray-900">Editar Elemento</h3>
@@ -698,6 +699,7 @@ export function PageEditor({ pages, onPagesChange }: PageEditorProps) {
             </div>
           </div>
         )}
+        </div>
       </div>
     </div>
   );
