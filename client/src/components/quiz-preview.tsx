@@ -42,10 +42,10 @@ export function QuizPreview({ quiz }: QuizPreviewProps) {
   });
 
   const { pages, settings } = quiz.structure;
-  const questions = pages?.flatMap(page => page.elements.filter(el => 
-    ['multiple_choice', 'text', 'email', 'phone', 'number', 'rating'].includes(el.type)
-  )) || [];
-  const totalSteps = questions.length + (settings.collectEmail || settings.collectName || settings.collectPhone ? 1 : 0) + 1; // +1 for result
+  
+  // Incluir todas as páginas (normais e de transição)
+  const allPages = pages || [];
+  const totalSteps = allPages.length + (settings.collectEmail || settings.collectName || settings.collectPhone ? 1 : 0) + 1; // +1 for result
   const progress = ((currentStep + 1) / totalSteps) * 100;
 
   const handleAnswer = (questionId: number, answer: any) => {
@@ -64,34 +64,145 @@ export function QuizPreview({ quiz }: QuizPreviewProps) {
     }
   };
 
-  const renderQuestion = (question: any, index: number) => {
-    const isActive = currentStep === index;
+  const renderPage = (page: any, pageIndex: number) => {
+    const isActive = currentStep === pageIndex;
+    if (!isActive) return null;
+
+    // Se a página não tem elementos, pula
+    if (!page.elements || page.elements.length === 0) {
+      setTimeout(handleNext, 100);
+      return null;
+    }
+
+    // Verificar se é página de transição
+    const isTransitionPage = page.isTransition || page.elements.some((el: any) => 
+      ['transition_background', 'transition_text', 'transition_counter', 'transition_loader', 'transition_redirect'].includes(el.type)
+    );
+
+    if (isTransitionPage) {
+      return renderTransitionPage(page, pageIndex);
+    }
+
+    // Renderizar elementos interativos da página
+    const interactiveElements = page.elements.filter((el: any) => 
+      ['multiple_choice', 'text', 'email', 'phone', 'number', 'rating', 'date', 'textarea', 'checkbox', 'birth_date', 'height', 'current_weight', 'target_weight'].includes(el.type)
+    );
+
+    const contentElements = page.elements.filter((el: any) => 
+      ['heading', 'paragraph', 'image', 'video', 'divider'].includes(el.type)
+    );
+
+    return (
+      <div className="max-w-2xl mx-auto text-center">
+        {/* Renderizar elementos de conteúdo primeiro */}
+        {contentElements.map((element: any) => (
+          <div key={element.id} className="mb-6">
+            {renderContentElement(element)}
+          </div>
+        ))}
+
+        {/* Renderizar primeiro elemento interativo */}
+        {interactiveElements.length > 0 && renderInteractiveElement(interactiveElements[0], pageIndex)}
+      </div>
+    );
+  };
+
+  const renderContentElement = (element: any) => {
+    switch (element.type) {
+      case 'heading':
+        const HeadingTag = element.fontSize === 'xs' ? 'h6' : 
+                          element.fontSize === 'sm' ? 'h5' :
+                          element.fontSize === 'base' ? 'h4' :
+                          element.fontSize === 'lg' ? 'h3' :
+                          element.fontSize === 'xl' ? 'h2' : 'h1';
+        return (
+          <HeadingTag 
+            className={`font-bold text-gray-900 mb-4 text-${element.textAlign || 'left'}`}
+            style={{ color: element.textColor }}
+          >
+            {element.content}
+          </HeadingTag>
+        );
+      
+      case 'paragraph':
+        return (
+          <p 
+            className={`text-gray-600 mb-4 text-${element.textAlign || 'left'}`}
+            style={{ color: element.textColor }}
+          >
+            {element.content}
+          </p>
+        );
+      
+      case 'image':
+        return (
+          <div className={`mb-4 text-${element.textAlign || 'center'}`}>
+            <img 
+              src={element.imageUrl || element.content} 
+              alt="Imagem" 
+              className="max-w-full h-auto rounded-lg mx-auto"
+            />
+          </div>
+        );
+      
+      case 'divider':
+        return <hr className="my-6 border-gray-300" />;
+      
+      default:
+        return null;
+    }
+  };
+
+  const renderTransitionPage = (page: any, pageIndex: number) => {
+    // Auto-avançar após alguns segundos para páginas de transição
+    setTimeout(() => {
+      if (currentStep === pageIndex) {
+        handleNext();
+      }
+    }, 3000);
+
+    return (
+      <div className="max-w-2xl mx-auto text-center">
+        <div className="mb-8">
+          <h2 className="text-2xl md:text-3xl font-bold text-gray-900 mb-4">
+            Página de Transição
+          </h2>
+          <p className="text-gray-600">
+            Aguarde um momento...
+          </p>
+        </div>
+      </div>
+    );
+  };
+
+  const renderInteractiveElement = (element: any, pageIndex: number) => {
+    const isActive = currentStep === pageIndex;
     if (!isActive) return null;
 
     return (
       <div className="max-w-2xl mx-auto text-center">
         <div className="mb-8">
           <h2 className="text-2xl md:text-3xl font-bold text-gray-900 mb-4">
-            {question.question || `Pergunta ${index + 1}`}
+            {element.question || `Pergunta`}
           </h2>
-          {question.description && (
-            <p className="text-gray-600 text-lg">{question.description}</p>
+          {element.description && (
+            <p className="text-gray-600 text-lg">{element.description}</p>
           )}
         </div>
 
         <div className="space-y-3">
-          {question.type === "multiple_choice" && question.options?.map((option: string, optionIndex: number) => (
+          {element.type === "multiple_choice" && element.options?.map((option: string, optionIndex: number) => (
             <Button
               key={optionIndex}
-              variant={answers[question.id] === option ? "default" : "outline"}
+              variant={answers[element.id] === option ? "default" : "outline"}
               className="w-full justify-start text-left p-4 h-auto"
               onClick={() => {
-                handleAnswer(question.id, option);
+                handleAnswer(element.id, option);
                 setTimeout(handleNext, 300);
               }}
             >
               <div className={`w-4 h-4 rounded-full mr-3 ${
-                answers[question.id] === option 
+                answers[element.id] === option 
                   ? 'bg-white' 
                   : 'border-2 border-gray-300'
               }`} />
@@ -99,32 +210,32 @@ export function QuizPreview({ quiz }: QuizPreviewProps) {
             </Button>
           ))}
 
-          {question.type === "text" && (
+          {element.type === "text" && (
             <div className="space-y-4">
               <Input
                 placeholder="Digite sua resposta..."
-                value={answers[question.id] || ""}
-                onChange={(e) => handleAnswer(question.id, e.target.value)}
+                value={answers[element.id] || ""}
+                onChange={(e) => handleAnswer(element.id, e.target.value)}
                 className="text-center"
               />
               <Button 
                 onClick={handleNext}
-                disabled={!answers[question.id]?.trim()}
+                disabled={!answers[element.id]?.trim()}
               >
                 Próxima <ArrowRight className="w-4 h-4 ml-2" />
               </Button>
             </div>
           )}
 
-          {question.type === "rating" && (
+          {element.type === "rating" && (
             <div className="flex justify-center space-x-2">
               {[1, 2, 3, 4, 5].map((rating) => (
                 <Button
                   key={rating}
-                  variant={answers[question.id] === rating ? "default" : "outline"}
+                  variant={answers[element.id] === rating ? "default" : "outline"}
                   className="w-12 h-12 rounded-full"
                   onClick={() => {
-                    handleAnswer(question.id, rating);
+                    handleAnswer(element.id, rating);
                     setTimeout(handleNext, 300);
                   }}
                 >
@@ -133,13 +244,134 @@ export function QuizPreview({ quiz }: QuizPreviewProps) {
               ))}
             </div>
           )}
+
+          {(element.type === "email" || element.type === "phone" || element.type === "number") && (
+            <div className="space-y-4">
+              <Input
+                type={element.type === "email" ? "email" : element.type === "phone" ? "tel" : "number"}
+                placeholder={element.placeholder || `Digite ${element.type === "email" ? "seu email" : element.type === "phone" ? "seu telefone" : "um número"}...`}
+                value={answers[element.id] || ""}
+                onChange={(e) => handleAnswer(element.id, e.target.value)}
+                className="text-center"
+              />
+              <Button 
+                onClick={handleNext}
+                disabled={element.required && !answers[element.id]?.toString().trim()}
+              >
+                Próxima <ArrowRight className="w-4 h-4 ml-2" />
+              </Button>
+            </div>
+          )}
+
+          {element.type === "date" && (
+            <div className="space-y-4">
+              <Input
+                type="date"
+                value={answers[element.id] || ""}
+                onChange={(e) => handleAnswer(element.id, e.target.value)}
+                className="text-center"
+              />
+              <Button 
+                onClick={handleNext}
+                disabled={element.required && !answers[element.id]}
+              >
+                Próxima <ArrowRight className="w-4 h-4 ml-2" />
+              </Button>
+            </div>
+          )}
+
+          {element.type === "birth_date" && (
+            <div className="space-y-4">
+              <Input
+                type="date"
+                value={answers[element.id] || ""}
+                onChange={(e) => handleAnswer(element.id, e.target.value)}
+                className="text-center"
+              />
+              <Button 
+                onClick={handleNext}
+                disabled={element.required && !answers[element.id]}
+              >
+                Próxima <ArrowRight className="w-4 h-4 ml-2" />
+              </Button>
+            </div>
+          )}
+
+          {(element.type === "height" || element.type === "current_weight" || element.type === "target_weight") && (
+            <div className="space-y-4">
+              <Input
+                type="number"
+                placeholder={element.placeholder || "Digite o valor..."}
+                value={answers[element.id] || ""}
+                onChange={(e) => handleAnswer(element.id, e.target.value)}
+                className="text-center"
+                min={element.min}
+                max={element.max}
+              />
+              <Button 
+                onClick={handleNext}
+                disabled={element.required && !answers[element.id]?.toString().trim()}
+              >
+                Próxima <ArrowRight className="w-4 h-4 ml-2" />
+              </Button>
+            </div>
+          )}
+
+          {element.type === "textarea" && (
+            <div className="space-y-4">
+              <textarea
+                placeholder={element.placeholder || "Digite sua resposta..."}
+                value={answers[element.id] || ""}
+                onChange={(e) => handleAnswer(element.id, e.target.value)}
+                className="w-full min-h-[120px] p-3 border border-gray-300 rounded-md resize-none focus:outline-none focus:ring-2 focus:ring-primary"
+              />
+              <Button 
+                onClick={handleNext}
+                disabled={element.required && !answers[element.id]?.toString().trim()}
+              >
+                Próxima <ArrowRight className="w-4 h-4 ml-2" />
+              </Button>
+            </div>
+          )}
+
+          {element.type === "checkbox" && element.options?.map((option: string, optionIndex: number) => (
+            <div key={optionIndex} className="flex items-center space-x-3 p-3 border rounded-lg hover:bg-gray-50">
+              <input
+                type="checkbox"
+                id={`${element.id}-${optionIndex}`}
+                checked={answers[element.id]?.includes(option) || false}
+                onChange={(e) => {
+                  const currentAnswers = answers[element.id] || [];
+                  const newAnswers = e.target.checked
+                    ? [...currentAnswers, option]
+                    : currentAnswers.filter((a: string) => a !== option);
+                  handleAnswer(element.id, newAnswers);
+                }}
+                className="w-4 h-4 text-primary border-gray-300 rounded focus:ring-primary"
+              />
+              <label htmlFor={`${element.id}-${optionIndex}`} className="text-left flex-1 cursor-pointer">
+                {option}
+              </label>
+            </div>
+          ))}
+
+          {element.type === "checkbox" && (
+            <div className="mt-4">
+              <Button 
+                onClick={handleNext}
+                disabled={element.required && (!answers[element.id] || answers[element.id].length === 0)}
+              >
+                Próxima <ArrowRight className="w-4 h-4 ml-2" />
+              </Button>
+            </div>
+          )}
         </div>
       </div>
     );
   };
 
   const renderLeadCapture = () => {
-    const isActive = currentStep === questions.length;
+    const isActive = currentStep === allPages.length;
     if (!isActive) return null;
 
     return (
@@ -293,10 +525,10 @@ export function QuizPreview({ quiz }: QuizPreviewProps) {
         {/* Quiz Content */}
         <Card className="min-h-[400px]">
           <CardContent className="p-8 flex items-center justify-center">
-            {/* Questions */}
-            {questions.map((question, index) => (
-              <div key={question.id || index}>
-                {renderQuestion(question, index)}
+            {/* Pages */}
+            {allPages.map((page, index) => (
+              <div key={page.id || index}>
+                {renderPage(page, index)}
               </div>
             ))}
             
@@ -307,20 +539,20 @@ export function QuizPreview({ quiz }: QuizPreviewProps) {
             {renderResult()}
 
             {/* Empty State */}
-            {questions.length === 0 && currentStep === 0 && (
+            {allPages.length === 0 && currentStep === 0 && (
               <div className="text-center text-gray-500">
                 <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
                   <Sparkles className="w-8 h-8" />
                 </div>
                 <h3 className="text-lg font-semibold mb-2">Quiz Vazio</h3>
-                <p>Adicione perguntas no editor para ver o preview</p>
+                <p>Adicione páginas no editor para ver o preview</p>
               </div>
             )}
           </CardContent>
         </Card>
 
         {/* Navigation */}
-        {questions.length > 0 && currentStep < totalSteps - 1 && (
+        {allPages.length > 0 && currentStep < totalSteps - 1 && (
           <div className="flex justify-between mt-6">
             <Button
               variant="outline"
@@ -332,7 +564,7 @@ export function QuizPreview({ quiz }: QuizPreviewProps) {
             </Button>
             
             <Badge variant="outline">
-              {currentStep < questions.length ? "Pergunta" : currentStep === questions.length ? "Captura" : "Resultado"}
+              {currentStep < allPages.length ? "Página" : currentStep === allPages.length ? "Captura" : "Resultado"}
             </Badge>
           </div>
         )}
