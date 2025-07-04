@@ -160,6 +160,10 @@ export function PageEditorHorizontal({ pages, onPagesChange }: PageEditorProps) 
   const [activePage, setActivePage] = useState(0);
   const [selectedElement, setSelectedElement] = useState<number | null>(null);
   const [activeTab, setActiveTab] = useState<'visual' | 'comportamento'>('visual');
+  const [editingPageId, setEditingPageId] = useState<number | null>(null);
+  const [editingPageTitle, setEditingPageTitle] = useState("");
+  const [draggedPage, setDraggedPage] = useState<number | null>(null);
+  const [dragOverPage, setDragOverPage] = useState<number | null>(null);
 
 
   // Função para traduzir os tipos de elementos
@@ -440,6 +444,70 @@ const gameElementCategories = [
     }
   };
 
+  const reorderPages = (fromIndex: number, toIndex: number) => {
+    if (fromIndex === toIndex) return;
+    
+    const newPages = [...pages];
+    const [draggedPage] = newPages.splice(fromIndex, 1);
+    newPages.splice(toIndex, 0, draggedPage);
+    
+    onPagesChange(newPages);
+    
+    // Ajustar página ativa após reordenação
+    if (activePage === fromIndex) {
+      setActivePage(toIndex);
+    } else if (activePage > fromIndex && activePage <= toIndex) {
+      setActivePage(activePage - 1);
+    } else if (activePage < fromIndex && activePage >= toIndex) {
+      setActivePage(activePage + 1);
+    }
+  };
+
+  const startEditingPageTitle = (pageId: number, currentTitle: string) => {
+    setEditingPageId(pageId);
+    setEditingPageTitle(currentTitle);
+  };
+
+  const savePageTitle = (pageId: number) => {
+    const newPages = pages.map(page => 
+      page.id === pageId 
+        ? { ...page, title: editingPageTitle.trim() || page.title }
+        : page
+    );
+    onPagesChange(newPages);
+    setEditingPageId(null);
+    setEditingPageTitle("");
+  };
+
+  const cancelEditingPageTitle = () => {
+    setEditingPageId(null);
+    setEditingPageTitle("");
+  };
+
+  const handleDragStart = (e: React.DragEvent, index: number) => {
+    setDraggedPage(index);
+    e.dataTransfer.effectAllowed = "move";
+  };
+
+  const handleDragOver = (e: React.DragEvent, index: number) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = "move";
+    setDragOverPage(index);
+  };
+
+  const handleDragLeave = () => {
+    setDragOverPage(null);
+  };
+
+  const handleDrop = (e: React.DragEvent, toIndex: number) => {
+    e.preventDefault();
+    if (draggedPage !== null) {
+      reorderPages(draggedPage, toIndex);
+    }
+    setDraggedPage(null);
+    setDragOverPage(null);
+  };
+
   const addElement = (type: Element["type"]) => {
     const baseElement: Element = {
       id: Date.now(),
@@ -665,10 +733,12 @@ const gameElementCategories = [
       case "date":
         return (
           <div className="space-y-2">
-            <label className="block text-sm font-medium text-gray-700">
-              {element.question || "Data"}
-              {element.required && <span className="text-red-500 ml-1">*</span>}
-            </label>
+            {element.question && (
+              <label className="block text-sm font-medium text-gray-700">
+                {element.question}
+                {element.required && <span className="text-red-500 ml-1">*</span>}
+              </label>
+            )}
             <input
               type="date"
               className="w-full px-3 py-2 border border-gray-300 rounded-md"
@@ -1567,17 +1637,62 @@ const gameElementCategories = [
             {pages.map((page, index) => (
               <div 
                 key={page.id}
-                className={`p-3 border rounded-lg cursor-pointer transition-colors ${
+                draggable
+                onDragStart={(e) => handleDragStart(e, index)}
+                onDragOver={(e) => handleDragOver(e, index)}
+                onDragLeave={handleDragLeave}
+                onDrop={(e) => handleDrop(e, index)}
+                className={`group p-3 border rounded-lg cursor-pointer transition-all duration-200 ${
                   index === activePage 
                     ? 'border-vendzz-primary bg-vendzz-primary/5' 
                     : 'border-gray-200 hover:border-gray-300'
+                } ${
+                  draggedPage === index ? 'opacity-50 scale-95' : ''
+                } ${
+                  dragOverPage === index ? 'border-vendzz-primary border-2 bg-vendzz-primary/10 transform scale-105' : ''
                 }`}
                 onClick={() => setActivePage(index)}
               >
                 <div className="flex items-center justify-between">
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <h4 className="font-medium text-sm">{page.title}</h4>
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2 mb-1">
+                      {/* Indicador de drag */}
+                      <div className="flex flex-col gap-0.5 opacity-40 group-hover:opacity-70">
+                        <div className="w-1 h-1 bg-gray-400 rounded-full"></div>
+                        <div className="w-1 h-1 bg-gray-400 rounded-full"></div>
+                        <div className="w-1 h-1 bg-gray-400 rounded-full"></div>
+                      </div>
+                      
+                      {/* Nome da página - editável */}
+                      {editingPageId === page.id ? (
+                        <input
+                          type="text"
+                          value={editingPageTitle}
+                          onChange={(e) => setEditingPageTitle(e.target.value)}
+                          onBlur={() => savePageTitle(page.id)}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') {
+                              savePageTitle(page.id);
+                            } else if (e.key === 'Escape') {
+                              cancelEditingPageTitle();
+                            }
+                          }}
+                          onClick={(e) => e.stopPropagation()}
+                          className="font-medium text-sm bg-white border border-vendzz-primary rounded px-1 py-0.5 focus:outline-none focus:ring-1 focus:ring-vendzz-primary"
+                          autoFocus
+                        />
+                      ) : (
+                        <h4 
+                          className="font-medium text-sm hover:text-vendzz-primary cursor-text"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            startEditingPageTitle(page.id, page.title);
+                          }}
+                        >
+                          {page.title}
+                        </h4>
+                      )}
+                      
                       {page.isTransition && (
                         <span className="text-xs bg-gradient-to-r from-purple-100 to-pink-100 text-purple-700 px-2 py-1 rounded-full">
                           ✨ Transição

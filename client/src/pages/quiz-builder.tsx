@@ -415,6 +415,67 @@ export default function QuizBuilder() {
                 </CardContent>
               </Card>
 
+              {/* Pixels de Rastreamento */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Settings className="w-5 h-5" />
+                    Pixels de Rastreamento
+                  </CardTitle>
+                  <p className="text-sm text-gray-600">Configure pixels para rastrear conversões e análises</p>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div>
+                    <Label htmlFor="facebookPixel">Facebook Pixel ID</Label>
+                    <Input
+                      id="facebookPixel"
+                      value={quizData.facebookPixel || ""}
+                      onChange={(e) => setQuizData(prev => ({ ...prev, facebookPixel: e.target.value }))}
+                      placeholder="Ex: 123456789012345"
+                      className="mt-2"
+                    />
+                    <p className="text-xs text-gray-500 mt-1">ID do pixel do Facebook para rastreamento de conversões</p>
+                  </div>
+
+                  <div>
+                    <Label htmlFor="googlePixel">Google Ads Pixel ID</Label>
+                    <Input
+                      id="googlePixel"
+                      value={quizData.googlePixel || ""}
+                      onChange={(e) => setQuizData(prev => ({ ...prev, googlePixel: e.target.value }))}
+                      placeholder="Ex: AW-123456789"
+                      className="mt-2"
+                    />
+                    <p className="text-xs text-gray-500 mt-1">ID do pixel do Google Ads para rastreamento</p>
+                  </div>
+
+                  <div>
+                    <Label htmlFor="ga4Id">Google Analytics 4 (GA4) ID</Label>
+                    <Input
+                      id="ga4Id"
+                      value={quizData.ga4Id || ""}
+                      onChange={(e) => setQuizData(prev => ({ ...prev, ga4Id: e.target.value }))}
+                      placeholder="Ex: G-XXXXXXXXXX"
+                      className="mt-2"
+                    />
+                    <p className="text-xs text-gray-500 mt-1">ID de medição do Google Analytics 4</p>
+                  </div>
+
+                  <div>
+                    <Label htmlFor="customHeadScript">Script Personalizado (Head)</Label>
+                    <Textarea
+                      id="customHeadScript"
+                      value={quizData.customHeadScript || ""}
+                      onChange={(e) => setQuizData(prev => ({ ...prev, customHeadScript: e.target.value }))}
+                      placeholder="<script>/* Seu código personalizado aqui */</script>"
+                      className="mt-2"
+                      rows={4}
+                    />
+                    <p className="text-xs text-gray-500 mt-1">Scripts personalizados para adicionar no &lt;head&gt; da página</p>
+                  </div>
+                </CardContent>
+              </Card>
+
               <Card>
                 <CardHeader>
                   <CardTitle>Compartilhamento</CardTitle>
