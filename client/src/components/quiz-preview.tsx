@@ -1018,18 +1018,27 @@ export function QuizPreview({ quiz }: QuizPreviewProps) {
 
           {element.type === "birth_date" && (
             <div className="space-y-4">
+              {element.question && (
+                <h3 
+                  className={`
+                    text-${element.fontSize || 'lg'} 
+                    font-${element.fontWeight || 'medium'} 
+                    text-${element.textAlign || 'center'}
+                    ${element.fontStyle === 'italic' ? 'italic' : ''}
+                    ${element.textDecoration === 'underline' ? 'underline' : ''}
+                  `}
+                  style={{ color: element.textColor || '#000000' }}
+                >
+                  {element.question}
+                  {element.required && <span className="text-red-500 ml-1">*</span>}
+                </h3>
+              )}
               <Input
                 type="date"
                 value={answers[element.id] || ""}
                 onChange={(e) => handleAnswer(element.id, e.target.value)}
                 className="text-center"
               />
-              <Button 
-                onClick={handleNext}
-                disabled={element.required && !answers[element.id]}
-              >
-                Próxima <ArrowRight className="w-4 h-4 ml-2" />
-              </Button>
             </div>
           )}
 

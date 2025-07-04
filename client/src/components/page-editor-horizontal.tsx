@@ -1894,7 +1894,7 @@ const gameElementCategories = [
         </div>
         <div className="flex-1 overflow-y-auto p-4">
           {currentPage ? (
-            <div className="space-y-4 border border-gray-200 rounded-lg p-6 bg-white min-h-[500px] h-auto">
+            <div className="space-y-4 border border-gray-200 rounded-lg p-6 bg-white min-h-[500px]">
               {currentPage.elements.length === 0 ? (
                 <div className="text-center text-gray-500 py-16">
                   <Edit3 className="w-16 h-16 mx-auto mb-4 opacity-50" />
@@ -2193,49 +2193,336 @@ const gameElementCategories = [
                 </div>
               )}
 
-              {(selectedElementData.type === "textarea" || selectedElementData.type === "date" || selectedElementData.type === "checkbox") && (
+              {/* Propriedades para Área de Texto */}
+              {selectedElementData.type === "textarea" && (
                 <div className="space-y-4">
                   <div>
-                    <Label htmlFor="question-label">Pergunta/Label</Label>
-                    <Input
-                      id="question-label"
+                    <Label htmlFor="textarea-question">Título da Pergunta *</Label>
+                    <textarea
+                      id="textarea-question"
                       value={selectedElementData.question || ""}
-                      onChange={(e) => updateElement(selectedElementData.id, { question: e.target.value })}
-                      className="mt-1"
+                      onChange={(e) => {
+                        if (e.target.value.length <= 240) {
+                          updateElement(selectedElementData.id, { question: e.target.value });
+                        }
+                      }}
+                      className="w-full px-3 py-2 border rounded mt-1 resize-none"
+                      placeholder="Digite sua pergunta aqui"
+                      maxLength={240}
+                      rows={3}
                     />
-                  </div>
-                  
-                  {selectedElementData.type === "textarea" && (
-                    <div>
-                      <Label htmlFor="textarea-placeholder">Placeholder</Label>
-                      <Input
-                        id="textarea-placeholder"
-                        value={selectedElementData.placeholder || ""}
-                        onChange={(e) => updateElement(selectedElementData.id, { placeholder: e.target.value })}
-                        className="mt-1"
-                        placeholder="Digite sua resposta aqui..."
-                      />
+                    <div className="text-xs text-gray-500 mt-1">
+                      {(selectedElementData.question || "").length}/240 caracteres
                     </div>
-                  )}
+                  </div>
+
+                  {/* Formatação do Texto */}
+                  <div className="border rounded-lg p-4 bg-gray-50">
+                    <h4 className="font-semibold text-sm mb-3">Formatação do Título</h4>
+                    <div className="grid grid-cols-2 gap-2">
+                      <div>
+                        <Label className="text-xs">Tamanho da Fonte</Label>
+                        <select 
+                          className="w-full px-2 py-1 border rounded text-xs mt-1"
+                          value={selectedElementData.fontSize || "base"}
+                          onChange={(e) => updateElement(selectedElementData.id, { fontSize: e.target.value })}
+                        >
+                          <option value="xs">Muito Pequeno</option>
+                          <option value="sm">Pequeno</option>
+                          <option value="base">Normal</option>
+                          <option value="lg">Grande</option>
+                          <option value="xl">Muito Grande</option>
+                          <option value="2xl">Gigante</option>
+                        </select>
+                      </div>
+
+                      <div>
+                        <Label className="text-xs">Alinhamento</Label>
+                        <select 
+                          className="w-full px-2 py-1 border rounded text-xs mt-1"
+                          value={selectedElementData.textAlign || "left"}
+                          onChange={(e) => updateElement(selectedElementData.id, { textAlign: e.target.value })}
+                        >
+                          <option value="left">Esquerda</option>
+                          <option value="center">Centro</option>
+                          <option value="right">Direita</option>
+                        </select>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-2 mt-2">
+                      <div>
+                        <Label className="text-xs">Peso da Fonte</Label>
+                        <select 
+                          className="w-full px-2 py-1 border rounded text-xs mt-1"
+                          value={selectedElementData.fontWeight || "normal"}
+                          onChange={(e) => updateElement(selectedElementData.id, { fontWeight: e.target.value })}
+                        >
+                          <option value="light">Leve</option>
+                          <option value="normal">Normal</option>
+                          <option value="medium">Médio</option>
+                          <option value="semibold">Semi-negrito</option>
+                          <option value="bold">Negrito</option>
+                        </select>
+                      </div>
+
+                      <div>
+                        <Label className="text-xs">Cor do Texto</Label>
+                        <input
+                          type="color"
+                          value={selectedElementData.textColor || "#000000"}
+                          onChange={(e) => updateElement(selectedElementData.id, { textColor: e.target.value })}
+                          className="w-full h-8 border rounded mt-1"
+                        />
+                      </div>
+                    </div>
+                  </div>
 
                   <div className="flex items-center space-x-2">
                     <input
                       type="checkbox"
-                      id="field-required"
+                      id="textarea-required"
                       checked={selectedElementData.required || false}
                       onChange={(e) => updateElement(selectedElementData.id, { required: e.target.checked })}
                     />
-                    <Label htmlFor="field-required" className="text-xs">Campo obrigatório</Label>
+                    <Label htmlFor="textarea-required">Campo obrigatório</Label>
                   </div>
 
                   <div>
-                    <Label htmlFor="field-id-custom">ID do Campo (para captura de leads)</Label>
+                    <Label htmlFor="textarea-placeholder">Placeholder</Label>
                     <Input
-                      id="field-id-custom"
+                      id="textarea-placeholder"
+                      value={selectedElementData.placeholder || ""}
+                      onChange={(e) => updateElement(selectedElementData.id, { placeholder: e.target.value })}
+                      className="mt-1"
+                      placeholder="Digite sua resposta detalhada aqui..."
+                    />
+                  </div>
+
+                  <div>
+                    <Label htmlFor="textarea-field-id">ID do Campo (para captura de leads)</Label>
+                    <Input
+                      id="textarea-field-id"
                       value={selectedElementData.fieldId || ""}
                       onChange={(e) => updateElement(selectedElementData.id, { fieldId: e.target.value })}
                       className="mt-1"
-                      placeholder="campo_comentario"
+                      placeholder="comentario"
+                    />
+                  </div>
+                </div>
+              )}
+
+              {/* Propriedades para Data */}
+              {selectedElementData.type === "date" && (
+                <div className="space-y-4">
+                  <div>
+                    <Label htmlFor="date-question">Título da Pergunta *</Label>
+                    <textarea
+                      id="date-question"
+                      value={selectedElementData.question || ""}
+                      onChange={(e) => {
+                        if (e.target.value.length <= 240) {
+                          updateElement(selectedElementData.id, { question: e.target.value });
+                        }
+                      }}
+                      className="w-full px-3 py-2 border rounded mt-1 resize-none"
+                      placeholder="Digite sua pergunta aqui"
+                      maxLength={240}
+                      rows={3}
+                    />
+                    <div className="text-xs text-gray-500 mt-1">
+                      {(selectedElementData.question || "").length}/240 caracteres
+                    </div>
+                  </div>
+
+                  {/* Formatação do Texto */}
+                  <div className="border rounded-lg p-4 bg-gray-50">
+                    <h4 className="font-semibold text-sm mb-3">Formatação do Título</h4>
+                    <div className="grid grid-cols-2 gap-2">
+                      <div>
+                        <Label className="text-xs">Tamanho da Fonte</Label>
+                        <select 
+                          className="w-full px-2 py-1 border rounded text-xs mt-1"
+                          value={selectedElementData.fontSize || "base"}
+                          onChange={(e) => updateElement(selectedElementData.id, { fontSize: e.target.value })}
+                        >
+                          <option value="xs">Muito Pequeno</option>
+                          <option value="sm">Pequeno</option>
+                          <option value="base">Normal</option>
+                          <option value="lg">Grande</option>
+                          <option value="xl">Muito Grande</option>
+                          <option value="2xl">Gigante</option>
+                        </select>
+                      </div>
+
+                      <div>
+                        <Label className="text-xs">Alinhamento</Label>
+                        <select 
+                          className="w-full px-2 py-1 border rounded text-xs mt-1"
+                          value={selectedElementData.textAlign || "left"}
+                          onChange={(e) => updateElement(selectedElementData.id, { textAlign: e.target.value })}
+                        >
+                          <option value="left">Esquerda</option>
+                          <option value="center">Centro</option>
+                          <option value="right">Direita</option>
+                        </select>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-2 mt-2">
+                      <div>
+                        <Label className="text-xs">Peso da Fonte</Label>
+                        <select 
+                          className="w-full px-2 py-1 border rounded text-xs mt-1"
+                          value={selectedElementData.fontWeight || "normal"}
+                          onChange={(e) => updateElement(selectedElementData.id, { fontWeight: e.target.value })}
+                        >
+                          <option value="light">Leve</option>
+                          <option value="normal">Normal</option>
+                          <option value="medium">Médio</option>
+                          <option value="semibold">Semi-negrito</option>
+                          <option value="bold">Negrito</option>
+                        </select>
+                      </div>
+
+                      <div>
+                        <Label className="text-xs">Cor do Texto</Label>
+                        <input
+                          type="color"
+                          value={selectedElementData.textColor || "#000000"}
+                          onChange={(e) => updateElement(selectedElementData.id, { textColor: e.target.value })}
+                          className="w-full h-8 border rounded mt-1"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center space-x-2">
+                    <input
+                      type="checkbox"
+                      id="date-required"
+                      checked={selectedElementData.required || false}
+                      onChange={(e) => updateElement(selectedElementData.id, { required: e.target.checked })}
+                    />
+                    <Label htmlFor="date-required">Campo obrigatório</Label>
+                  </div>
+
+                  <div>
+                    <Label htmlFor="date-field-id">ID do Campo (para captura de leads)</Label>
+                    <Input
+                      id="date-field-id"
+                      value={selectedElementData.fieldId || ""}
+                      onChange={(e) => updateElement(selectedElementData.id, { fieldId: e.target.value })}
+                      className="mt-1"
+                      placeholder="data_evento"
+                    />
+                  </div>
+                </div>
+              )}
+
+              {/* Propriedades para Checkbox */}
+              {selectedElementData.type === "checkbox" && (
+                <div className="space-y-4">
+                  <div>
+                    <Label htmlFor="checkbox-question">Título da Pergunta *</Label>
+                    <textarea
+                      id="checkbox-question"
+                      value={selectedElementData.question || ""}
+                      onChange={(e) => {
+                        if (e.target.value.length <= 240) {
+                          updateElement(selectedElementData.id, { question: e.target.value });
+                        }
+                      }}
+                      className="w-full px-3 py-2 border rounded mt-1 resize-none"
+                      placeholder="Digite sua pergunta aqui"
+                      maxLength={240}
+                      rows={3}
+                    />
+                    <div className="text-xs text-gray-500 mt-1">
+                      {(selectedElementData.question || "").length}/240 caracteres
+                    </div>
+                  </div>
+
+                  {/* Formatação do Texto */}
+                  <div className="border rounded-lg p-4 bg-gray-50">
+                    <h4 className="font-semibold text-sm mb-3">Formatação do Título</h4>
+                    <div className="grid grid-cols-2 gap-2">
+                      <div>
+                        <Label className="text-xs">Tamanho da Fonte</Label>
+                        <select 
+                          className="w-full px-2 py-1 border rounded text-xs mt-1"
+                          value={selectedElementData.fontSize || "base"}
+                          onChange={(e) => updateElement(selectedElementData.id, { fontSize: e.target.value })}
+                        >
+                          <option value="xs">Muito Pequeno</option>
+                          <option value="sm">Pequeno</option>
+                          <option value="base">Normal</option>
+                          <option value="lg">Grande</option>
+                          <option value="xl">Muito Grande</option>
+                          <option value="2xl">Gigante</option>
+                        </select>
+                      </div>
+
+                      <div>
+                        <Label className="text-xs">Alinhamento</Label>
+                        <select 
+                          className="w-full px-2 py-1 border rounded text-xs mt-1"
+                          value={selectedElementData.textAlign || "left"}
+                          onChange={(e) => updateElement(selectedElementData.id, { textAlign: e.target.value })}
+                        >
+                          <option value="left">Esquerda</option>
+                          <option value="center">Centro</option>
+                          <option value="right">Direita</option>
+                        </select>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-2 mt-2">
+                      <div>
+                        <Label className="text-xs">Peso da Fonte</Label>
+                        <select 
+                          className="w-full px-2 py-1 border rounded text-xs mt-1"
+                          value={selectedElementData.fontWeight || "normal"}
+                          onChange={(e) => updateElement(selectedElementData.id, { fontWeight: e.target.value })}
+                        >
+                          <option value="light">Leve</option>
+                          <option value="normal">Normal</option>
+                          <option value="medium">Médio</option>
+                          <option value="semibold">Semi-negrito</option>
+                          <option value="bold">Negrito</option>
+                        </select>
+                      </div>
+
+                      <div>
+                        <Label className="text-xs">Cor do Texto</Label>
+                        <input
+                          type="color"
+                          value={selectedElementData.textColor || "#000000"}
+                          onChange={(e) => updateElement(selectedElementData.id, { textColor: e.target.value })}
+                          className="w-full h-8 border rounded mt-1"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center space-x-2">
+                    <input
+                      type="checkbox"
+                      id="checkbox-required"
+                      checked={selectedElementData.required || false}
+                      onChange={(e) => updateElement(selectedElementData.id, { required: e.target.checked })}
+                    />
+                    <Label htmlFor="checkbox-required">Campo obrigatório</Label>
+                  </div>
+
+                  <div>
+                    <Label htmlFor="checkbox-field-id">ID do Campo (para captura de leads)</Label>
+                    <Input
+                      id="checkbox-field-id"
+                      value={selectedElementData.fieldId || ""}
+                      onChange={(e) => updateElement(selectedElementData.id, { fieldId: e.target.value })}
+                      className="mt-1"
+                      placeholder="aceita_termos"
                     />
                   </div>
                 </div>
@@ -3120,14 +3407,129 @@ const gameElementCategories = [
               {selectedElementData.type === "birth_date" && (
                 <div className="space-y-4">
                   <div>
-                    <Label htmlFor="birth-question">Pergunta</Label>
-                    <Input
+                    <Label htmlFor="birth-question">Título da Pergunta *</Label>
+                    <textarea
                       id="birth-question"
                       value={selectedElementData.question || ""}
-                      onChange={(e) => updateElement(selectedElementData.id, { question: e.target.value })}
-                      className="mt-1"
-                      placeholder="Data de Nascimento"
+                      onChange={(e) => {
+                        if (e.target.value.length <= 240) {
+                          updateElement(selectedElementData.id, { question: e.target.value });
+                        }
+                      }}
+                      className="w-full px-3 py-2 border rounded mt-1 resize-none"
+                      placeholder="Digite sua pergunta aqui"
+                      maxLength={240}
+                      rows={3}
                     />
+                    <div className="text-xs text-gray-500 mt-1">
+                      {(selectedElementData.question || "").length}/240 caracteres
+                    </div>
+                  </div>
+
+                  {/* Formatação do Texto */}
+                  <div className="border rounded-lg p-4 bg-gray-50">
+                    <h4 className="font-semibold text-sm mb-3">Formatação do Título</h4>
+                    <div className="grid grid-cols-2 gap-2">
+                      <div>
+                        <Label className="text-xs">Tamanho da Fonte</Label>
+                        <select 
+                          className="w-full px-2 py-1 border rounded text-xs mt-1"
+                          value={selectedElementData.fontSize || "base"}
+                          onChange={(e) => updateElement(selectedElementData.id, { fontSize: e.target.value })}
+                        >
+                          <option value="xs">Muito Pequeno</option>
+                          <option value="sm">Pequeno</option>
+                          <option value="base">Normal</option>
+                          <option value="lg">Grande</option>
+                          <option value="xl">Muito Grande</option>
+                          <option value="2xl">Gigante</option>
+                        </select>
+                      </div>
+
+                      <div>
+                        <Label className="text-xs">Alinhamento</Label>
+                        <select 
+                          className="w-full px-2 py-1 border rounded text-xs mt-1"
+                          value={selectedElementData.textAlign || "left"}
+                          onChange={(e) => updateElement(selectedElementData.id, { textAlign: e.target.value })}
+                        >
+                          <option value="left">Esquerda</option>
+                          <option value="center">Centro</option>
+                          <option value="right">Direita</option>
+                        </select>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-2 mt-2">
+                      <div>
+                        <Label className="text-xs">Peso da Fonte</Label>
+                        <select 
+                          className="w-full px-2 py-1 border rounded text-xs mt-1"
+                          value={selectedElementData.fontWeight || "normal"}
+                          onChange={(e) => updateElement(selectedElementData.id, { fontWeight: e.target.value })}
+                        >
+                          <option value="light">Leve</option>
+                          <option value="normal">Normal</option>
+                          <option value="medium">Médio</option>
+                          <option value="semibold">Semi-negrito</option>
+                          <option value="bold">Negrito</option>
+                        </select>
+                      </div>
+
+                      <div>
+                        <Label className="text-xs">Cor do Texto</Label>
+                        <input
+                          type="color"
+                          value={selectedElementData.textColor || "#000000"}
+                          onChange={(e) => updateElement(selectedElementData.id, { textColor: e.target.value })}
+                          className="w-full h-8 border rounded mt-1"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Configurações Específicas de Data de Nascimento */}
+                  <div className="border rounded-lg p-4 bg-purple-50">
+                    <h4 className="font-semibold text-sm mb-3">Configurações de Idade</h4>
+                    
+                    <div className="flex items-center space-x-2 mb-3">
+                      <input
+                        type="checkbox"
+                        id="show-age"
+                        checked={selectedElementData.showAgeCalculation || false}
+                        onChange={(e) => updateElement(selectedElementData.id, { showAgeCalculation: e.target.checked })}
+                      />
+                      <Label htmlFor="show-age">Mostrar cálculo de idade automaticamente</Label>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-2">
+                      <div>
+                        <Label className="text-xs">Idade Mínima</Label>
+                        <Input
+                          type="number"
+                          value={selectedElementData.minAge || 16}
+                          onChange={(e) => updateElement(selectedElementData.id, { minAge: parseInt(e.target.value) })}
+                          className="mt-1"
+                          min="1"
+                          max="120"
+                        />
+                      </div>
+                      <div>
+                        <Label className="text-xs">Idade Máxima</Label>
+                        <Input
+                          type="number"
+                          value={selectedElementData.maxAge || 100}
+                          onChange={(e) => updateElement(selectedElementData.id, { maxAge: parseInt(e.target.value) })}
+                          className="mt-1"
+                          min="1"
+                          max="120"
+                        />
+                      </div>
+                    </div>
+                    
+                    <div className="text-xs text-gray-600 mt-2">
+                      Idades fora deste intervalo não serão aceitas
+                    </div>
                   </div>
 
                   <div className="flex items-center space-x-2">
@@ -3138,37 +3540,6 @@ const gameElementCategories = [
                       onChange={(e) => updateElement(selectedElementData.id, { required: e.target.checked })}
                     />
                     <Label htmlFor="birth-required">Campo obrigatório</Label>
-                  </div>
-
-                  <div className="flex items-center space-x-2">
-                    <input
-                      type="checkbox"
-                      id="show-age"
-                      checked={selectedElementData.showAgeCalculation || false}
-                      onChange={(e) => updateElement(selectedElementData.id, { showAgeCalculation: e.target.checked })}
-                    />
-                    <Label htmlFor="show-age">Mostrar cálculo de idade</Label>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-2">
-                    <div>
-                      <Label className="text-xs">Idade Mínima</Label>
-                      <Input
-                        type="number"
-                        value={selectedElementData.minAge || 16}
-                        onChange={(e) => updateElement(selectedElementData.id, { minAge: parseInt(e.target.value) })}
-                        className="mt-1"
-                      />
-                    </div>
-                    <div>
-                      <Label className="text-xs">Idade Máxima</Label>
-                      <Input
-                        type="number"
-                        value={selectedElementData.maxAge || 100}
-                        onChange={(e) => updateElement(selectedElementData.id, { maxAge: parseInt(e.target.value) })}
-                        className="mt-1"
-                      />
-                    </div>
                   </div>
 
                   <div>
