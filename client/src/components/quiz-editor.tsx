@@ -18,10 +18,11 @@ import {
   Image as ImageIcon
 } from "lucide-react";
 
-interface Question {
+interface Element {
   id: number;
-  type: "multiple_choice" | "text" | "rating" | "email" | "checkbox" | "date" | "phone" | "number" | "textarea" | "image_upload";
-  question: string;
+  type: "multiple_choice" | "text" | "rating" | "email" | "checkbox" | "date" | "phone" | "number" | "textarea" | "image_upload" | "animated_transition" | "heading" | "paragraph" | "image" | "divider";
+  content: string; // Para textos, títulos, etc.
+  question?: string; // Para elementos de pergunta
   description?: string;
   options?: string[];
   required?: boolean;
@@ -29,6 +30,27 @@ interface Question {
   placeholder?: string;
   min?: number;
   max?: number;
+  // Propriedades específicas para transição animada
+  transitionContent?: string;
+  transitionBackground?: string;
+  transitionDuration?: number; // em segundos
+  redirectUrl?: string;
+  // Propriedades para elementos visuais
+  imageUrl?: string;
+  fontSize?: string;
+  textAlign?: "left" | "center" | "right";
+  color?: string;
+}
+
+interface QuizPage {
+  id: number;
+  title: string;
+  elements: Element[];
+}
+
+// Manter interface Question para compatibilidade
+interface Question extends Element {
+  question: string;
 }
 
 interface QuizEditorProps {
@@ -169,6 +191,12 @@ export function QuizEditor({ questions, onQuestionsChange }: QuizEditorProps) {
       label: "Checkbox",
       icon: <CheckSquare className="w-4 h-4" />,
       description: "Múltiplas seleções"
+    },
+    {
+      type: "animated_transition" as const,
+      label: "Transição Animada",
+      icon: <Star className="w-4 h-4" />,
+      description: "Tela de carregamento personalizada"
     }
   ];
 
@@ -376,6 +404,82 @@ export function QuizEditor({ questions, onQuestionsChange }: QuizEditorProps) {
                           {rating}
                         </div>
                       ))}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {selectedQuestionData.type === "animated_transition" && (
+                <div className="space-y-4">
+                  <div>
+                    <Label htmlFor="transition-content">Conteúdo da Transição</Label>
+                    <Textarea
+                      id="transition-content"
+                      placeholder="Processando suas respostas..."
+                      value={selectedQuestionData.transitionContent || ""}
+                      onChange={(e) => updateQuestion(selectedQuestionData.id, { transitionContent: e.target.value })}
+                      className="mt-1"
+                      rows={3}
+                    />
+                  </div>
+                  
+                  <div>
+                    <Label htmlFor="transition-background">Fundo (CSS)</Label>
+                    <Input
+                      id="transition-background"
+                      placeholder="linear-gradient(135deg, #667eea 0%, #764ba2 100%)"
+                      value={selectedQuestionData.transitionBackground || ""}
+                      onChange={(e) => updateQuestion(selectedQuestionData.id, { transitionBackground: e.target.value })}
+                      className="mt-1"
+                    />
+                  </div>
+                  
+                  <div>
+                    <Label htmlFor="transition-duration">Duração (segundos)</Label>
+                    <Input
+                      id="transition-duration"
+                      type="number"
+                      placeholder="5"
+                      value={selectedQuestionData.transitionDuration || ""}
+                      onChange={(e) => updateQuestion(selectedQuestionData.id, { transitionDuration: Number(e.target.value) })}
+                      className="mt-1"
+                    />
+                  </div>
+                  
+                  <div>
+                    <Label htmlFor="redirect-url">URL de Redirecionamento</Label>
+                    <Input
+                      id="redirect-url"
+                      placeholder="https://seu-site.com/obrigado"
+                      value={selectedQuestionData.redirectUrl || ""}
+                      onChange={(e) => updateQuestion(selectedQuestionData.id, { redirectUrl: e.target.value })}
+                      className="mt-1"
+                    />
+                  </div>
+                  
+                  {/* Preview */}
+                  <div>
+                    <Label>Preview</Label>
+                    <div 
+                      className="mt-2 min-h-[200px] rounded-lg flex items-center justify-center text-white relative overflow-hidden"
+                      style={{ 
+                        background: selectedQuestionData.transitionBackground || "linear-gradient(135deg, #667eea 0%, #764ba2 100%)" 
+                      }}
+                    >
+                      <div className="absolute inset-0 bg-black bg-opacity-20"></div>
+                      <div className="relative z-10 text-center px-8">
+                        <div className="mb-4">
+                          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white mx-auto mb-2"></div>
+                        </div>
+                        <div className="text-lg font-bold mb-2">
+                          {selectedQuestionData.transitionContent || "Processando suas respostas..."}
+                        </div>
+                        {selectedQuestionData.transitionDuration && (
+                          <div className="text-sm opacity-90">
+                            Redirecionando em {selectedQuestionData.transitionDuration}s
+                          </div>
+                        )}
+                      </div>
                     </div>
                   </div>
                 </div>

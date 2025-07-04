@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
-import { QuizEditor } from "@/components/quiz-editor";
+import { PageEditor } from "@/components/page-editor";
 import { QuizPreview } from "@/components/quiz-preview";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
@@ -100,17 +100,44 @@ export default function QuizBuilder() {
         title: existingQuiz.title,
         description: existingQuiz.description || "",
         structure: existingQuiz.structure || {
-          questions: [],
+          pages: [{
+            id: Date.now(),
+            title: "Página 1",
+            elements: []
+          }],
           settings: {
-            theme: "default",
+            theme: "vendzz",
             showProgressBar: true,
             collectEmail: true,
             collectName: true,
             collectPhone: false,
+            resultTitle: "",
+            resultDescription: ""
           }
         },
         isPublished: existingQuiz.isPublished,
       });
+    } else {
+      // Initialize with default page structure for new quiz
+      setQuizData(prev => ({
+        ...prev,
+        structure: {
+          pages: [{
+            id: Date.now(),
+            title: "Página 1",
+            elements: []
+          }],
+          settings: {
+            theme: "vendzz",
+            showProgressBar: true,
+            collectEmail: true,
+            collectName: true,
+            collectPhone: false,
+            resultTitle: "",
+            resultDescription: ""
+          }
+        }
+      }));
     }
   }, [existingQuiz]);
 
@@ -147,12 +174,12 @@ export default function QuizBuilder() {
     saveMutation.mutate(updatedData);
   };
 
-  const handleQuestionChange = (questions: any[]) => {
+  const handlePageChange = (pages: any[]) => {
     setQuizData(prev => ({
       ...prev,
       structure: {
         ...prev.structure,
-        questions
+        pages
       }
     }));
   };
@@ -167,26 +194,7 @@ export default function QuizBuilder() {
     }));
   };
 
-  const addQuestion = (type: "multiple_choice" | "text" | "rating" | "email" | "textarea" | "phone" | "number" | "date" | "checkbox") => {
-    const newQuestion = {
-      id: Date.now(),
-      type,
-      question: "Nova pergunta",
-      description: "",
-      options: type === "multiple_choice" || type === "checkbox" ? ["Opção 1", "Opção 2"] : undefined,
-      required: true,
-      fieldId: "",
-      placeholder: ""
-    };
-
-    setQuizData(prev => ({
-      ...prev,
-      structure: {
-        ...prev.structure,
-        questions: [...prev.structure.questions, newQuestion]
-      }
-    }));
-  };
+  // Função removida - agora gerenciada pelo PageEditor
 
   if (authLoading || (isEditing && quizLoading)) {
     return (
@@ -380,6 +388,15 @@ export default function QuizBuilder() {
                       <span className="mr-2">⭐</span>
                       Avaliação
                     </Button>
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      className="justify-start col-span-2"
+                      onClick={() => addQuestion("animated_transition")}
+                    >
+                      <span className="mr-2">✨</span>
+                      Transição Animada
+                    </Button>
                   </div>
                 </div>
 
@@ -425,11 +442,11 @@ export default function QuizBuilder() {
               </div>
             </div>
 
-            {/* Quiz Editor */}
+            {/* Page Editor */}
             <div className="flex-1 overflow-y-auto">
-              <QuizEditor
-                questions={quizData.structure.questions}
-                onQuestionsChange={handleQuestionChange}
+              <PageEditor
+                pages={quizData.structure.pages || []}
+                onPagesChange={handlePageChange}
               />
             </div>
           </div>
