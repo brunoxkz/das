@@ -23,6 +23,12 @@ export interface IStorage {
   getUser(id: string): Promise<User | undefined>;
   upsertUser(user: UpsertUser): Promise<User>;
   updateUserStripeInfo(userId: string, stripeCustomerId: string, stripeSubscriptionId: string): Promise<User>;
+  updateUserPlan(userId: string, plan: string, subscriptionStatus?: string): Promise<User>;
+  
+  // Admin operations
+  getAllUsers(): Promise<User[]>;
+  updateUserRole(userId: string, role: string): Promise<User>;
+  deleteUser(userId: string): Promise<void>;
   
   // Quiz operations
   getUserQuizzes(userId: string): Promise<Quiz[]>;
@@ -84,6 +90,45 @@ export class DatabaseStorage implements IStorage {
       .where(eq(users.id, userId))
       .returning();
     return user;
+  }
+
+  async updateUserPlan(userId: string, plan: string, subscriptionStatus?: string): Promise<User> {
+    const updateData: any = {
+      plan,
+      updatedAt: new Date(),
+    };
+    
+    if (subscriptionStatus) {
+      updateData.subscriptionStatus = subscriptionStatus;
+    }
+
+    const [user] = await db
+      .update(users)
+      .set(updateData)
+      .where(eq(users.id, userId))
+      .returning();
+    return user;
+  }
+
+  // Admin operations
+  async getAllUsers(): Promise<User[]> {
+    return await db.select().from(users).orderBy(users.createdAt);
+  }
+
+  async updateUserRole(userId: string, role: string): Promise<User> {
+    const [user] = await db
+      .update(users)
+      .set({
+        role,
+        updatedAt: new Date(),
+      })
+      .where(eq(users.id, userId))
+      .returning();
+    return user;
+  }
+
+  async deleteUser(userId: string): Promise<void> {
+    await db.delete(users).where(eq(users.id, userId));
   }
 
   // Quiz operations

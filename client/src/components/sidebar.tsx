@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Link, useLocation } from "wouter";
+import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { 
@@ -22,6 +23,8 @@ import { cn } from "@/lib/utils";
 export function Sidebar() {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [location] = useLocation();
+  const { user } = useAuth();
+  const userData = user as any;
 
   const navItems = [
     {
@@ -71,7 +74,14 @@ export function Sidebar() {
       href: "/settings",
       icon: <Settings className="w-4 h-4" />,
       active: location === "/settings"
-    }
+    },
+    ...(userData?.role === "admin" ? [{
+      title: "Admin",
+      href: "/admin",
+      icon: <Shield className="w-4 h-4" />,
+      active: location === "/admin",
+      className: "text-red-600 border-red-200 bg-red-50 hover:bg-red-100"
+    }] : [])
   ];
 
   return (
