@@ -28,19 +28,16 @@ export default function Dashboard() {
   const { isAuthenticated, isLoading: authLoading } = useAuth();
   const [showTutorial, setShowTutorial] = useState(false);
 
-  const { data: quizzes, isLoading: quizzesLoading } = useQuery({
-    queryKey: ["/api/quizzes"],
+  const { data: dashboardData, isLoading: dashboardLoading } = useQuery({
+    queryKey: ["/api/dashboard/stats"],
     retry: false,
-  });
-
-  const { data: responses, isLoading: responsesLoading } = useQuery({
-    queryKey: ["/api/quiz-responses"],
-    retry: false,
+    staleTime: 30000, // 30 segundos de cache
+    enabled: isAuthenticated,
   });
 
   // Calcular estatísticas em tempo real
-  const quizzesList = Array.isArray(quizzes) ? quizzes : [];
-  const responsesList = Array.isArray(responses) ? responses : [];
+  const quizzesList = Array.isArray(dashboardData?.quizzes) ? dashboardData.quizzes : [];
+  const responsesList = Array.isArray(dashboardData?.responses) ? dashboardData.responses : [];
   
   const totalQuizzes = quizzesList.length;
   const totalLeads = responsesList.length;
@@ -61,13 +58,7 @@ export default function Dashboard() {
     }
   }, [isAuthenticated, authLoading, toast]);
 
-  if (authLoading || quizzesLoading || responsesLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full" />
-      </div>
-    );
-  }
+
 
   const dashboardStats = [
     {
@@ -95,6 +86,15 @@ export default function Dashboard() {
       color: "text-orange-600"
     }
   ];
+
+  // Show loading spinner while dashboard data is loading
+  if (dashboardLoading || authLoading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full" aria-label="Loading dashboard"/>
+      </div>
+    );
+  }
 
   return (
     <div className="p-4 md:p-6 space-y-6" data-tutorial="dashboard-main">

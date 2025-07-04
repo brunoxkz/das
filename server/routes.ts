@@ -394,5 +394,28 @@ export function registerRoutes(app: Express): Server {
     res.redirect("/");
   });
 
+  // Dashboard stats route (optimized single call)
+  app.get("/api/dashboard/stats", authenticateToken, async (req, res) => {
+    try {
+      const [quizzes, allResponses] = await Promise.all([
+        storage.getUserQuizzes(req.user!.id),
+        storage.getQuizResponses("") 
+      ]);
+      
+      // Filter responses for user's quizzes only
+      const userQuizIds = quizzes.map(q => q.id);
+      const userResponses = Array.isArray(allResponses) ? 
+        allResponses.filter(r => userQuizIds.includes(r.quizId)) : [];
+      
+      res.json({
+        quizzes,
+        responses: userResponses
+      });
+    } catch (error) {
+      console.error("Error fetching dashboard stats:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
   return httpServer;
 }
