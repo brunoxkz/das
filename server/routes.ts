@@ -268,7 +268,22 @@ export function registerRoutes(app: Express): Server {
       }
 
       const analytics = await storage.getQuizAnalytics(req.params.quizId);
-      res.json({ quiz, analytics });
+      
+      // Calculate total metrics from analytics data
+      const totalViews = analytics.reduce((sum, record) => sum + (record.views || 0), 0);
+      const totalCompletions = analytics.reduce((sum, record) => sum + (record.completions || 0), 0);
+      const totalLeads = analytics.reduce((sum, record) => sum + (record.leads || 0), 0);
+      
+      const processedAnalytics = {
+        totalViews,
+        totalCompletions,
+        totalLeads,
+        completionRate: totalViews > 0 ? (totalCompletions / totalViews * 100) : 0,
+        conversionRate: totalViews > 0 ? (totalLeads / totalViews * 100) : 0,
+        rawData: analytics
+      };
+
+      res.json({ quiz, analytics: processedAnalytics });
     } catch (error) {
       console.error("Error fetching analytics:", error);
       res.status(500).json({ message: "Internal server error" });

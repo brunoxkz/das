@@ -252,7 +252,7 @@ export default function SuperAnalytics() {
   }
 
   // Use real analytics data from API
-  const analyticsData = analytics || {
+  const analyticsData = analytics?.analytics || {
     totalViews: 0,
     totalCompletions: 0,
     totalDropOffs: 0,
