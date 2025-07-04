@@ -195,7 +195,7 @@ export default function Dashboard() {
                 </div>
               ))}
               
-              {quizzes.length > 5 && (
+              {quizzesList.length > 5 && (
                 <div className="text-center pt-4">
                   <Button variant="outline">
                     Ver Todos os Quizzes
@@ -241,7 +241,7 @@ export default function Dashboard() {
           </Card>
         </Link>
 
-        <Link href="/analytics">
+        <Link href="/super-analytics">
           <Card className="cursor-pointer hover:shadow-lg transition-shadow">
             <CardContent className="p-4 md:p-6">
               <div className="flex items-center space-x-4">
@@ -257,6 +257,16 @@ export default function Dashboard() {
           </Card>
         </Link>
       </div>
+
+      {/* Tutorial Component */}
+      {showTutorial && (
+        <TutorialTour
+          steps={dashboardTutorialSteps}
+          isOpen={showTutorial}
+          onClose={() => setShowTutorial(false)}
+          onComplete={() => setShowTutorial(false)}
+        />
+      )}
     </div>
   );
 }
