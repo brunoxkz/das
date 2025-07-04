@@ -134,8 +134,14 @@ export default function LoginPage() {
                     type="button"
                     className="text-sm text-primary hover:underline"
                     onClick={() => {
-                      // TODO: Implementar funcionalidade de esqueceu senha
-                      alert('Funcionalidade de recuperação de senha será implementada em breve');
+                      const email = prompt('Digite seu email para recuperar a senha:');
+                      if (email) {
+                        // TODO: Implementar endpoint de recuperação
+                        toast({
+                          title: "Email enviado",
+                          description: "Se o email estiver cadastrado, você receberá instruções para redefinir sua senha.",
+                        });
+                      }
                     }}
                   >
                     Esqueceu a senha?

@@ -67,7 +67,8 @@ interface QuizAnalytics {
 }
 
 export default function SuperAnalytics() {
-  const { quizId } = useParams<{ quizId: string }>();
+  const params = new URLSearchParams(window.location.search);
+  const quizId = params.get('quiz');
   const [, setLocation] = useLocation();
   const { toast } = useToast();
   const { isAuthenticated, isLoading: authLoading } = useAuth();
