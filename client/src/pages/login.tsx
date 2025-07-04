@@ -125,6 +125,18 @@ export default function LoginPage() {
                   {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                   Entrar
                 </Button>
+                <div className="text-center mt-4">
+                  <button
+                    type="button"
+                    className="text-sm text-primary hover:underline"
+                    onClick={() => {
+                      // TODO: Implementar funcionalidade de esqueceu senha
+                      alert('Funcionalidade de recuperação de senha será implementada em breve');
+                    }}
+                  >
+                    Esqueceu a senha?
+                  </button>
+                </div>
               </form>
             </TabsContent>
 
