@@ -447,15 +447,15 @@ export function registerRoutes(app: Express): Server {
       }
       
       // Se não estiver em cache, buscar no banco
-      const [quizzes, allResponses] = await Promise.all([
-        storage.getUserQuizzes(userId),
-        storage.getQuizResponses("") 
-      ]);
+      const quizzes = await storage.getUserQuizzes(userId);
       
-      // Filter responses for user's quizzes only
-      const userQuizIds = quizzes.map(q => q.id);
-      const userResponses = Array.isArray(allResponses) ? 
-        allResponses.filter(r => userQuizIds.includes(r.quizId)) : [];
+      // Buscar respostas para cada quiz do usuário
+      const userQuizIds = quizzes.map(q => q.id).filter(id => id && id.trim() !== '');
+      const responsePromises = userQuizIds.map(quizId => 
+        storage.getQuizResponses(quizId).catch(() => [])
+      );
+      const responsesArrays = await Promise.all(responsePromises);
+      const userResponses = responsesArrays.flat();
       
       const responseData = {
         quizzes,
