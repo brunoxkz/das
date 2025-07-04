@@ -227,20 +227,30 @@ export function Sidebar() {
         </div>
 
         {/* User Plan Info */}
-        {!isCollapsed && (
+        {!isCollapsed && userData && (
           <div className="mt-4 p-3 bg-gray-50 rounded-lg">
             <div className="flex items-center justify-between mb-2">
               <span className="text-sm font-medium text-gray-900">Plano Atual</span>
-              <Badge variant="outline" className="text-xs">
-                Free
+              <Badge variant="outline" className="text-xs capitalize">
+                {userData.plan === 'enterprise' ? 'Enterprise' : userData.plan === 'premium' ? 'Premium' : 'Free'}
               </Badge>
             </div>
-            <div className="text-xs text-gray-600 mb-2">
-              {totalQuizzes} de 5 quizzes utilizados
-            </div>
-            <div className="w-full bg-gray-200 rounded-full h-1.5">
-              <div className="bg-primary h-1.5 rounded-full" style={{ width: `${Math.min((totalQuizzes / 5) * 100, 100)}%` }}></div>
-            </div>
+            {userData.plan === 'enterprise' ? (
+              <div className="text-xs text-gray-600">
+                {totalQuizzes} quizzes criados (ilimitado)
+              </div>
+            ) : (
+              <>
+                <div className="text-xs text-gray-600 mb-2">
+                  {totalQuizzes} de {userData.plan === 'premium' ? '25' : '3'} quizzes utilizados
+                </div>
+                <div className="w-full bg-gray-200 rounded-full h-1.5">
+                  <div className="bg-primary h-1.5 rounded-full" style={{ 
+                    width: `${Math.min((totalQuizzes / (userData.plan === 'premium' ? 25 : 3)) * 100, 100)}%` 
+                  }}></div>
+                </div>
+              </>
+            )}
           </div>
         )}
       </div>

@@ -415,20 +415,7 @@ export function registerRoutes(app: Express): Server {
 
 
 
-  app.put("/api/admin/users/:id/role", authenticateToken, async (req, res) => {
-    // Check if user is admin
-    if (req.user!.role !== 'admin') {
-      return res.status(403).json({ message: 'Acesso negado. Apenas administradores.' });
-    }
-    try {
-      const { role } = req.body;
-      const user = await storage.updateUserRole(req.params.id, role);
-      res.json(user);
-    } catch (error) {
-      console.error("Error updating user role:", error);
-      res.status(500).json({ message: "Internal server error" });
-    }
-  });
+
 
   // Remove old Replit auth routes - now handled by JWT
   app.get("/api/login", (req, res) => {
