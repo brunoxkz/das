@@ -3,7 +3,7 @@ import { createServer, type Server } from "http";
 import "./types"; // Import global types
 import Stripe from "stripe";
 import { storage } from "./storage";
-import { verifyJWT as authenticateToken, generateTokens } from "./auth";
+import { verifyJWT as authenticateToken } from "./auth-jwt";
 import bcrypt from "bcryptjs";
 import express from "express";
 import { 

@@ -16,7 +16,7 @@ import LeadsPage from "@/pages/leads";
 import NotFoundPage from "@/pages/not-found";
 import TutoriaisPage from "@/pages/tutoriais";
 import PremiacoesPage from "@/pages/premiacoes";
-import { useAuth } from "@/hooks/useAuth";
+import { useAuth } from "@/hooks/useAuth-jwt";
 import { isUnauthorizedError } from "@/lib/authUtils";
 
 function App() {
