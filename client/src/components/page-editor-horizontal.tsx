@@ -24,7 +24,10 @@ import {
   Hash,
   FileText as TextArea,
   Upload,
-  Video
+  Video,
+  BarChart3,
+  Volume2,
+  AlertCircle
 } from "lucide-react";
 
 interface Element {
@@ -168,19 +171,19 @@ export function PageEditorHorizontal({ pages, onPagesChange }: PageEditorProps) 
 
   const elementTypes = [
     { type: "heading", label: "Título", icon: <Type className="w-4 h-4" /> },
-    { type: "paragraph", label: "Parágrafo", icon: <AlignLeft className="w-4 h-4" /> },
-    { type: "multiple_choice", label: "Múltipla Escolha", icon: <CheckSquare className="w-4 h-4" /> },
-    { type: "text", label: "Campo de Texto", icon: <FileText className="w-4 h-4" /> },
+    { type: "paragraph", label: "Texto", icon: <AlignLeft className="w-4 h-4" /> },
+    { type: "multiple_choice", label: "Múltipla", icon: <CheckSquare className="w-4 h-4" /> },
+    { type: "text", label: "Campo", icon: <FileText className="w-4 h-4" /> },
     { type: "email", label: "Email", icon: <Mail className="w-4 h-4" /> },
     { type: "phone", label: "Telefone", icon: <Phone className="w-4 h-4" /> },
     { type: "number", label: "Número", icon: <Hash className="w-4 h-4" /> },
-    { type: "rating", label: "Avaliação", icon: <Star className="w-4 h-4" /> },
+    { type: "rating", label: "Estrelas", icon: <Star className="w-4 h-4" /> },
     { type: "date", label: "Data", icon: <Calendar className="w-4 h-4" /> },
-    { type: "textarea", label: "Área de Texto", icon: <TextArea className="w-4 h-4" /> },
+    { type: "textarea", label: "Área", icon: <TextArea className="w-4 h-4" /> },
     { type: "image", label: "Imagem", icon: <ImageIcon className="w-4 h-4" /> },
-    { type: "image_upload", label: "Upload Imagem", icon: <Upload className="w-4 h-4" /> },
+    { type: "image_upload", label: "Upload", icon: <Upload className="w-4 h-4" /> },
     { type: "video", label: "Vídeo", icon: <Video className="w-4 h-4" /> },
-    { type: "divider", label: "Divisória", icon: <Minus className="w-4 h-4" /> },
+    { type: "divider", label: "Linha", icon: <Minus className="w-4 h-4" /> },
   ];
 
   const currentPage = pages[activePage];
@@ -452,14 +455,16 @@ export function PageEditorHorizontal({ pages, onPagesChange }: PageEditorProps) 
         return (
           <div className="space-y-2">
             {element.imageUrl ? (
-              <img 
-                src={element.imageUrl} 
-                alt={element.content || "Imagem"} 
-                className="max-w-full h-auto rounded-lg border"
-                style={{
-                  textAlign: element.textAlign || "center"
-                }}
-              />
+              <div 
+                className="w-full"
+                style={{ textAlign: element.textAlign || "center" }}
+              >
+                <img 
+                  src={element.imageUrl} 
+                  alt={element.content || "Imagem"} 
+                  className="max-w-full h-auto rounded-lg border"
+                />
+              </div>
             ) : (
               <div className="w-full h-32 border-2 border-dashed border-gray-300 rounded-lg flex items-center justify-center bg-gray-50">
                 <div className="text-center">
@@ -486,15 +491,15 @@ export function PageEditorHorizontal({ pages, onPagesChange }: PageEditorProps) 
               {element.required && <span className="text-red-500 ml-1">*</span>}
             </label>
             {element.imageUrl ? (
-              <div className="relative">
+              <div 
+                className="w-full"
+                style={{ textAlign: element.textAlign || "center" }}
+              >
                 <img 
                   src={element.imageUrl} 
                   alt="Imagem carregada" 
                   className="max-w-full h-auto rounded-lg border max-h-64 object-cover"
                 />
-                <div className="absolute top-2 right-2">
-                  <Badge variant="secondary" className="text-xs">WebP</Badge>
-                </div>
               </div>
             ) : (
               <div className="w-full h-32 border-2 border-dashed border-gray-300 rounded-lg flex items-center justify-center bg-gray-50 cursor-pointer hover:bg-gray-100">
@@ -1500,6 +1505,19 @@ export function PageEditorHorizontal({ pages, onPagesChange }: PageEditorProps) 
                       className="mt-1"
                       placeholder="campo_foto"
                     />
+                  </div>
+
+                  <div className="border rounded-lg p-4 bg-gray-50">
+                    <h4 className="font-semibold text-sm mb-3">Alinhamento</h4>
+                    <select 
+                      className="w-full px-2 py-1 border rounded text-xs"
+                      value={selectedElementData.textAlign || "center"}
+                      onChange={(e) => updateElement(selectedElementData.id, { textAlign: e.target.value })}
+                    >
+                      <option value="left">Esquerda</option>
+                      <option value="center">Centro</option>
+                      <option value="right">Direita</option>
+                    </select>
                   </div>
                 </div>
               )}

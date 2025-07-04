@@ -137,6 +137,13 @@ Changelog:
     - Field IDs for lead capture integration
   * Clean editor interface with full-width workspace
   * Fixed save functionality - data persistence working correctly
+- July 04, 2025. Added new elements and improved UI:
+  * Added video element with automatic embed detection (YouTube, Vimeo, TikTok, Instagram)
+  * Added image upload element with WebP conversion and 5MB limit
+  * Simplified element names in sidebar (e.g., "Múltipla" instead of "Múltipla Escolha")
+  * Added comprehensive properties panels for video and image upload
+  * Improved image alignment options for both image and image_upload elements
+  * Removed confusing WebP indicator from preview
 ```
 
 ## User Preferences

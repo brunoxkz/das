@@ -1,0 +1,177 @@
+Perfeito! Vou ajustar removendo os temas específicos e adicionando mais funcionalidades:
+📋 Formulário
+📅 Data (Nascimento)
+
+Formato: DD/MM/AAAA
+Validação: Idade mínima 16 anos, máxima 100 anos
+Calendário: Popup picker com anos rápidos
+Cálculo: Idade automática
+Obrigatório: Sim/não
+Texto: Tamanho (XS, S, M, L, XL), negrito (sim/não)
+Cor: RGB personalizada
+
+📏 Altura
+
+Formato: X,XX m ou XXX cm
+Min/Max: 1,20m - 2,20m
+Input: Numérico com máscara
+Unidade: Metros ou centímetros
+Validação: Tempo real
+Texto: Tamanho (XS, S, M, L, XL), negrito (sim/não)
+Cor: RGB personalizada
+
+⚖️ Peso Atual
+
+Formato: XXX,X kg
+Min/Max: 30kg - 300kg
+Input: Numérico decimal
+Validação: Números válidos
+IMC: Cálculo automático
+Texto: Tamanho (XS, S, M, L, XL), negrito (sim/não)
+Cor: RGB personalizada
+
+🎯 Peso Desejado
+
+Formato: XXX,X kg
+Min/Max: Baseado no peso atual ±50kg
+Meta: Diferença automática
+Validação: Deve ser diferente do peso atual
+Sugestão: Peso ideal por altura
+Texto: Tamanho (XS, S, M, L, XL), negrito (sim/não)
+Cor: RGB personalizada
+
+📊 Gráfico Linear (Antes/Depois)
+
+Eixo X: Tempo (semanas/meses)
+Eixo Y: Peso, medidas, renda
+Input: Valores numéricos
+Visualização: Linha progressiva
+Metas: Marcos visuais
+Cores: RGB personalizada para linha e fundo
+
+🧩 Quiz
+📊 Escala Linear
+
+Intervalos: 1-5, 1-7, 1-10
+Labels personalizáveis: Extremidades customizáveis
+Formato: Números, emoji, texto
+Cores: RGB para gradiente ou cores discretas
+Orientação: Horizontal/vertical
+Texto: Tamanho (XS, S, M, L, XL), negrito (sim/não)
+
+📱 Mídia
+🎵 Áudio
+
+Fonte: Upload MP3/WAV, URL
+Controles: Play/pause, volume, timeline
+Autoplay: Sim/não
+Loop: Sim/não
+Volume: 0-100%
+Player: Cores RGB personalizáveis
+
+🚨 Elementos de Feedback
+⚠️ Alerta
+
+Tipos: Sucesso, erro, aviso, info
+Estilo: Sólido, outline, subtle
+Posição: Top, center, bottom
+Auto-close: 1-30 segundos ou manual
+Cores: RGB para fundo, texto e borda
+Texto: Tamanho (XS, S, M, L, XL), negrito (sim/não)
+
+⌛ Loading
+
+Tipo: Spinner, barra, dots, skeleton, pulse
+Tamanho: XS (16px), S (24px), M (32px), L (48px), XL (64px), XXL (96px)
+Cor: RGB personalizada
+Velocidade: Lenta, normal, rápida
+Texto: Mensagem customizável
+Texto: Tamanho (XS, S, M, L, XL), negrito (sim/não)
+Background: RGB para overlay
+
+📋 Argumentação & Vendas
+📄 Argumentos
+
+Layout: Lista, cards, timeline, grid
+Numeração: Automática, manual, bullets, sem numeração
+Ícones: Biblioteca ou upload
+Expansão: Accordion, modal, inline
+Texto: Tamanho (XS, S, M, L, XL), negrito (sim/não)
+Cores: RGB para texto, fundo, bordas
+
+📋 Cards (Funcionalidades Expandidas)
+
+Layout: Simples, com imagem, horizontal, vertical
+Sombra: Nenhuma, sutil, média, forte, custom
+Bordas: Raio (0-50px), espessura (0-10px)
+Hover: Elevação, zoom, mudança de cor
+Padding: XS, S, M, L, XL
+Header: Título, subtítulo, ícone
+Body: Texto, imagem, botões
+Footer: Ações, links, metadata
+Cores: RGB para fundo, bordas, sombra
+Texto: Tamanho (XS, S, M, L, XL), negrito (sim/não)
+Espaçamento: Entre elementos interno
+Alinhamento: Esquerda, centro, direita
+Largura: Auto, 100%, custom (px, %)
+
+🎠 Carrossel
+
+Itens: 1-8 por visualização
+Navegação: Setas, dots, swipe, keyboard
+Autoplay: Velocidade (1-10s), direção
+Transição: Slide, fade, 3D, flip
+Loop: Infinito ou finito
+Cores: RGB para controles e indicadores
+Texto: Tamanho (XS, S, M, L, XL), negrito (sim/não)
+
+❓ FAQ
+
+Layout: Accordion, tabs, cards, lista
+Busca: Filtro por pergunta
+Categorias: Agrupamento por tema
+Expansão: Múltiplas abertas ou única
+Ícones: Expandir/recolher customizáveis
+Cores: RGB para fundo, texto, separadores
+Texto: Tamanho (XS, S, M, L, XL), negrito (sim/não)
+Animação: Velocidade de abertura/fechamento
+
+💰 Preço
+
+Moeda: Símbolo e formato
+Comparação: Tabela de planos
+Destaque: Plano recomendado
+Periodicidade: Mensal, anual, único
+Desconto: Porcentagem visual
+Cores: RGB para preços, destaques, fundos
+Texto: Tamanho (XS, S, M, L, XL), negrito (sim/não)
+Strikethrough: Para preços antigos
+
+📈 Gráficos
+
+Tipos: Linha, barra, pizza, área, scatter, radar
+Dados: Input manual ou API
+Cores: RGB personalizada para cada série
+Interatividade: Hover, zoom, filtros, tooltips
+Exportação: PNG, JPG, PDF, SVG, dados CSV
+Eixos: Labels customizáveis
+Grid: Mostrar/ocultar, cor RGB
+Legenda: Posição, estilo, cores RGB
+Texto: Tamanho (XS, S, M, L, XL), negrito (sim/não)
+
+🎯 Funcionalidades Globais de Texto
+Para TODOS os elementos com texto:
+
+Tamanho: XS (12px), S (14px), M (16px), L (18px), XL (20px), XXL (24px)
+Peso: Normal (400), Medium (500), Semibold (600), Bold (700), Extra Bold (800)
+Cor: Seletor RGB completo com transparência
+Alinhamento: Esquerda, centro, direita, justificado
+Espaçamento: Entre letras e linhas
+Família: Sans-serif, serif, monospace, custom
+
+Para TODOS os elementos com cor:
+
+Seletor RGB: Com alpha (transparência)
+Paleta: Cores predefinidas + custom
+Gradiente: Linear, radial (quando aplicável)
+Modo escuro: Adaptação automática das cores
