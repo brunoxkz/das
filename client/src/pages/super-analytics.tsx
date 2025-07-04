@@ -82,8 +82,25 @@ export default function SuperAnalytics() {
 
   const { data: quizzes } = useQuery({
     queryKey: ["/api/quizzes"],
+    queryFn: async () => {
+      const token = localStorage.getItem("accessToken");
+      const response = await fetch("/api/quizzes", {
+        headers: {
+          "Authorization": `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      });
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      return response.json();
+    },
     retry: false,
   });
+  
+  console.log("SUPER ANALYTICS - Quizzes data:", quizzes);
 
   const quiz = quizzes?.find((q: any) => q.id === quizId);
   const quizLoading = !quizzes;
