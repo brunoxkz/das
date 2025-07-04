@@ -378,6 +378,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   };
 
+  // Debug route to check current user info
+  app.get("/api/debug/user", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const user = await storage.getUser(userId);
+      res.json({
+        userId,
+        userFromDb: user,
+        claims: req.user.claims
+      });
+    } catch (error) {
+      console.error("Debug user error:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  // Temporary route to set user as admin (remove after fixing)
+  app.post("/api/debug/make-admin", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      await storage.updateUserRole(userId, "admin");
+      res.json({ message: "User role updated to admin" });
+    } catch (error) {
+      console.error("Make admin error:", error);
+      res.status(500).json({ message: "Failed to update role" });
+    }
+  });
+
   // Admin routes
   app.get("/api/admin/users", isAuthenticated, isAdmin, async (req: any, res) => {
     try {
