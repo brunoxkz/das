@@ -72,6 +72,9 @@ export default function SuperAnalytics() {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
   const { isAuthenticated, isLoading: authLoading } = useAuth();
+  
+  console.log("SUPER ANALYTICS - URL:", window.location.search);
+  console.log("SUPER ANALYTICS - Quiz ID:", quizId);
   const [timeRange, setTimeRange] = useState('7d');
   const [dateFilter, setDateFilter] = useState("7");
   const [isDataReset, setIsDataReset] = useState(false);
