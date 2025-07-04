@@ -529,7 +529,7 @@ const gameElementCategories = [
     const baseElement: Element = {
       id: Date.now(),
       type,
-      content: type === "heading" ? "Novo título" : type === "paragraph" ? "Novo parágrafo" : "",
+      content: type === "heading" ? "Novo título" : type === "paragraph" ? "Novo parágrafo" : type === "continue_button" ? "Continuar" : "",
       question: type === "multiple_choice" ? "Nova pergunta" : 
                 type === "birth_date" ? "Data de Nascimento" :
                 type === "height" ? "Qual sua altura?" :
@@ -559,6 +559,15 @@ const gameElementCategories = [
       }),
       ...(type === "spacer" && {
         spacerSize: "medium" as const
+      }),
+      ...(type === "continue_button" && {
+        buttonText: "Continuar",
+        buttonAction: "next_page" as const,
+        buttonSize: "medium" as const,
+        buttonBorderRadius: "medium" as const,
+        buttonBackgroundColor: "#10B981",
+        buttonTextColor: "#FFFFFF",
+        buttonHoverColor: "#059669"
       })
     };
 
