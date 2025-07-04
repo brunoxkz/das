@@ -1,4 +1,3 @@
-
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import Stripe from "stripe";
@@ -21,150 +20,13 @@ const stripe = process.env.STRIPE_SECRET_KEY ? new Stripe(process.env.STRIPE_SEC
 export function registerRoutes(app: Express): Server {
   const httpServer = createServer(app);
 
-  // Auth routes (JWT-based)
-  app.post("/api/auth/register", async (req, res) => {
-    try {
-      const { email, password, firstName, lastName } = req.body;
-      
-      if (!email || !password || !firstName) {
-        return res.status(400).json({ message: "Email, password, and first name are required" });
-      }
-
-      // Check if user exists
-      const existingUser = await storage.getUserByEmail(email);
-      if (existingUser) {
-        return res.status(400).json({ message: "User already exists" });
-      }
-
-      // Hash password
-      const hashedPassword = await bcrypt.hash(password, 12);
-
-      // Create user
-      const user = await storage.createUserWithPassword({
-        email,
-        password: hashedPassword,
-        firstName,
-        lastName: lastName || ""
-      });
-
-      // Generate tokens
-      const tokens = generateTokens(user);
-
-      res.json({
-        user: {
-          id: user.id,
-          email: user.email,
-          firstName: user.firstName,
-          lastName: user.lastName,
-          role: user.role,
-          plan: user.plan
-        },
-        ...tokens
-      });
-    } catch (error) {
-      console.error("Registration error:", error);
-      res.status(500).json({ message: "Internal server error" });
-    }
-  });
-
-  app.post("/api/auth/login", async (req, res) => {
-    try {
-      const { email, password } = req.body;
-      
-      if (!email || !password) {
-        return res.status(400).json({ message: "Email and password are required" });
-      }
-
-      const user = await storage.getUserByEmail(email);
-      if (!user || !user.password) {
-        return res.status(401).json({ message: "Invalid credentials" });
-      }
-
-      const isValidPassword = await bcrypt.compare(password, user.password);
-      if (!isValidPassword) {
-        return res.status(401).json({ message: "Invalid credentials" });
-      }
-
-      const tokens = generateTokens(user);
-
-      res.json({
-        user: {
-          id: user.id,
-          email: user.email,
-          firstName: user.firstName,
-          lastName: user.lastName,
-          role: user.role,
-          plan: user.plan
-        },
-        ...tokens
-      });
-    } catch (error) {
-      console.error("Login error:", error);
-      res.status(500).json({ message: "Internal server error" });
-    }
-  });
-
-  app.post("/api/auth/refresh", async (req, res) => {
-    try {
-      const { refreshToken } = req.body;
-      
-      if (!refreshToken) {
-        return res.status(400).json({ message: "Refresh token required" });
-      }
-
-      const user = await storage.getUserByRefreshToken(refreshToken);
-      if (!user) {
-        return res.status(401).json({ message: "Invalid refresh token" });
-      }
-
-      const tokens = generateTokens(user);
-      
-      res.json(tokens);
-    } catch (error) {
-      console.error("Token refresh error:", error);
-      res.status(401).json({ message: "Invalid refresh token" });
-    }
-  });
-
-  app.post("/api/auth/logout", verifyJWT, async (req, res) => {
-    try {
-      const userId = req.user?.id;
-      if (userId) {
-        await storage.clearRefreshTokens(userId);
-      }
-      res.json({ message: "Logged out successfully" });
-    } catch (error) {
-      console.error("Logout error:", error);
-      res.status(500).json({ message: "Internal server error" });
-    }
-  });
-
-  app.get("/api/auth/user", verifyJWT, async (req, res) => {
-    try {
-      const user = await storage.getUser(req.user!.id);
-      if (!user) {
-        return res.status(404).json({ message: "User not found" });
-      }
-
-      res.json({
-        id: user.id,
-        email: user.email,
-        firstName: user.firstName,
-        lastName: user.lastName,
-        role: user.role,
-        plan: user.plan,
-        subscriptionStatus: user.subscriptionStatus
-      });
-    } catch (error) {
-      console.error("Get user error:", error);
-      res.status(500).json({ message: "Internal server error" });
-    }
-  });
+  // Setup Replit authentication
+  setupAuth(app);
 
   // Quiz routes
-  app.get("/api/quizzes", verifyJWT, async (req, res) => {
+  app.get("/api/quizzes", isAuthenticated, async (req, res) => {
     try {
-      const quizzes = await storage.getUserQuizzes(req.user!.id);
+      const quizzes = await storage.getUserQuizzes(req.user!.claims.sub);
       res.json(quizzes);
     } catch (error) {
       console.error("Error fetching quizzes:", error);
@@ -185,34 +47,32 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
-  app.post("/api/quizzes", verifyJWT, async (req, res) => {
+  app.post("/api/quizzes", isAuthenticated, async (req, res) => {
     try {
       const quizData = insertQuizSchema.parse({
         ...req.body,
-        userId: req.user!.id,
+        userId: req.user!.claims.sub
       });
       const quiz = await storage.createQuiz(quizData);
       res.json(quiz);
     } catch (error) {
       console.error("Error creating quiz:", error);
-      if (error instanceof z.ZodError) {
-        return res.status(400).json({ message: "Invalid quiz data", errors: error.errors });
-      }
       res.status(500).json({ message: "Internal server error" });
     }
   });
 
-  app.put("/api/quizzes/:id", verifyJWT, async (req, res) => {
+  app.put("/api/quizzes/:id", isAuthenticated, async (req, res) => {
     try {
       const quiz = await storage.getQuiz(req.params.id);
       if (!quiz) {
         return res.status(404).json({ message: "Quiz not found" });
       }
-      if (quiz.userId !== req.user!.id) {
+      if (quiz.userId !== req.user!.claims.sub) {
         return res.status(403).json({ message: "Access denied" });
       }
 
-      const updatedQuiz = await storage.updateQuiz(req.params.id, req.body);
+      const updates = insertQuizSchema.partial().parse(req.body);
+      const updatedQuiz = await storage.updateQuiz(req.params.id, updates);
       res.json(updatedQuiz);
     } catch (error) {
       console.error("Error updating quiz:", error);
@@ -220,13 +80,13 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
-  app.delete("/api/quizzes/:id", verifyJWT, async (req, res) => {
+  app.delete("/api/quizzes/:id", isAuthenticated, async (req, res) => {
     try {
       const quiz = await storage.getQuiz(req.params.id);
       if (!quiz) {
         return res.status(404).json({ message: "Quiz not found" });
       }
-      if (quiz.userId !== req.user!.id) {
+      if (quiz.userId !== req.user!.claims.sub) {
         return res.status(403).json({ message: "Access denied" });
       }
 
@@ -262,6 +122,17 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
+  app.post("/api/quiz-templates", async (req, res) => {
+    try {
+      const templateData = insertQuizTemplateSchema.parse(req.body);
+      const template = await storage.createQuizTemplate(templateData);
+      res.json(template);
+    } catch (error) {
+      console.error("Error creating quiz template:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
   // Quiz responses
   app.post("/api/quiz-responses", async (req, res) => {
     try {
@@ -270,16 +141,13 @@ export function registerRoutes(app: Express): Server {
       res.json(response);
     } catch (error) {
       console.error("Error creating quiz response:", error);
-      if (error instanceof z.ZodError) {
-        return res.status(400).json({ message: "Invalid response data", errors: error.errors });
-      }
       res.status(500).json({ message: "Internal server error" });
     }
   });
 
-  app.get("/api/quiz-responses", verifyJWT, async (req, res) => {
+  app.get("/api/quiz-responses/:quizId", isAuthenticated, async (req, res) => {
     try {
-      const responses = await storage.getUserQuizResponses(req.user!.id);
+      const responses = await storage.getQuizResponses(req.params.quizId);
       res.json(responses);
     } catch (error) {
       console.error("Error fetching quiz responses:", error);
@@ -288,13 +156,13 @@ export function registerRoutes(app: Express): Server {
   });
 
   // Analytics
-  app.get("/api/analytics/:quizId", verifyJWT, async (req, res) => {
+  app.get("/api/analytics/:quizId", isAuthenticated, async (req, res) => {
     try {
       const quiz = await storage.getQuiz(req.params.quizId);
       if (!quiz) {
         return res.status(404).json({ message: "Quiz not found" });
       }
-      if (quiz.userId !== req.user!.id) {
+      if (quiz.userId !== req.user!.claims.sub) {
         return res.status(403).json({ message: "Access denied" });
       }
 
@@ -306,8 +174,19 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
+  // Dashboard stats
+  app.get("/api/dashboard/stats", isAuthenticated, async (req, res) => {
+    try {
+      const stats = await storage.getDashboardStats(req.user!.claims.sub);
+      res.json(stats);
+    } catch (error) {
+      console.error("Error fetching dashboard stats:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
   // Admin routes
-  app.get("/api/admin/users", verifyJWT, async (req, res) => {
+  app.get("/api/admin/users", isAuthenticated, async (req, res) => {
     try {
       if (req.user!.role !== "admin") {
         return res.status(403).json({ message: "Admin access required" });
@@ -320,7 +199,7 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
-  app.put("/api/admin/users/:id/role", verifyJWT, async (req, res) => {
+  app.put("/api/admin/users/:id/role", isAuthenticated, async (req, res) => {
     try {
       if (req.user!.role !== "admin") {
         return res.status(403).json({ message: "Admin access required" });
@@ -334,35 +213,28 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
-  // Stripe integration (if available)
+  // Stripe routes
   if (stripe) {
-    app.post("/api/create-checkout-session", verifyJWT, async (req, res) => {
+    app.post("/api/create-checkout-session", isAuthenticated, async (req, res) => {
       try {
         const { priceId } = req.body;
-        const user = await storage.getUser(req.user!.id);
-        
-        if (!user) {
-          return res.status(404).json({ message: "User not found" });
-        }
-
-        let customerId = user.stripeCustomerId;
-        
-        if (!customerId) {
-          const customer = await stripe.customers.create({
-            email: user.email!,
-            name: `${user.firstName} ${user.lastName}`,
-          });
-          customerId = customer.id;
-          await storage.updateUserStripeInfo(user.id, customerId, "");
-        }
+        const user = req.user!;
 
         const session = await stripe.checkout.sessions.create({
-          customer: customerId,
           payment_method_types: ["card"],
-          line_items: [{ price: priceId, quantity: 1 }],
+          line_items: [
+            {
+              price: priceId,
+              quantity: 1,
+            },
+          ],
           mode: "subscription",
           success_url: `${req.headers.origin}/dashboard?session_id={CHECKOUT_SESSION_ID}`,
           cancel_url: `${req.headers.origin}/subscribe`,
+          customer_email: user.email,
+          metadata: {
+            userId: user.claims.sub,
+          },
         });
 
         res.json({ sessionId: session.id });
@@ -372,12 +244,14 @@ export function registerRoutes(app: Express): Server {
       }
     });
 
-    app.post("/api/webhook", express.raw({ type: "application/json" }), async (req, res) => {
-      const sig = req.headers["stripe-signature"] as string;
+    app.post("/api/stripe/webhook", async (req, res) => {
+      const sig = req.headers["stripe-signature"];
+      const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET;
+
       let event;
 
       try {
-        event = stripe.webhooks.constructEvent(req.body, sig, process.env.STRIPE_WEBHOOK_SECRET!);
+        event = stripe.webhooks.constructEvent(req.body, sig, endpointSecret);
       } catch (err: any) {
         console.error("Webhook signature verification failed:", err.message);
         return res.status(400).send(`Webhook Error: ${err.message}`);
@@ -386,31 +260,34 @@ export function registerRoutes(app: Express): Server {
       try {
         switch (event.type) {
           case "checkout.session.completed":
-            const session = event.data.object as any;
-            const customerId = session.customer;
-            const subscriptionId = session.subscription;
-            
-            const users = await storage.getAllUsers();
-            const user = users.find(u => u.stripeCustomerId === customerId);
-            
-            if (user) {
-              await storage.updateUserStripeInfo(user.id, customerId, subscriptionId);
-              await storage.updateUserPlan(user.id, "plus", "active");
-            }
+            const session = event.data.object;
+            const userId = session.metadata!.userId;
+            const customerId = session.customer as string;
+            const subscriptionId = session.subscription as string;
+
+            await storage.updateUserStripeInfo(userId, customerId, subscriptionId);
+            await storage.updateUserPlan(userId, "plus", "active");
             break;
 
           case "customer.subscription.updated":
+            const subscription = event.data.object;
+            const customer = await stripe.customers.retrieve(subscription.customer as string);
+            if (customer && !customer.deleted && customer.email) {
+              const user = await storage.getUserByEmail(customer.email);
+              if (user) {
+                await storage.updateUserPlan(user.id, "plus", subscription.status);
+              }
+            }
+            break;
+
           case "customer.subscription.deleted":
-            const subscription = event.data.object as any;
-            const customerIdFromSub = subscription.customer;
-            
-            const allUsers = await storage.getAllUsers();
-            const userFromSub = allUsers.find(u => u.stripeCustomerId === customerIdFromSub);
-            
-            if (userFromSub) {
-              const status = subscription.status;
-              const plan = status === "active" ? "plus" : "free";
-              await storage.updateUserPlan(userFromSub.id, plan, status);
+            const deletedSubscription = event.data.object;
+            const deletedCustomer = await stripe.customers.retrieve(deletedSubscription.customer as string);
+            if (deletedCustomer && !deletedCustomer.deleted && deletedCustomer.email) {
+              const deletedUser = await storage.getUserByEmail(deletedCustomer.email);
+              if (deletedUser) {
+                await storage.updateUserPlan(deletedUser.id, "free", "canceled");
+              }
             }
             break;
         }
