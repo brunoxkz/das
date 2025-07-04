@@ -822,79 +822,6 @@ export default function QuizBuilder() {
 
 // Super Analytics Component Embedded
 function SuperAnalyticsEmbed({ quizId }: { quizId: string }) {
-  const { data: quizzes } = useQuery({
-    queryKey: ["/api/quizzes"],
-    retry: false,
-  });
-
-  const quiz = quizzes?.find((q: any) => q.id === quizId);
-  const quizLoading = false;
-
-  const { data: analytics, isLoading: analyticsLoading } = useQuery({
-    queryKey: ["/api/analytics", quizId],
-    queryFn: async () => {
-      const token = localStorage.getItem("accessToken");
-      const response = await fetch(`/api/analytics/${quizId}`, {
-        headers: {
-          "Authorization": `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-      });
-      
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-      
-      return response.json();
-    },
-    enabled: !!quizId,
-    retry: false,
-  });
-
-  // Use real analytics data from API
-  const analyticsData = analytics || {
-    totalViews: 0,
-    totalCompletions: 0,
-    totalDropOffs: 0,
-    completionRate: 0,
-    avgCompletionTime: 0,
-    pageAnalytics: []
-  };
-
-  // Ensure pageAnalytics exists and has data structure
-  if (!analyticsData.pageAnalytics || analyticsData.pageAnalytics.length === 0) {
-    // Generate page analytics from quiz structure if not available
-    const pages = quiz?.structure?.pages || [];
-    analyticsData.pageAnalytics = pages.map((page: any, index: number) => ({
-      pageId: page.id,
-      pageName: page.title || `Página ${index + 1}`,
-      pageType: page.isGame ? 'game' : page.isTransition ? 'transition' : 'normal',
-      views: 0,
-      clicks: 0,
-      dropOffs: 0,
-      clickRate: 0,
-      dropOffRate: 0,
-      avgTimeOnPage: 0,
-      nextPageViews: 0
-    }));
-  }
-
-  if (quizLoading || analyticsLoading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full" />
-      </div>
-    );
-  }
-
-  if (!quiz) {
-    return (
-      <div className="text-center py-8">
-        <p className="text-gray-500">Quiz não encontrado</p>
-      </div>
-    );
-  }
-
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -902,222 +829,36 @@ function SuperAnalyticsEmbed({ quizId }: { quizId: string }) {
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold text-gray-900">Super Analytics</h1>
-            <p className="text-gray-600 mt-1">Análise detalhada página por página</p>
+            <p className="text-gray-600 mt-1">Análise detalhada em desenvolvimento</p>
           </div>
           <div className="flex items-center space-x-4">
-            <Badge variant="secondary" className="bg-green-100 text-green-800">
-              ✨ Ao Vivo
+            <Badge variant="secondary" className="bg-blue-100 text-blue-800">
+              🚧 Em Breve
             </Badge>
-            <div className="text-sm text-gray-500">
-              Última atualização: {new Date().toLocaleTimeString('pt-BR')}
-            </div>
           </div>
         </div>
       </div>
 
-      {/* Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
-        <Card className="bg-blue-50 border-blue-200">
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-blue-600 font-medium">Total de Visualizações</p>
-                <p className="text-2xl font-bold text-blue-800">{analyticsData.totalViews.toLocaleString()}</p>
-              </div>
-              <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
-                <Eye className="w-4 h-4 text-blue-600" />
-              </div>
+      {/* Coming Soon Message */}
+      <Card>
+        <CardContent className="p-12 text-center">
+          <div className="flex flex-col items-center space-y-4">
+            <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center">
+              <TrendingUp className="w-8 h-8 text-blue-600" />
             </div>
-          </CardContent>
-        </Card>
-
-        <Card className="bg-green-50 border-green-200">
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-green-600 font-medium">Conclusões</p>
-                <p className="text-2xl font-bold text-green-800">{analyticsData.totalCompletions.toLocaleString()}</p>
-              </div>
-              <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
-                <BarChart3 className="w-4 h-4 text-green-600" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="bg-red-50 border-red-200">
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-red-600 font-medium">Abandonos</p>
-                <p className="text-2xl font-bold text-red-800">{analyticsData.totalDropOffs.toLocaleString()}</p>
-              </div>
-              <div className="w-8 h-8 bg-red-100 rounded-full flex items-center justify-center">
-                <ArrowLeft className="w-4 h-4 text-red-600" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="bg-purple-50 border-purple-200">
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-purple-600 font-medium">Taxa de Conversão</p>
-                <p className="text-2xl font-bold text-purple-800">{analyticsData.completionRate}%</p>
-              </div>
-              <div className="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center">
-                <BarChart3 className="w-4 h-4 text-purple-600" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="bg-orange-50 border-orange-200">
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-orange-600 font-medium">Tempo Médio</p>
-                <p className="text-2xl font-bold text-orange-800">{analyticsData.avgCompletionTime}m</p>
-              </div>
-              <div className="w-8 h-8 bg-orange-100 rounded-full flex items-center justify-center">
-                <Globe className="w-4 h-4 text-orange-600" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Main Analytics Table */}
-      <div className="bg-white rounded-lg shadow border overflow-hidden">
-        <div className="p-6 border-b">
-          <h2 className="text-xl font-semibold text-gray-900">Análise Página por Página</h2>
-          <p className="text-gray-600 mt-1">Performance detalhada de cada página do seu quiz</p>
-        </div>
-
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Página
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Tipo
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Visualizações
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Cliques
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Taxa de Clique
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Abandonos
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Taxa de Abandono
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Tempo Médio
-                </th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {analyticsData.pageAnalytics.map((page: any, index: number) => (
-                <tr key={page.pageId} className={index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="flex items-center">
-                      <div className="text-sm font-medium text-gray-900">
-                        {page.pageName}
-                      </div>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <Badge 
-                      variant={page.pageType === 'game' ? 'default' : page.pageType === 'transition' ? 'secondary' : 'outline'}
-                      className={
-                        page.pageType === 'game' 
-                          ? 'bg-purple-100 text-purple-800' 
-                          : page.pageType === 'transition' 
-                          ? 'bg-blue-100 text-blue-800' 
-                          : 'bg-gray-100 text-gray-800'
-                      }
-                    >
-                      {page.pageType === 'game' ? '🎮 Jogo' : page.pageType === 'transition' ? '✨ Transição' : '📝 Normal'}
-                    </Badge>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    {page.views.toLocaleString()}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    {page.clicks.toLocaleString()}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="flex items-center">
-                      <div className="text-sm font-medium text-gray-900">
-                        {page.clickRate.toFixed(1)}%
-                      </div>
-                      <div className="ml-2 w-16 bg-gray-200 rounded-full h-2">
-                        <div 
-                          className="bg-green-500 h-2 rounded-full" 
-                          style={{ width: `${page.clickRate}%` }}
-                        />
-                      </div>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    {page.dropOffs.toLocaleString()}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="flex items-center">
-                      <div className="text-sm font-medium text-gray-900">
-                        {page.dropOffRate.toFixed(1)}%
-                      </div>
-                      <div className="ml-2 w-16 bg-gray-200 rounded-full h-2">
-                        <div 
-                          className="bg-red-500 h-2 rounded-full" 
-                          style={{ width: `${page.dropOffRate}%` }}
-                        />
-                      </div>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    {page.avgTimeOnPage.toFixed(1)}s
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      {/* Insights and Recommendations */}
-      <div className="bg-white rounded-lg shadow border p-6">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">💡 Insights e Recomendações</h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-            <div className="flex items-center mb-2">
-              <div className="w-2 h-2 bg-green-500 rounded-full mr-2"></div>
-              <h4 className="font-medium text-green-800">Melhor Performance</h4>
-            </div>
-            <p className="text-sm text-green-700">
-              O "Jogo da Roda" tem a melhor taxa de conversão (94.2%) e mantém os usuários engajados por mais tempo.
+            <h3 className="text-xl font-semibold text-gray-900">
+              Super Analytics Detalhado
+            </h3>
+            <p className="text-gray-600 max-w-md">
+              Esta seção mostrará análises detalhadas página por página do seu quiz, 
+              incluindo taxas de conversão, tempo gasto e pontos de abandono.
+            </p>
+            <p className="text-sm text-gray-500">
+              Para análises básicas, use a aba "Analytics" no menu principal.
             </p>
           </div>
-          <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-            <div className="flex items-center mb-2">
-              <div className="w-2 h-2 bg-red-500 rounded-full mr-2"></div>
-              <h4 className="font-medium text-red-800">Ponto de Atenção</h4>
-            </div>
-            <p className="text-sm text-red-700">
-              A página "Informações de Contato" tem alta taxa de abandono (18.1%). Considere simplificar o formulário.
-            </p>
-          </div>
-        </div>
-      </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }
