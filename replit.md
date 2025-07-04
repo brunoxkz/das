@@ -180,6 +180,14 @@ Changelog:
   * Added synchronization alerts between height and weight elements for IMC calculation
   * Enhanced preview functionality with larger inputs, visual indicators, and progress displays
   * Fixed image removal functionality in multiple choice options properties panel
+- July 04, 2025. Advanced page management and tracking integration:
+  * Implemented drag & drop reordering for pages, games, and transitions with visual feedback
+  * Added inline editing for page/game/transition names - click to edit, Enter to save, Escape to cancel
+  * Enhanced page cards with drag indicators (grip dots) and smooth animations during reordering
+  * Automatic sequential linking based on page position after reordering
+  * Restored pixel tracking configurations in quiz settings (Facebook Pixel, Google Ads, GA4, custom scripts)
+  * Added comprehensive tracking card with proper input validation and helpful placeholders
+  * Visual improvements: opacity, scaling, and border highlighting during drag operations
 ```
 
 ## User Preferences
