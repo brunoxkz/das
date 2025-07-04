@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -14,6 +14,142 @@ import {
   Phone,
   Sparkles
 } from "lucide-react";
+
+// Componente para textos alternantes
+const AlternatingText = ({ texts, color, fontSize }: { 
+  texts: Array<{ text: string; duration: number }>, 
+  color: string, 
+  fontSize: string 
+}) => {
+  const [currentIndex, setCurrentIndex] = useState(0);
+
+  useEffect(() => {
+    if (texts.length <= 1) return;
+
+    const interval = setInterval(() => {
+      setCurrentIndex((prev) => (prev + 1) % texts.length);
+    }, texts[currentIndex].duration * 1000);
+
+    return () => clearInterval(interval);
+  }, [texts, currentIndex]);
+
+  if (!texts.length) return null;
+
+  return (
+    <div className="mb-4">
+      <p 
+        className={`text-${fontSize} font-medium transition-opacity duration-300`}
+        style={{ color }}
+      >
+        {texts[currentIndex].text}
+      </p>
+    </div>
+  );
+};
+
+// Componente para contador animado
+const AnimatedCounter = ({ element }: { element: any }) => {
+  const [currentValue, setCurrentValue] = useState(
+    element.counterType === 'countdown' 
+      ? (element.counterStartValue || 10)
+      : { hours: element.chronometerHours || 0, minutes: element.chronometerMinutes || 0, seconds: element.chronometerSeconds || 0 }
+  );
+
+  useEffect(() => {
+    if (element.counterType === 'countdown') {
+      if (currentValue <= 0) return;
+
+      const interval = setInterval(() => {
+        setCurrentValue((prev: number) => Math.max(0, prev - 1));
+      }, 1000);
+
+      return () => clearInterval(interval);
+    } else {
+      // Cronômetro promocional - incrementa
+      const interval = setInterval(() => {
+        setCurrentValue((prev: any) => {
+          let newSeconds = prev.seconds + 1;
+          let newMinutes = prev.minutes;
+          let newHours = prev.hours;
+
+          if (newSeconds >= 60) {
+            newSeconds = 0;
+            newMinutes++;
+          }
+          if (newMinutes >= 60) {
+            newMinutes = 0;
+            newHours++;
+          }
+
+          return { hours: newHours, minutes: newMinutes, seconds: newSeconds };
+        });
+      }, 1000);
+
+      return () => clearInterval(interval);
+    }
+  }, [element.counterType, currentValue]);
+
+  const formatTime = (value: number) => value.toString().padStart(2, '0');
+
+  return (
+    <div className="mb-6">
+      <div 
+        className="text-4xl font-bold"
+        style={{ color: element.color || '#000000' }}
+      >
+        {element.counterType === 'countdown' 
+          ? `${currentValue}s` 
+          : `${formatTime(currentValue.hours)}:${formatTime(currentValue.minutes)}:${formatTime(currentValue.seconds)}`
+        }
+      </div>
+    </div>
+  );
+};
+
+// Componente para redirecionamento
+const RedirectComponent = ({ element, onRedirect }: { element: any, onRedirect?: () => void }) => {
+  const [countdown, setCountdown] = useState(element.redirectDelay || 5);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCountdown((prev: number) => {
+        if (prev <= 1) {
+          clearInterval(interval);
+          // Executar redirecionamento
+          setTimeout(() => {
+            if (element.redirectAction === 'custom_url' && element.redirectUrl) {
+              window.location.href = element.redirectUrl;
+            } else if (element.redirectAction === 'next_page' && onRedirect) {
+              onRedirect();
+            }
+          }, 100);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [element.redirectAction, element.redirectUrl, onRedirect]);
+
+  return (
+    <div className="mb-6">
+      {element.showRedirectCounter && (
+        <>
+          <p className="text-lg text-gray-700 mb-2">
+            Redirecionando em: {countdown} segundos
+          </p>
+          <div className="w-full bg-gray-200 rounded-full h-2">
+            <div 
+              className="bg-vendzz-primary h-2 rounded-full transition-all duration-1000"
+              style={{ width: `${(countdown / (element.redirectDelay || 5)) * 100}%` }}
+            />
+          </div>
+        </>
+      )}
+    </div>
+  );
+};
 
 interface QuizPreviewProps {
   quiz: {
@@ -47,6 +183,35 @@ export function QuizPreview({ quiz }: QuizPreviewProps) {
   const allPages = pages || [];
   const totalSteps = allPages.length + (settings.collectEmail || settings.collectName || settings.collectPhone ? 1 : 0) + 1; // +1 for result
   const progress = ((currentStep + 1) / totalSteps) * 100;
+  
+  // Determinar se é página de transição e encontrar elemento de fundo
+  const currentPage = allPages[currentStep];
+  const isTransitionPage = currentPage?.isTransition;
+  const backgroundElement = isTransitionPage 
+    ? currentPage?.elements?.find((el: any) => el.type === 'transition_background')
+    : null;
+    
+  // Estilo do fundo da página
+  const getPageBackgroundStyle = () => {
+    if (!backgroundElement) return {};
+    
+    if (backgroundElement.backgroundType === "gradient") {
+      return {
+        background: `linear-gradient(${backgroundElement.gradientDirection || "to-r"}, ${backgroundElement.gradientFrom || "#8B5CF6"}, ${backgroundElement.gradientTo || "#EC4899"})`
+      };
+    } else if (backgroundElement.backgroundType === "image" && backgroundElement.backgroundImage) {
+      return {
+        backgroundImage: `url(${backgroundElement.backgroundImage})`,
+        backgroundSize: "cover",
+        backgroundPosition: "center",
+        backgroundRepeat: "no-repeat"
+      };
+    } else {
+      return {
+        backgroundColor: backgroundElement.backgroundColor || "#8B5CF6"
+      };
+    }
+  };
 
   const handleAnswer = (questionId: number, answer: any) => {
     setAnswers(prev => ({ ...prev, [questionId]: answer }));
@@ -229,17 +394,7 @@ export function QuizPreview({ quiz }: QuizPreviewProps) {
 
         {/* Contador */}
         {counterElement && (
-          <div className="mb-6">
-            <div 
-              className="text-4xl font-bold"
-              style={{ color: counterElement.color || '#000000' }}
-            >
-              {counterElement.counterType === 'countdown' 
-                ? `${counterElement.counterStartValue || 10}s` 
-                : `${counterElement.chronometerHours || '00'}:${counterElement.chronometerMinutes || '00'}:${counterElement.chronometerSeconds || '00'}`
-              }
-            </div>
-          </div>
+          <AnimatedCounter element={counterElement} />
         )}
 
         {/* Loader */}
@@ -319,24 +474,24 @@ export function QuizPreview({ quiz }: QuizPreviewProps) {
         )}
 
         {/* Texto do loader alternado */}
-        {loader && loader.alternatingText1 && (
-          <div className="mb-4">
-            <p 
-              className="text-lg"
-              style={{ color: loader.loaderColor || '#666666' }}
-            >
-              {loader.alternatingText1}
-            </p>
-          </div>
+        {loader && (loader.alternatingText1 || loader.alternatingText2 || loader.alternatingText3) && (
+          <AlternatingText 
+            texts={[
+              loader.alternatingText1 && { text: loader.alternatingText1, duration: loader.alternatingDuration1 || 2 },
+              loader.alternatingText2 && { text: loader.alternatingText2, duration: loader.alternatingDuration2 || 2 },
+              loader.alternatingText3 && { text: loader.alternatingText3, duration: loader.alternatingDuration3 || 2 }
+            ].filter(Boolean)}
+            color={loader.textColor || '#666666'}
+            fontSize={loader.fontSize || 'base'}
+          />
         )}
 
         {/* Redirect com contador */}
-        {redirectElement && redirectElement.showRedirectCounter && (
-          <div className="mt-6">
-            <p className="text-sm text-gray-600">
-              Redirecionando em {redirectElement.redirectDelay || 5} segundos...
-            </p>
-          </div>
+        {redirectElement && (
+          <RedirectComponent 
+            element={redirectElement} 
+            onRedirect={() => setCurrentStep(currentStep + 1)}
+          />
         )}
 
         {/* Contador do loader */}
@@ -698,17 +853,22 @@ export function QuizPreview({ quiz }: QuizPreviewProps) {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 py-12">
+    <div 
+      className={`min-h-screen py-12 ${isTransitionPage ? '' : 'bg-gray-50'}`}
+      style={isTransitionPage ? getPageBackgroundStyle() : {}}
+    >
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
-        <div className="text-center mb-8">
-          <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-2">
-            {quiz.title || "Preview do Quiz"}
-          </h1>
-          {quiz.description && (
-            <p className="text-gray-600 text-lg">{quiz.description}</p>
-          )}
-        </div>
+        {!isTransitionPage && (
+          <div className="text-center mb-8">
+            <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-2">
+              {quiz.title || "Preview do Quiz"}
+            </h1>
+            {quiz.description && (
+              <p className="text-gray-600 text-lg">{quiz.description}</p>
+            )}
+          </div>
+        )}
 
         {/* Progress Bar */}
         {settings.showProgressBar && (
