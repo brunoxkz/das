@@ -37,11 +37,23 @@ export default function Analytics() {
   });
 
   // Fetch user's quizzes for general view
-  const { data: userQuizzes, isLoading: quizzesLoading } = useQuery({
+  const { data: userQuizzes, isLoading: quizzesLoading, error: quizzesError } = useQuery({
     queryKey: ["/api/quizzes"],
     enabled: isAuthenticated,
     retry: false,
   });
+
+  // Debug logs
+  useEffect(() => {
+    console.log("Analytics Debug:", {
+      isAuthenticated,
+      selectedQuizId,
+      userQuizzes,
+      quizzesLoading,
+      quizzesError,
+      dashboardStats
+    });
+  }, [isAuthenticated, selectedQuizId, userQuizzes, quizzesLoading, quizzesError, dashboardStats]);
 
   // Fetch specific quiz analytics if quiz is selected
   const { data: quizAnalytics, isLoading: quizAnalyticsLoading } = useQuery({
