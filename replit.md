@@ -171,6 +171,15 @@ Changelog:
   * Added Trophy icon and "🏆" badge to sidebar navigation
   * Implemented visual ranking with Crown/Medal/Award icons for top 3 positions
   * Added summary cards showing total sales, total prize money, and awarded sellers count
+- July 04, 2025. Enhanced weight and height elements with improved visuals:
+  * Redesigned current_weight element with blue theme, Scale icon, and IMC calculation display
+  * Redesigned target_weight element with orange theme, Target icon, and automatic difference calculation
+  * Redesigned height element with purple theme, ArrowUpDown icon, and IMC integration messaging
+  * Added visual cards with borders, shadows, and color-coded backgrounds for each element
+  * Implemented comprehensive property panels with detailed descriptions and alerts
+  * Added synchronization alerts between height and weight elements for IMC calculation
+  * Enhanced preview functionality with larger inputs, visual indicators, and progress displays
+  * Fixed image removal functionality in multiple choice options properties panel
 ```
 
 ## User Preferences

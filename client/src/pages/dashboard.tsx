@@ -19,11 +19,14 @@ import { Link } from "wouter";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { isUnauthorizedError } from "@/lib/authUtils";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
+import { TutorialTour, dashboardTutorialSteps } from "@/components/tutorial-tour";
+import { HelpCircle } from "lucide-react";
 
 export default function Dashboard() {
   const { toast } = useToast();
   const { isAuthenticated, isLoading: authLoading } = useAuth();
+  const [showTutorial, setShowTutorial] = useState(false);
 
   const { data: quizzes, isLoading: quizzesLoading } = useQuery({
     queryKey: ["/api/quizzes"],
@@ -94,30 +97,40 @@ export default function Dashboard() {
   ];
 
   return (
-    <div className="p-4 md:p-6 space-y-6">
+    <div className="p-4 md:p-6 space-y-6" data-tutorial="dashboard-main">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="text-2xl md:text-3xl font-bold text-gray-900">Dashboard</h1>
           <p className="text-gray-600 text-sm md:text-base">Gerencie seus quizzes e acompanhe o desempenho</p>
         </div>
-        <Link href="/quizzes/new">
-          <Button className="flex items-center gap-2 w-full sm:w-auto">
-            <Plus className="w-4 h-4" />
-            Criar Quiz
+        <div className="flex items-center gap-3">
+          <Button 
+            variant="outline"
+            onClick={() => setShowTutorial(true)}
+            className="flex items-center gap-2"
+          >
+            <HelpCircle className="w-4 h-4" />
+            Tutorial
           </Button>
-        </Link>
+          <Link href="/quizzes/new">
+            <Button className="flex items-center gap-2 w-full sm:w-auto" data-tutorial="create-quiz-btn">
+              <Plus className="w-4 h-4" />
+              Criar Quiz
+            </Button>
+          </Link>
+        </div>
       </div>
 
       {/* Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6" data-tutorial="stats-cards">
         {dashboardStats.map((stat, index) => (
           <StatsCard key={index} {...stat} />
         ))}
       </div>
 
       {/* Recent Quizzes */}
-      <Card>
+      <Card data-tutorial="quizzes-list">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <BarChart3 className="w-5 h-5" />

@@ -32,12 +32,16 @@ import {
   Palette,
   Loader,
   ArrowRight,
-  Sparkles
+  Sparkles,
+  Scale,
+  Activity,
+  Target,
+  Calculator
 } from "lucide-react";
 
 interface Element {
   id: number;
-  type: "multiple_choice" | "text" | "rating" | "email" | "checkbox" | "date" | "phone" | "number" | "textarea" | "image_upload" | "animated_transition" | "heading" | "paragraph" | "image" | "divider" | "video" | "birth_date" | "height" | "current_weight" | "target_weight" | "transition_background" | "transition_text" | "transition_counter" | "transition_loader" | "transition_redirect" | "spacer" | "game_wheel" | "game_scratch" | "game_color_pick" | "game_brick_break" | "game_memory_cards" | "game_slot_machine";
+  type: "multiple_choice" | "text" | "rating" | "email" | "checkbox" | "date" | "phone" | "number" | "textarea" | "image_upload" | "animated_transition" | "heading" | "paragraph" | "image" | "divider" | "video" | "audio" | "birth_date" | "height" | "current_weight" | "target_weight" | "transition_background" | "transition_text" | "transition_counter" | "transition_loader" | "transition_redirect" | "spacer" | "game_wheel" | "game_scratch" | "game_color_pick" | "game_brick_break" | "game_memory_cards" | "game_slot_machine";
   content: string;
   question?: string;
   description?: string;
@@ -125,6 +129,18 @@ interface Element {
   slotSymbols?: string[];
   slotWinningCombination?: string[];
   slotReels?: number;
+  
+  // Propriedades específicas para áudio
+  audioType?: "upload" | "elevenlabs";
+  audioUrl?: string;
+  audioFile?: File;
+  elevenLabsText?: string;
+  elevenLabsVoiceId?: string;
+  elevenLabsApiKey?: string;
+  audioDuration?: number;
+  audioTitle?: string;
+  showWaveform?: boolean;
+  autoPlay?: boolean;
 }
 
 interface QuizPage {
@@ -282,6 +298,7 @@ export function PageEditorHorizontal({ pages, onPagesChange }: PageEditorProps) 
         { type: "image", label: "Imagem", icon: <ImageIcon className="w-4 h-4" /> },
         { type: "image_upload", label: "Upload", icon: <Upload className="w-4 h-4" /> },
         { type: "video", label: "Vídeo", icon: <Video className="w-4 h-4" /> },
+        { type: "audio", label: "Áudio", icon: <Volume2 className="w-4 h-4" /> },
       ]
     }
   ];
@@ -795,78 +812,260 @@ const gameElementCategories = [
         );
       case "height":
         return (
-          <div className="space-y-2">
-            <label className="block text-sm font-medium text-gray-700">
-              {element.question || "Altura"}
-              {element.required && <span className="text-red-500 ml-1">*</span>}
-            </label>
-            <div className="flex">
-              <input
-                type="number"
-                step="0.01"
-                min={element.unit === "cm" ? "120" : "1.20"}
-                max={element.unit === "cm" ? "220" : "2.20"}
-                className="flex-1 px-3 py-2 border border-gray-300 rounded-l-md"
-                placeholder={element.unit === "cm" ? "175" : "1.75"}
-              />
-              <span className="px-3 py-2 bg-gray-100 border border-l-0 border-gray-300 rounded-r-md text-sm">
-                {element.unit || "cm"}
-              </span>
+          <div className="space-y-3 p-4 border-2 border-dashed border-purple-200 rounded-lg bg-purple-50">
+            <div className="flex items-center gap-2">
+              <ArrowUpDown className="w-4 h-4 text-purple-600" />
+              <span className="font-medium text-purple-800">Altura</span>
+            </div>
+            
+            <div className="bg-white rounded-lg p-4 shadow-sm">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                {element.question || "Qual é sua altura?"}
+                {element.required && <span className="text-red-500 ml-1">*</span>}
+              </label>
+              
+              <div className="flex items-center gap-3">
+                <div className="flex-1 relative">
+                  <input
+                    type="number"
+                    step="0.01"
+                    min={element.unit === "cm" ? "120" : "1.20"}
+                    max={element.unit === "cm" ? "220" : "2.20"}
+                    className="w-full px-4 py-3 text-lg border border-gray-300 rounded-lg text-center font-semibold"
+                    placeholder={element.unit === "cm" ? "175" : "1.75"}
+                    style={{ fontSize: '18px' }}
+                  />
+                  <span className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 font-medium">
+                    {element.unit || "cm"}
+                  </span>
+                </div>
+                
+                <div className="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center">
+                  <div className="text-center">
+                    <ArrowUpDown className="w-6 h-6 text-purple-700 mx-auto" />
+                    <div className="text-xs text-purple-600 font-semibold mt-1">
+                      {element.unit === "cm" ? "CM" : "M"}
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="mt-3 p-3 bg-purple-50 rounded-lg border border-purple-200">
+                <div className="flex items-center gap-2 mb-2">
+                  <Activity className="w-4 h-4 text-purple-600" />
+                  <span className="text-sm font-medium text-purple-800">Altura para cálculo do IMC</span>
+                </div>
+                <div className="text-xs text-purple-700">
+                  Esta altura será usada para calcular automaticamente o IMC quando combinada com o peso
+                </div>
+              </div>
+              
+              {element.description && (
+                <div className="mt-3 text-sm text-gray-600 bg-gray-50 p-2 rounded">
+                  {element.description}
+                </div>
+              )}
+            </div>
+            
+            <div className="text-xs text-purple-600 text-center">
+              Elemento: Altura • Range: {element.unit === "cm" ? "120-220cm" : "1.20-2.20m"} • Necessário para IMC
             </div>
           </div>
         );
       case "current_weight":
         return (
-          <div className="space-y-2">
-            <label className="block text-sm font-medium text-gray-700">
-              {element.question || "Peso Atual"}
-              {element.required && <span className="text-red-500 ml-1">*</span>}
-            </label>
-            <div className="flex">
-              <input
-                type="number"
-                step="0.1"
-                min="30"
-                max="300"
-                className="flex-1 px-3 py-2 border border-gray-300 rounded-l-md"
-                placeholder="70.5"
-              />
-              <span className="px-3 py-2 bg-gray-100 border border-l-0 border-gray-300 rounded-r-md text-sm">
-                kg
-              </span>
+          <div className="space-y-3 p-4 border-2 border-dashed border-blue-200 rounded-lg bg-blue-50">
+            <div className="flex items-center gap-2">
+              <Scale className="w-4 h-4 text-blue-600" />
+              <span className="font-medium text-blue-800">Peso Atual</span>
             </div>
-            {element.showBMICalculation && (
-              <div className="text-xs text-gray-500 bg-green-50 p-2 rounded">
-                📊 IMC será calculado automaticamente
+            
+            <div className="bg-white rounded-lg p-4 shadow-sm">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                {element.question || "Qual é seu peso atual?"}
+                {element.required && <span className="text-red-500 ml-1">*</span>}
+              </label>
+              
+              <div className="flex items-center gap-3">
+                <div className="flex-1 relative">
+                  <input
+                    type="number"
+                    step="0.1"
+                    min="30"
+                    max="300"
+                    className="w-full px-4 py-3 text-lg border border-gray-300 rounded-lg text-center font-semibold"
+                    placeholder="70.5"
+                    style={{ fontSize: '18px' }}
+                  />
+                  <span className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 font-medium">
+                    kg
+                  </span>
+                </div>
+                
+                {element.showBMICalculation && (
+                  <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center">
+                    <div className="text-center">
+                      <div className="text-xs text-green-600 font-semibold">IMC</div>
+                      <div className="text-sm font-bold text-green-700">--</div>
+                    </div>
+                  </div>
+                )}
               </div>
-            )}
+              
+              {element.showBMICalculation && (
+                <div className="mt-3 p-3 bg-blue-50 rounded-lg border border-blue-200">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Activity className="w-4 h-4 text-blue-600" />
+                    <span className="text-sm font-medium text-blue-800">Cálculo automático do IMC</span>
+                  </div>
+                  <div className="text-xs text-blue-700">
+                    Será calculado automaticamente quando altura e peso forem preenchidos
+                  </div>
+                </div>
+              )}
+              
+              {element.description && (
+                <div className="mt-3 text-sm text-gray-600 bg-gray-50 p-2 rounded">
+                  {element.description}
+                </div>
+              )}
+            </div>
+            
+            <div className="text-xs text-blue-600 text-center">
+              Elemento: Peso Atual • Range: 30-300kg
+            </div>
           </div>
         );
       case "target_weight":
         return (
-          <div className="space-y-2">
-            <label className="block text-sm font-medium text-gray-700">
-              {element.question || "Peso Desejado"}
-              {element.required && <span className="text-red-500 ml-1">*</span>}
-            </label>
-            <div className="flex">
-              <input
-                type="number"
-                step="0.1"
-                min="30"
-                max="300"
-                className="flex-1 px-3 py-2 border border-gray-300 rounded-l-md"
-                placeholder="65.0"
-              />
-              <span className="px-3 py-2 bg-gray-100 border border-l-0 border-gray-300 rounded-r-md text-sm">
-                kg
-              </span>
+          <div className="space-y-3 p-4 border-2 border-dashed border-orange-200 rounded-lg bg-orange-50">
+            <div className="flex items-center gap-2">
+              <Target className="w-4 h-4 text-orange-600" />
+              <span className="font-medium text-orange-800">Peso Objetivo</span>
             </div>
-            <div className="text-xs text-gray-500 bg-yellow-50 p-2 rounded">
-              🎯 Diferença será calculada automaticamente
+            
+            <div className="bg-white rounded-lg p-4 shadow-sm">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                {element.question || "Qual é seu peso objetivo?"}
+                {element.required && <span className="text-red-500 ml-1">*</span>}
+              </label>
+              
+              <div className="flex items-center gap-3">
+                <div className="flex-1 relative">
+                  <input
+                    type="number"
+                    step="0.1"
+                    min="30"
+                    max="300"
+                    className="w-full px-4 py-3 text-lg border border-gray-300 rounded-lg text-center font-semibold"
+                    placeholder="65.0"
+                    style={{ fontSize: '18px' }}
+                  />
+                  <span className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 font-medium">
+                    kg
+                  </span>
+                </div>
+                
+                <div className="w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center">
+                  <div className="text-center">
+                    <div className="text-xs text-orange-600 font-semibold">META</div>
+                    <Target className="w-6 h-6 text-orange-700 mx-auto" />
+                  </div>
+                </div>
+              </div>
+              
+              <div className="mt-3 p-3 bg-gradient-to-r from-orange-50 to-yellow-50 rounded-lg border border-orange-200">
+                <div className="flex items-center gap-2 mb-2">
+                  <Calculator className="w-4 h-4 text-orange-600" />
+                  <span className="text-sm font-medium text-orange-800">Cálculo automático de diferença</span>
+                </div>
+                <div className="grid grid-cols-2 gap-3 text-xs">
+                  <div className="bg-white p-2 rounded border">
+                    <div className="text-orange-600 font-semibold">Diferença</div>
+                    <div className="text-orange-700 font-bold">-- kg</div>
+                  </div>
+                  <div className="bg-white p-2 rounded border">
+                    <div className="text-orange-600 font-semibold">Progresso</div>
+                    <div className="text-orange-700 font-bold">--%</div>
+                  </div>
+                </div>
+                <div className="text-xs text-orange-700 mt-2">
+                  Calculado automaticamente com base no peso atual
+                </div>
+              </div>
+              
+              {element.description && (
+                <div className="mt-3 text-sm text-gray-600 bg-gray-50 p-2 rounded">
+                  {element.description}
+                </div>
+              )}
+            </div>
+            
+            <div className="text-xs text-orange-600 text-center">
+              Elemento: Peso Objetivo • Range: 30-300kg • Cálculo de diferença automático
             </div>
           </div>
         );
+
+      case "audio":
+        const audioType = element.audioType || "upload";
+        const audioTitle = element.audioTitle || "Mensagem de Áudio";
+        const duration = element.audioDuration || 15;
+        
+        return (
+          <div className="space-y-3 p-4 border-2 border-dashed border-green-200 rounded-lg bg-green-50">
+            <div className="flex items-center gap-2">
+              <Volume2 className="w-4 h-4 text-green-600" />
+              <span className="font-medium text-green-800">Áudio</span>
+            </div>
+            
+            {/* Visual estilo WhatsApp */}
+            <div className="bg-white rounded-lg p-3 max-w-xs shadow-sm border">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-green-500 rounded-full flex items-center justify-center">
+                  <svg className="w-5 h-5 text-white" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M8 5v14l11-7z"/>
+                  </svg>
+                </div>
+                
+                <div className="flex-1">
+                  <div className="text-sm font-medium text-gray-800">{audioTitle}</div>
+                  <div className="flex items-center gap-2 mt-1">
+                    {/* Forma de onda simulada */}
+                    <div className="flex items-center gap-1">
+                      {Array.from({ length: 8 }, (_, i) => (
+                        <div
+                          key={i}
+                          className="w-1 bg-green-400 rounded"
+                          style={{ 
+                            height: `${Math.random() * 16 + 4}px`,
+                            opacity: i < 3 ? 1 : 0.3
+                          }}
+                        />
+                      ))}
+                    </div>
+                    <span className="text-xs text-gray-500">{Math.floor(duration / 60)}:{(duration % 60).toString().padStart(2, '0')}</span>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="text-xs text-gray-500 mt-2 text-right">
+                {audioType === "elevenlabs" ? "🤖 ElevenLabs" : "📎 Upload"}
+              </div>
+            </div>
+            
+            <div className="text-xs text-green-600 text-center">
+              Tipo: {audioType === "elevenlabs" ? "Texto para Fala (ElevenLabs)" : "Upload de Arquivo"}
+              {audioType === "elevenlabs" && element.elevenLabsText && (
+                <div className="text-gray-600 mt-1 italic">"{element.elevenLabsText.substring(0, 50)}..."</div>
+              )}
+              {audioType === "upload" && element.audioUrl && (
+                <div className="text-gray-600 mt-1">Arquivo carregado</div>
+              )}
+            </div>
+          </div>
+        );
+
       case "transition_background":
         let backgroundStyle = {};
         if (element.backgroundType === "gradient") {
@@ -2047,16 +2246,25 @@ const gameElementCategories = [
                                   />
                                   <Button
                                     size="sm"
-                                    variant={selectedElementData.optionImages?.[index] ? "default" : "outline"}
+                                    variant={selectedElementData.optionImages?.[index] ? "destructive" : "outline"}
                                     className="text-xs"
                                     onClick={(e) => {
+                                      e.preventDefault();
+                                      e.stopPropagation();
+                                      
                                       if (selectedElementData.optionImages?.[index]) {
-                                        e.preventDefault();
+                                        // Remover imagem existente
                                         const newImages = [...(selectedElementData.optionImages || [])];
                                         newImages[index] = "";
                                         updateElement(selectedElementData.id, { 
                                           optionImages: newImages
                                         });
+                                      } else {
+                                        // Ativar seleção de arquivo
+                                        const fileInput = document.getElementById(`image-upload-${selectedElementData.id}-${index}`) as HTMLInputElement;
+                                        if (fileInput) {
+                                          fileInput.click();
+                                        }
                                       }
                                     }}
                                   >
@@ -2491,6 +2699,16 @@ const gameElementCategories = [
               {/* Propriedades para Peso Atual */}
               {selectedElementData.type === "current_weight" && (
                 <div className="space-y-4">
+                  <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                    <div className="flex items-center gap-2 mb-2">
+                      <Scale className="w-4 h-4 text-blue-600" />
+                      <span className="font-medium text-blue-800">Peso Atual - Configurações</span>
+                    </div>
+                    <div className="text-xs text-blue-700">
+                      Este elemento permite capturar o peso atual do usuário com validação automática
+                    </div>
+                  </div>
+
                   <div>
                     <Label htmlFor="weight-question">Pergunta</Label>
                     <Input
@@ -2498,7 +2716,18 @@ const gameElementCategories = [
                       value={selectedElementData.question || ""}
                       onChange={(e) => updateElement(selectedElementData.id, { question: e.target.value })}
                       className="mt-1"
-                      placeholder="Qual seu peso atual?"
+                      placeholder="Qual é seu peso atual?"
+                    />
+                  </div>
+
+                  <div>
+                    <Label htmlFor="weight-description">Descrição adicional</Label>
+                    <Input
+                      id="weight-description"
+                      value={selectedElementData.description || ""}
+                      onChange={(e) => updateElement(selectedElementData.id, { description: e.target.value })}
+                      className="mt-1"
+                      placeholder="Informações extras sobre o peso"
                     />
                   </div>
 
@@ -2512,14 +2741,30 @@ const gameElementCategories = [
                     <Label htmlFor="weight-required">Campo obrigatório</Label>
                   </div>
 
-                  <div className="flex items-center space-x-2">
-                    <input
-                      type="checkbox"
-                      id="show-bmi"
-                      checked={selectedElementData.showBMICalculation || false}
-                      onChange={(e) => updateElement(selectedElementData.id, { showBMICalculation: e.target.checked })}
-                    />
-                    <Label htmlFor="show-bmi">Mostrar cálculo de IMC</Label>
+                  <div className="space-y-3">
+                    <div className="flex items-center space-x-2">
+                      <input
+                        type="checkbox"
+                        id="show-bmi"
+                        checked={selectedElementData.showBMICalculation || false}
+                        onChange={(e) => updateElement(selectedElementData.id, { showBMICalculation: e.target.checked })}
+                      />
+                      <Label htmlFor="show-bmi">Mostrar cálculo de IMC</Label>
+                    </div>
+
+                    {selectedElementData.showBMICalculation && (
+                      <div className="p-3 bg-green-50 border border-green-200 rounded-lg">
+                        <div className="flex items-center gap-2 mb-2">
+                          <Activity className="w-4 h-4 text-green-600" />
+                          <span className="font-medium text-green-800">Sincronização IMC Ativa</span>
+                        </div>
+                        <div className="text-xs text-green-700 space-y-1">
+                          <div>• IMC será calculado automaticamente quando altura e peso forem preenchidos</div>
+                          <div>• Certifique-se de ter um elemento "Altura" no seu formulário</div>
+                          <div>• O cálculo aparecerá em tempo real durante o preenchimento</div>
+                        </div>
+                      </div>
+                    )}
                   </div>
 
                   <div>
@@ -2531,6 +2776,9 @@ const gameElementCategories = [
                       className="mt-1"
                       placeholder="peso_atual"
                     />
+                    <div className="text-xs text-gray-500 mt-1">
+                      Identificador único para capturar esse dado na geração de leads
+                    </div>
                   </div>
                 </div>
               )}
@@ -2538,6 +2786,16 @@ const gameElementCategories = [
               {/* Propriedades para Peso Desejado */}
               {selectedElementData.type === "target_weight" && (
                 <div className="space-y-4">
+                  <div className="p-3 bg-orange-50 border border-orange-200 rounded-lg">
+                    <div className="flex items-center gap-2 mb-2">
+                      <Target className="w-4 h-4 text-orange-600" />
+                      <span className="font-medium text-orange-800">Peso Objetivo - Configurações</span>
+                    </div>
+                    <div className="text-xs text-orange-700">
+                      Este elemento captura o peso desejado e calcula automaticamente a diferença com o peso atual
+                    </div>
+                  </div>
+
                   <div>
                     <Label htmlFor="target-question">Pergunta</Label>
                     <Input
@@ -2545,7 +2803,18 @@ const gameElementCategories = [
                       value={selectedElementData.question || ""}
                       onChange={(e) => updateElement(selectedElementData.id, { question: e.target.value })}
                       className="mt-1"
-                      placeholder="Qual seu peso desejado?"
+                      placeholder="Qual é seu peso objetivo?"
+                    />
+                  </div>
+
+                  <div>
+                    <Label htmlFor="target-description">Descrição adicional</Label>
+                    <Input
+                      id="target-description"
+                      value={selectedElementData.description || ""}
+                      onChange={(e) => updateElement(selectedElementData.id, { description: e.target.value })}
+                      className="mt-1"
+                      placeholder="Informações sobre sua meta de peso"
                     />
                   </div>
 
@@ -2559,6 +2828,19 @@ const gameElementCategories = [
                     <Label htmlFor="target-required">Campo obrigatório</Label>
                   </div>
 
+                  <div className="p-3 bg-gradient-to-r from-orange-50 to-yellow-50 border border-orange-200 rounded-lg">
+                    <div className="flex items-center gap-2 mb-2">
+                      <Calculator className="w-4 h-4 text-orange-600" />
+                      <span className="font-medium text-orange-800">Cálculo Automático Ativo</span>
+                    </div>
+                    <div className="text-xs text-orange-700 space-y-1">
+                      <div>• Diferença será calculada automaticamente com base no peso atual</div>
+                      <div>• Mostra percentual de progresso e quanto falta para atingir a meta</div>
+                      <div>• Certifique-se de ter um elemento "Peso Atual" no seu formulário</div>
+                      <div>• Cálculos aparecem em tempo real durante o preenchimento</div>
+                    </div>
+                  </div>
+
                   <div>
                     <Label htmlFor="target-field-id">ID do Campo (para captura de leads)</Label>
                     <Input
@@ -2566,8 +2848,11 @@ const gameElementCategories = [
                       value={selectedElementData.fieldId || ""}
                       onChange={(e) => updateElement(selectedElementData.id, { fieldId: e.target.value })}
                       className="mt-1"
-                      placeholder="peso_meta"
+                      placeholder="peso_objetivo"
                     />
+                    <div className="text-xs text-gray-500 mt-1">
+                      Identificador único para capturar esse dado na geração de leads
+                    </div>
                   </div>
                 </div>
               )}
@@ -3219,6 +3504,663 @@ const gameElementCategories = [
                       <option value="medium">Médio (40px)</option>
                       <option value="large">Grande (80px)</option>
                     </select>
+                  </div>
+                </div>
+              )}
+
+              {/* Propriedades para Roleta da Sorte */}
+              {selectedElementData.type === "game_wheel" && (
+                <div className="space-y-4">
+                  <div>
+                    <Label>Segmentos da Roleta</Label>
+                    <div className="space-y-2 mt-2">
+                      {(selectedElementData.wheelSegments || ["Prêmio 1", "Prêmio 2", "Prêmio 3", "Prêmio 4"]).map((segment, index) => (
+                        <div key={index} className="flex gap-2">
+                          <Input
+                            value={segment}
+                            onChange={(e) => {
+                              const newSegments = [...(selectedElementData.wheelSegments || ["Prêmio 1", "Prêmio 2", "Prêmio 3", "Prêmio 4"])];
+                              newSegments[index] = e.target.value;
+                              updateElement(selectedElementData.id, { wheelSegments: newSegments });
+                            }}
+                            placeholder={`Segmento ${index + 1}`}
+                            className="flex-1"
+                          />
+                          <Input
+                            type="color"
+                            value={(selectedElementData.wheelColors || ["#FF6B6B", "#4ECDC4", "#45B7D1", "#96CEB4"])[index] || "#e2e8f0"}
+                            onChange={(e) => {
+                              const newColors = [...(selectedElementData.wheelColors || ["#FF6B6B", "#4ECDC4", "#45B7D1", "#96CEB4"])];
+                              newColors[index] = e.target.value;
+                              updateElement(selectedElementData.id, { wheelColors: newColors });
+                            }}
+                            className="w-12 h-8 p-1"
+                          />
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => {
+                              const newSegments = (selectedElementData.wheelSegments || ["Prêmio 1", "Prêmio 2", "Prêmio 3", "Prêmio 4"]).filter((_, i) => i !== index);
+                              const newColors = (selectedElementData.wheelColors || ["#FF6B6B", "#4ECDC4", "#45B7D1", "#96CEB4"]).filter((_, i) => i !== index);
+                              updateElement(selectedElementData.id, { wheelSegments: newSegments, wheelColors: newColors });
+                            }}
+                            className="p-2"
+                          >
+                            ×
+                          </Button>
+                        </div>
+                      ))}
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => {
+                          const currentSegments = selectedElementData.wheelSegments || ["Prêmio 1", "Prêmio 2", "Prêmio 3", "Prêmio 4"];
+                          const currentColors = selectedElementData.wheelColors || ["#FF6B6B", "#4ECDC4", "#45B7D1", "#96CEB4"];
+                          updateElement(selectedElementData.id, { 
+                            wheelSegments: [...currentSegments, `Prêmio ${currentSegments.length + 1}`],
+                            wheelColors: [...currentColors, "#e2e8f0"]
+                          });
+                        }}
+                        className="w-full"
+                      >
+                        + Adicionar Segmento
+                      </Button>
+                    </div>
+                  </div>
+
+                  <div>
+                    <Label>Segmento Vencedor</Label>
+                    <select 
+                      className="w-full px-3 py-2 border rounded-md mt-1"
+                      value={selectedElementData.wheelWinningSegment || 0}
+                      onChange={(e) => updateElement(selectedElementData.id, { wheelWinningSegment: parseInt(e.target.value) })}
+                    >
+                      {(selectedElementData.wheelSegments || ["Prêmio 1", "Prêmio 2", "Prêmio 3", "Prêmio 4"]).map((segment, index) => (
+                        <option key={index} value={index}>{segment}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div>
+                    <Label>Cor do Ponteiro</Label>
+                    <div className="flex gap-2 mt-1">
+                      <Input
+                        type="color"
+                        value={selectedElementData.wheelPointerColor || "#DC2626"}
+                        onChange={(e) => updateElement(selectedElementData.id, { wheelPointerColor: e.target.value })}
+                        className="w-16 h-10 p-1"
+                      />
+                      <Input
+                        value={selectedElementData.wheelPointerColor || "#DC2626"}
+                        onChange={(e) => updateElement(selectedElementData.id, { wheelPointerColor: e.target.value })}
+                        placeholder="#DC2626"
+                        className="flex-1"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <Label>Duração da Animação (segundos)</Label>
+                    <Input
+                      type="number"
+                      min="1"
+                      max="10"
+                      value={selectedElementData.wheelSpinDuration || 3}
+                      onChange={(e) => updateElement(selectedElementData.id, { wheelSpinDuration: parseInt(e.target.value) })}
+                      placeholder="3"
+                      className="mt-1"
+                    />
+                  </div>
+                </div>
+              )}
+
+              {/* Propriedades para Raspadinha */}
+              {selectedElementData.type === "game_scratch" && (
+                <div className="space-y-4">
+                  <div>
+                    <Label>Cor da Cobertura</Label>
+                    <div className="flex gap-2 mt-1">
+                      <Input
+                        type="color"
+                        value={selectedElementData.scratchCoverColor || "#e5e7eb"}
+                        onChange={(e) => updateElement(selectedElementData.id, { scratchCoverColor: e.target.value })}
+                        className="w-16 h-10 p-1"
+                      />
+                      <Input
+                        value={selectedElementData.scratchCoverColor || "#e5e7eb"}
+                        onChange={(e) => updateElement(selectedElementData.id, { scratchCoverColor: e.target.value })}
+                        placeholder="#e5e7eb"
+                        className="flex-1"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <Label>Texto a Revelar</Label>
+                    <Input
+                      value={selectedElementData.scratchRevealText || "PARABÉNS!"}
+                      onChange={(e) => updateElement(selectedElementData.id, { scratchRevealText: e.target.value })}
+                      placeholder="PARABÉNS!"
+                      className="mt-1"
+                    />
+                  </div>
+
+                  <div>
+                    <Label>Imagem a Revelar (URL)</Label>
+                    <Input
+                      value={selectedElementData.scratchRevealImage || ""}
+                      onChange={(e) => updateElement(selectedElementData.id, { scratchRevealImage: e.target.value })}
+                      placeholder="https://exemplo.com/premio.jpg"
+                      className="mt-1"
+                    />
+                  </div>
+
+                  <div>
+                    <Label>Tamanho do Pincel</Label>
+                    <Input
+                      type="number"
+                      min="5"
+                      max="50"
+                      value={selectedElementData.scratchBrushSize || 20}
+                      onChange={(e) => updateElement(selectedElementData.id, { scratchBrushSize: parseInt(e.target.value) })}
+                      placeholder="20"
+                      className="mt-1"
+                    />
+                    <div className="text-xs text-gray-500 mt-1">Pixels (5-50)</div>
+                  </div>
+                </div>
+              )}
+
+              {/* Propriedades para Escolha de Cor */}
+              {selectedElementData.type === "game_color_pick" && (
+                <div className="space-y-4">
+                  <div>
+                    <Label>Instrução do Jogo</Label>
+                    <Input
+                      value={selectedElementData.colorInstruction || "Escolha a cor da sorte!"}
+                      onChange={(e) => updateElement(selectedElementData.id, { colorInstruction: e.target.value })}
+                      placeholder="Escolha a cor da sorte!"
+                      className="mt-1"
+                    />
+                  </div>
+
+                  <div>
+                    <Label>Opções de Cores</Label>
+                    <div className="space-y-2 mt-2">
+                      {(selectedElementData.colorOptions || ["#FF6B6B", "#4ECDC4", "#45B7D1", "#96CEB4", "#FECA57"]).map((color, index) => (
+                        <div key={index} className="flex gap-2">
+                          <Input
+                            type="color"
+                            value={color}
+                            onChange={(e) => {
+                              const newColors = [...(selectedElementData.colorOptions || ["#FF6B6B", "#4ECDC4", "#45B7D1", "#96CEB4", "#FECA57"])];
+                              newColors[index] = e.target.value;
+                              updateElement(selectedElementData.id, { colorOptions: newColors });
+                            }}
+                            className="w-16 h-10 p-1"
+                          />
+                          <Input
+                            value={color}
+                            onChange={(e) => {
+                              const newColors = [...(selectedElementData.colorOptions || ["#FF6B6B", "#4ECDC4", "#45B7D1", "#96CEB4", "#FECA57"])];
+                              newColors[index] = e.target.value;
+                              updateElement(selectedElementData.id, { colorOptions: newColors });
+                            }}
+                            placeholder="#FF6B6B"
+                            className="flex-1"
+                          />
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => {
+                              const newColors = (selectedElementData.colorOptions || ["#FF6B6B", "#4ECDC4", "#45B7D1", "#96CEB4", "#FECA57"]).filter((_, i) => i !== index);
+                              updateElement(selectedElementData.id, { colorOptions: newColors });
+                            }}
+                            className="p-2"
+                          >
+                            ×
+                          </Button>
+                        </div>
+                      ))}
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => {
+                          const currentColors = selectedElementData.colorOptions || ["#FF6B6B", "#4ECDC4", "#45B7D1", "#96CEB4", "#FECA57"];
+                          updateElement(selectedElementData.id, { colorOptions: [...currentColors, "#e2e8f0"] });
+                        }}
+                        className="w-full"
+                      >
+                        + Adicionar Cor
+                      </Button>
+                    </div>
+                  </div>
+
+                  <div>
+                    <Label>Cor Vencedora</Label>
+                    <select 
+                      className="w-full px-3 py-2 border rounded-md mt-1"
+                      value={selectedElementData.colorCorrectAnswer || (selectedElementData.colorOptions || ["#FF6B6B"])[0]}
+                      onChange={(e) => updateElement(selectedElementData.id, { colorCorrectAnswer: e.target.value })}
+                    >
+                      {(selectedElementData.colorOptions || ["#FF6B6B", "#4ECDC4", "#45B7D1", "#96CEB4", "#FECA57"]).map((color, index) => (
+                        <option key={index} value={color}>Cor {index + 1} ({color})</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+              )}
+
+              {/* Propriedades para Quebra Blocos */}
+              {selectedElementData.type === "game_brick_break" && (
+                <div className="space-y-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <Label>Linhas de Blocos</Label>
+                      <Input
+                        type="number"
+                        min="1"
+                        max="8"
+                        value={selectedElementData.brickRows || 3}
+                        onChange={(e) => updateElement(selectedElementData.id, { brickRows: parseInt(e.target.value) })}
+                        placeholder="3"
+                        className="mt-1"
+                      />
+                    </div>
+                    <div>
+                      <Label>Colunas de Blocos</Label>
+                      <Input
+                        type="number"
+                        min="3"
+                        max="12"
+                        value={selectedElementData.brickColumns || 6}
+                        onChange={(e) => updateElement(selectedElementData.id, { brickColumns: parseInt(e.target.value) })}
+                        placeholder="6"
+                        className="mt-1"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <Label>Cores dos Blocos</Label>
+                    <div className="space-y-2 mt-2">
+                      {(selectedElementData.brickColors || ["#FF6B6B", "#4ECDC4", "#45B7D1"]).map((color, index) => (
+                        <div key={index} className="flex gap-2">
+                          <Input
+                            type="color"
+                            value={color}
+                            onChange={(e) => {
+                              const newColors = [...(selectedElementData.brickColors || ["#FF6B6B", "#4ECDC4", "#45B7D1"])];
+                              newColors[index] = e.target.value;
+                              updateElement(selectedElementData.id, { brickColors: newColors });
+                            }}
+                            className="w-16 h-10 p-1"
+                          />
+                          <Input
+                            value={color}
+                            onChange={(e) => {
+                              const newColors = [...(selectedElementData.brickColors || ["#FF6B6B", "#4ECDC4", "#45B7D1"])];
+                              newColors[index] = e.target.value;
+                              updateElement(selectedElementData.id, { brickColors: newColors });
+                            }}
+                            placeholder="#FF6B6B"
+                            className="flex-1"
+                          />
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => {
+                              const newColors = (selectedElementData.brickColors || ["#FF6B6B", "#4ECDC4", "#45B7D1"]).filter((_, i) => i !== index);
+                              updateElement(selectedElementData.id, { brickColors: newColors });
+                            }}
+                            className="p-2"
+                          >
+                            ×
+                          </Button>
+                        </div>
+                      ))}
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => {
+                          const currentColors = selectedElementData.brickColors || ["#FF6B6B", "#4ECDC4", "#45B7D1"];
+                          updateElement(selectedElementData.id, { brickColors: [...currentColors, "#e2e8f0"] });
+                        }}
+                        className="w-full"
+                      >
+                        + Adicionar Cor
+                      </Button>
+                    </div>
+                  </div>
+
+                  <div>
+                    <Label>Cor da Raquete</Label>
+                    <div className="flex gap-2 mt-1">
+                      <Input
+                        type="color"
+                        value={selectedElementData.paddleColor || "#FFFFFF"}
+                        onChange={(e) => updateElement(selectedElementData.id, { paddleColor: e.target.value })}
+                        className="w-16 h-10 p-1"
+                      />
+                      <Input
+                        value={selectedElementData.paddleColor || "#FFFFFF"}
+                        onChange={(e) => updateElement(selectedElementData.id, { paddleColor: e.target.value })}
+                        placeholder="#FFFFFF"
+                        className="flex-1"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <Label>Cor da Bola</Label>
+                    <div className="flex gap-2 mt-1">
+                      <Input
+                        type="color"
+                        value={selectedElementData.ballColor || "#FECA57"}
+                        onChange={(e) => updateElement(selectedElementData.id, { ballColor: e.target.value })}
+                        className="w-16 h-10 p-1"
+                      />
+                      <Input
+                        value={selectedElementData.ballColor || "#FECA57"}
+                        onChange={(e) => updateElement(selectedElementData.id, { ballColor: e.target.value })}
+                        placeholder="#FECA57"
+                        className="flex-1"
+                      />
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Propriedades para Jogo da Memória */}
+              {selectedElementData.type === "game_memory_cards" && (
+                <div className="space-y-4">
+                  <div>
+                    <Label>Número de Pares</Label>
+                    <Input
+                      type="number"
+                      min="2"
+                      max="8"
+                      value={selectedElementData.memoryCardPairs || 4}
+                      onChange={(e) => updateElement(selectedElementData.id, { memoryCardPairs: parseInt(e.target.value) })}
+                      placeholder="4"
+                      className="mt-1"
+                    />
+                    <div className="text-xs text-gray-500 mt-1">Total de cartas: {(selectedElementData.memoryCardPairs || 4) * 2}</div>
+                  </div>
+
+                  <div>
+                    <Label>Tema das Cartas</Label>
+                    <select 
+                      className="w-full px-3 py-2 border rounded-md mt-1"
+                      value={selectedElementData.memoryCardTheme || "numbers"}
+                      onChange={(e) => updateElement(selectedElementData.id, { memoryCardTheme: e.target.value })}
+                    >
+                      <option value="numbers">Números (1, 2, 3...)</option>
+                      <option value="colors">Cores (🔴, 🔵, 🟢...)</option>
+                      <option value="icons">Ícones (⭐, ❤️, 🎯...)</option>
+                      <option value="custom">Imagens Customizadas</option>
+                    </select>
+                  </div>
+
+                  {selectedElementData.memoryCardTheme === "custom" && (
+                    <div>
+                      <Label>URLs das Imagens Customizadas</Label>
+                      <div className="space-y-2 mt-2">
+                        {Array.from({ length: selectedElementData.memoryCardPairs || 4 }, (_, index) => (
+                          <Input
+                            key={index}
+                            value={(selectedElementData.memoryCustomImages || [])[index] || ""}
+                            onChange={(e) => {
+                              const newImages = [...(selectedElementData.memoryCustomImages || [])];
+                              newImages[index] = e.target.value;
+                              updateElement(selectedElementData.id, { memoryCustomImages: newImages });
+                            }}
+                            placeholder={`URL da imagem ${index + 1}`}
+                            className="text-xs"
+                          />
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Propriedades para Caça-Níquel */}
+              {selectedElementData.type === "game_slot_machine" && (
+                <div className="space-y-4">
+                  <div>
+                    <Label>Número de Rolos</Label>
+                    <Input
+                      type="number"
+                      min="3"
+                      max="5"
+                      value={selectedElementData.slotReels || 3}
+                      onChange={(e) => updateElement(selectedElementData.id, { slotReels: parseInt(e.target.value) })}
+                      placeholder="3"
+                      className="mt-1"
+                    />
+                  </div>
+
+                  <div>
+                    <Label>Símbolos Disponíveis</Label>
+                    <div className="space-y-2 mt-2">
+                      {(selectedElementData.slotSymbols || ["🍒", "🍋", "🍊", "🔔", "⭐"]).map((symbol, index) => (
+                        <div key={index} className="flex gap-2">
+                          <Input
+                            value={symbol}
+                            onChange={(e) => {
+                              const newSymbols = [...(selectedElementData.slotSymbols || ["🍒", "🍋", "🍊", "🔔", "⭐"])];
+                              newSymbols[index] = e.target.value;
+                              updateElement(selectedElementData.id, { slotSymbols: newSymbols });
+                            }}
+                            placeholder="🍒"
+                            className="flex-1"
+                          />
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => {
+                              const newSymbols = (selectedElementData.slotSymbols || ["🍒", "🍋", "🍊", "🔔", "⭐"]).filter((_, i) => i !== index);
+                              updateElement(selectedElementData.id, { slotSymbols: newSymbols });
+                            }}
+                            className="p-2"
+                          >
+                            ×
+                          </Button>
+                        </div>
+                      ))}
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => {
+                          const currentSymbols = selectedElementData.slotSymbols || ["🍒", "🍋", "🍊", "🔔", "⭐"];
+                          updateElement(selectedElementData.id, { slotSymbols: [...currentSymbols, "🎯"] });
+                        }}
+                        className="w-full"
+                      >
+                        + Adicionar Símbolo
+                      </Button>
+                    </div>
+                  </div>
+
+                  <div>
+                    <Label>Combinação Vencedora</Label>
+                    <div className="space-y-2 mt-2">
+                      {Array.from({ length: selectedElementData.slotReels || 3 }, (_, index) => (
+                        <select
+                          key={index}
+                          className="w-full px-3 py-2 border rounded-md"
+                          value={(selectedElementData.slotWinningCombination || [])[index] || (selectedElementData.slotSymbols || ["🍒", "🍋", "🍊"])[0]}
+                          onChange={(e) => {
+                            const newCombination = [...(selectedElementData.slotWinningCombination || [])];
+                            newCombination[index] = e.target.value;
+                            updateElement(selectedElementData.id, { slotWinningCombination: newCombination });
+                          }}
+                        >
+                          {(selectedElementData.slotSymbols || ["🍒", "🍋", "🍊", "🔔", "⭐"]).map((symbol, symbolIndex) => (
+                            <option key={symbolIndex} value={symbol}>Rolo {index + 1}: {symbol}</option>
+                          ))}
+                        </select>
+                      ))}
+                    </div>
+                    <div className="text-xs text-gray-500 mt-1">
+                      Combinação: {(selectedElementData.slotWinningCombination || []).join(" ") || "Não definida"}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Propriedades para Áudio */}
+              {selectedElementData.type === "audio" && (
+                <div className="space-y-4">
+                  <div>
+                    <Label>Tipo de Áudio</Label>
+                    <select 
+                      className="w-full px-3 py-2 border rounded-md mt-1"
+                      value={selectedElementData.audioType || "upload"}
+                      onChange={(e) => updateElement(selectedElementData.id, { audioType: e.target.value as "upload" | "elevenlabs" })}
+                    >
+                      <option value="upload">Upload de Arquivo</option>
+                      <option value="elevenlabs">ElevenLabs (Texto para Fala)</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <Label>Título do Áudio</Label>
+                    <Input
+                      value={selectedElementData.audioTitle || ""}
+                      onChange={(e) => updateElement(selectedElementData.id, { audioTitle: e.target.value })}
+                      placeholder="Mensagem de Áudio"
+                      className="mt-1"
+                    />
+                  </div>
+
+                  {selectedElementData.audioType === "upload" && (
+                    <>
+                      <div>
+                        <Label>Upload de Arquivo de Áudio</Label>
+                        <Input
+                          type="file"
+                          accept="audio/*"
+                          onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            if (file) {
+                              // Verificar tamanho (máximo 10MB)
+                              if (file.size > 10 * 1024 * 1024) {
+                                alert("Arquivo muito grande. Máximo 10MB.");
+                                return;
+                              }
+                              // Criar URL temporária para preview
+                              const audioUrl = URL.createObjectURL(file);
+                              updateElement(selectedElementData.id, { 
+                                audioFile: file,
+                                audioUrl: audioUrl,
+                                audioDuration: 0 // Será atualizado quando o áudio carregar
+                              });
+                            }
+                          }}
+                          className="mt-1"
+                        />
+                        <div className="text-xs text-gray-500 mt-1">
+                          Formatos suportados: MP3, WAV, OGG, M4A (máximo 10MB)
+                        </div>
+                      </div>
+
+                      {selectedElementData.audioUrl && (
+                        <div className="bg-gray-50 p-3 rounded-lg">
+                          <Label className="text-xs">Preview do Áudio</Label>
+                          <audio 
+                            controls 
+                            className="w-full mt-2"
+                            src={selectedElementData.audioUrl}
+                            onLoadedMetadata={(e) => {
+                              const duration = Math.floor((e.target as HTMLAudioElement).duration);
+                              updateElement(selectedElementData.id, { audioDuration: duration });
+                            }}
+                          />
+                        </div>
+                      )}
+                    </>
+                  )}
+
+                  {selectedElementData.audioType === "elevenlabs" && (
+                    <>
+                      <div>
+                        <Label>Texto para Converter em Fala</Label>
+                        <textarea
+                          value={selectedElementData.elevenLabsText || ""}
+                          onChange={(e) => updateElement(selectedElementData.id, { elevenLabsText: e.target.value })}
+                          placeholder="Digite o texto que será convertido em áudio..."
+                          className="w-full px-3 py-2 border rounded-md mt-1 min-h-[100px] resize-none"
+                          maxLength={1000}
+                        />
+                        <div className="text-xs text-gray-500 mt-1">
+                          Máximo 1000 caracteres. Você pode usar variáveis como {`{nome}`}, {`{email}`}, etc.
+                        </div>
+                      </div>
+
+                      <div>
+                        <Label>Voice ID do ElevenLabs</Label>
+                        <Input
+                          value={selectedElementData.elevenLabsVoiceId || ""}
+                          onChange={(e) => updateElement(selectedElementData.id, { elevenLabsVoiceId: e.target.value })}
+                          placeholder="pNInz6obpgDQGcFmaJgB"
+                          className="mt-1"
+                        />
+                        <div className="text-xs text-gray-500 mt-1">
+                          Encontre o Voice ID na sua biblioteca do ElevenLabs
+                        </div>
+                      </div>
+
+                      <div className="bg-blue-50 p-3 rounded-lg">
+                        <h4 className="text-sm font-semibold text-blue-800 mb-2">⚙️ Configuração da API</h4>
+                        <div className="text-xs text-blue-700">
+                          <p>• Configure sua chave API do ElevenLabs nas configurações do projeto</p>
+                          <p>• O áudio será gerado automaticamente quando o quiz for executado</p>
+                          <p>• Custo aproximado: $0.30 por 1000 caracteres</p>
+                        </div>
+                      </div>
+                    </>
+                  )}
+
+                  <div>
+                    <Label>Duração Estimada (segundos)</Label>
+                    <Input
+                      type="number"
+                      min="1"
+                      max="300"
+                      value={selectedElementData.audioDuration || 15}
+                      onChange={(e) => updateElement(selectedElementData.id, { audioDuration: parseInt(e.target.value) })}
+                      placeholder="15"
+                      className="mt-1"
+                    />
+                    <div className="text-xs text-gray-500 mt-1">
+                      {selectedElementData.audioType === "upload" ? "Detectado automaticamente após upload" : "Estimativa para o áudio gerado"}
+                    </div>
+                  </div>
+
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="checkbox"
+                        id="showWaveform"
+                        checked={selectedElementData.showWaveform || false}
+                        onChange={(e) => updateElement(selectedElementData.id, { showWaveform: e.target.checked })}
+                        className="rounded"
+                      />
+                      <Label htmlFor="showWaveform" className="text-sm">Mostrar forma de onda visual</Label>
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="checkbox"
+                        id="autoPlay"
+                        checked={selectedElementData.autoPlay || false}
+                        onChange={(e) => updateElement(selectedElementData.id, { autoPlay: e.target.checked })}
+                        className="rounded"
+                      />
+                      <Label htmlFor="autoPlay" className="text-sm">Reproduzir automaticamente</Label>
+                    </div>
                   </div>
                 </div>
               )}
