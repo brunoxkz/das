@@ -43,17 +43,7 @@ export default function Analytics() {
     retry: false,
   });
 
-  // Debug logs
-  useEffect(() => {
-    console.log("Analytics Debug:", {
-      isAuthenticated,
-      selectedQuizId,
-      userQuizzes,
-      quizzesLoading,
-      quizzesError,
-      dashboardStats
-    });
-  }, [isAuthenticated, selectedQuizId, userQuizzes, quizzesLoading, quizzesError, dashboardStats]);
+
 
   // Fetch specific quiz analytics if quiz is selected
   const { data: quizAnalytics, isLoading: quizAnalyticsLoading } = useQuery({
@@ -213,9 +203,9 @@ export default function Analytics() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            {userQuizzes && userQuizzes.length > 0 ? (
+            {(userQuizzes || dashboardStats?.quizzes) && (userQuizzes?.length > 0 || dashboardStats?.quizzes?.length > 0) ? (
               <div className="space-y-3">
-                {userQuizzes.map((quiz: any) => (
+                {(userQuizzes || dashboardStats?.quizzes || []).map((quiz: any) => (
                   <div
                     key={quiz.id}
                     className="flex items-center justify-between p-4 bg-white border rounded-lg hover:shadow-md transition-shadow"
