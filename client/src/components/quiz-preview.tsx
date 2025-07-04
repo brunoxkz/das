@@ -789,6 +789,240 @@ export function QuizPreview({ quiz }: QuizPreviewProps) {
           </div>
         );
 
+      case 'animated_transition':
+        return (
+          <div className="mb-6 text-center">
+            <div className="relative">
+              {/* Elemento de transição animada */}
+              <div className="animate-pulse bg-gradient-to-r from-green-400 via-blue-500 to-purple-600 rounded-lg p-6">
+                <div className="text-white">
+                  <div className="text-xl font-bold mb-2">
+                    {element.content || "Transição Animada"}
+                  </div>
+                  {element.description && (
+                    <p className="text-sm opacity-90">{element.description}</p>
+                  )}
+                </div>
+              </div>
+              
+              {/* Efeito de brilho */}
+              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white to-transparent opacity-25 animate-ping rounded-lg"></div>
+            </div>
+          </div>
+        );
+
+      case 'checkbox':
+        return (
+          <div className="mb-6">
+            {element.question && (
+              <label className="block text-lg font-medium text-gray-700 mb-4">
+                {element.question}
+                {element.required && <span className="text-red-500 ml-1">*</span>}
+              </label>
+            )}
+            {element.description && (
+              <p className="text-gray-600 mb-4 text-sm">{element.description}</p>
+            )}
+            <div className="space-y-3">
+              {element.options?.map((option: string, index: number) => (
+                <label key={index} className="flex items-center space-x-3 cursor-pointer">
+                  <input 
+                    type="checkbox" 
+                    className="h-4 w-4 text-green-600 border-gray-300 rounded focus:ring-green-500"
+                    onChange={(e) => {
+                      const values = answers[element.id] || [];
+                      if (e.target.checked) {
+                        handleAnswer(element.id, [...values, option], element);
+                      } else {
+                        handleAnswer(element.id, values.filter((v: string) => v !== option), element);
+                      }
+                    }}
+                  />
+                  <span className="text-gray-700">{option}</span>
+                </label>
+              ))}
+            </div>
+          </div>
+        );
+
+      case 'game_wheel':
+        return (
+          <div className="mb-6 text-center">
+            <div className="bg-gradient-to-br from-yellow-400 to-orange-500 p-6 rounded-lg">
+              <h3 className="text-white font-bold text-xl mb-4">🎰 Roleta da Sorte</h3>
+              <div className="w-48 h-48 mx-auto bg-white rounded-full border-8 border-yellow-300 relative overflow-hidden">
+                {/* Segmentos da roleta */}
+                {(element.wheelSegments || ['Prêmio 1', 'Prêmio 2', 'Prêmio 3', 'Prêmio 4']).map((segment: string, index: number) => (
+                  <div
+                    key={index}
+                    className="absolute inset-0 flex items-center justify-center text-xs font-bold"
+                    style={{
+                      transform: `rotate(${index * (360 / (element.wheelSegments?.length || 4))}deg)`,
+                      backgroundColor: element.wheelColors?.[index] || ['#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4'][index % 4]
+                    }}
+                  >
+                    <span className="rotate-90">{segment}</span>
+                  </div>
+                ))}
+                
+                {/* Ponteiro */}
+                <div className="absolute top-2 left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-b-8 border-transparent border-b-red-600 z-10"></div>
+              </div>
+              <button 
+                className="mt-4 bg-white text-orange-600 px-6 py-2 rounded-full font-bold hover:bg-gray-100 transition-colors"
+                onClick={() => handleAnswer(element.id, 'girou', element)}
+              >
+                Girar Roleta!
+              </button>
+            </div>
+          </div>
+        );
+
+      case 'game_scratch':
+        return (
+          <div className="mb-6 text-center">
+            <div className="bg-gradient-to-br from-gray-400 to-gray-600 p-6 rounded-lg">
+              <h3 className="text-white font-bold text-xl mb-4">🪙 Raspadinha</h3>
+              <div className="w-64 h-40 mx-auto bg-gray-500 rounded-lg relative overflow-hidden cursor-pointer hover:bg-gray-400 transition-colors">
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <span className="text-white text-2xl font-bold">
+                    {element.scratchRevealText || 'Raspe aqui!'}
+                  </span>
+                </div>
+                <div className="absolute bottom-2 left-2 text-white text-xs">
+                  Clique para raspar
+                </div>
+              </div>
+              <button 
+                className="mt-4 bg-white text-gray-600 px-6 py-2 rounded-full font-bold hover:bg-gray-100 transition-colors"
+                onClick={() => handleAnswer(element.id, 'raspou', element)}
+              >
+                Raspar Cartela
+              </button>
+            </div>
+          </div>
+        );
+
+      case 'game_color_pick':
+        return (
+          <div className="mb-6 text-center">
+            <div className="bg-gradient-to-br from-purple-400 to-pink-500 p-6 rounded-lg">
+              <h3 className="text-white font-bold text-xl mb-4">🎨 Escolha de Cor</h3>
+              <p className="text-white mb-4">{element.colorInstruction || 'Escolha sua cor da sorte!'}</p>
+              <div className="grid grid-cols-3 gap-3 max-w-xs mx-auto">
+                {(element.colorOptions || ['#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FECA57', '#FF9FF3']).map((color: string, index: number) => (
+                  <button
+                    key={index}
+                    className="w-16 h-16 rounded-full border-4 border-white shadow-lg hover:scale-110 transition-transform"
+                    style={{ backgroundColor: color }}
+                    onClick={() => handleAnswer(element.id, color, element)}
+                  />
+                ))}
+              </div>
+            </div>
+          </div>
+        );
+
+      case 'game_brick_break':
+        return (
+          <div className="mb-6 text-center">
+            <div className="bg-gradient-to-br from-red-500 to-orange-600 p-6 rounded-lg">
+              <h3 className="text-white font-bold text-xl mb-4">🧱 Quebre o Muro</h3>
+              <div className="w-72 h-48 mx-auto bg-blue-900 rounded-lg relative overflow-hidden">
+                {/* Tijolos */}
+                {Array.from({ length: (element.brickRows || 4) * (element.brickColumns || 6) }).map((_, index) => (
+                  <div
+                    key={index}
+                    className="absolute w-10 h-6 border border-gray-300"
+                    style={{
+                      left: `${(index % (element.brickColumns || 6)) * 45}px`,
+                      top: `${Math.floor(index / (element.brickColumns || 6)) * 25}px`,
+                      backgroundColor: element.brickColors?.[index % (element.brickColors?.length || 3)] || ['#FF6B6B', '#4ECDC4', '#45B7D1'][index % 3]
+                    }}
+                  />
+                ))}
+                
+                {/* Paddle */}
+                <div 
+                  className="absolute bottom-4 left-1/2 transform -translate-x-1/2 h-2 rounded"
+                  style={{ 
+                    width: '40px',
+                    backgroundColor: element.paddleColor || '#FFFFFF'
+                  }}
+                />
+                
+                {/* Ball */}
+                <div 
+                  className="absolute bottom-8 left-1/2 transform -translate-x-1/2 w-3 h-3 rounded-full"
+                  style={{ backgroundColor: element.ballColor || '#FFFFFF' }}
+                />
+              </div>
+              <button 
+                className="mt-4 bg-white text-red-600 px-6 py-2 rounded-full font-bold hover:bg-gray-100 transition-colors"
+                onClick={() => handleAnswer(element.id, 'jogou', element)}
+              >
+                Iniciar Jogo!
+              </button>
+            </div>
+          </div>
+        );
+
+      case 'game_memory_cards':
+        return (
+          <div className="mb-6 text-center">
+            <div className="bg-gradient-to-br from-green-400 to-blue-500 p-6 rounded-lg">
+              <h3 className="text-white font-bold text-xl mb-4">🧠 Jogo da Memória</h3>
+              <div className="grid grid-cols-4 gap-2 max-w-xs mx-auto">
+                {Array.from({ length: (element.memoryCardPairs || 6) * 2 }).map((_, index) => (
+                  <div
+                    key={index}
+                    className="w-16 h-16 bg-white rounded-lg border-2 border-gray-300 flex items-center justify-center cursor-pointer hover:bg-gray-100 transition-colors"
+                  >
+                    <span className="text-2xl">?</span>
+                  </div>
+                ))}
+              </div>
+              <button 
+                className="mt-4 bg-white text-green-600 px-6 py-2 rounded-full font-bold hover:bg-gray-100 transition-colors"
+                onClick={() => handleAnswer(element.id, 'jogou_memoria', element)}
+              >
+                Começar Jogo!
+              </button>
+            </div>
+          </div>
+        );
+
+      case 'game_slot_machine':
+        return (
+          <div className="mb-6 text-center">
+            <div className="bg-gradient-to-br from-yellow-400 to-red-500 p-6 rounded-lg">
+              <h3 className="text-white font-bold text-xl mb-4">🎰 Caça-Níquel</h3>
+              <div className="w-72 h-32 mx-auto bg-gray-800 rounded-lg border-4 border-yellow-400 relative overflow-hidden">
+                <div className="flex h-full">
+                  {Array.from({ length: element.slotReels || 3 }).map((_, reelIndex) => (
+                    <div key={reelIndex} className="flex-1 bg-white border-r border-gray-400 flex items-center justify-center">
+                      <span className="text-4xl">
+                        {element.slotSymbols?.[0] || '🍒'}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+                
+                {/* Linhas de pagamento */}
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <div className="w-full h-0.5 bg-red-500 opacity-60"></div>
+                </div>
+              </div>
+              <button 
+                className="mt-4 bg-white text-yellow-600 px-6 py-2 rounded-full font-bold hover:bg-gray-100 transition-colors"
+                onClick={() => handleAnswer(element.id, 'puxou_alavanca', element)}
+              >
+                Puxar Alavanca!
+              </button>
+            </div>
+          </div>
+        );
+
       default:
         return null;
     }
