@@ -107,13 +107,30 @@ export default function SuperAnalytics() {
 
   const { data: analytics, isLoading: analyticsLoading, refetch } = useQuery({
     queryKey: ["/api/analytics", quizId, timeRange],
+    queryFn: async () => {
+      const token = localStorage.getItem("accessToken");
+      const response = await fetch(`/api/analytics/${quizId}`, {
+        headers: {
+          "Authorization": `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      });
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      return response.json();
+    },
     enabled: !!quizId && !!quiz,
     retry: false,
   });
+  
+  console.log("SUPER ANALYTICS - Analytics data:", analytics);
 
   // Função para exportar dados como CSV
   const exportToCSV = () => {
-    const csvData = mockAnalytics.pageAnalytics.map(page => ({
+    const csvData = analyticsData.pageAnalytics.map(page => ({
       'Página': page.pageName,
       'Tipo': page.pageType,
       'Visualizações': page.views,
@@ -234,25 +251,14 @@ export default function SuperAnalytics() {
     );
   }
 
-  // Mock data for demonstration - in real app, this would come from API
-  const mockAnalytics: QuizAnalytics = {
-    totalViews: isDataReset ? 0 : 1247,
-    totalCompletions: isDataReset ? 0 : 456,
-    totalDropOffs: isDataReset ? 0 : 791,
-    completionRate: isDataReset ? 0 : 36.6,
-    avgCompletionTime: isDataReset ? 0 : 180, // seconds
-    pageAnalytics: (quiz?.structure?.pages || []).map((page: any, index: number) => ({
-      pageId: page.id,
-      pageName: page.title || `Página ${index + 1}`,
-      pageType: page.isGame ? 'game' : page.isTransition ? 'transition' : 'normal',
-      views: isDataReset ? 0 : Math.max(100, Math.floor(Math.random() * 800) + 200),
-      clicks: isDataReset ? 0 : Math.max(50, Math.floor(Math.random() * 600) + 150),
-      dropOffs: isDataReset ? 0 : Math.max(10, Math.floor(Math.random() * 200) + 50),
-      clickRate: isDataReset ? 0 : Math.max(40, Math.random() * 40 + 40),
-      dropOffRate: isDataReset ? 0 : Math.max(5, Math.random() * 25 + 5),
-      avgTimeOnPage: isDataReset ? 0 : Math.max(15, Math.random() * 60 + 30),
-      nextPageViews: isDataReset ? 0 : (index < (quiz?.structure?.pages?.length || 0) - 1 ? Math.max(80, Math.floor(Math.random() * 500) + 120) : 0)
-    }))
+  // Use real analytics data from API
+  const analyticsData = analytics || {
+    totalViews: 0,
+    totalCompletions: 0,
+    totalDropOffs: 0,
+    completionRate: 0,
+    avgCompletionTime: 0,
+    pageAnalytics: []
   };
 
   const formatTime = (seconds: number) => {
@@ -340,7 +346,7 @@ export default function SuperAnalytics() {
               <Eye className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{mockAnalytics.totalViews.toLocaleString()}</div>
+              <div className="text-2xl font-bold">{analyticsData.totalViews.toLocaleString()}</div>
               <p className="text-xs text-muted-foreground">+12% vs. período anterior</p>
             </CardContent>
           </Card>
@@ -351,7 +357,7 @@ export default function SuperAnalytics() {
               <Target className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{formatPercentage(mockAnalytics.completionRate)}</div>
+              <div className="text-2xl font-bold">{formatPercentage(analyticsData.completionRate)}</div>
               <p className="text-xs text-muted-foreground">+2.1% vs. período anterior</p>
             </CardContent>
           </Card>
@@ -362,7 +368,7 @@ export default function SuperAnalytics() {
               <Clock className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{formatTime(mockAnalytics.avgCompletionTime)}</div>
+              <div className="text-2xl font-bold">{formatTime(analyticsData.avgCompletionTime)}</div>
               <p className="text-xs text-muted-foreground">-15s vs. período anterior</p>
             </CardContent>
           </Card>
@@ -373,8 +379,8 @@ export default function SuperAnalytics() {
               <UserMinus className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{mockAnalytics.totalDropOffs.toLocaleString()}</div>
-              <p className="text-xs text-muted-foreground">{formatPercentage(100 - mockAnalytics.completionRate)} taxa de desistência</p>
+              <div className="text-2xl font-bold">{analyticsData.totalDropOffs.toLocaleString()}</div>
+              <p className="text-xs text-muted-foreground">{formatPercentage(100 - analyticsData.completionRate)} taxa de desistência</p>
             </CardContent>
           </Card>
         </div>
@@ -407,7 +413,7 @@ export default function SuperAnalytics() {
                   </tr>
                 </thead>
                 <tbody>
-                  {mockAnalytics.pageAnalytics.map((page, index) => (
+                  {analyticsData.pageAnalytics.map((page, index) => (
                     <tr key={page.pageId} className="border-b hover:bg-gray-50">
                       <td className="p-4">
                         <div className="flex items-center gap-2">
@@ -492,8 +498,8 @@ export default function SuperAnalytics() {
                 <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
                   <h4 className="font-semibold text-red-800 mb-2">🚨 Alta Taxa de Evasão</h4>
                   <p className="text-sm text-red-700">
-                    A página "{mockAnalytics.pageAnalytics.find(p => p.dropOffRate > 20)?.pageName || 'Página 2'}" 
-                    tem {formatPercentage(mockAnalytics.pageAnalytics.find(p => p.dropOffRate > 20)?.dropOffRate || 25)} de evasão. 
+                    A página "{analyticsData.pageAnalytics.find(p => p.dropOffRate > 20)?.pageName || 'Página 2'}" 
+                    tem {formatPercentage(analyticsData.pageAnalytics.find(p => p.dropOffRate > 20)?.dropOffRate || 25)} de evasão. 
                     Considere simplificar o conteúdo ou melhorar a UX.
                   </p>
                 </div>
@@ -501,8 +507,8 @@ export default function SuperAnalytics() {
                 <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
                   <h4 className="font-semibold text-green-800 mb-2">✅ Boa Performance</h4>
                   <p className="text-sm text-green-700">
-                    A página "{mockAnalytics.pageAnalytics.find(p => p.clickRate > 70)?.pageName || 'Página 1'}" 
-                    tem excelente engajamento com {formatPercentage(mockAnalytics.pageAnalytics.find(p => p.clickRate > 70)?.clickRate || 75)} de cliques.
+                    A página "{analyticsData.pageAnalytics.find(p => p.clickRate > 70)?.pageName || 'Página 1'}" 
+                    tem excelente engajamento com {formatPercentage(analyticsData.pageAnalytics.find(p => p.clickRate > 70)?.clickRate || 75)} de cliques.
                   </p>
                 </div>
 
