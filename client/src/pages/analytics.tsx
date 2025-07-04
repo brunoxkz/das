@@ -17,6 +17,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { isUnauthorizedError } from "@/lib/authUtils";
 import { useEffect } from "react";
+import { Link } from "wouter";
 
 export default function Analytics() {
   const { toast } = useToast();
@@ -254,9 +255,11 @@ export default function Analytics() {
                         </div>
                       </td>
                       <td className="py-3 px-4">
-                        <Button variant="ghost" size="sm">
-                          Ver Detalhes
-                        </Button>
+                        <Link href={`/super-analytics/${quiz.id}`}>
+                          <Button variant="ghost" size="sm">
+                            Ver Detalhes
+                          </Button>
+                        </Link>
                       </td>
                     </tr>
                   ))}
