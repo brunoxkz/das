@@ -50,17 +50,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/quizzes/:id", isAuthenticated, async (req: any, res) => {
     try {
       const { id } = req.params;
+      const userId = req.user.claims.sub;
+      
+      console.log("=== GET QUIZ DEBUG ===");
+      console.log("Fetching quiz ID:", id);
+      console.log("User ID:", userId);
+      
       const quiz = await storage.getQuiz(id);
       
       if (!quiz) {
+        console.log("Quiz not found in database");
         return res.status(404).json({ message: "Quiz not found" });
       }
       
+      console.log("Found quiz:", JSON.stringify(quiz, null, 2));
+      
       // Check if user owns this quiz
-      if (quiz.userId !== req.user.claims.sub) {
+      if (quiz.userId !== userId) {
+        console.log("Access denied - user doesn't own quiz");
         return res.status(403).json({ message: "Access denied" });
       }
       
+      console.log("=== END GET QUIZ DEBUG ===");
       res.json(quiz);
     } catch (error) {
       console.error("Error fetching quiz:", error);
