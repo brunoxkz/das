@@ -25,15 +25,24 @@ export default function Dashboard() {
   const { toast } = useToast();
   const { isAuthenticated, isLoading: authLoading } = useAuth();
 
-  const { data: stats, isLoading: statsLoading } = useQuery({
-    queryKey: ["/api/dashboard/stats"],
-    retry: false,
-  });
-
   const { data: quizzes, isLoading: quizzesLoading } = useQuery({
     queryKey: ["/api/quizzes"],
     retry: false,
   });
+
+  const { data: responses, isLoading: responsesLoading } = useQuery({
+    queryKey: ["/api/quiz-responses"],
+    retry: false,
+  });
+
+  // Calcular estatísticas em tempo real
+  const quizzesList = Array.isArray(quizzes) ? quizzes : [];
+  const responsesList = Array.isArray(responses) ? responses : [];
+  
+  const totalQuizzes = quizzesList.length;
+  const totalLeads = responsesList.length;
+  const totalViews = quizzesList.reduce((sum: number, quiz: any) => sum + (quiz.totalViews || 0), 0);
+  const avgConversionRate = totalViews > 0 ? Math.round((totalLeads / totalViews) * 100) : 0;
 
   // Redirect if not authenticated
   useEffect(() => {
@@ -49,7 +58,7 @@ export default function Dashboard() {
     }
   }, [isAuthenticated, authLoading, toast]);
 
-  if (authLoading || statsLoading || quizzesLoading) {
+  if (authLoading || quizzesLoading || responsesLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full" />
@@ -60,25 +69,25 @@ export default function Dashboard() {
   const dashboardStats = [
     {
       title: "Total de Quizzes",
-      value: stats?.totalQuizzes || 0,
+      value: totalQuizzes,
       icon: <BarChart3 className="w-4 h-4" />,
       color: "text-blue-600"
     },
     {
       title: "Leads Capturados",
-      value: stats?.totalLeads || 0,
+      value: totalLeads,
       icon: <Users className="w-4 h-4" />,
       color: "text-green-600"
     },
     {
       title: "Visualizações",
-      value: stats?.totalViews || 0,
+      value: totalViews,
       icon: <Eye className="w-4 h-4" />,
       color: "text-purple-600"
     },
     {
       title: "Taxa de Conversão",
-      value: `${stats?.avgConversionRate || 0}%`,
+      value: `${avgConversionRate}%`,
       icon: <TrendingUp className="w-4 h-4" />,
       color: "text-orange-600"
     }
@@ -116,7 +125,7 @@ export default function Dashboard() {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          {!quizzes || quizzes.length === 0 ? (
+          {quizzesList.length === 0 ? (
             <div className="text-center py-12">
               <BarChart3 className="w-16 h-16 text-gray-400 mx-auto mb-4" />
               <h3 className="text-lg font-semibold text-gray-900 mb-2">
@@ -134,7 +143,7 @@ export default function Dashboard() {
             </div>
           ) : (
             <div className="space-y-4">
-              {quizzes.slice(0, 5).map((quiz: any) => (
+              {quizzesList.slice(0, 5).map((quiz: any) => (
                 <div key={quiz.id} className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors space-y-3 sm:space-y-0">
                   <div className="flex items-center space-x-4">
                     <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center flex-shrink-0">

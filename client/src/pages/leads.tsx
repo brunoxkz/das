@@ -14,19 +14,32 @@ export default function Leads() {
   const [filterQuiz, setFilterQuiz] = useState("all");
   const [filterTimeframe, setFilterTimeframe] = useState("all");
 
-  const { data: leads, isLoading: leadsLoading } = useQuery({
-    queryKey: ["/api/leads"],
+  const { data: responses, isLoading: leadsLoading } = useQuery({
+    queryKey: ["/api/quiz-responses"],
   });
 
   const { data: quizzes } = useQuery({
     queryKey: ["/api/quizzes"],
   });
 
-  const { data: stats } = useQuery({
-    queryKey: ["/api/leads/stats"],
+  const { data: dashStats } = useQuery({
+    queryKey: ["/api/dashboard/stats"],
   });
 
-  const filteredLeads = leads?.filter((lead: any) => {
+  const leads = Array.isArray(responses) ? responses : [];
+  const quizzesList = Array.isArray(quizzes) ? quizzes : [];
+
+  // Calcular estatísticas dos leads
+  const totalLeads = leads.length;
+  const today = new Date();
+  const startOfToday = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+  const leadsToday = leads.filter((lead: any) => new Date(lead.createdAt) >= startOfToday).length;
+  
+  const activeQuizzes = quizzesList.filter((quiz: any) => quiz.isPublished).length;
+  const totalViews = quizzesList.reduce((sum: number, quiz: any) => sum + (quiz.totalViews || 0), 0);
+  const conversionRate = totalViews > 0 ? Math.round((totalLeads / totalViews) * 100) : 0;
+
+  const filteredLeads = leads.filter((lead: any) => {
     const matchesSearch = !searchTerm || 
       lead.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       lead.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -107,9 +120,9 @@ export default function Leads() {
             <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats?.totalLeads || 0}</div>
+            <div className="text-2xl font-bold">{totalLeads}</div>
             <p className="text-xs text-muted-foreground">
-              {stats?.leadsGrowth > 0 ? "+" : ""}{stats?.leadsGrowth || 0}% vs último mês
+              Total de respostas capturadas
             </p>
           </CardContent>
         </Card>
@@ -120,7 +133,7 @@ export default function Leads() {
             <TrendingUp className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats?.leadsToday || 0}</div>
+            <div className="text-2xl font-bold">{leadsToday}</div>
             <p className="text-xs text-muted-foreground">
               Novos leads hoje
             </p>
@@ -133,7 +146,7 @@ export default function Leads() {
             <BarChart3 className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats?.conversionRate || 0}%</div>
+            <div className="text-2xl font-bold">{conversionRate}%</div>
             <p className="text-xs text-muted-foreground">
               Média geral
             </p>
@@ -146,7 +159,7 @@ export default function Leads() {
             <Eye className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats?.activeQuizzes || 0}</div>
+            <div className="text-2xl font-bold">{activeQuizzes}</div>
             <p className="text-xs text-muted-foreground">
               Gerando leads
             </p>
@@ -179,7 +192,7 @@ export default function Leads() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Todos os quizzes</SelectItem>
-                {quizzes?.map((quiz: any) => (
+                {quizzesList.map((quiz: any) => (
                   <SelectItem key={quiz.id} value={quiz.id}>{quiz.title}</SelectItem>
                 ))}
               </SelectContent>

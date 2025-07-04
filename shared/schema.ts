@@ -64,6 +64,19 @@ export const quizzes = pgTable("quizzes", {
   settings: jsonb("settings").default("{}"),
   isPublished: boolean("is_published").default(false),
   embedCode: text("embed_code"),
+  // Tracking pixels and scripts
+  facebookPixel: varchar("facebook_pixel"),
+  googlePixel: varchar("google_pixel"),
+  ga4Id: varchar("ga4_id"),
+  customHeadScript: text("custom_head_script"),
+  // Branding and customization
+  brandingLogo: varchar("branding_logo"), // URL da logo que fica flutuando
+  progressBarColor: varchar("progress_bar_color").default("#10b981"), // Cor da barra de progresso
+  buttonColor: varchar("button_color").default("#10b981"), // Cor dos botões
+  favicon: varchar("favicon"), // URL do favicon
+  seoTitle: varchar("seo_title"),
+  seoDescription: text("seo_description"),
+  seoKeywords: varchar("seo_keywords"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });

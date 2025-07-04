@@ -37,7 +37,7 @@ import {
 
 interface Element {
   id: number;
-  type: "multiple_choice" | "text" | "rating" | "email" | "checkbox" | "date" | "phone" | "number" | "textarea" | "image_upload" | "animated_transition" | "heading" | "paragraph" | "image" | "divider" | "video" | "birth_date" | "height" | "current_weight" | "target_weight" | "transition_background" | "transition_text" | "transition_counter" | "transition_loader" | "transition_redirect" | "spacer";
+  type: "multiple_choice" | "text" | "rating" | "email" | "checkbox" | "date" | "phone" | "number" | "textarea" | "image_upload" | "animated_transition" | "heading" | "paragraph" | "image" | "divider" | "video" | "birth_date" | "height" | "current_weight" | "target_weight" | "transition_background" | "transition_text" | "transition_counter" | "transition_loader" | "transition_redirect" | "spacer" | "game_wheel" | "game_scratch" | "game_color_pick" | "game_brick_break" | "game_memory_cards" | "game_slot_machine";
   content: string;
   question?: string;
   description?: string;
@@ -94,6 +94,37 @@ interface Element {
   visualEffect?: "fade" | "slide" | "zoom" | "bounce" | "none";
   effectDuration?: number;
   spacerSize?: "small" | "medium" | "large";
+  
+  // Propriedades específicas dos jogos
+  wheelSegments?: string[];
+  wheelColors?: string[];
+  wheelWinningSegment?: number;
+  wheelSpinDuration?: number;
+  wheelShowPointer?: boolean;
+  wheelPointerColor?: string;
+  
+  scratchCoverColor?: string;
+  scratchRevealText?: string;
+  scratchRevealImage?: string;
+  scratchBrushSize?: number;
+  
+  colorOptions?: string[];
+  colorCorrectAnswer?: string;
+  colorInstruction?: string;
+  
+  brickRows?: number;
+  brickColumns?: number;
+  brickColors?: string[];
+  paddleColor?: string;
+  ballColor?: string;
+  
+  memoryCardPairs?: number;
+  memoryCardTheme?: "numbers" | "colors" | "icons" | "custom";
+  memoryCustomImages?: string[];
+  
+  slotSymbols?: string[];
+  slotWinningCombination?: string[];
+  slotReels?: number;
 }
 
 interface QuizPage {
@@ -101,6 +132,7 @@ interface QuizPage {
   title: string;
   elements: Element[];
   isTransition?: boolean;
+  isGame?: boolean;
 }
 
 interface PageEditorProps {
@@ -137,7 +169,13 @@ export function PageEditorHorizontal({ pages, onPagesChange }: PageEditorProps) 
       target_weight: "Peso Desejado",
       textarea: "Área de Texto",
       image_upload: "Upload de Imagem",
-      spacer: "Espaço"
+      spacer: "Espaço",
+      game_wheel: "Roleta",
+      game_scratch: "Raspadinha",
+      game_color_pick: "Escolha de Cor",
+      game_brick_break: "Quebre o Muro",
+      game_memory_cards: "Jogo da Memória",
+      game_slot_machine: "Caça-Níquel"
     };
     return typeNames[type] || type;
   };
@@ -297,6 +335,50 @@ const transitionElementCategories = [
   },
 ];
 
+// Elementos específicos para páginas de jogos
+const gameElementCategories = [
+  {
+    name: "🎰 Jogos de Sorte",
+    elements: [
+      {
+        type: "game_wheel",
+        label: "Roleta",
+        icon: <BarChart3 className="w-4 h-4" />,
+      },
+      {
+        type: "game_scratch",
+        label: "Raspadinha",
+        icon: <Volume2 className="w-4 h-4" />,
+      },
+      {
+        type: "game_slot_machine",
+        label: "Caça-Níquel",
+        icon: <AlertCircle className="w-4 h-4" />,
+      },
+    ],
+  },
+  {
+    name: "🎯 Jogos de Habilidade",
+    elements: [
+      {
+        type: "game_color_pick",
+        label: "Escolha de Cor",
+        icon: <Palette className="w-4 h-4" />,
+      },
+      {
+        type: "game_memory_cards",
+        label: "Jogo da Memória",
+        icon: <Star className="w-4 h-4" />,
+      },
+      {
+        type: "game_brick_break",
+        label: "Quebre o Muro",
+        icon: <Hash className="w-4 h-4" />,
+      },
+    ],
+  },
+];
+
   const currentPage = pages[activePage];
   const selectedElementData = selectedElement 
     ? currentPage?.elements.find(el => el.id === selectedElement)
@@ -317,6 +399,16 @@ const transitionElementCategories = [
       title: `Transição ${pages.filter(p => p.isTransition).length + 1}`,
       elements: [],
       isTransition: true
+    };
+    onPagesChange([...pages, newPage]);
+  };
+
+  const addGamePage = () => {
+    const newPage: QuizPage = {
+      id: Date.now(),
+      title: `Jogo ${pages.filter(p => p.isGame).length + 1}`,
+      elements: [],
+      isGame: true
     };
     onPagesChange([...pages, newPage]);
   };
@@ -1001,6 +1093,261 @@ const transitionElementCategories = [
             </div>
           </div>
         );
+        
+      // Elementos de jogos
+      case "game_wheel":
+        const wheelSegments = element.wheelSegments || ["Prêmio 1", "Prêmio 2", "Prêmio 3", "Prêmio 4"];
+        const wheelColors = element.wheelColors || ["#FF6B6B", "#4ECDC4", "#45B7D1", "#96CEB4"];
+        const winningSegment = element.wheelWinningSegment || 0;
+        
+        return (
+          <div className="space-y-3 p-4 border-2 border-dashed border-orange-200 rounded-lg bg-orange-50">
+            <div className="flex items-center gap-2">
+              <BarChart3 className="w-4 h-4 text-orange-600" />
+              <span className="font-medium text-orange-800">Roleta da Sorte</span>
+            </div>
+            
+            <div className="flex flex-col items-center space-y-4">
+              <div className="relative w-40 h-40">
+                <svg viewBox="0 0 200 200" className="w-full h-full">
+                  {wheelSegments.map((segment, index) => {
+                    const angle = 360 / wheelSegments.length;
+                    const startAngle = index * angle;
+                    const endAngle = (index + 1) * angle;
+                    const isWinning = index === winningSegment;
+                    
+                    const x1 = 100 + 80 * Math.cos((startAngle * Math.PI) / 180);
+                    const y1 = 100 + 80 * Math.sin((startAngle * Math.PI) / 180);
+                    const x2 = 100 + 80 * Math.cos((endAngle * Math.PI) / 180);
+                    const y2 = 100 + 80 * Math.sin((endAngle * Math.PI) / 180);
+                    
+                    const largeArcFlag = angle > 180 ? 1 : 0;
+                    
+                    return (
+                      <g key={index}>
+                        <path
+                          d={`M 100 100 L ${x1} ${y1} A 80 80 0 ${largeArcFlag} 1 ${x2} ${y2} Z`}
+                          fill={wheelColors[index] || "#e2e8f0"}
+                          stroke={isWinning ? "#fbbf24" : "#ffffff"}
+                          strokeWidth={isWinning ? "3" : "2"}
+                        />
+                        <text
+                          x={100 + 50 * Math.cos(((startAngle + endAngle) / 2 * Math.PI) / 180)}
+                          y={100 + 50 * Math.sin(((startAngle + endAngle) / 2 * Math.PI) / 180)}
+                          textAnchor="middle"
+                          dominantBaseline="middle"
+                          fontSize="10"
+                          fill="white"
+                          fontWeight="bold"
+                        >
+                          {segment.length > 8 ? segment.substring(0, 8) + "..." : segment}
+                        </text>
+                      </g>
+                    );
+                  })}
+                  {/* Ponteiro */}
+                  <polygon
+                    points="100,20 105,35 95,35"
+                    fill={element.wheelPointerColor || "#DC2626"}
+                  />
+                </svg>
+              </div>
+              
+              <button className="px-4 py-2 bg-orange-500 text-white rounded-lg font-semibold hover:bg-orange-600 transition-colors">
+                🎰 Girar Roleta
+              </button>
+            </div>
+            
+            <div className="text-xs text-orange-600 text-center">
+              Segmentos: {wheelSegments.length} • Vencedor: {wheelSegments[winningSegment]}
+            </div>
+          </div>
+        );
+
+      case "game_scratch":
+        return (
+          <div className="space-y-3 p-4 border-2 border-dashed border-yellow-200 rounded-lg bg-yellow-50">
+            <div className="flex items-center gap-2">
+              <Volume2 className="w-4 h-4 text-yellow-600" />
+              <span className="font-medium text-yellow-800">Raspadinha</span>
+            </div>
+            
+            <div className="flex flex-col items-center space-y-4">
+              <div className="relative w-48 h-32 border-2 border-gray-300 rounded-lg overflow-hidden">
+                <div 
+                  className="absolute inset-0 flex items-center justify-center text-2xl font-bold text-green-600"
+                  style={{ backgroundColor: element.scratchCoverColor || "#e5e7eb" }}
+                >
+                  {element.scratchRevealText || "PARABÉNS!"}
+                </div>
+                <div className="absolute top-2 left-2 w-16 h-8 bg-transparent border-2 border-dashed border-white opacity-50"></div>
+                <div className="absolute bottom-2 right-2 w-12 h-6 bg-transparent border-2 border-dashed border-white opacity-50"></div>
+              </div>
+              
+              <div className="text-sm text-gray-600 text-center">
+                ↑ Raspe aqui para revelar o prêmio
+              </div>
+              
+              <div className="text-xs bg-yellow-100 text-yellow-700 px-3 py-1 rounded-full">
+                Tamanho do pincel: {element.scratchBrushSize || 20}px
+              </div>
+            </div>
+          </div>
+        );
+
+      case "game_color_pick":
+        const colorOptions = element.colorOptions || ["#FF6B6B", "#4ECDC4", "#45B7D1", "#96CEB4", "#FECA57"];
+        const correctColor = element.colorCorrectAnswer || colorOptions[0];
+        
+        return (
+          <div className="space-y-3 p-4 border-2 border-dashed border-purple-200 rounded-lg bg-purple-50">
+            <div className="flex items-center gap-2">
+              <Palette className="w-4 h-4 text-purple-600" />
+              <span className="font-medium text-purple-800">Escolha de Cor</span>
+            </div>
+            
+            <div className="flex flex-col items-center space-y-4">
+              <div className="text-center">
+                <h4 className="font-medium text-gray-800 mb-2">
+                  {element.colorInstruction || "Escolha a cor da sorte!"}
+                </h4>
+              </div>
+              
+              <div className="grid grid-cols-3 gap-3">
+                {colorOptions.map((color, index) => (
+                  <button
+                    key={index}
+                    className={`w-16 h-16 rounded-full border-4 transition-all ${
+                      color === correctColor ? 'border-yellow-400 ring-2 ring-yellow-300' : 'border-gray-300'
+                    }`}
+                    style={{ backgroundColor: color }}
+                  />
+                ))}
+              </div>
+              
+              <div className="text-xs text-purple-600 text-center">
+                Cor vencedora: {correctColor} • {colorOptions.length} opções
+              </div>
+            </div>
+          </div>
+        );
+
+      case "game_brick_break":
+        const rows = element.brickRows || 3;
+        const columns = element.brickColumns || 6;
+        
+        return (
+          <div className="space-y-3 p-4 border-2 border-dashed border-blue-200 rounded-lg bg-blue-50">
+            <div className="flex items-center gap-2">
+              <Hash className="w-4 h-4 text-blue-600" />
+              <span className="font-medium text-blue-800">Quebre o Muro</span>
+            </div>
+            
+            <div className="flex flex-col items-center space-y-4">
+              <div className="bg-black p-4 rounded-lg" style={{ width: '200px', height: '160px' }}>
+                {/* Blocos */}
+                <div className="grid gap-1" style={{ gridTemplateColumns: `repeat(${columns}, 1fr)` }}>
+                  {Array.from({ length: rows * columns }, (_, index) => (
+                    <div
+                      key={index}
+                      className="h-4 rounded-sm"
+                      style={{ 
+                        backgroundColor: element.brickColors?.[index % (element.brickColors?.length || 3)] || 
+                        (index % 3 === 0 ? '#FF6B6B' : index % 3 === 1 ? '#4ECDC4' : '#45B7D1')
+                      }}
+                    />
+                  ))}
+                </div>
+                
+                {/* Barra */}
+                <div 
+                  className="mx-auto mt-4 h-2 w-12 rounded-full"
+                  style={{ backgroundColor: element.paddleColor || '#FFFFFF' }}
+                />
+                
+                {/* Bola */}
+                <div 
+                  className="w-2 h-2 rounded-full mx-auto mt-2"
+                  style={{ backgroundColor: element.ballColor || '#FECA57' }}
+                />
+              </div>
+              
+              <div className="text-xs text-blue-600 text-center">
+                {rows}x{columns} blocos • Use as setas ← → para mover
+              </div>
+            </div>
+          </div>
+        );
+
+      case "game_memory_cards":
+        const pairs = element.memoryCardPairs || 4;
+        const theme = element.memoryCardTheme || "numbers";
+        
+        return (
+          <div className="space-y-3 p-4 border-2 border-dashed border-green-200 rounded-lg bg-green-50">
+            <div className="flex items-center gap-2">
+              <Star className="w-4 h-4 text-green-600" />
+              <span className="font-medium text-green-800">Jogo da Memória</span>
+            </div>
+            
+            <div className="flex flex-col items-center space-y-4">
+              <div className="grid grid-cols-4 gap-2">
+                {Array.from({ length: pairs * 2 }, (_, index) => (
+                  <div
+                    key={index}
+                    className="w-12 h-16 bg-gradient-to-br from-green-400 to-green-600 rounded-lg flex items-center justify-center text-white font-bold shadow-sm"
+                  >
+                    {index < 2 ? (
+                      theme === "numbers" ? Math.floor(index / 2) + 1 :
+                      theme === "colors" ? "🔴" :
+                      theme === "icons" ? "⭐" : "?"
+                    ) : "?"}
+                  </div>
+                ))}
+              </div>
+              
+              <div className="text-xs text-green-600 text-center">
+                {pairs} pares • Tema: {theme} • Clique para virar
+              </div>
+            </div>
+          </div>
+        );
+
+      case "game_slot_machine":
+        const symbols = element.slotSymbols || ["🍒", "🍋", "🍊", "🔔", "⭐"];
+        const reels = element.slotReels || 3;
+        
+        return (
+          <div className="space-y-3 p-4 border-2 border-dashed border-red-200 rounded-lg bg-red-50">
+            <div className="flex items-center gap-2">
+              <AlertCircle className="w-4 h-4 text-red-600" />
+              <span className="font-medium text-red-800">Caça-Níquel</span>
+            </div>
+            
+            <div className="flex flex-col items-center space-y-4">
+              <div className="bg-gradient-to-b from-yellow-300 to-yellow-500 p-4 rounded-lg border-4 border-yellow-600">
+                <div className="flex gap-2">
+                  {Array.from({ length: reels }, (_, index) => (
+                    <div key={index} className="bg-white w-16 h-20 rounded border-2 border-gray-300 flex items-center justify-center">
+                      <span className="text-2xl">
+                        {symbols[index % symbols.length]}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+              
+              <button className="px-6 py-2 bg-red-500 text-white rounded-lg font-bold hover:bg-red-600 transition-colors">
+                🎰 JOGAR
+              </button>
+              
+              <div className="text-xs text-red-600 text-center">
+                {reels} rolos • {symbols.length} símbolos • Combinação: {element.slotWinningCombination?.join(" ") || symbols.slice(0, reels).join(" ")}
+              </div>
+            </div>
+          </div>
+        );
+        
       default:
         return <div className="text-sm text-gray-500">Elemento: {element.type}</div>;
     }
@@ -1035,6 +1382,11 @@ const transitionElementCategories = [
                       {page.isTransition && (
                         <span className="text-xs bg-gradient-to-r from-purple-100 to-pink-100 text-purple-700 px-2 py-1 rounded-full">
                           ✨ Transição
+                        </span>
+                      )}
+                      {page.isGame && (
+                        <span className="text-xs bg-gradient-to-r from-orange-100 to-red-100 text-orange-700 px-2 py-1 rounded-full">
+                          🎮 Jogo
                         </span>
                       )}
                     </div>
@@ -1078,6 +1430,15 @@ const transitionElementCategories = [
               <Sparkles className="w-4 h-4 mr-2" />
               Nova Transição
             </Button>
+            <Button
+              onClick={addGamePage}
+              variant="outline"
+              size="sm"
+              className="w-full justify-center bg-gradient-to-r from-orange-50 to-red-50 border-orange-200 hover:border-orange-300"
+            >
+              <BarChart3 className="w-4 h-4 mr-2" />
+              Página de Jogos
+            </Button>
           </div>
         </div>
       </div>
@@ -1093,7 +1454,9 @@ const transitionElementCategories = [
         <div className="flex-1 overflow-y-auto min-h-0" style={{ maxHeight: 'calc(100vh - 73px)' }}>
           <div className="p-4">
             <div className="space-y-4 pb-4">
-              {(currentPage?.isTransition ? transitionElementCategories : elementCategories).map((category) => (
+              {(currentPage?.isTransition ? transitionElementCategories : 
+                currentPage?.isGame ? gameElementCategories : 
+                elementCategories).map((category) => (
                 <div key={category.name}>
                   <h4 className="text-xs font-semibold text-gray-600 mb-2 px-2 sticky top-0 bg-white py-1 z-10">
                     {category.name}

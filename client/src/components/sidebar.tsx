@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { Link, useLocation } from "wouter";
 import { useAuth } from "@/hooks/useAuth";
+import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { 
@@ -18,7 +19,8 @@ import {
   Users,
   Zap,
   Shield,
-  Trophy
+  Trophy,
+  BookOpen
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -27,6 +29,24 @@ export function Sidebar() {
   const [location] = useLocation();
   const { user } = useAuth();
   const userData = user as any;
+
+  // Buscar dados dos quizzes em tempo real
+  const { data: quizzes } = useQuery({
+    queryKey: ["/api/quizzes"],
+  });
+
+  const { data: responses } = useQuery({
+    queryKey: ["/api/quiz-responses"],
+  });
+
+  const quizzesList = Array.isArray(quizzes) ? quizzes : [];
+  const responsesList = Array.isArray(responses) ? responses : [];
+  const totalQuizzes = quizzesList.length;
+  const newLeadsCount = responsesList.filter((response: any) => {
+    const today = new Date();
+    const responseDate = new Date(response.createdAt);
+    return responseDate.toDateString() === today.toDateString();
+  }).length;
 
   // Auto-collapse when entering quiz builder
   useEffect(() => {
@@ -47,7 +67,7 @@ export function Sidebar() {
       href: "/quizzes",
       icon: <BarChart3 className="w-4 h-4" />,
       active: location.startsWith("/quizzes"),
-      badge: "3"
+      badge: totalQuizzes > 0 ? totalQuizzes.toString() : undefined
     },
     {
       title: "Templates",
@@ -66,7 +86,7 @@ export function Sidebar() {
       href: "/leads",
       icon: <Users className="w-4 h-4" />,
       active: location === "/leads",
-      badge: "New"
+      badge: newLeadsCount > 0 ? "New" : undefined
     },
     {
       title: "Premiações",
@@ -74,6 +94,12 @@ export function Sidebar() {
       icon: <Trophy className="w-4 h-4" />,
       active: location === "/premiacoes",
       badge: "🏆"
+    },
+    {
+      title: "Tutoriais",
+      href: "/tutoriais",
+      icon: <BookOpen className="w-4 h-4" />,
+      active: location === "/tutoriais"
     }
   ];
 
@@ -211,10 +237,10 @@ export function Sidebar() {
               </Badge>
             </div>
             <div className="text-xs text-gray-600 mb-2">
-              3 de 5 quizzes utilizados
+              {totalQuizzes} de 5 quizzes utilizados
             </div>
             <div className="w-full bg-gray-200 rounded-full h-1.5">
-              <div className="bg-primary h-1.5 rounded-full" style={{ width: '60%' }}></div>
+              <div className="bg-primary h-1.5 rounded-full" style={{ width: `${Math.min((totalQuizzes / 5) * 100, 100)}%` }}></div>
             </div>
           </div>
         )}

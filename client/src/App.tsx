@@ -16,6 +16,7 @@ import Settings from "@/pages/settings";
 import Admin from "@/pages/admin";
 import Leads from "@/pages/leads";
 import Premiacoes from "@/pages/premiacoes";
+import Tutoriais from "@/pages/tutoriais";
 import { Navbar } from "@/components/navbar";
 import { Sidebar } from "@/components/sidebar";
 
@@ -50,6 +51,7 @@ function Router() {
                   <Route path="/analytics" component={Analytics} />
                   <Route path="/leads" component={Leads} />
                   <Route path="/premiacoes" component={Premiacoes} />
+                  <Route path="/tutoriais" component={Tutoriais} />
                   <Route path="/subscribe" component={Subscribe} />
                   <Route path="/settings" component={Settings} />
                   <Route path="/admin" component={Admin} />
