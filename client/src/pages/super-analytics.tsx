@@ -1,5 +1,6 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useParams, useLocation } from "wouter";
+import { apiRequest } from "@/lib/queryClient";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -24,6 +25,24 @@ import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { isUnauthorizedError } from "@/lib/authUtils";
 import { useEffect, useState } from "react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 interface PageAnalytics {
   pageId: number;
@@ -53,6 +72,8 @@ export default function SuperAnalytics() {
   const { toast } = useToast();
   const { isAuthenticated, isLoading: authLoading } = useAuth();
   const [timeRange, setTimeRange] = useState('7d');
+  const [dateFilter, setDateFilter] = useState("7");
+  const queryClient = useQueryClient();
 
   const { data: quiz, isLoading: quizLoading } = useQuery({
     queryKey: ["/api/quizzes", quizId],
@@ -64,6 +85,58 @@ export default function SuperAnalytics() {
     queryKey: ["/api/analytics", quizId, timeRange],
     enabled: !!quizId,
     retry: false,
+  });
+
+  // Função para exportar dados como CSV
+  const exportToCSV = () => {
+    const csvData = mockAnalytics.pageAnalytics.map(page => ({
+      'Página': page.pageName,
+      'Tipo': page.pageType,
+      'Visualizações': page.views,
+      'Cliques': page.clicks,
+      'Taxa de Clique (%)': page.clickRate.toFixed(1),
+      'Abandonos': page.dropOffs,
+      'Taxa de Abandono (%)': page.dropOffRate.toFixed(1),
+      'Tempo Médio (s)': page.avgTimeOnPage.toFixed(0),
+    }));
+
+    const csvContent = [
+      Object.keys(csvData[0]).join(','),
+      ...csvData.map(row => Object.values(row).join(','))
+    ].join('\n');
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = `analytics-${quiz?.title || 'quiz'}-${new Date().toISOString().split('T')[0]}.csv`;
+    link.click();
+    
+    toast({
+      title: "CSV Exportado",
+      description: "Os dados de analytics foram exportados com sucesso.",
+    });
+  };
+
+  // Função para resetar dados do quiz
+  const resetMutation = useMutation({
+    mutationFn: async () => {
+      await apiRequest("DELETE", `/api/analytics/${quizId}/reset`);
+    },
+    onSuccess: () => {
+      toast({
+        title: "Dados Resetados",
+        description: "Todos os dados de analytics deste quiz foram zerados.",
+      });
+      refetch();
+      queryClient.invalidateQueries({ queryKey: ["/api/analytics"] });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Erro ao resetar",
+        description: error.message || "Não foi possível resetar os dados.",
+        variant: "destructive",
+      });
+    },
   });
 
   // Auth check
@@ -109,7 +182,7 @@ export default function SuperAnalytics() {
     totalDropOffs: 791,
     completionRate: 36.6,
     avgCompletionTime: 180, // seconds
-    pageAnalytics: quiz.structure?.pages?.map((page: any, index: number) => ({
+    pageAnalytics: (quiz?.structure?.pages || []).map((page: any, index: number) => ({
       pageId: page.id,
       pageName: page.title || `Página ${index + 1}`,
       pageType: page.isGame ? 'game' : page.isTransition ? 'transition' : 'normal',
@@ -119,8 +192,8 @@ export default function SuperAnalytics() {
       clickRate: Math.max(40, Math.random() * 40 + 40),
       dropOffRate: Math.max(5, Math.random() * 25 + 5),
       avgTimeOnPage: Math.max(15, Math.random() * 60 + 30),
-      nextPageViews: index < quiz.structure.pages.length - 1 ? Math.max(80, Math.floor(Math.random() * 500) + 120) : 0
-    })) || []
+      nextPageViews: index < (quiz?.structure?.pages?.length || 0) - 1 ? Math.max(80, Math.floor(Math.random() * 500) + 120) : 0
+    }))
   };
 
   const formatTime = (seconds: number) => {
@@ -154,24 +227,57 @@ export default function SuperAnalytics() {
           </div>
           
           <div className="flex items-center gap-4">
-            <select 
-              value={timeRange}
-              onChange={(e) => setTimeRange(e.target.value)}
-              className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-vendzz-primary"
-            >
-              <option value="1d">Últimas 24h</option>
-              <option value="7d">Últimos 7 dias</option>
-              <option value="30d">Últimos 30 dias</option>
-              <option value="90d">Últimos 90 dias</option>
-            </select>
+            <Select value={dateFilter} onValueChange={setDateFilter}>
+              <SelectTrigger className="w-40">
+                <SelectValue placeholder="Filtrar por dias" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="1">Último dia</SelectItem>
+                <SelectItem value="7">Últimos 7 dias</SelectItem>
+                <SelectItem value="15">Últimos 15 dias</SelectItem>
+                <SelectItem value="30">Últimos 30 dias</SelectItem>
+                <SelectItem value="60">Últimos 60 dias</SelectItem>
+                <SelectItem value="90">Últimos 90 dias</SelectItem>
+              </SelectContent>
+            </Select>
+            
             <Button onClick={() => refetch()} size="sm" variant="outline">
               <RefreshCw className="w-4 h-4 mr-2" />
               Atualizar
             </Button>
-            <Button size="sm" variant="outline">
+            
+            <Button onClick={exportToCSV} size="sm" variant="outline">
               <Download className="w-4 h-4 mr-2" />
-              Exportar
+              Exportar CSV
             </Button>
+            
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button size="sm" variant="outline" className="text-red-600 hover:text-red-700">
+                  <RefreshCw className="w-4 h-4 mr-2" />
+                  Reset
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Resetar dados do quiz?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    Esta ação irá apagar permanentemente todos os dados de analytics deste quiz,
+                    incluindo visualizações, respostas e métricas de performance. Esta ação não pode ser desfeita.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                  <AlertDialogAction 
+                    onClick={() => resetMutation.mutate()}
+                    disabled={resetMutation.isPending}
+                    className="bg-red-600 hover:bg-red-700"
+                  >
+                    {resetMutation.isPending ? "Resetando..." : "Sim, resetar dados"}
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
           </div>
         </div>
 

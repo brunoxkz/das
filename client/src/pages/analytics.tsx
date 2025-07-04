@@ -93,28 +93,20 @@ export default function Analytics() {
   return (
     <div className="p-6 space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">Analytics</h1>
-          <p className="text-gray-600">Acompanhe o desempenho dos seus quizzes</p>
-        </div>
-        <div className="flex items-center space-x-2">
-          <Button variant="outline" size="sm">
-            <Filter className="w-4 h-4 mr-2" />
-            Filtrar
-          </Button>
-          <Button variant="outline" size="sm">
-            <Calendar className="w-4 h-4 mr-2" />
-            Período
-          </Button>
-          <Button variant="outline" size="sm">
-            <Download className="w-4 h-4 mr-2" />
-            Exportar
-          </Button>
-          <Button variant="outline" size="sm">
-            <RefreshCw className="w-4 h-4 mr-2" />
-            Atualizar
-          </Button>
+      <div className="bg-white rounded-lg shadow border p-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900">Analytics Geral</h1>
+            <p className="text-gray-600 mt-1">Visão geral do desempenho de todos os seus quizzes</p>
+          </div>
+          <div className="flex items-center space-x-4">
+            <Badge variant="secondary" className="bg-blue-100 text-blue-800">
+              📊 Visão Geral
+            </Badge>
+            <div className="text-sm text-gray-500">
+              Última atualização: {new Date().toLocaleTimeString('pt-BR')}
+            </div>
+          </div>
         </div>
       </div>
 
@@ -255,11 +247,20 @@ export default function Analytics() {
                         </div>
                       </td>
                       <td className="py-3 px-4">
-                        <Link href={`/super-analytics/${quiz.id}`}>
-                          <Button variant="ghost" size="sm">
-                            Ver Detalhes
-                          </Button>
-                        </Link>
+                        <div className="flex items-center gap-2">
+                          <Link href={`/super-analytics/${quiz.id}`}>
+                            <Button variant="outline" size="sm" className="bg-blue-50 hover:bg-blue-100 text-blue-700 border-blue-200">
+                              <BarChart3 className="w-4 h-4 mr-1" />
+                              Super Analytics
+                            </Button>
+                          </Link>
+                          <Link href={`/quiz-builder/${quiz.id}`}>
+                            <Button variant="ghost" size="sm" className="text-gray-600 hover:text-gray-800">
+                              <Eye className="w-4 h-4 mr-1" />
+                              Editar
+                            </Button>
+                          </Link>
+                        </div>
                       </td>
                     </tr>
                   ))}
