@@ -58,10 +58,18 @@ export function Sidebar() {
   const navItems = [
     {
       title: "Dashboard",
-      href: "/",
+      href: "/dashboard",
       icon: <Home className="w-4 h-4" />,
-      active: location === "/"
+      active: location === "/" || location === "/dashboard"
     },
+    ...(userData?.role === "admin" ? [{
+      title: "Admin",
+      href: "/admin",
+      icon: <Shield className="w-4 h-4" />,
+      active: location === "/admin",
+      className: "text-red-600 border-red-200 bg-red-50 hover:bg-red-100",
+      badge: "⚡"
+    }] : []),
     {
       title: "Meus Quizzes",
       href: "/quizzes",
@@ -77,9 +85,9 @@ export function Sidebar() {
     },
     {
       title: "Analytics",
-      href: "/analytics",
+      href: "/super-analytics",
       icon: <TrendingUp className="w-4 h-4" />,
-      active: location === "/analytics"
+      active: location === "/super-analytics"
     },
     {
       title: "Leads",
@@ -116,14 +124,7 @@ export function Sidebar() {
       href: "/settings",
       icon: <Settings className="w-4 h-4" />,
       active: location === "/settings"
-    },
-    ...(userData?.role === "admin" ? [{
-      title: "Admin",
-      href: "/admin",
-      icon: <Shield className="w-4 h-4" />,
-      active: location === "/admin",
-      className: "text-red-600 border-red-200 bg-red-50 hover:bg-red-100"
-    }] : [])
+    }
   ];
 
   return (
@@ -184,7 +185,8 @@ export function Sidebar() {
                 className={cn(
                   "w-full justify-start",
                   isCollapsed ? "px-0" : "px-3",
-                  item.active && "bg-primary/10 text-primary"
+                  item.className,
+                  item.active && !item.className && "bg-primary/10 text-primary"
                 )}
               >
                 {item.icon}
