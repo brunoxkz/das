@@ -830,102 +830,56 @@ function SuperAnalyticsEmbed({ quizId }: { quizId: string }) {
   const quiz = quizzes?.find((q: any) => q.id === quizId);
   const quizLoading = false;
 
-  // Mock analytics data with real-time feel
-  const mockAnalytics = {
-    totalViews: 1847,
-    totalCompletions: 892,
-    totalDropOffs: 955,
-    completionRate: 48.3,
-    avgCompletionTime: 4.2,
-    pageAnalytics: [
-      {
-        pageId: 1,
-        pageName: "Bem-vindo",
-        pageType: 'normal' as const,
-        views: 1847,
-        clicks: 1654,
-        dropOffs: 193,
-        clickRate: 89.5,
-        dropOffRate: 10.5,
-        avgTimeOnPage: 12.8,
-        nextPageViews: 1654,
-      },
-      {
-        pageId: 2,
-        pageName: "Idade",
-        pageType: 'normal' as const,
-        views: 1654,
-        clicks: 1521,
-        dropOffs: 133,
-        clickRate: 91.9,
-        dropOffRate: 8.1,
-        avgTimeOnPage: 8.4,
-        nextPageViews: 1521,
-      },
-      {
-        pageId: 3,
-        pageName: "Objetivos",
-        pageType: 'normal' as const,
-        views: 1521,
-        clicks: 1398,
-        dropOffs: 123,
-        clickRate: 91.9,
-        dropOffRate: 8.1,
-        avgTimeOnPage: 15.2,
-        nextPageViews: 1398,
-      },
-      {
-        pageId: 4,
-        pageName: "Transição Motivacional",
-        pageType: 'transition' as const,
-        views: 1398,
-        clicks: 1287,
-        dropOffs: 111,
-        clickRate: 92.1,
-        dropOffRate: 7.9,
-        avgTimeOnPage: 5.8,
-        nextPageViews: 1287,
-      },
-      {
-        pageId: 5,
-        pageName: "Experiência Anterior",
-        pageType: 'normal' as const,
-        views: 1287,
-        clicks: 1156,
-        dropOffs: 131,
-        clickRate: 89.8,
-        dropOffRate: 10.2,
-        avgTimeOnPage: 11.6,
-        nextPageViews: 1156,
-      },
-      {
-        pageId: 6,
-        pageName: "Jogo da Roda",
-        pageType: 'game' as const,
-        views: 1156,
-        clicks: 1089,
-        dropOffs: 67,
-        clickRate: 94.2,
-        dropOffRate: 5.8,
-        avgTimeOnPage: 24.3,
-        nextPageViews: 1089,
-      },
-      {
-        pageId: 7,
-        pageName: "Informações de Contato",
-        pageType: 'normal' as const,
-        views: 1089,
-        clicks: 892,
-        dropOffs: 197,
-        clickRate: 81.9,
-        dropOffRate: 18.1,
-        avgTimeOnPage: 28.7,
-        nextPageViews: 892,
-      },
-    ],
+  const { data: analytics, isLoading: analyticsLoading } = useQuery({
+    queryKey: ["/api/analytics", quizId],
+    queryFn: async () => {
+      const token = localStorage.getItem("accessToken");
+      const response = await fetch(`/api/analytics/${quizId}`, {
+        headers: {
+          "Authorization": `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      });
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      return response.json();
+    },
+    enabled: !!quizId,
+    retry: false,
+  });
+
+  // Use real analytics data from API
+  const analyticsData = analytics || {
+    totalViews: 0,
+    totalCompletions: 0,
+    totalDropOffs: 0,
+    completionRate: 0,
+    avgCompletionTime: 0,
+    pageAnalytics: []
   };
 
-  if (quizLoading) {
+  // Ensure pageAnalytics exists and has data structure
+  if (!analyticsData.pageAnalytics || analyticsData.pageAnalytics.length === 0) {
+    // Generate page analytics from quiz structure if not available
+    const pages = quiz?.structure?.pages || [];
+    analyticsData.pageAnalytics = pages.map((page: any, index: number) => ({
+      pageId: page.id,
+      pageName: page.title || `Página ${index + 1}`,
+      pageType: page.isGame ? 'game' : page.isTransition ? 'transition' : 'normal',
+      views: 0,
+      clicks: 0,
+      dropOffs: 0,
+      clickRate: 0,
+      dropOffRate: 0,
+      avgTimeOnPage: 0,
+      nextPageViews: 0
+    }));
+  }
+
+  if (quizLoading || analyticsLoading) {
     return (
       <div className="flex items-center justify-center h-64">
         <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full" />
@@ -968,7 +922,7 @@ function SuperAnalyticsEmbed({ quizId }: { quizId: string }) {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-blue-600 font-medium">Total de Visualizações</p>
-                <p className="text-2xl font-bold text-blue-800">{mockAnalytics.totalViews.toLocaleString()}</p>
+                <p className="text-2xl font-bold text-blue-800">{analyticsData.totalViews.toLocaleString()}</p>
               </div>
               <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
                 <Eye className="w-4 h-4 text-blue-600" />
@@ -982,7 +936,7 @@ function SuperAnalyticsEmbed({ quizId }: { quizId: string }) {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-green-600 font-medium">Conclusões</p>
-                <p className="text-2xl font-bold text-green-800">{mockAnalytics.totalCompletions.toLocaleString()}</p>
+                <p className="text-2xl font-bold text-green-800">{analyticsData.totalCompletions.toLocaleString()}</p>
               </div>
               <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
                 <BarChart3 className="w-4 h-4 text-green-600" />
@@ -996,7 +950,7 @@ function SuperAnalyticsEmbed({ quizId }: { quizId: string }) {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-red-600 font-medium">Abandonos</p>
-                <p className="text-2xl font-bold text-red-800">{mockAnalytics.totalDropOffs.toLocaleString()}</p>
+                <p className="text-2xl font-bold text-red-800">{analyticsData.totalDropOffs.toLocaleString()}</p>
               </div>
               <div className="w-8 h-8 bg-red-100 rounded-full flex items-center justify-center">
                 <ArrowLeft className="w-4 h-4 text-red-600" />
@@ -1010,7 +964,7 @@ function SuperAnalyticsEmbed({ quizId }: { quizId: string }) {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-purple-600 font-medium">Taxa de Conversão</p>
-                <p className="text-2xl font-bold text-purple-800">{mockAnalytics.completionRate}%</p>
+                <p className="text-2xl font-bold text-purple-800">{analyticsData.completionRate}%</p>
               </div>
               <div className="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center">
                 <BarChart3 className="w-4 h-4 text-purple-600" />
@@ -1024,7 +978,7 @@ function SuperAnalyticsEmbed({ quizId }: { quizId: string }) {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-orange-600 font-medium">Tempo Médio</p>
-                <p className="text-2xl font-bold text-orange-800">{mockAnalytics.avgCompletionTime}m</p>
+                <p className="text-2xl font-bold text-orange-800">{analyticsData.avgCompletionTime}m</p>
               </div>
               <div className="w-8 h-8 bg-orange-100 rounded-full flex items-center justify-center">
                 <Globe className="w-4 h-4 text-orange-600" />
@@ -1072,7 +1026,7 @@ function SuperAnalyticsEmbed({ quizId }: { quizId: string }) {
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {mockAnalytics.pageAnalytics.map((page, index) => (
+              {analyticsData.pageAnalytics.map((page: any, index: number) => (
                 <tr key={page.pageId} className={index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center">
