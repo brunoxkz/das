@@ -3,6 +3,7 @@ import jwt from "jsonwebtoken";
 import bcrypt from "bcryptjs";
 import { z } from "zod";
 import { storage } from "./storage";
+import { cache } from "./cache";
 
 // Environment variables
 const JWT_SECRET = process.env.JWT_SECRET || "your-super-secret-jwt-key-change-in-production";
@@ -43,7 +44,16 @@ export const verifyJWT: RequestHandler = async (req: any, res, next) => {
     const decoded = jwt.verify(token, JWT_SECRET) as { userId: string };
     console.log("Token decoded:", decoded);
     
-    const user = await storage.getUser(decoded.userId);
+    // Check cache first for better performance
+    let user = cache.getUser(decoded.userId);
+    
+    if (!user) {
+      user = await storage.getUser(decoded.userId);
+      if (user) {
+        cache.setUser(decoded.userId, user);
+      }
+    }
+    
     console.log("User found:", user ? user.id : 'not found');
     
     if (!user) {

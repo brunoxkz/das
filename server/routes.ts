@@ -75,6 +75,8 @@ export function registerRoutes(app: Express): Server {
 
   app.post("/api/quizzes", rateLimiters.quizCreation.middleware(), authenticateToken, async (req, res) => {
     try {
+      console.log("Creating quiz with data:", JSON.stringify(req.body, null, 2));
+      
       // Check plan limits
       const userQuizzes = await storage.getUserQuizzes(req.user!.id);
       const canCreate = await canCreateQuiz(req.user!.id, userQuizzes.length, req.user!.plan);
@@ -93,7 +95,12 @@ export function registerRoutes(app: Express): Server {
         ...req.body,
         userId: req.user!.id,
       });
+      
+      console.log("Quiz data after parsing:", JSON.stringify(quizData, null, 2));
+      
       const quiz = await storage.createQuiz(quizData);
+      
+      console.log("Quiz created successfully:", quiz.id);
       
       // Invalidar caches após criação para manter consistência
       cache.invalidateUserCaches(req.user!.id);
@@ -102,6 +109,7 @@ export function registerRoutes(app: Express): Server {
     } catch (error) {
       console.error("Error creating quiz:", error);
       if (error instanceof z.ZodError) {
+        console.error("Zod validation errors:", error.errors);
         return res.status(400).json({ message: "Invalid quiz data", errors: error.errors });
       }
       res.status(500).json({ message: "Internal server error" });
