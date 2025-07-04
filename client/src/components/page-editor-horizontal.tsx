@@ -41,7 +41,7 @@ import {
 
 interface Element {
   id: number;
-  type: "multiple_choice" | "text" | "rating" | "email" | "checkbox" | "date" | "phone" | "number" | "textarea" | "image_upload" | "animated_transition" | "heading" | "paragraph" | "image" | "divider" | "video" | "audio" | "birth_date" | "height" | "current_weight" | "target_weight" | "transition_background" | "transition_text" | "transition_counter" | "transition_loader" | "transition_redirect" | "spacer" | "game_wheel" | "game_scratch" | "game_color_pick" | "game_brick_break" | "game_memory_cards" | "game_slot_machine" | "continue_button";
+  type: "multiple_choice" | "text" | "rating" | "email" | "checkbox" | "date" | "phone" | "number" | "textarea" | "image_upload" | "animated_transition" | "heading" | "paragraph" | "image" | "divider" | "video" | "audio" | "birth_date" | "height" | "current_weight" | "target_weight" | "transition_background" | "transition_text" | "transition_counter" | "transition_loader" | "transition_redirect" | "spacer" | "game_wheel" | "game_scratch" | "game_color_pick" | "game_brick_break" | "game_memory_cards" | "game_slot_machine" | "continue_button" | "loading_question";
   content: string;
   question?: string;
   description?: string;
@@ -153,6 +153,15 @@ interface Element {
   buttonHoverColor?: string;
   buttonBorderRadius?: "none" | "small" | "medium" | "large" | "full";
   buttonSize?: "small" | "medium" | "large";
+  
+  // Propriedades específicas para carregamento + pergunta
+  loadingDuration?: number; // duração em segundos
+  loadingBarColor?: string;
+  loadingBarWidth?: "thin" | "medium" | "thick";
+  loadingText?: string;
+  popupQuestion?: string;
+  popupYesText?: string;
+  popupNoText?: string;
 }
 
 interface QuizPage {
@@ -208,7 +217,8 @@ export function PageEditorHorizontal({ pages, onPagesChange }: PageEditorProps) 
       game_brick_break: "Quebre o Muro",
       game_memory_cards: "Jogo da Memória",
       game_slot_machine: "Caça-Níquel",
-      continue_button: "Botão Continuar"
+      continue_button: "Botão Continuar",
+      loading_question: "Carregamento + Pergunta"
     };
     return typeNames[type] || type;
   };
@@ -298,6 +308,7 @@ export function PageEditorHorizontal({ pages, onPagesChange }: PageEditorProps) 
         { type: "rating", label: "Estrelas", icon: <Star className="w-4 h-4" /> },
         { type: "date", label: "Data", icon: <Calendar className="w-4 h-4" /> },
         { type: "textarea", label: "Área", icon: <TextArea className="w-4 h-4" /> },
+        { type: "loading_question", label: "Carregamento + Pergunta", icon: <Loader className="w-4 h-4" /> },
       ]
     },
     {
@@ -566,6 +577,16 @@ const gameElementCategories = [
         buttonBackgroundColor: "#10B981",
         buttonTextColor: "#FFFFFF",
         buttonHoverColor: "#059669"
+      }),
+      ...(type === "loading_question" && {
+        loadingDuration: 3,
+        loadingBarColor: "#10B981",
+        loadingBarWidth: "medium" as const,
+        loadingText: "Carregando...",
+        popupQuestion: "Você gostaria de continuar?",
+        popupYesText: "Sim",
+        popupNoText: "Não",
+        responseId: `pergunta_${Date.now()}`
       })
     };
 
@@ -4604,6 +4625,115 @@ const gameElementCategories = [
                       onChange={(e) => updateElement(selectedElementData.id, { buttonHoverColor: e.target.value })}
                       className="mt-1 h-10"
                     />
+                  </div>
+                </div>
+              )}
+
+              {selectedElementData.type === "loading_question" && (
+                <div className="space-y-4">
+                  <div className="bg-green-50 p-3 rounded-lg">
+                    <h4 className="text-sm font-semibold text-green-800 mb-2">⏳ Carregamento + Pergunta</h4>
+                    <p className="text-xs text-green-700">
+                      Exibe uma barra de carregamento que, ao completar, mostra um popup com pergunta sim/não.
+                    </p>
+                  </div>
+
+                  <div>
+                    <Label>Duração do Carregamento (segundos)</Label>
+                    <Input
+                      type="number"
+                      min="1"
+                      max="30"
+                      value={selectedElementData.loadingDuration || 3}
+                      onChange={(e) => updateElement(selectedElementData.id, { loadingDuration: parseInt(e.target.value) })}
+                      placeholder="3"
+                      className="mt-1"
+                    />
+                    <div className="text-xs text-gray-500 mt-1">Tempo que a barra levará para carregar (1-30 segundos)</div>
+                  </div>
+
+                  <div>
+                    <Label>Texto Durante o Carregamento</Label>
+                    <Input
+                      value={selectedElementData.loadingText || ""}
+                      onChange={(e) => updateElement(selectedElementData.id, { loadingText: e.target.value })}
+                      placeholder="Carregando..."
+                      className="mt-1"
+                    />
+                  </div>
+
+                  <div>
+                    <Label>Largura da Barra</Label>
+                    <select
+                      value={selectedElementData.loadingBarWidth || "medium"}
+                      onChange={(e) => updateElement(selectedElementData.id, { loadingBarWidth: e.target.value as "thin" | "medium" | "thick" })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md mt-1"
+                    >
+                      <option value="thin">Fina</option>
+                      <option value="medium">Média</option>
+                      <option value="thick">Grossa</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <Label>Cor da Barra de Carregamento</Label>
+                    <Input
+                      type="color"
+                      value={selectedElementData.loadingBarColor || "#10B981"}
+                      onChange={(e) => updateElement(selectedElementData.id, { loadingBarColor: e.target.value })}
+                      className="mt-1 h-10"
+                    />
+                  </div>
+
+                  <div className="border-t pt-4">
+                    <h5 className="font-semibold text-sm mb-3">💬 Configurações do Popup</h5>
+                    
+                    <div>
+                      <Label>Pergunta do Popup</Label>
+                      <Input
+                        value={selectedElementData.popupQuestion || ""}
+                        onChange={(e) => updateElement(selectedElementData.id, { popupQuestion: e.target.value })}
+                        placeholder="Você gostaria de continuar?"
+                        className="mt-1"
+                      />
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-3 mt-3">
+                      <div>
+                        <Label>Texto do "Sim"</Label>
+                        <Input
+                          value={selectedElementData.popupYesText || ""}
+                          onChange={(e) => updateElement(selectedElementData.id, { popupYesText: e.target.value })}
+                          placeholder="Sim"
+                          className="mt-1"
+                        />
+                      </div>
+                      <div>
+                        <Label>Texto do "Não"</Label>
+                        <Input
+                          value={selectedElementData.popupNoText || ""}
+                          onChange={(e) => updateElement(selectedElementData.id, { popupNoText: e.target.value })}
+                          placeholder="Não"
+                          className="mt-1"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="border-t pt-4">
+                    <h5 className="font-semibold text-sm mb-3">🎯 Captura de Resposta</h5>
+                    <div>
+                      <Label>ID da Variável</Label>
+                      <Input
+                        value={selectedElementData.responseId || ""}
+                        onChange={(e) => updateElement(selectedElementData.id, { responseId: e.target.value })}
+                        placeholder="pergunta_continuacao"
+                        className="mt-1"
+                      />
+                      <div className="text-xs text-gray-500 mt-1">
+                        Use {"{{"}{selectedElementData.responseId || 'pergunta_continuacao'}{"}}"} em outros elementos para referenciar a resposta (sim/não)
+                      </div>
+                    </div>
                   </div>
                 </div>
               )}
