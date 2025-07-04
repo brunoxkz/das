@@ -337,17 +337,19 @@ export function QuizPreview({ quiz }: QuizPreviewProps) {
       case 'height':
         return (
           <div className="mb-6">
-            {element.question && (
+            {(element.question && element.question.trim() !== '') && (
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 {element.question}
+                {element.required && <span className="text-red-500 ml-1">*</span>}
               </label>
             )}
             <div className="flex items-center space-x-2">
               <input
                 type="number"
-                min="100"
-                max="250"
-                placeholder={element.placeholder || "175"}
+                min={element.unit === "cm" ? "120" : "1.20"}
+                max={element.unit === "cm" ? "220" : "2.20"}
+                step={element.unit === "cm" ? "1" : "0.01"}
+                placeholder={element.placeholder || (element.unit === "cm" ? "175" : "1.75")}
                 className="flex-1 px-4 py-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
               />
               <span className="text-gray-600">{element.unit || "cm"}</span>
@@ -358,9 +360,10 @@ export function QuizPreview({ quiz }: QuizPreviewProps) {
       case 'current_weight':
         return (
           <div className="mb-6">
-            {element.question && (
+            {(element.question && element.question.trim() !== '') && (
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 {element.question}
+                {element.required && <span className="text-red-500 ml-1">*</span>}
               </label>
             )}
             <div className="flex items-center space-x-2">
@@ -379,9 +382,10 @@ export function QuizPreview({ quiz }: QuizPreviewProps) {
       case 'target_weight':
         return (
           <div className="mb-6">
-            {element.question && (
+            {(element.question && element.question.trim() !== '') && (
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 {element.question}
+                {element.required && <span className="text-red-500 ml-1">*</span>}
               </label>
             )}
             <div className="flex items-center space-x-2">
@@ -464,9 +468,10 @@ export function QuizPreview({ quiz }: QuizPreviewProps) {
       case 'text':
         return (
           <div className="mb-6">
-            {element.question && (
+            {(element.question && element.question.trim() !== '') && (
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 {element.question}
+                {element.required && <span className="text-red-500 ml-1">*</span>}
               </label>
             )}
             <input

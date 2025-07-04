@@ -71,7 +71,7 @@ export default function QuizBuilder() {
     onSuccess: () => {
       toast({
         title: "Quiz salvo com sucesso!",
-        description: "Suas alterações foram salvas.",
+        description: "Aguarde 5 minutos para que todos os salvamentos façam efeito. (Lembre-se de publicar)",
       });
       queryClient.invalidateQueries({ queryKey: ["/api/quizzes"] });
     },
