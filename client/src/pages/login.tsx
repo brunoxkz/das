@@ -94,18 +94,20 @@ export default function LoginPage() {
             </TabsList>
 
             <TabsContent value="login">
-              <form onSubmit={handleLogin} className="space-y-4">
+              <form onSubmit={handleLogin} className="space-y-4" autoComplete="on">
                 <div className="space-y-2">
                   <Label htmlFor="login-email">Email</Label>
                   <div className="relative">
                     <Mail className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
                     <Input
                       id="login-email"
+                      name="email"
                       type="email"
                       placeholder="seu@email.com"
                       className="pl-10"
                       value={loginData.email}
                       onChange={(e) => setLoginData({ ...loginData, email: e.target.value })}
+                      autoComplete="email"
                       required
                     />
                   </div>
@@ -116,11 +118,13 @@ export default function LoginPage() {
                     <Lock className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
                     <Input
                       id="login-password"
+                      name="password"
                       type="password"
                       placeholder="••••••••"
                       className="pl-10"
                       value={loginData.password}
                       onChange={(e) => setLoginData({ ...loginData, password: e.target.value })}
+                      autoComplete="current-password"
                       required
                     />
                   </div>
@@ -151,7 +155,7 @@ export default function LoginPage() {
             </TabsContent>
 
             <TabsContent value="register">
-              <form onSubmit={handleRegister} className="space-y-4">
+              <form onSubmit={handleRegister} className="space-y-4" autoComplete="on">
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="register-firstName">Nome</Label>
@@ -159,10 +163,12 @@ export default function LoginPage() {
                       <User className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
                       <Input
                         id="register-firstName"
+                        name="firstName"
                         placeholder="João"
                         className="pl-10"
                         value={registerData.firstName}
                         onChange={(e) => setRegisterData({ ...registerData, firstName: e.target.value })}
+                        autoComplete="given-name"
                         required
                       />
                     </div>
@@ -171,9 +177,11 @@ export default function LoginPage() {
                     <Label htmlFor="register-lastName">Sobrenome</Label>
                     <Input
                       id="register-lastName"
+                      name="lastName"
                       placeholder="Silva"
                       value={registerData.lastName}
                       onChange={(e) => setRegisterData({ ...registerData, lastName: e.target.value })}
+                      autoComplete="family-name"
                       required
                     />
                   </div>
@@ -184,11 +192,13 @@ export default function LoginPage() {
                     <Mail className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
                     <Input
                       id="register-email"
+                      name="email"
                       type="email"
                       placeholder="seu@email.com"
                       className="pl-10"
                       value={registerData.email}
                       onChange={(e) => setRegisterData({ ...registerData, email: e.target.value })}
+                      autoComplete="email"
                       required
                     />
                   </div>
@@ -199,11 +209,13 @@ export default function LoginPage() {
                     <Lock className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
                     <Input
                       id="register-password"
+                      name="password"
                       type="password"
                       placeholder="••••••••"
                       className="pl-10"
                       value={registerData.password}
                       onChange={(e) => setRegisterData({ ...registerData, password: e.target.value })}
+                      autoComplete="new-password"
                       required
                       minLength={6}
                     />

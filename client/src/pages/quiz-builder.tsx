@@ -80,17 +80,7 @@ export default function QuizBuilder() {
     retry: false,
   });
 
-  // Debug logs
-  useEffect(() => {
-    console.log("Quiz Builder Debug:", {
-      isEditing,
-      quizId,
-      existingQuiz,
-      quizLoading,
-      quizError,
-      quizDataTitle: quizData.title
-    });
-  }, [isEditing, quizId, existingQuiz, quizLoading, quizError, quizData.title]);;
+
 
   // Save quiz mutation
   const saveMutation = useMutation({

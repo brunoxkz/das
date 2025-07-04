@@ -239,6 +239,13 @@ Changelog:
   * Updated navbar, sidebar, landing page, and login page with official Vendzz logo
   * Fixed react-router-dom import error by changing to wouter for consistent routing
   * All user-facing branding now consistently displays Vendzz logo instead of text
+- July 04, 2025. ANALYTICS AND LOGIN IMPROVEMENTS - Fixed data display and user experience:
+  * Corrected Analytics page statistics - Total de Quizzes now shows correct count using dashboardStats.quizzes.length
+  * Fixed quiz list loading in Analytics by using fallback data from dashboardStats when primary query fails
+  * Implemented browser password saving functionality with proper HTML form attributes
+  * Added autoComplete attributes to login form: email="email", password="current-password"
+  * Added autoComplete attributes to registration form: firstName="given-name", lastName="family-name", email="email", password="new-password"
+  * All forms now include autoComplete="on" and proper name attributes for browser credential management
 ```
 
 ## User Preferences

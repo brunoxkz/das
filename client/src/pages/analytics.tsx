@@ -162,7 +162,7 @@ export default function Analytics() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           <StatsCard
             title="Total de Quizzes"
-            value={dashboardStats?.totalQuizzes || 0}
+            value={dashboardStats?.quizzes?.length || 0}
             icon={<BarChart3 className="w-5 h-5 text-blue-600" />}
             color="blue"
             change="+5%"
