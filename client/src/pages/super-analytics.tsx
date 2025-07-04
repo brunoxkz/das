@@ -130,7 +130,7 @@ export default function SuperAnalytics() {
 
   // Função para exportar dados como CSV
   const exportToCSV = () => {
-    const csvData = analyticsData.pageAnalytics.map(page => ({
+    const csvData = (analyticsData?.pageAnalytics || []).map(page => ({
       'Página': page.pageName,
       'Tipo': page.pageType,
       'Visualizações': page.views,
@@ -364,7 +364,7 @@ export default function SuperAnalytics() {
               <Eye className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{analyticsData.totalViews.toLocaleString()}</div>
+              <div className="text-2xl font-bold">{(analyticsData?.totalViews || 0).toLocaleString()}</div>
               <p className="text-xs text-muted-foreground">+12% vs. período anterior</p>
             </CardContent>
           </Card>
@@ -375,7 +375,7 @@ export default function SuperAnalytics() {
               <Target className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{formatPercentage(analyticsData.completionRate)}</div>
+              <div className="text-2xl font-bold">{formatPercentage(analyticsData?.completionRate || 0)}</div>
               <p className="text-xs text-muted-foreground">+2.1% vs. período anterior</p>
             </CardContent>
           </Card>
@@ -386,7 +386,7 @@ export default function SuperAnalytics() {
               <Clock className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{formatTime(analyticsData.avgCompletionTime)}</div>
+              <div className="text-2xl font-bold">{formatTime(analyticsData?.avgCompletionTime || 0)}</div>
               <p className="text-xs text-muted-foreground">-15s vs. período anterior</p>
             </CardContent>
           </Card>
@@ -397,8 +397,8 @@ export default function SuperAnalytics() {
               <UserMinus className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{analyticsData.totalDropOffs.toLocaleString()}</div>
-              <p className="text-xs text-muted-foreground">{formatPercentage(100 - analyticsData.completionRate)} taxa de desistência</p>
+              <div className="text-2xl font-bold">{(analyticsData?.totalDropOffs || 0).toLocaleString()}</div>
+              <p className="text-xs text-muted-foreground">{formatPercentage(100 - (analyticsData?.completionRate || 0))} taxa de desistência</p>
             </CardContent>
           </Card>
         </div>
@@ -431,7 +431,7 @@ export default function SuperAnalytics() {
                   </tr>
                 </thead>
                 <tbody>
-                  {analyticsData.pageAnalytics.map((page, index) => (
+                  {(analyticsData?.pageAnalytics || []).map((page, index) => (
                     <tr key={page.pageId} className="border-b hover:bg-gray-50">
                       <td className="p-4">
                         <div className="flex items-center gap-2">
@@ -516,8 +516,8 @@ export default function SuperAnalytics() {
                 <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
                   <h4 className="font-semibold text-red-800 mb-2">🚨 Alta Taxa de Evasão</h4>
                   <p className="text-sm text-red-700">
-                    A página "{analyticsData.pageAnalytics.find(p => p.dropOffRate > 20)?.pageName || 'Página 2'}" 
-                    tem {formatPercentage(analyticsData.pageAnalytics.find(p => p.dropOffRate > 20)?.dropOffRate || 25)} de evasão. 
+                    A página "{(analyticsData?.pageAnalytics || []).find(p => p.dropOffRate > 20)?.pageName || 'Página 2'}" 
+                    tem {formatPercentage((analyticsData?.pageAnalytics || []).find(p => p.dropOffRate > 20)?.dropOffRate || 25)} de evasão. 
                     Considere simplificar o conteúdo ou melhorar a UX.
                   </p>
                 </div>
@@ -525,8 +525,8 @@ export default function SuperAnalytics() {
                 <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
                   <h4 className="font-semibold text-green-800 mb-2">✅ Boa Performance</h4>
                   <p className="text-sm text-green-700">
-                    A página "{analyticsData.pageAnalytics.find(p => p.clickRate > 70)?.pageName || 'Página 1'}" 
-                    tem excelente engajamento com {formatPercentage(analyticsData.pageAnalytics.find(p => p.clickRate > 70)?.clickRate || 75)} de cliques.
+                    A página "{(analyticsData?.pageAnalytics || []).find(p => p.clickRate > 70)?.pageName || 'Página 1'}" 
+                    tem excelente engajamento com {formatPercentage((analyticsData?.pageAnalytics || []).find(p => p.clickRate > 70)?.clickRate || 75)} de cliques.
                   </p>
                 </div>
 

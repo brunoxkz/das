@@ -23,7 +23,8 @@ import {
   Code,
   Globe,
   Palette,
-  BarChart3
+  BarChart3,
+  TrendingUp
 } from "lucide-react";
 import { Link } from "wouter";
 
