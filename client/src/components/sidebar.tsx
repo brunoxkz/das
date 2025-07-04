@@ -16,7 +16,8 @@ import {
   Home,
   FileText,
   Users,
-  Zap
+  Zap,
+  Shield
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
