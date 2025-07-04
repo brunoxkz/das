@@ -4,6 +4,15 @@ import "./types"; // Import global types
 import Stripe from "stripe";
 import { storage } from "./storage";
 import { verifyJWT as authenticateToken } from "./auth-jwt";
+import { 
+  requireAdmin, 
+  requireEditor, 
+  requireUser,
+  requireExport,
+  requireTemplates,
+  canCreateQuiz,
+  getPlanLimits 
+} from "./rbac";
 import bcrypt from "bcryptjs";
 import express from "express";
 import { 
@@ -52,6 +61,20 @@ export function registerRoutes(app: Express): Server {
 
   app.post("/api/quizzes", authenticateToken, async (req, res) => {
     try {
+      // Check plan limits
+      const userQuizzes = await storage.getUserQuizzes(req.user!.id);
+      const canCreate = await canCreateQuiz(req.user!.id, userQuizzes.length, req.user!.plan);
+      
+      if (!canCreate) {
+        const limits = getPlanLimits(req.user!.plan);
+        return res.status(403).json({ 
+          message: "Limite de quizzes atingido para seu plano",
+          currentCount: userQuizzes.length,
+          maxAllowed: limits.maxQuizzes,
+          currentPlan: req.user!.plan
+        });
+      }
+
       const quizData = insertQuizSchema.parse({
         ...req.body,
         userId: req.user!.id,
@@ -294,6 +317,73 @@ export function registerRoutes(app: Express): Server {
       }
     });
   }
+
+  // User profile with plan limits
+  app.get("/api/user/profile", authenticateToken, async (req, res) => {
+    try {
+      const user = req.user!;
+      const limits = getPlanLimits(user.plan);
+      const userQuizzes = await storage.getUserQuizzes(user.id);
+      
+      res.json({
+        user: {
+          id: user.id,
+          email: user.email,
+          firstName: user.firstName,
+          lastName: user.lastName,
+          role: user.role,
+          plan: user.plan
+        },
+        limits,
+        usage: {
+          quizzes: userQuizzes.length,
+          // TODO: Add responses count
+          responses: 0
+        }
+      });
+    } catch (error) {
+      console.error("Error fetching user profile:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  // Admin routes
+  app.get("/api/admin/users", authenticateToken, async (req, res) => {
+    // Check if user is admin
+    if (req.user!.role !== 'admin') {
+      return res.status(403).json({ message: 'Acesso negado. Apenas administradores.' });
+    }
+    try {
+      const users = await storage.getAllUsers();
+      res.json(users.map(u => ({
+        id: u.id,
+        email: u.email,
+        firstName: u.firstName,
+        lastName: u.lastName,
+        role: u.role,
+        plan: u.plan,
+        createdAt: u.createdAt
+      })));
+    } catch (error) {
+      console.error("Error fetching users:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  app.put("/api/admin/users/:id/role", authenticateToken, async (req, res) => {
+    // Check if user is admin
+    if (req.user!.role !== 'admin') {
+      return res.status(403).json({ message: 'Acesso negado. Apenas administradores.' });
+    }
+    try {
+      const { role } = req.body;
+      const user = await storage.updateUserRole(req.params.id, role);
+      res.json(user);
+    } catch (error) {
+      console.error("Error updating user role:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
 
   // Remove old Replit auth routes - now handled by JWT
   app.get("/api/login", (req, res) => {
