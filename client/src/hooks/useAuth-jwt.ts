@@ -91,6 +91,10 @@ export function useAuth() {
       // Force a small delay to ensure state updates are processed
       await new Promise(resolve => setTimeout(resolve, 100));
       
+      // Force immediate page refresh to trigger auth state check
+      console.log("Triggering page refresh to update auth state");
+      window.location.href = "/dashboard";
+      
       return data;
     } else {
       console.error("Login failed:", data.message);

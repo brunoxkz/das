@@ -37,17 +37,7 @@ export default function LoginPage() {
         description: `Bem-vindo, ${data.user.firstName}!`,
       });
       
-      console.log("About to redirect to dashboard...");
-      // Try multiple redirect methods to ensure it works
-      setTimeout(() => {
-        console.log("Executing redirect to dashboard");
-        setLocation("/dashboard");
-        // Fallback to window.location if router fails
-        setTimeout(() => {
-          console.log("Router redirect may have failed, trying window.location");
-          window.location.href = "/dashboard";
-        }, 100);
-      }, 150);
+      // Redirecionamento agora é feito automaticamente pelo hook de autenticação
       
     } catch (error: any) {
       console.error("Login error:", error);
@@ -73,10 +63,7 @@ export default function LoginPage() {
         description: `Bem-vindo, ${data.user.firstName}!`,
       });
       
-      // Force immediate navigation after successful registration
-      setTimeout(() => {
-        setLocation("/dashboard");
-      }, 150);
+      // Redirecionamento agora é feito automaticamente pelo hook de autenticação
       
     } catch (error: any) {
       toast({
