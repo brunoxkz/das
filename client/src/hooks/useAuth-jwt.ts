@@ -87,6 +87,10 @@ export function useAuth() {
       setUser(data.user);
       setIsAuthenticated(true);
       console.log("Login successful, user authenticated");
+      
+      // Force a small delay to ensure state updates are processed
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
       return data;
     } else {
       console.error("Login failed:", data.message);

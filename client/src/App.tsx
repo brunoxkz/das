@@ -1,4 +1,4 @@
-import { Switch, Route, useLocation } from "wouter";
+import { Switch, Route, useLocation, Redirect } from "wouter";
 import "./index.css";
 import { Toaster } from "@/components/ui/toaster";
 import { Layout } from "@/components/layout";
@@ -38,8 +38,9 @@ function App() {
   const isQuizRoute = location.startsWith("/quiz/");
   const isPublicRoute = publicRoutes.includes(location) || isQuizRoute;
 
+  // Redirect to login if not authenticated and not on a public route
   if (!isAuthenticated && !isPublicRoute) {
-    return <LoginPage />;
+    return <Redirect to="/login" />;
   }
 
   return (

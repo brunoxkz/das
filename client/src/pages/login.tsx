@@ -35,7 +35,11 @@ export default function LoginPage() {
         description: `Bem-vindo, ${data.user.firstName}!`,
       });
       
-      setLocation("/dashboard");
+      // Force immediate navigation after successful login
+      setTimeout(() => {
+        setLocation("/dashboard");
+      }, 150);
+      
     } catch (error: any) {
       toast({
         title: "Erro no login",
@@ -59,7 +63,11 @@ export default function LoginPage() {
         description: `Bem-vindo, ${data.user.firstName}!`,
       });
       
-      setLocation("/dashboard");
+      // Force immediate navigation after successful registration
+      setTimeout(() => {
+        setLocation("/dashboard");
+      }, 150);
+      
     } catch (error: any) {
       toast({
         title: "Erro no cadastro",

@@ -246,6 +246,13 @@ Changelog:
   * Added autoComplete attributes to login form: email="email", password="current-password"
   * Added autoComplete attributes to registration form: firstName="given-name", lastName="family-name", email="email", password="new-password"
   * All forms now include autoComplete="on" and proper name attributes for browser credential management
+- July 04, 2025. PUBLIC QUIZ VIEWING AND ANALYTICS IMPROVEMENTS - Implemented quiz sharing functionality:
+  * Created public quiz viewing page at `/quiz/:id` route for sharing published quizzes without authentication
+  * Added QuizPublicPage component with error handling for unpublished or missing quizzes
+  * Updated App.tsx routing to allow public access to quiz URLs while maintaining authentication for admin features
+  * Simplified SuperAnalyticsEmbed in quiz builder to show "Ainda não há dados registrados" when no analytics available
+  * Enhanced user experience with proper loading states and error messages for public quiz access
+  * Public quiz URLs now functional for sharing completed quizzes with respondents
 ```
 
 ## User Preferences
