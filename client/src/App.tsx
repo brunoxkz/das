@@ -46,6 +46,8 @@ function App() {
       <Route path="/dashboard" component={Dashboard} />
       <Route path="/quiz-builder" component={QuizBuilder} />
       <Route path="/quiz-builder/:id" component={QuizBuilder} />
+      <Route path="/quizzes/new" component={QuizBuilder} />
+      <Route path="/quizzes/:id/edit" component={QuizBuilder} />
       <Route path="/analytics/:id" component={AnalyticsPage} />
       <Route path="/super-analytics" component={SuperAnalyticsPage} />
       <Route path="/quizzes" component={QuizzesPage} />
