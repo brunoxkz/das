@@ -73,6 +73,7 @@ export default function SuperAnalytics() {
   const { isAuthenticated, isLoading: authLoading } = useAuth();
   const [timeRange, setTimeRange] = useState('7d');
   const [dateFilter, setDateFilter] = useState("7");
+  const [isDataReset, setIsDataReset] = useState(false);
   const queryClient = useQueryClient();
 
   const { data: quiz, isLoading: quizLoading } = useQuery({
@@ -123,6 +124,7 @@ export default function SuperAnalytics() {
       await apiRequest("DELETE", `/api/analytics/${quizId}/reset`);
     },
     onSuccess: () => {
+      setIsDataReset(true);
       toast({
         title: "Dados Resetados",
         description: "Todos os dados de analytics deste quiz foram zerados.",
@@ -177,22 +179,22 @@ export default function SuperAnalytics() {
 
   // Mock data for demonstration - in real app, this would come from API
   const mockAnalytics: QuizAnalytics = {
-    totalViews: 1247,
-    totalCompletions: 456,
-    totalDropOffs: 791,
-    completionRate: 36.6,
-    avgCompletionTime: 180, // seconds
+    totalViews: isDataReset ? 0 : 1247,
+    totalCompletions: isDataReset ? 0 : 456,
+    totalDropOffs: isDataReset ? 0 : 791,
+    completionRate: isDataReset ? 0 : 36.6,
+    avgCompletionTime: isDataReset ? 0 : 180, // seconds
     pageAnalytics: (quiz?.structure?.pages || []).map((page: any, index: number) => ({
       pageId: page.id,
       pageName: page.title || `Página ${index + 1}`,
       pageType: page.isGame ? 'game' : page.isTransition ? 'transition' : 'normal',
-      views: Math.max(100, Math.floor(Math.random() * 800) + 200),
-      clicks: Math.max(50, Math.floor(Math.random() * 600) + 150),
-      dropOffs: Math.max(10, Math.floor(Math.random() * 200) + 50),
-      clickRate: Math.max(40, Math.random() * 40 + 40),
-      dropOffRate: Math.max(5, Math.random() * 25 + 5),
-      avgTimeOnPage: Math.max(15, Math.random() * 60 + 30),
-      nextPageViews: index < (quiz?.structure?.pages?.length || 0) - 1 ? Math.max(80, Math.floor(Math.random() * 500) + 120) : 0
+      views: isDataReset ? 0 : Math.max(100, Math.floor(Math.random() * 800) + 200),
+      clicks: isDataReset ? 0 : Math.max(50, Math.floor(Math.random() * 600) + 150),
+      dropOffs: isDataReset ? 0 : Math.max(10, Math.floor(Math.random() * 200) + 50),
+      clickRate: isDataReset ? 0 : Math.max(40, Math.random() * 40 + 40),
+      dropOffRate: isDataReset ? 0 : Math.max(5, Math.random() * 25 + 5),
+      avgTimeOnPage: isDataReset ? 0 : Math.max(15, Math.random() * 60 + 30),
+      nextPageViews: isDataReset ? 0 : (index < (quiz?.structure?.pages?.length || 0) - 1 ? Math.max(80, Math.floor(Math.random() * 500) + 120) : 0)
     }))
   };
 
@@ -212,17 +214,9 @@ export default function SuperAnalytics() {
         {/* Header */}
         <div className="mb-8">
           <div className="flex items-center gap-4 mb-4">
-            <Button 
-              variant="outline" 
-              size="sm"
-              onClick={() => setLocation(`/quiz-builder/${quizId}`)}
-            >
-              <ArrowLeft className="w-4 h-4 mr-2" />
-              Voltar ao Editor
-            </Button>
             <div>
               <h1 className="text-3xl font-bold text-gray-900">Super Analytics</h1>
-              <p className="text-gray-600">{quiz.title}</p>
+              <p className="text-gray-600">{quiz?.title || "Carregando..."}</p>
             </div>
           </div>
           
