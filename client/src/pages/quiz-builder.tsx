@@ -167,14 +167,16 @@ export default function QuizBuilder() {
     }));
   };
 
-  const addQuestion = (type: "multiple_choice" | "text" | "rating" | "email") => {
+  const addQuestion = (type: "multiple_choice" | "text" | "rating" | "email" | "textarea" | "phone" | "number" | "date" | "checkbox") => {
     const newQuestion = {
       id: Date.now(),
       type,
       question: "Nova pergunta",
       description: "",
-      options: type === "multiple_choice" ? ["Opção 1", "Opção 2"] : undefined,
-      required: true
+      options: type === "multiple_choice" || type === "checkbox" ? ["Opção 1", "Opção 2"] : undefined,
+      required: true,
+      fieldId: "",
+      placeholder: ""
     };
 
     setQuizData(prev => ({
@@ -305,7 +307,7 @@ export default function QuizBuilder() {
 
                 <div>
                   <h3 className="font-semibold text-gray-900 mb-2">Elementos</h3>
-                  <div className="grid grid-cols-1 gap-2">
+                  <div className="grid grid-cols-2 gap-2">
                     <Button 
                       variant="outline" 
                       size="sm" 
@@ -333,6 +335,91 @@ export default function QuizBuilder() {
                       <span className="mr-2">✉️</span>
                       Email
                     </Button>
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      className="justify-start"
+                      onClick={() => addQuestion("phone")}
+                    >
+                      <span className="mr-2">📞</span>
+                      Telefone
+                    </Button>
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      className="justify-start"
+                      onClick={() => addQuestion("textarea")}
+                    >
+                      <span className="mr-2">📄</span>
+                      Texto Longo
+                    </Button>
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      className="justify-start"
+                      onClick={() => addQuestion("number")}
+                    >
+                      <span className="mr-2">🔢</span>
+                      Número
+                    </Button>
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      className="justify-start"
+                      onClick={() => addQuestion("date")}
+                    >
+                      <span className="mr-2">📅</span>
+                      Data
+                    </Button>
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      className="justify-start"
+                      onClick={() => addQuestion("rating")}
+                    >
+                      <span className="mr-2">⭐</span>
+                      Avaliação
+                    </Button>
+                  </div>
+                </div>
+
+                {/* Results Configuration */}
+                <div>
+                  <h3 className="font-semibold text-gray-900 mb-2">Resultado Personalizado</h3>
+                  <div className="space-y-3">
+                    <div>
+                      <Label htmlFor="result-title">Título do Resultado</Label>
+                      <Input
+                        id="result-title"
+                        placeholder="Parabéns {nome}! Seu resultado:"
+                        value={quizData.structure.settings.resultTitle || ""}
+                        onChange={(e) => handleSettingsChange({
+                          ...quizData.structure.settings,
+                          resultTitle: e.target.value
+                        })}
+                        className="mt-1"
+                      />
+                    </div>
+                    
+                    <div>
+                      <Label htmlFor="result-description">Descrição do Resultado</Label>
+                      <Textarea
+                        id="result-description"
+                        placeholder="Com base nas suas respostas, sua empresa {empresa} pode crescer {percentual}% usando nossa solução..."
+                        value={quizData.structure.settings.resultDescription || ""}
+                        onChange={(e) => handleSettingsChange({
+                          ...quizData.structure.settings,
+                          resultDescription: e.target.value
+                        })}
+                        className="mt-1"
+                        rows={3}
+                      />
+                    </div>
+                    
+                    <div className="text-xs text-gray-500">
+                      <p>Use {"{campo_id}"} para inserir respostas automaticamente.</p>
+                      <p>Exemplo: {"{nome}"}, {"{empresa}"}, {"{telefone}"}</p>
+                    </div>
                   </div>
                 </div>
               </div>

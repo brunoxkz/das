@@ -20,11 +20,15 @@ import {
 
 interface Question {
   id: number;
-  type: "multiple_choice" | "text" | "rating" | "email";
+  type: "multiple_choice" | "text" | "rating" | "email" | "checkbox" | "date" | "phone" | "number" | "textarea" | "image_upload";
   question: string;
   description?: string;
   options?: string[];
   required?: boolean;
+  fieldId?: string; // ID único para referências cruzadas
+  placeholder?: string;
+  min?: number;
+  max?: number;
 }
 
 interface QuizEditorProps {
@@ -42,8 +46,10 @@ export function QuizEditor({ questions, onQuestionsChange }: QuizEditorProps) {
       type,
       question: "",
       description: "",
-      options: type === "multiple_choice" ? ["Opção 1", "Opção 2"] : undefined,
-      required: true
+      options: type === "multiple_choice" || type === "checkbox" ? ["Opção 1", "Opção 2"] : undefined,
+      required: true,
+      fieldId: "",
+      placeholder: ""
     };
 
     onQuestionsChange([...questions, newQuestion]);
@@ -118,9 +124,39 @@ export function QuizEditor({ questions, onQuestionsChange }: QuizEditorProps) {
     },
     {
       type: "text" as const,
-      label: "Texto Livre",
+      label: "Texto Curto",
       icon: <Type className="w-4 h-4" />,
-      description: "Campo de texto aberto"
+      description: "Campo de texto pequeno"
+    },
+    {
+      type: "textarea" as const,
+      label: "Texto Longo",
+      icon: <Type className="w-4 h-4" />,
+      description: "Campo de texto grande"
+    },
+    {
+      type: "email" as const,
+      label: "Email",
+      icon: <Type className="w-4 h-4" />,
+      description: "Campo para capturar email"
+    },
+    {
+      type: "phone" as const,
+      label: "Telefone",
+      icon: <Type className="w-4 h-4" />,
+      description: "Campo para telefone"
+    },
+    {
+      type: "number" as const,
+      label: "Número",
+      icon: <Type className="w-4 h-4" />,
+      description: "Campo numérico"
+    },
+    {
+      type: "date" as const,
+      label: "Data",
+      icon: <Type className="w-4 h-4" />,
+      description: "Seletor de data"
     },
     {
       type: "rating" as const,
@@ -129,10 +165,10 @@ export function QuizEditor({ questions, onQuestionsChange }: QuizEditorProps) {
       description: "Escala de 1 a 5 estrelas"
     },
     {
-      type: "email" as const,
-      label: "Email",
-      icon: <Type className="w-4 h-4" />,
-      description: "Campo para capturar email"
+      type: "checkbox" as const,
+      label: "Checkbox",
+      icon: <CheckSquare className="w-4 h-4" />,
+      description: "Múltiplas seleções"
     }
   ];
 
@@ -270,6 +306,22 @@ export function QuizEditor({ questions, onQuestionsChange }: QuizEditorProps) {
                   className="mt-2"
                   rows={2}
                 />
+              </div>
+
+              {/* Field ID for Cross References */}
+              <div>
+                <Label htmlFor="fieldId">ID do Campo (para referências)</Label>
+                <Input
+                  id="fieldId"
+                  placeholder="ex: nome, empresa, telefone"
+                  value={selectedQuestionData.fieldId || ""}
+                  onChange={(e) => updateQuestion(selectedQuestionData.id, { fieldId: e.target.value.toLowerCase().replace(/[^a-z0-9]/g, '_') })}
+                  className="mt-2"
+                />
+                <p className="text-xs text-gray-500 mt-1">
+                  Use este ID para referenciar a resposta em outros textos: {"{"}
+                  {selectedQuestionData.fieldId || "campo_id"}{"}"}
+                </p>
               </div>
 
               {/* Options for Multiple Choice */}
