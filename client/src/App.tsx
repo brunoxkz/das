@@ -1,6 +1,7 @@
 import { Switch, Route, useLocation } from "wouter";
 import "./index.css";
 import { Toaster } from "@/components/ui/toaster";
+import { Layout } from "@/components/layout";
 import LandingPage from "@/pages/landing";
 import LoginPage from "@/pages/login";
 import Dashboard from "@/pages/dashboard";
@@ -40,26 +41,81 @@ function App() {
   }
 
   return (
-    <Switch>
-      <Route path="/" component={LandingPage} />
-      <Route path="/login" component={LoginPage} />
-      <Route path="/dashboard" component={Dashboard} />
-      <Route path="/quiz-builder" component={QuizBuilder} />
-      <Route path="/quiz-builder/:id" component={QuizBuilder} />
-      <Route path="/quizzes/new" component={QuizBuilder} />
-      <Route path="/quizzes/:id/edit" component={QuizBuilder} />
-      <Route path="/analytics/:id" component={AnalyticsPage} />
-      <Route path="/super-analytics" component={SuperAnalyticsPage} />
-      <Route path="/quizzes" component={QuizzesPage} />
-      <Route path="/templates" component={TemplatesPage} />
-      <Route path="/subscribe" component={SubscribePage} />
-      <Route path="/settings" component={SettingsPage} />
-      <Route path="/admin" component={AdminPage} />
-      <Route path="/leads" component={LeadsPage} />
-      <Route path="/tutoriais" component={TutoriaisPage} />
-      <Route path="/premiacoes" component={PremiacoesPage} />
-      <Route component={NotFoundPage} />
-    </Switch>
+    <>
+      <Switch>
+        {/* Public routes without sidebar */}
+        <Route path="/" component={LandingPage} />
+        <Route path="/login" component={LoginPage} />
+        
+        {/* Authenticated routes with sidebar */}
+        <Route path="/dashboard">
+          <Layout>
+            <Dashboard />
+          </Layout>
+        </Route>
+        
+        {/* Quiz builder routes without sidebar for full-screen editing */}
+        <Route path="/quiz-builder" component={QuizBuilder} />
+        <Route path="/quiz-builder/:id" component={QuizBuilder} />
+        <Route path="/quizzes/new" component={QuizBuilder} />
+        <Route path="/quizzes/:id/edit" component={QuizBuilder} />
+        
+        {/* Other authenticated routes with sidebar */}
+        <Route path="/analytics/:id">
+          <Layout>
+            <AnalyticsPage />
+          </Layout>
+        </Route>
+        <Route path="/super-analytics">
+          <Layout>
+            <SuperAnalyticsPage />
+          </Layout>
+        </Route>
+        <Route path="/quizzes">
+          <Layout>
+            <QuizzesPage />
+          </Layout>
+        </Route>
+        <Route path="/templates">
+          <Layout>
+            <TemplatesPage />
+          </Layout>
+        </Route>
+        <Route path="/subscribe">
+          <Layout>
+            <SubscribePage />
+          </Layout>
+        </Route>
+        <Route path="/settings">
+          <Layout>
+            <SettingsPage />
+          </Layout>
+        </Route>
+        <Route path="/admin">
+          <Layout>
+            <AdminPage />
+          </Layout>
+        </Route>
+        <Route path="/leads">
+          <Layout>
+            <LeadsPage />
+          </Layout>
+        </Route>
+        <Route path="/tutoriais">
+          <Layout>
+            <TutoriaisPage />
+          </Layout>
+        </Route>
+        <Route path="/premiacoes">
+          <Layout>
+            <PremiacoesPage />
+          </Layout>
+        </Route>
+        
+        <Route component={NotFoundPage} />
+      </Switch>
+      <Toaster />
+    </>
   );
 }
 
