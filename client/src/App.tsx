@@ -61,7 +61,7 @@ function App() {
         <Route path="/quizzes/:id/edit" component={QuizBuilder} />
         
         {/* Other authenticated routes with sidebar */}
-        <Route path="/analytics/:id">
+        <Route path="/analytics">
           <Layout>
             <AnalyticsPage />
           </Layout>

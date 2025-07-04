@@ -164,14 +164,48 @@ export default function SuperAnalytics() {
     );
   }
 
+  // If no quiz is selected, show quiz selection
+  if (!quizId) {
+    return (
+      <div className="min-h-screen bg-gray-50 p-6">
+        <div className="max-w-4xl mx-auto">
+          <div className="mb-6">
+            <h1 className="text-2xl font-bold text-gray-900">Super Analytics</h1>
+            <p className="text-gray-600">Selecione um quiz para ver analytics detalhados</p>
+          </div>
+          
+          <Card>
+            <CardHeader>
+              <CardTitle>Escolha um Quiz</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-gray-500 mb-4">
+                Para acessar o Super Analytics, você precisa especificar um quiz. 
+                Vá para Analytics geral e clique em "Ver Detalhes" em um quiz específico.
+              </p>
+              <div className="space-y-2">
+                <Button onClick={() => setLocation("/analytics")} className="w-full">
+                  Ir para Analytics Geral
+                </Button>
+                <Button onClick={() => setLocation("/dashboard")} variant="outline" className="w-full">
+                  Voltar ao Dashboard
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    );
+  }
+
   if (!quiz) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
           <h2 className="text-2xl font-bold text-gray-900 mb-2">Quiz não encontrado</h2>
           <p className="text-gray-600 mb-4">O quiz solicitado não existe ou você não tem permissão para acessá-lo.</p>
-          <Button onClick={() => setLocation("/dashboard")}>
-            Voltar ao Dashboard
+          <Button onClick={() => setLocation("/analytics")}>
+            Voltar para Analytics
           </Button>
         </div>
       </div>

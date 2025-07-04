@@ -101,29 +101,33 @@ export default function Analytics() {
                 title="Visualizações"
                 value={quizAnalytics.totalViews || 0}
                 icon={<Eye className="w-5 h-5 text-blue-600" />}
-                change={12}
-                changeType="increase"
+                color="blue"
+                change="+12%"
+                changeType="positive"
               />
               <StatsCard
                 title="Leads Gerados"
                 value={quizAnalytics.totalLeads || 0}
                 icon={<Users className="w-5 h-5 text-green-600" />}
-                change={8}
-                changeType="increase"
+                color="green"
+                change="+8%"
+                changeType="positive"
               />
               <StatsCard
                 title="Taxa de Conversão"
                 value={`${quizAnalytics.conversionRate || 0}%`}
                 icon={<TrendingUp className="w-5 h-5 text-purple-600" />}
-                change={5}
-                changeType="increase"
+                color="purple"
+                change="+5%"
+                changeType="positive"
               />
               <StatsCard
                 title="Completados"
                 value={quizAnalytics.completedCount || 0}
                 icon={<BarChart3 className="w-5 h-5 text-orange-600" />}
-                change={3}
-                changeType="increase"
+                color="orange"
+                change="+3%"
+                changeType="positive"
               />
             </div>
           ) : (
@@ -158,29 +162,33 @@ export default function Analytics() {
             title="Total de Quizzes"
             value={dashboardStats?.totalQuizzes || 0}
             icon={<BarChart3 className="w-5 h-5 text-blue-600" />}
-            change={5}
-            changeType="increase"
+            color="blue"
+            change="+5%"
+            changeType="positive"
           />
           <StatsCard
             title="Total de Leads"
             value={dashboardStats?.totalLeads || 0}
             icon={<Users className="w-5 h-5 text-green-600" />}
-            change={12}
-            changeType="increase"
+            color="green"
+            change="+12%"
+            changeType="positive"
           />
           <StatsCard
             title="Total de Visualizações"
             value={dashboardStats?.totalViews || 0}
             icon={<Eye className="w-5 h-5 text-purple-600" />}
-            change={8}
-            changeType="increase"
+            color="purple"
+            change="+8%"
+            changeType="positive"
           />
           <StatsCard
             title="Taxa Média de Conversão"
             value={`${dashboardStats?.avgConversionRate || 0}%`}
             icon={<TrendingUp className="w-5 h-5 text-orange-600" />}
-            change={3}
-            changeType="increase"
+            color="orange"
+            change="+3%"
+            changeType="positive"
           />
         </div>
 
