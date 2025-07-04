@@ -74,11 +74,23 @@ export default function QuizBuilder() {
   const [activeTab, setActiveTab] = useState<"editor" | "preview" | "settings" | "design" | "analytics">("editor");
 
   // Fetch quiz data if editing
-  const { data: existingQuiz, isLoading: quizLoading } = useQuery({
+  const { data: existingQuiz, isLoading: quizLoading, error: quizError } = useQuery({
     queryKey: [`/api/quizzes/${quizId}`],
     enabled: !!isEditing && !!quizId,
     retry: false,
   });
+
+  // Debug logs
+  useEffect(() => {
+    console.log("Quiz Builder Debug:", {
+      isEditing,
+      quizId,
+      existingQuiz,
+      quizLoading,
+      quizError,
+      quizDataTitle: quizData.title
+    });
+  }, [isEditing, quizId, existingQuiz, quizLoading, quizError, quizData.title]);;
 
   // Save quiz mutation
   const saveMutation = useMutation({
