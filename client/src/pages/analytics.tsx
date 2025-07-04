@@ -39,7 +39,7 @@ export default function Analytics() {
   // Fetch user's quizzes for general view
   const { data: userQuizzes, isLoading: quizzesLoading } = useQuery({
     queryKey: ["/api/quizzes"],
-    enabled: isAuthenticated && !selectedQuizId,
+    enabled: isAuthenticated,
     retry: false,
   });
 
@@ -64,7 +64,7 @@ export default function Analytics() {
     }
   }, [isAuthenticated, authLoading, toast]);
 
-  if (authLoading || statsLoading || quizzesLoading || quizAnalyticsLoading) {
+  if (authLoading || (selectedQuizId ? quizAnalyticsLoading : (statsLoading || quizzesLoading))) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full" />
@@ -236,7 +236,7 @@ export default function Analytics() {
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => navigate(`/analytics?quiz=${quiz.id}`)}
+                        onClick={() => navigate(`/super-analytics?quiz=${quiz.id}`)}
                         className="flex items-center gap-1"
                       >
                         Ver Detalhes
