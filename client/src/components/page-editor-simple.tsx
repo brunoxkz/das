@@ -60,6 +60,7 @@ export function PageEditor({ pages, onPagesChange }: PageEditorProps) {
   const [activePage, setActivePage] = useState(0);
   const [selectedElement, setSelectedElement] = useState<number | null>(null);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [activeTab, setActiveTab] = useState<'pages' | 'elements'>('pages');
 
   const elementTypes = [
     { type: "heading" as const, label: "Título", icon: <Heading1 className="w-4 h-4" /> },
@@ -270,9 +271,9 @@ export function PageEditor({ pages, onPagesChange }: PageEditorProps) {
   }
 
   return (
-    <div className="flex h-screen">
+    <div className="flex h-screen overflow-hidden">
       {/* Sidebar esquerdo com funcionalidade de recolher */}
-      <div className={`${sidebarCollapsed ? 'w-12' : 'w-80'} border-r bg-gray-50 transition-all duration-300 relative flex-shrink-0`}>
+      <div className={`${sidebarCollapsed ? 'w-12' : 'w-80'} border-r bg-gray-50 transition-all duration-300 relative flex-shrink-0 min-h-0`}>
         {/* Botão de recolher/expandir */}
         <Button
           size="sm"
@@ -284,70 +285,122 @@ export function PageEditor({ pages, onPagesChange }: PageEditorProps) {
         </Button>
 
         {!sidebarCollapsed && (
-          <div className="p-4 space-y-4 h-full overflow-y-auto">
-            {/* Gerenciamento de Páginas */}
-            <div>
-              <div className="flex items-center justify-between mb-3">
-                <h3 className="font-semibold text-gray-900">Páginas</h3>
-                <Button size="sm" onClick={addPage}>
-                  <Plus className="w-4 h-4 mr-1" />
-                  Nova
-                </Button>
-              </div>
-              
-              <Tabs value={activePage.toString()} onValueChange={(value) => setActivePage(parseInt(value))}>
-                <TabsList className="grid w-full grid-cols-1 gap-1 h-auto p-1">
-                  {pages.map((page, index) => (
-                    <div key={page.id} className="flex items-center gap-2">
-                      <TabsTrigger value={index.toString()} className="flex-1 text-left">
-                        {page.title}
-                      </TabsTrigger>
-                      {pages.length > 1 && (
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          onClick={() => deletePage(index)}
-                          className="h-8 w-8 p-0"
-                        >
-                          <Trash2 className="w-3 h-3" />
-                        </Button>
-                      )}
-                    </div>
-                  ))}
-                </TabsList>
-              </Tabs>
+          <div className="flex-1 flex flex-col">
+            {/* Abas */}
+            <div className="flex border-b bg-white">
+              <button
+                className={`flex-1 px-4 py-3 text-sm font-medium flex items-center justify-center gap-2 ${
+                  activeTab === 'pages'
+                    ? 'text-vendzz-primary border-b-2 border-vendzz-primary bg-vendzz-primary/5'
+                    : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
+                }`}
+                onClick={() => setActiveTab('pages')}
+              >
+                <FileText className="w-4 h-4" />
+                Páginas
+              </button>
+              <button
+                className={`flex-1 px-4 py-3 text-sm font-medium flex items-center justify-center gap-2 ${
+                  activeTab === 'elements'
+                    ? 'text-vendzz-primary border-b-2 border-vendzz-primary bg-vendzz-primary/5'
+                    : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
+                }`}
+                onClick={() => setActiveTab('elements')}
+              >
+                <Plus className="w-4 h-4" />
+                Elementos
+              </button>
             </div>
 
-            {/* Título da Página Ativa */}
-            {currentPage && (
-              <div>
-                <Label htmlFor="page-title">Título da Página</Label>
-                <Input
-                  id="page-title"
-                  value={currentPage.title}
-                  onChange={(e) => updatePageTitle(activePage, e.target.value)}
-                  className="mt-1"
-                />
-              </div>
-            )}
+            {/* Conteúdo das Abas */}
+            <div className="flex-1 overflow-y-auto p-4">
+              {activeTab === 'pages' && (
+                <div className="space-y-4">
+                  {/* Controles de Página */}
+                  <div>
+                    <div className="flex items-center justify-between mb-3">
+                      <h3 className="font-semibold text-gray-900">Suas Páginas</h3>
+                      <Button size="sm" onClick={addPage}>
+                        <Plus className="w-4 h-4" />
+                      </Button>
+                    </div>
 
-            {/* Elementos Disponíveis */}
-            <div>
-              <h3 className="font-semibold text-gray-900 mb-3">Adicionar Elementos</h3>
-              <div className="grid grid-cols-1 gap-2">
-                {elementTypes.map((elementType) => (
-                  <Button
-                    key={elementType.type}
-                    variant="outline"
-                    size="sm"
-                    className="justify-start"
-                    onClick={() => addElement(elementType.type)}
-                  >
-                    {elementType.icon}
-                    <span className="ml-2">{elementType.label}</span>
-                  </Button>
-                ))}
-              </div>
+                    <div className="space-y-2">
+                      {pages.map((page, index) => (
+                        <div
+                          key={page.id}
+                          className={`flex items-center justify-between p-3 rounded border cursor-pointer transition-all ${
+                            activePage === index ? 'bg-vendzz-primary/10 border-vendzz-primary' : 'bg-white border-gray-200 hover:border-gray-300'
+                          }`}
+                          onClick={() => setActivePage(index)}
+                        >
+                          <div>
+                            <span className="text-sm font-medium block">{page.title}</span>
+                            <span className="text-xs text-gray-500">{page.elements.length} elementos</span>
+                          </div>
+                          <div className="flex items-center gap-1">
+                            {pages.length > 1 && (
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                className="w-6 h-6 p-0 text-red-500 hover:bg-red-50"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  deletePage(index);
+                                }}
+                              >
+                                <Trash2 className="w-3 h-3" />
+                              </Button>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Título da Página Ativa */}
+                  {currentPage && (
+                    <div>
+                      <Label htmlFor="page-title">Título da Página</Label>
+                      <Input
+                        id="page-title"
+                        value={currentPage.title}
+                        onChange={(e) => updatePageTitle(activePage, e.target.value)}
+                        className="mt-1"
+                        placeholder="Nome da página..."
+                      />
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {activeTab === 'elements' && (
+                <div>
+                  <div className="mb-4">
+                    <h3 className="font-semibold text-gray-900 mb-2">Adicionar Elementos</h3>
+                    <p className="text-xs text-gray-600">Clique em um elemento para adicioná-lo à página ativa</p>
+                  </div>
+                  <div className="grid grid-cols-1 gap-2">
+                    {elementTypes.map((elementType) => (
+                      <Button
+                        key={elementType.type}
+                        variant="outline"
+                        size="sm"
+                        className="justify-start h-auto p-3 hover:bg-vendzz-primary/5 hover:border-vendzz-primary"
+                        onClick={() => {
+                          addElement(elementType.type);
+                          setActiveTab('pages'); // Volta para aba de páginas após adicionar
+                        }}
+                      >
+                        <div className="flex items-center">
+                          {elementType.icon}
+                          <span className="ml-2 font-medium">{elementType.label}</span>
+                        </div>
+                      </Button>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         )}
@@ -371,13 +424,18 @@ export function PageEditor({ pages, onPagesChange }: PageEditorProps) {
       </div>
 
       {/* Área central - Preview da página */}
-      <div className="flex-1 overflow-y-auto p-6">
-        {currentPage ? (
-          <div className="max-w-2xl mx-auto">
-            <div className="mb-4">
+      <div className="flex-1 flex flex-col bg-white min-w-0 overflow-hidden">
+        <div className="p-4 border-b flex-shrink-0">
+          {currentPage && (
+            <div className="flex items-center gap-2">
               <Badge variant="outline">{currentPage.title}</Badge>
-              <h2 className="text-xl font-bold mt-2">Preview da Página</h2>
+              <h2 className="text-lg font-semibold">Preview da Página</h2>
             </div>
+          )}
+        </div>
+        <div className="flex-1 overflow-y-auto p-4 min-h-0">
+          {currentPage ? (
+            <div className="w-full space-y-4">
             
             <div className="space-y-4 border border-gray-200 rounded-lg p-6 bg-white min-h-[500px]">
               {currentPage.elements.length === 0 ? (
@@ -428,8 +486,11 @@ export function PageEditor({ pages, onPagesChange }: PageEditorProps) {
       </div>
 
       {/* Sidebar direito - Propriedades do elemento selecionado */}
-      <div className="w-80 border-l bg-gray-50 flex-shrink-0 overflow-y-auto">
-        <div className="p-4">
+      <div className="w-80 border-l bg-gray-50 flex-shrink-0 flex flex-col min-h-0 overflow-hidden">
+        <div className="p-4 border-b bg-white flex-shrink-0">
+          <h3 className="font-semibold text-gray-900">Propriedades</h3>
+        </div>
+        <div className="flex-1 overflow-y-auto p-4 min-h-0">
         {selectedElementData ? (
           <div className="space-y-4">
             <h3 className="font-semibold text-gray-900">Editar Elemento</h3>
@@ -702,5 +763,6 @@ export function PageEditor({ pages, onPagesChange }: PageEditorProps) {
         </div>
       </div>
     </div>
+  </div>
   );
 }

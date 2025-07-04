@@ -29,7 +29,7 @@ export function Sidebar() {
 
   // Auto-collapse when entering quiz builder
   useEffect(() => {
-    if (location.includes('/quiz-builder')) {
+    if (location.includes('/quiz-builder') || location.includes('/quizzes') && location.includes('/edit')) {
       setIsCollapsed(true);
     }
   }, [location]);

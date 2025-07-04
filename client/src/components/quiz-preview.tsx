@@ -41,7 +41,10 @@ export function QuizPreview({ quiz }: QuizPreviewProps) {
     phone: ""
   });
 
-  const { questions, settings } = quiz.structure;
+  const { pages, settings } = quiz.structure;
+  const questions = pages?.flatMap(page => page.elements.filter(el => 
+    ['multiple_choice', 'text', 'email', 'phone', 'number', 'rating'].includes(el.type)
+  )) || [];
   const totalSteps = questions.length + (settings.collectEmail || settings.collectName || settings.collectPhone ? 1 : 0) + 1; // +1 for result
   const progress = ((currentStep + 1) / totalSteps) * 100;
 
