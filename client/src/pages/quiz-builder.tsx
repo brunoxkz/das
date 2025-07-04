@@ -74,11 +74,36 @@ export default function QuizBuilder() {
   const [activeTab, setActiveTab] = useState<"editor" | "preview" | "settings" | "design" | "analytics">("editor");
 
   // Fetch quiz data if editing
+  console.log("QUIZ BUILDER - Estados:", { isEditing, quizId, shouldFetch: !!isEditing && !!quizId });
+  
   const { data: existingQuiz, isLoading: quizLoading, error: quizError } = useQuery({
     queryKey: [`/api/quizzes/${quizId}`],
+    queryFn: async () => {
+      const token = localStorage.getItem("accessToken");
+      console.log("QUIZ BUILDER - Fazendo requisição para:", `/api/quizzes/${quizId}`, "com token:", !!token);
+      
+      const response = await fetch(`/api/quizzes/${quizId}`, {
+        headers: {
+          "Authorization": `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      });
+      
+      console.log("QUIZ BUILDER - Response status:", response.status);
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      const data = await response.json();
+      console.log("QUIZ BUILDER - Dados recebidos:", data);
+      return data;
+    },
     enabled: !!isEditing && !!quizId,
     retry: false,
   });
+  
+  console.log("QUIZ BUILDER - Query result:", { existingQuiz, quizLoading, quizError });
 
 
 
