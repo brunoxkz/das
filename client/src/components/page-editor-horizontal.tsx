@@ -749,38 +749,40 @@ export function PageEditorHorizontal({ pages, onPagesChange }: PageEditorProps) 
       </div>
 
       {/* 2. Painel Elementos */}
-      <div className="w-64 border-r bg-white flex-shrink-0 flex flex-col">
-        <div className="p-4 border-b bg-vendzz-primary text-white">
+      <div className="w-64 border-r bg-white flex-shrink-0 flex flex-col h-full">
+        <div className="p-4 border-b bg-vendzz-primary text-white flex-shrink-0">
           <h3 className="font-semibold flex items-center gap-2">
             <Plus className="w-4 h-4" />
             Elementos
           </h3>
         </div>
-        <div className="flex-1 overflow-y-auto p-4">
-          <div className="space-y-4">
-            {elementCategories.map((category) => (
-              <div key={category.name}>
-                <h4 className="text-xs font-semibold text-gray-600 mb-2 px-2">
-                  {category.name}
-                </h4>
-                <div className="grid grid-cols-1 gap-2">
-                  {category.elements.map((elementType) => (
-                    <Button
-                      key={elementType.type}
-                      variant="outline"
-                      size="sm"
-                      className="justify-start h-auto p-3 hover:bg-vendzz-primary/5 hover:border-vendzz-primary"
-                      onClick={() => addElement(elementType.type as Element["type"])}
-                    >
-                      <div className="flex items-center">
-                        {elementType.icon}
-                        <span className="ml-2 font-medium text-xs">{elementType.label}</span>
-                      </div>
-                    </Button>
-                  ))}
+        <div className="flex-1 overflow-y-auto min-h-0" style={{ maxHeight: 'calc(100vh - 73px)' }}>
+          <div className="p-4">
+            <div className="space-y-4 pb-4">
+              {elementCategories.map((category) => (
+                <div key={category.name}>
+                  <h4 className="text-xs font-semibold text-gray-600 mb-2 px-2 sticky top-0 bg-white py-1 z-10">
+                    {category.name}
+                  </h4>
+                  <div className="grid grid-cols-1 gap-2">
+                    {category.elements.map((elementType) => (
+                      <Button
+                        key={elementType.type}
+                        variant="outline"
+                        size="sm"
+                        className="justify-start h-auto p-3 hover:bg-vendzz-primary/5 hover:border-vendzz-primary"
+                        onClick={() => addElement(elementType.type as Element["type"])}
+                      >
+                        <div className="flex items-center">
+                          {elementType.icon}
+                          <span className="ml-2 font-medium text-xs">{elementType.label}</span>
+                        </div>
+                      </Button>
+                    ))}
+                  </div>
                 </div>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
         </div>
       </div>
