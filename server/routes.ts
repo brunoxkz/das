@@ -3,7 +3,7 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import Stripe from "stripe";
 import { storage } from "./storage";
-import { verifyJWT, generateTokens } from "./auth";
+import { setupAuth, isAuthenticated } from "./replitAuth";
 import { 
   insertQuizSchema, 
   insertQuizResponseSchema, 
@@ -11,7 +11,6 @@ import {
   insertQuizAnalyticsSchema 
 } from "@shared/schema";
 import { z } from "zod";
-import bcrypt from "bcryptjs";
 
 if (!process.env.STRIPE_SECRET_KEY) {
   console.warn('STRIPE_SECRET_KEY not found - Stripe functionality will be disabled');
@@ -41,13 +40,11 @@ export function registerRoutes(app: Express): Server {
       const hashedPassword = await bcrypt.hash(password, 12);
 
       // Create user
-      const user = await storage.createUser({
+      const user = await storage.createUserWithPassword({
         email,
         password: hashedPassword,
         firstName,
-        lastName: lastName || "",
-        role: "user",
-        plan: "free"
+        lastName: lastName || ""
       });
 
       // Generate tokens
