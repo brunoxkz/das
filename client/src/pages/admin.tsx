@@ -64,10 +64,20 @@ export default function AdminPage() {
   const [newRole, setNewRole] = useState<string>('');
 
   // Fetch all users
-  const { data: users, isLoading } = useQuery<User[]>({
+  const { data: users, isLoading, error } = useQuery<User[]>({
     queryKey: ['/api/admin/users'],
+    queryFn: async () => {
+      console.log("ADMIN - Buscando usuários...");
+      const response = await apiRequest('GET', '/api/admin/users');
+      console.log("ADMIN - Response status:", response.status);
+      const data = await response.json();
+      console.log("ADMIN - Users data:", data);
+      return data;
+    },
     enabled: user?.role === 'admin'
   });
+
+  console.log("ADMIN - Estado atual:", { user: user?.role, users, isLoading, error });
 
   // Update user role mutation
   const updateRoleMutation = useMutation({

@@ -261,6 +261,24 @@ export default function SuperAnalytics() {
     pageAnalytics: []
   };
 
+  // Ensure pageAnalytics exists and has data structure
+  if (!analyticsData.pageAnalytics || analyticsData.pageAnalytics.length === 0) {
+    // Generate page analytics from quiz structure if not available
+    const pages = quiz?.structure?.pages || [];
+    analyticsData.pageAnalytics = pages.map((page: any, index: number) => ({
+      pageId: page.id,
+      pageName: page.title || `Página ${index + 1}`,
+      pageType: page.isGame ? 'game' : page.isTransition ? 'transition' : 'normal',
+      views: 0,
+      clicks: 0,
+      dropOffs: 0,
+      clickRate: 0,
+      dropOffRate: 0,
+      avgTimeOnPage: 0,
+      nextPageViews: 0
+    }));
+  }
+
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;

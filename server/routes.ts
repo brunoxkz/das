@@ -281,7 +281,9 @@ export function registerRoutes(app: Express): Server {
       if (req.user!.role !== "admin") {
         return res.status(403).json({ message: "Admin access required" });
       }
+      console.log("ADMIN USERS - Buscando todos os usuários...");
       const users = await storage.getAllUsers();
+      console.log("ADMIN USERS - Usuários encontrados:", users.length);
       res.json(users);
     } catch (error) {
       console.error("Error fetching users:", error);
