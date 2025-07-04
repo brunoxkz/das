@@ -37,10 +37,13 @@ Vendzz is a modern, futuristic SaaS quiz funnel platform focused on lead generat
 - **User Management**: Automatic user creation and profile management
 
 ### Quiz Management
-- **Builder**: Visual drag-and-drop quiz editor with live preview
+- **Builder**: Visual page-based quiz editor with auto-collapsing sidebar
 - **Templates**: Pre-built quiz templates for different use cases
-- **Questions**: Support for multiple choice, text input, rating, and email capture
+- **Questions**: Support for multiple choice, text input, rating, email capture, numbers, dates
+- **Element Editor**: Comprehensive properties for each element (required fields, placeholders, min/max values)
+- **Lead Capture**: Custom field IDs for automatic lead data collection
 - **Customization**: Theme selection, progress bars, and lead collection settings
+- **Interface**: Clean separation between Editor, Preview, and Configuration tabs
 
 ### Payment Integration
 - **Provider**: Stripe for subscription management
@@ -123,6 +126,17 @@ Changelog:
 - July 03, 2025. Rebrand to Vendzz with green futuristic theme
 - July 03, 2025. Fixed 404 errors for "Meus Quizzes" and "Configurações" pages
 - July 03, 2025. Implemented Vendzz logo and modern green color scheme
+- July 04, 2025. Major UX improvements to quiz editor:
+  * Auto-collapse main sidebar when entering quiz builder
+  * Moved quiz title/description to dedicated "Configurações" tab
+  * Enhanced element editor with comprehensive properties:
+    - Required fields with visual indicators (*)
+    - Custom placeholders for all input types
+    - Multiple choice with add/remove options
+    - Min/max values for number inputs
+    - Field IDs for lead capture integration
+  * Clean editor interface with full-width workspace
+  * Fixed save functionality - data persistence working correctly
 ```
 
 ## User Preferences
