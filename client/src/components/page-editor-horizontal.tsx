@@ -2681,6 +2681,67 @@ const transitionElementCategories = [
                       />
                     </div>
                   </div>
+
+                  <div className="border rounded-lg p-3 bg-gray-50">
+                    <h4 className="font-semibold text-sm mb-3">Redirecionamento</h4>
+                    
+                    <div className="space-y-3">
+                      <div>
+                        <Label>Após Carregamento</Label>
+                        <select 
+                          className="w-full px-3 py-2 border rounded-md mt-1"
+                          value={selectedElementData.redirectAction || "manual"}
+                          onChange={(e) => updateElement(selectedElementData.id, { redirectAction: e.target.value })}
+                        >
+                          <option value="manual">Não Redirecionar (Manual)</option>
+                          <option value="next_page">Próxima Página</option>
+                          <option value="custom_url">URL Customizada</option>
+                        </select>
+                      </div>
+
+                      {selectedElementData.redirectAction !== "manual" && (
+                        <div>
+                          <Label>Tempo de Carregamento (segundos)</Label>
+                          <Input
+                            type="number"
+                            min="1"
+                            max="60"
+                            value={selectedElementData.redirectDelay || 5}
+                            onChange={(e) => updateElement(selectedElementData.id, { redirectDelay: parseInt(e.target.value) })}
+                            placeholder="5"
+                            className="mt-1"
+                          />
+                        </div>
+                      )}
+
+                      {selectedElementData.redirectAction === "custom_url" && (
+                        <div>
+                          <Label>URL de Destino</Label>
+                          <Input
+                            value={selectedElementData.redirectUrl || ""}
+                            onChange={(e) => updateElement(selectedElementData.id, { redirectUrl: e.target.value })}
+                            placeholder="https://exemplo.com"
+                            className="mt-1"
+                          />
+                        </div>
+                      )}
+
+                      {selectedElementData.redirectAction !== "manual" && (
+                        <div className="flex items-center space-x-2">
+                          <input
+                            type="checkbox"
+                            id="showCounter"
+                            checked={selectedElementData.showRedirectCounter || false}
+                            onChange={(e) => updateElement(selectedElementData.id, { showRedirectCounter: e.target.checked })}
+                            className="w-4 h-4"
+                          />
+                          <Label htmlFor="showCounter" className="text-sm">
+                            Mostrar contador regressivo
+                          </Label>
+                        </div>
+                      )}
+                    </div>
+                  </div>
                 </div>
               )}
 

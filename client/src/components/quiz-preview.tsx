@@ -156,8 +156,9 @@ export function QuizPreview({ quiz }: QuizPreviewProps) {
   const renderTransitionPage = (page: any, pageIndex: number) => {
     // Buscar elemento de redirect se existir
     const redirectElement = page.elements.find((el: any) => el.type === 'transition_redirect');
+    const loaderElement = page.elements.find((el: any) => el.type === 'transition_loader');
     
-    // Só auto-avançar se houver elemento de redirect configurado
+    // Verificar redirecionamento do elemento redirect
     if (redirectElement && redirectElement.redirectDelay) {
       setTimeout(() => {
         if (currentStep === pageIndex) {
@@ -165,12 +166,25 @@ export function QuizPreview({ quiz }: QuizPreviewProps) {
         }
       }, redirectElement.redirectDelay * 1000);
     }
+    
+    // Verificar redirecionamento do elemento loader
+    if (loaderElement && loaderElement.redirectAction !== 'manual' && loaderElement.redirectDelay) {
+      setTimeout(() => {
+        if (currentStep === pageIndex) {
+          if (loaderElement.redirectAction === 'custom_url' && loaderElement.redirectUrl) {
+            window.open(loaderElement.redirectUrl, '_blank');
+          } else {
+            handleNext();
+          }
+        }
+      }, loaderElement.redirectDelay * 1000);
+    }
 
     // Buscar elementos de fundo
     const backgroundElement = page.elements.find((el: any) => el.type === 'transition_background');
     const textElement = page.elements.find((el: any) => el.type === 'transition_text');
     const counterElement = page.elements.find((el: any) => el.type === 'transition_counter');
-    const loaderElement = page.elements.find((el: any) => el.type === 'transition_loader');
+    const loader = page.elements.find((el: any) => el.type === 'transition_loader');
 
     // Aplicar estilo de fundo
     let backgroundStyle: any = {};
@@ -229,31 +243,31 @@ export function QuizPreview({ quiz }: QuizPreviewProps) {
         )}
 
         {/* Loader */}
-        {loaderElement && (
+        {loader && (
           <div className="mb-6 flex justify-center">
-            {loaderElement.loaderType === 'spinner' && (
+            {loader.loaderType === 'spinner' && (
               <div 
                 className={`animate-spin rounded-full border-4 border-t-transparent ${
-                  loaderElement.loaderSize === 'sm' ? 'w-8 h-8' :
-                  loaderElement.loaderSize === 'lg' ? 'w-16 h-16' : 'w-12 h-12'
+                  loader.loaderSize === 'sm' ? 'w-8 h-8' :
+                  loader.loaderSize === 'lg' ? 'w-16 h-16' : 'w-12 h-12'
                 }`}
                 style={{ 
-                  borderColor: `${loaderElement.loaderColor || '#10b981'} transparent transparent transparent`
+                  borderColor: `${loader.loaderColor || '#10b981'} transparent transparent transparent`
                 }}
               />
             )}
             
-            {loaderElement.loaderType === 'dots' && (
+            {loader.loaderType === 'dots' && (
               <div className="flex space-x-2">
                 {[0, 1, 2].map(i => (
                   <div 
                     key={i}
                     className={`animate-bounce rounded-full ${
-                      loaderElement.loaderSize === 'sm' ? 'w-2 h-2' :
-                      loaderElement.loaderSize === 'lg' ? 'w-4 h-4' : 'w-3 h-3'
+                      loader.loaderSize === 'sm' ? 'w-2 h-2' :
+                      loader.loaderSize === 'lg' ? 'w-4 h-4' : 'w-3 h-3'
                     }`}
                     style={{ 
-                      backgroundColor: loaderElement.loaderColor || '#10b981',
+                      backgroundColor: loader.loaderColor || '#10b981',
                       animationDelay: `${i * 0.1}s`
                     }}
                   />
@@ -261,17 +275,17 @@ export function QuizPreview({ quiz }: QuizPreviewProps) {
               </div>
             )}
 
-            {loaderElement.loaderType === 'bars' && (
+            {loader.loaderType === 'bars' && (
               <div className="flex space-x-1 items-end">
                 {[0, 1, 2, 3, 4].map(i => (
                   <div 
                     key={i}
                     className={`animate-pulse ${
-                      loaderElement.loaderSize === 'sm' ? 'w-1 h-6' :
-                      loaderElement.loaderSize === 'lg' ? 'w-2 h-12' : 'w-1.5 h-8'
+                      loader.loaderSize === 'sm' ? 'w-1 h-6' :
+                      loader.loaderSize === 'lg' ? 'w-2 h-12' : 'w-1.5 h-8'
                     }`}
                     style={{ 
-                      backgroundColor: loaderElement.loaderColor || '#10b981',
+                      backgroundColor: loader.loaderColor || '#10b981',
                       animationDelay: `${i * 0.1}s`
                     }}
                   />
@@ -279,25 +293,25 @@ export function QuizPreview({ quiz }: QuizPreviewProps) {
               </div>
             )}
 
-            {loaderElement.loaderType === 'pulse' && (
+            {loader.loaderType === 'pulse' && (
               <div 
                 className={`animate-pulse rounded-full ${
-                  loaderElement.loaderSize === 'sm' ? 'w-8 h-8' :
-                  loaderElement.loaderSize === 'lg' ? 'w-16 h-16' : 'w-12 h-12'
+                  loader.loaderSize === 'sm' ? 'w-8 h-8' :
+                  loader.loaderSize === 'lg' ? 'w-16 h-16' : 'w-12 h-12'
                 }`}
-                style={{ backgroundColor: loaderElement.loaderColor || '#10b981' }}
+                style={{ backgroundColor: loader.loaderColor || '#10b981' }}
               />
             )}
 
-            {loaderElement.loaderType === 'ring' && (
+            {loader.loaderType === 'ring' && (
               <div 
                 className={`animate-spin rounded-full border-2 ${
-                  loaderElement.loaderSize === 'sm' ? 'w-8 h-8' :
-                  loaderElement.loaderSize === 'lg' ? 'w-16 h-16' : 'w-12 h-12'
+                  loader.loaderSize === 'sm' ? 'w-8 h-8' :
+                  loader.loaderSize === 'lg' ? 'w-16 h-16' : 'w-12 h-12'
                 }`}
                 style={{ 
-                  borderColor: `${loaderElement.loaderColor || '#10b981'}20`,
-                  borderTopColor: loaderElement.loaderColor || '#10b981'
+                  borderColor: `${loader.loaderColor || '#10b981'}20`,
+                  borderTopColor: loader.loaderColor || '#10b981'
                 }}
               />
             )}
@@ -305,13 +319,13 @@ export function QuizPreview({ quiz }: QuizPreviewProps) {
         )}
 
         {/* Texto do loader alternado */}
-        {loaderElement && loaderElement.alternatingText1 && (
+        {loader && loader.alternatingText1 && (
           <div className="mb-4">
             <p 
               className="text-lg"
-              style={{ color: loaderElement.loaderColor || '#666666' }}
+              style={{ color: loader.loaderColor || '#666666' }}
             >
-              {loaderElement.alternatingText1}
+              {loader.alternatingText1}
             </p>
           </div>
         )}
@@ -321,6 +335,18 @@ export function QuizPreview({ quiz }: QuizPreviewProps) {
           <div className="mt-6">
             <p className="text-sm text-gray-600">
               Redirecionando em {redirectElement.redirectDelay || 5} segundos...
+            </p>
+          </div>
+        )}
+
+        {/* Contador do loader */}
+        {loader && loader.redirectAction !== 'manual' && loader.showRedirectCounter && (
+          <div className="mt-6">
+            <p className="text-sm text-gray-600">
+              {loader.redirectAction === 'custom_url' 
+                ? `Redirecionando para ${loader.redirectUrl || 'URL'} em ${loader.redirectDelay || 5} segundos...`
+                : `Avançando em ${loader.redirectDelay || 5} segundos...`
+              }
             </p>
           </div>
         )}
