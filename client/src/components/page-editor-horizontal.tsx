@@ -32,7 +32,7 @@ import {
 
 interface Element {
   id: number;
-  type: "multiple_choice" | "text" | "rating" | "email" | "checkbox" | "date" | "phone" | "number" | "textarea" | "image_upload" | "animated_transition" | "heading" | "paragraph" | "image" | "divider" | "video";
+  type: "multiple_choice" | "text" | "rating" | "email" | "checkbox" | "date" | "phone" | "number" | "textarea" | "image_upload" | "animated_transition" | "heading" | "paragraph" | "image" | "divider" | "video" | "birth_date" | "height" | "current_weight" | "target_weight";
   content: string;
   question?: string;
   description?: string;
@@ -63,6 +63,12 @@ interface Element {
   borderStyle?: string;
   shadowStyle?: string;
   hideInputs?: boolean;
+  // Novos campos para elementos específicos
+  unit?: "cm" | "m"; // Para altura
+  showAgeCalculation?: boolean; // Para data de nascimento
+  showBMICalculation?: boolean; // Para peso
+  minAge?: number;
+  maxAge?: number;
 }
 
 interface QuizPage {
@@ -80,7 +86,7 @@ export function PageEditorHorizontal({ pages, onPagesChange }: PageEditorProps) 
   const [activePage, setActivePage] = useState(0);
   const [selectedElement, setSelectedElement] = useState<number | null>(null);
   const [activeTab, setActiveTab] = useState<'visual' | 'comportamento'>('visual');
-  const [showEmojiPicker, setShowEmojiPicker] = useState<number | null>(null);
+
 
   // Função para traduzir os tipos de elementos
   const getElementTypeName = (type: string) => {
@@ -99,6 +105,10 @@ export function PageEditorHorizontal({ pages, onPagesChange }: PageEditorProps) 
       animated_transition: "Transição Animada",
       checkbox: "Checkbox",
       date: "Data",
+      birth_date: "Data de Nascimento",
+      height: "Altura",
+      current_weight: "Peso Atual",
+      target_weight: "Peso Desejado",
       textarea: "Área de Texto",
       image_upload: "Upload de Imagem"
     };
@@ -169,21 +179,45 @@ export function PageEditorHorizontal({ pages, onPagesChange }: PageEditorProps) 
     return null;
   };
 
-  const elementTypes = [
-    { type: "heading", label: "Título", icon: <Type className="w-4 h-4" /> },
-    { type: "paragraph", label: "Texto", icon: <AlignLeft className="w-4 h-4" /> },
-    { type: "multiple_choice", label: "Múltipla", icon: <CheckSquare className="w-4 h-4" /> },
-    { type: "text", label: "Campo", icon: <FileText className="w-4 h-4" /> },
-    { type: "email", label: "Email", icon: <Mail className="w-4 h-4" /> },
-    { type: "phone", label: "Telefone", icon: <Phone className="w-4 h-4" /> },
-    { type: "number", label: "Número", icon: <Hash className="w-4 h-4" /> },
-    { type: "rating", label: "Estrelas", icon: <Star className="w-4 h-4" /> },
-    { type: "date", label: "Data", icon: <Calendar className="w-4 h-4" /> },
-    { type: "textarea", label: "Área", icon: <TextArea className="w-4 h-4" /> },
-    { type: "image", label: "Imagem", icon: <ImageIcon className="w-4 h-4" /> },
-    { type: "image_upload", label: "Upload", icon: <Upload className="w-4 h-4" /> },
-    { type: "video", label: "Vídeo", icon: <Video className="w-4 h-4" /> },
-    { type: "divider", label: "Linha", icon: <Minus className="w-4 h-4" /> },
+  const elementCategories = [
+    {
+      name: "📝 Conteúdo",
+      elements: [
+        { type: "heading", label: "Título", icon: <Type className="w-4 h-4" /> },
+        { type: "paragraph", label: "Texto", icon: <AlignLeft className="w-4 h-4" /> },
+        { type: "divider", label: "Linha", icon: <Minus className="w-4 h-4" /> },
+      ]
+    },
+    {
+      name: "❓ Perguntas",
+      elements: [
+        { type: "multiple_choice", label: "Múltipla", icon: <CheckSquare className="w-4 h-4" /> },
+        { type: "text", label: "Campo", icon: <FileText className="w-4 h-4" /> },
+        { type: "email", label: "Email", icon: <Mail className="w-4 h-4" /> },
+        { type: "phone", label: "Telefone", icon: <Phone className="w-4 h-4" /> },
+        { type: "number", label: "Número", icon: <Hash className="w-4 h-4" /> },
+        { type: "rating", label: "Estrelas", icon: <Star className="w-4 h-4" /> },
+        { type: "date", label: "Data", icon: <Calendar className="w-4 h-4" /> },
+        { type: "textarea", label: "Área", icon: <TextArea className="w-4 h-4" /> },
+      ]
+    },
+    {
+      name: "📋 Formulário",
+      elements: [
+        { type: "birth_date", label: "Nascimento", icon: <Calendar className="w-4 h-4" /> },
+        { type: "height", label: "Altura", icon: <Hash className="w-4 h-4" /> },
+        { type: "current_weight", label: "Peso Atual", icon: <Hash className="w-4 h-4" /> },
+        { type: "target_weight", label: "Peso Meta", icon: <Hash className="w-4 h-4" /> },
+      ]
+    },
+    {
+      name: "🎨 Mídia",
+      elements: [
+        { type: "image", label: "Imagem", icon: <ImageIcon className="w-4 h-4" /> },
+        { type: "image_upload", label: "Upload", icon: <Upload className="w-4 h-4" /> },
+        { type: "video", label: "Vídeo", icon: <Video className="w-4 h-4" /> },
+      ]
+    }
   ];
 
   const currentPage = pages[activePage];
@@ -211,17 +245,37 @@ export function PageEditorHorizontal({ pages, onPagesChange }: PageEditorProps) 
   };
 
   const addElement = (type: Element["type"]) => {
-    const newElement: Element = {
+    const baseElement: Element = {
       id: Date.now(),
       type,
       content: type === "heading" ? "Novo título" : type === "paragraph" ? "Novo parágrafo" : "",
-      question: type === "multiple_choice" ? "Nova pergunta" : undefined,
+      question: type === "multiple_choice" ? "Nova pergunta" : 
+                type === "birth_date" ? "Data de Nascimento" :
+                type === "height" ? "Qual sua altura?" :
+                type === "current_weight" ? "Qual seu peso atual?" :
+                type === "target_weight" ? "Qual seu peso desejado?" : undefined,
       options: type === "multiple_choice" ? ["Opção 1", "Opção 2"] : undefined,
       required: false,
       fieldId: `campo_${Date.now()}`,
       placeholder: "",
       fontSize: "base",
       textAlign: "left"
+    };
+
+    // Adicionar propriedades específicas por tipo
+    const newElement: Element = {
+      ...baseElement,
+      ...(type === "birth_date" && {
+        showAgeCalculation: true,
+        minAge: 16,
+        maxAge: 100
+      }),
+      ...(type === "height" && {
+        unit: "cm" as const
+      }),
+      ...(type === "current_weight" && {
+        showBMICalculation: true
+      })
     };
 
     const updatedPages = pages.map((page, index) => {
@@ -373,9 +427,6 @@ export function PageEditorHorizontal({ pages, onPagesChange }: PageEditorProps) 
                     />
                   )}
                   <span className="text-sm flex-1 font-medium">{option}</span>
-                  {element.optionIcons?.[index] && (
-                    <span className="text-xl">{element.optionIcons[index]}</span>
-                  )}
                 </div>
               ))}
             </div>
@@ -541,6 +592,99 @@ export function PageEditorHorizontal({ pages, onPagesChange }: PageEditorProps) 
             )}
           </div>
         );
+      case "birth_date":
+        return (
+          <div className="space-y-2">
+            <label className="block text-sm font-medium text-gray-700">
+              {element.question || "Data de Nascimento"}
+              {element.required && <span className="text-red-500 ml-1">*</span>}
+            </label>
+            <input
+              type="date"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md"
+              placeholder="DD/MM/AAAA"
+            />
+            {element.showAgeCalculation && (
+              <div className="text-xs text-gray-500 bg-blue-50 p-2 rounded">
+                💡 Idade será calculada automaticamente
+              </div>
+            )}
+          </div>
+        );
+      case "height":
+        return (
+          <div className="space-y-2">
+            <label className="block text-sm font-medium text-gray-700">
+              {element.question || "Altura"}
+              {element.required && <span className="text-red-500 ml-1">*</span>}
+            </label>
+            <div className="flex">
+              <input
+                type="number"
+                step="0.01"
+                min={element.unit === "cm" ? "120" : "1.20"}
+                max={element.unit === "cm" ? "220" : "2.20"}
+                className="flex-1 px-3 py-2 border border-gray-300 rounded-l-md"
+                placeholder={element.unit === "cm" ? "175" : "1.75"}
+              />
+              <span className="px-3 py-2 bg-gray-100 border border-l-0 border-gray-300 rounded-r-md text-sm">
+                {element.unit || "cm"}
+              </span>
+            </div>
+          </div>
+        );
+      case "current_weight":
+        return (
+          <div className="space-y-2">
+            <label className="block text-sm font-medium text-gray-700">
+              {element.question || "Peso Atual"}
+              {element.required && <span className="text-red-500 ml-1">*</span>}
+            </label>
+            <div className="flex">
+              <input
+                type="number"
+                step="0.1"
+                min="30"
+                max="300"
+                className="flex-1 px-3 py-2 border border-gray-300 rounded-l-md"
+                placeholder="70.5"
+              />
+              <span className="px-3 py-2 bg-gray-100 border border-l-0 border-gray-300 rounded-r-md text-sm">
+                kg
+              </span>
+            </div>
+            {element.showBMICalculation && (
+              <div className="text-xs text-gray-500 bg-green-50 p-2 rounded">
+                📊 IMC será calculado automaticamente
+              </div>
+            )}
+          </div>
+        );
+      case "target_weight":
+        return (
+          <div className="space-y-2">
+            <label className="block text-sm font-medium text-gray-700">
+              {element.question || "Peso Desejado"}
+              {element.required && <span className="text-red-500 ml-1">*</span>}
+            </label>
+            <div className="flex">
+              <input
+                type="number"
+                step="0.1"
+                min="30"
+                max="300"
+                className="flex-1 px-3 py-2 border border-gray-300 rounded-l-md"
+                placeholder="65.0"
+              />
+              <span className="px-3 py-2 bg-gray-100 border border-l-0 border-gray-300 rounded-r-md text-sm">
+                kg
+              </span>
+            </div>
+            <div className="text-xs text-gray-500 bg-yellow-50 p-2 rounded">
+              🎯 Diferença será calculada automaticamente
+            </div>
+          </div>
+        );
       default:
         return <div className="text-sm text-gray-500">Elemento: {element.type}</div>;
     }
@@ -613,20 +757,29 @@ export function PageEditorHorizontal({ pages, onPagesChange }: PageEditorProps) 
           </h3>
         </div>
         <div className="flex-1 overflow-y-auto p-4">
-          <div className="grid grid-cols-1 gap-2">
-            {elementTypes.map((elementType) => (
-              <Button
-                key={elementType.type}
-                variant="outline"
-                size="sm"
-                className="justify-start h-auto p-3 hover:bg-vendzz-primary/5 hover:border-vendzz-primary"
-                onClick={() => addElement(elementType.type as Element["type"])}
-              >
-                <div className="flex items-center">
-                  {elementType.icon}
-                  <span className="ml-2 font-medium text-xs">{elementType.label}</span>
+          <div className="space-y-4">
+            {elementCategories.map((category) => (
+              <div key={category.name}>
+                <h4 className="text-xs font-semibold text-gray-600 mb-2 px-2">
+                  {category.name}
+                </h4>
+                <div className="grid grid-cols-1 gap-2">
+                  {category.elements.map((elementType) => (
+                    <Button
+                      key={elementType.type}
+                      variant="outline"
+                      size="sm"
+                      className="justify-start h-auto p-3 hover:bg-vendzz-primary/5 hover:border-vendzz-primary"
+                      onClick={() => addElement(elementType.type as Element["type"])}
+                    >
+                      <div className="flex items-center">
+                        {elementType.icon}
+                        <span className="ml-2 font-medium text-xs">{elementType.label}</span>
+                      </div>
+                    </Button>
+                  ))}
                 </div>
-              </Button>
+              </div>
             ))}
           </div>
         </div>
@@ -1168,52 +1321,49 @@ export function PageEditorHorizontal({ pages, onPagesChange }: PageEditorProps) 
                               </div>
                               
                               <div className="flex gap-2">
-                                {/* Botão de adicionar imagem */}
-                                <Button
-                                  size="sm"
-                                  variant={selectedElementData.optionImages?.[index] ? "default" : "outline"}
-                                  onClick={() => {
-                                    const newImages = [...(selectedElementData.optionImages || [])];
-                                    if (newImages[index]) {
-                                      newImages[index] = "";
-                                    } else {
-                                      newImages[index] = "https://via.placeholder.com/60x60";
-                                    }
-                                    updateElement(selectedElementData.id, { 
-                                      optionImages: newImages,
-                                      showImages: true
-                                    });
-                                  }}
-                                  className="text-xs"
-                                >
-                                  <ImageIcon className="w-3 h-3 mr-1" />
-                                  {selectedElementData.optionImages?.[index] ? "Remover" : "IMG"}
-                                </Button>
-                                
-                                {/* Seletor de emoji */}
-                                <div className="flex gap-1">
-                                  {["📝", "✅", "❌", "⭐", "💡", "🎯", "🔥", "💎"].map((emoji) => (
-                                    <Button
-                                      key={emoji}
-                                      size="sm"
-                                      variant={selectedElementData.optionIcons?.[index] === emoji ? "default" : "outline"}
-                                      onClick={() => {
-                                        const newIcons = [...(selectedElementData.optionIcons || [])];
-                                        if (newIcons[index] === emoji) {
-                                          newIcons[index] = "";
-                                        } else {
-                                          newIcons[index] = emoji;
+                                {/* Botão de adicionar/remover imagem */}
+                                <div className="relative">
+                                  <input
+                                    type="file"
+                                    accept="image/*"
+                                    onChange={async (e) => {
+                                      const file = e.target.files?.[0];
+                                      if (file) {
+                                        try {
+                                          const webpUrl = await convertToWebP(file);
+                                          const newImages = [...(selectedElementData.optionImages || [])];
+                                          newImages[index] = webpUrl;
+                                          updateElement(selectedElementData.id, { 
+                                            optionImages: newImages,
+                                            showImages: true
+                                          });
+                                        } catch (error) {
+                                          console.error("Erro ao converter imagem:", error);
                                         }
+                                      }
+                                      e.target.value = '';
+                                    }}
+                                    className="absolute inset-0 opacity-0 cursor-pointer"
+                                    id={`image-upload-${selectedElementData.id}-${index}`}
+                                  />
+                                  <Button
+                                    size="sm"
+                                    variant={selectedElementData.optionImages?.[index] ? "default" : "outline"}
+                                    className="text-xs"
+                                    onClick={(e) => {
+                                      if (selectedElementData.optionImages?.[index]) {
+                                        e.preventDefault();
+                                        const newImages = [...(selectedElementData.optionImages || [])];
+                                        newImages[index] = "";
                                         updateElement(selectedElementData.id, { 
-                                          optionIcons: newIcons,
-                                          showIcons: true
+                                          optionImages: newImages
                                         });
-                                      }}
-                                      className="text-xs p-1 w-8 h-8"
-                                    >
-                                      {emoji}
-                                    </Button>
-                                  ))}
+                                      }
+                                    }}
+                                  >
+                                    <ImageIcon className="w-3 h-3 mr-1" />
+                                    {selectedElementData.optionImages?.[index] ? "Remover" : "IMG"}
+                                  </Button>
                                 </div>
                               </div>
                               
@@ -1518,6 +1668,207 @@ export function PageEditorHorizontal({ pages, onPagesChange }: PageEditorProps) 
                       <option value="center">Centro</option>
                       <option value="right">Direita</option>
                     </select>
+                  </div>
+                </div>
+              )}
+
+              {/* Propriedades para Data de Nascimento */}
+              {selectedElementData.type === "birth_date" && (
+                <div className="space-y-4">
+                  <div>
+                    <Label htmlFor="birth-question">Pergunta</Label>
+                    <Input
+                      id="birth-question"
+                      value={selectedElementData.question || ""}
+                      onChange={(e) => updateElement(selectedElementData.id, { question: e.target.value })}
+                      className="mt-1"
+                      placeholder="Data de Nascimento"
+                    />
+                  </div>
+
+                  <div className="flex items-center space-x-2">
+                    <input
+                      type="checkbox"
+                      id="birth-required"
+                      checked={selectedElementData.required || false}
+                      onChange={(e) => updateElement(selectedElementData.id, { required: e.target.checked })}
+                    />
+                    <Label htmlFor="birth-required">Campo obrigatório</Label>
+                  </div>
+
+                  <div className="flex items-center space-x-2">
+                    <input
+                      type="checkbox"
+                      id="show-age"
+                      checked={selectedElementData.showAgeCalculation || false}
+                      onChange={(e) => updateElement(selectedElementData.id, { showAgeCalculation: e.target.checked })}
+                    />
+                    <Label htmlFor="show-age">Mostrar cálculo de idade</Label>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <Label className="text-xs">Idade Mínima</Label>
+                      <Input
+                        type="number"
+                        value={selectedElementData.minAge || 16}
+                        onChange={(e) => updateElement(selectedElementData.id, { minAge: parseInt(e.target.value) })}
+                        className="mt-1"
+                      />
+                    </div>
+                    <div>
+                      <Label className="text-xs">Idade Máxima</Label>
+                      <Input
+                        type="number"
+                        value={selectedElementData.maxAge || 100}
+                        onChange={(e) => updateElement(selectedElementData.id, { maxAge: parseInt(e.target.value) })}
+                        className="mt-1"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <Label htmlFor="birth-field-id">ID do Campo (para captura de leads)</Label>
+                    <Input
+                      id="birth-field-id"
+                      value={selectedElementData.fieldId || ""}
+                      onChange={(e) => updateElement(selectedElementData.id, { fieldId: e.target.value })}
+                      className="mt-1"
+                      placeholder="data_nascimento"
+                    />
+                  </div>
+                </div>
+              )}
+
+              {/* Propriedades para Altura */}
+              {selectedElementData.type === "height" && (
+                <div className="space-y-4">
+                  <div>
+                    <Label htmlFor="height-question">Pergunta</Label>
+                    <Input
+                      id="height-question"
+                      value={selectedElementData.question || ""}
+                      onChange={(e) => updateElement(selectedElementData.id, { question: e.target.value })}
+                      className="mt-1"
+                      placeholder="Qual sua altura?"
+                    />
+                  </div>
+
+                  <div className="flex items-center space-x-2">
+                    <input
+                      type="checkbox"
+                      id="height-required"
+                      checked={selectedElementData.required || false}
+                      onChange={(e) => updateElement(selectedElementData.id, { required: e.target.checked })}
+                    />
+                    <Label htmlFor="height-required">Campo obrigatório</Label>
+                  </div>
+
+                  <div>
+                    <Label className="text-xs">Unidade</Label>
+                    <select 
+                      className="w-full px-2 py-1 border rounded text-xs mt-1"
+                      value={selectedElementData.unit || "cm"}
+                      onChange={(e) => updateElement(selectedElementData.id, { unit: e.target.value as "cm" | "m" })}
+                    >
+                      <option value="cm">Centímetros (cm)</option>
+                      <option value="m">Metros (m)</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <Label htmlFor="height-field-id">ID do Campo (para captura de leads)</Label>
+                    <Input
+                      id="height-field-id"
+                      value={selectedElementData.fieldId || ""}
+                      onChange={(e) => updateElement(selectedElementData.id, { fieldId: e.target.value })}
+                      className="mt-1"
+                      placeholder="altura"
+                    />
+                  </div>
+                </div>
+              )}
+
+              {/* Propriedades para Peso Atual */}
+              {selectedElementData.type === "current_weight" && (
+                <div className="space-y-4">
+                  <div>
+                    <Label htmlFor="weight-question">Pergunta</Label>
+                    <Input
+                      id="weight-question"
+                      value={selectedElementData.question || ""}
+                      onChange={(e) => updateElement(selectedElementData.id, { question: e.target.value })}
+                      className="mt-1"
+                      placeholder="Qual seu peso atual?"
+                    />
+                  </div>
+
+                  <div className="flex items-center space-x-2">
+                    <input
+                      type="checkbox"
+                      id="weight-required"
+                      checked={selectedElementData.required || false}
+                      onChange={(e) => updateElement(selectedElementData.id, { required: e.target.checked })}
+                    />
+                    <Label htmlFor="weight-required">Campo obrigatório</Label>
+                  </div>
+
+                  <div className="flex items-center space-x-2">
+                    <input
+                      type="checkbox"
+                      id="show-bmi"
+                      checked={selectedElementData.showBMICalculation || false}
+                      onChange={(e) => updateElement(selectedElementData.id, { showBMICalculation: e.target.checked })}
+                    />
+                    <Label htmlFor="show-bmi">Mostrar cálculo de IMC</Label>
+                  </div>
+
+                  <div>
+                    <Label htmlFor="weight-field-id">ID do Campo (para captura de leads)</Label>
+                    <Input
+                      id="weight-field-id"
+                      value={selectedElementData.fieldId || ""}
+                      onChange={(e) => updateElement(selectedElementData.id, { fieldId: e.target.value })}
+                      className="mt-1"
+                      placeholder="peso_atual"
+                    />
+                  </div>
+                </div>
+              )}
+
+              {/* Propriedades para Peso Desejado */}
+              {selectedElementData.type === "target_weight" && (
+                <div className="space-y-4">
+                  <div>
+                    <Label htmlFor="target-question">Pergunta</Label>
+                    <Input
+                      id="target-question"
+                      value={selectedElementData.question || ""}
+                      onChange={(e) => updateElement(selectedElementData.id, { question: e.target.value })}
+                      className="mt-1"
+                      placeholder="Qual seu peso desejado?"
+                    />
+                  </div>
+
+                  <div className="flex items-center space-x-2">
+                    <input
+                      type="checkbox"
+                      id="target-required"
+                      checked={selectedElementData.required || false}
+                      onChange={(e) => updateElement(selectedElementData.id, { required: e.target.checked })}
+                    />
+                    <Label htmlFor="target-required">Campo obrigatório</Label>
+                  </div>
+
+                  <div>
+                    <Label htmlFor="target-field-id">ID do Campo (para captura de leads)</Label>
+                    <Input
+                      id="target-field-id"
+                      value={selectedElementData.fieldId || ""}
+                      onChange={(e) => updateElement(selectedElementData.id, { fieldId: e.target.value })}
+                      className="mt-1"
+                      placeholder="peso_meta"
+                    />
                   </div>
                 </div>
               )}

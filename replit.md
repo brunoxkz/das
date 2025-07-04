@@ -144,6 +144,12 @@ Changelog:
   * Added comprehensive properties panels for video and image upload
   * Improved image alignment options for both image and image_upload elements
   * Removed confusing WebP indicator from preview
+- July 04, 2025. Specialized form elements and UX improvements:
+  * Added birth_date, height, current_weight, target_weight elements with validation
+  * Removed emoji system from multiple choice options
+  * Implemented automatic image upload for multiple choice options
+  * Organized elements into visual categories (Conteúdo, Perguntas, Formulário, Mídia)
+  * Added scrollable element panel with category headers for better organization
 ```
 
 ## User Preferences
