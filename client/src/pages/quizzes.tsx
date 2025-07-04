@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { Link } from "wouter";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
+import { apiRequest, queryClient } from "@/lib/queryClient";
+import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -21,16 +23,57 @@ import { ptBR } from "date-fns/locale";
 
 export default function Quizzes() {
   const [searchTerm, setSearchTerm] = useState("");
+  const { toast } = useToast();
   
   const { data: quizzes, isLoading, error } = useQuery({
     queryKey: ["/api/quizzes"],
   });
+
+  const deleteMutation = useMutation({
+    mutationFn: async (quizId: string) => {
+      await apiRequest("DELETE", `/api/quizzes/${quizId}`);
+    },
+    onSuccess: () => {
+      toast({
+        title: "Quiz excluído",
+        description: "O quiz foi excluído com sucesso.",
+      });
+      queryClient.invalidateQueries({ queryKey: ["/api/quizzes"] });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Erro ao excluir",
+        description: error.message || "Não foi possível excluir o quiz.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleDeleteQuiz = (quizId: string, quizTitle: string) => {
+    if (window.confirm(`Tem certeza que deseja excluir o quiz "${quizTitle}"? Esta ação não pode ser desfeita.`)) {
+      deleteMutation.mutate(quizId);
+    }
+  };
 
   const quizzesList = Array.isArray(quizzes) ? quizzes : [];
   const filteredQuizzes = quizzesList.filter((quiz: any) =>
     quiz.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
     quiz.description?.toLowerCase().includes(searchTerm.toLowerCase())
   );
+
+  // Calcula o status correto do quiz
+  const getQuizStatus = (quiz: any) => {
+    return quiz.isPublished ? "Ativo" : "Inativo";
+  };
+
+  // Calcula estatísticas com dados reais
+  const totalLeads = quizzesList.reduce((total: number, quiz: any) => total + (quiz.totalResponses || 0), 0);
+  const totalViews = quizzesList.reduce((total: number, quiz: any) => total + (quiz.totalViews || 0), 0);
+  const avgConversionRate = quizzesList.length > 0 ? 
+    Math.round((quizzesList.reduce((total: number, quiz: any) => {
+      const rate = quiz.totalViews > 0 ? (quiz.totalResponses / quiz.totalViews) * 100 : 0;
+      return total + rate;
+    }, 0) / quizzesList.length)) : 0;
 
   if (isLoading) {
     return (
@@ -101,7 +144,7 @@ export default function Quizzes() {
               <div>
                 <p className="text-sm text-gray-600">Leads Capturados</p>
                 <p className="text-2xl font-bold text-gray-900">
-                  {quizzesList.reduce((total: number, quiz: any) => total + (quiz.totalResponses || 0), 0)}
+                  {totalLeads}
                 </p>
               </div>
               <Users className="w-8 h-8 text-green-500" />
@@ -114,9 +157,7 @@ export default function Quizzes() {
               <div>
                 <p className="text-sm text-gray-600">Taxa de Conversão</p>
                 <p className="text-2xl font-bold text-gray-900">
-                  {quizzesList.length > 0 ? 
-                    Math.round((quizzesList.reduce((total: number, quiz: any) => total + (quiz.conversionRate || 0), 0) / quizzesList.length)) : 0
-                  }%
+                  {avgConversionRate}%
                 </p>
               </div>
               <TrendingUp className="w-8 h-8 text-purple-500" />
@@ -158,8 +199,8 @@ export default function Quizzes() {
                     <CardTitle className="text-lg mb-1">{quiz.title}</CardTitle>
                     <p className="text-sm text-gray-600 line-clamp-2">{quiz.description}</p>
                   </div>
-                  <Badge variant={quiz.isActive ? "default" : "secondary"}>
-                    {quiz.isActive ? "Ativo" : "Inativo"}
+                  <Badge variant={quiz.isPublished ? "default" : "secondary"}>
+                    {getQuizStatus(quiz)}
                   </Badge>
                 </div>
               </CardHeader>
@@ -195,7 +236,13 @@ export default function Quizzes() {
                       <BarChart3 className="w-3 h-3 mr-1" />
                       Analytics
                     </Button>
-                    <Button size="sm" variant="outline" className="px-2">
+                    <Button 
+                      size="sm" 
+                      variant="outline" 
+                      className="px-2"
+                      onClick={() => handleDeleteQuiz(quiz.id, quiz.title)}
+                      disabled={deleteMutation.isPending}
+                    >
                       <Trash2 className="w-3 h-3" />
                     </Button>
                   </div>

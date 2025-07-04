@@ -28,6 +28,7 @@ import {
   BarChart3,
   Volume2,
   AlertCircle,
+  ArrowUpDown,
   Palette,
   Loader,
   ArrowRight,
@@ -36,7 +37,7 @@ import {
 
 interface Element {
   id: number;
-  type: "multiple_choice" | "text" | "rating" | "email" | "checkbox" | "date" | "phone" | "number" | "textarea" | "image_upload" | "animated_transition" | "heading" | "paragraph" | "image" | "divider" | "video" | "birth_date" | "height" | "current_weight" | "target_weight" | "transition_background" | "transition_text" | "transition_counter" | "transition_loader" | "transition_redirect";
+  type: "multiple_choice" | "text" | "rating" | "email" | "checkbox" | "date" | "phone" | "number" | "textarea" | "image_upload" | "animated_transition" | "heading" | "paragraph" | "image" | "divider" | "video" | "birth_date" | "height" | "current_weight" | "target_weight" | "transition_background" | "transition_text" | "transition_counter" | "transition_loader" | "transition_redirect" | "spacer";
   content: string;
   question?: string;
   description?: string;
@@ -92,6 +93,7 @@ interface Element {
   showRedirectCounter?: boolean;
   visualEffect?: "fade" | "slide" | "zoom" | "bounce" | "none";
   effectDuration?: number;
+  spacerSize?: "small" | "medium" | "large";
 }
 
 interface QuizPage {
@@ -134,7 +136,8 @@ export function PageEditorHorizontal({ pages, onPagesChange }: PageEditorProps) 
       current_weight: "Peso Atual",
       target_weight: "Peso Desejado",
       textarea: "Área de Texto",
-      image_upload: "Upload de Imagem"
+      image_upload: "Upload de Imagem",
+      spacer: "Espaço"
     };
     return typeNames[type] || type;
   };
@@ -210,6 +213,7 @@ export function PageEditorHorizontal({ pages, onPagesChange }: PageEditorProps) 
         { type: "heading", label: "Título", icon: <Type className="w-4 h-4" /> },
         { type: "paragraph", label: "Texto", icon: <AlignLeft className="w-4 h-4" /> },
         { type: "divider", label: "Linha", icon: <Minus className="w-4 h-4" /> },
+        { type: "spacer", label: "Espaço", icon: <ArrowUpDown className="w-4 h-4" /> },
       ]
     },
     {
@@ -358,6 +362,9 @@ const transitionElementCategories = [
       }),
       ...(type === "current_weight" && {
         showBMICalculation: true
+      }),
+      ...(type === "spacer" && {
+        spacerSize: "medium" as const
       })
     };
 
@@ -2206,6 +2213,17 @@ const transitionElementCategories = [
               {selectedElementData.type === "transition_background" && (
                 <div className="space-y-4">
                   <div>
+                    <Label htmlFor="bg-question">Título/Pergunta</Label>
+                    <Input
+                      id="bg-question"
+                      value={selectedElementData.question || ""}
+                      onChange={(e) => updateElement(selectedElementData.id, { question: e.target.value })}
+                      className="mt-1"
+                      placeholder="Configuração de fundo"
+                    />
+                  </div>
+
+                  <div>
                     <Label>Tipo de Fundo</Label>
                     <select 
                       className="w-full px-3 py-2 border rounded-md mt-1"
@@ -2820,6 +2838,24 @@ const transitionElementCategories = [
                         className="flex-1"
                       />
                     </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Propriedades para Espaço */}
+              {selectedElementData.type === "spacer" && (
+                <div className="space-y-4">
+                  <div>
+                    <Label>Tamanho do Espaçamento</Label>
+                    <select 
+                      className="w-full px-3 py-2 border rounded-md mt-1"
+                      value={selectedElementData.spacerSize || "medium"}
+                      onChange={(e) => updateElement(selectedElementData.id, { spacerSize: e.target.value as "small" | "medium" | "large" })}
+                    >
+                      <option value="small">Pequeno (20px)</option>
+                      <option value="medium">Médio (40px)</option>
+                      <option value="large">Grande (80px)</option>
+                    </select>
                   </div>
                 </div>
               )}

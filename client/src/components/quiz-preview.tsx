@@ -65,20 +65,25 @@ const AnimatedCounter = ({ element }: { element: any }) => {
 
       return () => clearInterval(interval);
     } else {
-      // Cronômetro promocional - incrementa
+      // Cronômetro promocional - DECREMENTA (regressivo)
       const interval = setInterval(() => {
         setCurrentValue((prev: any) => {
-          let newSeconds = prev.seconds + 1;
+          let newSeconds = prev.seconds - 1;
           let newMinutes = prev.minutes;
           let newHours = prev.hours;
 
-          if (newSeconds >= 60) {
-            newSeconds = 0;
-            newMinutes++;
+          if (newSeconds < 0) {
+            newSeconds = 59;
+            newMinutes--;
           }
-          if (newMinutes >= 60) {
+          if (newMinutes < 0) {
+            newMinutes = 59;
+            newHours--;
+          }
+          if (newHours < 0) {
+            newHours = 0;
             newMinutes = 0;
-            newHours++;
+            newSeconds = 0;
           }
 
           return { hours: newHours, minutes: newMinutes, seconds: newSeconds };
