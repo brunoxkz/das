@@ -200,10 +200,15 @@ async function deduplicatedFetch(url: string, options: RequestInit = {}) {
       throw new Error("Rate limit exceeded, retrying...");
     }
     
-    const result = response.ok ? await response.json() : response;
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`${response.status}: ${errorText}`);
+    }
+
+    const result = await response.json();
     
     // Cache successful GET requests
-    if (response.ok && (!options.method || options.method === 'GET')) {
+    if (!options.method || options.method === 'GET') {
       const cacheTime = response.headers.get("X-Cache") === "HIT" ? 30000 : 300000;
       localCache.set(cacheKey, result, cacheTime);
     }
