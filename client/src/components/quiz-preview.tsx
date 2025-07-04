@@ -253,9 +253,9 @@ export function QuizPreview({ quiz }: QuizPreviewProps) {
       return renderTransitionPage(page, pageIndex);
     }
 
-    // Renderizar elementos interativos da página
+    // Renderizar elementos interativos da página (incluindo jogos)
     const interactiveElements = page.elements.filter((el: any) => 
-      ['multiple_choice', 'text', 'email', 'phone', 'number', 'rating', 'date', 'textarea', 'checkbox', 'birth_date', 'height', 'current_weight', 'target_weight'].includes(el.type)
+      ['multiple_choice', 'text', 'email', 'phone', 'number', 'rating', 'date', 'textarea', 'checkbox', 'birth_date', 'height', 'current_weight', 'target_weight', 'game_wheel', 'game_scratch', 'game_color_pick', 'game_brick_break', 'game_memory_cards', 'game_slot_machine'].includes(el.type)
     );
 
     const contentElements = page.elements.filter((el: any) => 
@@ -725,6 +725,222 @@ export function QuizPreview({ quiz }: QuizPreviewProps) {
                 disabled={element.required && (!answers[element.id] || answers[element.id].length === 0)}
               >
                 Próxima <ArrowRight className="w-4 h-4 ml-2" />
+              </Button>
+            </div>
+          )}
+
+          {/* Elementos de Jogos */}
+          {element.type === "game_wheel" && (
+            <div className="space-y-4">
+              <div className="flex justify-center mb-4">
+                <div className="w-60 h-60 relative">
+                  <svg viewBox="0 0 200 200" className="w-full h-full">
+                    {(element.wheelSegments || ["Prêmio 1", "Prêmio 2", "Prêmio 3", "Prêmio 4"]).map((segment, index) => {
+                      const total = element.wheelSegments?.length || 4;
+                      const angle = 360 / total;
+                      const startAngle = index * angle;
+                      const endAngle = startAngle + angle;
+                      const isWinning = index === (element.wheelWinningSegment || 0);
+                      
+                      return (
+                        <g key={index}>
+                          <path
+                            d={`M 100 100 L ${100 + 80 * Math.cos((startAngle * Math.PI) / 180)} ${100 + 80 * Math.sin((startAngle * Math.PI) / 180)} A 80 80 0 ${angle > 180 ? 1 : 0} 1 ${100 + 80 * Math.cos((endAngle * Math.PI) / 180)} ${100 + 80 * Math.sin((endAngle * Math.PI) / 180)} Z`}
+                            fill={isWinning ? "#FFD700" : (element.wheelColors?.[index] || "#4ECDC4")}
+                            stroke={isWinning ? "#fbbf24" : "#ffffff"}
+                            strokeWidth={isWinning ? "3" : "2"}
+                          />
+                          <text
+                            x={100 + 50 * Math.cos(((startAngle + endAngle) / 2 * Math.PI) / 180)}
+                            y={100 + 50 * Math.sin(((startAngle + endAngle) / 2 * Math.PI) / 180)}
+                            textAnchor="middle"
+                            dominantBaseline="middle"
+                            fontSize="10"
+                            fill="white"
+                            fontWeight="bold"
+                          >
+                            {segment.length > 8 ? segment.substring(0, 8) + "..." : segment}
+                          </text>
+                        </g>
+                      );
+                    })}
+                    <polygon
+                      points="100,20 105,35 95,35"
+                      fill={element.wheelPointerColor || "#DC2626"}
+                    />
+                  </svg>
+                </div>
+              </div>
+              
+              <Button 
+                className="w-full bg-orange-500 hover:bg-orange-600 text-white"
+                onClick={() => {
+                  handleAnswer(element.id, "girado");
+                  setTimeout(handleNext, 1000);
+                }}
+              >
+                🎰 Girar Roleta
+              </Button>
+            </div>
+          )}
+
+          {element.type === "game_scratch" && (
+            <div className="space-y-4">
+              <div className="flex justify-center mb-4">
+                <div className="relative w-64 h-40 border-2 border-gray-300 rounded-lg overflow-hidden">
+                  <div 
+                    className="absolute inset-0 flex items-center justify-center text-2xl font-bold text-green-600 cursor-pointer hover:opacity-80"
+                    style={{ backgroundColor: element.scratchCoverColor || "#e5e7eb" }}
+                    onClick={() => {
+                      handleAnswer(element.id, "raspado");
+                      setTimeout(handleNext, 500);
+                    }}
+                  >
+                    {element.scratchRevealText || "PARABÉNS!"}
+                  </div>
+                  <div className="absolute top-4 left-4 text-xs text-gray-600">
+                    ↑ Clique para raspar
+                  </div>
+                </div>
+              </div>
+              
+              <Button 
+                className="w-full bg-yellow-500 hover:bg-yellow-600 text-white"
+                onClick={() => {
+                  handleAnswer(element.id, "raspado");
+                  setTimeout(handleNext, 500);
+                }}
+              >
+                🎫 Raspar Cartela
+              </Button>
+            </div>
+          )}
+
+          {element.type === "game_color_pick" && (
+            <div className="space-y-4">
+              <div className="text-center mb-4">
+                <h4 className="font-medium text-gray-800 mb-4">
+                  {element.colorInstruction || "Escolha a cor da sorte!"}
+                </h4>
+                
+                <div className="grid grid-cols-3 gap-3 justify-center max-w-sm mx-auto">
+                  {(element.colorOptions || ["#FF6B6B", "#4ECDC4", "#45B7D1", "#96CEB4", "#FECA57"]).map((color, index) => (
+                    <button
+                      key={index}
+                      className="w-16 h-16 rounded-full border-4 border-gray-300 hover:border-yellow-400 transition-all hover:scale-105"
+                      style={{ backgroundColor: color }}
+                      onClick={() => {
+                        handleAnswer(element.id, color);
+                        setTimeout(handleNext, 500);
+                      }}
+                    />
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {element.type === "game_memory_cards" && (
+            <div className="space-y-4">
+              <div className="text-center mb-4">
+                <h4 className="font-medium text-gray-800 mb-4">
+                  Jogo da Memória - Encontre os pares!
+                </h4>
+                
+                <div className="grid grid-cols-4 gap-2 max-w-sm mx-auto">
+                  {Array.from({ length: (element.memoryCardPairs || 4) * 2 }, (_, index) => (
+                    <div
+                      key={index}
+                      className="w-12 h-12 bg-blue-500 rounded-lg flex items-center justify-center cursor-pointer hover:bg-blue-600 transition-colors"
+                      onClick={() => {
+                        if (index === 0) {
+                          handleAnswer(element.id, "completado");
+                          setTimeout(handleNext, 1000);
+                        }
+                      }}
+                    >
+                      <span className="text-white font-bold">?</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+              
+              <Button 
+                className="w-full bg-blue-500 hover:bg-blue-600 text-white"
+                onClick={() => {
+                  handleAnswer(element.id, "completado");
+                  setTimeout(handleNext, 1000);
+                }}
+              >
+                🧠 Começar Jogo
+              </Button>
+            </div>
+          )}
+
+          {element.type === "game_slot_machine" && (
+            <div className="space-y-4">
+              <div className="text-center mb-4">
+                <h4 className="font-medium text-gray-800 mb-4">
+                  Máquina Caça-Níqueis
+                </h4>
+                
+                <div className="flex justify-center space-x-2 mb-4">
+                  {Array.from({ length: element.slotReels || 3 }, (_, index) => (
+                    <div key={index} className="w-16 h-16 border-2 border-gray-400 rounded-lg bg-white flex items-center justify-center">
+                      <span className="text-2xl">🎰</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+              
+              <Button 
+                className="w-full bg-purple-500 hover:bg-purple-600 text-white"
+                onClick={() => {
+                  handleAnswer(element.id, "jogado");
+                  setTimeout(handleNext, 1000);
+                }}
+              >
+                🎰 Puxar Alavanca
+              </Button>
+            </div>
+          )}
+
+          {element.type === "game_brick_break" && (
+            <div className="space-y-4">
+              <div className="text-center mb-4">
+                <h4 className="font-medium text-gray-800 mb-4">
+                  Quebra Tijolos
+                </h4>
+                
+                <div className="relative bg-black rounded-lg p-4 mx-auto max-w-sm">
+                  <div className="grid grid-cols-6 gap-1 mb-4">
+                    {Array.from({ length: (element.brickRows || 3) * (element.brickColumns || 6) }, (_, index) => (
+                      <div
+                        key={index}
+                        className="w-6 h-3 rounded-sm"
+                        style={{ backgroundColor: element.brickColors?.[index % (element.brickColors?.length || 1)] || "#FF6B6B" }}
+                      />
+                    ))}
+                  </div>
+                  
+                  <div className="flex justify-center">
+                    <div className="w-12 h-2 rounded-full" style={{ backgroundColor: element.paddleColor || "#4ECDC4" }} />
+                  </div>
+                  
+                  <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
+                    <div className="w-3 h-3 rounded-full" style={{ backgroundColor: element.ballColor || "#FFD700" }} />
+                  </div>
+                </div>
+              </div>
+              
+              <Button 
+                className="w-full bg-red-500 hover:bg-red-600 text-white"
+                onClick={() => {
+                  handleAnswer(element.id, "jogado");
+                  setTimeout(handleNext, 1000);
+                }}
+              >
+                🧱 Começar Jogo
               </Button>
             </div>
           )}
