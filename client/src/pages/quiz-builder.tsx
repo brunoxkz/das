@@ -85,7 +85,10 @@ export default function QuizBuilder() {
     mutationFn: async (data: any) => {
       const url = isEditing ? `/api/quizzes/${quizId}` : "/api/quizzes";
       const method = isEditing ? "PUT" : "POST";
-      return await apiRequest(method, url, data);
+      return await apiRequest(url, {
+        method,
+        body: JSON.stringify(data),
+      });
     },
     onSuccess: () => {
       toast({
@@ -119,9 +122,9 @@ export default function QuizBuilder() {
     if (existingQuiz) {
       console.log("Carregando quiz existente:", JSON.stringify(existingQuiz, null, 2));
       setQuizData({
-        title: existingQuiz.title,
-        description: existingQuiz.description || "",
-        structure: existingQuiz.structure ? existingQuiz.structure : {
+        title: (existingQuiz as any).title,
+        description: (existingQuiz as any).description || "",
+        structure: (existingQuiz as any).structure ? (existingQuiz as any).structure : {
           pages: [{
             id: Date.now(),
             title: "Página 1",
