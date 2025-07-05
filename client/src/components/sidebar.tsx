@@ -132,30 +132,15 @@ export function Sidebar() {
       "vendzz-sidebar flex flex-col transition-all duration-300",
       isCollapsed ? "w-16" : "w-64"
     )}>
-      {/* Header */}
+      {/* Logo */}
       <div className="p-4 border-b border-gray-200">
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-center">
           {!isCollapsed && (
-            <div className="flex items-center space-x-3">
-              <img 
-                src="https://vendzz.com.br/wp-content/uploads/2024/12/logo-vendzz.png" 
-                alt="Vendzz" 
-                className="w-12 h-12 object-contain"
-              />
-            </div>
+            <span className="font-bold text-2xl text-gray-900">QuizMaster</span>
           )}
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => setIsCollapsed(!isCollapsed)}
-            className="h-8 w-8 p-0"
-          >
-            {isCollapsed ? (
-              <ChevronRight className="w-4 h-4" />
-            ) : (
-              <ChevronLeft className="w-4 h-4" />
-            )}
-          </Button>
+          {isCollapsed && (
+            <span className="font-bold text-xl text-gray-900">Q</span>
+          )}
         </div>
       </div>
 

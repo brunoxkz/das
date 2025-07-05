@@ -740,7 +740,7 @@ export default function Landing() {
                   Clientes que usam nosso sistema de premiações têm:
                 </p>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
-                  <div className="flex items-center">
+                  <div className="flex itemsitems-center">
                     <TrendingUp className="w-4 h-4 text-green-600 mr-2" />
                     <span>+40% engajamento</span>
                   </div>
