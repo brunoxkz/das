@@ -1023,6 +1023,90 @@ export function QuizPreview({ quiz }: QuizPreviewProps) {
           </div>
         );
 
+      case 'share_quiz':
+        const shareMessage = processVariables(element.shareMessage || "Faça esse teste e se surpreenda também!");
+        const shareNetworks = element.shareNetworks || ["whatsapp", "facebook", "twitter", "email"];
+        const shareButtonStyle = {
+          backgroundColor: element.shareButtonBackgroundColor || "#10B981",
+          color: element.shareButtonTextColor || "#FFFFFF",
+          borderRadius: element.shareButtonBorderRadius === "none" ? "0px" :
+                       element.shareButtonBorderRadius === "small" ? "4px" :
+                       element.shareButtonBorderRadius === "medium" ? "8px" :
+                       element.shareButtonBorderRadius === "large" ? "12px" :
+                       element.shareButtonBorderRadius === "full" ? "9999px" : "8px",
+          padding: element.shareButtonSize === "small" ? "6px 12px" :
+                  element.shareButtonSize === "large" ? "12px 24px" : "8px 16px",
+          fontSize: element.shareButtonSize === "small" ? "14px" :
+                   element.shareButtonSize === "large" ? "18px" : "16px"
+        };
+
+        const networkIcons = {
+          whatsapp: "📱",
+          facebook: "📘", 
+          twitter: "🐦",
+          instagram: "📸",
+          email: "📧"
+        };
+
+        const handleShare = (network: string) => {
+          const url = window.location.href;
+          const message = encodeURIComponent(shareMessage);
+          const text = encodeURIComponent(`${shareMessage} ${url}`);
+          
+          switch (network) {
+            case 'whatsapp':
+              window.open(`https://wa.me/?text=${text}`, '_blank');
+              break;
+            case 'facebook':
+              window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}&quote=${message}`, '_blank');
+              break;
+            case 'twitter':
+              window.open(`https://twitter.com/intent/tweet?text=${text}`, '_blank');
+              break;
+            case 'instagram':
+              // Instagram não permite compartilhamento direto via URL, então copiamos para clipboard
+              navigator.clipboard?.writeText(`${shareMessage} ${url}`);
+              alert('Link copiado! Cole no Instagram Stories ou feed.');
+              break;
+            case 'email':
+              window.open(`mailto:?subject=${encodeURIComponent('Quiz interessante!')}&body=${text}`, '_blank');
+              break;
+          }
+        };
+
+        return (
+          <div className="bg-white rounded-lg p-6 space-y-4 shadow-sm border">
+            <div className="text-center space-y-3">
+              <h3 className="text-lg font-semibold text-gray-800">
+                Compartilhe este quiz!
+              </h3>
+              <p className="text-gray-600">
+                {shareMessage}
+              </p>
+            </div>
+            
+            <div className={`flex ${element.shareLayout === "vertical" ? "flex-col gap-3" : "flex-wrap gap-3 justify-center"}`}>
+              {shareNetworks.map((network: string) => (
+                <button
+                  key={network}
+                  onClick={() => handleShare(network)}
+                  style={shareButtonStyle}
+                  className="flex items-center gap-2 transition-all hover:opacity-80 focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
+                >
+                  {element.shareShowIcons !== false && (
+                    <span className={`${element.shareIconSize === "small" ? "text-sm" : element.shareIconSize === "large" ? "text-lg" : "text-base"}`}>
+                      {networkIcons[network as keyof typeof networkIcons]}
+                    </span>
+                  )}
+                  <span className="capitalize">
+                    {network === "whatsapp" ? "WhatsApp" : network}
+                  </span>
+                </button>
+              ))}
+            </div>
+          </div>
+        );
+
       default:
         return null;
     }
@@ -2008,12 +2092,6 @@ export function QuizPreview({ quiz }: QuizPreviewProps) {
               </div>
             )}
             
-            <h1 
-              className="text-3xl md:text-4xl font-bold mb-2"
-              style={{ color: themeStyles.color }}
-            >
-              {quiz.title || "Preview do Quiz"}
-            </h1>
             {quiz.description && (
               <p 
                 className="text-lg"

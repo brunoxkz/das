@@ -36,12 +36,13 @@ import {
   Scale,
   Activity,
   Target,
-  Calculator
+  Calculator,
+  Share2
 } from "lucide-react";
 
 interface Element {
   id: number;
-  type: "multiple_choice" | "text" | "rating" | "email" | "checkbox" | "date" | "phone" | "number" | "textarea" | "image_upload" | "animated_transition" | "heading" | "paragraph" | "image" | "divider" | "video" | "audio" | "birth_date" | "height" | "current_weight" | "target_weight" | "transition_background" | "transition_text" | "transition_counter" | "transition_loader" | "transition_redirect" | "spacer" | "game_wheel" | "game_scratch" | "game_color_pick" | "game_brick_break" | "game_memory_cards" | "game_slot_machine" | "continue_button" | "loading_question";
+  type: "multiple_choice" | "text" | "rating" | "email" | "checkbox" | "date" | "phone" | "number" | "textarea" | "image_upload" | "animated_transition" | "heading" | "paragraph" | "image" | "divider" | "video" | "audio" | "birth_date" | "height" | "current_weight" | "target_weight" | "transition_background" | "transition_text" | "transition_counter" | "transition_loader" | "transition_redirect" | "spacer" | "game_wheel" | "game_scratch" | "game_color_pick" | "game_brick_break" | "game_memory_cards" | "game_slot_machine" | "continue_button" | "loading_question" | "share_quiz";
   content: string;
   question?: string;
   description?: string;
@@ -176,6 +177,18 @@ interface Element {
   percentageColor?: string;
   additionalText?: string;
   additionalTextColor?: string;
+  
+  // Propriedades específicas para compartilhamento
+  shareMessage?: string;
+  shareNetworks?: string[];
+  shareButtonText?: string;
+  shareButtonBackgroundColor?: string;
+  shareButtonTextColor?: string;
+  shareButtonBorderRadius?: "none" | "small" | "medium" | "large" | "full";
+  shareButtonSize?: "small" | "medium" | "large";
+  shareShowIcons?: boolean;
+  shareIconSize?: "small" | "medium" | "large";
+  shareLayout?: "vertical" | "horizontal";
 }
 
 interface QuizPage {
@@ -347,6 +360,7 @@ export function PageEditorHorizontal({ pages, onPagesChange }: PageEditorProps) 
       name: "🔄 Navegação",
       elements: [
         { type: "continue_button", label: "Botão", icon: <ArrowRight className="w-4 h-4" /> },
+        { type: "share_quiz", label: "Compartilhar", icon: <Share2 className="w-4 h-4" /> },
       ]
     }
   ];
@@ -1748,8 +1762,68 @@ const gameElementCategories = [
           </div>
         );
 
+      case "share_quiz":
+        const shareButtonStyle = {
+          backgroundColor: element.shareButtonBackgroundColor || "#10B981",
+          color: element.shareButtonTextColor || "#FFFFFF",
+          borderRadius: element.shareButtonBorderRadius === "none" ? "0px" :
+                       element.shareButtonBorderRadius === "small" ? "4px" :
+                       element.shareButtonBorderRadius === "medium" ? "8px" :
+                       element.shareButtonBorderRadius === "large" ? "12px" :
+                       element.shareButtonBorderRadius === "full" ? "9999px" : "8px",
+          padding: element.shareButtonSize === "small" ? "6px 12px" :
+                  element.shareButtonSize === "large" ? "12px 24px" : "8px 16px",
+          fontSize: element.shareButtonSize === "small" ? "14px" :
+                   element.shareButtonSize === "large" ? "18px" : "16px"
+        };
 
-        
+        const networks = element.shareNetworks || ["whatsapp", "facebook", "twitter", "email"];
+        const networkIcons = {
+          whatsapp: "📱",
+          facebook: "📘", 
+          twitter: "🐦",
+          instagram: "📸",
+          email: "📧"
+        };
+
+        return (
+          <div className="space-y-4 p-4 border-2 border-dashed border-green-200 rounded-lg bg-green-50">
+            <div className="flex items-center gap-2">
+              <Share2 className="w-4 h-4 text-green-600" />
+              <span className="font-medium text-green-800">Compartilhar Quiz</span>
+            </div>
+            
+            <div className="bg-white rounded-lg p-4 space-y-3">
+              <div className="text-sm text-gray-700">
+                {element.shareMessage || "Faça esse teste e se surpreenda também!"}
+              </div>
+              
+              <div className={`flex ${element.shareLayout === "vertical" ? "flex-col gap-2" : "flex-wrap gap-2"}`}>
+                {networks.map((network) => (
+                  <button
+                    key={network}
+                    style={shareButtonStyle}
+                    className="flex items-center gap-2 transition-all hover:opacity-80"
+                  >
+                    {element.shareShowIcons !== false && (
+                      <span className={`${element.shareIconSize === "small" ? "text-sm" : element.shareIconSize === "large" ? "text-lg" : "text-base"}`}>
+                        {networkIcons[network as keyof typeof networkIcons]}
+                      </span>
+                    )}
+                    <span className="capitalize">
+                      {network === "whatsapp" ? "WhatsApp" : network}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            </div>
+            
+            <div className="text-xs text-green-600 text-center">
+              Redes selecionadas: {networks.length} • Layout: {element.shareLayout || "horizontal"}
+            </div>
+          </div>
+        );
+
       default:
         return <div className="text-sm text-gray-500">Elemento: {element.type}</div>;
     }
@@ -4928,6 +5002,157 @@ const gameElementCategories = [
                         Use {"{{"}{selectedElementData.responseId || 'pergunta_continuacao'}{"}}"} em outros elementos para referenciar a resposta (sim/não)
                       </div>
                     </div>
+                  </div>
+                </div>
+              )}
+
+              {selectedElementData.type === "share_quiz" && (
+                <div className="space-y-4 max-h-96 overflow-y-auto">
+                  <div className="bg-green-50 p-3 rounded-lg">
+                    <h4 className="text-sm font-semibold text-green-800 mb-2">🔗 Compartilhar Quiz</h4>
+                    <p className="text-xs text-green-700">
+                      Permite que os usuários compartilhem o quiz em redes sociais com mensagem personalizável.
+                    </p>
+                  </div>
+
+                  <div className="border-b pb-4">
+                    <h5 className="font-semibold text-sm mb-3">💬 Mensagem</h5>
+                    
+                    <div>
+                      <Label>Mensagem de Compartilhamento</Label>
+                      <Input
+                        value={selectedElementData.shareMessage || ""}
+                        onChange={(e) => updateElement(selectedElementData.id, { shareMessage: e.target.value })}
+                        placeholder="Faça esse teste e se surpreenda também!"
+                        className="mt-1"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="border-b pb-4">
+                    <h5 className="font-semibold text-sm mb-3">📱 Redes Sociais</h5>
+                    
+                    <div className="space-y-2">
+                      {["whatsapp", "facebook", "twitter", "instagram", "email"].map((network) => (
+                        <div key={network} className="flex items-center justify-between">
+                          <Label className="flex items-center gap-2">
+                            <span className="capitalize">
+                              {network === "whatsapp" ? "WhatsApp" : network}
+                            </span>
+                          </Label>
+                          <input
+                            type="checkbox"
+                            checked={(selectedElementData.shareNetworks || []).includes(network)}
+                            onChange={(e) => {
+                              const networks = selectedElementData.shareNetworks || [];
+                              if (e.target.checked) {
+                                updateElement(selectedElementData.id, { shareNetworks: [...networks, network] });
+                              } else {
+                                updateElement(selectedElementData.id, { shareNetworks: networks.filter(n => n !== network) });
+                              }
+                            }}
+                            className="h-4 w-4 text-green-600 border-gray-300 rounded focus:ring-green-500"
+                          />
+                        </div>
+                      ))}
+                    </div>
+
+                    <div className="mt-3">
+                      <Label>Layout dos Botões</Label>
+                      <select 
+                        className="w-full px-2 py-1 border rounded text-xs mt-1"
+                        value={selectedElementData.shareLayout || "horizontal"}
+                        onChange={(e) => updateElement(selectedElementData.id, { shareLayout: e.target.value })}
+                      >
+                        <option value="horizontal">Horizontal</option>
+                        <option value="vertical">Vertical</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div className="border-b pb-4">
+                    <h5 className="font-semibold text-sm mb-3">🎨 Estilo dos Botões</h5>
+                    
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <Label>Tamanho</Label>
+                        <select 
+                          className="w-full px-2 py-1 border rounded text-xs mt-1"
+                          value={selectedElementData.shareButtonSize || "medium"}
+                          onChange={(e) => updateElement(selectedElementData.id, { shareButtonSize: e.target.value })}
+                        >
+                          <option value="small">Pequeno</option>
+                          <option value="medium">Médio</option>
+                          <option value="large">Grande</option>
+                        </select>
+                      </div>
+                      
+                      <div>
+                        <Label>Bordas</Label>
+                        <select 
+                          className="w-full px-2 py-1 border rounded text-xs mt-1"
+                          value={selectedElementData.shareButtonBorderRadius || "medium"}
+                          onChange={(e) => updateElement(selectedElementData.id, { shareButtonBorderRadius: e.target.value })}
+                        >
+                          <option value="none">Quadrado</option>
+                          <option value="small">Pequeno</option>
+                          <option value="medium">Médio</option>
+                          <option value="large">Grande</option>
+                          <option value="full">Circular</option>
+                        </select>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-3 mt-3">
+                      <div>
+                        <Label>Cor de Fundo</Label>
+                        <Input
+                          type="color"
+                          value={selectedElementData.shareButtonBackgroundColor || "#10B981"}
+                          onChange={(e) => updateElement(selectedElementData.id, { shareButtonBackgroundColor: e.target.value })}
+                          className="mt-1 h-10"
+                        />
+                      </div>
+                      
+                      <div>
+                        <Label>Cor do Texto</Label>
+                        <Input
+                          type="color"
+                          value={selectedElementData.shareButtonTextColor || "#FFFFFF"}
+                          onChange={(e) => updateElement(selectedElementData.id, { shareButtonTextColor: e.target.value })}
+                          className="mt-1 h-10"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div>
+                    <h5 className="font-semibold text-sm mb-3">🔧 Opções</h5>
+                    
+                    <div className="flex items-center justify-between">
+                      <Label>Mostrar Ícones</Label>
+                      <input
+                        type="checkbox"
+                        checked={selectedElementData.shareShowIcons !== false}
+                        onChange={(e) => updateElement(selectedElementData.id, { shareShowIcons: e.target.checked })}
+                        className="h-4 w-4 text-green-600 border-gray-300 rounded focus:ring-green-500"
+                      />
+                    </div>
+
+                    {selectedElementData.shareShowIcons !== false && (
+                      <div className="mt-3">
+                        <Label>Tamanho dos Ícones</Label>
+                        <select 
+                          className="w-full px-2 py-1 border rounded text-xs mt-1"
+                          value={selectedElementData.shareIconSize || "medium"}
+                          onChange={(e) => updateElement(selectedElementData.id, { shareIconSize: e.target.value })}
+                        >
+                          <option value="small">Pequeno</option>
+                          <option value="medium">Médio</option>
+                          <option value="large">Grande</option>
+                        </select>
+                      </div>
+                    )}
                   </div>
                 </div>
               )}
