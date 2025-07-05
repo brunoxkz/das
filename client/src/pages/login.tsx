@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
-import { useAuth } from "@/hooks/useAuth-jwt";
+import { useAuth } from "@/hooks/use-auth-hybrid";
 import { Loader2, Mail, Lock, User } from "lucide-react";
 
 export default function LoginPage() {
@@ -56,8 +56,8 @@ export default function LoginPage() {
 
     try {
       console.log("Starting login process...");
-      const data = await login(loginData.email, loginData.password);
-      console.log("Login successful, data received:", data);
+      await login(loginData.email, loginData.password);
+      console.log("Login successful");
       
       // Salvar ou limpar credenciais baseado na escolha do usuário
       if (rememberPassword) {
@@ -72,7 +72,7 @@ export default function LoginPage() {
       
       toast({
         title: "Login realizado com sucesso!",
-        description: `Bem-vindo, ${data.user.firstName}!`,
+        description: "Redirecionando...",
       });
       
       // Redirecionamento agora é feito automaticamente pelo hook de autenticação
@@ -94,11 +94,11 @@ export default function LoginPage() {
     setIsLoading(true);
 
     try {
-      const data = await register(registerData);
+      await register(registerData);
       
       toast({
         title: "Conta criada com sucesso!",
-        description: `Bem-vindo, ${data.user.firstName}!`,
+        description: "Redirecionando...",
       });
       
       // Redirecionamento agora é feito automaticamente pelo hook de autenticação

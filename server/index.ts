@@ -1,9 +1,9 @@
 import express, { type Request, Response, NextFunction } from "express";
 import compression from "compression";
 import helmet from "helmet";
-import { registerSQLiteRoutes } from "./routes-sqlite";
+import { registerHybridRoutes } from "./routes-hybrid";
 import { setupVite, serveStatic, log } from "./vite";
-import { setupSQLiteAuth, verifyJWT } from "./auth-sqlite";
+import { setupHybridAuth, verifyJWT } from "./auth-hybrid";
 
 const app = express();
 
@@ -87,7 +87,7 @@ app.use((req, res, next) => {
 
 (async () => {
   // Setup SQLite auth and routes (completely independent)
-  setupSQLiteAuth(app);
+  setupHybridAuth(app);
   
   // Apply JWT middleware to protected routes
   app.use('/api', (req, res, next) => {
@@ -112,7 +112,7 @@ app.use((req, res, next) => {
     return verifyJWT(req, res, next);
   });
   
-  const server = registerSQLiteRoutes(app);
+  const server = registerHybridRoutes(app);
 
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
     const status = err.status || err.statusCode || 500;

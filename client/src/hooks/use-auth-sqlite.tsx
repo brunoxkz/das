@@ -58,23 +58,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       localStorage.setItem("accessToken", response.accessToken);
       localStorage.setItem("refreshToken", response.refreshToken);
       setUser(response.user);
+      
+      // Forçar redirecionamento após login bem-sucedido
+      window.location.href = "/";
+      
+      return response;
     } catch (error) {
       throw error;
     }
   };
 
-  const register = async (email: string, password: string, firstName: string, lastName: string) => {
+  const register = async (userData: { email: string; password: string; firstName: string; lastName: string }) => {
     try {
-      const response = await apiRequest("POST", "/api/auth/register", {
-        email,
-        password,
-        firstName,
-        lastName,
-      });
+      const response = await apiRequest("POST", "/api/auth/register", userData);
 
       localStorage.setItem("accessToken", response.accessToken);
       localStorage.setItem("refreshToken", response.refreshToken);
       setUser(response.user);
+      
+      // Forçar redirecionamento após registro bem-sucedido
+      window.location.href = "/";
+      
+      return response;
     } catch (error) {
       throw error;
     }

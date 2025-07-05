@@ -18,7 +18,7 @@ import NotFoundPage from "@/pages/not-found";
 import TutoriaisPage from "@/pages/tutoriais";
 import PremiacoesPage from "@/pages/premiacoes";
 import QuizPublicPage from "@/pages/quiz-public";
-import { useAuth } from "@/hooks/useAuth-jwt";
+import { useAuth } from "@/hooks/use-auth-hybrid";
 import { isUnauthorizedError } from "@/lib/authUtils";
 
 function App() {
