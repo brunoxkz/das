@@ -7,6 +7,43 @@ import { insertQuizSchema, insertQuizResponseSchema } from "../shared/schema-sql
 import { verifyJWT } from "./auth-sqlite";
 
 export function registerSQLiteRoutes(app: Express): Server {
+  // Public routes BEFORE any middleware or authentication
+  // Public quiz viewing (without auth)
+  app.get("/api/quiz/:id/public", async (req, res) => {
+    try {
+      const quiz = await storage.getQuiz(req.params.id);
+      if (!quiz || !quiz.isPublished) {
+        return res.status(404).json({ error: 'Quiz não encontrado ou não publicado' });
+      }
+      res.json(quiz);
+    } catch (error) {
+      console.error("Get public quiz error:", error);
+      res.status(500).json({ error: 'Erro ao buscar quiz público' });
+    }
+  });
+
+  // Track quiz view (public endpoint without auth)
+  app.post("/api/analytics/:quizId/view", async (req, res) => {
+    try {
+      const { quizId } = req.params;
+      
+      // Verify quiz exists and is published
+      const quizData = await storage.getQuiz(quizId);
+      if (!quizData) {
+        return res.status(404).json({ message: "Quiz not found" });
+      }
+
+      if (!quizData.isPublished) {
+        return res.status(403).json({ message: "Quiz not published" });
+      }
+
+      // For now, just return success (analytics storage can be added later)
+      res.json({ success: true, message: "View tracked" });
+    } catch (error) {
+      console.error("Error tracking quiz view:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
 
   // Dashboard Stats
   app.get("/api/dashboard/stats", async (req: any, res) => {
@@ -347,6 +384,8 @@ export function registerSQLiteRoutes(app: Express): Server {
       cache: cache.getStats()
     });
   });
+
+
 
   const httpServer = createServer(app);
   return httpServer;

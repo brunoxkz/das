@@ -36,7 +36,7 @@ export default function QuizPublicPage() {
       setLoading(true);
       setError(null);
       
-      const response = await fetch(`/api/quizzes/${quizId}`);
+      const response = await fetch(`/api/quiz/${quizId}/public`);
       
       if (!response.ok) {
         if (response.status === 404) {

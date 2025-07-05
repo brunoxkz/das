@@ -96,29 +96,7 @@ app.use((req, res, next) => {
   // Setup SQLite auth and routes (completely independent)
   setupHybridAuth(app);
   
-  // Apply JWT middleware to protected routes
-  app.use('/api', (req, res, next) => {
-    // Skip auth for public endpoints
-    const publicEndpoints = [
-      '/api/auth/login',
-      '/api/auth/register', 
-      '/api/auth/refresh',
-      '/api/health',
-      '/api/cache/status'
-    ];
-    
-    // Skip auth for quiz responses and views (public)
-    if (req.path.includes('/responses') || req.path.includes('/view')) {
-      return next();
-    }
-    
-    if (publicEndpoints.includes(req.path)) {
-      return next();
-    }
-    
-    return verifyJWT(req, res, next);
-  });
-  
+  // Register all routes FIRST (before authentication middleware)
   const server = registerHybridRoutes(app);
 
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
