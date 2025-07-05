@@ -212,6 +212,7 @@ export function PageEditorHorizontal({ pages, onPagesChange }: PageEditorProps) 
   const [editingPageTitle, setEditingPageTitle] = useState("");
   const [draggedPage, setDraggedPage] = useState<number | null>(null);
   const [dragOverPage, setDragOverPage] = useState<number | null>(null);
+  const [globalBackgroundColor, setGlobalBackgroundColor] = useState("#ffffff");
 
 
   // Função para traduzir os tipos de elementos
@@ -335,6 +336,7 @@ export function PageEditorHorizontal({ pages, onPagesChange }: PageEditorProps) 
         { type: "rating", label: "Estrelas", icon: <Star className="w-4 h-4" /> },
         { type: "date", label: "Data", icon: <Calendar className="w-4 h-4" /> },
         { type: "textarea", label: "Área", icon: <TextArea className="w-4 h-4" /> },
+        { type: "checkbox", label: "Seleção", icon: <CheckSquare className="w-4 h-4" /> },
         { type: "loading_question", label: "Carregamento + Pergunta", icon: <Loader className="w-4 h-4" /> },
       ]
     },
@@ -342,9 +344,9 @@ export function PageEditorHorizontal({ pages, onPagesChange }: PageEditorProps) 
       name: "📋 Formulário",
       elements: [
         { type: "birth_date", label: "Nascimento", icon: <Calendar className="w-4 h-4" /> },
-        { type: "height", label: "Altura", icon: <Hash className="w-4 h-4" /> },
-        { type: "current_weight", label: "Peso Atual", icon: <Hash className="w-4 h-4" /> },
-        { type: "target_weight", label: "Peso Meta", icon: <Hash className="w-4 h-4" /> },
+        { type: "height", label: "Altura", icon: <ArrowUpDown className="w-4 h-4" /> },
+        { type: "current_weight", label: "Peso Atual", icon: <Scale className="w-4 h-4" /> },
+        { type: "target_weight", label: "Peso Meta", icon: <Target className="w-4 h-4" /> },
       ]
     },
     {
@@ -357,10 +359,22 @@ export function PageEditorHorizontal({ pages, onPagesChange }: PageEditorProps) 
       ]
     },
     {
+      name: "🎮 Jogos",
+      elements: [
+        { type: "game_wheel", label: "Roleta", icon: <BarChart3 className="w-4 h-4" /> },
+        { type: "game_scratch", label: "Raspadinha", icon: <Palette className="w-4 h-4" /> },
+        { type: "game_color_pick", label: "Escolha Cor", icon: <Palette className="w-4 h-4" /> },
+        { type: "game_memory_cards", label: "Memória", icon: <Star className="w-4 h-4" /> },
+        { type: "game_brick_break", label: "Quebra Muro", icon: <Calculator className="w-4 h-4" /> },
+        { type: "game_slot_machine", label: "Caça-Níquel", icon: <Activity className="w-4 h-4" /> },
+      ]
+    },
+    {
       name: "🔄 Navegação",
       elements: [
         { type: "continue_button", label: "Botão", icon: <ArrowRight className="w-4 h-4" /> },
         { type: "share_quiz", label: "Compartilhar", icon: <Share2 className="w-4 h-4" /> },
+        { type: "animated_transition", label: "Transição", icon: <Sparkles className="w-4 h-4" /> },
       ]
     }
   ];
@@ -1972,6 +1986,31 @@ const gameElementCategories = [
             Elementos
           </h3>
         </div>
+        
+        {/* Seletor Global de Cor de Fundo */}
+        <div className="p-4 border-b bg-gray-50">
+          <Label className="text-xs font-semibold text-gray-600 mb-2 block">
+            🎨 Cor de Fundo Global
+          </Label>
+          <div className="flex items-center gap-2">
+            <Input
+              type="color"
+              value={globalBackgroundColor}
+              onChange={(e) => setGlobalBackgroundColor(e.target.value)}
+              className="w-8 h-8 rounded cursor-pointer border-none p-0"
+            />
+            <Input
+              type="text"
+              value={globalBackgroundColor}
+              onChange={(e) => setGlobalBackgroundColor(e.target.value)}
+              className="flex-1 text-xs"
+              placeholder="#ffffff"
+            />
+          </div>
+          <p className="text-xs text-gray-500 mt-1">
+            Aplicado a todas as páginas automaticamente
+          </p>
+        </div>
         <div className="flex-1 overflow-y-auto min-h-0" style={{ maxHeight: 'calc(100vh - 73px)' }}>
           <div className="p-4">
             <div className="space-y-4 pb-4">
@@ -2018,7 +2057,10 @@ const gameElementCategories = [
         </div>
         <div className="flex-1 overflow-y-auto p-4">
           {currentPage ? (
-            <div className="space-y-4 border border-gray-200 rounded-lg p-6 bg-white min-h-[500px]">
+            <div 
+              className="space-y-4 border border-gray-200 rounded-lg p-6 min-h-[500px]"
+              style={{ backgroundColor: globalBackgroundColor }}
+            >
               {currentPage.elements.length === 0 ? (
                 <div className="text-center text-gray-500 py-16">
                   <Edit3 className="w-16 h-16 mx-auto mb-4 opacity-50" />

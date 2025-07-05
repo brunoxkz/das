@@ -275,6 +275,14 @@ Changelog:
   * Functional sharing URLs with proper encoding and Instagram clipboard fallback
   * Element appears correctly in both quiz preview and published versions
   * Mobile-optimized with 2-column grid on small screens, 4-column on larger screens
+- July 05, 2025. GLOBAL BACKGROUND COLOR AND ELEMENT REORGANIZATION - Modern UI improvements:
+  * Added global background color selector in elements panel that applies to all pages automatically
+  * Removed transition_background element from transition pages (replaced by global selector)
+  * Reorganized all elements into modern categories: Conteúdo, Perguntas, Formulário, Mídia, Jogos, Navegação
+  * Added 🎮 Jogos category with all 6 interactive game elements consolidated
+  * Improved element organization with better icons and clearer labels
+  * Global background color shows live preview in editor with hex color input
+  * Streamlined UI removes need to drag background elements to each page individually
 ```
 
 ## User Preferences
