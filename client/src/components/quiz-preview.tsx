@@ -1026,26 +1026,35 @@ export function QuizPreview({ quiz }: QuizPreviewProps) {
       case 'share_quiz':
         const shareMessage = processVariables(element.shareMessage || "Faça esse teste e se surpreenda também!");
         const shareNetworks = element.shareNetworks || ["whatsapp", "facebook", "twitter", "email"];
-        const shareButtonStyle = {
-          backgroundColor: element.shareButtonBackgroundColor || "#10B981",
-          color: element.shareButtonTextColor || "#FFFFFF",
-          borderRadius: element.shareButtonBorderRadius === "none" ? "0px" :
-                       element.shareButtonBorderRadius === "small" ? "4px" :
-                       element.shareButtonBorderRadius === "medium" ? "8px" :
-                       element.shareButtonBorderRadius === "large" ? "12px" :
-                       element.shareButtonBorderRadius === "full" ? "9999px" : "8px",
-          padding: element.shareButtonSize === "small" ? "6px 12px" :
-                  element.shareButtonSize === "large" ? "12px 24px" : "8px 16px",
-          fontSize: element.shareButtonSize === "small" ? "14px" :
-                   element.shareButtonSize === "large" ? "18px" : "16px"
-        };
 
+        // Ícones SVG minimalistas
         const networkIcons = {
-          whatsapp: "📱",
-          facebook: "📘", 
-          twitter: "🐦",
-          instagram: "📸",
-          email: "📧"
+          whatsapp: (
+            <svg viewBox="0 0 24 24" className="w-5 h-5 fill-current">
+              <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.569-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/>
+              <path d="M12 0C5.373 0 0 5.373 0 12c0 2.625.846 5.059 2.284 7.034L.784 23.467l4.533-1.5C7.241 23.154 9.553 24 12 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm5.894 17.258c-.223.623-.905 1.198-1.529 1.353-.434.107-.99.24-2.811-.602-2.351-.983-4.233-3.293-4.364-3.446-.131-.152-1.037-1.374-1.037-2.62 0-1.246.67-1.855.906-2.108.236-.253.516-.316.689-.316.173 0 .344.002.495.009.158.007.369-.06.576.44.223.538.759 1.851.825 1.985.066.134.11.291.022.469-.088.178-.132.285-.264.441-.132.155-.277.347-.396.466-.132.155-.269.322-.115.631.154.308.686 1.132 1.472 1.832.857.764 1.58 1.003 1.803 1.117.223.115.354.096.485-.058.131-.153.559-.651.708-.875.149-.223.297-.185.5-.111.204.074 1.291.608 1.513.719.223.111.371.166.425.258.055.092.055.533-.168 1.156z"/>
+            </svg>
+          ),
+          facebook: (
+            <svg viewBox="0 0 24 24" className="w-5 h-5 fill-current">
+              <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
+            </svg>
+          ),
+          twitter: (
+            <svg viewBox="0 0 24 24" className="w-5 h-5 fill-current">
+              <path d="M23.953 4.57a10 10 0 01-2.825.775 4.958 4.958 0 002.163-2.723c-.951.555-2.005.959-3.127 1.184a4.92 4.92 0 00-8.384 4.482C7.69 8.095 4.067 6.13 1.64 3.162a4.822 4.822 0 00-.666 2.475c0 1.71.87 3.213 2.188 4.096a4.904 4.904 0 01-2.228-.616v.06a4.923 4.923 0 003.946 4.827 4.996 4.996 0 01-2.212.085 4.936 4.936 0 004.604 3.417 9.867 9.867 0 01-6.102 2.105c-.39 0-.779-.023-1.17-.067a13.995 13.995 0 007.557 2.209c9.053 0 13.998-7.496 13.998-13.985 0-.21 0-.42-.015-.63A9.935 9.935 0 0024 4.59z"/>
+            </svg>
+          ),
+          instagram: (
+            <svg viewBox="0 0 24 24" className="w-5 h-5 fill-current">
+              <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/>
+            </svg>
+          ),
+          email: (
+            <svg viewBox="0 0 24 24" className="w-5 h-5 fill-current">
+              <path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/>
+            </svg>
+          )
         };
 
         const handleShare = (network: string) => {
@@ -1064,7 +1073,6 @@ export function QuizPreview({ quiz }: QuizPreviewProps) {
               window.open(`https://twitter.com/intent/tweet?text=${text}`, '_blank');
               break;
             case 'instagram':
-              // Instagram não permite compartilhamento direto via URL, então copiamos para clipboard
               navigator.clipboard?.writeText(`${shareMessage} ${url}`);
               alert('Link copiado! Cole no Instagram Stories ou feed.');
               break;
@@ -1075,32 +1083,36 @@ export function QuizPreview({ quiz }: QuizPreviewProps) {
         };
 
         return (
-          <div className="bg-white rounded-lg p-6 space-y-4 shadow-sm border">
-            <div className="text-center space-y-3">
+          <div className="w-full max-w-md mx-auto bg-white rounded-lg p-4 sm:p-6 space-y-4 shadow-sm border">
+            <div className="text-center space-y-2">
               <h3 className="text-lg font-semibold text-gray-800">
                 Compartilhe este quiz!
               </h3>
-              <p className="text-gray-600">
+              <p className="text-gray-600 text-sm">
                 {shareMessage}
               </p>
             </div>
             
-            <div className={`flex ${element.shareLayout === "vertical" ? "flex-col gap-3" : "flex-wrap gap-3 justify-center"}`}>
+            <div className={`grid ${element.shareLayout === "vertical" ? "grid-cols-1 gap-2" : "grid-cols-2 sm:grid-cols-4 gap-2"}`}>
               {shareNetworks.map((network: string) => (
                 <button
                   key={network}
                   onClick={() => handleShare(network)}
-                  style={shareButtonStyle}
-                  className="flex items-center gap-2 transition-all hover:opacity-80 focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
+                  className={`
+                    flex items-center justify-center p-3 rounded-lg
+                    transition-all hover:scale-105 focus:ring-2 focus:ring-green-500 focus:ring-offset-2
+                    ${network === 'whatsapp' ? 'bg-green-500 hover:bg-green-600 text-white' :
+                      network === 'facebook' ? 'bg-blue-600 hover:bg-blue-700 text-white' :
+                      network === 'twitter' ? 'bg-blue-400 hover:bg-blue-500 text-white' :
+                      network === 'instagram' ? 'bg-gradient-to-r from-purple-400 via-pink-500 to-red-500 hover:from-purple-500 hover:via-pink-600 hover:to-red-600 text-white' :
+                      'bg-gray-600 hover:bg-gray-700 text-white'}
+                  `}
                 >
                   {element.shareShowIcons !== false && (
-                    <span className={`${element.shareIconSize === "small" ? "text-sm" : element.shareIconSize === "large" ? "text-lg" : "text-base"}`}>
+                    <span className="flex-shrink-0">
                       {networkIcons[network as keyof typeof networkIcons]}
                     </span>
                   )}
-                  <span className="capitalize">
-                    {network === "whatsapp" ? "WhatsApp" : network}
-                  </span>
                 </button>
               ))}
             </div>
