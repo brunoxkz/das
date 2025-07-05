@@ -202,9 +202,18 @@ interface QuizPage {
 interface PageEditorProps {
   pages: QuizPage[];
   onPagesChange: (pages: QuizPage[]) => void;
+  globalTheme?: "light" | "dark" | "custom";
+  customBackgroundColor?: string;
+  onThemeChange?: (theme: "light" | "dark" | "custom", customColor?: string) => void;
 }
 
-export function PageEditorHorizontal({ pages, onPagesChange }: PageEditorProps) {
+export function PageEditorHorizontal({ 
+  pages, 
+  onPagesChange, 
+  globalTheme: initialGlobalTheme = "light",
+  customBackgroundColor: initialCustomBackgroundColor = "#ffffff",
+  onThemeChange 
+}: PageEditorProps) {
   const [activePage, setActivePage] = useState(0);
   const [selectedElement, setSelectedElement] = useState<number | null>(null);
   const [activeTab, setActiveTab] = useState<'visual' | 'comportamento'>('visual');
@@ -212,7 +221,42 @@ export function PageEditorHorizontal({ pages, onPagesChange }: PageEditorProps) 
   const [editingPageTitle, setEditingPageTitle] = useState("");
   const [draggedPage, setDraggedPage] = useState<number | null>(null);
   const [dragOverPage, setDragOverPage] = useState<number | null>(null);
-  const [globalBackgroundColor, setGlobalBackgroundColor] = useState("#ffffff");
+  const [globalTheme, setGlobalTheme] = useState<"light" | "dark" | "custom">(initialGlobalTheme);
+  const [customBackgroundColor, setCustomBackgroundColor] = useState(initialCustomBackgroundColor);
+
+  // Função para calcular cor de fundo baseada no tema
+  const getBackgroundColor = () => {
+    switch (globalTheme) {
+      case "light":
+        return "#ffffff";
+      case "dark":
+        return "#000000";
+      case "custom":
+        return customBackgroundColor;
+      default:
+        return "#ffffff";
+    }
+  };
+
+  // Função para calcular cor de texto baseada no tema
+  const getTextColor = () => {
+    switch (globalTheme) {
+      case "light":
+        return "#000000";
+      case "dark":
+        return "#ffffff";
+      case "custom":
+        // Calcular contraste automático baseado na cor de fundo
+        const color = customBackgroundColor;
+        const r = parseInt(color.substr(1, 2), 16);
+        const g = parseInt(color.substr(3, 2), 16);
+        const b = parseInt(color.substr(5, 2), 16);
+        const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+        return luminance > 0.5 ? "#000000" : "#ffffff";
+      default:
+        return "#000000";
+    }
+  };
 
 
   // Função para traduzir os tipos de elementos
@@ -1992,20 +2036,76 @@ const gameElementCategories = [
           <Label className="text-xs font-semibold text-gray-600 mb-2 block">
             🎨 Cor de Fundo Global
           </Label>
-          <div className="flex items-center gap-2">
-            <Input
-              type="color"
-              value={globalBackgroundColor}
-              onChange={(e) => setGlobalBackgroundColor(e.target.value)}
-              className="w-8 h-8 rounded cursor-pointer border-none p-0"
-            />
-            <Input
-              type="text"
-              value={globalBackgroundColor}
-              onChange={(e) => setGlobalBackgroundColor(e.target.value)}
-              className="flex-1 text-xs"
-              placeholder="#ffffff"
-            />
+          <div className="space-y-3">
+            <div className="flex gap-2">
+              <button
+                onClick={() => {
+                  setGlobalTheme("light");
+                  onThemeChange?.("light", "#ffffff");
+                }}
+                className={`flex-1 p-3 rounded-lg border-2 transition-all ${
+                  globalTheme === "light" 
+                    ? "border-green-500 bg-green-50" 
+                    : "border-gray-200 hover:border-gray-300"
+                }`}
+              >
+                <div className="w-full h-6 bg-white border rounded mb-2"></div>
+                <div className="text-xs font-medium">Light</div>
+                <div className="text-xs text-gray-500">Branco/Preto</div>
+              </button>
+              
+              <button
+                onClick={() => {
+                  setGlobalTheme("dark");
+                  onThemeChange?.("dark", "#000000");
+                }}
+                className={`flex-1 p-3 rounded-lg border-2 transition-all ${
+                  globalTheme === "dark" 
+                    ? "border-green-500 bg-green-50" 
+                    : "border-gray-200 hover:border-gray-300"
+                }`}
+              >
+                <div className="w-full h-6 bg-black border rounded mb-2"></div>
+                <div className="text-xs font-medium">Dark</div>
+                <div className="text-xs text-gray-500">Preto/Branco</div>
+              </button>
+              
+              <button
+                onClick={() => {
+                  setGlobalTheme("custom");
+                  onThemeChange?.("custom", customBackgroundColor);
+                }}
+                className={`flex-1 p-3 rounded-lg border-2 transition-all ${
+                  globalTheme === "custom" 
+                    ? "border-green-500 bg-green-50" 
+                    : "border-gray-200 hover:border-gray-300"
+                }`}
+              >
+                <div 
+                  className="w-full h-6 border rounded mb-2"
+                  style={{ backgroundColor: customBackgroundColor }}
+                ></div>
+                <div className="text-xs font-medium">Custom</div>
+                <div className="text-xs text-gray-500">Personalizado</div>
+              </button>
+            </div>
+            
+            {globalTheme === "custom" && (
+              <div className="mt-3">
+                <Input
+                  type="color"
+                  value={customBackgroundColor}
+                  onChange={(e) => {
+                    setCustomBackgroundColor(e.target.value);
+                    onThemeChange?.("custom", e.target.value);
+                  }}
+                  className="w-full h-10"
+                />
+                <div className="text-xs text-gray-500 mt-2">
+                  Contraste automático aplicado ao texto
+                </div>
+              </div>
+            )}
           </div>
           <p className="text-xs text-gray-500 mt-1">
             Aplicado a todas as páginas automaticamente
@@ -2059,7 +2159,10 @@ const gameElementCategories = [
           {currentPage ? (
             <div 
               className="space-y-4 border border-gray-200 rounded-lg p-6 min-h-[500px]"
-              style={{ backgroundColor: globalBackgroundColor }}
+              style={{ 
+                backgroundColor: getBackgroundColor(),
+                color: getTextColor()
+              }}
             >
               {currentPage.elements.length === 0 ? (
                 <div className="text-center text-gray-500 py-16">

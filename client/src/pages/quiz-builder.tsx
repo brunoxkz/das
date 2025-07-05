@@ -85,6 +85,8 @@ export default function QuizBuilder() {
   });
 
   const [activeTab, setActiveTab] = useState<"editor" | "preview" | "settings" | "design">("editor");
+  const [globalTheme, setGlobalTheme] = useState<"light" | "dark" | "custom">("light");
+  const [customBackgroundColor, setCustomBackgroundColor] = useState("#ffffff");
 
   // Fetch quiz data if editing
   console.log("QUIZ BUILDER - Estados:", { isEditing, quizId, shouldFetch: !!isEditing && !!quizId });
@@ -395,6 +397,12 @@ export default function QuizBuilder() {
             <PageEditorHorizontal
               pages={quizData.structure.pages || []}
               onPagesChange={handlePageChange}
+              globalTheme={globalTheme}
+              customBackgroundColor={customBackgroundColor}
+              onThemeChange={(theme, customColor) => {
+                setGlobalTheme(theme);
+                setCustomBackgroundColor(customColor || "#ffffff");
+              }}
             />
           </div>
         )}
