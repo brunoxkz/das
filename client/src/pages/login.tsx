@@ -41,6 +41,15 @@ export default function LoginPage() {
     }
   }, []);
 
+  // Limpar credenciais quando o usuário desmarca "Lembrar senha"
+  const handleRememberPasswordChange = (checked: boolean | "indeterminate") => {
+    const isChecked = checked === true;
+    setRememberPassword(isChecked);
+    if (!isChecked) {
+      localStorage.removeItem('vendzz_saved_credentials');
+    }
+  };
+
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
@@ -162,6 +171,16 @@ export default function LoginPage() {
                       required
                     />
                   </div>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <Checkbox 
+                    id="remember-password"
+                    checked={rememberPassword}
+                    onCheckedChange={handleRememberPasswordChange}
+                  />
+                  <Label htmlFor="remember-password" className="text-sm font-normal">
+                    Lembrar senha
+                  </Label>
                 </div>
                 <Button type="submit" className="w-full" disabled={isLoading}>
                   {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
