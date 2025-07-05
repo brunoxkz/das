@@ -4,8 +4,9 @@ import bcrypt from "bcryptjs";
 import { storage } from "./storage-sqlite";
 import { cache } from "./cache";
 
-const JWT_SECRET = process.env.JWT_SECRET || "vendzz-sqlite-secret-key-2025";
-const JWT_REFRESH_SECRET = process.env.JWT_REFRESH_SECRET || "vendzz-sqlite-refresh-secret-2025";
+// USAR EXATAMENTE O MESMO SEGREDO DO AUTH-HYBRID PARA COMPATIBILIDADE
+const JWT_SECRET = process.env.JWT_SECRET || 'vendzz-jwt-secret-key-2024';
+const JWT_REFRESH_SECRET = process.env.JWT_REFRESH_SECRET || 'vendzz-jwt-refresh-secret-2024';
 
 export function generateTokens(user: any) {
   const accessToken = jwt.sign(

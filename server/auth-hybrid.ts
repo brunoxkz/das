@@ -12,8 +12,9 @@ const detectAuthSystem = () => {
 
 export const authSystem = detectAuthSystem();
 
-// JWT Secret unificado
+// JWT Secret unificado - EXATAMENTE O MESMO SEGREDO EM TODOS OS SISTEMAS
 const JWT_SECRET = process.env.JWT_SECRET || 'vendzz-jwt-secret-key-2024';
+const JWT_REFRESH_SECRET = process.env.JWT_REFRESH_SECRET || 'vendzz-jwt-refresh-secret-2024';
 
 // Middleware de verificação JWT híbrido que funciona para ambos os sistemas
 export const verifyJWT: RequestHandler = async (req: any, res, next) => {
