@@ -48,7 +48,7 @@ import {
 
 interface Element {
   id: number;
-  type: "multiple_choice" | "text" | "rating" | "email" | "checkbox" | "date" | "phone" | "number" | "textarea" | "image_upload" | "animated_transition" | "heading" | "paragraph" | "image" | "divider" | "video" | "audio" | "birth_date" | "height" | "current_weight" | "target_weight" | "transition_background" | "transition_text" | "transition_counter" | "transition_loader" | "transition_redirect" | "spacer" | "game_wheel" | "game_scratch" | "game_color_pick" | "game_brick_break" | "game_memory_cards" | "game_slot_machine" | "continue_button" | "loading_question" | "share_quiz";
+  type: "multiple_choice" | "text" | "rating" | "email" | "checkbox" | "date" | "phone" | "number" | "textarea" | "image_upload" | "animated_transition" | "heading" | "paragraph" | "image" | "divider" | "video" | "audio" | "birth_date" | "height" | "current_weight" | "target_weight" | "transition_background" | "transition_text" | "transition_counter" | "transition_loader" | "transition_redirect" | "spacer" | "game_wheel" | "game_scratch" | "game_color_pick" | "game_brick_break" | "game_memory_cards" | "game_slot_machine" | "continue_button" | "loading_question" | "share_quiz" | "price";
   content: string;
   question?: string;
   description?: string;
@@ -195,6 +195,55 @@ interface Element {
   shareShowIcons?: boolean;
   shareIconSize?: "small" | "medium" | "large";
   shareLayout?: "vertical" | "horizontal";
+  
+  // Propriedades específicas para preço
+  priceValue?: string;
+  priceOriginalValue?: string;
+  priceCurrency?: string;
+  priceSymbol?: string;
+  priceCurrencyPosition?: "left" | "right";
+  priceLink?: string;
+  priceLinkText?: string;
+  priceDisplayStyle?: "simple" | "card" | "comparison" | "highlight" | "minimal";
+  priceShowDiscount?: boolean;
+  priceDiscountPercent?: number;
+  priceShowStrikethrough?: boolean;
+  priceAlignment?: "left" | "center" | "right";
+  priceMainColor?: string;
+  priceAccentColor?: string;
+  priceBackgroundColor?: string;
+  priceBorderColor?: string;
+  priceTextColor?: string;
+  priceOriginalColor?: string;
+  priceDiscountColor?: string;
+  priceFontSize?: "small" | "medium" | "large" | "xl" | "2xl";
+  priceOriginalFontSize?: "small" | "medium" | "large";
+  priceFontWeight?: "normal" | "medium" | "semibold" | "bold";
+  priceBorderRadius?: "none" | "small" | "medium" | "large" | "full";
+  pricePadding?: "none" | "small" | "medium" | "large";
+  priceMargin?: "none" | "small" | "medium" | "large";
+  priceShadow?: "none" | "small" | "medium" | "large";
+  priceAnimation?: "none" | "pulse" | "bounce" | "shake" | "glow";
+  priceShowBadge?: boolean;
+  priceBadgeText?: string;
+  priceBadgeColor?: string;
+  priceBadgePosition?: "top-left" | "top-right" | "bottom-left" | "bottom-right";
+  priceShowIcon?: boolean;
+  priceIcon?: string;
+  priceIconPosition?: "left" | "right" | "top" | "bottom";
+  priceIconColor?: string;
+  priceButtonStyle?: "contained" | "outlined" | "text" | "gradient";
+  priceButtonColor?: string;
+  priceButtonTextColor?: string;
+  priceButtonHoverColor?: string;
+  priceButtonBorderRadius?: "none" | "small" | "medium" | "large" | "full";
+  priceButtonSize?: "small" | "medium" | "large";
+  priceButtonFullWidth?: boolean;
+  priceOpenInNewTab?: boolean;
+  priceDescription?: string;
+  priceFeatures?: string[];
+  priceShowFeatures?: boolean;
+  priceFeatureIcon?: string;
 }
 
 interface QuizPage {
