@@ -323,11 +323,10 @@ export default function Landing() {
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center">
               <div className="flex-shrink-0 flex items-center">
-                <Vote className="text-primary text-2xl mr-2" />
                 <img 
                   src="https://vendzz.com.br/wp-content/uploads/2024/12/logo-vendzz.png" 
                   alt="Vendzz" 
-                  className="h-8 object-contain"
+                  className="h-12 object-contain"
                 />
               </div>
             </div>
@@ -354,7 +353,6 @@ export default function Landing() {
               </Button>
               <Button size="sm" className="bg-gradient-to-r from-primary to-primary/80">
                 <RouterLink to="/login">
-                  <Sparkles className="w-4 h-4 mr-1" />
                   Teste Grátis
                 </RouterLink>
               </Button>
@@ -412,7 +410,7 @@ export default function Landing() {
                 <Button 
                   size="lg" 
                   variant="outline" 
-                  className="border-white text-white hover:bg-white hover:text-black text-lg px-8 py-4"
+                  className="border-gray-400 text-gray-600 hover:bg-blue-500 hover:text-white hover:border-blue-500 text-lg px-8 py-4"
                 >
                   <Video className="w-5 h-5 mr-2" />
                   Ver Demo Completa
@@ -1027,7 +1025,7 @@ export default function Landing() {
             <Button 
               size="lg" 
               variant="outline" 
-              className="border-white text-white hover:bg-white hover:text-black text-lg px-8 py-4"
+              className="border-gray-400 text-gray-600 hover:bg-blue-500 hover:text-white hover:border-blue-500 text-lg px-8 py-4"
             >
               Agendar Demo Personalizada
             </Button>
@@ -1065,11 +1063,10 @@ export default function Landing() {
           <div className="grid grid-cols-1 md:grid-cols-5 gap-8">
             <div className="md:col-span-2">
               <div className="flex items-center mb-6">
-                <Vote className="text-primary text-2xl mr-2" />
                 <img 
                   src="https://vendzz.com.br/wp-content/uploads/2024/12/logo-vendzz.png" 
                   alt="Vendzz" 
-                  className="h-6 object-contain"
+                  className="h-10 object-contain"
                 />
               </div>
               <p className="text-gray-400 mb-6 leading-relaxed">
