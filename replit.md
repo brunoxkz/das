@@ -17,24 +17,24 @@ Vendzz is a modern, futuristic SaaS quiz funnel platform focused on lead generat
 ### Backend Architecture
 - **Framework**: Express.js with TypeScript
 - **Runtime**: Node.js with ES modules
-- **Database**: PostgreSQL with Drizzle ORM
-- **Session Management**: Express sessions with PostgreSQL store
-- **Authentication**: Replit OpenID Connect (OIDC)
-- **Payment Processing**: Stripe integration
+- **Database**: SQLite with Drizzle ORM (completely independent)
+- **Authentication**: JWT-based authentication with refresh tokens
+- **Session Management**: Local storage with token-based authentication
+- **Payment Processing**: Stripe integration (optional)
 
 ## Key Components
 
 ### Database Layer
-- **ORM**: Drizzle with PostgreSQL dialect
-- **Connection**: Neon serverless PostgreSQL with connection pooling
-- **Schema**: Centralized in `shared/schema.ts` with type-safe definitions
-- **Migrations**: Managed through Drizzle Kit
+- **ORM**: Drizzle with SQLite dialect (better-sqlite3)
+- **Connection**: Local SQLite database file (completely independent)
+- **Schema**: Centralized in `shared/schema-sqlite.ts` with type-safe definitions
+- **Migrations**: Automatic schema creation with fallback to manual table creation
 
 ### Authentication System
-- **Provider**: Replit OIDC authentication
-- **Session Storage**: PostgreSQL-backed sessions with connect-pg-simple
-- **Middleware**: Passport.js strategy for OIDC integration
-- **User Management**: Automatic user creation and profile management
+- **Provider**: Custom JWT-based authentication (no external dependencies)
+- **Token Storage**: localStorage for access and refresh tokens
+- **Middleware**: JWT verification with automatic token refresh
+- **User Management**: Bcrypt password hashing with role-based access control
 
 ### Quiz Management
 - **Builder**: Visual page-based quiz editor with auto-collapsing sidebar
@@ -112,11 +112,10 @@ Vendzz is a modern, futuristic SaaS quiz funnel platform focused on lead generat
 - **Assets**: Served from Express static middleware
 
 ### Environment Variables
-- `DATABASE_URL`: PostgreSQL connection string
-- `SESSION_SECRET`: Session encryption key
-- `STRIPE_SECRET_KEY`: Stripe API key
-- `REPLIT_DOMAINS`: Allowed domains for OIDC
-- `ISSUER_URL`: OIDC provider URL
+- `JWT_SECRET`: JWT signing secret (optional, defaults to built-in key)
+- `JWT_REFRESH_SECRET`: Refresh token secret (optional, defaults to built-in key)
+- `STRIPE_SECRET_KEY`: Stripe API key (optional for payment features)
+- `NODE_ENV`: Environment mode (development/production)
 
 ## Changelog
 
@@ -283,6 +282,17 @@ Changelog:
   * Improved element organization with better icons and clearer labels
   * Global background color shows live preview in editor with hex color input
   * Streamlined UI removes need to drag background elements to each page individually
+- July 05, 2025. COMPLETE INDEPENDENCE FROM REPLIT - Full SQLite migration accomplished:
+  * Migrated from PostgreSQL/Replit dependencies to completely independent SQLite database
+  * Implemented custom JWT-based authentication system replacing Replit OIDC
+  * Created robust SQLite storage layer with full CRUD operations (storage-sqlite.ts)
+  * Built comprehensive authentication system with bcrypt password hashing (auth-sqlite.ts)
+  * Established independent routing system with proper JWT middleware (routes-sqlite.ts)
+  * Database automatically creates schema with default admin/editor accounts
+  * Token-based authentication with automatic refresh and localStorage persistence
+  * System now runs completely independently without any external service dependencies
+  * Performance maintained with caching and optimized SQLite queries
+  * Default users: admin@vendzz.com (admin123) and editor@vendzz.com (editor123)
 ```
 
 ## User Preferences

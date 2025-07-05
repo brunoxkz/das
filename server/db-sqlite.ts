@@ -1,0 +1,113 @@
+import Database from 'better-sqlite3';
+import { drizzle } from 'drizzle-orm/better-sqlite3';
+import * as schema from "../shared/schema-sqlite";
+import { migrate } from 'drizzle-orm/better-sqlite3/migrator';
+import path from 'path';
+
+// Criar banco de dados SQLite local
+const sqlite = new Database('./vendzz-database.db');
+sqlite.pragma('journal_mode = WAL');
+
+export const db = drizzle(sqlite, { schema });
+
+// Função para executar migrações
+export function runMigrations() {
+  try {
+    migrate(db, { migrationsFolder: './migrations' });
+    console.log('✅ Database migrations completed successfully');
+  } catch (error) {
+    console.log('⚡ Creating fresh database schema...');
+    
+    // Criar tabelas manualmente se as migrações falharem
+    const createUsersTable = `
+      CREATE TABLE IF NOT EXISTS users (
+        id TEXT PRIMARY KEY,
+        email TEXT UNIQUE NOT NULL,
+        password TEXT,
+        firstName TEXT,
+        lastName TEXT,
+        profileImageUrl TEXT,
+        stripeCustomerId TEXT,
+        stripeSubscriptionId TEXT,
+        plan TEXT DEFAULT 'free',
+        role TEXT DEFAULT 'user',
+        refreshToken TEXT,
+        subscriptionStatus TEXT,
+        createdAt INTEGER DEFAULT (unixepoch() * 1000),
+        updatedAt INTEGER DEFAULT (unixepoch() * 1000)
+      );
+    `;
+
+    const createQuizzesTable = `
+      CREATE TABLE IF NOT EXISTS quizzes (
+        id TEXT PRIMARY KEY,
+        title TEXT NOT NULL,
+        description TEXT,
+        structure TEXT NOT NULL,
+        userId TEXT NOT NULL,
+        isPublished INTEGER DEFAULT 0,
+        settings TEXT,
+        design TEXT,
+        facebookPixel TEXT,
+        googlePixel TEXT,
+        ga4Pixel TEXT,
+        customHeadScript TEXT,
+        resultTitle TEXT,
+        resultDescription TEXT,
+        embedCode TEXT,
+        createdAt INTEGER DEFAULT (unixepoch() * 1000),
+        updatedAt INTEGER DEFAULT (unixepoch() * 1000),
+        FOREIGN KEY (userId) REFERENCES users(id)
+      );
+    `;
+
+    const createQuizTemplatesTable = `
+      CREATE TABLE IF NOT EXISTS quiz_templates (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name TEXT NOT NULL,
+        description TEXT,
+        structure TEXT NOT NULL,
+        category TEXT,
+        createdAt INTEGER DEFAULT (unixepoch() * 1000),
+        updatedAt INTEGER DEFAULT (unixepoch() * 1000)
+      );
+    `;
+
+    const createQuizResponsesTable = `
+      CREATE TABLE IF NOT EXISTS quiz_responses (
+        id TEXT PRIMARY KEY,
+        quizId TEXT NOT NULL,
+        responses TEXT NOT NULL,
+        metadata TEXT,
+        submittedAt INTEGER DEFAULT (unixepoch() * 1000),
+        FOREIGN KEY (quizId) REFERENCES quizzes(id)
+      );
+    `;
+
+    const createQuizAnalyticsTable = `
+      CREATE TABLE IF NOT EXISTS quiz_analytics (
+        id TEXT PRIMARY KEY,
+        quizId TEXT NOT NULL,
+        date TEXT NOT NULL,
+        views INTEGER DEFAULT 0,
+        completions INTEGER DEFAULT 0,
+        conversionRate REAL DEFAULT 0,
+        metadata TEXT,
+        FOREIGN KEY (quizId) REFERENCES quizzes(id)
+      );
+    `;
+
+    sqlite.exec(createUsersTable);
+    sqlite.exec(createQuizzesTable);
+    sqlite.exec(createQuizTemplatesTable);
+    sqlite.exec(createQuizResponsesTable);
+    sqlite.exec(createQuizAnalyticsTable);
+
+    console.log('✅ Fresh SQLite database schema created successfully');
+  }
+}
+
+// Executar migrações na inicialização
+runMigrations();
+
+export { sqlite };

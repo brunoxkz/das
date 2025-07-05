@@ -1,9 +1,9 @@
 import express, { type Request, Response, NextFunction } from "express";
 import compression from "compression";
 import helmet from "helmet";
-import { registerMemoryRoutes } from "./routes-memory";
+import { registerSQLiteRoutes } from "./routes-sqlite";
 import { setupVite, serveStatic, log } from "./vite";
-import { setupMemoryAuth } from "./auth-memory";
+import { setupSQLiteAuth, verifyJWT } from "./auth-sqlite";
 
 const app = express();
 
@@ -86,9 +86,33 @@ app.use((req, res, next) => {
 });
 
 (async () => {
-  // Setup memory auth (temporary)
-  setupMemoryAuth(app);
-  const server = registerMemoryRoutes(app);
+  // Setup SQLite auth and routes (completely independent)
+  setupSQLiteAuth(app);
+  
+  // Apply JWT middleware to protected routes
+  app.use('/api', (req, res, next) => {
+    // Skip auth for public endpoints
+    const publicEndpoints = [
+      '/api/auth/login',
+      '/api/auth/register', 
+      '/api/auth/refresh',
+      '/api/health',
+      '/api/cache/status'
+    ];
+    
+    // Skip auth for quiz responses and views (public)
+    if (req.path.includes('/responses') || req.path.includes('/view')) {
+      return next();
+    }
+    
+    if (publicEndpoints.includes(req.path)) {
+      return next();
+    }
+    
+    return verifyJWT(req, res, next);
+  });
+  
+  const server = registerSQLiteRoutes(app);
 
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
     const status = err.status || err.statusCode || 500;
