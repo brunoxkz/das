@@ -1,4 +1,3 @@
-
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -374,13 +373,13 @@ export default function Landing() {
                 <Sparkles className="w-3 h-3 mr-1" />
                 Plataforma Mais Avançada do Brasil
               </Badge>
-              
+
               <h1 className="text-5xl md:text-6xl font-bold mb-6 leading-tight">
                 Quiz Funnels com
                 <span className="text-yellow-300 block"> Super Analytics</span>
                 <span className="text-green-300 block"> + Gamificação</span>
               </h1>
-              
+
               <p className="text-xl mb-8 text-gray-100 leading-relaxed">
                 A única plataforma que combina quiz funnels inteligentes, analytics avançado, 
                 sistema de premiações e elementos de IA para maximizar suas conversões.
@@ -398,7 +397,7 @@ export default function Landing() {
                   </div>
                 ))}
               </div>
-              
+
               <div className="flex flex-col sm:flex-row gap-4 mb-8">
                 <Button 
                   size="lg" 
@@ -413,13 +412,13 @@ export default function Landing() {
                 <Button 
                   size="lg" 
                   variant="outline" 
-                  className="border-white text-white hover:bg-white hover:text-primary text-lg px-8 py-4"
+                  className="border-white text-white hover:bg-white hover:text-black text-lg px-8 py-4"
                 >
                   <Video className="w-5 h-5 mr-2" />
                   Ver Demo Completa
                 </Button>
               </div>
-              
+
               <div className="flex items-center space-x-6 text-sm text-gray-200">
                 <span className="flex items-center">
                   <Check className="w-4 h-4 mr-2 text-green-300" />
@@ -590,7 +589,7 @@ export default function Landing() {
                     <h3 className="text-lg font-semibold mb-2">Dashboard Analytics</h3>
                     <p className="text-blue-100 text-sm">Dados dos últimos 30 dias</p>
                   </div>
-                  
+
                   <div className="p-6">
                     <div className="grid grid-cols-2 gap-4 mb-6">
                       <div className="text-center p-4 bg-gray-50 rounded-lg">
@@ -611,7 +610,7 @@ export default function Landing() {
                       <div className="w-full bg-gray-200 rounded-full h-2">
                         <div className="bg-green-500 h-2 rounded-full" style={{width: '92%'}}></div>
                       </div>
-                      
+
                       <div className="flex justify-between text-sm">
                         <span>Pergunta 2 → 3</span>
                         <span className="text-green-600">78%</span>
@@ -619,7 +618,7 @@ export default function Landing() {
                       <div className="w-full bg-gray-200 rounded-full h-2">
                         <div className="bg-green-500 h-2 rounded-full" style={{width: '78%'}}></div>
                       </div>
-                      
+
                       <div className="flex justify-between text-sm">
                         <span>Pergunta 3 → Lead</span>
                         <span className="text-yellow-600">64%</span>
@@ -650,7 +649,7 @@ export default function Landing() {
                     </h3>
                     <p className="text-yellow-100 text-sm">Rankings em tempo real</p>
                   </div>
-                  
+
                   <div className="p-6">
                     <div className="space-y-4">
                       <div className="flex items-center justify-between p-3 bg-yellow-50 rounded-lg border-2 border-yellow-200">
@@ -825,7 +824,7 @@ export default function Landing() {
                   <div className="absolute top-4 right-4">
                     <Badge className={template.badgeColor}>{template.badge}</Badge>
                   </div>
-                  
+
                   <Card className="bg-white/95 backdrop-blur p-6 max-w-[250px] mx-auto">
                     <CardContent className="p-0 text-center">
                       <div className="text-4xl mb-3">{template.icon}</div>
@@ -838,11 +837,11 @@ export default function Landing() {
                     </CardContent>
                   </Card>
                 </div>
-                
+
                 <CardContent className="p-8">
                   <h3 className="text-xl font-semibold text-neutral-900 mb-3">{template.title}</h3>
                   <p className="text-gray-600 mb-4 leading-relaxed">{template.description}</p>
-                  
+
                   <div className="flex flex-wrap gap-2 mb-6">
                     {template.features.map((feature, featureIndex) => (
                       <Badge key={featureIndex} variant="secondary" className="text-xs">
@@ -850,7 +849,7 @@ export default function Landing() {
                       </Badge>
                     ))}
                   </div>
-                  
+
                   <Button className="w-full">
                     <RouterLink to="/login" className="flex items-center justify-center">
                       Usar Template
@@ -898,16 +897,16 @@ export default function Landing() {
                       <Star key={i} className="w-4 h-4 text-yellow-400 fill-current" />
                     ))}
                   </div>
-                  
+
                   <blockquote className="text-gray-700 mb-6 leading-relaxed">
                     "{testimonial.content}"
                   </blockquote>
-                  
+
                   <div className="border-t pt-6">
                     <div className="font-semibold text-gray-900">{testimonial.name}</div>
                     <div className="text-sm text-gray-600">{testimonial.role}</div>
                     <div className="text-sm text-gray-600">{testimonial.company}</div>
-                    
+
                     <div className="mt-3 p-3 bg-green-50 rounded-lg">
                       <div className="text-sm font-medium text-green-800">
                         🎯 {testimonial.results}
@@ -1013,7 +1012,7 @@ export default function Landing() {
             Junte-se a milhares de empresas que já multiplicaram suas conversões 
             com quiz funnels inteligentes, analytics avançado e gamificação
           </p>
-          
+
           <div className="flex flex-col sm:flex-row justify-center gap-6 mb-12">
             <Button 
               size="lg" 
@@ -1028,7 +1027,7 @@ export default function Landing() {
             <Button 
               size="lg" 
               variant="outline" 
-              className="border-white text-white hover:bg-white hover:text-primary text-lg px-8 py-4"
+              className="border-white text-white hover:bg-white hover:text-black text-lg px-8 py-4"
             >
               Agendar Demo Personalizada
             </Button>
