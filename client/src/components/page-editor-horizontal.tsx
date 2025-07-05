@@ -3,6 +3,11 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
+import { DragDropItem, DragDropContainer } from "@/components/ui/drag-drop";
+import { ModernButton } from "@/components/ui/modern-button";
+import { ModernCard, ModernCardContent, ModernCardHeader, ModernCardTitle } from "@/components/ui/modern-card";
+import { animations, microInteractions } from "@/lib/animations";
+import { cn } from "@/lib/utils";
 import { 
   FileText, 
   Plus, 
@@ -12,6 +17,7 @@ import {
   ChevronUp, 
   ChevronDown, 
   Edit3,
+  GripVertical,
   Type,
   AlignLeft,
   Image as ImageIcon,
@@ -1888,17 +1894,20 @@ const gameElementCategories = [
   }
 
   return (
-    <div className="flex h-screen bg-gray-100">
-      {/* 1. Painel Páginas */}
-      <div className="w-64 border-r bg-white flex-shrink-0 flex flex-col">
-        <div className="p-4 border-b bg-vendzz-primary text-white">
-          <h3 className="font-semibold flex items-center gap-2">
+    <div className="flex flex-col lg:flex-row h-screen bg-gray-50">
+      {/* 1. Painel Páginas - Mobile First */}
+      <div className="w-full lg:w-64 border-b lg:border-r lg:border-b-0 bg-white flex-shrink-0 flex flex-col">
+        <div className="p-4 border-b bg-gradient-to-r from-primary-600 to-primary-700 text-white">
+          <h3 className={cn(
+            "font-semibold flex items-center gap-2",
+            animations.fadeIn
+          )}>
             <FileText className="w-4 h-4" />
             Páginas
           </h3>
         </div>
         <div className="flex-1 overflow-y-auto p-4">
-          <div className="space-y-2 mb-4">
+          <div className="space-y-3 mb-4">
             {pages.map((page, index) => (
               <div 
                 key={page.id}
@@ -1907,15 +1916,15 @@ const gameElementCategories = [
                 onDragOver={(e) => handleDragOver(e, index)}
                 onDragLeave={handleDragLeave}
                 onDrop={(e) => handleDrop(e, index)}
-                className={`group p-3 border rounded-lg cursor-pointer transition-all duration-200 ${
+                className={cn(
+                  "group p-3 border rounded-xl cursor-pointer transition-all duration-200",
+                  microInteractions.cardHover,
                   index === activePage 
-                    ? 'border-vendzz-primary bg-vendzz-primary/5' 
-                    : 'border-gray-200 hover:border-gray-300'
-                } ${
-                  draggedPage === index ? 'opacity-50 scale-95' : ''
-                } ${
-                  dragOverPage === index ? 'border-vendzz-primary border-2 bg-vendzz-primary/10 transform scale-105' : ''
-                }`}
+                    ? 'border-primary-400 bg-primary-50 shadow-soft' 
+                    : 'border-gray-200 hover:border-primary-200 hover:shadow-soft bg-white',
+                  draggedPage === index && 'opacity-50 scale-95',
+                  dragOverPage === index && 'border-primary-500 border-2 bg-primary-100 transform scale-105'
+                )}
                 onClick={() => setActivePage(index)}
               >
                 <div className="flex items-center justify-between">
@@ -1990,25 +1999,25 @@ const gameElementCategories = [
               </div>
             ))}
           </div>
-          <div className="space-y-2">
-            <Button
+          <div className="space-y-3">
+            <ModernButton
               onClick={addPage}
-              variant="outline"
+              variant="secondary"
               size="sm"
-              className="w-full justify-center"
+              className="w-full"
+              leftIcon={<Plus className="w-4 h-4" />}
             >
-              <Plus className="w-4 h-4 mr-2" />
               Nova Página
-            </Button>
-            <Button
+            </ModernButton>
+            <ModernButton
               onClick={addTransitionPage}
-              variant="outline"
+              variant="secondary"
               size="sm"
-              className="w-full justify-center bg-gradient-to-r from-purple-50 to-pink-50 border-purple-200 hover:border-purple-300"
+              className="w-full bg-gradient-to-r from-purple-50 to-pink-50 border-purple-200 hover:border-purple-300 hover:from-purple-100 hover:to-pink-100"
+              leftIcon={<Sparkles className="w-4 h-4" />}
             >
-              <Sparkles className="w-4 h-4 mr-2" />
               Nova Transição
-            </Button>
+            </ModernButton>
             <Button
               onClick={addGamePage}
               variant="outline"
@@ -2022,10 +2031,13 @@ const gameElementCategories = [
         </div>
       </div>
 
-      {/* 2. Painel Elementos */}
-      <div className="w-64 border-r bg-white flex-shrink-0 flex flex-col h-full">
-        <div className="p-4 border-b bg-vendzz-primary text-white flex-shrink-0">
-          <h3 className="font-semibold flex items-center gap-2">
+      {/* 2. Painel Elementos - Mobile First */}
+      <div className="w-full lg:w-64 border-b lg:border-r lg:border-b-0 bg-white flex-shrink-0 flex flex-col h-auto lg:h-full">
+        <div className="p-4 border-b bg-gradient-to-r from-primary-600 to-primary-700 text-white flex-shrink-0">
+          <h3 className={cn(
+            "font-semibold flex items-center gap-2",
+            animations.fadeIn
+          )}>
             <Plus className="w-4 h-4" />
             Elementos
           </h3>
@@ -2043,11 +2055,13 @@ const gameElementCategories = [
                   setGlobalTheme("light");
                   onThemeChange?.("light", "#ffffff");
                 }}
-                className={`flex-1 p-3 rounded-lg border-2 transition-all ${
+                className={cn(
+                  "flex-1 p-3 rounded-xl border-2 transition-all",
+                  microInteractions.buttonPress,
                   globalTheme === "light" 
-                    ? "border-green-500 bg-green-50" 
-                    : "border-gray-200 hover:border-gray-300"
-                }`}
+                    ? "border-primary-500 bg-primary-50 shadow-soft" 
+                    : "border-gray-200 hover:border-primary-200 hover:shadow-soft"
+                )}
               >
                 <div className="w-full h-6 bg-white border rounded mb-2"></div>
                 <div className="text-xs font-medium">Light</div>
@@ -2059,11 +2073,13 @@ const gameElementCategories = [
                   setGlobalTheme("dark");
                   onThemeChange?.("dark", "#000000");
                 }}
-                className={`flex-1 p-3 rounded-lg border-2 transition-all ${
+                className={cn(
+                  "flex-1 p-3 rounded-xl border-2 transition-all",
+                  microInteractions.buttonPress,
                   globalTheme === "dark" 
-                    ? "border-green-500 bg-green-50" 
-                    : "border-gray-200 hover:border-gray-300"
-                }`}
+                    ? "border-primary-500 bg-primary-50 shadow-soft" 
+                    : "border-gray-200 hover:border-primary-200 hover:shadow-soft"
+                )}
               >
                 <div className="w-full h-6 bg-black border rounded mb-2"></div>
                 <div className="text-xs font-medium">Dark</div>
@@ -2075,11 +2091,13 @@ const gameElementCategories = [
                   setGlobalTheme("custom");
                   onThemeChange?.("custom", customBackgroundColor);
                 }}
-                className={`flex-1 p-3 rounded-lg border-2 transition-all ${
+                className={cn(
+                  "flex-1 p-3 rounded-xl border-2 transition-all",
+                  microInteractions.buttonPress,
                   globalTheme === "custom" 
-                    ? "border-green-500 bg-green-50" 
-                    : "border-gray-200 hover:border-gray-300"
-                }`}
+                    ? "border-primary-500 bg-primary-50 shadow-soft" 
+                    : "border-gray-200 hover:border-primary-200 hover:shadow-soft"
+                )}
               >
                 <div 
                   className="w-full h-6 border rounded mb-2"
@@ -2121,20 +2139,21 @@ const gameElementCategories = [
                   <h4 className="text-xs font-semibold text-gray-600 mb-2 px-2 sticky top-0 bg-white py-1 z-10">
                     {category.name}
                   </h4>
-                  <div className="grid grid-cols-1 gap-2">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 gap-2">
                     {category.elements.map((elementType) => (
-                      <Button
+                      <ModernButton
                         key={elementType.type}
-                        variant="outline"
+                        variant="secondary"
                         size="sm"
-                        className="justify-start h-auto p-3 hover:bg-vendzz-primary/5 hover:border-vendzz-primary"
+                        className={cn(
+                          "justify-start h-auto p-3 w-full",
+                          microInteractions.buttonPress
+                        )}
                         onClick={() => addElement(elementType.type as Element["type"])}
+                        leftIcon={React.cloneElement(elementType.icon, { className: "w-4 h-4" })}
                       >
-                        <div className="flex items-center">
-                          {elementType.icon}
-                          <span className="ml-2 font-medium text-xs">{elementType.label}</span>
-                        </div>
-                      </Button>
+                        <span className="font-medium text-xs">{elementType.label}</span>
+                      </ModernButton>
                     ))}
                   </div>
                 </div>
@@ -2144,21 +2163,27 @@ const gameElementCategories = [
         </div>
       </div>
 
-      {/* 3. Painel Preview */}
-      <div className="flex-1 flex flex-col bg-white overflow-hidden">
-        <div className="p-4 border-b bg-vendzz-primary text-white">
-          <h3 className="font-semibold flex items-center gap-2">
+      {/* 3. Painel Preview - Mobile First */}
+      <div className="flex-1 flex flex-col bg-gray-50 overflow-hidden order-first lg:order-none">
+        <div className="p-4 border-b bg-gradient-to-r from-primary-600 to-primary-700 text-white">
+          <h3 className={cn(
+            "font-semibold flex items-center gap-2",
+            animations.fadeIn
+          )}>
             <Eye className="w-4 h-4" />
             Preview
             {currentPage && (
-              <Badge variant="secondary" className="ml-2">{currentPage.title}</Badge>
+              <Badge variant="secondary" className="ml-2 bg-white/20">{currentPage.title}</Badge>
             )}
           </h3>
         </div>
         <div className="flex-1 overflow-y-auto p-4">
           {currentPage ? (
             <div 
-              className="space-y-4 border border-gray-200 rounded-lg p-6 min-h-[500px]"
+              className={cn(
+                "space-y-4 border border-gray-200 rounded-xl p-6 min-h-[500px] bg-white shadow-soft",
+                animations.slideIn
+              )}
               style={{ 
                 backgroundColor: getBackgroundColor(),
                 color: getTextColor()
@@ -2171,54 +2196,56 @@ const gameElementCategories = [
                   <p className="text-sm">Adicione elementos usando o painel Elementos.</p>
                 </div>
               ) : (
-                currentPage.elements.map((element) => (
-                  <div
-                    key={element.id}
-                    className={`group relative border-2 border-transparent rounded-lg p-2 hover:border-blue-200 cursor-pointer ${
-                      selectedElement === element.id ? "border-blue-400 bg-blue-50" : ""
-                    }`}
-                    onClick={() => setSelectedElement(element.id)}
-                  >
-                    {renderElementPreview(element)}
-                    
-                    {/* Controles do elemento */}
-                    <div className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 flex gap-1">
-                      <Button 
-                        size="sm" 
-                        variant="ghost" 
-                        className="h-6 w-6 p-0 bg-white/80 hover:bg-white"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          moveElement(element.id, "up");
-                        }}
-                      >
-                        <ChevronUp className="w-3 h-3" />
-                      </Button>
-                      <Button 
-                        size="sm" 
-                        variant="ghost" 
-                        className="h-6 w-6 p-0 bg-white/80 hover:bg-white"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          moveElement(element.id, "down");
-                        }}
-                      >
-                        <ChevronDown className="w-3 h-3" />
-                      </Button>
-                      <Button 
-                        size="sm" 
-                        variant="ghost" 
-                        className="h-6 w-6 p-0 bg-white/80 hover:bg-white text-red-500 hover:text-red-700"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          deleteElement(element.id);
-                        }}
-                      >
-                        <Trash2 className="w-3 h-3" />
-                      </Button>
-                    </div>
-                  </div>
-                ))
+                <DragDropContainer>
+                  {currentPage.elements.map((element, index) => (
+                    <DragDropItem
+                      key={element.id}
+                      index={index}
+                      onMove={(fromIndex, toIndex) => {
+                        // Implementa o movimento usando a lógica existente
+                        const updatedPages = pages.map((page, pageIndex) => {
+                          if (pageIndex === activePage) {
+                            const elements = [...page.elements];
+                            const [movedElement] = elements.splice(fromIndex, 1);
+                            elements.splice(toIndex, 0, movedElement);
+                            return { ...page, elements };
+                          }
+                          return page;
+                        });
+                        onPagesChange(updatedPages);
+                      }}
+                      canMoveUp={index > 0}
+                      canMoveDown={index < currentPage.elements.length - 1}
+                      className={cn(
+                        "group border-2 border-transparent rounded-lg p-2 cursor-pointer transition-all duration-150",
+                        "hover:border-primary-200 hover:bg-primary-50/30",
+                        selectedElement === element.id && "border-primary-400 bg-primary-50",
+                        animations.hoverLift
+                      )}
+                      showArrows={true}
+                      dragEnabled={true}
+                    >
+                      <div onClick={() => setSelectedElement(element.id)}>
+                        {renderElementPreview(element)}
+                        
+                        {/* Controles modernos do elemento */}
+                        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity duration-150">
+                          <ModernButton
+                            size="icon"
+                            variant="ghost"
+                            className="h-7 w-7 bg-white/90 hover:bg-white shadow-sm"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              deleteElement(element.id);
+                            }}
+                          >
+                            <Trash2 className="w-3 h-3 text-red-500" />
+                          </ModernButton>
+                        </div>
+                      </div>
+                    </DragDropItem>
+                  ))}
+                </DragDropContainer>
               )}
             </div>
           ) : (
@@ -2233,17 +2260,20 @@ const gameElementCategories = [
         </div>
       </div>
 
-      {/* 4. Painel Propriedades */}
-      <div className="w-80 border-l bg-white flex-shrink-0 flex flex-col">
-        <div className="p-4 border-b bg-vendzz-primary text-white">
-          <h3 className="font-semibold flex items-center gap-2">
+      {/* 4. Painel Propriedades - Mobile First */}
+      <div className="w-full lg:w-80 border-t lg:border-l lg:border-t-0 bg-white flex-shrink-0 flex flex-col">
+        <div className="p-4 border-b bg-gradient-to-r from-primary-600 to-primary-700 text-white">
+          <h3 className={cn(
+            "font-semibold flex items-center gap-2",
+            animations.fadeIn
+          )}>
             <Settings className="w-4 h-4" />
             {selectedElementData ? getElementTypeName(selectedElementData.type) : 'Propriedades'}
           </h3>
         </div>
         <div className="flex-1 overflow-y-auto p-4" style={{ maxHeight: 'calc(100vh - 73px)' }}>
           {selectedElementData ? (
-            <div className="space-y-4">
+            <div className={cn("space-y-4", animations.slideIn)}>
               {/* Propriedades básicas */}
               {selectedElementData.type === "heading" && (
                 <div className="space-y-4">
