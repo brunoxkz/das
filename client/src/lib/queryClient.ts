@@ -260,3 +260,21 @@ export const queryClient = new QueryClient({
     },
   },
 });
+
+// Force cache refresh function - use this to fix sync issues
+export function forceRefreshCache() {
+  console.log("🔄 Forçando atualização completa do cache...");
+  
+  // Clear all cache data
+  queryClient.clear();
+  
+  // Invalidate specific queries that matter for dashboard sync
+  queryClient.invalidateQueries({ queryKey: ['/api/quizzes'] });
+  queryClient.invalidateQueries({ queryKey: ['/api/dashboard/stats'] });
+  
+  // Force refetch immediately
+  queryClient.refetchQueries({ queryKey: ['/api/quizzes'] });
+  queryClient.refetchQueries({ queryKey: ['/api/dashboard/stats'] });
+  
+  console.log("✅ Cache atualizado - dados mais recentes carregados");
+}

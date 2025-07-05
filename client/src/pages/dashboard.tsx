@@ -21,7 +21,8 @@ import { useToast } from "@/hooks/use-toast";
 import { isUnauthorizedError } from "@/lib/authUtils";
 import { useEffect, useState } from "react";
 import { TutorialTour, dashboardTutorialSteps } from "@/components/tutorial-tour";
-import { HelpCircle } from "lucide-react";
+import { HelpCircle, RefreshCcw } from "lucide-react";
+import { forceRefreshCache } from "@/lib/queryClient";
 
 export default function Dashboard() {
   const { toast } = useToast();
@@ -120,6 +121,21 @@ export default function Dashboard() {
           <p className="text-gray-600 text-sm md:text-base">Gerencie seus quizzes e acompanhe o desempenho</p>
         </div>
         <div className="flex items-center gap-3">
+          <Button 
+            variant="outline"
+            onClick={() => {
+              forceRefreshCache();
+              toast({
+                title: "Cache Atualizado",
+                description: "Dados mais recentes carregados com sucesso!",
+              });
+            }}
+            className="flex items-center gap-2"
+            title="Atualizar dados do cache"
+          >
+            <RefreshCcw className="w-4 h-4" />
+            Atualizar
+          </Button>
           <Button 
             variant="outline"
             onClick={() => setShowTutorial(true)}
