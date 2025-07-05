@@ -20,6 +20,596 @@ import {
 } from "lucide-react";
 import { globalVariableProcessor, processVariables, setQuizResponse, addCalculationRule, VariableProcessor } from "@/lib/variables";
 
+// Componente da Roleta Interativa
+const WheelGameElement = ({ element, onComplete }: { element: any; onComplete: (result: string) => void }) => {
+  const [isSpinning, setIsSpinning] = useState(false);
+  const [rotation, setRotation] = useState(0);
+  const [gameCompleted, setGameCompleted] = useState(false);
+  const [winningSegment, setWinningSegment] = useState<string | null>(null);
+
+  const segments = element.wheelSegments || ["Prêmio 1", "Prêmio 2", "Prêmio 3", "Prêmio 4"];
+  const colors = element.wheelColors || ["#FF6B6B", "#4ECDC4", "#45B7D1", "#96CEB4"];
+
+  const spinWheel = () => {
+    if (isSpinning || gameCompleted) return;
+    
+    setIsSpinning(true);
+    const spins = 5 + Math.random() * 5; // 5-10 voltas
+    const finalRotation = spins * 360 + Math.random() * 360;
+    setRotation(finalRotation);
+    
+    setTimeout(() => {
+      setIsSpinning(false);
+      const segmentAngle = 360 / segments.length;
+      const normalizedRotation = finalRotation % 360;
+      const winningIndex = Math.floor((360 - normalizedRotation + segmentAngle/2) / segmentAngle) % segments.length;
+      const winner = segments[winningIndex];
+      setWinningSegment(winner);
+      setGameCompleted(true);
+      onComplete(winner);
+    }, 3000);
+  };
+
+  return (
+    <div className="space-y-4">
+      <div className="text-center mb-4">
+        <h4 className="font-medium text-gray-800 mb-4">Gire a Roleta da Sorte!</h4>
+      </div>
+      
+      <div className="flex justify-center mb-4">
+        <div className="w-60 h-60 relative">
+          <svg 
+            viewBox="0 0 200 200" 
+            className={`w-full h-full transition-transform duration-3000 ease-out ${isSpinning ? 'animate-spin-slow' : ''}`}
+            style={{ transform: `rotate(${rotation}deg)` }}
+          >
+            {segments.map((segment, index) => {
+              const total = segments.length;
+              const angle = 360 / total;
+              const startAngle = index * angle;
+              const endAngle = startAngle + angle;
+              
+              return (
+                <g key={index}>
+                  <path
+                    d={`M 100 100 L ${100 + 80 * Math.cos((startAngle * Math.PI) / 180)} ${100 + 80 * Math.sin((startAngle * Math.PI) / 180)} A 80 80 0 ${angle > 180 ? 1 : 0} 1 ${100 + 80 * Math.cos((endAngle * Math.PI) / 180)} ${100 + 80 * Math.sin((endAngle * Math.PI) / 180)} Z`}
+                    fill={colors[index % colors.length]}
+                    stroke="#ffffff"
+                    strokeWidth="2"
+                    className="hover:opacity-80"
+                  />
+                  <text
+                    x={100 + 50 * Math.cos(((startAngle + endAngle) / 2 * Math.PI) / 180)}
+                    y={100 + 50 * Math.sin(((startAngle + endAngle) / 2 * Math.PI) / 180)}
+                    textAnchor="middle"
+                    dominantBaseline="middle"
+                    fontSize="9"
+                    fill="white"
+                    fontWeight="bold"
+                  >
+                    {segment.length > 8 ? segment.substring(0, 8) + "..." : segment}
+                  </text>
+                </g>
+              );
+            })}
+            <circle cx="100" cy="100" r="10" fill="#333" />
+          </svg>
+          {/* Ponteiro fixo */}
+          <div className="absolute top-2 left-1/2 transform -translate-x-1/2">
+            <div 
+              className="w-0 h-0"
+              style={{
+                borderLeft: '8px solid transparent',
+                borderRight: '8px solid transparent',
+                borderTop: '20px solid #DC2626'
+              }}
+            />
+          </div>
+        </div>
+      </div>
+
+      {!gameCompleted ? (
+        <Button 
+          className="w-full bg-orange-500 hover:bg-orange-600 text-white disabled:opacity-50"
+          onClick={spinWheel}
+          disabled={isSpinning}
+        >
+          {isSpinning ? "🎰 Girando..." : "🎰 Girar Roleta"}
+        </Button>
+      ) : (
+        <div className="text-center space-y-3">
+          <div className="p-4 bg-green-100 rounded-lg border border-green-300">
+            <div className="text-lg font-bold text-green-800">🎉 Parabéns!</div>
+            <div className="text-green-700">Você ganhou: {winningSegment}</div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+// Componente do Jogo da Memória
+const MemoryGameElement = ({ element, onComplete }: { element: any; onComplete: (result: string) => void }) => {
+  const [cards, setCards] = useState<Array<{id: number, value: string, flipped: boolean, matched: boolean}>>([]);
+  const [flippedCards, setFlippedCards] = useState<number[]>([]);
+  const [gameStarted, setGameStarted] = useState(false);
+  const [gameCompleted, setGameCompleted] = useState(false);
+  const [moves, setMoves] = useState(0);
+
+  const cardPairs = element.memoryCardPairs || 4;
+  const emojis = ["🎯", "⭐", "🎪", "🎨", "🎭", "🎪", "🚀", "🎸"];
+
+  useEffect(() => {
+    if (gameStarted && cards.length === 0) {
+      const gameEmojis = emojis.slice(0, cardPairs);
+      const cardArray = [...gameEmojis, ...gameEmojis]
+        .map((emoji, index) => ({
+          id: index,
+          value: emoji,
+          flipped: false,
+          matched: false
+        }))
+        .sort(() => Math.random() - 0.5);
+      setCards(cardArray);
+    }
+  }, [gameStarted]);
+
+  const flipCard = (cardId: number) => {
+    if (flippedCards.length === 2 || cards[cardId].flipped || cards[cardId].matched) return;
+
+    const newCards = [...cards];
+    newCards[cardId].flipped = true;
+    setCards(newCards);
+
+    const newFlippedCards = [...flippedCards, cardId];
+    setFlippedCards(newFlippedCards);
+
+    if (newFlippedCards.length === 2) {
+      setMoves(moves + 1);
+      const [first, second] = newFlippedCards;
+      
+      if (cards[first].value === cards[second].value) {
+        // Par encontrado
+        setTimeout(() => {
+          const updatedCards = [...newCards];
+          updatedCards[first].matched = true;
+          updatedCards[second].matched = true;
+          setCards(updatedCards);
+          setFlippedCards([]);
+          
+          // Verificar se terminou
+          if (updatedCards.every(card => card.matched)) {
+            setGameCompleted(true);
+            onComplete(`Completado em ${moves + 1} jogadas`);
+          }
+        }, 500);
+      } else {
+        // Não é par - virar de volta
+        setTimeout(() => {
+          const resetCards = [...newCards];
+          resetCards[first].flipped = false;
+          resetCards[second].flipped = false;
+          setCards(resetCards);
+          setFlippedCards([]);
+        }, 1000);
+      }
+    }
+  };
+
+  if (!gameStarted) {
+    return (
+      <div className="space-y-4">
+        <div className="text-center">
+          <h4 className="font-medium text-gray-800 mb-4">Jogo da Memória</h4>
+          <p className="text-sm text-gray-600 mb-4">Encontre todos os pares de cartas!</p>
+          
+          <div className="grid grid-cols-4 gap-2 max-w-sm mx-auto mb-6">
+            {Array.from({ length: cardPairs * 2 }, (_, index) => (
+              <div key={index} className="w-12 h-12 bg-blue-500 rounded-lg flex items-center justify-center">
+                <span className="text-white font-bold">?</span>
+              </div>
+            ))}
+          </div>
+        </div>
+        
+        <Button 
+          className="w-full bg-blue-500 hover:bg-blue-600 text-white"
+          onClick={() => setGameStarted(true)}
+        >
+          🧠 Começar Jogo
+        </Button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-4">
+      <div className="text-center">
+        <h4 className="font-medium text-gray-800 mb-2">Jogo da Memória</h4>
+        <p className="text-sm text-gray-600">Jogadas: {moves}</p>
+      </div>
+      
+      <div className="grid grid-cols-4 gap-2 max-w-sm mx-auto">
+        {cards.map((card) => (
+          <div
+            key={card.id}
+            className={`w-12 h-12 rounded-lg flex items-center justify-center cursor-pointer transition-all duration-300 ${
+              card.flipped || card.matched 
+                ? 'bg-white border-2 border-blue-300 transform scale-105' 
+                : 'bg-blue-500 hover:bg-blue-600'
+            }`}
+            onClick={() => flipCard(card.id)}
+          >
+            <span className={`text-lg ${card.flipped || card.matched ? '' : 'text-white font-bold'}`}>
+              {card.flipped || card.matched ? card.value : '?'}
+            </span>
+          </div>
+        ))}
+      </div>
+
+      {gameCompleted && (
+        <div className="text-center p-4 bg-green-100 rounded-lg border border-green-300">
+          <div className="text-lg font-bold text-green-800">🎉 Parabéns!</div>
+          <div className="text-green-700">Jogo completado em {moves} jogadas!</div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+// Componente do Jogo Raspadinha
+const ScratchGameElement = ({ element, onComplete }: { element: any; onComplete: (result: string) => void }) => {
+  const [isScratched, setIsScratched] = useState(false);
+  const [gameCompleted, setGameCompleted] = useState(false);
+
+  const handleScratch = () => {
+    if (isScratched || gameCompleted) return;
+    
+    setIsScratched(true);
+    setTimeout(() => {
+      setGameCompleted(true);
+      onComplete(element.scratchRevealText || "PARABÉNS!");
+    }, 1500);
+  };
+
+  return (
+    <div className="space-y-4">
+      <div className="text-center mb-4">
+        <h4 className="font-medium text-gray-800 mb-4">Raspadinha da Sorte!</h4>
+        <p className="text-sm text-gray-600">Clique para raspar e descobrir seu prêmio</p>
+      </div>
+      
+      <div className="flex justify-center mb-4">
+        <div className="relative w-64 h-40 border-2 border-gray-300 rounded-lg overflow-hidden cursor-pointer" onClick={handleScratch}>
+          <div 
+            className={`absolute inset-0 flex items-center justify-center text-2xl font-bold text-green-600 transition-opacity duration-1500 ${
+              isScratched ? 'opacity-100 bg-white' : 'opacity-0'
+            }`}
+          >
+            {element.scratchRevealText || "PARABÉNS!"}
+          </div>
+          <div 
+            className={`absolute inset-0 flex items-center justify-center text-lg font-bold text-gray-700 transition-opacity duration-1500 ${
+              isScratched ? 'opacity-0' : 'opacity-100'
+            }`}
+            style={{ backgroundColor: element.scratchCoverColor || "#e5e7eb" }}
+          >
+            <div className="text-center">
+              <div>Clique aqui</div>
+              <div className="text-sm">para raspar</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {!gameCompleted ? (
+        <Button 
+          className="w-full bg-yellow-500 hover:bg-yellow-600 text-white disabled:opacity-50"
+          onClick={handleScratch}
+          disabled={isScratched}
+        >
+          {isScratched ? "🎫 Raspando..." : "🎫 Raspar Cartela"}
+        </Button>
+      ) : (
+        <div className="text-center space-y-3">
+          <div className="p-4 bg-green-100 rounded-lg border border-green-300">
+            <div className="text-lg font-bold text-green-800">🎉 Parabéns!</div>
+            <div className="text-green-700">Você revelou: {element.scratchRevealText || "PARABÉNS!"}</div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+// Componente do Caça-Níqueis
+const SlotMachineElement = ({ element, onComplete }: { element: any; onComplete: (result: string) => void }) => {
+  const [isSpinning, setIsSpinning] = useState(false);
+  const [gameCompleted, setGameCompleted] = useState(false);
+  const [reels, setReels] = useState<string[]>([]);
+
+  const symbols = ["🍎", "🍌", "🍒", "🍊", "⭐", "💎", "🎰"];
+  const numReels = element.slotReels || 3;
+
+  useEffect(() => {
+    setReels(Array.from({ length: numReels }, () => "🎰"));
+  }, [numReels]);
+
+  const spinReels = () => {
+    if (isSpinning || gameCompleted) return;
+    
+    setIsSpinning(true);
+    
+    // Simular animação dos reels girando
+    const interval = setInterval(() => {
+      setReels(Array.from({ length: numReels }, () => symbols[Math.floor(Math.random() * symbols.length)]));
+    }, 100);
+
+    setTimeout(() => {
+      clearInterval(interval);
+      
+      // Resultado final - chance de 30% de ganhar (3 iguais)
+      const isWinner = Math.random() < 0.3;
+      let finalReels;
+      
+      if (isWinner) {
+        const winningSymbol = symbols[Math.floor(Math.random() * symbols.length)];
+        finalReels = Array.from({ length: numReels }, () => winningSymbol);
+      } else {
+        finalReels = Array.from({ length: numReels }, () => symbols[Math.floor(Math.random() * symbols.length)]);
+        // Garantir que não seja um trio ganhador
+        if (finalReels.every(symbol => symbol === finalReels[0])) {
+          finalReels[1] = symbols.find(s => s !== finalReels[0]) || "🍎";
+        }
+      }
+      
+      setReels(finalReels);
+      setIsSpinning(false);
+      setGameCompleted(true);
+      
+      const result = isWinner ? `JACKPOT! ${finalReels[0]}${finalReels[0]}${finalReels[0]}` : "Tente novamente!";
+      onComplete(result);
+    }, 2000);
+  };
+
+  return (
+    <div className="space-y-4">
+      <div className="text-center mb-4">
+        <h4 className="font-medium text-gray-800 mb-4">Máquina Caça-Níqueis</h4>
+        <p className="text-sm text-gray-600">Três símbolos iguais = JACKPOT!</p>
+      </div>
+      
+      <div className="flex justify-center space-x-2 mb-4">
+        {reels.map((symbol, index) => (
+          <div 
+            key={index} 
+            className={`w-16 h-16 border-2 border-gray-400 rounded-lg bg-white flex items-center justify-center transition-all duration-200 ${
+              isSpinning ? 'animate-bounce' : ''
+            }`}
+          >
+            <span className="text-2xl">{symbol}</span>
+          </div>
+        ))}
+      </div>
+
+      {!gameCompleted ? (
+        <Button 
+          className="w-full bg-purple-500 hover:bg-purple-600 text-white disabled:opacity-50"
+          onClick={spinReels}
+          disabled={isSpinning}
+        >
+          {isSpinning ? "🎰 Girando..." : "🎰 Puxar Alavanca"}
+        </Button>
+      ) : (
+        <div className="text-center space-y-3">
+          <div className={`p-4 rounded-lg border ${
+            reels.every(symbol => symbol === reels[0]) 
+              ? 'bg-yellow-100 border-yellow-300' 
+              : 'bg-gray-100 border-gray-300'
+          }`}>
+            <div className={`text-lg font-bold ${
+              reels.every(symbol => symbol === reels[0]) 
+                ? 'text-yellow-800' 
+                : 'text-gray-800'
+            }`}>
+              {reels.every(symbol => symbol === reels[0]) ? "💰 JACKPOT!" : "Não foi dessa vez!"}
+            </div>
+            <div className={`${
+              reels.every(symbol => symbol === reels[0]) 
+                ? 'text-yellow-700' 
+                : 'text-gray-700'
+            }`}>
+              {reels.join(" ")}
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+// Componente do Quebra Tijolos
+const BrickBreakElement = ({ element, onComplete }: { element: any; onComplete: (result: string) => void }) => {
+  const [gameStarted, setGameStarted] = useState(false);
+  const [gameCompleted, setGameCompleted] = useState(false);
+  const [ballPosition, setBallPosition] = useState({ x: 50, y: 70 });
+  const [paddlePosition, setPaddlePosition] = useState(50);
+  const [bricksLeft, setBricksLeft] = useState(18);
+
+  const startGame = () => {
+    if (gameStarted || gameCompleted) return;
+    
+    setGameStarted(true);
+    
+    // Simular o jogo por 3 segundos
+    const gameTimer = setInterval(() => {
+      setBallPosition(prev => ({
+        x: Math.random() * 80 + 10,
+        y: Math.random() * 60 + 20
+      }));
+      setPaddlePosition(Math.random() * 60 + 20);
+      setBricksLeft(prev => Math.max(0, prev - Math.floor(Math.random() * 3)));
+    }, 200);
+
+    setTimeout(() => {
+      clearInterval(gameTimer);
+      setBricksLeft(0);
+      setGameCompleted(true);
+      onComplete("Todos os tijolos destruídos!");
+    }, 3000);
+  };
+
+  const rows = element.brickRows || 3;
+  const cols = element.brickColumns || 6;
+  const totalBricks = rows * cols;
+
+  return (
+    <div className="space-y-4">
+      <div className="text-center mb-4">
+        <h4 className="font-medium text-gray-800 mb-4">Quebra Tijolos</h4>
+        <p className="text-sm text-gray-600">Destrua todos os tijolos!</p>
+      </div>
+      
+      <div className="relative bg-black rounded-lg p-4 mx-auto max-w-sm h-48">
+        {/* Tijolos */}
+        <div className="grid gap-1 mb-4" style={{ gridTemplateColumns: `repeat(${cols}, 1fr)` }}>
+          {Array.from({ length: totalBricks }, (_, index) => (
+            <div
+              key={index}
+              className={`w-6 h-3 rounded-sm transition-opacity duration-200 ${
+                index < bricksLeft ? 'opacity-100' : 'opacity-0'
+              }`}
+              style={{ backgroundColor: element.brickColors?.[index % (element.brickColors?.length || 1)] || "#FF6B6B" }}
+            />
+          ))}
+        </div>
+        
+        {/* Bola */}
+        <div 
+          className="absolute w-3 h-3 rounded-full transition-all duration-200"
+          style={{ 
+            backgroundColor: element.ballColor || "#FFD700",
+            left: `${ballPosition.x}%`,
+            top: `${ballPosition.y}%`
+          }}
+        />
+        
+        {/* Raquete */}
+        <div 
+          className="absolute bottom-4 w-12 h-2 rounded-full transition-all duration-200"
+          style={{ 
+            backgroundColor: element.paddleColor || "#4ECDC4",
+            left: `${paddlePosition}%`
+          }}
+        />
+
+        {/* Contador de tijolos */}
+        <div className="absolute top-2 left-2 text-white text-xs">
+          Tijolos: {bricksLeft}
+        </div>
+      </div>
+
+      {!gameCompleted ? (
+        <Button 
+          className="w-full bg-red-500 hover:bg-red-600 text-white disabled:opacity-50"
+          onClick={startGame}
+          disabled={gameStarted}
+        >
+          {gameStarted ? "🧱 Jogando..." : "🧱 Começar Jogo"}
+        </Button>
+      ) : (
+        <div className="text-center space-y-3">
+          <div className="p-4 bg-green-100 rounded-lg border border-green-300">
+            <div className="text-lg font-bold text-green-800">🎉 Parabéns!</div>
+            <div className="text-green-700">Todos os tijolos foram destruídos!</div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+// Componente do Jogo Escolha de Cores
+const ColorPickGameElement = ({ element, onComplete }: { element: any; onComplete: (result: string) => void }) => {
+  const [selectedColor, setSelectedColor] = useState<string | null>(null);
+  const [gameCompleted, setGameCompleted] = useState(false);
+  const [isWinning, setIsWinning] = useState<boolean | null>(null);
+
+  const colors = element.colorOptions || ["#FF6B6B", "#4ECDC4", "#45B7D1", "#96CEB4", "#FECA57", "#A8E6CF"];
+  const winningColor = element.colorWinning || colors[0];
+
+  const handleColorSelect = (color: string) => {
+    if (selectedColor || gameCompleted) return;
+    
+    setSelectedColor(color);
+    const isWinner = color === winningColor;
+    setIsWinning(isWinner);
+    
+    setTimeout(() => {
+      setGameCompleted(true);
+      const result = isWinner ? `Cor certa! ${color}` : `Cor errada! A certa era ${winningColor}`;
+      onComplete(result);
+    }, 1500);
+  };
+
+  return (
+    <div className="space-y-4">
+      <div className="text-center mb-4">
+        <h4 className="font-medium text-gray-800 mb-4">
+          {element.colorInstruction || "Escolha a cor da sorte!"}
+        </h4>
+        {selectedColor && (
+          <p className="text-sm text-gray-600">
+            {isWinning === null ? "Verificando..." : 
+             isWinning ? "🎉 Parabéns! Você acertou!" : "❌ Que pena! Tente novamente."}
+          </p>
+        )}
+      </div>
+      
+      <div className="grid grid-cols-3 gap-3 justify-center max-w-sm mx-auto">
+        {colors.map((color, index) => (
+          <button
+            key={index}
+            className={`w-16 h-16 rounded-full border-4 transition-all duration-300 ${
+              selectedColor === color 
+                ? (isWinning === true ? 'border-green-400 scale-110' : 
+                   isWinning === false ? 'border-red-400 scale-110' : 
+                   'border-yellow-400 scale-110 animate-pulse') 
+                : 'border-gray-300 hover:border-yellow-400 hover:scale-105'
+            }`}
+            style={{ backgroundColor: color }}
+            onClick={() => handleColorSelect(color)}
+            disabled={!!selectedColor}
+          />
+        ))}
+      </div>
+
+      {gameCompleted && (
+        <div className="text-center space-y-3">
+          <div className={`p-4 rounded-lg border ${
+            isWinning 
+              ? 'bg-green-100 border-green-300' 
+              : 'bg-red-100 border-red-300'
+          }`}>
+            <div className={`text-lg font-bold ${
+              isWinning ? 'text-green-800' : 'text-red-800'
+            }`}>
+              {isWinning ? "🎉 Parabéns!" : "❌ Que pena!"}
+            </div>
+            <div className={`${
+              isWinning ? 'text-green-700' : 'text-red-700'
+            }`}>
+              {isWinning 
+                ? `Você escolheu a cor certa!` 
+                : `A cor certa era ${winningColor === "#FF6B6B" ? "vermelha" : winningColor === "#4ECDC4" ? "azul" : winningColor === "#45B7D1" ? "azul claro" : winningColor === "#96CEB4" ? "verde" : winningColor === "#FECA57" ? "amarela" : "especial"}`}
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
 // Componente para textos alternantes
 const AlternatingText = ({ texts, color, fontSize }: { 
   texts: Array<{ text: string; duration: number }>, 
@@ -1865,218 +2455,63 @@ export function QuizPreview({ quiz }: QuizPreviewProps) {
 
           {/* Elementos de Jogos */}
           {element.type === "game_wheel" && (
-            <div className="space-y-4">
-              <div className="flex justify-center mb-4">
-                <div className="w-60 h-60 relative">
-                  <svg viewBox="0 0 200 200" className="w-full h-full">
-                    {(element.wheelSegments || ["Prêmio 1", "Prêmio 2", "Prêmio 3", "Prêmio 4"]).map((segment, index) => {
-                      const total = element.wheelSegments?.length || 4;
-                      const angle = 360 / total;
-                      const startAngle = index * angle;
-                      const endAngle = startAngle + angle;
-                      const isWinning = index === (element.wheelWinningSegment || 0);
-                      
-                      return (
-                        <g key={index}>
-                          <path
-                            d={`M 100 100 L ${100 + 80 * Math.cos((startAngle * Math.PI) / 180)} ${100 + 80 * Math.sin((startAngle * Math.PI) / 180)} A 80 80 0 ${angle > 180 ? 1 : 0} 1 ${100 + 80 * Math.cos((endAngle * Math.PI) / 180)} ${100 + 80 * Math.sin((endAngle * Math.PI) / 180)} Z`}
-                            fill={isWinning ? "#FFD700" : (element.wheelColors?.[index] || "#4ECDC4")}
-                            stroke={isWinning ? "#fbbf24" : "#ffffff"}
-                            strokeWidth={isWinning ? "3" : "2"}
-                          />
-                          <text
-                            x={100 + 50 * Math.cos(((startAngle + endAngle) / 2 * Math.PI) / 180)}
-                            y={100 + 50 * Math.sin(((startAngle + endAngle) / 2 * Math.PI) / 180)}
-                            textAnchor="middle"
-                            dominantBaseline="middle"
-                            fontSize="10"
-                            fill="white"
-                            fontWeight="bold"
-                          >
-                            {segment.length > 8 ? segment.substring(0, 8) + "..." : segment}
-                          </text>
-                        </g>
-                      );
-                    })}
-                    <polygon
-                      points="100,20 105,35 95,35"
-                      fill={element.wheelPointerColor || "#DC2626"}
-                    />
-                  </svg>
-                </div>
-              </div>
-              
-              <Button 
-                className="w-full bg-orange-500 hover:bg-orange-600 text-white"
-                onClick={() => {
-                  handleAnswer(element.id, "girado");
-                  setTimeout(handleNext, 1000);
-                }}
-              >
-                🎰 Girar Roleta
-              </Button>
-            </div>
+            <WheelGameElement 
+              element={element}
+              onComplete={(result) => {
+                handleAnswer(element.id, result);
+                // NÃO auto-avançar mais - aguardar ação do usuário
+              }}
+            />
           )}
 
           {element.type === "game_scratch" && (
-            <div className="space-y-4">
-              <div className="flex justify-center mb-4">
-                <div className="relative w-64 h-40 border-2 border-gray-300 rounded-lg overflow-hidden">
-                  <div 
-                    className="absolute inset-0 flex items-center justify-center text-2xl font-bold text-green-600 cursor-pointer hover:opacity-80"
-                    style={{ backgroundColor: element.scratchCoverColor || "#e5e7eb" }}
-                    onClick={() => {
-                      handleAnswer(element.id, "raspado");
-                      setTimeout(handleNext, 500);
-                    }}
-                  >
-                    {element.scratchRevealText || "PARABÉNS!"}
-                  </div>
-                  <div className="absolute top-4 left-4 text-xs text-gray-600">
-                    ↑ Clique para raspar
-                  </div>
-                </div>
-              </div>
-              
-              <Button 
-                className="w-full bg-yellow-500 hover:bg-yellow-600 text-white"
-                onClick={() => {
-                  handleAnswer(element.id, "raspado");
-                  setTimeout(handleNext, 500);
-                }}
-              >
-                🎫 Raspar Cartela
-              </Button>
-            </div>
+            <ScratchGameElement 
+              element={element}
+              onComplete={(result) => {
+                handleAnswer(element.id, result);
+                // Não auto-avançar - aguardar ação do usuário
+              }}
+            />
           )}
 
           {element.type === "game_color_pick" && (
-            <div className="space-y-4">
-              <div className="text-center mb-4">
-                <h4 className="font-medium text-gray-800 mb-4">
-                  {element.colorInstruction || "Escolha a cor da sorte!"}
-                </h4>
-                
-                <div className="grid grid-cols-3 gap-3 justify-center max-w-sm mx-auto">
-                  {(element.colorOptions || ["#FF6B6B", "#4ECDC4", "#45B7D1", "#96CEB4", "#FECA57"]).map((color, index) => (
-                    <button
-                      key={index}
-                      className="w-16 h-16 rounded-full border-4 border-gray-300 hover:border-yellow-400 transition-all hover:scale-105"
-                      style={{ backgroundColor: color }}
-                      onClick={() => {
-                        handleAnswer(element.id, color);
-                        setTimeout(handleNext, 500);
-                      }}
-                    />
-                  ))}
-                </div>
-              </div>
-            </div>
+            <ColorPickGameElement 
+              element={element}
+              onComplete={(result) => {
+                handleAnswer(element.id, result);
+                // Não auto-avançar - aguardar ação do usuário
+              }}
+            />
           )}
 
           {element.type === "game_memory_cards" && (
-            <div className="space-y-4">
-              <div className="text-center mb-4">
-                <h4 className="font-medium text-gray-800 mb-4">
-                  Jogo da Memória - Encontre os pares!
-                </h4>
-                
-                <div className="grid grid-cols-4 gap-2 max-w-sm mx-auto">
-                  {Array.from({ length: (element.memoryCardPairs || 4) * 2 }, (_, index) => (
-                    <div
-                      key={index}
-                      className="w-12 h-12 bg-blue-500 rounded-lg flex items-center justify-center cursor-pointer hover:bg-blue-600 transition-colors"
-                      onClick={() => {
-                        if (index === 0) {
-                          handleAnswer(element.id, "completado");
-                          setTimeout(handleNext, 1000);
-                        }
-                      }}
-                    >
-                      <span className="text-white font-bold">?</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-              
-              <Button 
-                className="w-full bg-blue-500 hover:bg-blue-600 text-white"
-                onClick={() => {
-                  handleAnswer(element.id, "completado");
-                  setTimeout(handleNext, 1000);
-                }}
-              >
-                🧠 Começar Jogo
-              </Button>
-            </div>
+            <MemoryGameElement 
+              element={element}
+              onComplete={(result) => {
+                handleAnswer(element.id, result);
+                // Não auto-avançar - aguardar ação do usuário
+              }}
+            />
           )}
 
           {element.type === "game_slot_machine" && (
-            <div className="space-y-4">
-              <div className="text-center mb-4">
-                <h4 className="font-medium text-gray-800 mb-4">
-                  Máquina Caça-Níqueis
-                </h4>
-                
-                <div className="flex justify-center space-x-2 mb-4">
-                  {Array.from({ length: element.slotReels || 3 }, (_, index) => (
-                    <div key={index} className="w-16 h-16 border-2 border-gray-400 rounded-lg bg-white flex items-center justify-center">
-                      <span className="text-2xl">🎰</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-              
-              <Button 
-                className="w-full bg-purple-500 hover:bg-purple-600 text-white"
-                onClick={() => {
-                  handleAnswer(element.id, "jogado");
-                  setTimeout(handleNext, 1000);
-                }}
-              >
-                🎰 Puxar Alavanca
-              </Button>
-            </div>
+            <SlotMachineElement 
+              element={element}
+              onComplete={(result) => {
+                handleAnswer(element.id, result);
+                // Não auto-avançar - aguardar ação do usuário
+              }}
+            />
           )}
 
           {element.type === "game_brick_break" && (
-            <div className="space-y-4">
-              <div className="text-center mb-4">
-                <h4 className="font-medium text-gray-800 mb-4">
-                  Quebra Tijolos
-                </h4>
-                
-                <div className="relative bg-black rounded-lg p-4 mx-auto max-w-sm">
-                  <div className="grid grid-cols-6 gap-1 mb-4">
-                    {Array.from({ length: (element.brickRows || 3) * (element.brickColumns || 6) }, (_, index) => (
-                      <div
-                        key={index}
-                        className="w-6 h-3 rounded-sm"
-                        style={{ backgroundColor: element.brickColors?.[index % (element.brickColors?.length || 1)] || "#FF6B6B" }}
-                      />
-                    ))}
-                  </div>
-                  
-                  <div className="flex justify-center">
-                    <div className="w-12 h-2 rounded-full" style={{ backgroundColor: element.paddleColor || "#4ECDC4" }} />
-                  </div>
-                  
-                  <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
-                    <div className="w-3 h-3 rounded-full" style={{ backgroundColor: element.ballColor || "#FFD700" }} />
-                  </div>
-                </div>
-              </div>
-              
-              <Button 
-                className="w-full bg-red-500 hover:bg-red-600 text-white"
-                onClick={() => {
-                  handleAnswer(element.id, "jogado");
-                  setTimeout(handleNext, 1000);
-                }}
-              >
-                🧱 Começar Jogo
-              </Button>
-            </div>
+            <BrickBreakElement 
+              element={element}
+              onComplete={(result) => {
+                handleAnswer(element.id, result);
+                // Não auto-avançar - aguardar ação do usuário
+              }}
+            />
           )}
         </div>
       </div>
