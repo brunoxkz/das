@@ -11,15 +11,13 @@ if (!process.env.DATABASE_URL) {
   );
 }
 
-// Configuração otimizada para alta concorrência (100k+ usuários simultâneos)
+// Configuração simplificada temporária devido ao problema de database
 export const pool = new Pool({ 
-  connectionString: process.env.DATABASE_URL,
-  max: 20, // Máximo de 20 conexões simultâneas
-  min: 5,  // Mínimo de 5 conexões sempre ativas
-  maxUses: 7500, // Recicla conexões após 7500 usos
-  idleTimeout: 1000 * 60 * 5, // 5 minutos de timeout para conexões inativas
-  connectionTimeout: 1000 * 10, // 10 segundos para estabelecer conexão
-  query_timeout: 1000 * 30, // 30 segundos de timeout para queries
+  connectionString: process.env.DATABASE_URL || "postgresql://user:pass@localhost:5432/temp",
+  max: 5,
+  min: 1,
+  idleTimeoutMillis: 30000,
+  connectionTimeoutMillis: 2000
 });
 
 export const db = drizzle({ client: pool, schema });

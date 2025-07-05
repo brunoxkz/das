@@ -3712,7 +3712,7 @@ const gameElementCategories = [
                         <select 
                           className="w-full px-2 py-1 border rounded text-xs"
                           value={selectedElementData.textAlign || "center"}
-                          onChange={(e) => updateElement(selectedElementData.id, { textAlign: e.target.value })}
+                          onChange={(e) => updateElement(selectedElementData.id, { textAlign: e.target.value as any })}
                         >
                           <option value="left">Esquerda</option>
                           <option value="center">Centro</option>

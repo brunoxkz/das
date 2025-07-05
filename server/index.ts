@@ -1,9 +1,9 @@
 import express, { type Request, Response, NextFunction } from "express";
 import compression from "compression";
 import helmet from "helmet";
-import { registerRoutes } from "./routes";
+import { registerMemoryRoutes } from "./routes-memory";
 import { setupVite, serveStatic, log } from "./vite";
-import { setupJWTAuth } from "./auth-jwt";
+import { setupMemoryAuth } from "./auth-memory";
 
 const app = express();
 
@@ -86,9 +86,9 @@ app.use((req, res, next) => {
 });
 
 (async () => {
-  // Setup JWT auth first
-  setupJWTAuth(app);
-  const server = await registerRoutes(app);
+  // Setup memory auth (temporary)
+  setupMemoryAuth(app);
+  const server = registerMemoryRoutes(app);
 
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
     const status = err.status || err.statusCode || 500;
