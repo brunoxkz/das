@@ -181,6 +181,7 @@ interface QuizPreviewProps {
 export function QuizPreview({ quiz }: QuizPreviewProps) {
   const [currentStep, setCurrentStep] = useState(0);
   const [answers, setAnswers] = useState<Record<number, any>>({});
+  const [gameStates, setGameStates] = useState<Record<string, any>>({});
   const [leadData, setLeadData] = useState({
     name: "",
     email: "",
@@ -273,6 +274,12 @@ export function QuizPreview({ quiz }: QuizPreviewProps) {
                           'text';
       
       setQuizResponse(element.responseId, answer, responseType, questionId);
+    }
+
+    // Para jogos, não avançar automaticamente - apenas registrar a resposta
+    if (element?.type?.startsWith('game_')) {
+      // Apenas registra a resposta do jogo, não avança automaticamente
+      return;
     }
   };
 
@@ -846,58 +853,120 @@ export function QuizPreview({ quiz }: QuizPreviewProps) {
         );
 
       case 'game_wheel':
+        const wheelState = gameStates[`wheel_${element.id}`] || { spinning: false, result: null };
+        const segments = element.wheelSegments || ['Prêmio 1', 'Prêmio 2', 'Prêmio 3', 'Prêmio 4'];
+        
+        const handleWheelSpin = () => {
+          setGameStates(prev => ({
+            ...prev,
+            [`wheel_${element.id}`]: { spinning: true, result: null }
+          }));
+          
+          // Simular rotação por 3 segundos
+          setTimeout(() => {
+            const randomIndex = Math.floor(Math.random() * segments.length);
+            const result = segments[randomIndex];
+            
+            setGameStates(prev => ({
+              ...prev,
+              [`wheel_${element.id}`]: { spinning: false, result }
+            }));
+            
+            handleAnswer(element.id, result, element);
+          }, 3000);
+        };
+
         return (
           <div className="mb-6 text-center">
             <div className="bg-gradient-to-br from-yellow-400 to-orange-500 p-6 rounded-lg">
               <h3 className="text-white font-bold text-xl mb-4">🎰 Roleta da Sorte</h3>
-              <div className="w-48 h-48 mx-auto bg-white rounded-full border-8 border-yellow-300 relative overflow-hidden">
+              <div className={`w-48 h-48 mx-auto bg-white rounded-full border-8 border-yellow-300 relative overflow-hidden ${wheelState.spinning ? 'animate-spin' : ''}`}>
                 {/* Segmentos da roleta */}
-                {(element.wheelSegments || ['Prêmio 1', 'Prêmio 2', 'Prêmio 3', 'Prêmio 4']).map((segment: string, index: number) => (
+                {segments.map((segment: string, index: number) => (
                   <div
                     key={index}
                     className="absolute inset-0 flex items-center justify-center text-xs font-bold"
                     style={{
-                      transform: `rotate(${index * (360 / (element.wheelSegments?.length || 4))}deg)`,
-                      backgroundColor: element.wheelColors?.[index] || ['#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4'][index % 4]
+                      transform: `rotate(${index * (360 / segments.length)}deg)`,
+                      backgroundColor: element.wheelColors?.[index] || ['#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4'][index % 4],
+                      clipPath: `polygon(50% 50%, 50% 0%, ${50 + 50 * Math.cos((index + 1) * (360 / segments.length) * Math.PI / 180)}% ${50 - 50 * Math.sin((index + 1) * (360 / segments.length) * Math.PI / 180)}%)`
                     }}
                   >
-                    <span className="rotate-90">{segment}</span>
+                    <span className="rotate-90 text-white drop-shadow-lg">{segment}</span>
                   </div>
                 ))}
                 
                 {/* Ponteiro */}
                 <div className="absolute top-2 left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-b-8 border-transparent border-b-red-600 z-10"></div>
               </div>
+              
+              {wheelState.result && (
+                <div className="mt-4 p-3 bg-white rounded-lg">
+                  <p className="text-orange-600 font-bold">Resultado: {wheelState.result}</p>
+                </div>
+              )}
+              
               <button 
-                className="mt-4 bg-white text-orange-600 px-6 py-2 rounded-full font-bold hover:bg-gray-100 transition-colors"
-                onClick={() => handleAnswer(element.id, 'girou', element)}
+                className="mt-4 bg-white text-orange-600 px-6 py-2 rounded-full font-bold hover:bg-gray-100 transition-colors disabled:opacity-50"
+                onClick={handleWheelSpin}
+                disabled={wheelState.spinning}
               >
-                Girar Roleta!
+                {wheelState.spinning ? 'Girando...' : 'Girar Roleta!'}
               </button>
             </div>
           </div>
         );
 
       case 'game_scratch':
+        const scratchState = gameStates[`scratch_${element.id}`] || { scratched: false, result: null };
+        
+        const handleScratch = () => {
+          setGameStates(prev => ({
+            ...prev,
+            [`scratch_${element.id}`]: { scratched: true, result: 'Você ganhou!' }
+          }));
+          
+          setTimeout(() => {
+            handleAnswer(element.id, 'raspou', element);
+          }, 1000);
+        };
+
         return (
           <div className="mb-6 text-center">
             <div className="bg-gradient-to-br from-gray-400 to-gray-600 p-6 rounded-lg">
               <h3 className="text-white font-bold text-xl mb-4">🪙 Raspadinha</h3>
-              <div className="w-64 h-40 mx-auto bg-gray-500 rounded-lg relative overflow-hidden cursor-pointer hover:bg-gray-400 transition-colors">
+              <div 
+                className="w-64 h-40 mx-auto rounded-lg relative overflow-hidden cursor-pointer transition-all duration-500"
+                style={{
+                  background: scratchState.scratched 
+                    ? 'linear-gradient(135deg, #FFD700, #FFA500)' 
+                    : 'linear-gradient(135deg, #9CA3AF, #6B7280)'
+                }}
+                onClick={!scratchState.scratched ? handleScratch : undefined}
+              >
                 <div className="absolute inset-0 flex items-center justify-center">
                   <span className="text-white text-2xl font-bold">
-                    {element.scratchRevealText || 'Raspe aqui!'}
+                    {scratchState.scratched 
+                      ? (element.scratchRevealText || 'Parabéns! 🎉')
+                      : 'Raspe aqui!'
+                    }
                   </span>
                 </div>
-                <div className="absolute bottom-2 left-2 text-white text-xs">
-                  Clique para raspar
-                </div>
+                {!scratchState.scratched && (
+                  <div className="absolute bottom-2 left-2 text-white text-xs">
+                    Clique para raspar
+                  </div>
+                )}
+                {scratchState.scratched && (
+                  <div className="absolute inset-0 animate-pulse bg-yellow-400 opacity-20 rounded-lg"></div>
+                )}
               </div>
               <button 
-                className="mt-4 bg-white text-gray-600 px-6 py-2 rounded-full font-bold hover:bg-gray-100 transition-colors"
-                onClick={() => handleAnswer(element.id, 'raspou', element)}
+                className="mt-4 bg-white text-gray-600 px-6 py-2 rounded-full font-bold hover:bg-gray-100 transition-colors disabled:opacity-50"
+                onClick={!scratchState.scratched ? handleScratch : undefined}
+                disabled={scratchState.scratched}
               >
-                Raspar Cartela
+                {scratchState.scratched ? 'Prêmio Revelado!' : 'Raspar Cartela'}
               </button>
             </div>
           </div>
@@ -930,17 +999,24 @@ export function QuizPreview({ quiz }: QuizPreviewProps) {
               <h3 className="text-white font-bold text-xl mb-4">🧱 Quebre o Muro</h3>
               <div className="w-72 h-48 mx-auto bg-blue-900 rounded-lg relative overflow-hidden">
                 {/* Tijolos */}
-                {Array.from({ length: (element.brickRows || 4) * (element.brickColumns || 6) }).map((_, index) => (
-                  <div
-                    key={index}
-                    className="absolute w-10 h-6 border border-gray-300"
-                    style={{
-                      left: `${(index % (element.brickColumns || 6)) * 45}px`,
-                      top: `${Math.floor(index / (element.brickColumns || 6)) * 25}px`,
-                      backgroundColor: element.brickColors?.[index % (element.brickColors?.length || 3)] || ['#FF6B6B', '#4ECDC4', '#45B7D1'][index % 3]
-                    }}
-                  />
-                ))}
+                {Array.from({ length: (element.brickRows || 4) * (element.brickColumns || 6) }).map((_, index) => {
+                  const brickState = gameStates[`brick_${element.id}`] || { brokenBricks: [] };
+                  const isBroken = brickState.brokenBricks?.includes(index);
+                  
+                  return (
+                    <div
+                      key={index}
+                      className={`absolute w-10 h-6 border border-gray-300 transition-all duration-300 ${
+                        isBroken ? 'opacity-0 scale-0 rotate-45' : 'opacity-100 scale-100'
+                      }`}
+                      style={{
+                        left: `${(index % (element.brickColumns || 6)) * 45}px`,
+                        top: `${Math.floor(index / (element.brickColumns || 6)) * 25}px`,
+                        backgroundColor: element.brickColors?.[index % (element.brickColors?.length || 3)] || ['#FF6B6B', '#4ECDC4', '#45B7D1'][index % 3]
+                      }}
+                    />
+                  );
+                })}
                 
                 {/* Paddle */}
                 <div 
@@ -953,15 +1029,95 @@ export function QuizPreview({ quiz }: QuizPreviewProps) {
                 
                 {/* Ball */}
                 <div 
-                  className="absolute bottom-8 left-1/2 transform -translate-x-1/2 w-3 h-3 rounded-full"
+                  className={`absolute bottom-8 left-1/2 transform -translate-x-1/2 w-3 h-3 rounded-full ${
+                    gameStates[`brick_${element.id}`]?.playing ? 'animate-bounce' : ''
+                  }`}
                   style={{ backgroundColor: element.ballColor || '#FFFFFF' }}
                 />
+                
+                {/* Paddle */}
+                <div 
+                  className={`absolute bottom-4 left-1/2 transform -translate-x-1/2 h-2 rounded ${
+                    gameStates[`brick_${element.id}`]?.playing ? 'animate-pulse' : ''
+                  }`}
+                  style={{ 
+                    width: '40px',
+                    backgroundColor: element.paddleColor || '#FFFFFF'
+                  }}
+                />
+                
+                {/* Pontuação em tempo real */}
+                {gameStates[`brick_${element.id}`]?.playing && (
+                  <div className="absolute top-2 left-2 text-white text-sm font-bold bg-black bg-opacity-50 px-2 py-1 rounded">
+                    Pontos: {gameStates[`brick_${element.id}`]?.score || 0}
+                  </div>
+                )}
+                
+                {/* Resultado Final */}
+                {gameStates[`brick_${element.id}`]?.completed && (
+                  <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-80">
+                    <div className="text-center">
+                      <div className="text-yellow-400 text-2xl font-bold mb-2">🏆</div>
+                      <div className="text-white text-lg font-bold">Jogo Completo!</div>
+                      <div className="text-yellow-400 text-xl font-bold">{gameStates[`brick_${element.id}`]?.score} pts</div>
+                    </div>
+                  </div>
+                )}
               </div>
               <button 
-                className="mt-4 bg-white text-red-600 px-6 py-2 rounded-full font-bold hover:bg-gray-100 transition-colors"
-                onClick={() => handleAnswer(element.id, 'jogou', element)}
+                className="mt-4 bg-white text-red-600 px-6 py-2 rounded-full font-bold hover:bg-gray-100 transition-colors disabled:opacity-50"
+                onClick={() => {
+                  const brickState = gameStates[`brick_${element.id}`] || { playing: false, score: 0, completed: false, brokenBricks: [] };
+                  
+                  if (!brickState.playing) {
+                    setGameStates(prev => ({
+                      ...prev,
+                      [`brick_${element.id}`]: { playing: true, score: 0, completed: false, brokenBricks: [] }
+                    }));
+                    
+                    // Simular jogo por 5 segundos
+                    const totalBricks = (element.brickRows || 4) * (element.brickColumns || 6);
+                    const brokenBricks: number[] = [];
+                    
+                    // Simular quebra de tijolos gradualmente
+                    const breakInterval = setInterval(() => {
+                      if (brokenBricks.length < totalBricks * 0.8) {
+                        const randomBrick = Math.floor(Math.random() * totalBricks);
+                        if (!brokenBricks.includes(randomBrick)) {
+                          brokenBricks.push(randomBrick);
+                          setGameStates(prev => ({
+                            ...prev,
+                            [`brick_${element.id}`]: { 
+                              ...prev[`brick_${element.id}`], 
+                              brokenBricks: [...brokenBricks],
+                              score: brokenBricks.length * 100 
+                            }
+                          }));
+                        }
+                      }
+                    }, 200);
+                    
+                    setTimeout(() => {
+                      clearInterval(breakInterval);
+                      const finalScore = brokenBricks.length * 100;
+                      setGameStates(prev => ({
+                        ...prev,
+                        [`brick_${element.id}`]: { 
+                          playing: false, 
+                          score: finalScore, 
+                          completed: true, 
+                          brokenBricks 
+                        }
+                      }));
+                      
+                      handleAnswer(element.id, `score_${finalScore}`, element);
+                    }, 5000);
+                  }
+                }}
+                disabled={gameStates[`brick_${element.id}`]?.playing}
               >
-                Iniciar Jogo!
+                {gameStates[`brick_${element.id}`]?.playing ? 'Quebrando...' : 
+                 gameStates[`brick_${element.id}`]?.completed ? 'Jogo Completo!' : 'Iniciar Jogo!'}
               </button>
             </div>
           </div>
