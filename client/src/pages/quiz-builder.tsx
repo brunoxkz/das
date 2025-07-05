@@ -505,7 +505,28 @@ export default function QuizBuilder() {
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div>
-                    <Label htmlFor="faviconUrl">URL do Favicon</Label>
+                    <Label htmlFor="faviconUpload">Upload de Favicon</Label>
+                    <Input
+                      id="faviconUpload"
+                      type="file"
+                      accept="image/*,.ico"
+                      onChange={async (e) => {
+                        const file = e.target.files?.[0];
+                        if (file) {
+                          const faviconUrl = URL.createObjectURL(file);
+                          setQuizData(prev => ({ 
+                            ...prev, 
+                            design: { ...prev.design, faviconUrl, favicon: file.name }
+                          }));
+                        }
+                      }}
+                      className="mt-2"
+                    />
+                    <p className="text-xs text-gray-500 mt-1">Formatos aceitos: ICO, PNG, JPG (16x16 ou 32x32 pixels)</p>
+                  </div>
+
+                  <div>
+                    <Label htmlFor="faviconUrl">URL do Favicon (alternativa)</Label>
                     <Input
                       id="faviconUrl"
                       value={quizData.design?.faviconUrl || ""}
@@ -516,8 +537,26 @@ export default function QuizBuilder() {
                       placeholder="https://exemplo.com/favicon.ico"
                       className="mt-2"
                     />
-                    <p className="text-xs text-gray-500 mt-1">Formatos recomendados: .ico, .png (16x16 ou 32x32 pixels)</p>
+                    <p className="text-xs text-gray-500 mt-1">URL alternativa se não fizer upload</p>
                   </div>
+
+                  {/* Preview do Favicon */}
+                  {quizData.design?.faviconUrl && (
+                    <div className="mt-4 p-4 bg-gray-50 rounded-lg">
+                      <Label className="text-sm font-medium mb-2 block">Preview do Favicon</Label>
+                      <div className="flex items-center gap-3">
+                        <img
+                          src={quizData.design.faviconUrl}
+                          alt="Favicon Preview"
+                          className="w-4 h-4 object-contain"
+                          onError={(e) => {
+                            e.currentTarget.style.display = 'none';
+                          }}
+                        />
+                        <span className="text-sm text-gray-600">16x16 pixels</span>
+                      </div>
+                    </div>
+                  )}
                 </CardContent>
               </Card>
 
@@ -716,9 +755,9 @@ export default function QuizBuilder() {
                         theme: e.target.value
                       })}
                     >
-                      <option value="default">Padrão</option>
-                      <option value="modern">Moderno</option>
-                      <option value="minimal">Minimalista</option>
+                      <option value="customizado">Customizado</option>
+                      <option value="light">Light</option>
+                      <option value="dark">Dark</option>
                     </select>
                   </div>
 

@@ -191,8 +191,8 @@ export function QuizPreview({ quiz }: QuizPreviewProps) {
   
   // Incluir todas as páginas (normais e de transição)
   const allPages = pages || [];
-  const totalSteps = allPages.length + (settings.collectEmail || settings.collectName || settings.collectPhone ? 1 : 0) + 1; // +1 for result
-  const progress = ((currentStep + 1) / totalSteps) * 100;
+  const totalSteps = allPages.length;
+  const progress = totalSteps > 0 ? ((currentStep + 1) / totalSteps) * 100 : 0;
 
   // Configurar cálculos automáticos quando o quiz carrega
   useEffect(() => {
@@ -1955,10 +1955,36 @@ export function QuizPreview({ quiz }: QuizPreviewProps) {
     );
   };
 
+  // Aplicar estilos baseados no tema
+  const getThemeStyles = () => {
+    const theme = settings.theme;
+    if (theme === 'dark') {
+      return {
+        backgroundColor: '#1a1a1a',
+        color: '#ffffff'
+      };
+    } else if (theme === 'light') {
+      return {
+        backgroundColor: '#ffffff',
+        color: '#000000'
+      };
+    } else {
+      // Customizado - usar cores do design
+      return {
+        backgroundColor: quiz.design?.backgroundColor || '#ffffff',
+        color: quiz.design?.primaryColor || '#000000'
+      };
+    }
+  };
+
+  const themeStyles = getThemeStyles();
+
   return (
     <div 
       className={`min-h-screen py-12 ${isTransitionPage ? '' : ''}`}
-      style={isTransitionPage ? getPageBackgroundStyle() : {}}
+      style={{
+        ...(isTransitionPage ? getPageBackgroundStyle() : themeStyles)
+      }}
     >
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
@@ -1982,11 +2008,19 @@ export function QuizPreview({ quiz }: QuizPreviewProps) {
               </div>
             )}
             
-            <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-2">
+            <h1 
+              className="text-3xl md:text-4xl font-bold mb-2"
+              style={{ color: themeStyles.color }}
+            >
               {quiz.title || "Preview do Quiz"}
             </h1>
             {quiz.description && (
-              <p className="text-gray-600 text-lg">{quiz.description}</p>
+              <p 
+                className="text-lg"
+                style={{ color: settings.theme === 'dark' ? '#d1d5db' : settings.theme === 'light' ? '#4b5563' : themeStyles.color }}
+              >
+                {quiz.description}
+              </p>
             )}
           </div>
         )}
@@ -2031,26 +2065,31 @@ export function QuizPreview({ quiz }: QuizPreviewProps) {
         <div className="min-h-[400px] bg-transparent">
           <div className="p-8 flex items-center justify-center">
             {/* Pages */}
-            {allPages.map((page, index) => (
-              <div key={page.id || index}>
-                {renderPage(page, index)}
+            {allPages.length > 0 && currentStep < allPages.length && (
+              <div key={allPages[currentStep].id || currentStep}>
+                {renderPage(allPages[currentStep], currentStep)}
               </div>
-            ))}
-            
-            {/* Lead Capture */}
-            {renderLeadCapture()}
-            
-            {/* Result */}
-            {renderResult()}
+            )}
 
             {/* Empty State */}
-            {allPages.length === 0 && currentStep === 0 && (
+            {allPages.length === 0 && (
               <div className="text-center text-gray-500">
                 <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
                   <Sparkles className="w-8 h-8" />
                 </div>
                 <h3 className="text-lg font-semibold mb-2">Quiz Vazio</h3>
                 <p>Adicione páginas no editor para ver o preview</p>
+              </div>
+            )}
+
+            {/* Quiz Finalizado */}
+            {allPages.length > 0 && currentStep >= allPages.length && (
+              <div className="text-center text-gray-500">
+                <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <CheckCircle className="w-8 h-8" />
+                </div>
+                <h3 className="text-lg font-semibold mb-2">Quiz Finalizado</h3>
+                <p>Todas as páginas foram visualizadas</p>
               </div>
             )}
           </div>
