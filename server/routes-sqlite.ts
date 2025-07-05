@@ -4,6 +4,7 @@ import { storage } from "./storage-sqlite";
 import { cache } from "./cache";
 import { nanoid } from "nanoid";
 import { insertQuizSchema, insertQuizResponseSchema } from "../shared/schema-sqlite";
+import { verifyJWT } from "./auth-sqlite";
 
 export function registerSQLiteRoutes(app: Express): Server {
 
@@ -307,6 +308,37 @@ export function registerSQLiteRoutes(app: Express): Server {
   });
 
   // Health check
+  // Auth verification endpoint - MUST use application/json content type
+  app.get("/api/auth/verify", verifyJWT, async (req: any, res) => {
+    try {
+      res.setHeader('Content-Type', 'application/json');
+      
+      if (!req.user) {
+        return res.status(401).json({ message: "Token não válido" });
+      }
+
+      // Buscar dados completos do usuário no cache primeiro
+      const cachedUser = cache.getUser(req.user.id);
+      if (cachedUser) {
+        return res.status(200).json({ user: cachedUser });
+      }
+
+      // Se não estiver no cache, buscar no banco
+      const user = await storage.getUser(req.user.id);
+      if (!user) {
+        return res.status(401).json({ message: "Usuário não encontrado" });
+      }
+
+      // Salvar no cache
+      cache.setUser(req.user.id, user);
+      
+      return res.status(200).json({ user });
+    } catch (error) {
+      console.error("Auth verify error:", error);
+      return res.status(500).json({ message: "Erro interno do servidor" });
+    }
+  });
+
   app.get("/api/health", (req, res) => {
     res.json({ 
       status: "ok", 

@@ -56,8 +56,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const checkCurrentUser = async (): Promise<User> => {
-    const endpoint = authSystem === 'sqlite' ? '/api/user' : '/api/user';
-    return await apiRequest("GET", endpoint);
+    const endpoint = authSystem === 'sqlite' ? '/api/auth/verify' : '/api/user';
+    const response = await apiRequest("GET", endpoint);
+    return response.user || response;
   };
 
   const login = async (email: string, password: string): Promise<void> => {

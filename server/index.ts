@@ -86,6 +86,13 @@ app.use((req, res, next) => {
 });
 
 (async () => {
+  // Middleware para interceptar rotas da API antes do Vite
+  app.use('/api/*', (req, res, next) => {
+    // Força o header Content-Type para JSON nas rotas da API
+    res.setHeader('Content-Type', 'application/json');
+    next();
+  });
+
   // Setup SQLite auth and routes (completely independent)
   setupHybridAuth(app);
   
