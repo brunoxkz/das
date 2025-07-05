@@ -1,11 +1,12 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth-jwt";
 import { Loader2, Mail, Lock, User } from "lucide-react";
@@ -13,6 +14,7 @@ import { Loader2, Mail, Lock, User } from "lucide-react";
 export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [loginData, setLoginData] = useState({ email: "", password: "" });
+  const [rememberPassword, setRememberPassword] = useState(false);
   const [registerData, setRegisterData] = useState({ 
     email: "", 
     password: "", 
@@ -23,6 +25,22 @@ export default function LoginPage() {
   const { toast } = useToast();
   const { login, register } = useAuth();
 
+  // Carregar dados salvos ao montar o componente
+  useEffect(() => {
+    const savedCredentials = localStorage.getItem('vendzz_saved_credentials');
+    if (savedCredentials) {
+      try {
+        const { email, password, remember } = JSON.parse(savedCredentials);
+        if (remember) {
+          setLoginData({ email, password });
+          setRememberPassword(true);
+        }
+      } catch (error) {
+        console.log('Erro ao carregar credenciais salvas:', error);
+      }
+    }
+  }, []);
+
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
@@ -31,6 +49,17 @@ export default function LoginPage() {
       console.log("Starting login process...");
       const data = await login(loginData.email, loginData.password);
       console.log("Login successful, data received:", data);
+      
+      // Salvar ou limpar credenciais baseado na escolha do usuário
+      if (rememberPassword) {
+        localStorage.setItem('vendzz_saved_credentials', JSON.stringify({
+          email: loginData.email,
+          password: loginData.password,
+          remember: true
+        }));
+      } else {
+        localStorage.removeItem('vendzz_saved_credentials');
+      }
       
       toast({
         title: "Login realizado com sucesso!",
