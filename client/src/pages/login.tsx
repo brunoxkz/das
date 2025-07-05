@@ -72,7 +72,7 @@ export default function LoginPage() {
       
       toast({
         title: "Login realizado com sucesso!",
-        description: "Redirecionando...",
+        description: "Redirecionando para dashboard...",
       });
       
       // Redirecionamento agora é feito automaticamente pelo hook de autenticação
@@ -98,7 +98,7 @@ export default function LoginPage() {
       
       toast({
         title: "Conta criada com sucesso!",
-        description: "Redirecionando...",
+        description: "Redirecionando para dashboard...",
       });
       
       // Redirecionamento agora é feito automaticamente pelo hook de autenticação

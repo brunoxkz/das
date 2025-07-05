@@ -38,33 +38,30 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
   const authSystem = detectAuthSystem();
 
-  const checkAuth = async () => {
-    try {
-      const token = localStorage.getItem("accessToken");
-      if (!token) {
-        setIsLoading(false);
-        return;
-      }
-
-      // Detecta automaticamente qual endpoint usar
-      const endpoint = authSystem === 'sqlite' ? '/api/user' : '/api/me';
-      const response = await apiRequest("GET", endpoint);
-      setUser(response);
-    } catch (error) {
-      console.log("Auth check failed:", error);
-      localStorage.removeItem("accessToken");
-      localStorage.removeItem("refreshToken");
-      setUser(null);
-    } finally {
+  // Check for existing session on mount
+  useEffect(() => {
+    const token = localStorage.getItem("accessToken");
+    if (token) {
+      // Verificar se token é válido
+      checkCurrentUser()
+        .then(setUser)
+        .catch(() => {
+          localStorage.removeItem("accessToken");
+          localStorage.removeItem("refreshToken");
+        })
+        .finally(() => setIsLoading(false));
+    } else {
       setIsLoading(false);
     }
-  };
-
-  useEffect(() => {
-    checkAuth();
   }, []);
 
-  const login = async (email: string, password: string) => {
+  const checkCurrentUser = async (): Promise<User> => {
+    const endpoint = authSystem === 'sqlite' ? '/api/user' : '/api/user';
+    return await apiRequest("GET", endpoint);
+  };
+
+  const login = async (email: string, password: string): Promise<void> => {
+    setIsLoading(true);
     try {
       // Detecta automaticamente qual endpoint usar
       const endpoint = authSystem === 'sqlite' ? '/api/auth/login' : '/api/login';
@@ -76,17 +73,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       localStorage.setItem("accessToken", response.accessToken);
       localStorage.setItem("refreshToken", response.refreshToken);
       setUser(response.user);
-      
-      // Forçar redirecionamento após login bem-sucedido
-      window.location.href = "/";
-      
-      return response;
-    } catch (error) {
-      throw error;
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  const register = async (userData: { email: string; password: string; firstName: string; lastName: string }) => {
+  const register = async (userData: { email: string; password: string; firstName: string; lastName: string }): Promise<void> => {
+    setIsLoading(true);
     try {
       // Detecta automaticamente qual endpoint usar
       const endpoint = authSystem === 'sqlite' ? '/api/auth/register' : '/api/register';
@@ -95,35 +88,37 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       localStorage.setItem("accessToken", response.accessToken);
       localStorage.setItem("refreshToken", response.refreshToken);
       setUser(response.user);
-      
-      // Forçar redirecionamento após registro bem-sucedido
-      window.location.href = "/";
-      
-      return response;
-    } catch (error) {
-      throw error;
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  const logout = async () => {
+  const logout = async (): Promise<void> => {
+    setIsLoading(true);
     try {
-      // Detecta automaticamente qual endpoint usar
       const endpoint = authSystem === 'sqlite' ? '/api/auth/logout' : '/api/logout';
       await apiRequest("POST", endpoint);
     } catch (error) {
-      console.log("Logout error:", error);
+      console.error("Logout error:", error);
     } finally {
       localStorage.removeItem("accessToken");
       localStorage.removeItem("refreshToken");
       setUser(null);
-      window.location.href = "/login";
+      setIsLoading(false);
     }
   };
 
-  const isAuthenticated = !!user;
+  const value: AuthContextType = {
+    user,
+    login,
+    register,
+    logout,
+    isLoading,
+    isAuthenticated: !!user,
+  };
 
   return (
-    <AuthContext.Provider value={{ user, login, register, logout, isLoading, isAuthenticated }}>
+    <AuthContext.Provider value={value}>
       {children}
     </AuthContext.Provider>
   );

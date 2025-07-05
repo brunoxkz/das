@@ -38,6 +38,11 @@ function App() {
   const isQuizRoute = location.startsWith("/quiz/");
   const isPublicRoute = publicRoutes.includes(location) || isQuizRoute;
 
+  // Redirect to dashboard if authenticated and on login page
+  if (isAuthenticated && location === "/login") {
+    return <Redirect to="/dashboard" />;
+  }
+
   // Redirect to login if not authenticated and not on a public route
   if (!isAuthenticated && !isPublicRoute) {
     return <Redirect to="/login" />;
