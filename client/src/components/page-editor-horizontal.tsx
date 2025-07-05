@@ -2199,7 +2199,7 @@ const gameElementCategories = [
                           microInteractions.buttonPress
                         )}
                         onClick={() => addElement(elementType.type as Element["type"])}
-                        leftIcon={React.cloneElement(elementType.icon, { className: "w-4 h-4" })}
+                        leftIcon={elementType.icon}
                       >
                         <span className="font-medium text-xs">{elementType.label}</span>
                       </ModernButton>
@@ -2231,7 +2231,7 @@ const gameElementCategories = [
             <div 
               className={cn(
                 "space-y-4 border border-gray-200 rounded-xl p-6 min-h-[500px] bg-white shadow-soft",
-                animations.slideIn
+                animations.slideInUp
               )}
               style={{ 
                 backgroundColor: getBackgroundColor(),
@@ -2322,7 +2322,7 @@ const gameElementCategories = [
         </div>
         <div className="flex-1 overflow-y-auto p-4" style={{ maxHeight: 'calc(100vh - 73px)' }}>
           {selectedElementData ? (
-            <div className={cn("space-y-4", animations.slideIn)}>
+            <div className={cn("space-y-4", animations.slideInUp)}>
               {/* Propriedades básicas */}
               {selectedElementData.type === "heading" && (
                 <div className="space-y-4">
