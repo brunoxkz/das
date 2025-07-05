@@ -93,11 +93,9 @@ app.use((req, res, next) => {
     next();
   });
 
-  // Setup SQLite auth and routes (completely independent)
-  setupHybridAuth(app);
-  
-  // Register all routes FIRST (before authentication middleware)
-  const server = registerHybridRoutes(app);
+  // Use mock routes system - 100% JWT simulation without any auth conflicts
+  const { registerMockRoutes } = await import("./routes-mock");
+  const server = registerMockRoutes(app);
 
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
     const status = err.status || err.statusCode || 500;
