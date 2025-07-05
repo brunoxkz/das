@@ -61,9 +61,18 @@ export default function QuizBuilder() {
     },
     design: {
       brandingLogo: "",
+      logoUpload: "",
+      logoUrl: "",
+      logoPosition: "top",
       progressBarColor: "#10b981",
+      progressBarStyle: "default",
+      progressBarHeight: "8",
+      showProgressBar: true,
       buttonColor: "#10b981",
+      backgroundColor: "#ffffff",
+      primaryColor: "#10b981",
       favicon: "",
+      faviconUrl: "",
       seoTitle: "",
       seoDescription: "",
       seoKeywords: ""
@@ -410,7 +419,29 @@ export default function QuizBuilder() {
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div>
-                    <Label htmlFor="logoUrl">URL da Logo</Label>
+                    <Label htmlFor="logoUpload">Upload de Logo</Label>
+                    <Input
+                      id="logoUpload"
+                      type="file"
+                      accept="image/*"
+                      onChange={async (e) => {
+                        const file = e.target.files?.[0];
+                        if (file) {
+                          // Criar URL temporária para preview
+                          const logoUrl = URL.createObjectURL(file);
+                          setQuizData(prev => ({ 
+                            ...prev, 
+                            design: { ...prev.design, logoUrl, logoUpload: file.name }
+                          }));
+                        }
+                      }}
+                      className="mt-2"
+                    />
+                    <p className="text-xs text-gray-500 mt-1">Formatos aceitos: PNG, JPG, SVG. Tamanho máximo: 2MB</p>
+                  </div>
+
+                  <div>
+                    <Label htmlFor="logoUrl">URL da Logo (alternativa)</Label>
                     <Input
                       id="logoUrl"
                       value={quizData.design?.logoUrl || ""}
@@ -440,6 +471,26 @@ export default function QuizBuilder() {
                       <option value="right">Direita</option>
                     </select>
                   </div>
+
+                  {/* Preview da Logo */}
+                  {quizData.design?.logoUrl && (
+                    <div className="mt-4 p-4 bg-gray-50 rounded-lg">
+                      <Label className="text-sm font-medium mb-2 block">Preview da Logo</Label>
+                      <div className={`flex ${
+                        quizData.design.logoPosition === 'left' ? 'justify-start' : 
+                        quizData.design.logoPosition === 'right' ? 'justify-end' : 'justify-center'
+                      }`}>
+                        <img
+                          src={quizData.design.logoUrl}
+                          alt="Logo Preview"
+                          className="h-10 max-w-[200px] object-contain"
+                          onError={(e) => {
+                            e.currentTarget.style.display = 'none';
+                          }}
+                        />
+                      </div>
+                    </div>
+                  )}
                 </CardContent>
               </Card>
 
@@ -564,6 +615,19 @@ export default function QuizBuilder() {
                   <p className="text-sm text-gray-600">Personalize a aparência da barra de progresso</p>
                 </CardHeader>
                 <CardContent className="space-y-4">
+                  <div className="flex items-center space-x-2">
+                    <input
+                      type="checkbox"
+                      id="showProgressBar"
+                      checked={quizData.design?.showProgressBar || false}
+                      onChange={(e) => setQuizData(prev => ({ 
+                        ...prev, 
+                        design: { ...prev.design, showProgressBar: e.target.checked }
+                      }))}
+                    />
+                    <Label htmlFor="showProgressBar">Mostrar barra de progresso</Label>
+                  </div>
+
                   <div>
                     <Label htmlFor="progressBarStyle">Estilo</Label>
                     <select
@@ -658,57 +722,7 @@ export default function QuizBuilder() {
                     </select>
                   </div>
 
-                  <div className="flex items-center space-x-2">
-                    <input
-                      type="checkbox"
-                      id="showProgressBar"
-                      checked={quizData.structure.settings.showProgressBar}
-                      onChange={(e) => handleSettingsChange({
-                        ...quizData.structure.settings,
-                        showProgressBar: e.target.checked
-                      })}
-                    />
-                    <Label htmlFor="showProgressBar">Mostrar barra de progresso</Label>
-                  </div>
 
-                  <div className="flex items-center space-x-2">
-                    <input
-                      type="checkbox"
-                      id="collectEmail"
-                      checked={quizData.structure.settings.collectEmail}
-                      onChange={(e) => handleSettingsChange({
-                        ...quizData.structure.settings,
-                        collectEmail: e.target.checked
-                      })}
-                    />
-                    <Label htmlFor="collectEmail">Coletar email</Label>
-                  </div>
-
-                  <div className="flex items-center space-x-2">
-                    <input
-                      type="checkbox"
-                      id="collectName"
-                      checked={quizData.structure.settings.collectName}
-                      onChange={(e) => handleSettingsChange({
-                        ...quizData.structure.settings,
-                        collectName: e.target.checked
-                      })}
-                    />
-                    <Label htmlFor="collectName">Coletar nome</Label>
-                  </div>
-
-                  <div className="flex items-center space-x-2">
-                    <input
-                      type="checkbox"
-                      id="collectPhone"
-                      checked={quizData.structure.settings.collectPhone}
-                      onChange={(e) => handleSettingsChange({
-                        ...quizData.structure.settings,
-                        collectPhone: e.target.checked
-                      })}
-                    />
-                    <Label htmlFor="collectPhone">Coletar telefone</Label>
-                  </div>
                 </CardContent>
               </Card>
 

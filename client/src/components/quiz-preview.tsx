@@ -1957,13 +1957,31 @@ export function QuizPreview({ quiz }: QuizPreviewProps) {
 
   return (
     <div 
-      className={`min-h-screen py-12 ${isTransitionPage ? '' : 'bg-gray-50'}`}
+      className={`min-h-screen py-12 ${isTransitionPage ? '' : ''}`}
       style={isTransitionPage ? getPageBackgroundStyle() : {}}
     >
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         {!isTransitionPage && (
           <div className="text-center mb-8">
+            {/* Logo */}
+            {quiz.design?.logoUrl && (
+              <div className={`mb-6 flex ${
+                quiz.design.logoPosition === 'left' ? 'justify-start' :
+                quiz.design.logoPosition === 'right' ? 'justify-end' :
+                'justify-center'
+              }`}>
+                <img
+                  src={quiz.design.logoUrl}
+                  alt="Logo"
+                  className="h-10 max-w-[200px] object-contain"
+                  onError={(e) => {
+                    e.currentTarget.style.display = 'none';
+                  }}
+                />
+              </div>
+            )}
+            
             <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-2">
               {quiz.title || "Preview do Quiz"}
             </h1>
@@ -1974,7 +1992,7 @@ export function QuizPreview({ quiz }: QuizPreviewProps) {
         )}
 
         {/* Progress Bar */}
-        {settings.showProgressBar && (
+        {(quiz.design?.showProgressBar || settings.showProgressBar) && (
           <div className="mb-8">
             <div className="flex justify-between items-center mb-2">
               <span className="text-sm text-gray-600">
@@ -1984,13 +2002,34 @@ export function QuizPreview({ quiz }: QuizPreviewProps) {
                 {Math.round(progress)}% completo
               </span>
             </div>
-            <Progress value={progress} className="h-2" />
+            <div 
+              className={`w-full bg-gray-200 overflow-hidden ${
+                quiz.design?.progressBarStyle === 'square' ? 'rounded-none' :
+                quiz.design?.progressBarStyle === 'thin' ? 'rounded-sm' :
+                quiz.design?.progressBarStyle === 'thick' ? 'rounded-lg' :
+                'rounded-full'
+              }`}
+              style={{ height: `${quiz.design?.progressBarHeight || 8}px` }}
+            >
+              <div
+                className={`h-full transition-all duration-300 ${
+                  quiz.design?.progressBarStyle === 'square' ? 'rounded-none' :
+                  quiz.design?.progressBarStyle === 'thin' ? 'rounded-sm' :
+                  quiz.design?.progressBarStyle === 'thick' ? 'rounded-lg' :
+                  'rounded-full'
+                }`}
+                style={{ 
+                  width: `${progress}%`,
+                  backgroundColor: quiz.design?.progressBarColor || '#10b981'
+                }}
+              />
+            </div>
           </div>
         )}
 
         {/* Quiz Content */}
-        <Card className="min-h-[400px]">
-          <CardContent className="p-8 flex items-center justify-center">
+        <div className="min-h-[400px] bg-transparent">
+          <div className="p-8 flex items-center justify-center">
             {/* Pages */}
             {allPages.map((page, index) => (
               <div key={page.id || index}>
@@ -2014,26 +2053,10 @@ export function QuizPreview({ quiz }: QuizPreviewProps) {
                 <p>Adicione páginas no editor para ver o preview</p>
               </div>
             )}
-          </CardContent>
-        </Card>
-
-        {/* Navigation */}
-        {allPages.length > 0 && currentStep < totalSteps - 1 && (
-          <div className="flex justify-between mt-6">
-            <Button
-              variant="outline"
-              onClick={handleBack}
-              disabled={currentStep === 0}
-            >
-              <ArrowLeft className="w-4 h-4 mr-2" />
-              Anterior
-            </Button>
-            
-            <Badge variant="outline">
-              {currentStep < allPages.length ? "Página" : currentStep === allPages.length ? "Captura" : "Resultado"}
-            </Badge>
           </div>
-        )}
+        </div>
+
+
       </div>
     </div>
   );
