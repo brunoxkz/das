@@ -17,6 +17,7 @@ import LeadsPage from "@/pages/leads";
 import NotFoundPage from "@/pages/not-found";
 import TutoriaisPage from "@/pages/tutoriais";
 import PremiacoesPage from "@/pages/premiacoes";
+import EncapsuladosPage from "@/pages/encapsulados";
 import QuizPublicPage from "@/pages/quiz-public";
 import { useAuth } from "@/hooks/use-auth-hybrid";
 import { isUnauthorizedError } from "@/lib/authUtils";
@@ -118,6 +119,11 @@ function App() {
         <Route path="/premiacoes">
           <Layout>
             <PremiacoesPage />
+          </Layout>
+        </Route>
+        <Route path="/encapsulados">
+          <Layout>
+            <EncapsuladosPage />
           </Layout>
         </Route>
         

@@ -4,6 +4,8 @@ import {
   quizTemplates,
   quizResponses,
   quizAnalytics,
+  products,
+  affiliations,
   type User,
   type UpsertUser,
   type Quiz,
@@ -14,6 +16,10 @@ import {
   type InsertQuizResponse,
   type QuizAnalytics,
   type InsertQuizAnalytics,
+  type Product,
+  type InsertProduct,
+  type Affiliation,
+  type InsertAffiliation,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, and, sql, gte, lte } from "drizzle-orm";
@@ -57,7 +63,20 @@ export interface IStorage {
     avgConversionRate: number;
   }>;
 
-    // JWT Auth methods
+  // Product operations
+  getAllProducts(): Promise<Product[]>;
+  getProduct(id: string): Promise<Product | undefined>;
+  createProduct(product: InsertProduct): Promise<Product>;
+  updateProduct(id: string, updates: Partial<InsertProduct>): Promise<Product>;
+  deleteProduct(id: string): Promise<void>;
+
+  // Affiliation operations
+  getUserAffiliations(userId: string): Promise<Affiliation[]>;
+  getAffiliation(id: string): Promise<Affiliation | undefined>;
+  createAffiliation(affiliation: InsertAffiliation): Promise<Affiliation>;
+  deleteAffiliation(id: string): Promise<void>;
+
+  // JWT Auth methods
   getUserByEmail(email: string): Promise<User | null>;
   createUserWithPassword(userData: {
     email: string;
@@ -408,6 +427,71 @@ export class DatabaseStorage implements IStorage {
       totalViews,
       avgConversionRate: Number(avgConversionRate.toFixed(2)),
     };
+  }
+
+  // Product operations
+  async getAllProducts(): Promise<Product[]> {
+    return await db
+      .select()
+      .from(products)
+      .orderBy(desc(products.createdAt));
+  }
+
+  async getProduct(id: string): Promise<Product | undefined> {
+    const [product] = await db.select().from(products).where(eq(products.id, id));
+    return product;
+  }
+
+  async createProduct(product: InsertProduct): Promise<Product> {
+    const [newProduct] = await db.insert(products).values(product).returning();
+    return newProduct;
+  }
+
+  async updateProduct(id: string, updates: Partial<InsertProduct>): Promise<Product> {
+    const [product] = await db
+      .update(products)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(products.id, id))
+      .returning();
+    return product;
+  }
+
+  async deleteProduct(id: string): Promise<void> {
+    await db.delete(products).where(eq(products.id, id));
+  }
+
+  // Affiliation operations
+  async getUserAffiliations(userId: string): Promise<Affiliation[]> {
+    return await db
+      .select({
+        id: affiliations.id,
+        userId: affiliations.userId,
+        productId: affiliations.productId,
+        status: affiliations.status,
+        affiliateCode: affiliations.affiliateCode,
+        customLink: affiliations.customLink,
+        createdAt: affiliations.createdAt,
+        updatedAt: affiliations.updatedAt,
+        product: products
+      })
+      .from(affiliations)
+      .innerJoin(products, eq(affiliations.productId, products.id))
+      .where(eq(affiliations.userId, userId))
+      .orderBy(desc(affiliations.createdAt));
+  }
+
+  async getAffiliation(id: string): Promise<Affiliation | undefined> {
+    const [affiliation] = await db.select().from(affiliations).where(eq(affiliations.id, id));
+    return affiliation;
+  }
+
+  async createAffiliation(affiliation: InsertAffiliation): Promise<Affiliation> {
+    const [newAffiliation] = await db.insert(affiliations).values(affiliation).returning();
+    return newAffiliation;
+  }
+
+  async deleteAffiliation(id: string): Promise<void> {
+    await db.delete(affiliations).where(eq(affiliations.id, id));
   }
 }
 

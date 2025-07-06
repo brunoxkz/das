@@ -22,6 +22,8 @@ import {
   insertQuizResponseSchema, 
   insertQuizTemplateSchema,
   insertQuizAnalyticsSchema,
+  insertProductSchema,
+  insertAffiliationSchema,
   type User
 } from "@shared/schema";
 import { z } from "zod";
@@ -634,6 +636,109 @@ export function registerRoutes(app: Express): Server {
       });
     } catch (error) {
       console.error("Error fetching performance stats:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  // Product Routes
+  app.get("/api/products", rateLimiters.general.middleware(), authenticateToken, async (req, res) => {
+    try {
+      const products = await storage.getAllProducts();
+      res.json(products);
+    } catch (error) {
+      console.error("Error fetching products:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  app.get("/api/products/:id", rateLimiters.general.middleware(), authenticateToken, async (req, res) => {
+    try {
+      const product = await storage.getProduct(req.params.id);
+      if (!product) {
+        return res.status(404).json({ message: "Product not found" });
+      }
+      res.json(product);
+    } catch (error) {
+      console.error("Error fetching product:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  app.post("/api/products", rateLimiters.general.middleware(), authenticateToken, requireAdmin, async (req, res) => {
+    try {
+      const validated = insertProductSchema.parse(req.body);
+      const product = await storage.createProduct({
+        ...validated,
+        createdBy: req.user!.id
+      });
+      res.status(201).json(product);
+    } catch (error) {
+      console.error("Error creating product:", error);
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: "Validation error", errors: error.errors });
+      }
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  app.put("/api/products/:id", rateLimiters.general.middleware(), authenticateToken, requireAdmin, async (req, res) => {
+    try {
+      const validated = insertProductSchema.partial().parse(req.body);
+      const product = await storage.updateProduct(req.params.id, validated);
+      res.json(product);
+    } catch (error) {
+      console.error("Error updating product:", error);
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: "Validation error", errors: error.errors });
+      }
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  app.delete("/api/products/:id", rateLimiters.general.middleware(), authenticateToken, requireAdmin, async (req, res) => {
+    try {
+      await storage.deleteProduct(req.params.id);
+      res.status(204).send();
+    } catch (error) {
+      console.error("Error deleting product:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  // Affiliation Routes
+  app.get("/api/affiliations", rateLimiters.general.middleware(), authenticateToken, async (req, res) => {
+    try {
+      const affiliations = await storage.getUserAffiliations(req.user!.id);
+      res.json(affiliations);
+    } catch (error) {
+      console.error("Error fetching affiliations:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  app.post("/api/affiliations", rateLimiters.general.middleware(), authenticateToken, async (req, res) => {
+    try {
+      const validated = insertAffiliationSchema.parse(req.body);
+      const affiliation = await storage.createAffiliation({
+        ...validated,
+        userId: req.user!.id
+      });
+      res.status(201).json(affiliation);
+    } catch (error) {
+      console.error("Error creating affiliation:", error);
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: "Validation error", errors: error.errors });
+      }
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  app.delete("/api/affiliations/:id", rateLimiters.general.middleware(), authenticateToken, async (req, res) => {
+    try {
+      await storage.deleteAffiliation(req.params.id);
+      res.status(204).send();
+    } catch (error) {
+      console.error("Error deleting affiliation:", error);
       res.status(500).json({ message: "Internal server error" });
     }
   });
