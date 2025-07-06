@@ -22,7 +22,8 @@ import {
   Trophy,
   BookOpen,
   Package,
-  MessageSquare
+  MessageSquare,
+  Mail
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -116,6 +117,12 @@ export function Sidebar() {
       href: "/sms-credits",
       icon: <MessageSquare className="w-4 h-4" />,
       active: location === "/sms-credits"
+    },
+    {
+      title: "E-mail Marketing",
+      href: "/email-marketing",
+      icon: <Mail className="w-4 h-4" />,
+      active: location === "/email-marketing"
     }
   ];
 

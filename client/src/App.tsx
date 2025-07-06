@@ -20,6 +20,7 @@ import PremiacoesPage from "@/pages/premiacoes";
 import EncapsuladosPage from "@/pages/encapsulados";
 import QuizPublicPage from "@/pages/quiz-public";
 import SMSCreditsPage from "@/pages/sms-credits";
+import EmailMarketingPage from "@/pages/email-marketing";
 import { useAuth } from "@/hooks/use-auth-hybrid";
 import { isUnauthorizedError } from "@/lib/authUtils";
 import { lazy } from "react";
@@ -131,6 +132,11 @@ function App() {
         <Route path="/sms-credits">
           <Layout>
             <SMSCreditsPage />
+          </Layout>
+        </Route>
+        <Route path="/email-marketing">
+          <Layout>
+            <EmailMarketingPage />
           </Layout>
         </Route>
         <Route component={NotFoundPage} />

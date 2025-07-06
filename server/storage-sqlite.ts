@@ -1,10 +1,12 @@
 import { db } from "./db-sqlite";
 import { 
-  users, quizzes, quizTemplates, quizResponses, quizAnalytics,
+  users, quizzes, quizTemplates, quizResponses, quizAnalytics, emailCampaigns, emailTemplates,
   type User, type UpsertUser, type InsertQuiz, type Quiz,
   type InsertQuizTemplate, type QuizTemplate,
   type InsertQuizResponse, type QuizResponse,
-  type InsertQuizAnalytics, type QuizAnalytics
+  type InsertQuizAnalytics, type QuizAnalytics,
+  type InsertEmailCampaign, type EmailCampaign,
+  type InsertEmailTemplate, type EmailTemplate
 } from "../shared/schema-sqlite";
 import { eq, desc, and, gte, lte, count } from "drizzle-orm";
 import { nanoid } from "nanoid";
@@ -47,6 +49,24 @@ export interface IStorage {
     totalViews: number;
     avgConversionRate: number;
   }>;
+
+  // Email Campaign operations
+  getEmailCampaigns(userId: string): Promise<EmailCampaign[]>;
+  getEmailCampaign(id: string): Promise<EmailCampaign | undefined>;
+  createEmailCampaign(campaign: InsertEmailCampaign): Promise<EmailCampaign>;
+  updateEmailCampaign(id: string, updates: Partial<InsertEmailCampaign>): Promise<EmailCampaign>;
+  deleteEmailCampaign(id: string): Promise<void>;
+
+  // Email Template operations
+  getEmailTemplates(userId: string): Promise<EmailTemplate[]>;
+  getEmailTemplate(id: string): Promise<EmailTemplate | undefined>;
+  createEmailTemplate(template: InsertEmailTemplate): Promise<EmailTemplate>;
+  updateEmailTemplate(id: string, updates: Partial<InsertEmailTemplate>): Promise<EmailTemplate>;
+  deleteEmailTemplate(id: string): Promise<void>;
+
+  // Email campaign sending operations
+  getQuizResponsesForEmail(quizId: string, targetAudience: string): Promise<QuizResponse[]>;
+  extractEmailsFromResponses(responses: QuizResponse[]): string[];
 
   // JWT Auth methods
   getUserByEmail(email: string): Promise<User | null>;
@@ -384,6 +404,109 @@ export class SQLiteStorage implements IStorage {
       totalViews,
       avgConversionRate,
     };
+  }
+
+  // Email Campaign operations
+  async getEmailCampaigns(userId: string): Promise<EmailCampaign[]> {
+    const campaigns = await db.select().from(emailCampaigns).where(eq(emailCampaigns.userId, userId));
+    return campaigns;
+  }
+
+  async getEmailCampaign(id: string): Promise<EmailCampaign | undefined> {
+    const campaign = await db.select().from(emailCampaigns).where(eq(emailCampaigns.id, id)).limit(1);
+    return campaign[0];
+  }
+
+  async createEmailCampaign(campaign: InsertEmailCampaign): Promise<EmailCampaign> {
+    const newCampaign = {
+      id: nanoid(),
+      ...campaign,
+    };
+    await db.insert(emailCampaigns).values(newCampaign);
+    return newCampaign as EmailCampaign;
+  }
+
+  async updateEmailCampaign(id: string, updates: Partial<InsertEmailCampaign>): Promise<EmailCampaign> {
+    await db.update(emailCampaigns).set(updates).where(eq(emailCampaigns.id, id));
+    return this.getEmailCampaign(id) as Promise<EmailCampaign>;
+  }
+
+  async deleteEmailCampaign(id: string): Promise<void> {
+    await db.delete(emailCampaigns).where(eq(emailCampaigns.id, id));
+  }
+
+  // Email Template operations
+  async getEmailTemplates(userId: string): Promise<EmailTemplate[]> {
+    const templates = await db.select().from(emailTemplates).where(eq(emailTemplates.userId, userId));
+    return templates;
+  }
+
+  async getEmailTemplate(id: string): Promise<EmailTemplate | undefined> {
+    const template = await db.select().from(emailTemplates).where(eq(emailTemplates.id, id)).limit(1);
+    return template[0];
+  }
+
+  async createEmailTemplate(template: InsertEmailTemplate): Promise<EmailTemplate> {
+    const newTemplate = {
+      id: nanoid(),
+      ...template,
+    };
+    await db.insert(emailTemplates).values(newTemplate);
+    return newTemplate as EmailTemplate;
+  }
+
+  async updateEmailTemplate(id: string, updates: Partial<InsertEmailTemplate>): Promise<EmailTemplate> {
+    await db.update(emailTemplates).set(updates).where(eq(emailTemplates.id, id));
+    return this.getEmailTemplate(id) as Promise<EmailTemplate>;
+  }
+
+  async deleteEmailTemplate(id: string): Promise<void> {
+    await db.delete(emailTemplates).where(eq(emailTemplates.id, id));
+  }
+
+  // Email campaign sending operations
+  async getQuizResponsesForEmail(quizId: string, targetAudience: string): Promise<QuizResponse[]> {
+    let query = db.select().from(quizResponses).where(eq(quizResponses.quizId, quizId));
+    
+    if (targetAudience === 'completed') {
+      // Respostas completas - com resposta não vazia
+      query = query.where(and(
+        eq(quizResponses.quizId, quizId),
+        // Assumindo que respostas completas têm dados no campo response
+      ));
+    } else if (targetAudience === 'abandoned') {
+      // Respostas abandonadas - com resposta vazia ou incompleta
+      query = query.where(and(
+        eq(quizResponses.quizId, quizId),
+        // Condição para respostas abandonadas - implementar lógica específica
+      ));
+    }
+    
+    const responses = await query;
+    return responses;
+  }
+
+  extractEmailsFromResponses(responses: QuizResponse[]): string[] {
+    const emails: string[] = [];
+    
+    responses.forEach(response => {
+      if (response.responses && typeof response.responses === 'object') {
+        const responseData = response.responses as any;
+        
+        // Procurar por campos de email nas respostas
+        Object.keys(responseData).forEach(key => {
+          if (key.toLowerCase().includes('email') || key.toLowerCase().includes('e-mail')) {
+            const email = responseData[key];
+            if (email && typeof email === 'string' && email.includes('@')) {
+              emails.push(email);
+            }
+          }
+        });
+      }
+    });
+    
+    // Remover duplicatas
+    return Array.from(new Set(emails));
   }
 }
 

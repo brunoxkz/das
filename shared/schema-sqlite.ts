@@ -67,6 +67,39 @@ export const quizAnalytics = sqliteTable("quiz_analytics", {
   metadata: text("metadata", { mode: 'json' }),
 });
 
+export const emailCampaigns = sqliteTable("email_campaigns", {
+  id: text("id").primaryKey(),
+  name: text("name").notNull(),
+  subject: text("subject").notNull(),
+  content: text("content").notNull(),
+  quizId: text("quizId").notNull().references(() => quizzes.id, { onDelete: "cascade" }),
+  userId: text("userId").notNull().references(() => users.id, { onDelete: "cascade" }),
+  status: text("status").default("draft"), // draft, active, paused, completed
+  triggerType: text("triggerType").default("immediate"), // immediate, delayed
+  triggerDelay: integer("triggerDelay").default(0),
+  triggerUnit: text("triggerUnit").default("hours"), // minutes, hours, days
+  targetAudience: text("targetAudience").default("completed"), // all, completed, abandoned
+  variables: text("variables", { mode: 'json' }).default("[]"),
+  sent: integer("sent").default(0),
+  delivered: integer("delivered").default(0),
+  opened: integer("opened").default(0),
+  clicked: integer("clicked").default(0),
+  createdAt: integer("createdAt", { mode: 'timestamp' }).notNull().$defaultFn(() => new Date()),
+  updatedAt: integer("updatedAt", { mode: 'timestamp' }).notNull().$defaultFn(() => new Date()),
+});
+
+export const emailTemplates = sqliteTable("email_templates", {
+  id: text("id").primaryKey(),
+  name: text("name").notNull(),
+  subject: text("subject").notNull(),
+  content: text("content").notNull(),
+  category: text("category").notNull(), // welcome, follow_up, promotion, abandoned_cart
+  variables: text("variables", { mode: 'json' }).default("[]"),
+  userId: text("userId").notNull().references(() => users.id, { onDelete: "cascade" }),
+  createdAt: integer("createdAt", { mode: 'timestamp' }).notNull().$defaultFn(() => new Date()),
+  updatedAt: integer("updatedAt", { mode: 'timestamp' }).notNull().$defaultFn(() => new Date()),
+});
+
 // Schemas para validação
 export const insertUserSchema = createInsertSchema(users).omit({
   id: true,
@@ -95,6 +128,18 @@ export const insertQuizAnalyticsSchema = createInsertSchema(quizAnalytics).omit(
   id: true,
 });
 
+export const insertEmailCampaignSchema = createInsertSchema(emailCampaigns).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertEmailTemplateSchema = createInsertSchema(emailTemplates).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
 // Tipos TypeScript
 export type User = typeof users.$inferSelect;
 export type UpsertUser = z.infer<typeof insertUserSchema>;
@@ -106,3 +151,7 @@ export type InsertQuizResponse = z.infer<typeof insertQuizResponseSchema>;
 export type QuizResponse = typeof quizResponses.$inferSelect;
 export type InsertQuizAnalytics = z.infer<typeof insertQuizAnalyticsSchema>;
 export type QuizAnalytics = typeof quizAnalytics.$inferSelect;
+export type InsertEmailCampaign = z.infer<typeof insertEmailCampaignSchema>;
+export type EmailCampaign = typeof emailCampaigns.$inferSelect;
+export type InsertEmailTemplate = z.infer<typeof insertEmailTemplateSchema>;
+export type EmailTemplate = typeof emailTemplates.$inferSelect;

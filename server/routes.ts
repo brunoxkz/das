@@ -2,8 +2,9 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import "./types"; // Import global types
 import Stripe from "stripe";
-import { storage } from "./storage";
+import { storage } from "./storage-sqlite";
 import { verifyJWT as authenticateToken } from "./auth-jwt";
+import { verifyJWT } from "./auth-hybrid";
 import { cache } from "./cache";
 import { rateLimiters } from "./rate-limiter";
 import { 
@@ -16,14 +17,16 @@ import {
   getPlanLimits 
 } from "./rbac";
 import bcrypt from "bcryptjs";
-import express from "express";
+import express, { type Response } from "express";
 import { 
   insertQuizSchema, 
   insertQuizResponseSchema, 
   insertQuizTemplateSchema,
   insertQuizAnalyticsSchema,
+  insertEmailCampaignSchema,
+  insertEmailTemplateSchema,
   type User
-} from "@shared/schema";
+} from "@shared/schema-sqlite";
 import { z } from "zod";
 
 // Types are now handled in ./types.ts
@@ -1020,6 +1023,214 @@ export function registerRoutes(app: Express): Server {
       res.json(mockTemplates);
     } catch (error) {
       console.error("Error fetching SMS templates:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
+  // Email Marketing Routes
+  app.get("/api/email-campaigns", rateLimiters.general.middleware(), verifyJWT, async (req: any, res: Response) => {
+    try {
+      const userId = req.user.id;
+      const campaigns = await storage.getEmailCampaigns(userId);
+      res.json(campaigns);
+    } catch (error) {
+      console.error("Error fetching email campaigns:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
+  app.get("/api/email-campaigns/:id", rateLimiters.general.middleware(), verifyJWT, async (req: any, res: Response) => {
+    try {
+      const { id } = req.params;
+      const userId = req.user.id;
+      const campaign = await storage.getEmailCampaign(id);
+      
+      if (!campaign || campaign.userId !== userId) {
+        return res.status(404).json({ error: "Campaign not found" });
+      }
+      
+      res.json(campaign);
+    } catch (error) {
+      console.error("Error fetching email campaign:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
+  app.post("/api/email-campaigns", rateLimiters.general.middleware(), verifyJWT, async (req: any, res: Response) => {
+    try {
+      const userId = req.user.id;
+      const campaignData = insertEmailCampaignSchema.parse({ ...req.body, userId });
+      const campaign = await storage.createEmailCampaign(campaignData);
+      res.status(201).json(campaign);
+    } catch (error) {
+      console.error("Error creating email campaign:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
+  app.put("/api/email-campaigns/:id", rateLimiters.general.middleware(), verifyJWT, async (req: any, res: Response) => {
+    try {
+      const { id } = req.params;
+      const userId = req.user.id;
+      const campaign = await storage.getEmailCampaign(id);
+      
+      if (!campaign || campaign.userId !== userId) {
+        return res.status(404).json({ error: "Campaign not found" });
+      }
+      
+      const updatedCampaign = await storage.updateEmailCampaign(id, req.body);
+      res.json(updatedCampaign);
+    } catch (error) {
+      console.error("Error updating email campaign:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
+  app.delete("/api/email-campaigns/:id", rateLimiters.general.middleware(), verifyJWT, async (req: any, res: Response) => {
+    try {
+      const { id } = req.params;
+      const userId = req.user.id;
+      const campaign = await storage.getEmailCampaign(id);
+      
+      if (!campaign || campaign.userId !== userId) {
+        return res.status(404).json({ error: "Campaign not found" });
+      }
+      
+      await storage.deleteEmailCampaign(id);
+      res.status(204).send();
+    } catch (error) {
+      console.error("Error deleting email campaign:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
+  // Email Templates Routes
+  app.get("/api/email-templates", rateLimiters.general.middleware(), verifyJWT, async (req: any, res: Response) => {
+    try {
+      const userId = req.user.id;
+      const templates = await storage.getEmailTemplates(userId);
+      res.json(templates);
+    } catch (error) {
+      console.error("Error fetching email templates:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
+  app.get("/api/email-templates/:id", rateLimiters.general.middleware(), verifyJWT, async (req: any, res: Response) => {
+    try {
+      const { id } = req.params;
+      const userId = req.user.id;
+      const template = await storage.getEmailTemplate(id);
+      
+      if (!template || template.userId !== userId) {
+        return res.status(404).json({ error: "Template not found" });
+      }
+      
+      res.json(template);
+    } catch (error) {
+      console.error("Error fetching email template:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
+  app.post("/api/email-templates", rateLimiters.general.middleware(), verifyJWT, async (req: any, res: Response) => {
+    try {
+      const userId = req.user.id;
+      const templateData = insertEmailTemplateSchema.parse({ ...req.body, userId });
+      const template = await storage.createEmailTemplate(templateData);
+      res.status(201).json(template);
+    } catch (error) {
+      console.error("Error creating email template:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
+  app.put("/api/email-templates/:id", rateLimiters.general.middleware(), verifyJWT, async (req: any, res: Response) => {
+    try {
+      const { id } = req.params;
+      const userId = req.user.id;
+      const template = await storage.getEmailTemplate(id);
+      
+      if (!template || template.userId !== userId) {
+        return res.status(404).json({ error: "Template not found" });
+      }
+      
+      const updatedTemplate = await storage.updateEmailTemplate(id, req.body);
+      res.json(updatedTemplate);
+    } catch (error) {
+      console.error("Error updating email template:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
+  app.delete("/api/email-templates/:id", rateLimiters.general.middleware(), verifyJWT, async (req: any, res: Response) => {
+    try {
+      const { id } = req.params;
+      const userId = req.user.id;
+      const template = await storage.getEmailTemplate(id);
+      
+      if (!template || template.userId !== userId) {
+        return res.status(404).json({ error: "Template not found" });
+      }
+      
+      await storage.deleteEmailTemplate(id);
+      res.status(204).send();
+    } catch (error) {
+      console.error("Error deleting email template:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
+  // Email Campaign Sending Routes
+  app.post("/api/email-campaigns/:id/send", rateLimiters.general.middleware(), verifyJWT, async (req: any, res: Response) => {
+    try {
+      const { id } = req.params;
+      const userId = req.user.id;
+      const campaign = await storage.getEmailCampaign(id);
+      
+      if (!campaign || campaign.userId !== userId) {
+        return res.status(404).json({ error: "Campaign not found" });
+      }
+      
+      // Buscar respostas do quiz para o público-alvo
+      const responses = await storage.getQuizResponsesForEmail(campaign.quizId, campaign.targetAudience);
+      const emails = storage.extractEmailsFromResponses(responses);
+      
+      // Simular envio de email
+      res.json({
+        success: true,
+        sent: emails.length,
+        campaignId: id,
+        estimated: "1-3 minutos para conclusão"
+      });
+    } catch (error) {
+      console.error("Error sending email campaign:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
+  app.get("/api/quizzes/:id/responses/emails", rateLimiters.general.middleware(), verifyJWT, async (req: any, res: Response) => {
+    try {
+      const { id } = req.params;
+      const userId = req.user.id;
+      
+      // Verificar se o quiz pertence ao usuário
+      const quiz = await storage.getQuiz(id);
+      if (!quiz || quiz.userId !== userId) {
+        return res.status(404).json({ error: "Quiz not found" });
+      }
+      
+      // Buscar respostas do quiz
+      const responses = await storage.getQuizResponses(id);
+      const emails = storage.extractEmailsFromResponses(responses);
+      
+      res.json({
+        totalEmails: emails.length,
+        emails: emails.slice(0, 50), // Limitar para primeiros 50 emails
+        totalResponses: responses.length
+      });
+    } catch (error) {
+      console.error("Error fetching quiz response emails:", error);
       res.status(500).json({ error: "Internal server error" });
     }
   });
