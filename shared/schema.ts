@@ -110,6 +110,36 @@ export const quizAnalytics = pgTable("quiz_analytics", {
   conversionRate: numeric("conversion_rate").default("0"),
 });
 
+// Produtos físicos para afiliação
+export const products = pgTable("products", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  name: varchar("name").notNull(),
+  description: text("description"),
+  image: varchar("image"), // URL da imagem do produto
+  price: numeric("price", { precision: 10, scale: 2 }).notNull(),
+  commissionRate: numeric("commission_rate", { precision: 5, scale: 2 }).notNull(), // Porcentagem de comissão
+  commissionValue: numeric("commission_value", { precision: 10, scale: 2 }), // Valor fixo da comissão
+  category: varchar("category"),
+  brand: varchar("brand"),
+  affiliateLink: text("affiliate_link"), // Link para onde o usuário será redirecionado
+  isActive: boolean("is_active").default(true),
+  createdBy: varchar("created_by").references(() => users.id).notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Afiliações dos usuários aos produtos
+export const affiliations = pgTable("affiliations", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  userId: varchar("user_id").references(() => users.id).notNull(),
+  productId: uuid("product_id").references(() => products.id).notNull(),
+  status: varchar("status").default("active").notNull(), // active, paused, cancelled
+  affiliateCode: varchar("affiliate_code").unique(), // Código único do afiliado para tracking
+  customLink: text("custom_link"), // Link personalizado gerado
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
 // Schema exports
 export const insertUserSchema = createInsertSchema(users).omit({
   createdAt: true,
@@ -140,6 +170,18 @@ export const insertQuizAnalyticsSchema = createInsertSchema(quizAnalytics).omit(
   date: true,
 });
 
+export const insertProductSchema = createInsertSchema(products).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertAffiliationSchema = createInsertSchema(affiliations).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
 // Type exports
 export type UpsertUser = z.infer<typeof insertUserSchema>;
 export type User = typeof users.$inferSelect;
@@ -151,3 +193,7 @@ export type InsertQuizResponse = z.infer<typeof insertQuizResponseSchema>;
 export type QuizResponse = typeof quizResponses.$inferSelect;
 export type InsertQuizAnalytics = z.infer<typeof insertQuizAnalyticsSchema>;
 export type QuizAnalytics = typeof quizAnalytics.$inferSelect;
+export type InsertProduct = z.infer<typeof insertProductSchema>;
+export type Product = typeof products.$inferSelect;
+export type InsertAffiliation = z.infer<typeof insertAffiliationSchema>;
+export type Affiliation = typeof affiliations.$inferSelect;

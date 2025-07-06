@@ -16,7 +16,9 @@ import {
   Eye,
   Users,
   Calendar,
-  TrendingUp
+  TrendingUp,
+  ExternalLink,
+  Copy
 } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -68,9 +70,49 @@ export default function Quizzes() {
     },
   });
 
+  const duplicateMutation = useMutation({
+    mutationFn: async (quiz: any) => {
+      const duplicatedQuiz = {
+        title: `${quiz.title} - Cópia`,
+        description: quiz.description,
+        structure: quiz.structure,
+        settings: quiz.settings,
+        isPublished: false, // Sempre criar como rascunho
+      };
+      
+      const response = await apiRequest("POST", "/api/quizzes", duplicatedQuiz);
+      if (!response.ok) {
+        throw new Error("Erro ao duplicar quiz");
+      }
+      return response.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: "Quiz duplicado",
+        description: "O quiz foi duplicado com sucesso.",
+      });
+      // Atualizar cache
+      queryClient.invalidateQueries({ queryKey: ["/api/quizzes"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/dashboard/stats"] });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Erro ao duplicar",
+        description: error.message || "Não foi possível duplicar o quiz.",
+        variant: "destructive",
+      });
+    },
+  });
+
   const handleDeleteQuiz = (quizId: string, quizTitle: string) => {
     if (window.confirm(`Tem certeza que deseja excluir o quiz "${quizTitle}"? Esta ação não pode ser desfeita.`)) {
       deleteMutation.mutate(quizId);
+    }
+  };
+
+  const handleDuplicateQuiz = (quiz: any) => {
+    if (window.confirm(`Deseja duplicar o quiz "${quiz.title}"? Uma cópia será criada como rascunho.`)) {
+      duplicateMutation.mutate(quiz);
     }
   };
 
@@ -244,19 +286,63 @@ export default function Quizzes() {
                   </div>
 
                   {/* Actions */}
-                  <div className="flex items-center space-x-2 pt-2">
+                  <div className="flex items-center space-x-1 pt-2">
                     <Link href={`/quizzes/${quiz.id}/edit`}>
                       <Button size="sm" variant="outline" className="flex-1">
                         <Edit className="w-3 h-3 mr-1" />
                         Editar
                       </Button>
                     </Link>
+                    
+                    {/* Preview Quiz */}
+                    <Button 
+                      size="sm" 
+                      variant="outline" 
+                      className="px-2"
+                      onClick={() => window.open(`/quiz/${quiz.id}`, '_blank')}
+                      title="Visualizar quiz"
+                    >
+                      <Eye className="w-3 h-3" />
+                    </Button>
+                    
+                    {/* Copy Quiz Link */}
+                    <Button 
+                      size="sm" 
+                      variant="outline" 
+                      className="px-2"
+                      onClick={() => {
+                        const url = `${window.location.origin}/quiz/${quiz.id}`;
+                        navigator.clipboard.writeText(url);
+                        toast({
+                          title: "Link copiado!",
+                          description: "O link do quiz foi copiado para a área de transferência.",
+                        });
+                      }}
+                      title="Copiar link do quiz"
+                    >
+                      <ExternalLink className="w-3 h-3" />
+                    </Button>
+                    
+                    {/* Duplicate Quiz */}
+                    <Button 
+                      size="sm" 
+                      variant="outline" 
+                      className="px-2"
+                      onClick={() => handleDuplicateQuiz(quiz)}
+                      disabled={duplicateMutation.isPending}
+                      title="Duplicar quiz"
+                    >
+                      <Copy className="w-3 h-3" />
+                    </Button>
+                    
+                    {/* Delete Quiz */}
                     <Button 
                       size="sm" 
                       variant="outline" 
                       className="px-2"
                       onClick={() => handleDeleteQuiz(quiz.id, quiz.title)}
                       disabled={deleteMutation.isPending}
+                      title="Excluir quiz"
                     >
                       <Trash2 className="w-3 h-3" />
                     </Button>

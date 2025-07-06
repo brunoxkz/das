@@ -20,7 +20,8 @@ import {
   Zap,
   Shield,
   Trophy,
-  BookOpen
+  BookOpen,
+  Package
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -90,11 +91,11 @@ export function Sidebar() {
       active: location === "/analytics"
     },
     {
-      title: "Leads",
-      href: "/leads",
-      icon: <Users className="w-4 h-4" />,
-      active: location === "/leads",
-      badge: newLeadsCount > 0 ? "New" : undefined
+      title: "Encapsulados",
+      href: "/encapsulados",
+      icon: <Package className="w-4 h-4" />,
+      active: location === "/encapsulados",
+      badge: "🛍️"
     },
     {
       title: "Premiações",
@@ -136,10 +137,18 @@ export function Sidebar() {
       <div className="p-4 border-b border-gray-200">
         <div className="flex items-center justify-center">
           {!isCollapsed && (
-            <span className="font-bold text-2xl text-gray-900">QuizMaster</span>
+            <img 
+              src="https://vendzz.com.br/wp-content/uploads/2024/12/logo-vendzz.png" 
+              alt="Vendzz" 
+              className="h-12 w-auto"
+            />
           )}
           {isCollapsed && (
-            <span className="font-bold text-xl text-gray-900">Q</span>
+            <img 
+              src="https://vendzz.com.br/wp-content/uploads/2024/12/logo-vendzz.png" 
+              alt="Vendzz" 
+              className="h-8 w-auto"
+            />
           )}
         </div>
       </div>
