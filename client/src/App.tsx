@@ -21,6 +21,7 @@ import EncapsuladosPage from "@/pages/encapsulados";
 import QuizPublicPage from "@/pages/quiz-public";
 import { useAuth } from "@/hooks/use-auth-hybrid";
 import { isUnauthorizedError } from "@/lib/authUtils";
+import { lazy } from "react";
 
 function App() {
   const { isAuthenticated, isLoading } = useAuth();
@@ -56,20 +57,20 @@ function App() {
         <Route path="/" component={LandingPage} />
         <Route path="/login" component={LoginPage} />
         <Route path="/quiz/:id" component={QuizPublicPage} />
-        
+
         {/* Authenticated routes with sidebar */}
         <Route path="/dashboard">
           <Layout>
             <Dashboard />
           </Layout>
         </Route>
-        
+
         {/* Quiz builder routes without sidebar for full-screen editing */}
         <Route path="/quiz-builder" component={QuizBuilder} />
         <Route path="/quiz-builder/:id" component={QuizBuilder} />
         <Route path="/quizzes/new" component={QuizBuilder} />
         <Route path="/quizzes/:id/edit" component={QuizBuilder} />
-        
+
         {/* Other authenticated routes with sidebar */}
         <Route path="/analytics">
           <Layout>
@@ -126,7 +127,11 @@ function App() {
             <EncapsuladosPage />
           </Layout>
         </Route>
-        
+        <Route path="/sms-credits">
+          <Layout>
+            <lazy(() => import("./pages/sms-credits"))}
+          </Layout>
+        </Route>
         <Route component={NotFoundPage} />
       </Switch>
       <Toaster />

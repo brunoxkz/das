@@ -21,7 +21,8 @@ import {
   Shield,
   Trophy,
   BookOpen,
-  Package
+  Package,
+  MessageSquare
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -109,6 +110,12 @@ export function Sidebar() {
       href: "/tutoriais",
       icon: <BookOpen className="w-4 h-4" />,
       active: location === "/tutoriais"
+    },
+    {
+      title: "Créditos SMS",
+      href: "/sms-credits",
+      icon: <MessageSquare className="w-4 h-4" />,
+      active: location === "/sms-credits"
     }
   ];
 

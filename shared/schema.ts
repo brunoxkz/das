@@ -140,6 +140,28 @@ export const affiliations = pgTable("affiliations", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
+// SMS Credits Packages
+export const smsCreditPackages = pgTable("sms_credit_packages", {
+  id: serial("id").primaryKey(),
+  name: varchar("name").notNull(),
+  description: text("description"),
+  price: numeric("price", { precision: 10, scale: 2 }).notNull(),
+  credits: integer("credits").notNull(),
+  isActive: boolean("is_active").default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// SMS Credits Transactions
+export const smsCreditsTransactions = pgTable("sms_credits_transactions", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  userId: varchar("user_id").references(() => users.id).notNull(),
+  packageId: integer("package_id").references(() => smsCreditPackages.id),
+  transactionType: varchar("transaction_type").notNull(), // purchase, usage
+  credits: integer("credits").notNull(),
+  amount: numeric("amount", { precision: 10, scale: 2 }),
+  transactionDate: timestamp("transaction_date").defaultNow(),
+});
+
 // Schema exports
 export const insertUserSchema = createInsertSchema(users).omit({
   createdAt: true,
@@ -182,6 +204,16 @@ export const insertAffiliationSchema = createInsertSchema(affiliations).omit({
   updatedAt: true,
 });
 
+export const insertSmsCreditsTransactionSchema = createInsertSchema(smsCreditsTransactions).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertSmsCreditPackageSchema = createInsertSchema(smsCreditPackages).omit({
+  id: true,
+  createdAt: true,
+});
+
 // Type exports
 export type UpsertUser = z.infer<typeof insertUserSchema>;
 export type User = typeof users.$inferSelect;
@@ -197,3 +229,7 @@ export type InsertProduct = z.infer<typeof insertProductSchema>;
 export type Product = typeof products.$inferSelect;
 export type InsertAffiliation = z.infer<typeof insertAffiliationSchema>;
 export type Affiliation = typeof affiliations.$inferSelect;
+export type InsertSmsCreditsTransaction = z.infer<typeof insertSmsCreditsTransactionSchema>;
+export type SmsCreditsTransaction = typeof smsCreditsTransactions.$inferSelect;
+export type InsertSmsCreditPackage = z.infer<typeof insertSmsCreditPackageSchema>;
+export type SmsCreditPackage = typeof smsCreditPackages.$inferSelect;

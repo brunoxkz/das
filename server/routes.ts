@@ -22,8 +22,6 @@ import {
   insertQuizResponseSchema, 
   insertQuizTemplateSchema,
   insertQuizAnalyticsSchema,
-  insertProductSchema,
-  insertAffiliationSchema,
   type User
 } from "@shared/schema";
 import { z } from "zod";
@@ -415,13 +413,41 @@ export function registerRoutes(app: Express): Server {
             const session = event.data.object as any;
             const customerId = session.customer;
             const subscriptionId = session.subscription;
+            const metadata = session.metadata;
 
-            const users = await storage.getAllUsers();
-            const user = users.find(u => u.stripeCustomerId === customerId);
+            if (metadata && metadata.type === "sms_credits") {
+              // Compra de créditos SMS
+              const userId = metadata.userId;
+              const credits = parseFloat(metadata.credits);
+              
+              // Adicionar créditos ao usuário
+              const user = await storage.getUser(userId);
+              if (user) {
+                const currentCredits = parseFloat(user.smsCredits || "0");
+                const newBalance = currentCredits + credits;
+                
+                await storage.updateUserSmsCredits(userId, newBalance);
+                
+                // Registrar transação
+                await storage.createSmsTransaction({
+                  userId,
+                  type: "purchase",
+                  amount: credits,
+                  balance: newBalance,
+                  description: `Compra de ${credits} créditos SMS`,
+                  smsCount: 0,
+                  costPerSms: 0
+                });
+              }
+            } else {
+              // Compra de plano (código existente)
+              const users = await storage.getAllUsers();
+              const user = users.find(u => u.stripeCustomerId === customerId);
 
-            if (user) {
-              await storage.updateUserStripeInfo(user.id, customerId, subscriptionId);
-              await storage.updateUserPlan(user.id, "plus", "active");
+              if (user) {
+                await storage.updateUserStripeInfo(user.id, customerId, subscriptionId);
+                await storage.updateUserPlan(user.id, "plus", "active");
+              }
             }
             break;
 
@@ -463,7 +489,8 @@ export function registerRoutes(app: Express): Server {
           firstName: user.firstName,
           lastName: user.lastName,
           role: user.role,
-          plan: user.plan
+          plan: user.plan,
+          smsCredits: user.smsCredits || 0
         },
         limits,
         usage: {
@@ -474,6 +501,187 @@ export function registerRoutes(app: Express): Server {
       });
     } catch (error) {
       console.error("Error fetching user profile:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  // SMS Credits routes
+  app.get("/api/sms-credits/packages", async (req, res) => {
+    try {
+      const packages = [
+        {
+          id: 1,
+          name: "Iniciante",
+          description: "Ideal para testar o sistema",
+          credits: 100,
+          price: 29.90,
+          bonusCredits: 0,
+          isActive: true
+        },
+        {
+          id: 2,
+          name: "Profissional", 
+          description: "Para empresas em crescimento",
+          credits: 500,
+          price: 129.90,
+          bonusCredits: 50,
+          isActive: true,
+          badge: "Popular"
+        },
+        {
+          id: 3,
+          name: "Empresarial",
+          description: "Para grandes volumes", 
+          credits: 1500,
+          price: 349.90,
+          bonusCredits: 200,
+          isActive: true,
+          badge: "Melhor Valor"
+        },
+        {
+          id: 4,
+          name: "Enterprise",
+          description: "Volumes ilimitados",
+          credits: 5000,
+          price: 999.90,
+          bonusCredits: 1000,
+          isActive: true,
+          badge: "Premium"
+        }
+      ];
+      
+      res.json(packages);
+    } catch (error) {
+      console.error("Error fetching SMS credit packages:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  app.post("/api/sms-credits/purchase", authenticateToken, async (req, res) => {
+    try {
+      const { packageId } = req.body;
+      const user = req.user!;
+      
+      // Buscar pacote
+      const packages = [
+        { id: 1, name: "Iniciante", credits: 100, price: 29.90, bonusCredits: 0 },
+        { id: 2, name: "Profissional", credits: 500, price: 129.90, bonusCredits: 50 },
+        { id: 3, name: "Empresarial", credits: 1500, price: 349.90, bonusCredits: 200 },
+        { id: 4, name: "Enterprise", credits: 5000, price: 999.90, bonusCredits: 1000 }
+      ];
+      
+      const selectedPackage = packages.find(p => p.id === packageId);
+      if (!selectedPackage) {
+        return res.status(404).json({ message: "Pacote não encontrado" });
+      }
+
+      if (stripe) {
+        // Criar sessão do Stripe
+        const session = await stripe.checkout.sessions.create({
+          payment_method_types: ["card"],
+          line_items: [{
+            price_data: {
+              currency: "brl",
+              product_data: {
+                name: `Créditos SMS - ${selectedPackage.name}`,
+                description: `${selectedPackage.credits + selectedPackage.bonusCredits} créditos SMS`,
+              },
+              unit_amount: Math.round(selectedPackage.price * 100), // Centavos
+            },
+            quantity: 1,
+          }],
+          mode: "payment",
+          success_url: `${req.headers.origin}/sms-credits?success=true`,
+          cancel_url: `${req.headers.origin}/sms-credits?canceled=true`,
+          metadata: {
+            userId: user.id,
+            packageId: packageId.toString(),
+            credits: (selectedPackage.credits + selectedPackage.bonusCredits).toString(),
+            type: "sms_credits"
+          }
+        });
+
+        res.json({ sessionUrl: session.url });
+      } else {
+        // Modo desenvolvimento - simular compra
+        res.json({ 
+          message: "Modo desenvolvimento - Stripe não configurado",
+          sessionUrl: `/sms-credits?success=true&dev=true`
+        });
+      }
+    } catch (error) {
+      console.error("Error creating SMS credits checkout session:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  app.post("/api/sms-credits/send", authenticateToken, async (req, res) => {
+    try {
+      const { quizId, phoneNumbers, message } = req.body;
+      const user = req.user!;
+      
+      // Verificar saldo
+      const currentCredits = parseFloat(user.smsCredits || "0");
+      const smsCount = phoneNumbers.length;
+      const costPerSms = 0.15;
+      const totalCost = smsCount * costPerSms;
+      
+      if (currentCredits < totalCost) {
+        return res.status(400).json({ 
+          message: "Créditos insuficientes",
+          required: totalCost,
+          available: currentCredits
+        });
+      }
+
+      // Simular envio de SMS (aqui vocês integram a API real)
+      const sentSms = [];
+      for (const phone of phoneNumbers) {
+        // Aqui seria a integração real com a API de SMS
+        // Por enquanto, vamos simular
+        sentSms.push({
+          phone,
+          status: "sent",
+          messageId: `sms_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+        });
+      }
+
+      // Debitar créditos
+      const newBalance = currentCredits - totalCost;
+      await storage.updateUserSmsCredits(user.id, newBalance);
+
+      // Registrar transação
+      await storage.createSmsTransaction({
+        userId: user.id,
+        type: "usage",
+        amount: -totalCost,
+        balance: newBalance,
+        description: `Envio de ${smsCount} SMS para quiz ${quizId}`,
+        quizId,
+        smsCount,
+        costPerSms
+      });
+
+      res.json({
+        success: true,
+        sentCount: sentSms.length,
+        totalCost,
+        newBalance,
+        details: sentSms
+      });
+    } catch (error) {
+      console.error("Error sending SMS:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  app.get("/api/sms-credits/history", authenticateToken, async (req, res) => {
+    try {
+      const userId = req.user!.id;
+      const transactions = await storage.getSmsTransactions(userId);
+      res.json(transactions);
+    } catch (error) {
+      console.error("Error fetching SMS transactions:", error);
       res.status(500).json({ message: "Internal server error" });
     }
   });
@@ -636,109 +844,6 @@ export function registerRoutes(app: Express): Server {
       });
     } catch (error) {
       console.error("Error fetching performance stats:", error);
-      res.status(500).json({ message: "Internal server error" });
-    }
-  });
-
-  // Product Routes
-  app.get("/api/products", rateLimiters.general.middleware(), authenticateToken, async (req, res) => {
-    try {
-      const products = await storage.getAllProducts();
-      res.json(products);
-    } catch (error) {
-      console.error("Error fetching products:", error);
-      res.status(500).json({ message: "Internal server error" });
-    }
-  });
-
-  app.get("/api/products/:id", rateLimiters.general.middleware(), authenticateToken, async (req, res) => {
-    try {
-      const product = await storage.getProduct(req.params.id);
-      if (!product) {
-        return res.status(404).json({ message: "Product not found" });
-      }
-      res.json(product);
-    } catch (error) {
-      console.error("Error fetching product:", error);
-      res.status(500).json({ message: "Internal server error" });
-    }
-  });
-
-  app.post("/api/products", rateLimiters.general.middleware(), authenticateToken, requireAdmin, async (req, res) => {
-    try {
-      const validated = insertProductSchema.parse(req.body);
-      const product = await storage.createProduct({
-        ...validated,
-        createdBy: req.user!.id
-      });
-      res.status(201).json(product);
-    } catch (error) {
-      console.error("Error creating product:", error);
-      if (error instanceof z.ZodError) {
-        return res.status(400).json({ message: "Validation error", errors: error.errors });
-      }
-      res.status(500).json({ message: "Internal server error" });
-    }
-  });
-
-  app.put("/api/products/:id", rateLimiters.general.middleware(), authenticateToken, requireAdmin, async (req, res) => {
-    try {
-      const validated = insertProductSchema.partial().parse(req.body);
-      const product = await storage.updateProduct(req.params.id, validated);
-      res.json(product);
-    } catch (error) {
-      console.error("Error updating product:", error);
-      if (error instanceof z.ZodError) {
-        return res.status(400).json({ message: "Validation error", errors: error.errors });
-      }
-      res.status(500).json({ message: "Internal server error" });
-    }
-  });
-
-  app.delete("/api/products/:id", rateLimiters.general.middleware(), authenticateToken, requireAdmin, async (req, res) => {
-    try {
-      await storage.deleteProduct(req.params.id);
-      res.status(204).send();
-    } catch (error) {
-      console.error("Error deleting product:", error);
-      res.status(500).json({ message: "Internal server error" });
-    }
-  });
-
-  // Affiliation Routes
-  app.get("/api/affiliations", rateLimiters.general.middleware(), authenticateToken, async (req, res) => {
-    try {
-      const affiliations = await storage.getUserAffiliations(req.user!.id);
-      res.json(affiliations);
-    } catch (error) {
-      console.error("Error fetching affiliations:", error);
-      res.status(500).json({ message: "Internal server error" });
-    }
-  });
-
-  app.post("/api/affiliations", rateLimiters.general.middleware(), authenticateToken, async (req, res) => {
-    try {
-      const validated = insertAffiliationSchema.parse(req.body);
-      const affiliation = await storage.createAffiliation({
-        ...validated,
-        userId: req.user!.id
-      });
-      res.status(201).json(affiliation);
-    } catch (error) {
-      console.error("Error creating affiliation:", error);
-      if (error instanceof z.ZodError) {
-        return res.status(400).json({ message: "Validation error", errors: error.errors });
-      }
-      res.status(500).json({ message: "Internal server error" });
-    }
-  });
-
-  app.delete("/api/affiliations/:id", rateLimiters.general.middleware(), authenticateToken, async (req, res) => {
-    try {
-      await storage.deleteAffiliation(req.params.id);
-      res.status(204).send();
-    } catch (error) {
-      console.error("Error deleting affiliation:", error);
       res.status(500).json({ message: "Internal server error" });
     }
   });
