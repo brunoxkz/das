@@ -102,6 +102,9 @@ export class SQLiteStorage implements IStorage {
         if (admin) {
           await this.updateUserRole(admin.id, 'admin');
           await this.updateUserPlan(admin.id, 'enterprise');
+          
+          // Criar quizzes de exemplo para testar o cloaker
+          await this.createExampleQuizzes(admin.id);
         }
       }
 
@@ -124,6 +127,108 @@ export class SQLiteStorage implements IStorage {
       console.log('✅ Default users created successfully');
     } catch (error) {
       console.log('⚠️ Error creating default users:', error);
+    }
+  }
+
+  private async createExampleQuizzes(userId: string) {
+    try {
+      // Verificar se já existem quizzes para este usuário
+      const existingQuizzes = await this.getUserQuizzes(userId);
+      if (existingQuizzes.length > 0) {
+        return; // Já tem quizzes, não precisa criar
+      }
+
+      console.log('📝 Creating example quizzes for admin user...');
+
+      const exampleQuizzes = [
+        {
+          id: nanoid(),
+          title: 'Quiz de Emagrecimento Rápido',
+          description: 'Descubra seu perfil metabólico e receba um plano personalizado',
+          userId,
+          structure: {
+            questions: [
+              {
+                id: 1,
+                type: 'multiple_choice',
+                question: 'Qual é seu principal objetivo?',
+                options: ['Perder peso', 'Ganhar massa muscular', 'Melhorar saúde geral']
+              }
+            ],
+            settings: {
+              theme: 'green',
+              showProgressBar: true,
+              collectEmail: true,
+              collectName: true,
+              collectPhone: false
+            }
+          },
+          isPublished: true,
+          createdAt: new Date(),
+          updatedAt: new Date()
+        },
+        {
+          id: nanoid(),
+          title: 'Quiz de Produtos Digitais',
+          description: 'Encontre o curso ideal para sua jornada empreendedora',
+          userId,
+          structure: {
+            questions: [
+              {
+                id: 1,
+                type: 'multiple_choice',
+                question: 'Qual sua experiência com negócios online?',
+                options: ['Iniciante', 'Intermediário', 'Avançado']
+              }
+            ],
+            settings: {
+              theme: 'blue',
+              showProgressBar: true,
+              collectEmail: true,
+              collectName: true,
+              collectPhone: true
+            }
+          },
+          isPublished: true,
+          createdAt: new Date(),
+          updatedAt: new Date()
+        },
+        {
+          id: nanoid(),
+          title: 'Quiz de Investimentos',
+          description: 'Descubra seu perfil de investidor e estratégias ideais',
+          userId,
+          structure: {
+            questions: [
+              {
+                id: 1,
+                type: 'multiple_choice',
+                question: 'Qual seu conhecimento sobre investimentos?',
+                options: ['Iniciante', 'Básico', 'Intermediário', 'Avançado']
+              }
+            ],
+            settings: {
+              theme: 'purple',
+              showProgressBar: true,
+              collectEmail: true,
+              collectName: true,
+              collectPhone: false
+            }
+          },
+          isPublished: true,
+          createdAt: new Date(),
+          updatedAt: new Date()
+        }
+      ];
+
+      // Inserir os quizzes de exemplo
+      for (const quiz of exampleQuizzes) {
+        await db.insert(quizzes).values(quiz);
+      }
+
+      console.log('✅ Example quizzes created successfully');
+    } catch (error) {
+      console.error('Error creating example quizzes:', error);
     }
   }
 
