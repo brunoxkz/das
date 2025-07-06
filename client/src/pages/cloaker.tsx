@@ -1,34 +1,31 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Switch } from "@/components/ui/switch";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
+import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Separator } from "@/components/ui/separator";
+import { Textarea } from "@/components/ui/textarea";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Separator } from "@/components/ui/separator";
+import { Badge } from "@/components/ui/badge";
 import { 
   Shield, 
+  Settings, 
+  BarChart3, 
+  CheckCircle, 
+  AlertTriangle, 
   Eye, 
   Users, 
-  AlertTriangle, 
-  Settings, 
-  Globe, 
-  Target,
-  CheckCircle,
-  XCircle,
-  Activity,
   TrendingUp,
-  Clock,
-  Ban
+  Globe,
+  Clock
 } from "lucide-react";
-import { useAuth } from "@/hooks/use-auth-hybrid";
-import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
+import { useToast } from "@/hooks/use-toast";
 
+// Types
 interface CloakerConfig {
   isEnabled: boolean;
   requiredUTMParams: string[];
@@ -41,14 +38,10 @@ interface CloakerConfig {
   blockDuration: number;
 }
 
-interface CloakerDetection {
-  isBlocked: boolean;
-  reason: string;
-  clientIP: string;
-  userAgent: string;
-  referrer: string;
-  utmParams: Record<string, string>;
-  timestamp: Date;
+interface Quiz {
+  id: string;
+  title: string;
+  description: string;
 }
 
 interface CloakerStats {
@@ -57,29 +50,30 @@ interface CloakerStats {
   blockRate: number;
   topReasons: Array<{ reason: string; count: number }>;
   topUserAgents: Array<{ userAgent: string; count: number }>;
-  recentDetections: CloakerDetection[];
+  recentDetections: Array<{
+    isBlocked: boolean;
+    reason: string;
+    clientIP: string;
+    userAgent: string;
+    timestamp: Date;
+  }>;
 }
 
 export default function CloakerPage() {
-  const { user } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  
   const [selectedQuiz, setSelectedQuiz] = useState<string>("");
   const [config, setConfig] = useState<CloakerConfig>({
     isEnabled: false,
     requiredUTMParams: [],
     blockAdLibrary: true,
-    blockDirectAccess: false,
+    blockDirectAccess: true,
     blockPage: 'maintenance',
     customBlockMessage: '',
     whitelistedIPs: [],
-    maxAttemptsPerIP: 3,
+    maxAttemptsPerIP: 5,
     blockDuration: 60
   });
-  
-  const [newUTMParam, setNewUTMParam] = useState("");
-  const [newWhitelistedIP, setNewWhitelistedIP] = useState("");
 
   // Fetch user's quizzes
   const { data: quizzes = [], isLoading: quizzesLoading } = useQuery({
@@ -88,124 +82,105 @@ export default function CloakerPage() {
   });
 
   // Fetch cloaker config for selected quiz
-  const { data: cloakerConfig = null, isLoading: configLoading } = useQuery({
+  const { data: cloakerConfig, isLoading: configLoading } = useQuery({
     queryKey: ["/api/cloaker/config", selectedQuiz],
     enabled: !!selectedQuiz,
     retry: false,
   });
 
   // Fetch cloaker statistics
-  const { data: stats = { totalRequests: 0, blockedRequests: 0, blockRate: 0, topReasons: [], topUserAgents: [], recentDetections: [] }, isLoading: statsLoading } = useQuery({
-    queryKey: ["/api/cloaker/stats", selectedQuiz],
-    enabled: !!selectedQuiz,
+  const { data: cloakerStats, isLoading: statsLoading } = useQuery({
+    queryKey: ["/api/cloaker/stats"],
     retry: false,
   });
 
-  // Update config when cloaker config is loaded
-  useEffect(() => {
-    if (cloakerConfig) {
-      setConfig(cloakerConfig);
-    }
-  }, [cloakerConfig]);
+  // Update config when data is loaded
+  if (cloakerConfig && JSON.stringify(config) !== JSON.stringify(cloakerConfig)) {
+    setConfig(cloakerConfig);
+  }
 
-  // Save cloaker configuration
+  // Save configuration mutation
   const saveConfigMutation = useMutation({
-    mutationFn: async (configData: CloakerConfig) => {
-      return await apiRequest("POST", `/api/cloaker/config/${selectedQuiz}`, configData);
+    mutationFn: async (newConfig: CloakerConfig) => {
+      if (!selectedQuiz) throw new Error("Nenhum quiz selecionado");
+      return apiRequest(`/api/cloaker/config`, {
+        method: "POST",
+        body: JSON.stringify({
+          quizId: selectedQuiz,
+          config: newConfig
+        })
+      });
     },
     onSuccess: () => {
       toast({
-        title: "Configuração salva!",
+        title: "✅ Configuração salva",
         description: "As configurações do cloaker foram atualizadas com sucesso.",
       });
       queryClient.invalidateQueries({ queryKey: ["/api/cloaker/config", selectedQuiz] });
     },
     onError: (error: any) => {
       toast({
-        title: "Erro ao salvar",
-        description: error.message || "Erro ao salvar as configurações do cloaker.",
+        title: "❌ Erro ao salvar",
+        description: error.message || "Erro ao salvar configurações",
         variant: "destructive",
       });
-    },
+    }
   });
 
   const handleSaveConfig = () => {
-    if (!selectedQuiz) {
-      toast({
-        title: "Selecione um quiz",
-        description: "Por favor, selecione um quiz para aplicar as configurações.",
-        variant: "destructive",
-      });
-      return;
-    }
     saveConfigMutation.mutate(config);
   };
 
+  const updateConfig = (updates: Partial<CloakerConfig>) => {
+    setConfig(prev => ({ ...prev, ...updates }));
+  };
+
   const addUTMParam = () => {
-    if (newUTMParam.trim() && !config.requiredUTMParams.includes(newUTMParam.trim())) {
-      setConfig(prev => ({
-        ...prev,
-        requiredUTMParams: [...prev.requiredUTMParams, newUTMParam.trim()]
-      }));
-      setNewUTMParam("");
+    const input = document.getElementById('utm-input') as HTMLInputElement;
+    if (input?.value.trim()) {
+      updateConfig({
+        requiredUTMParams: [...config.requiredUTMParams, input.value.trim()]
+      });
+      input.value = '';
     }
   };
 
-  const removeUTMParam = (param: string) => {
-    setConfig(prev => ({
-      ...prev,
-      requiredUTMParams: prev.requiredUTMParams.filter(p => p !== param)
-    }));
-  };
-
-  const addWhitelistedIP = () => {
-    if (newWhitelistedIP.trim() && !config.whitelistedIPs?.includes(newWhitelistedIP.trim())) {
-      setConfig(prev => ({
-        ...prev,
-        whitelistedIPs: [...(prev.whitelistedIPs || []), newWhitelistedIP.trim()]
-      }));
-      setNewWhitelistedIP("");
-    }
-  };
-
-  const removeWhitelistedIP = (ip: string) => {
-    setConfig(prev => ({
-      ...prev,
-      whitelistedIPs: prev.whitelistedIPs?.filter(i => i !== ip) || []
-    }));
+  const removeUTMParam = (index: number) => {
+    updateConfig({
+      requiredUTMParams: config.requiredUTMParams.filter((_, i) => i !== index)
+    });
   };
 
   if (quizzesLoading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600"></div>
+      <div className="container mx-auto py-8">
+        <div className="animate-pulse space-y-4">
+          <div className="h-8 bg-gray-200 rounded w-1/3"></div>
+          <div className="h-32 bg-gray-200 rounded"></div>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="max-w-6xl mx-auto p-6 space-y-6">
+    <div className="container mx-auto py-8 space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center space-x-3">
-          <Shield className="h-8 w-8 text-green-600" />
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900">Cloaker Avançado</h1>
-            <p className="text-gray-600">Proteja seus quizzes contra acessos indesejados</p>
-          </div>
+      <div className="flex items-center space-x-3">
+        <Shield className="h-8 w-8 text-green-600" />
+        <div>
+          <h1 className="text-3xl font-bold">Sistema Cloaker</h1>
+          <p className="text-muted-foreground">
+            Proteja seus quizzes contra tráfego indesejado e bibliotecas de anúncios
+          </p>
         </div>
-        <Badge variant="secondary" className="text-sm">
-          <Activity className="h-4 w-4 mr-1" />
-          Sistema Ativo
-        </Badge>
       </div>
 
       {/* Quiz Selection */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center space-x-2">
-            <Target className="h-5 w-5" />
-            <span>Selecionar Quiz</span>
+            <Globe className="h-5 w-5" />
+            <span>Seleção de Quiz</span>
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -217,7 +192,7 @@ export default function CloakerPage() {
                   <SelectValue placeholder="Selecione um quiz..." />
                 </SelectTrigger>
                 <SelectContent>
-                  {quizzes?.map((quiz: any) => (
+                  {Array.isArray(quizzes) && quizzes.map((quiz: Quiz) => (
                     <SelectItem key={quiz.id} value={quiz.id}>
                       {quiz.title}
                     </SelectItem>
@@ -226,11 +201,11 @@ export default function CloakerPage() {
               </Select>
             </div>
             
-            {selectedQuiz && (
+            {selectedQuiz && Array.isArray(quizzes) && (
               <Alert>
                 <CheckCircle className="h-4 w-4" />
                 <AlertDescription>
-                  Quiz selecionado: <strong>{quizzes?.find((q: any) => q.id === selectedQuiz)?.title}</strong>
+                  Quiz selecionado: <strong>{quizzes.find((q: Quiz) => q.id === selectedQuiz)?.title}</strong>
                 </AlertDescription>
               </Alert>
             )}
@@ -250,47 +225,41 @@ export default function CloakerPage() {
             </CardHeader>
             <CardContent className="space-y-6">
               {/* Enable/Disable */}
-              <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-                <div className="flex items-center space-x-3">
-                  <Shield className="h-5 w-5 text-green-600" />
-                  <div>
-                    <Label className="text-base font-medium">Ativar Cloaker</Label>
-                    <p className="text-sm text-gray-600">Habilitar proteção para este quiz</p>
-                  </div>
+              <div className="flex items-center justify-between">
+                <div>
+                  <Label htmlFor="enable-cloaker">Ativar Cloaker</Label>
+                  <p className="text-sm text-muted-foreground">
+                    Habilita a proteção para este quiz
+                  </p>
                 </div>
                 <Switch
+                  id="enable-cloaker"
                   checked={config.isEnabled}
-                  onCheckedChange={(checked) => setConfig(prev => ({ ...prev, isEnabled: checked }))}
+                  onCheckedChange={(checked) => updateConfig({ isEnabled: checked })}
                 />
               </div>
 
               <Separator />
 
               {/* UTM Parameters */}
-              <div className="space-y-4">
-                <div className="flex items-center space-x-2">
-                  <Globe className="h-5 w-5 text-blue-600" />
-                  <Label className="text-base font-medium">Parâmetros UTM Obrigatórios</Label>
-                </div>
-                <p className="text-sm text-gray-600">
-                  Bloqueia acessos que não possuem os parâmetros UTM especificados
+              <div className="space-y-3">
+                <Label>Parâmetros UTM Obrigatórios</Label>
+                <p className="text-sm text-muted-foreground">
+                  Lista de parâmetros UTM que devem estar presentes na URL
                 </p>
-                
                 <div className="flex space-x-2">
                   <Input
-                    placeholder="Ex: utm_source, utm_campaign..."
-                    value={newUTMParam}
-                    onChange={(e) => setNewUTMParam(e.target.value)}
+                    id="utm-input"
+                    placeholder="Ex: utm_source, utm_campaign"
                     onKeyPress={(e) => e.key === 'Enter' && addUTMParam()}
                   />
-                  <Button onClick={addUTMParam} variant="outline">
+                  <Button onClick={addUTMParam} size="sm">
                     Adicionar
                   </Button>
                 </div>
-                
                 <div className="flex flex-wrap gap-2">
-                  {config.requiredUTMParams.map((param) => (
-                    <Badge key={param} variant="secondary" className="cursor-pointer" onClick={() => removeUTMParam(param)}>
+                  {config.requiredUTMParams.map((param, index) => (
+                    <Badge key={index} variant="secondary" className="cursor-pointer" onClick={() => removeUTMParam(index)}>
                       {param} ×
                     </Badge>
                   ))}
@@ -299,105 +268,45 @@ export default function CloakerPage() {
 
               <Separator />
 
-              {/* Ad Library Protection */}
-              <div className="flex items-center justify-between p-4 bg-orange-50 rounded-lg">
-                <div className="flex items-center space-x-3">
-                  <Ban className="h-5 w-5 text-orange-600" />
-                  <div>
-                    <Label className="text-base font-medium">Bloquear Bibliotecas de Anúncios</Label>
-                    <p className="text-sm text-gray-600">Detecta e bloqueia acessos de ferramentas de spy ads</p>
-                  </div>
-                </div>
-                <Switch
-                  checked={config.blockAdLibrary}
-                  onCheckedChange={(checked) => setConfig(prev => ({ ...prev, blockAdLibrary: checked }))}
-                />
-              </div>
-
-              {/* Direct Access Protection */}
-              <div className="flex items-center justify-between p-4 bg-red-50 rounded-lg">
-                <div className="flex items-center space-x-3">
-                  <AlertTriangle className="h-5 w-5 text-red-600" />
-                  <div>
-                    <Label className="text-base font-medium">Bloquear Acesso Direto</Label>
-                    <p className="text-sm text-gray-600">Bloqueia acessos que não possuem referrer</p>
-                  </div>
-                </div>
-                <Switch
-                  checked={config.blockDirectAccess}
-                  onCheckedChange={(checked) => setConfig(prev => ({ ...prev, blockDirectAccess: checked }))}
-                />
-              </div>
-
-              <Separator />
-
-              {/* IP Whitelist */}
+              {/* Protection Options */}
               <div className="space-y-4">
-                <div className="flex items-center space-x-2">
-                  <Users className="h-5 w-5 text-green-600" />
-                  <Label className="text-base font-medium">IPs Permitidos</Label>
-                </div>
-                <p className="text-sm text-gray-600">
-                  IPs que nunca serão bloqueados (seus IPs de teste)
-                </p>
+                <Label>Opções de Proteção</Label>
                 
-                <div className="flex space-x-2">
-                  <Input
-                    placeholder="Ex: 192.168.1.1"
-                    value={newWhitelistedIP}
-                    onChange={(e) => setNewWhitelistedIP(e.target.value)}
-                    onKeyPress={(e) => e.key === 'Enter' && addWhitelistedIP()}
-                  />
-                  <Button onClick={addWhitelistedIP} variant="outline">
-                    Adicionar
-                  </Button>
-                </div>
-                
-                <div className="flex flex-wrap gap-2">
-                  {config.whitelistedIPs?.map((ip) => (
-                    <Badge key={ip} variant="secondary" className="cursor-pointer" onClick={() => removeWhitelistedIP(ip)}>
-                      {ip} ×
-                    </Badge>
-                  ))}
-                </div>
-              </div>
-
-              <Separator />
-
-              {/* Rate Limiting */}
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label>Tentativas Máximas por IP</Label>
-                  <Input
-                    type="number"
-                    value={config.maxAttemptsPerIP}
-                    onChange={(e) => setConfig(prev => ({ ...prev, maxAttemptsPerIP: parseInt(e.target.value) || 3 }))}
-                    min="1"
-                    max="10"
+                <div className="flex items-center justify-between">
+                  <div>
+                    <Label htmlFor="block-ad-library">Bloquear Bibliotecas de Anúncios</Label>
+                    <p className="text-sm text-muted-foreground">
+                      Detecta e bloqueia ferramentas de bibliotecas de anúncios
+                    </p>
+                  </div>
+                  <Switch
+                    id="block-ad-library"
+                    checked={config.blockAdLibrary}
+                    onCheckedChange={(checked) => updateConfig({ blockAdLibrary: checked })}
                   />
                 </div>
-                <div className="space-y-2">
-                  <Label>Duração do Bloqueio (minutos)</Label>
-                  <Input
-                    type="number"
-                    value={config.blockDuration}
-                    onChange={(e) => setConfig(prev => ({ ...prev, blockDuration: parseInt(e.target.value) || 60 }))}
-                    min="1"
-                    max="1440"
+
+                <div className="flex items-center justify-between">
+                  <div>
+                    <Label htmlFor="block-direct">Bloquear Acesso Direto</Label>
+                    <p className="text-sm text-muted-foreground">
+                      Bloqueia acessos sem referrer ou UTMs
+                    </p>
+                  </div>
+                  <Switch
+                    id="block-direct"
+                    checked={config.blockDirectAccess}
+                    onCheckedChange={(checked) => updateConfig({ blockDirectAccess: checked })}
                   />
                 </div>
               </div>
 
               <Separator />
 
-              {/* Block Page Configuration */}
-              <div className="space-y-4">
-                <div className="flex items-center space-x-2">
-                  <Eye className="h-5 w-5 text-purple-600" />
-                  <Label className="text-base font-medium">Página de Bloqueio</Label>
-                </div>
-                
-                <Select value={config.blockPage} onValueChange={(value: any) => setConfig(prev => ({ ...prev, blockPage: value }))}>
+              {/* Block Page Type */}
+              <div className="space-y-3">
+                <Label htmlFor="block-page">Página de Bloqueio</Label>
+                <Select value={config.blockPage} onValueChange={(value: any) => updateConfig({ blockPage: value })}>
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
@@ -407,122 +316,163 @@ export default function CloakerPage() {
                     <SelectItem value="custom">Mensagem Personalizada</SelectItem>
                   </SelectContent>
                 </Select>
-                
+
                 {config.blockPage === 'custom' && (
-                  <div className="space-y-2">
-                    <Label>Mensagem Personalizada</Label>
+                  <div>
+                    <Label htmlFor="custom-message">Mensagem Personalizada</Label>
                     <Textarea
-                      placeholder="Digite a mensagem que será exibida para usuários bloqueados..."
+                      id="custom-message"
+                      placeholder="Digite sua mensagem personalizada..."
                       value={config.customBlockMessage || ''}
-                      onChange={(e) => setConfig(prev => ({ ...prev, customBlockMessage: e.target.value }))}
-                      rows={3}
+                      onChange={(e) => updateConfig({ customBlockMessage: e.target.value })}
                     />
                   </div>
                 )}
               </div>
 
-              {/* Save Button */}
-              <div className="flex justify-end">
-                <Button 
-                  onClick={handleSaveConfig} 
-                  disabled={saveConfigMutation.isPending}
-                  className="bg-green-600 hover:bg-green-700"
-                >
-                  {saveConfigMutation.isPending ? "Salvando..." : "Salvar Configurações"}
-                </Button>
+              <Separator />
+
+              {/* Rate Limiting */}
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="max-attempts">Máximo de Tentativas por IP</Label>
+                  <Input
+                    id="max-attempts"
+                    type="number"
+                    value={config.maxAttemptsPerIP}
+                    onChange={(e) => updateConfig({ maxAttemptsPerIP: parseInt(e.target.value) || 5 })}
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="block-duration">Duração do Bloqueio (minutos)</Label>
+                  <Input
+                    id="block-duration"
+                    type="number"
+                    value={config.blockDuration}
+                    onChange={(e) => updateConfig({ blockDuration: parseInt(e.target.value) || 60 })}
+                  />
+                </div>
               </div>
+
+              {/* Save Button */}
+              <Button 
+                onClick={handleSaveConfig} 
+                disabled={saveConfigMutation.isPending}
+                className="w-full"
+              >
+                {saveConfigMutation.isPending ? "Salvando..." : "Salvar Configurações"}
+              </Button>
             </CardContent>
           </Card>
 
           {/* Statistics */}
-          {stats && (
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center space-x-2">
-                  <TrendingUp className="h-5 w-5" />
-                  <span>Estatísticas de Proteção</span>
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-                  <div className="text-center p-4 bg-blue-50 rounded-lg">
-                    <div className="text-2xl font-bold text-blue-600">{stats.totalRequests}</div>
-                    <div className="text-sm text-gray-600">Total de Requisições</div>
-                  </div>
-                  <div className="text-center p-4 bg-red-50 rounded-lg">
-                    <div className="text-2xl font-bold text-red-600">{stats.blockedRequests}</div>
-                    <div className="text-sm text-gray-600">Requisições Bloqueadas</div>
-                  </div>
-                  <div className="text-center p-4 bg-green-50 rounded-lg">
-                    <div className="text-2xl font-bold text-green-600">{stats.blockRate.toFixed(1)}%</div>
-                    <div className="text-sm text-gray-600">Taxa de Bloqueio</div>
-                  </div>
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center space-x-2">
+                <BarChart3 className="h-5 w-5" />
+                <span>Estatísticas de Proteção</span>
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {statsLoading ? (
+                <div className="animate-pulse space-y-4">
+                  <div className="h-16 bg-gray-200 rounded"></div>
+                  <div className="h-16 bg-gray-200 rounded"></div>
                 </div>
+              ) : cloakerStats ? (
+                <div className="space-y-6">
+                  {/* Overview Stats */}
+                  <div className="grid grid-cols-3 gap-4">
+                    <div className="text-center p-4 border rounded-lg">
+                      <div className="text-2xl font-bold text-blue-600">{cloakerStats.totalRequests || 0}</div>
+                      <div className="text-sm text-muted-foreground">Total de Requisições</div>
+                    </div>
+                    <div className="text-center p-4 border rounded-lg">
+                      <div className="text-2xl font-bold text-red-600">{cloakerStats.blockedRequests || 0}</div>
+                      <div className="text-sm text-muted-foreground">Requisições Bloqueadas</div>
+                    </div>
+                    <div className="text-center p-4 border rounded-lg">
+                      <div className="text-2xl font-bold text-orange-600">{(cloakerStats.blockRate || 0).toFixed(1)}%</div>
+                      <div className="text-sm text-muted-foreground">Taxa de Bloqueio</div>
+                    </div>
+                  </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   {/* Top Block Reasons */}
                   <div>
-                    <h4 className="font-medium mb-3 flex items-center">
-                      <XCircle className="h-4 w-4 mr-2 text-red-600" />
-                      Principais Motivos de Bloqueio
-                    </h4>
+                    <h3 className="font-semibold mb-3 flex items-center">
+                      <AlertTriangle className="h-4 w-4 mr-2" />
+                      Principais Razões de Bloqueio
+                    </h3>
                     <div className="space-y-2">
-                      {stats.topReasons.map((reason, index) => (
-                        <div key={index} className="flex justify-between items-center p-2 bg-gray-50 rounded">
-                          <span className="text-sm">{reason.reason}</span>
-                          <Badge variant="outline">{reason.count}</Badge>
-                        </div>
-                      ))}
+                      {cloakerStats.topReasons && Array.isArray(cloakerStats.topReasons) ? 
+                        cloakerStats.topReasons.map((reason: any, index: number) => (
+                          <div key={index} className="flex justify-between items-center p-2 bg-gray-50 rounded">
+                            <span className="text-sm">{reason.reason}</span>
+                            <Badge variant="outline">{reason.count}</Badge>
+                          </div>
+                        )) : 
+                        <p className="text-sm text-muted-foreground">Nenhum dado disponível</p>
+                      }
                     </div>
                   </div>
 
                   {/* Top User Agents */}
                   <div>
-                    <h4 className="font-medium mb-3 flex items-center">
-                      <Users className="h-4 w-4 mr-2 text-blue-600" />
+                    <h3 className="font-semibold mb-3 flex items-center">
+                      <Users className="h-4 w-4 mr-2" />
                       User Agents Mais Bloqueados
-                    </h4>
+                    </h3>
                     <div className="space-y-2">
-                      {stats.topUserAgents.map((ua, index) => (
-                        <div key={index} className="flex justify-between items-center p-2 bg-gray-50 rounded">
-                          <span className="text-sm truncate">{ua.userAgent}</span>
-                          <Badge variant="outline">{ua.count}</Badge>
-                        </div>
-                      ))}
+                      {cloakerStats.topUserAgents && Array.isArray(cloakerStats.topUserAgents) ? 
+                        cloakerStats.topUserAgents.map((ua: any, index: number) => (
+                          <div key={index} className="flex justify-between items-center p-2 bg-gray-50 rounded">
+                            <span className="text-sm truncate">{ua.userAgent}</span>
+                            <Badge variant="outline">{ua.count}</Badge>
+                          </div>
+                        )) : 
+                        <p className="text-sm text-muted-foreground">Nenhum dado disponível</p>
+                      }
+                    </div>
+                  </div>
+
+                  {/* Recent Detections */}
+                  <div>
+                    <h3 className="font-semibold mb-3 flex items-center">
+                      <Clock className="h-4 w-4 mr-2" />
+                      Detecções Recentes
+                    </h3>
+                    <div className="space-y-2">
+                      {cloakerStats.recentDetections && Array.isArray(cloakerStats.recentDetections) ? 
+                        cloakerStats.recentDetections.map((detection: any, index: number) => (
+                          <div key={index} className="flex items-center justify-between p-3 border rounded-lg">
+                            <div className="flex items-center space-x-3">
+                              {detection.isBlocked ? (
+                                <AlertTriangle className="h-4 w-4 text-red-500" />
+                              ) : (
+                                <CheckCircle className="h-4 w-4 text-green-500" />
+                              )}
+                              <div>
+                                <div className="text-sm font-medium">{detection.reason}</div>
+                                <div className="text-xs text-muted-foreground">IP: {detection.clientIP}</div>
+                              </div>
+                            </div>
+                            <div className="text-xs text-muted-foreground">
+                              {new Date(detection.timestamp).toLocaleString()}
+                            </div>
+                          </div>
+                        )) : 
+                        <p className="text-sm text-muted-foreground">Nenhuma detecção recente</p>
+                      }
                     </div>
                   </div>
                 </div>
-
-                {/* Recent Detections */}
-                <div className="mt-6">
-                  <h4 className="font-medium mb-3 flex items-center">
-                    <Clock className="h-4 w-4 mr-2 text-purple-600" />
-                    Detecções Recentes
-                  </h4>
-                  <div className="space-y-2 max-h-64 overflow-y-auto">
-                    {stats.recentDetections.map((detection, index) => (
-                      <div key={index} className="p-3 bg-gray-50 rounded-lg">
-                        <div className="flex justify-between items-start">
-                          <div className="flex-1">
-                            <div className="flex items-center space-x-2">
-                              <Badge variant={detection.isBlocked ? "destructive" : "secondary"}>
-                                {detection.isBlocked ? "Bloqueado" : "Permitido"}
-                              </Badge>
-                              <span className="text-sm text-gray-600">{detection.clientIP}</span>
-                            </div>
-                            <div className="text-sm text-gray-700 mt-1">{detection.reason}</div>
-                          </div>
-                          <div className="text-xs text-gray-500">
-                            {new Date(detection.timestamp).toLocaleString()}
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          )}
+              ) : (
+                <p className="text-center text-muted-foreground py-8">
+                  Nenhuma estatística disponível ainda
+                </p>
+              )}
+            </CardContent>
+          </Card>
         </>
       )}
     </div>
