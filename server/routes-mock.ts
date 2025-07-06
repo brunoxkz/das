@@ -23,20 +23,243 @@ const mockUser = {
   updatedAt: new Date()
 };
 
+// Mock JWT Verification - Always success
+const verifyMockJWT = (req: any, res: any, next: any) => {
+  console.log("🔓 MOCK JWT VERIFICATION - Always success");
+  req.user = mockUser; // Attach mock user to request
+  next();
+};
+
+// Mock Cloaker Service and Storage (replace with actual implementations)
+const cloakerService = {
+  analyzeRequest: (req: any, config: any) => {
+    // Mock analysis - block if user agent contains "AdLibrary"
+    const userAgent = req.get('user-agent') || '';
+    const referrer = req.get('referer') || '';
+    const ip = req.ip || req.connection?.remoteAddress || '';
+    const utmParams = req.query;
+
+    let isBlocked = false;
+    let reason = '';
+
+    if (userAgent.includes('AdLibrary')) {
+      isBlocked = true;
+      reason = 'User-Agent contém AdLibrary';
+    }
+
+    if (config.requireUtm && Object.keys(utmParams).length === 0) {
+      isBlocked = true;
+      reason = 'UTM parameters are required but missing';
+    }
+
+    return {
+      isBlocked,
+      reason,
+      userAgent,
+      referrer,
+      ip,
+      utmParams
+    };
+  },
+  getStats: () => ({
+    totalRequests: 100,
+    blockedRequests: 10
+  })
+};
+
+const cloakerStorage = {
+  cloakerConfigs: new Map(),
+  usageStats: new Map(),
+
+  getCloakerConfig: async (quizId: string) => {
+    // Mock config - always return enabled, requires UTM, default block page
+    let config = cloakerStorage.cloakerConfigs.get(quizId);
+
+    if (!config) {
+      config = {
+        quizId: quizId,
+        isEnabled: false,
+        requireUtm: false,
+        blockPage: 'maintenance',
+        customBlockMessage: 'Acesso não autorizado',
+        allowedIps: [],
+        blockedIps: [],
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+    }
+
+    return config;
+  },
+  saveCloakerConfig: async (quizId: string, userId: string, config: any) => {
+    config.quizId = quizId;
+    config.userId = userId;
+    config.createdAt = new Date();
+    config.updatedAt = new Date();
+    cloakerStorage.cloakerConfigs.set(quizId, config);
+    return config;
+  },
+  updateCloakerConfig: async (quizId: string, userId: string, config: any) => {
+    const existingConfig = await cloakerStorage.getCloakerConfig(quizId);
+    if (!existingConfig) {
+      throw new Error('Cloaker config not found');
+    }
+
+    config.quizId = quizId;
+    config.userId = userId;
+    config.createdAt = existingConfig.createdAt;
+    config.updatedAt = new Date();
+
+    cloakerStorage.cloakerConfigs.set(quizId, config);
+    return config;
+  },
+  removeCloakerConfig: async (quizId: string) => {
+    cloakerStorage.cloakerConfigs.delete(quizId);
+  },
+  getCloakerUsageStats: async (userId: string) => {
+    let stats = cloakerStorage.usageStats.get(userId);
+    if (!stats) {
+      stats = {
+        userId: userId,
+        totalTests: 5,
+        totalBlocks: 2,
+        lastTest: new Date()
+      };
+    }
+    return stats;
+  },
+  getActiveCloackers: async (userId: string) => {
+    const active = Array.from(cloakerStorage.cloakerConfigs.values()).filter(c => c.userId === userId && c.isEnabled);
+    return active;
+  }
+};
+
 export function registerMockRoutes(app: Express): Server {
-  // Public routes - NO authentication required
+  // Public quiz viewing (with cloaker protection)
   app.get("/api/quiz/:id/public", async (req, res) => {
     try {
       const quiz = await storage.getQuiz(req.params.id);
       if (!quiz || !quiz.isPublished) {
         return res.status(404).json({ error: 'Quiz não encontrado ou não publicado' });
       }
+
+      // Verificar se quiz tem proteção cloaker ativa
+      const cloakerConfig = await cloakerStorage.getCloakerConfig(req.params.id);
+
+      if (cloakerConfig.isEnabled) {
+        const detection = cloakerService.analyzeRequest(req, cloakerConfig);
+
+        if (detection.isBlocked) {
+          console.log(`🚫 CLOAKER: Quiz ${req.params.id} blocked - ${detection.reason}`);
+
+          // Retornar página de bloqueio baseada na configuração
+          res.setHeader('Content-Type', 'text/html; charset=utf-8');
+
+          let content = '';
+          switch (cloakerConfig.blockPage) {
+            case 'maintenance':
+              content = getMaintenancePage();
+              break;
+            case 'unavailable':
+              content = getUnavailablePage();
+              break;
+            case 'custom':
+              content = getCustomPage(cloakerConfig.customBlockMessage || 'Acesso não autorizado');
+              break;
+            default:
+              content = getMaintenancePage();
+          }
+
+          return res.status(503).send(content);
+        }
+      }
+
       res.json(quiz);
     } catch (error) {
       console.error("Get public quiz error:", error);
       res.status(500).json({ error: 'Erro ao buscar quiz público' });
     }
   });
+
+  // Funções auxiliares para páginas de bloqueio
+  function getMaintenancePage(): string {
+    return `
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Site em Manutenção</title>
+    <style>
+        body { font-family: Arial, sans-serif; text-align: center; padding: 50px; background: #f5f5f5; }
+        .container { max-width: 500px; margin: 0 auto; background: white; padding: 40px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        h1 { color: #666; margin-bottom: 20px; }
+        p { color: #888; line-height: 1.6; }
+        .icon { font-size: 48px; margin-bottom: 20px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="icon">🔧</div>
+        <h1>Site em Manutenção</h1>
+        <p>Estamos realizando melhorias em nosso sistema.</p>
+        <p>Por favor, tente novamente em alguns minutos.</p>
+        <p><small>Obrigado pela compreensão.</small></p>
+    </div>
+</body>
+</html>`;
+  }
+
+  function getUnavailablePage(): string {
+    return `
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Página Indisponível</title>
+    <style>
+        body { font-family: Arial, sans-serif; text-align: center; padding: 50px; background: #f5f5f5; }
+        .container { max-width: 500px; margin: 0 auto; background: white; padding: 40px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        h1 { color: #666; margin-bottom: 20px; }
+        p { color: #888; line-height: 1.6; }
+        .icon { font-size: 48px; margin-bottom: 20px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="icon">⚠️</div>
+        <h1>Página Indisponível</h1>
+        <p>Esta página está temporariamente indisponível.</p>
+        <p>Tente acessar novamente mais tarde.</p>
+    </div>
+</body>
+</html>`;
+  }
+
+  function getCustomPage(message: string): string {
+    return `
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Acesso Restrito</title>
+    <style>
+        body { font-family: Arial, sans-serif; text-align: center; padding: 50px; background: #f5f5f5; }
+        .container { max-width: 500px; margin: 0 auto; background: white; padding: 40px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        h1 { color: #666; margin-bottom: 20px; }
+        p { color: #888; line-height: 1.6; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Acesso Restrito</h1>
+        <p>${message}</p>
+    </div>
+</body>
+</html>`;
+  }
 
   app.post("/api/analytics/:quizId/view", async (req, res) => {
     try {
@@ -99,7 +322,7 @@ export function registerMockRoutes(app: Express): Server {
     try {
       console.log("📊 MOCK DASHBOARD - No auth required");
       const userId = mockUser.id;
-      
+
       // Check cache first
       const cachedStats = cache.getDashboardStats(userId);
       if (cachedStats) {
@@ -108,7 +331,7 @@ export function registerMockRoutes(app: Express): Server {
 
       const stats = await storage.getDashboardStats(userId);
       const quizzes = await storage.getUserQuizzes(userId);
-      
+
       const dashboardData = {
         totalQuizzes: stats.totalQuizzes,
         totalLeads: stats.totalLeads,
@@ -136,7 +359,7 @@ export function registerMockRoutes(app: Express): Server {
     try {
       console.log("📝 MOCK QUIZZES - No auth required");
       const userId = mockUser.id;
-      
+
       // Check cache first
       const cachedQuizzes = cache.getQuizzes(userId);
       if (cachedQuizzes) {
@@ -144,7 +367,7 @@ export function registerMockRoutes(app: Express): Server {
       }
 
       const quizzes = await storage.getUserQuizzes(userId);
-      
+
       // Save to cache
       cache.setQuizzes(userId, quizzes);
       res.json(quizzes);
@@ -158,7 +381,7 @@ export function registerMockRoutes(app: Express): Server {
   app.get("/api/quizzes/:id", async (req, res) => {
     try {
       const quiz = await storage.getQuiz(req.params.id);
-      
+
       if (!quiz) {
         return res.status(404).json({ message: "Quiz not found" });
       }
@@ -184,10 +407,10 @@ export function registerMockRoutes(app: Express): Server {
       });
 
       const quiz = await storage.createQuiz(quizData);
-      
+
       // Invalidate cache
       cache.invalidateUserCaches(userId);
-      
+
       res.status(201).json(quiz);
     } catch (error) {
       console.error("Create quiz error:", error);
@@ -200,18 +423,18 @@ export function registerMockRoutes(app: Express): Server {
     try {
       const userId = mockUser.id;
       const quiz = await storage.getQuiz(req.params.id);
-      
+
       if (!quiz) {
         return res.status(404).json({ message: "Quiz not found" });
       }
 
       // Allow access with mock user
       const updatedQuiz = await storage.updateQuiz(req.params.id, req.body);
-      
+
       // Invalidate cache
       cache.invalidateUserCaches(userId);
       cache.invalidateQuizCaches(req.params.id, userId);
-      
+
       res.json(updatedQuiz);
     } catch (error) {
       console.error("Update quiz error:", error);
@@ -225,7 +448,7 @@ export function registerMockRoutes(app: Express): Server {
       console.log("🗑️ DELETE QUIZ - Starting deletion for ID:", req.params.id);
       const userId = mockUser.id;
       const quiz = await storage.getQuiz(req.params.id);
-      
+
       if (!quiz) {
         console.log("❌ DELETE QUIZ - Quiz not found:", req.params.id);
         return res.status(404).json({ message: "Quiz not found" });
@@ -234,13 +457,13 @@ export function registerMockRoutes(app: Express): Server {
       // Allow access with mock user
       console.log("🗑️ DELETE QUIZ - Deleting from storage...");
       await storage.deleteQuiz(req.params.id);
-      
+
       // Invalidate cache
       console.log("🔄 CACHE INVALIDATION - Clearing caches for userId:", userId, "quizId:", req.params.id);
       cache.invalidateUserCaches(userId);
       cache.invalidateQuizCaches(req.params.id, userId);
       console.log("✅ CACHE INVALIDATION - Completed");
-      
+
       console.log("✅ DELETE QUIZ - Successfully deleted:", req.params.id);
       res.json({ message: "Quiz deleted successfully" });
     } catch (error) {
@@ -321,7 +544,7 @@ export function registerMockRoutes(app: Express): Server {
   app.get("/api/quiz-templates/:id", async (req, res) => {
     try {
       const template = await storage.getQuizTemplate(parseInt(req.params.id));
-      
+
       if (!template) {
         return res.status(404).json({ message: "Template not found" });
       }
@@ -342,6 +565,165 @@ export function registerMockRoutes(app: Express): Server {
       console.error("Get quiz analytics error:", error);
       res.status(500).json({ message: "Internal server error" });
     }
+  });
+
+  // Cloaker Configuration Routes
+  app.get("/api/cloaker/config/:quizId", verifyMockJWT, async (req: any, res) => {
+    try {
+      const { quizId } = req.params;
+      const userId = req.user.id;
+
+      // Verificar se o quiz pertence ao usuário
+      const quiz = await storage.getQuiz(quizId);
+      if (!quiz || quiz.userId !== userId) {
+        return res.status(404).json({ error: "Quiz não encontrado" });
+      }
+
+      const config = await cloakerStorage.getCloakerConfig(quizId);
+      res.json(config);
+    } catch (error) {
+      console.error("Error fetching cloaker config:", error);
+      res.status(500).json({ error: "Erro interno do servidor" });
+    }
+  });
+
+  app.post("/api/cloaker/config/:quizId", verifyMockJWT, async (req: any, res) => {
+    try {
+      const { quizId } = req.params;
+      const userId = req.user.id;
+
+      // Verificar se o quiz pertence ao usuário
+      const quiz = await storage.getQuiz(quizId);
+      if (!quiz || quiz.userId !== userId) {
+        return res.status(404).json({ error: "Quiz não encontrado" });
+      }
+
+      const config = await cloakerStorage.saveCloakerConfig(quizId, userId, req.body);
+      res.json(config);
+    } catch (error) {
+      console.error("Error saving cloaker config:", error);
+      res.status(500).json({ error: "Erro interno do servidor" });
+    }
+  });
+
+  app.put("/api/cloaker/config/:quizId", verifyMockJWT, async (req: any, res) => {
+    try {
+      const { quizId } = req.params;
+      const userId = req.user.id;
+
+      // Verificar se o quiz pertence ao usuário
+      const quiz = await storage.getQuiz(quizId);
+      if (!quiz || quiz.userId !== userId) {
+        return res.status(404).json({ error: "Quiz não encontrado" });
+      }
+
+      const config = await cloakerStorage.updateCloakerConfig(quizId, userId, req.body);
+      res.json(config);
+    } catch (error) {
+      console.error("Error updating cloaker config:", error);
+      res.status(500).json({ error: "Erro interno do servidor" });
+    }
+  });
+
+  app.delete("/api/cloaker/config/:quizId", verifyMockJWT, async (req: any, res) => {
+    try {
+      const { quizId } = req.params;
+      const userId = req.user.id;
+
+      // Verificar se o quiz pertence ao usuário
+      const quiz = await storage.getQuiz(quizId);
+      if (!quiz || quiz.userId !== userId) {
+        return res.status(404).json({ error: "Quiz não encontrado" });
+      }
+
+      await cloakerStorage.removeCloakerConfig(quizId);
+      res.json({ success: true, message: "Configuração de cloaker removida" });
+    } catch (error) {
+      console.error("Error removing cloaker config:", error);
+      res.status(500).json({ error: "Erro interno do servidor" });
+    }
+  });
+
+  // Cloaker Analytics & Monitoring
+  app.get("/api/cloaker/stats", verifyMockJWT, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const stats = cloakerService.getStats();
+      const usageStats = await cloakerStorage.getCloakerUsageStats(userId);
+
+      res.json({
+        detection: stats,
+        usage: usageStats
+      });
+    } catch (error) {
+      console.error("Error fetching cloaker stats:", error);
+      res.status(500).json({ error: "Erro interno do servidor" });
+    }
+  });
+
+  app.get("/api/cloaker/active", verifyMockJWT, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const activeCloackers = await cloakerStorage.getActiveCloackers(userId);
+      res.json(activeCloackers);
+    } catch (error) {
+      console.error("Error fetching active cloackers:", error);
+      res.status(500).json({ error: "Erro interno do servidor" });
+    }
+  });
+
+  // Test cloaker protection
+  app.post("/api/cloaker/test/:quizId", verifyMockJWT, async (req: any, res) => {
+    try {
+      const { quizId } = req.params;
+      const { testParams } = req.body;
+      const userId = req.user.id;
+
+      // Verificar se o quiz pertence ao usuário
+      const quiz = await storage.getQuiz(quizId);
+      if (!quiz || quiz.userId !== userId) {
+        return res.status(404).json({ error: "Quiz não encontrado" });
+      }
+
+      const config = await cloakerStorage.getCloakerConfig(quizId);
+
+      // Simular requisição com parâmetros de teste
+      const mockRequest = {
+        ip: testParams.ip || '127.0.0.1',
+        query: testParams.utmParams || {},
+        get: (header: string) => {
+          switch (header.toLowerCase()) {
+            case 'referer': return testParams.referrer || '';
+            case 'user-agent': return testParams.userAgent || 'Mozilla/5.0 Test Browser';
+            default: return '';
+          }
+        },
+        connection: { remoteAddress: testParams.ip || '127.0.0.1' }
+      } as any;
+
+      const detection = cloakerService.analyzeRequest(mockRequest, config);
+
+      res.json({
+        config,
+        testParams,
+        detection,
+        wouldBlock: detection.isBlocked
+      });
+    } catch (error) {
+      console.error("Error testing cloaker:", error);
+      res.status(500).json({ error: "Erro interno do servidor" });
+    }
+  });
+
+  // Health check
+  app.get("/api/health", (req, res) => {
+    res.json({ 
+      status: "ok", 
+      timestamp: new Date().toISOString(),
+      database: "mock",
+      cache: cache.getStats(),
+      cloaker: cloakerService.getStats()
+    });
   });
 
   const httpServer = createServer(app);

@@ -145,6 +145,12 @@ function App() {
             <WhatsAppRemarketingPage />
           </Layout>
         </Route>
+        <Route path="/cloaker">
+          <Layout>
+            {/* The CloakerPage component will be loaded here */}
+            <lazy(() => import("./pages/cloaker"))} />
+          </Layout>
+        </Route>
         <Route component={NotFoundPage} />
       </Switch>
       <Toaster />

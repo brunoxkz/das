@@ -129,6 +129,12 @@ export function Sidebar() {
       href: "/whatsapp-remarketing",
       icon: <Zap className="w-4 h-4" />,
       active: location === "/whatsapp-remarketing"
+    },
+    {
+      title: "Cloaker",
+      href: "/cloaker",
+      icon: <Shield className="w-4 h-4" />,
+      active: location === "/cloaker"
     }
   ];
 
