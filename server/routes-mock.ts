@@ -101,8 +101,7 @@ export function registerMockRoutes(app: Express): Server {
       const userId = mockUser.id;
       
       // Check cache first
-      const cacheKey = `dashboard-${userId}`;
-      const cachedStats = cache.getDashboardStats(cacheKey);
+      const cachedStats = cache.getDashboardStats(userId);
       if (cachedStats) {
         return res.json(cachedStats);
       }
@@ -124,7 +123,7 @@ export function registerMockRoutes(app: Express): Server {
       };
 
       // Save to cache
-      cache.setDashboardStats(cacheKey, dashboardData);
+      cache.setDashboardStats(userId, dashboardData);
       res.json(dashboardData);
     } catch (error) {
       console.error("Dashboard stats error:", error);
@@ -139,8 +138,7 @@ export function registerMockRoutes(app: Express): Server {
       const userId = mockUser.id;
       
       // Check cache first
-      const cacheKey = `quizzes-${userId}`;
-      const cachedQuizzes = cache.getQuizzes(cacheKey);
+      const cachedQuizzes = cache.getQuizzes(userId);
       if (cachedQuizzes) {
         return res.json(cachedQuizzes);
       }
@@ -148,7 +146,7 @@ export function registerMockRoutes(app: Express): Server {
       const quizzes = await storage.getUserQuizzes(userId);
       
       // Save to cache
-      cache.setQuizzes(cacheKey, quizzes);
+      cache.setQuizzes(userId, quizzes);
       res.json(quizzes);
     } catch (error) {
       console.error("Get quizzes error:", error);
@@ -224,23 +222,29 @@ export function registerMockRoutes(app: Express): Server {
   // Delete quiz - Always works with mock user
   app.delete("/api/quizzes/:id", async (req, res) => {
     try {
+      console.log("🗑️ DELETE QUIZ - Starting deletion for ID:", req.params.id);
       const userId = mockUser.id;
       const quiz = await storage.getQuiz(req.params.id);
       
       if (!quiz) {
+        console.log("❌ DELETE QUIZ - Quiz not found:", req.params.id);
         return res.status(404).json({ message: "Quiz not found" });
       }
 
       // Allow access with mock user
+      console.log("🗑️ DELETE QUIZ - Deleting from storage...");
       await storage.deleteQuiz(req.params.id);
       
       // Invalidate cache
+      console.log("🔄 CACHE INVALIDATION - Clearing caches for userId:", userId, "quizId:", req.params.id);
       cache.invalidateUserCaches(userId);
       cache.invalidateQuizCaches(req.params.id, userId);
+      console.log("✅ CACHE INVALIDATION - Completed");
       
+      console.log("✅ DELETE QUIZ - Successfully deleted:", req.params.id);
       res.json({ message: "Quiz deleted successfully" });
     } catch (error) {
-      console.error("Delete quiz error:", error);
+      console.error("❌ Delete quiz error:", error);
       res.status(500).json({ message: "Internal server error" });
     }
   });

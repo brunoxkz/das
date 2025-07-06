@@ -104,15 +104,19 @@ export class HighPerformanceCache {
 
   // Invalida caches relacionados
   invalidateUserCaches(userId: string) {
-    this.del(`user:${userId}`);
-    this.del(`quizzes:${userId}`);
-    this.del(`dashboard:${userId}`);
+    console.log("🔄 CACHE INVALIDATION - Invalidating user caches for:", userId);
+    const deletedUser = this.del(`user:${userId}`);
+    const deletedQuizzes = this.del(`quizzes:${userId}`);
+    const deletedDashboard = this.del(`dashboard:${userId}`);
+    console.log("🔄 CACHE INVALIDATION - Deleted:", { user: deletedUser, quizzes: deletedQuizzes, dashboard: deletedDashboard });
   }
 
   invalidateQuizCaches(quizId: string, userId: string) {
-    this.del(`responses:${quizId}`);
-    this.del(`quizzes:${userId}`);
-    this.del(`dashboard:${userId}`);
+    console.log("🔄 CACHE INVALIDATION - Invalidating quiz caches for:", quizId, "user:", userId);
+    const deletedResponses = this.del(`responses:${quizId}`);
+    const deletedQuizzes = this.del(`quizzes:${userId}`);
+    const deletedDashboard = this.del(`dashboard:${userId}`);
+    console.log("🔄 CACHE INVALIDATION - Deleted:", { responses: deletedResponses, quizzes: deletedQuizzes, dashboard: deletedDashboard });
   }
 }
 
