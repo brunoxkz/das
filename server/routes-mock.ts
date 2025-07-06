@@ -571,16 +571,22 @@ export function registerMockRoutes(app: Express): Server {
   app.get("/api/cloaker/config/:quizId", verifyMockJWT, async (req: any, res) => {
     try {
       const { quizId } = req.params;
-      const userId = req.user.id;
+      
+      // Mock config padrão
+      const mockConfig = {
+        isEnabled: false,
+        requiredUTMParams: ['utm_source', 'utm_campaign'],
+        blockAdLibrary: true,
+        blockDirectAccess: false,
+        blockPage: 'maintenance',
+        customBlockMessage: 'Site temporariamente indisponível para manutenção.',
+        whitelistedIPs: ['127.0.0.1', '192.168.1.1'],
+        maxAttemptsPerIP: 3,
+        blockDuration: 60
+      };
 
-      // Verificar se o quiz pertence ao usuário
-      const quiz = await storage.getQuiz(quizId);
-      if (!quiz || quiz.userId !== userId) {
-        return res.status(404).json({ error: "Quiz não encontrado" });
-      }
-
-      const config = await cloakerStorage.getCloakerConfig(quizId);
-      res.json(config);
+      console.log(`🛡️ MOCK CLOAKER CONFIG - Quiz ${quizId}`);
+      res.json(mockConfig);
     } catch (error) {
       console.error("Error fetching cloaker config:", error);
       res.status(500).json({ error: "Erro interno do servidor" });
@@ -590,56 +596,21 @@ export function registerMockRoutes(app: Express): Server {
   app.post("/api/cloaker/config/:quizId", verifyMockJWT, async (req: any, res) => {
     try {
       const { quizId } = req.params;
-      const userId = req.user.id;
+      
+      console.log(`🛡️ MOCK CLOAKER SAVE - Quiz ${quizId}`, req.body);
+      
+      // Retorna a configuração salva
+      const savedConfig = {
+        ...req.body,
+        quizId,
+        userId: req.user.id,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      };
 
-      // Verificar se o quiz pertence ao usuário
-      const quiz = await storage.getQuiz(quizId);
-      if (!quiz || quiz.userId !== userId) {
-        return res.status(404).json({ error: "Quiz não encontrado" });
-      }
-
-      const config = await cloakerStorage.saveCloakerConfig(quizId, userId, req.body);
-      res.json(config);
+      res.json(savedConfig);
     } catch (error) {
       console.error("Error saving cloaker config:", error);
-      res.status(500).json({ error: "Erro interno do servidor" });
-    }
-  });
-
-  app.put("/api/cloaker/config/:quizId", verifyMockJWT, async (req: any, res) => {
-    try {
-      const { quizId } = req.params;
-      const userId = req.user.id;
-
-      // Verificar se o quiz pertence ao usuário
-      const quiz = await storage.getQuiz(quizId);
-      if (!quiz || quiz.userId !== userId) {
-        return res.status(404).json({ error: "Quiz não encontrado" });
-      }
-
-      const config = await cloakerStorage.updateCloakerConfig(quizId, userId, req.body);
-      res.json(config);
-    } catch (error) {
-      console.error("Error updating cloaker config:", error);
-      res.status(500).json({ error: "Erro interno do servidor" });
-    }
-  });
-
-  app.delete("/api/cloaker/config/:quizId", verifyMockJWT, async (req: any, res) => {
-    try {
-      const { quizId } = req.params;
-      const userId = req.user.id;
-
-      // Verificar se o quiz pertence ao usuário
-      const quiz = await storage.getQuiz(quizId);
-      if (!quiz || quiz.userId !== userId) {
-        return res.status(404).json({ error: "Quiz não encontrado" });
-      }
-
-      await cloakerStorage.removeCloakerConfig(quizId);
-      res.json({ success: true, message: "Configuração de cloaker removida" });
-    } catch (error) {
-      console.error("Error removing cloaker config:", error);
       res.status(500).json({ error: "Erro interno do servidor" });
     }
   });
@@ -647,14 +618,53 @@ export function registerMockRoutes(app: Express): Server {
   // Cloaker Analytics & Monitoring
   app.get("/api/cloaker/stats", verifyMockJWT, async (req: any, res) => {
     try {
-      const userId = req.user.id;
-      const stats = cloakerService.getStats();
-      const usageStats = await cloakerStorage.getCloakerUsageStats(userId);
+      console.log("🛡️ MOCK CLOAKER STATS");
+      
+      const mockStats = {
+        detection: {
+          totalRequests: 1247,
+          blockedRequests: 89,
+          blockRate: 7.14,
+          topReasons: [
+            { reason: "Biblioteca de anúncios detectada", count: 34 },
+            { reason: "Acesso direto bloqueado", count: 28 },
+            { reason: "Parâmetros UTM ausentes", count: 27 }
+          ],
+          topUserAgents: [
+            { userAgent: "Facebook Ad Library", count: 18 },
+            { userAgent: "Google Ads Bot", count: 16 },
+            { userAgent: "Direct Access", count: 12 }
+          ],
+          recentDetections: [
+            {
+              isBlocked: true,
+              reason: "Biblioteca de anúncios detectada",
+              clientIP: "203.0.113.45",
+              userAgent: "Facebook Ad Library",
+              referrer: "https://facebook.com/ads",
+              utmParams: {},
+              timestamp: new Date(Date.now() - 300000)
+            },
+            {
+              isBlocked: true,
+              reason: "Acesso direto bloqueado",
+              clientIP: "198.51.100.22",
+              userAgent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64)",
+              referrer: "",
+              utmParams: {},
+              timestamp: new Date(Date.now() - 600000)
+            }
+          ]
+        },
+        usage: {
+          totalLinksProtected: 5,
+          totalDetections: 89,
+          successfulBlocks: 89,
+          averageBlockRate: 7.14
+        }
+      };
 
-      res.json({
-        detection: stats,
-        usage: usageStats
-      });
+      res.json(mockStats);
     } catch (error) {
       console.error("Error fetching cloaker stats:", error);
       res.status(500).json({ error: "Erro interno do servidor" });
@@ -663,54 +673,36 @@ export function registerMockRoutes(app: Express): Server {
 
   app.get("/api/cloaker/active", verifyMockJWT, async (req: any, res) => {
     try {
-      const userId = req.user.id;
-      const activeCloackers = await cloakerStorage.getActiveCloackers(userId);
-      res.json(activeCloackers);
+      console.log("🛡️ MOCK ACTIVE CLOACKERS");
+      
+      const mockActiveCloackers = [
+        {
+          quizId: "quiz_1",
+          userId: "7fK49CWfbjBvVpgH59vm2",
+          isEnabled: true,
+          requiredUTMParams: ['utm_source', 'utm_campaign'],
+          blockAdLibrary: true,
+          blockDirectAccess: false,
+          blockPage: 'maintenance',
+          createdAt: new Date('2024-01-15'),
+          updatedAt: new Date('2024-01-20')
+        },
+        {
+          quizId: "quiz_2",
+          userId: "7fK49CWfbjBvVpgH59vm2",
+          isEnabled: true,
+          requiredUTMParams: ['utm_source'],
+          blockAdLibrary: true,
+          blockDirectAccess: true,
+          blockPage: 'unavailable',
+          createdAt: new Date('2024-01-10'),
+          updatedAt: new Date('2024-01-18')
+        }
+      ];
+
+      res.json(mockActiveCloackers);
     } catch (error) {
       console.error("Error fetching active cloackers:", error);
-      res.status(500).json({ error: "Erro interno do servidor" });
-    }
-  });
-
-  // Test cloaker protection
-  app.post("/api/cloaker/test/:quizId", verifyMockJWT, async (req: any, res) => {
-    try {
-      const { quizId } = req.params;
-      const { testParams } = req.body;
-      const userId = req.user.id;
-
-      // Verificar se o quiz pertence ao usuário
-      const quiz = await storage.getQuiz(quizId);
-      if (!quiz || quiz.userId !== userId) {
-        return res.status(404).json({ error: "Quiz não encontrado" });
-      }
-
-      const config = await cloakerStorage.getCloakerConfig(quizId);
-
-      // Simular requisição com parâmetros de teste
-      const mockRequest = {
-        ip: testParams.ip || '127.0.0.1',
-        query: testParams.utmParams || {},
-        get: (header: string) => {
-          switch (header.toLowerCase()) {
-            case 'referer': return testParams.referrer || '';
-            case 'user-agent': return testParams.userAgent || 'Mozilla/5.0 Test Browser';
-            default: return '';
-          }
-        },
-        connection: { remoteAddress: testParams.ip || '127.0.0.1' }
-      } as any;
-
-      const detection = cloakerService.analyzeRequest(mockRequest, config);
-
-      res.json({
-        config,
-        testParams,
-        detection,
-        wouldBlock: detection.isBlocked
-      });
-    } catch (error) {
-      console.error("Error testing cloaker:", error);
       res.status(500).json({ error: "Erro interno do servidor" });
     }
   });

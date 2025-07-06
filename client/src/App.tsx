@@ -22,6 +22,7 @@ import QuizPublicPage from "@/pages/quiz-public";
 import SMSCreditsPage from "@/pages/sms-credits";
 import EmailMarketingPage from "@/pages/email-marketing";
 import WhatsAppRemarketingPage from "@/pages/whatsapp-remarketing";
+import CloakerPage from "@/pages/cloaker";
 import { useAuth } from "@/hooks/use-auth-hybrid";
 import { isUnauthorizedError } from "@/lib/authUtils";
 import { lazy } from "react";
@@ -147,10 +148,7 @@ function App() {
         </Route>
         <Route path="/cloaker">
           <Layout>
-            <div className="p-6">
-              <h1 className="text-2xl font-bold mb-4">Cloaker</h1>
-              <p className="text-gray-600">Esta funcionalidade está em desenvolvimento.</p>
-            </div>
+            <CloakerPage />
           </Layout>
         </Route>
         <Route component={NotFoundPage} />
