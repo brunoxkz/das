@@ -27,7 +27,7 @@ export default function Quizzes() {
   const [searchTerm, setSearchTerm] = useState("");
   const { toast } = useToast();
   
-  const { data: quizzes, isLoading, error } = useQuery({
+  const { data: quizzes, isLoading, error, refetch } = useQuery({
     queryKey: ["/api/quizzes"],
     queryFn: async () => {
       const token = localStorage.getItem("accessToken");
@@ -55,11 +55,10 @@ export default function Quizzes() {
         title: "Quiz excluído",
         description: "O quiz foi excluído com sucesso.",
       });
-      // Limpar cache completamente e forçar nova busca
-      queryClient.removeQueries({ queryKey: ["/api/quizzes"] });
-      queryClient.removeQueries({ queryKey: ["/api/dashboard/stats"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/quizzes"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/dashboard/stats"] });
+      // Simples refresh da lista sem sobrecarregar o servidor
+      setTimeout(() => {
+        refetch();
+      }, 500);
     },
     onError: (error: any) => {
       toast({
