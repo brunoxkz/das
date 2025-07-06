@@ -112,7 +112,7 @@ export function Sidebar() {
       active: location === "/tutoriais"
     },
     {
-      title: "Créditos SMS",
+      title: "Remarketing SMS",
       href: "/sms-credits",
       icon: <MessageSquare className="w-4 h-4" />,
       active: location === "/sms-credits"
