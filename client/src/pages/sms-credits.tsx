@@ -72,12 +72,24 @@ export default function SMSCreditsPage() {
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState("overview");
   const [selectedQuiz, setSelectedQuiz] = useState<string>("");
-  const [campaignForm, setCampaignForm] = useState({
+  const [campaignForm, setCampaignForm] = useState<{
+    name: string;
+    message: string;
+    scheduledDate: string;
+    targetAudience: "completed" | "abandoned" | "all";
+    quizId: string;
+    triggerType: "immediate" | "delayed";
+    triggerDelay: number;
+    triggerUnit: "hours" | "minutes";
+  }>({
     name: "",
     message: "",
     scheduledDate: "",
-    targetAudience: "completed" as const,
-    quizId: ""
+    targetAudience: "completed",
+    quizId: "",
+    triggerType: "immediate",
+    triggerDelay: 1,
+    triggerUnit: "hours"
   });
 
   // Fetch user's SMS credits
@@ -162,7 +174,10 @@ export default function SMSCreditsPage() {
         message: "",
         scheduledDate: "",
         targetAudience: "completed",
-        quizId: ""
+        quizId: "",
+        triggerType: "immediate",
+        triggerDelay: 1,
+        triggerUnit: "hours"
       });
     }
   });
@@ -247,8 +262,8 @@ export default function SMSCreditsPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">SMS Credits</h1>
-          <p className="text-gray-600">Gerencie seus créditos SMS e campanhas de follow-up</p>
+          <h1 className="text-3xl font-bold text-gray-900">Remarketing SMS</h1>
+          <p className="text-gray-600">Gerencie seus créditos SMS e campanhas de remarketing</p>
         </div>
         <div className="flex items-center space-x-4">
           <Card className="bg-green-50 border-green-200">
@@ -266,6 +281,53 @@ export default function SMSCreditsPage() {
           </Card>
         </div>
       </div>
+
+      {/* Info Section */}
+      <Card className="bg-gradient-to-r from-green-50 to-blue-50 border-green-200">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-green-800">
+            <MessageSquare className="w-5 h-5" />
+            Como funciona o Remarketing SMS
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid md:grid-cols-3 gap-6">
+            <div className="space-y-3">
+              <h4 className="font-semibold text-gray-900">📱 Como Funciona</h4>
+              <ul className="space-y-2 text-sm text-gray-700">
+                <li>• Selecione um quiz onde o lead tenha preenchido o campo <strong>Telefone</strong></li>
+                <li>• Escolha enviar para pessoas que <strong>abandonaram</strong> ou <strong>completaram</strong> o quiz</li>
+                <li>• Defina mensagens personalizadas para cada situação</li>
+                <li>• Configure timing automático: envio imediato ou após X horas/minutos</li>
+              </ul>
+            </div>
+            <div className="space-y-3">
+              <h4 className="font-semibold text-gray-900">🎯 Direcionamento</h4>
+              <ul className="space-y-2 text-sm text-gray-700">
+                <li>• <strong>Leads Abandonados:</strong> Pessoas que começaram mas não terminaram</li>
+                <li>• <strong>Leads Completos:</strong> Pessoas que terminaram o quiz</li>
+                <li>• <strong>Filtro Automático:</strong> Apenas leads com telefone válido</li>
+                <li>• <strong>Timing Flexível:</strong> 1-72 horas após o evento</li>
+              </ul>
+            </div>
+            <div className="space-y-3">
+              <h4 className="font-semibold text-gray-900">📈 Resultados</h4>
+              <ul className="space-y-2 text-sm text-gray-700">
+                <li>• <strong>Previsão de aumento de ROI: +28%</strong></li>
+                <li>• Recupere leads abandonados automaticamente</li>
+                <li>• Mantenha engajamento com quem completou</li>
+                <li>• Mensagens no momento certo aumentam conversão</li>
+              </ul>
+            </div>
+          </div>
+          <Alert className="bg-yellow-50 border-yellow-200">
+            <AlertCircle className="w-4 h-4 text-yellow-600" />
+            <AlertDescription className="text-yellow-800">
+              <strong>Importante:</strong> É necessário comprar créditos SMS para usar esta funcionalidade. Cada SMS enviado consome 1 crédito.
+            </AlertDescription>
+          </Alert>
+        </CardContent>
+      </Card>
 
       {/* Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab}>
@@ -418,14 +480,50 @@ export default function SMSCreditsPage() {
                   </p>
                 </div>
 
-                <div>
-                  <Label htmlFor="scheduled-date">Agendar Envio (Opcional)</Label>
-                  <Input
-                    id="scheduled-date"
-                    type="datetime-local"
-                    value={campaignForm.scheduledDate}
-                    onChange={(e) => setCampaignForm({...campaignForm, scheduledDate: e.target.value})}
-                  />
+                <div className="space-y-3">
+                  <Label>Momento do Envio</Label>
+                  <Select 
+                    value={campaignForm.triggerType} 
+                    onValueChange={(value) => setCampaignForm({...campaignForm, triggerType: value as "immediate" | "delayed"})}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione quando enviar" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="immediate">Enviar imediatamente</SelectItem>
+                      <SelectItem value="delayed">Enviar depois de X tempo</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  
+                  {campaignForm.triggerType === "delayed" && (
+                    <div className="flex gap-2 items-center bg-blue-50 p-3 rounded-lg">
+                      <Clock className="w-4 h-4 text-blue-600" />
+                      <span className="text-sm font-medium text-blue-900">Enviar após</span>
+                      <Input
+                        type="number"
+                        min="1"
+                        max="72"
+                        value={campaignForm.triggerDelay}
+                        onChange={(e) => setCampaignForm({...campaignForm, triggerDelay: parseInt(e.target.value) || 1})}
+                        className="w-20"
+                      />
+                      <Select 
+                        value={campaignForm.triggerUnit} 
+                        onValueChange={(value) => setCampaignForm({...campaignForm, triggerUnit: value as "minutes" | "hours"})}
+                      >
+                        <SelectTrigger className="w-24">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="minutes">min</SelectItem>
+                          <SelectItem value="hours">horas</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <span className="text-sm text-blue-700">
+                        {campaignForm.targetAudience === "completed" ? "após completar" : "após abandonar"} o quiz
+                      </span>
+                    </div>
+                  )}
                 </div>
 
                 <Button 
