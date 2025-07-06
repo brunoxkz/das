@@ -75,10 +75,25 @@ export default function CloakerPage() {
     blockDuration: 60
   });
 
-  // Fetch user's quizzes with proper error handling
+  // Fetch user's quizzes 
   const { data: quizzes, isLoading: quizzesLoading, error: quizzesError } = useQuery({
     queryKey: ["/api/quizzes"],
-    retry: 1,
+    queryFn: async () => {
+      const token = localStorage.getItem('access_token');
+      const response = await fetch('/api/quizzes', {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to fetch quizzes');
+      }
+      
+      return response.json();
+    },
+    retry: 2,
     staleTime: 30000,
   });
 
@@ -95,17 +110,8 @@ export default function CloakerPage() {
     retry: false,
   });
 
-  // Fallback mock quizzes if API fails
-  const mockQuizzes = [
-    { id: "quiz-1", title: "Quiz de Leads - Emagrecimento", description: "Captura leads para produtos de emagrecimento" },
-    { id: "quiz-2", title: "Quiz Educacional - Vendas", description: "Quiz para curso de vendas online" },
-    { id: "quiz-3", title: "Quiz de Segmentação - E-commerce", description: "Segmentação de público para loja virtual" },
-    { id: "quiz-4", title: "Quiz de Qualificação - Consultoria", description: "Qualifica leads para serviços de consultoria" },
-    { id: "quiz-5", title: "Quiz Interativo - Marketing Digital", description: "Captura leads interessados em marketing" }
-  ];
-
-  // Use real data if available, otherwise use mock data
-  const displayQuizzes = Array.isArray(quizzes) && quizzes.length > 0 ? quizzes : mockQuizzes;
+  // Use real quiz data from API
+  const displayQuizzes = Array.isArray(quizzes) ? quizzes : [];
 
   // Update config when data is loaded
   if (cloakerConfig && JSON.stringify(config) !== JSON.stringify(cloakerConfig)) {
@@ -207,61 +213,52 @@ export default function CloakerPage() {
             </div>
           ) : (
             <div className="space-y-4">
-              {quizzesError && (
-                <Alert>
-                  <AlertTriangle className="h-4 w-4" />
-                  <AlertDescription>
-                    Erro ao carregar quizzes. Usando dados de exemplo.
-                  </AlertDescription>
-                </Alert>
-              )}
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {displayQuizzes.map((quiz: Quiz) => (
-                  <Card
-                    key={quiz.id}
-                    className={`cursor-pointer transition-all duration-200 hover:shadow-md border-2 ${
-                      selectedQuiz === quiz.id
-                        ? "border-green-500 bg-green-50 shadow-md"
-                        : "border-gray-200 hover:border-green-300"
-                    }`}
-                    onClick={() => setSelectedQuiz(quiz.id)}
-                  >
-                    <CardContent className="p-4">
-                      <div className="flex items-start space-x-3">
-                        <div className={`p-2 rounded-lg ${
-                          selectedQuiz === quiz.id ? "bg-green-100" : "bg-gray-100"
-                        }`}>
-                          <Shield className={`h-5 w-5 ${
-                            selectedQuiz === quiz.id ? "text-green-600" : "text-gray-600"
-                          }`} />
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <h3 className="font-medium text-sm leading-5 truncate">
-                            {quiz.title}
-                          </h3>
-                          <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
-                            {quiz.description || "Configure proteções avançadas para este quiz"}
-                          </p>
-                          <div className="flex items-center mt-2">
-                            {selectedQuiz === quiz.id ? (
-                              <Badge variant="default" className="text-xs bg-green-600">
-                                ✓ Selecionado
-                              </Badge>
-                            ) : (
-                              <Badge variant="outline" className="text-xs">
-                                Clique para selecionar
-                              </Badge>
-                            )}
+              {displayQuizzes.length > 0 ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {displayQuizzes.map((quiz: Quiz) => (
+                    <Card
+                      key={quiz.id}
+                      className={`cursor-pointer transition-all duration-200 hover:shadow-md border-2 ${
+                        selectedQuiz === quiz.id
+                          ? "border-green-500 bg-green-50 shadow-md"
+                          : "border-gray-200 hover:border-green-300"
+                      }`}
+                      onClick={() => setSelectedQuiz(quiz.id)}
+                    >
+                      <CardContent className="p-4">
+                        <div className="flex items-start space-x-3">
+                          <div className={`p-2 rounded-lg ${
+                            selectedQuiz === quiz.id ? "bg-green-100" : "bg-gray-100"
+                          }`}>
+                            <Shield className={`h-5 w-5 ${
+                              selectedQuiz === quiz.id ? "text-green-600" : "text-gray-600"
+                            }`} />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <h3 className="font-medium text-sm leading-5 truncate">
+                              {quiz.title}
+                            </h3>
+                            <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
+                              {quiz.description || "Configure proteções avançadas para este quiz"}
+                            </p>
+                            <div className="flex items-center mt-2">
+                              {selectedQuiz === quiz.id ? (
+                                <Badge variant="default" className="text-xs bg-green-600">
+                                  ✓ Selecionado
+                                </Badge>
+                              ) : (
+                                <Badge variant="outline" className="text-xs">
+                                  Clique para selecionar
+                                </Badge>
+                              )}
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-
-              {displayQuizzes.length === 0 && (
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              ) : (
                 <div className="text-center py-8">
                   <Globe className="h-12 w-12 text-gray-400 mx-auto mb-3" />
                   <p className="text-muted-foreground">Nenhum quiz encontrado</p>
