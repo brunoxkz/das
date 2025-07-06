@@ -228,9 +228,11 @@ export default function Dashboard() {
               
               {quizzesList.length > 5 && (
                 <div className="text-center pt-4">
-                  <Button variant="outline">
-                    Ver Todos os Quizzes
-                  </Button>
+                  <Link href="/quizzes">
+                    <Button variant="outline">
+                      Ver Todos os Quizzes
+                    </Button>
+                  </Link>
                 </div>
               )}
             </div>
