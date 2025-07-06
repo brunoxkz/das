@@ -129,7 +129,7 @@ function App() {
         </Route>
         <Route path="/sms-credits">
           <Layout>
-            <lazy(() => import("./pages/sms-credits"))}
+            <div>SMS Credits page coming soon...</div>
           </Layout>
         </Route>
         <Route component={NotFoundPage} />
