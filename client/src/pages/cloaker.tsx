@@ -82,20 +82,20 @@ export default function CloakerPage() {
   const [newWhitelistedIP, setNewWhitelistedIP] = useState("");
 
   // Fetch user's quizzes
-  const { data: quizzes, isLoading: quizzesLoading } = useQuery({
+  const { data: quizzes = [], isLoading: quizzesLoading } = useQuery({
     queryKey: ["/api/quizzes"],
     retry: false,
   });
 
   // Fetch cloaker config for selected quiz
-  const { data: cloakerConfig, isLoading: configLoading } = useQuery({
+  const { data: cloakerConfig = null, isLoading: configLoading } = useQuery({
     queryKey: ["/api/cloaker/config", selectedQuiz],
     enabled: !!selectedQuiz,
     retry: false,
   });
 
   // Fetch cloaker statistics
-  const { data: stats, isLoading: statsLoading } = useQuery({
+  const { data: stats = { totalRequests: 0, blockedRequests: 0, blockRate: 0, topReasons: [], topUserAgents: [], recentDetections: [] }, isLoading: statsLoading } = useQuery({
     queryKey: ["/api/cloaker/stats", selectedQuiz],
     enabled: !!selectedQuiz,
     retry: false,
