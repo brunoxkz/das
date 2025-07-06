@@ -21,6 +21,7 @@ import EncapsuladosPage from "@/pages/encapsulados";
 import QuizPublicPage from "@/pages/quiz-public";
 import SMSCreditsPage from "@/pages/sms-credits";
 import EmailMarketingPage from "@/pages/email-marketing";
+import WhatsAppRemarketingPage from "@/pages/whatsapp-remarketing";
 import { useAuth } from "@/hooks/use-auth-hybrid";
 import { isUnauthorizedError } from "@/lib/authUtils";
 import { lazy } from "react";
@@ -137,6 +138,11 @@ function App() {
         <Route path="/email-marketing">
           <Layout>
             <EmailMarketingPage />
+          </Layout>
+        </Route>
+        <Route path="/whatsapp-remarketing">
+          <Layout>
+            <WhatsAppRemarketingPage />
           </Layout>
         </Route>
         <Route component={NotFoundPage} />

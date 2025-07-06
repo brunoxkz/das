@@ -123,6 +123,12 @@ export function Sidebar() {
       href: "/email-marketing",
       icon: <Mail className="w-4 h-4" />,
       active: location === "/email-marketing"
+    },
+    {
+      title: "WhatsApp Remarketing",
+      href: "/whatsapp-remarketing",
+      icon: <Zap className="w-4 h-4" />,
+      active: location === "/whatsapp-remarketing"
     }
   ];
 

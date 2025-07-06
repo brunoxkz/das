@@ -891,6 +891,130 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
+  // WhatsApp Campaigns endpoints
+  app.get("/api/whatsapp-campaigns", verifyJWT, async (req: any, res: Response) => {
+    try {
+      const userId = req.user.id;
+      
+      // Mock data - campanhas WhatsApp simuladas
+      const mockCampaigns = [
+        {
+          id: "whatsapp_camp1",
+          name: "Follow-up Quiz Nutrição",
+          quizId: "quiz1",
+          quizTitle: "Quiz de Avaliação Nutricional",
+          status: "active",
+          message: "Oi {{nome}}! Vi que você completou nosso quiz. Baseado no seu perfil {{resultado}}, tenho uma dica especial! 🌟",
+          variables: ["nome", "resultado", "pontuacao"],
+          targetAudience: "completed",
+          triggerType: "delayed",
+          triggerDelay: 2,
+          triggerUnit: "hours",
+          scheduleType: "business_hours",
+          businessHours: { start: "09:00", end: "18:00", days: ["monday", "tuesday", "wednesday", "thursday", "friday"] },
+          customSchedule: [],
+          personalizedMessage: true,
+          messageVariations: [],
+          sent: 87,
+          delivered: 84,
+          viewed: 72,
+          replied: 23,
+          clicks: 15,
+          createdAt: "2025-01-05T10:00:00Z",
+          isExtensionConnected: true
+        }
+      ];
+
+      res.json(mockCampaigns);
+    } catch (error) {
+      console.error("Error fetching WhatsApp campaigns:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
+  app.post("/api/whatsapp-campaigns", verifyJWT, async (req: any, res: Response) => {
+    try {
+      const { name, message, quizId, targetAudience, triggerType, triggerDelay, triggerUnit, scheduleType, businessHours, personalizedMessage } = req.body;
+      const userId = req.user.id;
+      
+      if (!name || !message || !quizId) {
+        return res.status(400).json({ error: "Missing required fields" });
+      }
+
+      // Mock data - sempre retorna sucesso
+      const newCampaign = {
+        id: `whatsapp_camp_${Date.now()}`,
+        name,
+        quizId,
+        quizTitle: "Quiz Selecionado",
+        status: "active",
+        message,
+        targetAudience,
+        triggerType,
+        triggerDelay,
+        triggerUnit,
+        scheduleType,
+        businessHours,
+        personalizedMessage,
+        sent: 0,
+        delivered: 0,
+        viewed: 0,
+        replied: 0,
+        clicks: 0,
+        createdAt: new Date().toISOString(),
+        isExtensionConnected: true
+      };
+
+      res.json(newCampaign);
+    } catch (error) {
+      console.error("Error creating WhatsApp campaign:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
+  app.post("/api/whatsapp-campaigns/:id/send", verifyJWT, async (req: any, res: Response) => {
+    try {
+      const { id } = req.params;
+      const userId = req.user.id;
+      
+      // Mock data - sempre retorna sucesso
+      res.json({ 
+        success: true, 
+        message: "Campanha WhatsApp enviada com sucesso via extensão",
+        campaignId: id,
+        sent: 25,
+        estimated: "Envio em tempo real via extensão"
+      });
+    } catch (error) {
+      console.error("Error sending WhatsApp campaign:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
+  // WhatsApp Extension endpoints
+  app.get("/api/whatsapp-extension/status", verifyJWT, async (req: any, res: Response) => {
+    try {
+      const userId = req.user.id;
+      
+      // Mock data - status da extensão
+      const mockStatus = {
+        isInstalled: Math.random() > 0.3, // 70% chance
+        isConnected: Math.random() > 0.2, // 80% chance
+        isOnline: Math.random() > 0.1, // 90% chance
+        phoneNumber: "+55 11 99999-9999",
+        whatsappVersion: "2.2.24.18",
+        lastActivity: "Agora mesmo",
+        messagesSent: 127,
+        messagesQueue: Math.floor(Math.random() * 10)
+      };
+
+      res.json(mockStatus);
+    } catch (error) {
+      console.error("Error fetching WhatsApp extension status:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
   // SMS Campaigns endpoints
   app.get("/api/sms-campaigns", verifyJWT, async (req: any, res: Response) => {
     try {
