@@ -147,8 +147,10 @@ function App() {
         </Route>
         <Route path="/cloaker">
           <Layout>
-            {/* The CloakerPage component will be loaded here */}
-            <lazy(() => import("./pages/cloaker"))} />
+            <div className="p-6">
+              <h1 className="text-2xl font-bold mb-4">Cloaker</h1>
+              <p className="text-gray-600">Esta funcionalidade está em desenvolvimento.</p>
+            </div>
           </Layout>
         </Route>
         <Route component={NotFoundPage} />
