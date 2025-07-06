@@ -122,12 +122,9 @@ export default function CloakerPage() {
   const saveConfigMutation = useMutation({
     mutationFn: async (newConfig: CloakerConfig) => {
       if (!selectedQuiz) throw new Error("Nenhum quiz selecionado");
-      return apiRequest(`/api/cloaker/config`, {
+      return apiRequest(`/api/cloaker/config/${selectedQuiz}`, {
         method: "POST",
-        body: JSON.stringify({
-          quizId: selectedQuiz,
-          config: newConfig
-        })
+        body: JSON.stringify(newConfig)
       });
     },
     onSuccess: () => {
