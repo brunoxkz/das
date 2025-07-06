@@ -848,5 +848,181 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
+  // SMS Credits endpoints
+  app.get("/api/sms-credits", verifyJWT, async (req: any, res: Response) => {
+    try {
+      const userId = req.user.id;
+      
+      // Mock data - dados simulados de créditos SMS
+      const mockCredits = {
+        total: 1500,
+        used: 350,
+        remaining: 1150
+      };
+
+      res.json(mockCredits);
+    } catch (error) {
+      console.error("Error fetching SMS credits:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
+  app.post("/api/sms-credits/purchase", verifyJWT, async (req: any, res: Response) => {
+    try {
+      const { amount } = req.body;
+      const userId = req.user.id;
+      
+      if (!amount || amount <= 0) {
+        return res.status(400).json({ error: "Invalid amount" });
+      }
+
+      // Mock data - sempre retorna sucesso
+      res.json({ 
+        success: true, 
+        message: "Créditos SMS adicionados com sucesso",
+        newBalance: 1150 + amount 
+      });
+    } catch (error) {
+      console.error("Error purchasing SMS credits:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
+  // SMS Campaigns endpoints
+  app.get("/api/sms-campaigns", verifyJWT, async (req: any, res: Response) => {
+    try {
+      const userId = req.user.id;
+      
+      // Mock data - campanhas SMS simuladas
+      const mockCampaigns = [
+        {
+          id: "camp1",
+          name: "Follow-up Quiz Saúde",
+          quizId: "quiz1",
+          quizTitle: "Quiz de Saúde e Bem-estar",
+          status: "active",
+          message: "Obrigado por completar nosso quiz! Aqui está sua recomendação personalizada...",
+          targetAudience: "completed",
+          sent: 127,
+          delivered: 124,
+          opened: 98,
+          clicked: 23,
+          replies: 5,
+          createdAt: "2025-01-05T10:00:00Z"
+        },
+        {
+          id: "camp2",
+          name: "Promoção Black Friday",
+          quizId: "quiz2",
+          quizTitle: "Quiz de Estilo",
+          status: "completed",
+          message: "🎁 Oferta especial! 50% OFF em todos os produtos até domingo!",
+          targetAudience: "all",
+          sent: 89,
+          delivered: 87,
+          opened: 72,
+          clicked: 18,
+          replies: 3,
+          createdAt: "2025-01-03T14:00:00Z"
+        }
+      ];
+
+      res.json(mockCampaigns);
+    } catch (error) {
+      console.error("Error fetching SMS campaigns:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
+  app.post("/api/sms-campaigns", verifyJWT, async (req: any, res: Response) => {
+    try {
+      const { name, message, quizId, targetAudience, scheduledDate } = req.body;
+      const userId = req.user.id;
+      
+      if (!name || !message || !quizId) {
+        return res.status(400).json({ error: "Missing required fields" });
+      }
+
+      // Mock data - sempre retorna sucesso
+      const newCampaign = {
+        id: `camp_${Date.now()}`,
+        name,
+        quizId,
+        quizTitle: "Quiz Selecionado",
+        status: "active",
+        message,
+        targetAudience,
+        scheduledDate,
+        sent: 0,
+        delivered: 0,
+        opened: 0,
+        clicked: 0,
+        replies: 0,
+        createdAt: new Date().toISOString()
+      };
+
+      res.json(newCampaign);
+    } catch (error) {
+      console.error("Error creating SMS campaign:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
+  app.post("/api/sms-campaigns/:id/send", verifyJWT, async (req: any, res: Response) => {
+    try {
+      const { id } = req.params;
+      const userId = req.user.id;
+      
+      // Mock data - sempre retorna sucesso
+      res.json({ 
+        success: true, 
+        message: "Campanha SMS enviada com sucesso",
+        campaignId: id,
+        sent: 45,
+        estimated: "2-5 minutos para conclusão"
+      });
+    } catch (error) {
+      console.error("Error sending SMS campaign:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
+  // SMS Templates endpoints
+  app.get("/api/sms-templates", verifyJWT, async (req: any, res: Response) => {
+    try {
+      const userId = req.user.id;
+      
+      // Mock data - templates SMS simulados
+      const mockTemplates = [
+        {
+          id: "tmpl1",
+          name: "Agradecimento",
+          message: "Obrigado por completar nosso quiz! Seus resultados: {resultado}",
+          category: "thank_you",
+          variables: ["resultado", "nome"]
+        },
+        {
+          id: "tmpl2",
+          name: "Promoção",
+          message: "🎁 Oferta especial para você! {desconto}% OFF válido até amanhã. Use: {codigo}",
+          category: "promotion",
+          variables: ["desconto", "codigo"]
+        },
+        {
+          id: "tmpl3",
+          name: "Lembrete",
+          message: "Oi {nome}! Você não terminou nosso quiz. Complete agora: {link}",
+          category: "reminder",
+          variables: ["link", "nome"]
+        }
+      ];
+
+      res.json(mockTemplates);
+    } catch (error) {
+      console.error("Error fetching SMS templates:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
   return httpServer;
 }

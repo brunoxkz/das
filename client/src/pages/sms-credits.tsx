@@ -1,310 +1,652 @@
-
 import { useState } from "react";
-import { useAuth } from "@/hooks/useAuth";
-import { Button } from "@/components/ui/button";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Progress } from "@/components/ui/progress";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
+import { Switch } from "@/components/ui/switch";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Separator } from "@/components/ui/separator";
-import { useToast } from "@/hooks/use-toast";
 import { 
   MessageSquare, 
+  Send, 
   CreditCard, 
   Zap, 
-  Crown, 
-  Star,
+  Target, 
+  Users, 
+  TrendingUp, 
+  Clock, 
+  Filter,
+  Play,
+  Pause,
+  Settings,
+  BarChart3,
+  Phone,
+  CheckCircle,
+  XCircle,
+  AlertCircle,
   Plus,
-  History,
-  Smartphone
+  Trash2,
+  Edit
 } from "lucide-react";
+import { queryClient } from "@/lib/queryClient";
+import { useToast } from "@/hooks/use-toast";
 
-const creditPackages = [
-  {
-    id: 1,
-    name: "Iniciante",
-    description: "Ideal para testar o sistema",
-    credits: 100,
-    price: 29.90,
-    bonusCredits: 0,
-    badge: null,
-    icon: <MessageSquare className="w-6 h-6" />,
-    color: "from-blue-500 to-blue-600"
-  },
-  {
-    id: 2,
-    name: "Profissional",
-    description: "Para empresas em crescimento",
-    credits: 500,
-    price: 129.90,
-    bonusCredits: 50,
-    badge: "Popular",
-    icon: <Zap className="w-6 h-6" />,
-    color: "from-green-500 to-green-600"
-  },
-  {
-    id: 3,
-    name: "Empresarial",
-    description: "Para grandes volumes",
-    credits: 1500,
-    price: 349.90,
-    bonusCredits: 200,
-    badge: "Melhor Valor",
-    icon: <Crown className="w-6 h-6" />,
-    color: "from-purple-500 to-purple-600"
-  },
-  {
-    id: 4,
-    name: "Enterprise",
-    description: "Volumes ilimitados",
-    credits: 5000,
-    price: 999.90,
-    bonusCredits: 1000,
-    badge: "Premium",
-    icon: <Star className="w-6 h-6" />,
-    color: "from-yellow-500 to-yellow-600"
-  }
-];
+interface SMSCredits {
+  total: number;
+  used: number;
+  remaining: number;
+}
 
-export default function SmsCredits() {
-  const { user } = useAuth();
+interface SMSCampaign {
+  id: string;
+  name: string;
+  quizId: string;
+  quizTitle: string;
+  status: 'active' | 'paused' | 'completed';
+  message: string;
+  scheduledDate?: string;
+  targetAudience: 'all' | 'completed' | 'abandoned';
+  sent: number;
+  delivered: number;
+  opened: number;
+  clicked: number;
+  replies: number;
+  createdAt: string;
+}
+
+interface SMSTemplate {
+  id: string;
+  name: string;
+  message: string;
+  category: 'promotion' | 'follow_up' | 'reminder' | 'thank_you';
+  variables: string[];
+}
+
+export default function SMSCreditsPage() {
   const { toast } = useToast();
-  const [selectedPackage, setSelectedPackage] = useState<number | null>(null);
-  const [loading, setLoading] = useState(false);
+  const [activeTab, setActiveTab] = useState("overview");
+  const [selectedQuiz, setSelectedQuiz] = useState<string>("");
+  const [campaignForm, setCampaignForm] = useState({
+    name: "",
+    message: "",
+    scheduledDate: "",
+    targetAudience: "completed" as const,
+    quizId: ""
+  });
 
-  const handlePurchase = async (packageId: number) => {
-    setLoading(true);
-    setSelectedPackage(packageId);
+  // Fetch user's SMS credits
+  const { data: smsCredits, isLoading: creditsLoading } = useQuery<SMSCredits>({
+    queryKey: ["/api/sms-credits"],
+    queryFn: async () => {
+      const response = await fetch("/api/sms-credits");
+      if (!response.ok) throw new Error("Failed to fetch SMS credits");
+      return response.json();
+    }
+  });
 
-    try {
-      // Integração com Stripe para compra de créditos
-      const response = await fetch('/api/sms-credits/purchase', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ packageId })
+  // Fetch user's quizzes for funnel selection
+  const { data: quizzes, isLoading: quizzesLoading } = useQuery({
+    queryKey: ["/api/quizzes"],
+    queryFn: async () => {
+      const response = await fetch("/api/quizzes");
+      if (!response.ok) throw new Error("Failed to fetch quizzes");
+      return response.json();
+    }
+  });
+
+  // Fetch SMS campaigns
+  const { data: campaigns, isLoading: campaignLoading } = useQuery<SMSCampaign[]>({
+    queryKey: ["/api/sms-campaigns"],
+    queryFn: async () => {
+      const response = await fetch("/api/sms-campaigns");
+      if (!response.ok) throw new Error("Failed to fetch SMS campaigns");
+      return response.json();
+    }
+  });
+
+  // Fetch SMS templates
+  const { data: templates, isLoading: templatesLoading } = useQuery<SMSTemplate[]>({
+    queryKey: ["/api/sms-templates"],
+    queryFn: async () => {
+      const response = await fetch("/api/sms-templates");
+      if (!response.ok) throw new Error("Failed to fetch SMS templates");
+      return response.json();
+    }
+  });
+
+  // Purchase SMS credits mutation
+  const purchaseCreditsMutation = useMutation({
+    mutationFn: async (amount: number) => {
+      const response = await fetch("/api/sms-credits/purchase", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ amount })
       });
-
-      if (response.ok) {
-        const { sessionUrl } = await response.json();
-        window.location.href = sessionUrl;
-      } else {
-        throw new Error('Erro ao processar compra');
-      }
-    } catch (error) {
+      if (!response.ok) throw new Error("Failed to purchase credits");
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/sms-credits"] });
       toast({
-        title: "Erro na compra",
-        description: "Não foi possível processar a compra. Tente novamente.",
+        title: "Créditos SMS Adquiridos",
+        description: "Seus créditos foram adicionados com sucesso!"
+      });
+    }
+  });
+
+  // Create SMS campaign mutation
+  const createCampaignMutation = useMutation({
+    mutationFn: async (campaign: typeof campaignForm) => {
+      const response = await fetch("/api/sms-campaigns", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(campaign)
+      });
+      if (!response.ok) throw new Error("Failed to create campaign");
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/sms-campaigns"] });
+      toast({
+        title: "Campanha SMS Criada",
+        description: "Sua campanha foi criada com sucesso!"
+      });
+      setCampaignForm({
+        name: "",
+        message: "",
+        scheduledDate: "",
+        targetAudience: "completed",
+        quizId: ""
+      });
+    }
+  });
+
+  // Send SMS campaign mutation
+  const sendCampaignMutation = useMutation({
+    mutationFn: async (campaignId: string) => {
+      const response = await fetch(`/api/sms-campaigns/${campaignId}/send`, {
+        method: "POST"
+      });
+      if (!response.ok) throw new Error("Failed to send campaign");
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/sms-campaigns"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/sms-credits"] });
+      toast({
+        title: "Campanha SMS Enviada",
+        description: "Sua campanha está sendo enviada!"
+      });
+    }
+  });
+
+  const handleCreateCampaign = () => {
+    if (!campaignForm.name || !campaignForm.message || !campaignForm.quizId) {
+      toast({
+        title: "Erro",
+        description: "Preencha todos os campos obrigatórios",
         variant: "destructive"
       });
-    } finally {
-      setLoading(false);
-      setSelectedPackage(null);
+      return;
     }
+
+    createCampaignMutation.mutate(campaignForm);
   };
 
-  if (!user) {
+  const handleSendCampaign = (campaignId: string) => {
+    sendCampaignMutation.mutate(campaignId);
+  };
+
+  const creditPackages = [
+    { amount: 100, price: 9.90, bonus: 0 },
+    { amount: 500, price: 39.90, bonus: 50 },
+    { amount: 1000, price: 69.90, bonus: 150 },
+    { amount: 5000, price: 299.90, bonus: 1000 }
+  ];
+
+  const smsTemplates = [
+    {
+      id: "1",
+      name: "Agradecimento",
+      message: "Obrigado por completar nosso quiz! Seus resultados: {resultado}",
+      category: "thank_you" as const,
+      variables: ["resultado", "nome"]
+    },
+    {
+      id: "2", 
+      name: "Promoção",
+      message: "🎁 Oferta especial para você! 20% OFF válido até amanhã. Use: QUIZ20",
+      category: "promotion" as const,
+      variables: ["desconto", "codigo"]
+    },
+    {
+      id: "3",
+      name: "Lembrete",
+      message: "Você não terminou nosso quiz! Complete agora: {link}",
+      category: "reminder" as const,
+      variables: ["link", "nome"]
+    }
+  ];
+
+  if (creditsLoading || quizzesLoading) {
     return (
-      <div className="container mx-auto px-4 py-8">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold mb-4">Acesso Negado</h1>
-          <p className="text-gray-600">Você precisa estar logado para acessar esta página.</p>
-        </div>
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600"></div>
       </div>
     );
   }
 
   return (
-    <div className="container mx-auto px-4 py-8 max-w-7xl">
+    <div className="container mx-auto p-6 space-y-6">
       {/* Header */}
-      <div className="text-center mb-8">
-        <h1 className="text-3xl font-bold mb-4">Créditos SMS</h1>
-        <p className="text-gray-600 mb-6">
-          Compre créditos para enviar SMS automático para seus leads
-        </p>
-        
-        {/* Saldo Atual */}
-        <Card className="max-w-md mx-auto bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-3">
-                <div className="bg-blue-500 p-2 rounded-full">
-                  <Smartphone className="w-6 h-6 text-white" />
-                </div>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900">SMS Credits</h1>
+          <p className="text-gray-600">Gerencie seus créditos SMS e campanhas de follow-up</p>
+        </div>
+        <div className="flex items-center space-x-4">
+          <Card className="bg-green-50 border-green-200">
+            <CardContent className="p-4">
+              <div className="flex items-center space-x-2">
+                <MessageSquare className="w-5 h-5 text-green-600" />
                 <div>
-                  <p className="text-sm text-gray-600">Saldo Atual</p>
-                  <p className="text-2xl font-bold text-blue-700">
-                    {user.smsCredits || 0} créditos
+                  <p className="text-sm text-green-700">Créditos Disponíveis</p>
+                  <p className="text-xl font-bold text-green-800">
+                    {smsCredits?.remaining || 0}
                   </p>
                 </div>
               </div>
-              <div className="text-right">
-                <p className="text-xs text-gray-500">Custo por SMS</p>
-                <p className="text-sm font-semibold text-gray-700">R$ 0,15</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Pacotes de Créditos */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-        {creditPackages.map((pkg) => (
-          <Card key={pkg.id} className="relative hover:shadow-lg transition-shadow">
-            {pkg.badge && (
-              <div className="absolute -top-3 left-1/2 transform -translate-x-1/2 z-10">
-                <Badge className="bg-green-500 text-white">
-                  {pkg.badge}
-                </Badge>
-              </div>
-            )}
-            
-            <CardHeader className="text-center pb-4">
-              <div className={`w-12 h-12 rounded-full bg-gradient-to-r ${pkg.color} flex items-center justify-center mx-auto mb-3`}>
-                <div className="text-white">
-                  {pkg.icon}
-                </div>
-              </div>
-              <CardTitle className="text-xl">{pkg.name}</CardTitle>
-              <CardDescription>{pkg.description}</CardDescription>
-            </CardHeader>
-            
-            <CardContent>
-              <div className="text-center mb-4">
-                <div className="text-3xl font-bold text-gray-900 mb-1">
-                  R$ {pkg.price.toFixed(2).replace('.', ',')}
-                </div>
-                <div className="text-sm text-gray-600">
-                  {pkg.credits} créditos
-                </div>
-                {pkg.bonusCredits > 0 && (
-                  <div className="text-xs text-green-600 font-semibold mt-1">
-                    + {pkg.bonusCredits} bônus
-                  </div>
-                )}
-              </div>
-              
-              <Separator className="my-4" />
-              
-              <div className="space-y-2 text-sm text-gray-600 mb-6">
-                <div className="flex justify-between">
-                  <span>SMS enviados:</span>
-                  <span className="font-semibold">{pkg.credits + pkg.bonusCredits}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>Custo por SMS:</span>
-                  <span className="font-semibold">R$ 0,15</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>Economia:</span>
-                  <span className="font-semibold text-green-600">
-                    {Math.round(((pkg.credits + pkg.bonusCredits) * 0.15 - pkg.price) / pkg.price * 100)}%
-                  </span>
-                </div>
-              </div>
-              
-              <Button
-                className={`w-full bg-gradient-to-r ${pkg.color} hover:opacity-90 transition-opacity`}
-                onClick={() => handlePurchase(pkg.id)}
-                disabled={loading}
-              >
-                {loading && selectedPackage === pkg.id ? (
-                  <div className="flex items-center">
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                    Processando...
-                  </div>
-                ) : (
-                  <div className="flex items-center">
-                    <CreditCard className="w-4 h-4 mr-2" />
-                    Comprar Agora
-                  </div>
-                )}
-              </Button>
             </CardContent>
           </Card>
-        ))}
-      </div>
-
-      {/* Informações Adicionais */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center">
-              <Plus className="w-5 h-5 mr-2 text-blue-500" />
-              Como Funciona
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3 text-sm">
-            <div className="flex items-start space-x-3">
-              <div className="bg-blue-100 rounded-full p-1 mt-1">
-                <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-              </div>
-              <div>
-                <p className="font-semibold">1. Compre Créditos</p>
-                <p className="text-gray-600">Escolha um pacote e efetue o pagamento</p>
-              </div>
-            </div>
-            <div className="flex items-start space-x-3">
-              <div className="bg-green-100 rounded-full p-1 mt-1">
-                <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-              </div>
-              <div>
-                <p className="font-semibold">2. Configure SMS</p>
-                <p className="text-gray-600">Ative o SMS automático nos seus quizzes</p>
-              </div>
-            </div>
-            <div className="flex items-start space-x-3">
-              <div className="bg-purple-100 rounded-full p-1 mt-1">
-                <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
-              </div>
-              <div>
-                <p className="font-semibold">3. Envio Automático</p>
-                <p className="text-gray-600">SMS enviado automaticamente para seus leads</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center">
-              <History className="w-5 h-5 mr-2 text-green-500" />
-              Vantagens
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3 text-sm">
-            <div className="flex items-center space-x-3">
-              <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-              <span>🚀 Recuperação de leads abandonados</span>
-            </div>
-            <div className="flex items-center space-x-3">
-              <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-              <span>⚡ Envio instantâneo e automático</span>
-            </div>
-            <div className="flex items-center space-x-3">
-              <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
-              <span>🎯 Segmentação inteligente</span>
-            </div>
-            <div className="flex items-center space-x-3">
-              <div className="w-2 h-2 bg-yellow-500 rounded-full"></div>
-              <span>📊 Relatórios detalhados</span>
-            </div>
-            <div className="flex items-center space-x-3">
-              <div className="w-2 h-2 bg-red-500 rounded-full"></div>
-              <span>🔄 Campanhas sequenciais</span>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Termos */}
-      <div className="mt-8 text-center">
-        <div className="bg-gray-50 rounded-lg p-4">
-          <p className="text-sm text-gray-600">
-            • Créditos não expiram • Sem taxa de configuração • Suporte 24/7
-          </p>
-          <p className="text-xs text-gray-500 mt-2">
-            Os créditos são consumidos apenas quando os SMS são efetivamente enviados
-          </p>
         </div>
       </div>
+
+      {/* Tabs */}
+      <Tabs value={activeTab} onValueChange={setActiveTab}>
+        <TabsList className="grid w-full grid-cols-5">
+          <TabsTrigger value="overview">Visão Geral</TabsTrigger>
+          <TabsTrigger value="campaigns">Campanhas</TabsTrigger>
+          <TabsTrigger value="templates">Templates</TabsTrigger>
+          <TabsTrigger value="analytics">Análises</TabsTrigger>
+          <TabsTrigger value="credits">Créditos</TabsTrigger>
+        </TabsList>
+
+        {/* Overview Tab */}
+        <TabsContent value="overview" className="space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-sm font-medium">Total de Créditos</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{smsCredits?.total || 0}</div>
+                <Progress value={((smsCredits?.total || 0) / 1000) * 100} className="mt-2" />
+              </CardContent>
+            </Card>
+            
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-sm font-medium">Créditos Usados</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold text-orange-600">{smsCredits?.used || 0}</div>
+                <p className="text-xs text-gray-600 mt-1">Este mês</p>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-sm font-medium">Campanhas Ativas</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold text-green-600">
+                  {campaigns?.filter(c => c.status === 'active').length || 0}
+                </div>
+                <p className="text-xs text-gray-600 mt-1">Em andamento</p>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-sm font-medium">Taxa de Entrega</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold text-blue-600">98.5%</div>
+                <p className="text-xs text-gray-600 mt-1">Média geral</p>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Recent Campaigns */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Campanhas Recentes</CardTitle>
+              <CardDescription>Suas últimas campanhas SMS</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                {campaigns?.slice(0, 5).map((campaign) => (
+                  <div key={campaign.id} className="flex items-center justify-between p-3 border rounded-lg">
+                    <div className="flex items-center space-x-3">
+                      <div className={`w-2 h-2 rounded-full ${
+                        campaign.status === 'active' ? 'bg-green-500' : 
+                        campaign.status === 'paused' ? 'bg-yellow-500' : 'bg-gray-500'
+                      }`} />
+                      <div>
+                        <p className="font-medium">{campaign.name}</p>
+                        <p className="text-sm text-gray-600">{campaign.quizTitle}</p>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-sm font-medium">{campaign.sent} enviados</p>
+                      <p className="text-xs text-gray-600">{campaign.delivered} entregues</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Campaigns Tab */}
+        <TabsContent value="campaigns" className="space-y-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Create Campaign Form */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Nova Campanha SMS</CardTitle>
+                <CardDescription>Crie uma campanha para seus leads</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div>
+                  <Label htmlFor="campaign-name">Nome da Campanha</Label>
+                  <Input
+                    id="campaign-name"
+                    placeholder="Ex: Follow-up Quiz Saúde"
+                    value={campaignForm.name}
+                    onChange={(e) => setCampaignForm({...campaignForm, name: e.target.value})}
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="quiz-select">Selecionar Funil</Label>
+                  <Select value={campaignForm.quizId} onValueChange={(value) => setCampaignForm({...campaignForm, quizId: value})}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Escolha um quiz" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {quizzes?.map((quiz: any) => (
+                        <SelectItem key={quiz.id} value={quiz.id}>
+                          {quiz.title}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div>
+                  <Label htmlFor="target-audience">Público-Alvo</Label>
+                  <Select value={campaignForm.targetAudience} onValueChange={(value: any) => setCampaignForm({...campaignForm, targetAudience: value})}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="completed">Completaram o quiz</SelectItem>
+                      <SelectItem value="abandoned">Abandonaram o quiz</SelectItem>
+                      <SelectItem value="all">Todos os leads</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div>
+                  <Label htmlFor="message">Mensagem SMS</Label>
+                  <Textarea
+                    id="message"
+                    placeholder="Sua mensagem aqui..."
+                    value={campaignForm.message}
+                    onChange={(e) => setCampaignForm({...campaignForm, message: e.target.value})}
+                    className="min-h-20"
+                  />
+                  <p className="text-xs text-gray-600 mt-1">
+                    {campaignForm.message.length}/160 caracteres
+                  </p>
+                </div>
+
+                <div>
+                  <Label htmlFor="scheduled-date">Agendar Envio (Opcional)</Label>
+                  <Input
+                    id="scheduled-date"
+                    type="datetime-local"
+                    value={campaignForm.scheduledDate}
+                    onChange={(e) => setCampaignForm({...campaignForm, scheduledDate: e.target.value})}
+                  />
+                </div>
+
+                <Button 
+                  onClick={handleCreateCampaign} 
+                  className="w-full"
+                  disabled={createCampaignMutation.isPending}
+                >
+                  {createCampaignMutation.isPending ? "Criando..." : "Criar Campanha"}
+                </Button>
+              </CardContent>
+            </Card>
+
+            {/* Campaign List */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Campanhas Existentes</CardTitle>
+                <CardDescription>Gerencie suas campanhas SMS</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  {campaigns?.map((campaign) => (
+                    <div key={campaign.id} className="border rounded-lg p-4">
+                      <div className="flex items-center justify-between mb-2">
+                        <h3 className="font-medium">{campaign.name}</h3>
+                        <Badge variant={campaign.status === 'active' ? 'default' : 'secondary'}>
+                          {campaign.status}
+                        </Badge>
+                      </div>
+                      <p className="text-sm text-gray-600 mb-2">{campaign.quizTitle}</p>
+                      <p className="text-sm bg-gray-50 p-2 rounded">{campaign.message}</p>
+                      <div className="flex items-center justify-between mt-3">
+                        <div className="flex space-x-4 text-xs text-gray-600">
+                          <span>📤 {campaign.sent}</span>
+                          <span>✅ {campaign.delivered}</span>
+                          <span>👁️ {campaign.opened}</span>
+                          <span>🔗 {campaign.clicked}</span>
+                        </div>
+                        <div className="flex space-x-2">
+                          {campaign.status === 'active' && (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => handleSendCampaign(campaign.id)}
+                              disabled={sendCampaignMutation.isPending}
+                            >
+                              <Send className="w-4 h-4" />
+                            </Button>
+                          )}
+                          <Button size="sm" variant="outline">
+                            <Edit className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </TabsContent>
+
+        {/* Templates Tab */}
+        <TabsContent value="templates" className="space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {smsTemplates.map((template) => (
+              <Card key={template.id}>
+                <CardHeader>
+                  <CardTitle className="text-sm">{template.name}</CardTitle>
+                  <Badge variant="outline">{template.category}</Badge>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-sm text-gray-600 mb-3">{template.message}</p>
+                  <div className="flex flex-wrap gap-1 mb-3">
+                    {template.variables.map((variable) => (
+                      <Badge key={variable} variant="secondary" className="text-xs">
+                        {variable}
+                      </Badge>
+                    ))}
+                  </div>
+                  <Button size="sm" variant="outline" className="w-full">
+                    Usar Template
+                  </Button>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </TabsContent>
+
+        {/* Analytics Tab */}
+        <TabsContent value="analytics" className="space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-sm">Taxa de Entrega</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold text-green-600">98.5%</div>
+                <Progress value={98.5} className="mt-2" />
+                <p className="text-xs text-gray-600 mt-1">Últimos 30 dias</p>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-sm">Taxa de Abertura</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold text-blue-600">85.2%</div>
+                <Progress value={85.2} className="mt-2" />
+                <p className="text-xs text-gray-600 mt-1">Últimos 30 dias</p>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-sm">Taxa de Cliques</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold text-purple-600">12.8%</div>
+                <Progress value={12.8} className="mt-2" />
+                <p className="text-xs text-gray-600 mt-1">Últimos 30 dias</p>
+              </CardContent>
+            </Card>
+          </div>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Desempenho por Campanha</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                {campaigns?.map((campaign) => (
+                  <div key={campaign.id} className="flex items-center justify-between p-3 border rounded-lg">
+                    <div>
+                      <p className="font-medium">{campaign.name}</p>
+                      <p className="text-sm text-gray-600">{campaign.quizTitle}</p>
+                    </div>
+                    <div className="grid grid-cols-4 gap-4 text-center">
+                      <div>
+                        <p className="text-sm font-medium">{campaign.sent}</p>
+                        <p className="text-xs text-gray-600">Enviados</p>
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium">{campaign.delivered}</p>
+                        <p className="text-xs text-gray-600">Entregues</p>
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium">{campaign.opened}</p>
+                        <p className="text-xs text-gray-600">Abertos</p>
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium">{campaign.clicked}</p>
+                        <p className="text-xs text-gray-600">Cliques</p>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Credits Tab */}
+        <TabsContent value="credits" className="space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            {creditPackages.map((pkg) => (
+              <Card key={pkg.amount} className="text-center">
+                <CardHeader>
+                  <CardTitle>{pkg.amount.toLocaleString()} SMS</CardTitle>
+                  {pkg.bonus > 0 && (
+                    <Badge variant="secondary" className="mx-auto">
+                      +{pkg.bonus} Bônus
+                    </Badge>
+                  )}
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold text-green-600 mb-2">
+                    R$ {pkg.price.toFixed(2)}
+                  </div>
+                  <p className="text-sm text-gray-600 mb-4">
+                    R$ {(pkg.price / (pkg.amount + pkg.bonus)).toFixed(3)} por SMS
+                  </p>
+                  <Button 
+                    className="w-full"
+                    onClick={() => purchaseCreditsMutation.mutate(pkg.amount + pkg.bonus)}
+                    disabled={purchaseCreditsMutation.isPending}
+                  >
+                    <CreditCard className="w-4 h-4 mr-2" />
+                    Comprar
+                  </Button>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Histórico de Transações</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3">
+                <div className="flex items-center justify-between p-3 border rounded-lg">
+                  <div className="flex items-center space-x-3">
+                    <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
+                      <Plus className="w-4 h-4 text-green-600" />
+                    </div>
+                    <div>
+                      <p className="font-medium">Compra de Créditos</p>
+                      <p className="text-sm text-gray-600">1000 SMS + 150 bônus</p>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <p className="font-medium text-green-600">+1.150</p>
+                    <p className="text-sm text-gray-600">Hoje</p>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
