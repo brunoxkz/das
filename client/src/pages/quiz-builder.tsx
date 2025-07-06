@@ -87,6 +87,7 @@ export default function QuizBuilder() {
   const [activeTab, setActiveTab] = useState<"editor" | "preview" | "settings" | "design">("editor");
   const [globalTheme, setGlobalTheme] = useState<"light" | "dark" | "custom">("light");
   const [customBackgroundColor, setCustomBackgroundColor] = useState("#ffffff");
+  const [currentQuizId, setCurrentQuizId] = useState<string | null>(quizId || null);
 
   // Fetch quiz data if editing
   console.log("QUIZ BUILDER - Estados:", { isEditing, quizId, shouldFetch: !!isEditing && !!quizId });
@@ -132,7 +133,12 @@ export default function QuizBuilder() {
         body: JSON.stringify(data),
       });
     },
-    onSuccess: () => {
+    onSuccess: (result) => {
+      // Se é um novo quiz (não editing), capturar o ID retornado
+      if (!isEditing && result?.id) {
+        setCurrentQuizId(result.id);
+      }
+      
       toast({
         title: "Quiz salvo com sucesso!",
         description: "Aguarde 5 minutos para que todos os salvamentos façam efeito. (Lembre-se de publicar)",
@@ -843,7 +849,7 @@ export default function QuizBuilder() {
                     <Label>Link público</Label>
                     <div className="flex mt-2">
                       <Input
-                        value={quizData.isPublished ? `${window.location.origin}/quiz/${quizId}` : "Quiz não publicado"}
+                        value={quizData.isPublished && currentQuizId ? `${window.location.origin}/quiz/${currentQuizId}` : "Quiz não publicado"}
                         readOnly
                         className="flex-1"
                       />
