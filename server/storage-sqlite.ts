@@ -1,13 +1,12 @@
 import { db } from "./db-sqlite";
 import { 
-  users, quizzes, quizTemplates, quizResponses, quizAnalytics, emailCampaigns, emailTemplates, smsTransactions, smsCampaigns,
+  users, quizzes, quizTemplates, quizResponses, quizAnalytics, emailCampaigns, emailTemplates, smsTransactions,
   type User, type UpsertUser, type InsertQuiz, type Quiz,
   type InsertQuizTemplate, type QuizTemplate,
   type InsertQuizResponse, type QuizResponse,
   type InsertQuizAnalytics, type QuizAnalytics,
   type InsertEmailCampaign, type EmailCampaign,
-  type InsertEmailTemplate, type EmailTemplate,
-  type InsertSmsCampaign, type SmsCampaign
+  type InsertEmailTemplate, type EmailTemplate
 } from "../shared/schema-sqlite";
 import { eq, desc, and, gte, lte, count } from "drizzle-orm";
 import { nanoid } from "nanoid";
@@ -74,13 +73,6 @@ export interface IStorage {
   updateUserSmsCredits(userId: string, newCredits: number): Promise<User>;
   createSmsTransaction(transaction: { userId: string; type: string; amount: number; description?: string }): Promise<void>;
   getSmsTransactions(userId: string): Promise<any[]>;
-
-  // SMS Campaign operations
-  getSmsCampaigns(userId: string): Promise<SmsCampaign[]>;
-  getSmsCampaign(id: string): Promise<SmsCampaign | undefined>;
-  createSmsCampaign(campaign: InsertSmsCampaign): Promise<SmsCampaign>;
-  updateSmsCampaign(id: string, updates: Partial<InsertSmsCampaign>): Promise<SmsCampaign>;
-  deleteSmsCampaign(id: string): Promise<void>;
 
   // JWT Auth methods
   getUserByEmail(email: string): Promise<User | null>;
@@ -694,59 +686,6 @@ export class SQLiteStorage implements IStorage {
       .orderBy(desc(smsTransactions.createdAt));
     
     return transactions;
-  }
-
-  // SMS Campaign operations
-  async getSmsCampaigns(userId: string): Promise<SmsCampaign[]> {
-    const campaigns = await db
-      .select()
-      .from(smsCampaigns)
-      .where(eq(smsCampaigns.userId, userId))
-      .orderBy(desc(smsCampaigns.createdAt));
-    
-    return campaigns;
-  }
-
-  async getSmsCampaign(id: string): Promise<SmsCampaign | undefined> {
-    const [campaign] = await db
-      .select()
-      .from(smsCampaigns)
-      .where(eq(smsCampaigns.id, id))
-      .limit(1);
-    
-    return campaign;
-  }
-
-  async createSmsCampaign(campaign: InsertSmsCampaign): Promise<SmsCampaign> {
-    const [newCampaign] = await db
-      .insert(smsCampaigns)
-      .values({
-        id: crypto.randomUUID(),
-        ...campaign,
-        createdAt: new Date(),
-        updatedAt: new Date()
-      })
-      .returning();
-    
-    return newCampaign;
-  }
-
-  async updateSmsCampaign(id: string, updates: Partial<InsertSmsCampaign>): Promise<SmsCampaign> {
-    const [updatedCampaign] = await db
-      .update(smsCampaigns)
-      .set({ ...updates, updatedAt: new Date() })
-      .where(eq(smsCampaigns.id, id))
-      .returning();
-    
-    if (!updatedCampaign) {
-      throw new Error('SMS campaign not found');
-    }
-    
-    return updatedCampaign;
-  }
-
-  async deleteSmsCampaign(id: string): Promise<void> {
-    await db.delete(smsCampaigns).where(eq(smsCampaigns.id, id));
   }
 }
 
