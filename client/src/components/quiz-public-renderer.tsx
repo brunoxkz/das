@@ -224,17 +224,23 @@ export function QuizPublicRenderer({ quiz }: QuizPublicRendererProps) {
       case 'multiple_choice':
         return (
           <div key={id} className="space-y-4">
-            <h3 className="text-lg font-semibold">{properties.question}</h3>
+            <h3 className="text-lg font-semibold">{properties?.question || 'Pergunta'}</h3>
             <RadioGroup 
               value={answer} 
-              onValueChange={(value) => handleElementAnswer(id, type, value, properties.fieldId)}
+              onValueChange={(value) => handleElementAnswer(id, type, value, properties?.fieldId)}
             >
-              {properties.options?.map((option: any, index: number) => (
-                <div key={index} className="flex items-center space-x-2">
-                  <RadioGroupItem value={option.text} id={`${id}-${index}`} />
-                  <Label htmlFor={`${id}-${index}`}>{option.text}</Label>
+              {Array.isArray(properties?.options) && properties.options.length > 0 ? (
+                properties.options.map((option: any, index: number) => (
+                  <div key={index} className="flex items-center space-x-2">
+                    <RadioGroupItem value={option?.text || `Opção ${index + 1}`} id={`${id}-${index}`} />
+                    <Label htmlFor={`${id}-${index}`}>{option?.text || `Opção ${index + 1}`}</Label>
+                  </div>
+                ))
+              ) : (
+                <div className="text-gray-500 p-4 border rounded-md">
+                  Nenhuma opção configurada
                 </div>
-              ))}
+              )}
             </RadioGroup>
           </div>
         );
@@ -242,13 +248,13 @@ export function QuizPublicRenderer({ quiz }: QuizPublicRendererProps) {
       case 'text':
         return (
           <div key={id} className="space-y-4">
-            <h3 className="text-lg font-semibold">{properties.question}</h3>
+            <h3 className="text-lg font-semibold">{properties?.question || 'Texto'}</h3>
             <Input
               type="text"
-              placeholder={properties.placeholder}
+              placeholder={properties?.placeholder || 'Digite aqui'}
               value={answer || ''}
-              onChange={(e) => handleElementAnswer(id, type, e.target.value, properties.fieldId)}
-              required={properties.required}
+              onChange={(e) => handleElementAnswer(id, type, e.target.value, properties?.fieldId)}
+              required={properties?.required}
             />
           </div>
         );
@@ -256,13 +262,13 @@ export function QuizPublicRenderer({ quiz }: QuizPublicRendererProps) {
       case 'email':
         return (
           <div key={id} className="space-y-4">
-            <h3 className="text-lg font-semibold">{properties.question}</h3>
+            <h3 className="text-lg font-semibold">{properties?.question || 'E-mail'}</h3>
             <Input
               type="email"
-              placeholder={properties.placeholder || 'Digite seu email'}
+              placeholder={properties?.placeholder || 'Digite seu email'}
               value={answer || ''}
-              onChange={(e) => handleElementAnswer(id, type, e.target.value, properties.fieldId || 'email')}
-              required={properties.required}
+              onChange={(e) => handleElementAnswer(id, type, e.target.value, properties?.fieldId || 'email')}
+              required={properties?.required}
             />
           </div>
         );
@@ -286,17 +292,17 @@ export function QuizPublicRenderer({ quiz }: QuizPublicRendererProps) {
       case 'number':
         return (
           <div key={id} className="space-y-4">
-            {(properties.question || properties.label) && (
-              <h3 className="text-lg font-semibold">{properties.question || properties.label || 'Número'}</h3>
+            {(properties?.question || properties?.label) && (
+              <h3 className="text-lg font-semibold">{properties?.question || properties?.label || 'Número'}</h3>
             )}
             <Input
               type="number"
-              placeholder={properties.placeholder}
+              placeholder={properties?.placeholder || 'Digite um número'}
               value={answer || ''}
-              onChange={(e) => handleElementAnswer(id, type, Number(e.target.value), properties.fieldId)}
-              required={properties.required}
-              min={properties.min}
-              max={properties.max}
+              onChange={(e) => handleElementAnswer(id, type, Number(e.target.value), properties?.fieldId)}
+              required={properties?.required}
+              min={properties?.min}
+              max={properties?.max}
             />
           </div>
         );
@@ -304,15 +310,15 @@ export function QuizPublicRenderer({ quiz }: QuizPublicRendererProps) {
       case 'textarea':
         return (
           <div key={id} className="space-y-4">
-            {(properties.question || properties.label) && (
-              <h3 className="text-lg font-semibold">{properties.question || properties.label || 'Texto'}</h3>
+            {(properties?.question || properties?.label) && (
+              <h3 className="text-lg font-semibold">{properties?.question || properties?.label || 'Texto'}</h3>
             )}
             <Textarea
-              placeholder={properties.placeholder}
+              placeholder={properties?.placeholder || 'Digite seu texto aqui...'}
               value={answer || ''}
-              onChange={(e) => handleElementAnswer(id, type, e.target.value, properties.fieldId)}
-              required={properties.required}
-              rows={properties.rows || 4}
+              onChange={(e) => handleElementAnswer(id, type, e.target.value, properties?.fieldId)}
+              required={properties?.required}
+              rows={properties?.rows || 4}
             />
           </div>
         );
@@ -320,26 +326,33 @@ export function QuizPublicRenderer({ quiz }: QuizPublicRendererProps) {
       case 'checkbox':
         return (
           <div key={id} className="space-y-4">
-            {(properties.question || properties.label) && (
-              <h3 className="text-lg font-semibold">{properties.question || properties.label || 'Opções'}</h3>
+            {(properties?.question || properties?.label) && (
+              <h3 className="text-lg font-semibold">{properties?.question || properties?.label || 'Opções'}</h3>
             )}
             <div className="space-y-2">
-              {properties.options?.map((option: any, index: number) => (
-                <div key={index} className="flex items-center space-x-2">
-                  <Checkbox
-                    id={`${id}-${index}`}
-                    checked={answer?.includes(option.text)}
-                    onCheckedChange={(checked) => {
-                      const currentAnswers = answer || [];
-                      const newAnswers = checked
-                        ? [...currentAnswers, option.text]
-                        : currentAnswers.filter((a: string) => a !== option.text);
-                      handleElementAnswer(id, type, newAnswers, properties.fieldId);
-                    }}
-                  />
-                  <Label htmlFor={`${id}-${index}`}>{option.text}</Label>
+              {Array.isArray(properties?.options) && properties.options.length > 0 ? (
+                properties.options.map((option: any, index: number) => (
+                  <div key={index} className="flex items-center space-x-2">
+                    <Checkbox
+                      id={`${id}-${index}`}
+                      checked={Array.isArray(answer) && answer.includes(option?.text)}
+                      onCheckedChange={(checked) => {
+                        const currentAnswers = Array.isArray(answer) ? answer : [];
+                        const optionText = option?.text || `Opção ${index + 1}`;
+                        const newAnswers = checked
+                          ? [...currentAnswers, optionText]
+                          : currentAnswers.filter((a: string) => a !== optionText);
+                        handleElementAnswer(id, type, newAnswers, properties?.fieldId);
+                      }}
+                    />
+                    <Label htmlFor={`${id}-${index}`}>{option?.text || `Opção ${index + 1}`}</Label>
+                  </div>
+                ))
+              ) : (
+                <div className="text-gray-500 p-4 border rounded-md">
+                  Nenhuma opção configurada
                 </div>
-              ))}
+              )}
             </div>
           </div>
         );
@@ -347,14 +360,14 @@ export function QuizPublicRenderer({ quiz }: QuizPublicRendererProps) {
       case 'date':
         return (
           <div key={id} className="space-y-4">
-            {(properties.question || properties.label) && (
-              <h3 className="text-lg font-semibold">{properties.question || properties.label || 'Data'}</h3>
+            {(properties?.question || properties?.label) && (
+              <h3 className="text-lg font-semibold">{properties?.question || properties?.label || 'Data'}</h3>
             )}
             <Input
               type="date"
               value={answer || ''}
-              onChange={(e) => handleElementAnswer(id, type, e.target.value, properties.fieldId)}
-              required={properties.required}
+              onChange={(e) => handleElementAnswer(id, type, e.target.value, properties?.fieldId)}
+              required={properties?.required}
             />
           </div>
         );
@@ -364,13 +377,13 @@ export function QuizPublicRenderer({ quiz }: QuizPublicRendererProps) {
           <div key={id} className="space-y-4">
             <div className="flex items-center space-x-2">
               <Calendar className="w-5 h-5 text-purple-500" />
-              <h3 className="text-lg font-semibold">{properties.question || 'Data de Nascimento'}</h3>
+              <h3 className="text-lg font-semibold">{properties?.question || 'Data de Nascimento'}</h3>
             </div>
             <Input
               type="date"
               value={answer || ''}
-              onChange={(e) => handleElementAnswer(id, type, e.target.value, properties.fieldId || 'data_nascimento')}
-              required={properties.required}
+              onChange={(e) => handleElementAnswer(id, type, e.target.value, properties?.fieldId || 'data_nascimento')}
+              required={properties?.required}
             />
           </div>
         );
@@ -380,16 +393,16 @@ export function QuizPublicRenderer({ quiz }: QuizPublicRendererProps) {
           <div key={id} className="space-y-4">
             <div className="flex items-center space-x-2">
               <ArrowUpDown className="w-5 h-5 text-purple-500" />
-              <h3 className="text-lg font-semibold">{properties.question || 'Altura'}</h3>
+              <h3 className="text-lg font-semibold">{properties?.question || 'Altura'}</h3>
             </div>
             <Input
               type="number"
-              placeholder={properties.placeholder || '170'}
+              placeholder={properties?.placeholder || '170'}
               value={answer || ''}
-              onChange={(e) => handleElementAnswer(id, type, Number(e.target.value), properties.fieldId || 'altura')}
-              required={properties.required}
-              min={properties.min || 100}
-              max={properties.max || 250}
+              onChange={(e) => handleElementAnswer(id, type, Number(e.target.value), properties?.fieldId || 'altura')}
+              required={properties?.required}
+              min={properties?.min || 100}
+              max={properties?.max || 250}
             />
           </div>
         );
@@ -399,16 +412,16 @@ export function QuizPublicRenderer({ quiz }: QuizPublicRendererProps) {
           <div key={id} className="space-y-4">
             <div className="flex items-center space-x-2">
               <Scale className="w-5 h-5 text-blue-500" />
-              <h3 className="text-lg font-semibold">{properties.question || 'Peso Atual'}</h3>
+              <h3 className="text-lg font-semibold">{properties?.question || 'Peso Atual'}</h3>
             </div>
             <Input
               type="number"
-              placeholder={properties.placeholder || '70'}
+              placeholder={properties?.placeholder || '70'}
               value={answer || ''}
-              onChange={(e) => handleElementAnswer(id, type, Number(e.target.value), properties.fieldId || 'peso_atual')}
-              required={properties.required}
-              min={properties.min || 30}
-              max={properties.max || 300}
+              onChange={(e) => handleElementAnswer(id, type, Number(e.target.value), properties?.fieldId || 'peso_atual')}
+              required={properties?.required}
+              min={properties?.min || 30}
+              max={properties?.max || 300}
             />
           </div>
         );
@@ -418,16 +431,16 @@ export function QuizPublicRenderer({ quiz }: QuizPublicRendererProps) {
           <div key={id} className="space-y-4">
             <div className="flex items-center space-x-2">
               <Target className="w-5 h-5 text-orange-500" />
-              <h3 className="text-lg font-semibold">{properties.question || 'Peso Meta'}</h3>
+              <h3 className="text-lg font-semibold">{properties?.question || 'Peso Meta'}</h3>
             </div>
             <Input
               type="number"
-              placeholder={properties.placeholder || '65'}
+              placeholder={properties?.placeholder || '65'}
               value={answer || ''}
-              onChange={(e) => handleElementAnswer(id, type, Number(e.target.value), properties.fieldId || 'peso_meta')}
-              required={properties.required}
-              min={properties.min || 30}
-              max={properties.max || 300}
+              onChange={(e) => handleElementAnswer(id, type, Number(e.target.value), properties?.fieldId || 'peso_meta')}
+              required={properties?.required}
+              min={properties?.min || 30}
+              max={properties?.max || 300}
             />
           </div>
         );
@@ -435,14 +448,14 @@ export function QuizPublicRenderer({ quiz }: QuizPublicRendererProps) {
       case 'rating':
         return (
           <div key={id} className="space-y-4">
-            {(properties.question || properties.label) && (
-              <h3 className="text-lg font-semibold">{properties.question || properties.label || 'Avaliação'}</h3>
+            {(properties?.question || properties?.label) && (
+              <h3 className="text-lg font-semibold">{properties?.question || properties?.label || 'Avaliação'}</h3>
             )}
             <div className="flex space-x-2">
-              {Array.from({ length: properties.maxRating || 5 }, (_, i) => (
+              {Array.from({ length: properties?.maxRating || 5 }, (_, i) => (
                 <button
                   key={i}
-                  onClick={() => handleElementAnswer(id, type, i + 1, properties.fieldId)}
+                  onClick={() => handleElementAnswer(id, type, i + 1, properties?.fieldId)}
                   className={`p-2 ${answer === i + 1 ? 'text-yellow-500' : 'text-gray-300'}`}
                 >
                   <Star className="w-6 h-6" fill={answer === i + 1 ? 'currentColor' : 'none'} />
@@ -469,29 +482,32 @@ export function QuizPublicRenderer({ quiz }: QuizPublicRendererProps) {
       case 'image':
         return (
           <div key={id} className="space-y-2">
-            {properties.src && (
-              <img 
-                src={properties.src} 
-                alt={properties.alt || 'Imagem'} 
-                className="max-w-full h-auto rounded-md"
-              />
-            )}
+            <img 
+              src={properties.src || '/placeholder-image.jpg'} 
+              alt={properties.alt || 'Imagem'} 
+              className="max-w-full h-auto rounded-md"
+            />
           </div>
         );
 
       case 'video':
         return (
           <div key={id} className="space-y-2">
-            {properties.src && (
-              <div className="aspect-video">
+            <div className="aspect-video bg-gray-100 rounded-lg flex items-center justify-center">
+              {properties.src ? (
                 <iframe
                   src={properties.src}
                   className="w-full h-full rounded-md"
                   allowFullScreen
                   title={properties.title || 'Vídeo'}
                 />
-              </div>
-            )}
+              ) : (
+                <div className="text-center">
+                  <PlayCircle className="w-12 h-12 text-gray-400 mx-auto mb-2" />
+                  <p className="text-gray-500">Vídeo não configurado</p>
+                </div>
+              )}
+            </div>
           </div>
         );
 
