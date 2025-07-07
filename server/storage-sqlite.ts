@@ -706,7 +706,9 @@ export class SQLiteStorage implements IStorage {
   }): Promise<any> {
     const now = Math.floor(Date.now() / 1000);
     
-    const scheduledAtValue = campaignData.scheduledAt ? Math.floor(new Date(campaignData.scheduledAt).getTime() / 1000) : null;
+    const scheduledAtValue = campaignData.scheduledAt ? 
+      (typeof campaignData.scheduledAt === 'number' ? campaignData.scheduledAt : Math.floor(new Date(campaignData.scheduledAt).getTime() / 1000)) 
+      : null;
     
     console.log(`📅 STORAGE - scheduledAt recebido: ${campaignData.scheduledAt}`);
     console.log(`📅 STORAGE - scheduledAt convertido: ${scheduledAtValue}`);

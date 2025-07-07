@@ -121,9 +121,10 @@ app.use((req, res, next) => {
           console.log(`   Hora atual: ${now.toLocaleString()}`);
           console.log(`   Timestamp agora: ${Math.floor(now.getTime() / 1000)}`);
           console.log(`   Timestamp agendado: ${campaign.scheduledAt}`);
-          console.log(`   Deve executar? ${now >= scheduledTime}`);
+          const nowTimestamp = Math.floor(now.getTime() / 1000);
+          console.log(`   Deve executar? ${nowTimestamp >= campaign.scheduledAt}`);
           
-          if (now >= scheduledTime) {
+          if (nowTimestamp >= campaign.scheduledAt) {
             console.log(`🕐 ATIVANDO CAMPANHA AGENDADA: ${campaign.name} (${campaign.id})`);
             
             // Ativar campanha

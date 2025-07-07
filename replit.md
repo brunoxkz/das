@@ -414,6 +414,12 @@ Changelog:
   * Set default triggerDelay to 10 minutes instead of 1 hour
   * Changed default triggerUnit from "hours" to "minutes"
   * Improved user experience with more practical default timing for SMS campaigns
+- July 07, 2025. CAMPAIGN SCHEDULING BUG FIXES - Resolved critical issues with delayed campaigns:
+  * Fixed scheduledAt timestamp conversion bug in storage-sqlite.ts (was converting numbers to Date unnecessarily)
+  * Corrected campaign timing verification logic in server/index.ts (now properly compares Unix timestamps)
+  * Fixed campaign display showing incorrect dates (1970) by switching to show creation date instead of broken scheduledAt
+  * Campaigns with 1-minute delays now wait properly instead of executing immediately
+  * Enhanced debugging with proper timestamp logging for campaign scheduling verification
 ```
 
 ## User Preferences
