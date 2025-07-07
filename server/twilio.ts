@@ -1,16 +1,14 @@
 import twilio from 'twilio';
 
-const accountSid = process.env.TWILIO_ACCOUNT_SID;
-const authToken = process.env.TWILIO_AUTH_TOKEN;
-const twilioPhoneNumber = process.env.TWILIO_PHONE_NUMBER;
+const accountSid = process.env.TWILIO_ACCOUNT_SID || 'ACaa795b9b75f0821fc406b3396f797563';
+const authToken = process.env.TWILIO_AUTH_TOKEN || 'c0151d44e86da2319fbbe8f33b7426bd';
+const twilioPhoneNumber = process.env.TWILIO_PHONE_NUMBER || '+12344373337';
 
-if (!accountSid || !authToken || !twilioPhoneNumber) {
-  console.error('Twilio credentials missing:', {
-    accountSid: !!accountSid,
-    authToken: !!authToken,
-    twilioPhoneNumber: !!twilioPhoneNumber
-  });
-}
+console.log('🔧 Twilio configurado:', {
+  accountSid: accountSid.substring(0, 10) + '...',
+  authToken: authToken.substring(0, 10) + '...',
+  twilioPhoneNumber
+});
 
 export const twilioClient = twilio(accountSid, authToken);
 
@@ -21,20 +19,19 @@ export interface SmsMessage {
 
 export async function sendSms(to: string, message: string): Promise<boolean> {
   try {
-    if (!accountSid || !authToken || !twilioPhoneNumber) {
-      throw new Error('Twilio credentials not configured');
-    }
+    const formattedNumber = formatPhoneNumber(to);
+    console.log(`📱 Enviando SMS: ${to} -> ${formattedNumber}`);
 
     const result = await twilioClient.messages.create({
       body: message,
       from: twilioPhoneNumber,
-      to: to
+      to: formattedNumber
     });
 
-    console.log('SMS sent successfully:', result.sid);
+    console.log(`✅ SMS enviado com sucesso! SID: ${result.sid}`);
     return true;
   } catch (error) {
-    console.error('Failed to send SMS:', error);
+    console.error('❌ Erro ao enviar SMS:', error);
     return false;
   }
 }
@@ -62,18 +59,37 @@ export function formatPhoneNumber(phone: string): string {
   // Remove all non-numeric characters
   const cleaned = phone.replace(/\D/g, '');
   
-  // If it doesn't start with country code, assume Brazil (+55)
-  if (cleaned.length === 11 && cleaned.startsWith('1')) {
-    // Already has Brazil country code without +55
-    return `+55${cleaned}`;
-  } else if (cleaned.length === 10 || cleaned.length === 11) {
-    // Brazilian number without country code
-    return `+55${cleaned}`;
-  } else if (cleaned.startsWith('55') && cleaned.length === 13) {
-    // Already has Brazil country code
-    return `+${cleaned}`;
+  console.log(`🔄 Formatando número: "${phone}" -> "${cleaned}"`);
+  
+  // Número brasileiro com 11 dígitos (ex: 11995133932)
+  if (cleaned.length === 11 && (cleaned.startsWith('1') || cleaned.startsWith('2') || cleaned.startsWith('8') || cleaned.startsWith('9'))) {
+    const formatted = `+55${cleaned}`;
+    console.log(`📱 Número brasileiro 11 dígitos: ${formatted}`);
+    return formatted;
   }
   
-  // Return as is if it already looks formatted
-  return phone.startsWith('+') ? phone : `+${cleaned}`;
+  // Número brasileiro com 10 dígitos (ex: 1195133932) - adiciona 9
+  if (cleaned.length === 10 && (cleaned.startsWith('1') || cleaned.startsWith('2') || cleaned.startsWith('8'))) {
+    const formatted = `+55${cleaned.substring(0, 2)}9${cleaned.substring(2)}`;
+    console.log(`📱 Número brasileiro 10 dígitos (adicionando 9): ${formatted}`);
+    return formatted;
+  }
+  
+  // Já tem código do país Brasil (+5511995133932)
+  if (cleaned.length === 13 && cleaned.startsWith('55')) {
+    const formatted = `+${cleaned}`;
+    console.log(`📱 Número com código do país: ${formatted}`);
+    return formatted;
+  }
+  
+  // Se já tem + no início, retorna como está
+  if (phone.startsWith('+')) {
+    console.log(`📱 Número já formatado: ${phone}`);
+    return phone;
+  }
+  
+  // Caso padrão: assume Brasil se não tiver código
+  const formatted = `+55${cleaned}`;
+  console.log(`📱 Caso padrão (assumindo Brasil): ${formatted}`);
+  return formatted;
 }

@@ -5,6 +5,7 @@ import { cache } from "./cache";
 import { nanoid } from "nanoid";
 import { insertQuizSchema, insertQuizResponseSchema } from "../shared/schema-sqlite";
 import { verifyJWT } from "./auth-sqlite";
+import { sendSms } from "./twilio";
 
 export function registerSQLiteRoutes(app: Express): Server {
   // Public routes BEFORE any middleware or authentication
@@ -42,6 +43,45 @@ export function registerSQLiteRoutes(app: Express): Server {
     } catch (error) {
       console.error("Error tracking quiz view:", error);
       res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  // Endpoint de teste SMS (público para teste)
+  app.post("/api/test-sms", async (req, res) => {
+    try {
+      const { phone, message } = req.body;
+      
+      if (!phone || !message) {
+        return res.status(400).json({ error: "Phone e message são obrigatórios" });
+      }
+
+      console.log(`🧪 TESTE SMS: Enviando para ${phone}`);
+      console.log(`📝 Mensagem: ${message}`);
+
+      const success = await sendSms(phone, message);
+      
+      if (success) {
+        console.log(`✅ SMS de teste enviado com sucesso!`);
+        res.json({ 
+          success: true, 
+          message: "SMS enviado com sucesso!", 
+          phone: phone,
+          testMessage: message 
+        });
+      } else {
+        console.log(`❌ Falha no envio do SMS de teste`);
+        res.status(500).json({ 
+          success: false, 
+          error: "Falha ao enviar SMS" 
+        });
+      }
+    } catch (error) {
+      console.error("❌ Erro no teste SMS:", error);
+      res.status(500).json({ 
+        success: false, 
+        error: "Erro interno no teste SMS",
+        details: error.message 
+      });
     }
   });
 
