@@ -3,7 +3,6 @@ import { createServer, type Server } from "http";
 import "./types"; // Import global types
 import Stripe from "stripe";
 import { storage } from "./storage-sqlite";
-import { verifyJWT as authenticateToken } from "./auth-jwt";
 import { verifyJWT } from "./auth-hybrid";
 import { cache } from "./cache";
 import { rateLimiters } from "./rate-limiter";
@@ -41,7 +40,7 @@ export function registerSQLiteRoutes(app: Express): Server {
   const httpServer = createServer(app);
 
   // Quiz routes with rate limiting
-  app.get("/api/quizzes", rateLimiters.general.middleware(), authenticateToken, async (req, res) => {
+  app.get("/api/quizzes", rateLimiters.general.middleware(), verifyJWT, async (req, res) => {
     try {
       const userId = req.user!.id;
       
@@ -84,7 +83,7 @@ export function registerSQLiteRoutes(app: Express): Server {
     }
   });
 
-  app.post("/api/quizzes", rateLimiters.quizCreation.middleware(), authenticateToken, async (req, res) => {
+  app.post("/api/quizzes", rateLimiters.quizCreation.middleware(), verifyJWT, async (req, res) => {
     try {
       console.log("Creating quiz with data:", JSON.stringify(req.body, null, 2));
       
@@ -124,7 +123,7 @@ export function registerSQLiteRoutes(app: Express): Server {
     }
   });
 
-  app.put("/api/quizzes/:id", rateLimiters.quizCreation.middleware(), authenticateToken, async (req, res) => {
+  app.put("/api/quizzes/:id", rateLimiters.quizCreation.middleware(), verifyJWT, async (req, res) => {
     try {
       const quiz = await storage.getQuiz(req.params.id);
       if (!quiz) {
@@ -162,7 +161,7 @@ export function registerSQLiteRoutes(app: Express): Server {
     }
   });
 
-  app.delete("/api/quizzes/:id", rateLimiters.general.middleware(), authenticateToken, async (req, res) => {
+  app.delete("/api/quizzes/:id", rateLimiters.general.middleware(), verifyJWT, async (req, res) => {
     try {
       const quiz = await storage.getQuiz(req.params.id);
       if (!quiz) {
@@ -197,7 +196,7 @@ export function registerSQLiteRoutes(app: Express): Server {
     }
   });
 
-  app.post("/api/quiz-templates", authenticateToken, requireAdmin, async (req, res) => {
+  app.post("/api/quiz-templates", verifyJWT, requireAdmin, async (req, res) => {
     try {
       const validatedData = insertQuizTemplateSchema.parse(req.body);
       const template = await storage.createQuizTemplate(validatedData);
@@ -212,7 +211,7 @@ export function registerSQLiteRoutes(app: Express): Server {
   });
 
   // Quiz responses
-  app.get("/api/quizzes/:id/responses", authenticateToken, async (req, res) => {
+  app.get("/api/quizzes/:id/responses", verifyJWT, async (req, res) => {
     try {
       const quiz = await storage.getQuiz(req.params.id);
       if (!quiz) {
@@ -269,7 +268,7 @@ export function registerSQLiteRoutes(app: Express): Server {
   });
 
   // Analytics routes
-  app.get("/api/analytics/:quizId", authenticateToken, async (req, res) => {
+  app.get("/api/analytics/:quizId", verifyJWT, async (req, res) => {
     try {
       const quiz = await storage.getQuiz(req.params.quizId);
       if (!quiz) {
@@ -339,7 +338,7 @@ export function registerSQLiteRoutes(app: Express): Server {
   });
 
   // Dashboard stats
-  app.get("/api/dashboard/stats", rateLimiters.dashboard.middleware(), authenticateToken, async (req, res) => {
+  app.get("/api/dashboard/stats", rateLimiters.dashboard.middleware(), verifyJWT, async (req, res) => {
     try {
       const userId = req.user!.id;
       
@@ -362,7 +361,7 @@ export function registerSQLiteRoutes(app: Express): Server {
   });
 
   // SMS credits routes
-  app.get("/api/sms/credits", authenticateToken, async (req, res) => {
+  app.get("/api/sms/credits", verifyJWT, async (req, res) => {
     try {
       const user = await storage.getUser(req.user!.id);
       if (!user) {
@@ -378,7 +377,7 @@ export function registerSQLiteRoutes(app: Express): Server {
     }
   });
 
-  app.post("/api/sms/credits/purchase", authenticateToken, async (req, res) => {
+  app.post("/api/sms/credits/purchase", verifyJWT, async (req, res) => {
     try {
       const { amount } = req.body;
       
@@ -409,7 +408,7 @@ export function registerSQLiteRoutes(app: Express): Server {
   });
 
   // SMS sending route
-  app.post("/api/sms/send", authenticateToken, async (req, res) => {
+  app.post("/api/sms/send", verifyJWT, async (req, res) => {
     try {
       const { phoneNumbers, message } = req.body;
 
@@ -484,7 +483,7 @@ export function registerSQLiteRoutes(app: Express): Server {
   });
 
   // SMS transactions history
-  app.get("/api/sms/transactions", authenticateToken, async (req, res) => {
+  app.get("/api/sms/transactions", verifyJWT, async (req, res) => {
     try {
       const transactions = await storage.getSmsTransactions(req.user!.id);
       res.json(transactions);
@@ -495,7 +494,7 @@ export function registerSQLiteRoutes(app: Express): Server {
   });
 
   // Route to get quiz responses with phone numbers for SMS campaigns
-  app.get("/api/quizzes/:id/phones", authenticateToken, async (req, res) => {
+  app.get("/api/quizzes/:id/phones", verifyJWT, async (req, res) => {
     try {
       const quiz = await storage.getQuiz(req.params.id);
       if (!quiz) {
@@ -570,7 +569,7 @@ export function registerSQLiteRoutes(app: Express): Server {
   });
 
   // Route to get quiz responses with phone numbers filtered by completed responses
-  app.get("/api/quizzes/:id/completed-phones", authenticateToken, async (req, res) => {
+  app.get("/api/quizzes/:id/completed-phones", verifyJWT, async (req, res) => {
     try {
       const quiz = await storage.getQuiz(req.params.id);
       if (!quiz) {
@@ -649,7 +648,7 @@ export function registerSQLiteRoutes(app: Express): Server {
   });
 
   // SMS Campaigns routes
-  app.get("/api/sms/campaigns", authenticateToken, async (req, res) => {
+  app.get("/api/sms/campaigns", verifyJWT, async (req, res) => {
     try {
       const campaigns = await storage.getSmsCampaigns(req.user!.id);
       res.json(campaigns);
@@ -659,7 +658,7 @@ export function registerSQLiteRoutes(app: Express): Server {
     }
   });
 
-  app.post("/api/sms/campaigns", authenticateToken, async (req, res) => {
+  app.post("/api/sms/campaigns", verifyJWT, async (req, res) => {
     try {
       const validatedData = insertSmsCampaignSchema.parse({
         ...req.body,
@@ -677,7 +676,7 @@ export function registerSQLiteRoutes(app: Express): Server {
     }
   });
 
-  app.get("/api/sms/campaigns/:id", authenticateToken, async (req, res) => {
+  app.get("/api/sms/campaigns/:id", verifyJWT, async (req, res) => {
     try {
       const campaign = await storage.getSmsCampaign(req.params.id);
       if (!campaign) {
@@ -695,7 +694,7 @@ export function registerSQLiteRoutes(app: Express): Server {
     }
   });
 
-  app.put("/api/sms/campaigns/:id", authenticateToken, async (req, res) => {
+  app.put("/api/sms/campaigns/:id", verifyJWT, async (req, res) => {
     try {
       const campaign = await storage.getSmsCampaign(req.params.id);
       if (!campaign) {
@@ -714,7 +713,7 @@ export function registerSQLiteRoutes(app: Express): Server {
     }
   });
 
-  app.delete("/api/sms/campaigns/:id", authenticateToken, async (req, res) => {
+  app.delete("/api/sms/campaigns/:id", verifyJWT, async (req, res) => {
     try {
       const campaign = await storage.getSmsCampaign(req.params.id);
       if (!campaign) {
@@ -734,7 +733,7 @@ export function registerSQLiteRoutes(app: Express): Server {
   });
 
   // Execute SMS campaign
-  app.post("/api/sms/campaigns/:id/execute", authenticateToken, async (req, res) => {
+  app.post("/api/sms/campaigns/:id/execute", verifyJWT, async (req, res) => {
     try {
       const campaign = await storage.getSmsCampaign(req.params.id);
       if (!campaign) {
@@ -848,7 +847,7 @@ export function registerSQLiteRoutes(app: Express): Server {
   });
 
   // Email campaigns routes
-  app.get("/api/email/campaigns", authenticateToken, async (req, res) => {
+  app.get("/api/email/campaigns", verifyJWT, async (req, res) => {
     try {
       const campaigns = await storage.getEmailCampaigns(req.user!.id);
       res.json(campaigns);
@@ -858,7 +857,7 @@ export function registerSQLiteRoutes(app: Express): Server {
     }
   });
 
-  app.post("/api/email/campaigns", authenticateToken, async (req, res) => {
+  app.post("/api/email/campaigns", verifyJWT, async (req, res) => {
     try {
       const validatedData = insertEmailCampaignSchema.parse({
         ...req.body,
@@ -876,7 +875,7 @@ export function registerSQLiteRoutes(app: Express): Server {
     }
   });
 
-  app.get("/api/email/campaigns/:id", authenticateToken, async (req, res) => {
+  app.get("/api/email/campaigns/:id", verifyJWT, async (req, res) => {
     try {
       const campaign = await storage.getEmailCampaign(req.params.id);
       if (!campaign) {
@@ -894,7 +893,7 @@ export function registerSQLiteRoutes(app: Express): Server {
     }
   });
 
-  app.put("/api/email/campaigns/:id", authenticateToken, async (req, res) => {
+  app.put("/api/email/campaigns/:id", verifyJWT, async (req, res) => {
     try {
       const campaign = await storage.getEmailCampaign(req.params.id);
       if (!campaign) {
@@ -913,7 +912,7 @@ export function registerSQLiteRoutes(app: Express): Server {
     }
   });
 
-  app.delete("/api/email/campaigns/:id", authenticateToken, async (req, res) => {
+  app.delete("/api/email/campaigns/:id", verifyJWT, async (req, res) => {
     try {
       const campaign = await storage.getEmailCampaign(req.params.id);
       if (!campaign) {
@@ -933,7 +932,7 @@ export function registerSQLiteRoutes(app: Express): Server {
   });
 
   // Email templates routes
-  app.get("/api/email/templates", authenticateToken, async (req, res) => {
+  app.get("/api/email/templates", verifyJWT, async (req, res) => {
     try {
       const templates = await storage.getEmailTemplates(req.user!.id);
       res.json(templates);
@@ -943,7 +942,7 @@ export function registerSQLiteRoutes(app: Express): Server {
     }
   });
 
-  app.post("/api/email/templates", authenticateToken, async (req, res) => {
+  app.post("/api/email/templates", verifyJWT, async (req, res) => {
     try {
       const validatedData = insertEmailTemplateSchema.parse({
         ...req.body,
@@ -961,7 +960,7 @@ export function registerSQLiteRoutes(app: Express): Server {
     }
   });
 
-  app.get("/api/email/templates/:id", authenticateToken, async (req, res) => {
+  app.get("/api/email/templates/:id", verifyJWT, async (req, res) => {
     try {
       const template = await storage.getEmailTemplate(req.params.id);
       if (!template) {
@@ -979,7 +978,7 @@ export function registerSQLiteRoutes(app: Express): Server {
     }
   });
 
-  app.put("/api/email/templates/:id", authenticateToken, async (req, res) => {
+  app.put("/api/email/templates/:id", verifyJWT, async (req, res) => {
     try {
       const template = await storage.getEmailTemplate(req.params.id);
       if (!template) {
@@ -998,7 +997,7 @@ export function registerSQLiteRoutes(app: Express): Server {
     }
   });
 
-  app.delete("/api/email/templates/:id", authenticateToken, async (req, res) => {
+  app.delete("/api/email/templates/:id", verifyJWT, async (req, res) => {
     try {
       const template = await storage.getEmailTemplate(req.params.id);
       if (!template) {
@@ -1018,7 +1017,7 @@ export function registerSQLiteRoutes(app: Express): Server {
   });
 
   // User management routes
-  app.get("/api/user", authenticateToken, async (req, res) => {
+  app.get("/api/user", verifyJWT, async (req, res) => {
     try {
       const userId = req.user!.id;
       
@@ -1044,7 +1043,7 @@ export function registerSQLiteRoutes(app: Express): Server {
   });
 
   // Admin routes
-  app.get("/api/admin/users", authenticateToken, requireAdmin, async (req, res) => {
+  app.get("/api/admin/users", verifyJWT, requireAdmin, async (req, res) => {
     try {
       const users = await storage.getAllUsers();
       res.json(users);
@@ -1054,7 +1053,7 @@ export function registerSQLiteRoutes(app: Express): Server {
     }
   });
 
-  app.put("/api/admin/users/:id/role", authenticateToken, requireAdmin, async (req, res) => {
+  app.put("/api/admin/users/:id/role", verifyJWT, requireAdmin, async (req, res) => {
     try {
       const { role } = req.body;
       
@@ -1074,7 +1073,7 @@ export function registerSQLiteRoutes(app: Express): Server {
     }
   });
 
-  app.delete("/api/admin/users/:id", authenticateToken, requireAdmin, async (req, res) => {
+  app.delete("/api/admin/users/:id", verifyJWT, requireAdmin, async (req, res) => {
     try {
       await storage.deleteUser(req.params.id);
       
