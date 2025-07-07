@@ -84,6 +84,8 @@ export default function WhatsAppCampaignsPage() {
     refetchInterval: autoRefresh ? 10000 : false,
   });
 
+
+
   // Buscar telefones do quiz selecionado
   const { data: quizPhones = [], refetch: refetchPhones } = useQuery({
     queryKey: ['/api/quiz-phones', selectedQuiz],
@@ -286,11 +288,17 @@ export default function WhatsAppCampaignsPage() {
                       <SelectValue placeholder="Escolha um quiz" />
                     </SelectTrigger>
                     <SelectContent>
-                      {quizzes.map((quiz) => (
-                        <SelectItem key={quiz.id} value={quiz.id}>
-                          {quiz.title}
+                      {quizzes.length > 0 ? (
+                        quizzes.map((quiz) => (
+                          <SelectItem key={quiz.id} value={quiz.id}>
+                            {quiz.title}
+                          </SelectItem>
+                        ))
+                      ) : (
+                        <SelectItem value="" disabled>
+                          Nenhum quiz encontrado
                         </SelectItem>
-                      ))}
+                      )}
                     </SelectContent>
                   </Select>
                 </div>
