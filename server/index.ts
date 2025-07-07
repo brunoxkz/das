@@ -100,6 +100,60 @@ app.use((req, res, next) => {
   setupSQLiteAuth(app);
   const server = registerSQLiteRoutes(app);
 
+  // Sistema de ativação automática para campanhas agendadas
+  setInterval(async () => {
+    try {
+      const { storage } = await import('./storage-sqlite');
+      const campaigns = await storage.getAllSMSCampaigns();
+      
+      for (const campaign of campaigns) {
+        if (campaign.status === 'draft' && campaign.scheduledAt) {
+          const now = new Date();
+          const scheduledTime = new Date(campaign.scheduledAt);
+          
+          if (now >= scheduledTime) {
+            console.log(`🕐 ATIVANDO CAMPANHA AGENDADA: ${campaign.name} (${campaign.id})`);
+            
+            // Ativar campanha
+            await storage.updateSMSCampaign(campaign.id, { status: 'active' });
+            
+            // Enviar SMS para todos os telefones
+            const phones = JSON.parse(campaign.phones);
+            const twilio = (await import('./twilio')).default;
+            
+            let successCount = 0;
+            for (const phone of phones) {
+              try {
+                const phoneNumber = phone.telefone || phone.phone || phone;
+                if (!phoneNumber) continue;
+                
+                const result = await twilio.sendSMS(phoneNumber, campaign.message);
+                
+                if (result.success) {
+                  // Atualizar log de 'scheduled' para 'sent'
+                  await storage.updateSMSLogStatus(campaign.id, phoneNumber, 'sent');
+                  successCount++;
+                } else {
+                  // Atualizar log para 'failed'
+                  await storage.updateSMSLogStatus(campaign.id, phoneNumber, 'failed', result.error);
+                }
+              } catch (error) {
+                console.error(`❌ Erro ao enviar SMS para ${phone}:`, error);
+                await storage.updateSMSLogStatus(campaign.id, phoneNumber, 'failed', error.message);
+              }
+            }
+            
+            // Atualizar contadores da campanha
+            await storage.updateSMSCampaignStats(campaign.id, { sent: successCount, delivered: successCount });
+            console.log(`✅ Campanha ${campaign.name} ativada - ${successCount} SMS enviados`);
+          }
+        }
+      }
+    } catch (error) {
+      console.error('❌ Erro no sistema de campanhas agendadas:', error);
+    }
+  }, 30000); // Verificar a cada 30 segundos
+
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
     const status = err.status || err.statusCode || 500;
     const message = err.message || "Internal Server Error";

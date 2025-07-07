@@ -729,6 +729,22 @@ export class SQLiteStorage implements IStorage {
     }
   }
 
+  async getAllSMSCampaigns(): Promise<any[]> {
+    try {
+      const campaigns = await db.select()
+        .from(smsCampaigns)
+        .orderBy(desc(smsCampaigns.createdAt));
+      
+      return campaigns.map(campaign => ({
+        ...campaign,
+        phones: JSON.parse(campaign.phones)
+      }));
+    } catch (error) {
+      console.error('Error getting all SMS campaigns:', error);
+      throw error;
+    }
+  }
+
   async updateSMSCampaign(campaignId: string, updates: Partial<{ name: string; message: string; phones: string[]; status: string }>): Promise<any> {
     try {
       const updateData: any = {
@@ -748,6 +764,25 @@ export class SQLiteStorage implements IStorage {
       return result[0];
     } catch (error) {
       console.error('Error updating SMS campaign:', error);
+      throw error;
+    }
+  }
+
+  async updateSMSCampaignStats(campaignId: string, stats: { sent?: number; delivered?: number }): Promise<any> {
+    try {
+      const updateData: any = {
+        ...stats,
+        updatedAt: Math.floor(Date.now() / 1000)
+      };
+
+      const result = await db.update(smsCampaigns)
+        .set(updateData)
+        .where(eq(smsCampaigns.id, campaignId))
+        .returning();
+      
+      return result[0];
+    } catch (error) {
+      console.error('Error updating SMS campaign stats:', error);
       throw error;
     }
   }
@@ -789,6 +824,37 @@ export class SQLiteStorage implements IStorage {
   }): Promise<any> {
     const log = await db.insert(smsLogs).values(logData).returning();
     return log[0];
+  }
+
+  async getSMSLogs(campaignId: string) {
+    return await db.select().from(smsLogs).where(eq(smsLogs.campaignId, campaignId));
+  }
+
+  async updateSMSLogStatus(campaignId: string, phone: string, status: string, errorMessage?: string) {
+    const updateData: any = {
+      status,
+      updatedAt: Math.floor(Date.now() / 1000)
+    };
+
+    if (status === 'sent') {
+      updateData.sentAt = Math.floor(Date.now() / 1000);
+    } else if (status === 'delivered') {
+      updateData.deliveredAt = Math.floor(Date.now() / 1000);
+    }
+
+    if (errorMessage) {
+      updateData.errorMessage = errorMessage;
+    }
+
+    return await db.update(smsLogs)
+      .set(updateData)
+      .where(
+        and(
+          eq(smsLogs.campaignId, campaignId),
+          eq(smsLogs.phone, phone)
+        )
+      )
+      .returning();
   }
 
   async getSMSLogsByCampaign(campaignId: string): Promise<any[]> {

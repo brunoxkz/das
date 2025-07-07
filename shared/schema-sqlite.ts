@@ -91,6 +91,7 @@ export const smsCampaigns = sqliteTable("sms_campaigns", {
   opened: integer("opened").default(0),
   clicked: integer("clicked").default(0),
   replies: integer("replies").default(0),
+  scheduledAt: integer("scheduledAt"), // Para campanhas agendadas
   createdAt: integer("createdAt").notNull().$defaultFn(() => Math.floor(Date.now() / 1000)),
   updatedAt: integer("updatedAt").notNull().$defaultFn(() => Math.floor(Date.now() / 1000)),
 });

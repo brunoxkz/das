@@ -1277,8 +1277,15 @@ export function registerSQLiteRoutes(app: Express): Server {
       console.log("📱 TELEFONES EXTRAÍDOS:", phones.length);
 
       // Determinar status inicial baseado no triggerType
-      const { triggerType = 'immediate' } = req.body;
+      const { triggerType = 'immediate', triggerDelay = 1, triggerUnit = 'hours' } = req.body;
       const initialStatus = triggerType === 'immediate' ? 'active' : 'draft';
+      
+      // Calcular scheduledAt para campanhas agendadas
+      let scheduledAt = null;
+      if (triggerType === 'delayed') {
+        const delayInMs = triggerUnit === 'minutes' ? triggerDelay * 60 * 1000 : triggerDelay * 60 * 60 * 1000;
+        scheduledAt = new Date(Date.now() + delayInMs);
+      }
       
       const campaign = await storage.createSMSCampaign({
         id: nanoid(),
@@ -1288,23 +1295,29 @@ export function registerSQLiteRoutes(app: Express): Server {
         message,
         phones: JSON.stringify(phones),
         status: initialStatus,
+        scheduledAt,
         createdAt: new Date(),
         updatedAt: new Date()
       });
 
       // Criar logs para todos os telefones, independente do tipo de envio
+      console.log(`📱 CRIANDO LOGS - Campanha ${campaign.id}, Telefones: ${phones.length}, Trigger: ${triggerType}`);
+      
       for (const phone of phones) {
         const phoneNumber = phone.telefone || phone.phone || phone;
         if (!phoneNumber) continue;
         
         const logId = nanoid();
-        await storage.createSMSLog({
+        const logData = {
           id: logId,
           campaignId: campaign.id,
           phone: phoneNumber,
           message: message,
           status: triggerType === 'immediate' ? 'pending' : 'scheduled'
-        });
+        };
+        
+        console.log(`📱 CRIANDO LOG: ${logId} - ${phoneNumber} - ${logData.status}`);
+        await storage.createSMSLog(logData);
       }
 
       // Se for envio imediato, enviar SMS automaticamente
