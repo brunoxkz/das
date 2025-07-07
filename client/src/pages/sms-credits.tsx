@@ -162,15 +162,24 @@ export default function SMSCreditsPage() {
   // Create SMS campaign mutation
   const createCampaignMutation = useMutation({
     mutationFn: async (campaign: typeof campaignForm) => {
+      const token = localStorage.getItem("accessToken");
       const response = await fetch("/api/sms-campaigns", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { 
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`
+        },
         body: JSON.stringify(campaign)
       });
-      if (!response.ok) throw new Error("Failed to create campaign");
+      if (!response.ok) {
+        const errorData = await response.text();
+        console.error("Campaign creation error:", errorData);
+        throw new Error(`Failed to create campaign: ${response.status}`);
+      }
       return response.json();
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
+      console.log("Campaign created successfully:", data);
       queryClient.invalidateQueries({ queryKey: ["/api/sms-campaigns"] });
       toast({
         title: "Campanha SMS Criada",
@@ -184,7 +193,14 @@ export default function SMSCreditsPage() {
         triggerType: "immediate",
         triggerDelay: 1,
         triggerUnit: "hours",
-
+      });
+    },
+    onError: (error) => {
+      console.error("Mutation error:", error);
+      toast({
+        title: "Erro ao Criar Campanha",
+        description: "Houve um problema ao criar a campanha SMS. Tente novamente.",
+        variant: "destructive"
       });
     }
   });
