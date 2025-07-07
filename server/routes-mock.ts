@@ -861,7 +861,7 @@ export function registerMockRoutes(app: Express): Server {
         });
       }
 
-      const sentCount = results.filter(r => r.status === 'sent').length.
+      const sentCount = results.filter(r => r.status === 'sent').length;
       const failedCount = results.filter(r => r.status === 'failed').length;
 
       console.log(`📱 RESULTADO ENVIO - Enviados: ${sentCount}, Falharam: ${failedCount}`);
