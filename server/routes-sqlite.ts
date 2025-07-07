@@ -1190,14 +1190,15 @@ export function registerSQLiteRoutes(app: Express): Server {
       const userId = req.user.id;
       console.log("📱 SMS CAMPAIGN CREATE - Body recebido:", JSON.stringify(req.body, null, 2));
       
-      const { name, quizId, message, triggerType, scheduledDateTime, targetAudience, triggerDelay, triggerUnit } = req.body;
+      const { name, quizId, message, triggerType, scheduledDateTime, targetAudience, triggerDelay, triggerUnit, fromDate } = req.body;
       console.log("📱 SMS CAMPAIGN CREATE - Campos extraídos:", {
         name: name || 'MISSING',
         quizId: quizId || 'MISSING', 
         message: message || 'MISSING',
         triggerType: triggerType || 'immediate',
         scheduledDateTime: scheduledDateTime || 'NOT_PROVIDED',
-        targetAudience: targetAudience || 'all'
+        targetAudience: targetAudience || 'all',
+        fromDate: fromDate || 'NOT_PROVIDED'
       });
 
       if (!name || !quizId || !message) {
@@ -1210,8 +1211,18 @@ export function registerSQLiteRoutes(app: Express): Server {
       const allResponses = await storage.getQuizResponses(quizId);
       console.log("📱 RESPONSES ENCONTRADAS:", allResponses.length);
       
-      // Por enquanto, processar todas as respostas (filtro por data será implementado posteriormente)
+      // Filtrar respostas por data se especificada
       let responses = allResponses;
+      if (fromDate) {
+        const filterDate = new Date(fromDate);
+        responses = allResponses.filter(response => {
+          const responseDate = new Date(response.submittedAt);
+          return responseDate >= filterDate;
+        });
+        console.log(`📅 FILTRO DE DATA - Original: ${allResponses.length}, Filtrado: ${responses.length} (a partir de ${fromDate})`);
+      } else {
+        console.log(`📅 FILTRO DE DATA - Não especificado, processando todas as ${allResponses.length} respostas`);
+      }
       
       const phoneMap = new Map<string, any>(); // Sistema de deduplicação inteligente com prioridade: COMPLETED > ABANDONED
       

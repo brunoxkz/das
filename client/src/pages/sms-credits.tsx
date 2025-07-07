@@ -288,39 +288,13 @@ export default function SMSCreditsPage() {
       return;
     }
 
-    // Validação obrigatória para data/hora - SEMPRE OBRIGATÓRIA
-    if (!campaignForm.scheduledDateTime) {
-      toast({
-        title: "Erro",
-        description: "A data e hora do agendamento são obrigatórias",
-        variant: "destructive"
-      });
-      return;
-    }
-
-    // Validação se data/hora está no futuro (mínimo 5 minutos)
-    const scheduledTime = new Date(campaignForm.scheduledDateTime);
-    const now = new Date();
-    const minTime = new Date(now.getTime() + 5 * 60 * 1000); // 5 minutos no futuro
-    
-    if (scheduledTime < minTime) {
-      toast({
-        title: "Erro",
-        description: "A data/hora deve ser pelo menos 5 minutos no futuro",
-        variant: "destructive"
-      });
-      return;
-    }
-
     // Gerar o nome automaticamente baseado no quiz selecionado
     const selectedQuiz = quizzes?.find((q: any) => q.id === campaignForm.quizId);
     const campaignName = `Sistema Contínuo - ${selectedQuiz?.title || 'Quiz'}`;
 
     createCampaignMutation.mutate({
       ...campaignForm,
-      name: campaignName,
-      triggerType: "scheduled", // Sempre agendado já que data/hora é obrigatória
-      scheduledDateTime: campaignForm.scheduledDateTime
+      name: campaignName
     });
   };
 
@@ -870,30 +844,79 @@ export default function SMSCreditsPage() {
                 </Select>
               </div>
 
-              {/* CAMPO DE DATA/HORA OBRIGATÓRIO */}
-              <div className="bg-purple-50 p-4 rounded-lg border border-purple-200">
+              {/* FILTRO DE DATA PARA LEADS */}
+              <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
                 <div className="flex items-center gap-2 mb-3">
-                  <Clock className="w-4 h-4 text-purple-600" />
-                  <span className="text-sm font-medium text-purple-900">Agendar Envio (OBRIGATÓRIO)</span>
+                  <Clock className="w-4 h-4 text-blue-600" />
+                  <span className="text-sm font-medium text-blue-900">Filtrar Leads por Data</span>
                 </div>
                 <div className="space-y-3">
                   <div>
-                    <Label htmlFor="scheduledDate" className="text-sm font-medium text-purple-800">
-                      Data e Hora *
+                    <Label htmlFor="fromDate" className="text-sm font-medium text-blue-800">
+                      Processar leads a partir de:
                     </Label>
                     <Input
-                      id="scheduledDate"
+                      id="fromDate"
                       type="datetime-local"
-                      value={campaignForm.scheduledDateTime || ''}
-                      onChange={(e) => setCampaignForm({...campaignForm, scheduledDateTime: e.target.value})}
-                      min={new Date(Date.now() + 5 * 60 * 1000).toISOString().slice(0, 16)}
+                      value={campaignForm.fromDate || ''}
+                      onChange={(e) => setCampaignForm({...campaignForm, fromDate: e.target.value})}
                       className="w-full"
-                      required
                     />
-                    <p className="text-xs text-purple-600 mt-1">
-                      A campanha será enviada exatamente na data/hora especificada (mínimo 5 minutos no futuro)
+                    <p className="text-xs text-blue-600 mt-1">
+                      Apenas leads capturados após esta data serão incluídos na campanha. Deixe vazio para incluir todos.
                     </p>
                   </div>
+                </div>
+              </div>
+
+              {/* AGENDAMENTO DE ENVIO */}
+              <div className="bg-orange-50 p-4 rounded-lg border border-orange-200">
+                <div className="flex items-center gap-2 mb-3">
+                  <Clock className="w-4 h-4 text-orange-600" />
+                  <span className="text-sm font-medium text-orange-900">Momento do Envio</span>
+                </div>
+                <div className="space-y-3">
+                  <Select 
+                    value={campaignForm.triggerType} 
+                    onValueChange={(value) => setCampaignForm({...campaignForm, triggerType: value as "immediate" | "delayed"})}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Quando enviar?" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="immediate">Enviar imediatamente</SelectItem>
+                      <SelectItem value="delayed">Enviar depois de X tempo que o lead chegou</SelectItem>
+                    </SelectContent>
+                  </Select>
+
+                  {campaignForm.triggerType === "delayed" && (
+                    <div className="flex gap-2 items-center bg-orange-100 p-3 rounded-lg">
+                      <span className="text-sm font-medium text-orange-900">Enviar após</span>
+                      <Input
+                        type="number"
+                        min="1"
+                        max="72"
+                        value={campaignForm.triggerDelay}
+                        onChange={(e) => setCampaignForm({...campaignForm, triggerDelay: parseInt(e.target.value) || 1})}
+                        className="w-20"
+                      />
+                      <Select 
+                        value={campaignForm.triggerUnit} 
+                        onValueChange={(value) => setCampaignForm({...campaignForm, triggerUnit: value as "minutes" | "hours"})}
+                      >
+                        <SelectTrigger className="w-24">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="minutes">min</SelectItem>
+                          <SelectItem value="hours">horas</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <span className="text-sm text-orange-700">
+                        que o lead {campaignForm.targetAudience === "completed" ? "completou" : campaignForm.targetAudience === "abandoned" ? "abandonou" : "interagiu com"} o quiz
+                      </span>
+                    </div>
+                  )}
                 </div>
               </div>
 
