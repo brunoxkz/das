@@ -198,23 +198,23 @@ export default function Analytics() {
           />
           <StatsCard
             title="Total de Leads"
-            value={dashboardStats?.totalLeads || 0}
+            value={allAnalytics ? allAnalytics.reduce((sum: number, a: any) => sum + (a.completions || 0), 0) : 0}
             icon={<Users className="w-5 h-5 text-green-600" />}
             color="green"
-            change="+12%"
+            change={allAnalytics && allAnalytics.length > 2 ? `+${Math.round(((allAnalytics.slice(0, Math.floor(allAnalytics.length / 2)).reduce((sum: number, a: any) => sum + (a.completions || 0), 0) - allAnalytics.slice(Math.floor(allAnalytics.length / 2)).reduce((sum: number, a: any) => sum + (a.completions || 0), 0)) / Math.max(1, allAnalytics.slice(Math.floor(allAnalytics.length / 2)).reduce((sum: number, a: any) => sum + (a.completions || 0), 0))) * 100)}%` : "+12%"}
             changeType="positive"
           />
           <StatsCard
             title="Total de Visualizações"
-            value={dashboardStats?.totalViews || 0}
+            value={allAnalytics ? allAnalytics.reduce((sum: number, a: any) => sum + (a.views || 0), 0) : 0}
             icon={<Eye className="w-5 h-5 text-purple-600" />}
             color="purple"
-            change="+8%"
+            change={allAnalytics && allAnalytics.length > 2 ? `+${Math.round(((allAnalytics.slice(0, Math.floor(allAnalytics.length / 2)).reduce((sum: number, a: any) => sum + (a.views || 0), 0) - allAnalytics.slice(Math.floor(allAnalytics.length / 2)).reduce((sum: number, a: any) => sum + (a.views || 0), 0)) / Math.max(1, allAnalytics.slice(Math.floor(allAnalytics.length / 2)).reduce((sum: number, a: any) => sum + (a.views || 0), 0))) * 100)}%` : "+8%"}
             changeType="positive"
           />
           <StatsCard
             title="Taxa Média de Conversão"
-            value={`${dashboardStats?.avgConversionRate || 0}%`}
+            value={`${allAnalytics && allAnalytics.length > 0 ? Math.round((allAnalytics.reduce((sum: number, a: any) => sum + (a.completions || 0), 0) / Math.max(1, allAnalytics.reduce((sum: number, a: any) => sum + (a.views || 0), 0))) * 100) : 0}%`}
             icon={<TrendingUp className="w-5 h-5 text-orange-600" />}
             color="orange"
             change="+3%"
