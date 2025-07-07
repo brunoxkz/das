@@ -980,12 +980,20 @@ export function registerSQLiteRoutes(app: Express): Server {
             }
             
             if (phoneNumber) {
+              // Verificar status de completude
+              const metadata = response.metadata as any;
+              const isComplete = metadata?.isComplete === true;
+              const completedAt = metadata?.completedAt || null;
+              
               phones.push({
                 id: response.id,
                 phone: phoneNumber,
                 name: userName || 'Sem nome',
                 submittedAt: response.submittedAt,
-                responses: responseData
+                responses: responseData,
+                isComplete: isComplete,
+                completedAt: completedAt,
+                status: isComplete ? 'completed' : 'abandoned'
               });
             } else {
               console.log(`📱 NENHUM TELEFONE ENCONTRADO na response ${index + 1}`);
@@ -1008,12 +1016,20 @@ export function registerSQLiteRoutes(app: Express): Server {
                   }
                 }
                 
+                // Verificar status de completude
+                const metadata = response.metadata as any;
+                const isComplete = metadata?.isComplete === true;
+                const completedAt = metadata?.completedAt || null;
+                
                 phones.push({
                   id: response.id,
                   phone: responseData[key],
                   name: userName || 'Sem nome',
                   submittedAt: response.submittedAt,
-                  responses: responseData
+                  responses: responseData,
+                  isComplete: isComplete,
+                  completedAt: completedAt,
+                  status: isComplete ? 'completed' : 'abandoned'
                 });
                 break;
               }

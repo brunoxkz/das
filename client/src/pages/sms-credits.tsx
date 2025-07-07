@@ -218,9 +218,13 @@ export default function SMSCreditsPage() {
       return;
     }
 
+    // Gerar o nome automaticamente baseado no quiz selecionado
+    const selectedQuiz = quizzes?.find((q: any) => q.id === campaignForm.quizId);
+    const campaignName = `Sistema Contínuo - ${selectedQuiz?.title || 'Quiz'}`;
+
     createCampaignMutation.mutate({
       ...campaignForm,
-      name: `Sistema Contínuo - ${quizzes?.find(q => q.id === campaignForm.quizId)?.title || 'Quiz'}`
+      name: campaignName
     });
   };
 
