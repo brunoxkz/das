@@ -180,7 +180,42 @@ export default function SMSCreditsPage() {
     return { completed, abandoned, all };
   };
 
+  // Calcular leads após filtro de data (LISTA OFICIAL PARA ENVIO)
+  const getFilteredLeadCounts = () => {
+    if (!quizPhones?.phones) return { completed: 0, abandoned: 0, all: 0, totalBeforeFilter: 0 };
+    
+    let phones = quizPhones.phones;
+    const totalBeforeFilter = phones.length;
+    
+    // Aplicar filtro de data se especificado
+    if (campaignForm.fromDate) {
+      const filterDate = new Date(campaignForm.fromDate);
+      phones = phones.filter((p: any) => {
+        const responseDate = new Date(p.submittedAt);
+        return responseDate >= filterDate;
+      });
+    }
+    
+    // Aplicar filtro de público-alvo
+    let filteredPhones = phones;
+    if (campaignForm.targetAudience === 'completed') {
+      filteredPhones = phones.filter((p: any) => p.status === 'completed');
+    } else if (campaignForm.targetAudience === 'abandoned') {
+      filteredPhones = phones.filter((p: any) => p.status === 'abandoned');
+    }
+    
+    return {
+      completed: phones.filter((p: any) => p.status === 'completed').length,
+      abandoned: phones.filter((p: any) => p.status === 'abandoned').length,
+      all: phones.length,
+      totalBeforeFilter,
+      finalCount: filteredPhones.length, // Número final que será enviado
+      filteredByDate: totalBeforeFilter - phones.length // Quantos foram removidos pelo filtro de data
+    };
+  };
+
   const leadCounts = getLeadCounts();
+  const filteredCounts = getFilteredLeadCounts();
 
   // Purchase SMS credits mutation
   const purchaseCreditsMutation = useMutation({
@@ -919,6 +954,33 @@ export default function SMSCreditsPage() {
                     <p className="text-xs text-blue-600 mt-1">
                       Apenas leads capturados após esta data serão incluídos na campanha. Deixe vazio para incluir todos.
                     </p>
+                    
+                    {/* CONTADOR DA LISTA OFICIAL */}
+                    {campaignForm.quizId && (
+                      <div className="mt-3 p-3 bg-blue-50 rounded-lg border border-blue-200">
+                        <div className="space-y-2">
+                          <div className="flex items-center justify-between">
+                            <span className="text-sm font-medium text-blue-800">Lista Oficial para Envio:</span>
+                            <span className="px-3 py-1 bg-blue-600 text-white text-sm font-bold rounded-full">
+                              {filteredCounts.finalCount} SMS serão enviados
+                            </span>
+                          </div>
+                          
+                          {campaignForm.fromDate && filteredCounts.filteredByDate > 0 && (
+                            <div className="text-xs text-blue-600">
+                              📅 {filteredCounts.filteredByDate} leads removidos pelo filtro de data
+                            </div>
+                          )}
+                          
+                          <div className="text-xs text-blue-600">
+                            📊 Total disponível: {filteredCounts.totalBeforeFilter} leads • 
+                            Após filtros: {filteredCounts.finalCount} leads • 
+                            Público: {campaignForm.targetAudience === 'completed' ? 'Completos' : 
+                                      campaignForm.targetAudience === 'abandoned' ? 'Abandonados' : 'Todos'}
+                          </div>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>

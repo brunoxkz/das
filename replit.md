@@ -395,6 +395,20 @@ Changelog:
   * Enhanced phone display with completion percentage and submission date for better lead tracking
   * Fixed JSON parsing error in campaign activation system with improved data type handling
   * Phone lists now provide clear visual feedback about lead quality and quiz completion status
+- July 07, 2025. STATUS INCONSISTENCY CRITICAL BUG FIX - Unified completion status logic across all endpoints:
+  * Fixed critical inconsistency where `/api/quiz-phones` used only `metadata.isComplete === true` 
+  * Campaign creation endpoint used only `completionPercentage === 100` causing status conflicts
+  * Unified logic: both endpoints now use `isComplete=true OR completionPercentage=100` for "completed" status
+  * Quiz 312312 with phone 11995133932 now correctly shows as "completed" in both interface and campaigns
+  * Consistent behavior ensures reliable audience segmentation and campaign targeting
+- July 07, 2025. DYNAMIC LEAD COUNTERS SYSTEM - Implemented real-time lead counting with visual feedback:
+  * Added dynamic counters in public-alvo selector showing exact lead counts per audience type
+  * Green badges for completed leads, orange for abandoned, blue for all leads with live counts
+  * Real-time updates every 10 seconds to detect new leads automatically as they arrive
+  * Enhanced date filter with "Lista Oficial para Envio" showing exact SMS count after all filters applied
+  * Visual breakdown: total available → after date filter → after audience filter → final SMS count
+  * System now displays exactly how many SMS will be sent before campaign creation
+  * Complete transparency in lead filtering and campaign targeting with dynamic updates
 ```
 
 ## User Preferences
