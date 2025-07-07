@@ -179,7 +179,7 @@ app.use((req, res, next) => {
     }
   }, 30000); // A cada 30 segundos
 
-  // Sistema de detecção automática de novos leads - SIMPLIFICADO PARA DEBUG
+  // Sistema de detecção automática de novos leads - PERMITE RE-ENVIO APENAS SE USUÁRIO RESPONDER NOVAMENTE
   const autoDetectionSystem = async () => {
     console.log(`🔍 EXECUTANDO DETECÇÃO AUTOMÁTICA - ${new Date().toLocaleTimeString()}`);
     try {
@@ -193,30 +193,64 @@ app.use((req, res, next) => {
           
           const responses = await storage.getQuizResponses(campaign.quizId);
           const logs = await storage.getSMSLogs(campaign.id);
-          const existingPhones = new Set(logs.map(l => l.phone));
           
-          console.log(`📊 DADOS: ${responses.length} respostas, ${logs.length} logs, ${existingPhones.size} telefones existentes`);
+          // Mapear telefones já processados com seus timestamps
+          const processedPhones = new Map();
+          logs.forEach(log => {
+            const phone = log.phone;
+            const logTime = new Date(log.createdAt).getTime();
+            
+            if (!processedPhones.has(phone) || logTime > processedPhones.get(phone).time) {
+              processedPhones.set(phone, {
+                time: logTime,
+                status: log.status
+              });
+            }
+          });
           
-          // Buscar novos telefones
+          console.log(`📊 DADOS: ${responses.length} respostas, ${logs.length} logs, ${processedPhones.size} telefones únicos processados`);
+          
+          // Buscar telefones nas respostas
           for (const response of responses) {
             const responseArray = Array.isArray(response.responses) ? response.responses : JSON.parse(response.responses || '[]');
+            const responseTime = new Date(response.submittedAt || response.createdAt).getTime();
+            
             for (const resp of responseArray) {
               if (resp.elementType === 'phone' && resp.answer) {
                 const phone = resp.answer;
-                if (phone.length >= 10 && !existingPhones.has(phone)) {
-                  console.log(`🆕 NOVO TELEFONE DETECTADO: ${phone} - AGENDANDO...`);
+                
+                if (phone.length >= 10) {
+                  const processed = processedPhones.get(phone);
                   
-                  // Criar log agendado
-                  await storage.createSMSLog({
-                    id: crypto.randomUUID(),
-                    campaignId: campaign.id,
-                    phone,
-                    message: campaign.message,
-                    status: 'scheduled',
-                    scheduledAt: Math.floor(Date.now() / 1000) + (campaign.triggerDelay * 60)
-                  });
-                  
-                  console.log(`✅ TELEFONE ${phone} AGENDADO COM SUCESSO`);
+                  if (!processed) {
+                    // Telefone completamente novo
+                    console.log(`🆕 NOVO TELEFONE DETECTADO: ${phone} - AGENDANDO...`);
+                    
+                    await storage.createSMSLog({
+                      id: crypto.randomUUID(),
+                      campaignId: campaign.id,
+                      phone,
+                      message: campaign.message,
+                      status: 'scheduled',
+                      scheduledAt: Math.floor(Date.now() / 1000) + (campaign.triggerDelay * 60)
+                    });
+                    
+                    console.log(`✅ TELEFONE ${phone} AGENDADO COM SUCESSO`);
+                  } else if (processed.status === 'failed' && responseTime > processed.time) {
+                    // Telefone falhou e usuário respondeu novamente após a falha
+                    console.log(`🔄 RE-TENTATIVA: ${phone} - usuário respondeu novamente após falha, permitindo novo envio...`);
+                    
+                    await storage.createSMSLog({
+                      id: crypto.randomUUID(),
+                      campaignId: campaign.id,
+                      phone,
+                      message: campaign.message,
+                      status: 'scheduled',
+                      scheduledAt: Math.floor(Date.now() / 1000) + (campaign.triggerDelay * 60)
+                    });
+                    
+                    console.log(`✅ TELEFONE ${phone} REAGENDADO COM SUCESSO`);
+                  }
                 }
               }
             }
