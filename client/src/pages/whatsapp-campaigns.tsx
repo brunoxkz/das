@@ -79,10 +79,12 @@ export default function WhatsAppCampaignsPage() {
   const { toast } = useToast();
 
   // Buscar lista de quizzes
-  const { data: quizzes = [] } = useQuery({
+  const { data: quizzes = [], isLoading: quizzesLoading } = useQuery({
     queryKey: ['/api/quizzes'],
     refetchInterval: autoRefresh ? 10000 : false,
   });
+  
+  console.log("DEBUG QUIZZES:", { quizzes, length: quizzes.length, isLoading: quizzesLoading });
 
 
 
@@ -300,15 +302,14 @@ export default function WhatsAppCampaignsPage() {
                       <SelectValue placeholder="Escolha um quiz" />
                     </SelectTrigger>
                     <SelectContent>
-                      {quizzes.length > 0 ? (
-                        quizzes.map((quiz) => (
-                          <SelectItem key={quiz.id} value={quiz.id}>
-                            {quiz.title}
-                          </SelectItem>
-                        ))
-                      ) : (
+                      {quizzes.map((quiz) => (
+                        <SelectItem key={quiz.id} value={quiz.id}>
+                          {quiz.title}
+                        </SelectItem>
+                      ))}
+                      {quizzes.length === 0 && (
                         <SelectItem value="no-quiz" disabled>
-                          Nenhum quiz encontrado
+                          Carregando quizzes...
                         </SelectItem>
                       )}
                     </SelectContent>
