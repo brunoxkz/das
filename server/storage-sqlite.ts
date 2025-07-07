@@ -645,60 +645,6 @@ export class SQLiteStorage implements IStorage {
     // Remover duplicatas
     return Array.from(new Set(emails));
   }
-  // Métodos para SMS campaigns
-  async createSmsCampaign(campaign: InsertSmsCampaign): Promise<SmsCampaign> {
-    try {
-      const newCampaign = {
-        ...campaign,
-        id: crypto.randomUUID(),
-        createdAt: new Date(),
-        updatedAt: new Date()
-      };
-      
-      await this.db.insert(smsCampaigns).values(newCampaign);
-      return newCampaign as SmsCampaign;
-    } catch (error) {
-      console.error('Erro ao criar campanha SMS:', error);
-      throw error;
-    }
-  }
-
-  async getSmsCampaigns(userId: string): Promise<SmsCampaign[]> {
-    try {
-      const campaigns = await this.db.select().from(smsCampaigns).where(eq(smsCampaigns.userId, userId));
-      return campaigns;
-    } catch (error) {
-      console.error('Erro ao obter campanhas SMS:', error);
-      return [];
-    }
-  }
-
-  async updateSmsCampaign(id: string, updates: Partial<SmsCampaign>): Promise<SmsCampaign | null> {
-    try {
-      const updatedCampaign = {
-        ...updates,
-        updatedAt: new Date()
-      };
-      
-      await this.db.update(smsCampaigns).set(updatedCampaign).where(eq(smsCampaigns.id, id));
-      
-      const campaign = await this.db.select().from(smsCampaigns).where(eq(smsCampaigns.id, id)).get();
-      return campaign || null;
-    } catch (error) {
-      console.error('Erro ao atualizar campanha SMS:', error);
-      return null;
-    }
-  }
-
-  async deleteSmsCampaign(id: string): Promise<boolean> {
-    try {
-      await this.db.delete(smsCampaigns).where(eq(smsCampaigns.id, id));
-      return true;
-    } catch (error) {
-      console.error('Erro ao deletar campanha SMS:', error);
-      return false;
-    }
-  }
 }
 
 export const storage = new SQLiteStorage();
