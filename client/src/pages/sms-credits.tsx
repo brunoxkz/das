@@ -164,8 +164,23 @@ export default function SMSCreditsPage() {
       if (!response.ok) throw new Error("Failed to fetch quiz phones");
       return response.json();
     },
-    enabled: !!campaignForm.quizId
+    enabled: !!campaignForm.quizId,
+    refetchInterval: 10000 // Atualizar a cada 10 segundos para detectar novos leads
   });
+
+  // Calcular contadores dinâmicos de leads por público-alvo
+  const getLeadCounts = () => {
+    if (!quizPhones?.phones) return { completed: 0, abandoned: 0, all: 0 };
+    
+    const phones = quizPhones.phones;
+    const completed = phones.filter((p: any) => p.status === 'completed').length;
+    const abandoned = phones.filter((p: any) => p.status === 'abandoned').length;
+    const all = phones.length;
+    
+    return { completed, abandoned, all };
+  };
+
+  const leadCounts = getLeadCounts();
 
   // Purchase SMS credits mutation
   const purchaseCreditsMutation = useMutation({
@@ -837,11 +852,50 @@ export default function SMSCreditsPage() {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="completed">Completaram o quiz</SelectItem>
-                    <SelectItem value="abandoned">Abandonaram o quiz</SelectItem>
-                    <SelectItem value="all">Todos os leads</SelectItem>
+                    <SelectItem value="completed">
+                      <div className="flex items-center justify-between w-full">
+                        <span>Completaram o quiz</span>
+                        <span className="ml-2 px-2 py-1 bg-green-100 text-green-800 text-xs font-semibold rounded-full">
+                          {campaignForm.quizId ? leadCounts.completed : '0'} leads
+                        </span>
+                      </div>
+                    </SelectItem>
+                    <SelectItem value="abandoned">
+                      <div className="flex items-center justify-between w-full">
+                        <span>Abandonaram o quiz</span>
+                        <span className="ml-2 px-2 py-1 bg-orange-100 text-orange-800 text-xs font-semibold rounded-full">
+                          {campaignForm.quizId ? leadCounts.abandoned : '0'} leads
+                        </span>
+                      </div>
+                    </SelectItem>
+                    <SelectItem value="all">
+                      <div className="flex items-center justify-between w-full">
+                        <span>Todos os leads</span>
+                        <span className="ml-2 px-2 py-1 bg-blue-100 text-blue-800 text-xs font-semibold rounded-full">
+                          {campaignForm.quizId ? leadCounts.all : '0'} leads
+                        </span>
+                      </div>
+                    </SelectItem>
                   </SelectContent>
                 </Select>
+                
+                {/* Resumo dinâmico dos leads encontrados */}
+                {campaignForm.quizId && (
+                  <div className="mt-2 p-3 bg-gray-50 rounded-lg border">
+                    <div className="flex items-center gap-2 text-sm">
+                      <MessageSquare className="w-4 h-4 text-gray-600" />
+                      <span className="font-medium text-gray-700">
+                        {campaignForm.targetAudience === 'completed' && `${leadCounts.completed} leads que completaram serão incluídos`}
+                        {campaignForm.targetAudience === 'abandoned' && `${leadCounts.abandoned} leads que abandonaram serão incluídos`}
+                        {campaignForm.targetAudience === 'all' && `${leadCounts.all} leads (todos) serão incluídos`}
+                      </span>
+                      {phonesLoading && <span className="text-xs text-gray-500">(atualizando...)</span>}
+                    </div>
+                    <div className="mt-1 text-xs text-gray-500">
+                      📱 Atualização automática a cada 10 segundos para detectar novos leads
+                    </div>
+                  </div>
+                )}
               </div>
 
               {/* FILTRO DE DATA PARA LEADS */}
