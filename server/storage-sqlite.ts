@@ -697,7 +697,7 @@ export class SQLiteStorage implements IStorage {
     phones: string[]; 
     status?: string; 
     scheduledAt?: number | Date;
-    fromDate?: string;
+
     createdAt?: Date;
     updatedAt?: Date;
     triggerDelay?: number;
@@ -711,9 +711,6 @@ export class SQLiteStorage implements IStorage {
     console.log(`📅 STORAGE - scheduledAt recebido: ${campaignData.scheduledAt}`);
     console.log(`📅 STORAGE - scheduledAt convertido: ${scheduledAtValue}`);
     
-    // Converter fromDate para timestamp se fornecido
-    const fromDateValue = campaignData.fromDate ? Math.floor(new Date(campaignData.fromDate).getTime() / 1000) : null;
-    
     const campaign = {
       id: crypto.randomUUID(),
       name: campaignData.name,
@@ -726,7 +723,6 @@ export class SQLiteStorage implements IStorage {
       triggerDelay: campaignData.triggerDelay || 10,
       triggerUnit: campaignData.triggerUnit || 'minutes',
       targetAudience: campaignData.targetAudience || 'all',
-      fromDate: fromDateValue,
       createdAt: now,
       updatedAt: now
     };
@@ -760,10 +756,22 @@ export class SQLiteStorage implements IStorage {
         .from(smsCampaigns)
         .orderBy(desc(smsCampaigns.createdAt));
       
-      return campaigns.map(campaign => ({
-        ...campaign,
-        phones: JSON.parse(campaign.phones)
-      }));
+      return campaigns.map(campaign => {
+        try {
+          return {
+            ...campaign,
+            phones: JSON.parse(campaign.phones)
+          };
+        } catch (parseError) {
+          console.error(`❌ Erro ao fazer parse de phones para campanha ${campaign.id}:`, parseError);
+          console.error(`❌ Dados inválidos: ${campaign.phones}`);
+          // Retornar campanha com phones vazio para evitar quebrar o sistema
+          return {
+            ...campaign,
+            phones: []
+          };
+        }
+      });
     } catch (error) {
       console.error('Error getting all SMS campaigns:', error);
       throw error;

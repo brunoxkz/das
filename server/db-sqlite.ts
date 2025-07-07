@@ -233,6 +233,10 @@ export function runMigrations() {
       sqlite.exec("ALTER TABLE sms_campaigns ADD COLUMN replies INTEGER DEFAULT 0;");
     } catch (e) {} // Ignora se já existe
     
+    try {
+      sqlite.exec("ALTER TABLE sms_campaigns ADD COLUMN fromDate INTEGER;");
+    } catch (e) {} // Ignora se já existe
+    
     sqlite.exec(createSmsLogsTable);
     sqlite.exec(createEmailCampaignsTable);
     sqlite.exec(createEmailTemplatesTable);

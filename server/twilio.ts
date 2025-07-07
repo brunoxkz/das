@@ -93,3 +93,15 @@ export function formatPhoneNumber(phone: string): string {
   console.log(`📱 Caso padrão (assumindo Brasil): ${formatted}`);
   return formatted;
 }
+
+// Função com interface compatível para o sistema de campanhas
+export default {
+  async sendSMS(phoneNumber: string, message: string): Promise<{ success: boolean; error?: string }> {
+    try {
+      const success = await sendSms(phoneNumber, message);
+      return { success };
+    } catch (error) {
+      return { success: false, error: error.message || 'Erro desconhecido' };
+    }
+  }
+};
