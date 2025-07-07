@@ -493,6 +493,98 @@ export function registerSQLiteRoutes(app: Express): Server {
     }
   });
 
+  // Submissão completa de quiz (rota pública para leads)
+  app.post("/api/quizzes/:id/submit", async (req: Request, res: Response) => {
+    try {
+      const { id: quizId } = req.params;
+      const { responses, metadata } = req.body;
+      
+      console.log(`📝 SUBMISSÃO COMPLETA - Quiz: ${quizId}, Responses: ${responses?.length || 0}`);
+      
+      if (!responses || !Array.isArray(responses) || responses.length === 0) {
+        console.log('⚠️ Nenhuma resposta válida para submeter');
+        return res.status(400).json({ error: 'Respostas são obrigatórias' });
+      }
+
+      // Verificar se o quiz existe e está publicado (permitir acesso público)
+      const quiz = await storage.getQuiz(quizId);
+      if (!quiz) {
+        console.log(`❌ Quiz ${quizId} não encontrado`);
+        return res.status(404).json({ error: "Quiz não encontrado" });
+      }
+
+      if (!quiz.isPublished) {
+        console.log(`❌ Quiz ${quizId} não está publicado`);
+        return res.status(403).json({ error: "Quiz não está disponível" });
+      }
+
+      // Converter responses do formato do globalVariableProcessor para formato de armazenamento
+      const responseData: Record<string, any> = {};
+      
+      responses.forEach((response: any) => {
+        if (response.responseId && response.value !== undefined) {
+          responseData[response.responseId] = response.value;
+          console.log(`📝 Campo finalizado: ${response.responseId} = ${response.value}`);
+        }
+      });
+
+      // Verificar se existe uma resposta parcial prévia para consolidar
+      const existingResponses = await storage.getQuizResponses(quizId);
+      let existingPartialResponse = existingResponses.find(r => 
+        r.metadata && 
+        typeof r.metadata === 'object' && 
+        (r.metadata as any).isPartial === true
+      );
+
+      let finalResponseData = responseData;
+
+      if (existingPartialResponse) {
+        // Mesclar dados parciais com dados finais
+        const existingData = existingPartialResponse.responses as Record<string, any> || {};
+        finalResponseData = { ...existingData, ...responseData };
+        
+        console.log(`🔄 MESCLANDO com resposta parcial existente: ${existingPartialResponse.id}`);
+        console.log(`📋 Dados mesclados:`, Object.keys(finalResponseData));
+        
+        // Remover a resposta parcial após consolidação
+        await storage.deleteQuizResponse(existingPartialResponse.id);
+        console.log(`🗑️ Resposta parcial removida após consolidação`);
+      }
+
+      // Criar resposta final (completa)
+      console.log(`✨ CRIANDO resposta final completa`);
+      console.log(`📋 Dados finais:`, Object.keys(finalResponseData));
+      
+      await storage.createQuizResponse({
+        quizId,
+        responses: finalResponseData,
+        metadata: {
+          ...metadata,
+          isPartial: false,
+          isComplete: true,
+          completedAt: new Date().toISOString(),
+          totalFields: Object.keys(finalResponseData).length,
+          userAgent: req.headers['user-agent'],
+          ipAddress: req.ip
+        }
+      });
+
+      // Invalidar caches para atualizar estatísticas
+      cache.invalidateQuizCaches(quizId, quiz.userId);
+
+      console.log(`✅ Submissão completa realizada com sucesso!`);
+      
+      res.status(201).json({ 
+        message: 'Quiz submetido com sucesso',
+        fieldsCount: Object.keys(finalResponseData).length
+      });
+      
+    } catch (error) {
+      console.error('❌ ERRO ao submeter quiz:', error);
+      res.status(500).json({ error: 'Erro interno do servidor' });
+    }
+  });
+
   // SMS Quiz Phone Numbers endpoint
   app.get("/api/quiz-phones/:quizId", verifyJWT, async (req: any, res) => {
     try {

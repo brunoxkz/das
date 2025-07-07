@@ -94,9 +94,11 @@ app.use((req, res, next) => {
     next();
   });
 
-  // Use mock routes system - 100% JWT simulation without any auth conflicts
-  const { registerMockRoutes } = await import("./routes-mock");
-  const server = registerMockRoutes(app);
+  // Use SQLite system directly
+  const { setupSQLiteAuth } = await import("./auth-sqlite");
+  const { registerSQLiteRoutes } = await import("./routes-sqlite");
+  setupSQLiteAuth(app);
+  const server = registerSQLiteRoutes(app);
 
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
     const status = err.status || err.statusCode || 500;
