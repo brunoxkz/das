@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { MessageSquare, Send, DollarSign, FileText, Plus, Eye, Clock, Users, CheckCircle, XCircle, Phone, Search, AlertCircle, Edit, CreditCard } from "lucide-react";
+import { MessageSquare, Send, DollarSign, FileText, Plus, Eye, Clock, Users, CheckCircle, XCircle, Phone, Search, AlertCircle, Edit, CreditCard, Pause, Play, Trash2 } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Progress } from "@/components/ui/progress";
 import { useToast } from "@/hooks/use-toast";
@@ -278,6 +278,60 @@ export default function SMSCreditsPage() {
     sendCampaignMutation.mutate(campaignId);
   };
 
+  // Pause campaign mutation
+  const pauseCampaignMutation = useMutation({
+    mutationFn: async (campaignId: string) => {
+      const token = localStorage.getItem("accessToken");
+      const response = await fetch(`/api/sms-campaigns/${campaignId}/pause`, {
+        method: "PUT",
+        headers: {
+          "Authorization": `Bearer ${token}`
+        }
+      });
+      if (!response.ok) throw new Error("Failed to pause campaign");
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/sms-campaigns"] });
+      toast({
+        title: "Campanha Pausada",
+        description: "A campanha foi pausada com sucesso."
+      });
+    }
+  });
+
+  // Delete campaign mutation
+  const deleteCampaignMutation = useMutation({
+    mutationFn: async (campaignId: string) => {
+      const token = localStorage.getItem("accessToken");
+      const response = await fetch(`/api/sms-campaigns/${campaignId}`, {
+        method: "DELETE",
+        headers: {
+          "Authorization": `Bearer ${token}`
+        }
+      });
+      if (!response.ok) throw new Error("Failed to delete campaign");
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/sms-campaigns"] });
+      toast({
+        title: "Campanha Deletada",
+        description: "A campanha foi deletada com sucesso."
+      });
+    }
+  });
+
+  const handlePauseCampaign = (campaignId: string) => {
+    pauseCampaignMutation.mutate(campaignId);
+  };
+
+  const handleDeleteCampaign = (campaignId: string) => {
+    if (confirm("Tem certeza que deseja deletar esta campanha? Esta ação não pode ser desfeita.")) {
+      deleteCampaignMutation.mutate(campaignId);
+    }
+  };
+
   const creditPackages = [
     { amount: 100, price: 9.90, bonus: 0 },
     { amount: 500, price: 39.90, bonus: 50 },
@@ -499,9 +553,29 @@ export default function SMSCreditsPage() {
                           <p className="text-sm text-green-700">{campaign.quizTitle}</p>
                         </div>
                       </div>
-                      <div className="text-right">
-                        <p className="text-sm font-medium text-green-800">{campaign.sent || 0} enviados</p>
-                        <p className="text-xs text-green-600">Em funcionamento</p>
+                      <div className="flex items-center gap-3">
+                        <div className="text-right">
+                          <p className="text-sm font-medium text-green-800">{campaign.sent || 0} enviados</p>
+                          <p className="text-xs text-green-600">Em funcionamento</p>
+                        </div>
+                        <div className="flex gap-2">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => handlePauseCampaign(campaign.id)}
+                            className="text-yellow-600 border-yellow-300 hover:bg-yellow-50"
+                          >
+                            <Pause className="w-4 h-4" />
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => handleDeleteCampaign(campaign.id)}
+                            className="text-red-600 border-red-300 hover:bg-red-50"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        </div>
                       </div>
                     </div>
                   ))}

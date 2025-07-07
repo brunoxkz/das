@@ -1369,6 +1369,57 @@ export function registerSQLiteRoutes(app: Express): Server {
     }
   });
 
+  // Pause SMS campaign
+  app.put("/api/sms-campaigns/:id/pause", verifyJWT, async (req: any, res: Response) => {
+    try {
+      const { id } = req.params;
+      const userId = req.user.id;
+      
+      const campaign = await storage.getSMSCampaignById(id);
+      
+      if (!campaign || campaign.userId !== userId) {
+        return res.status(404).json({ error: "Campanha não encontrada" });
+      }
+
+      await storage.updateSMSCampaign(id, {
+        status: 'paused',
+        updatedAt: new Date()
+      });
+
+      res.json({
+        success: true,
+        message: "Campanha pausada com sucesso"
+      });
+    } catch (error) {
+      console.error("Error pausing SMS campaign:", error);
+      res.status(500).json({ error: "Error pausing SMS campaign" });
+    }
+  });
+
+  // Delete SMS campaign
+  app.delete("/api/sms-campaigns/:id", verifyJWT, async (req: any, res: Response) => {
+    try {
+      const { id } = req.params;
+      const userId = req.user.id;
+      
+      const campaign = await storage.getSMSCampaignById(id);
+      
+      if (!campaign || campaign.userId !== userId) {
+        return res.status(404).json({ error: "Campanha não encontrada" });
+      }
+
+      await storage.deleteSMSCampaign(id);
+
+      res.json({
+        success: true,
+        message: "Campanha deletada com sucesso"
+      });
+    } catch (error) {
+      console.error("Error deleting SMS campaign:", error);
+      res.status(500).json({ error: "Error deleting SMS campaign" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
