@@ -128,10 +128,16 @@ app.use((req, res, next) => {
             // Enviar SMS para todos os telefones
             let phones;
             try {
-              phones = JSON.parse(campaign.phones);
+              // Se phones já é string, fazer parse; se for object, usar diretamente
+              if (typeof campaign.phones === 'string') {
+                phones = JSON.parse(campaign.phones);
+              } else {
+                phones = campaign.phones;
+              }
               console.log(`📱 PHONES PARSED: ${phones.length} telefones`);
             } catch (error) {
               console.error(`❌ Erro ao fazer parse de phones para campanha ${campaign.id}:`, error);
+              console.error(`❌ Dados recebidos: ${campaign.phones}`);
               continue; // Pular esta campanha se houver erro no JSON
             }
             

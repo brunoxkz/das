@@ -1113,7 +1113,20 @@ export default function SMSCreditsPage() {
                               <Phone className="w-4 h-4 text-green-600" />
                             </div>
                             <div>
-                              <p className="font-medium">{phone.phone}</p>
+                              <div className="flex items-center gap-2">
+                                <p className="font-medium">{phone.phone}</p>
+                                {phone.status === 'completed' ? (
+                                  <Badge variant="default" className="bg-green-100 text-green-800 border-green-200">
+                                    <CheckCircle className="w-3 h-3 mr-1" />
+                                    Completo
+                                  </Badge>
+                                ) : (
+                                  <Badge variant="secondary" className="bg-orange-100 text-orange-800 border-orange-200">
+                                    <Clock className="w-3 h-3 mr-1" />
+                                    Abandonado
+                                  </Badge>
+                                )}
+                              </div>
                               <p className="text-sm text-gray-600">
                                 {phone.name || "Nome não informado"}
                               </p>
@@ -1122,6 +1135,9 @@ export default function SMSCreditsPage() {
                           <div className="text-right">
                             <p className="text-sm text-gray-600">
                               {new Date(phone.submittedAt).toLocaleDateString("pt-BR")}
+                            </p>
+                            <p className="text-xs text-gray-500">
+                              {phone.completionPercentage}% concluído
                             </p>
                           </div>
                         </div>

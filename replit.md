@@ -389,6 +389,12 @@ Changelog:
   * System now maintains data integrity by preventing duplicate phones while respecting completion status hierarchy
   * Fixed campaign display issues by removing corrupted JSON data and implementing robust error handling
   * Campaigns now correctly segment audiences with dedicated lists for "completed", "abandoned", and "all" targeting options
+- July 07, 2025. STATUS INDICATORS IN PHONE LIST - Enhanced user interface with completion status display:
+  * Added visual status badges next to phone numbers showing "Completo" (green) or "Abandonado" (orange)
+  * Implemented CheckCircle and Clock icons to clearly distinguish between completed and abandoned quiz responses
+  * Enhanced phone display with completion percentage and submission date for better lead tracking
+  * Fixed JSON parsing error in campaign activation system with improved data type handling
+  * Phone lists now provide clear visual feedback about lead quality and quiz completion status
 ```
 
 ## User Preferences
