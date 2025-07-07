@@ -79,7 +79,7 @@ export default function SMSCreditsPage() {
   const [phoneSearch, setPhoneSearch] = useState("");
   const [selectedCampaignLogs, setSelectedCampaignLogs] = useState<string | null>(null);
 
-  // Fetch user's SMS credits
+  // Fetch user's SMS credits with real usage calculation
   const { data: smsCredits, isLoading: creditsLoading } = useQuery<SMSCredits>({
     queryKey: ["/api/sms-credits"],
     queryFn: async () => {
@@ -91,7 +91,38 @@ export default function SMSCreditsPage() {
         },
       });
       if (!response.ok) throw new Error("Failed to fetch SMS credits");
-      return response.json();
+      const credits = await response.json();
+      
+      // Calculate real usage from all campaigns
+      const campaignsResponse = await fetch("/api/sms-campaigns", {
+        headers: { "Authorization": `Bearer ${token}` }
+      });
+      if (campaignsResponse.ok) {
+        const campaigns = await campaignsResponse.json();
+        let totalUsed = 0;
+        
+        for (const campaign of campaigns) {
+          try {
+            const logsResponse = await fetch(`/api/sms-campaigns/${campaign.id}/logs`, {
+              headers: { "Authorization": `Bearer ${token}` }
+            });
+            if (logsResponse.ok) {
+              const logs = await logsResponse.json();
+              totalUsed += logs.filter((log: any) => log.status === 'sent' || log.status === 'delivered' || log.status === 'failed').length;
+            }
+          } catch (error) {
+            // Continue if logs fetch fails
+          }
+        }
+        
+        return {
+          total: credits.total,
+          used: totalUsed,
+          remaining: credits.total - totalUsed
+        };
+      }
+      
+      return credits;
     }
   });
 
@@ -115,7 +146,7 @@ export default function SMSCreditsPage() {
     },
   });
 
-  // Fetch SMS campaigns
+  // Fetch SMS campaigns with real stats
   const { data: campaigns, isLoading: campaignLoading } = useQuery<SMSCampaign[]>({
     queryKey: ["/api/sms-campaigns"],
     queryFn: async () => {
@@ -127,7 +158,29 @@ export default function SMSCreditsPage() {
         },
       });
       if (!response.ok) throw new Error("Failed to fetch SMS campaigns");
-      return response.json();
+      const campaigns = await response.json();
+      
+      // Fetch real stats from logs for each campaign
+      const campaignsWithStats = await Promise.all(
+        campaigns.map(async (campaign: SMSCampaign) => {
+          try {
+            const logsResponse = await fetch(`/api/sms-campaigns/${campaign.id}/logs`, {
+              headers: { "Authorization": `Bearer ${token}` }
+            });
+            if (!logsResponse.ok) {
+              return { ...campaign, sent: 0, delivered: 0 };
+            }
+            const logs = await logsResponse.json();
+            const sent = logs.filter((log: any) => log.status === 'sent' || log.status === 'delivered' || log.status === 'failed').length;
+            const delivered = logs.filter((log: any) => log.status === 'delivered').length;
+            return { ...campaign, sent, delivered };
+          } catch (error) {
+            return { ...campaign, sent: 0, delivered: 0 };
+          }
+        })
+      );
+      
+      return campaignsWithStats;
     },
     staleTime: 0, // Force fresh data
     cacheTime: 0  // No cache

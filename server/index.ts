@@ -210,49 +210,67 @@ app.use((req, res, next) => {
           
           console.log(`📊 DADOS: ${responses.length} respostas, ${logs.length} logs, ${processedPhones.size} telefones únicos processados`);
           
-          // Buscar telefones nas respostas
+          // Verificar apenas telefones que ainda não foram processados ou precisam re-envio válido
+          const phoneResponseTimes = new Map();
+          
+          // Mapear tempo de resposta mais recente para cada telefone
           for (const response of responses) {
             const responseArray = Array.isArray(response.responses) ? response.responses : JSON.parse(response.responses || '[]');
             const responseTime = new Date(response.submittedAt || response.createdAt).getTime();
             
             for (const resp of responseArray) {
-              if (resp.elementType === 'phone' && resp.answer) {
+              if (resp.elementType === 'phone' && resp.answer && resp.answer.length >= 10) {
                 const phone = resp.answer;
-                
-                if (phone.length >= 10) {
-                  const processed = processedPhones.get(phone);
-                  
-                  if (!processed) {
-                    // Telefone completamente novo
-                    console.log(`🆕 NOVO TELEFONE DETECTADO: ${phone} - AGENDANDO...`);
-                    
-                    await storage.createSMSLog({
-                      id: crypto.randomUUID(),
-                      campaignId: campaign.id,
-                      phone,
-                      message: campaign.message,
-                      status: 'scheduled',
-                      scheduledAt: Math.floor(Date.now() / 1000) + (campaign.triggerDelay * 60)
-                    });
-                    
-                    console.log(`✅ TELEFONE ${phone} AGENDADO COM SUCESSO`);
-                  } else if (processed.status === 'failed' && responseTime > processed.time) {
-                    // Telefone falhou e usuário respondeu novamente após a falha
-                    console.log(`🔄 RE-TENTATIVA: ${phone} - usuário respondeu novamente após falha, permitindo novo envio...`);
-                    
-                    await storage.createSMSLog({
-                      id: crypto.randomUUID(),
-                      campaignId: campaign.id,
-                      phone,
-                      message: campaign.message,
-                      status: 'scheduled',
-                      scheduledAt: Math.floor(Date.now() / 1000) + (campaign.triggerDelay * 60)
-                    });
-                    
-                    console.log(`✅ TELEFONE ${phone} REAGENDADO COM SUCESSO`);
-                  }
+                const currentTime = phoneResponseTimes.get(phone) || 0;
+                if (responseTime > currentTime) {
+                  phoneResponseTimes.set(phone, responseTime);
                 }
               }
+            }
+          }
+          
+          // Processar apenas telefones que atendem aos critérios
+          for (const [phone, responseTime] of phoneResponseTimes) {
+            const processed = processedPhones.get(phone);
+            
+            if (!processed) {
+              // Telefone completamente novo - criar apenas um log
+              console.log(`🆕 NOVO TELEFONE DETECTADO: ${phone} - AGENDANDO...`);
+              
+              await storage.createSMSLog({
+                id: crypto.randomUUID(),
+                campaignId: campaign.id,
+                phone,
+                message: campaign.message,
+                status: 'scheduled',
+                scheduledAt: Math.floor(Date.now() / 1000) + (campaign.triggerDelay * 60)
+              });
+              
+              console.log(`✅ TELEFONE ${phone} AGENDADO COM SUCESSO`);
+            } else if (processed.status === 'failed') {
+              // Para re-envio, resposta deve ser APÓS falha E APÓS criação da campanha
+              const campaignCreateTime = new Date(campaign.createdAt).getTime();
+              const shouldRetry = responseTime > processed.time && responseTime > campaignCreateTime;
+              
+              if (shouldRetry) {
+                console.log(`🔄 RE-TENTATIVA VÁLIDA: ${phone} - resposta (${new Date(responseTime).toLocaleString()}) > falha (${new Date(processed.time).toLocaleString()}) e > criação campanha (${new Date(campaignCreateTime).toLocaleString()})`);
+                
+                await storage.createSMSLog({
+                  id: crypto.randomUUID(),
+                  campaignId: campaign.id,
+                  phone,
+                  message: campaign.message,
+                  status: 'scheduled',
+                  scheduledAt: Math.floor(Date.now() / 1000) + (campaign.triggerDelay * 60)
+                });
+                
+                console.log(`✅ TELEFONE ${phone} REAGENDADO COM SUCESSO`);
+              } else {
+                console.log(`⏭️ TELEFONE ${phone} - resposta antiga (${new Date(responseTime).toLocaleString()}), não reagendar`);
+              }
+            } else {
+              // Telefone já processado com sucesso
+              console.log(`⏭️ TELEFONE ${phone} JÁ PROCESSADO - status: ${processed.status}, não reagendar`);
             }
           }
         }
