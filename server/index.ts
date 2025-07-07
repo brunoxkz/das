@@ -118,7 +118,13 @@ app.use((req, res, next) => {
             await storage.updateSMSCampaign(campaign.id, { status: 'active' });
             
             // Enviar SMS para todos os telefones
-            const phones = JSON.parse(campaign.phones);
+            let phones;
+            try {
+              phones = JSON.parse(campaign.phones);
+            } catch (error) {
+              console.error(`❌ Erro ao fazer parse de phones para campanha ${campaign.id}:`, error);
+              continue; // Pular esta campanha se houver erro no JSON
+            }
             const { default: twilio } = await import('./twilio');
             
             let successCount = 0;
@@ -167,17 +173,34 @@ app.use((req, res, next) => {
           const existingLogs = await storage.getSMSLogs(campaign.id);
           const existingPhones = new Set(existingLogs.map(log => log.phone));
           
-          // Extrair novos telefones das respostas do quiz
+          // Extrair novos telefones das respostas do quiz COMPLETAS
           const newPhones = [];
           for (const response of quizResponses) {
+            // Só processar respostas FINALIZADAS (não parciais)
+            const isComplete = response.metadata?.isComplete === true;
+            const isPartial = response.metadata?.isPartial === true;
+            const completionPercentage = response.metadata?.completionPercentage || 0;
+            
+            // Pular respostas parciais ou não finalizadas (mais restritivo)
+            if (isPartial || !isComplete || completionPercentage < 100) {
+              console.log(`🚫 RESPOSTA IGNORADA: ${response.id} - isComplete:${isComplete}, isPartial:${isPartial}, completion:${completionPercentage}%`);
+              continue;
+            }
+            
+            console.log(`✅ PROCESSANDO RESPOSTA COMPLETA: ${response.id} - completion:${completionPercentage}%`);
+            
             const responses = Array.isArray(response.responses) ? response.responses : JSON.parse(response.responses || '[]');
             
             for (const resp of responses) {
               if (resp.elementType === 'phone' && resp.elementFieldId?.startsWith('telefone_')) {
                 const phone = resp.answer;
-                if (phone && !existingPhones.has(phone)) {
+                
+                // Validar número de telefone (mínimo 10 dígitos, máximo 15)
+                const cleanPhone = phone?.replace(/\D/g, '') || '';
+                const isValidPhone = cleanPhone.length >= 10 && cleanPhone.length <= 15;
+                
+                if (phone && isValidPhone && !existingPhones.has(phone)) {
                   // Verificar segmentação da campanha
-                  const isComplete = response.metadata?.isComplete === true;
                   const targetAudience = campaign.targetAudience || 'all';
                   
                   let shouldInclude = false;
@@ -202,7 +225,7 @@ app.use((req, res, next) => {
           
           // Processar novos telefones encontrados
           if (newPhones.length > 0) {
-            console.log(`📱 NOVOS LEADS DETECTADOS: ${newPhones.length} para campanha "${campaign.name}"`);
+            console.log(`📱 NOVOS LEADS VÁLIDOS DETECTADOS: ${newPhones.length} para campanha "${campaign.name}"`);
             
             for (const { phone, leadData } of newPhones) {
               // Criar log agendado para cada novo telefone
@@ -219,7 +242,7 @@ app.use((req, res, next) => {
               const delay = campaign.triggerDelay || 10; // Default 10 minutos
               const delayMs = delay * 60 * 1000;
               
-              console.log(`⏰ NOVO LEAD AGENDADO: ${phone} (${leadData.name}) - envio em ${delay} minutos`);
+              console.log(`⏰ NOVO LEAD VÁLIDO AGENDADO: ${phone} (${leadData.name}) - envio em ${delay} minutos`);
               
               // Usar setTimeout para agendamento dinâmico
               setTimeout(async () => {
