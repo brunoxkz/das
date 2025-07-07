@@ -92,10 +92,19 @@ export default function WhatsAppCampaignsPage() {
 
 
 
-  // Buscar telefones do quiz selecionado
-  const { data: quizPhones = [], refetch: refetchPhones } = useQuery({
+  // Buscar telefones do quiz selecionado usando apiRequest
+  const { data: quizPhones = {}, refetch: refetchPhones, isLoading: phonesLoading } = useQuery({
     queryKey: ['/api/quiz-phones', selectedQuiz],
     enabled: !!selectedQuiz,
+    queryFn: async () => {
+      if (!selectedQuiz) return {};
+      try {
+        return await apiRequest('GET', `/api/quiz-phones/${selectedQuiz}`);
+      } catch (error) {
+        console.error('Erro ao buscar telefones:', error);
+        return { phones: [], totalPhones: 0 };
+      }
+    },
     refetchInterval: autoRefresh ? 10000 : false,
   });
 
@@ -118,9 +127,11 @@ export default function WhatsAppCampaignsPage() {
     refetchInterval: autoRefresh ? 10000 : false,
   });
 
+
+
   // Calcular listas filtradas e contadores dinamicamente
   const getFilteredPhones = () => {
-    if (!selectedQuiz || !quizPhones.phones || !quizPhones.phones.length) return [];
+    if (!selectedQuiz || !quizPhones?.phones || !quizPhones.phones.length) return [];
     
     let filteredPhones = quizPhones.phones;
     
@@ -385,6 +396,13 @@ export default function WhatsAppCampaignsPage() {
                       <RefreshCw className="h-4 w-4" />
                     </Button>
                   </div>
+                  
+                  <Alert>
+                    <AlertCircle className="h-4 w-4" />
+                    <AlertDescription>
+                      🔄 <strong>Auto-detecção ativa:</strong> Novos números que responderem ao quiz serão automaticamente adicionados à campanha ativa em até 30 segundos.
+                    </AlertDescription>
+                  </Alert>
                   
                   <div className="max-h-48 overflow-y-auto border rounded-md p-2">
                     {filteredPhones.length > 0 ? (
