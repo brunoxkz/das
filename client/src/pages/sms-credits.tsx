@@ -108,7 +108,7 @@ export default function SMSCreditsPage() {
             });
             if (logsResponse.ok) {
               const logs = await logsResponse.json();
-              totalUsed += logs.filter((log: any) => log.status === 'sent' || log.status === 'delivered').length;
+              totalUsed += logs.filter((log: any) => log.status === 'sent').length;
             }
           } catch (error) {
             // Continue if logs fetch fails
@@ -171,8 +171,8 @@ export default function SMSCreditsPage() {
               return { ...campaign, sent: 0, delivered: 0 };
             }
             const logs = await logsResponse.json();
-            const sent = logs.filter((log: any) => log.status === 'sent' || log.status === 'delivered').length;
-            const delivered = logs.filter((log: any) => log.status === 'delivered').length;
+            const sent = logs.filter((log: any) => log.status === 'sent').length;
+            const delivered = 0; // Removido conforme solicitado
             return { ...campaign, sent, delivered };
           } catch (error) {
             return { ...campaign, sent: 0, delivered: 0 };
@@ -824,6 +824,7 @@ export default function SMSCreditsPage() {
                             <Play className="w-4 h-4" />
                           </Button>
                         )}
+
                         <Button
                           size="sm"
                           variant="outline"

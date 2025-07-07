@@ -1548,12 +1548,12 @@ export function registerSQLiteRoutes(app: Express): Server {
       if (triggerType === 'immediate') {
         initialStatus = 'active';
       } else if (triggerType === 'delayed') {
-        initialStatus = 'draft';
+        initialStatus = 'active'; // Campanhas delayed agora são ativas imediatamente
         const delayInMs = triggerUnit === 'minutes' ? triggerDelay * 60 * 1000 : triggerDelay * 60 * 60 * 1000;
         scheduledAt = Math.floor((Date.now() + delayInMs) / 1000); // Timestamp Unix em segundos
         console.log(`⏰ AGENDAMENTO DELAYED: ${new Date(scheduledAt * 1000)} (em ${triggerDelay} ${triggerUnit})`);
       } else if (triggerType === 'scheduled') {
-        initialStatus = 'draft';
+        initialStatus = 'active'; // Campanhas scheduled agora são ativas imediatamente
         if (scheduledDateTime) {
           // Converter para timestamp Unix em segundos
           scheduledAt = Math.floor(new Date(scheduledDateTime).getTime() / 1000);

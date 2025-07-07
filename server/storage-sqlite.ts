@@ -967,10 +967,7 @@ export class SQLiteStorage implements IStorage {
         .innerJoin(smsCampaigns, eq(smsLogs.campaignId, smsCampaigns.id))
         .where(and(
           eq(smsCampaigns.userId, userId),
-          or(
-            eq(smsLogs.status, 'sent'),
-            eq(smsLogs.status, 'delivered')
-          )
+          eq(smsLogs.status, 'sent')
         ));
       
       console.log(`💰 RESULTADO CONTAGEM: ${result[0]?.count || 0} SMS enviados`);

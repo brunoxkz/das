@@ -247,30 +247,9 @@ app.use((req, res, next) => {
               });
               
               console.log(`✅ TELEFONE ${phone} AGENDADO COM SUCESSO`);
-            } else if (processed.status === 'failed') {
-              // Para re-envio, resposta deve ser APÓS falha E APÓS criação da campanha
-              const campaignCreateTime = new Date(campaign.createdAt).getTime();
-              const shouldRetry = responseTime > processed.time && responseTime > campaignCreateTime;
-              
-              if (shouldRetry) {
-                console.log(`🔄 RE-TENTATIVA VÁLIDA: ${phone} - resposta (${new Date(responseTime).toLocaleString()}) > falha (${new Date(processed.time).toLocaleString()}) e > criação campanha (${new Date(campaignCreateTime).toLocaleString()})`);
-                
-                await storage.createSMSLog({
-                  id: crypto.randomUUID(),
-                  campaignId: campaign.id,
-                  phone,
-                  message: campaign.message,
-                  status: 'scheduled',
-                  scheduledAt: Math.floor(Date.now() / 1000) + (campaign.triggerDelay * 60)
-                });
-                
-                console.log(`✅ TELEFONE ${phone} REAGENDADO COM SUCESSO`);
-              } else {
-                console.log(`⏭️ TELEFONE ${phone} - resposta antiga (${new Date(responseTime).toLocaleString()}), não reagendar`);
-              }
             } else {
-              // Telefone já processado com sucesso
-              console.log(`⏭️ TELEFONE ${phone} JÁ PROCESSADO - status: ${processed.status}, não reagendar`);
+              // Telefone já processado - NÃO reagendar automaticamente
+              console.log(`⏭️ TELEFONE ${phone} JÁ PROCESSADO - status: ${processed.status}, não reagendar automaticamente`);
             }
           }
         }
