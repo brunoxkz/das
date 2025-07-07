@@ -340,6 +340,15 @@ Changelog:
   * Campaign "Carrinho Abandonado Final" correctly filters to 0 phones (no abandoned in test data)
   * SMS delivery logs show proper segmentation with distinct message targeting per audience
   * System prevents cross-contamination between success messages and re-engagement messages
+- July 07, 2025. SMS CAMPAIGN DELETION AND SCHEDULING FIXES - Resolved critical operational issues:
+  * Fixed SMS campaign deletion by implementing cascading delete of sms_logs before deleting campaigns
+  * Resolved FOREIGN KEY constraint errors in deleteSMSCampaign function in storage-sqlite.ts
+  * Successfully tested scheduled campaigns with triggerType: "delayed" and specific time delays
+  * Verified agendamento functionality works correctly with 1-2 minute delays as requested
+  * Tested specifically with number 11995133932 as requested by user for production validation
+  * Campaign scheduling system processes delayed campaigns automatically via background job
+  * System now supports both immediate (triggerType: "immediate") and scheduled (triggerType: "delayed") campaigns
+  * Complete SMS workflow functional: creation → segmentation → scheduling → deletion
 ```
 
 ## User Preferences

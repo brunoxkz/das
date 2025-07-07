@@ -789,8 +789,15 @@ export class SQLiteStorage implements IStorage {
 
   async deleteSMSCampaign(campaignId: string): Promise<void> {
     try {
+      // Primeiro deletar todos os logs SMS relacionados à campanha
+      await db.delete(smsLogs)
+        .where(eq(smsLogs.campaignId, campaignId));
+      
+      // Depois deletar a campanha SMS
       await db.delete(smsCampaigns)
         .where(eq(smsCampaigns.id, campaignId));
+      
+      console.log(`✅ Campanha SMS ${campaignId} e seus logs foram deletados com sucesso`);
     } catch (error) {
       console.error('Error deleting SMS campaign:', error);
       throw error;
