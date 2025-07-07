@@ -5,7 +5,7 @@ import { cache } from "./cache";
 import { nanoid } from "nanoid";
 import { insertQuizSchema, insertQuizResponseSchema } from "../shared/schema-sqlite";
 import { verifyJWT } from "./auth-sqlite";
-import { sendSms } from "./twilio";
+import { sendSms as sendSMS } from "./twilio";
 
 export function registerSQLiteRoutes(app: Express): Server {
   // Public routes BEFORE any middleware or authentication
@@ -1129,6 +1129,120 @@ export function registerSQLiteRoutes(app: Express): Server {
     } catch (error) {
       console.error("Erro no teste SMS:", error);
       res.status(500).json({ error: "Erro interno do servidor" });
+    }
+  });
+
+  // SMS Campaign routes
+  app.get("/api/sms-campaigns", verifyJWT, async (req: any, res: Response) => {
+    try {
+      const userId = req.user.id;
+      const campaigns = await storage.getSMSCampaigns(userId);
+      res.json(campaigns);
+    } catch (error) {
+      console.error("Error fetching SMS campaigns:", error);
+      res.status(500).json({ error: "Error fetching SMS campaigns" });
+    }
+  });
+
+  app.post("/api/sms-campaigns", verifyJWT, async (req: any, res: Response) => {
+    try {
+      const userId = req.user.id;
+      const { name, quizId, message, phones } = req.body;
+
+      if (!name || !quizId || !message || !phones) {
+        return res.status(400).json({ error: "Dados obrigatórios em falta" });
+      }
+
+      const campaign = await storage.createSMSCampaign({
+        id: nanoid(),
+        userId,
+        name,
+        quizId,
+        message,
+        phones: JSON.stringify(phones),
+        status: 'draft',
+        createdAt: new Date(),
+        updatedAt: new Date()
+      });
+
+      res.json(campaign);
+    } catch (error) {
+      console.error("Error creating SMS campaign:", error);
+      res.status(500).json({ error: "Error creating SMS campaign" });
+    }
+  });
+
+  app.post("/api/sms-campaigns/:id/send", verifyJWT, async (req: any, res: Response) => {
+    try {
+      const { id } = req.params;
+      const userId = req.user.id;
+      
+      const campaign = await storage.getSMSCampaignById(id);
+      
+      if (!campaign || campaign.userId !== userId) {
+        return res.status(404).json({ error: "Campanha não encontrada" });
+      }
+
+      const phones = JSON.parse(campaign.phones || '[]');
+      if (!phones.length) {
+        return res.status(400).json({ error: "Nenhum telefone na campanha" });
+      }
+
+      let successCount = 0;
+      let failureCount = 0;
+      const results = [];
+
+      for (const phone of phones) {
+        try {
+          const phoneNumber = phone.telefone || phone.phone || phone;
+          if (!phoneNumber) continue;
+
+          const success = await sendSMS(phoneNumber, campaign.message);
+          
+          if (success) {
+            successCount++;
+            results.push({
+              phone: phoneNumber,
+              status: "success",
+              message: "SMS enviado com sucesso"
+            });
+          } else {
+            failureCount++;
+            results.push({
+              phone: phoneNumber,
+              status: "error",
+              message: "Falha ao enviar SMS"
+            });
+          }
+        } catch (error) {
+          failureCount++;
+          results.push({
+            phone: phone.telefone || phone.phone || phone,
+            status: "error",
+            message: error.message || "Erro desconhecido"
+          });
+        }
+      }
+
+      // Atualizar status da campanha
+      await storage.updateSMSCampaign(id, {
+        status: 'sent',
+        sentAt: new Date(),
+        successCount,
+        failureCount,
+        updatedAt: new Date()
+      });
+
+      res.json({
+        success: true,
+        message: "Campanha enviada",
+        totalSent: successCount,
+        totalFailed: failureCount,
+        results
+      });
+    } catch (error) {
+      console.error("Error sending SMS campaign:", error);
+      res.status(500).json({ error: "Error sending SMS campaign" });
     }
   });
 
