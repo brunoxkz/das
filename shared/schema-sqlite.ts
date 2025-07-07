@@ -15,6 +15,7 @@ export const users = sqliteTable("users", {
   role: text("role").default("user"),
   refreshToken: text("refreshToken"),
   subscriptionStatus: text("subscriptionStatus"),
+  smsCredits: integer("smsCredits").default(0),
   createdAt: integer("createdAt", { mode: 'timestamp' }).notNull().$defaultFn(() => new Date()),
   updatedAt: integer("updatedAt", { mode: 'timestamp' }).notNull().$defaultFn(() => new Date()),
 });
@@ -65,6 +66,15 @@ export const quizAnalytics = sqliteTable("quiz_analytics", {
   completions: integer("completions").default(0),
   conversionRate: real("conversionRate").default(0),
   metadata: text("metadata", { mode: 'json' }),
+});
+
+export const smsTransactions = sqliteTable("sms_transactions", {
+  id: text("id").primaryKey(),
+  userId: text("userId").notNull().references(() => users.id),
+  type: text("type").notNull(), // 'purchase' | 'usage' | 'bonus'
+  amount: integer("amount").notNull(),
+  description: text("description"),
+  createdAt: integer("createdAt", { mode: 'timestamp' }).notNull().$defaultFn(() => new Date()),
 });
 
 export const emailCampaigns = sqliteTable("email_campaigns", {

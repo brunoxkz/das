@@ -1,6 +1,6 @@
 import { db } from "./db-sqlite";
 import { 
-  users, quizzes, quizTemplates, quizResponses, quizAnalytics, emailCampaigns, emailTemplates,
+  users, quizzes, quizTemplates, quizResponses, quizAnalytics, emailCampaigns, emailTemplates, smsTransactions,
   type User, type UpsertUser, type InsertQuiz, type Quiz,
   type InsertQuizTemplate, type QuizTemplate,
   type InsertQuizResponse, type QuizResponse,
@@ -11,6 +11,7 @@ import {
 import { eq, desc, and, gte, lte, count } from "drizzle-orm";
 import { nanoid } from "nanoid";
 import bcrypt from "bcryptjs";
+import crypto from "crypto";
 
 export interface IStorage {
   // User operations (required for Replit Auth)
@@ -67,6 +68,11 @@ export interface IStorage {
   // Email campaign sending operations
   getQuizResponsesForEmail(quizId: string, targetAudience: string): Promise<QuizResponse[]>;
   extractEmailsFromResponses(responses: QuizResponse[]): string[];
+
+  // SMS Credits methods
+  updateUserSmsCredits(userId: string, newCredits: number): Promise<User>;
+  createSmsTransaction(transaction: { userId: string; type: string; amount: number; description?: string }): Promise<void>;
+  getSmsTransactions(userId: string): Promise<any[]>;
 
   // JWT Auth methods
   getUserByEmail(email: string): Promise<User | null>;
@@ -644,6 +650,42 @@ export class SQLiteStorage implements IStorage {
     
     // Remover duplicatas
     return Array.from(new Set(emails));
+  }
+
+  // SMS Credits methods implementation
+  async updateUserSmsCredits(userId: string, newCredits: number): Promise<User> {
+    const [updatedUser] = await db
+      .update(users)
+      .set({ smsCredits: newCredits })
+      .where(eq(users.id, userId))
+      .returning();
+    
+    if (!updatedUser) {
+      throw new Error('User not found');
+    }
+    
+    return updatedUser;
+  }
+
+  async createSmsTransaction(transaction: { userId: string; type: string; amount: number; description?: string }): Promise<void> {
+    await db.insert(smsTransactions).values({
+      id: crypto.randomUUID(),
+      userId: transaction.userId,
+      type: transaction.type,
+      amount: transaction.amount,
+      description: transaction.description || null,
+      createdAt: new Date()
+    });
+  }
+
+  async getSmsTransactions(userId: string): Promise<any[]> {
+    const transactions = await db
+      .select()
+      .from(smsTransactions)
+      .where(eq(smsTransactions.userId, userId))
+      .orderBy(desc(smsTransactions.createdAt));
+    
+    return transactions;
   }
 }
 
