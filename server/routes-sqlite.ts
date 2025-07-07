@@ -1210,8 +1210,7 @@ export function registerSQLiteRoutes(app: Express): Server {
       // Por enquanto, processar todas as respostas (filtro por data será implementado posteriormente)
       let responses = allResponses;
       
-      let phones: any[] = [];
-      const processedPhones = new Set<string>(); // Para evitar duplicatas
+      const phoneMap = new Map<string, any>(); // Sistema de deduplicação inteligente com prioridade: COMPLETED > ABANDONED
       
       responses.forEach((response, index) => {
         const responseData = response.responses;
@@ -1275,13 +1274,13 @@ export function registerSQLiteRoutes(app: Express): Server {
             }
           }
           
-          // Validar e adicionar telefone apenas se for válido e não duplicado
-          if (phoneNumber && phoneNumber.length >= 10) {
-            const phoneKey = `${phoneNumber}_${status}`; // Chave única por telefone + status
+          // Sistema de deduplicação inteligente - prioridade: COMPLETED > ABANDONED
+          if (phoneNumber && phoneNumber.length >= 10 && phoneNumber.length <= 15 && /^\d+$/.test(phoneNumber)) {
+            const existingEntry = phoneMap.get(phoneNumber);
             
-            if (!processedPhones.has(phoneKey)) {
-              processedPhones.add(phoneKey);
-              phones.push({
+            if (!existingEntry) {
+              // Primeiro registro para este telefone
+              phoneMap.set(phoneNumber, {
                 id: response.id,
                 phone: phoneNumber,
                 name: userName || 'Sem nome',
@@ -1293,10 +1292,25 @@ export function registerSQLiteRoutes(app: Express): Server {
               });
               console.log(`✅ TELEFONE ADICIONADO: ${phoneNumber} [${status.toUpperCase()}]`);
             } else {
-              console.log(`⚠️ TELEFONE DUPLICADO IGNORADO: ${phoneNumber} [${status.toUpperCase()}]`);
+              // Aplicar regra de prioridade: COMPLETED substitui ABANDONED
+              if (status === 'completed' && existingEntry.status === 'abandoned') {
+                phoneMap.set(phoneNumber, {
+                  id: response.id,
+                  phone: phoneNumber,
+                  name: userName || 'Sem nome',
+                  submittedAt: response.submittedAt,
+                  responses: responseData,
+                  status: status,
+                  isComplete: isComplete,
+                  completionPercentage: metadata.completionPercentage || 0
+                });
+                console.log(`🔄 TELEFONE ATUALIZADO: ${phoneNumber} [ABANDONED → COMPLETED] - PRIORIDADE APLICADA`);
+              } else {
+                console.log(`⚠️ TELEFONE DUPLICADO IGNORADO: ${phoneNumber} [${status.toUpperCase()}] - mantendo ${existingEntry.status.toUpperCase()}`);
+              }
             }
           } else {
-            console.log(`❌ TELEFONE INVÁLIDO ou MUITO CURTO: ${phoneNumber}`);
+            console.log(`❌ TELEFONE INVÁLIDO: ${phoneNumber} (fora do range 10-15 dígitos ou não numérico)`);
           }
         } else {
           // Formato antigo - resposta é um objeto
@@ -1317,13 +1331,13 @@ export function registerSQLiteRoutes(app: Express): Server {
                 }
               }
               
-              // Validar e adicionar telefone apenas se for válido e não duplicado
-              if (phoneNumber && phoneNumber.length >= 10) {
-                const phoneKey = `${phoneNumber}_${status}`; // Chave única por telefone + status
+              // Sistema de deduplicação inteligente - prioridade: COMPLETED > ABANDONED
+              if (phoneNumber && phoneNumber.length >= 10 && phoneNumber.length <= 15 && /^\d+$/.test(phoneNumber)) {
+                const existingEntry = phoneMap.get(phoneNumber);
                 
-                if (!processedPhones.has(phoneKey)) {
-                  processedPhones.add(phoneKey);
-                  phones.push({
+                if (!existingEntry) {
+                  // Primeiro registro para este telefone
+                  phoneMap.set(phoneNumber, {
                     id: response.id,
                     phone: phoneNumber,
                     name: userName || 'Sem nome',
@@ -1335,16 +1349,35 @@ export function registerSQLiteRoutes(app: Express): Server {
                   });
                   console.log(`✅ TELEFONE ADICIONADO: ${phoneNumber} [${status.toUpperCase()}]`);
                 } else {
-                  console.log(`⚠️ TELEFONE DUPLICADO IGNORADO: ${phoneNumber} [${status.toUpperCase()}]`);
+                  // Aplicar regra de prioridade: COMPLETED substitui ABANDONED
+                  if (status === 'completed' && existingEntry.status === 'abandoned') {
+                    phoneMap.set(phoneNumber, {
+                      id: response.id,
+                      phone: phoneNumber,
+                      name: userName || 'Sem nome',
+                      submittedAt: response.submittedAt,
+                      responses: responseData,
+                      status: status,
+                      isComplete: isComplete,
+                      completionPercentage: metadata.completionPercentage || 0
+                    });
+                    console.log(`🔄 TELEFONE ATUALIZADO: ${phoneNumber} [ABANDONED → COMPLETED] - PRIORIDADE APLICADA`);
+                  } else {
+                    console.log(`⚠️ TELEFONE DUPLICADO IGNORADO: ${phoneNumber} [${status.toUpperCase()}] - mantendo ${existingEntry.status.toUpperCase()}`);
+                  }
                 }
               } else {
-                console.log(`❌ TELEFONE INVÁLIDO ou MUITO CURTO: ${phoneNumber}`);
+                console.log(`❌ TELEFONE INVÁLIDO: ${phoneNumber} (fora do range 10-15 dígitos ou não numérico)`);
               }
               break;
             }
           }
         }
       });
+
+      // Converter mapa para array final
+      const phones = Array.from(phoneMap.values());
+      console.log(`📱 TOTAL DE TELEFONES ÚNICOS APÓS DEDUPLICAÇÃO: ${phones.length}`);
 
       // Filtrar telefones baseado no público-alvo da campanha
       const { targetAudience = 'all' } = req.body;
