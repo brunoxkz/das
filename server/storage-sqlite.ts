@@ -698,7 +698,8 @@ export class SQLiteStorage implements IStorage {
       id,
       name: data.name,
       quiz_id: data.quizId,
-      message: data.message,
+      quiz_title: data.quizTitle || "Quiz",
+      messages: JSON.stringify(data.messages || []),
       user_id: data.userId,
       phones: JSON.stringify(data.phones || []),
       status: data.status || 'active',
@@ -706,6 +707,7 @@ export class SQLiteStorage implements IStorage {
       trigger_delay: data.triggerDelay || 10,
       trigger_unit: data.triggerUnit || 'minutes',
       target_audience: data.targetAudience || 'all',
+      date_filter: data.dateFilter,
       extension_settings: JSON.stringify(data.extensionSettings || {
         delay: 3000,
         maxRetries: 3,
@@ -717,14 +719,14 @@ export class SQLiteStorage implements IStorage {
 
     const stmt = this.db.prepare(`
       INSERT INTO whatsapp_campaigns 
-      (id, name, quiz_id, message, user_id, phones, status, scheduled_at, trigger_delay, trigger_unit, target_audience, extension_settings, created_at, updated_at)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      (id, name, quiz_id, quiz_title, messages, user_id, phones, status, scheduled_at, trigger_delay, trigger_unit, target_audience, date_filter, extension_settings, created_at, updated_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `);
     
     stmt.run(
-      campaign.id, campaign.name, campaign.quiz_id, campaign.message, 
+      campaign.id, campaign.name, campaign.quiz_id, campaign.quiz_title, campaign.messages, 
       campaign.user_id, campaign.phones, campaign.status, campaign.scheduled_at,
-      campaign.trigger_delay, campaign.trigger_unit, campaign.target_audience,
+      campaign.trigger_delay, campaign.trigger_unit, campaign.target_audience, campaign.date_filter,
       campaign.extension_settings, campaign.created_at, campaign.updated_at
     );
 

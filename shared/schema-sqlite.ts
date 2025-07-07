@@ -208,7 +208,8 @@ export const whatsappCampaigns = sqliteTable('whatsapp_campaigns', {
   id: text('id').primaryKey().notNull(),
   name: text('name').notNull(),
   quizId: text('quiz_id').notNull(),
-  message: text('message').notNull(),
+  quizTitle: text('quiz_title').notNull(),
+  messages: text('messages', { mode: 'json' }).notNull().$type<string[]>(), // Array de mensagens rotativas
   userId: text('user_id').notNull().references(() => users.id),
   phones: text('phones', { mode: 'json' }).notNull().$type<Array<{
     phone: string;
@@ -221,6 +222,7 @@ export const whatsappCampaigns = sqliteTable('whatsapp_campaigns', {
   triggerDelay: integer('trigger_delay').default(10),
   triggerUnit: text('trigger_unit').default('minutes'),
   targetAudience: text('target_audience').notNull().default('all'),
+  dateFilter: text('date_filter'), // Filtro de data para frente
   extensionSettings: text('extension_settings', { mode: 'json' }).$type<{
     delay: number;
     maxRetries: number;

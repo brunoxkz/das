@@ -9,13 +9,15 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { MessageSquare, Send, Users, CheckCircle, XCircle, Phone, Search, AlertCircle, Edit, Pause, Play, Trash2, Clock3, Smartphone, Eye, Settings, Plus } from "lucide-react";
+import { MessageSquare, Send, Users, CheckCircle, XCircle, Phone, Search, AlertCircle, Edit, Pause, Play, Trash2, Clock3, Smartphone, Eye, Settings, Plus, RefreshCw, Calendar, Filter } from "lucide-react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Progress } from "@/components/ui/progress";
+import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useLocation } from "wouter";
+import { apiRequest } from "@/lib/queryClient";
 
 interface WhatsAppCampaign {
   id: string;
@@ -23,7 +25,7 @@ interface WhatsAppCampaign {
   quizId: string;
   quizTitle: string;
   status: 'active' | 'paused' | 'completed';
-  message: string;
+  messages: string[]; // Array de mensagens rotativas
   scheduledDate?: string;
   targetAudience: 'all' | 'completed' | 'abandoned';
   sent: number;
@@ -39,12 +41,14 @@ interface WhatsAppCampaign {
   };
 }
 
-interface WhatsAppTemplate {
-  id: string;
-  name: string;
-  message: string;
-  category: 'promotion' | 'follow_up' | 'reminder' | 'thank_you';
-  variables: string[];
+interface PhoneContact {
+  phone: string;
+  status: 'completed' | 'abandoned';
+  completionPercentage: number;
+  submittedAt: string;
+  name?: string;
+  email?: string;
+  leadData?: any;
 }
 
 interface ExtensionStatus {
@@ -55,467 +59,221 @@ interface ExtensionStatus {
 }
 
 export default function WhatsAppCampaignsPage() {
-  const { user } = useAuth();
-  const { toast } = useToast();
+  const [activeTab, setActiveTab] = useState("remarketing");
+  const [showCreateForm, setShowCreateForm] = useState(false);
+  const [editingCampaign, setEditingCampaign] = useState<WhatsAppCampaign | null>(null);
+  const [selectedCampaign, setSelectedCampaign] = useState<WhatsAppCampaign | null>(null);
+  const [showLogs, setShowLogs] = useState(false);
+  
+  // Estados para seleção de quiz e filtros
+  const [selectedQuiz, setSelectedQuiz] = useState<string>("");
+  const [selectedAudience, setSelectedAudience] = useState<'all' | 'completed' | 'abandoned'>('all');
+  const [dateFilter, setDateFilter] = useState<string>("");
+  const [phoneList, setPhoneList] = useState<PhoneContact[]>([]);
+  const [audienceCounts, setAudienceCounts] = useState({ completed: 0, abandoned: 0, all: 0 });
+  const [rotatingMessages, setRotatingMessages] = useState<string[]>([""]);
+  const [autoRefresh, setAutoRefresh] = useState(true);
+  const [campaignName, setCampaignName] = useState("");
+  const [isCreating, setIsCreating] = useState(false);
+  
   const queryClient = useQueryClient();
-  const [, setLocation] = useLocation();
+  const { toast } = useToast();
 
-  // Campaign form state
-  const [campaignForm, setCampaignForm] = useState({
-    name: '',
-    quizId: '',
-    message: '',
-    targetAudience: 'all' as 'all' | 'completed' | 'abandoned',
-    triggerType: 'delayed' as 'immediate' | 'delayed' | 'scheduled',
-    triggerDelay: 10,
-    triggerUnit: 'minutes' as 'minutes' | 'hours',
-    scheduledDateTime: '',
-    extensionSettings: {
-      delay: 3000,
-      maxRetries: 3,
-      enabled: true
+  // Buscar lista de quizzes
+  const { data: quizzes = [] } = useQuery({
+    queryKey: ['/api/quizzes'],
+    refetchInterval: autoRefresh ? 10000 : false,
+  });
+
+  // Buscar telefones do quiz selecionado
+  const { data: quizPhones = [], refetch: refetchPhones } = useQuery({
+    queryKey: ['/api/quiz-phones', selectedQuiz],
+    enabled: !!selectedQuiz,
+    refetchInterval: autoRefresh ? 10000 : false,
+  });
+
+  // Buscar campanhas WhatsApp
+  const { data: campaigns = [], refetch: refetchCampaigns } = useQuery({
+    queryKey: ['/api/whatsapp-campaigns'],
+    refetchInterval: autoRefresh ? 30000 : false,
+  });
+
+  // Status da extensão
+  const { data: extensionStatus } = useQuery({
+    queryKey: ['/api/whatsapp-extension/status'],
+    refetchInterval: 5000,
+  });
+
+  // Atualizar lista de telefones quando mudar quiz ou filtros
+  useEffect(() => {
+    if (selectedQuiz && quizPhones.length > 0) {
+      let filteredPhones = quizPhones;
+      
+      // Aplicar filtro de data
+      if (dateFilter) {
+        const filterDate = new Date(dateFilter);
+        filteredPhones = filteredPhones.filter(phone => 
+          new Date(phone.submittedAt) >= filterDate
+        );
+      }
+      
+      // Aplicar filtro de audiência
+      if (selectedAudience !== 'all') {
+        filteredPhones = filteredPhones.filter(phone => {
+          const isCompleted = phone.status === 'completed' || phone.completionPercentage === 100;
+          return selectedAudience === 'completed' ? isCompleted : !isCompleted;
+        });
+      }
+      
+      setPhoneList(filteredPhones);
+      
+      // Atualizar contadores
+      const completed = quizPhones.filter(p => p.status === 'completed' || p.completionPercentage === 100).length;
+      const abandoned = quizPhones.filter(p => p.status !== 'completed' && p.completionPercentage !== 100).length;
+      setAudienceCounts({
+        completed,
+        abandoned,
+        all: quizPhones.length
+      });
+    } else {
+      setPhoneList([]);
+      setAudienceCounts({ completed: 0, abandoned: 0, all: 0 });
     }
-  });
+  }, [selectedQuiz, quizPhones, selectedAudience, dateFilter]);
 
-  // UI state
-  const [selectedCampaignLogs, setSelectedCampaignLogs] = useState<string | null>(null);
-  const [phoneFilterQuery, setPhoneFilterQuery] = useState('');
-  const [leadCounts, setLeadCounts] = useState({ all: 0, completed: 0, abandoned: 0 });
+  // Função para adicionar nova mensagem rotativa
+  const addRotatingMessage = () => {
+    setRotatingMessages([...rotatingMessages, ""]);
+  };
 
-  // Fetch WhatsApp campaigns
-  const { data: campaigns, isLoading: campaignLoading } = useQuery<WhatsAppCampaign[]>({
-    queryKey: ["/api/whatsapp-campaigns"],
-    queryFn: async () => {
-      const token = localStorage.getItem("accessToken");
-      const response = await fetch("/api/whatsapp-campaigns", {
-        headers: {
-          "Authorization": `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
+  // Função para remover mensagem rotativa
+  const removeRotatingMessage = (index: number) => {
+    if (rotatingMessages.length > 1) {
+      setRotatingMessages(rotatingMessages.filter((_, i) => i !== index));
+    }
+  };
+
+  // Função para atualizar mensagem rotativa
+  const updateRotatingMessage = (index: number, message: string) => {
+    const newMessages = [...rotatingMessages];
+    newMessages[index] = message;
+    setRotatingMessages(newMessages);
+  };
+
+  // Função para criar campanha
+  const createCampaign = async () => {
+    if (!selectedQuiz || !campaignName || rotatingMessages.filter(m => m.trim()).length === 0) {
+      toast({
+        title: "Erro",
+        description: "Selecione um quiz, digite um nome e adicione pelo menos uma mensagem",
+        variant: "destructive",
       });
-      
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-      
-      return response.json();
-    },
-    staleTime: 0,
-    cacheTime: 0,
-    refetchInterval: 10000 // Update every 10 seconds
-  });
+      return;
+    }
 
-  // Fetch user's quizzes for funnel selection
-  const { data: quizzes, isLoading: quizzesLoading } = useQuery({
-    queryKey: ["/api/quizzes"],
-    queryFn: async () => {
-      const token = localStorage.getItem("accessToken");
-      const response = await fetch("/api/quizzes", {
-        headers: {
-          "Authorization": `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-      });
+    setIsCreating(true);
+    try {
+      const selectedQuizData = quizzes.find(q => q.id === selectedQuiz);
+      const validMessages = rotatingMessages.filter(m => m.trim());
       
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-      
-      return response.json();
-    },
-  });
-
-  // Fetch WhatsApp templates
-  const { data: templates, isLoading: templatesLoading } = useQuery<WhatsAppTemplate[]>({
-    queryKey: ["/api/whatsapp-templates"],
-    queryFn: async () => {
-      const token = localStorage.getItem("accessToken");
-      const response = await fetch("/api/whatsapp-templates", {
-        headers: {
-          "Authorization": `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-      });
-      
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-      
-      return response.json();
-    },
-  });
-
-  // Fetch extension status
-  const { data: extensionStatus } = useQuery<ExtensionStatus>({
-    queryKey: ["/api/whatsapp-extension/status"],
-    queryFn: async () => {
-      const token = localStorage.getItem("accessToken");
-      const response = await fetch("/api/whatsapp-extension/status", {
-        headers: {
-          "Authorization": `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-      });
-      
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-      
-      return response.json();
-    },
-    refetchInterval: 5000
-  });
-
-  // Create WhatsApp campaign mutation
-  const createCampaignMutation = useMutation({
-    mutationFn: async (campaign: typeof campaignForm) => {
-      const token = localStorage.getItem("accessToken");
-      const response = await fetch("/api/whatsapp-campaigns", {
-        method: "POST",
-        headers: { 
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${token}`
-        },
-        body: JSON.stringify(campaign),
-      });
-      
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || "Erro ao criar campanha");
-      }
-      
-      return response.json();
-    },
-    onSuccess: () => {
-      // Reset form
-      setCampaignForm({
-        name: '',
-        quizId: '',
-        message: '',
-        targetAudience: 'all',
-        triggerType: 'delayed',
-        triggerDelay: 10,
-        triggerUnit: 'minutes',
-        scheduledDateTime: '',
+      await apiRequest("POST", "/api/whatsapp-campaigns", {
+        name: campaignName,
+        quizId: selectedQuiz,
+        quizTitle: selectedQuizData?.title || "Quiz",
+        messages: validMessages,
+        targetAudience: selectedAudience,
+        dateFilter,
         extensionSettings: {
-          delay: 3000,
+          delay: 5,
           maxRetries: 3,
           enabled: true
         }
       });
       
-      queryClient.invalidateQueries({ queryKey: ["/api/whatsapp-campaigns"] });
       toast({
-        title: "Campanha WhatsApp Criada",
-        description: "Sua campanha foi criada e será processada pela extensão!"
-      });
-    }
-  });
-
-  // Update lead counts when quiz changes
-  useEffect(() => {
-    if (campaignForm.quizId) {
-      updateLeadCounts();
-    }
-  }, [campaignForm.quizId]);
-
-  const updateLeadCounts = async () => {
-    if (!campaignForm.quizId) return;
-
-    try {
-      const token = localStorage.getItem("accessToken");
-      const response = await fetch(`/api/quiz-phones/${campaignForm.quizId}`, {
-        headers: { "Authorization": `Bearer ${token}` }
+        title: "Sucesso",
+        description: "Campanha WhatsApp criada com sucesso!",
       });
       
-      if (response.ok) {
-        const phones = await response.json();
-        setLeadCounts({
-          all: phones.length,
-          completed: phones.filter((p: any) => p.status === 'completed').length,
-          abandoned: phones.filter((p: any) => p.status === 'abandoned').length
-        });
-      }
+      // Limpar formulário
+      setCampaignName("");
+      setRotatingMessages([""]);
+      setSelectedQuiz("");
+      setSelectedAudience('all');
+      setDateFilter("");
+      
+      // Atualizar lista de campanhas
+      refetchCampaigns();
+      
     } catch (error) {
-      console.error('Erro ao contar leads:', error);
+      toast({
+        title: "Erro",
+        description: "Erro ao criar campanha WhatsApp",
+        variant: "destructive",
+      });
+    } finally {
+      setIsCreating(false);
     }
   };
 
-  const handleCreateCampaign = () => {
-    console.log("📱 VALORES DO FORMULÁRIO:", {
-      message: campaignForm.message,
-      quizId: campaignForm.quizId,
-      targetAudience: campaignForm.targetAudience,
-      triggerType: campaignForm.triggerType,
-      scheduledDateTime: campaignForm.scheduledDateTime,
-      messageLength: campaignForm.message?.length,
+  // Função para formatar data
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString('pt-BR', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
     });
-
-    if (!campaignForm.name || !campaignForm.quizId || !campaignForm.message) {
-      toast({
-        title: "Erro de Validação",
-        description: "Por favor, preencha todos os campos obrigatórios.",
-        variant: "destructive"
-      });
-      return;
-    }
-
-    if (campaignForm.triggerType === 'scheduled' && !campaignForm.scheduledDateTime) {
-      toast({
-        title: "Erro de Agendamento",
-        description: "Data e hora são obrigatórias para agendamento específico.",
-        variant: "destructive"
-      });
-      return;
-    }
-
-    createCampaignMutation.mutate(campaignForm);
   };
-
-  const getStatusBadge = (status: string) => {
-    switch (status) {
-      case 'active':
-        return <Badge variant="default" className="bg-green-500">Ativa</Badge>;
-      case 'paused':
-        return <Badge variant="secondary">Pausada</Badge>;
-      case 'completed':
-        return <Badge variant="outline">Completa</Badge>;
-      default:
-        return <Badge variant="secondary">{status}</Badge>;
-    }
-  };
-
-  const getExtensionStatusBadge = () => {
-    if (!extensionStatus) {
-      return <Badge variant="secondary">Verificando...</Badge>;
-    }
-    
-    return extensionStatus.connected ? 
-      <Badge variant="default" className="bg-green-500">Conectada</Badge> :
-      <Badge variant="destructive">Desconectada</Badge>;
-  };
-
-  if (!user) {
-    setLocation('/login');
-    return null;
-  }
 
   return (
-    <div className="p-6 space-y-6">
-      {/* Header */}
+    <div className="container mx-auto p-6 space-y-6">
       <div className="flex justify-between items-center">
         <div>
           <h1 className="text-3xl font-bold">Campanhas WhatsApp</h1>
-          <p className="text-muted-foreground mt-1">
-            Gerencie campanhas de remarketing via WhatsApp Web
-          </p>
+          <p className="text-gray-600">Remarketing automático via WhatsApp Web</p>
         </div>
-        
-        {/* Extension Status */}
         <div className="flex items-center gap-2">
-          <Smartphone className="w-4 h-4" />
-          <span className="text-sm">Extensão:</span>
-          {getExtensionStatusBadge()}
+          <Badge variant={extensionStatus?.connected ? "default" : "destructive"}>
+            {extensionStatus?.connected ? "Extensão Conectada" : "Extensão Desconectada"}
+          </Badge>
+          <Button onClick={() => setAutoRefresh(!autoRefresh)} variant="outline" size="sm">
+            <RefreshCw className={`h-4 w-4 mr-2 ${autoRefresh ? 'animate-spin' : ''}`} />
+            Auto-Refresh: {autoRefresh ? "ON" : "OFF"}
+          </Button>
         </div>
       </div>
 
-      {/* Extension Alert */}
-      {!extensionStatus?.connected && (
-        <Alert>
-          <AlertCircle className="h-4 w-4" />
-          <AlertDescription>
-            A extensão Chrome não está conectada. Para enviar mensagens WhatsApp, você precisa instalar e ativar a extensão Vendzz WhatsApp.
-          </AlertDescription>
-        </Alert>
-      )}
-
-      <Tabs defaultValue="campaigns" className="space-y-6">
-        <TabsList>
-          <TabsTrigger value="campaigns">📱 Campanhas</TabsTrigger>
-          <TabsTrigger value="create">➕ Nova Campanha</TabsTrigger>
-          <TabsTrigger value="templates">📝 Templates</TabsTrigger>
-          <TabsTrigger value="extension">🔧 Extensão</TabsTrigger>
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+        <TabsList className="grid w-full grid-cols-3">
+          <TabsTrigger value="remarketing">Remarketing</TabsTrigger>
+          <TabsTrigger value="campaigns">Campanhas</TabsTrigger>
+          <TabsTrigger value="extension">Extensão</TabsTrigger>
         </TabsList>
 
-        {/* Campaigns Tab */}
-        <TabsContent value="campaigns">
+        <TabsContent value="remarketing" className="space-y-6">
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <MessageSquare className="w-5 h-5" />
-                Campanhas WhatsApp
+                <MessageSquare className="h-5 w-5" />
+                Configurar Remarketing WhatsApp
               </CardTitle>
               <CardDescription>
-                Acompanhe suas campanhas de remarketing WhatsApp
+                Selecione um quiz e configure mensagens rotativas para evitar ban
               </CardDescription>
             </CardHeader>
-            <CardContent>
-              {campaignLoading ? (
-                <div className="flex items-center justify-center py-8">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-                </div>
-              ) : !campaigns?.length ? (
-                <div className="text-center py-8">
-                  <MessageSquare className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
-                  <h3 className="text-lg font-medium mb-2">Nenhuma campanha encontrada</h3>
-                  <p className="text-muted-foreground mb-4">
-                    Crie sua primeira campanha WhatsApp para começar o remarketing
-                  </p>
-                  <Button onClick={() => document.querySelector('[value="create"]')?.click?.()}>
-                    <Plus className="w-4 h-4 mr-2" />
-                    Nova Campanha
-                  </Button>
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  {/* Campaign Stats Cards */}
-                  <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-                    <Card>
-                      <CardContent className="p-4">
-                        <div className="flex items-center gap-2">
-                          <Send className="w-4 h-4 text-green-500" />
-                          <div>
-                            <p className="text-sm text-muted-foreground">Enviadas</p>
-                            <p className="text-2xl font-bold text-green-500">
-                              {campaigns.reduce((sum, c) => sum + c.sent, 0)}
-                            </p>
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                    
-                    <Card>
-                      <CardContent className="p-4">
-                        <div className="flex items-center gap-2">
-                          <CheckCircle className="w-4 h-4 text-blue-500" />
-                          <div>
-                            <p className="text-sm text-muted-foreground">Entregues</p>
-                            <p className="text-2xl font-bold text-blue-500">
-                              {campaigns.reduce((sum, c) => sum + c.delivered, 0)}
-                            </p>
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                    
-                    <Card>
-                      <CardContent className="p-4">
-                        <div className="flex items-center gap-2">
-                          <Eye className="w-4 h-4 text-purple-500" />
-                          <div>
-                            <p className="text-sm text-muted-foreground">Visualizadas</p>
-                            <p className="text-2xl font-bold text-purple-500">
-                              {campaigns.reduce((sum, c) => sum + c.opened, 0)}
-                            </p>
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                    
-                    <Card>
-                      <CardContent className="p-4">
-                        <div className="flex items-center gap-2">
-                          <MessageSquare className="w-4 h-4 text-orange-500" />
-                          <div>
-                            <p className="text-sm text-muted-foreground">Respostas</p>
-                            <p className="text-2xl font-bold text-orange-500">
-                              {campaigns.reduce((sum, c) => sum + c.replies, 0)}
-                            </p>
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  </div>
-
-                  {/* Campaigns Table */}
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Nome</TableHead>
-                        <TableHead>Quiz</TableHead>
-                        <TableHead>Status</TableHead>
-                        <TableHead>Público</TableHead>
-                        <TableHead>Enviadas</TableHead>
-                        <TableHead>Taxa Entrega</TableHead>
-                        <TableHead>Ações</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {campaigns.map((campaign) => (
-                        <TableRow key={campaign.id}>
-                          <TableCell className="font-medium">{campaign.name}</TableCell>
-                          <TableCell>{campaign.quizTitle || campaign.quizId}</TableCell>
-                          <TableCell>{getStatusBadge(campaign.status)}</TableCell>
-                          <TableCell>
-                            <Badge variant="outline">
-                              {campaign.targetAudience === 'all' ? 'Todos' : 
-                               campaign.targetAudience === 'completed' ? 'Completos' : 'Abandonados'}
-                            </Badge>
-                          </TableCell>
-                          <TableCell>{campaign.sent}</TableCell>
-                          <TableCell>
-                            {campaign.sent > 0 ? 
-                              `${Math.round((campaign.delivered / campaign.sent) * 100)}%` : 
-                              '0%'
-                            }
-                          </TableCell>
-                          <TableCell>
-                            <div className="flex items-center gap-2">
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => setSelectedCampaignLogs(campaign.id)}
-                              >
-                                <Eye className="w-4 h-4" />
-                              </Button>
-                            </div>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        {/* Create Campaign Tab */}
-        <TabsContent value="create">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Plus className="w-5 h-5" />
-                Nova Campanha WhatsApp
-              </CardTitle>
-              <CardDescription>
-                Crie uma campanha de remarketing WhatsApp para seus leads
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              {/* Basic Info */}
+            <CardContent className="space-y-4">
+              {/* Seleção do Quiz */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="campaign-name">Nome da Campanha *</Label>
-                  <Input
-                    id="campaign-name"
-                    placeholder="Ex: Remarketing Quiz Nutrição"
-                    value={campaignForm.name}
-                    onChange={(e) => setCampaignForm(prev => ({ ...prev, name: e.target.value }))}
-                  />
-                </div>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="quiz-select">Selecionar Funil *</Label>
-                  <Select
-                    value={campaignForm.quizId}
-                    onValueChange={(value) => setCampaignForm(prev => ({ ...prev, quizId: value }))}
-                  >
+                <div>
+                  <Label htmlFor="quiz-select">Selecionar Quiz</Label>
+                  <Select value={selectedQuiz} onValueChange={setSelectedQuiz}>
                     <SelectTrigger>
                       <SelectValue placeholder="Escolha um quiz" />
                     </SelectTrigger>
                     <SelectContent>
-                      {quizzes?.map((quiz: any) => (
+                      {quizzes.map((quiz) => (
                         <SelectItem key={quiz.id} value={quiz.id}>
                           {quiz.title}
                         </SelectItem>
@@ -523,179 +281,158 @@ export default function WhatsAppCampaignsPage() {
                     </SelectContent>
                   </Select>
                 </div>
+                
+                <div>
+                  <Label htmlFor="campaign-name">Nome da Campanha</Label>
+                  <Input
+                    id="campaign-name"
+                    placeholder="Ex: Recuperação Carrinho Janeiro"
+                    value={campaignName}
+                    onChange={(e) => setCampaignName(e.target.value)}
+                  />
+                </div>
               </div>
 
-              {/* Message */}
-              <div className="space-y-2">
-                <Label htmlFor="message">Mensagem WhatsApp *</Label>
-                <Textarea
-                  id="message"
-                  placeholder="Olá! Vi que você se interessou pelo nosso quiz sobre nutrição. Que tal continuar nossa conversa? 😊"
-                  value={campaignForm.message}
-                  onChange={(e) => setCampaignForm(prev => ({ ...prev, message: e.target.value }))}
-                  rows={4}
-                />
-                <p className="text-sm text-muted-foreground">
-                  {campaignForm.message.length} caracteres (WhatsApp suporta até 4096)
-                </p>
-              </div>
-
-              {/* Audience & Timing */}
+              {/* Filtros */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label>Público-Alvo</Label>
-                  <Select
-                    value={campaignForm.targetAudience}
-                    onValueChange={(value: 'all' | 'completed' | 'abandoned') => 
-                      setCampaignForm(prev => ({ ...prev, targetAudience: value }))
-                    }
-                  >
+                <div>
+                  <Label htmlFor="audience">Público-Alvo</Label>
+                  <Select value={selectedAudience} onValueChange={(value: 'all' | 'completed' | 'abandoned') => setSelectedAudience(value)}>
                     <SelectTrigger>
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="all">
-                        Todos ({leadCounts.all} leads)
+                        Todos ({audienceCounts.all})
                       </SelectItem>
                       <SelectItem value="completed">
-                        Quiz Completo ({leadCounts.completed} leads)
+                        Completos ({audienceCounts.completed})
                       </SelectItem>
                       <SelectItem value="abandoned">
-                        Quiz Abandonado ({leadCounts.abandoned} leads)
+                        Abandonados ({audienceCounts.abandoned})
                       </SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
-                
-                <div className="space-y-2">
-                  <Label>Tipo de Envio</Label>
-                  <Select
-                    value={campaignForm.triggerType}
-                    onValueChange={(value: 'immediate' | 'delayed' | 'scheduled') => 
-                      setCampaignForm(prev => ({ ...prev, triggerType: value }))
-                    }
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="immediate">Envio Imediato</SelectItem>
-                      <SelectItem value="delayed">Envio com Delay</SelectItem>
-                      <SelectItem value="scheduled">Agendamento Específico</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
 
-              {/* Timing Details */}
-              {campaignForm.triggerType === 'delayed' && (
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label>Delay</Label>
-                    <Input
-                      type="number"
-                      min="1"
-                      value={campaignForm.triggerDelay}
-                      onChange={(e) => setCampaignForm(prev => ({ 
-                        ...prev, 
-                        triggerDelay: parseInt(e.target.value) || 1 
-                      }))}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Unidade</Label>
-                    <Select
-                      value={campaignForm.triggerUnit}
-                      onValueChange={(value: 'minutes' | 'hours') => 
-                        setCampaignForm(prev => ({ ...prev, triggerUnit: value }))
-                      }
-                    >
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="minutes">Minutos</SelectItem>
-                        <SelectItem value="hours">Horas</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-              )}
-
-              {campaignForm.triggerType === 'scheduled' && (
-                <div className="space-y-2">
-                  <Label>Data e Hora do Envio</Label>
+                <div>
+                  <Label htmlFor="date-filter">Filtro de Data (a partir de)</Label>
                   <Input
-                    type="datetime-local"
-                    value={campaignForm.scheduledDateTime}
-                    onChange={(e) => setCampaignForm(prev => ({ 
-                      ...prev, 
-                      scheduledDateTime: e.target.value 
-                    }))}
+                    id="date-filter"
+                    type="date"
+                    value={dateFilter}
+                    onChange={(e) => setDateFilter(e.target.value)}
                   />
                 </div>
-              )}
+              </div>
 
-              {/* Extension Settings */}
-              <div className="space-y-4 p-4 border rounded-lg">
-                <h3 className="text-lg font-medium">Configurações da Extensão</h3>
-                
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label>Delay entre mensagens (ms)</Label>
-                    <Input
-                      type="number"
-                      min="1000"
-                      max="10000"
-                      value={campaignForm.extensionSettings.delay}
-                      onChange={(e) => setCampaignForm(prev => ({ 
-                        ...prev, 
-                        extensionSettings: {
-                          ...prev.extensionSettings,
-                          delay: parseInt(e.target.value) || 3000
-                        }
-                      }))}
-                    />
-                    <p className="text-sm text-muted-foreground">
-                      Recomendado: 3000ms para evitar bloqueios
-                    </p>
+              {/* Lista de Telefones */}
+              {selectedQuiz && (
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2">
+                    <Phone className="h-4 w-4" />
+                    <Label>Lista de Telefones ({phoneList.length})</Label>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => refetchPhones()}
+                    >
+                      <RefreshCw className="h-4 w-4" />
+                    </Button>
                   </div>
                   
-                  <div className="space-y-2">
-                    <Label>Máximo de tentativas</Label>
-                    <Input
-                      type="number"
-                      min="1"
-                      max="5"
-                      value={campaignForm.extensionSettings.maxRetries}
-                      onChange={(e) => setCampaignForm(prev => ({ 
-                        ...prev, 
-                        extensionSettings: {
-                          ...prev.extensionSettings,
-                          maxRetries: parseInt(e.target.value) || 3
-                        }
-                      }))}
-                    />
+                  <div className="max-h-48 overflow-y-auto border rounded-md p-2">
+                    {phoneList.length > 0 ? (
+                      <div className="space-y-2">
+                        {phoneList.slice(0, 50).map((contact, index) => (
+                          <div key={index} className="flex items-center justify-between text-sm">
+                            <span className="font-mono">{contact.phone}</span>
+                            <div className="flex items-center gap-2">
+                              <Badge variant={contact.status === 'completed' ? "default" : "secondary"}>
+                                {contact.status === 'completed' ? (
+                                  <CheckCircle className="h-3 w-3 mr-1" />
+                                ) : (
+                                  <Clock3 className="h-3 w-3 mr-1" />
+                                )}
+                                {contact.status === 'completed' ? 'Completo' : 'Abandonado'}
+                              </Badge>
+                              <span className="text-xs text-gray-500">
+                                {formatDate(contact.submittedAt)}
+                              </span>
+                            </div>
+                          </div>
+                        ))}
+                        {phoneList.length > 50 && (
+                          <div className="text-xs text-gray-500 text-center">
+                            ... e mais {phoneList.length - 50} telefones
+                          </div>
+                        )}
+                      </div>
+                    ) : (
+                      <div className="text-center text-gray-500 py-4">
+                        Nenhum telefone encontrado para os filtros selecionados
+                      </div>
+                    )}
                   </div>
+                </div>
+              )}
+
+              {/* Mensagens Rotativas */}
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <Label>Mensagens Rotativas (Anti-Ban)</Label>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={addRotatingMessage}
+                  >
+                    <Plus className="h-4 w-4 mr-2" />
+                    Adicionar Mensagem
+                  </Button>
+                </div>
+                
+                {rotatingMessages.map((message, index) => (
+                  <div key={index} className="flex gap-2">
+                    <div className="flex-1">
+                      <Textarea
+                        placeholder={`Mensagem ${index + 1} - Use {nome}, {email}, {telefone} como variáveis`}
+                        value={message}
+                        onChange={(e) => updateRotatingMessage(index, e.target.value)}
+                        className="min-h-20"
+                      />
+                    </div>
+                    {rotatingMessages.length > 1 && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => removeRotatingMessage(index)}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    )}
+                  </div>
+                ))}
+                
+                <div className="text-xs text-gray-500">
+                  💡 Dica: Use múltiplas mensagens com variações para evitar detecção de spam
                 </div>
               </div>
 
-              {/* Create Button */}
-              <Button
-                onClick={handleCreateCampaign}
-                disabled={createCampaignMutation.isPending}
+              {/* Botão de Criar Campanha */}
+              <Button 
+                onClick={createCampaign} 
+                disabled={isCreating || !selectedQuiz || !campaignName || rotatingMessages.filter(m => m.trim()).length === 0}
                 className="w-full"
-                size="lg"
               >
-                {createCampaignMutation.isPending ? (
+                {isCreating ? (
                   <>
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                    <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
                     Criando Campanha...
                   </>
                 ) : (
                   <>
-                    <Send className="w-4 h-4 mr-2" />
-                    Criar Campanha WhatsApp
+                    <Send className="h-4 w-4 mr-2" />
+                    Ativar Remarketing WhatsApp
                   </>
                 )}
               </Button>
@@ -703,143 +440,124 @@ export default function WhatsAppCampaignsPage() {
           </Card>
         </TabsContent>
 
-        {/* Templates Tab */}
-        <TabsContent value="templates">
+        <TabsContent value="campaigns" className="space-y-6">
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <MessageSquare className="w-5 h-5" />
-                Templates WhatsApp
-              </CardTitle>
+              <CardTitle>Campanhas Ativas</CardTitle>
               <CardDescription>
-                Templates pré-prontos para suas campanhas WhatsApp
+                Gerencie suas campanhas de remarketing WhatsApp
               </CardDescription>
             </CardHeader>
             <CardContent>
-              {templatesLoading ? (
-                <div className="flex items-center justify-center py-8">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+              {campaigns.length > 0 ? (
+                <div className="space-y-4">
+                  {campaigns.map((campaign) => (
+                    <div key={campaign.id} className="border rounded-lg p-4">
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="flex items-center gap-2">
+                          <h3 className="font-semibold">{campaign.name}</h3>
+                          <Badge variant={campaign.status === 'active' ? "default" : "secondary"}>
+                            {campaign.status === 'active' ? 'Ativa' : 'Pausada'}
+                          </Badge>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Button variant="ghost" size="sm">
+                            <Edit className="h-4 w-4" />
+                          </Button>
+                          <Button variant="ghost" size="sm">
+                            {campaign.status === 'active' ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
+                          </Button>
+                          <Button variant="ghost" size="sm">
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </div>
+                      
+                      <div className="text-sm text-gray-600 mb-2">
+                        Quiz: {campaign.quizTitle} | Público: {campaign.targetAudience === 'completed' ? 'Completos' : campaign.targetAudience === 'abandoned' ? 'Abandonados' : 'Todos'}
+                      </div>
+                      
+                      <div className="grid grid-cols-4 gap-4 text-sm">
+                        <div className="text-center">
+                          <div className="font-semibold text-blue-600">{campaign.sent}</div>
+                          <div className="text-gray-500">Enviadas</div>
+                        </div>
+                        <div className="text-center">
+                          <div className="font-semibold text-green-600">{campaign.delivered}</div>
+                          <div className="text-gray-500">Entregues</div>
+                        </div>
+                        <div className="text-center">
+                          <div className="font-semibold text-orange-600">{campaign.opened}</div>
+                          <div className="text-gray-500">Abertas</div>
+                        </div>
+                        <div className="text-center">
+                          <div className="font-semibold text-purple-600">{campaign.replies}</div>
+                          <div className="text-gray-500">Respostas</div>
+                        </div>
+                      </div>
+                      
+                      {campaign.messages && (
+                        <div className="mt-3 text-xs text-gray-500">
+                          {campaign.messages.length} mensagens rotativas configuradas
+                        </div>
+                      )}
+                    </div>
+                  ))}
                 </div>
               ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {[
-                    {
-                      id: '1',
-                      name: 'Boas-vindas Nutrição',
-                      category: 'follow_up',
-                      message: 'Olá! 👋 Vi que você se interessou pelo nosso quiz sobre nutrição. Que tal continuar nossa conversa? Tenho algumas dicas personalizadas para você! 😊'
-                    },
-                    {
-                      id: '2', 
-                      name: 'Carrinho Abandonado',
-                      category: 'reminder',
-                      message: 'Oi! 😊 Notei que você começou nosso quiz mas não finalizou. Que tal completar? São só mais algumas perguntas e você terá acesso ao seu resultado personalizado! 🎯'
-                    },
-                    {
-                      id: '3',
-                      name: 'Oferta Especial',
-                      category: 'promotion', 
-                      message: 'Oferta exclusiva para você! 🎉 Com base no seu perfil do quiz, preparei um desconto especial de 30% no nosso programa. Válido até amanhã! 💪'
-                    },
-                    {
-                      id: '4',
-                      name: 'Agradecimento',
-                      category: 'thank_you',
-                      message: 'Muito obrigado por completar nosso quiz! 🙏 Seu resultado está pronto. Quer que eu envie algumas dicas extras baseadas no seu perfil? 📊'
-                    }
-                  ].map((template) => (
-                    <Card key={template.id} className="cursor-pointer hover:shadow-md transition-shadow">
-                      <CardContent className="p-4">
-                        <div className="flex justify-between items-start mb-2">
-                          <h3 className="font-medium">{template.name}</h3>
-                          <Badge variant="outline">{template.category}</Badge>
-                        </div>
-                        <p className="text-sm text-muted-foreground mb-3 line-clamp-3">
-                          {template.message}
-                        </p>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => setCampaignForm(prev => ({ 
-                            ...prev, 
-                            message: template.message 
-                          }))}
-                        >
-                          Usar Template
-                        </Button>
-                      </CardContent>
-                    </Card>
-                  ))}
+                <div className="text-center py-8 text-gray-500">
+                  Nenhuma campanha criada ainda
                 </div>
               )}
             </CardContent>
           </Card>
         </TabsContent>
 
-        {/* Extension Tab */}
-        <TabsContent value="extension">
+        <TabsContent value="extension" className="space-y-6">
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Settings className="w-5 h-5" />
-                Extensão WhatsApp
-              </CardTitle>
+              <CardTitle>Status da Extensão Chrome</CardTitle>
               <CardDescription>
-                Status e configurações da extensão Chrome
+                Monitoramento da extensão WhatsApp Web
               </CardDescription>
             </CardHeader>
-            <CardContent className="space-y-6">
-              {/* Extension Status */}
-              <div className="p-4 border rounded-lg">
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-lg font-medium">Status da Extensão</h3>
-                  {getExtensionStatusBadge()}
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span>Status da Conexão</span>
+                    <Badge variant={extensionStatus?.connected ? "default" : "destructive"}>
+                      {extensionStatus?.connected ? "Conectada" : "Desconectada"}
+                    </Badge>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span>Versão</span>
+                    <span className="font-mono">{extensionStatus?.version || "N/A"}</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span>Último Ping</span>
+                    <span className="text-sm text-gray-500">
+                      {extensionStatus?.lastPing ? formatDate(extensionStatus.lastPing) : "N/A"}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span>Mensagens Pendentes</span>
+                    <Badge variant="outline">{extensionStatus?.pendingMessages || 0}</Badge>
+                  </div>
                 </div>
                 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div>
-                    <p className="text-sm text-muted-foreground">Versão</p>
-                    <p className="font-medium">{extensionStatus?.version || 'N/A'}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-muted-foreground">Último Ping</p>
-                    <p className="font-medium">
-                      {extensionStatus?.lastPing ? 
-                        new Date(extensionStatus.lastPing).toLocaleTimeString() : 
-                        'Nunca'
-                      }
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-muted-foreground">Mensagens Pendentes</p>
-                    <p className="font-medium">{extensionStatus?.pendingMessages || 0}</p>
-                  </div>
+                <div className="space-y-2">
+                  <Alert>
+                    <AlertCircle className="h-4 w-4" />
+                    <AlertDescription>
+                      Para usar o remarketing WhatsApp, instale a extensão Chrome e mantenha o WhatsApp Web aberto.
+                    </AlertDescription>
+                  </Alert>
+                  <Button className="w-full" disabled>
+                    <Settings className="h-4 w-4 mr-2" />
+                    Baixar Extensão Chrome
+                  </Button>
                 </div>
-              </div>
-
-              {/* Installation Instructions */}
-              <div className="p-4 border rounded-lg">
-                <h3 className="text-lg font-medium mb-4">Como Instalar a Extensão</h3>
-                <ol className="list-decimal list-inside space-y-2 text-sm">
-                  <li>Acesse a Chrome Web Store</li>
-                  <li>Pesquise por "Vendzz WhatsApp Extension"</li>
-                  <li>Clique em "Adicionar ao Chrome"</li>
-                  <li>Abra o WhatsApp Web (web.whatsapp.com)</li>
-                  <li>Faça login com seu número</li>
-                  <li>A extensão se conectará automaticamente</li>
-                </ol>
-              </div>
-
-              {/* Quick Actions */}
-              <div className="flex gap-4">
-                <Button variant="outline" disabled={!extensionStatus?.connected}>
-                  <Settings className="w-4 h-4 mr-2" />
-                  Configurar Extensão
-                </Button>
-                <Button variant="outline">
-                  <MessageSquare className="w-4 h-4 mr-2" />
-                  Abrir WhatsApp Web
-                </Button>
               </div>
             </CardContent>
           </Card>

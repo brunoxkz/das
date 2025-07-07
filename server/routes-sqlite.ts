@@ -2019,22 +2019,35 @@ app.get("/api/whatsapp-campaigns", verifyJWT, async (req: any, res: Response) =>
 app.post("/api/whatsapp-campaigns", verifyJWT, async (req: any, res: Response) => {
   try {
     const userId = req.user.id;
-    const { name, quizId, message, targetAudience = 'all', triggerType = 'delayed', triggerDelay = 10, triggerUnit = 'minutes', scheduledDateTime, extensionSettings } = req.body;
+    const { name, quizId, quizTitle, messages, targetAudience = 'all', dateFilter, triggerType = 'delayed', triggerDelay = 10, triggerUnit = 'minutes', scheduledDateTime, extensionSettings } = req.body;
     
-    console.log('📱 CRIANDO CAMPANHA WHATSAPP:', { name, quizId, targetAudience, triggerType });
+    console.log('📱 CRIANDO CAMPANHA WHATSAPP:', { name, quizId, targetAudience, triggerType, messagesCount: messages?.length });
+    
+    // Validações
+    if (!messages || messages.length === 0) {
+      return res.status(400).json({ error: 'Pelo menos uma mensagem é obrigatória' });
+    }
     
     // Get phones from quiz responses
     const phones = await storage.getQuizPhoneNumbers(quizId);
     
-    // Apply audience filter
+    // Apply date filter
     let filteredPhones = phones;
-    if (targetAudience === 'completed') {
-      filteredPhones = phones.filter(p => p.status === 'completed');
-    } else if (targetAudience === 'abandoned') {
-      filteredPhones = phones.filter(p => p.status === 'abandoned');
+    if (dateFilter) {
+      const filterDate = new Date(dateFilter);
+      filteredPhones = filteredPhones.filter(p => 
+        new Date(p.submittedAt || p.created_at) >= filterDate
+      );
     }
     
-    console.log(`📱 LEADS FILTRADOS: ${filteredPhones.length} de ${phones.length} total`);
+    // Apply audience filter
+    if (targetAudience === 'completed') {
+      filteredPhones = filteredPhones.filter(p => p.status === 'completed');
+    } else if (targetAudience === 'abandoned') {
+      filteredPhones = filteredPhones.filter(p => p.status === 'abandoned');
+    }
+    
+    console.log(`📱 LEADS FILTRADOS: ${filteredPhones.length} de ${phones.length} total (dateFilter: ${dateFilter}, audience: ${targetAudience})`);
     
     let scheduledAt;
     let initialStatus = 'active';
@@ -2052,7 +2065,8 @@ app.post("/api/whatsapp-campaigns", verifyJWT, async (req: any, res: Response) =
     const campaign = await storage.createWhatsappCampaign({
       name,
       quizId,
-      message,
+      quizTitle: quizTitle || "Quiz",
+      messages,
       userId,
       phones: filteredPhones,
       status: initialStatus,
@@ -2060,6 +2074,7 @@ app.post("/api/whatsapp-campaigns", verifyJWT, async (req: any, res: Response) =
       triggerDelay,
       triggerUnit,
       targetAudience,
+      dateFilter,
       extensionSettings: extensionSettings || {
         delay: 3000,
         maxRetries: 3,
@@ -2069,12 +2084,16 @@ app.post("/api/whatsapp-campaigns", verifyJWT, async (req: any, res: Response) =
       updatedAt: new Date()
     });
 
-    // Create logs for all filtered phones
-    console.log(`📱 CRIANDO LOGS - Campanha ${campaign.id}, Telefones: ${filteredPhones.length}`);
+    // Create logs for all filtered phones with rotating messages
+    console.log(`📱 CRIANDO LOGS - Campanha ${campaign.id}, Telefones: ${filteredPhones.length}, Mensagens: ${messages.length}`);
     
-    for (const phone of filteredPhones) {
+    for (let i = 0; i < filteredPhones.length; i++) {
+      const phone = filteredPhones[i];
       const phoneNumber = phone.telefone || phone.phone || phone;
       if (!phoneNumber) continue;
+      
+      // Select rotating message (cycle through messages)
+      const selectedMessage = messages[i % messages.length];
       
       const logId = nanoid();
       let logScheduledAt: number | undefined;
@@ -2092,7 +2111,7 @@ app.post("/api/whatsapp-campaigns", verifyJWT, async (req: any, res: Response) =
         id: logId,
         campaignId: campaign.id,
         phone: phoneNumber,
-        message: message,
+        message: selectedMessage,
         status: status,
         scheduledAt: logScheduledAt
       });
