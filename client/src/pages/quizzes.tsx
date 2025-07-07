@@ -55,10 +55,19 @@ export default function Quizzes() {
         title: "Quiz excluído",
         description: "O quiz foi excluído com sucesso.",
       });
-      // Simples refresh da lista sem sobrecarregar o servidor
-      setTimeout(() => {
-        refetch();
-      }, 500);
+      
+      // Invalidação completa do cache para atualizar analytics e dashboard
+      queryClient.removeQueries({ queryKey: ["/api/quizzes"] });
+      queryClient.removeQueries({ queryKey: ["/api/dashboard/stats"] });
+      queryClient.removeQueries({ queryKey: ["/api/analytics"] });
+      
+      // Refetch imediato
+      queryClient.invalidateQueries({ queryKey: ["/api/quizzes"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/dashboard/stats"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/analytics"] });
+      
+      // Refetch manual para garantir
+      refetch();
     },
     onError: (error: any) => {
       toast({
