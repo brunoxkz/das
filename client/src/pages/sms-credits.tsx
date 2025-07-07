@@ -87,10 +87,20 @@ export default function SMSCreditsPage() {
   const { data: quizzes, isLoading: quizzesLoading } = useQuery({
     queryKey: ["/api/quizzes"],
     queryFn: async () => {
-      const response = await fetch("/api/quizzes");
-      if (!response.ok) throw new Error("Failed to fetch quizzes");
+      const token = localStorage.getItem("accessToken");
+      const response = await fetch("/api/quizzes", {
+        headers: {
+          "Authorization": `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      });
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
       return response.json();
-    }
+    },
   });
 
   // Fetch SMS campaigns
