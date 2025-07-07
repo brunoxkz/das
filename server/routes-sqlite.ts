@@ -406,6 +406,119 @@ export function registerSQLiteRoutes(app: Express): Server {
     }
   });
 
+  // SMS Quiz Phone Numbers endpoint
+  app.get("/api/quizzes/:quizId/phones", verifyJWT, async (req: any, res) => {
+    try {
+      const { quizId } = req.params;
+      const userId = req.user.id;
+      
+      console.log(`📱 BUSCANDO TELEFONES - Quiz: ${quizId}, User: ${userId}`);
+      
+      // Verificar se o quiz pertence ao usuário
+      const quiz = await storage.getQuiz(quizId);
+      if (!quiz || quiz.userId !== userId) {
+        return res.status(404).json({ error: "Quiz not found" });
+      }
+      
+      // Buscar responses do quiz
+      const responses = await storage.getQuizResponses(quizId);
+      console.log(`📱 RESPONSES ENCONTRADAS: ${responses.length}`);
+      
+      // Extrair telefones das respostas
+      const phones: any[] = [];
+      
+      responses.forEach((response, index) => {
+        console.log(`📱 RESPONSE ${index + 1}:`, {
+          id: response.id,
+          responses: response.responses,
+          submittedAt: response.submittedAt
+        });
+        
+        if (response.responses && typeof response.responses === 'object') {
+          const responseData = response.responses as any;
+          console.log(`📱 DADOS DA RESPONSE ${index + 1}:`, Object.keys(responseData));
+          console.log(`📱 VALORES DA RESPONSE ${index + 1}:`, responseData);
+          
+          // Procurar campo telefone em diferentes formatos - priorizar telefone_ primeiro
+          const phoneFields = ['telefone_', 'telefone', 'phone', 'celular', 'whatsapp', 'numero', 'phoneNumber', 'campo_'];
+          let phoneNumber = null;
+          let userName = null;
+          
+          // Buscar telefone - buscar em qualquer campo que contenha essas palavras
+          for (const field of Object.keys(responseData)) {
+            const fieldLower = field.toLowerCase();
+            const value = responseData[field];
+            console.log(`📱 VERIFICANDO CAMPO ${field} (${fieldLower}) = ${value}`);
+            
+            // Verificar cada padrão individual
+            for (const pattern of phoneFields) {
+              console.log(`📱 VERIFICANDO PADRÃO "${pattern}" em "${fieldLower}"`);
+              if (fieldLower.includes(pattern)) {
+                console.log(`📱 CAMPO ${field} CORRESPONDE A TELEFONE (padrão: ${pattern})`);
+                // Verificar se o valor parece um telefone (contém dígitos e símbolos de telefone)
+                if (typeof value === 'string' && /[\d\(\)\-\s\+]{8,}/.test(value)) {
+                  phoneNumber = value;
+                  console.log(`📱 TELEFONE ENCONTRADO no campo ${field}: ${phoneNumber}`);
+                  break;
+                } else {
+                  console.log(`📱 VALOR NÃO PARECE TELEFONE: ${value} (tipo: ${typeof value})`);
+                }
+              }
+            }
+            if (phoneNumber) break;
+          }
+          
+          // Se não encontrou, procurar por padrão de telefone (regex)
+          if (!phoneNumber) {
+            for (const field of Object.keys(responseData)) {
+              const value = responseData[field];
+              if (typeof value === 'string' && /[\d\s\-\(\)\+]{8,}/.test(value)) {
+                phoneNumber = value;
+                console.log(`📱 TELEFONE ENCONTRADO por padrão no campo ${field}: ${phoneNumber}`);
+                break;
+              }
+            }
+          }
+          
+          // Buscar nome
+          const nameFields = ['nome', 'name', 'nomeCompleto', 'firstName', 'fullName'];
+          for (const field of Object.keys(responseData)) {
+            const fieldLower = field.toLowerCase();
+            if (nameFields.some(nf => fieldLower.includes(nf))) {
+              userName = responseData[field];
+              break;
+            }
+          }
+          
+          if (phoneNumber) {
+            phones.push({
+              id: response.id,
+              phone: phoneNumber,
+              name: userName || 'Sem nome',
+              submittedAt: response.submittedAt,
+              responses: responseData
+            });
+          } else {
+            console.log(`📱 NENHUM TELEFONE ENCONTRADO na response ${index + 1}`);
+          }
+        }
+      });
+      
+      console.log(`📱 TELEFONES EXTRAÍDOS: ${phones.length}`);
+      
+      res.json({
+        quizId,
+        quizTitle: quiz.title,
+        totalResponses: responses.length,
+        totalPhones: phones.length,
+        phones: phones.sort((a, b) => new Date(b.submittedAt).getTime() - new Date(a.submittedAt).getTime())
+      });
+    } catch (error) {
+      console.error("Error fetching quiz phones:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
   app.get("/api/health", (req, res) => {
     res.json({ 
       status: "ok", 
