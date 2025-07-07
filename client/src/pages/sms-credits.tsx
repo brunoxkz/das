@@ -9,7 +9,8 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { MessageSquare, Send, DollarSign, FileText, Plus, Eye, Clock, Users, CheckCircle, XCircle, Phone, Search, AlertCircle, Edit, CreditCard, Pause, Play, Trash2 } from "lucide-react";
+import { MessageSquare, Send, DollarSign, FileText, Plus, Eye, Clock, Users, CheckCircle, XCircle, Phone, Search, AlertCircle, Edit, CreditCard, Pause, Play, Trash2, Clock3 } from "lucide-react";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Progress } from "@/components/ui/progress";
 import { useToast } from "@/hooks/use-toast";
@@ -72,6 +73,7 @@ export default function SMSCreditsPage() {
   });
   const [selectedQuizForPhones, setSelectedQuizForPhones] = useState("");
   const [phoneSearch, setPhoneSearch] = useState("");
+  const [selectedCampaignLogs, setSelectedCampaignLogs] = useState<string | null>(null);
 
   // Fetch user's SMS credits
   const { data: smsCredits, isLoading: creditsLoading } = useQuery<SMSCredits>({
@@ -372,6 +374,53 @@ export default function SMSCreditsPage() {
     }
   };
 
+  // Query para buscar logs de SMS de uma campanha específica
+  const { data: smsLogs } = useQuery({
+    queryKey: ["/api/sms-campaigns", selectedCampaignLogs, "logs"],
+    queryFn: async () => {
+      if (!selectedCampaignLogs) return [];
+      const token = localStorage.getItem("accessToken");
+      const response = await fetch(`/api/sms-campaigns/${selectedCampaignLogs}/logs`, {
+        headers: { "Authorization": `Bearer ${token}` }
+      });
+      if (!response.ok) throw new Error("Failed to fetch SMS logs");
+      return response.json();
+    },
+    enabled: !!selectedCampaignLogs
+  });
+
+  const formatTimestamp = (timestamp: number) => {
+    if (!timestamp) return "—";
+    const date = new Date(timestamp * 1000);
+    return date.toLocaleString('pt-BR');
+  };
+
+  const getStatusIcon = (status: string) => {
+    switch (status) {
+      case 'sent':
+        return <CheckCircle className="w-4 h-4 text-green-600" />;
+      case 'failed':
+        return <XCircle className="w-4 h-4 text-red-600" />;
+      case 'pending':
+        return <Clock3 className="w-4 h-4 text-yellow-600" />;
+      default:
+        return <Clock3 className="w-4 h-4 text-gray-400" />;
+    }
+  };
+
+  const getStatusLabel = (status: string) => {
+    switch (status) {
+      case 'sent':
+        return 'Enviado';
+      case 'failed':
+        return 'Falhou';
+      case 'pending':
+        return 'Pendente';
+      default:
+        return 'Desconhecido';
+    }
+  };
+
   const creditPackages = [
     { amount: 100, price: 9.90, bonus: 0 },
     { amount: 500, price: 39.90, bonus: 50 },
@@ -580,6 +629,15 @@ export default function SMSCreditsPage() {
                       </div>
                       {/* Botões de controle */}
                       <div className="flex gap-2">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => setSelectedCampaignLogs(campaign.id)}
+                          className="text-blue-600 border-blue-300 hover:bg-blue-50"
+                          title="Ver logs de envio"
+                        >
+                          <Eye className="w-4 h-4" />
+                        </Button>
                         {campaign.status === 'active' && (
                           <Button
                             size="sm"
@@ -1104,6 +1162,61 @@ export default function SMSCreditsPage() {
           </Card>
         </TabsContent>
       </Tabs>
+
+      {/* Modal de Logs SMS */}
+      <Dialog open={!!selectedCampaignLogs} onOpenChange={() => setSelectedCampaignLogs(null)}>
+        <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Logs de SMS - Campanha</DialogTitle>
+            <DialogDescription>
+              Histórico detalhado de todos os SMS enviados nesta campanha
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4">
+            {smsLogs && smsLogs.length > 0 ? (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Telefone</TableHead>
+                    <TableHead>Mensagem</TableHead>
+                    <TableHead>Enviado em</TableHead>
+                    <TableHead>Erro</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {smsLogs.map((log: any) => (
+                    <TableRow key={log.id}>
+                      <TableCell>
+                        <div className="flex items-center gap-2">
+                          {getStatusIcon(log.status)}
+                          <span className="text-sm">{getStatusLabel(log.status)}</span>
+                        </div>
+                      </TableCell>
+                      <TableCell className="font-mono">{log.phone}</TableCell>
+                      <TableCell className="max-w-xs truncate" title={log.message}>
+                        {log.message}
+                      </TableCell>
+                      <TableCell className="text-sm text-gray-600">
+                        {formatTimestamp(log.sentAt)}
+                      </TableCell>
+                      <TableCell className="text-sm text-red-600">
+                        {log.errorMessage || "—"}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            ) : (
+              <div className="text-center py-8 text-gray-500">
+                <MessageSquare className="w-12 h-12 mx-auto mb-4 text-gray-300" />
+                <p>Nenhum log encontrado para esta campanha</p>
+              </div>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

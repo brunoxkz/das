@@ -1304,14 +1304,34 @@ export function registerSQLiteRoutes(app: Express): Server {
             const phoneNumber = phone.telefone || phone.phone || phone;
             if (!phoneNumber) continue;
 
+            // Criar log antes de enviar
+            const logId = nanoid();
+            await storage.createSMSLog({
+              id: logId,
+              campaignId: campaign.id,
+              phone: phoneNumber,
+              message: message,
+              status: 'pending'
+            });
+
             const success = await sendSms(phoneNumber, message);
             
             if (success) {
               successCount++;
-              console.log(`📱 SMS ENVIADO com sucesso para: ${phoneNumber}`);
+              // Atualizar log com sucesso
+              await storage.updateSMSLog(logId, {
+                status: 'sent',
+                sentAt: Math.floor(Date.now() / 1000)
+              });
+              console.log(`📱 SMS ENVIADO com sucesso para: ${phoneNumber} (Log: ${logId})`);
             } else {
               failureCount++;
-              console.log(`📱 ERRO no envio para: ${phoneNumber}`);
+              // Atualizar log com erro
+              await storage.updateSMSLog(logId, {
+                status: 'failed',
+                errorMessage: 'Erro no envio pelo Twilio'
+              });
+              console.log(`📱 ERRO no envio para: ${phoneNumber} (Log: ${logId})`);
             }
           } catch (error) {
             failureCount++;
@@ -1490,6 +1510,27 @@ export function registerSQLiteRoutes(app: Express): Server {
     } catch (error) {
       console.error("Error deleting SMS campaign:", error);
       res.status(500).json({ error: "Error deleting SMS campaign" });
+    }
+  });
+
+  // Get SMS logs for a campaign
+  app.get("/api/sms-campaigns/:id/logs", verifyJWT, async (req: any, res: Response) => {
+    try {
+      const { id } = req.params;
+      const userId = req.user.id;
+      
+      const campaign = await storage.getSMSCampaignById(id);
+      
+      if (!campaign || campaign.userId !== userId) {
+        return res.status(404).json({ error: "Campanha não encontrada" });
+      }
+
+      const logs = await storage.getSMSLogsByCampaign(id);
+      
+      res.json(logs);
+    } catch (error) {
+      console.error("Error fetching SMS logs:", error);
+      res.status(500).json({ error: "Error fetching SMS logs" });
     }
   });
 

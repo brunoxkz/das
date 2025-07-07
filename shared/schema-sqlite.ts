@@ -1,6 +1,7 @@
 import { sqliteTable, text, integer, real } from "drizzle-orm/sqlite-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
+import { desc } from "drizzle-orm";
 
 export const users = sqliteTable("users", {
   id: text("id").primaryKey(),
@@ -92,6 +93,19 @@ export const smsCampaigns = sqliteTable("sms_campaigns", {
   replies: integer("replies").default(0),
   createdAt: integer("createdAt").notNull().$defaultFn(() => Math.floor(Date.now() / 1000)),
   updatedAt: integer("updatedAt").notNull().$defaultFn(() => Math.floor(Date.now() / 1000)),
+});
+
+export const smsLogs = sqliteTable("sms_logs", {
+  id: text("id").primaryKey(),
+  campaignId: text("campaignId").notNull().references(() => smsCampaigns.id, { onDelete: "cascade" }),
+  phone: text("phone").notNull(),
+  message: text("message").notNull(),
+  status: text("status").notNull(), // pending, sent, delivered, failed
+  twilioSid: text("twilioSid"),
+  errorMessage: text("errorMessage"),
+  sentAt: integer("sentAt"),
+  deliveredAt: integer("deliveredAt"),
+  createdAt: integer("createdAt").notNull().$defaultFn(() => Math.floor(Date.now() / 1000)),
 });
 
 export const emailCampaigns = sqliteTable("email_campaigns", {

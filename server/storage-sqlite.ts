@@ -1,6 +1,6 @@
 import { db } from "./db-sqlite";
 import { 
-  users, quizzes, quizTemplates, quizResponses, quizAnalytics, emailCampaigns, emailTemplates, smsTransactions, smsCampaigns,
+  users, quizzes, quizTemplates, quizResponses, quizAnalytics, emailCampaigns, emailTemplates, smsTransactions, smsCampaigns, smsLogs,
   type User, type UpsertUser, type InsertQuiz, type Quiz,
   type InsertQuizTemplate, type QuizTemplate,
   type InsertQuizResponse, type QuizResponse,
@@ -775,6 +775,46 @@ export class SQLiteStorage implements IStorage {
       console.error('Error getting SMS campaign by ID:', error);
       throw error;
     }
+  }
+
+  // SMS Logs methods
+  async createSMSLog(logData: {
+    id: string;
+    campaignId: string;
+    phone: string;
+    message: string;
+    status: string;
+    twilioSid?: string;
+    errorMessage?: string;
+  }): Promise<any> {
+    const log = await db.insert(smsLogs).values(logData).returning();
+    return log[0];
+  }
+
+  async getSMSLogsByCampaign(campaignId: string): Promise<any[]> {
+    const logs = await db
+      .select()
+      .from(smsLogs)
+      .where(eq(smsLogs.campaignId, campaignId))
+      .orderBy(desc(smsLogs.createdAt));
+    
+    return logs;
+  }
+
+  async updateSMSLog(logId: string, updates: {
+    status?: string;
+    twilioSid?: string;
+    errorMessage?: string;
+    sentAt?: number;
+    deliveredAt?: number;
+  }): Promise<any> {
+    const result = await db
+      .update(smsLogs)
+      .set(updates)
+      .where(eq(smsLogs.id, logId))
+      .returning();
+    
+    return result[0];
   }
 }
 
