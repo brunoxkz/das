@@ -1,6 +1,6 @@
 import { db } from "./db-sqlite";
 import { 
-  users, quizzes, quizTemplates, quizResponses, quizAnalytics, emailCampaigns, emailTemplates, smsTransactions,
+  users, quizzes, quizTemplates, quizResponses, quizAnalytics, emailCampaigns, emailTemplates, smsTransactions, smsCampaigns,
   type User, type UpsertUser, type InsertQuiz, type Quiz,
   type InsertQuizTemplate, type QuizTemplate,
   type InsertQuizResponse, type QuizResponse,
@@ -686,6 +686,94 @@ export class SQLiteStorage implements IStorage {
       .orderBy(desc(smsTransactions.createdAt));
     
     return transactions;
+  }
+
+  async createSMSCampaign(campaignData: { 
+    name: string; 
+    quizId: string; 
+    message: string; 
+    userId: string; 
+    phones: string[]; 
+    status?: string; 
+  }): Promise<any> {
+    const campaign = {
+      id: crypto.randomUUID(),
+      name: campaignData.name,
+      quizId: campaignData.quizId,
+      userId: campaignData.userId,
+      message: campaignData.message,
+      phones: JSON.stringify(campaignData.phones),
+      status: campaignData.status || 'pending'
+      // Não incluir createdAt e updatedAt - deixar o SQLite usar os defaults
+    };
+
+    await db.insert(smsCampaigns).values(campaign);
+    return campaign;
+  }
+
+  async getSMSCampaigns(userId: string): Promise<any[]> {
+    try {
+      const campaigns = await db.select()
+        .from(smsCampaigns)
+        .where(eq(smsCampaigns.userId, userId))
+        .orderBy(desc(smsCampaigns.createdAt));
+      
+      return campaigns.map(campaign => ({
+        ...campaign,
+        phones: JSON.parse(campaign.phones)
+      }));
+    } catch (error) {
+      console.error('Error getting SMS campaigns:', error);
+      throw error;
+    }
+  }
+
+  async updateSMSCampaign(campaignId: string, updates: Partial<{ name: string; message: string; phones: string[]; status: string }>): Promise<any> {
+    try {
+      const updateData: any = {
+        ...updates,
+        updatedAt: Math.floor(Date.now() / 1000)
+      };
+
+      if (updates.phones) {
+        updateData.phones = JSON.stringify(updates.phones);
+      }
+
+      const result = await db.update(smsCampaigns)
+        .set(updateData)
+        .where(eq(smsCampaigns.id, campaignId))
+        .returning();
+      
+      return result[0];
+    } catch (error) {
+      console.error('Error updating SMS campaign:', error);
+      throw error;
+    }
+  }
+
+  async deleteSMSCampaign(campaignId: string): Promise<void> {
+    try {
+      await db.delete(smsCampaigns)
+        .where(eq(smsCampaigns.id, campaignId));
+    } catch (error) {
+      console.error('Error deleting SMS campaign:', error);
+      throw error;
+    }
+  }
+
+  async getSMSCampaignById(campaignId: string): Promise<any | null> {
+    try {
+      const campaign = await db.select().from(smsCampaigns).where(eq(smsCampaigns.id, campaignId)).limit(1);
+      if (campaign.length === 0) return null;
+      
+      return {
+        ...campaign[0],
+        phones: JSON.parse(campaign[0].phones)
+      };
+    } catch (error) {
+      console.error('Error getting SMS campaign by ID:', error);
+      throw error;
+    }
   }
 }
 

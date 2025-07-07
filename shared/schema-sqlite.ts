@@ -77,6 +77,18 @@ export const smsTransactions = sqliteTable("sms_transactions", {
   createdAt: integer("createdAt", { mode: 'timestamp' }).notNull().$defaultFn(() => new Date()),
 });
 
+export const smsCampaigns = sqliteTable("sms_campaigns", {
+  id: text("id").primaryKey(),
+  name: text("name").notNull(),
+  quizId: text("quizId").notNull().references(() => quizzes.id, { onDelete: "cascade" }),
+  userId: text("userId").notNull().references(() => users.id, { onDelete: "cascade" }),
+  message: text("message").notNull(),
+  phones: text("phones", { mode: 'json' }).notNull(), // Array of phone numbers stored as JSON
+  status: text("status").default("pending"), // pending, active, paused, completed
+  createdAt: integer("createdAt").notNull().$defaultFn(() => Math.floor(Date.now() / 1000)),
+  updatedAt: integer("updatedAt").notNull().$defaultFn(() => Math.floor(Date.now() / 1000)),
+});
+
 export const emailCampaigns = sqliteTable("email_campaigns", {
   id: text("id").primaryKey(),
   name: text("name").notNull(),

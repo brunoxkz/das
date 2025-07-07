@@ -1147,11 +1147,111 @@ export function registerSQLiteRoutes(app: Express): Server {
   app.post("/api/sms-campaigns", verifyJWT, async (req: any, res: Response) => {
     try {
       const userId = req.user.id;
-      const { name, quizId, message, phones } = req.body;
+      console.log("📱 SMS CAMPAIGN CREATE - Body recebido:", JSON.stringify(req.body, null, 2));
+      
+      const { name, quizId, message } = req.body;
+      console.log("📱 SMS CAMPAIGN CREATE - Campos extraídos:", {
+        name: name || 'MISSING',
+        quizId: quizId || 'MISSING', 
+        message: message || 'MISSING'
+      });
 
-      if (!name || !quizId || !message || !phones) {
+      if (!name || !quizId || !message) {
+        console.log("📱 SMS CAMPAIGN CREATE - ERRO: Dados obrigatórios em falta");
         return res.status(400).json({ error: "Dados obrigatórios em falta" });
       }
+
+      // Buscar automaticamente os telefones do quiz
+      console.log("📱 BUSCANDO TELEFONES - Quiz:", quizId, ", User:", userId);
+      const responses = await storage.getQuizResponses(quizId);
+      console.log("📱 RESPONSES ENCONTRADAS:", responses.length);
+      
+      let phones: any[] = [];
+      
+      responses.forEach((response, index) => {
+        const responseData = response.responses;
+        console.log(`📱 RESPONSE ${index + 1}:`, { id: response.id, responses: responseData, submittedAt: response.submittedAt });
+        
+        let phoneNumber = null;
+        let userName = null;
+        
+        if (Array.isArray(responseData)) {
+          // Formato novo - array de elementos
+          console.log(`📱 FORMATO NOVO - RESPONSE ${index + 1}:`, responseData);
+          
+          // Buscar telefone primeiro
+          for (const item of responseData) {
+            if (item.elementType === 'phone' && item.answer) {
+              phoneNumber = item.answer;
+              console.log(`📱 TELEFONE ENCONTRADO no elemento ${item.elementId}: ${phoneNumber}`);
+              break;
+            }
+          }
+          
+          // Se não encontrou phone element, buscar por fieldId que contenha "telefone"
+          if (!phoneNumber) {
+            for (const item of responseData) {
+              if (item.elementFieldId && item.elementFieldId.includes('telefone') && item.answer) {
+                phoneNumber = item.answer;
+                console.log(`📱 TELEFONE ENCONTRADO no fieldId ${item.elementFieldId}: ${phoneNumber}`);
+                break;
+              }
+            }
+          }
+          
+          // Buscar nome
+          for (const item of responseData) {
+            if (item.elementType === 'text' && item.elementFieldId && 
+                (item.elementFieldId.includes('nome') || item.elementFieldId.includes('name'))) {
+              userName = item.answer;
+              console.log(`📱 NOME ENCONTRADO no elemento ${item.elementId}: ${userName}`);
+              break;
+            }
+          }
+          
+          if (phoneNumber) {
+            phones.push({
+              id: response.id,
+              phone: phoneNumber,
+              name: userName || 'Sem nome',
+              submittedAt: response.submittedAt,
+              responses: responseData
+            });
+          } else {
+            console.log(`📱 NENHUM TELEFONE ENCONTRADO na response ${index + 1}`);
+          }
+        } else {
+          // Formato antigo - resposta é um objeto
+          console.log(`📱 FORMATO ANTIGO - RESPONSE ${index + 1}:`, responseData);
+          
+          // Buscar por chaves que contenham "telefone"
+          for (const key in responseData) {
+            if (key.includes('telefone') && responseData[key]) {
+              console.log(`📱 TELEFONE ENCONTRADO na chave ${key}: ${responseData[key]}`);
+              
+              // Buscar nome
+              let userName = null;
+              for (const nameKey in responseData) {
+                if (nameKey.includes('nome') && responseData[nameKey]) {
+                  userName = responseData[nameKey];
+                  break;
+                }
+              }
+              
+              phones.push({
+                id: response.id,
+                phone: responseData[key],
+                name: userName || 'Sem nome',
+                submittedAt: response.submittedAt,
+                responses: responseData
+              });
+              break;
+            }
+          }
+        }
+      });
+
+      console.log("📱 TELEFONES EXTRAÍDOS:", phones.length);
 
       const campaign = await storage.createSMSCampaign({
         id: nanoid(),
