@@ -264,7 +264,9 @@ export function QuizPublicRenderer({ quiz }: QuizPublicRendererProps) {
       case 'phone':
         return (
           <div key={id} className="space-y-4">
-            <h3 className="text-lg font-semibold">{properties.question}</h3>
+            {(properties.question || properties.label) && (
+              <h3 className="text-lg font-semibold">{properties.question || properties.label || 'Telefone'}</h3>
+            )}
             <Input
               type="tel"
               placeholder={properties.placeholder || 'Digite seu telefone'}
@@ -278,7 +280,9 @@ export function QuizPublicRenderer({ quiz }: QuizPublicRendererProps) {
       case 'number':
         return (
           <div key={id} className="space-y-4">
-            <h3 className="text-lg font-semibold">{properties.question}</h3>
+            {(properties.question || properties.label) && (
+              <h3 className="text-lg font-semibold">{properties.question || properties.label || 'Número'}</h3>
+            )}
             <Input
               type="number"
               placeholder={properties.placeholder}
@@ -294,7 +298,9 @@ export function QuizPublicRenderer({ quiz }: QuizPublicRendererProps) {
       case 'textarea':
         return (
           <div key={id} className="space-y-4">
-            <h3 className="text-lg font-semibold">{properties.question}</h3>
+            {(properties.question || properties.label) && (
+              <h3 className="text-lg font-semibold">{properties.question || properties.label || 'Texto'}</h3>
+            )}
             <Textarea
               placeholder={properties.placeholder}
               value={answer || ''}
@@ -308,7 +314,9 @@ export function QuizPublicRenderer({ quiz }: QuizPublicRendererProps) {
       case 'checkbox':
         return (
           <div key={id} className="space-y-4">
-            <h3 className="text-lg font-semibold">{properties.question}</h3>
+            {(properties.question || properties.label) && (
+              <h3 className="text-lg font-semibold">{properties.question || properties.label || 'Opções'}</h3>
+            )}
             <div className="space-y-2">
               {properties.options?.map((option: any, index: number) => (
                 <div key={index} className="flex items-center space-x-2">
@@ -333,7 +341,9 @@ export function QuizPublicRenderer({ quiz }: QuizPublicRendererProps) {
       case 'date':
         return (
           <div key={id} className="space-y-4">
-            <h3 className="text-lg font-semibold">{properties.question}</h3>
+            {(properties.question || properties.label) && (
+              <h3 className="text-lg font-semibold">{properties.question || properties.label || 'Data'}</h3>
+            )}
             <Input
               type="date"
               value={answer || ''}
@@ -419,7 +429,9 @@ export function QuizPublicRenderer({ quiz }: QuizPublicRendererProps) {
       case 'rating':
         return (
           <div key={id} className="space-y-4">
-            <h3 className="text-lg font-semibold">{properties.question}</h3>
+            {(properties.question || properties.label) && (
+              <h3 className="text-lg font-semibold">{properties.question || properties.label || 'Avaliação'}</h3>
+            )}
             <div className="flex space-x-2">
               {Array.from({ length: properties.maxRating || 5 }, (_, i) => (
                 <button
