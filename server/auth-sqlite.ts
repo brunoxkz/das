@@ -207,6 +207,21 @@ export function setupSQLiteAuth(app: Express) {
     }
   });
 
+  // Verify token endpoint
+  app.post('/api/auth/verify', verifyJWT, (req: any, res: Response) => {
+    res.json({
+      valid: true,
+      user: {
+        id: req.user.id,
+        email: req.user.email,
+        firstName: req.user.firstName,
+        lastName: req.user.lastName,
+        role: req.user.role,
+        plan: req.user.plan,
+      }
+    });
+  });
+
   // Get current user endpoint
   app.get('/api/user', verifyJWT, (req: any, res: Response) => {
     res.json({
