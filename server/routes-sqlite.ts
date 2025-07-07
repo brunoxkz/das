@@ -1190,11 +1190,14 @@ export function registerSQLiteRoutes(app: Express): Server {
       const userId = req.user.id;
       console.log("📱 SMS CAMPAIGN CREATE - Body recebido:", JSON.stringify(req.body, null, 2));
       
-      const { name, quizId, message } = req.body;
+      const { name, quizId, message, triggerType, scheduledDateTime, targetAudience, triggerDelay, triggerUnit } = req.body;
       console.log("📱 SMS CAMPAIGN CREATE - Campos extraídos:", {
         name: name || 'MISSING',
         quizId: quizId || 'MISSING', 
-        message: message || 'MISSING'
+        message: message || 'MISSING',
+        triggerType: triggerType || 'immediate',
+        scheduledDateTime: scheduledDateTime || 'NOT_PROVIDED',
+        targetAudience: targetAudience || 'all'
       });
 
       if (!name || !quizId || !message) {
@@ -1386,7 +1389,6 @@ export function registerSQLiteRoutes(app: Express): Server {
       console.log(`📊 SEGMENTAÇÃO: ${completedPhones.length} COMPLETED, ${abandonedPhones.length} ABANDONED`);
 
       // Filtrar telefones baseado no público-alvo da campanha (LISTAS SEPARADAS)
-      const { targetAudience = 'all' } = req.body;
       let filteredPhones = [];
       
       if (targetAudience === 'completed') {
@@ -1403,15 +1405,26 @@ export function registerSQLiteRoutes(app: Express): Server {
       console.log(`📱 TELEFONES EXTRAÍDOS: ${allPhones.length}, FILTRADOS: ${filteredPhones.length}`);
 
       // Determinar status inicial baseado no triggerType
-      const { triggerType = 'immediate', triggerDelay = 1, triggerUnit = 'hours' } = req.body;
-      const initialStatus = triggerType === 'immediate' ? 'active' : 'draft';
-      
-      // Calcular scheduledAt para campanhas agendadas
+      let initialStatus = 'active';
       let scheduledAt = null;
-      if (triggerType === 'delayed') {
+      
+      if (triggerType === 'immediate') {
+        initialStatus = 'active';
+      } else if (triggerType === 'delayed') {
+        initialStatus = 'draft';
         const delayInMs = triggerUnit === 'minutes' ? triggerDelay * 60 * 1000 : triggerDelay * 60 * 60 * 1000;
-        scheduledAt = Date.now() + delayInMs; // Timestamp em milliseconds
-        console.log(`⏰ AGENDAMENTO CONFIGURADO: ${new Date(scheduledAt)} (em ${triggerDelay} ${triggerUnit})`);
+        scheduledAt = Math.floor((Date.now() + delayInMs) / 1000); // Timestamp Unix em segundos
+        console.log(`⏰ AGENDAMENTO DELAYED: ${new Date(scheduledAt * 1000)} (em ${triggerDelay} ${triggerUnit})`);
+      } else if (triggerType === 'scheduled') {
+        initialStatus = 'draft';
+        if (scheduledDateTime) {
+          // Converter para timestamp Unix em segundos
+          scheduledAt = Math.floor(new Date(scheduledDateTime).getTime() / 1000);
+          console.log(`⏰ AGENDAMENTO SCHEDULED: ${new Date(scheduledAt * 1000)} (data específica: ${scheduledDateTime})`);
+        } else {
+          console.log(`❌ ERRO: triggerType=scheduled mas scheduledDateTime não fornecido`);
+          return res.status(400).json({ error: "Data/hora obrigatória para agendamento específico" });
+        }
       }
       
       const campaign = await storage.createSMSCampaign({

@@ -59,10 +59,11 @@ export default function SMSCreditsPage() {
     message: string;
     targetAudience: "completed" | "abandoned" | "all";
     quizId: string;
-    triggerType: "immediate" | "delayed";
+    triggerType: "immediate" | "delayed" | "scheduled";
     triggerDelay: number;
     triggerUnit: "hours" | "minutes";
     fromDate: string;
+    scheduledDateTime?: string;
   }>({
     name: "",
     message: "",
@@ -268,12 +269,15 @@ export default function SMSCreditsPage() {
       message: campaignForm.message,
       quizId: campaignForm.quizId,
       targetAudience: campaignForm.targetAudience,
+      triggerType: campaignForm.triggerType,
+      scheduledDateTime: campaignForm.scheduledDateTime,
       messageLength: campaignForm.message?.length,
       messageEmpty: !campaignForm.message,
       quizIdEmpty: !campaignForm.quizId,
       targetAudienceEmpty: !campaignForm.targetAudience
     });
     
+    // Validações obrigatórias
     if (!campaignForm.message || !campaignForm.quizId || !campaignForm.targetAudience) {
       toast({
         title: "Erro",
@@ -281,6 +285,32 @@ export default function SMSCreditsPage() {
         variant: "destructive"
       });
       return;
+    }
+
+    // Validação obrigatória para data/hora quando tipo é 'scheduled'
+    if (campaignForm.triggerType === "scheduled" && !campaignForm.scheduledDateTime) {
+      toast({
+        title: "Erro",
+        description: "A data e hora do agendamento são obrigatórias",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    // Validação se data/hora está no futuro (mínimo 5 minutos)
+    if (campaignForm.triggerType === "scheduled" && campaignForm.scheduledDateTime) {
+      const scheduledTime = new Date(campaignForm.scheduledDateTime);
+      const now = new Date();
+      const minTime = new Date(now.getTime() + 5 * 60 * 1000); // 5 minutos no futuro
+      
+      if (scheduledTime < minTime) {
+        toast({
+          title: "Erro",
+          description: "A data/hora deve ser pelo menos 5 minutos no futuro",
+          variant: "destructive"
+        });
+        return;
+      }
     }
 
     // Gerar o nome automaticamente baseado no quiz selecionado
@@ -927,6 +957,7 @@ export default function SMSCreditsPage() {
                   <SelectContent>
                     <SelectItem value="immediate">Enviar imediatamente</SelectItem>
                     <SelectItem value="delayed">Enviar depois de X tempo</SelectItem>
+                    <SelectItem value="scheduled">Agendar para data/hora específica</SelectItem>
                   </SelectContent>
                 </Select>
 
@@ -957,6 +988,34 @@ export default function SMSCreditsPage() {
                     <span className="text-sm text-blue-700">
                       {campaignForm.targetAudience === "completed" ? "após completar" : "após abandonar"} o quiz
                     </span>
+                  </div>
+                )}
+
+                {campaignForm.triggerType === "scheduled" && (
+                  <div className="bg-purple-50 p-4 rounded-lg border border-purple-200">
+                    <div className="flex items-center gap-2 mb-3">
+                      <Clock className="w-4 h-4 text-purple-600" />
+                      <span className="text-sm font-medium text-purple-900">Agendar envio para:</span>
+                    </div>
+                    <div className="space-y-3">
+                      <div>
+                        <Label htmlFor="scheduledDate" className="text-sm font-medium text-purple-800">
+                          Data e Hora *
+                        </Label>
+                        <Input
+                          id="scheduledDate"
+                          type="datetime-local"
+                          value={campaignForm.scheduledDateTime || ''}
+                          onChange={(e) => setCampaignForm({...campaignForm, scheduledDateTime: e.target.value})}
+                          min={new Date(Date.now() + 5 * 60 * 1000).toISOString().slice(0, 16)} // Mínimo 5 minutos a partir de agora
+                          className="w-full"
+                          required
+                        />
+                        <p className="text-xs text-purple-600 mt-1">
+                          A campanha será enviada exatamente na data/hora especificada
+                        </p>
+                      </div>
+                    </div>
                   </div>
                 )}
               </div>
