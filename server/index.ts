@@ -1,6 +1,7 @@
 import express, { type Request, Response, NextFunction } from "express";
 import compression from "compression";
 import helmet from "helmet";
+import crypto from "crypto";
 import { registerHybridRoutes } from "./routes-hybrid";
 import { setupVite, serveStatic, log } from "./vite";
 import { setupHybridAuth, verifyJWT } from "./auth-hybrid";
@@ -178,129 +179,57 @@ app.use((req, res, next) => {
     }
   }, 30000); // A cada 30 segundos
 
-  // Sistema de monitoramento automático para novos leads em campanhas ativas
-  setInterval(async () => {
+  // Sistema de detecção automática de novos leads - SIMPLIFICADO PARA DEBUG
+  const autoDetectionSystem = async () => {
+    console.log(`🔍 EXECUTANDO DETECÇÃO AUTOMÁTICA - ${new Date().toLocaleTimeString()}`);
     try {
       const { storage } = await import('./storage-sqlite');
-      const activeCampaigns = await storage.getAllSMSCampaigns();
+      const campaigns = await storage.getAllSMSCampaigns();
+      console.log(`📋 CAMPANHAS ENCONTRADAS: ${campaigns.length}`);
       
-      for (const campaign of activeCampaigns) {
-        // Processar todas as campanhas ativas (não apenas agendadas)
-        if (campaign.status === 'active') {
-          const allQuizResponses = await storage.getQuizResponses(campaign.quizId);
-          const existingLogs = await storage.getSMSLogs(campaign.id);
-          const existingPhones = new Set(existingLogs.map(log => log.phone));
+      for (const campaign of campaigns) {
+        if (campaign.status === 'draft' && campaign.scheduledAt) {
+          console.log(`✅ PROCESSANDO: "${campaign.name}" - Quiz: ${campaign.quizId}`);
           
-          // Por enquanto, processar todas as respostas (filtro por data será implementado posteriormente)
-          let quizResponses = allQuizResponses;
+          const responses = await storage.getQuizResponses(campaign.quizId);
+          const logs = await storage.getSMSLogs(campaign.id);
+          const existingPhones = new Set(logs.map(l => l.phone));
           
-          // Extrair novos telefones das respostas do quiz COMPLETAS
-          const newPhones = [];
-          for (const response of quizResponses) {
-            // Processar respostas FINALIZADAS (completas ou abandonadas, mas não parciais em tempo real)
-            const isComplete = response.metadata?.isComplete === true;
-            const isPartial = response.metadata?.isPartial === true;
-            const completionPercentage = response.metadata?.completionPercentage || 0;
-            
-            // Só pular respostas que são salvamentos parciais em tempo real (isPartial=true)
-            if (isPartial) {
-              console.log(`🚫 RESPOSTA PARCIAL IGNORADA: ${response.id} - salvamento em tempo real`);
-              continue;
-            }
-            
-            // Processar tanto quizzes completos quanto abandonados
-            const status = isComplete ? 'completed' : 'abandoned';
-            console.log(`✅ PROCESSANDO RESPOSTA ${status.toUpperCase()}: ${response.id} - completion:${completionPercentage}%`);
-            
-            const responses = Array.isArray(response.responses) ? response.responses : JSON.parse(response.responses || '[]');
-            
-            for (const resp of responses) {
-              if (resp.elementType === 'phone' && resp.elementFieldId?.startsWith('telefone_')) {
+          console.log(`📊 DADOS: ${responses.length} respostas, ${logs.length} logs, ${existingPhones.size} telefones existentes`);
+          
+          // Buscar novos telefones
+          for (const response of responses) {
+            const responseArray = Array.isArray(response.responses) ? response.responses : JSON.parse(response.responses || '[]');
+            for (const resp of responseArray) {
+              if (resp.elementType === 'phone' && resp.answer) {
                 const phone = resp.answer;
-                
-                // Validação rigorosa de número de telefone
-                const cleanPhone = phone?.replace(/\D/g, '') || '';
-                const isValidPhone = cleanPhone.length >= 10 && cleanPhone.length <= 15;
-                const isNumericOnly = /^\d+$/.test(cleanPhone); // Só números
-                
-                console.log(`📱 VALIDANDO: "${phone}" -> limpo:"${cleanPhone}" -> válido:${isValidPhone && isNumericOnly}`);
-                
-                if (phone && isValidPhone && isNumericOnly && !existingPhones.has(phone)) {
-                  // Verificar segmentação da campanha
-                  const targetAudience = campaign.targetAudience || 'all';
+                if (phone.length >= 10 && !existingPhones.has(phone)) {
+                  console.log(`🆕 NOVO TELEFONE DETECTADO: ${phone} - AGENDANDO...`);
                   
-                  let shouldInclude = false;
-                  if (targetAudience === 'all') shouldInclude = true;
-                  else if (targetAudience === 'completed' && isComplete) shouldInclude = true;
-                  else if (targetAudience === 'abandoned' && !isComplete) shouldInclude = true;
+                  // Criar log agendado
+                  await storage.createSMSLog({
+                    id: crypto.randomUUID(),
+                    campaignId: campaign.id,
+                    phone,
+                    message: campaign.message,
+                    status: 'scheduled',
+                    scheduledAt: Math.floor(Date.now() / 1000) + (campaign.triggerDelay * 60)
+                  });
                   
-                  if (shouldInclude) {
-                    newPhones.push({
-                      phone,
-                      leadData: {
-                        name: response.metadata?.leadData?.nome || 'Sem nome',
-                        isComplete,
-                        status: isComplete ? 'completed' : 'abandoned',
-                        submittedAt: response.submittedAt
-                      }
-                    });
-                  }
+                  console.log(`✅ TELEFONE ${phone} AGENDADO COM SUCESSO`);
                 }
               }
-            }
-          }
-          
-          // Processar novos telefones encontrados
-          if (newPhones.length > 0) {
-            console.log(`📱 NOVOS LEADS VÁLIDOS DETECTADOS: ${newPhones.length} para campanha "${campaign.name}"`);
-            
-            for (const { phone, leadData } of newPhones) {
-              // Criar log agendado para cada novo telefone
-              const logId = crypto.randomUUID();
-              await storage.createSMSLog({
-                id: logId,
-                campaignId: campaign.id,
-                phone,
-                message: campaign.message,
-                status: 'scheduled'
-              });
-              
-              // Agendar envio baseado nas configurações da campanha
-              const delay = campaign.triggerDelay || 10; // Default 10 minutos
-              const delayMs = delay * 60 * 1000;
-              
-              console.log(`⏰ NOVO LEAD VÁLIDO AGENDADO: ${phone} (${leadData.name}) [${leadData.status}] - envio em ${delay} minutos`);
-              
-              // Usar setTimeout para agendamento dinâmico
-              setTimeout(async () => {
-                try {
-                  const { storage: currentStorage } = await import('./storage-sqlite');
-                  const { default: twilio } = await import('./twilio');
-                  
-                  const result = await twilio.sendSMS(phone, campaign.message);
-                  
-                  if (result.success) {
-                    await currentStorage.updateSMSLogStatus(campaign.id, phone, 'sent');
-                    await currentStorage.updateSMSCampaignStats(campaign.id, { sent: 1 });
-                    console.log(`✅ SMS DINÂMICO ENVIADO: ${phone} para campanha "${campaign.name}"`);
-                  } else {
-                    await currentStorage.updateSMSLogStatus(campaign.id, phone, 'failed', result.error);
-                    console.log(`❌ Falha no envio dinâmico: ${phone} - ${result.error}`);
-                  }
-                } catch (error) {
-                  console.error(`❌ Erro no envio dinâmico para ${phone}:`, error);
-                  const { storage: errorStorage } = await import('./storage-sqlite');
-                  await errorStorage.updateSMSLogStatus(campaign.id, phone, 'failed', error.message);
-                }
-              }, delayMs);
             }
           }
         }
       }
     } catch (error) {
-      console.error('❌ Erro no sistema de monitoramento dinâmico:', error);
+      console.error('❌ ERRO NA DETECÇÃO AUTOMÁTICA:', error);
     }
-  }, 30000); // Verificar novos leads a cada 30 segundos para detecção rápida
+  };
+  
+  // Executar a cada 20 segundos
+  setInterval(autoDetectionSystem, 20000);
 
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
     const status = err.status || err.statusCode || 500;
