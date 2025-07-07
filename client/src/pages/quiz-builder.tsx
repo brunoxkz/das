@@ -33,7 +33,7 @@ import { Link } from "wouter";
 
 export default function QuizBuilder() {
   const [match, params] = useRoute("/quizzes/:id/edit");
-  const isEditing = match && params?.id;
+  const isEditing = !!params?.id;
   const quizId = params?.id;
   
   const { toast } = useToast();
@@ -126,8 +126,20 @@ export default function QuizBuilder() {
   // Save quiz mutation
   const saveMutation = useMutation({
     mutationFn: async (data: any) => {
-      const url = isEditing ? `/api/quizzes/${quizId}` : "/api/quizzes";
-      const method = isEditing ? "PUT" : "POST";
+      // Usar currentQuizId se disponível, caso contrário verificar se é edição com quizId da URL
+      const hasQuizId = currentQuizId || (isEditing && quizId);
+      const url = hasQuizId ? `/api/quizzes/${currentQuizId || quizId}` : "/api/quizzes";
+      const method = hasQuizId ? "PUT" : "POST";
+      
+      console.log("SAVE MUTATION - Debug:", {
+        isEditing,
+        quizId,
+        currentQuizId,
+        hasQuizId,
+        url,
+        method
+      });
+      
       return await apiRequest(url, {
         method,
         body: JSON.stringify(data),
@@ -135,8 +147,9 @@ export default function QuizBuilder() {
     },
     onSuccess: (result) => {
       // Se é um novo quiz (não editing), capturar o ID retornado
-      if (!isEditing && result?.id) {
+      if (!currentQuizId && result?.id) {
         setCurrentQuizId(result.id);
+        console.log("SAVE MUTATION - Novo quiz criado com ID:", result.id);
       }
       
       toast({
@@ -169,6 +182,10 @@ export default function QuizBuilder() {
   useEffect(() => {
     if (existingQuiz) {
       console.log("Carregando quiz existente:", JSON.stringify(existingQuiz, null, 2));
+      
+      // Definir o currentQuizId quando carregamos um quiz existente
+      setCurrentQuizId(existingQuiz.id);
+      
       setQuizData({
         title: (existingQuiz as any).title,
         description: (existingQuiz as any).description || "",
@@ -206,7 +223,8 @@ export default function QuizBuilder() {
       console.log("QUIZ BUILDER DEBUG - Dados carregados:", {
         title: existingQuiz.title,
         structure: existingQuiz.structure,
-        fullQuiz: existingQuiz
+        fullQuiz: existingQuiz,
+        quizId: existingQuiz.id
       });
     } else {
       // Initialize with default page structure for new quiz
