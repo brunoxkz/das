@@ -56,9 +56,32 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const checkCurrentUser = async (): Promise<User> => {
-    const endpoint = authSystem === 'sqlite' ? '/api/auth/verify' : '/api/user';
-    const response = await apiRequest("GET", endpoint);
-    return response.user || response;
+    try {
+      const endpoint = authSystem === 'sqlite' ? '/api/auth/verify' : '/api/user';
+      const response = await apiRequest("GET", endpoint);
+      return response.user || response;
+    } catch (error: any) {
+      // Se falhou a verificação, tentar refresh do token
+      if (error.message?.includes('401') || error.message?.includes('Invalid token')) {
+        const refreshToken = localStorage.getItem("refreshToken");
+        if (refreshToken) {
+          try {
+            console.log("🔄 Tentando refresh do token após falha na verificação...");
+            const refreshResponse = await apiRequest("POST", "/api/auth/refresh", { refreshToken });
+            localStorage.setItem("accessToken", refreshResponse.accessToken);
+            
+            // Tentar verificar novamente com o novo token
+            const endpoint = authSystem === 'sqlite' ? '/api/auth/verify' : '/api/user';
+            const response = await apiRequest("GET", endpoint);
+            return response.user || response;
+          } catch (refreshError) {
+            console.error("❌ Falha no refresh do token:", refreshError);
+            throw error;
+          }
+        }
+      }
+      throw error;
+    }
   };
 
   const login = async (email: string, password: string): Promise<void> => {

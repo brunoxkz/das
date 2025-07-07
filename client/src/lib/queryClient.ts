@@ -3,6 +3,41 @@ import { localCache } from "./performance";
 
 async function throwIfResNotOk(res: Response) {
   if (!res.ok) {
+    // Se for erro 401 (Unauthorized), tentar refresh do token
+    if (res.status === 401) {
+      const refreshToken = localStorage.getItem("refreshToken");
+      if (refreshToken) {
+        try {
+          console.log("🔄 Token expirado, tentando refresh...");
+          const refreshResponse = await fetch("/api/auth/refresh", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ refreshToken }),
+          });
+          
+          if (refreshResponse.ok) {
+            const { accessToken } = await refreshResponse.json();
+            localStorage.setItem("accessToken", accessToken);
+            console.log("✅ Token refreshed com sucesso");
+            
+            // Recarregar a página para aplicar o novo token
+            window.location.reload();
+            return;
+          }
+        } catch (error) {
+          console.error("❌ Erro no refresh do token:", error);
+        }
+      }
+      
+      // Se falhou o refresh, limpar tokens e redirecionar para login
+      localStorage.removeItem("accessToken");
+      localStorage.removeItem("refreshToken");
+      window.location.href = "/login";
+      return;
+    }
+    
     const text = (await res.text()) || res.statusText;
     throw new Error(`${res.status}: ${text}`);
   }

@@ -420,6 +420,12 @@ Changelog:
   * Fixed campaign display showing incorrect dates (1970) by switching to show creation date instead of broken scheduledAt
   * Campaigns with 1-minute delays now wait properly instead of executing immediately
   * Enhanced debugging with proper timestamp logging for campaign scheduling verification
+- July 07, 2025. JWT TOKEN REFRESH SYSTEM - Implemented automatic token refresh to prevent dashboard disappearing:
+  * Added automatic token refresh in queryClient.ts when receiving 401 errors
+  * Enhanced auth verification in use-auth-hybrid.tsx with fallback token refresh attempts
+  * Fixed dashboard and menu disappearing issues caused by expired JWT tokens
+  * System now automatically refreshes tokens without requiring user re-login
+  * Prevents loss of session data and maintains continuous user experience
 ```
 
 ## User Preferences
