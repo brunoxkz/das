@@ -660,6 +660,17 @@ export default function SMSCreditsPage() {
                       <div>
                         <p className="font-medium">{campaign.name}</p>
                         <p className="text-sm text-gray-600">{campaign.quizTitle}</p>
+                        {campaign.status === 'draft' && campaign.scheduledAt && (
+                          <p className="text-xs text-blue-600 font-medium">
+                            <Clock className="w-3 h-3 inline mr-1" />
+                            Agendada para: {new Date(campaign.scheduledAt * 1000).toLocaleString('pt-BR')}
+                          </p>
+                        )}
+                        {campaign.createdAt && (
+                          <p className="text-xs text-gray-500">
+                            Criada: {new Date(campaign.createdAt * 1000).toLocaleDateString('pt-BR')}
+                          </p>
+                        )}
                       </div>
                     </div>
                     <div className="flex items-center gap-3">

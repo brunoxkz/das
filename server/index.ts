@@ -111,12 +111,16 @@ app.use((req, res, next) => {
       for (const campaign of campaigns) {
         if (campaign.status === 'draft' && campaign.scheduledAt) {
           const now = new Date();
-          const scheduledTime = new Date(campaign.scheduledAt);
+          // Converter timestamp Unix para milliseconds se necessário
+          const scheduledTime = new Date(campaign.scheduledAt * 1000);
           
           console.log(`📅 CAMPANHA ${campaign.name}:`);
           console.log(`   Status: ${campaign.status}`);
+          console.log(`   scheduledAt raw: ${campaign.scheduledAt}`);
           console.log(`   Agendada para: ${scheduledTime.toLocaleString()}`);
           console.log(`   Hora atual: ${now.toLocaleString()}`);
+          console.log(`   Timestamp agora: ${Math.floor(now.getTime() / 1000)}`);
+          console.log(`   Timestamp agendado: ${campaign.scheduledAt}`);
           console.log(`   Deve executar? ${now >= scheduledTime}`);
           
           if (now >= scheduledTime) {
