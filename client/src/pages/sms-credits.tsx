@@ -324,11 +324,11 @@ export default function SMSCreditsPage() {
 
       {/* Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid w-full grid-cols-6">
+        <TabsList className={`grid w-full ${campaignForm.quizId ? 'grid-cols-6' : 'grid-cols-5'}`}>
           <TabsTrigger value="overview">Visão Geral</TabsTrigger>
           <TabsTrigger value="campaigns">Campanhas</TabsTrigger>
           <TabsTrigger value="templates">Templates</TabsTrigger>
-          <TabsTrigger value="phones">Telefones</TabsTrigger>
+          {campaignForm.quizId && <TabsTrigger value="phones">Telefones</TabsTrigger>}
           <TabsTrigger value="analytics">Análises</TabsTrigger>
           <TabsTrigger value="credits">Créditos</TabsTrigger>
         </TabsList>
@@ -432,7 +432,11 @@ export default function SMSCreditsPage() {
 
                 <div>
                   <Label htmlFor="quiz-select">Selecionar Funil</Label>
-                  <Select value={campaignForm.quizId} onValueChange={(value) => setCampaignForm({...campaignForm, quizId: value})}>
+                  <Select value={campaignForm.quizId} onValueChange={(value) => {
+                    setCampaignForm({...campaignForm, quizId: value});
+                    setSelectedQuiz(value);
+                    setSelectedQuizForPhones(value);
+                  }}>
                     <SelectTrigger>
                       <SelectValue placeholder="Escolha um quiz" />
                     </SelectTrigger>
@@ -689,19 +693,19 @@ export default function SMSCreditsPage() {
                 Telefones Capturados
               </CardTitle>
               <p className="text-sm text-gray-600">
-                {selectedQuiz ? `Quiz: ${selectedQuiz.title}` : "Selecione um quiz para ver os telefones capturados"}
+                {selectedQuiz ? `Quiz: ${selectedQuiz}` : "Selecione um quiz para ver os telefones capturados"}
               </p>
             </CardHeader>
             <CardContent>
-              {selectedQuiz ? (
+              {campaignForm.quizId ? (
                 <div className="space-y-4">
-                  {phoneNumbers.isLoading ? (
+                  {phonesLoading ? (
                     <div className="flex items-center justify-center p-8">
                       <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600"></div>
                     </div>
-                  ) : phoneNumbers.data && phoneNumbers.data.length > 0 ? (
+                  ) : quizPhones && quizPhones.length > 0 ? (
                     <div className="space-y-3">
-                      {phoneNumbers.data.map((phone, index) => (
+                      {quizPhones.map((phone: any, index: number) => (
                         <div key={index} className="flex items-center justify-between p-3 border rounded-lg">
                           <div className="flex items-center space-x-3">
                             <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
