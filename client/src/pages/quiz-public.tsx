@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useRoute } from "wouter";
-import { QuizPreview } from "@/components/quiz-preview";
+import { QuizPublicRenderer } from "@/components/quiz-public-renderer";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { AlertCircle, ArrowLeft } from "lucide-react";
@@ -107,7 +107,7 @@ export default function QuizPublicPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <QuizPreview quiz={quiz} />
+      <QuizPublicRenderer quiz={quiz} />
     </div>
   );
 }
