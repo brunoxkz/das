@@ -105,13 +105,20 @@ export default function WhatsAppCampaignsPage() {
     refetchInterval: 5000,
   });
 
+  // Buscar logs de WhatsApp para verificar telefones já enviados
+  const { data: whatsappLogs = [] } = useQuery({
+    queryKey: ['/api/whatsapp-campaigns', selectedQuiz, 'logs'],
+    enabled: !!selectedQuiz,
+    refetchInterval: autoRefresh ? 10000 : false,
+  });
+
   // Calcular listas filtradas e contadores dinamicamente
   const getFilteredPhones = () => {
-    if (!selectedQuiz || !quizPhones.length) return [];
+    if (!selectedQuiz || !quizPhones.phones || !quizPhones.phones.length) return [];
     
-    let filteredPhones = quizPhones;
+    let filteredPhones = quizPhones.phones;
     
-    // Aplicar filtro de data
+    // Aplicar filtro de data (se não selecionado, inclui todos)
     if (dateFilter) {
       const filterDate = new Date(dateFilter);
       filteredPhones = filteredPhones.filter(phone => 
@@ -122,7 +129,7 @@ export default function WhatsAppCampaignsPage() {
     // Aplicar filtro de audiência
     if (selectedAudience !== 'all') {
       filteredPhones = filteredPhones.filter(phone => {
-        const isCompleted = phone.status === 'completed' || phone.completionPercentage === 100;
+        const isCompleted = phone.status === 'completed' || phone.isComplete === true;
         return selectedAudience === 'completed' ? isCompleted : !isCompleted;
       });
     }
@@ -131,11 +138,11 @@ export default function WhatsAppCampaignsPage() {
   };
 
   const getAudienceCounts = () => {
-    if (!selectedQuiz || !quizPhones.length) return { completed: 0, abandoned: 0, all: 0 };
+    if (!selectedQuiz || !quizPhones.phones || !quizPhones.phones.length) return { completed: 0, abandoned: 0, all: 0 };
     
-    let basePhones = quizPhones;
+    let basePhones = quizPhones.phones;
     
-    // Aplicar filtro de data se especificado
+    // Aplicar filtro de data se especificado (se não selecionado, inclui todos)
     if (dateFilter) {
       const filterDate = new Date(dateFilter);
       basePhones = basePhones.filter(phone => 
@@ -143,8 +150,8 @@ export default function WhatsAppCampaignsPage() {
       );
     }
     
-    const completed = basePhones.filter(p => p.status === 'completed' || p.completionPercentage === 100).length;
-    const abandoned = basePhones.filter(p => p.status !== 'completed' && p.completionPercentage !== 100).length;
+    const completed = basePhones.filter(p => p.status === 'completed' || p.isComplete === true).length;
+    const abandoned = basePhones.filter(p => p.status !== 'completed' && p.isComplete !== true).length;
     
     return {
       completed,
@@ -155,6 +162,11 @@ export default function WhatsAppCampaignsPage() {
 
   const filteredPhones = getFilteredPhones();
   const audienceCounts = getAudienceCounts();
+
+  // Função para verificar se telefone já foi enviado
+  const isPhoneSent = (phone: string) => {
+    return whatsappLogs.some(log => log.phone === phone && (log.status === 'sent' || log.status === 'delivered'));
+  };
 
   // Função para adicionar nova mensagem rotativa
   const addRotatingMessage = () => {
@@ -345,8 +357,11 @@ export default function WhatsAppCampaignsPage() {
                     onChange={(e) => setDateFilter(e.target.value)}
                   />
                   <p className="text-sm text-gray-500 mt-1">
-                    Disparar para leads a partir de {dateFilter ? new Date(dateFilter).toLocaleDateString('pt-BR') : 'data selecionada'} 
-                    {dateFilter && ` (${audienceCounts.all} leads)`}
+                    {dateFilter ? (
+                      <>Disparar para leads a partir de {new Date(dateFilter).toLocaleDateString('pt-BR')} ({audienceCounts.all} leads)</>
+                    ) : (
+                      <>Disparar para lista inteira - todos os leads ({audienceCounts.all} leads)</>
+                    )}
                   </p>
                 </div>
               </div>
@@ -369,24 +384,33 @@ export default function WhatsAppCampaignsPage() {
                   <div className="max-h-48 overflow-y-auto border rounded-md p-2">
                     {filteredPhones.length > 0 ? (
                       <div className="space-y-2">
-                        {filteredPhones.slice(0, 50).map((contact, index) => (
-                          <div key={index} className="flex items-center justify-between text-sm">
-                            <span className="font-mono">{contact.phone}</span>
-                            <div className="flex items-center gap-2">
-                              <Badge variant={contact.status === 'completed' ? "default" : "secondary"}>
-                                {contact.status === 'completed' ? (
-                                  <CheckCircle className="h-3 w-3 mr-1" />
-                                ) : (
-                                  <Clock3 className="h-3 w-3 mr-1" />
+                        {filteredPhones.slice(0, 50).map((contact, index) => {
+                          const alreadySent = isPhoneSent(contact.phone);
+                          return (
+                            <div key={index} className="flex items-center justify-between text-sm">
+                              <span className="font-mono">{contact.phone}</span>
+                              <div className="flex items-center gap-2">
+                                <Badge variant={contact.status === 'completed' ? "default" : "secondary"}>
+                                  {contact.status === 'completed' ? (
+                                    <CheckCircle className="h-3 w-3 mr-1" />
+                                  ) : (
+                                    <Clock3 className="h-3 w-3 mr-1" />
+                                  )}
+                                  {contact.status === 'completed' ? 'Completo' : 'Abandonado'}
+                                </Badge>
+                                {alreadySent && (
+                                  <Badge variant="outline" className="text-green-600 border-green-600">
+                                    <Send className="h-3 w-3 mr-1" />
+                                    WhatsApp Enviado
+                                  </Badge>
                                 )}
-                                {contact.status === 'completed' ? 'Completo' : 'Abandonado'}
-                              </Badge>
-                              <span className="text-xs text-gray-500">
-                                {formatDate(contact.submittedAt)}
-                              </span>
+                                <span className="text-xs text-gray-500">
+                                  {formatDate(contact.submittedAt)}
+                                </span>
+                              </div>
                             </div>
-                          </div>
-                        ))}
+                          );
+                        })}
                         {filteredPhones.length > 50 && (
                           <div className="text-xs text-gray-500 text-center">
                             ... e mais {filteredPhones.length - 50} telefones
