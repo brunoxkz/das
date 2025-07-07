@@ -125,14 +125,20 @@ export default function SMSCreditsPage() {
 
   // Fetch phone numbers for selected quiz
   const { data: quizPhones, isLoading: phonesLoading } = useQuery<any>({
-    queryKey: ["/api/sms/quiz", selectedQuizForPhones, "phones"],
+    queryKey: ["/api/quiz-phones", campaignForm.quizId],
     queryFn: async () => {
-      if (!selectedQuizForPhones) return { phones: [] };
-      const response = await fetch(`/api/sms/quiz/${selectedQuizForPhones}/phones`);
+      if (!campaignForm.quizId) return { phones: [] };
+      const token = localStorage.getItem("accessToken");
+      const response = await fetch(`/api/quiz-phones/${campaignForm.quizId}`, {
+        headers: {
+          "Authorization": `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      });
       if (!response.ok) throw new Error("Failed to fetch quiz phones");
       return response.json();
     },
-    enabled: !!selectedQuizForPhones
+    enabled: !!campaignForm.quizId
   });
 
   // Purchase SMS credits mutation
