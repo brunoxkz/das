@@ -454,6 +454,24 @@ export class SQLiteStorage implements IStorage {
       });
   }
 
+  // Get all analytics for user quizzes
+  async getAllQuizAnalytics(userId: string) {
+    try {
+      const userQuizzes = await db.select().from(quizzes).where(eq(quizzes.userId, userId));
+      const quizIds = userQuizzes.map(q => q.id);
+      
+      if (quizIds.length === 0) {
+        return [];
+      }
+      
+      const analytics = await db.select().from(quizAnalytics);
+      return analytics.filter(a => quizIds.includes(a.quizId));
+    } catch (error) {
+      console.error('Error getting all quiz analytics:', error);
+      throw error;
+    }
+  }
+
   async getDashboardStats(userId: string): Promise<{
     totalQuizzes: number;
     totalLeads: number;

@@ -18,6 +18,7 @@ import {
 import { useAuth } from "@/hooks/use-auth-hybrid";
 import { useToast } from "@/hooks/use-toast";
 import { useEffect } from "react";
+import React from "react";
 import { Link, useLocation } from "wouter";
 
 export default function Analytics() {
@@ -51,6 +52,33 @@ export default function Analytics() {
     enabled: isAuthenticated && !!selectedQuizId,
     retry: false,
   });
+
+  // Fetch all analytics data
+  const { data: allAnalytics } = useQuery({
+    queryKey: ["/api/analytics"],
+    enabled: isAuthenticated && !selectedQuizId,
+    retry: false,
+  });
+
+  // Create map of quiz analytics for displaying real data
+  const quizAnalyticsMap = React.useMemo(() => {
+    const map = new Map();
+    if (userQuizzes && allAnalytics) {
+      userQuizzes.forEach((quiz: any) => {
+        const quizAnalytics = allAnalytics.filter((a: any) => a.quizId === quiz.id);
+        const totalViews = quizAnalytics.reduce((sum: number, a: any) => sum + (a.views || 0), 0);
+        const totalCompletions = quizAnalytics.reduce((sum: number, a: any) => sum + (a.completions || 0), 0);
+        const conversionRate = totalViews > 0 ? Math.round((totalCompletions / totalViews) * 100) : 0;
+        
+        map.set(quiz.id, {
+          views: totalViews,
+          leads: totalCompletions,
+          conversions: conversionRate
+        });
+      });
+    }
+    return map;
+  }, [userQuizzes, allAnalytics]);
 
   // Auth check
   useEffect(() => {
@@ -219,19 +247,19 @@ export default function Analytics() {
                     <div className="flex items-center gap-4">
                       <div className="text-center">
                         <div className="text-sm font-medium text-gray-900">
-                          {Math.floor(Math.random() * 100)}
+                          {quizAnalyticsMap.get(quiz.id)?.views || 0}
                         </div>
                         <div className="text-xs text-gray-500">Visualizações</div>
                       </div>
                       <div className="text-center">
                         <div className="text-sm font-medium text-gray-900">
-                          {Math.floor(Math.random() * 50)}
+                          {quizAnalyticsMap.get(quiz.id)?.leads || 0}
                         </div>
                         <div className="text-xs text-gray-500">Leads</div>
                       </div>
                       <div className="text-center">
                         <div className="text-sm font-medium text-gray-900">
-                          {Math.floor(Math.random() * 30)}%
+                          {quizAnalyticsMap.get(quiz.id)?.conversions || 0}%
                         </div>
                         <div className="text-xs text-gray-500">Conversão</div>
                       </div>

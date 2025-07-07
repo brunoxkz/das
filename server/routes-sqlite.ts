@@ -299,6 +299,36 @@ export function registerSQLiteRoutes(app: Express): Server {
     }
   });
 
+  // Get quiz analytics
+  app.get("/api/analytics/:quizId", verifyJWT, async (req: any, res) => {
+    try {
+      if (!req.user) {
+        return res.status(401).json({ message: "Unauthorized" });
+      }
+
+      const analytics = await storage.getQuizAnalytics(req.params.quizId);
+      res.json(analytics);
+    } catch (error) {
+      console.error("Get quiz analytics error:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  // Get all quiz analytics for user
+  app.get("/api/analytics", verifyJWT, async (req: any, res) => {
+    try {
+      if (!req.user) {
+        return res.status(401).json({ message: "Unauthorized" });
+      }
+
+      const analytics = await storage.getAllQuizAnalytics(req.user.id);
+      res.json(analytics);
+    } catch (error) {
+      console.error("Get all quiz analytics error:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
   // Track quiz view (public endpoint)
   app.post("/api/analytics/:quizId/view", async (req, res) => {
     try {
@@ -320,7 +350,7 @@ export function registerSQLiteRoutes(app: Express): Server {
       // Invalidar cache relevante
       cache.invalidateUserCaches(quiz.userId);
       
-      res.json({ message: "View tracked" });
+      res.json({ message: "View tracked", success: true });
     } catch (error) {
       console.error("Track view error:", error);
       res.status(500).json({ message: "Failed to track view" });
