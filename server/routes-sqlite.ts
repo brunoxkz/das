@@ -1248,6 +1248,30 @@ export function registerSQLiteRoutes(app: Express): Server {
       // Importar função sendSms do twilio
       const { sendSms } = await import("./twilio");
 
+      // Verificar créditos SMS antes do envio
+      const currentSentSMS = await storage.getSentSMSCount(userId);
+      const remainingCredits = Math.max(0, (user.smsCredits || 100) - currentSentSMS);
+      
+      console.log(`💰 VERIFICAÇÃO DE CRÉDITOS: Tem ${remainingCredits}, precisa ${phones.length}`);
+      
+      if (remainingCredits <= 0) {
+        console.log(`🚫 CRÉDITOS ESGOTADOS`);
+        return res.status(400).json({ 
+          error: "Créditos SMS esgotados", 
+          remaining: remainingCredits,
+          needed: phones.length 
+        });
+      }
+      
+      if (phones.length > remainingCredits) {
+        console.log(`🚫 CRÉDITOS INSUFICIENTES`);
+        return res.status(400).json({ 
+          error: `Créditos insuficientes. Precisa de ${phones.length} créditos, restam ${remainingCredits}`,
+          remaining: remainingCredits,
+          needed: phones.length 
+        });
+      }
+
       const results = [];
       let successCount = 0;
       let failureCount = 0;
@@ -1261,6 +1285,22 @@ export function registerSQLiteRoutes(app: Express): Server {
           
           if (success) {
             successCount++;
+            
+            // Consumir crédito SMS para teste
+            await storage.updateUserSmsCredits(userId, user.smsCredits - 1);
+            
+            // Registrar transação
+            await storage.createSmsTransaction({
+              userId: userId,
+              type: 'teste_sms',
+              amount: -1,
+              description: `Teste SMS: ${phoneNumber}`
+            });
+            
+            // Invalidar cache de créditos SMS para atualizar dashboard
+            cache.del(`sms-credits-${userId}`);
+            cache.invalidateUserCaches(userId);
+            
             results.push({
               phone: phoneNumber,
               status: "success",

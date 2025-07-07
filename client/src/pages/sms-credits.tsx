@@ -123,7 +123,10 @@ export default function SMSCreditsPage() {
       }
       
       return credits;
-    }
+    },
+    staleTime: 0, // Force fresh data sempre
+    cacheTime: 0, // No cache para créditos
+    refetchInterval: 5000 // Atualizar a cada 5 segundos
   });
 
   // Fetch user's quizzes for funnel selection

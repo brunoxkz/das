@@ -157,6 +157,10 @@ app.use((req, res, next) => {
                 description: `SMS individual: ${smsLog.phone}`
               });
               
+              // Invalidar cache de créditos SMS para atualizar dashboard
+              cache.del(`sms-credits-${campaign.userId}`);
+              cache.invalidateUserCaches(campaign.userId);
+              
               console.log(`✅ SMS ENVIADO: ${smsLog.id} - ${smsLog.phone}`);
             } else {
               await storage.updateSMSLog(smsLog.id, {
