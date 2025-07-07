@@ -22,9 +22,15 @@ async function throwIfResNotOk(res: Response) {
             localStorage.setItem("accessToken", accessToken);
             console.log("✅ Token refreshed com sucesso");
             
-            // Recarregar a página para aplicar o novo token
-            window.location.reload();
-            return;
+            // Repetir a requisição original com o novo token
+            return fetch(res.url, {
+              method: res.headers.get('x-original-method') || 'GET',
+              headers: {
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${accessToken}`,
+              },
+              body: res.headers.get('x-original-body'),
+            });
           }
         } catch (error) {
           console.error("❌ Erro no refresh do token:", error);

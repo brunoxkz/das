@@ -84,12 +84,16 @@ export default function WhatsAppCampaignsPage() {
     refetchInterval: autoRefresh ? 10000 : false,
   });
   
-  // Log para debug
+  // Verificar autenticação automaticamente
+  const { user } = useAuth();
+  
   useEffect(() => {
-    console.log('Quizzes loading:', quizzesLoading);
-    console.log('Quizzes error:', quizzesError);
-    console.log('Quizzes data:', quizzes);
-  }, [quizzesLoading, quizzesError, quizzes]);
+    const token = localStorage.getItem("accessToken");
+    if (!token && !user) {
+      console.log("❌ Sem token ou usuário, redirecionando para login");
+      window.location.href = "/login";
+    }
+  }, [user]);
   
 
 
