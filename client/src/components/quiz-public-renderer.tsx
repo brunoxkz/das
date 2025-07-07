@@ -264,15 +264,15 @@ export function QuizPublicRenderer({ quiz }: QuizPublicRendererProps) {
       case 'phone':
         return (
           <div key={id} className="space-y-4">
-            {(properties.question || properties.label) && (
-              <h3 className="text-lg font-semibold">{properties.question || properties.label || 'Telefone'}</h3>
+            {(properties?.question || properties?.label) && (
+              <h3 className="text-lg font-semibold">{properties?.question || properties?.label || 'Telefone'}</h3>
             )}
             <Input
               type="tel"
-              placeholder={properties.placeholder || 'Digite seu telefone'}
+              placeholder={properties?.placeholder || 'Digite seu telefone'}
               value={answer || ''}
-              onChange={(e) => handleElementAnswer(id, type, e.target.value, properties.fieldId || 'telefone_principal')}
-              required={properties.required}
+              onChange={(e) => handleElementAnswer(id, type, e.target.value, properties?.fieldId || 'telefone_principal')}
+              required={properties?.required}
             />
           </div>
         );

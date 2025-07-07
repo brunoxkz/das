@@ -54,7 +54,6 @@ export default function SMSCreditsPage() {
   const [campaignForm, setCampaignForm] = useState<{
     name: string;
     message: string;
-    scheduledDate: string;
     targetAudience: "completed" | "abandoned" | "all";
     quizId: string;
     triggerType: "immediate" | "delayed";
@@ -63,7 +62,6 @@ export default function SMSCreditsPage() {
   }>({
     name: "",
     message: "",
-    scheduledDate: "",
     targetAudience: "completed",
     quizId: "",
     triggerType: "immediate",
@@ -181,12 +179,12 @@ export default function SMSCreditsPage() {
       setCampaignForm({
         name: "",
         message: "",
-        scheduledDate: "",
         targetAudience: "completed",
         quizId: "",
         triggerType: "immediate",
         triggerDelay: 1,
-        triggerUnit: "hours"
+        triggerUnit: "hours",
+
       });
     }
   });
@@ -426,177 +424,132 @@ export default function SMSCreditsPage() {
           </Card>
         </TabsContent>
 
-        {/* Campaigns Tab */}
+        {/* Campaigns Tab - Simplified Continuous Campaign */}
         <TabsContent value="campaigns" className="space-y-6">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Create Campaign Form */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Nova Campanha SMS</CardTitle>
-                <CardDescription>Crie uma campanha para seus leads</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div>
-                  <Label htmlFor="campaign-name">Nome da Campanha</Label>
-                  <Input
-                    id="campaign-name"
-                    placeholder="Ex: Follow-up Quiz Saúde"
-                    value={campaignForm.name}
-                    onChange={(e) => setCampaignForm({...campaignForm, name: e.target.value})}
-                  />
-                </div>
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Send className="w-5 h-5" />
+                Sistema de Envio Contínuo
+              </CardTitle>
+              <CardDescription>
+                Configure um sistema que envia SMS automaticamente quando novos leads chegam
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div>
+                <Label htmlFor="quiz-select">Selecionar Funil</Label>
+                <Select value={campaignForm.quizId} onValueChange={(value) => {
+                  setCampaignForm({...campaignForm, quizId: value});
+                  setSelectedQuiz(value);
+                  setSelectedQuizForPhones(value);
+                }}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Escolha um quiz" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {quizzes?.map((quiz: any) => (
+                      <SelectItem key={quiz.id} value={quiz.id}>
+                        {quiz.title}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
 
-                <div>
-                  <Label htmlFor="quiz-select">Selecionar Funil</Label>
-                  <Select value={campaignForm.quizId} onValueChange={(value) => {
-                    setCampaignForm({...campaignForm, quizId: value});
-                    setSelectedQuiz(value);
-                    setSelectedQuizForPhones(value);
-                  }}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Escolha um quiz" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {quizzes?.map((quiz: any) => (
-                        <SelectItem key={quiz.id} value={quiz.id}>
-                          {quiz.title}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
+              <div>
+                <Label htmlFor="target-audience">Público-Alvo</Label>
+                <Select value={campaignForm.targetAudience} onValueChange={(value: any) => setCampaignForm({...campaignForm, targetAudience: value})}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="completed">Completaram o quiz</SelectItem>
+                    <SelectItem value="abandoned">Abandonaram o quiz</SelectItem>
+                    <SelectItem value="all">Todos os leads</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
 
-                <div>
-                  <Label htmlFor="target-audience">Público-Alvo</Label>
-                  <Select value={campaignForm.targetAudience} onValueChange={(value: any) => setCampaignForm({...campaignForm, targetAudience: value})}>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="completed">Completaram o quiz</SelectItem>
-                      <SelectItem value="abandoned">Abandonaram o quiz</SelectItem>
-                      <SelectItem value="all">Todos os leads</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
+              <div>
+                <Label htmlFor="message">Mensagem SMS</Label>
+                <Textarea
+                  id="message"
+                  placeholder="Sua mensagem aqui..."
+                  value={campaignForm.message}
+                  onChange={(e) => setCampaignForm({...campaignForm, message: e.target.value})}
+                  className="min-h-20"
+                />
+                <p className="text-xs text-gray-600 mt-1">
+                  {campaignForm.message.length}/160 caracteres
+                </p>
+              </div>
 
-                <div>
-                  <Label htmlFor="message">Mensagem SMS</Label>
-                  <Textarea
-                    id="message"
-                    placeholder="Sua mensagem aqui..."
-                    value={campaignForm.message}
-                    onChange={(e) => setCampaignForm({...campaignForm, message: e.target.value})}
-                    className="min-h-20"
-                  />
-                  <p className="text-xs text-gray-600 mt-1">
-                    {campaignForm.message.length}/160 caracteres
-                  </p>
-                </div>
-
-                <div className="space-y-3">
-                  <Label>Momento do Envio</Label>
-                  <Select 
-                    value={campaignForm.triggerType} 
-                    onValueChange={(value) => setCampaignForm({...campaignForm, triggerType: value as "immediate" | "delayed"})}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecione quando enviar" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="immediate">Enviar imediatamente</SelectItem>
-                      <SelectItem value="delayed">Enviar depois de X tempo</SelectItem>
-                    </SelectContent>
-                  </Select>
-
-                  {campaignForm.triggerType === "delayed" && (
-                    <div className="flex gap-2 items-center bg-blue-50 p-3 rounded-lg">
-                      <Clock className="w-4 h-4 text-blue-600" />
-                      <span className="text-sm font-medium text-blue-900">Enviar após</span>
-                      <Input
-                        type="number"
-                        min="1"
-                        max="72"
-                        value={campaignForm.triggerDelay}
-                        onChange={(e) => setCampaignForm({...campaignForm, triggerDelay: parseInt(e.target.value) || 1})}
-                        className="w-20"
-                      />
-                      <Select 
-                        value={campaignForm.triggerUnit} 
-                        onValueChange={(value) => setCampaignForm({...campaignForm, triggerUnit: value as "minutes" | "hours"})}
-                      >
-                        <SelectTrigger className="w-24">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="minutes">min</SelectItem>
-                          <SelectItem value="hours">horas</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <span className="text-sm text-blue-700">
-                        {campaignForm.targetAudience === "completed" ? "após completar" : "após abandonar"} o quiz
-                      </span>
-                    </div>
-                  )}
-                </div>
-
-                <Button 
-                  onClick={handleCreateCampaign} 
-                  className="w-full"
-                  disabled={createCampaignMutation.isPending}
+              <div className="space-y-3">
+                <Label>Momento do Envio</Label>
+                <Select 
+                  value={campaignForm.triggerType} 
+                  onValueChange={(value) => setCampaignForm({...campaignForm, triggerType: value as "immediate" | "delayed"})}
                 >
-                  {createCampaignMutation.isPending ? "Criando..." : "Criar Campanha"}
-                </Button>
-              </CardContent>
-            </Card>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione quando enviar" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="immediate">Enviar imediatamente</SelectItem>
+                    <SelectItem value="delayed">Enviar depois de X tempo</SelectItem>
+                  </SelectContent>
+                </Select>
 
-            {/* Campaign List */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Campanhas Existentes</CardTitle>
-                <CardDescription>Gerencie suas campanhas SMS</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
-                  {campaigns?.map((campaign) => (
-                    <div key={campaign.id} className="border rounded-lg p-4">
-                      <div className="flex items-center justify-between mb-2">
-                        <h3 className="font-medium">{campaign.name}</h3>
-                        <Badge variant={campaign.status === 'active' ? 'default' : 'secondary'}>
-                          {campaign.status}
-                        </Badge>
-                      </div>
-                      <p className="text-sm text-gray-600 mb-2">{campaign.quizTitle}</p>
-                      <p className="text-sm bg-gray-50 p-2 rounded">{campaign.message}</p>
-                      <div className="flex items-center justify-between mt-3">
-                        <div className="flex space-x-4 text-xs text-gray-600">
-                          <span>📤 {campaign.sent}</span>
-                          <span>✅ {campaign.delivered}</span>
-                          <span>👁️ {campaign.opened}</span>
-                          <span>🔗 {campaign.clicked}</span>
-                        </div>
-                        <div className="flex space-x-2">
-                          {campaign.status === 'active' && (
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => handleSendCampaign(campaign.id)}
-                              disabled={sendCampaignMutation.isPending}
-                            >
-                              <Send className="w-4 h-4" />
-                            </Button>
-                          )}
-                          <Button size="sm" variant="outline">
-                            <Edit className="w-4 h-4" />
-                          </Button>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
+                {campaignForm.triggerType === "delayed" && (
+                  <div className="flex gap-2 items-center bg-blue-50 p-3 rounded-lg">
+                    <Clock className="w-4 h-4 text-blue-600" />
+                    <span className="text-sm font-medium text-blue-900">Enviar após</span>
+                    <Input
+                      type="number"
+                      min="1"
+                      max="72"
+                      value={campaignForm.triggerDelay}
+                      onChange={(e) => setCampaignForm({...campaignForm, triggerDelay: parseInt(e.target.value) || 1})}
+                      className="w-20"
+                    />
+                    <Select 
+                      value={campaignForm.triggerUnit} 
+                      onValueChange={(value) => setCampaignForm({...campaignForm, triggerUnit: value as "minutes" | "hours"})}
+                    >
+                      <SelectTrigger className="w-24">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="minutes">min</SelectItem>
+                        <SelectItem value="hours">horas</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <span className="text-sm text-blue-700">
+                      {campaignForm.targetAudience === "completed" ? "após completar" : "após abandonar"} o quiz
+                    </span>
+                  </div>
+                )}
+              </div>
+
+              <div className="bg-green-50 p-4 rounded-lg border border-green-200">
+                <div className="flex items-center gap-2 mb-2">
+                  <div className="w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
+                  <span className="text-sm font-medium text-green-900">Sistema Automático</span>
                 </div>
-              </CardContent>
-            </Card>
-          </div>
+                <p className="text-sm text-green-800">
+                  Esta campanha rodará continuamente e enviará SMS automaticamente para novos leads até ser pausada.
+                </p>
+              </div>
+
+              <Button 
+                onClick={handleCreateCampaign} 
+                className="w-full"
+                disabled={createCampaignMutation.isPending}
+              >
+                {createCampaignMutation.isPending ? "Ativando..." : "Ativar Sistema Contínuo"}
+              </Button>
+            </CardContent>
+          </Card>
         </TabsContent>
 
         {/* Templates Tab */}
