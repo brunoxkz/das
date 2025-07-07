@@ -1038,7 +1038,21 @@ export function registerSQLiteRoutes(app: Express): Server {
         }
       });
       
-      console.log(`📱 TELEFONES EXTRAÍDOS: ${phones.length}`);
+      // Filtrar telefones baseado no público-alvo da campanha
+      const { targetAudience = 'all' } = req.body;
+      let filteredPhones = phones;
+      
+      if (targetAudience === 'completed') {
+        filteredPhones = phones.filter(p => p.status === 'completed');
+        console.log(`🎯 FILTRADO PARA QUIZ COMPLETO: ${filteredPhones.length} de ${phones.length} telefones`);
+      } else if (targetAudience === 'abandoned') {
+        filteredPhones = phones.filter(p => p.status === 'abandoned');
+        console.log(`🎯 FILTRADO PARA QUIZ ABANDONADO: ${filteredPhones.length} de ${phones.length} telefones`);
+      } else {
+        console.log(`🎯 TODOS OS TELEFONES: ${phones.length}`);
+      }
+      
+      console.log(`📱 TELEFONES EXTRAÍDOS: ${phones.length}, FILTRADOS: ${filteredPhones.length}`);
       
       res.json({
         quizId,
@@ -1194,7 +1208,28 @@ export function registerSQLiteRoutes(app: Express): Server {
       
       responses.forEach((response, index) => {
         const responseData = response.responses;
-        console.log(`📱 RESPONSE ${index + 1}:`, { id: response.id, responses: responseData, submittedAt: response.submittedAt });
+        const metadata = response.metadata || {};
+        
+        console.log(`📱 RESPONSE ${index + 1}:`, { 
+          id: response.id, 
+          responses: responseData, 
+          submittedAt: response.submittedAt,
+          metadata: metadata
+        });
+        
+        // Determinar se o quiz foi completado ou abandonado
+        const isComplete = metadata.isComplete === true;
+        const isPartial = metadata.isPartial === true;
+        const completionPercentage = metadata.completionPercentage || 0;
+        
+        let status = 'unknown';
+        if (isComplete || completionPercentage === 100) {
+          status = 'completed';
+        } else if (isPartial || (completionPercentage > 0 && completionPercentage < 100)) {
+          status = 'abandoned';
+        }
+        
+        console.log(`📊 STATUS DO QUIZ: ${status} (isComplete: ${isComplete}, completionPercentage: ${metadata.completionPercentage})`);
         
         let phoneNumber = null;
         let userName = null;
@@ -1235,18 +1270,23 @@ export function registerSQLiteRoutes(app: Express): Server {
           
           // Validar e adicionar telefone apenas se for válido e não duplicado
           if (phoneNumber && phoneNumber.length >= 10) {
-            if (!processedPhones.has(phoneNumber)) {
-              processedPhones.add(phoneNumber);
+            const phoneKey = `${phoneNumber}_${status}`; // Chave única por telefone + status
+            
+            if (!processedPhones.has(phoneKey)) {
+              processedPhones.add(phoneKey);
               phones.push({
                 id: response.id,
                 phone: phoneNumber,
                 name: userName || 'Sem nome',
                 submittedAt: response.submittedAt,
-                responses: responseData
+                responses: responseData,
+                status: status,
+                isComplete: isComplete,
+                completionPercentage: metadata.completionPercentage || 0
               });
-              console.log(`✅ TELEFONE ADICIONADO: ${phoneNumber}`);
+              console.log(`✅ TELEFONE ADICIONADO: ${phoneNumber} [${status.toUpperCase()}]`);
             } else {
-              console.log(`⚠️ TELEFONE DUPLICADO IGNORADO: ${phoneNumber}`);
+              console.log(`⚠️ TELEFONE DUPLICADO IGNORADO: ${phoneNumber} [${status.toUpperCase()}]`);
             }
           } else {
             console.log(`❌ TELEFONE INVÁLIDO ou MUITO CURTO: ${phoneNumber}`);
@@ -1272,18 +1312,23 @@ export function registerSQLiteRoutes(app: Express): Server {
               
               // Validar e adicionar telefone apenas se for válido e não duplicado
               if (phoneNumber && phoneNumber.length >= 10) {
-                if (!processedPhones.has(phoneNumber)) {
-                  processedPhones.add(phoneNumber);
+                const phoneKey = `${phoneNumber}_${status}`; // Chave única por telefone + status
+                
+                if (!processedPhones.has(phoneKey)) {
+                  processedPhones.add(phoneKey);
                   phones.push({
                     id: response.id,
                     phone: phoneNumber,
                     name: userName || 'Sem nome',
                     submittedAt: response.submittedAt,
-                    responses: responseData
+                    responses: responseData,
+                    status: status,
+                    isComplete: isComplete,
+                    completionPercentage: metadata.completionPercentage || 0
                   });
-                  console.log(`✅ TELEFONE ADICIONADO: ${phoneNumber}`);
+                  console.log(`✅ TELEFONE ADICIONADO: ${phoneNumber} [${status.toUpperCase()}]`);
                 } else {
-                  console.log(`⚠️ TELEFONE DUPLICADO IGNORADO: ${phoneNumber}`);
+                  console.log(`⚠️ TELEFONE DUPLICADO IGNORADO: ${phoneNumber} [${status.toUpperCase()}]`);
                 }
               } else {
                 console.log(`❌ TELEFONE INVÁLIDO ou MUITO CURTO: ${phoneNumber}`);
@@ -1294,7 +1339,21 @@ export function registerSQLiteRoutes(app: Express): Server {
         }
       });
 
-      console.log("📱 TELEFONES EXTRAÍDOS:", phones.length);
+      // Filtrar telefones baseado no público-alvo da campanha
+      const { targetAudience = 'all' } = req.body;
+      let filteredPhones = phones;
+      
+      if (targetAudience === 'completed') {
+        filteredPhones = phones.filter(p => p.status === 'completed');
+        console.log(`🎯 FILTRADO PARA QUIZ COMPLETO: ${filteredPhones.length} de ${phones.length} telefones`);
+      } else if (targetAudience === 'abandoned') {
+        filteredPhones = phones.filter(p => p.status === 'abandoned');
+        console.log(`🎯 FILTRADO PARA QUIZ ABANDONADO: ${filteredPhones.length} de ${phones.length} telefones`);
+      } else {
+        console.log(`🎯 TODOS OS TELEFONES: ${phones.length}`);
+      }
+      
+      console.log(`📱 TELEFONES EXTRAÍDOS: ${phones.length}, FILTRADOS: ${filteredPhones.length}`);
 
       // Determinar status inicial baseado no triggerType
       const { triggerType = 'immediate', triggerDelay = 1, triggerUnit = 'hours' } = req.body;
@@ -1313,17 +1372,17 @@ export function registerSQLiteRoutes(app: Express): Server {
         name,
         quizId,
         message,
-        phones: JSON.stringify(phones),
+        phones: JSON.stringify(filteredPhones),
         status: initialStatus,
         scheduledAt,
         createdAt: new Date(),
         updatedAt: new Date()
       });
 
-      // Criar logs para todos os telefones, independente do tipo de envio
-      console.log(`📱 CRIANDO LOGS - Campanha ${campaign.id}, Telefones: ${phones.length}, Trigger: ${triggerType}`);
+      // Criar logs para todos os telefones filtrados, independente do tipo de envio
+      console.log(`📱 CRIANDO LOGS - Campanha ${campaign.id}, Telefones: ${filteredPhones.length}, Trigger: ${triggerType}`);
       
-      for (const phone of phones) {
+      for (const phone of filteredPhones) {
         const phoneNumber = phone.telefone || phone.phone || phone;
         if (!phoneNumber) continue;
         
@@ -1341,13 +1400,13 @@ export function registerSQLiteRoutes(app: Express): Server {
       }
 
       // Se for envio imediato, enviar SMS automaticamente
-      if (triggerType === 'immediate' && phones.length > 0) {
-        console.log(`📱 ENVIO AUTOMÁTICO - Iniciando envio para ${phones.length} telefones`);
+      if (triggerType === 'immediate' && filteredPhones.length > 0) {
+        console.log(`📱 ENVIO AUTOMÁTICO - Iniciando envio para ${filteredPhones.length} telefones`);
         
         let successCount = 0;
         let failureCount = 0;
         
-        for (const phone of phones) {
+        for (const phone of filteredPhones) {
           try {
             const phoneNumber = phone.telefone || phone.phone || phone;
             if (!phoneNumber) continue;

@@ -110,6 +110,44 @@ export function runMigrations() {
       );
     `;
 
+    const createSmsCampaignsTable = `
+      CREATE TABLE IF NOT EXISTS sms_campaigns (
+        id TEXT PRIMARY KEY,
+        name TEXT NOT NULL,
+        quizId TEXT NOT NULL,
+        userId TEXT NOT NULL,
+        message TEXT NOT NULL,
+        phones TEXT NOT NULL,
+        status TEXT DEFAULT 'pending',
+        sent INTEGER DEFAULT 0,
+        delivered INTEGER DEFAULT 0,
+        opened INTEGER DEFAULT 0,
+        clicked INTEGER DEFAULT 0,
+        replies INTEGER DEFAULT 0,
+        scheduledAt INTEGER,
+        createdAt INTEGER NOT NULL,
+        updatedAt INTEGER NOT NULL,
+        FOREIGN KEY (quizId) REFERENCES quizzes(id),
+        FOREIGN KEY (userId) REFERENCES users(id)
+      );
+    `;
+
+    const createSmsLogsTable = `
+      CREATE TABLE IF NOT EXISTS sms_logs (
+        id TEXT PRIMARY KEY,
+        campaignId TEXT NOT NULL,
+        phone TEXT NOT NULL,
+        message TEXT NOT NULL,
+        status TEXT NOT NULL,
+        twilioSid TEXT,
+        errorMessage TEXT,
+        sentAt INTEGER,
+        deliveredAt INTEGER,
+        createdAt INTEGER NOT NULL,
+        FOREIGN KEY (campaignId) REFERENCES sms_campaigns(id)
+      );
+    `;
+
     const createEmailCampaignsTable = `
       CREATE TABLE IF NOT EXISTS email_campaigns (
         id TEXT PRIMARY KEY,
@@ -156,6 +194,8 @@ export function runMigrations() {
     sqlite.exec(createQuizResponsesTable);
     sqlite.exec(createQuizAnalyticsTable);
     sqlite.exec(createSmsTransactionsTable);
+    sqlite.exec(createSmsCampaignsTable);
+    sqlite.exec(createSmsLogsTable);
     sqlite.exec(createEmailCampaignsTable);
     sqlite.exec(createEmailTemplatesTable);
 
