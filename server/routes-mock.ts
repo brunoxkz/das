@@ -756,6 +756,42 @@ export function registerMockRoutes(app: Express): Server {
       const responses = await storage.getQuizResponses(quizId);
       console.log(`📱 RESPONSES ENCONTRADAS: ${responses.length}`);
 
+      // Se não há respostas reais, criar dados de exemplo para demonstração
+      if (responses.length === 0) {
+        console.log(`📱 CRIANDO DADOS DE EXEMPLO PARA QUIZ: ${quizId}`);
+        const mockPhones = [
+          {
+            id: `phone-${quizId}-1`,
+            phone: "+55 11 99999-8888",
+            name: "João Silva",
+            submittedAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000), // 2 dias atrás
+            responses: { telefone: "+55 11 99999-8888", nome: "João Silva", email: "joao@example.com" }
+          },
+          {
+            id: `phone-${quizId}-2`,
+            phone: "+55 21 88888-7777",
+            name: "Maria Santos",
+            submittedAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000), // 1 dia atrás
+            responses: { telefone: "+55 21 88888-7777", nome: "Maria Santos", email: "maria@example.com" }
+          },
+          {
+            id: `phone-${quizId}-3`,
+            phone: "+55 31 77777-6666",
+            name: "Carlos Oliveira",
+            submittedAt: new Date(Date.now() - 3 * 60 * 60 * 1000), // 3 horas atrás
+            responses: { telefone: "+55 31 77777-6666", nome: "Carlos Oliveira", email: "carlos@example.com" }
+          }
+        ];
+
+        res.json({
+          quizId,
+          totalResponses: mockPhones.length,
+          totalPhones: mockPhones.length,
+          phones: mockPhones.sort((a, b) => new Date(b.submittedAt).getTime() - new Date(a.submittedAt).getTime())
+        });
+        return;
+      }
+
       // Extrair telefones das respostas
       const phones = [];
 
