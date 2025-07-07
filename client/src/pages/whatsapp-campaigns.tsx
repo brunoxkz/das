@@ -365,18 +365,19 @@ export default function WhatsAppCampaignsPage() {
                 </div>
 
                 <div>
-                  <Label htmlFor="date-filter">Filtro de Data</Label>
+                  <Label htmlFor="date-filter">Filtrar Leads por Data de Chegada</Label>
                   <Input
                     id="date-filter"
                     type="date"
                     value={dateFilter}
                     onChange={(e) => setDateFilter(e.target.value)}
+                    placeholder="Selecione a data mínima"
                   />
                   <p className="text-sm text-gray-500 mt-1">
                     {dateFilter ? (
-                      <>Disparar para leads a partir de {new Date(dateFilter).toLocaleDateString('pt-BR')} ({audienceCounts.all} leads)</>
+                      <>📅 Incluir apenas leads que responderam ao quiz <strong>a partir de {new Date(dateFilter).toLocaleDateString('pt-BR')}</strong> ({audienceCounts.all} leads filtrados)</>
                     ) : (
-                      <>Disparar para lista inteira - todos os leads ({audienceCounts.all} leads)</>
+                      <>📋 Incluir todos os leads - sem filtro de data ({audienceCounts.all} leads total)</>
                     )}
                   </p>
                 </div>
@@ -454,11 +455,10 @@ export default function WhatsAppCampaignsPage() {
                 <div className="flex items-center justify-between">
                   <Label>Mensagens Rotativas (Anti-Ban)</Label>
                   <Button
-                    variant="outline"
-                    size="sm"
                     onClick={addRotatingMessage}
+                    className="bg-blue-600 hover:bg-blue-700 text-white font-semibold"
                   >
-                    <Plus className="h-4 w-4 mr-2" />
+                    <Plus className="h-5 w-5 mr-2" />
                     Adicionar Mensagem
                   </Button>
                 </div>
