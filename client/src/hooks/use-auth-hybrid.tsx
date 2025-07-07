@@ -38,16 +38,56 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
   const authSystem = detectAuthSystem();
 
+  // Auto refresh token when it expires
+  const refreshToken = async () => {
+    try {
+      const refreshTokenValue = localStorage.getItem("refreshToken");
+      if (!refreshTokenValue) {
+        throw new Error("No refresh token");
+      }
+
+      const response = await fetch("/api/auth/refresh", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ refreshToken: refreshTokenValue })
+      });
+
+      if (!response.ok) {
+        throw new Error("Token refresh failed");
+      }
+
+      const data = await response.json();
+      localStorage.setItem("accessToken", data.accessToken);
+      if (data.refreshToken) {
+        localStorage.setItem("refreshToken", data.refreshToken);
+      }
+
+      return data.accessToken;
+    } catch (error) {
+      localStorage.removeItem("accessToken");
+      localStorage.removeItem("refreshToken");
+      setUser(null);
+      throw error;
+    }
+  };
+
   // Check for existing session on mount
   useEffect(() => {
     const token = localStorage.getItem("accessToken");
     if (token) {
-      // Verificar se token é válido
+      // Verificar se token é válido, tentar renovar se expirado
       checkCurrentUser()
         .then(setUser)
-        .catch(() => {
-          localStorage.removeItem("accessToken");
-          localStorage.removeItem("refreshToken");
+        .catch(async () => {
+          try {
+            await refreshToken();
+            const userData = await checkCurrentUser();
+            setUser(userData);
+          } catch (error) {
+            localStorage.removeItem("accessToken");
+            localStorage.removeItem("refreshToken");
+            setUser(null);
+          }
         })
         .finally(() => setIsLoading(false));
     } else {

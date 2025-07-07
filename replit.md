@@ -374,6 +374,21 @@ Changelog:
   * Enhanced dynamic detection system to only schedule SMS for valid, complete phone numbers
   * Confirmed zero invalid logs in database after implementation
   * System fully operational and ready for production use with number 11995133932
+- July 07, 2025. FRONTEND VISUAL CORRECTIONS AND AUTO-DETECTION FIXES - Fixed display and duplication issues:
+  * Corrected SMS credits display to show real usage calculated from all campaign logs dynamically
+  * Fixed "Campanhas Recentes" section to display accurate sent/delivered counts from actual SMS logs
+  * Enhanced SMS credits calculation to aggregate logs from all campaigns for true usage statistics
+  * Corrected auto-detection system that was creating duplicate SMS logs without new user responses
+  * Added stricter validation requiring response time > failure time AND > campaign creation time
+  * System now properly prevents duplicate SMS creation while maintaining valid retry logic
+  * Fixed JWT token refresh system to prevent dashboard disappearing after server restarts
+  * Enhanced authentication flow with automatic token renewal on 401 errors
+- July 07, 2025. SMS COUNTING ACCURACY FIX - Corrected sent/delivered calculation to exclude failed SMS:
+  * Fixed frontend to count only successful SMS (status: 'sent' or 'delivered') excluding failed attempts
+  * Updated backend getSentSMSCount function to include both 'sent' and 'delivered' status for consistency
+  * Removed failed SMS from "enviados" count in campaign statistics for accurate reporting
+  * SMS credits now calculated based only on successful sends, not counting failed attempts
+  * System now properly distinguishes between attempted sends vs successful sends vs delivery confirmations
 - July 07, 2025. QUIZ ABANDONMENT DETECTION ENHANCEMENT - Extended system to handle abandoned quizzes:
   * Modified validation to process both completed (isComplete=true) and abandoned (isComplete=false) quiz responses
   * System now ignores only real-time partial saves (isPartial=true) but processes finalized incomplete responses

@@ -108,7 +108,7 @@ export default function SMSCreditsPage() {
             });
             if (logsResponse.ok) {
               const logs = await logsResponse.json();
-              totalUsed += logs.filter((log: any) => log.status === 'sent' || log.status === 'delivered' || log.status === 'failed').length;
+              totalUsed += logs.filter((log: any) => log.status === 'sent' || log.status === 'delivered').length;
             }
           } catch (error) {
             // Continue if logs fetch fails
@@ -171,7 +171,7 @@ export default function SMSCreditsPage() {
               return { ...campaign, sent: 0, delivered: 0 };
             }
             const logs = await logsResponse.json();
-            const sent = logs.filter((log: any) => log.status === 'sent' || log.status === 'delivered' || log.status === 'failed').length;
+            const sent = logs.filter((log: any) => log.status === 'sent' || log.status === 'delivered').length;
             const delivered = logs.filter((log: any) => log.status === 'delivered').length;
             return { ...campaign, sent, delivered };
           } catch (error) {

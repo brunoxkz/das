@@ -8,7 +8,7 @@ import {
   type InsertEmailCampaign, type EmailCampaign,
   type InsertEmailTemplate, type EmailTemplate
 } from "../shared/schema-sqlite";
-import { eq, desc, and, gte, lte, count, asc } from "drizzle-orm";
+import { eq, desc, and, gte, lte, count, asc, or } from "drizzle-orm";
 import { nanoid } from "nanoid";
 import bcrypt from "bcryptjs";
 import crypto from "crypto";
@@ -967,7 +967,10 @@ export class SQLiteStorage implements IStorage {
         .innerJoin(smsCampaigns, eq(smsLogs.campaignId, smsCampaigns.id))
         .where(and(
           eq(smsCampaigns.userId, userId),
-          eq(smsLogs.status, 'sent')
+          or(
+            eq(smsLogs.status, 'sent'),
+            eq(smsLogs.status, 'delivered')
+          )
         ));
       
       console.log(`💰 RESULTADO CONTAGEM: ${result[0]?.count || 0} SMS enviados`);
