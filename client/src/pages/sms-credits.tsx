@@ -209,7 +209,7 @@ export default function SMSCreditsPage() {
   });
 
   const handleCreateCampaign = () => {
-    if (!campaignForm.name || !campaignForm.message || !campaignForm.quizId) {
+    if (!campaignForm.message || !campaignForm.quizId) {
       toast({
         title: "Erro",
         description: "Preencha todos os campos obrigatórios",
@@ -218,7 +218,10 @@ export default function SMSCreditsPage() {
       return;
     }
 
-    createCampaignMutation.mutate(campaignForm);
+    createCampaignMutation.mutate({
+      ...campaignForm,
+      name: `Sistema Contínuo - ${quizzes?.find(q => q.id === campaignForm.quizId)?.title || 'Quiz'}`
+    });
   };
 
   const handleSendCampaign = (campaignId: string) => {
