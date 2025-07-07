@@ -298,13 +298,24 @@ export default function SMSCreditsPage() {
   const pauseCampaignMutation = useMutation({
     mutationFn: async (campaignId: string) => {
       const token = localStorage.getItem("accessToken");
+      console.log("Pausing campaign with token:", token ? "Token exists" : "No token");
+      
       const response = await fetch(`/api/sms-campaigns/${campaignId}/pause`, {
         method: "PUT",
         headers: {
-          "Authorization": `Bearer ${token}`
+          "Authorization": `Bearer ${token}`,
+          "Content-Type": "application/json"
         }
       });
-      if (!response.ok) throw new Error("Failed to pause campaign");
+      
+      console.log("Pause response status:", response.status);
+      
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        console.error("Pause error:", errorData);
+        throw new Error(`Failed to pause campaign: ${response.status}`);
+      }
+      
       return response.json();
     },
     onSuccess: () => {
@@ -312,6 +323,14 @@ export default function SMSCreditsPage() {
       toast({
         title: "Campanha Pausada",
         description: "A campanha foi pausada com sucesso."
+      });
+    },
+    onError: (error) => {
+      console.error("Pause mutation error:", error);
+      toast({
+        title: "Erro ao Pausar Campanha",
+        description: "Houve um problema ao pausar a campanha. Tente novamente.",
+        variant: "destructive"
       });
     }
   });
@@ -342,13 +361,24 @@ export default function SMSCreditsPage() {
   const resumeCampaignMutation = useMutation({
     mutationFn: async (campaignId: string) => {
       const token = localStorage.getItem("accessToken");
+      console.log("Resuming campaign with token:", token ? "Token exists" : "No token");
+      
       const response = await fetch(`/api/sms-campaigns/${campaignId}/resume`, {
         method: "PUT",
         headers: {
-          "Authorization": `Bearer ${token}`
+          "Authorization": `Bearer ${token}`,
+          "Content-Type": "application/json"
         }
       });
-      if (!response.ok) throw new Error("Failed to resume campaign");
+      
+      console.log("Resume response status:", response.status);
+      
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        console.error("Resume error:", errorData);
+        throw new Error(`Failed to resume campaign: ${response.status}`);
+      }
+      
       return response.json();
     },
     onSuccess: () => {
@@ -356,6 +386,14 @@ export default function SMSCreditsPage() {
       toast({
         title: "Campanha Retomada",
         description: "A campanha foi retomada com sucesso."
+      });
+    },
+    onError: (error) => {
+      console.error("Resume mutation error:", error);
+      toast({
+        title: "Erro ao Retomar Campanha",
+        description: "Houve um problema ao retomar a campanha. Tente novamente.",
+        variant: "destructive"
       });
     }
   });
