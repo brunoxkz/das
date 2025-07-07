@@ -950,6 +950,34 @@ export function registerSQLiteRoutes(app: Express): Server {
             } else {
               console.log(`📱 NENHUM TELEFONE ENCONTRADO na response ${index + 1}`);
             }
+          } else {
+            // Formato antigo - resposta é um objeto
+            console.log(`📱 FORMATO ANTIGO - RESPONSE ${index + 1}:`, responseData);
+            
+            // Buscar por chaves que contenham "telefone"
+            for (const key in responseData) {
+              if (key.includes('telefone') && responseData[key]) {
+                console.log(`📱 TELEFONE ENCONTRADO na chave ${key}: ${responseData[key]}`);
+                
+                // Buscar nome
+                let userName = null;
+                for (const nameKey in responseData) {
+                  if (nameKey.includes('nome') && responseData[nameKey]) {
+                    userName = responseData[nameKey];
+                    break;
+                  }
+                }
+                
+                phones.push({
+                  id: response.id,
+                  phone: responseData[key],
+                  name: userName || 'Sem nome',
+                  submittedAt: response.submittedAt,
+                  responses: responseData
+                });
+                break;
+              }
+            }
           }
         }
       });
