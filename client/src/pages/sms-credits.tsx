@@ -122,7 +122,9 @@ export default function SMSCreditsPage() {
       });
       if (!response.ok) throw new Error("Failed to fetch SMS campaigns");
       return response.json();
-    }
+    },
+    staleTime: 0, // Force fresh data
+    cacheTime: 0  // No cache
   });
 
   // Fetch SMS templates
@@ -328,8 +330,34 @@ export default function SMSCreditsPage() {
     }
   });
 
+  // Resume campaign mutation
+  const resumeCampaignMutation = useMutation({
+    mutationFn: async (campaignId: string) => {
+      const token = localStorage.getItem("accessToken");
+      const response = await fetch(`/api/sms-campaigns/${campaignId}/resume`, {
+        method: "PUT",
+        headers: {
+          "Authorization": `Bearer ${token}`
+        }
+      });
+      if (!response.ok) throw new Error("Failed to resume campaign");
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/sms-campaigns"] });
+      toast({
+        title: "Campanha Retomada",
+        description: "A campanha foi retomada com sucesso."
+      });
+    }
+  });
+
   const handlePauseCampaign = (campaignId: string) => {
     pauseCampaignMutation.mutate(campaignId);
+  };
+
+  const handleResumeCampaign = (campaignId: string) => {
+    resumeCampaignMutation.mutate(campaignId);
   };
 
   const handleDeleteCampaign = (campaignId: string) => {
@@ -514,7 +542,15 @@ export default function SMSCreditsPage() {
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {campaigns?.slice(0, 5).map((campaign) => (
+                {campaigns?.slice(0, 5).map((campaign) => {
+                  console.log("CAMPAIGN DATA:", {
+                    id: campaign.id,
+                    name: campaign.name,
+                    status: campaign.status,
+                    sent: campaign.sent,
+                    delivered: campaign.delivered
+                  });
+                  return (
                   <div key={campaign.id} className="flex items-center justify-between p-3 border rounded-lg">
                     <div className="flex items-center space-x-3">
                       <div className={`w-2 h-2 rounded-full ${
@@ -539,8 +575,20 @@ export default function SMSCreditsPage() {
                             variant="outline"
                             onClick={() => handlePauseCampaign(campaign.id)}
                             className="text-yellow-600 border-yellow-300 hover:bg-yellow-50"
+                            title="Pausar campanha"
                           >
                             <Pause className="w-4 h-4" />
+                          </Button>
+                        )}
+                        {campaign.status === 'paused' && (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => handleResumeCampaign(campaign.id)}
+                            className="text-green-600 border-green-300 hover:bg-green-50"
+                            title="Retomar campanha"
+                          >
+                            <Play className="w-4 h-4" />
                           </Button>
                         )}
                         <Button
@@ -548,13 +596,15 @@ export default function SMSCreditsPage() {
                           variant="outline"
                           onClick={() => handleDeleteCampaign(campaign.id)}
                           className="text-red-600 border-red-300 hover:bg-red-50"
+                          title="Excluir campanha"
                         >
                           <Trash2 className="w-4 h-4" />
                         </Button>
                       </div>
                     </div>
                   </div>
-                ))}
+                  );
+                })}
               </div>
             </CardContent>
           </Card>

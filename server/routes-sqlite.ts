@@ -1396,6 +1396,33 @@ export function registerSQLiteRoutes(app: Express): Server {
     }
   });
 
+  // Resume SMS campaign
+  app.put("/api/sms-campaigns/:id/resume", verifyJWT, async (req: any, res: Response) => {
+    try {
+      const { id } = req.params;
+      const userId = req.user.id;
+      
+      const campaign = await storage.getSMSCampaignById(id);
+      
+      if (!campaign || campaign.userId !== userId) {
+        return res.status(404).json({ error: "Campanha não encontrada" });
+      }
+
+      await storage.updateSMSCampaign(id, {
+        status: 'active',
+        updatedAt: new Date()
+      });
+
+      res.json({
+        success: true,
+        message: "Campanha retomada com sucesso"
+      });
+    } catch (error) {
+      console.error("Error resuming SMS campaign:", error);
+      res.status(500).json({ error: "Error resuming SMS campaign" });
+    }
+  });
+
   // Delete SMS campaign
   app.delete("/api/sms-campaigns/:id", verifyJWT, async (req: any, res: Response) => {
     try {
