@@ -1987,6 +1987,8 @@ export function registerSQLiteRoutes(app: Express): Server {
   }
 
   const httpServer = createServer(app);
+  return httpServer;
+}
 
 // =============================================
 // WHATSAPP CAMPAIGNS ROUTES
@@ -2270,6 +2272,6 @@ app.get("/api/whatsapp-extension/pending", verifyJWT, async (req: any, res: Resp
 
     return extracted;
   }
-
+  const httpServer = createServer(app);
   return httpServer;
 }

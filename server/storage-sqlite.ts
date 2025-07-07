@@ -689,6 +689,260 @@ export class SQLiteStorage implements IStorage {
     return transactions;
   }
 
+  // WhatsApp Management Methods
+  async createWhatsappCampaign(data: any): Promise<any> {
+    const id = nanoid();
+    const now = Date.now();
+    
+    const campaign = {
+      id,
+      name: data.name,
+      quiz_id: data.quizId,
+      message: data.message,
+      user_id: data.userId,
+      phones: JSON.stringify(data.phones || []),
+      status: data.status || 'active',
+      scheduled_at: data.scheduledAt,
+      trigger_delay: data.triggerDelay || 10,
+      trigger_unit: data.triggerUnit || 'minutes',
+      target_audience: data.targetAudience || 'all',
+      extension_settings: JSON.stringify(data.extensionSettings || {
+        delay: 3000,
+        maxRetries: 3,
+        enabled: true
+      }),
+      created_at: now,
+      updated_at: now
+    };
+
+    const stmt = this.db.prepare(`
+      INSERT INTO whatsapp_campaigns 
+      (id, name, quiz_id, message, user_id, phones, status, scheduled_at, trigger_delay, trigger_unit, target_audience, extension_settings, created_at, updated_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `);
+    
+    stmt.run(
+      campaign.id, campaign.name, campaign.quiz_id, campaign.message, 
+      campaign.user_id, campaign.phones, campaign.status, campaign.scheduled_at,
+      campaign.trigger_delay, campaign.trigger_unit, campaign.target_audience,
+      campaign.extension_settings, campaign.created_at, campaign.updated_at
+    );
+
+    return campaign;
+  }
+
+  async getWhatsappCampaigns(userId: string): Promise<any[]> {
+    const stmt = this.db.prepare(`
+      SELECT wc.*, q.title as quizTitle 
+      FROM whatsapp_campaigns wc
+      LEFT JOIN quizzes q ON wc.quiz_id = q.id
+      WHERE wc.user_id = ?
+      ORDER BY wc.created_at DESC
+    `);
+    
+    const campaigns = stmt.all(userId);
+    
+    return campaigns.map(campaign => ({
+      ...campaign,
+      phones: JSON.parse(campaign.phones || '[]'),
+      extensionSettings: JSON.parse(campaign.extension_settings || '{}'),
+      sent: 0,
+      delivered: 0,
+      opened: 0,
+      clicked: 0,
+      replies: 0
+    }));
+  }
+
+  async getWhatsappCampaignById(id: string): Promise<any | null> {
+    const stmt = this.db.prepare(`
+      SELECT wc.*, q.title as quizTitle 
+      FROM whatsapp_campaigns wc
+      LEFT JOIN quizzes q ON wc.quiz_id = q.id
+      WHERE wc.id = ?
+    `);
+    
+    const campaign = stmt.get(id);
+    if (!campaign) return null;
+
+    return {
+      ...campaign,
+      phones: JSON.parse(campaign.phones || '[]'),
+      extensionSettings: JSON.parse(campaign.extension_settings || '{}')
+    };
+  }
+
+  async updateWhatsappCampaign(id: string, updates: any): Promise<any> {
+    const campaign = await this.getWhatsappCampaignById(id);
+    if (!campaign) throw new Error('Campanha WhatsApp não encontrada');
+
+    const updatedData = {
+      ...campaign,
+      ...updates,
+      updated_at: Date.now()
+    };
+
+    if (updates.phones) {
+      updatedData.phones = JSON.stringify(updates.phones);
+    }
+    if (updates.extensionSettings) {
+      updatedData.extension_settings = JSON.stringify(updates.extensionSettings);
+    }
+
+    const stmt = this.db.prepare(`
+      UPDATE whatsapp_campaigns 
+      SET name = ?, message = ?, status = ?, phones = ?, extension_settings = ?, updated_at = ?
+      WHERE id = ?
+    `);
+    
+    stmt.run(
+      updatedData.name, updatedData.message, updatedData.status,
+      updatedData.phones, updatedData.extension_settings, updatedData.updated_at, id
+    );
+
+    return await this.getWhatsappCampaignById(id);
+  }
+
+  async deleteWhatsappCampaign(id: string): Promise<boolean> {
+    // Delete logs first (cascade)
+    const deleteLogsStmt = this.db.prepare('DELETE FROM whatsapp_logs WHERE campaign_id = ?');
+    deleteLogsStmt.run(id);
+    
+    // Delete campaign
+    const deleteCampaignStmt = this.db.prepare('DELETE FROM whatsapp_campaigns WHERE id = ?');
+    const result = deleteCampaignStmt.run(id);
+    
+    return result.changes > 0;
+  }
+
+  async createWhatsappLog(data: any): Promise<any> {
+    const id = nanoid();
+    const now = Math.floor(Date.now() / 1000);
+    
+    const log = {
+      id,
+      campaign_id: data.campaignId,
+      phone: data.phone,
+      message: data.message,
+      status: data.status || 'pending',
+      scheduled_at: data.scheduledAt,
+      sent_at: data.sentAt,
+      extension_status: data.extensionStatus,
+      error: data.error,
+      created_at: now,
+      updated_at: now
+    };
+
+    const stmt = this.db.prepare(`
+      INSERT INTO whatsapp_logs 
+      (id, campaign_id, phone, message, status, scheduled_at, sent_at, extension_status, error, created_at, updated_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `);
+    
+    stmt.run(
+      log.id, log.campaign_id, log.phone, log.message, log.status,
+      log.scheduled_at, log.sent_at, log.extension_status, log.error,
+      log.created_at, log.updated_at
+    );
+
+    return log;
+  }
+
+  async getWhatsappLogs(campaignId: string): Promise<any[]> {
+    const stmt = this.db.prepare(`
+      SELECT * FROM whatsapp_logs 
+      WHERE campaign_id = ? 
+      ORDER BY created_at DESC
+    `);
+    
+    return stmt.all(campaignId);
+  }
+
+  async updateWhatsappLogStatus(id: string, status: string, extensionStatus?: string, error?: string): Promise<void> {
+    const updates: any = {
+      status,
+      updated_at: Math.floor(Date.now() / 1000)
+    };
+    
+    if (status === 'sent') {
+      updates.sent_at = Math.floor(Date.now() / 1000);
+    }
+    if (extensionStatus) {
+      updates.extension_status = extensionStatus;
+    }
+    if (error) {
+      updates.error = error;
+    }
+
+    const stmt = this.db.prepare(`
+      UPDATE whatsapp_logs 
+      SET status = ?, sent_at = ?, extension_status = ?, error = ?, updated_at = ?
+      WHERE id = ?
+    `);
+    
+    stmt.run(updates.status, updates.sent_at, updates.extension_status, updates.error, updates.updated_at, id);
+  }
+
+  async getScheduledWhatsappLogs(): Promise<any[]> {
+    const now = Math.floor(Date.now() / 1000);
+    const stmt = this.db.prepare(`
+      SELECT wl.*, wc.user_id, wc.extension_settings
+      FROM whatsapp_logs wl
+      JOIN whatsapp_campaigns wc ON wl.campaign_id = wc.id
+      WHERE wl.status = 'scheduled' 
+      AND wl.scheduled_at <= ?
+      ORDER BY wl.scheduled_at ASC
+      LIMIT 100
+    `);
+    
+    return stmt.all(now);
+  }
+
+  async getWhatsappTemplates(userId: string): Promise<any[]> {
+    const stmt = this.db.prepare(`
+      SELECT * FROM whatsapp_templates 
+      WHERE user_id = ? 
+      ORDER BY created_at DESC
+    `);
+    
+    return stmt.all(userId).map(template => ({
+      ...template,
+      variables: JSON.parse(template.variables || '[]')
+    }));
+  }
+
+  async createWhatsappTemplate(data: any): Promise<any> {
+    const id = nanoid();
+    const now = Math.floor(Date.now() / 1000);
+    
+    const template = {
+      id,
+      name: data.name,
+      message: data.message,
+      category: data.category,
+      variables: JSON.stringify(data.variables || []),
+      user_id: data.userId,
+      created_at: now,
+      updated_at: now
+    };
+
+    const stmt = this.db.prepare(`
+      INSERT INTO whatsapp_templates 
+      (id, name, message, category, variables, user_id, created_at, updated_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+    `);
+    
+    stmt.run(
+      template.id, template.name, template.message, template.category,
+      template.variables, template.user_id, template.created_at, template.updated_at
+    );
+
+    return {
+      ...template,
+      variables: JSON.parse(template.variables)
+    };
+  }
+
   async createSMSCampaign(campaignData: { 
     name: string; 
     quizId: string; 
@@ -955,6 +1209,85 @@ export class SQLiteStorage implements IStorage {
       .limit(1);
     
     return campaign[0] || null;
+  }
+
+  async getQuizPhoneNumbers(quizId: string): Promise<any[]> {
+    const stmt = this.db.prepare(`
+      SELECT qr.responses, qr.metadata
+      FROM quiz_responses qr
+      WHERE qr.quiz_id = ?
+      AND (
+        (qr.metadata->>'isComplete' = 'true') OR 
+        (qr.metadata->>'completionPercentage' = '100') OR
+        (qr.metadata->>'isComplete' = 'false' AND qr.metadata->>'isPartial' != 'true')
+      )
+    `);
+    
+    const responses = stmt.all(quizId);
+    const phoneSet = new Set();
+    const phoneData: any[] = [];
+    
+    for (const response of responses) {
+      let parsedResponses;
+      let parsedMetadata;
+      
+      try {
+        parsedResponses = typeof response.responses === 'string' ? 
+          JSON.parse(response.responses) : response.responses;
+        parsedMetadata = typeof response.metadata === 'string' ? 
+          JSON.parse(response.metadata) : response.metadata;
+      } catch (error) {
+        console.error('Erro ao fazer parse das respostas:', error);
+        continue;
+      }
+      
+      if (!parsedResponses) continue;
+      
+      // Find phone number in responses
+      let phoneNumber = null;
+      
+      if (Array.isArray(parsedResponses)) {
+        for (const item of parsedResponses) {
+          if (item.elementFieldId && item.elementFieldId.includes('telefone') && item.answer) {
+            phoneNumber = item.answer;
+            break;
+          }
+        }
+      } else if (typeof parsedResponses === 'object') {
+        for (const [key, value] of Object.entries(parsedResponses)) {
+          if (key.includes('telefone') && value) {
+            phoneNumber = value;
+            break;
+          }
+        }
+      }
+      
+      if (phoneNumber) {
+        // Clean phone number
+        const cleanPhone = phoneNumber.toString().replace(/\D/g, '');
+        
+        // Validate phone (10-15 digits)
+        if (cleanPhone.length >= 10 && cleanPhone.length <= 15 && /^\d+$/.test(cleanPhone)) {
+          if (!phoneSet.has(cleanPhone)) {
+            phoneSet.add(cleanPhone);
+            
+            // Determine completion status
+            const isComplete = parsedMetadata?.isComplete === true || 
+                             parsedMetadata?.completionPercentage === 100;
+            
+            phoneData.push({
+              telefone: cleanPhone,
+              phone: cleanPhone,
+              status: isComplete ? 'completed' : 'abandoned',
+              completionPercentage: parsedMetadata?.completionPercentage || 0,
+              submittedAt: response.submitted_at
+            });
+          }
+        }
+      }
+    }
+    
+    return phoneData;
   }
 
   async getSentSMSCount(userId: string): Promise<number> {

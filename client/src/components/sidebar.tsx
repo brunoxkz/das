@@ -131,6 +131,13 @@ export function Sidebar() {
       active: location === "/whatsapp-remarketing"
     },
     {
+      title: "Campanhas WhatsApp",
+      href: "/campanhas-whatsapp",
+      icon: <MessageSquare className="w-4 h-4" />,
+      active: location === "/campanhas-whatsapp",
+      badge: "📱"
+    },
+    {
       title: "Cloaker",
       href: "/cloaker",
       icon: <Shield className="w-4 h-4" />,

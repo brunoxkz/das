@@ -1,4 +1,5 @@
 import { sqliteTable, text, integer, real } from "drizzle-orm/sqlite-core";
+import { sql } from "drizzle-orm";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 import { desc } from "drizzle-orm";
@@ -201,3 +202,70 @@ export type InsertEmailCampaign = z.infer<typeof insertEmailCampaignSchema>;
 export type EmailCampaign = typeof emailCampaigns.$inferSelect;
 export type InsertEmailTemplate = z.infer<typeof insertEmailTemplateSchema>;
 export type EmailTemplate = typeof emailTemplates.$inferSelect;
+
+// WhatsApp Campaigns Schema
+export const whatsappCampaigns = sqliteTable('whatsapp_campaigns', {
+  id: text('id').primaryKey().notNull(),
+  name: text('name').notNull(),
+  quizId: text('quiz_id').notNull(),
+  message: text('message').notNull(),
+  userId: text('user_id').notNull().references(() => users.id),
+  phones: text('phones', { mode: 'json' }).notNull().$type<Array<{
+    phone: string;
+    name?: string;
+    status?: 'completed' | 'abandoned';
+    submittedAt?: string;
+  }>>(),
+  status: text('status').notNull().default('active'),
+  scheduledAt: integer('scheduled_at'),
+  triggerDelay: integer('trigger_delay').default(10),
+  triggerUnit: text('trigger_unit').default('minutes'),
+  targetAudience: text('target_audience').notNull().default('all'),
+  extensionSettings: text('extension_settings', { mode: 'json' }).$type<{
+    delay: number;
+    maxRetries: number;
+    enabled: boolean;
+  }>(),
+  createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
+  updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull()
+});
+
+// WhatsApp Logs Schema
+export const whatsappLogs = sqliteTable('whatsapp_logs', {
+  id: text('id').primaryKey().notNull(),
+  campaignId: text('campaign_id').notNull().references(() => whatsappCampaigns.id, { onDelete: 'cascade' }),
+  phone: text('phone').notNull(),
+  message: text('message').notNull(),
+  status: text('status').notNull().default('pending'),
+  scheduledAt: integer('scheduled_at'),
+  sentAt: integer('sent_at'),
+  extensionStatus: text('extension_status'),
+  error: text('error'),
+  createdAt: integer('created_at', { mode: 'timestamp' }).notNull().default(sql`(unixepoch())`),
+  updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull().default(sql`(unixepoch())`)
+});
+
+// WhatsApp Templates Schema
+export const whatsappTemplates = sqliteTable('whatsapp_templates', {
+  id: text('id').primaryKey().notNull(),
+  name: text('name').notNull(),
+  message: text('message').notNull(),
+  category: text('category').notNull(),
+  variables: text('variables', { mode: 'json' }).notNull().$type<string[]>(),
+  userId: text('user_id').notNull().references(() => users.id),
+  createdAt: integer('created_at', { mode: 'timestamp' }).notNull().default(sql`(unixepoch())`),
+  updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull().default(sql`(unixepoch())`)
+});
+
+// WhatsApp Zod Schemas
+export const insertWhatsappCampaignSchema = createInsertSchema(whatsappCampaigns);
+export const insertWhatsappLogSchema = createInsertSchema(whatsappLogs);
+export const insertWhatsappTemplateSchema = createInsertSchema(whatsappTemplates);
+
+// WhatsApp Types
+export type InsertWhatsappCampaign = z.infer<typeof insertWhatsappCampaignSchema>;
+export type WhatsappCampaign = typeof whatsappCampaigns.$inferSelect;
+export type InsertWhatsappLog = z.infer<typeof insertWhatsappLogSchema>;
+export type WhatsappLog = typeof whatsappLogs.$inferSelect;
+export type InsertWhatsappTemplate = z.infer<typeof insertWhatsappTemplateSchema>;
+export type WhatsappTemplate = typeof whatsappTemplates.$inferSelect;

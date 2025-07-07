@@ -193,6 +193,57 @@ export function runMigrations() {
       );
     `;
 
+    const createWhatsappCampaignsTable = `
+      CREATE TABLE IF NOT EXISTS whatsapp_campaigns (
+        id TEXT PRIMARY KEY,
+        name TEXT NOT NULL,
+        quiz_id TEXT NOT NULL,
+        message TEXT NOT NULL,
+        user_id TEXT NOT NULL,
+        phones TEXT NOT NULL,
+        status TEXT NOT NULL DEFAULT 'active',
+        scheduled_at INTEGER,
+        trigger_delay INTEGER DEFAULT 10,
+        trigger_unit TEXT DEFAULT 'minutes',
+        target_audience TEXT NOT NULL DEFAULT 'all',
+        extension_settings TEXT,
+        created_at INTEGER NOT NULL,
+        updated_at INTEGER NOT NULL,
+        FOREIGN KEY (user_id) REFERENCES users(id)
+      );
+    `;
+
+    const createWhatsappLogsTable = `
+      CREATE TABLE IF NOT EXISTS whatsapp_logs (
+        id TEXT PRIMARY KEY,
+        campaign_id TEXT NOT NULL,
+        phone TEXT NOT NULL,
+        message TEXT NOT NULL,
+        status TEXT NOT NULL DEFAULT 'pending',
+        scheduled_at INTEGER,
+        sent_at INTEGER,
+        extension_status TEXT,
+        error TEXT,
+        created_at INTEGER NOT NULL DEFAULT (unixepoch()),
+        updated_at INTEGER NOT NULL DEFAULT (unixepoch()),
+        FOREIGN KEY (campaign_id) REFERENCES whatsapp_campaigns(id) ON DELETE CASCADE
+      );
+    `;
+
+    const createWhatsappTemplatesTable = `
+      CREATE TABLE IF NOT EXISTS whatsapp_templates (
+        id TEXT PRIMARY KEY,
+        name TEXT NOT NULL,
+        message TEXT NOT NULL,
+        category TEXT NOT NULL,
+        variables TEXT NOT NULL,
+        user_id TEXT NOT NULL,
+        created_at INTEGER NOT NULL DEFAULT (unixepoch()),
+        updated_at INTEGER NOT NULL DEFAULT (unixepoch()),
+        FOREIGN KEY (user_id) REFERENCES users(id)
+      );
+    `;
+
     sqlite.exec(createUsersTable);
     sqlite.exec(createQuizzesTable);
     sqlite.exec(createQuizTemplatesTable);
@@ -200,6 +251,9 @@ export function runMigrations() {
     sqlite.exec(createQuizAnalyticsTable);
     sqlite.exec(createSmsTransactionsTable);
     sqlite.exec(createSmsCampaignsTable);
+    sqlite.exec(createWhatsappCampaignsTable);
+    sqlite.exec(createWhatsappLogsTable);
+    sqlite.exec(createWhatsappTemplatesTable);
     
     // Adicionar campos se não existirem
     try {
