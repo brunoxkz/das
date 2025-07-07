@@ -100,6 +100,28 @@ export const emailTemplates = sqliteTable("email_templates", {
   updatedAt: integer("updatedAt", { mode: 'timestamp' }).notNull().$defaultFn(() => new Date()),
 });
 
+export const smsCampaigns = sqliteTable("sms_campaigns", {
+  id: text("id").primaryKey(),
+  name: text("name").notNull(),
+  message: text("message").notNull(),
+  quizId: text("quizId").notNull().references(() => quizzes.id, { onDelete: "cascade" }),
+  userId: text("userId").notNull().references(() => users.id, { onDelete: "cascade" }),
+  status: text("status").default("draft"), // draft, active, paused, completed
+  triggerType: text("triggerType").default("immediate"), // immediate, delayed
+  triggerDelay: integer("triggerDelay").default(0),
+  triggerUnit: text("triggerUnit").default("hours"), // minutes, hours, days
+  targetAudience: text("targetAudience").default("completed"), // all, completed, abandoned
+  scheduledDate: text("scheduledDate"),
+  sent: integer("sent").default(0),
+  delivered: integer("delivered").default(0),
+  opened: integer("opened").default(0),
+  clicked: integer("clicked").default(0),
+  replies: integer("replies").default(0),
+  estimatedReach: integer("estimatedReach").default(0),
+  createdAt: integer("createdAt", { mode: 'timestamp' }).notNull().$defaultFn(() => new Date()),
+  updatedAt: integer("updatedAt", { mode: 'timestamp' }).notNull().$defaultFn(() => new Date()),
+});
+
 // Schemas para validação
 export const insertUserSchema = createInsertSchema(users).omit({
   id: true,
@@ -140,6 +162,12 @@ export const insertEmailTemplateSchema = createInsertSchema(emailTemplates).omit
   updatedAt: true,
 });
 
+export const insertSmsCampaignSchema = createInsertSchema(smsCampaigns).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
 // Tipos TypeScript
 export type User = typeof users.$inferSelect;
 export type UpsertUser = z.infer<typeof insertUserSchema>;
@@ -155,3 +183,5 @@ export type InsertEmailCampaign = z.infer<typeof insertEmailCampaignSchema>;
 export type EmailCampaign = typeof emailCampaigns.$inferSelect;
 export type InsertEmailTemplate = z.infer<typeof insertEmailTemplateSchema>;
 export type EmailTemplate = typeof emailTemplates.$inferSelect;
+export type InsertSmsCampaign = z.infer<typeof insertSmsCampaignSchema>;
+export type SmsCampaign = typeof smsCampaigns.$inferSelect;

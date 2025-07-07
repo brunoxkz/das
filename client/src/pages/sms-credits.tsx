@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { MessageSquare, Send, DollarSign, FileText, Plus, Eye, Clock, Users, CheckCircle, XCircle, Phone, Search, AlertCircle, Edit, CreditCard } from "lucide-react";
+import { MessageSquare, Send, DollarSign, FileText, Plus, Eye, Clock, Users, CheckCircle, XCircle, Phone, Search, AlertCircle, Edit, CreditCard, Copy, BarChart3, PlayCircle } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Progress } from "@/components/ui/progress";
 import { useToast } from "@/hooks/use-toast";
@@ -72,6 +72,11 @@ export default function SMSCreditsPage() {
   });
   const [selectedQuizForPhones, setSelectedQuizForPhones] = useState("");
   const [phoneSearch, setPhoneSearch] = useState("");
+  const [phoneDialog, setPhoneDialog] = useState(false);
+  const [campaignDialog, setCampaignDialog] = useState(false);
+  const [selectedCampaign, setSelectedCampaign] = useState<SMSCampaign | null>(null);
+  const [quizDialog, setQuizDialog] = useState(false);
+  const [phoneListDialog, setPhoneListDialog] = useState(false);
 
   // Fetch user's SMS credits
   const { data: smsCredits, isLoading: creditsLoading } = useQuery<SMSCredits>({
@@ -267,21 +272,21 @@ export default function SMSCreditsPage() {
   }
 
   return (
-    <div className="container mx-auto p-6 space-y-6">
+    <div className="container mx-auto p-4 lg:p-6 space-y-4 lg:space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Remarketing SMS</h1>
-          <p className="text-gray-600">Gerencie seus créditos SMS e campanhas de remarketing</p>
+          <h1 className="text-2xl lg:text-3xl font-bold text-gray-900">Remarketing SMS</h1>
+          <p className="text-sm lg:text-base text-gray-600">Gerencie seus créditos SMS e campanhas de remarketing</p>
         </div>
-        <div className="flex items-center space-x-4">
+        <div className="w-full lg:w-auto">
           <Card className="bg-green-50 border-green-200">
-            <CardContent className="p-4">
+            <CardContent className="p-3 lg:p-4">
               <div className="flex items-center space-x-2">
-                <MessageSquare className="w-5 h-5 text-green-600" />
+                <MessageSquare className="w-4 h-4 lg:w-5 lg:h-5 text-green-600" />
                 <div>
-                  <p className="text-sm text-green-700">Créditos Disponíveis</p>
-                  <p className="text-xl font-bold text-green-800">
+                  <p className="text-xs lg:text-sm text-green-700">Créditos Disponíveis</p>
+                  <p className="text-lg lg:text-xl font-bold text-green-800">
                     {smsCredits?.remaining || 0}
                   </p>
                 </div>
@@ -340,13 +345,18 @@ export default function SMSCreditsPage() {
 
       {/* Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className={`grid w-full ${campaignForm.quizId ? 'grid-cols-6' : 'grid-cols-5'}`}>
-          <TabsTrigger value="overview">Visão Geral</TabsTrigger>
-          <TabsTrigger value="campaigns">Campanhas</TabsTrigger>
-          <TabsTrigger value="templates">Templates</TabsTrigger>
-          {campaignForm.quizId && <TabsTrigger value="phones">Telefones</TabsTrigger>}
-          <TabsTrigger value="analytics">Análises</TabsTrigger>
-          <TabsTrigger value="credits">Créditos</TabsTrigger>
+        <TabsList className="grid w-full grid-cols-2 lg:grid-cols-4 xl:grid-cols-6 gap-1">
+          <TabsTrigger value="overview" className="text-xs lg:text-sm">
+            <span className="lg:hidden">Geral</span>
+            <span className="hidden lg:inline">Visão Geral</span>
+          </TabsTrigger>
+          <TabsTrigger value="campaigns" className="text-xs lg:text-sm">Campanhas</TabsTrigger>
+          <TabsTrigger value="templates" className="text-xs lg:text-sm hidden xl:flex">Templates</TabsTrigger>
+          <TabsTrigger value="analytics" className="text-xs lg:text-sm hidden lg:flex">
+            <span className="lg:hidden">Stats</span>
+            <span className="hidden lg:inline">Análises</span>
+          </TabsTrigger>
+          <TabsTrigger value="credits" className="text-xs lg:text-sm">Créditos</TabsTrigger>
         </TabsList>
 
         {/* Overview Tab */}
@@ -550,48 +560,158 @@ export default function SMSCreditsPage() {
               </CardContent>
             </Card>
 
+            {/* Phone Contacts Integration */}
+            <Card className="border-blue-200 bg-blue-50/30">
+              <CardHeader className="pb-3">
+                <div className="flex items-center gap-2">
+                  <Phone className="w-5 h-5 text-blue-600" />
+                  <CardTitle className="text-lg text-blue-900">Contatos de Telefone</CardTitle>
+                </div>
+                <CardDescription className="text-blue-700">
+                  Números capturados automaticamente dos seus quizzes
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <div className="flex flex-col sm:flex-row gap-2">
+                  <Select value={selectedQuiz} onValueChange={setSelectedQuiz}>
+                    <SelectTrigger className="flex-1">
+                      <SelectValue placeholder="Selecione um quiz para ver telefones" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {quizzes?.map((quiz: any) => (
+                        <SelectItem key={quiz.id} value={quiz.id}>
+                          {quiz.title}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={() => setPhoneDialog(true)}
+                    disabled={!selectedQuiz}
+                    className="whitespace-nowrap border-blue-300 text-blue-700 hover:bg-blue-50"
+                  >
+                    <Eye className="w-4 h-4 mr-2" />
+                    Ver Telefones
+                  </Button>
+                </div>
+                {selectedQuiz && (
+                  <div className="bg-white/60 rounded p-3 text-sm">
+                    <div className="flex items-center gap-2 text-blue-700">
+                      <Users className="w-4 h-4" />
+                      <span>Quiz selecionado: <strong>{quizzes?.find((q: any) => q.id === selectedQuiz)?.title}</strong></span>
+                    </div>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
             {/* Campaign List */}
             <Card>
-              <CardHeader>
-                <CardTitle>Campanhas Existentes</CardTitle>
-                <CardDescription>Gerencie suas campanhas SMS</CardDescription>
+              <CardHeader className="pb-3">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                  <div>
+                    <CardTitle className="text-lg">Campanhas SMS</CardTitle>
+                    <CardDescription>Gerencie suas campanhas de remarketing</CardDescription>
+                  </div>
+                  <Button 
+                    size="sm" 
+                    onClick={() => setCampaignDialog(true)}
+                    className="bg-green-600 hover:bg-green-700 self-start sm:self-auto"
+                  >
+                    <Plus className="w-4 h-4 mr-2" />
+                    Nova Campanha
+                  </Button>
+                </div>
               </CardHeader>
               <CardContent>
-                <div className="space-y-3">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                   {campaigns?.map((campaign) => (
-                    <div key={campaign.id} className="border rounded-lg p-4">
-                      <div className="flex items-center justify-between mb-2">
-                        <h3 className="font-medium">{campaign.name}</h3>
-                        <Badge variant={campaign.status === 'active' ? 'default' : 'secondary'}>
-                          {campaign.status}
-                        </Badge>
-                      </div>
-                      <p className="text-sm text-gray-600 mb-2">{campaign.quizTitle}</p>
-                      <p className="text-sm bg-gray-50 p-2 rounded">{campaign.message}</p>
-                      <div className="flex items-center justify-between mt-3">
-                        <div className="flex space-x-4 text-xs text-gray-600">
-                          <span>📤 {campaign.sent}</span>
-                          <span>✅ {campaign.delivered}</span>
-                          <span>👁️ {campaign.opened}</span>
-                          <span>🔗 {campaign.clicked}</span>
+                    <Card key={campaign.id} className="border-l-4 border-l-green-500">
+                      <CardHeader className="pb-3">
+                        <div className="flex items-start justify-between">
+                          <div className="flex-1">
+                            <CardTitle className="text-base font-semibold">{campaign.name}</CardTitle>
+                            <CardDescription className="text-sm mt-1">
+                              {campaign.quizTitle}
+                            </CardDescription>
+                          </div>
+                          <Badge 
+                            variant={campaign.status === 'active' ? 'default' : 
+                                   campaign.status === 'completed' ? 'secondary' : 'outline'}
+                            className="ml-2"
+                          >
+                            {campaign.status === 'active' ? 'Ativo' : 
+                             campaign.status === 'completed' ? 'Concluído' : 
+                             campaign.status === 'paused' ? 'Pausado' : 'Rascunho'}
+                          </Badge>
                         </div>
-                        <div className="flex space-x-2">
-                          {campaign.status === 'active' && (
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => handleSendCampaign(campaign.id)}
-                              disabled={sendCampaignMutation.isPending}
-                            >
-                              <Send className="w-4 h-4" />
+                      </CardHeader>
+                      <CardContent className="space-y-3">
+                        <div className="text-sm text-gray-600">
+                          <div className="flex items-center gap-2 mb-1">
+                            <MessageSquare className="w-4 h-4" />
+                            <span>Público: {campaign.targetAudience === 'completed' ? 'Completaram' : 
+                                            campaign.targetAudience === 'abandoned' ? 'Abandonaram' : 'Todos'}</span>
+                          </div>
+                          <div className="bg-gray-50 p-2 rounded text-xs">
+                            {campaign.message.substring(0, 100)}...
+                          </div>
+                        </div>
+                        
+                        {/* Stats Grid */}
+                        <div className="grid grid-cols-2 gap-2 text-sm">
+                          <div className="bg-green-50 p-2 rounded">
+                            <div className="text-green-600 font-semibold">{campaign.sent}</div>
+                            <div className="text-green-700 text-xs">Enviados</div>
+                          </div>
+                          <div className="bg-blue-50 p-2 rounded">
+                            <div className="text-blue-600 font-semibold">{campaign.delivered}</div>
+                            <div className="text-blue-700 text-xs">Entregues</div>
+                          </div>
+                          <div className="bg-purple-50 p-2 rounded">
+                            <div className="text-purple-600 font-semibold">{campaign.opened}</div>
+                            <div className="text-purple-700 text-xs">Abertos</div>
+                          </div>
+                          <div className="bg-orange-50 p-2 rounded">
+                            <div className="text-orange-600 font-semibold">{campaign.replies}</div>
+                            <div className="text-orange-700 text-xs">Respostas</div>
+                          </div>
+                        </div>
+
+                        {/* Actions */}
+                        <div className="flex justify-between items-center pt-2 border-t">
+                          <div className="flex gap-1">
+                            <Button variant="ghost" size="sm" onClick={() => {
+                              setSelectedCampaign(campaign);
+                              setCampaignDialog(true);
+                            }}>
+                              <Edit className="w-4 h-4" />
                             </Button>
-                          )}
-                          <Button size="sm" variant="outline">
-                            <Edit className="w-4 h-4" />
+                            <Button variant="ghost" size="sm">
+                              <Copy className="w-4 h-4" />
+                            </Button>
+                            <Button variant="ghost" size="sm">
+                              <BarChart3 className="w-4 h-4" />
+                            </Button>
+                          </div>
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            className={campaign.status === 'active' ? 'text-orange-600' : 'text-green-600'}
+                            onClick={() => campaign.status === 'active' ? handleSendCampaign(campaign.id) : null}
+                            disabled={sendCampaignMutation.isPending}
+                          >
+                            {campaign.status === 'active' ? (
+                              <><Send className="w-4 h-4 mr-1" /> Enviar</>
+                            ) : (
+                              <><PlayCircle className="w-4 h-4 mr-1" /> Ativar</>
+                            )}
                           </Button>
                         </div>
-                      </div>
-                    </div>
+                      </CardContent>
+                    </Card>
                   ))}
                 </div>
               </CardContent>
