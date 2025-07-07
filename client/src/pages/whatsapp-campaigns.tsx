@@ -485,9 +485,24 @@ export default function WhatsAppCampaignsPage() {
                   </div>
                 ))}
                 
-                <div className="text-xs text-gray-500">
-                  💡 Dica: Use múltiplas mensagens com variações para evitar detecção de spam
-                </div>
+                <Alert>
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertDescription>
+                    <strong>⚠️ Recomendação Anti-Spam:</strong> Use no mínimo 4-5 mensagens diferentes com variações de texto, emojis e estrutura. Isso evita detecção de spam pelo WhatsApp e melhora a entregabilidade.
+                  </AlertDescription>
+                </Alert>
+              </div>
+
+              {/* Status das Mensagens */}
+              <div className="flex items-center gap-2">
+                <Badge variant={rotatingMessages.filter(m => m.trim()).length >= 4 ? "default" : "secondary"}>
+                  {rotatingMessages.filter(m => m.trim()).length}/4+ mensagens
+                </Badge>
+                {rotatingMessages.filter(m => m.trim()).length < 4 && (
+                  <span className="text-xs text-orange-600">
+                    Recomendamos pelo menos 4 mensagens para melhor entregabilidade
+                  </span>
+                )}
               </div>
 
               {/* Botão de Criar Campanha */}
