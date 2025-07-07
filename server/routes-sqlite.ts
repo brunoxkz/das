@@ -494,7 +494,7 @@ export function registerSQLiteRoutes(app: Express): Server {
   });
 
   // SMS Quiz Phone Numbers endpoint
-  app.get("/api/quizzes/:quizId/phones", verifyJWT, async (req: any, res) => {
+  app.get("/api/quiz-phones/:quizId", verifyJWT, async (req: any, res) => {
     try {
       const { quizId } = req.params;
       const userId = req.user.id;
