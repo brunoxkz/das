@@ -435,6 +435,15 @@ Changelog:
   * Supports unlimited concurrent users with individual phone number processing
   * Enhanced error handling and automatic credit management for each individual SMS
   * Complete transition from bulk campaign processing to individual message scheduling
+- July 07, 2025. AUTOMATIC NEW LEAD DETECTION SYSTEM - Real-time lead inclusion for active campaigns:
+  * Implemented continuous monitoring system that detects new quiz responses every 30 seconds
+  * Active campaigns automatically include new phone numbers as they arrive from quiz submissions
+  * New leads are automatically scheduled for SMS delivery based on campaign settings and audience segmentation
+  * System respects completion status (completed vs abandoned) for proper audience targeting
+  * Each new lead gets individual scheduling with random delay (0-300 seconds) for load distribution
+  * Prevents duplicate processing and maintains data integrity with phone validation
+  * Supports real-time campaign expansion without manual intervention
+  * Complete end-to-end automation: quiz submission → lead detection → SMS scheduling → delivery
 ```
 
 ## User Preferences

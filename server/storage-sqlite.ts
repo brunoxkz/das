@@ -946,6 +946,17 @@ export class SQLiteStorage implements IStorage {
     return scheduledLogs;
   }
 
+  // Função para buscar campanha por ID
+  async getSMSCampaign(campaignId: string): Promise<any> {
+    const campaign = await db
+      .select()
+      .from(smsCampaigns)
+      .where(eq(smsCampaigns.id, campaignId))
+      .limit(1);
+    
+    return campaign[0] || null;
+  }
+
   async getSentSMSCount(userId: string): Promise<number> {
     try {
       // Contar SMS enviados com sucesso para campanhas do usuário

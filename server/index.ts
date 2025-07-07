@@ -114,7 +114,14 @@ app.use((req, res, next) => {
         for (const smsLog of scheduledSMS) {
           try {
             // Verificar créditos antes de enviar cada SMS
-            const campaign = await storage.getSMSCampaign(smsLog.campaignId);
+            const campaigns = await storage.getAllSMSCampaigns();
+            const campaign = campaigns.find(c => c.id === smsLog.campaignId);
+            
+            if (!campaign) {
+              console.log(`❌ Campanha não encontrada: ${smsLog.campaignId}`);
+              continue;
+            }
+            
             const user = await storage.getUser(campaign.userId);
             
             const sentSMS = await storage.getSentSMSCount(campaign.userId);
