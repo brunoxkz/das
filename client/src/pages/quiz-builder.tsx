@@ -246,7 +246,7 @@ export default function QuizBuilder() {
     }
   }, [isAuthenticated, authLoading, toast]);
 
-  const handleSave = () => {
+  const handleSave = (isPublishing = false) => {
     if (!quizData.title?.trim()) {
       toast({
         title: "Título obrigatório",
@@ -261,7 +261,7 @@ export default function QuizBuilder() {
       title: quizData.title,
       description: quizData.description || "",
       structure: quizData.structure,
-      isPublished: quizData.isPublished || false,
+      isPublished: isPublishing || quizData.isPublished || false,
       brandingLogo: quizData.design?.brandingLogo || "",
       progressBarColor: quizData.design?.progressBarColor || "#10b981",
       buttonColor: quizData.design?.buttonColor || "#10b981",
@@ -275,14 +275,16 @@ export default function QuizBuilder() {
       customHeadScript: quizData.customHeadScript || ""
     };
 
-    console.log("Salvando quiz com dados:", JSON.stringify(dataToSave, null, 2));
+    const action = isPublishing ? "Publicando" : "Salvando";
+    console.log(`${action} quiz com dados:`, JSON.stringify(dataToSave, null, 2));
     saveMutation.mutate(dataToSave);
   };
 
   const handlePublish = () => {
-    const updatedData = { ...quizData, isPublished: true };
-    setQuizData(updatedData);
-    saveMutation.mutate(updatedData);
+    // Atualiza o estado local primeiro
+    setQuizData(prev => ({ ...prev, isPublished: true }));
+    // Salva com flag de publicação
+    handleSave(true);
   };
 
   const handlePageChange = (pages: any[]) => {
@@ -352,7 +354,7 @@ export default function QuizBuilder() {
             <Button
               variant="outline"
               size="sm"
-              onClick={handleSave}
+              onClick={() => handleSave()}
               disabled={saveMutation.isPending}
             >
               <Save className="w-4 h-4 mr-2" />
