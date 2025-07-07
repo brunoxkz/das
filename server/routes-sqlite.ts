@@ -204,39 +204,343 @@ export function registerSQLiteRoutes(app: Express): Server {
     }
   });
 
-  // Get quiz responses
-  app.get("/api/quizzes/:id/responses", async (req: any, res) => {
+  // Get quiz responses with advanced filtering
+  app.get("/api/quizzes/:id/responses", verifyJWT, async (req: any, res) => {
     try {
-      if (!req.user) {
-        return res.status(401).json({ message: "Unauthorized" });
-      }
-
       const quiz = await storage.getQuiz(req.params.id);
       
       if (!quiz || quiz.userId !== req.user.id) {
         return res.status(403).json({ message: "Access denied" });
       }
 
-      // Verificar cache primeiro
+      // Parse query parameters for filtering
+      const {
+        type = 'all', // 'partial', 'complete', 'all'
+        startDate,
+        endDate,
+        limit = 100,
+        offset = 0,
+        sortBy = 'submittedAt',
+        sortOrder = 'desc'
+      } = req.query;
+
+      // Verificar cache primeiro (apenas para consultas simples)
+      const isSimpleQuery = type === 'all' && !startDate && !endDate && limit == 100 && offset == 0;
       const cacheKey = `responses-${req.params.id}`;
-      const cachedResponses = cache.getResponses(cacheKey);
-      if (cachedResponses) {
-        return res.json(cachedResponses);
+      
+      if (isSimpleQuery) {
+        const cachedResponses = cache.getResponses(cacheKey);
+        if (cachedResponses) {
+          return res.json(cachedResponses);
+        }
       }
 
       const responses = await storage.getQuizResponses(req.params.id);
       
-      // Salvar no cache
-      cache.setResponses(cacheKey, responses);
+      // Filtrar respostas baseado nos parâmetros
+      let filteredResponses = responses;
+
+      // Filtrar por tipo
+      if (type === 'partial') {
+        filteredResponses = filteredResponses.filter(r => 
+          r.metadata && typeof r.metadata === 'object' && 
+          (r.metadata as any).isPartial === true
+        );
+      } else if (type === 'complete') {
+        filteredResponses = filteredResponses.filter(r => 
+          r.metadata && typeof r.metadata === 'object' && 
+          (r.metadata as any).isPartial === false
+        );
+      }
+
+      // Filtrar por data
+      if (startDate) {
+        const start = new Date(startDate as string);
+        filteredResponses = filteredResponses.filter(r => new Date(r.submittedAt) >= start);
+      }
+      if (endDate) {
+        const end = new Date(endDate as string);
+        filteredResponses = filteredResponses.filter(r => new Date(r.submittedAt) <= end);
+      }
+
+      // Ordenar
+      filteredResponses.sort((a, b) => {
+        const aVal = a[sortBy as keyof typeof a];
+        const bVal = b[sortBy as keyof typeof b];
+        const order = sortOrder === 'desc' ? -1 : 1;
+        return aVal > bVal ? order : aVal < bVal ? -order : 0;
+      });
+
+      // Paginar
+      const total = filteredResponses.length;
+      const paginatedResponses = filteredResponses.slice(
+        parseInt(offset as string), 
+        parseInt(offset as string) + parseInt(limit as string)
+      );
+
+      // Processar respostas para extração de dados úteis
+      const processedResponses = paginatedResponses.map(response => {
+        const metadata = response.metadata && typeof response.metadata === 'object' ? response.metadata as any : {};
+        const leadData = metadata.leadData || {};
+        
+        return {
+          ...response,
+          isPartial: metadata.isPartial || false,
+          completionPercentage: metadata.completionPercentage || 0,
+          timeSpent: metadata.timeSpent || 0,
+          leadData,
+          extractedData: extractLeadDataFromResponses(response.responses, leadData)
+        };
+      });
+
+      // Salvar no cache apenas para consultas simples
+      if (isSimpleQuery) {
+        cache.setResponses(cacheKey, processedResponses);
+      }
       
-      res.json(responses);
+      res.json({
+        responses: processedResponses,
+        total,
+        limit: parseInt(limit as string),
+        offset: parseInt(offset as string),
+        hasMore: (parseInt(offset as string) + parseInt(limit as string)) < total
+      });
     } catch (error) {
       console.error("Get responses error:", error);
       res.status(500).json({ message: "Internal server error" });
     }
   });
 
-  // Submit quiz response (public endpoint)
+  // Get quiz leads (extracted data from responses)
+  app.get("/api/quizzes/:id/leads", verifyJWT, async (req: any, res) => {
+    try {
+      const quiz = await storage.getQuiz(req.params.id);
+      
+      if (!quiz || quiz.userId !== req.user.id) {
+        return res.status(403).json({ message: "Access denied" });
+      }
+
+      const {
+        onlyComplete = 'true',
+        startDate,
+        endDate,
+        limit = 100,
+        offset = 0
+      } = req.query;
+
+      const responses = await storage.getQuizResponses(req.params.id);
+      
+      // Filtrar apenas respostas com dados de lead
+      let leadResponses = responses.filter(response => {
+        const metadata = response.metadata && typeof response.metadata === 'object' ? response.metadata as any : {};
+        
+        // Se onlyComplete for true, filtrar apenas respostas completas
+        if (onlyComplete === 'true' && metadata.isPartial !== false) {
+          return false;
+        }
+        
+        // Verificar se há dados de lead extraíveis
+        const extractedData = extractLeadDataFromResponses(response.responses, metadata.leadData || {});
+        return Object.keys(extractedData).length > 0;
+      });
+
+      // Filtrar por data
+      if (startDate) {
+        const start = new Date(startDate as string);
+        leadResponses = leadResponses.filter(r => new Date(r.submittedAt) >= start);
+      }
+      if (endDate) {
+        const end = new Date(endDate as string);
+        leadResponses = leadResponses.filter(r => new Date(r.submittedAt) <= end);
+      }
+
+      // Ordenar por data de submissão (mais recentes primeiro)
+      leadResponses.sort((a, b) => new Date(b.submittedAt).getTime() - new Date(a.submittedAt).getTime());
+
+      // Paginar
+      const total = leadResponses.length;
+      const paginatedLeads = leadResponses.slice(
+        parseInt(offset as string), 
+        parseInt(offset as string) + parseInt(limit as string)
+      );
+
+      // Processar leads
+      const leads = paginatedLeads.map(response => {
+        const metadata = response.metadata && typeof response.metadata === 'object' ? response.metadata as any : {};
+        const leadData = metadata.leadData || {};
+        const extractedData = extractLeadDataFromResponses(response.responses, leadData);
+        
+        return {
+          id: response.id,
+          submittedAt: response.submittedAt,
+          isComplete: metadata.isPartial === false,
+          completionPercentage: metadata.completionPercentage || 0,
+          timeSpent: metadata.timeSpent || 0,
+          ip: metadata.ip,
+          userAgent: metadata.userAgent,
+          ...extractedData // nome, email, telefone, etc.
+        };
+      });
+      
+      res.json({
+        leads,
+        total,
+        limit: parseInt(limit as string),
+        offset: parseInt(offset as string),
+        hasMore: (parseInt(offset as string) + parseInt(limit as string)) < total
+      });
+    } catch (error) {
+      console.error("Get leads error:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  // Get phones specifically for SMS campaigns
+  app.get("/api/quizzes/:id/phones", verifyJWT, async (req: any, res) => {
+    try {
+      const quiz = await storage.getQuiz(req.params.id);
+      
+      if (!quiz || quiz.userId !== req.user.id) {
+        return res.status(403).json({ message: "Access denied" });
+      }
+
+      const { onlyComplete = 'true' } = req.query;
+
+      const responses = await storage.getQuizResponses(req.params.id);
+      
+      // Extrair telefones das respostas
+      const phones: Array<{
+        phone: string;
+        name?: string;
+        submittedAt: Date;
+        responseId: string;
+        isComplete: boolean;
+      }> = [];
+
+      responses.forEach(response => {
+        const metadata = response.metadata && typeof response.metadata === 'object' ? response.metadata as any : {};
+        
+        // Se onlyComplete for true, filtrar apenas respostas completas
+        if (onlyComplete === 'true' && metadata.isPartial !== false) {
+          return;
+        }
+
+        const extractedData = extractLeadDataFromResponses(response.responses, metadata.leadData || {});
+        
+        // Buscar telefone nos dados extraídos
+        const phone = extractedData.telefone || extractedData.phone || extractedData.celular;
+        
+        if (phone && phone.trim()) {
+          phones.push({
+            phone: phone.trim(),
+            name: extractedData.nome || extractedData.name || extractedData.firstName,
+            submittedAt: response.submittedAt,
+            responseId: response.id,
+            isComplete: metadata.isPartial === false
+          });
+        }
+      });
+
+      // Remover duplicatas baseadas no número de telefone
+      const uniquePhones = phones.filter((phone, index, array) => 
+        array.findIndex(p => p.phone === phone.phone) === index
+      );
+
+      // Ordenar por data de submissão (mais recentes primeiro)
+      uniquePhones.sort((a, b) => new Date(b.submittedAt).getTime() - new Date(a.submittedAt).getTime());
+      
+      res.json({
+        phones: uniquePhones,
+        total: uniquePhones.length
+      });
+    } catch (error) {
+      console.error("Get phones error:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  // Submit partial quiz response (public endpoint - salva progresso durante o quiz)
+  app.post("/api/quizzes/:id/partial-responses", async (req, res) => {
+    try {
+      const quiz = await storage.getQuiz(req.params.id);
+      
+      if (!quiz || !quiz.isPublished) {
+        return res.status(404).json({ message: "Quiz not found or not published" });
+      }
+
+      const responseData = {
+        quizId: req.params.id,
+        responses: req.body.responses,
+        metadata: {
+          ...req.body.metadata,
+          isPartial: true,
+          savedAt: new Date().toISOString(),
+          userAgent: req.headers['user-agent'],
+          ip: req.ip || req.connection.remoteAddress,
+          currentPage: req.body.currentPage || 0,
+          totalPages: req.body.totalPages || 0,
+          completionPercentage: req.body.completionPercentage || 0
+        }
+      };
+
+      const response = await storage.createQuizResponse(responseData);
+
+      // Invalidar cache de respostas
+      cache.del(`responses-${req.params.id}`);
+      
+      res.status(201).json({ 
+        success: true, 
+        responseId: response.id,
+        message: "Resposta parcial salva com sucesso"
+      });
+    } catch (error) {
+      console.error("Submit partial response error:", error);
+      res.status(500).json({ message: "Failed to submit partial response" });
+    }
+  });
+
+  // Submit final quiz response (public endpoint - finaliza o quiz)
+  app.post("/api/quizzes/:id/submit", async (req, res) => {
+    try {
+      const quiz = await storage.getQuiz(req.params.id);
+      
+      if (!quiz || !quiz.isPublished) {
+        return res.status(404).json({ message: "Quiz not found or not published" });
+      }
+
+      const responseData = {
+        quizId: req.params.id,
+        responses: req.body.responses,
+        metadata: {
+          ...req.body.metadata,
+          isPartial: false,
+          completedAt: new Date().toISOString(),
+          userAgent: req.headers['user-agent'],
+          ip: req.ip || req.connection.remoteAddress,
+          totalPages: req.body.totalPages || 0,
+          completionPercentage: 100,
+          timeSpent: req.body.timeSpent || 0, // tempo em segundos
+          leadData: req.body.leadData || {} // dados de lead capturados
+        }
+      };
+
+      const response = await storage.createQuizResponse(responseData);
+
+      // Invalidar cache de respostas
+      cache.del(`responses-${req.params.id}`);
+      
+      res.status(201).json({ 
+        success: true, 
+        responseId: response.id,
+        message: "Quiz finalizado com sucesso"
+      });
+    } catch (error) {
+      console.error("Submit final response error:", error);
+      res.status(500).json({ message: "Failed to submit final response" });
+    }
+  });
+
+  // Submit quiz response (mantém compatibilidade com endpoint antigo)
   app.post("/api/quizzes/:id/responses", async (req, res) => {
     try {
       const quiz = await storage.getQuiz(req.params.id);
@@ -696,4 +1000,54 @@ export function registerSQLiteRoutes(app: Express): Server {
 
   const httpServer = createServer(app);
   return httpServer;
+}
+
+// Função auxiliar para extrair dados de lead das respostas
+function extractLeadDataFromResponses(responses: any, leadData: any = {}): Record<string, any> {
+  const extracted: Record<string, any> = { ...leadData };
+  
+  if (!responses || typeof responses !== 'object') {
+    return extracted;
+  }
+
+  // Percorrer todas as respostas
+  Object.keys(responses).forEach(key => {
+    const response = responses[key];
+    
+    // Extrair dados baseado no field_id ou tipo de campo
+    if (key.includes('nome') || key.includes('name')) {
+      extracted.nome = response;
+    }
+    
+    if (key.includes('email')) {
+      extracted.email = response;
+    }
+    
+    if (key.includes('telefone') || key.includes('phone') || key.includes('celular')) {
+      extracted.telefone = response;
+    }
+    
+    if (key.includes('altura') || key.includes('height')) {
+      extracted.altura = response;
+    }
+    
+    if (key.includes('peso') || key.includes('weight')) {
+      extracted.peso = response;
+    }
+    
+    if (key.includes('idade') || key.includes('age')) {
+      extracted.idade = response;
+    }
+    
+    if (key.includes('nascimento') || key.includes('birth')) {
+      extracted.nascimento = response;
+    }
+    
+    // Adicionar outros campos genéricos
+    if (response && response.toString().trim()) {
+      extracted[key] = response;
+    }
+  });
+
+  return extracted;
 }
