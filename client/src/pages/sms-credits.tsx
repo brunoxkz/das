@@ -229,7 +229,7 @@ export default function SMSCreditsPage() {
   });
 
   const handleCreateCampaign = () => {
-    if (!campaignForm.message || !campaignForm.quizId) {
+    if (!campaignForm.message || !campaignForm.quizId || !campaignForm.targetAudience) {
       toast({
         title: "Erro",
         description: "Preencha todos os campos obrigatórios",
