@@ -1470,15 +1470,28 @@ export function registerSQLiteRoutes(app: Express): Server {
         if (!phoneNumber) continue;
         
         const logId = nanoid();
+        let scheduledAt: number | undefined;
+        let status = 'pending';
+        
+        // Calcular agendamento individual para escalabilidade massiva
+        if (triggerType === 'delayed') {
+          const baseDelay = triggerDelay * (triggerUnit === 'minutes' ? 60 : 3600);
+          // Adicionar variação aleatória para distribuir carga (0-300 segundos)
+          const randomDelay = Math.floor(Math.random() * 300);
+          scheduledAt = Math.floor(Date.now() / 1000) + baseDelay + randomDelay;
+          status = 'scheduled';
+        }
+        
         const logData = {
           id: logId,
           campaignId: campaign.id,
           phone: phoneNumber,
           message: message,
-          status: triggerType === 'immediate' ? 'pending' : 'scheduled'
+          status: status,
+          scheduledAt: scheduledAt
         };
         
-        console.log(`📱 CRIANDO LOG: ${logId} - ${phoneNumber} - ${logData.status}`);
+        console.log(`📱 CRIANDO LOG INDIVIDUAL: ${logId} - ${phoneNumber} - ${logData.status} - agendado:${scheduledAt || 'não'}`);
         await storage.createSMSLog(logData);
       }
 

@@ -426,6 +426,15 @@ Changelog:
   * Fixed dashboard and menu disappearing issues caused by expired JWT tokens
   * System now automatically refreshes tokens without requiring user re-login
   * Prevents loss of session data and maintains continuous user experience
+- July 07, 2025. MASSIVE SCALABILITY UPGRADE - Individual SMS scheduling system for 100,000+ concurrent users:
+  * Completely replaced campaign-level scheduling with individual SMS scheduling for maximum scalability
+  * Added scheduledAt field to sms_logs table for per-SMS agendamento with random distribution (0-300 seconds)
+  * Implemented getScheduledSMSLogs() function to process individual SMS instead of bulk campaigns
+  * New system processes SMS individually every 30 seconds with credit validation per message
+  * Each SMS gets unique scheduling timestamp with random delay to distribute server load
+  * Supports unlimited concurrent users with individual phone number processing
+  * Enhanced error handling and automatic credit management for each individual SMS
+  * Complete transition from bulk campaign processing to individual message scheduling
 ```
 
 ## User Preferences

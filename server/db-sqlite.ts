@@ -147,6 +147,7 @@ export function runMigrations() {
         errorMessage TEXT,
         sentAt INTEGER,
         deliveredAt INTEGER,
+        scheduledAt INTEGER,
         createdAt INTEGER NOT NULL,
         FOREIGN KEY (campaignId) REFERENCES sms_campaigns(id)
       );

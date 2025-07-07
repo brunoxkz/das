@@ -104,11 +104,12 @@ export const smsLogs = sqliteTable("sms_logs", {
   campaignId: text("campaignId").notNull().references(() => smsCampaigns.id, { onDelete: "cascade" }),
   phone: text("phone").notNull(),
   message: text("message").notNull(),
-  status: text("status").notNull(), // pending, sent, delivered, failed
+  status: text("status").notNull(), // pending, sent, delivered, failed, scheduled
   twilioSid: text("twilioSid"),
   errorMessage: text("errorMessage"),
   sentAt: integer("sentAt"),
   deliveredAt: integer("deliveredAt"),
+  scheduledAt: integer("scheduledAt"), // Agendamento individual para cada SMS
   createdAt: integer("createdAt").notNull().$defaultFn(() => Math.floor(Date.now() / 1000)),
 });
 

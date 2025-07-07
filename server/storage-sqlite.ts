@@ -8,7 +8,7 @@ import {
   type InsertEmailCampaign, type EmailCampaign,
   type InsertEmailTemplate, type EmailTemplate
 } from "../shared/schema-sqlite";
-import { eq, desc, and, gte, lte, count } from "drizzle-orm";
+import { eq, desc, and, gte, lte, count, asc } from "drizzle-orm";
 import { nanoid } from "nanoid";
 import bcrypt from "bcryptjs";
 import crypto from "crypto";
@@ -863,8 +863,12 @@ export class SQLiteStorage implements IStorage {
     status: string;
     twilioSid?: string;
     errorMessage?: string;
+    scheduledAt?: number;
   }): Promise<any> {
-    const log = await db.insert(smsLogs).values(logData).returning();
+    const log = await db.insert(smsLogs).values({
+      ...logData,
+      createdAt: Math.floor(Date.now() / 1000)
+    }).returning();
     return log[0];
   }
 
@@ -915,6 +919,7 @@ export class SQLiteStorage implements IStorage {
     errorMessage?: string;
     sentAt?: number;
     deliveredAt?: number;
+    scheduledAt?: number;
   }): Promise<any> {
     const result = await db
       .update(smsLogs)
@@ -923,6 +928,22 @@ export class SQLiteStorage implements IStorage {
       .returning();
     
     return result[0];
+  }
+
+  // Nova função para buscar SMS agendados individualmente
+  async getScheduledSMSLogs(): Promise<any[]> {
+    const currentTime = Math.floor(Date.now() / 1000);
+    
+    const scheduledLogs = await db
+      .select()
+      .from(smsLogs)
+      .where(and(
+        eq(smsLogs.status, 'scheduled'),
+        lte(smsLogs.scheduledAt, currentTime)
+      ))
+      .orderBy(asc(smsLogs.scheduledAt));
+    
+    return scheduledLogs;
   }
 
   async getSentSMSCount(userId: string): Promise<number> {

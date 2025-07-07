@@ -100,109 +100,76 @@ app.use((req, res, next) => {
   setupSQLiteAuth(app);
   const server = registerSQLiteRoutes(app);
 
-  // Sistema de ativação automática para campanhas agendadas - A CADA 10 SEGUNDOS
+  // Sistema de processamento individual de SMS agendados - A CADA 30 SEGUNDOS
   setInterval(async () => {
     try {
       const { storage } = await import('./storage-sqlite');
-      const campaigns = await storage.getAllSMSCampaigns();
+      const scheduledSMS = await storage.getScheduledSMSLogs();
       
-      console.log(`🔍 VERIFICANDO CAMPANHAS AGENDADAS - Total: ${campaigns.length}`);
+      console.log(`🔍 VERIFICANDO SMS AGENDADOS - Total: ${scheduledSMS.length}`);
       
-      for (const campaign of campaigns) {
-        if (campaign.status === 'draft' && campaign.scheduledAt) {
-          const now = new Date();
-          // Converter timestamp Unix para milliseconds se necessário
-          const scheduledTime = new Date(campaign.scheduledAt * 1000);
-          
-          console.log(`📅 CAMPANHA ${campaign.name}:`);
-          console.log(`   Status: ${campaign.status}`);
-          console.log(`   scheduledAt raw: ${campaign.scheduledAt}`);
-          console.log(`   Agendada para: ${scheduledTime.toLocaleString()}`);
-          console.log(`   Hora atual: ${now.toLocaleString()}`);
-          console.log(`   Timestamp agora: ${Math.floor(now.getTime() / 1000)}`);
-          console.log(`   Timestamp agendado: ${campaign.scheduledAt}`);
-          const nowTimestamp = Math.floor(now.getTime() / 1000);
-          console.log(`   Deve executar? ${nowTimestamp >= campaign.scheduledAt}`);
-          
-          if (nowTimestamp >= campaign.scheduledAt) {
-            console.log(`🕐 ATIVANDO CAMPANHA AGENDADA: ${campaign.name} (${campaign.id})`);
-            
-            // Ativar campanha
-            await storage.updateSMSCampaign(campaign.id, { status: 'active' });
-            
-            // Enviar SMS para todos os telefones
-            let phones;
-            try {
-              // Se phones já é string, fazer parse; se for object, usar diretamente
-              if (typeof campaign.phones === 'string') {
-                phones = JSON.parse(campaign.phones);
-              } else {
-                phones = campaign.phones;
-              }
-              console.log(`📱 PHONES PARSED: ${phones.length} telefones`);
-            } catch (error) {
-              console.error(`❌ Erro ao fazer parse de phones para campanha ${campaign.id}:`, error);
-              console.error(`❌ Dados recebidos: ${campaign.phones}`);
-              continue; // Pular esta campanha se houver erro no JSON
-            }
-            
-            const { default: twilio } = await import('./twilio');
-            
-            let successCount = 0;
-            for (const phone of phones) {
-              try {
-                const phoneNumber = phone.telefone || phone.phone || phone;
-                if (!phoneNumber) continue;
-                
-                console.log(`📞 TENTANDO ENVIAR SMS para ${phoneNumber}`);
-                const result = await twilio.sendSMS(phoneNumber, campaign.message);
-                
-                if (result.success) {
-                  // Atualizar log de 'scheduled' para 'sent'
-                  await storage.updateSMSLogStatus(campaign.id, phoneNumber, 'sent');
-                  successCount++;
-                  console.log(`✅ SMS ENVIADO com sucesso para ${phoneNumber}`);
-                } else {
-                  // Atualizar log para 'failed'
-                  await storage.updateSMSLogStatus(campaign.id, phoneNumber, 'failed', result.error);
-                  console.log(`❌ SMS FALHOU para ${phoneNumber}: ${result.error}`);
-                }
-              } catch (error) {
-                console.error(`❌ Erro ao enviar SMS para ${phoneNumber}:`, error);
-                await storage.updateSMSLogStatus(campaign.id, phoneNumber, 'failed', error.message);
-              }
-            }
-            
-            // Verificar se há créditos suficientes antes de atualizar
+      if (scheduledSMS.length > 0) {
+        const { default: twilio } = await import('./twilio');
+        
+        for (const smsLog of scheduledSMS) {
+          try {
+            // Verificar créditos antes de enviar cada SMS
+            const campaign = await storage.getSMSCampaign(smsLog.campaignId);
             const user = await storage.getUser(campaign.userId);
-            if (user && user.smsCredits >= successCount) {
-              // Consumir créditos SMS
-              await storage.updateUserSmsCredits(campaign.userId, user.smsCredits - successCount);
+            
+            const sentSMS = await storage.getSentSMSCount(campaign.userId);
+            const remainingCredits = Math.max(0, (user.smsCredits || 100) - sentSMS);
+            
+            if (remainingCredits <= 0) {
+              console.log(`🚫 CRÉDITOS ESGOTADOS - Pausando SMS ${smsLog.id}`);
+              await storage.updateSMSLog(smsLog.id, { 
+                status: 'failed', 
+                errorMessage: 'Créditos SMS esgotados' 
+              });
+              continue;
+            }
+            console.log(`📞 PROCESSANDO SMS AGENDADO: ${smsLog.id} - ${smsLog.phone}`);
+            const result = await twilio.sendSMS(smsLog.phone, smsLog.message);
+            
+            if (result.success) {
+              await storage.updateSMSLog(smsLog.id, {
+                status: 'sent',
+                twilioSid: result.sid,
+                sentAt: Math.floor(Date.now() / 1000)
+              });
+              
+              // Consumir crédito SMS
+              await storage.updateUserSmsCredits(campaign.userId, user.smsCredits - 1);
               
               // Registrar transação
               await storage.createSmsTransaction({
                 userId: campaign.userId,
-                type: 'envio_campanha',
-                amount: -successCount,
-                description: `Campanha: ${campaign.name} (${successCount} SMS)`
+                type: 'envio_individual',
+                amount: -1,
+                description: `SMS individual: ${smsLog.phone}`
               });
               
-              console.log(`💰 CRÉDITOS CONSUMIDOS: ${successCount} SMS - Restam: ${user.smsCredits - successCount}`);
+              console.log(`✅ SMS ENVIADO: ${smsLog.id} - ${smsLog.phone}`);
             } else {
-              console.log(`❌ CRÉDITOS INSUFICIENTES para campanha ${campaign.name}`);
-              await storage.updateSMSCampaign(campaign.id, { status: 'paused' });
+              await storage.updateSMSLog(smsLog.id, {
+                status: 'failed',
+                errorMessage: result.error
+              });
+              console.log(`❌ SMS FALHOU: ${smsLog.id} - ${smsLog.phone} - ${result.error}`);
             }
-            
-            // Atualizar contadores da campanha
-            await storage.updateSMSCampaignStats(campaign.id, { sent: successCount, delivered: successCount });
-            console.log(`✅ Campanha ${campaign.name} ativada - ${successCount} SMS enviados`);
+          } catch (error) {
+            console.error(`❌ Erro ao processar SMS ${smsLog.id}:`, error);
+            await storage.updateSMSLog(smsLog.id, {
+              status: 'failed',
+              errorMessage: error.message
+            });
           }
         }
       }
     } catch (error) {
-      console.error('❌ Erro no sistema de campanhas agendadas:', error);
+      console.error('❌ Erro no sistema de SMS agendados:', error);
     }
-  }, 10000); // Verificar a cada 10 segundos
+  }, 30000); // A cada 30 segundos
 
   // Sistema de monitoramento automático para novos leads em campanhas ativas
   setInterval(async () => {
