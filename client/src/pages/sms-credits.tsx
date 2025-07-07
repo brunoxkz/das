@@ -433,6 +433,43 @@ export default function SMSCreditsPage() {
 
         {/* Campaigns Tab - Simplified Continuous Campaign */}
         <TabsContent value="campaigns" className="space-y-6">
+          {/* Status das Campanhas Ativas */}
+          {campaigns && campaigns.some(c => c.status === 'active') && (
+            <Card className="border-green-200 bg-green-50">
+              <CardHeader className="pb-3">
+                <CardTitle className="flex items-center gap-2 text-green-800">
+                  <div className="w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
+                  Campanhas SMS Ativas
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-2">
+                  {campaigns?.filter(c => c.status === 'active').map((campaign) => (
+                    <div key={campaign.id} className="flex items-center justify-between p-3 bg-white rounded-lg border border-green-200">
+                      <div className="flex items-center gap-3">
+                        <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                        <div>
+                          <p className="font-medium text-green-900">{campaign.name}</p>
+                          <p className="text-sm text-green-700">{campaign.quizTitle}</p>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-sm font-medium text-green-800">{campaign.sent || 0} enviados</p>
+                        <p className="text-xs text-green-600">Em funcionamento</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                <div className="mt-3 p-2 bg-green-100 rounded border border-green-200">
+                  <p className="text-sm text-green-800 flex items-center gap-2">
+                    <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                    Sistema funcionando automaticamente - SMS são enviados quando novos leads chegam
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
@@ -615,6 +652,19 @@ export default function SMSCreditsPage() {
               >
                 {createCampaignMutation.isPending ? "Ativando..." : "Ativar Sistema Contínuo"}
               </Button>
+
+              {/* Status da Campanha após ativação */}
+              {createCampaignMutation.isSuccess && (
+                <div className="mt-4 p-4 bg-green-100 border border-green-300 rounded-lg">
+                  <div className="flex items-center gap-2">
+                    <div className="w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
+                    <span className="text-sm font-medium text-green-800">Campanha Ativada com Sucesso!</span>
+                  </div>
+                  <p className="text-sm text-green-700 mt-1">
+                    A campanha SMS está rodando continuamente e enviará mensagens para novos leads automaticamente.
+                  </p>
+                </div>
+              )}
             </CardContent>
           </Card>
         </TabsContent>
