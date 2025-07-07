@@ -265,8 +265,9 @@ export function QuizPreview({ quiz }: QuizPreviewProps) {
   const handleAnswer = (questionId: number, answer: any, element?: any) => {
     setAnswers(prev => ({ ...prev, [questionId]: answer }));
     
-    // Se o elemento tem responseId, registra a resposta no sistema de variáveis
-    if (element?.responseId) {
+    // Se o elemento tem responseId ou fieldId, registra a resposta no sistema de variáveis
+    const fieldIdentifier = element?.responseId || element?.fieldId;
+    if (fieldIdentifier) {
       const responseType = element.type === 'multiple_choice' ? 'choice' :
                           element.type === 'number' || element.type === 'rating' ? 'number' :
                           element.type === 'email' ? 'email' :
@@ -274,7 +275,15 @@ export function QuizPreview({ quiz }: QuizPreviewProps) {
                           element.type === 'date' || element.type === 'birth_date' ? 'date' :
                           'text';
       
-      setQuizResponse(element.responseId, answer, responseType, questionId);
+      console.log('REGISTRANDO RESPOSTA:', {
+        fieldIdentifier,
+        answer,
+        responseType,
+        questionId,
+        elementType: element.type
+      });
+      
+      setQuizResponse(fieldIdentifier, answer, responseType, questionId);
     }
 
     // Para jogos, não avançar automaticamente - apenas registrar a resposta
