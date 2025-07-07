@@ -114,11 +114,11 @@ export default function SMSCreditsPage() {
   });
 
   // Fetch phone numbers for selected quiz
-  const { data: quizPhones, isLoading: phonesLoading } = useQuery<string[]>({
-    queryKey: ["/api/quiz-phones", selectedQuizForPhones],
+  const { data: quizPhones, isLoading: phonesLoading } = useQuery<any>({
+    queryKey: ["/api/sms/quiz", selectedQuizForPhones, "phones"],
     queryFn: async () => {
-      if (!selectedQuizForPhones) return [];
-      const response = await fetch(`/api/quiz-phones/${selectedQuizForPhones}`);
+      if (!selectedQuizForPhones) return { phones: [] };
+      const response = await fetch(`/api/sms/quiz/${selectedQuizForPhones}/phones`);
       if (!response.ok) throw new Error("Failed to fetch quiz phones");
       return response.json();
     },
@@ -703,9 +703,9 @@ export default function SMSCreditsPage() {
                     <div className="flex items-center justify-center p-8">
                       <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600"></div>
                     </div>
-                  ) : quizPhones && quizPhones.length > 0 ? (
+                  ) : quizPhones && quizPhones.phones && quizPhones.phones.length > 0 ? (
                     <div className="space-y-3">
-                      {quizPhones.map((phone: any, index: number) => (
+                      {quizPhones.phones.map((phone: any, index: number) => (
                         <div key={index} className="flex items-center justify-between p-3 border rounded-lg">
                           <div className="flex items-center space-x-3">
                             <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">

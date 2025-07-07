@@ -86,10 +86,11 @@ app.use((req, res, next) => {
 });
 
 (async () => {
-  // Middleware para interceptar rotas da API antes do Vite
-  app.use('/api/*', (req, res, next) => {
-    // Força o header Content-Type para JSON nas rotas da API
+  // Configuração específica de headers para rotas API
+  app.use('/api', (req, res, next) => {
+    // Força headers adequados para API
     res.setHeader('Content-Type', 'application/json');
+    res.setHeader('Cache-Control', 'no-cache');
     next();
   });
 
