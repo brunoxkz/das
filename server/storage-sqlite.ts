@@ -909,6 +909,28 @@ export class SQLiteStorage implements IStorage {
     
     return result[0];
   }
+
+  async getSentSMSCount(userId: string): Promise<number> {
+    try {
+      // Contar SMS enviados com sucesso para campanhas do usuário
+      console.log(`🔍 CONTANDO SMS ENVIADOS para userId: ${userId}`);
+      
+      const result = await db.select({ count: count() })
+        .from(smsLogs)
+        .innerJoin(smsCampaigns, eq(smsLogs.campaignId, smsCampaigns.id))
+        .where(and(
+          eq(smsCampaigns.userId, userId),
+          eq(smsLogs.status, 'sent')
+        ));
+      
+      console.log(`💰 RESULTADO CONTAGEM: ${result[0]?.count || 0} SMS enviados`);
+      
+      return result[0]?.count || 0;
+    } catch (error) {
+      console.error('Error counting sent SMS:', error);
+      return 0;
+    }
+  }
 }
 
 export const storage = new SQLiteStorage();

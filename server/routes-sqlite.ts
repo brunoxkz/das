@@ -1077,12 +1077,16 @@ export function registerSQLiteRoutes(app: Express): Server {
         return res.status(404).json({ error: "User not found" });
       }
       
-      const smsCredits = user.smsCredits || 0;
+      // Calcular créditos usados baseado nos SMS enviados com sucesso do usuário
+      const sentSMS = await storage.getSentSMSCount(userId);
+      const total = user.smsCredits || 100; // Valor padrão de 100 créditos
+      const used = sentSMS;
+      const remaining = Math.max(0, total - used);
       
       res.json({
-        total: smsCredits,
-        used: 0, // Para compatibilidade, pode ser implementado depois
-        remaining: smsCredits
+        total,
+        used,
+        remaining
       });
     } catch (error) {
       console.error("Error fetching SMS credits:", error);
@@ -1406,11 +1410,34 @@ export function registerSQLiteRoutes(app: Express): Server {
       if (triggerType === 'immediate' && filteredPhones.length > 0) {
         console.log(`📱 ENVIO AUTOMÁTICO - Iniciando envio para ${filteredPhones.length} telefones`);
         
+        // Verificar créditos disponíveis antes de enviar
+        const user = await storage.getUser(userId);
+        const sentSMS = await storage.getSentSMSCount(userId);
+        const remainingCredits = Math.max(0, (user.smsCredits || 100) - sentSMS);
+        
+        console.log(`💰 CRÉDITOS: Total ${user.smsCredits || 100}, Usados ${sentSMS}, Restantes ${remainingCredits}`);
+        
+        if (remainingCredits <= 0) {
+          console.log(`🚫 CRÉDITOS ESGOTADOS - Pausando campanha automaticamente`);
+          await storage.updateSMSCampaign(campaign.id, {
+            status: 'paused',
+            updatedAt: new Date()
+          });
+          return res.status(400).json({ 
+            error: "Créditos SMS esgotados. Campanha pausada automaticamente.",
+            remainingCredits: 0
+          });
+        }
+        
         let successCount = 0;
         let failureCount = 0;
+        const maxSendable = Math.min(filteredPhones.length, remainingCredits);
         
-        for (const phone of filteredPhones) {
+        console.log(`📱 ENVIANDO: Máximo ${maxSendable} SMS (limitado por créditos)`);
+        
+        for (let i = 0; i < maxSendable; i++) {
           try {
+            const phone = filteredPhones[i];
             const phoneNumber = phone.telefone || phone.phone || phone;
             if (!phoneNumber) continue;
 
@@ -1457,11 +1484,29 @@ export function registerSQLiteRoutes(app: Express): Server {
           updatedAt: new Date()
         });
         
+        // Verificar se ainda há créditos após envios
+        const finalSentSMS = await storage.getSentSMSCount(userId);
+        const finalRemainingCredits = Math.max(0, (user.smsCredits || 100) - finalSentSMS);
+        
         console.log(`📱 RESULTADO FINAL: ${successCount} enviados, ${failureCount} falhas`);
+        console.log(`💰 CRÉDITOS FINAIS: ${finalRemainingCredits} restantes`);
+        
+        // Se créditos acabaram, pausar a campanha
+        if (finalRemainingCredits <= 0) {
+          console.log(`🚫 CRÉDITOS ESGOTADOS APÓS ENVIO - Pausando campanha`);
+          await storage.updateSMSCampaign(campaign.id, {
+            status: 'paused',
+            updatedAt: new Date()
+          });
+        }
         
         // Retornar campanha com estatísticas atualizadas
         const updatedCampaign = await storage.getSMSCampaignById(campaign.id);
-        res.json(updatedCampaign);
+        res.json({
+          ...updatedCampaign,
+          remainingCredits: finalRemainingCredits,
+          creditWarning: finalRemainingCredits <= 0 ? "Créditos esgotados - campanha pausada" : null
+        });
       } else {
         res.json(campaign);
       }
