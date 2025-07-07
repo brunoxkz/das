@@ -288,8 +288,8 @@ export default function SMSCreditsPage() {
       return;
     }
 
-    // Validação obrigatória para data/hora quando tipo é 'scheduled'
-    if (campaignForm.triggerType === "scheduled" && !campaignForm.scheduledDateTime) {
+    // Validação obrigatória para data/hora - SEMPRE OBRIGATÓRIA
+    if (!campaignForm.scheduledDateTime) {
       toast({
         title: "Erro",
         description: "A data e hora do agendamento são obrigatórias",
@@ -299,19 +299,17 @@ export default function SMSCreditsPage() {
     }
 
     // Validação se data/hora está no futuro (mínimo 5 minutos)
-    if (campaignForm.triggerType === "scheduled" && campaignForm.scheduledDateTime) {
-      const scheduledTime = new Date(campaignForm.scheduledDateTime);
-      const now = new Date();
-      const minTime = new Date(now.getTime() + 5 * 60 * 1000); // 5 minutos no futuro
-      
-      if (scheduledTime < minTime) {
-        toast({
-          title: "Erro",
-          description: "A data/hora deve ser pelo menos 5 minutos no futuro",
-          variant: "destructive"
-        });
-        return;
-      }
+    const scheduledTime = new Date(campaignForm.scheduledDateTime);
+    const now = new Date();
+    const minTime = new Date(now.getTime() + 5 * 60 * 1000); // 5 minutos no futuro
+    
+    if (scheduledTime < minTime) {
+      toast({
+        title: "Erro",
+        description: "A data/hora deve ser pelo menos 5 minutos no futuro",
+        variant: "destructive"
+      });
+      return;
     }
 
     // Gerar o nome automaticamente baseado no quiz selecionado
@@ -320,7 +318,9 @@ export default function SMSCreditsPage() {
 
     createCampaignMutation.mutate({
       ...campaignForm,
-      name: campaignName
+      name: campaignName,
+      triggerType: "scheduled", // Sempre agendado já que data/hora é obrigatória
+      scheduledDateTime: campaignForm.scheduledDateTime
     });
   };
 
@@ -870,7 +870,32 @@ export default function SMSCreditsPage() {
                 </Select>
               </div>
 
-
+              {/* CAMPO DE DATA/HORA OBRIGATÓRIO */}
+              <div className="bg-purple-50 p-4 rounded-lg border border-purple-200">
+                <div className="flex items-center gap-2 mb-3">
+                  <Clock className="w-4 h-4 text-purple-600" />
+                  <span className="text-sm font-medium text-purple-900">Agendar Envio (OBRIGATÓRIO)</span>
+                </div>
+                <div className="space-y-3">
+                  <div>
+                    <Label htmlFor="scheduledDate" className="text-sm font-medium text-purple-800">
+                      Data e Hora *
+                    </Label>
+                    <Input
+                      id="scheduledDate"
+                      type="datetime-local"
+                      value={campaignForm.scheduledDateTime || ''}
+                      onChange={(e) => setCampaignForm({...campaignForm, scheduledDateTime: e.target.value})}
+                      min={new Date(Date.now() + 5 * 60 * 1000).toISOString().slice(0, 16)}
+                      className="w-full"
+                      required
+                    />
+                    <p className="text-xs text-purple-600 mt-1">
+                      A campanha será enviada exatamente na data/hora especificada (mínimo 5 minutos no futuro)
+                    </p>
+                  </div>
+                </div>
+              </div>
 
               <div>
                 <Label htmlFor="message">Mensagem SMS</Label>
