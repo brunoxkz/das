@@ -113,6 +113,18 @@ export default function SMSCreditsPage() {
     }
   });
 
+  // Fetch phone numbers for selected quiz
+  const { data: quizPhones, isLoading: phonesLoading } = useQuery<string[]>({
+    queryKey: ["/api/quiz-phones", selectedQuizForPhones],
+    queryFn: async () => {
+      if (!selectedQuizForPhones) return [];
+      const response = await fetch(`/api/quiz-phones/${selectedQuizForPhones}`);
+      if (!response.ok) throw new Error("Failed to fetch quiz phones");
+      return response.json();
+    },
+    enabled: !!selectedQuizForPhones
+  });
+
   // Purchase SMS credits mutation
   const purchaseCreditsMutation = useMutation({
     mutationFn: async (amount: number) => {
@@ -312,10 +324,11 @@ export default function SMSCreditsPage() {
 
       {/* Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid w-full grid-cols-5">
+        <TabsList className="grid w-full grid-cols-6">
           <TabsTrigger value="overview">Visão Geral</TabsTrigger>
           <TabsTrigger value="campaigns">Campanhas</TabsTrigger>
           <TabsTrigger value="templates">Templates</TabsTrigger>
+          <TabsTrigger value="phones">Telefones</TabsTrigger>
           <TabsTrigger value="analytics">Análises</TabsTrigger>
           <TabsTrigger value="credits">Créditos</TabsTrigger>
         </TabsList>
@@ -663,6 +676,71 @@ export default function SMSCreditsPage() {
                   </div>
                 ))}
               </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Telefones Tab */}
+        <TabsContent value="phones" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Phone className="w-5 h-5" />
+                Telefones Capturados
+              </CardTitle>
+              <p className="text-sm text-gray-600">
+                {selectedQuiz ? `Quiz: ${selectedQuiz.title}` : "Selecione um quiz para ver os telefones capturados"}
+              </p>
+            </CardHeader>
+            <CardContent>
+              {selectedQuiz ? (
+                <div className="space-y-4">
+                  {phoneNumbers.isLoading ? (
+                    <div className="flex items-center justify-center p-8">
+                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600"></div>
+                    </div>
+                  ) : phoneNumbers.data && phoneNumbers.data.length > 0 ? (
+                    <div className="space-y-3">
+                      {phoneNumbers.data.map((phone, index) => (
+                        <div key={index} className="flex items-center justify-between p-3 border rounded-lg">
+                          <div className="flex items-center space-x-3">
+                            <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
+                              <Phone className="w-4 h-4 text-green-600" />
+                            </div>
+                            <div>
+                              <p className="font-medium">{phone.phone}</p>
+                              <p className="text-sm text-gray-600">
+                                {phone.name || "Nome não informado"}
+                              </p>
+                            </div>
+                          </div>
+                          <div className="text-right">
+                            <p className="text-sm text-gray-600">
+                              {new Date(phone.submittedAt).toLocaleDateString("pt-BR")}
+                            </p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="text-center py-8">
+                      <Phone className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                      <p className="text-gray-600">Nenhum telefone capturado ainda</p>
+                      <p className="text-sm text-gray-500">
+                        Os telefones aparecerão aqui quando os usuários responderem ao quiz
+                      </p>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div className="text-center py-8">
+                  <Phone className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                  <p className="text-gray-600">Selecione um quiz para ver os telefones</p>
+                  <p className="text-sm text-gray-500">
+                    Use o seletor de quiz acima para visualizar os telefones capturados
+                  </p>
+                </div>
+              )}
             </CardContent>
           </Card>
         </TabsContent>
