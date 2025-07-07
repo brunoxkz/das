@@ -980,25 +980,61 @@ export function registerSQLiteRoutes(app: Express): Server {
             }
             
             if (phoneNumber) {
-              // Verificar status de completude - USAR MESMA LÓGICA DA CRIAÇÃO DE CAMPANHAS
-              const metadata = response.metadata as any;
-              const isComplete = metadata?.isComplete === true;
-              const completionPercentage = metadata?.completionPercentage || 0;
-              const completedAt = metadata?.completedAt || null;
-              
-              // Unificar critérios: completed se isComplete=true OU completionPercentage=100
-              const isReallyComplete = isComplete || completionPercentage === 100;
-              
-              phones.push({
-                id: response.id,
-                phone: phoneNumber,
-                name: userName || 'Sem nome',
-                submittedAt: response.submittedAt,
-                responses: responseData,
-                isComplete: isReallyComplete,
-                completedAt: completedAt,
-                status: isReallyComplete ? 'completed' : 'abandoned'
-              });
+              // Verificar se phone é válido (10-15 dígitos)
+              if (phoneNumber.length >= 10 && phoneNumber.length <= 15 && /^\d+$/.test(phoneNumber)) {
+                // Verificar status de completude - USAR MESMA LÓGICA DA CRIAÇÃO DE CAMPANHAS
+                const metadata = response.metadata as any;
+                const isComplete = metadata?.isComplete === true;
+                const completionPercentage = metadata?.completionPercentage || 0;
+                const completedAt = metadata?.completedAt || null;
+                
+                // Unificar critérios: completed se isComplete=true OU completionPercentage=100
+                const isReallyComplete = isComplete || completionPercentage === 100;
+                
+                const phoneEntry = {
+                  id: response.id,
+                  phone: phoneNumber,
+                  name: userName || 'Sem nome',
+                  submittedAt: response.submittedAt,
+                  responses: responseData,
+                  isComplete: isReallyComplete,
+                  completedAt: completedAt,
+                  status: isReallyComplete ? 'completed' : 'abandoned'
+                };
+                
+                // Aplicar deduplicação aqui mesmo no momento da extração
+                const existing = phones.find(p => p.phone === phoneNumber);
+                if (!existing) {
+                  phones.push(phoneEntry);
+                  console.log(`📱 PRIMEIRO TELEFONE: ${phoneNumber} - STATUS: ${phoneEntry.status}`);
+                } else {
+                  // Aplicar regra de prioridade
+                  if (phoneEntry.status === 'completed' && existing.status === 'abandoned') {
+                    // Remover o antigo e adicionar o novo
+                    const index = phones.findIndex(p => p.phone === phoneNumber);
+                    phones[index] = phoneEntry;
+                    console.log(`📱 PRIORIDADE APLICADA: ${phoneNumber} - ABANDONED → COMPLETED`);
+                  } else if (phoneEntry.status === 'completed' && existing.status === 'completed') {
+                    // Ambos completed - manter o mais recente
+                    if (new Date(phoneEntry.submittedAt) > new Date(existing.submittedAt)) {
+                      const index = phones.findIndex(p => p.phone === phoneNumber);
+                      phones[index] = phoneEntry;
+                      console.log(`📱 COMPLETED ATUALIZADO: ${phoneNumber} - mais recente`);
+                    }
+                  } else if (phoneEntry.status === 'abandoned' && existing.status === 'abandoned') {
+                    // Ambos abandoned - manter o mais recente
+                    if (new Date(phoneEntry.submittedAt) > new Date(existing.submittedAt)) {
+                      const index = phones.findIndex(p => p.phone === phoneNumber);
+                      phones[index] = phoneEntry;
+                      console.log(`📱 ABANDONED ATUALIZADO: ${phoneNumber} - mais recente`);
+                    }
+                  } else {
+                    console.log(`📱 TELEFONE DUPLICADO IGNORADO: ${phoneNumber} - ${phoneEntry.status} (mantendo ${existing.status})`);
+                  }
+                }
+              } else {
+                console.log(`❌ TELEFONE INVÁLIDO IGNORADO: ${phoneNumber} (deve ter 10-15 dígitos)`);
+              }
             } else {
               console.log(`📱 NENHUM TELEFONE ENCONTRADO na response ${index + 1}`);
             }
@@ -1029,16 +1065,51 @@ export function registerSQLiteRoutes(app: Express): Server {
                 // Unificar critérios: completed se isComplete=true OU completionPercentage=100
                 const isReallyComplete = isComplete || completionPercentage === 100;
                 
-                phones.push({
-                  id: response.id,
-                  phone: responseData[key],
-                  name: userName || 'Sem nome',
-                  submittedAt: response.submittedAt,
-                  responses: responseData,
-                  isComplete: isReallyComplete,
-                  completedAt: completedAt,
-                  status: isReallyComplete ? 'completed' : 'abandoned'
-                });
+                const phoneNumber = responseData[key];
+                
+                // Verificar se phone é válido (10-15 dígitos)
+                if (phoneNumber && phoneNumber.length >= 10 && phoneNumber.length <= 15 && /^\d+$/.test(phoneNumber)) {
+                  const phoneEntry = {
+                    id: response.id,
+                    phone: phoneNumber,
+                    name: userName || 'Sem nome',
+                    submittedAt: response.submittedAt,
+                    responses: responseData,
+                    isComplete: isReallyComplete,
+                    completedAt: completedAt,
+                    status: isReallyComplete ? 'completed' : 'abandoned'
+                  };
+                  
+                  // Aplicar deduplicação aqui também
+                  const existing = phones.find(p => p.phone === phoneNumber);
+                  if (!existing) {
+                    phones.push(phoneEntry);
+                    console.log(`📱 PRIMEIRO TELEFONE (ANTIGO): ${phoneNumber} - STATUS: ${phoneEntry.status}`);
+                  } else {
+                    // Aplicar regra de prioridade
+                    if (phoneEntry.status === 'completed' && existing.status === 'abandoned') {
+                      const index = phones.findIndex(p => p.phone === phoneNumber);
+                      phones[index] = phoneEntry;
+                      console.log(`📱 PRIORIDADE APLICADA (ANTIGO): ${phoneNumber} - ABANDONED → COMPLETED`);
+                    } else if (phoneEntry.status === 'completed' && existing.status === 'completed') {
+                      if (new Date(phoneEntry.submittedAt) > new Date(existing.submittedAt)) {
+                        const index = phones.findIndex(p => p.phone === phoneNumber);
+                        phones[index] = phoneEntry;
+                        console.log(`📱 COMPLETED ATUALIZADO (ANTIGO): ${phoneNumber} - mais recente`);
+                      }
+                    } else if (phoneEntry.status === 'abandoned' && existing.status === 'abandoned') {
+                      if (new Date(phoneEntry.submittedAt) > new Date(existing.submittedAt)) {
+                        const index = phones.findIndex(p => p.phone === phoneNumber);
+                        phones[index] = phoneEntry;
+                        console.log(`📱 ABANDONED ATUALIZADO (ANTIGO): ${phoneNumber} - mais recente`);
+                      }
+                    } else {
+                      console.log(`📱 TELEFONE DUPLICADO IGNORADO (ANTIGO): ${phoneNumber} - ${phoneEntry.status} (mantendo ${existing.status})`);
+                    }
+                  }
+                } else {
+                  console.log(`❌ TELEFONE INVÁLIDO IGNORADO (ANTIGO): ${phoneNumber} (deve ter 10-15 dígitos)`);
+                }
                 break;
               }
             }
@@ -1046,28 +1117,75 @@ export function registerSQLiteRoutes(app: Express): Server {
         }
       });
       
+      console.log(`📱 TELEFONES ANTES DA DEDUPLICAÇÃO: ${phones.length}`);
+      
+      // APLICAR DEDUPLICAÇÃO FINAL - Sistema inteligente com prioridade COMPLETED > ABANDONED
+      const phoneMap = new Map<string, any>();
+      
+      phones.forEach((phone, index) => {
+        const phoneNumber = phone.phone;
+        const existing = phoneMap.get(phoneNumber);
+        
+        console.log(`📱 PROCESSANDO TELEFONE ${index + 1}: ${phoneNumber} - STATUS: ${phone.status}`);
+        
+        if (!existing) {
+          // Primeiro telefone com este número
+          phoneMap.set(phoneNumber, phone);
+          console.log(`📱 PRIMEIRO TELEFONE: ${phoneNumber} - STATUS: ${phone.status}`);
+        } else {
+          // Telefone duplicado - aplicar regra de prioridade
+          if (phone.status === 'completed' && existing.status === 'abandoned') {
+            // Priorizar COMPLETED sobre ABANDONED
+            phoneMap.set(phoneNumber, phone);
+            console.log(`📱 PRIORIDADE APLICADA: ${phoneNumber} - ABANDONED → COMPLETED`);
+          } else if (phone.status === 'completed' && existing.status === 'completed') {
+            // Ambos são COMPLETED - manter o mais recente
+            if (new Date(phone.submittedAt) > new Date(existing.submittedAt)) {
+              phoneMap.set(phoneNumber, phone);
+              console.log(`📱 COMPLETED ATUALIZADO: ${phoneNumber} - mais recente`);
+            } else {
+              console.log(`📱 COMPLETED MANTIDO: ${phoneNumber} - existente é mais recente`);
+            }
+          } else if (phone.status === 'abandoned' && existing.status === 'abandoned') {
+            // Ambos são ABANDONED - manter o mais recente
+            if (new Date(phone.submittedAt) > new Date(existing.submittedAt)) {
+              phoneMap.set(phoneNumber, phone);
+              console.log(`📱 ABANDONED ATUALIZADO: ${phoneNumber} - mais recente`);
+            } else {
+              console.log(`📱 ABANDONED MANTIDO: ${phoneNumber} - existente é mais recente`);
+            }
+          } else {
+            console.log(`📱 TELEFONE DUPLICADO IGNORADO: ${phoneNumber} - ${phone.status} (mantendo ${existing.status})`);
+          }
+        }
+      });
+      
+      // Converter Map para array após deduplicação
+      const uniquePhones = Array.from(phoneMap.values());
+      console.log(`📱 DEDUPLICAÇÃO CONCLUÍDA: ${phones.length} → ${uniquePhones.length} telefones únicos`);
+      
       // Filtrar telefones baseado no público-alvo da campanha
       const { targetAudience = 'all' } = req.body;
-      let filteredPhones = phones;
+      let filteredPhones = uniquePhones;
       
       if (targetAudience === 'completed') {
-        filteredPhones = phones.filter(p => p.status === 'completed');
-        console.log(`🎯 FILTRADO PARA QUIZ COMPLETO: ${filteredPhones.length} de ${phones.length} telefones`);
+        filteredPhones = uniquePhones.filter(p => p.status === 'completed');
+        console.log(`🎯 FILTRADO PARA QUIZ COMPLETO: ${filteredPhones.length} de ${uniquePhones.length} telefones`);
       } else if (targetAudience === 'abandoned') {
-        filteredPhones = phones.filter(p => p.status === 'abandoned');
-        console.log(`🎯 FILTRADO PARA QUIZ ABANDONADO: ${filteredPhones.length} de ${phones.length} telefones`);
+        filteredPhones = uniquePhones.filter(p => p.status === 'abandoned');
+        console.log(`🎯 FILTRADO PARA QUIZ ABANDONADO: ${filteredPhones.length} de ${uniquePhones.length} telefones`);
       } else {
-        console.log(`🎯 TODOS OS TELEFONES: ${phones.length}`);
+        console.log(`🎯 TODOS OS TELEFONES: ${uniquePhones.length}`);
       }
       
-      console.log(`📱 TELEFONES EXTRAÍDOS: ${phones.length}, FILTRADOS: ${filteredPhones.length}`);
+      console.log(`📱 TELEFONES FINAIS: EXTRAÍDOS: ${phones.length}, ÚNICOS: ${uniquePhones.length}, FILTRADOS: ${filteredPhones.length}`);
       
       res.json({
         quizId,
         quizTitle: quiz.title,
         totalResponses: responses.length,
-        totalPhones: phones.length,
-        phones: phones.sort((a, b) => new Date(b.submittedAt).getTime() - new Date(a.submittedAt).getTime())
+        totalPhones: uniquePhones.length,
+        phones: uniquePhones.sort((a, b) => new Date(b.submittedAt).getTime() - new Date(a.submittedAt).getTime())
       });
     } catch (error) {
       console.error("Error fetching quiz phones:", error);
