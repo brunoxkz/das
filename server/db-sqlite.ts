@@ -125,6 +125,10 @@ export function runMigrations() {
         clicked INTEGER DEFAULT 0,
         replies INTEGER DEFAULT 0,
         scheduledAt INTEGER,
+        triggerDelay INTEGER DEFAULT 10,
+        triggerUnit TEXT DEFAULT 'minutes',
+        targetAudience TEXT DEFAULT 'all',
+        fromDate INTEGER,
         createdAt INTEGER NOT NULL,
         updatedAt INTEGER NOT NULL,
         FOREIGN KEY (quizId) REFERENCES quizzes(id),
@@ -195,6 +199,40 @@ export function runMigrations() {
     sqlite.exec(createQuizAnalyticsTable);
     sqlite.exec(createSmsTransactionsTable);
     sqlite.exec(createSmsCampaignsTable);
+    
+    // Adicionar campos se não existirem
+    try {
+      sqlite.exec("ALTER TABLE sms_campaigns ADD COLUMN targetAudience TEXT DEFAULT 'all';");
+    } catch (e) {} // Ignora se já existe
+    
+    try {
+      sqlite.exec("ALTER TABLE sms_campaigns ADD COLUMN triggerDelay INTEGER DEFAULT 10;");
+    } catch (e) {} // Ignora se já existe
+    
+    try {
+      sqlite.exec("ALTER TABLE sms_campaigns ADD COLUMN triggerUnit TEXT DEFAULT 'minutes';");
+    } catch (e) {} // Ignora se já existe
+    
+    try {
+      sqlite.exec("ALTER TABLE sms_campaigns ADD COLUMN sent INTEGER DEFAULT 0;");
+    } catch (e) {} // Ignora se já existe
+    
+    try {
+      sqlite.exec("ALTER TABLE sms_campaigns ADD COLUMN delivered INTEGER DEFAULT 0;");
+    } catch (e) {} // Ignora se já existe
+    
+    try {
+      sqlite.exec("ALTER TABLE sms_campaigns ADD COLUMN opened INTEGER DEFAULT 0;");
+    } catch (e) {} // Ignora se já existe
+    
+    try {
+      sqlite.exec("ALTER TABLE sms_campaigns ADD COLUMN clicked INTEGER DEFAULT 0;");
+    } catch (e) {} // Ignora se já existe
+    
+    try {
+      sqlite.exec("ALTER TABLE sms_campaigns ADD COLUMN replies INTEGER DEFAULT 0;");
+    } catch (e) {} // Ignora se já existe
+    
     sqlite.exec(createSmsLogsTable);
     sqlite.exec(createEmailCampaignsTable);
     sqlite.exec(createEmailTemplatesTable);

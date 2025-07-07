@@ -169,9 +169,20 @@ app.use((req, res, next) => {
       for (const campaign of activeCampaigns) {
         // Processar todas as campanhas ativas (não apenas agendadas)
         if (campaign.status === 'active') {
-          const quizResponses = await storage.getQuizResponses(campaign.quizId);
+          const allQuizResponses = await storage.getQuizResponses(campaign.quizId);
           const existingLogs = await storage.getSMSLogs(campaign.id);
           const existingPhones = new Set(existingLogs.map(log => log.phone));
+          
+          // Aplicar filtro por data se a campanha tiver fromDate configurado
+          let quizResponses = allQuizResponses;
+          if (campaign.fromDate) {
+            const fromTimestamp = new Date(campaign.fromDate * 1000); // fromDate está em timestamp
+            quizResponses = allQuizResponses.filter(response => {
+              const responseDate = new Date(response.submittedAt);
+              return responseDate >= fromTimestamp;
+            });
+            console.log(`📅 CAMPANHA ${campaign.name} - FILTRO POR DATA: ${fromTimestamp.toISOString()} - Respostas após esta data: ${quizResponses.length}/${allQuizResponses.length}`);
+          }
           
           // Extrair novos telefones das respostas do quiz COMPLETAS
           const newPhones = [];

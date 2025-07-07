@@ -62,6 +62,7 @@ export default function SMSCreditsPage() {
     triggerType: "immediate" | "delayed";
     triggerDelay: number;
     triggerUnit: "hours" | "minutes";
+    fromDate: string;
   }>({
     name: "",
     message: "",
@@ -69,7 +70,8 @@ export default function SMSCreditsPage() {
     quizId: "",
     triggerType: "immediate",
     triggerDelay: 1,
-    triggerUnit: "hours"
+    triggerUnit: "hours",
+    fromDate: ""
   });
   const [selectedQuizForPhones, setSelectedQuizForPhones] = useState("");
   const [phoneSearch, setPhoneSearch] = useState("");
@@ -223,6 +225,7 @@ export default function SMSCreditsPage() {
         triggerType: "immediate",
         triggerDelay: 1,
         triggerUnit: "hours",
+        fromDate: ""
       });
       // Redirecionar para a aba de campanhas
       setActiveTab("campaigns");
@@ -823,6 +826,22 @@ export default function SMSCreditsPage() {
                     <SelectItem value="all">Todos os leads</SelectItem>
                   </SelectContent>
                 </Select>
+              </div>
+
+              <div>
+                <Label htmlFor="from-date">📅 Processar leads a partir de</Label>
+                <div className="space-y-2">
+                  <Input
+                    id="from-date"
+                    type="date"
+                    value={campaignForm.fromDate}
+                    onChange={(e) => setCampaignForm({...campaignForm, fromDate: e.target.value})}
+                    className="w-full"
+                  />
+                  <p className="text-xs text-gray-600">
+                    Deixe vazio para processar todos os leads ou selecione uma data para evitar reprocessar a lista inteira
+                  </p>
+                </div>
               </div>
 
               <div>

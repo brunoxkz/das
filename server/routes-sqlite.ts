@@ -1204,8 +1204,21 @@ export function registerSQLiteRoutes(app: Express): Server {
 
       // Buscar automaticamente os telefones do quiz
       console.log("📱 BUSCANDO TELEFONES - Quiz:", quizId, ", User:", userId);
-      const responses = await storage.getQuizResponses(quizId);
-      console.log("📱 RESPONSES ENCONTRADAS:", responses.length);
+      const allResponses = await storage.getQuizResponses(quizId);
+      console.log("📱 RESPONSES ENCONTRADAS:", allResponses.length);
+      
+      // Aplicar filtro por data se fornecido
+      const { fromDate } = req.body;
+      let responses = allResponses;
+      
+      if (fromDate) {
+        const fromTimestamp = new Date(fromDate);
+        responses = allResponses.filter(response => {
+          const responseDate = new Date(response.submittedAt);
+          return responseDate >= fromTimestamp;
+        });
+        console.log(`📅 FILTRO POR DATA: ${fromDate} - Respostas após esta data: ${responses.length}/${allResponses.length}`);
+      }
       
       let phones: any[] = [];
       const processedPhones = new Set<string>(); // Para evitar duplicatas
@@ -1382,6 +1395,7 @@ export function registerSQLiteRoutes(app: Express): Server {
         triggerDelay,
         triggerUnit,
         targetAudience,
+        fromDate: req.body.fromDate,
         createdAt: new Date(),
         updatedAt: new Date()
       });

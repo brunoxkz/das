@@ -697,6 +697,7 @@ export class SQLiteStorage implements IStorage {
     phones: string[]; 
     status?: string; 
     scheduledAt?: number | Date;
+    fromDate?: string;
     createdAt?: Date;
     updatedAt?: Date;
     triggerDelay?: number;
@@ -710,6 +711,9 @@ export class SQLiteStorage implements IStorage {
     console.log(`📅 STORAGE - scheduledAt recebido: ${campaignData.scheduledAt}`);
     console.log(`📅 STORAGE - scheduledAt convertido: ${scheduledAtValue}`);
     
+    // Converter fromDate para timestamp se fornecido
+    const fromDateValue = campaignData.fromDate ? Math.floor(new Date(campaignData.fromDate).getTime() / 1000) : null;
+    
     const campaign = {
       id: crypto.randomUUID(),
       name: campaignData.name,
@@ -722,6 +726,7 @@ export class SQLiteStorage implements IStorage {
       triggerDelay: campaignData.triggerDelay || 10,
       triggerUnit: campaignData.triggerUnit || 'minutes',
       targetAudience: campaignData.targetAudience || 'all',
+      fromDate: fromDateValue,
       createdAt: now,
       updatedAt: now
     };

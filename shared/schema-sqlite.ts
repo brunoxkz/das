@@ -92,6 +92,10 @@ export const smsCampaigns = sqliteTable("sms_campaigns", {
   clicked: integer("clicked").default(0),
   replies: integer("replies").default(0),
   scheduledAt: integer("scheduledAt"), // Para campanhas agendadas
+  targetAudience: text("targetAudience").default("all"), // all, completed, abandoned
+  triggerDelay: integer("triggerDelay").default(10),
+  triggerUnit: text("triggerUnit").default("minutes"),
+  fromDate: integer("fromDate"), // Data a partir da qual processar leads (timestamp)
   createdAt: integer("createdAt").notNull().$defaultFn(() => Math.floor(Date.now() / 1000)),
   updatedAt: integer("updatedAt").notNull().$defaultFn(() => Math.floor(Date.now() / 1000)),
 });
