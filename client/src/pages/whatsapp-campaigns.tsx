@@ -78,15 +78,18 @@ export default function WhatsAppCampaignsPage() {
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
-  // Buscar dados do dashboard que já funcionam
-  const { data: dashboardData } = useQuery({
-    queryKey: ['/api/dashboard/stats'],
+  // Buscar quizzes diretamente já que o dashboard está com problemas
+  const { data: quizzes = [], isLoading: quizzesLoading, error: quizzesError } = useQuery({
+    queryKey: ['/api/quizzes'],
     refetchInterval: autoRefresh ? 10000 : false,
   });
-
-  // Extrair quizzes dos dados do dashboard
-  const quizzes = dashboardData?.quizzes || [];
-  const quizzesLoading = !dashboardData;
+  
+  // Log para debug
+  useEffect(() => {
+    console.log('Quizzes loading:', quizzesLoading);
+    console.log('Quizzes error:', quizzesError);
+    console.log('Quizzes data:', quizzes);
+  }, [quizzesLoading, quizzesError, quizzes]);
   
 
 
