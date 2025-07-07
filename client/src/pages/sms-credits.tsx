@@ -403,6 +403,8 @@ export default function SMSCreditsPage() {
         return <XCircle className="w-4 h-4 text-red-600" />;
       case 'pending':
         return <Clock3 className="w-4 h-4 text-yellow-600" />;
+      case 'scheduled':
+        return <Clock className="w-4 h-4 text-blue-600" />;
       default:
         return <Clock3 className="w-4 h-4 text-gray-400" />;
     }
@@ -416,6 +418,8 @@ export default function SMSCreditsPage() {
         return 'Falhou';
       case 'pending':
         return 'Pendente';
+      case 'scheduled':
+        return 'Agendado';
       default:
         return 'Desconhecido';
     }

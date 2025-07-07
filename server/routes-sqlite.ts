@@ -1292,6 +1292,21 @@ export function registerSQLiteRoutes(app: Express): Server {
         updatedAt: new Date()
       });
 
+      // Criar logs para todos os telefones, independente do tipo de envio
+      for (const phone of phones) {
+        const phoneNumber = phone.telefone || phone.phone || phone;
+        if (!phoneNumber) continue;
+        
+        const logId = nanoid();
+        await storage.createSMSLog({
+          id: logId,
+          campaignId: campaign.id,
+          phone: phoneNumber,
+          message: message,
+          status: triggerType === 'immediate' ? 'pending' : 'scheduled'
+        });
+      }
+
       // Se for envio imediato, enviar SMS automaticamente
       if (triggerType === 'immediate' && phones.length > 0) {
         console.log(`📱 ENVIO AUTOMÁTICO - Iniciando envio para ${phones.length} telefones`);
