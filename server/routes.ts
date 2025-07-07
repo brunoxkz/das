@@ -901,20 +901,35 @@ export function registerRoutes(app: Express): Server {
         if (response.responses && typeof response.responses === 'object') {
           const responseData = response.responses as any;
           console.log(`📱 DADOS DA RESPONSE ${index + 1}:`, Object.keys(responseData));
+          console.log(`📱 VALORES DA RESPONSE ${index + 1}:`, responseData);
           
-          // Procurar campo telefone em diferentes formatos
-          const phoneFields = ['telefone', 'phone', 'celular', 'whatsapp', 'numero', 'phoneNumber'];
+          // Procurar campo telefone em diferentes formatos - priorizar telefone_ primeiro
+          const phoneFields = ['telefone_', 'telefone', 'phone', 'celular', 'whatsapp', 'numero', 'phoneNumber', 'campo_'];
           let phoneNumber = null;
           let userName = null;
           
           // Buscar telefone - buscar em qualquer campo que contenha essas palavras
           for (const field of Object.keys(responseData)) {
             const fieldLower = field.toLowerCase();
-            if (phoneFields.some(pf => fieldLower.includes(pf))) {
-              phoneNumber = responseData[field];
-              console.log(`📱 TELEFONE ENCONTRADO no campo ${field}: ${phoneNumber}`);
-              break;
+            const value = responseData[field];
+            console.log(`📱 VERIFICANDO CAMPO ${field} (${fieldLower}) = ${value}`);
+            
+            // Verificar cada padrão individual
+            for (const pattern of phoneFields) {
+              console.log(`📱 VERIFICANDO PADRÃO "${pattern}" em "${fieldLower}"`);
+              if (fieldLower.includes(pattern)) {
+                console.log(`📱 CAMPO ${field} CORRESPONDE A TELEFONE (padrão: ${pattern})`);
+                // Verificar se o valor parece um telefone (contém dígitos e símbolos de telefone)
+                if (typeof value === 'string' && /[\d\(\)\-\s\+]{8,}/.test(value)) {
+                  phoneNumber = value;
+                  console.log(`📱 TELEFONE ENCONTRADO no campo ${field}: ${phoneNumber}`);
+                  break;
+                } else {
+                  console.log(`📱 VALOR NÃO PARECE TELEFONE: ${value} (tipo: ${typeof value})`);
+                }
+              }
             }
+            if (phoneNumber) break;
           }
           
           // Se não encontrou, procurar por padrão de telefone (regex)

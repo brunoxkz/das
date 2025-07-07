@@ -309,6 +309,13 @@ Changelog:
   * Only remaining dependencies are optional: Stripe (payments), SendGrid (emails), PostgreSQL (remote database)
   * Local deployment requires only: Node.js 18+, npm install, npm run dev - no external services needed
   * Complete independence achieved - system runs entirely on user's local machine without any cloud dependencies
+- July 07, 2025. PHONE FIELD ID CONSISTENCY ENHANCEMENT - Finalized read-only protection for phone fields:
+  * Applied read-only restriction to phone field IDs in both page-editor-horizontal.tsx and page-editor-simple.tsx
+  * Phone field ID inputs now display as read-only when field type is "phone" to maintain "telefone_" prefix consistency
+  * Enhanced placeholder text shows "telefone_" for phone fields instead of generic placeholder
+  * Prevents accidental modification of phone field IDs that could break the "telefone_" detection pattern
+  * Ensures reliable phone number retrieval in "Campanhas > Selecionar Funil > Telefones" workflow
+  * Consistent behavior across both quiz editor interfaces for maximum phone data capture reliability
 ```
 
 ## User Preferences

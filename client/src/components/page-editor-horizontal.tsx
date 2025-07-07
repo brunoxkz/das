@@ -687,7 +687,7 @@ const gameElementCategories = [
       question: undefined,
       options: type === "multiple_choice" ? ["Opção 1", "Opção 2"] : undefined,
       required: false,
-      fieldId: `campo_${Date.now()}`,
+      fieldId: type === "phone" ? `telefone_${Date.now()}` : `campo_${Date.now()}`,
       placeholder: "",
       fontSize: "base",
       textAlign: "left"
@@ -3054,8 +3054,14 @@ const gameElementCategories = [
                       value={selectedElementData.fieldId || ""}
                       onChange={(e) => updateElement(selectedElementData.id, { fieldId: e.target.value })}
                       className="mt-1"
-                      placeholder="campo_email"
+                      placeholder={selectedElementData.type === "phone" ? "telefone_" : "campo_email"}
+                      readOnly={selectedElementData.type === "phone"}
                     />
+                    {selectedElementData.type === "phone" && (
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Campos de telefone usam automaticamente o prefixo "telefone_" para garantir a detecção correta.
+                      </p>
+                    )}
                   </div>
                 </div>
               )}

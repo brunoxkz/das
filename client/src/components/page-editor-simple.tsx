@@ -133,7 +133,8 @@ export function PageEditor({ pages, onPagesChange }: PageEditorProps) {
       question: ["multiple_choice", "text", "email", "phone", "number", "rating"].includes(type) ? "Nova pergunta" : undefined,
       options: type === "multiple_choice" ? ["Opção 1", "Opção 2"] : undefined,
       required: ["multiple_choice", "text", "email", "phone", "number", "rating"].includes(type),
-      fieldId: ["multiple_choice", "text", "email", "phone", "number", "rating"].includes(type) ? `campo_${Date.now()}` : undefined,
+      fieldId: ["multiple_choice", "text", "email", "phone", "number", "rating"].includes(type) ? 
+        (type === "phone" ? `telefone_${Date.now()}` : `campo_${Date.now()}`) : undefined,
       placeholder: type === "email" ? "seu@email.com" : type === "phone" ? "(11) 99999-9999" : "",
       fontSize: type === "heading" ? "xl" : "base",
       textAlign: "left"
@@ -695,7 +696,8 @@ export function PageEditor({ pages, onPagesChange }: PageEditorProps) {
                     value={selectedElementData.fieldId || ""}
                     onChange={(e) => updateElement(selectedElementData.id, { fieldId: e.target.value })}
                     className="mt-1"
-                    placeholder="nome, email, empresa..."
+                    placeholder={selectedElementData.type === "phone" ? "telefone_" : "nome, email, empresa..."}
+                    readOnly={selectedElementData.type === "phone"}
                   />
                 </div>
 
