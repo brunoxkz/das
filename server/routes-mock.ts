@@ -571,7 +571,7 @@ export function registerMockRoutes(app: Express): Server {
   app.get("/api/cloaker/config/:quizId", verifyMockJWT, async (req: any, res) => {
     try {
       const { quizId } = req.params;
-      
+
       // Mock config padrão
       const mockConfig = {
         isEnabled: false,
@@ -596,9 +596,9 @@ export function registerMockRoutes(app: Express): Server {
   app.post("/api/cloaker/config/:quizId", verifyMockJWT, async (req: any, res) => {
     try {
       const { quizId } = req.params;
-      
+
       console.log(`🛡️ MOCK CLOAKER SAVE - Quiz ${quizId}`, req.body);
-      
+
       // Retorna a configuração salva
       const savedConfig = {
         ...req.body,
@@ -619,7 +619,7 @@ export function registerMockRoutes(app: Express): Server {
   app.get("/api/cloaker/stats", verifyMockJWT, async (req: any, res) => {
     try {
       console.log("🛡️ MOCK CLOAKER STATS");
-      
+
       const mockStats = {
         detection: {
           totalRequests: 1247,
@@ -674,7 +674,7 @@ export function registerMockRoutes(app: Express): Server {
   app.get("/api/cloaker/active", verifyMockJWT, async (req: any, res) => {
     try {
       console.log("🛡️ MOCK ACTIVE CLOACKERS");
-      
+
       const mockActiveCloackers = [
         {
           quizId: "quiz_1",
@@ -704,6 +704,179 @@ export function registerMockRoutes(app: Express): Server {
     } catch (error) {
       console.error("Error fetching active cloackers:", error);
       res.status(500).json({ error: "Erro interno do servidor" });
+    }
+  });
+
+  // SMS Templates endpoints
+  app.get("/api/sms-templates", verifyMockJWT, async (req: any, res: any) => {
+    try {
+      const userId = mockUser.id;
+
+      // Mock data - templates SMS simulados
+      const mockTemplates = [
+        {
+          id: "tmpl1",
+          name: "Agradecimento",
+          message: "Obrigado por completar nosso quiz! Seus resultados: {resultado}",
+          category: "thank_you",
+          variables: ["resultado", "nome"]
+        },
+        {
+          id: "tmpl2",
+          name: "Promoção",
+          message: "🎁 Oferta especial para você! {desconto}% OFF válido até amanhã. Use: {codigo}",
+          category: "promotion",
+          variables: ["desconto", "codigo"]
+        },
+        {
+          id: "tmpl3",
+          name: "Lembrete",
+          message: "Oi {nome}! Você não terminou nosso quiz. Complete agora: {link}",
+          category: "reminder",
+          variables: ["link", "nome"]
+        }
+      ];
+
+      res.json(mockTemplates);
+    } catch (error) {
+      console.error("Error fetching SMS templates:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
+  // SMS Quiz Phone Numbers endpoint
+  app.get("/api/sms/quiz/:quizId/phones", verifyMockJWT, async (req: any, res: any) => {
+    try {
+      const { quizId } = req.params;
+      const userId = mockUser.id;
+
+      console.log(`📱 BUSCANDO TELEFONES - Quiz: ${quizId}, User: ${userId}`);
+
+      // Buscar quiz responses reais do banco
+      const responses = await storage.getQuizResponses(quizId);
+      console.log(`📱 RESPONSES ENCONTRADAS: ${responses.length}`);
+
+      // Extrair telefones das respostas
+      const phones = [];
+
+      responses.forEach((response, index) => {
+        console.log(`📱 RESPONSE ${index + 1}:`, response);
+
+        if (response.responses && typeof response.responses === 'object') {
+          const responseData = response.responses as any;
+
+          // Procurar campo telefone em diferentes formatos
+          const phoneFields = ['telefone', 'phone', 'celular', 'whatsapp', 'numero'];
+          let phoneNumber = null;
+          let userName = null;
+
+          // Buscar telefone
+          for (const field of phoneFields) {
+            if (responseData[field]) {
+              phoneNumber = responseData[field];
+              break;
+            }
+          }
+
+          // Buscar nome
+          const nameFields = ['nome', 'name', 'nomeCompleto', 'firstName'];
+          for (const field of nameFields) {
+            if (responseData[field]) {
+              userName = responseData[field];
+              break;
+            }
+          }
+
+          if (phoneNumber) {
+            phones.push({
+              id: response.id,
+              phone: phoneNumber,
+              name: userName || 'Sem nome',
+              submittedAt: response.submittedAt || response.completedAt,
+              responses: responseData
+            });
+          }
+        }
+      });
+
+      console.log(`📱 TELEFONES EXTRAÍDOS: ${phones.length}`);
+
+      res.json({
+        quizId,
+        totalResponses: responses.length,
+        totalPhones: phones.length,
+        phones: phones.sort((a, b) => new Date(b.submittedAt).getTime() - new Date(a.submittedAt).getTime())
+      });
+    } catch (error) {
+      console.error("Error fetching quiz phone numbers:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
+  app.post("/api/sms-campaigns/:id/send", verifyMockJWT, async (req: any, res: any) => {
+    try {
+      const { id } = req.params;
+      const userId = mockUser.id;
+
+      // Mock data - sempre retorna sucesso
+      res.json({ 
+        success: true, 
+        message: "Campanha SMS enviada com sucesso",
+        campaignId: id,
+        sent: 45,
+        estimated: "2-5 minutos para conclusão"
+      });
+    } catch (error) {
+      console.error("Error sending SMS campaign:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
+  // Endpoint para envio direto de SMS via Twilio
+  app.post("/api/sms/send-direct", verifyMockJWT, async (req: any, res: any) => {
+    try {
+      const { phones, message, quizId } = req.body;
+      const userId = mockUser.id;
+
+      console.log(`📱 ENVIO DIRETO SMS - User: ${userId}, Phones: ${phones.length}, Quiz: ${quizId}`);
+
+      if (!phones || !Array.isArray(phones) || phones.length === 0) {
+        return res.status(400).json({ error: "Lista de telefones é obrigatória" });
+      }
+
+      if (!message || message.trim() === '') {
+        return res.status(400).json({ error: "Mensagem é obrigatória" });
+      }
+
+      // Simulação do Twilio (substitua pela integração real)
+      const results = [];
+      for (const phone of phones) {
+        // Simular envio
+        const success = Math.random() > 0.1; // 90% de sucesso
+        results.push({
+          phone,
+          status: success ? 'sent' : 'failed',
+          messageId: success ? `twilio_${Date.now()}_${Math.random().toString(36).substr(2, 9)}` : null,
+          error: success ? null : 'Número inválido'
+        });
+      }
+
+      const sentCount = results.filter(r => r.status === 'sent').length.
+      const failedCount = results.filter(r => r.status === 'failed').length;
+
+      console.log(`📱 RESULTADO ENVIO - Enviados: ${sentCount}, Falharam: ${failedCount}`);
+
+      res.json({
+        success: true,
+        sent: sentCount,
+        failed: failedCount,
+        total: phones.length,
+        results,
+        message: `${sentCount} SMS enviados com sucesso, ${failedCount} falharam`
+      });
+    } catch (error) {
+      console.error("Error sending direct SMS:", error);
+      res.status(500).json({ error: "Internal server error" });
     }
   });
 

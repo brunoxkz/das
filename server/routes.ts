@@ -870,6 +870,104 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
+  // SMS Quiz Phone Numbers endpoint
+  app.get("/api/sms/quiz/:quizId/phones", authenticateToken, async (req, res) => {
+    try {
+      const { quizId } = req.params;
+      const userId = req.user!.id;
+      
+      console.log(`📱 BUSCANDO TELEFONES - Quiz: ${quizId}, User: ${userId}`);
+      
+      // Verificar se o quiz pertence ao usuário
+      const quiz = await storage.getQuiz(quizId);
+      if (!quiz || quiz.userId !== userId) {
+        return res.status(404).json({ error: "Quiz not found" });
+      }
+      
+      // Buscar responses do quiz
+      const responses = await storage.getQuizResponses(quizId);
+      console.log(`📱 RESPONSES ENCONTRADAS: ${responses.length}`);
+      
+      // Extrair telefones das respostas
+      const phones = [];
+      
+      responses.forEach((response, index) => {
+        console.log(`📱 RESPONSE ${index + 1}:`, {
+          id: response.id,
+          responses: response.responses,
+          submittedAt: response.completedAt
+        });
+        
+        if (response.responses && typeof response.responses === 'object') {
+          const responseData = response.responses as any;
+          console.log(`📱 DADOS DA RESPONSE ${index + 1}:`, Object.keys(responseData));
+          
+          // Procurar campo telefone em diferentes formatos
+          const phoneFields = ['telefone', 'phone', 'celular', 'whatsapp', 'numero', 'phoneNumber'];
+          let phoneNumber = null;
+          let userName = null;
+          
+          // Buscar telefone - buscar em qualquer campo que contenha essas palavras
+          for (const field of Object.keys(responseData)) {
+            const fieldLower = field.toLowerCase();
+            if (phoneFields.some(pf => fieldLower.includes(pf))) {
+              phoneNumber = responseData[field];
+              console.log(`📱 TELEFONE ENCONTRADO no campo ${field}: ${phoneNumber}`);
+              break;
+            }
+          }
+          
+          // Se não encontrou, procurar por padrão de telefone (regex)
+          if (!phoneNumber) {
+            for (const field of Object.keys(responseData)) {
+              const value = responseData[field];
+              if (typeof value === 'string' && /[\d\s\-\(\)\+]{8,}/.test(value)) {
+                phoneNumber = value;
+                console.log(`📱 TELEFONE ENCONTRADO por padrão no campo ${field}: ${phoneNumber}`);
+                break;
+              }
+            }
+          }
+          
+          // Buscar nome
+          const nameFields = ['nome', 'name', 'nomeCompleto', 'firstName', 'fullName'];
+          for (const field of Object.keys(responseData)) {
+            const fieldLower = field.toLowerCase();
+            if (nameFields.some(nf => fieldLower.includes(nf))) {
+              userName = responseData[field];
+              break;
+            }
+          }
+          
+          if (phoneNumber) {
+            phones.push({
+              id: response.id,
+              phone: phoneNumber,
+              name: userName || 'Sem nome',
+              submittedAt: response.completedAt,
+              responses: responseData
+            });
+          } else {
+            console.log(`📱 NENHUM TELEFONE ENCONTRADO na response ${index + 1}`);
+          }
+        }
+      });
+      
+      console.log(`📱 TELEFONES EXTRAÍDOS: ${phones.length}`);
+      
+      res.json({
+        quizId,
+        quizTitle: quiz.title,
+        totalResponses: responses.length,
+        totalPhones: phones.length,
+        phones: phones.sort((a, b) => new Date(b.submittedAt).getTime() - new Date(a.submittedAt).getTime())
+      });
+    } catch (error) {
+      console.error("Error fetching quiz phone numbers:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
   app.post("/api/sms-credits/purchase", verifyJWT, async (req: any, res: Response) => {
     try {
       const { amount } = req.body;

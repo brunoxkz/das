@@ -1,41 +1,17 @@
-import { useState } from "react";
-import { useQuery, useMutation } from "@tanstack/react-query";
+import { useState, useEffect } from "react";
+import { useAuth } from "@/hooks/use-auth-hybrid";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { Switch } from "@/components/ui/switch";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Separator } from "@/components/ui/separator";
-import { 
-  MessageSquare, 
-  Send, 
-  CreditCard, 
-  Zap, 
-  Target, 
-  Users, 
-  TrendingUp, 
-  Clock, 
-  Filter,
-  Play,
-  Pause,
-  Settings,
-  BarChart3,
-  Phone,
-  CheckCircle,
-  XCircle,
-  AlertCircle,
-  Plus,
-  Trash2,
-  Edit
-} from "lucide-react";
-import { queryClient } from "@/lib/queryClient";
-import { useToast } from "@/hooks/use-toast";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { MessageSquare, Send, DollarSign, FileText, Plus, Eye, Clock, Users, CheckCircle, XCircle, Phone, Search } from "lucide-react";
+import { toast } from "@/hooks/use-toast";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
 interface SMSCredits {
   total: number;
@@ -91,6 +67,8 @@ export default function SMSCreditsPage() {
     triggerDelay: 1,
     triggerUnit: "hours"
   });
+  const [selectedQuizForPhones, setSelectedQuizForPhones] = useState("");
+  const [phoneSearch, setPhoneSearch] = useState("");
 
   // Fetch user's SMS credits
   const { data: smsCredits, isLoading: creditsLoading } = useQuery<SMSCredits>({
@@ -351,7 +329,7 @@ export default function SMSCreditsPage() {
                 <Progress value={((smsCredits?.total || 0) / 1000) * 100} className="mt-2" />
               </CardContent>
             </Card>
-            
+
             <Card>
               <CardHeader className="pb-3">
                 <CardTitle className="text-sm font-medium">Créditos Usados</CardTitle>
@@ -494,7 +472,7 @@ export default function SMSCreditsPage() {
                       <SelectItem value="delayed">Enviar depois de X tempo</SelectItem>
                     </SelectContent>
                   </Select>
-                  
+
                   {campaignForm.triggerType === "delayed" && (
                     <div className="flex gap-2 items-center bg-blue-50 p-3 rounded-lg">
                       <Clock className="w-4 h-4 text-blue-600" />
