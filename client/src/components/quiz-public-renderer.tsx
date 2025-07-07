@@ -211,8 +211,14 @@ export function QuizPublicRenderer({ quiz }: QuizPublicRendererProps) {
 
   // Renderizar elementos com captura automática de resposta
   const renderElement = (element: Element) => {
-    const { id, type, properties } = element;
+    const { id, type, properties = {} } = element;
     const answer = answers[id];
+
+    // Verificação de segurança para properties
+    if (!properties || typeof properties !== 'object') {
+      console.warn(`Elemento ${id} do tipo ${type} não possui properties válidas`);
+      return <div key={id} className="text-red-500">Erro: Propriedades do elemento não encontradas</div>;
+    }
 
     switch (type) {
       case 'multiple_choice':
@@ -449,14 +455,14 @@ export function QuizPublicRenderer({ quiz }: QuizPublicRendererProps) {
       case 'heading':
         return (
           <div key={id} className="space-y-2">
-            <h2 className="text-2xl font-bold">{properties.text}</h2>
+            <h2 className="text-2xl font-bold">{properties.text || 'Título'}</h2>
           </div>
         );
 
       case 'paragraph':
         return (
           <div key={id} className="space-y-2">
-            <p className="text-gray-700">{properties.text}</p>
+            <p className="text-gray-700">{properties.text || 'Parágrafo'}</p>
           </div>
         );
 
