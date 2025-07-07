@@ -78,13 +78,17 @@ export default function WhatsAppCampaignsPage() {
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
-  // Buscar lista de quizzes
-  const { data: quizzes = [], isLoading: quizzesLoading } = useQuery({
-    queryKey: ['/api/quizzes'],
+  // Buscar dados do dashboard que já funcionam
+  const { data: dashboardData } = useQuery({
+    queryKey: ['/api/dashboard/stats'],
     refetchInterval: autoRefresh ? 10000 : false,
   });
+
+  // Extrair quizzes dos dados do dashboard
+  const quizzes = dashboardData?.quizzes || [];
+  const quizzesLoading = !dashboardData;
   
-  console.log("DEBUG QUIZZES:", { quizzes, length: quizzes.length, isLoading: quizzesLoading });
+
 
 
 
