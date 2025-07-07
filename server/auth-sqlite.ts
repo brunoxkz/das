@@ -231,6 +231,7 @@ export function setupSQLiteAuth(app: Express) {
       lastName: req.user.lastName,
       role: req.user.role,
       plan: req.user.plan,
+      smsCredits: req.user.smsCredits || 0,
     });
   });
 }
