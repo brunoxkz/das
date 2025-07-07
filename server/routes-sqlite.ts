@@ -980,10 +980,14 @@ export function registerSQLiteRoutes(app: Express): Server {
             }
             
             if (phoneNumber) {
-              // Verificar status de completude
+              // Verificar status de completude - USAR MESMA LÓGICA DA CRIAÇÃO DE CAMPANHAS
               const metadata = response.metadata as any;
               const isComplete = metadata?.isComplete === true;
+              const completionPercentage = metadata?.completionPercentage || 0;
               const completedAt = metadata?.completedAt || null;
+              
+              // Unificar critérios: completed se isComplete=true OU completionPercentage=100
+              const isReallyComplete = isComplete || completionPercentage === 100;
               
               phones.push({
                 id: response.id,
@@ -991,9 +995,9 @@ export function registerSQLiteRoutes(app: Express): Server {
                 name: userName || 'Sem nome',
                 submittedAt: response.submittedAt,
                 responses: responseData,
-                isComplete: isComplete,
+                isComplete: isReallyComplete,
                 completedAt: completedAt,
-                status: isComplete ? 'completed' : 'abandoned'
+                status: isReallyComplete ? 'completed' : 'abandoned'
               });
             } else {
               console.log(`📱 NENHUM TELEFONE ENCONTRADO na response ${index + 1}`);
@@ -1016,10 +1020,14 @@ export function registerSQLiteRoutes(app: Express): Server {
                   }
                 }
                 
-                // Verificar status de completude
+                // Verificar status de completude - USAR MESMA LÓGICA DA CRIAÇÃO DE CAMPANHAS
                 const metadata = response.metadata as any;
                 const isComplete = metadata?.isComplete === true;
+                const completionPercentage = metadata?.completionPercentage || 0;
                 const completedAt = metadata?.completedAt || null;
+                
+                // Unificar critérios: completed se isComplete=true OU completionPercentage=100
+                const isReallyComplete = isComplete || completionPercentage === 100;
                 
                 phones.push({
                   id: response.id,
@@ -1027,9 +1035,9 @@ export function registerSQLiteRoutes(app: Express): Server {
                   name: userName || 'Sem nome',
                   submittedAt: response.submittedAt,
                   responses: responseData,
-                  isComplete: isComplete,
+                  isComplete: isReallyComplete,
                   completedAt: completedAt,
-                  status: isComplete ? 'completed' : 'abandoned'
+                  status: isReallyComplete ? 'completed' : 'abandoned'
                 });
                 break;
               }
