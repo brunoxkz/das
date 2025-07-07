@@ -696,7 +696,17 @@ export class SQLiteStorage implements IStorage {
     userId: string; 
     phones: string[]; 
     status?: string; 
+    scheduledAt?: number | Date;
+    createdAt?: Date;
+    updatedAt?: Date;
   }): Promise<any> {
+    const now = Math.floor(Date.now() / 1000);
+    
+    const scheduledAtValue = campaignData.scheduledAt ? Math.floor(new Date(campaignData.scheduledAt).getTime() / 1000) : null;
+    
+    console.log(`📅 STORAGE - scheduledAt recebido: ${campaignData.scheduledAt}`);
+    console.log(`📅 STORAGE - scheduledAt convertido: ${scheduledAtValue}`);
+    
     const campaign = {
       id: crypto.randomUUID(),
       name: campaignData.name,
@@ -704,10 +714,14 @@ export class SQLiteStorage implements IStorage {
       userId: campaignData.userId,
       message: campaignData.message,
       phones: JSON.stringify(campaignData.phones),
-      status: campaignData.status || 'pending'
-      // Não incluir createdAt e updatedAt - deixar o SQLite usar os defaults
+      status: campaignData.status || 'pending',
+      scheduledAt: scheduledAtValue,
+      createdAt: now,
+      updatedAt: now
     };
 
+    console.log(`📅 STORAGE - Dados da campanha antes de inserir:`, campaign);
+    
     await db.insert(smsCampaigns).values(campaign);
     return campaign;
   }

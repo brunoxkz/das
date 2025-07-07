@@ -1363,16 +1363,16 @@ export function registerSQLiteRoutes(app: Express): Server {
       let scheduledAt = null;
       if (triggerType === 'delayed') {
         const delayInMs = triggerUnit === 'minutes' ? triggerDelay * 60 * 1000 : triggerDelay * 60 * 60 * 1000;
-        scheduledAt = new Date(Date.now() + delayInMs);
+        scheduledAt = Date.now() + delayInMs; // Timestamp em milliseconds
+        console.log(`⏰ AGENDAMENTO CONFIGURADO: ${new Date(scheduledAt)} (em ${triggerDelay} ${triggerUnit})`);
       }
       
       const campaign = await storage.createSMSCampaign({
-        id: nanoid(),
-        userId,
         name,
         quizId,
         message,
-        phones: JSON.stringify(filteredPhones),
+        userId,
+        phones: filteredPhones,
         status: initialStatus,
         scheduledAt,
         createdAt: new Date(),
