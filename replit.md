@@ -316,6 +316,14 @@ Changelog:
   * Prevents accidental modification of phone field IDs that could break the "telefone_" detection pattern
   * Ensures reliable phone number retrieval in "Campanhas > Selecionar Funil > Telefones" workflow
   * Consistent behavior across both quiz editor interfaces for maximum phone data capture reliability
+- July 07, 2025. SMS PHONE EXTRACTION BUG FIX - Resolved critical phone duplication and validation issues:
+  * Fixed phone number extraction bug that created multiple incorrect records from single input
+  * Implemented phone number deduplication using Set data structure to prevent duplicate processing
+  * Added phone number validation requiring minimum 10 digits to filter out invalid entries like "11"
+  * Enhanced phone number cleaning to remove non-numeric characters before validation
+  * SMS logs now show exactly one record per unique valid phone number
+  * System correctly processes "11995133932" as single entry instead of creating "11" and duplicate "11995133932" records
+  * Phone extraction logic maintains data integrity for SMS campaign targeting
 ```
 
 ## User Preferences

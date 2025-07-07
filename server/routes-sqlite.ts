@@ -1190,6 +1190,7 @@ export function registerSQLiteRoutes(app: Express): Server {
       console.log("📱 RESPONSES ENCONTRADAS:", responses.length);
       
       let phones: any[] = [];
+      const processedPhones = new Set<string>(); // Para evitar duplicatas
       
       responses.forEach((response, index) => {
         const responseData = response.responses;
@@ -1205,7 +1206,7 @@ export function registerSQLiteRoutes(app: Express): Server {
           // Buscar telefone primeiro
           for (const item of responseData) {
             if (item.elementType === 'phone' && item.answer) {
-              phoneNumber = item.answer;
+              phoneNumber = item.answer.toString().replace(/\D/g, ''); // Remove caracteres não numéricos
               console.log(`📱 TELEFONE ENCONTRADO no elemento ${item.elementId}: ${phoneNumber}`);
               break;
             }
@@ -1215,7 +1216,7 @@ export function registerSQLiteRoutes(app: Express): Server {
           if (!phoneNumber) {
             for (const item of responseData) {
               if (item.elementFieldId && item.elementFieldId.includes('telefone') && item.answer) {
-                phoneNumber = item.answer;
+                phoneNumber = item.answer.toString().replace(/\D/g, ''); // Remove caracteres não numéricos
                 console.log(`📱 TELEFONE ENCONTRADO no fieldId ${item.elementFieldId}: ${phoneNumber}`);
                 break;
               }
@@ -1232,16 +1233,23 @@ export function registerSQLiteRoutes(app: Express): Server {
             }
           }
           
-          if (phoneNumber) {
-            phones.push({
-              id: response.id,
-              phone: phoneNumber,
-              name: userName || 'Sem nome',
-              submittedAt: response.submittedAt,
-              responses: responseData
-            });
+          // Validar e adicionar telefone apenas se for válido e não duplicado
+          if (phoneNumber && phoneNumber.length >= 10) {
+            if (!processedPhones.has(phoneNumber)) {
+              processedPhones.add(phoneNumber);
+              phones.push({
+                id: response.id,
+                phone: phoneNumber,
+                name: userName || 'Sem nome',
+                submittedAt: response.submittedAt,
+                responses: responseData
+              });
+              console.log(`✅ TELEFONE ADICIONADO: ${phoneNumber}`);
+            } else {
+              console.log(`⚠️ TELEFONE DUPLICADO IGNORADO: ${phoneNumber}`);
+            }
           } else {
-            console.log(`📱 NENHUM TELEFONE ENCONTRADO na response ${index + 1}`);
+            console.log(`❌ TELEFONE INVÁLIDO ou MUITO CURTO: ${phoneNumber}`);
           }
         } else {
           // Formato antigo - resposta é um objeto
@@ -1250,7 +1258,8 @@ export function registerSQLiteRoutes(app: Express): Server {
           // Buscar por chaves que contenham "telefone"
           for (const key in responseData) {
             if (key.includes('telefone') && responseData[key]) {
-              console.log(`📱 TELEFONE ENCONTRADO na chave ${key}: ${responseData[key]}`);
+              phoneNumber = responseData[key].toString().replace(/\D/g, ''); // Remove caracteres não numéricos
+              console.log(`📱 TELEFONE ENCONTRADO na chave ${key}: ${phoneNumber}`);
               
               // Buscar nome
               let userName = null;
@@ -1261,13 +1270,24 @@ export function registerSQLiteRoutes(app: Express): Server {
                 }
               }
               
-              phones.push({
-                id: response.id,
-                phone: responseData[key],
-                name: userName || 'Sem nome',
-                submittedAt: response.submittedAt,
-                responses: responseData
-              });
+              // Validar e adicionar telefone apenas se for válido e não duplicado
+              if (phoneNumber && phoneNumber.length >= 10) {
+                if (!processedPhones.has(phoneNumber)) {
+                  processedPhones.add(phoneNumber);
+                  phones.push({
+                    id: response.id,
+                    phone: phoneNumber,
+                    name: userName || 'Sem nome',
+                    submittedAt: response.submittedAt,
+                    responses: responseData
+                  });
+                  console.log(`✅ TELEFONE ADICIONADO: ${phoneNumber}`);
+                } else {
+                  console.log(`⚠️ TELEFONE DUPLICADO IGNORADO: ${phoneNumber}`);
+                }
+              } else {
+                console.log(`❌ TELEFONE INVÁLIDO ou MUITO CURTO: ${phoneNumber}`);
+              }
               break;
             }
           }
