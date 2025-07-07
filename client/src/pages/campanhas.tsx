@@ -126,11 +126,11 @@ export default function CampanhasPage() {
 
   // Fetch phone numbers for selected quiz
   const { data: quizPhones, isLoading: phonesLoading } = useQuery<any>({
-    queryKey: ["/api/quiz-phones", selectedQuiz],
+    queryKey: ["/api/quizzes", selectedQuiz, "phones"],
     queryFn: async () => {
       if (!selectedQuiz) return { phones: [] };
       const token = localStorage.getItem("accessToken");
-      const response = await fetch(`/api/quiz-phones/${selectedQuiz}`, {
+      const response = await fetch(`/api/quizzes/${selectedQuiz}/phones`, {
         headers: {
           "Authorization": `Bearer ${token}`,
           "Content-Type": "application/json",
