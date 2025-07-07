@@ -69,8 +69,7 @@ export default function WhatsAppCampaignsPage() {
   const [selectedQuiz, setSelectedQuiz] = useState<string>("");
   const [selectedAudience, setSelectedAudience] = useState<'all' | 'completed' | 'abandoned'>('all');
   const [dateFilter, setDateFilter] = useState<string>("");
-  const [phoneList, setPhoneList] = useState<PhoneContact[]>([]);
-  const [audienceCounts, setAudienceCounts] = useState({ completed: 0, abandoned: 0, all: 0 });
+
   const [rotatingMessages, setRotatingMessages] = useState<string[]>([""]);
   const [autoRefresh, setAutoRefresh] = useState(true);
   const [campaignName, setCampaignName] = useState("");
@@ -104,42 +103,56 @@ export default function WhatsAppCampaignsPage() {
     refetchInterval: 5000,
   });
 
-  // Atualizar lista de telefones quando mudar quiz ou filtros
-  useEffect(() => {
-    if (selectedQuiz && quizPhones.length > 0) {
-      let filteredPhones = quizPhones;
-      
-      // Aplicar filtro de data
-      if (dateFilter) {
-        const filterDate = new Date(dateFilter);
-        filteredPhones = filteredPhones.filter(phone => 
-          new Date(phone.submittedAt) >= filterDate
-        );
-      }
-      
-      // Aplicar filtro de audiência
-      if (selectedAudience !== 'all') {
-        filteredPhones = filteredPhones.filter(phone => {
-          const isCompleted = phone.status === 'completed' || phone.completionPercentage === 100;
-          return selectedAudience === 'completed' ? isCompleted : !isCompleted;
-        });
-      }
-      
-      setPhoneList(filteredPhones);
-      
-      // Atualizar contadores
-      const completed = quizPhones.filter(p => p.status === 'completed' || p.completionPercentage === 100).length;
-      const abandoned = quizPhones.filter(p => p.status !== 'completed' && p.completionPercentage !== 100).length;
-      setAudienceCounts({
-        completed,
-        abandoned,
-        all: quizPhones.length
-      });
-    } else {
-      setPhoneList([]);
-      setAudienceCounts({ completed: 0, abandoned: 0, all: 0 });
+  // Calcular listas filtradas e contadores dinamicamente
+  const getFilteredPhones = () => {
+    if (!selectedQuiz || !quizPhones.length) return [];
+    
+    let filteredPhones = quizPhones;
+    
+    // Aplicar filtro de data
+    if (dateFilter) {
+      const filterDate = new Date(dateFilter);
+      filteredPhones = filteredPhones.filter(phone => 
+        new Date(phone.submittedAt) >= filterDate
+      );
     }
-  }, [selectedQuiz, quizPhones, selectedAudience, dateFilter]);
+    
+    // Aplicar filtro de audiência
+    if (selectedAudience !== 'all') {
+      filteredPhones = filteredPhones.filter(phone => {
+        const isCompleted = phone.status === 'completed' || phone.completionPercentage === 100;
+        return selectedAudience === 'completed' ? isCompleted : !isCompleted;
+      });
+    }
+    
+    return filteredPhones;
+  };
+
+  const getAudienceCounts = () => {
+    if (!selectedQuiz || !quizPhones.length) return { completed: 0, abandoned: 0, all: 0 };
+    
+    let basePhones = quizPhones;
+    
+    // Aplicar filtro de data se especificado
+    if (dateFilter) {
+      const filterDate = new Date(dateFilter);
+      basePhones = basePhones.filter(phone => 
+        new Date(phone.submittedAt) >= filterDate
+      );
+    }
+    
+    const completed = basePhones.filter(p => p.status === 'completed' || p.completionPercentage === 100).length;
+    const abandoned = basePhones.filter(p => p.status !== 'completed' && p.completionPercentage !== 100).length;
+    
+    return {
+      completed,
+      abandoned,
+      all: basePhones.length
+    };
+  };
+
+  const filteredPhones = getFilteredPhones();
+  const audienceCounts = getAudienceCounts();
 
   // Função para adicionar nova mensagem rotativa
   const addRotatingMessage = () => {
@@ -316,13 +329,17 @@ export default function WhatsAppCampaignsPage() {
                 </div>
 
                 <div>
-                  <Label htmlFor="date-filter">Filtro de Data (a partir de)</Label>
+                  <Label htmlFor="date-filter">Filtro de Data</Label>
                   <Input
                     id="date-filter"
                     type="date"
                     value={dateFilter}
                     onChange={(e) => setDateFilter(e.target.value)}
                   />
+                  <p className="text-sm text-gray-500 mt-1">
+                    Disparar para leads a partir de {dateFilter ? new Date(dateFilter).toLocaleDateString('pt-BR') : 'data selecionada'} 
+                    {dateFilter && ` (${audienceCounts.all} leads)`}
+                  </p>
                 </div>
               </div>
 
@@ -331,7 +348,7 @@ export default function WhatsAppCampaignsPage() {
                 <div className="space-y-2">
                   <div className="flex items-center gap-2">
                     <Phone className="h-4 w-4" />
-                    <Label>Lista de Telefones ({phoneList.length})</Label>
+                    <Label>Lista Oficial para Envio ({filteredPhones.length})</Label>
                     <Button
                       variant="ghost"
                       size="sm"
@@ -342,9 +359,9 @@ export default function WhatsAppCampaignsPage() {
                   </div>
                   
                   <div className="max-h-48 overflow-y-auto border rounded-md p-2">
-                    {phoneList.length > 0 ? (
+                    {filteredPhones.length > 0 ? (
                       <div className="space-y-2">
-                        {phoneList.slice(0, 50).map((contact, index) => (
+                        {filteredPhones.slice(0, 50).map((contact, index) => (
                           <div key={index} className="flex items-center justify-between text-sm">
                             <span className="font-mono">{contact.phone}</span>
                             <div className="flex items-center gap-2">
@@ -362,9 +379,9 @@ export default function WhatsAppCampaignsPage() {
                             </div>
                           </div>
                         ))}
-                        {phoneList.length > 50 && (
+                        {filteredPhones.length > 50 && (
                           <div className="text-xs text-gray-500 text-center">
-                            ... e mais {phoneList.length - 50} telefones
+                            ... e mais {filteredPhones.length - 50} telefones
                           </div>
                         )}
                       </div>
@@ -432,7 +449,7 @@ export default function WhatsAppCampaignsPage() {
                 ) : (
                   <>
                     <Send className="h-4 w-4 mr-2" />
-                    Ativar Remarketing WhatsApp
+                    Ativar Campanha e Sincronizar com a extensão
                   </>
                 )}
               </Button>
