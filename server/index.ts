@@ -195,11 +195,14 @@ app.use((req, res, next) => {
               if (resp.elementType === 'phone' && resp.elementFieldId?.startsWith('telefone_')) {
                 const phone = resp.answer;
                 
-                // Validar número de telefone (mínimo 10 dígitos, máximo 15)
+                // Validação rigorosa de número de telefone
                 const cleanPhone = phone?.replace(/\D/g, '') || '';
                 const isValidPhone = cleanPhone.length >= 10 && cleanPhone.length <= 15;
+                const isNumericOnly = /^\d+$/.test(cleanPhone); // Só números
                 
-                if (phone && isValidPhone && !existingPhones.has(phone)) {
+                console.log(`📱 VALIDANDO: "${phone}" -> limpo:"${cleanPhone}" -> válido:${isValidPhone && isNumericOnly}`);
+                
+                if (phone && isValidPhone && isNumericOnly && !existingPhones.has(phone)) {
                   // Verificar segmentação da campanha
                   const targetAudience = campaign.targetAudience || 'all';
                   
