@@ -69,9 +69,9 @@ export default function SMSCreditsPage() {
     message: "",
     targetAudience: "completed",
     quizId: "",
-    triggerType: "immediate",
-    triggerDelay: 1,
-    triggerUnit: "hours",
+    triggerType: "delayed",
+    triggerDelay: 10,
+    triggerUnit: "minutes",
     fromDate: "",
     scheduledDateTime: ""
   });

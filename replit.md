@@ -409,6 +409,11 @@ Changelog:
   * Visual breakdown: total available → after date filter → after audience filter → final SMS count
   * System now displays exactly how many SMS will be sent before campaign creation
   * Complete transparency in lead filtering and campaign targeting with dynamic updates
+- July 07, 2025. DEFAULT SEND TIMING UPDATE - Changed default campaign timing from immediate to 10 minutes delay:
+  * Modified default triggerType from "immediate" to "delayed"
+  * Set default triggerDelay to 10 minutes instead of 1 hour
+  * Changed default triggerUnit from "hours" to "minutes"
+  * Improved user experience with more practical default timing for SMS campaigns
 ```
 
 ## User Preferences
