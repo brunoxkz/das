@@ -307,7 +307,7 @@ export default function WhatsAppCampaignsPage() {
                           </SelectItem>
                         ))
                       ) : (
-                        <SelectItem value="" disabled>
+                        <SelectItem value="no-quiz" disabled>
                           Nenhum quiz encontrado
                         </SelectItem>
                       )}
