@@ -33,6 +33,7 @@ export function runMigrations() {
         role TEXT DEFAULT 'user',
         refreshToken TEXT,
         subscriptionStatus TEXT,
+        smsCredits INTEGER DEFAULT 0,
         createdAt INTEGER DEFAULT (unixepoch() * 1000),
         updatedAt INTEGER DEFAULT (unixepoch() * 1000)
       );
@@ -97,11 +98,66 @@ export function runMigrations() {
       );
     `;
 
+    const createSmsTransactionsTable = `
+      CREATE TABLE IF NOT EXISTS sms_transactions (
+        id TEXT PRIMARY KEY,
+        userId TEXT NOT NULL,
+        type TEXT NOT NULL,
+        amount INTEGER NOT NULL,
+        description TEXT,
+        createdAt INTEGER DEFAULT (unixepoch() * 1000),
+        FOREIGN KEY (userId) REFERENCES users(id)
+      );
+    `;
+
+    const createEmailCampaignsTable = `
+      CREATE TABLE IF NOT EXISTS email_campaigns (
+        id TEXT PRIMARY KEY,
+        name TEXT NOT NULL,
+        subject TEXT NOT NULL,
+        content TEXT NOT NULL,
+        quizId TEXT NOT NULL,
+        userId TEXT NOT NULL,
+        status TEXT DEFAULT 'draft',
+        triggerType TEXT DEFAULT 'immediate',
+        triggerDelay INTEGER DEFAULT 0,
+        triggerUnit TEXT DEFAULT 'hours',
+        targetAudience TEXT DEFAULT 'completed',
+        variables TEXT DEFAULT '[]',
+        sent INTEGER DEFAULT 0,
+        delivered INTEGER DEFAULT 0,
+        opened INTEGER DEFAULT 0,
+        clicked INTEGER DEFAULT 0,
+        createdAt INTEGER DEFAULT (unixepoch() * 1000),
+        updatedAt INTEGER DEFAULT (unixepoch() * 1000),
+        FOREIGN KEY (quizId) REFERENCES quizzes(id),
+        FOREIGN KEY (userId) REFERENCES users(id)
+      );
+    `;
+
+    const createEmailTemplatesTable = `
+      CREATE TABLE IF NOT EXISTS email_templates (
+        id TEXT PRIMARY KEY,
+        name TEXT NOT NULL,
+        subject TEXT NOT NULL,
+        content TEXT NOT NULL,
+        category TEXT NOT NULL,
+        variables TEXT DEFAULT '[]',
+        userId TEXT NOT NULL,
+        createdAt INTEGER DEFAULT (unixepoch() * 1000),
+        updatedAt INTEGER DEFAULT (unixepoch() * 1000),
+        FOREIGN KEY (userId) REFERENCES users(id)
+      );
+    `;
+
     sqlite.exec(createUsersTable);
     sqlite.exec(createQuizzesTable);
     sqlite.exec(createQuizTemplatesTable);
     sqlite.exec(createQuizResponsesTable);
     sqlite.exec(createQuizAnalyticsTable);
+    sqlite.exec(createSmsTransactionsTable);
+    sqlite.exec(createEmailCampaignsTable);
+    sqlite.exec(createEmailTemplatesTable);
 
     console.log('✅ Fresh SQLite database schema created successfully');
   }
