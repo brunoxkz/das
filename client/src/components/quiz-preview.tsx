@@ -19,6 +19,7 @@ import {
   Activity
 } from "lucide-react";
 import { globalVariableProcessor, processVariables, setQuizResponse, addCalculationRule, VariableProcessor } from "@/lib/variables";
+import { apiRequest } from "@/lib/queryClient";
 
 // Componente para textos alternantes
 const AlternatingText = ({ texts, color, fontSize }: { 
@@ -283,12 +284,50 @@ export function QuizPreview({ quiz }: QuizPreviewProps) {
     }
   };
 
-  const handleNext = () => {
+  const handleNext = async () => {
     if (currentStep < totalSteps - 1) {
       setCurrentStep(prev => prev + 1);
     } else {
-      // Quiz terminado - não fazer nada, apenas parar
-      console.log('Quiz finalizado');
+      // Quiz terminado - enviar as respostas para o servidor
+      await submitQuizResponses();
+    }
+  };
+
+  const submitQuizResponses = async () => {
+    try {
+      // Obter todas as respostas coletadas do processador global
+      const allResponses = globalVariableProcessor.getAllResponses();
+      
+      if (allResponses.length === 0) {
+        console.log('Nenhuma resposta para enviar');
+        return;
+      }
+
+      // Extrair o ID do quiz da URL atual
+      const pathParts = window.location.pathname.split('/');
+      const quizId = pathParts[pathParts.length - 1];
+
+      console.log('Enviando respostas do quiz:', allResponses);
+
+      // Enviar para o endpoint de submissão do quiz
+      await apiRequest(`/api/quizzes/${quizId}/responses`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          responses: allResponses,
+          metadata: {
+            userAgent: navigator.userAgent,
+            timestamp: new Date().toISOString(),
+            completedAt: new Date().toISOString()
+          }
+        }),
+      });
+
+      console.log('Quiz finalizado e respostas enviadas com sucesso!');
+    } catch (error) {
+      console.error('Erro ao enviar respostas do quiz:', error);
     }
   };
 

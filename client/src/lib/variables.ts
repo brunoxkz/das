@@ -36,6 +36,11 @@ export class VariableProcessor {
     return this.responses.get(responseId);
   }
 
+  // Obtém todas as respostas
+  getAllResponses(): QuizResponse[] {
+    return Array.from(this.responses.values());
+  }
+
   // Processa texto substituindo variáveis
   processText(text: string): string {
     if (!text) return text;
