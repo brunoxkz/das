@@ -176,18 +176,20 @@ app.use((req, res, next) => {
           // Extrair novos telefones das respostas do quiz COMPLETAS
           const newPhones = [];
           for (const response of quizResponses) {
-            // Só processar respostas FINALIZADAS (não parciais)
+            // Processar respostas FINALIZADAS (completas ou abandonadas, mas não parciais em tempo real)
             const isComplete = response.metadata?.isComplete === true;
             const isPartial = response.metadata?.isPartial === true;
             const completionPercentage = response.metadata?.completionPercentage || 0;
             
-            // Pular respostas parciais ou não finalizadas (mais restritivo)
-            if (isPartial || !isComplete || completionPercentage < 100) {
-              console.log(`🚫 RESPOSTA IGNORADA: ${response.id} - isComplete:${isComplete}, isPartial:${isPartial}, completion:${completionPercentage}%`);
+            // Só pular respostas que são salvamentos parciais em tempo real (isPartial=true)
+            if (isPartial) {
+              console.log(`🚫 RESPOSTA PARCIAL IGNORADA: ${response.id} - salvamento em tempo real`);
               continue;
             }
             
-            console.log(`✅ PROCESSANDO RESPOSTA COMPLETA: ${response.id} - completion:${completionPercentage}%`);
+            // Processar tanto quizzes completos quanto abandonados
+            const status = isComplete ? 'completed' : 'abandoned';
+            console.log(`✅ PROCESSANDO RESPOSTA ${status.toUpperCase()}: ${response.id} - completion:${completionPercentage}%`);
             
             const responses = Array.isArray(response.responses) ? response.responses : JSON.parse(response.responses || '[]');
             
@@ -217,6 +219,7 @@ app.use((req, res, next) => {
                       leadData: {
                         name: response.metadata?.leadData?.nome || 'Sem nome',
                         isComplete,
+                        status: isComplete ? 'completed' : 'abandoned',
                         submittedAt: response.submittedAt
                       }
                     });
@@ -245,7 +248,7 @@ app.use((req, res, next) => {
               const delay = campaign.triggerDelay || 10; // Default 10 minutos
               const delayMs = delay * 60 * 1000;
               
-              console.log(`⏰ NOVO LEAD VÁLIDO AGENDADO: ${phone} (${leadData.name}) - envio em ${delay} minutos`);
+              console.log(`⏰ NOVO LEAD VÁLIDO AGENDADO: ${phone} (${leadData.name}) [${leadData.status}] - envio em ${delay} minutos`);
               
               // Usar setTimeout para agendamento dinâmico
               setTimeout(async () => {
