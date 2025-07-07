@@ -1376,24 +1376,31 @@ export function registerSQLiteRoutes(app: Express): Server {
       });
 
       // Converter mapa para array final
-      const phones = Array.from(phoneMap.values());
-      console.log(`📱 TOTAL DE TELEFONES ÚNICOS APÓS DEDUPLICAÇÃO: ${phones.length}`);
+      const allPhones = Array.from(phoneMap.values());
+      console.log(`📱 TOTAL DE TELEFONES ÚNICOS APÓS DEDUPLICAÇÃO: ${allPhones.length}`);
 
-      // Filtrar telefones baseado no público-alvo da campanha
+      // Criar listas separadas por status para segmentação correta
+      const completedPhones = allPhones.filter(p => p.status === 'completed');
+      const abandonedPhones = allPhones.filter(p => p.status === 'abandoned');
+      
+      console.log(`📊 SEGMENTAÇÃO: ${completedPhones.length} COMPLETED, ${abandonedPhones.length} ABANDONED`);
+
+      // Filtrar telefones baseado no público-alvo da campanha (LISTAS SEPARADAS)
       const { targetAudience = 'all' } = req.body;
-      let filteredPhones = phones;
+      let filteredPhones = [];
       
       if (targetAudience === 'completed') {
-        filteredPhones = phones.filter(p => p.status === 'completed');
-        console.log(`🎯 FILTRADO PARA QUIZ COMPLETO: ${filteredPhones.length} de ${phones.length} telefones`);
+        filteredPhones = completedPhones; // APENAS quem completou
+        console.log(`🎯 LISTA COMPLETED: ${filteredPhones.length} telefones que completaram o quiz`);
       } else if (targetAudience === 'abandoned') {
-        filteredPhones = phones.filter(p => p.status === 'abandoned');
-        console.log(`🎯 FILTRADO PARA QUIZ ABANDONADO: ${filteredPhones.length} de ${phones.length} telefones`);
+        filteredPhones = abandonedPhones; // APENAS quem abandonou
+        console.log(`🎯 LISTA ABANDONED: ${filteredPhones.length} telefones que abandonaram o quiz`);
       } else {
-        console.log(`🎯 TODOS OS TELEFONES: ${phones.length}`);
+        filteredPhones = allPhones; // TODOS (ambas as listas)
+        console.log(`🎯 LISTA ALL: ${filteredPhones.length} telefones (completed + abandoned)`);
       }
       
-      console.log(`📱 TELEFONES EXTRAÍDOS: ${phones.length}, FILTRADOS: ${filteredPhones.length}`);
+      console.log(`📱 TELEFONES EXTRAÍDOS: ${allPhones.length}, FILTRADOS: ${filteredPhones.length}`);
 
       // Determinar status inicial baseado no triggerType
       const { triggerType = 'immediate', triggerDelay = 1, triggerUnit = 'hours' } = req.body;
