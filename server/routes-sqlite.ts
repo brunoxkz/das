@@ -1,688 +1,188 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
+import "./types"; // Import global types
+import Stripe from "stripe";
 import { storage } from "./storage-sqlite";
+import { verifyJWT as authenticateToken } from "./auth-jwt";
+import { verifyJWT } from "./auth-hybrid";
 import { cache } from "./cache";
-import { nanoid } from "nanoid";
-import { insertQuizSchema, insertQuizResponseSchema } from "../shared/schema-sqlite";
-import { verifyJWT } from "./auth-sqlite";
-import { sendSms } from "./twilio";
+import { rateLimiters } from "./rate-limiter";
+import { 
+  requireAdmin, 
+  requireEditor, 
+  requireUser,
+  requireExport,
+  requireTemplates,
+  canCreateQuiz,
+  getPlanLimits 
+} from "./rbac";
+import bcrypt from "bcryptjs";
+import express, { type Response } from "express";
+import { 
+  insertQuizSchema, 
+  insertQuizResponseSchema, 
+  insertQuizTemplateSchema,
+  insertQuizAnalyticsSchema,
+  insertEmailCampaignSchema,
+  insertEmailTemplateSchema,
+  insertSmsCampaignSchema,
+  type User
+} from "@shared/schema-sqlite";
+import { z } from "zod";
+import { sendSms, twilioClient } from './twilio';
+
+if (!process.env.STRIPE_SECRET_KEY) {
+  console.warn('STRIPE_SECRET_KEY not found - Stripe functionality will be disabled');
+}
+
+const stripe = process.env.STRIPE_SECRET_KEY ? new Stripe(process.env.STRIPE_SECRET_KEY) : null;
 
 export function registerSQLiteRoutes(app: Express): Server {
-  // Public routes BEFORE any middleware or authentication
-  // Public quiz viewing (without auth)
-  app.get("/api/quiz/:id/public", async (req, res) => {
+  const httpServer = createServer(app);
+
+  // Quiz routes with rate limiting
+  app.get("/api/quizzes", rateLimiters.general.middleware(), authenticateToken, async (req, res) => {
     try {
-      const quiz = await storage.getQuiz(req.params.id);
-      if (!quiz || !quiz.isPublished) {
-        return res.status(404).json({ error: 'Quiz não encontrado ou não publicado' });
-      }
-      res.json(quiz);
-    } catch (error) {
-      console.error("Get public quiz error:", error);
-      res.status(500).json({ error: 'Erro ao buscar quiz público' });
-    }
-  });
-
-  // Track quiz view (public endpoint without auth)
-  app.post("/api/analytics/:quizId/view", async (req, res) => {
-    try {
-      const { quizId } = req.params;
+      const userId = req.user!.id;
       
-      // Verify quiz exists and is published
-      const quizData = await storage.getQuiz(quizId);
-      if (!quizData) {
-        return res.status(404).json({ message: "Quiz not found" });
-      }
-
-      if (!quizData.isPublished) {
-        return res.status(403).json({ message: "Quiz not published" });
-      }
-
-      // For now, just return success (analytics storage can be added later)
-      res.json({ success: true, message: "View tracked" });
-    } catch (error) {
-      console.error("Error tracking quiz view:", error);
-      res.status(500).json({ message: "Internal server error" });
-    }
-  });
-
-  // Endpoint de teste SMS (público para teste)
-  app.post("/api/test-sms", async (req, res) => {
-    try {
-      const { phone, message } = req.body;
-      
-      if (!phone || !message) {
-        return res.status(400).json({ error: "Phone e message são obrigatórios" });
-      }
-
-      console.log(`🧪 TESTE SMS: Enviando para ${phone}`);
-      console.log(`📝 Mensagem: ${message}`);
-
-      const success = await sendSms(phone, message);
-      
-      if (success) {
-        console.log(`✅ SMS de teste enviado com sucesso!`);
-        res.json({ 
-          success: true, 
-          message: "SMS enviado com sucesso!", 
-          phone: phone,
-          testMessage: message 
-        });
-      } else {
-        console.log(`❌ Falha no envio do SMS de teste`);
-        res.status(500).json({ 
-          success: false, 
-          error: "Falha ao enviar SMS" 
-        });
-      }
-    } catch (error) {
-      console.error("❌ Erro no teste SMS:", error);
-      res.status(500).json({ 
-        success: false, 
-        error: "Erro interno no teste SMS",
-        details: error.message 
-      });
-    }
-  });
-
-  // Dashboard Stats
-  app.get("/api/dashboard/stats", verifyJWT, async (req: any, res) => {
-    try {
-
-      // Verificar cache primeiro
-      const cacheKey = `dashboard-${req.user.id}`;
-      const cachedStats = cache.getDashboardStats(cacheKey);
-      if (cachedStats) {
-        return res.json(cachedStats);
-      }
-
-      const stats = await storage.getDashboardStats(req.user.id);
-      
-      // Buscar quizzes para estatísticas detalhadas
-      const quizzes = await storage.getUserQuizzes(req.user.id);
-      
-      const dashboardData = {
-        totalQuizzes: stats.totalQuizzes,
-        totalLeads: stats.totalLeads,
-        totalViews: stats.totalViews,
-        avgConversionRate: stats.avgConversionRate,
-        quizzes: quizzes.map(quiz => ({
-          id: quiz.id,
-          title: quiz.title,
-          isPublished: quiz.isPublished,
-          createdAt: quiz.createdAt,
-        }))
-      };
-
-      // Salvar no cache
-      cache.setDashboardStats(cacheKey, dashboardData);
-      
-      res.json(dashboardData);
-    } catch (error) {
-      console.error("Dashboard stats error:", error);
-      res.status(500).json({ message: "Internal server error" });
-    }
-  });
-
-  // Get user quizzes
-  app.get("/api/quizzes", verifyJWT, async (req: any, res) => {
-    try {
-
-      // Verificar cache primeiro
-      const cacheKey = `quizzes-${req.user.id}`;
-      const cachedQuizzes = cache.getQuizzes(cacheKey);
+      // Cache otimizado para quizzes
+      const cachedQuizzes = cache.getQuizzes(userId);
       if (cachedQuizzes) {
+        res.setHeader('X-Cache', 'HIT');
         return res.json(cachedQuizzes);
       }
-
-      const quizzes = await storage.getUserQuizzes(req.user.id);
       
-      // Salvar no cache
-      cache.setQuizzes(cacheKey, quizzes);
+      const quizzes = await storage.getUserQuizzes(userId);
+      cache.setQuizzes(userId, quizzes);
       
+      res.setHeader('X-Cache', 'MISS');
       res.json(quizzes);
     } catch (error) {
-      console.error("Get quizzes error:", error);
+      console.error("Error fetching quizzes:", error);
       res.status(500).json({ message: "Internal server error" });
     }
   });
 
-  // Get specific quiz
-  app.get("/api/quizzes/:id", async (req: any, res) => {
+  app.get("/api/quizzes/:id", async (req, res) => {
+    try {
+      console.log("SERVIDOR - Buscando quiz ID:", req.params.id);
+      const quiz = await storage.getQuiz(req.params.id);
+      if (!quiz) {
+        console.log("SERVIDOR - Quiz não encontrado");
+        return res.status(404).json({ message: "Quiz not found" });
+      }
+      console.log("SERVIDOR - Quiz encontrado:", {
+        id: quiz.id,
+        title: quiz.title,
+        structure: quiz.structure ? "presente" : "ausente",
+        structureSize: quiz.structure ? JSON.stringify(quiz.structure).length : 0
+      });
+      res.json(quiz);
+    } catch (error) {
+      console.error("Error fetching quiz:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  app.post("/api/quizzes", rateLimiters.quizCreation.middleware(), authenticateToken, async (req, res) => {
+    try {
+      console.log("Creating quiz with data:", JSON.stringify(req.body, null, 2));
+      
+      // Check plan limits
+      const userQuizzes = await storage.getUserQuizzes(req.user!.id);
+      const canCreate = await canCreateQuiz(req.user!.id, userQuizzes.length, req.user!.plan);
+      
+      if (!canCreate) {
+        const limits = getPlanLimits(req.user!.plan);
+        return res.status(403).json({ 
+          message: "Limite de quizzes atingido para seu plano",
+          currentCount: userQuizzes.length,
+          maxAllowed: limits.maxQuizzes,
+          plan: req.user!.plan
+        });
+      }
+
+      // Validate data using Zod schema
+      const validatedData = insertQuizSchema.parse({
+        ...req.body,
+        userId: req.user!.id,
+      });
+
+      const quiz = await storage.createQuiz(validatedData);
+      
+      // Invalidate user caches
+      cache.invalidateUserCaches(req.user!.id);
+      
+      console.log("Quiz created successfully with ID:", quiz.id);
+      res.status(201).json(quiz);
+    } catch (error) {
+      console.error("Error creating quiz:", error);
+      if (error.name === 'ZodError') {
+        return res.status(400).json({ message: "Invalid quiz data", errors: error.errors });
+      }
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  app.put("/api/quizzes/:id", rateLimiters.quizCreation.middleware(), authenticateToken, async (req, res) => {
     try {
       const quiz = await storage.getQuiz(req.params.id);
-      
       if (!quiz) {
         return res.status(404).json({ message: "Quiz not found" });
       }
 
-      // Check if user owns this quiz or if it's published
-      if (quiz.userId !== req.user?.id && !quiz.isPublished) {
-        return res.status(403).json({ message: "Access denied" });
+      if (quiz.userId !== req.user!.id && req.user!.role !== 'admin') {
+        return res.status(403).json({ message: "Not authorized" });
       }
 
-      res.json(quiz);
-    } catch (error) {
-      console.error("Get quiz error:", error);
-      res.status(500).json({ message: "Internal server error" });
-    }
-  });
-
-  // Create quiz
-  app.post("/api/quizzes", verifyJWT, async (req: any, res) => {
-    try {
-
-      // Validar dados do quiz
-      const quizData = insertQuizSchema.parse({
-        ...req.body,
-        userId: req.user.id,
+      // Para debugging - log da estrutura enviada
+      console.log("Updating quiz with structure:", {
+        id: req.params.id,
+        hasStructure: !!req.body.structure,
+        structureKeys: req.body.structure ? Object.keys(req.body.structure) : [],
+        structureSize: req.body.structure ? JSON.stringify(req.body.structure).length : 0
       });
 
-      const quiz = await storage.createQuiz(quizData);
-
-      // Invalidar caches relevantes
-      cache.invalidateUserCaches(req.user.id);
-      
-      res.status(201).json(quiz);
-    } catch (error) {
-      console.error("Create quiz error:", error);
-      res.status(500).json({ message: "Failed to create quiz" });
-    }
-  });
-
-  // Update quiz
-  app.put("/api/quizzes/:id", verifyJWT, async (req: any, res) => {
-    try {
-
-      const existingQuiz = await storage.getQuiz(req.params.id);
-      
-      if (!existingQuiz) {
-        return res.status(404).json({ message: "Quiz not found" });
-      }
-
-      if (existingQuiz.userId !== req.user.id) {
-        return res.status(403).json({ message: "Access denied" });
-      }
-
       const updatedQuiz = await storage.updateQuiz(req.params.id, req.body);
-
-      // Invalidar caches relevantes
-      cache.invalidateUserCaches(req.user.id);
-      cache.invalidateQuizCaches(req.params.id, req.user.id);
+      
+      // Invalidate related caches
+      cache.invalidateUserCaches(req.user!.id);
+      cache.invalidateQuizCaches(req.params.id, req.user!.id);
+      
+      console.log("Quiz updated successfully:", {
+        id: updatedQuiz.id,
+        title: updatedQuiz.title,
+        hasStructure: !!updatedQuiz.structure
+      });
       
       res.json(updatedQuiz);
     } catch (error) {
-      console.error("Update quiz error:", error);
-      res.status(500).json({ message: "Failed to update quiz" });
+      console.error("Error updating quiz:", error);
+      res.status(500).json({ message: "Internal server error" });
     }
   });
 
-  // Delete quiz
-  app.delete("/api/quizzes/:id", verifyJWT, async (req: any, res) => {
+  app.delete("/api/quizzes/:id", rateLimiters.general.middleware(), authenticateToken, async (req, res) => {
     try {
-
-      const existingQuiz = await storage.getQuiz(req.params.id);
-      
-      if (!existingQuiz) {
+      const quiz = await storage.getQuiz(req.params.id);
+      if (!quiz) {
         return res.status(404).json({ message: "Quiz not found" });
       }
 
-      if (existingQuiz.userId !== req.user.id) {
-        return res.status(403).json({ message: "Access denied" });
+      if (quiz.userId !== req.user!.id && req.user!.role !== 'admin') {
+        return res.status(403).json({ message: "Not authorized" });
       }
 
       await storage.deleteQuiz(req.params.id);
-
-      // Invalidar caches relevantes
-      cache.invalidateUserCaches(req.user.id);
-      cache.invalidateQuizCaches(req.params.id, req.user.id);
       
-      res.json({ message: "Quiz deleted successfully" });
+      // Clear all related cache
+      cache.invalidateUserCaches(req.user!.id);
+      cache.invalidateQuizCaches(req.params.id, req.user!.id);
+      
+      res.status(204).send();
     } catch (error) {
-      console.error("Delete quiz error:", error);
-      res.status(500).json({ message: "Failed to delete quiz" });
-    }
-  });
-
-  // Get quiz responses with advanced filtering
-  app.get("/api/quizzes/:id/responses", verifyJWT, async (req: any, res) => {
-    try {
-      const quiz = await storage.getQuiz(req.params.id);
-      
-      if (!quiz || quiz.userId !== req.user.id) {
-        return res.status(403).json({ message: "Access denied" });
-      }
-
-      // Parse query parameters for filtering
-      const {
-        type = 'all', // 'partial', 'complete', 'all'
-        startDate,
-        endDate,
-        limit = 100,
-        offset = 0,
-        sortBy = 'submittedAt',
-        sortOrder = 'desc'
-      } = req.query;
-
-      // Verificar cache primeiro (apenas para consultas simples)
-      const isSimpleQuery = type === 'all' && !startDate && !endDate && limit == 100 && offset == 0;
-      const cacheKey = `responses-${req.params.id}`;
-      
-      if (isSimpleQuery) {
-        const cachedResponses = cache.getResponses(cacheKey);
-        if (cachedResponses) {
-          return res.json(cachedResponses);
-        }
-      }
-
-      const responses = await storage.getQuizResponses(req.params.id);
-      
-      // Filtrar respostas baseado nos parâmetros
-      let filteredResponses = responses;
-
-      // Filtrar por tipo
-      if (type === 'partial') {
-        filteredResponses = filteredResponses.filter(r => 
-          r.metadata && typeof r.metadata === 'object' && 
-          (r.metadata as any).isPartial === true
-        );
-      } else if (type === 'complete') {
-        filteredResponses = filteredResponses.filter(r => 
-          r.metadata && typeof r.metadata === 'object' && 
-          (r.metadata as any).isPartial === false
-        );
-      }
-
-      // Filtrar por data
-      if (startDate) {
-        const start = new Date(startDate as string);
-        filteredResponses = filteredResponses.filter(r => new Date(r.submittedAt) >= start);
-      }
-      if (endDate) {
-        const end = new Date(endDate as string);
-        filteredResponses = filteredResponses.filter(r => new Date(r.submittedAt) <= end);
-      }
-
-      // Ordenar
-      filteredResponses.sort((a, b) => {
-        const aVal = a[sortBy as keyof typeof a];
-        const bVal = b[sortBy as keyof typeof b];
-        const order = sortOrder === 'desc' ? -1 : 1;
-        return aVal > bVal ? order : aVal < bVal ? -order : 0;
-      });
-
-      // Paginar
-      const total = filteredResponses.length;
-      const paginatedResponses = filteredResponses.slice(
-        parseInt(offset as string), 
-        parseInt(offset as string) + parseInt(limit as string)
-      );
-
-      // Processar respostas para extração de dados úteis
-      const processedResponses = paginatedResponses.map(response => {
-        const metadata = response.metadata && typeof response.metadata === 'object' ? response.metadata as any : {};
-        const leadData = metadata.leadData || {};
-        
-        return {
-          ...response,
-          isPartial: metadata.isPartial || false,
-          completionPercentage: metadata.completionPercentage || 0,
-          timeSpent: metadata.timeSpent || 0,
-          leadData,
-          extractedData: extractLeadDataFromResponses(response.responses, leadData)
-        };
-      });
-
-      // Salvar no cache apenas para consultas simples
-      if (isSimpleQuery) {
-        cache.setResponses(cacheKey, processedResponses);
-      }
-      
-      res.json({
-        responses: processedResponses,
-        total,
-        limit: parseInt(limit as string),
-        offset: parseInt(offset as string),
-        hasMore: (parseInt(offset as string) + parseInt(limit as string)) < total
-      });
-    } catch (error) {
-      console.error("Get responses error:", error);
+      console.error("Error deleting quiz:", error);
       res.status(500).json({ message: "Internal server error" });
-    }
-  });
-
-  // Get quiz leads (extracted data from responses)
-  app.get("/api/quizzes/:id/leads", verifyJWT, async (req: any, res) => {
-    try {
-      const quiz = await storage.getQuiz(req.params.id);
-      
-      if (!quiz || quiz.userId !== req.user.id) {
-        return res.status(403).json({ message: "Access denied" });
-      }
-
-      const {
-        onlyComplete = 'true',
-        startDate,
-        endDate,
-        limit = 100,
-        offset = 0
-      } = req.query;
-
-      const responses = await storage.getQuizResponses(req.params.id);
-      
-      // Filtrar apenas respostas com dados de lead
-      let leadResponses = responses.filter(response => {
-        const metadata = response.metadata && typeof response.metadata === 'object' ? response.metadata as any : {};
-        
-        // Se onlyComplete for true, filtrar apenas respostas completas
-        if (onlyComplete === 'true' && metadata.isPartial !== false) {
-          return false;
-        }
-        
-        // Verificar se há dados de lead extraíveis
-        const extractedData = extractLeadDataFromResponses(response.responses, metadata.leadData || {});
-        return Object.keys(extractedData).length > 0;
-      });
-
-      // Filtrar por data
-      if (startDate) {
-        const start = new Date(startDate as string);
-        leadResponses = leadResponses.filter(r => new Date(r.submittedAt) >= start);
-      }
-      if (endDate) {
-        const end = new Date(endDate as string);
-        leadResponses = leadResponses.filter(r => new Date(r.submittedAt) <= end);
-      }
-
-      // Ordenar por data de submissão (mais recentes primeiro)
-      leadResponses.sort((a, b) => new Date(b.submittedAt).getTime() - new Date(a.submittedAt).getTime());
-
-      // Paginar
-      const total = leadResponses.length;
-      const paginatedLeads = leadResponses.slice(
-        parseInt(offset as string), 
-        parseInt(offset as string) + parseInt(limit as string)
-      );
-
-      // Processar leads
-      const leads = paginatedLeads.map(response => {
-        const metadata = response.metadata && typeof response.metadata === 'object' ? response.metadata as any : {};
-        const leadData = metadata.leadData || {};
-        const extractedData = extractLeadDataFromResponses(response.responses, leadData);
-        
-        return {
-          id: response.id,
-          submittedAt: response.submittedAt,
-          isComplete: metadata.isPartial === false,
-          completionPercentage: metadata.completionPercentage || 0,
-          timeSpent: metadata.timeSpent || 0,
-          ip: metadata.ip,
-          userAgent: metadata.userAgent,
-          ...extractedData // nome, email, telefone, etc.
-        };
-      });
-      
-      res.json({
-        leads,
-        total,
-        limit: parseInt(limit as string),
-        offset: parseInt(offset as string),
-        hasMore: (parseInt(offset as string) + parseInt(limit as string)) < total
-      });
-    } catch (error) {
-      console.error("Get leads error:", error);
-      res.status(500).json({ message: "Internal server error" });
-    }
-  });
-
-  // Get phones specifically for SMS campaigns
-  app.get("/api/quizzes/:id/phones", verifyJWT, async (req: any, res) => {
-    try {
-      const quiz = await storage.getQuiz(req.params.id);
-      
-      if (!quiz || quiz.userId !== req.user.id) {
-        return res.status(403).json({ message: "Access denied" });
-      }
-
-      const { onlyComplete = 'true' } = req.query;
-
-      const responses = await storage.getQuizResponses(req.params.id);
-      
-      // Extrair telefones das respostas
-      const phones: Array<{
-        phone: string;
-        name?: string;
-        submittedAt: Date;
-        responseId: string;
-        isComplete: boolean;
-      }> = [];
-
-      responses.forEach(response => {
-        const metadata = response.metadata && typeof response.metadata === 'object' ? response.metadata as any : {};
-        
-        // Se onlyComplete for true, filtrar apenas respostas completas
-        if (onlyComplete === 'true' && metadata.isPartial !== false) {
-          return;
-        }
-
-        const extractedData = extractLeadDataFromResponses(response.responses, metadata.leadData || {});
-        
-        // Buscar telefone nos dados extraídos
-        const phone = extractedData.telefone || extractedData.phone || extractedData.celular;
-        
-        if (phone && phone.trim()) {
-          phones.push({
-            phone: phone.trim(),
-            name: extractedData.nome || extractedData.name || extractedData.firstName,
-            submittedAt: response.submittedAt,
-            responseId: response.id,
-            isComplete: metadata.isPartial === false
-          });
-        }
-      });
-
-      // Remover duplicatas baseadas no número de telefone
-      const uniquePhones = phones.filter((phone, index, array) => 
-        array.findIndex(p => p.phone === phone.phone) === index
-      );
-
-      // Ordenar por data de submissão (mais recentes primeiro)
-      uniquePhones.sort((a, b) => new Date(b.submittedAt).getTime() - new Date(a.submittedAt).getTime());
-      
-      res.json({
-        phones: uniquePhones,
-        total: uniquePhones.length
-      });
-    } catch (error) {
-      console.error("Get phones error:", error);
-      res.status(500).json({ message: "Internal server error" });
-    }
-  });
-
-  // Submit partial quiz response (public endpoint - salva progresso durante o quiz)
-  app.post("/api/quizzes/:id/partial-responses", async (req, res) => {
-    try {
-      const quiz = await storage.getQuiz(req.params.id);
-      
-      if (!quiz || !quiz.isPublished) {
-        return res.status(404).json({ message: "Quiz not found or not published" });
-      }
-
-      const responseData = {
-        quizId: req.params.id,
-        responses: req.body.responses,
-        metadata: {
-          ...req.body.metadata,
-          isPartial: true,
-          savedAt: new Date().toISOString(),
-          userAgent: req.headers['user-agent'],
-          ip: req.ip || req.connection.remoteAddress,
-          currentPage: req.body.currentPage || 0,
-          totalPages: req.body.totalPages || 0,
-          completionPercentage: req.body.completionPercentage || 0
-        }
-      };
-
-      const response = await storage.createQuizResponse(responseData);
-
-      // Invalidar cache de respostas
-      cache.del(`responses-${req.params.id}`);
-      
-      res.status(201).json({ 
-        success: true, 
-        responseId: response.id,
-        message: "Resposta parcial salva com sucesso"
-      });
-    } catch (error) {
-      console.error("Submit partial response error:", error);
-      res.status(500).json({ message: "Failed to submit partial response" });
-    }
-  });
-
-  // Submit final quiz response (public endpoint - finaliza o quiz)
-  app.post("/api/quizzes/:id/submit", async (req, res) => {
-    try {
-      const quiz = await storage.getQuiz(req.params.id);
-      
-      if (!quiz || !quiz.isPublished) {
-        return res.status(404).json({ message: "Quiz not found or not published" });
-      }
-
-      const responseData = {
-        quizId: req.params.id,
-        responses: req.body.responses,
-        metadata: {
-          ...req.body.metadata,
-          isPartial: false,
-          completedAt: new Date().toISOString(),
-          userAgent: req.headers['user-agent'],
-          ip: req.ip || req.connection.remoteAddress,
-          totalPages: req.body.totalPages || 0,
-          completionPercentage: 100,
-          timeSpent: req.body.timeSpent || 0, // tempo em segundos
-          leadData: req.body.leadData || {} // dados de lead capturados
-        }
-      };
-
-      const response = await storage.createQuizResponse(responseData);
-
-      // Invalidar cache de respostas
-      cache.del(`responses-${req.params.id}`);
-      
-      res.status(201).json({ 
-        success: true, 
-        responseId: response.id,
-        message: "Quiz finalizado com sucesso"
-      });
-    } catch (error) {
-      console.error("Submit final response error:", error);
-      res.status(500).json({ message: "Failed to submit final response" });
-    }
-  });
-
-  // Submit quiz response (mantém compatibilidade com endpoint antigo)
-  app.post("/api/quizzes/:id/responses", async (req, res) => {
-    try {
-      const quiz = await storage.getQuiz(req.params.id);
-      
-      if (!quiz || !quiz.isPublished) {
-        return res.status(404).json({ message: "Quiz not found or not published" });
-      }
-
-      const responseData = insertQuizResponseSchema.parse({
-        quizId: req.params.id,
-        responses: req.body.responses,
-        metadata: req.body.metadata,
-      });
-
-      const response = await storage.createQuizResponse(responseData);
-
-      // Invalidar cache de respostas
-      cache.del(`responses-${req.params.id}`);
-      
-      res.status(201).json(response);
-    } catch (error) {
-      console.error("Submit response error:", error);
-      res.status(500).json({ message: "Failed to submit response" });
-    }
-  });
-
-  // Analytics endpoint
-  app.get("/api/analytics/:quizId", async (req: any, res) => {
-    try {
-      if (!req.user) {
-        return res.status(401).json({ message: "Unauthorized" });
-      }
-
-      const quiz = await storage.getQuiz(req.params.quizId);
-      
-      if (!quiz || quiz.userId !== req.user.id) {
-        return res.status(403).json({ message: "Access denied" });
-      }
-
-      const analytics = await storage.getQuizAnalytics(req.params.quizId);
-      res.json(analytics);
-    } catch (error) {
-      console.error("Analytics error:", error);
-      res.status(500).json({ message: "Internal server error" });
-    }
-  });
-
-  // Get quiz analytics
-  app.get("/api/analytics/:quizId", verifyJWT, async (req: any, res) => {
-    try {
-      if (!req.user) {
-        return res.status(401).json({ message: "Unauthorized" });
-      }
-
-      const analytics = await storage.getQuizAnalytics(req.params.quizId);
-      res.json(analytics);
-    } catch (error) {
-      console.error("Get quiz analytics error:", error);
-      res.status(500).json({ message: "Internal server error" });
-    }
-  });
-
-  // Get all quiz analytics for user
-  app.get("/api/analytics", verifyJWT, async (req: any, res) => {
-    try {
-      if (!req.user) {
-        return res.status(401).json({ message: "Unauthorized" });
-      }
-
-      const analytics = await storage.getAllQuizAnalytics(req.user.id);
-      res.json(analytics);
-    } catch (error) {
-      console.error("Get all quiz analytics error:", error);
-      res.status(500).json({ message: "Internal server error" });
-    }
-  });
-
-  // Track quiz view (public endpoint)
-  app.post("/api/analytics/:quizId/view", async (req, res) => {
-    try {
-      const quiz = await storage.getQuiz(req.params.quizId);
-      
-      if (!quiz || !quiz.isPublished) {
-        return res.status(404).json({ message: "Quiz not found" });
-      }
-
-      const today = new Date().toISOString().split('T')[0];
-      
-      await storage.updateQuizAnalytics(req.params.quizId, {
-        date: today,
-        views: 1,
-        completions: 0,
-        conversionRate: 0,
-      });
-
-      // Invalidar cache relevante
-      cache.invalidateUserCaches(quiz.userId);
-      
-      res.json({ message: "View tracked", success: true });
-    } catch (error) {
-      console.error("Track view error:", error);
-      res.status(500).json({ message: "Failed to track view" });
     }
   });
 
@@ -692,496 +192,951 @@ export function registerSQLiteRoutes(app: Express): Server {
       const templates = await storage.getQuizTemplates();
       res.json(templates);
     } catch (error) {
-      console.error("Get templates error:", error);
+      console.error("Error fetching quiz templates:", error);
       res.status(500).json({ message: "Internal server error" });
     }
   });
 
-  // Cache status endpoint
-  app.get("/api/cache/status", (req, res) => {
-    const stats = cache.getStats();
-    res.json(stats);
-  });
-
-  // Health check
-  // Auth verification endpoint - MUST use application/json content type
-  app.get("/api/auth/verify", verifyJWT, async (req: any, res) => {
+  app.post("/api/quiz-templates", authenticateToken, requireAdmin, async (req, res) => {
     try {
-      res.setHeader('Content-Type', 'application/json');
-      
-      if (!req.user) {
-        return res.status(401).json({ message: "Token não válido" });
-      }
-
-      // Buscar dados completos do usuário no cache primeiro
-      const cachedUser = cache.getUser(req.user.id);
-      if (cachedUser) {
-        return res.status(200).json({ user: cachedUser });
-      }
-
-      // Se não estiver no cache, buscar no banco
-      const user = await storage.getUser(req.user.id);
-      if (!user) {
-        return res.status(401).json({ message: "Usuário não encontrado" });
-      }
-
-      // Salvar no cache
-      cache.setUser(req.user.id, user);
-      
-      return res.status(200).json({ user });
+      const validatedData = insertQuizTemplateSchema.parse(req.body);
+      const template = await storage.createQuizTemplate(validatedData);
+      res.status(201).json(template);
     } catch (error) {
-      console.error("Auth verify error:", error);
-      return res.status(500).json({ message: "Erro interno do servidor" });
+      console.error("Error creating quiz template:", error);
+      if (error.name === 'ZodError') {
+        return res.status(400).json({ message: "Invalid template data", errors: error.errors });
+      }
+      res.status(500).json({ message: "Internal server error" });
     }
   });
 
-  // Endpoint para salvar respostas parciais durante transições de página
-  app.post("/api/quizzes/:id/partial-responses", async (req: Request, res: Response) => {
+  // Quiz responses
+  app.get("/api/quizzes/:id/responses", authenticateToken, async (req, res) => {
     try {
-      const { id: quizId } = req.params;
-      const { responses, currentStep, metadata } = req.body;
-      
-      console.log(`💾 SALVANDO RESPOSTAS PARCIAIS - Quiz: ${quizId}, Step: ${currentStep}, Responses: ${responses?.length || 0}`);
-      
-      if (!responses || !Array.isArray(responses) || responses.length === 0) {
-        console.log('⚠️ Nenhuma resposta válida para salvar');
-        return res.status(200).json({ message: 'Nenhuma resposta para salvar' });
-      }
-
-      // Verificar se o quiz existe (sem autenticação para permitir acesso público)
-      const quiz = await storage.getQuiz(quizId);
+      const quiz = await storage.getQuiz(req.params.id);
       if (!quiz) {
-        console.log(`❌ Quiz ${quizId} não encontrado`);
-        return res.status(404).json({ error: "Quiz not found" });
+        return res.status(404).json({ message: "Quiz not found" });
       }
 
-      // Converter responses do formato do globalVariableProcessor para formato de armazenamento
-      const responseData: Record<string, any> = {};
-      
-      responses.forEach((response: any) => {
-        if (response.responseId && response.value !== undefined) {
-          responseData[response.responseId] = response.value;
-          console.log(`📝 Campo salvo: ${response.responseId} = ${response.value}`);
-        }
-      });
-
-      // Buscar resposta existente ou criar nova
-      const existingResponses = await storage.getQuizResponses(quizId);
-      let existingResponse = existingResponses.find(r => 
-        r.metadata && 
-        typeof r.metadata === 'object' && 
-        (r.metadata as any).isPartial === true
-      );
-
-      if (existingResponse) {
-        // Atualizar resposta parcial existente mesclando com novas respostas
-        const existingData = existingResponse.responses as Record<string, any> || {};
-        const mergedData = { ...existingData, ...responseData };
-        
-        console.log(`🔄 ATUALIZANDO resposta parcial existente: ${existingResponse.id}`);
-        console.log(`📋 Dados mesclados:`, Object.keys(mergedData));
-        
-        await storage.updateQuizResponse(existingResponse.id, {
-          responses: mergedData,
-          metadata: {
-            ...metadata,
-            lastUpdated: new Date().toISOString(),
-            currentStep,
-            totalFields: Object.keys(mergedData).length
-          }
-        });
-      } else {
-        // Criar nova resposta parcial
-        console.log(`✨ CRIANDO nova resposta parcial`);
-        console.log(`📋 Dados novos:`, Object.keys(responseData));
-        
-        await storage.createQuizResponse({
-          quizId,
-          responses: responseData,
-          metadata: {
-            ...metadata,
-            isPartial: true,
-            currentStep,
-            createdAt: new Date().toISOString(),
-            totalFields: Object.keys(responseData).length
-          }
-        });
+      if (quiz.userId !== req.user!.id && req.user!.role !== 'admin') {
+        return res.status(403).json({ message: "Not authorized" });
       }
 
-      console.log(`✅ Respostas parciais salvas com sucesso - Step: ${currentStep}`);
+      // Cache otimizado para respostas
+      const cachedResponses = cache.getResponses(req.params.id);
+      if (cachedResponses) {
+        res.setHeader('X-Cache', 'HIT');
+        return res.json(cachedResponses);
+      }
+
+      const responses = await storage.getQuizResponses(req.params.id);
+      cache.setResponses(req.params.id, responses);
       
-      res.status(200).json({ 
-        message: 'Respostas parciais salvas com sucesso',
-        step: currentStep,
-        fieldsCount: Object.keys(responseData).length
-      });
-      
+      res.setHeader('X-Cache', 'MISS');
+      res.json(responses);
     } catch (error) {
-      console.error('❌ ERRO ao salvar respostas parciais:', error);
-      res.status(500).json({ error: 'Erro interno do servidor' });
+      console.error("Error fetching quiz responses:", error);
+      res.status(500).json({ message: "Internal server error" });
     }
   });
 
-  // Submissão completa de quiz (rota pública para leads)
-  app.post("/api/quizzes/:id/submit", async (req: Request, res: Response) => {
+  app.post("/api/quizzes/:id/responses", async (req, res) => {
     try {
-      const { id: quizId } = req.params;
-      const { responses, metadata } = req.body;
-      
-      console.log(`📝 SUBMISSÃO COMPLETA - Quiz: ${quizId}, Responses: ${responses?.length || 0}`);
-      
-      if (!responses || !Array.isArray(responses) || responses.length === 0) {
-        console.log('⚠️ Nenhuma resposta válida para submeter');
-        return res.status(400).json({ error: 'Respostas são obrigatórias' });
+      const quiz = await storage.getQuiz(req.params.id);
+      if (!quiz) {
+        return res.status(404).json({ message: "Quiz not found" });
       }
 
-      // Verificar se o quiz existe e está publicado (permitir acesso público)
-      const quiz = await storage.getQuiz(quizId);
+      const validatedData = insertQuizResponseSchema.parse({
+        ...req.body,
+        quizId: req.params.id,
+      });
+
+      const response = await storage.createQuizResponse(validatedData);
+      
+      // Invalidate responses cache
+      cache.invalidateQuizCaches(req.params.id, quiz.userId);
+      
+      res.status(201).json(response);
+    } catch (error) {
+      console.error("Error creating quiz response:", error);
+      if (error.name === 'ZodError') {
+        return res.status(400).json({ message: "Invalid response data", errors: error.errors });
+      }
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  // Analytics routes
+  app.get("/api/analytics/:quizId", authenticateToken, async (req, res) => {
+    try {
+      const quiz = await storage.getQuiz(req.params.quizId);
       if (!quiz) {
-        console.log(`❌ Quiz ${quizId} não encontrado`);
-        return res.status(404).json({ error: "Quiz não encontrado" });
+        return res.status(404).json({ message: "Quiz not found" });
+      }
+
+      if (quiz.userId !== req.user!.id && req.user!.role !== 'admin') {
+        return res.status(403).json({ message: "Not authorized" });
+      }
+
+      const startDate = req.query.startDate ? new Date(req.query.startDate as string) : undefined;
+      const endDate = req.query.endDate ? new Date(req.query.endDate as string) : undefined;
+
+      const analytics = await storage.getQuizAnalytics(req.params.quizId, startDate, endDate);
+      
+      // Processar dados de analytics para o frontend
+      const processedAnalytics = analytics.map(item => ({
+        id: item.id,
+        date: item.date,
+        quizId: item.quizId,
+        views: item.views || 0,
+        completions: item.completions || 0,
+        conversionRate: item.conversionRate || 0,
+        leads: item.completions || 0, // Add leads field for frontend compatibility
+        metadata: item.metadata
+      }));
+
+      res.json(processedAnalytics);
+    } catch (error) {
+      console.error("Error fetching analytics:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  // Endpoint for tracking quiz views
+  app.post("/api/analytics/:quizId/view", async (req, res) => {
+    try {
+      const quiz = await storage.getQuiz(req.params.quizId);
+      if (!quiz) {
+        return res.status(404).json({ message: "Quiz not found" });
       }
 
       if (!quiz.isPublished) {
-        console.log(`❌ Quiz ${quizId} não está publicado`);
-        return res.status(403).json({ error: "Quiz não está disponível" });
+        return res.status(403).json({ message: "Quiz is not published" });
       }
 
-      // Converter responses do formato do globalVariableProcessor para formato de armazenamento
-      const responseData: Record<string, any> = {};
+      const today = new Date().toISOString().split('T')[0];
       
-      responses.forEach((response: any) => {
-        if (response.responseId && response.value !== undefined) {
-          responseData[response.responseId] = response.value;
-          console.log(`📝 Campo finalizado: ${response.responseId} = ${response.value}`);
-        }
+      // Update analytics
+      await storage.updateQuizAnalytics(req.params.quizId, {
+        quizId: req.params.quizId,
+        date: today,
+        views: 1,
+        completions: 0,
+        conversionRate: 0,
+        metadata: {}
       });
 
-      // Verificar se existe uma resposta parcial prévia para consolidar
-      const existingResponses = await storage.getQuizResponses(quizId);
-      let existingPartialResponse = existingResponses.find(r => 
-        r.metadata && 
-        typeof r.metadata === 'object' && 
-        (r.metadata as any).isPartial === true
-      );
+      // Invalidate analytics cache
+      cache.invalidateQuizCaches(req.params.quizId, quiz.userId);
 
-      let finalResponseData = responseData;
-
-      if (existingPartialResponse) {
-        // Mesclar dados parciais com dados finais
-        const existingData = existingPartialResponse.responses as Record<string, any> || {};
-        finalResponseData = { ...existingData, ...responseData };
-        
-        console.log(`🔄 MESCLANDO com resposta parcial existente: ${existingPartialResponse.id}`);
-        console.log(`📋 Dados mesclados:`, Object.keys(finalResponseData));
-        
-        // Remover a resposta parcial após consolidação
-        await storage.deleteQuizResponse(existingPartialResponse.id);
-        console.log(`🗑️ Resposta parcial removida após consolidação`);
-      }
-
-      // Criar resposta final (completa)
-      console.log(`✨ CRIANDO resposta final completa`);
-      console.log(`📋 Dados finais:`, Object.keys(finalResponseData));
-      
-      await storage.createQuizResponse({
-        quizId,
-        responses: finalResponseData,
-        metadata: {
-          ...metadata,
-          isPartial: false,
-          isComplete: true,
-          completedAt: new Date().toISOString(),
-          totalFields: Object.keys(finalResponseData).length,
-          userAgent: req.headers['user-agent'],
-          ipAddress: req.ip
-        }
-      });
-
-      // Invalidar caches para atualizar estatísticas
-      cache.invalidateQuizCaches(quizId, quiz.userId);
-
-      console.log(`✅ Submissão completa realizada com sucesso!`);
-      
-      res.status(201).json({ 
-        message: 'Quiz submetido com sucesso',
-        fieldsCount: Object.keys(finalResponseData).length
-      });
-      
+      res.json({ success: true });
     } catch (error) {
-      console.error('❌ ERRO ao submeter quiz:', error);
-      res.status(500).json({ error: 'Erro interno do servidor' });
+      console.error("Error tracking view:", error);
+      res.status(500).json({ message: "Internal server error" });
     }
   });
 
-  // SMS Quiz Phone Numbers endpoint
-  app.get("/api/quiz-phones/:quizId", verifyJWT, async (req: any, res) => {
+  // Dashboard stats
+  app.get("/api/dashboard/stats", rateLimiters.dashboard.middleware(), authenticateToken, async (req, res) => {
     try {
-      const { quizId } = req.params;
-      const userId = req.user.id;
+      const userId = req.user!.id;
       
-      console.log(`📱 BUSCANDO TELEFONES - Quiz: ${quizId}, User: ${userId}`);
-      
-      // Verificar se o quiz pertence ao usuário
-      const quiz = await storage.getQuiz(quizId);
-      if (!quiz || quiz.userId !== userId) {
-        return res.status(404).json({ error: "Quiz not found" });
+      // Cache otimizado para dashboard
+      const cachedStats = cache.getDashboardStats(userId);
+      if (cachedStats) {
+        res.setHeader('X-Cache', 'HIT');
+        return res.json(cachedStats);
       }
       
-      // Buscar responses do quiz
-      const responses = await storage.getQuizResponses(quizId);
-      console.log(`📱 RESPONSES ENCONTRADAS: ${responses.length}`);
+      const stats = await storage.getDashboardStats(userId);
+      cache.setDashboardStats(userId, stats);
       
-      // Extrair telefones das respostas
-      const phones: any[] = [];
+      res.setHeader('X-Cache', 'MISS');
+      res.json(stats);
+    } catch (error) {
+      console.error("Error fetching dashboard stats:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  // SMS credits routes
+  app.get("/api/sms/credits", authenticateToken, async (req, res) => {
+    try {
+      const user = await storage.getUser(req.user!.id);
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
       
-      responses.forEach((response, index) => {
-        console.log(`📱 RESPONSE ${index + 1}:`, {
-          id: response.id,
-          responses: response.responses,
-          submittedAt: response.submittedAt
+      res.json({ 
+        credits: user.smsCredits || 0
+      });
+    } catch (error) {
+      console.error("Error fetching SMS credits:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  app.post("/api/sms/credits/purchase", authenticateToken, async (req, res) => {
+    try {
+      const { amount } = req.body;
+      
+      if (!amount || amount <= 0) {
+        return res.status(400).json({ message: "Invalid amount" });
+      }
+
+      const credits = parseInt(amount) || 0;
+      const user = await storage.updateUserSmsCredits(req.user!.id, credits);
+      
+      // Log the transaction
+      await storage.createSmsTransaction({
+        userId: req.user!.id,
+        type: 'purchase',
+        amount: credits,
+        description: `Purchase of ${credits} SMS credits`
+      });
+
+      res.json({ 
+        success: true, 
+        credits: user.smsCredits,
+        message: `${credits} créditos SMS adicionados com sucesso!`
+      });
+    } catch (error) {
+      console.error("Error purchasing SMS credits:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  // SMS sending route
+  app.post("/api/sms/send", authenticateToken, async (req, res) => {
+    try {
+      const { phoneNumbers, message } = req.body;
+
+      if (!phoneNumbers || !Array.isArray(phoneNumbers) || phoneNumbers.length === 0) {
+        return res.status(400).json({ message: "Phone numbers are required" });
+      }
+
+      if (!message || message.trim() === '') {
+        return res.status(400).json({ message: "Message is required" });
+      }
+
+      // Check user SMS credits
+      const user = await storage.getUser(req.user!.id);
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      const requiredCredits = phoneNumbers.length;
+      if ((user.smsCredits || 0) < requiredCredits) {
+        return res.status(400).json({ 
+          message: `Créditos SMS insuficientes. Necessário: ${requiredCredits}, Disponível: ${user.smsCredits || 0}` 
         });
-        
-        if (response.responses) {
-          let responseData = response.responses as any;
-          
-          // Verificar se é o novo formato (array) ou antigo formato (object)
-          if (Array.isArray(responseData)) {
-            // Novo formato - resposta é um array de objetos
-            console.log(`📱 NOVO FORMATO - RESPONSE ${index + 1} com ${responseData.length} elementos:`, responseData);
-            
-            let phoneNumber = null;
-            let userName = null;
-            
-            // Buscar telefone através dos elementos do array
-            for (const item of responseData) {
-              if (item.elementType === 'phone' && item.answer) {
-                phoneNumber = item.answer;
-                console.log(`📱 TELEFONE ENCONTRADO no elemento ${item.elementId}: ${phoneNumber}`);
-                break;
-              }
-              
-              // Também verificar pelo fieldId que contém "telefone_"
-              if (item.elementFieldId && item.elementFieldId.includes('telefone_') && item.answer) {
-                phoneNumber = item.answer;
-                console.log(`📱 TELEFONE ENCONTRADO pelo fieldId ${item.elementFieldId}: ${phoneNumber}`);
-                break;
-              }
-            }
-            
-            // Buscar nome
-            for (const item of responseData) {
-              if (item.elementType === 'text' && item.elementFieldId && 
-                  (item.elementFieldId.includes('nome') || item.elementFieldId.includes('name'))) {
-                userName = item.answer;
-                console.log(`📱 NOME ENCONTRADO no elemento ${item.elementId}: ${userName}`);
-                break;
-              }
-            }
-            
-            if (phoneNumber) {
-              // Verificar status de completude
-              const metadata = response.metadata as any;
-              const isComplete = metadata?.isComplete === true;
-              const completedAt = metadata?.completedAt || null;
-              
-              phones.push({
-                id: response.id,
-                phone: phoneNumber,
-                name: userName || 'Sem nome',
-                submittedAt: response.submittedAt,
-                responses: responseData,
-                isComplete: isComplete,
-                completedAt: completedAt,
-                status: isComplete ? 'completed' : 'abandoned'
-              });
-            } else {
-              console.log(`📱 NENHUM TELEFONE ENCONTRADO na response ${index + 1}`);
-            }
-          } else {
-            // Formato antigo - resposta é um objeto
-            console.log(`📱 FORMATO ANTIGO - RESPONSE ${index + 1}:`, responseData);
-            
-            // Buscar por chaves que contenham "telefone"
-            for (const key in responseData) {
-              if (key.includes('telefone') && responseData[key]) {
-                console.log(`📱 TELEFONE ENCONTRADO na chave ${key}: ${responseData[key]}`);
-                
-                // Buscar nome
-                let userName = null;
-                for (const nameKey in responseData) {
-                  if (nameKey.includes('nome') && responseData[nameKey]) {
-                    userName = responseData[nameKey];
-                    break;
-                  }
-                }
-                
-                // Verificar status de completude
-                const metadata = response.metadata as any;
-                const isComplete = metadata?.isComplete === true;
-                const completedAt = metadata?.completedAt || null;
-                
-                phones.push({
-                  id: response.id,
-                  phone: responseData[key],
-                  name: userName || 'Sem nome',
-                  submittedAt: response.submittedAt,
-                  responses: responseData,
-                  isComplete: isComplete,
-                  completedAt: completedAt,
-                  status: isComplete ? 'completed' : 'abandoned'
-                });
-                break;
-              }
-            }
-          }
-        }
-      });
-      
-      console.log(`📱 TELEFONES EXTRAÍDOS: ${phones.length}`);
-      
-      res.json({
-        quizId,
-        quizTitle: quiz.title,
-        totalResponses: responses.length,
-        totalPhones: phones.length,
-        phones: phones.sort((a, b) => new Date(b.submittedAt).getTime() - new Date(a.submittedAt).getTime())
-      });
-    } catch (error) {
-      console.error("Error fetching quiz phones:", error);
-      res.status(500).json({ error: "Internal server error" });
-    }
-  });
-
-  app.get("/api/health", (req, res) => {
-    res.json({ 
-      status: "ok", 
-      timestamp: new Date().toISOString(),
-      database: "sqlite",
-      cache: cache.getStats()
-    });
-  });
-
-  // Endpoint para teste SMS direto com Twilio
-  app.post("/api/sms/send-direct", verifyJWT, async (req: any, res) => {
-    try {
-      const { phones, message, quizId } = req.body;
-      const userId = req.user.id;
-
-      console.log(`📱 TESTE SMS DIRETO - User: ${userId}, Phones: ${phones?.length || 0}, Quiz: ${quizId}`);
-
-      if (!phones || !Array.isArray(phones) || phones.length === 0) {
-        return res.status(400).json({ error: "Phones array is required" });
       }
-
-      if (!message || message.trim() === "") {
-        return res.status(400).json({ error: "Message is required" });
-      }
-
-      // Importar função sendSms do twilio
-      const { sendSms } = await import("./twilio");
 
       const results = [];
       let successCount = 0;
-      let failureCount = 0;
+      let errorCount = 0;
 
-      for (const phone of phones) {
+      // Send SMS to each phone number
+      for (const phone of phoneNumbers) {
         try {
-          const phoneNumber = phone.phone || phone;
-          console.log(`📲 Enviando SMS para: ${phoneNumber}`);
-          
-          const success = await sendSms(phoneNumber, message);
-          
+          const success = await sendSms(phone, message);
           if (success) {
+            results.push({ phone, status: 'sent', sid: 'success' });
             successCount++;
-            results.push({
-              phone: phoneNumber,
-              status: "success",
-              message: "SMS enviado com sucesso"
-            });
           } else {
-            failureCount++;
-            results.push({
-              phone: phoneNumber,
-              status: "error",
-              message: "Falha ao enviar SMS"
-            });
+            results.push({ phone, status: 'failed', error: 'SMS sending failed' });
+            errorCount++;
           }
         } catch (error) {
-          failureCount++;
-          results.push({
-            phone: phone.phone || phone,
-            status: "error",
-            message: error.message || "Erro desconhecido"
-          });
+          console.error(`Error sending SMS to ${phone}:`, error);
+          results.push({ phone, status: 'failed', error: error.message });
+          errorCount++;
         }
       }
 
-      console.log(`📊 RESULTADO SMS - Sucesso: ${successCount}, Falha: ${failureCount}`);
+      // Deduct credits for successful sends
+      if (successCount > 0) {
+        await storage.updateUserSmsCredits(req.user!.id, (user.smsCredits || 0) - successCount);
+        
+        // Log the transaction
+        await storage.createSmsTransaction({
+          userId: req.user!.id,
+          type: 'send',
+          amount: -successCount,
+          description: `SMS sent to ${successCount} numbers`
+        });
+      }
 
       res.json({
         success: true,
-        message: "Teste SMS concluído",
         totalSent: successCount,
-        totalFailed: failureCount,
-        results
+        totalFailed: errorCount,
+        results,
+        remainingCredits: (user.smsCredits || 0) - successCount
+      });
+
+    } catch (error) {
+      console.error("Error sending SMS:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  // SMS transactions history
+  app.get("/api/sms/transactions", authenticateToken, async (req, res) => {
+    try {
+      const transactions = await storage.getSmsTransactions(req.user!.id);
+      res.json(transactions);
+    } catch (error) {
+      console.error("Error fetching SMS transactions:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  // Route to get quiz responses with phone numbers for SMS campaigns
+  app.get("/api/quizzes/:id/phones", authenticateToken, async (req, res) => {
+    try {
+      const quiz = await storage.getQuiz(req.params.id);
+      if (!quiz) {
+        return res.status(404).json({ message: "Quiz not found" });
+      }
+
+      if (quiz.userId !== req.user!.id && req.user!.role !== 'admin') {
+        return res.status(403).json({ message: "Not authorized" });
+      }
+
+      const responses = await storage.getQuizResponses(req.params.id);
+      
+      // Extract phone numbers from responses
+      let phones: any[] = [];
+      
+      responses.forEach(response => {
+        if (response.completedAt && response.responses) {
+          // Check if structure has pages (new format) or questions (old format)
+          const structure = quiz.structure as any || {};
+          const pages = structure.pages || [];
+          
+          if (pages.length > 0) {
+            // New format with pages
+            pages.forEach((page: any) => {
+              if (page.elements) {
+                page.elements.forEach((element: any) => {
+                  if (element.type === 'phone' && element.fieldId) {
+                    const phoneValue = (response.responses as any)[element.fieldId];
+                    if (phoneValue) {
+                      phones.push({
+                        phone: phoneValue,
+                        responseId: response.id,
+                        submittedAt: response.submittedAt
+                      });
+                    }
+                  }
+                });
+              }
+            });
+          } else {
+            // Old format with questions - fallback for compatibility
+            const questions = structure.questions || [];
+            questions.forEach((question: any) => {
+              if (question.type === 'phone' && question.fieldId) {
+                const phoneValue = (response.responses as any)[question.fieldId];
+                if (phoneValue) {
+                  phones.push({
+                    phone: phoneValue,
+                    responseId: response.id,
+                    submittedAt: response.submittedAt
+                  });
+                }
+              }
+            });
+          }
+        }
+      });
+
+      // Remove duplicates based on phone number
+      const uniquePhones = phones.filter((phone, index, self) => 
+        index === self.findIndex(p => p.phone === phone.phone)
+      );
+
+      res.json({
+        total: uniquePhones.length,
+        phones: uniquePhones
       });
     } catch (error) {
-      console.error("Erro no teste SMS:", error);
-      res.status(500).json({ error: "Erro interno do servidor" });
+      console.error("Error fetching quiz phones:", error);
+      res.status(500).json({ message: "Internal server error" });
     }
   });
 
-  const httpServer = createServer(app);
-  return httpServer;
-}
+  // Route to get quiz responses with phone numbers filtered by completed responses
+  app.get("/api/quizzes/:id/completed-phones", authenticateToken, async (req, res) => {
+    try {
+      const quiz = await storage.getQuiz(req.params.id);
+      if (!quiz) {
+        return res.status(404).json({ message: "Quiz not found" });
+      }
 
-// Função auxiliar para extrair dados de lead das respostas
-function extractLeadDataFromResponses(responses: any, leadData: any = {}): Record<string, any> {
-  const extracted: Record<string, any> = { ...leadData };
-  
-  if (!responses || typeof responses !== 'object') {
-    return extracted;
+      if (quiz.userId !== req.user!.id && req.user!.role !== 'admin') {
+        return res.status(403).json({ message: "Not authorized" });
+      }
+
+      const responses = await storage.getQuizResponses(req.params.id);
+      
+      // Extract phone numbers only from completed responses
+      let phones: any[] = [];
+      
+      responses.forEach(response => {
+        if (response.completedAt && response.responses) {
+          // Check if structure has pages (new format) or questions (old format)
+          const structure = quiz.structure as any || {};
+          const pages = structure.pages || [];
+          
+          if (pages.length > 0) {
+            // New format with pages
+            pages.forEach((page: any) => {
+              if (page.elements) {
+                page.elements.forEach((element: any) => {
+                  if (element.type === 'phone' && element.fieldId && element.fieldId.startsWith('telefone_')) {
+                    const phoneValue = (response.responses as any)[element.fieldId];
+                    if (phoneValue) {
+                      phones.push({
+                        phone: phoneValue,
+                        responseId: response.id,
+                        submittedAt: response.submittedAt,
+                        completedAt: response.completedAt
+                      });
+                    }
+                  }
+                });
+              }
+            });
+          } else {
+            // Old format fallback
+            const questions = structure.questions || [];
+            questions.forEach((question: any) => {
+              if (question.type === 'phone' && question.fieldId && question.fieldId.startsWith('telefone_')) {
+                const phoneValue = (response.responses as any)[question.fieldId];
+                if (phoneValue) {
+                  phones.push({
+                    phone: phoneValue,
+                    responseId: response.id,
+                    submittedAt: response.submittedAt,
+                    completedAt: response.completedAt
+                  });
+                }
+              }
+            });
+          }
+        }
+      });
+
+      // Remove duplicates and return only valid phone numbers
+      const uniquePhones = phones.filter((phone, index, self) => 
+        index === self.findIndex(p => p.phone === phone.phone) && 
+        phone.phone && 
+        phone.phone.trim() !== ''
+      );
+
+      res.json({
+        total: uniquePhones.length,
+        phones: uniquePhones
+      });
+    } catch (error) {
+      console.error("Error fetching completed quiz phones:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  // SMS Campaigns routes
+  app.get("/api/sms/campaigns", authenticateToken, async (req, res) => {
+    try {
+      const campaigns = await storage.getSmsCampaigns(req.user!.id);
+      res.json(campaigns);
+    } catch (error) {
+      console.error("Error fetching SMS campaigns:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  app.post("/api/sms/campaigns", authenticateToken, async (req, res) => {
+    try {
+      const validatedData = insertSmsCampaignSchema.parse({
+        ...req.body,
+        userId: req.user!.id,
+      });
+
+      const campaign = await storage.createSmsCampaign(validatedData);
+      res.status(201).json(campaign);
+    } catch (error) {
+      console.error("Error creating SMS campaign:", error);
+      if (error.name === 'ZodError') {
+        return res.status(400).json({ message: "Invalid campaign data", errors: error.errors });
+      }
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  app.get("/api/sms/campaigns/:id", authenticateToken, async (req, res) => {
+    try {
+      const campaign = await storage.getSmsCampaign(req.params.id);
+      if (!campaign) {
+        return res.status(404).json({ message: "Campaign not found" });
+      }
+
+      if (campaign.userId !== req.user!.id && req.user!.role !== 'admin') {
+        return res.status(403).json({ message: "Not authorized" });
+      }
+
+      res.json(campaign);
+    } catch (error) {
+      console.error("Error fetching SMS campaign:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  app.put("/api/sms/campaigns/:id", authenticateToken, async (req, res) => {
+    try {
+      const campaign = await storage.getSmsCampaign(req.params.id);
+      if (!campaign) {
+        return res.status(404).json({ message: "Campaign not found" });
+      }
+
+      if (campaign.userId !== req.user!.id && req.user!.role !== 'admin') {
+        return res.status(403).json({ message: "Not authorized" });
+      }
+
+      const updatedCampaign = await storage.updateSmsCampaign(req.params.id, req.body);
+      res.json(updatedCampaign);
+    } catch (error) {
+      console.error("Error updating SMS campaign:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  app.delete("/api/sms/campaigns/:id", authenticateToken, async (req, res) => {
+    try {
+      const campaign = await storage.getSmsCampaign(req.params.id);
+      if (!campaign) {
+        return res.status(404).json({ message: "Campaign not found" });
+      }
+
+      if (campaign.userId !== req.user!.id && req.user!.role !== 'admin') {
+        return res.status(403).json({ message: "Not authorized" });
+      }
+
+      await storage.deleteSmsCampaign(req.params.id);
+      res.status(204).send();
+    } catch (error) {
+      console.error("Error deleting SMS campaign:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  // Execute SMS campaign
+  app.post("/api/sms/campaigns/:id/execute", authenticateToken, async (req, res) => {
+    try {
+      const campaign = await storage.getSmsCampaign(req.params.id);
+      if (!campaign) {
+        return res.status(404).json({ message: "Campaign not found" });
+      }
+
+      if (campaign.userId !== req.user!.id && req.user!.role !== 'admin') {
+        return res.status(403).json({ message: "Not authorized" });
+      }
+
+      // Check user SMS credits
+      const user = await storage.getUser(req.user!.id);
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      // Get target phone numbers based on campaign settings
+      const quiz = await storage.getQuiz(campaign.quizId!);
+      if (!quiz) {
+        return res.status(404).json({ message: "Quiz not found for campaign" });
+      }
+
+      const responses = await storage.getQuizResponses(campaign.quizId!);
+      
+      // Extract phone numbers from completed responses
+      let phones: string[] = [];
+      
+      responses.forEach(response => {
+        if (response.completedAt && response.responses) {
+          const structure = quiz.structure as any || {};
+          const pages = structure.pages || [];
+          
+          pages.forEach((page: any) => {
+            if (page.elements) {
+              page.elements.forEach((element: any) => {
+                if (element.type === 'phone' && element.fieldId && element.fieldId.startsWith('telefone_')) {
+                  const phoneValue = (response.responses as any)[element.fieldId];
+                  if (phoneValue) {
+                    phones.push(phoneValue);
+                  }
+                }
+              });
+            }
+          });
+        }
+      });
+
+      // Remove duplicates
+      const uniquePhones = [...new Set(phones)];
+
+      if (uniquePhones.length === 0) {
+        return res.status(400).json({ message: "No phone numbers found for this campaign" });
+      }
+
+      const requiredCredits = uniquePhones.length;
+      if ((user.smsCredits || 0) < requiredCredits) {
+        return res.status(400).json({ 
+          message: `Créditos SMS insuficientes. Necessário: ${requiredCredits}, Disponível: ${user.smsCredits || 0}` 
+        });
+      }
+
+      const results = [];
+      let successCount = 0;
+      let errorCount = 0;
+
+      // Send SMS to each phone number
+      for (const phone of uniquePhones) {
+        try {
+          const result = await sendSms(phone, campaign.message!);
+          results.push({ phone, status: 'sent', sid: result.sid });
+          successCount++;
+        } catch (error) {
+          console.error(`Error sending SMS to ${phone}:`, error);
+          results.push({ phone, status: 'failed', error: error.message });
+          errorCount++;
+        }
+      }
+
+      // Deduct credits for successful sends
+      if (successCount > 0) {
+        await storage.updateUserSmsCredits(req.user!.id, (user.smsCredits || 0) - successCount);
+        
+        // Log the transaction
+        await storage.createSmsTransaction({
+          userId: req.user!.id,
+          type: 'campaign',
+          amount: -successCount,
+          description: `SMS campaign "${campaign.name}" sent to ${successCount} numbers`
+        });
+      }
+
+      // Update campaign with execution results
+      await storage.updateSmsCampaign(req.params.id, {
+        lastExecuted: new Date(),
+        status: 'executed'
+      });
+
+      res.json({
+        success: true,
+        campaignName: campaign.name,
+        totalSent: successCount,
+        totalFailed: errorCount,
+        results,
+        remainingCredits: (user.smsCredits || 0) - successCount
+      });
+
+    } catch (error) {
+      console.error("Error executing SMS campaign:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  // Email campaigns routes
+  app.get("/api/email/campaigns", authenticateToken, async (req, res) => {
+    try {
+      const campaigns = await storage.getEmailCampaigns(req.user!.id);
+      res.json(campaigns);
+    } catch (error) {
+      console.error("Error fetching email campaigns:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  app.post("/api/email/campaigns", authenticateToken, async (req, res) => {
+    try {
+      const validatedData = insertEmailCampaignSchema.parse({
+        ...req.body,
+        userId: req.user!.id,
+      });
+
+      const campaign = await storage.createEmailCampaign(validatedData);
+      res.status(201).json(campaign);
+    } catch (error) {
+      console.error("Error creating email campaign:", error);
+      if (error.name === 'ZodError') {
+        return res.status(400).json({ message: "Invalid campaign data", errors: error.errors });
+      }
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  app.get("/api/email/campaigns/:id", authenticateToken, async (req, res) => {
+    try {
+      const campaign = await storage.getEmailCampaign(req.params.id);
+      if (!campaign) {
+        return res.status(404).json({ message: "Campaign not found" });
+      }
+
+      if (campaign.userId !== req.user!.id && req.user!.role !== 'admin') {
+        return res.status(403).json({ message: "Not authorized" });
+      }
+
+      res.json(campaign);
+    } catch (error) {
+      console.error("Error fetching email campaign:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  app.put("/api/email/campaigns/:id", authenticateToken, async (req, res) => {
+    try {
+      const campaign = await storage.getEmailCampaign(req.params.id);
+      if (!campaign) {
+        return res.status(404).json({ message: "Campaign not found" });
+      }
+
+      if (campaign.userId !== req.user!.id && req.user!.role !== 'admin') {
+        return res.status(403).json({ message: "Not authorized" });
+      }
+
+      const updatedCampaign = await storage.updateEmailCampaign(req.params.id, req.body);
+      res.json(updatedCampaign);
+    } catch (error) {
+      console.error("Error updating email campaign:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  app.delete("/api/email/campaigns/:id", authenticateToken, async (req, res) => {
+    try {
+      const campaign = await storage.getEmailCampaign(req.params.id);
+      if (!campaign) {
+        return res.status(404).json({ message: "Campaign not found" });
+      }
+
+      if (campaign.userId !== req.user!.id && req.user!.role !== 'admin') {
+        return res.status(403).json({ message: "Not authorized" });
+      }
+
+      await storage.deleteEmailCampaign(req.params.id);
+      res.status(204).send();
+    } catch (error) {
+      console.error("Error deleting email campaign:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  // Email templates routes
+  app.get("/api/email/templates", authenticateToken, async (req, res) => {
+    try {
+      const templates = await storage.getEmailTemplates(req.user!.id);
+      res.json(templates);
+    } catch (error) {
+      console.error("Error fetching email templates:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  app.post("/api/email/templates", authenticateToken, async (req, res) => {
+    try {
+      const validatedData = insertEmailTemplateSchema.parse({
+        ...req.body,
+        userId: req.user!.id,
+      });
+
+      const template = await storage.createEmailTemplate(validatedData);
+      res.status(201).json(template);
+    } catch (error) {
+      console.error("Error creating email template:", error);
+      if (error.name === 'ZodError') {
+        return res.status(400).json({ message: "Invalid template data", errors: error.errors });
+      }
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  app.get("/api/email/templates/:id", authenticateToken, async (req, res) => {
+    try {
+      const template = await storage.getEmailTemplate(req.params.id);
+      if (!template) {
+        return res.status(404).json({ message: "Template not found" });
+      }
+
+      if (template.userId !== req.user!.id && req.user!.role !== 'admin') {
+        return res.status(403).json({ message: "Not authorized" });
+      }
+
+      res.json(template);
+    } catch (error) {
+      console.error("Error fetching email template:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  app.put("/api/email/templates/:id", authenticateToken, async (req, res) => {
+    try {
+      const template = await storage.getEmailTemplate(req.params.id);
+      if (!template) {
+        return res.status(404).json({ message: "Template not found" });
+      }
+
+      if (template.userId !== req.user!.id && req.user!.role !== 'admin') {
+        return res.status(403).json({ message: "Not authorized" });
+      }
+
+      const updatedTemplate = await storage.updateEmailTemplate(req.params.id, req.body);
+      res.json(updatedTemplate);
+    } catch (error) {
+      console.error("Error updating email template:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  app.delete("/api/email/templates/:id", authenticateToken, async (req, res) => {
+    try {
+      const template = await storage.getEmailTemplate(req.params.id);
+      if (!template) {
+        return res.status(404).json({ message: "Template not found" });
+      }
+
+      if (template.userId !== req.user!.id && req.user!.role !== 'admin') {
+        return res.status(403).json({ message: "Not authorized" });
+      }
+
+      await storage.deleteEmailTemplate(req.params.id);
+      res.status(204).send();
+    } catch (error) {
+      console.error("Error deleting email template:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  // User management routes
+  app.get("/api/user", authenticateToken, async (req, res) => {
+    try {
+      const userId = req.user!.id;
+      
+      // Cache do usuário
+      const cachedUser = cache.getUser(userId);
+      if (cachedUser) {
+        res.setHeader('X-Cache', 'HIT');
+        return res.json(cachedUser);
+      }
+      
+      const user = await storage.getUser(userId);
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+      
+      cache.setUser(userId, user);
+      res.setHeader('X-Cache', 'MISS');
+      res.json(user);
+    } catch (error) {
+      console.error("Error fetching user:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  // Admin routes
+  app.get("/api/admin/users", authenticateToken, requireAdmin, async (req, res) => {
+    try {
+      const users = await storage.getAllUsers();
+      res.json(users);
+    } catch (error) {
+      console.error("Error fetching users:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  app.put("/api/admin/users/:id/role", authenticateToken, requireAdmin, async (req, res) => {
+    try {
+      const { role } = req.body;
+      
+      if (!role || !['user', 'editor', 'admin'].includes(role)) {
+        return res.status(400).json({ message: "Invalid role" });
+      }
+
+      const user = await storage.updateUserRole(req.params.id, role);
+      
+      // Invalidate user cache
+      cache.del(`user:${req.params.id}`);
+      
+      res.json(user);
+    } catch (error) {
+      console.error("Error updating user role:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  app.delete("/api/admin/users/:id", authenticateToken, requireAdmin, async (req, res) => {
+    try {
+      await storage.deleteUser(req.params.id);
+      
+      // Invalidate user caches
+      cache.invalidateUserCaches(req.params.id);
+      
+      res.status(204).send();
+    } catch (error) {
+      console.error("Error deleting user:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  // Stripe webhook
+  if (stripe) {
+    app.post("/api/stripe/webhook", express.raw({ type: 'application/json' }), async (req, res) => {
+      let event;
+
+      try {
+        event = stripe.webhooks.constructEvent(req.body, req.headers['stripe-signature'] as string, process.env.STRIPE_WEBHOOK_SECRET!);
+      } catch (err) {
+        console.error("Webhook signature verification failed:", err);
+        return res.status(400).send(`Webhook Error: ${err.message}`);
+      }
+
+      try {
+        switch (event.type) {
+          case 'customer.subscription.created':
+          case 'customer.subscription.updated':
+            const subscription = event.data.object;
+            // Update user's subscription status
+            // Implementation depends on your user-subscription mapping
+            break;
+          case 'customer.subscription.deleted':
+            // Handle subscription cancellation
+            break;
+          default:
+            console.log(`Unhandled event type ${event.type}`);
+        }
+
+        res.json({ received: true });
+      } catch (error) {
+        console.error("Error handling webhook:", error);
+        res.status(500).json({ message: "Webhook handler failed" });
+      }
+    });
   }
 
-  // Percorrer todas as respostas
-  Object.keys(responses).forEach(key => {
-    const response = responses[key];
-    
-    // Extrair dados baseado no field_id ou tipo de campo
-    if (key.includes('nome') || key.includes('name')) {
-      extracted.nome = response;
-    }
-    
-    if (key.includes('email')) {
-      extracted.email = response;
-    }
-    
-    if (key.includes('telefone') || key.includes('phone') || key.includes('celular')) {
-      extracted.telefone = response;
-    }
-    
-    if (key.includes('altura') || key.includes('height')) {
-      extracted.altura = response;
-    }
-    
-    if (key.includes('peso') || key.includes('weight')) {
-      extracted.peso = response;
-    }
-    
-    if (key.includes('idade') || key.includes('age')) {
-      extracted.idade = response;
-    }
-    
-    if (key.includes('nascimento') || key.includes('birth')) {
-      extracted.nascimento = response;
-    }
-    
-    // Adicionar outros campos genéricos
-    if (response && response.toString().trim()) {
-      extracted[key] = response;
+  // Performance monitoring endpoint
+  app.get("/api/performance/stats", async (req, res) => {
+    try {
+      const stats = cache.getStats();
+      res.json({
+        cache: stats,
+        memory: process.memoryUsage(),
+        uptime: process.uptime()
+      });
+    } catch (error) {
+      console.error("Error fetching performance stats:", error);
+      res.status(500).json({ message: "Internal server error" });
     }
   });
 
-  return extracted;
+  return httpServer;
 }
