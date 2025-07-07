@@ -1375,6 +1375,9 @@ export function registerSQLiteRoutes(app: Express): Server {
         phones: filteredPhones,
         status: initialStatus,
         scheduledAt,
+        triggerDelay,
+        triggerUnit,
+        targetAudience,
         createdAt: new Date(),
         updatedAt: new Date()
       });

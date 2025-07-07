@@ -349,6 +349,15 @@ Changelog:
   * Campaign scheduling system processes delayed campaigns automatically via background job
   * System now supports both immediate (triggerType: "immediate") and scheduled (triggerType: "delayed") campaigns
   * Complete SMS workflow functional: creation → segmentation → scheduling → deletion
+- July 07, 2025. DYNAMIC LEAD DETECTION SYSTEM - Implemented automatic detection and scheduling for new quiz responses:
+  * Created dynamic monitoring system that checks for new quiz responses every 30 seconds
+  * Active campaigns automatically detect new phone numbers from quiz submissions
+  * New leads are automatically scheduled for SMS delivery based on campaign settings (default 10 minutes)
+  * System respects audience segmentation (completed vs abandoned) for new leads
+  * Supports real-time campaign expansion as quiz responses grow
+  * Each new lead gets individual scheduling with proper error handling and status tracking
+  * System maintains full functionality even with thousands of new leads entering campaigns
+  * Background job processing ensures no performance impact on main application
 ```
 
 ## User Preferences

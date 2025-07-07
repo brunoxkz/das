@@ -699,6 +699,9 @@ export class SQLiteStorage implements IStorage {
     scheduledAt?: number | Date;
     createdAt?: Date;
     updatedAt?: Date;
+    triggerDelay?: number;
+    triggerUnit?: string;
+    targetAudience?: string;
   }): Promise<any> {
     const now = Math.floor(Date.now() / 1000);
     
@@ -716,6 +719,9 @@ export class SQLiteStorage implements IStorage {
       phones: JSON.stringify(campaignData.phones),
       status: campaignData.status || 'pending',
       scheduledAt: scheduledAtValue,
+      triggerDelay: campaignData.triggerDelay || 10,
+      triggerUnit: campaignData.triggerUnit || 'minutes',
+      targetAudience: campaignData.targetAudience || 'all',
       createdAt: now,
       updatedAt: now
     };
