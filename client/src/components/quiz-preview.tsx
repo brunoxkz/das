@@ -285,11 +285,54 @@ export function QuizPreview({ quiz }: QuizPreviewProps) {
   };
 
   const handleNext = async () => {
+    // Enviar as respostas atuais para o servidor antes de avançar
+    await saveCurrentResponses();
+    
     if (currentStep < totalSteps - 1) {
       setCurrentStep(prev => prev + 1);
     } else {
-      // Quiz terminado - enviar as respostas para o servidor
+      // Quiz terminado - enviar as respostas finais
       await submitQuizResponses();
+    }
+  };
+
+  const saveCurrentResponses = async () => {
+    try {
+      // Obter todas as respostas coletadas até agora
+      const allResponses = globalVariableProcessor.getAllResponses();
+      
+      if (allResponses.length === 0) {
+        console.log('Nenhuma resposta para salvar nesta etapa');
+        return;
+      }
+
+      // Extrair o ID do quiz da URL atual
+      const pathParts = window.location.pathname.split('/');
+      const quizId = pathParts[pathParts.length - 1];
+
+      console.log('Salvando respostas parciais do quiz:', allResponses);
+
+      // Enviar para o endpoint de respostas parciais
+      await apiRequest(`/api/quizzes/${quizId}/partial-responses`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          responses: allResponses,
+          currentStep: currentStep,
+          metadata: {
+            userAgent: navigator.userAgent,
+            timestamp: new Date().toISOString(),
+            isPartial: true
+          }
+        }),
+      });
+
+      console.log('Respostas parciais salvas com sucesso!');
+    } catch (error) {
+      console.error('Erro ao salvar respostas parciais:', error);
+      // Não bloquear a navegação se houver erro no salvamento
     }
   };
 

@@ -406,6 +406,93 @@ export function registerSQLiteRoutes(app: Express): Server {
     }
   });
 
+  // Endpoint para salvar respostas parciais durante transições de página
+  app.post("/api/quizzes/:id/partial-responses", async (req: Request, res: Response) => {
+    try {
+      const { id: quizId } = req.params;
+      const { responses, currentStep, metadata } = req.body;
+      
+      console.log(`💾 SALVANDO RESPOSTAS PARCIAIS - Quiz: ${quizId}, Step: ${currentStep}, Responses: ${responses?.length || 0}`);
+      
+      if (!responses || !Array.isArray(responses) || responses.length === 0) {
+        console.log('⚠️ Nenhuma resposta válida para salvar');
+        return res.status(200).json({ message: 'Nenhuma resposta para salvar' });
+      }
+
+      // Verificar se o quiz existe (sem autenticação para permitir acesso público)
+      const quiz = await storage.getQuiz(quizId);
+      if (!quiz) {
+        console.log(`❌ Quiz ${quizId} não encontrado`);
+        return res.status(404).json({ error: "Quiz not found" });
+      }
+
+      // Converter responses do formato do globalVariableProcessor para formato de armazenamento
+      const responseData: Record<string, any> = {};
+      
+      responses.forEach((response: any) => {
+        if (response.responseId && response.value !== undefined) {
+          responseData[response.responseId] = response.value;
+          console.log(`📝 Campo salvo: ${response.responseId} = ${response.value}`);
+        }
+      });
+
+      // Buscar resposta existente ou criar nova
+      const existingResponses = await storage.getQuizResponses(quizId);
+      let existingResponse = existingResponses.find(r => 
+        r.metadata && 
+        typeof r.metadata === 'object' && 
+        (r.metadata as any).isPartial === true
+      );
+
+      if (existingResponse) {
+        // Atualizar resposta parcial existente mesclando com novas respostas
+        const existingData = existingResponse.responses as Record<string, any> || {};
+        const mergedData = { ...existingData, ...responseData };
+        
+        console.log(`🔄 ATUALIZANDO resposta parcial existente: ${existingResponse.id}`);
+        console.log(`📋 Dados mesclados:`, Object.keys(mergedData));
+        
+        await storage.updateQuizResponse(existingResponse.id, {
+          responses: mergedData,
+          metadata: {
+            ...metadata,
+            lastUpdated: new Date().toISOString(),
+            currentStep,
+            totalFields: Object.keys(mergedData).length
+          }
+        });
+      } else {
+        // Criar nova resposta parcial
+        console.log(`✨ CRIANDO nova resposta parcial`);
+        console.log(`📋 Dados novos:`, Object.keys(responseData));
+        
+        await storage.createQuizResponse({
+          quizId,
+          responses: responseData,
+          metadata: {
+            ...metadata,
+            isPartial: true,
+            currentStep,
+            createdAt: new Date().toISOString(),
+            totalFields: Object.keys(responseData).length
+          }
+        });
+      }
+
+      console.log(`✅ Respostas parciais salvas com sucesso - Step: ${currentStep}`);
+      
+      res.status(200).json({ 
+        message: 'Respostas parciais salvas com sucesso',
+        step: currentStep,
+        fieldsCount: Object.keys(responseData).length
+      });
+      
+    } catch (error) {
+      console.error('❌ ERRO ao salvar respostas parciais:', error);
+      res.status(500).json({ error: 'Erro interno do servidor' });
+    }
+  });
+
   // SMS Quiz Phone Numbers endpoint
   app.get("/api/quizzes/:quizId/phones", verifyJWT, async (req: any, res) => {
     try {

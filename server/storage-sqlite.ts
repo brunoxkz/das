@@ -427,6 +427,20 @@ export class SQLiteStorage implements IStorage {
     return newResponse;
   }
 
+  async updateQuizResponse(responseId: string, updates: Partial<QuizResponse>): Promise<QuizResponse> {
+    const [updatedResponse] = await db
+      .update(quizResponses)
+      .set(updates)
+      .where(eq(quizResponses.id, responseId))
+      .returning();
+    
+    if (!updatedResponse) {
+      throw new Error(`Response with id ${responseId} not found`);
+    }
+    
+    return updatedResponse;
+  }
+
   async getQuizAnalytics(quizId: string, startDate?: Date, endDate?: Date): Promise<QuizAnalytics[]> {
     let query = db.select().from(quizAnalytics).where(eq(quizAnalytics.quizId, quizId));
     
