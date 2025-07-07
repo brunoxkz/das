@@ -409,6 +409,13 @@ Changelog:
   * Visual breakdown: total available → after date filter → after audience filter → final SMS count
   * System now displays exactly how many SMS will be sent before campaign creation
   * Complete transparency in lead filtering and campaign targeting with dynamic updates
+- July 07, 2025. DUPLICATE LOG CLEANUP AND PREVENTION - Fixed critical database integrity issues:
+  * Identified and cleaned 42 duplicate SMS logs (25x phone 11996595909, 13x phone 113232333232)
+  * Created cleanup script (cleanup-logs.js) that removes duplicates while keeping most recent entry per phone
+  * Reduced logs from 42 duplicates to 3 unique entries (1 per phone number)
+  * System now maintains clean database with proper phone number deduplication
+  * Automatic detection continues working correctly with clean logs
+  * Retry logic functions properly - only allows duplicates when user manually re-enters failed numbers
 - July 07, 2025. DEFAULT SEND TIMING UPDATE - Changed default campaign timing from immediate to 10 minutes delay:
   * Modified default triggerType from "immediate" to "delayed"
   * Set default triggerDelay to 10 minutes instead of 1 hour
