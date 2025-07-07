@@ -1006,7 +1006,75 @@ export function registerSQLiteRoutes(app: Express): Server {
     });
   });
 
+  // Endpoint para teste SMS direto com Twilio
+  app.post("/api/sms/send-direct", verifyJWT, async (req: any, res) => {
+    try {
+      const { phones, message, quizId } = req.body;
+      const userId = req.user.id;
 
+      console.log(`📱 TESTE SMS DIRETO - User: ${userId}, Phones: ${phones?.length || 0}, Quiz: ${quizId}`);
+
+      if (!phones || !Array.isArray(phones) || phones.length === 0) {
+        return res.status(400).json({ error: "Phones array is required" });
+      }
+
+      if (!message || message.trim() === "") {
+        return res.status(400).json({ error: "Message is required" });
+      }
+
+      // Importar função sendSms do twilio
+      const { sendSms } = await import("./twilio");
+
+      const results = [];
+      let successCount = 0;
+      let failureCount = 0;
+
+      for (const phone of phones) {
+        try {
+          const phoneNumber = phone.phone || phone;
+          console.log(`📲 Enviando SMS para: ${phoneNumber}`);
+          
+          const success = await sendSms(phoneNumber, message);
+          
+          if (success) {
+            successCount++;
+            results.push({
+              phone: phoneNumber,
+              status: "success",
+              message: "SMS enviado com sucesso"
+            });
+          } else {
+            failureCount++;
+            results.push({
+              phone: phoneNumber,
+              status: "error",
+              message: "Falha ao enviar SMS"
+            });
+          }
+        } catch (error) {
+          failureCount++;
+          results.push({
+            phone: phone.phone || phone,
+            status: "error",
+            message: error.message || "Erro desconhecido"
+          });
+        }
+      }
+
+      console.log(`📊 RESULTADO SMS - Sucesso: ${successCount}, Falha: ${failureCount}`);
+
+      res.json({
+        success: true,
+        message: "Teste SMS concluído",
+        totalSent: successCount,
+        totalFailed: failureCount,
+        results
+      });
+    } catch (error) {
+      console.error("Erro no teste SMS:", error);
+      res.status(500).json({ error: "Erro interno do servidor" });
+    }
+  });
 
   const httpServer = createServer(app);
   return httpServer;
