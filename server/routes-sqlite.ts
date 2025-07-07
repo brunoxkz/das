@@ -46,11 +46,8 @@ export function registerSQLiteRoutes(app: Express): Server {
   });
 
   // Dashboard Stats
-  app.get("/api/dashboard/stats", async (req: any, res) => {
+  app.get("/api/dashboard/stats", verifyJWT, async (req: any, res) => {
     try {
-      if (!req.user) {
-        return res.status(401).json({ message: "Unauthorized" });
-      }
 
       // Verificar cache primeiro
       const cacheKey = `dashboard-${req.user.id}`;
@@ -88,11 +85,8 @@ export function registerSQLiteRoutes(app: Express): Server {
   });
 
   // Get user quizzes
-  app.get("/api/quizzes", async (req: any, res) => {
+  app.get("/api/quizzes", verifyJWT, async (req: any, res) => {
     try {
-      if (!req.user) {
-        return res.status(401).json({ message: "Unauthorized" });
-      }
 
       // Verificar cache primeiro
       const cacheKey = `quizzes-${req.user.id}`;
@@ -135,11 +129,8 @@ export function registerSQLiteRoutes(app: Express): Server {
   });
 
   // Create quiz
-  app.post("/api/quizzes", async (req: any, res) => {
+  app.post("/api/quizzes", verifyJWT, async (req: any, res) => {
     try {
-      if (!req.user) {
-        return res.status(401).json({ message: "Unauthorized" });
-      }
 
       // Validar dados do quiz
       const quizData = insertQuizSchema.parse({
@@ -160,11 +151,8 @@ export function registerSQLiteRoutes(app: Express): Server {
   });
 
   // Update quiz
-  app.put("/api/quizzes/:id", async (req: any, res) => {
+  app.put("/api/quizzes/:id", verifyJWT, async (req: any, res) => {
     try {
-      if (!req.user) {
-        return res.status(401).json({ message: "Unauthorized" });
-      }
 
       const existingQuiz = await storage.getQuiz(req.params.id);
       
@@ -190,11 +178,8 @@ export function registerSQLiteRoutes(app: Express): Server {
   });
 
   // Delete quiz
-  app.delete("/api/quizzes/:id", async (req: any, res) => {
+  app.delete("/api/quizzes/:id", verifyJWT, async (req: any, res) => {
     try {
-      if (!req.user) {
-        return res.status(401).json({ message: "Unauthorized" });
-      }
 
       const existingQuiz = await storage.getQuiz(req.params.id);
       
