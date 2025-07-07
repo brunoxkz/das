@@ -1053,6 +1053,29 @@ export function registerSQLiteRoutes(app: Express): Server {
     }
   });
 
+  // SMS Credits endpoint  
+  app.get("/api/sms-credits", verifyJWT, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const user = await storage.getUser(userId);
+      
+      if (!user) {
+        return res.status(404).json({ error: "User not found" });
+      }
+      
+      const smsCredits = user.smsCredits || 0;
+      
+      res.json({
+        total: smsCredits,
+        used: 0, // Para compatibilidade, pode ser implementado depois
+        remaining: smsCredits
+      });
+    } catch (error) {
+      console.error("Error fetching SMS credits:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
   app.get("/api/health", (req, res) => {
     res.json({ 
       status: "ok", 

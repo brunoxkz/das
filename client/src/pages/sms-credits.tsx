@@ -107,7 +107,13 @@ export default function SMSCreditsPage() {
   const { data: campaigns, isLoading: campaignLoading } = useQuery<SMSCampaign[]>({
     queryKey: ["/api/sms-campaigns"],
     queryFn: async () => {
-      const response = await fetch("/api/sms-campaigns");
+      const token = localStorage.getItem("accessToken");
+      const response = await fetch("/api/sms-campaigns", {
+        headers: {
+          "Authorization": `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      });
       if (!response.ok) throw new Error("Failed to fetch SMS campaigns");
       return response.json();
     }
@@ -117,7 +123,13 @@ export default function SMSCreditsPage() {
   const { data: templates, isLoading: templatesLoading } = useQuery<SMSTemplate[]>({
     queryKey: ["/api/sms-templates"],
     queryFn: async () => {
-      const response = await fetch("/api/sms-templates");
+      const token = localStorage.getItem("accessToken");
+      const response = await fetch("/api/sms-templates", {
+        headers: {
+          "Authorization": `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      });
       if (!response.ok) throw new Error("Failed to fetch SMS templates");
       return response.json();
     }
