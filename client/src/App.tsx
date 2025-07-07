@@ -23,6 +23,7 @@ import SMSCreditsPage from "@/pages/sms-credits";
 import EmailMarketingPage from "@/pages/email-marketing";
 import WhatsAppRemarketingPage from "@/pages/whatsapp-remarketing";
 import CloakerPage from "@/pages/cloaker";
+import CampanhasPage from "@/pages/campanhas";
 import { useAuth } from "@/hooks/use-auth-hybrid";
 import { isUnauthorizedError } from "@/lib/authUtils";
 import { lazy } from "react";
@@ -134,6 +135,11 @@ function App() {
         <Route path="/sms-credits">
           <Layout>
             <SMSCreditsPage />
+          </Layout>
+        </Route>
+        <Route path="/campanhas">
+          <Layout>
+            <CampanhasPage />
           </Layout>
         </Route>
         <Route path="/email-marketing">

@@ -1,15 +1,12 @@
 import { db } from "./db-sqlite";
 import { 
   users, quizzes, quizTemplates, quizResponses, quizAnalytics, emailCampaigns, emailTemplates,
-  smsTransactions, smsCampaigns, smsTemplates,
   type User, type UpsertUser, type InsertQuiz, type Quiz,
   type InsertQuizTemplate, type QuizTemplate,
   type InsertQuizResponse, type QuizResponse,
   type InsertQuizAnalytics, type QuizAnalytics,
   type InsertEmailCampaign, type EmailCampaign,
-  type InsertEmailTemplate, type EmailTemplate,
-  type SmsTransaction, type SmsCampaign, type SmsTemplate,
-  type InsertSmsTransaction, type InsertSmsCampaign, type InsertSmsTemplate
+  type InsertEmailTemplate, type EmailTemplate
 } from "../shared/schema-sqlite";
 import { eq, desc, and, gte, lte, count } from "drizzle-orm";
 import { nanoid } from "nanoid";
@@ -70,20 +67,6 @@ export interface IStorage {
   // Email campaign sending operations
   getQuizResponsesForEmail(quizId: string, targetAudience: string): Promise<QuizResponse[]>;
   extractEmailsFromResponses(responses: QuizResponse[]): string[];
-
-  // SMS operations (simplified - no credits system)
-  
-  getSmsCampaigns(userId: string): Promise<SmsCampaign[]>;
-  getSmsCampaign(id: string): Promise<SmsCampaign | undefined>;
-  createSmsCampaign(campaign: InsertSmsCampaign): Promise<SmsCampaign>;
-  updateSmsCampaign(id: string, updates: Partial<InsertSmsCampaign>): Promise<SmsCampaign>;
-  deleteSmsCampaign(id: string): Promise<void>;
-
-  getSmsTemplates(userId: string): Promise<SmsTemplate[]>;
-  getSmsTemplate(id: string): Promise<SmsTemplate | undefined>;
-  createSmsTemplate(template: InsertSmsTemplate): Promise<SmsTemplate>;
-  updateSmsTemplate(id: string, updates: Partial<InsertSmsTemplate>): Promise<SmsTemplate>;
-  deleteSmsTemplate(id: string): Promise<void>;
 
   // JWT Auth methods
   getUserByEmail(email: string): Promise<User | null>;
@@ -662,164 +645,58 @@ export class SQLiteStorage implements IStorage {
     // Remover duplicatas
     return Array.from(new Set(emails));
   }
-
-  // SMS operations removed - credits system eliminated
+  // Métodos para SMS campaigns
+  async createSmsCampaign(campaign: InsertSmsCampaign): Promise<SmsCampaign> {
+    try {
+      const newCampaign = {
+        ...campaign,
+        id: crypto.randomUUID(),
+        createdAt: new Date(),
+        updatedAt: new Date()
+      };
+      
+      await this.db.insert(smsCampaigns).values(newCampaign);
+      return newCampaign as SmsCampaign;
+    } catch (error) {
+      console.error('Erro ao criar campanha SMS:', error);
+      throw error;
+    }
+  }
 
   async getSmsCampaigns(userId: string): Promise<SmsCampaign[]> {
     try {
-      const campaigns = await db
-        .select()
-        .from(smsCampaigns)
-        .where(eq(smsCampaigns.userId, userId))
-        .orderBy(desc(smsCampaigns.createdAt));
-
+      const campaigns = await this.db.select().from(smsCampaigns).where(eq(smsCampaigns.userId, userId));
       return campaigns;
     } catch (error) {
-      console.error('Error getting SMS campaigns:', error);
-      throw error;
+      console.error('Erro ao obter campanhas SMS:', error);
+      return [];
     }
   }
 
-  async getSmsCampaign(id: string): Promise<SmsCampaign | undefined> {
+  async updateSmsCampaign(id: string, updates: Partial<SmsCampaign>): Promise<SmsCampaign | null> {
     try {
-      const [campaign] = await db
-        .select()
-        .from(smsCampaigns)
-        .where(eq(smsCampaigns.id, id))
-        .limit(1);
-
-      return campaign;
+      const updatedCampaign = {
+        ...updates,
+        updatedAt: new Date()
+      };
+      
+      await this.db.update(smsCampaigns).set(updatedCampaign).where(eq(smsCampaigns.id, id));
+      
+      const campaign = await this.db.select().from(smsCampaigns).where(eq(smsCampaigns.id, id)).get();
+      return campaign || null;
     } catch (error) {
-      console.error('Error getting SMS campaign:', error);
-      throw error;
+      console.error('Erro ao atualizar campanha SMS:', error);
+      return null;
     }
   }
 
-  async createSmsCampaign(campaign: InsertSmsCampaign): Promise<SmsCampaign> {
+  async deleteSmsCampaign(id: string): Promise<boolean> {
     try {
-      const [newCampaign] = await db
-        .insert(smsCampaigns)
-        .values({
-          id: nanoid(),
-          ...campaign,
-          createdAt: new Date(),
-          updatedAt: new Date()
-        })
-        .returning();
-
-      return newCampaign;
+      await this.db.delete(smsCampaigns).where(eq(smsCampaigns.id, id));
+      return true;
     } catch (error) {
-      console.error('Error creating SMS campaign:', error);
-      throw error;
-    }
-  }
-
-  async updateSmsCampaign(id: string, updates: Partial<InsertSmsCampaign>): Promise<SmsCampaign> {
-    try {
-      const [updatedCampaign] = await db
-        .update(smsCampaigns)
-        .set({ ...updates, updatedAt: new Date() })
-        .where(eq(smsCampaigns.id, id))
-        .returning();
-
-      if (!updatedCampaign) {
-        throw new Error('SMS campaign not found');
-      }
-
-      return updatedCampaign;
-    } catch (error) {
-      console.error('Error updating SMS campaign:', error);
-      throw error;
-    }
-  }
-
-  async deleteSmsCampaign(id: string): Promise<void> {
-    try {
-      await db
-        .delete(smsCampaigns)
-        .where(eq(smsCampaigns.id, id));
-    } catch (error) {
-      console.error('Error deleting SMS campaign:', error);
-      throw error;
-    }
-  }
-
-  async getSmsTemplates(userId: string): Promise<SmsTemplate[]> {
-    try {
-      const templates = await db
-        .select()
-        .from(smsTemplates)
-        .where(eq(smsTemplates.userId, userId))
-        .orderBy(desc(smsTemplates.createdAt));
-
-      return templates;
-    } catch (error) {
-      console.error('Error getting SMS templates:', error);
-      throw error;
-    }
-  }
-
-  async getSmsTemplate(id: string): Promise<SmsTemplate | undefined> {
-    try {
-      const [template] = await db
-        .select()
-        .from(smsTemplates)
-        .where(eq(smsTemplates.id, id))
-        .limit(1);
-
-      return template;
-    } catch (error) {
-      console.error('Error getting SMS template:', error);
-      throw error;
-    }
-  }
-
-  async createSmsTemplate(template: InsertSmsTemplate): Promise<SmsTemplate> {
-    try {
-      const [newTemplate] = await db
-        .insert(smsTemplates)
-        .values({
-          id: nanoid(),
-          ...template,
-          createdAt: new Date(),
-          updatedAt: new Date()
-        })
-        .returning();
-
-      return newTemplate;
-    } catch (error) {
-      console.error('Error creating SMS template:', error);
-      throw error;
-    }
-  }
-
-  async updateSmsTemplate(id: string, updates: Partial<InsertSmsTemplate>): Promise<SmsTemplate> {
-    try {
-      const [updatedTemplate] = await db
-        .update(smsTemplates)
-        .set({ ...updates, updatedAt: new Date() })
-        .where(eq(smsTemplates.id, id))
-        .returning();
-
-      if (!updatedTemplate) {
-        throw new Error('SMS template not found');
-      }
-
-      return updatedTemplate;
-    } catch (error) {
-      console.error('Error updating SMS template:', error);
-      throw error;
-    }
-  }
-
-  async deleteSmsTemplate(id: string): Promise<void> {
-    try {
-      await db
-        .delete(smsTemplates)
-        .where(eq(smsTemplates.id, id));
-    } catch (error) {
-      console.error('Error deleting SMS template:', error);
-      throw error;
+      console.error('Erro ao deletar campanha SMS:', error);
+      return false;
     }
   }
 }

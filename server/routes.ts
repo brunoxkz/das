@@ -418,11 +418,36 @@ export function registerRoutes(app: Express): Server {
             const subscriptionId = session.subscription;
             const metadata = session.metadata;
 
-            // Compra de plano
-            const users = await storage.getAllUsers();
-            const user = users.find(u => u.stripeCustomerId === customerId);
+            if (metadata && metadata.type === "sms_credits") {
+              // Compra de créditos SMS
+              const userId = metadata.userId;
+              const credits = parseFloat(metadata.credits);
+              
+              // Adicionar créditos ao usuário
+              const user = await storage.getUser(userId);
+              if (user) {
+                const currentCredits = parseFloat(user.smsCredits || "0");
+                const newBalance = currentCredits + credits;
+                
+                await storage.updateUserSmsCredits(userId, newBalance);
+                
+                // Registrar transação
+                await storage.createSmsTransaction({
+                  userId,
+                  type: "purchase",
+                  amount: credits,
+                  balance: newBalance,
+                  description: `Compra de ${credits} créditos SMS`,
+                  smsCount: 0,
+                  costPerSms: 0
+                });
+              }
+            } else {
+              // Compra de plano (código existente)
+              const users = await storage.getAllUsers();
+              const user = users.find(u => u.stripeCustomerId === customerId);
 
-            if (user) {
+              if (user) {
                 await storage.updateUserStripeInfo(user.id, customerId, subscriptionId);
                 await storage.updateUserPlan(user.id, "plus", "active");
               }

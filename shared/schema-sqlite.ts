@@ -106,23 +106,18 @@ export const smsCampaigns = sqliteTable("sms_campaigns", {
   message: text("message").notNull(),
   quizId: text("quizId").notNull().references(() => quizzes.id, { onDelete: "cascade" }),
   userId: text("userId").notNull().references(() => users.id, { onDelete: "cascade" }),
-  status: text("status").default("draft"), // draft, active, completed, paused
-  targetAudience: text("targetAudience").default("all"), // all, completed, abandoned
-  scheduledAt: integer("scheduledAt", { mode: 'timestamp' }),
+  status: text("status").default("draft"), // draft, active, paused, completed
+  triggerType: text("triggerType").default("immediate"), // immediate, delayed
+  triggerDelay: integer("triggerDelay").default(0),
+  triggerUnit: text("triggerUnit").default("hours"), // minutes, hours, days
+  targetAudience: text("targetAudience").default("completed"), // all, completed, abandoned
+  scheduledDate: text("scheduledDate"),
   sent: integer("sent").default(0),
   delivered: integer("delivered").default(0),
-  failed: integer("failed").default(0),
-  createdAt: integer("createdAt", { mode: 'timestamp' }).notNull().$defaultFn(() => new Date()),
-  updatedAt: integer("updatedAt", { mode: 'timestamp' }).notNull().$defaultFn(() => new Date()),
-});
-
-export const smsTemplates = sqliteTable("sms_templates", {
-  id: text("id").primaryKey(),
-  name: text("name").notNull(),
-  content: text("content").notNull(),
-  category: text("category").notNull(), // welcome, follow_up, promotion, reminder
-  variables: text("variables", { mode: 'json' }).default("[]"),
-  userId: text("userId").notNull().references(() => users.id, { onDelete: "cascade" }),
+  opened: integer("opened").default(0),
+  clicked: integer("clicked").default(0),
+  replies: integer("replies").default(0),
+  estimatedReach: integer("estimatedReach").default(0),
   createdAt: integer("createdAt", { mode: 'timestamp' }).notNull().$defaultFn(() => new Date()),
   updatedAt: integer("updatedAt", { mode: 'timestamp' }).notNull().$defaultFn(() => new Date()),
 });
@@ -167,14 +162,7 @@ export const insertEmailTemplateSchema = createInsertSchema(emailTemplates).omit
   updatedAt: true,
 });
 
-// SMS related schemas
 export const insertSmsCampaignSchema = createInsertSchema(smsCampaigns).omit({
-  id: true,
-  createdAt: true,
-  updatedAt: true,
-});
-
-export const insertSmsTemplateSchema = createInsertSchema(smsTemplates).omit({
   id: true,
   createdAt: true,
   updatedAt: true,
@@ -195,9 +183,5 @@ export type InsertEmailCampaign = z.infer<typeof insertEmailCampaignSchema>;
 export type EmailCampaign = typeof emailCampaigns.$inferSelect;
 export type InsertEmailTemplate = z.infer<typeof insertEmailTemplateSchema>;
 export type EmailTemplate = typeof emailTemplates.$inferSelect;
-
-// SMS types
 export type InsertSmsCampaign = z.infer<typeof insertSmsCampaignSchema>;
 export type SmsCampaign = typeof smsCampaigns.$inferSelect;
-export type InsertSmsTemplate = z.infer<typeof insertSmsTemplateSchema>;
-export type SmsTemplate = typeof smsTemplates.$inferSelect;
