@@ -108,6 +108,7 @@ export class SQLiteStorage implements IStorage {
         if (admin) {
           await this.updateUserRole(admin.id, 'admin');
           await this.updateUserPlan(admin.id, 'enterprise');
+          await this.updateUserSmsCredits(admin.id, 100);
           
           // Criar quizzes de exemplo para testar o cloaker
           await this.createExampleQuizzes(admin.id);

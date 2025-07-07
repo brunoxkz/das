@@ -14,6 +14,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Progress } from "@/components/ui/progress";
 import { useToast } from "@/hooks/use-toast";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useLocation } from "wouter";
 
 interface SMSCredits {
   total: number;
@@ -49,6 +50,7 @@ interface SMSTemplate {
 export default function SMSCreditsPage() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const [, setLocation] = useLocation();
   const [activeTab, setActiveTab] = useState("overview");
   const [selectedQuiz, setSelectedQuiz] = useState<string>("");
   const [campaignForm, setCampaignForm] = useState<{
@@ -194,6 +196,8 @@ export default function SMSCreditsPage() {
         triggerDelay: 1,
         triggerUnit: "hours",
       });
+      // Redirecionar para a aba de campanhas
+      setActiveTab("campaigns");
     },
     onError: (error) => {
       console.error("Mutation error:", error);
