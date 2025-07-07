@@ -526,9 +526,32 @@ export default function SMSCreditsPage() {
                         <p className="text-sm text-gray-600">{campaign.quizTitle}</p>
                       </div>
                     </div>
-                    <div className="text-right">
-                      <p className="text-sm font-medium">{campaign.sent} enviados</p>
-                      <p className="text-xs text-gray-600">{campaign.delivered} entregues</p>
+                    <div className="flex items-center gap-3">
+                      <div className="text-right">
+                        <p className="text-sm font-medium">{campaign.sent} enviados</p>
+                        <p className="text-xs text-gray-600">{campaign.delivered} entregues</p>
+                      </div>
+                      {/* Botões de controle */}
+                      <div className="flex gap-2">
+                        {campaign.status === 'active' && (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => handlePauseCampaign(campaign.id)}
+                            className="text-yellow-600 border-yellow-300 hover:bg-yellow-50"
+                          >
+                            <Pause className="w-4 h-4" />
+                          </Button>
+                        )}
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => handleDeleteCampaign(campaign.id)}
+                          className="text-red-600 border-red-300 hover:bg-red-50"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      </div>
                     </div>
                   </div>
                 ))}
