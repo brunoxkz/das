@@ -49,6 +49,7 @@ interface SMSTemplate {
 export default function SMSCreditsPage() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { user } = useAuth();
   const [activeTab, setActiveTab] = useState("overview");
   const [selectedQuiz, setSelectedQuiz] = useState<string>("");
   const [campaignForm, setCampaignForm] = useState<{
@@ -140,10 +141,13 @@ export default function SMSCreditsPage() {
           "Content-Type": "application/json",
         },
       });
-      if (!response.ok) throw new Error("Failed to fetch quiz phones");
+      if (!response.ok) {
+        console.error(`Failed to fetch quiz phones: ${response.status}`);
+        throw new Error("Failed to fetch quiz phones");
+      }
       return response.json();
     },
-    enabled: !!campaignForm.quizId
+    enabled: !!campaignForm.quizId && !!user
   });
 
   // Purchase SMS credits mutation
