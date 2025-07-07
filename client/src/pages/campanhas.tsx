@@ -208,8 +208,14 @@ export default function CampanhasPage() {
 
         {/* Phones Tab */}
         <TabsContent value="phones" className="space-y-6">
-          <div className="flex flex-col lg:flex-row gap-4">
-            <div className="flex-1">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Phone className="w-5 h-5 text-green-600" />
+                Selecionar Funil
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
               <Select value={selectedQuiz} onValueChange={setSelectedQuiz}>
                 <SelectTrigger>
                   <SelectValue placeholder="Selecione um quiz para ver os telefones" />
@@ -222,32 +228,15 @@ export default function CampanhasPage() {
                   ))}
                 </SelectContent>
               </Select>
-            </div>
-            
-            {selectedQuiz && (
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                <Input
-                  placeholder="Buscar por telefone ou nome..."
-                  value={phoneSearch}
-                  onChange={(e) => setPhoneSearch(e.target.value)}
-                  className="pl-10 w-full lg:w-80"
-                />
-              </div>
-            )}
-          </div>
+            </CardContent>
+          </Card>
 
           {selectedQuiz && (
             <Card>
               <CardHeader>
-                <CardTitle className="flex items-center justify-between">
-                  <span className="flex items-center gap-2">
-                    <Phone className="w-5 h-5 text-green-600" />
-                    Telefones Capturados
-                  </span>
-                  <Badge variant="outline">
-                    {filteredPhones.length} contatos
-                  </Badge>
+                <CardTitle className="flex items-center gap-2">
+                  <Phone className="w-5 h-5 text-green-600" />
+                  Telefones ({filteredPhones.length} encontrados)
                 </CardTitle>
               </CardHeader>
               <CardContent>
@@ -262,44 +251,20 @@ export default function CampanhasPage() {
                       Nenhum telefone encontrado
                     </h3>
                     <p className="text-gray-600">
-                      {selectedQuiz 
-                        ? "Este quiz ainda não capturou nenhum telefone ou não há campos de telefone configurados."
-                        : "Selecione um quiz para ver os telefones capturados."
-                      }
+                      Este quiz ainda não capturou nenhum telefone.
                     </p>
                   </div>
                 ) : (
-                  <div className="space-y-3">
+                  <div className="space-y-2">
                     {filteredPhones.map((contact: PhoneContact, index: number) => (
-                      <div key={index} className="flex items-center justify-between p-4 border rounded-lg">
-                        <div className="flex items-center gap-3">
-                          <div className="bg-green-100 text-green-600 rounded-full w-10 h-10 flex items-center justify-center">
-                            <Phone className="w-4 h-4" />
-                          </div>
-                          <div>
-                            <p className="font-medium text-gray-900">
-                              {contact.phone}
-                            </p>
-                            {contact.name && (
-                              <p className="text-sm text-gray-600">
-                                {contact.name}
-                              </p>
-                            )}
-                            {contact.email && (
-                              <p className="text-sm text-gray-500">
-                                {contact.email}
-                              </p>
-                            )}
-                          </div>
+                      <div key={index} className="flex items-center justify-between p-3 border rounded">
+                        <div>
+                          <p className="font-medium">{contact.phone}</p>
+                          {contact.name && <p className="text-sm text-gray-600">{contact.name}</p>}
                         </div>
-                        <div className="text-right">
-                          <Badge variant={contact.status === 'completed' ? 'default' : 'secondary'}>
-                            {contact.status === 'completed' ? 'Completo' : 'Abandonado'}
-                          </Badge>
-                          <p className="text-xs text-gray-500 mt-1">
-                            {new Date(contact.lastActivity).toLocaleDateString('pt-BR')}
-                          </p>
-                        </div>
+                        <Badge variant={contact.status === 'completed' ? 'default' : 'secondary'}>
+                          {contact.status === 'completed' ? 'Completo' : 'Abandonado'}
+                        </Badge>
                       </div>
                     ))}
                   </div>
