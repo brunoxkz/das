@@ -77,7 +77,13 @@ export default function SMSCreditsPage() {
   const { data: smsCredits, isLoading: creditsLoading } = useQuery<SMSCredits>({
     queryKey: ["/api/sms-credits"],
     queryFn: async () => {
-      const response = await fetch("/api/sms-credits");
+      const token = localStorage.getItem("accessToken");
+      const response = await fetch("/api/sms-credits", {
+        headers: {
+          "Authorization": `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      });
       if (!response.ok) throw new Error("Failed to fetch SMS credits");
       return response.json();
     }
