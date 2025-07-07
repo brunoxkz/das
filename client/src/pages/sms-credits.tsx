@@ -72,7 +72,8 @@ export default function SMSCreditsPage() {
     triggerType: "immediate",
     triggerDelay: 1,
     triggerUnit: "hours",
-    fromDate: ""
+    fromDate: "",
+    scheduledDateTime: ""
   });
   const [selectedQuizForPhones, setSelectedQuizForPhones] = useState("");
   const [phoneSearch, setPhoneSearch] = useState("");
