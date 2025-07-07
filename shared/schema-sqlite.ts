@@ -100,6 +100,33 @@ export const emailTemplates = sqliteTable("email_templates", {
   updatedAt: integer("updatedAt", { mode: 'timestamp' }).notNull().$defaultFn(() => new Date()),
 });
 
+export const smsCampaigns = sqliteTable("sms_campaigns", {
+  id: text("id").primaryKey(),
+  name: text("name").notNull(),
+  message: text("message").notNull(),
+  quizId: text("quizId").notNull().references(() => quizzes.id, { onDelete: "cascade" }),
+  userId: text("userId").notNull().references(() => users.id, { onDelete: "cascade" }),
+  status: text("status").default("draft"), // draft, active, completed, paused
+  targetAudience: text("targetAudience").default("all"), // all, completed, abandoned
+  scheduledAt: integer("scheduledAt", { mode: 'timestamp' }),
+  sent: integer("sent").default(0),
+  delivered: integer("delivered").default(0),
+  failed: integer("failed").default(0),
+  createdAt: integer("createdAt", { mode: 'timestamp' }).notNull().$defaultFn(() => new Date()),
+  updatedAt: integer("updatedAt", { mode: 'timestamp' }).notNull().$defaultFn(() => new Date()),
+});
+
+export const smsTemplates = sqliteTable("sms_templates", {
+  id: text("id").primaryKey(),
+  name: text("name").notNull(),
+  content: text("content").notNull(),
+  category: text("category").notNull(), // welcome, follow_up, promotion, reminder
+  variables: text("variables", { mode: 'json' }).default("[]"),
+  userId: text("userId").notNull().references(() => users.id, { onDelete: "cascade" }),
+  createdAt: integer("createdAt", { mode: 'timestamp' }).notNull().$defaultFn(() => new Date()),
+  updatedAt: integer("updatedAt", { mode: 'timestamp' }).notNull().$defaultFn(() => new Date()),
+});
+
 // Schemas para validação
 export const insertUserSchema = createInsertSchema(users).omit({
   id: true,
@@ -140,6 +167,19 @@ export const insertEmailTemplateSchema = createInsertSchema(emailTemplates).omit
   updatedAt: true,
 });
 
+// SMS related schemas
+export const insertSmsCampaignSchema = createInsertSchema(smsCampaigns).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertSmsTemplateSchema = createInsertSchema(smsTemplates).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
 // Tipos TypeScript
 export type User = typeof users.$inferSelect;
 export type UpsertUser = z.infer<typeof insertUserSchema>;
@@ -155,3 +195,9 @@ export type InsertEmailCampaign = z.infer<typeof insertEmailCampaignSchema>;
 export type EmailCampaign = typeof emailCampaigns.$inferSelect;
 export type InsertEmailTemplate = z.infer<typeof insertEmailTemplateSchema>;
 export type EmailTemplate = typeof emailTemplates.$inferSelect;
+
+// SMS types
+export type InsertSmsCampaign = z.infer<typeof insertSmsCampaignSchema>;
+export type SmsCampaign = typeof smsCampaigns.$inferSelect;
+export type InsertSmsTemplate = z.infer<typeof insertSmsTemplateSchema>;
+export type SmsTemplate = typeof smsTemplates.$inferSelect;
