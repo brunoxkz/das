@@ -5,7 +5,7 @@ import { cache } from "./cache";
 import { nanoid } from "nanoid";
 import { insertQuizSchema, insertQuizResponseSchema } from "../shared/schema-sqlite";
 import { verifyJWT } from "./auth-sqlite";
-import { sendSms as sendSMS } from "./twilio";
+import { sendSms } from "./twilio";
 
 export function registerSQLiteRoutes(app: Express): Server {
   // Public routes BEFORE any middleware or authentication
@@ -1276,6 +1276,10 @@ export function registerSQLiteRoutes(app: Express): Server {
 
       console.log("📱 TELEFONES EXTRAÍDOS:", phones.length);
 
+      // Determinar status inicial baseado no triggerType
+      const { triggerType = 'immediate' } = req.body;
+      const initialStatus = triggerType === 'immediate' ? 'active' : 'draft';
+      
       const campaign = await storage.createSMSCampaign({
         id: nanoid(),
         userId,
@@ -1283,12 +1287,54 @@ export function registerSQLiteRoutes(app: Express): Server {
         quizId,
         message,
         phones: JSON.stringify(phones),
-        status: 'draft',
+        status: initialStatus,
         createdAt: new Date(),
         updatedAt: new Date()
       });
 
-      res.json(campaign);
+      // Se for envio imediato, enviar SMS automaticamente
+      if (triggerType === 'immediate' && phones.length > 0) {
+        console.log(`📱 ENVIO AUTOMÁTICO - Iniciando envio para ${phones.length} telefones`);
+        
+        let successCount = 0;
+        let failureCount = 0;
+        
+        for (const phone of phones) {
+          try {
+            const phoneNumber = phone.telefone || phone.phone || phone;
+            if (!phoneNumber) continue;
+
+            const success = await sendSms(phoneNumber, message);
+            
+            if (success) {
+              successCount++;
+              console.log(`📱 SMS ENVIADO com sucesso para: ${phoneNumber}`);
+            } else {
+              failureCount++;
+              console.log(`📱 ERRO no envio para: ${phoneNumber}`);
+            }
+          } catch (error) {
+            failureCount++;
+            console.log(`📱 ERRO no envio:`, error);
+          }
+        }
+        
+        // Atualizar estatísticas da campanha
+        await storage.updateSMSCampaign(campaign.id, {
+          sent: successCount,
+          delivered: successCount, // Assumindo que SMS enviado = entregue
+          status: 'active',
+          updatedAt: new Date()
+        });
+        
+        console.log(`📱 RESULTADO FINAL: ${successCount} enviados, ${failureCount} falhas`);
+        
+        // Retornar campanha com estatísticas atualizadas
+        const updatedCampaign = await storage.getSMSCampaignById(campaign.id);
+        res.json(updatedCampaign);
+      } else {
+        res.json(campaign);
+      }
     } catch (error) {
       console.error("Error creating SMS campaign:", error);
       res.status(500).json({ error: "Error creating SMS campaign" });

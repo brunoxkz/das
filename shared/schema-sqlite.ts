@@ -85,6 +85,11 @@ export const smsCampaigns = sqliteTable("sms_campaigns", {
   message: text("message").notNull(),
   phones: text("phones", { mode: 'json' }).notNull(), // Array of phone numbers stored as JSON
   status: text("status").default("pending"), // pending, active, paused, completed
+  sent: integer("sent").default(0),
+  delivered: integer("delivered").default(0),
+  opened: integer("opened").default(0),
+  clicked: integer("clicked").default(0),
+  replies: integer("replies").default(0),
   createdAt: integer("createdAt").notNull().$defaultFn(() => Math.floor(Date.now() / 1000)),
   updatedAt: integer("updatedAt").notNull().$defaultFn(() => Math.floor(Date.now() / 1000)),
 });

@@ -203,9 +203,15 @@ export default function SMSCreditsPage() {
     onSuccess: (data) => {
       console.log("Campaign created successfully:", data);
       queryClient.invalidateQueries({ queryKey: ["/api/sms-campaigns"] });
+      
+      const sentCount = data.sent || 0;
+      const description = sentCount > 0 
+        ? `Campanha criada e ${sentCount} SMS enviados automaticamente!`
+        : "Campanha criada com sucesso!";
+      
       toast({
         title: "Campanha SMS Criada",
-        description: "Sua campanha foi criada com sucesso!"
+        description
       });
       setCampaignForm({
         name: "",
@@ -564,8 +570,13 @@ export default function SMSCreditsPage() {
                     </div>
                     <div className="flex items-center gap-3">
                       <div className="text-right">
-                        <p className="text-sm font-medium">{campaign.sent} enviados</p>
-                        <p className="text-xs text-gray-600">{campaign.delivered} entregues</p>
+                        <p className="text-sm font-medium">{campaign.sent || 0} enviados</p>
+                        <p className="text-xs text-gray-600">
+                          {campaign.status === 'active' && (campaign.sent || 0) === 0 
+                            ? 'Processando...' 
+                            : `${campaign.delivered || 0} entregues`
+                          }
+                        </p>
                       </div>
                       {/* Botões de controle */}
                       <div className="flex gap-2">
