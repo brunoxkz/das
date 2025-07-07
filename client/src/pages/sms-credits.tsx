@@ -212,8 +212,12 @@ export default function SMSCreditsPage() {
   // Send SMS campaign mutation
   const sendCampaignMutation = useMutation({
     mutationFn: async (campaignId: string) => {
+      const token = localStorage.getItem("accessToken");
       const response = await fetch(`/api/sms-campaigns/${campaignId}/send`, {
-        method: "POST"
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${token}`
+        }
       });
       if (!response.ok) throw new Error("Failed to send campaign");
       return response.json();
@@ -229,6 +233,16 @@ export default function SMSCreditsPage() {
   });
 
   const handleCreateCampaign = () => {
+    console.log("🔍 VALORES DO FORMULÁRIO:", {
+      message: campaignForm.message,
+      quizId: campaignForm.quizId,
+      targetAudience: campaignForm.targetAudience,
+      messageLength: campaignForm.message?.length,
+      messageEmpty: !campaignForm.message,
+      quizIdEmpty: !campaignForm.quizId,
+      targetAudienceEmpty: !campaignForm.targetAudience
+    });
+    
     if (!campaignForm.message || !campaignForm.quizId || !campaignForm.targetAudience) {
       toast({
         title: "Erro",
