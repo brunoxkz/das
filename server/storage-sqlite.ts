@@ -805,13 +805,24 @@ export class SQLiteStorage implements IStorage {
         }
       });
       
-      return {
+      const result = {
         ...campaign,
         phones: JSON.parse(campaign.phones || '[]'),
         extensionSettings: JSON.parse(campaign.extension_settings || '{}'),
         messages: JSON.parse(campaign.messages || '[]'),
-        ...stats
+        ...stats,
+        quizId: campaign.quiz_id // Mapear quiz_id para quizId
       };
+      
+      // Debug: verificar se quizId foi perdido
+      if (!result.quizId && campaign.quiz_id) {
+        console.log(`🚨 DEBUG: quizId perdido para campanha ${campaign.id}`);
+        console.log(`   campaign.quiz_id: ${campaign.quiz_id}`);
+        console.log(`   stats:`, Object.keys(stats));
+        result.quizId = campaign.quiz_id; // forçar o valor
+      }
+      
+      return result;
     });
   }
 
@@ -932,6 +943,7 @@ export class SQLiteStorage implements IStorage {
       
       return campaigns.map(campaign => ({
         ...campaign,
+        quizId: campaign.quiz_id, // Mapear quiz_id para quizId
         messages: JSON.parse(campaign.messages || '[]'),
         phones: JSON.parse(campaign.phones || '[]')
       }));

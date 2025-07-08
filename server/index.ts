@@ -285,10 +285,9 @@ app.use((req, res, next) => {
         
         try {
           // Verificar se quizId é válido antes de continuar
-          if (!campaign.quizId || campaign.quizId === 'NULL' || campaign.quizId === 'teste-manual') {
-            console.log(`⚠️ CAMPANHA ${campaign.name}: quiz_id inválido (${campaign.quizId}), usando logs existentes apenas`);
-            const existingLogs = await storage.getWhatsappLogs(campaign.id);
-            continue; // Pular para próxima campanha
+          if (!campaign.quizId || campaign.quizId === 'NULL' || campaign.quizId === 'undefined' || campaign.quizId === null) {
+            console.log(`⚠️ CAMPANHA ${campaign.name}: quiz_id inválido (${campaign.quizId}), pulando detecção automática`);
+            continue; // Pular para próxima campanha sem processar logs
           }
           
           // Buscar dados necessários em paralelo
