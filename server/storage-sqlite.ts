@@ -1629,6 +1629,46 @@ export class SQLiteStorage implements IStorage {
     }
   }
 
+  async getWhatsAppAutomationFiles(userId: string): Promise<any[]> {
+    try {
+      const stmt = sqlite.prepare(`
+        SELECT * FROM whatsapp_automation_files 
+        WHERE user_id = ?
+        ORDER BY created_at DESC
+      `);
+      
+      const files = stmt.all(userId);
+      
+      return files.map(file => ({
+        ...file,
+        phones: JSON.parse(file.phones || '[]')
+      }));
+    } catch (error) {
+      console.log('Tabela de arquivos de automação ainda não foi criada');
+      return [];
+    }
+  }
+
+  async getWhatsAppAutomationFile(fileId: string): Promise<any | null> {
+    try {
+      const stmt = sqlite.prepare(`
+        SELECT * FROM whatsapp_automation_files 
+        WHERE id = ?
+      `);
+      
+      const file = stmt.get(fileId);
+      if (!file) return null;
+
+      return {
+        ...file,
+        phones: JSON.parse(file.phones || '[]')
+      };
+    } catch (error) {
+      console.log('Tabela de arquivos de automação ainda não foi criada');
+      return null;
+    }
+  }
+
   async deleteAutomationFile(fileId: string): Promise<void> {
     const stmt = sqlite.prepare(`
       DELETE FROM whatsapp_automation_files WHERE id = ?

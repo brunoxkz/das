@@ -1,0 +1,308 @@
+/* Estilos para a extensão Vendzz WhatsApp Automation v2.0 */
+
+.vendzz-sidebar {
+  position: fixed;
+  top: 0;
+  right: 0;
+  width: 320px;
+  height: 100vh;
+  background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+  border-left: 2px solid #00ff88;
+  box-shadow: -4px 0 20px rgba(0, 255, 136, 0.1);
+  z-index: 999999;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  color: #ffffff;
+  overflow-y: auto;
+  transition: transform 0.3s ease;
+}
+
+.vendzz-sidebar.minimized {
+  transform: translateX(280px);
+}
+
+.vendzz-sidebar.minimized .vendzz-content {
+  display: none;
+}
+
+.vendzz-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  background: rgba(0, 255, 136, 0.1);
+  border-bottom: 1px solid rgba(0, 255, 136, 0.2);
+}
+
+.vendzz-logo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.vendzz-icon {
+  font-size: 20px;
+}
+
+.vendzz-title {
+  font-weight: 600;
+  font-size: 14px;
+  color: #00ff88;
+}
+
+.vendzz-btn-icon {
+  background: rgba(0, 255, 136, 0.2);
+  border: 1px solid rgba(0, 255, 136, 0.3);
+  border-radius: 4px;
+  color: #ffffff;
+  cursor: pointer;
+  font-size: 16px;
+  padding: 4px 8px;
+  transition: all 0.2s ease;
+}
+
+.vendzz-btn-icon:hover {
+  background: rgba(0, 255, 136, 0.3);
+}
+
+.vendzz-content {
+  padding: 16px;
+  height: calc(100vh - 60px);
+  overflow-y: auto;
+}
+
+.vendzz-section {
+  margin-bottom: 20px;
+  padding: 12px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.vendzz-section h3 {
+  margin: 0 0 12px 0;
+  font-size: 13px;
+  font-weight: 600;
+  color: #00ff88;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.vendzz-config {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.vendzz-input {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 4px;
+  color: #ffffff;
+  font-size: 12px;
+  padding: 8px 10px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.vendzz-input::placeholder {
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.vendzz-input:focus {
+  outline: none;
+  border-color: #00ff88;
+  box-shadow: 0 0 0 2px rgba(0, 255, 136, 0.2);
+}
+
+.vendzz-btn {
+  background: linear-gradient(135deg, #00ff88 0%, #00cc6a 100%);
+  border: none;
+  border-radius: 4px;
+  color: #000000;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 8px 12px;
+  transition: all 0.2s ease;
+  text-transform: uppercase;
+}
+
+.vendzz-btn:hover {
+  background: linear-gradient(135deg, #00cc6a 0%, #00ff88 100%);
+  transform: translateY(-1px);
+}
+
+.vendzz-btn-small {
+  background: rgba(0, 255, 136, 0.2);
+  border: 1px solid rgba(0, 255, 136, 0.3);
+  border-radius: 4px;
+  color: #ffffff;
+  cursor: pointer;
+  font-size: 12px;
+  padding: 6px 8px;
+  transition: all 0.2s ease;
+}
+
+.vendzz-btn-small:hover {
+  background: rgba(0, 255, 136, 0.3);
+}
+
+.vendzz-file-selector {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.vendzz-select {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 4px;
+  color: #ffffff;
+  font-size: 12px;
+  padding: 6px 8px;
+  flex: 1;
+}
+
+.vendzz-select option {
+  background: #2d2d2d;
+  color: #ffffff;
+}
+
+.vendzz-contact-list {
+  max-height: 200px;
+  overflow-y: auto;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+}
+
+.vendzz-contact-item {
+  padding: 8px 10px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  font-size: 11px;
+}
+
+.vendzz-contact-item:last-child {
+  border-bottom: none;
+}
+
+.vendzz-contact-phone {
+  font-family: 'Courier New', monospace;
+  font-weight: 600;
+  color: #ffffff;
+  margin-bottom: 4px;
+}
+
+.vendzz-contact-status {
+  font-size: 10px;
+  padding: 2px 6px;
+  border-radius: 3px;
+  display: inline-block;
+}
+
+.vendzz-contact-status.completed {
+  background: rgba(0, 255, 136, 0.2);
+  color: #00ff88;
+}
+
+.vendzz-contact-status.abandoned {
+  background: rgba(255, 165, 0, 0.2);
+  color: #ffa500;
+}
+
+.vendzz-status {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.vendzz-status-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 11px;
+}
+
+.vendzz-status-label {
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.vendzz-status-value {
+  font-weight: 600;
+}
+
+.vendzz-status-value.connected {
+  color: #00ff88;
+}
+
+.vendzz-status-value.error {
+  color: #ff4444;
+}
+
+.vendzz-log {
+  max-height: 120px;
+  overflow-y: auto;
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 4px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.vendzz-log-item {
+  padding: 4px 8px;
+  font-size: 10px;
+  color: rgba(255, 255, 255, 0.8);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  font-family: 'Courier New', monospace;
+}
+
+.vendzz-log-item:last-child {
+  border-bottom: none;
+}
+
+/* Responsividade */
+@media (max-width: 1200px) {
+  .vendzz-sidebar {
+    width: 280px;
+  }
+}
+
+@media (max-width: 900px) {
+  .vendzz-sidebar {
+    width: 260px;
+    font-size: 11px;
+  }
+  
+  .vendzz-content {
+    padding: 12px;
+  }
+  
+  .vendzz-section {
+    padding: 8px;
+  }
+}
+
+/* Scrollbar customizada */
+.vendzz-sidebar::-webkit-scrollbar,
+.vendzz-contact-list::-webkit-scrollbar,
+.vendzz-log::-webkit-scrollbar {
+  width: 6px;
+}
+
+.vendzz-sidebar::-webkit-scrollbar-track,
+.vendzz-contact-list::-webkit-scrollbar-track,
+.vendzz-log::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.vendzz-sidebar::-webkit-scrollbar-thumb,
+.vendzz-contact-list::-webkit-scrollbar-thumb,
+.vendzz-log::-webkit-scrollbar-thumb {
+  background: rgba(0, 255, 136, 0.3);
+  border-radius: 3px;
+}
+
+.vendzz-sidebar::-webkit-scrollbar-thumb:hover,
+.vendzz-contact-list::-webkit-scrollbar-thumb:hover,
+.vendzz-log::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 255, 136, 0.5);
+}

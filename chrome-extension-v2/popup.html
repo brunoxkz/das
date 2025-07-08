@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Vendzz WhatsApp Automation</title>
+  <style>
+    body {
+      width: 350px;
+      min-height: 400px;
+      margin: 0;
+      padding: 0;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+      color: #ffffff;
+    }
+
+    .header {
+      background: rgba(0, 255, 136, 0.1);
+      padding: 16px;
+      border-bottom: 1px solid rgba(0, 255, 136, 0.2);
+      text-align: center;
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+
+    .logo-icon {
+      font-size: 24px;
+    }
+
+    .logo-text {
+      font-size: 16px;
+      font-weight: 600;
+      color: #00ff88;
+    }
+
+    .subtitle {
+      font-size: 12px;
+      color: rgba(255, 255, 255, 0.7);
+    }
+
+    .content {
+      padding: 16px;
+    }
+
+    .section {
+      margin-bottom: 20px;
+      padding: 12px;
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 8px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .section-title {
+      font-size: 13px;
+      font-weight: 600;
+      color: #00ff88;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .status-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+      font-size: 12px;
+    }
+
+    .status-label {
+      color: rgba(255, 255, 255, 0.7);
+    }
+
+    .status-value {
+      font-weight: 600;
+    }
+
+    .status-connected {
+      color: #00ff88;
+    }
+
+    .status-error {
+      color: #ff4444;
+    }
+
+    .btn {
+      background: linear-gradient(135deg, #00ff88 0%, #00cc6a 100%);
+      border: none;
+      border-radius: 4px;
+      color: #000000;
+      cursor: pointer;
+      font-size: 12px;
+      font-weight: 600;
+      padding: 10px 16px;
+      width: 100%;
+      margin-bottom: 8px;
+      transition: all 0.2s ease;
+      text-transform: uppercase;
+    }
+
+    .btn:hover {
+      background: linear-gradient(135deg, #00cc6a 0%, #00ff88 100%);
+      transform: translateY(-1px);
+    }
+
+    .btn-secondary {
+      background: rgba(0, 255, 136, 0.2);
+      color: #ffffff;
+      border: 1px solid rgba(0, 255, 136, 0.3);
+    }
+
+    .btn-secondary:hover {
+      background: rgba(0, 255, 136, 0.3);
+    }
+
+    .instructions {
+      background: rgba(0, 255, 136, 0.1);
+      border: 1px solid rgba(0, 255, 136, 0.2);
+      border-radius: 6px;
+      padding: 12px;
+      font-size: 11px;
+      line-height: 1.4;
+    }
+
+    .instructions-title {
+      font-weight: 600;
+      color: #00ff88;
+      margin-bottom: 8px;
+    }
+
+    .instructions ol {
+      margin: 0;
+      padding-left: 16px;
+    }
+
+    .instructions li {
+      margin-bottom: 4px;
+    }
+
+    .loading {
+      text-align: center;
+      padding: 20px;
+      color: rgba(255, 255, 255, 0.7);
+    }
+
+    .spinner {
+      display: inline-block;
+      width: 20px;
+      height: 20px;
+      border: 2px solid rgba(0, 255, 136, 0.3);
+      border-radius: 50%;
+      border-top-color: #00ff88;
+      animation: spin 1s ease-in-out infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div class="logo">
+      <span class="logo-icon">🤖</span>
+      <span class="logo-text">Vendzz Automation</span>
+    </div>
+    <div class="subtitle">WhatsApp Marketing v2.0</div>
+  </div>
+
+  <div class="content">
+    <div class="section">
+      <div class="section-title">📊 Status</div>
+      <div class="status-item">
+        <span class="status-label">Conexão:</span>
+        <span class="status-value" id="connection-status">Verificando...</span>
+      </div>
+      <div class="status-item">
+        <span class="status-label">WhatsApp:</span>
+        <span class="status-value" id="whatsapp-status">Verificando...</span>
+      </div>
+      <div class="status-item">
+        <span class="status-label">Arquivos:</span>
+        <span class="status-value" id="files-status">-</span>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">🎯 Ações</div>
+      <button class="btn" id="open-whatsapp">Abrir WhatsApp Web</button>
+      <button class="btn btn-secondary" id="refresh-data">Atualizar Dados</button>
+    </div>
+
+    <div class="section">
+      <div class="section-title">📖 Como Usar</div>
+      <div class="instructions">
+        <div class="instructions-title">Setup Rápido:</div>
+        <ol>
+          <li>Acesse o sistema Vendzz</li>
+          <li>Vá em "Automação WhatsApp"</li>
+          <li>Gere um arquivo de contatos</li>
+          <li>Abra o WhatsApp Web</li>
+          <li>Use a sidebar para acessar os contatos</li>
+        </ol>
+      </div>
+    </div>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>

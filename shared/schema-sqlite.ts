@@ -259,10 +259,30 @@ export const whatsappTemplates = sqliteTable('whatsapp_templates', {
   updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull().default(sql`(unixepoch())`)
 });
 
+// WhatsApp Automation Files Schema
+export const whatsappAutomationFiles = sqliteTable('whatsapp_automation_files', {
+  id: text('id').primaryKey().notNull(),
+  userId: text('user_id').notNull().references(() => users.id),
+  quizId: text('quiz_id').notNull(),
+  quizTitle: text('quiz_title').notNull(),
+  targetAudience: text('target_audience').notNull(),
+  dateFilter: text('date_filter'),
+  phones: text('phones', { mode: 'json' }).notNull().$type<Array<{
+    phone: string;
+    isComplete: boolean;
+    submittedAt: Date;
+    responseId: string;
+  }>>(),
+  totalPhones: integer('total_phones').notNull(),
+  createdAt: text('created_at').notNull(),
+  lastUpdated: text('last_updated').notNull()
+});
+
 // WhatsApp Zod Schemas
 export const insertWhatsappCampaignSchema = createInsertSchema(whatsappCampaigns);
 export const insertWhatsappLogSchema = createInsertSchema(whatsappLogs);
 export const insertWhatsappTemplateSchema = createInsertSchema(whatsappTemplates);
+export const insertWhatsappAutomationFileSchema = createInsertSchema(whatsappAutomationFiles);
 
 // WhatsApp Types
 export type InsertWhatsappCampaign = z.infer<typeof insertWhatsappCampaignSchema>;
@@ -271,3 +291,5 @@ export type InsertWhatsappLog = z.infer<typeof insertWhatsappLogSchema>;
 export type WhatsappLog = typeof whatsappLogs.$inferSelect;
 export type InsertWhatsappTemplate = z.infer<typeof insertWhatsappTemplateSchema>;
 export type WhatsappTemplate = typeof whatsappTemplates.$inferSelect;
+export type InsertWhatsappAutomationFile = z.infer<typeof insertWhatsappAutomationFileSchema>;
+export type WhatsappAutomationFile = typeof whatsappAutomationFiles.$inferSelect;

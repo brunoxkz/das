@@ -35,7 +35,20 @@ export default function WhatsAppAutomationPage() {
   // Buscar telefones do quiz selecionado
   const { data: phonesData, refetch: refetchPhones } = useQuery({
     queryKey: ["/api/quiz-phones", selectedQuiz],
+    queryFn: async () => {
+      if (!selectedQuiz) return { phones: [] };
+      const token = localStorage.getItem("accessToken");
+      const response = await fetch(`/api/quiz-phones/${selectedQuiz}`, {
+        headers: {
+          "Authorization": `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      });
+      if (!response.ok) throw new Error("Failed to fetch quiz phones");
+      return response.json();
+    },
     enabled: !!selectedQuiz,
+    refetchInterval: 10000 // Atualizar a cada 10 segundos para detectar novos leads
   });
 
   // Status da extensão
@@ -45,7 +58,7 @@ export default function WhatsAppAutomationPage() {
   });
 
   const quizzesList = Array.isArray(quizzes) ? quizzes : [];
-  const phonesList = Array.isArray(phonesData) ? phonesData : [];
+  const phonesList = phonesData?.phones || [];
 
   // Filtrar telefones baseado na audiência e data
   const filteredPhones = phonesList.filter(contact => {
@@ -58,17 +71,17 @@ export default function WhatsAppAutomationPage() {
     
     // Filtro de audiência
     if (selectedAudience === 'completed') {
-      return contact.status === 'completed';
+      return contact.isComplete === true;
     } else if (selectedAudience === 'abandoned') {
-      return contact.status === 'abandoned';
+      return contact.isComplete === false;
     }
     
     return true; // 'all'
   });
 
   const audienceCounts = {
-    completed: phonesList.filter(c => c.status === 'completed').length,
-    abandoned: phonesList.filter(c => c.status === 'abandoned').length,
+    completed: phonesList.filter(c => c.isComplete === true).length,
+    abandoned: phonesList.filter(c => c.isComplete === false).length,
     all: phonesList.length
   };
 
@@ -218,7 +231,7 @@ export default function WhatsAppAutomationPage() {
                         <div key={index} className="flex items-center justify-between text-sm">
                           <span className="font-mono">{contact.phone}</span>
                           <div className="flex items-center gap-2">
-                            {contact.status === 'completed' ? (
+                            {contact.isComplete === true ? (
                               <Badge variant="default" className="text-xs">
                                 <CheckCircle className="w-3 h-3 mr-1" />
                                 Completo

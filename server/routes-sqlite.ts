@@ -2118,6 +2118,42 @@ app.post("/api/whatsapp-automation-file", verifyJWT, async (req: any, res: Respo
   }
 });
 
+// Listar arquivos de automação WhatsApp do usuário  
+app.get("/api/whatsapp-automation-files", verifyJWT, async (req: any, res: Response) => {
+  try {
+    const userId = req.user.id;
+    const files = await storage.getWhatsAppAutomationFiles(userId);
+    
+    console.log(`📁 BUSCANDO ARQUIVOS - User: ${userId}, Total: ${files.length}`);
+    
+    res.json(files);
+  } catch (error) {
+    console.error("Error fetching automation files:", error);
+    res.status(500).json({ error: "Error fetching automation files" });
+  }
+});
+
+// Buscar arquivo específico de automação WhatsApp
+app.get("/api/whatsapp-automation-files/:fileId", verifyJWT, async (req: any, res: Response) => {
+  try {
+    const { fileId } = req.params;
+    const userId = req.user.id;
+    
+    const file = await storage.getWhatsAppAutomationFile(fileId);
+    
+    if (!file || file.user_id !== userId) {
+      return res.status(404).json({ error: "File not found" });
+    }
+    
+    console.log(`📄 ARQUIVO ENCONTRADO: ${fileId}, ${file.total_phones} contatos`);
+    
+    res.json(file);
+  } catch (error) {
+    console.error("Error fetching automation file:", error);
+    res.status(500).json({ error: "Error fetching automation file" });
+  }
+});
+
 // Endpoint para extensão acessar arquivo de automação
 app.get("/api/whatsapp-automation-file/:userId/:quizId", verifyJWT, async (req: any, res: Response) => {
   try {

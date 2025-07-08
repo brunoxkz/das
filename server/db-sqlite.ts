@@ -230,6 +230,21 @@ export function runMigrations() {
       );
     `;
 
+    const createWhatsappAutomationFilesTable = `
+      CREATE TABLE IF NOT EXISTS whatsapp_automation_files (
+        id TEXT PRIMARY KEY NOT NULL,
+        user_id TEXT NOT NULL REFERENCES users(id),
+        quiz_id TEXT NOT NULL,
+        quiz_title TEXT NOT NULL,
+        target_audience TEXT NOT NULL,
+        date_filter TEXT,
+        phones TEXT NOT NULL,
+        total_phones INTEGER NOT NULL,
+        created_at TEXT NOT NULL,
+        last_updated TEXT NOT NULL
+      );
+    `;
+
     const createWhatsappTemplatesTable = `
       CREATE TABLE IF NOT EXISTS whatsapp_templates (
         id TEXT PRIMARY KEY,
@@ -254,6 +269,7 @@ export function runMigrations() {
     sqlite.exec(createWhatsappCampaignsTable);
     sqlite.exec(createWhatsappLogsTable);
     sqlite.exec(createWhatsappTemplatesTable);
+    sqlite.exec(createWhatsappAutomationFilesTable);
     
     // Adicionar campos se não existirem
     try {
