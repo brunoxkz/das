@@ -28,7 +28,7 @@ export default function WhatsAppAutomationPage() {
   const { toast } = useToast();
 
   // Buscar quizzes
-  const { data: quizzes, isLoading: loadingQuizzes } = useQuery({
+  const { data: quizzes, isLoading: loadingQuizzes, error: quizzesError } = useQuery({
     queryKey: ["/api/quizzes"],
   });
 
@@ -59,6 +59,8 @@ export default function WhatsAppAutomationPage() {
 
   const quizzesList = Array.isArray(quizzes) ? quizzes : [];
   const phonesList = phonesData?.phones || [];
+  
+
 
   // Filtrar telefones baseado na audiência e data
   const filteredPhones = phonesList.filter(contact => {
