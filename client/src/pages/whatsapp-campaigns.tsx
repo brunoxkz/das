@@ -78,22 +78,35 @@ export default function WhatsAppCampaignsPage() {
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
-  // Buscar quizzes diretamente já que o dashboard está com problemas
+  // Buscar quizzes com logs detalhados
   const { data: quizzes = [], isLoading: quizzesLoading, error: quizzesError } = useQuery({
     queryKey: ['/api/quizzes'],
     refetchInterval: autoRefresh ? 10000 : false,
+    queryFn: async () => {
+      console.log('🔍 Iniciando busca de quizzes...');
+      try {
+        const result = await apiRequest('GET', '/api/quizzes');
+        console.log('✅ Quizzes carregados:', result?.length || 0);
+        return result;
+      } catch (error) {
+        console.error('❌ Erro ao carregar quizzes:', error);
+        throw error;
+      }
+    },
   });
   
-  // Verificar autenticação automaticamente
+  // Hook de autenticação
   const { user } = useAuth();
   
+  // Debug logs
   useEffect(() => {
-    const token = localStorage.getItem("accessToken");
-    if (!token && !user) {
-      console.log("❌ Sem token ou usuário, redirecionando para login");
-      window.location.href = "/login";
-    }
-  }, [user]);
+    console.log('📊 Estado atual:');
+    console.log('- User:', user);
+    console.log('- Quizzes loading:', quizzesLoading);
+    console.log('- Quizzes error:', quizzesError);
+    console.log('- Quizzes data:', quizzes);
+    console.log('- Token exists:', !!localStorage.getItem("accessToken"));
+  }, [user, quizzesLoading, quizzesError, quizzes]);
   
 
 
