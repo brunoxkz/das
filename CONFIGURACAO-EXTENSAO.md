@@ -13,14 +13,13 @@ A Chrome Extension v2.0 já está configurada e pronta para uso!
 3. Clique em **"Carregar sem compactação"**
 4. Selecione a pasta `chrome-extension-v2/` do projeto
 
-## 2️⃣ Configurar a URL do Servidor
+## 2️⃣ ✅ URL do Servidor (JÁ CONFIGURADA)
 
-1. Copie a URL pública do seu Replit (que aparece quando você roda o projeto)
-2. Abra o arquivo `chrome-extension-v2/background.js`
-3. Na linha 3, substitua `REPL_NAME` pela sua URL:
-   ```javascript
-   serverUrl: 'https://SUA-URL-AQUI.replit.dev',
-   ```
+**A URL já está configurada automaticamente!**
+
+- URL configurada: `https://workspace--brunotamaso.replit.app`
+- Arquivos atualizados: `background.js`, `config.js`, `content.js`
+- Não precisa alterar nada!
 
 ## 3️⃣ Obter o Token de Acesso
 
@@ -34,10 +33,9 @@ A Chrome Extension v2.0 já está configurada e pronta para uso!
 6. Procure pela chave **"access_token"**
 7. **Copie o valor** (uma string longa começando com "eyJ...")
 
-**Exemplo do que você vai ver:**
+**Token atual válido (até 6:19 AM):**
 ```
-Key: access_token
-Value: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6Ikt...
+eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IktqY3ROQ09sTTVqY2FmZ0FfZHJWUSIsImVtYWlsIjoiYWRtaW5AdmVuZHp6LmNvbSIsInJvbGUiOiJhZG1pbiIsInBsYW4iOiJlbnRlcnByaXNlIiwiaWF0IjoxNzUxOTU0NjYxLCJleHAiOjE3NTE5NTU1NjF9.UnbGgZm4QuJOW7o_KDgZnvPoNlG_dskiRqKC6tUfLLk
 ```
 
 **IMPORTANTE:** Copie APENAS o valor (a string longa), não a palavra "access_token"

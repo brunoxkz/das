@@ -1,6 +1,6 @@
 // Background script para gerenciar a comunicação com a API
 let config = {
-  serverUrl: 'https://REPL_NAME.replit.dev',
+  serverUrl: 'https://workspace--brunotamaso.replit.app',
   accessToken: null,
   autoMode: false,
   refreshInterval: 30000 // 30 segundos

@@ -1,8 +1,8 @@
 // Configuração da extensão para usar a URL do Replit
 // Substitua 'REPL_NAME' pelo nome real do seu Repl
 const REPLIT_CONFIG = {
-  // URL base do servidor - substitua pelo seu domínio público do Replit
-  serverUrl: 'https://REPL_NAME.replit.dev',
+  // URL base do servidor - domínio público automático do Replit
+  serverUrl: 'https://workspace--brunotamaso.replit.app',
   
   // Configurações padrão
   defaultSettings: {

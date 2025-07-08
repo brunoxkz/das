@@ -75,7 +75,7 @@ function createSidebar() {
         <div class="vendzz-section">
           <h3>🔐 Configuração</h3>
           <div class="vendzz-config">
-            <input type="text" id="vendzz-server" placeholder="http://localhost:5000" class="vendzz-input">
+            <input type="text" id="vendzz-server" placeholder="https://workspace--brunotamaso.replit.app" class="vendzz-input">
             <input type="password" id="vendzz-token" placeholder="Token de acesso" class="vendzz-input">
             <button id="vendzz-connect" class="vendzz-btn">Conectar</button>
           </div>
