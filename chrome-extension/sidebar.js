@@ -6,8 +6,8 @@ let isMonitoringEnabled = true;
 
 // Configurações e estado
 let config = {
-  serverUrl: 'https://vendzz--5000.prod1.defang.dev',
-  token: null,
+  serverUrl: 'http://localhost:5000',
+  token: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IktqY3ROQ09sTTVqY2FmZ0FfZHJWUSIsImVtYWlsIjoiYWRtaW5AdmVuZHp6LmNvbSIsInJvbGUiOiJhZG1pbiIsInBsYW4iOiJlbnRlcnByaXNlIiwiaWF0IjoxNzUxOTQzOTc2LCJleHAiOjE3NTE5NDQ4NzZ9.MHqphaqAL5J9po7ebhxhZWBpTI67EqOb0JxDldawyVg',
   autoSend: true,
   monitoring: true
 };

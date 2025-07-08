@@ -3,8 +3,8 @@ console.log('🚀 Vendzz WhatsApp Extension iniciada');
 
 // Configuração da extensão
 let config = {
-  serverUrl: 'https://51f74588-7b5b-4e89-adab-b70610c96e0b-00-zr6ug9hu0yss.janeway.replit.dev',
-  token: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiJLamN0TkNPbE01amNhZmdBX2RyVlEiLCJlbWFpbCI6ImFkbWluQHZlbmR6ei5jb20iLCJpYXQiOjE3NTE5NDM0OTgsImV4cCI6MTc1MTk0NzA5OH0.6Z1MZwrAXdmlWGsOSCJZ3nPEp3xZjl5cKp7BF1QTXBI', // Token válido do admin
+  serverUrl: 'http://localhost:5000',
+  token: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IktqY3ROQ09sTTVqY2FmZ0FfZHJWUSIsImVtYWlsIjoiYWRtaW5AdmVuZHp6LmNvbSIsInJvbGUiOiJhZG1pbiIsInBsYW4iOiJlbnRlcnByaXNlIiwiaWF0IjoxNzUxOTQzOTc2LCJleHAiOjE3NTE5NDQ4NzZ9.MHqphaqAL5J9po7ebhxhZWBpTI67EqOb0JxDldawyVg', // Token mais recente
   userId: 'KjctNCOlM5jcafgA_drVQ', // ID do usuário admin
   userEmail: 'admin@vendzz.com', // Email para logs de segurança
   isConnected: false,
