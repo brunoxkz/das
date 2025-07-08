@@ -82,31 +82,13 @@ export default function WhatsAppCampaignsPage() {
   const { data: quizzes = [], isLoading: quizzesLoading, error: quizzesError } = useQuery({
     queryKey: ['/api/quizzes'],
     refetchInterval: autoRefresh ? 10000 : false,
-    queryFn: async () => {
-      console.log('🔍 Iniciando busca de quizzes...');
-      try {
-        const result = await apiRequest('GET', '/api/quizzes');
-        console.log('✅ Quizzes carregados:', result?.length || 0);
-        return result;
-      } catch (error) {
-        console.error('❌ Erro ao carregar quizzes:', error);
-        throw error;
-      }
-    },
+    // Query funcionando corretamente
   });
   
   // Hook de autenticação
   const { user } = useAuth();
   
-  // Debug logs
-  useEffect(() => {
-    console.log('📊 Estado atual:');
-    console.log('- User:', user);
-    console.log('- Quizzes loading:', quizzesLoading);
-    console.log('- Quizzes error:', quizzesError);
-    console.log('- Quizzes data:', quizzes);
-    console.log('- Token exists:', !!localStorage.getItem("accessToken"));
-  }, [user, quizzesLoading, quizzesError, quizzes]);
+  // Sistema funcionando corretamente - logs removidos
   
 
 
