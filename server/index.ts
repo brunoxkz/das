@@ -284,6 +284,13 @@ app.use((req, res, next) => {
         const campaignStartTime = Date.now();
         
         try {
+          // Verificar se quizId é válido antes de continuar
+          if (!campaign.quizId || campaign.quizId === 'NULL' || campaign.quizId === 'teste-manual') {
+            console.log(`⚠️ CAMPANHA ${campaign.name}: quiz_id inválido (${campaign.quizId}), usando logs existentes apenas`);
+            const existingLogs = await storage.getWhatsappLogs(campaign.id);
+            continue; // Pular para próxima campanha
+          }
+          
           // Buscar dados necessários em paralelo
           const [currentPhones, existingLogs] = await Promise.all([
             storage.getQuizPhoneNumbers(campaign.quizId),
