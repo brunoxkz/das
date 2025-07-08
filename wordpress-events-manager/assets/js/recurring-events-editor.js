@@ -528,7 +528,23 @@ jQuery(document).ready(function($) {
     
     function setupModals() {
         // Configurar comportamento dos modais
+        $(document).on('click', '.close-modal', function() {
+            closeModals();
+        });
+        
+        $(document).on('click', '.vendzz-modal', function(e) {
+            if (e.target === this) {
+                closeModals();
+            }
+        });
     }
+    
+    // Expor objeto global para uso externo
+    window.VendzzRecurringEditor = {
+        init: initRecurringEditor,
+        openEditor: openRecurringEditor,
+        closeEditor: closeModals
+    };
     
     // Inicializar
     initRecurringEditor();

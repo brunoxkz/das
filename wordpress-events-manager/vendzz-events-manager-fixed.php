@@ -94,11 +94,6 @@ class VendzzEventsManagerFixed {
             true
         );
         
-        wp_localize_script('vendzz-events-admin', 'vendzz_ajax', array(
-            'ajax_url' => admin_url('admin-ajax.php'),
-            'nonce' => wp_create_nonce('vendzz_events_nonce')
-        ));
-        
         wp_enqueue_style(
             'vendzz-events-admin',
             VENDZZ_EVENTS_PLUGIN_URL . 'assets/css/admin.css',
