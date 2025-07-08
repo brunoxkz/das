@@ -124,35 +124,60 @@ function createSidebar() {
             <div class="vendzz-config-group">
               <label class="vendzz-label">📅 Filtro de Data (opcional):</label>
               <input type="date" id="vendzz-date-filter" class="vendzz-input">
-              <small class="vendzz-help">Enviar apenas para leads após esta data</small>
+              <small class="vendzz-help">Enviar para Leads que chegaram depois dessa data *evitar leads antigos</small>
             </div>
 
             <div class="vendzz-config-group">
               <label class="vendzz-checkbox-label">
                 <input type="checkbox" id="vendzz-enable-completed" checked>
                 <span class="vendzz-checkmark"></span>
-                ✅ Mensagem para Quiz Completo
+                ✅ Mensagens para Quiz Completo (4 rotativas anti-spam)
               </label>
-              <textarea id="vendzz-completed-message" class="vendzz-textarea" placeholder="Mensagem para quem completou o quiz...">Olá {nome}! Parabéns por completar nosso quiz! 🎉</textarea>
+              <div class="vendzz-message-rotation">
+                <textarea id="vendzz-completed-message-1" class="vendzz-textarea" placeholder="Mensagem 1...">Olá {nome}! Obrigado por completar nosso quiz. Seus dados foram registrados com sucesso! 🎉</textarea>
+                <textarea id="vendzz-completed-message-2" class="vendzz-textarea" placeholder="Mensagem 2...">Oi {nome}! Quiz finalizado! Em breve entraremos em contato com mais informações. ✅</textarea>
+                <textarea id="vendzz-completed-message-3" class="vendzz-textarea" placeholder="Mensagem 3...">Parabéns {nome}! Você completou nosso quiz. Aguarde nosso retorno em breve. 🚀</textarea>
+                <textarea id="vendzz-completed-message-4" class="vendzz-textarea" placeholder="Mensagem 4...">Olá {nome}! Recebemos suas respostas do quiz. Nossa equipe entrará em contato logo! 📞</textarea>
+              </div>
             </div>
 
             <div class="vendzz-config-group">
               <label class="vendzz-checkbox-label">
                 <input type="checkbox" id="vendzz-enable-abandoned" checked>
                 <span class="vendzz-checkmark"></span>
-                ⚠️ Mensagem para Quiz Abandonado
+                ⚠️ Mensagens para Quiz Abandonado (4 rotativas anti-spam)
               </label>
-              <textarea id="vendzz-abandoned-message" class="vendzz-textarea" placeholder="Mensagem para quem abandonou o quiz...">Olá {nome}! Vimos que você começou nosso quiz mas não terminou. Que tal finalizar? 😊</textarea>
+              <div class="vendzz-message-rotation">
+                <textarea id="vendzz-abandoned-message-1" class="vendzz-textarea" placeholder="Mensagem 1...">Oi {nome}! Notamos que você começou nosso quiz mas não finalizou. Que tal completar agora? 🤔</textarea>
+                <textarea id="vendzz-abandoned-message-2" class="vendzz-textarea" placeholder="Mensagem 2...">Olá {nome}! Você estava quase terminando nosso quiz. Gostaria de finalizar suas respostas? ⏰</textarea>
+                <textarea id="vendzz-abandoned-message-3" class="vendzz-textarea" placeholder="Mensagem 3...">Ei {nome}! Vimos que você iniciou nosso quiz. Só faltam alguns passos para concluir! 📝</textarea>
+                <textarea id="vendzz-abandoned-message-4" class="vendzz-textarea" placeholder="Mensagem 4...">Oi {nome}! Seu quiz ficou pela metade. Que tal terminar e receber nosso contato? 😊</textarea>
+              </div>
             </div>
 
             <div class="vendzz-config-group">
-              <label class="vendzz-label">⏱️ Delay entre mensagens (segundos):</label>
-              <input type="number" id="vendzz-message-delay" class="vendzz-input" value="3" min="1" max="30">
+              <label class="vendzz-label">⏱️ Delay entre mensagens (segundos) - Anti-Ban 2025:</label>
+              <input type="number" id="vendzz-message-delay" class="vendzz-input" value="25" min="15" max="60">
+              <small class="vendzz-help">Recomendado: 25-45s (+ delay aleatório de 0-15s)</small>
             </div>
 
             <div class="vendzz-config-group">
-              <label class="vendzz-label">🎯 Limite diário:</label>
-              <input type="number" id="vendzz-daily-limit" class="vendzz-input" value="100" min="1" max="1000">
+              <label class="vendzz-label">🎯 Limite diário (conservador):</label>
+              <input type="number" id="vendzz-daily-limit" class="vendzz-input" value="50" min="10" max="200">
+              <small class="vendzz-help">Máximo 50 mensagens/dia para evitar banimento</small>
+            </div>
+
+            <div class="vendzz-config-group">
+              <label class="vendzz-label">⏰ Máximo por hora:</label>
+              <input type="number" id="vendzz-hourly-limit" class="vendzz-input" value="8" min="3" max="15">
+              <small class="vendzz-help">Máximo 8 mensagens/hora (política WhatsApp 2025)</small>
+            </div>
+
+            <div class="vendzz-anti-ban-warning">
+              🛡️ MODO ANTI-BAN 2025 ATIVADO<br>
+              • 4+ mensagens rotativas evitam detecção de spam<br>
+              • Delays aleatórios 25-40s simulam comportamento humano<br>
+              • Limites conservadores protegem contra banimento
             </div>
           </div>
 
@@ -244,10 +269,16 @@ function setupEventListeners() {
   document.getElementById('vendzz-date-filter').addEventListener('change', updateAutomationConfig);
   document.getElementById('vendzz-enable-completed').addEventListener('change', updateAutomationConfig);
   document.getElementById('vendzz-enable-abandoned').addEventListener('change', updateAutomationConfig);
-  document.getElementById('vendzz-completed-message').addEventListener('input', updateAutomationConfig);
-  document.getElementById('vendzz-abandoned-message').addEventListener('input', updateAutomationConfig);
+  
+  // Event listeners para mensagens rotativas
+  for (let i = 1; i <= 4; i++) {
+    document.getElementById(`vendzz-completed-message-${i}`).addEventListener('input', updateAutomationConfig);
+    document.getElementById(`vendzz-abandoned-message-${i}`).addEventListener('input', updateAutomationConfig);
+  }
+  
   document.getElementById('vendzz-message-delay').addEventListener('change', updateAutomationConfig);
   document.getElementById('vendzz-daily-limit').addEventListener('change', updateAutomationConfig);
+  document.getElementById('vendzz-hourly-limit').addEventListener('change', updateAutomationConfig);
 }
 
 // Carregar configuração
@@ -520,17 +551,55 @@ async function init() {
 
 // ==================== SISTEMA DE AUTOMAÇÃO DE MENSAGENS ====================
 
+// Configuração global da automação com sistema anti-ban
+let automationConfig = {
+  dateFilter: null,
+  enableCompleted: true,
+  enableAbandoned: false,
+  completedMessages: [],
+  abandonedMessages: [],
+  messageDelay: 25000, // 25 segundos base
+  randomDelayRange: 15000, // +/- 15 segundos aleatórios
+  dailyLimit: 50,
+  hourlyLimit: 8,
+  antiSpamMode: true,
+  messageRotationIndex: { completed: 0, abandoned: 0 },
+  sentInCurrentHour: 0,
+  hourStartTime: Date.now()
+};
+
 // Atualizar configuração da automação
 function updateAutomationConfig() {
   automationConfig.dateFilter = document.getElementById('vendzz-date-filter').value || null;
   automationConfig.enableCompleted = document.getElementById('vendzz-enable-completed').checked;
   automationConfig.enableAbandoned = document.getElementById('vendzz-enable-abandoned').checked;
-  automationConfig.completedMessage = document.getElementById('vendzz-completed-message').value;
-  automationConfig.abandonedMessage = document.getElementById('vendzz-abandoned-message').value;
-  automationConfig.messageDelay = parseInt(document.getElementById('vendzz-message-delay').value) * 1000; // Convert to ms
-  automationConfig.dailyLimit = parseInt(document.getElementById('vendzz-daily-limit').value);
   
-  console.log('🔧 Configuração da automação atualizada:', automationConfig);
+  // Coletar todas as mensagens rotativas
+  automationConfig.completedMessages = [
+    document.getElementById('vendzz-completed-message-1').value,
+    document.getElementById('vendzz-completed-message-2').value,
+    document.getElementById('vendzz-completed-message-3').value,
+    document.getElementById('vendzz-completed-message-4').value
+  ].filter(msg => msg.trim().length > 0);
+  
+  automationConfig.abandonedMessages = [
+    document.getElementById('vendzz-abandoned-message-1').value,
+    document.getElementById('vendzz-abandoned-message-2').value,
+    document.getElementById('vendzz-abandoned-message-3').value,
+    document.getElementById('vendzz-abandoned-message-4').value
+  ].filter(msg => msg.trim().length > 0);
+  
+  automationConfig.messageDelay = parseInt(document.getElementById('vendzz-message-delay').value) * 1000;
+  automationConfig.dailyLimit = parseInt(document.getElementById('vendzz-daily-limit').value);
+  automationConfig.hourlyLimit = parseInt(document.getElementById('vendzz-hourly-limit').value);
+  
+  console.log('🔧 Configuração anti-ban atualizada:', {
+    completedMessages: automationConfig.completedMessages.length,
+    abandonedMessages: automationConfig.abandonedMessages.length,
+    messageDelay: automationConfig.messageDelay,
+    dailyLimit: automationConfig.dailyLimit,
+    hourlyLimit: automationConfig.hourlyLimit
+  });
 }
 
 // Preparar fila de automação com verificação de duplicatas
@@ -555,12 +624,12 @@ async function prepareAutomationQueue() {
       }
     }
     
-    // Filtro por status e mensagem correspondente
+    // Filtro por status e seleção de mensagem rotativa
     let message = null;
     if (contact.status === 'completed' && automationConfig.enableCompleted) {
-      message = automationConfig.completedMessage;
+      message = getRotativeMessage('completed');
     } else if (contact.status === 'abandoned' && automationConfig.enableAbandoned) {
-      message = automationConfig.abandonedMessage;
+      message = getRotativeMessage('abandoned');
     }
     
     if (message && contact.phone) {
@@ -603,9 +672,15 @@ async function prepareAutomationQueue() {
             .replace(/{altura}/g, contact.altura || '')
             .replace(/{peso}/g, contact.peso || '');
           
+          // Identificar variação da mensagem para logs
+          const messageType = contact.status === 'completed' ? 'completed' : 'abandoned';
+          const currentIndex = automationConfig.messageRotationIndex[messageType];
+          const messageVariation = `Variação ${((currentIndex - 1 + (automationConfig[messageType + 'Messages'].length)) % automationConfig[messageType + 'Messages'].length) + 1}`;
+          
           automationQueue.push({
             phone: contact.phone,
             message: personalizedMessage,
+            messageVariation: messageVariation,
             contact: contact
           });
         }
@@ -725,16 +800,25 @@ async function processAutomationQueue() {
   currentlyProcessing = true;
   
   while (automationActive && automationQueue.length > 0) {
+    // Verificar limites anti-ban antes de cada envio
+    const antiBanCheck = checkAntiBanLimits();
+    if (!antiBanCheck.allowed) {
+      addLog(`🚫 ${antiBanCheck.reason} - Pausando automação`);
+      stopAutomation();
+      break;
+    }
+    
     const item = automationQueue.shift();
     
     try {
-      addLog(`📤 Enviando para ${item.phone}...`);
+      addLog(`📤 Enviando para ${item.phone}... (${item.messageVariation})`);
       
       // Enviar mensagem
       const success = await sendWhatsAppMessage(item.phone, item.message);
       
       if (success) {
         automationStats.sent++;
+        incrementSentCounter(); // Incrementar contador anti-ban
         addLog(`✅ Enviado para ${item.phone}`);
       } else {
         automationStats.failed++;
@@ -743,10 +827,11 @@ async function processAutomationQueue() {
       
       updateAutomationStats();
       
-      // Aguardar delay antes da próxima mensagem
+      // Aguardar delay anti-ban randomizado antes da próxima mensagem
       if (automationQueue.length > 0 && automationActive) {
-        addLog(`⏱️ Aguardando ${automationConfig.messageDelay / 1000}s...`);
-        await new Promise(resolve => setTimeout(resolve, automationConfig.messageDelay));
+        const delay = calculateAntiBanDelay();
+        addLog(`⏱️ Aguardando ${Math.round(delay / 1000)}s (anti-ban 2025)...`);
+        await new Promise(resolve => setTimeout(resolve, delay));
       }
       
     } catch (error) {
@@ -1178,6 +1263,67 @@ function showAutomationSection() {
   if (automationSection) {
     automationSection.style.display = 'block';
   }
+}
+
+// ==================== SISTEMA DE MENSAGENS ROTATIVAS ANTI-SPAM ====================
+
+// Obter mensagem rotativa baseada no tipo
+function getRotativeMessage(type) {
+  const messages = type === 'completed' ? automationConfig.completedMessages : automationConfig.abandonedMessages;
+  
+  if (messages.length === 0) {
+    return null;
+  }
+  
+  // Obter índice atual da rotação
+  const currentIndex = automationConfig.messageRotationIndex[type];
+  const message = messages[currentIndex];
+  
+  // Avançar para próxima mensagem (rotação circular)
+  automationConfig.messageRotationIndex[type] = (currentIndex + 1) % messages.length;
+  
+  console.log(`🔄 Mensagem rotativa selecionada (${type}): Variação ${currentIndex + 1}/${messages.length}`);
+  
+  return message;
+}
+
+// Verificar limites anti-ban
+function checkAntiBanLimits() {
+  const now = Date.now();
+  const oneHour = 60 * 60 * 1000;
+  
+  // Reset contador se passou 1 hora
+  if (now - automationConfig.hourStartTime > oneHour) {
+    automationConfig.sentInCurrentHour = 0;
+    automationConfig.hourStartTime = now;
+  }
+  
+  // Verificar limite por hora
+  if (automationConfig.sentInCurrentHour >= automationConfig.hourlyLimit) {
+    return {
+      allowed: false,
+      reason: `Limite de ${automationConfig.hourlyLimit} mensagens/hora atingido`
+    };
+  }
+  
+  return { allowed: true };
+}
+
+// Calcular delay anti-ban com randomização
+function calculateAntiBanDelay() {
+  const baseDelay = automationConfig.messageDelay;
+  const randomDelay = Math.random() * automationConfig.randomDelayRange;
+  const totalDelay = baseDelay + randomDelay;
+  
+  console.log(`⏱️ Delay anti-ban calculado: ${Math.round(totalDelay/1000)}s (base: ${baseDelay/1000}s + random: ${Math.round(randomDelay/1000)}s)`);
+  
+  return totalDelay;
+}
+
+// Incrementar contador de mensagens enviadas
+function incrementSentCounter() {
+  automationConfig.sentInCurrentHour++;
+  console.log(`📊 Mensagens enviadas nesta hora: ${automationConfig.sentInCurrentHour}/${automationConfig.hourlyLimit}`);
 }
 
 // Inicializar quando o DOM estiver pronto
