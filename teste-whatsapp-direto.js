@@ -1,135 +1,130 @@
-// 🚀 TESTE DIRETO DO SISTEMA WHATSAPP - SIMULAÇÃO COMPLETA
-// ========================================================
-
-import Database from 'better-sqlite3';
+import fetch from 'node-fetch';
 
 async function req(endpoint, options = {}) {
-  const response = await fetch(`http://localhost:5000${endpoint}`, {
-    headers: { 'Content-Type': 'application/json', ...options.headers },
+  const url = `https://51f74588-7b5b-4e89-adab-b70610c96e0b-00-zr6ug9hu0yss.janeway.replit.dev${endpoint}`;
+  return fetch(url, {
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers
+    },
     ...options
   });
-  return await response.json();
 }
 
 async function testeRapido() {
-  console.log('🚀 TESTE COMPLETO WHATSAPP - SIMULAÇÃO REAL\n');
-
-  // 1. LOGIN
-  console.log('1️⃣ Fazendo login...');
-  const login = await req('/api/auth/login', {
-    method: 'POST',
-    body: JSON.stringify({ email: 'admin@vendzz.com', password: 'admin123' })
-  });
-  const token = login.accessToken;
-  console.log('✅ Autenticado');
-
-  // 2. INSERIR LEAD NO BANCO
-  console.log('\n2️⃣ Inserindo lead de teste...');
-  const db = new Database('./vendzz-database.db');
   try {
-    // Verificar colunas da tabela
-    const info = db.prepare("PRAGMA table_info(quiz_responses)").all();
-    const columns = info.map(col => col.name);
-    console.log('📋 Colunas disponíveis:', columns.join(', '));
-    
-    // Inserir usando colunas corretas
-    if (columns.includes('quizId')) {
-      db.prepare(`INSERT OR REPLACE INTO quiz_responses (id, quizId, responses, metadata, submittedAt) VALUES (?, ?, ?, ?, ?)`).run(
-        'lead-whatsapp-test',
-        'quiz-whatsapp-123',
-        JSON.stringify([
-          { elementId: 'phone-1', elementType: 'phone', answer: '11988776655', elementFieldId: 'telefone_contato' },
-          { elementId: 'nome-1', elementType: 'text', answer: 'Ana Teste Final', elementFieldId: 'nome_completo' }
-        ]),
-        JSON.stringify({ isComplete: true, completionPercentage: 100 }),
-        new Date().toISOString()
-      );
-      console.log('✅ Lead inserido: 11988776655 (Ana Teste Final)');
-    }
-  } catch (err) {
-    console.log('ℹ️ Erro no banco:', err.message);
-  }
-  db.close();
+    console.log('🔑 CRIANDO ARQUIVO DE TESTE ESPECÍFICO PARA 11995133932\n');
 
-  // 3. CRIAR CAMPANHA
-  console.log('\n3️⃣ Criando campanha WhatsApp...');
-  const campanha = await req('/api/whatsapp-campaigns', {
-    method: 'POST',
-    headers: { 'Authorization': `Bearer ${token}` },
-    body: JSON.stringify({
-      name: 'Teste Final WhatsApp',
-      quizId: 'quiz-whatsapp-123',
-      messages: [
-        '🎯 Oi Ana! Vimos seu interesse!',
-        '💡 Temos uma oferta especial!',
-        '🔥 Aproveite o desconto hoje!',
-        '⏰ Últimas vagas!'
-      ],
-      targetAudience: 'all',
-      triggerType: 'immediate'
-    })
-  });
-  console.log('✅ Campanha criada:', campanha.name || 'OK');
-
-  // 4. AGUARDAR 5 SEGUNDOS (em vez de 25)
-  console.log('\n4️⃣ Aguardando detecção (5s)...');
-  await new Promise(r => setTimeout(r, 5000));
-
-  // 5. VERIFICAR MENSAGENS PENDENTES
-  console.log('\n5️⃣ Verificando mensagens pendentes...');
-  const pending = await req('/api/whatsapp-extension/pending-messages', {
-    headers: { 'Authorization': `Bearer ${token}` }
-  });
-  console.log(`✅ Mensagens encontradas: ${pending.length || 0}`);
-  
-  if (pending && pending.length > 0) {
-    const msg = pending[0];
-    console.log(`📱 Primeira mensagem: ${msg.phone} - ${msg.message}`);
-
-    // 6. SIMULAR ENVIO
-    console.log('\n6️⃣ Simulando envio...');
-    const envio = await req('/api/whatsapp-extension/logs', {
+    // Login
+    const loginRes = await req('/api/auth/login', {
       method: 'POST',
-      headers: { 'Authorization': `Bearer ${token}` },
       body: JSON.stringify({
-        logId: msg.logId,
-        status: 'sent',
-        phone: msg.phone,
-        timestamp: Math.floor(Date.now() / 1000)
+        email: 'admin@vendzz.com',
+        password: 'admin123'
       })
     });
-    console.log('✅ Envio simulado:', envio.success ? 'Sucesso' : 'Erro');
+    
+    const { accessToken } = await loginRes.json();
+    console.log('✅ Login realizado');
 
-    // 7. VERIFICAR LOGS
-    console.log('\n7️⃣ Verificando logs da campanha...');
-    if (campanha.id) {
-      const logs = await req(`/api/whatsapp-campaigns/${campanha.id}/logs`, {
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-      console.log(`✅ Logs encontrados: ${logs.length || 0}`);
+    // Criar dados de teste realistas para o telefone específico
+    const testData = {
+      quiz_id: 'test-quiz-11995133932',
+      quiz_title: 'TESTE DIRETO - Telefone 11995133932',
+      target_audience: 'completed',
+      date_filter: null,
+      total_phones: 1,
+      contacts: [{
+        phone: '11995133932',
+        nome: 'Rafael Silva',
+        email: 'rafael.silva@teste.com',
+        idade: '28',
+        altura: '180',
+        peso: '75',
+        status: 'completed',
+        submissionDate: new Date().toISOString(),
+        responses: {
+          nome: 'Rafael Silva',
+          email: 'rafael.silva@teste.com',
+          telefone_principal: '11995133932',
+          idade: '28',
+          altura: '180',
+          peso_atual: '75',
+          peso_desejado: '70',
+          objetivo: 'Perder 5kg em 3 meses'
+        }
+      }]
+    };
+
+    // Criar arquivo de automação
+    const createRes = await req('/api/whatsapp-automation-files', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${accessToken}`
+      },
+      body: JSON.stringify(testData)
+    });
+
+    if (!createRes.ok) {
+      const error = await createRes.text();
+      throw new Error(`Erro ao criar arquivo: ${error}`);
     }
+
+    const fileData = await createRes.json();
+    console.log(`✅ Arquivo criado: ${fileData.id}`);
+    console.log(`📋 Título: ${testData.quiz_title}`);
+    console.log(`📱 Telefone: ${testData.contacts[0].phone}`);
+    console.log(`👤 Nome: ${testData.contacts[0].nome}`);
+
+    // Verificar se o arquivo foi criado corretamente
+    const checkRes = await req(`/api/whatsapp-automation-files/${fileData.id}`, {
+      headers: {
+        'Authorization': `Bearer ${accessToken}`
+      }
+    });
+
+    const checkData = await checkRes.json();
+    console.log('\n📄 DADOS DO ARQUIVO CRIADO:');
+    console.log(`ID: ${checkData.id}`);
+    console.log(`Contatos: ${checkData.contacts.length}`);
+    
+    if (checkData.contacts.length > 0) {
+      const contact = checkData.contacts[0];
+      console.log('\n📱 DADOS DO CONTATO:');
+      console.log(`Telefone: ${contact.phone}`);
+      console.log(`Nome: ${contact.nome}`);
+      console.log(`Email: ${contact.email}`);
+      console.log(`Idade: ${contact.idade}`);
+      console.log(`Altura: ${contact.altura}`);
+      console.log(`Peso: ${contact.peso}`);
+      console.log(`Status: ${contact.status}`);
+    }
+
+    console.log('\n🎯 MENSAGENS PERSONALIZADAS DE TESTE:');
+    console.log('\n📝 Para Quiz Completos:');
+    console.log(`Olá ${testData.contacts[0].nome}! 🎉 Parabéns por completar nosso quiz!`);
+    console.log(`Com ${testData.contacts[0].idade} anos, altura de ${testData.contacts[0].altura}cm e peso atual de ${testData.contacts[0].peso}kg,`);
+    console.log(`temos o plano perfeito para você atingir seus objetivos! 💪`);
+
+    console.log('\n🔧 PRÓXIMOS PASSOS:');
+    console.log('1. Abra WhatsApp Web');
+    console.log('2. A sidebar aparece automaticamente');
+    console.log('3. Clique "🔄 Conectar"');
+    console.log(`4. Selecione o arquivo: "${testData.quiz_title}"`);
+    console.log('5. Configure a mensagem personalizada');
+    console.log('6. Clique "🚀 Iniciar Automação"');
+
+    console.log('\n⚠️ IMPORTANTE:');
+    console.log('• Este arquivo contém apenas 1 contato: 11995133932');
+    console.log('• Os dados são realistas para teste completo');
+    console.log('• A mensagem será personalizada com nome, idade, altura e peso');
+    console.log('• O telefone será formatado automaticamente para +5511995133932');
+
+    console.log('\n✅ ARQUIVO DE TESTE PRONTO PARA USO!');
+
+  } catch (error) {
+    console.error('❌ Erro:', error.message);
   }
-
-  // 8. PING FINAL
-  console.log('\n8️⃣ Ping final da extensão...');
-  const ping = await req('/api/whatsapp-extension/status', {
-    method: 'POST',
-    headers: { 'Authorization': `Bearer ${token}` },
-    body: JSON.stringify({
-      version: '1.0.0',
-      pendingMessages: 0,
-      sentMessages: 1,
-      failedMessages: 0,
-      isActive: true
-    })
-  });
-  console.log('✅ Ping final:', ping.success ? 'OK' : 'Erro');
-
-  console.log('\n🎉 TESTE COMPLETO FINALIZADO!');
-  console.log('============================');
-  console.log('✅ Sistema WhatsApp testado e funcionando');
-  console.log('✅ Fluxo: Lead → Campanha → Detecção → Ping → Envio → Log');
-  console.log('🚀 Pronto para uso com Chrome Extension!');
 }
 
-testeRapido().catch(console.error);
+testeRapido();

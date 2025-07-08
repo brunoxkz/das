@@ -1,110 +1,75 @@
-// Script para criar teste WhatsApp direto
-import sqlite3 from 'sqlite3';
-import { nanoid } from 'nanoid';
+import { db } from './server/db-sqlite.js';
+import { whatsappAutomationFiles } from './shared/schema-sqlite.js';
 
 async function criarTesteWhatsApp() {
-  console.log('🧪 CRIANDO TESTE WHATSAPP DIRETO');
-  console.log('================================');
-  
-  const db = new sqlite3.Database('./vendzz-database.db');
-  
-  // IDs únicos
-  const campaignId = nanoid();
-  const logId = nanoid();
-  const userId = 'KjctNCOlM5jcafgA_drVQ'; // ID do admin
-  
-  console.log('📋 Campaign ID:', campaignId);
-  console.log('📱 Log ID:', logId);
-  
   try {
-    // Inserir campanha
-    await new Promise((resolve, reject) => {
-      db.run(`
-        INSERT INTO whatsapp_campaigns (
-          id, user_id, quiz_id, quiz_title, name, messages, 
-          target_audience, status, created_at, updated_at
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-      `, [
-        campaignId,
-        userId,
-        'teste-manual',
-        'Teste Manual',
-        'Teste Manual - Olá 5511995133932',
-        JSON.stringify(['Olá']),
-        'all',
-        'active',
-        Math.floor(Date.now() / 1000),
-        Math.floor(Date.now() / 1000)
-      ], (err) => {
-        if (err) reject(err);
-        else resolve();
-      });
-    });
-    
-    console.log('✅ Campanha criada!');
-    
-    // Inserir log
-    await new Promise((resolve, reject) => {
-      db.run(`
-        INSERT INTO whatsapp_logs (
-          id, campaign_id, phone, message, status, 
-          scheduled_at, created_at, updated_at
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-      `, [
-        logId,
-        campaignId,
-        '5511995133932',
-        'Olá',
-        'scheduled',
-        Math.floor(Date.now() / 1000),
-        Math.floor(Date.now() / 1000),
-        Math.floor(Date.now() / 1000)
-      ], (err) => {
-        if (err) reject(err);
-        else resolve();
-      });
-    });
-    
-    console.log('✅ Mensagem agendada!');
-    
-    // Verificar
-    await new Promise((resolve, reject) => {
-      db.get(`
-        SELECT wl.phone, wl.message, wl.status, wc.name as campaign_name
-        FROM whatsapp_logs wl
-        JOIN whatsapp_campaigns wc ON wl.campaign_id = wc.id
-        WHERE wl.id = ?
-      `, [logId], (err, row) => {
-        if (err) reject(err);
-        else {
-          console.log('');
-          console.log('🔍 MENSAGEM CRIADA:');
-          console.log('==================');
-          console.log('📱 Telefone:', row.phone);
-          console.log('💬 Mensagem:', row.message);
-          console.log('📋 Status:', row.status);
-          console.log('🏷️ Campanha:', row.campaign_name);
-          resolve();
+    console.log('🔑 CRIANDO ARQUIVO DE TESTE PARA 11995133932\n');
+
+    const fileId = `test-11995133932-${Date.now()}`;
+    const testData = {
+      id: fileId,
+      user_id: 'KjctNCOlM5jcafgA_drVQ',
+      quiz_id: 'test-quiz-11995133932',
+      quiz_title: 'TESTE DIRETO - Telefone 11995133932',
+      target_audience: 'completed',
+      date_filter: null,
+      total_phones: 1,
+      contacts: JSON.stringify([{
+        phone: '11995133932',
+        nome: 'Rafael Silva',
+        email: 'rafael.silva@teste.com',
+        idade: '28',
+        altura: '180',
+        peso: '75',
+        status: 'completed',
+        submissionDate: new Date().toISOString(),
+        responses: {
+          nome: 'Rafael Silva',
+          email: 'rafael.silva@teste.com',
+          telefone_principal: '11995133932',
+          idade: '28',
+          altura: '180',
+          peso_atual: '75',
+          peso_desejado: '70',
+          objetivo: 'Perder 5kg em 3 meses'
         }
-      });
-    });
+      }]),
+      created_at: new Date().toISOString()
+    };
+
+    // Inserir arquivo no banco
+    await db.insert(whatsappAutomationFiles).values(testData);
     
-    console.log('');
-    console.log('🚀 TESTE PRONTO!');
-    console.log('================');
-    console.log('');
-    console.log('📱 Mensagem criada para: 5511995133932');
-    console.log('💬 Texto: Olá');
-    console.log('📋 Status: scheduled (pronto para envio)');
-    console.log('');
-    console.log('🔄 A extensão detectará automaticamente nos próximos 30 segundos');
-    console.log('📊 Você pode acompanhar na dashboard da extensão');
+    console.log('✅ Arquivo criado com sucesso!');
+    console.log(`📋 ID: ${fileId}`);
+    console.log(`📱 Telefone: 11995133932`);
+    console.log(`👤 Nome: Rafael Silva`);
+    console.log(`📧 Email: rafael.silva@teste.com`);
+    console.log(`👨 Idade: 28 anos`);
+    console.log(`📏 Altura: 180cm`);
+    console.log(`⚖️ Peso: 75kg`);
+
+    console.log('\n🎯 MENSAGEM PERSONALIZADA DE EXEMPLO:');
+    console.log('Olá Rafael Silva! 🎉 Parabéns por completar nosso quiz!');
+    console.log('Com 28 anos, altura de 180cm e peso atual de 75kg,');
+    console.log('temos o plano perfeito para você atingir seus objetivos! 💪');
+
+    console.log('\n🔧 COMO USAR NA EXTENSÃO:');
+    console.log('1. Abra WhatsApp Web');
+    console.log('2. Sidebar aparece automaticamente');
+    console.log('3. Clique "🔄 Conectar"');
+    console.log('4. Selecione "TESTE DIRETO - Telefone 11995133932"');
+    console.log('5. Configure mensagem personalizada com {nome}, {idade}, {altura}, {peso}');
+    console.log('6. Clique "🚀 Iniciar Automação"');
+
+    console.log('\n📞 FORMATAÇÃO AUTOMÁTICA:');
+    console.log('11995133932 → +5511995133932 (WhatsApp)');
+
+    console.log('\n✅ ARQUIVO PRONTO PARA TESTE!');
     
   } catch (error) {
-    console.error('❌ Erro:', error);
-  } finally {
-    db.close();
+    console.error('❌ Erro ao criar arquivo:', error);
   }
 }
 
-criarTesteWhatsApp().catch(console.error);
+criarTesteWhatsApp();
