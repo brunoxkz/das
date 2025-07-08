@@ -598,33 +598,28 @@ export default function WhatsAppCampaignsPage() {
               {/* Status das Mensagens */}
               <div className="flex items-center gap-2">
                 <Badge variant={rotatingMessages.filter(m => m.trim()).length >= 4 ? "default" : "secondary"}>
-                  {rotatingMessages.filter(m => m.trim()).length}/4+ mensagens
+                  {rotatingMessages.filter(m => m.trim()).length >= 4 ? "✅ Anti-Spam OK" : "⚠️ Mais mensagens recomendadas"}
                 </Badge>
-                {rotatingMessages.filter(m => m.trim()).length < 4 && (
-                  <span className="text-xs text-orange-600">
-                    Recomendamos pelo menos 4 mensagens para melhor entregabilidade
-                  </span>
-                )}
+                <span className="text-sm text-gray-500">
+                  {rotatingMessages.filter(m => m.trim()).length} de 4+ mensagens configuradas
+                </span>
               </div>
 
-              {/* Botão de Criar Campanha */}
-              <Button 
-                onClick={createCampaign} 
-                disabled={isCreating || !selectedQuiz || !campaignName || rotatingMessages.filter(m => m.trim()).length === 0}
-                className="w-full"
-              >
-                {isCreating ? (
-                  <>
-                    <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
-                    Criando Campanha...
-                  </>
-                ) : (
-                  <>
-                    <Send className="h-4 w-4 mr-2" />
-                    Ativar Campanha e Sincronizar com a extensão
-                  </>
-                )}
-              </Button>
+              {/* Botão Criar Campanha */}
+              <div className="pt-4">
+                <Button 
+                  onClick={createCampaign}
+                  disabled={!selectedQuiz || !campaignName.trim() || isCreating || rotatingMessages.filter(m => m.trim()).length === 0}
+                  className="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-3"
+                >
+                  {isCreating ? (
+                    <RefreshCw className="h-5 w-5 mr-2 animate-spin" />
+                  ) : (
+                    <MessageSquare className="h-5 w-5 mr-2" />
+                  )}
+                  {isCreating ? "Criando Campanha..." : `Criar Campanha WhatsApp (${filteredPhones.length} leads)`}
+                </Button>
+              </div>
             </CardContent>
           </Card>
         </TabsContent>
