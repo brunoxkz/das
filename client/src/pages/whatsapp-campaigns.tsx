@@ -80,12 +80,26 @@ export default function WhatsAppCampaignsPage() {
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
-  // Buscar quizzes
+  // Buscar quizzes com debug
   const { data: quizzes = [], isLoading: quizzesLoading, error: quizzesError, refetch: refetchQuizzes } = useQuery({
     queryKey: ['/api/quizzes'],
     retry: 3,
     refetchOnWindowFocus: true,
     staleTime: 30000,
+    onSuccess: (data) => {
+      console.log('✅ Quizzes carregados:', data);
+    },
+    onError: (error) => {
+      console.error('❌ Erro ao carregar quizzes:', error);
+    }
+  });
+
+  // Log dos quizzes para debug
+  console.log('🔍 Estado dos quizzes:', {
+    loading: quizzesLoading,
+    error: quizzesError,
+    data: quizzes,
+    length: quizzes?.length
   });
   
   // Hook de autenticação
@@ -325,16 +339,17 @@ export default function WhatsAppCampaignsPage() {
                         <SelectValue placeholder={quizzesLoading ? "🔄 Carregando..." : quizzes.length === 0 ? "❌ Nenhum quiz encontrado" : "✅ Escolha um quiz"} />
                       </SelectTrigger>
                       <SelectContent>
-                        {quizzes.map((quiz) => (
-                          <SelectItem key={quiz.id} value={quiz.id}>
-                            {quiz.title}
+                        {quizzes && quizzes.length > 0 ? (
+                          quizzes.map((quiz: any) => (
+                            <SelectItem key={quiz.id} value={quiz.id}>
+                              {quiz.title}
+                            </SelectItem>
+                          ))
+                        ) : (
+                          <SelectItem value="no-quiz" disabled>
+                            {quizzesLoading ? "Carregando..." : "Nenhum quiz encontrado"}
                           </SelectItem>
-                        ))}
-                      {quizzes.length === 0 && (
-                        <SelectItem value="no-quiz" disabled>
-                          Carregando quizzes...
-                        </SelectItem>
-                      )}
+                        )}
                     </SelectContent>
                   </Select>
                   
