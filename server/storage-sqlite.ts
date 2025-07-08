@@ -9,7 +9,7 @@ import Database from 'better-sqlite3';
 // 4. Para 1000+ usuários: MIGRAR PARA POSTGRESQL
 const sqlite = new Database('./vendzz-database.db', {
   // Otimizações temporárias até migração
-  verbose: console.log, // Debug para identificar queries lentas
+  verbose: process.env.NODE_ENV === 'development' ? console.log : undefined, // Só debug em dev
   timeout: 5000, // 5s timeout para evitar locks eternos
   readonly: false
 });

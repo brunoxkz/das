@@ -13,9 +13,9 @@ export class HighPerformanceCache {
   constructor() {
     this.cache = new NodeCache({
       stdTTL: 300, // 5 minutos padrão
-      checkperiod: 60, // Verifica expiração a cada 60 segundos
+      checkperiod: 30, // OTIMIZAÇÃO: Verifica expiração a cada 30s (mais frequente para 1000+ users)
       useClones: false, // Não clona objetos para melhor performance
-      maxKeys: 10000, // Máximo de 10k chaves em cache
+      maxKeys: 5000, // OTIMIZAÇÃO: Reduzido para 5k chaves (controle de memória)
     });
 
     this.stats = {

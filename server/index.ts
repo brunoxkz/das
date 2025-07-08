@@ -5,6 +5,7 @@ import crypto from "crypto";
 import { registerHybridRoutes } from "./routes-hybrid";
 import { setupVite, serveStatic, log } from "./vite";
 import { setupHybridAuth, verifyJWT } from "./auth-hybrid";
+import { healthCheck, detailedHealth } from "./health-check";
 
 const app = express();
 

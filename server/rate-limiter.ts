@@ -27,10 +27,10 @@ export class HighPerformanceRateLimiter {
     
     this.clients = new Map();
     
-    // Limpeza automática a cada minuto para liberar memória
+    // OTIMIZAÇÃO: Limpeza mais frequente para 1000+ users (30s ao invés de 60s)
     this.cleanupInterval = setInterval(() => {
       this.cleanup();
-    }, 60000);
+    }, 30000);
   }
 
   private getClientKey(req: Request): string {
@@ -41,12 +41,26 @@ export class HighPerformanceRateLimiter {
   private cleanup(): void {
     const now = Date.now();
     const toDelete: string[] = [];
+    const MAX_CLIENTS = 5000; // LIMITE para prevenir memory leak
     
     this.clients.forEach((record, key) => {
       if (record.resetTime <= now) {
         toDelete.push(key);
       }
     });
+    
+    // CRÍTICO: Se Map cresceu muito, remove entradas antigas mesmo que não expiradas
+    if (this.clients.size > MAX_CLIENTS) {
+      const excess = this.clients.size - MAX_CLIENTS;
+      const allKeys = Array.from(this.clients.keys());
+      const oldestKeys = allKeys.slice(0, excess); // Remove os mais antigos
+      oldestKeys.forEach(key => {
+        if (!toDelete.includes(key)) {
+          toDelete.push(key);
+        }
+      });
+      console.log(`⚠️ [RateLimit] Força limpeza: ${excess} clientes em excesso removidos`);
+    }
     
     toDelete.forEach(key => this.clients.delete(key));
     
