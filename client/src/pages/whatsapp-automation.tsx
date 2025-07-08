@@ -16,7 +16,9 @@ import {
   AlertCircle,
   CheckCircle,
   Clock,
-  Users
+  Users,
+  Key,
+  RefreshCw
 } from "lucide-react";
 
 export default function WhatsAppAutomationPage() {
@@ -25,6 +27,8 @@ export default function WhatsAppAutomationPage() {
   const [dateFilter, setDateFilter] = useState("");
   const [generatingFile, setGeneratingFile] = useState(false);
   const [lastGeneratedFile, setLastGeneratedFile] = useState<any>(null);
+  const [generatingToken, setGeneratingToken] = useState(false);
+  const [generatedToken, setGeneratedToken] = useState<string | null>(null);
   const { toast } = useToast();
 
   // Buscar quizzes
@@ -51,11 +55,16 @@ export default function WhatsAppAutomationPage() {
     refetchInterval: 10000 // Atualizar a cada 10 segundos para detectar novos leads
   });
 
-  // Status da extensão
+  // Status da extensão - só considera conectada se realmente há activity recente
   const { data: extensionStatus } = useQuery({
     queryKey: ["/api/whatsapp-extension/status"],
     refetchInterval: 30000, // Verificar a cada 30 segundos
   });
+
+  // Verifica se extensão está realmente conectada (ping nos últimos 2 minutos)
+  const isExtensionConnected = extensionStatus?.connected && 
+    extensionStatus?.lastPing && 
+    (new Date().getTime() - new Date(extensionStatus.lastPing).getTime()) < 120000;
 
   const quizzesList = Array.isArray(quizzes) ? quizzes : [];
   const phonesList = phonesData?.phones || [];
@@ -106,12 +115,12 @@ export default function WhatsAppAutomationPage() {
       });
       
       toast({
-        title: "Arquivo gerado com sucesso!",
-        description: `Arquivo criado com ${filteredPhones.length} contatos. A extensão pode acessá-lo agora.`,
+        title: "Sincronização ativada com sucesso!",
+        description: `Funil sincronizado com ${filteredPhones.length} contatos. A ferramenta de automação pode acessá-lo agora.`,
       });
       
     } catch (error: any) {
-      console.error('Erro ao gerar arquivo:', error);
+      console.error('Erro ao ativar sincronização:', error);
       
       // Verifica se é erro de automação desabilitada
       if (error.message && error.message.includes('Automação WhatsApp não está habilitada')) {
@@ -122,7 +131,7 @@ export default function WhatsAppAutomationPage() {
         });
       } else {
         toast({
-          title: "Erro ao gerar arquivo",
+          title: "Erro ao ativar sincronização",
           description: error.message || "Tente novamente em alguns instantes.",
           variant: "destructive",
         });
@@ -132,16 +141,48 @@ export default function WhatsAppAutomationPage() {
     }
   };
 
+  const generateToken = async () => {
+    setGeneratingToken(true);
+    try {
+      const token = localStorage.getItem("accessToken");
+      if (!token) {
+        throw new Error("Token de acesso não encontrado");
+      }
+      
+      setGeneratedToken(token);
+      
+      toast({
+        title: "Token gerado com sucesso!",
+        description: "Token copiado para área de transferência. Use-o na extensão Chrome.",
+      });
+      
+      // Copiar token para área de transferência
+      if (navigator.clipboard) {
+        await navigator.clipboard.writeText(token);
+      }
+      
+    } catch (error: any) {
+      console.error('Erro ao gerar token:', error);
+      toast({
+        title: "Erro ao gerar token",
+        description: error.message || "Tente novamente em alguns instantes.",
+        variant: "destructive",
+      });
+    } finally {
+      setGeneratingToken(false);
+    }
+  };
+
   return (
     <div className="container mx-auto p-6 space-y-6">
       <div className="flex justify-between items-center">
         <div>
           <h1 className="text-3xl font-bold">Automação WhatsApp</h1>
-          <p className="text-gray-600">Gere arquivos de contatos para a extensão Chrome</p>
+          <p className="text-gray-600">Sincronize seus funis com a ferramenta de automação</p>
         </div>
         <div className="flex items-center gap-2">
-          <Badge variant={extensionStatus?.connected ? "default" : "destructive"}>
-            {extensionStatus?.connected ? "Extensão Conectada" : "Extensão Desconectada"}
+          <Badge variant={isExtensionConnected ? "default" : "destructive"}>
+            {isExtensionConnected ? "Extensão Conectada" : "Extensão Desconectada"}
           </Badge>
         </div>
       </div>
@@ -150,11 +191,11 @@ export default function WhatsAppAutomationPage() {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <FileText className="h-5 w-5" />
-            Gerar Arquivo de Automação
+            <RefreshCw className="h-5 w-5" />
+            Sincronize seu Funil customizado com o WhatsApp (ROI +38%)
           </CardTitle>
           <CardDescription>
-            Selecione um quiz e configure os filtros para gerar o arquivo que a extensão Chrome irá usar
+            Selecione um quiz e configure os filtros para enviar os dados para a ferramenta de automação.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -271,36 +312,57 @@ export default function WhatsAppAutomationPage() {
                 </div>
               </div>
 
-              {/* Botão de Gerar */}
-              <Button 
-                onClick={generateAutomationFile} 
-                disabled={generatingFile || filteredPhones.length === 0}
-                className="w-full"
-              >
-                {generatingFile ? (
-                  <>
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                    Gerando Arquivo...
-                  </>
-                ) : (
-                  <>
-                    <Download className="h-4 w-4 mr-2" />
-                    Gerar Arquivo de Automação ({filteredPhones.length} contatos)
-                  </>
-                )}
-              </Button>
+              {/* Botões */}
+              <div className="space-y-3">
+                <Button 
+                  onClick={generateAutomationFile} 
+                  disabled={generatingFile || filteredPhones.length === 0}
+                  className="w-full"
+                >
+                  {generatingFile ? (
+                    <>
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                      Ativando Sincronização...
+                    </>
+                  ) : (
+                    <>
+                      <RefreshCw className="h-4 w-4 mr-2" />
+                      Ativar Sincronização desse Funil ({filteredPhones.length} contatos)
+                    </>
+                  )}
+                </Button>
+                
+                <Button 
+                  onClick={generateToken} 
+                  disabled={generatingToken}
+                  variant="outline"
+                  className="w-full"
+                >
+                  {generatingToken ? (
+                    <>
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current mr-2"></div>
+                      Gerando Token...
+                    </>
+                  ) : (
+                    <>
+                      <Key className="h-4 w-4 mr-2" />
+                      Gerar Token para Extensão
+                    </>
+                  )}
+                </Button>
+              </div>
             </>
           )}
         </CardContent>
       </Card>
 
-      {/* Arquivo Gerado Recentemente */}
+      {/* Funil Sincronizado */}
       {lastGeneratedFile && (
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-green-600">
               <CheckCircle className="h-5 w-5" />
-              Arquivo Gerado com Sucesso
+              Funil Sincronizado com Sucesso
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -314,7 +376,7 @@ export default function WhatsAppAutomationPage() {
                 <p className="font-semibold">{lastGeneratedFile.totalPhones}</p>
               </div>
               <div>
-                <Label className="text-gray-500">Gerado em</Label>
+                <Label className="text-gray-500">Sincronizado em</Label>
                 <p className="font-semibold">
                   {new Date(lastGeneratedFile.createdAt).toLocaleString('pt-BR')}
                 </p>
@@ -324,9 +386,50 @@ export default function WhatsAppAutomationPage() {
             <Alert className="mt-4">
               <AlertCircle className="h-4 w-4" />
               <AlertDescription>
-                ✅ <strong>Arquivo pronto!</strong> A extensão Chrome agora pode acessar este arquivo e exibir os contatos na sidebar do WhatsApp Web.
+                ✅ <strong>Sincronização ativa!</strong> A ferramenta de automação agora pode acessar este funil e exibir os contatos na interface do WhatsApp Web.
               </AlertDescription>
             </Alert>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Token Gerado */}
+      {generatedToken && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-blue-600">
+              <Key className="h-5 w-5" />
+              Token Gerado para Extensão
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              <div>
+                <Label className="text-gray-500">Token de Autenticação</Label>
+                <div className="flex items-center gap-2 mt-1">
+                  <Input 
+                    value={generatedToken} 
+                    readOnly 
+                    className="font-mono text-sm"
+                    type="password"
+                  />
+                  <Button 
+                    size="sm" 
+                    variant="outline"
+                    onClick={() => navigator.clipboard.writeText(generatedToken)}
+                  >
+                    Copiar
+                  </Button>
+                </div>
+              </div>
+              
+              <Alert className="mt-4">
+                <AlertCircle className="h-4 w-4" />
+                <AlertDescription>
+                  🔑 <strong>Token copiado!</strong> Use este token na extensão Chrome para conectar com o sistema. O token já foi copiado para sua área de transferência.
+                </AlertDescription>
+              </Alert>
+            </div>
           </CardContent>
         </Card>
       )}
