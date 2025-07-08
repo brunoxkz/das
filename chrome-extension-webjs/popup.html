@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Vendzz WhatsApp 2.0</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      width: 350px;
+      min-height: 400px;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+      background: linear-gradient(135deg, #1e3a8a 0%, #059669 100%);
+      color: white;
+      padding: 20px;
+    }
+    
+    .header {
+      text-align: center;
+      margin-bottom: 20px;
+      padding-bottom: 15px;
+      border-bottom: 1px solid rgba(255,255,255,0.2);
+    }
+    
+    .logo {
+      font-size: 20px;
+      font-weight: bold;
+      margin-bottom: 5px;
+    }
+    
+    .subtitle {
+      font-size: 12px;
+      opacity: 0.8;
+    }
+    
+    .status-section {
+      margin: 20px 0;
+    }
+    
+    .status-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px;
+      background: rgba(255,255,255,0.1);
+      border-radius: 6px;
+      margin-bottom: 8px;
+      font-size: 14px;
+    }
+    
+    .status-indicator {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #ef4444;
+    }
+    
+    .status-indicator.connected {
+      background: #10b981;
+    }
+    
+    .config-section {
+      margin: 20px 0;
+    }
+    
+    .section-title {
+      font-size: 14px;
+      font-weight: 600;
+      margin-bottom: 10px;
+      opacity: 0.9;
+    }
+    
+    .input-group {
+      margin-bottom: 12px;
+    }
+    
+    .input-label {
+      display: block;
+      font-size: 12px;
+      margin-bottom: 4px;
+      opacity: 0.8;
+    }
+    
+    .input-field {
+      width: 100%;
+      padding: 8px 10px;
+      border: none;
+      border-radius: 4px;
+      background: rgba(255,255,255,0.2);
+      color: white;
+      font-size: 13px;
+    }
+    
+    .input-field::placeholder {
+      color: rgba(255,255,255,0.6);
+    }
+    
+    .input-field:focus {
+      outline: none;
+      background: rgba(255,255,255,0.3);
+    }
+    
+    .btn {
+      width: 100%;
+      padding: 10px;
+      border: none;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      margin-bottom: 8px;
+      transition: all 0.2s;
+    }
+    
+    .btn-primary {
+      background: #10b981;
+      color: white;
+    }
+    
+    .btn-primary:hover {
+      background: #059669;
+    }
+    
+    .btn-primary:disabled {
+      background: #6b7280;
+      cursor: not-allowed;
+    }
+    
+    .btn-secondary {
+      background: rgba(255,255,255,0.2);
+      color: white;
+    }
+    
+    .btn-secondary:hover {
+      background: rgba(255,255,255,0.3);
+    }
+    
+    .stats-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin: 15px 0;
+    }
+    
+    .stat-card {
+      background: rgba(255,255,255,0.1);
+      border-radius: 6px;
+      padding: 10px;
+      text-align: center;
+    }
+    
+    .stat-number {
+      font-size: 16px;
+      font-weight: bold;
+      margin-bottom: 2px;
+    }
+    
+    .stat-label {
+      font-size: 10px;
+      opacity: 0.8;
+    }
+    
+    .message {
+      padding: 8px 10px;
+      border-radius: 4px;
+      margin: 10px 0;
+      font-size: 12px;
+      text-align: center;
+    }
+    
+    .message.success {
+      background: rgba(16, 185, 129, 0.2);
+      border: 1px solid rgba(16, 185, 129, 0.4);
+    }
+    
+    .message.error {
+      background: rgba(239, 68, 68, 0.2);
+      border: 1px solid rgba(239, 68, 68, 0.4);
+    }
+    
+    .message.info {
+      background: rgba(59, 130, 246, 0.2);
+      border: 1px solid rgba(59, 130, 246, 0.4);
+    }
+    
+    .hidden {
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div class="logo">Vendzz WhatsApp</div>
+    <div class="subtitle">Automação Simplificada v2.0</div>
+  </div>
+  
+  <div class="status-section">
+    <div class="status-item">
+      <span>Status da Extensão</span>
+      <div class="status-indicator" id="extensionStatus"></div>
+    </div>
+    <div class="status-item">
+      <span>Conexão com Servidor</span>
+      <div class="status-indicator" id="serverStatus"></div>
+    </div>
+    <div class="status-item">
+      <span>WhatsApp Web</span>
+      <div class="status-indicator" id="whatsappStatus"></div>
+    </div>
+  </div>
+  
+  <div id="messageContainer"></div>
+  
+  <div class="config-section">
+    <div class="section-title">Configuração</div>
+    
+    <div class="input-group">
+      <label class="input-label">URL do Servidor</label>
+      <input 
+        type="text" 
+        class="input-field" 
+        id="serverUrl" 
+        placeholder="http://localhost:5000"
+        value="http://localhost:5000"
+      >
+    </div>
+    
+    <div class="input-group">
+      <label class="input-label">Token de Acesso</label>
+      <input 
+        type="password" 
+        class="input-field" 
+        id="authToken" 
+        placeholder="Cole seu token aqui..."
+      >
+    </div>
+    
+    <button class="btn btn-primary" id="saveConfigBtn">
+      Salvar Configuração
+    </button>
+    
+    <button class="btn btn-secondary" id="testConnectionBtn">
+      Testar Conexão
+    </button>
+  </div>
+  
+  <div class="stats-grid" id="statsContainer">
+    <div class="stat-card">
+      <div class="stat-number" id="contactsCount">0</div>
+      <div class="stat-label">Contatos</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-number" id="messagesCount">0</div>
+      <div class="stat-label">Mensagens</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-number" id="campaignsCount">0</div>
+      <div class="stat-label">Campanhas</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-number" id="successRate">100%</div>
+      <div class="stat-label">Sucesso</div>
+    </div>
+  </div>
+  
+  <div class="actions">
+    <button class="btn btn-primary" id="openWhatsAppBtn">
+      Abrir WhatsApp Web
+    </button>
+    
+    <button class="btn btn-secondary" id="openPanelBtn">
+      Abrir Painel Vendzz
+    </button>
+    
+    <button class="btn btn-secondary" id="toggleExtensionBtn">
+      Pausar Extensão
+    </button>
+  </div>
+  
+  <script src="popup.js"></script>
+</body>
+</html>

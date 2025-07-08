@@ -114,6 +114,10 @@ app.use((req, res, next) => {
   setupSQLiteAuth(app);
   const server = registerSQLiteRoutes(app);
 
+  // Setup WhatsApp Automation routes (nova arquitetura simplificada)
+  const { setupWhatsAppAutomationRoutes } = await import('./routes-whatsapp-automation');
+  setupWhatsAppAutomationRoutes(app);
+
   // Sistema de processamento individual de SMS agendados - A CADA 30 SEGUNDOS
   setInterval(async () => {
     try {
