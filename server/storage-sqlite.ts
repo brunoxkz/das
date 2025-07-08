@@ -1,4 +1,8 @@
 import { db } from "./db-sqlite";
+import Database from 'better-sqlite3';
+
+// Instância direta do SQLite para comandos raw
+const sqlite = new Database('./vendzz-database.db');
 import { 
   users, quizzes, quizTemplates, quizResponses, quizAnalytics, emailCampaigns, emailTemplates, smsTransactions, smsCampaigns, smsLogs,
   whatsappCampaigns, whatsappLogs, whatsappTemplates,
@@ -864,9 +868,13 @@ export class SQLiteStorage implements IStorage {
   // Get all WhatsApp campaigns for auto-detection
   async getAllWhatsappCampaigns(): Promise<any[]> {
     try {
-      const campaigns = await db.select().from(whatsappCampaigns)
-        .where(eq(whatsappCampaigns.status, 'active'))
-        .orderBy(desc(whatsappCampaigns.createdAt));
+      const stmt = sqlite.prepare(`
+        SELECT * FROM whatsapp_campaigns 
+        WHERE status = 'active'
+        ORDER BY created_at DESC
+      `);
+      
+      const campaigns = stmt.all();
       
       return campaigns.map(campaign => ({
         ...campaign,
@@ -882,15 +890,15 @@ export class SQLiteStorage implements IStorage {
   // Get scheduled WhatsApp logs  
   async getScheduledWhatsappLogs(currentTime: number): Promise<any[]> {
     try {
-      const logs = await db.select().from(whatsappLogs)
-        .where(and(
-          eq(whatsappLogs.status, 'scheduled'),
-          lte(whatsappLogs.scheduledAt, currentTime)
-        ))
-        .orderBy(asc(whatsappLogs.scheduledAt))
-        .limit(100);
-        
-      return logs;
+      const stmt = sqlite.prepare(`
+        SELECT * FROM whatsapp_logs 
+        WHERE status = 'scheduled' 
+        AND scheduled_at <= ?
+        ORDER BY scheduled_at ASC
+        LIMIT 100
+      `);
+      
+      return stmt.all(currentTime);
     } catch (error) {
       console.error('Error getting scheduled WhatsApp logs:', error);
       return [];
@@ -900,26 +908,37 @@ export class SQLiteStorage implements IStorage {
   // Update WhatsApp log status
   async updateWhatsappLogStatus(id: string, status: string, extensionStatus?: string, errorMsg?: string): Promise<void> {
     try {
-      const updates: any = {
+      const updates = {
         status,
-        updatedAt: new Date()
+        updated_at: Math.floor(Date.now() / 1000)
       };
       
+      let setClause = 'SET status = ?, updated_at = ?';
+      let params = [status, updates.updated_at];
+      
       if (status === 'sent') {
-        updates.sentAt = new Date();
+        setClause += ', sent_at = ?';
+        params.push(Math.floor(Date.now() / 1000));
       }
       
       if (extensionStatus) {
-        updates.extensionStatus = extensionStatus;
+        setClause += ', extension_status = ?';
+        params.push(extensionStatus);
       }
       
       if (errorMsg) {
-        updates.errorMessage = errorMsg;
+        setClause += ', error_message = ?';
+        params.push(errorMsg);
       }
       
-      await db.update(whatsappLogs)
-        .set(updates)
-        .where(eq(whatsappLogs.id, id));
+      const stmt = sqlite.prepare(`
+        UPDATE whatsapp_logs 
+        ${setClause}
+        WHERE id = ?
+      `);
+      
+      params.push(id);
+      stmt.run(...params);
         
     } catch (error) {
       console.error('Error updating WhatsApp log status:', error);
