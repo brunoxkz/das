@@ -1,8 +1,25 @@
 import { db } from "./db-sqlite";
 import Database from 'better-sqlite3';
 
-// Instância direta do SQLite para comandos raw
-const sqlite = new Database('./vendzz-database.db');
+// Instância direta do SQLite para comandos raw - CRÍTICO: NÃO SUPORTA 1000+ USUÁRIOS
+// SQLite tem limitações severas para alta concorrência:
+// 1. Apenas 1 write simultâneo (database locking)
+// 2. WAL mode melhora reads mas não resolve writes
+// 3. Connection pooling limitado
+// 4. Para 1000+ usuários: MIGRAR PARA POSTGRESQL
+const sqlite = new Database('./vendzz-database.db', {
+  // Otimizações temporárias até migração
+  verbose: console.log, // Debug para identificar queries lentas
+  timeout: 5000, // 5s timeout para evitar locks eternos
+  readonly: false
+});
+
+// Configurações críticas para performance
+sqlite.pragma('journal_mode = WAL'); // Write-Ahead Logging
+sqlite.pragma('synchronous = NORMAL'); // Balance segurança/performance
+sqlite.pragma('cache_size = 10000'); // 10MB cache
+sqlite.pragma('temp_store = MEMORY'); // Temp tables em RAM
+sqlite.pragma('mmap_size = 268435456'); // 256MB memory mapping
 import { 
   users, quizzes, quizTemplates, quizResponses, quizAnalytics, emailCampaigns, emailTemplates, smsTransactions, smsCampaigns, smsLogs,
   whatsappCampaigns, whatsappLogs, whatsappTemplates,
