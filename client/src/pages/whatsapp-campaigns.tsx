@@ -74,6 +74,8 @@ export default function WhatsAppCampaignsPage() {
   const [autoRefresh, setAutoRefresh] = useState(true);
   const [campaignName, setCampaignName] = useState("");
   const [isCreating, setIsCreating] = useState(false);
+  const [leadDelay, setLeadDelay] = useState(10); // minutos
+  const [distributionDelay, setDistributionDelay] = useState(180); // segundos
   
   const queryClient = useQueryClient();
   const { toast } = useToast();
@@ -229,6 +231,8 @@ export default function WhatsAppCampaignsPage() {
         messages: validMessages,
         targetAudience: selectedAudience,
         dateFilter,
+        leadDelay,
+        distributionDelay,
         extensionSettings: {
           delay: 5,
           maxRetries: 3,
@@ -451,6 +455,54 @@ export default function WhatsAppCampaignsPage() {
                   </div>
                 </div>
               )}
+
+              {/* Configurações de Timing */}
+              <div className="space-y-4 border rounded-lg p-4 bg-gray-50">
+                <h3 className="font-semibold text-gray-800">⏱️ Configurações de Timing</h3>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="leadDelay">Aguardar depois que o Lead chega (minutos)</Label>
+                    <Input
+                      id="leadDelay"
+                      type="number"
+                      value={leadDelay}
+                      onChange={(e) => setLeadDelay(parseInt(e.target.value) || 10)}
+                      min="1"
+                      max="1440"
+                      placeholder="10"
+                      className="mt-1"
+                    />
+                    <p className="text-sm text-gray-600 mt-1">
+                      Tempo que o sistema aguarda após capturar o telefone do quiz antes de agendar o envio
+                    </p>
+                  </div>
+                  
+                  <div>
+                    <Label htmlFor="distributionDelay">Distribuição entre mensagens (segundos)</Label>
+                    <Input
+                      id="distributionDelay"
+                      type="number"
+                      value={distributionDelay}
+                      onChange={(e) => setDistributionDelay(parseInt(e.target.value) || 180)}
+                      min="30"
+                      max="600"
+                      placeholder="180"
+                      className="mt-1"
+                    />
+                    <p className="text-sm text-gray-600 mt-1">
+                      <span className="font-medium">Recomendado: 120-300 segundos</span> para evitar bloqueios do WhatsApp
+                    </p>
+                  </div>
+                </div>
+                
+                <Alert>
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertDescription>
+                    <strong>💡 Dica:</strong> O sistema aplica distribuição aleatória automática baseada no valor configurado para garantir envios seguros e evitar detecção de spam.
+                  </AlertDescription>
+                </Alert>
+              </div>
 
               {/* Mensagens Rotativas */}
               <div className="space-y-2">

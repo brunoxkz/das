@@ -864,13 +864,9 @@ export class SQLiteStorage implements IStorage {
   // Get all WhatsApp campaigns for auto-detection
   async getAllWhatsappCampaigns(): Promise<any[]> {
     try {
-      const stmt = this.db.prepare(`
-        SELECT * FROM whatsapp_campaigns 
-        WHERE status = 'active'
-        ORDER BY created_at DESC
-      `);
-      
-      const campaigns = stmt.all();
+      const campaigns = await db.select().from(whatsappCampaigns)
+        .where(eq(whatsappCampaigns.status, 'active'))
+        .orderBy(desc(whatsappCampaigns.createdAt));
       
       return campaigns.map(campaign => ({
         ...campaign,
@@ -886,15 +882,15 @@ export class SQLiteStorage implements IStorage {
   // Get scheduled WhatsApp logs  
   async getScheduledWhatsappLogs(currentTime: number): Promise<any[]> {
     try {
-      const stmt = this.db.prepare(`
-        SELECT * FROM whatsapp_logs 
-        WHERE status = 'scheduled' 
-        AND scheduled_at <= ?
-        ORDER BY scheduled_at ASC
-        LIMIT 100
-      `);
-      
-      return stmt.all(currentTime);
+      const logs = await db.select().from(whatsappLogs)
+        .where(and(
+          eq(whatsappLogs.status, 'scheduled'),
+          lte(whatsappLogs.scheduledAt, currentTime)
+        ))
+        .orderBy(asc(whatsappLogs.scheduledAt))
+        .limit(100);
+        
+      return logs;
     } catch (error) {
       console.error('Error getting scheduled WhatsApp logs:', error);
       return [];
@@ -904,37 +900,26 @@ export class SQLiteStorage implements IStorage {
   // Update WhatsApp log status
   async updateWhatsappLogStatus(id: string, status: string, extensionStatus?: string, errorMsg?: string): Promise<void> {
     try {
-      const updates = {
+      const updates: any = {
         status,
-        updated_at: Math.floor(Date.now() / 1000)
+        updatedAt: new Date()
       };
       
-      let setClause = 'SET status = ?, updated_at = ?';
-      let params = [status, updates.updated_at];
-      
       if (status === 'sent') {
-        setClause += ', sent_at = ?';
-        params.push(Math.floor(Date.now() / 1000));
+        updates.sentAt = new Date();
       }
       
       if (extensionStatus) {
-        setClause += ', extension_status = ?';
-        params.push(extensionStatus);
+        updates.extensionStatus = extensionStatus;
       }
       
       if (errorMsg) {
-        setClause += ', error_message = ?';
-        params.push(errorMsg);
+        updates.errorMessage = errorMsg;
       }
       
-      const stmt = this.db.prepare(`
-        UPDATE whatsapp_logs 
-        ${setClause}
-        WHERE id = ?
-      `);
-      
-      params.push(id);
-      stmt.run(...params);
+      await db.update(whatsappLogs)
+        .set(updates)
+        .where(eq(whatsappLogs.id, id));
         
     } catch (error) {
       console.error('Error updating WhatsApp log status:', error);
