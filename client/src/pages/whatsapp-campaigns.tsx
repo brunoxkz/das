@@ -80,22 +80,24 @@ export default function WhatsAppCampaignsPage() {
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
-  // Buscar quizzes com debug
-  const { data: quizzes = [], isLoading: quizzesLoading, error: quizzesError, refetch: refetchQuizzes } = useQuery({
-    queryKey: ['/api/quizzes'],
-    retry: 3,
-    refetchOnWindowFocus: true,
-    staleTime: 30000,
-    onSuccess: (data) => {
-      console.log('✅ Quizzes carregados:', data);
-    },
-    onError: (error) => {
-      console.error('❌ Erro ao carregar quizzes:', error);
+  // Buscar quizzes usando o mesmo padrão do SMS que funciona
+  const { data: quizzes = [], isLoading: quizzesLoading, error: quizzesError } = useQuery({
+    queryKey: ["/api/quizzes"],
+    queryFn: async () => {
+      const token = localStorage.getItem("accessToken");
+      const response = await fetch("/api/quizzes", {
+        headers: {
+          "Authorization": `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      });
+      if (!response.ok) throw new Error("Failed to fetch quizzes");
+      return response.json();
     }
   });
 
   // Log dos quizzes para debug
-  console.log('🔍 Estado dos quizzes:', {
+  console.log('🔍 Estado dos quizzes WhatsApp:', {
     loading: quizzesLoading,
     error: quizzesError,
     data: quizzes,
