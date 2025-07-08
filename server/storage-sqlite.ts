@@ -1712,13 +1712,25 @@ export class SQLiteStorage implements IStorage {
   }
 
   async updateWhatsappAutomationFile(fileId: string, updates: { last_updated?: string }): Promise<void> {
+    const newTimestamp = updates.last_updated || new Date().toISOString();
+    
+    console.log(`💾 DEBUG UPDATE: fileId=${fileId}, newTimestamp=${newTimestamp}`);
+    
     const stmt = sqlite.prepare(`
       UPDATE whatsapp_automation_files 
       SET last_updated = ? 
       WHERE id = ?
     `);
     
-    stmt.run(updates.last_updated || new Date().toISOString(), fileId);
+    const result = stmt.run(newTimestamp, fileId);
+    console.log(`💾 DEBUG RESULT: changes=${result.changes}, lastInsertRowid=${result.lastInsertRowid}`);
+    
+    // Verificar se a atualização foi bem-sucedida
+    if (result.changes === 0) {
+      console.log(`⚠️ AVISO: Nenhuma linha foi atualizada para fileId=${fileId}`);
+    } else {
+      console.log(`✅ Atualização bem-sucedida para fileId=${fileId}`);
+    }
   }
 
   async deleteAutomationFile(fileId: string): Promise<void> {

@@ -2064,11 +2064,19 @@ app.get("/api/whatsapp-automation-file/:userId/:quizId/sync", verifyJWT, async (
     }
     
     if (newResponses.length === 0) {
+      // Atualizar last_updated mesmo quando não há novos leads
+      const currentTimestamp = new Date().toISOString();
+      await storage.updateWhatsappAutomationFile(automationFile.id, {
+        last_updated: currentTimestamp
+      });
+      
+      console.log(`🔄 Arquivo de automação atualizado (sem novos leads): ${automationFile.id}, last_updated: ${currentTimestamp}`);
+      
       return res.json({ 
         hasUpdates: false, 
         newLeads: [],
         totalNewLeads: 0,
-        lastUpdate: new Date().toISOString()
+        lastUpdate: currentTimestamp
       });
     }
     
