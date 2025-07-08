@@ -41,12 +41,30 @@ app.use(express.urlencoded({
   parameterLimit: 1000
 }));
 
-// CORS configurado para extensão Chrome
+// CORS configurado especificamente para Chrome Extension + localhost
 app.use((req, res, next) => {
-  // CORS para extensão Chrome
-  res.setHeader('Access-Control-Allow-Origin', '*');
+  const origin = req.headers.origin;
+  
+  // Permite Chrome Extension (chrome-extension://) + localhost + Replit
+  const allowedOrigins = [
+    'chrome-extension://*',
+    'http://localhost:5000',
+    'http://127.0.0.1:5000',
+    'https://*.replit.app',
+    'https://*.replit.dev'
+  ];
+  
+  // Chrome Extension tem origin null ou chrome-extension://
+  if (!origin || origin.startsWith('chrome-extension://') || origin === 'null') {
+    res.setHeader('Access-Control-Allow-Origin', '*');
+  } else if (allowedOrigins.some(allowed => origin.match(allowed.replace('*', '.*')))) {
+    res.setHeader('Access-Control-Allow-Origin', origin);
+  } else {
+    res.setHeader('Access-Control-Allow-Origin', '*'); // Fallback para desenvolvimento
+  }
+  
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, x-extension-id');
   res.setHeader('Access-Control-Allow-Credentials', 'true');
   
   // Headers de performance

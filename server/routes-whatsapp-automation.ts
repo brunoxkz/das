@@ -448,6 +448,8 @@ export function setupWhatsAppAutomationRoutes(app: any) {
         success: true,
         quiz: { id: quiz.id, title: quiz.title, description: quiz.description },
         phones: filteredPhones,
+        timestamp: new Date().toISOString(),
+        realTimeData: true, // Indica que dados são sempre atuais
         total: filteredPhones.length,
         variables: {
           nome: '{nome}',
