@@ -143,18 +143,36 @@ async function saveToken() {
     saveTokenBtn.textContent = 'Salvando...';
     saveTokenBtn.disabled = true;
     
+    console.log('💾 Salvando token no popup...', token.substring(0, 20) + '...');
+    
     const response = await chrome.runtime.sendMessage({
       action: 'save_token',
       token: token
     });
     
-    if (response.success) {
+    console.log('💾 Resposta do salvamento:', response);
+    
+    if (response && response.success) {
       alert('Token salvo com sucesso!');
       tokenInput.value = '';
       tokenInput.placeholder = 'Token configurado (clique para editar)';
+      
+      // Forçar criação da sidebar nas abas do WhatsApp
+      try {
+        const tabs = await chrome.tabs.query({ url: "https://web.whatsapp.com/*" });
+        console.log('🔧 Encontradas', tabs.length, 'abas do WhatsApp');
+        for (const tab of tabs) {
+          chrome.tabs.sendMessage(tab.id, { action: 'force_sidebar' });
+        }
+        console.log('🔧 Comando para forçar sidebar enviado');
+      } catch (e) {
+        console.log('⚠️ Erro ao forçar sidebar:', e);
+      }
+      
       await checkStatus();
     } else {
-      alert('Erro ao salvar token: ' + response.error);
+      console.error('❌ Erro na resposta:', response);
+      alert('Erro ao salvar token: ' + (response?.error || 'Resposta inválida'));
     }
   } catch (error) {
     console.error('❌ Erro ao salvar token:', error);

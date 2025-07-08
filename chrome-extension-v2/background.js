@@ -10,16 +10,27 @@ let intervalId = null;
 
 // Salvar configuração
 function saveConfig() {
-  chrome.storage.local.set({ vend_config: config });
+  console.log('💾 Salvando configuração:', config);
+  chrome.storage.local.set({ vend_config: config }, () => {
+    console.log('✅ Configuração salva com sucesso');
+  });
 }
 
 // Carregar configuração
 async function loadConfig() {
-  const result = await chrome.storage.local.get(['vend_config']);
-  if (result.vend_config) {
-    config = { ...config, ...result.vend_config };
+  try {
+    const result = await chrome.storage.local.get(['vend_config']);
+    if (result.vend_config) {
+      config = { ...config, ...result.vend_config };
+      console.log('📥 Configuração carregada:', config);
+    } else {
+      console.log('⚠️ Nenhuma configuração encontrada no storage');
+    }
+    return config;
+  } catch (error) {
+    console.error('❌ Erro ao carregar configuração:', error);
+    return config;
   }
-  return config;
 }
 
 // Fazer requisição para a API
@@ -61,9 +72,17 @@ async function fetchAutomationFiles() {
   }
 
   try {
+    console.log('📂 Buscando arquivos de automação...');
     const files = await apiRequest('/api/whatsapp-automation-files');
-    console.log(`📁 Arquivos encontrados: ${files.length}`);
-    return files;
+    console.log(`📂 Arquivos encontrados: ${files?.length || 0}`);
+    
+    if (files && Array.isArray(files)) {
+      console.log('📂 Primeiros 3 arquivos:', files.slice(0, 3));
+      return files;
+    } else {
+      console.log('⚠️ Resposta inválida ou vazia dos arquivos');
+      return [];
+    }
   } catch (error) {
     console.error('❌ Erro ao buscar arquivos:', error);
     return [];

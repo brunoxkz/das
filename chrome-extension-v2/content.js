@@ -44,16 +44,32 @@ function waitForElement(selector, timeout = 10000) {
   });
 }
 
-// Verificar se WhatsApp está carregado
+// Verificar se WhatsApp está carregado (melhorado para muitas conversas)
 function isWhatsAppLoaded() {
+  // Múltiplos seletores para garantir detecção mesmo com muitas conversas
   const selectors = [
     '[data-testid="chat-list"]',
-    '[data-testid="chatlist-header"]',
+    '[data-testid="chatlist-header"]', 
+    '[data-testid="side"]',
+    '#side',
     '._ak8q',
-    '#side .copyable-text'
+    '#side .copyable-text',
+    '[data-testid="chatlist-search"]',
+    '[role="application"]',
+    '[data-testid="default-user"]',
+    '._1Fm4j', // Header do chat
+    '[data-testid="conversation-compose-box-input"]' // Input de mensagem
   ];
   
-  return selectors.some(selector => document.querySelector(selector));
+  // Verificar se pelo menos 2 seletores estão presentes para maior segurança
+  const foundSelectors = selectors.filter(selector => document.querySelector(selector));
+  const isLoaded = foundSelectors.length >= 2;
+  
+  if (isLoaded) {
+    console.log(`✅ WhatsApp detectado com ${foundSelectors.length} elementos encontrados`);
+  }
+  
+  return isLoaded;
 }
 
 // Aguardar carregamento do WhatsApp
@@ -77,8 +93,11 @@ async function waitForWhatsAppLoad() {
 // Criar sidebar
 function createSidebar() {
   if (sidebar) {
+    console.log('✅ Sidebar já existe, retornando...');
     return sidebar;
   }
+  
+  console.log('🎨 Criando sidebar...');
 
   const sidebarHtml = `
     <div id="vendzz-sidebar" class="vendzz-sidebar">
@@ -232,17 +251,34 @@ function createSidebar() {
     </div>
   `;
 
-  // Inserir sidebar no DOM
-  document.body.insertAdjacentHTML('beforeend', sidebarHtml);
-  sidebar = document.getElementById('vendzz-sidebar');
+  try {
+    // Inserir sidebar no DOM
+    console.log('📋 Inserindo sidebar no DOM...');
+    document.body.insertAdjacentHTML('beforeend', sidebarHtml);
+    sidebar = document.getElementById('vendzz-sidebar');
+    
+    if (!sidebar) {
+      console.error('❌ Falha ao encontrar sidebar após inserção');
+      return null;
+    }
+    
+    console.log('✅ Sidebar inserida no DOM com sucesso');
 
-  // Configurar event listeners
-  setupEventListeners();
-  
-  // Carregar configuração
-  loadConfig();
+    // Configurar event listeners
+    console.log('🔧 Configurando event listeners...');
+    setupEventListeners();
+    
+    // Carregar configuração
+    console.log('⚙️ Carregando configuração...');
+    loadConfig();
+    
+    console.log('✅ Sidebar totalmente configurada');
 
-  return sidebar;
+    return sidebar;
+  } catch (error) {
+    console.error('❌ Erro ao criar sidebar:', error);
+    return null;
+  }
 }
 
 // Configurar event listeners
@@ -349,27 +385,42 @@ async function connectToServer() {
 // Carregar arquivos
 async function loadFiles() {
   try {
+    console.log('🔄 Tentando carregar arquivos...');
     addLog('🔄 Carregando arquivos...');
     
     const response = await chrome.runtime.sendMessage({ action: 'fetch_files' });
+    console.log('📂 Resposta do background:', response);
     
-    if (response.error) {
+    if (response && response.error) {
       throw new Error(response.error);
     }
     
     const fileSelect = document.getElementById('vendzz-file-select');
+    if (!fileSelect) {
+      console.error('❌ Select de arquivos não encontrado!');
+      addLog('❌ Interface não carregada corretamente');
+      return;
+    }
+    
     fileSelect.innerHTML = '<option value="">Selecione um arquivo</option>';
     
-    response.files.forEach(file => {
-      const option = document.createElement('option');
-      option.value = file.id;
-      option.textContent = `${file.quiz_title} (${file.total_phones} contatos)`;
-      fileSelect.appendChild(option);
-    });
-    
-    addLog(`📁 ${response.files.length} arquivos carregados`);
+    if (response && response.files && Array.isArray(response.files)) {
+      response.files.forEach(file => {
+        const option = document.createElement('option');
+        option.value = file.id;
+        option.textContent = `${file.quiz_title} (${file.total_phones} contatos)`;
+        fileSelect.appendChild(option);
+      });
+      
+      addLog(`📁 ${response.files.length} arquivos carregados`);
+      console.log('✅ Arquivos carregados com sucesso');
+    } else {
+      addLog('⚠️ Nenhum arquivo encontrado');
+      console.log('⚠️ Resposta inválida:', response);
+    }
     
   } catch (error) {
+    console.error('❌ Erro ao carregar arquivos:', error);
     addLog(`❌ Erro ao carregar arquivos: ${error.message}`);
   }
 }
@@ -534,18 +585,32 @@ async function init() {
   try {
     console.log('🔄 Inicializando Vendzz WhatsApp Automation...');
     
+    // Verificar se já existe sidebar
+    if (document.getElementById('vendzz-sidebar')) {
+      console.log('✅ Sidebar já existe, abortando inicialização');
+      return;
+    }
+    
     await waitForWhatsAppLoad();
     
     // Aguardar um pouco mais para garantir que tudo carregou
     await new Promise(resolve => setTimeout(resolve, 2000));
     
-    createSidebar();
-    adjustWhatsAppLayout();
+    const sidebarElement = createSidebar();
+    if (sidebarElement) {
+      console.log('✅ Sidebar criada com sucesso');
+      adjustWhatsAppLayout();
+      console.log('✅ Layout do WhatsApp ajustado');
+    } else {
+      console.error('❌ Falha ao criar sidebar');
+    }
     
     console.log('✅ Vendzz WhatsApp Automation inicializado com sucesso');
     
   } catch (error) {
     console.error('❌ Erro na inicialização:', error);
+    // Tentar novamente em 5 segundos
+    setTimeout(init, 5000);
   }
 }
 
@@ -1326,9 +1391,181 @@ function incrementSentCounter() {
   console.log(`📊 Mensagens enviadas nesta hora: ${automationConfig.sentInCurrentHour}/${automationConfig.hourlyLimit}`);
 }
 
+// Múltiplas tentativas de inicialização para garantir que funcione
+let initAttempts = 0;
+const maxInitAttempts = 5;
+
+function tryInit() {
+  initAttempts++;
+  console.log(`🚀 Tentativa de inicialização #${initAttempts}`);
+  
+  if (document.getElementById('vendzz-sidebar')) {
+    console.log('✅ Sidebar já existe, não precisa inicializar novamente');
+    return;
+  }
+  
+  init().catch(error => {
+    console.error(`❌ Falha na tentativa #${initAttempts}:`, error);
+    if (initAttempts < maxInitAttempts) {
+      console.log(`🔄 Tentando novamente em 3 segundos... (${initAttempts}/${maxInitAttempts})`);
+      setTimeout(tryInit, 3000);
+    } else {
+      console.error('❌ Todas as tentativas de inicialização falharam');
+    }
+  });
+}
+
 // Inicializar quando o DOM estiver pronto
 if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', init);
+  document.addEventListener('DOMContentLoaded', tryInit);
 } else {
-  init();
+  tryInit();
 }
+
+// Tentar novamente após um tempo caso algo tenha dado errado
+setTimeout(() => {
+  if (!document.getElementById('vendzz-sidebar') && initAttempts < maxInitAttempts) {
+    console.log('🔄 Verificação adicional: sidebar não encontrada, tentando novamente...');
+    tryInit();
+  }
+}, 5000);
+
+// Forçar sidebar via mensagem da extensão (para debug)
+chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+  if (request.action === 'force_sidebar') {
+    console.log('🔧 Forçando criação da sidebar...');
+    const existing = document.getElementById('vendzz-sidebar');
+    if (existing) {
+      existing.remove();
+    }
+    sidebar = null;
+    tryInit();
+    sendResponse({ success: true });
+  }
+});
+
+// Função de força bruta para garantir que a sidebar apareça
+function forceSidebarDisplay() {
+  console.log('💪 FORÇA BRUTA: Garantindo que sidebar seja visível...');
+  
+  // Remover sidebar existente se houver
+  const existing = document.getElementById('vendzz-sidebar');
+  if (existing) {
+    existing.remove();
+    console.log('🗑️ Sidebar existente removida');
+  }
+  
+  // Criar nova sidebar forçadamente
+  const sidebarHtml = `
+    <div id="vendzz-sidebar" style="position: fixed !important; top: 50px !important; right: 20px !important; width: 350px !important; height: 600px !important; background: white !important; border: 2px solid #00ff88 !important; border-radius: 10px !important; box-shadow: 0 4px 20px rgba(0,255,136,0.3) !important; z-index: 999999 !important; font-family: Arial, sans-serif !important; overflow: hidden !important; display: block !important;">
+      <div style="background: linear-gradient(135deg, #00ff88, #00cc6a) !important; color: white !important; padding: 15px !important; font-weight: bold !important; text-align: center !important;">
+        🚀 VENDZZ WHATSAPP AUTOMATION
+        <button id="vendzz-minimize" style="float: right !important; background: none !important; border: none !important; color: white !important; font-size: 18px !important; cursor: pointer !important;">−</button>
+      </div>
+      
+      <div style="padding: 15px !important; height: calc(100% - 60px) !important; overflow-y: auto !important;">
+        <div style="margin-bottom: 15px !important;">
+          <label style="display: block !important; margin-bottom: 5px !important; font-weight: bold !important;">🔗 Servidor:</label>
+          <input type="text" id="vendzz-server" value="https://51f74588-7b5b-4e89-adab-b70610c96e0b-00-zr6ug9hu0yss.janeway.replit.dev" style="width: 100% !important; padding: 8px !important; border: 1px solid #ddd !important; border-radius: 5px !important; font-size: 12px !important;" readonly>
+        </div>
+        
+        <div style="margin-bottom: 15px !important;">
+          <label style="display: block !important; margin-bottom: 5px !important; font-weight: bold !important;">🔑 Token:</label>
+          <input type="password" id="vendzz-token" placeholder="Cole seu token aqui" style="width: 100% !important; padding: 8px !important; border: 1px solid #ddd !important; border-radius: 5px !important;">
+          <button id="vendzz-connect" style="width: 100% !important; padding: 10px !important; background: #00ff88 !important; color: white !important; border: none !important; border-radius: 5px !important; margin-top: 10px !important; cursor: pointer !important; font-weight: bold !important;">🔗 CONECTAR</button>
+        </div>
+        
+        <div style="margin-bottom: 10px !important;">
+          <span style="font-weight: bold !important;">Status:</span> 
+          <span id="vendzz-status" style="color: #ff4444 !important;">❌ Desconectado</span>
+        </div>
+        
+        <div id="vendzz-files-section" style="margin-bottom: 15px !important; display: none !important;">
+          <label style="display: block !important; margin-bottom: 5px !important; font-weight: bold !important;">📁 Arquivo:</label>
+          <select id="vendzz-file-select" style="width: 100% !important; padding: 8px !important; border: 1px solid #ddd !important; border-radius: 5px !important;">
+            <option value="">Selecione um arquivo</option>
+          </select>
+          <button id="vendzz-refresh-files" style="width: 100% !important; padding: 8px !important; background: #0066cc !important; color: white !important; border: none !important; border-radius: 5px !important; margin-top: 5px !important; cursor: pointer !important;">🔄 Atualizar</button>
+        </div>
+        
+        <div id="vendzz-log" style="background: #f8f9fa !important; border: 1px solid #ddd !important; border-radius: 5px !important; padding: 10px !important; height: 150px !important; overflow-y: auto !important; font-size: 12px !important;">
+          <div style="color: #00ff88 !important; font-weight: bold !important;">🚀 Extensão Vendzz carregada!</div>
+          <div style="color: #666 !important;">Conecte-se para começar...</div>
+        </div>
+      </div>
+    </div>
+  `;
+  
+  // Inserir no DOM com força total
+  document.body.insertAdjacentHTML('beforeend', sidebarHtml);
+  
+  // Verificar se foi inserida
+  const newSidebar = document.getElementById('vendzz-sidebar');
+  if (newSidebar) {
+    console.log('✅ SUCESSO: Sidebar forçada criada e visível!');
+    
+    // Configurar eventos básicos
+    const minimizeBtn = document.getElementById('vendzz-minimize');
+    if (minimizeBtn) {
+      minimizeBtn.addEventListener('click', () => {
+        newSidebar.style.height = newSidebar.style.height === '40px' ? '600px' : '40px';
+      });
+    }
+    
+    const connectBtn = document.getElementById('vendzz-connect');
+    if (connectBtn) {
+      connectBtn.addEventListener('click', () => {
+        const token = document.getElementById('vendzz-token').value;
+        if (token) {
+          // Salvar no background
+          chrome.runtime.sendMessage({
+            action: 'save_config',
+            config: { 
+              serverUrl: document.getElementById('vendzz-server').value,
+              accessToken: token 
+            }
+          });
+          
+          document.getElementById('vendzz-status').innerHTML = '✅ Conectado';
+          document.getElementById('vendzz-status').style.color = '#00ff88';
+          document.getElementById('vendzz-files-section').style.display = 'block';
+          
+          // Carregar arquivos
+          chrome.runtime.sendMessage({ action: 'fetch_files' }).then(response => {
+            const select = document.getElementById('vendzz-file-select');
+            if (response && response.files) {
+              select.innerHTML = '<option value="">Selecione um arquivo</option>';
+              response.files.forEach(file => {
+                const option = document.createElement('option');
+                option.value = file.id;
+                option.textContent = `${file.quiz_title} (${file.total_phones} contatos)`;
+                select.appendChild(option);
+              });
+            }
+          });
+        }
+      });
+    }
+    
+    return newSidebar;
+  } else {
+    console.error('❌ FALHA: Não conseguiu forçar a criação da sidebar');
+    return null;
+  }
+}
+
+// Executar força bruta após 3 segundos
+setTimeout(() => {
+  if (!document.getElementById('vendzz-sidebar')) {
+    console.log('🚨 Sidebar não detectada após 3s, executando força bruta...');
+    forceSidebarDisplay();
+  }
+}, 3000);
+
+// Executar força bruta após 8 segundos também
+setTimeout(() => {
+  if (!document.getElementById('vendzz-sidebar')) {
+    console.log('🚨 Sidebar não detectada após 8s, executando força bruta FINAL...');
+    forceSidebarDisplay();
+  }
+}, 8000);
