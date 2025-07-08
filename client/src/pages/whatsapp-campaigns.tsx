@@ -68,7 +68,9 @@ export default function WhatsAppCampaignsPage() {
   // Estados para seleção de quiz e filtros
   const [selectedQuiz, setSelectedQuiz] = useState<string>("");
   const [selectedAudience, setSelectedAudience] = useState<'all' | 'completed' | 'abandoned'>('all');
+  const [targetAudience, setTargetAudience] = useState<'all' | 'completed' | 'abandoned'>('all');
   const [dateFilter, setDateFilter] = useState<string>("");
+  const [fromDate, setFromDate] = useState<string>("");
 
   const [rotatingMessages, setRotatingMessages] = useState<string[]>([""]);
   const [autoRefresh, setAutoRefresh] = useState(true);
@@ -383,6 +385,44 @@ export default function WhatsAppCampaignsPage() {
                   />
                 </div>
               </div>
+
+              {/* Seleção de Público-Alvo */}
+              {selectedQuiz && (
+                <div>
+                  <Label htmlFor="target-audience">Público-Alvo</Label>
+                  <div className="space-y-3">
+                    <Select value={targetAudience} onValueChange={setTargetAudience}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecione o público" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="completed">
+                          <div className="flex items-center gap-2">
+                            <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                            Quiz Completo - Leads Qualificados
+                          </div>
+                        </SelectItem>
+                        <SelectItem value="abandoned">
+                          <div className="flex items-center gap-2">
+                            <div className="w-2 h-2 bg-orange-500 rounded-full"></div>
+                            Quiz Abandonado - Recuperação
+                          </div>
+                        </SelectItem>
+                        <SelectItem value="all">
+                          <div className="flex items-center gap-2">
+                            <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                            Todos os Leads
+                          </div>
+                        </SelectItem>
+                      </SelectContent>
+                    </Select>
+                    
+                    <div className="text-sm text-gray-500">
+                      Contadores em desenvolvimento...
+                    </div>
+                  </div>
+                </div>
+              )}
 
               {/* Filtros */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
