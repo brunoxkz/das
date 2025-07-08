@@ -38,14 +38,10 @@ if (version_compare(PHP_VERSION, '7.4', '<')) {
     return;
 }
 
-// Incluir classes necessárias
-if (file_exists(VENDZZ_EVENTS_PLUGIN_PATH . 'includes/class-events-database.php')) {
-    require_once VENDZZ_EVENTS_PLUGIN_PATH . 'includes/class-events-database.php';
-} else {
-    add_action('admin_notices', function() {
-        echo '<div class="notice notice-error"><p>Vendzz Events Manager: Arquivo de classe não encontrado.</p></div>';
-    });
-    return;
+// Incluir classes necessárias apenas se o arquivo existe
+$database_class_file = VENDZZ_EVENTS_PLUGIN_PATH . 'includes/class-events-database.php';
+if (file_exists($database_class_file)) {
+    require_once $database_class_file;
 }
 
 /**
@@ -70,19 +66,12 @@ class VendzzEventsManager {
      * Construtor
      */
     private function __construct() {
-        try {
-            // Verificar se a classe existe antes de instanciar
-            if (!class_exists('VendzzEventsDatabase')) {
-                throw new Exception('Classe VendzzEventsDatabase não encontrada');
-            }
-            
+        // Inicializar hooks primeiro
+        $this->init_hooks();
+        
+        // Inicializar database apenas se a classe existir
+        if (class_exists('VendzzEventsDatabase')) {
             $this->database = new VendzzEventsDatabase();
-            $this->init_hooks();
-        } catch (Exception $e) {
-            add_action('admin_notices', function() use ($e) {
-                echo '<div class="notice notice-error"><p>Erro no Vendzz Events Manager: ' . esc_html($e->getMessage()) . '</p></div>';
-            });
-            return;
         }
     }
     
