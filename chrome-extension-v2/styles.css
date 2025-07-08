@@ -346,3 +346,164 @@
 .vendzz-log::-webkit-scrollbar-thumb:hover {
   background: rgba(0, 255, 136, 0.5);
 }
+
+/* Estilos para automação de mensagens */
+.vendzz-automation-config {
+  margin-bottom: 16px;
+}
+
+.vendzz-config-group {
+  margin-bottom: 12px;
+}
+
+.vendzz-label {
+  display: block;
+  margin-bottom: 4px;
+  font-size: 12px;
+  font-weight: 500;
+  color: #cccccc;
+}
+
+.vendzz-help {
+  display: block;
+  font-size: 10px;
+  color: #888888;
+  margin-top: 2px;
+}
+
+.vendzz-textarea {
+  width: 100%;
+  min-height: 60px;
+  padding: 8px 10px;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 6px;
+  color: #ffffff;
+  font-size: 11px;
+  font-family: inherit;
+  resize: vertical;
+  transition: all 0.2s ease;
+}
+
+.vendzz-textarea:focus {
+  outline: none;
+  border-color: #00ff88;
+  background: rgba(0, 255, 136, 0.05);
+}
+
+.vendzz-textarea::placeholder {
+  color: #888888;
+}
+
+.vendzz-checkbox-label {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  margin-bottom: 8px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.vendzz-checkbox-label input[type="checkbox"] {
+  display: none;
+}
+
+.vendzz-checkmark {
+  width: 16px;
+  height: 16px;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 3px;
+  margin-right: 8px;
+  position: relative;
+  transition: all 0.2s ease;
+}
+
+.vendzz-checkbox-label input[type="checkbox"]:checked + .vendzz-checkmark {
+  background: #00ff88;
+  border-color: #00ff88;
+}
+
+.vendzz-checkbox-label input[type="checkbox"]:checked + .vendzz-checkmark::after {
+  content: "✓";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: #000000;
+  font-size: 10px;
+  font-weight: bold;
+}
+
+.vendzz-automation-controls {
+  margin: 16px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.vendzz-btn-primary {
+  background: linear-gradient(135deg, #00ff88 0%, #00cc6a 100%);
+  color: #000000;
+  font-weight: 600;
+}
+
+.vendzz-btn-primary:hover {
+  background: linear-gradient(135deg, #00cc6a 0%, #00aa55 100%);
+  transform: translateY(-1px);
+}
+
+.vendzz-btn-danger {
+  background: linear-gradient(135deg, #ff4757 0%, #ff3742 100%);
+  color: #ffffff;
+  font-weight: 600;
+}
+
+.vendzz-btn-danger:hover {
+  background: linear-gradient(135deg, #ff3742 0%, #ff2635 100%);
+  transform: translateY(-1px);
+}
+
+.vendzz-automation-stats {
+  margin-top: 16px;
+  padding: 12px;
+  background: rgba(0, 255, 136, 0.05);
+  border: 1px solid rgba(0, 255, 136, 0.2);
+  border-radius: 8px;
+}
+
+.vendzz-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+}
+
+.vendzz-stat-item {
+  text-align: center;
+}
+
+.vendzz-stat-number {
+  display: block;
+  font-size: 20px;
+  font-weight: 700;
+  color: #00ff88;
+  line-height: 1;
+}
+
+.vendzz-stat-label {
+  display: block;
+  font-size: 10px;
+  color: #cccccc;
+  margin-top: 2px;
+}
+
+/* Animações para status de automação */
+.vendzz-automation-running .vendzz-btn-text::before {
+  content: "🔄 ";
+  animation: spin 2s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
