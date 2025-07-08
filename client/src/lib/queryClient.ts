@@ -150,7 +150,7 @@ export const getQueryFn: <T>(options: {
 }) => QueryFunction<T> =
   ({ on401: unauthorizedBehavior }) =>
   async ({ queryKey }) => {
-    const token = localStorage.getItem("accessToken");
+    const token = localStorage.getItem("accessToken") || localStorage.getItem("token");
     
     const res = await deduplicatedFetch(queryKey[0] as string, {
       method: "GET",
@@ -266,6 +266,7 @@ async function deduplicatedFetch(url: string, options: RequestInit = {}) {
 export const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
+      queryFn: getQueryFn({ on401: "throw" }),
       refetchInterval: false,
       refetchOnWindowFocus: false,
       staleTime: 30 * 1000, // 30 segundos (otimizado para sincronização rápida)
