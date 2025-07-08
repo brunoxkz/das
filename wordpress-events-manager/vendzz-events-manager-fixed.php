@@ -46,8 +46,18 @@ class VendzzEventsManagerFixed {
         add_action('wp_ajax_vendzz_get_events', array($this, 'ajax_get_events'));
         add_action('wp_ajax_vendzz_republish_event', array($this, 'ajax_republish_event'));
         
+        // Endpoints para editor de eventos recorrentes
+        add_action('wp_ajax_vendzz_get_recurring_event', array($this, 'ajax_get_recurring_event'));
+        add_action('wp_ajax_vendzz_add_occurrence', array($this, 'ajax_add_occurrence'));
+        add_action('wp_ajax_vendzz_delete_occurrence', array($this, 'ajax_delete_occurrence'));
+        add_action('wp_ajax_vendzz_update_recurring_event', array($this, 'ajax_update_recurring_event'));
+        add_action('wp_ajax_vendzz_generate_occurrences', array($this, 'ajax_generate_occurrences'));
+        
         register_activation_hook(__FILE__, array($this, 'activate'));
         register_deactivation_hook(__FILE__, array($this, 'deactivate'));
+        
+        // Incluir classe do editor de eventos recorrentes
+        $this->include_recurring_editor();
     }
     
     public function add_admin_menu() {
@@ -76,6 +86,14 @@ class VendzzEventsManagerFixed {
             true
         );
         
+        wp_enqueue_script(
+            'vendzz-recurring-editor',
+            VENDZZ_EVENTS_PLUGIN_URL . 'assets/js/recurring-events-editor.js',
+            array('jquery'),
+            VENDZZ_EVENTS_VERSION,
+            true
+        );
+        
         wp_localize_script('vendzz-events-admin', 'vendzz_ajax', array(
             'ajax_url' => admin_url('admin-ajax.php'),
             'nonce' => wp_create_nonce('vendzz_events_nonce')
@@ -86,6 +104,16 @@ class VendzzEventsManagerFixed {
             VENDZZ_EVENTS_PLUGIN_URL . 'assets/css/admin.css',
             array(),
             VENDZZ_EVENTS_VERSION
+        );
+        
+        // Localizar scripts com dados necessários
+        wp_localize_script(
+            'vendzz-events-admin',
+            'vendzz_ajax',
+            array(
+                'ajax_url' => admin_url('admin-ajax.php'),
+                'nonce' => wp_create_nonce('vendzz_events_nonce')
+            )
         );
     }
     
@@ -135,6 +163,43 @@ class VendzzEventsManagerFixed {
             
             <div id="vendzz-pagination-container"></div>
         </div>
+        
+        <!-- Modal do Editor de Eventos Recorrentes -->
+        <div id="vendzz-recurring-editor-modal" class="vendzz-modal">
+            <div class="vendzz-modal-content">
+                <div class="vendzz-modal-header">
+                    <h3>Editor de Eventos Recorrentes</h3>
+                    <button class="close-modal" onclick="closeRecurringEditor()">&times;</button>
+                </div>
+                <div class="vendzz-modal-body">
+                    <div id="vendzz-recurring-editor-content">
+                        <!-- Conteúdo do editor será carregado aqui -->
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <script>
+        // Função para fechar o modal
+        function closeRecurringEditor() {
+            document.getElementById('vendzz-recurring-editor-modal').style.display = 'none';
+        }
+        
+        // Fechar modal clicando fora
+        document.getElementById('vendzz-recurring-editor-modal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeRecurringEditor();
+            }
+        });
+        
+        // Inicializar o editor recorrente quando disponível
+        jQuery(document).ready(function($) {
+            if (typeof VendzzRecurringEditor !== 'undefined') {
+                VendzzRecurringEditor.init();
+            }
+        });
+        </script>
+        
         <?php
     }
     
@@ -319,6 +384,166 @@ class VendzzEventsManagerFixed {
     
     public function deactivate() {
         delete_option('vendzz_events_version');
+    }
+    
+    // Incluir classe do editor de eventos recorrentes
+    private function include_recurring_editor() {
+        $editor_file = VENDZZ_EVENTS_PLUGIN_PATH . 'includes/class-recurring-events-editor.php';
+        if (file_exists($editor_file)) {
+            require_once $editor_file;
+        }
+    }
+    
+    // AJAX: Obter evento recorrente
+    public function ajax_get_recurring_event() {
+        check_ajax_referer('vendzz_events_nonce', 'nonce');
+        
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error('Permissão negada');
+        }
+        
+        $event_id = intval($_POST['event_id']);
+        
+        if (!$event_id) {
+            wp_send_json_error('ID do evento inválido');
+        }
+        
+        if (!class_exists('VendzzRecurringEventsEditor')) {
+            wp_send_json_error('Editor de eventos recorrentes não disponível');
+        }
+        
+        $editor = new VendzzRecurringEventsEditor();
+        $event = $editor->get_recurring_event($event_id);
+        
+        if (!$event) {
+            wp_send_json_error('Evento não encontrado');
+        }
+        
+        wp_send_json_success($event);
+    }
+    
+    // AJAX: Adicionar ocorrência
+    public function ajax_add_occurrence() {
+        check_ajax_referer('vendzz_events_nonce', 'nonce');
+        
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error('Permissão negada');
+        }
+        
+        $parent_event_id = intval($_POST['parent_event_id']);
+        $title = sanitize_text_field($_POST['title']);
+        $start_date = sanitize_text_field($_POST['start_date']);
+        $end_date = sanitize_text_field($_POST['end_date']);
+        
+        if (!$parent_event_id || !$start_date || !$end_date) {
+            wp_send_json_error('Dados obrigatórios não fornecidos');
+        }
+        
+        if (!class_exists('VendzzRecurringEventsEditor')) {
+            wp_send_json_error('Editor de eventos recorrentes não disponível');
+        }
+        
+        $editor = new VendzzRecurringEventsEditor();
+        $occurrence_id = $editor->add_occurrence($parent_event_id, $start_date, $end_date, $title);
+        
+        if (!$occurrence_id) {
+            wp_send_json_error('Erro ao criar ocorrência');
+        }
+        
+        wp_send_json_success(array(
+            'occurrence_id' => $occurrence_id,
+            'message' => 'Ocorrência criada com sucesso'
+        ));
+    }
+    
+    // AJAX: Excluir ocorrência
+    public function ajax_delete_occurrence() {
+        check_ajax_referer('vendzz_events_nonce', 'nonce');
+        
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error('Permissão negada');
+        }
+        
+        $occurrence_id = intval($_POST['occurrence_id']);
+        
+        if (!$occurrence_id) {
+            wp_send_json_error('ID da ocorrência inválido');
+        }
+        
+        if (!class_exists('VendzzRecurringEventsEditor')) {
+            wp_send_json_error('Editor de eventos recorrentes não disponível');
+        }
+        
+        $editor = new VendzzRecurringEventsEditor();
+        $result = $editor->delete_occurrence($occurrence_id);
+        
+        if (!$result) {
+            wp_send_json_error('Erro ao excluir ocorrência');
+        }
+        
+        wp_send_json_success('Ocorrência excluída com sucesso');
+    }
+    
+    // AJAX: Atualizar evento recorrente
+    public function ajax_update_recurring_event() {
+        check_ajax_referer('vendzz_events_nonce', 'nonce');
+        
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error('Permissão negada');
+        }
+        
+        $event_id = intval($_POST['event_id']);
+        $event_data = json_decode(stripslashes($_POST['event_data']), true);
+        
+        if (!$event_id || !$event_data) {
+            wp_send_json_error('Dados do evento inválidos');
+        }
+        
+        if (!class_exists('VendzzRecurringEventsEditor')) {
+            wp_send_json_error('Editor de eventos recorrentes não disponível');
+        }
+        
+        $editor = new VendzzRecurringEventsEditor();
+        $result = $editor->update_recurring_event($event_id, $event_data);
+        
+        if (!$result) {
+            wp_send_json_error('Erro ao atualizar evento');
+        }
+        
+        wp_send_json_success('Evento atualizado com sucesso');
+    }
+    
+    // AJAX: Gerar ocorrências automáticas
+    public function ajax_generate_occurrences() {
+        check_ajax_referer('vendzz_events_nonce', 'nonce');
+        
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error('Permissão negada');
+        }
+        
+        $event_id = intval($_POST['event_id']);
+        $recurrence_rule = sanitize_text_field($_POST['recurrence_rule']);
+        $end_date = sanitize_text_field($_POST['end_date']);
+        
+        if (!$event_id || !$recurrence_rule) {
+            wp_send_json_error('Dados obrigatórios não fornecidos');
+        }
+        
+        if (!class_exists('VendzzRecurringEventsEditor')) {
+            wp_send_json_error('Editor de eventos recorrentes não disponível');
+        }
+        
+        $editor = new VendzzRecurringEventsEditor();
+        $occurrences = $editor->generate_occurrences($event_id, $recurrence_rule, $end_date);
+        
+        if (!$occurrences) {
+            wp_send_json_error('Erro ao gerar ocorrências');
+        }
+        
+        wp_send_json_success(array(
+            'count' => count($occurrences),
+            'occurrences' => $occurrences
+        ));
     }
 }
 

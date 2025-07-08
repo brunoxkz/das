@@ -1,405 +1,280 @@
 /**
- * JavaScript do painel administrativo do Vendzz Events Manager
+ * JavaScript para o painel administrativo do Vendzz Events Manager
  */
 
-(function($) {
-    'use strict';
-
+jQuery(document).ready(function($) {
+    
     // Variáveis globais
-    const VendzzEventsManager = {
-        currentPage: 1,
-        totalPages: 1,
-        isLoading: false,
+    let currentPage = 1;
+    let isLoading = false;
+    
+    // Carregar eventos na inicialização
+    loadEvents();
+    
+    // Bind dos eventos
+    bindEvents();
+    
+    function bindEvents() {
+        // Filtrar eventos
+        $('#vendzz-filter-button').on('click', function() {
+            currentPage = 1;
+            loadEvents();
+        });
         
-        // Elementos DOM
-        elements: {
-            searchInput: $('#vendzz-search-input'),
-            statusFilter: $('#vendzz-status-filter'),
-            recurrenceFilter: $('#vendzz-recurrence-filter'),
-            filterButton: $('#vendzz-filter-button'),
-            eventsContainer: $('#vendzz-events-container'),
-            paginationContainer: $('#vendzz-pagination-container'),
-            modal: $('#vendzz-event-modal'),
-            modalForm: $('#vendzz-event-form')
-        },
-        
-        // Inicializar
-        init: function() {
-            this.bindEvents();
-            this.loadEvents();
-        },
-        
-        // Vincular eventos
-        bindEvents: function() {
-            const self = this;
-            
-            // Filtros
-            this.elements.filterButton.on('click', function() {
-                self.currentPage = 1;
-                self.loadEvents();
-            });
-            
-            // Enter no campo de busca
-            this.elements.searchInput.on('keypress', function(e) {
-                if (e.which === 13) {
-                    self.currentPage = 1;
-                    self.loadEvents();
-                }
-            });
-            
-            // Paginação
-            $(document).on('click', '.vendzz-pagination-btn', function() {
-                const page = $(this).data('page');
-                if (page && page !== self.currentPage) {
-                    self.currentPage = page;
-                    self.loadEvents();
-                }
-            });
-            
-            // Ações dos eventos
-            $(document).on('click', '.vendzz-edit-event', function() {
-                const eventId = $(this).data('event-id');
-                self.editEvent(eventId);
-            });
-            
-            $(document).on('click', '.vendzz-republish-event', function() {
-                const eventId = $(this).data('event-id');
-                self.republishEvent(eventId);
-            });
-            
-            // Modal
-            $(document).on('click', '.vendzz-modal-close', function() {
-                self.closeModal();
-            });
-            
-            $(document).on('click', '.vendzz-modal', function(e) {
-                if (e.target === this) {
-                    self.closeModal();
-                }
-            });
-            
-            // Formulário do modal
-            this.elements.modalForm.on('submit', function(e) {
-                e.preventDefault();
-                self.saveEvent();
-            });
-            
-            // Tecla ESC para fechar modal
-            $(document).on('keydown', function(e) {
-                if (e.key === 'Escape') {
-                    self.closeModal();
-                }
-            });
-        },
-        
-        // Carregar eventos
-        loadEvents: function() {
-            if (this.isLoading) return;
-            
-            this.isLoading = true;
-            this.showLoading();
-            
-            const data = {
-                action: 'vendzz_get_events',
-                nonce: vendzz_ajax.nonce,
-                search: this.elements.searchInput.val(),
-                status: this.elements.statusFilter.val(),
-                recurrence: this.elements.recurrenceFilter.val(),
-                page: this.currentPage
-            };
-            
-            $.ajax({
-                url: vendzz_ajax.ajax_url,
-                type: 'POST',
-                data: data,
-                success: (response) => {
-                    this.isLoading = false;
-                    
-                    if (response.success) {
-                        this.renderEvents(response.data.events);
-                        this.renderPagination(response.data);
-                    } else {
-                        this.showError(response.data || 'Erro ao carregar eventos');
-                    }
-                },
-                error: (xhr, status, error) => {
-                    this.isLoading = false;
-                    this.showError('Erro na requisição: ' + error);
-                }
-            });
-        },
-        
-        // Renderizar eventos
-        renderEvents: function(events) {
-            let html = '';
-            
-            if (events.length === 0) {
-                html = '<div class="vendzz-text-center"><p>Nenhum evento encontrado.</p></div>';
-            } else {
-                html = '<div class="vendzz-events-table">';
-                html += '<table>';
-                html += '<thead>';
-                html += '<tr>';
-                html += '<th>Título</th>';
-                html += '<th>Status</th>';
-                html += '<th>Data de Início</th>';
-                html += '<th>Data de Fim</th>';
-                html += '<th>Local</th>';
-                html += '<th>Recorrência</th>';
-                html += '<th>Ações</th>';
-                html += '</tr>';
-                html += '</thead>';
-                html += '<tbody>';
-                
-                events.forEach(event => {
-                    html += '<tr>';
-                    html += '<td><strong>' + this.escapeHtml(event.title) + '</strong></td>';
-                    html += '<td><span class="vendzz-event-status ' + event.status + '">' + this.getStatusLabel(event.status) + '</span></td>';
-                    html += '<td>' + this.formatDate(event.start_date) + '</td>';
-                    html += '<td>' + this.formatDate(event.end_date) + '</td>';
-                    html += '<td>' + this.escapeHtml(event.venue || '-') + '</td>';
-                    html += '<td><span class="vendzz-recurrence-type ' + (event.is_recurring ? 'recurring' : 'single') + '">' + this.escapeHtml(event.recurrence_info) + '</span></td>';
-                    html += '<td>';
-                    html += '<div class="vendzz-event-actions">';
-                    html += '<button class="edit vendzz-edit-event" data-event-id="' + event.id + '">Editar</button>';
-                    html += '<button class="republish vendzz-republish-event" data-event-id="' + event.id + '">Republicar</button>';
-                    if (event.view_url) {
-                        html += '<a href="' + event.view_url + '" target="_blank" class="view">Ver</a>';
-                    }
-                    html += '</div>';
-                    html += '</td>';
-                    html += '</tr>';
-                });
-                
-                html += '</tbody>';
-                html += '</table>';
-                html += '</div>';
+        // Busca por Enter
+        $('#vendzz-search-input').on('keypress', function(e) {
+            if (e.which === 13) {
+                currentPage = 1;
+                loadEvents();
             }
-            
-            this.elements.eventsContainer.html(html);
-        },
-        
-        // Renderizar paginação
-        renderPagination: function(data) {
-            let html = '';
-            
-            if (data.total_pages > 1) {
-                html += '<div class="vendzz-events-pagination">';
-                html += '<div class="vendzz-pagination-info">';
-                html += 'Mostrando página ' + data.current_page + ' de ' + data.total_pages + ' (' + data.total_events + ' eventos)';
-                html += '</div>';
-                html += '<div class="vendzz-pagination-controls">';
-                
-                // Botão anterior
-                if (data.current_page > 1) {
-                    html += '<button class="vendzz-pagination-btn" data-page="' + (data.current_page - 1) + '">« Anterior</button>';
-                } else {
-                    html += '<button class="vendzz-pagination-btn" disabled>« Anterior</button>';
-                }
-                
-                // Números das páginas
-                const startPage = Math.max(1, data.current_page - 2);
-                const endPage = Math.min(data.total_pages, data.current_page + 2);
-                
-                for (let i = startPage; i <= endPage; i++) {
-                    if (i === data.current_page) {
-                        html += '<button class="vendzz-pagination-btn active" data-page="' + i + '">' + i + '</button>';
-                    } else {
-                        html += '<button class="vendzz-pagination-btn" data-page="' + i + '">' + i + '</button>';
-                    }
-                }
-                
-                // Botão próximo
-                if (data.current_page < data.total_pages) {
-                    html += '<button class="vendzz-pagination-btn" data-page="' + (data.current_page + 1) + '">Próxima »</button>';
-                } else {
-                    html += '<button class="vendzz-pagination-btn" disabled>Próxima »</button>';
-                }
-                
-                html += '</div>';
-                html += '</div>';
-            }
-            
-            this.elements.paginationContainer.html(html);
-        },
-        
-        // Editar evento
-        editEvent: function(eventId) {
-            const data = {
-                action: 'vendzz_get_event_details',
-                nonce: vendzz_ajax.nonce,
-                event_id: eventId
-            };
-            
-            $.ajax({
-                url: vendzz_ajax.ajax_url,
-                type: 'POST',
-                data: data,
-                success: (response) => {
-                    if (response.success) {
-                        this.openModal(response.data);
-                    } else {
-                        this.showError(response.data || 'Erro ao carregar detalhes do evento');
-                    }
-                },
-                error: (xhr, status, error) => {
-                    this.showError('Erro na requisição: ' + error);
-                }
-            });
-        },
+        });
         
         // Republicar evento
-        republishEvent: function(eventId) {
-            if (!confirm('Tem certeza que deseja republicar este evento?')) {
-                return;
+        $(document).on('click', '.vendzz-republish-btn', function() {
+            const eventId = $(this).data('event-id');
+            const eventTitle = $(this).data('event-title');
+            
+            if (confirm('Tem certeza que deseja republicar o evento "' + eventTitle + '"?')) {
+                republishEvent(eventId);
             }
-            
-            const data = {
-                action: 'vendzz_republish_event',
-                nonce: vendzz_ajax.nonce,
-                event_id: eventId
-            };
-            
-            $.ajax({
-                url: vendzz_ajax.ajax_url,
-                type: 'POST',
-                data: data,
-                success: (response) => {
-                    if (response.success) {
-                        this.showSuccess(response.data.message);
-                        this.loadEvents();
-                    } else {
-                        this.showError(response.data || 'Erro ao republicar evento');
-                    }
-                },
-                error: (xhr, status, error) => {
-                    this.showError('Erro na requisição: ' + error);
+        });
+        
+        // Paginação
+        $(document).on('click', '.vendzz-pagination-btn', function() {
+            const page = $(this).data('page');
+            if (page && page !== currentPage) {
+                currentPage = page;
+                loadEvents();
+            }
+        });
+        
+        // Editor de eventos recorrentes
+        $(document).on('click', '.edit-recurring-event', function() {
+            const eventId = $(this).data('event-id');
+            if (eventId) {
+                // Verificar se o editor está disponível
+                if (typeof window.VendzzRecurringEditor !== 'undefined') {
+                    window.VendzzRecurringEditor.openEditor(eventId);
+                } else {
+                    showError('Editor de eventos recorrentes não está disponível.');
                 }
-            });
-        },
-        
-        // Abrir modal
-        openModal: function(eventData) {
-            // Preencher formulário
-            $('#vendzz-event-id').val(eventData.id);
-            $('#vendzz-event-title').val(eventData.title);
-            $('#vendzz-event-description').val(eventData.description);
-            $('#vendzz-event-status').val(eventData.status);
-            $('#vendzz-event-start-date').val(eventData.start_date);
-            $('#vendzz-event-end-date').val(eventData.end_date);
-            $('#vendzz-event-venue').val(eventData.venue);
-            
-            // Mostrar modal
-            this.elements.modal.addClass('active');
-            $('body').addClass('modal-open');
-        },
-        
-        // Fechar modal
-        closeModal: function() {
-            this.elements.modal.removeClass('active');
-            $('body').removeClass('modal-open');
-            this.elements.modalForm[0].reset();
-        },
-        
-        // Salvar evento
-        saveEvent: function() {
-            const formData = {
-                action: 'vendzz_update_event',
-                nonce: vendzz_ajax.nonce,
-                event_id: $('#vendzz-event-id').val(),
-                title: $('#vendzz-event-title').val(),
-                description: $('#vendzz-event-description').val(),
-                status: $('#vendzz-event-status').val(),
-                start_date: $('#vendzz-event-start-date').val(),
-                end_date: $('#vendzz-event-end-date').val(),
-                venue: $('#vendzz-event-venue').val()
-            };
-            
-            $.ajax({
-                url: vendzz_ajax.ajax_url,
-                type: 'POST',
-                data: formData,
-                success: (response) => {
-                    if (response.success) {
-                        this.showSuccess(response.data.message);
-                        this.closeModal();
-                        this.loadEvents();
-                    } else {
-                        this.showError(response.data || 'Erro ao salvar evento');
-                    }
-                },
-                error: (xhr, status, error) => {
-                    this.showError('Erro na requisição: ' + error);
-                }
-            });
-        },
-        
-        // Mostrar loading
-        showLoading: function() {
-            this.elements.eventsContainer.html('<div class="vendzz-loading"><div class="spinner"></div>Carregando eventos...</div>');
-        },
-        
-        // Mostrar mensagem de sucesso
-        showSuccess: function(message) {
-            const html = '<div class="vendzz-message success">' + this.escapeHtml(message) + '</div>';
-            $('.vendzz-events-manager').prepend(html);
-            
-            setTimeout(() => {
-                $('.vendzz-message').fadeOut();
-            }, 3000);
-        },
-        
-        // Mostrar mensagem de erro
-        showError: function(message) {
-            const html = '<div class="vendzz-message error">' + this.escapeHtml(message) + '</div>';
-            $('.vendzz-events-manager').prepend(html);
-            
-            setTimeout(() => {
-                $('.vendzz-message').fadeOut();
-            }, 5000);
-        },
-        
-        // Formatar data
-        formatDate: function(dateString) {
-            if (!dateString) return '-';
-            
-            const date = new Date(dateString);
-            return date.toLocaleDateString('pt-BR', {
-                day: '2-digit',
-                month: '2-digit',
-                year: 'numeric',
-                hour: '2-digit',
-                minute: '2-digit'
-            });
-        },
-        
-        // Obter label do status
-        getStatusLabel: function(status) {
-            const labels = {
-                'publish': 'Publicado',
-                'draft': 'Rascunho',
-                'private': 'Privado',
-                'trash': 'Lixeira'
-            };
-            
-            return labels[status] || status;
-        },
-        
-        // Escapar HTML
-        escapeHtml: function(text) {
-            if (!text) return '';
-            const div = document.createElement('div');
-            div.textContent = text;
-            return div.innerHTML;
-        }
-    };
+            }
+        });
+    }
     
-    // Inicializar quando o documento estiver pronto
-    $(document).ready(function() {
-        // Verificar se estamos na página do plugin
-        if ($('.vendzz-events-manager').length > 0) {
-            VendzzEventsManager.init();
+    function loadEvents() {
+        if (isLoading) return;
+        
+        isLoading = true;
+        showLoading();
+        
+        const search = $('#vendzz-search-input').val();
+        const status = $('#vendzz-status-filter').val();
+        
+        $.ajax({
+            url: vendzz_ajax.ajax_url,
+            type: 'POST',
+            data: {
+                action: 'vendzz_get_events',
+                search: search,
+                status: status,
+                page: currentPage,
+                nonce: vendzz_ajax.nonce
+            },
+            success: function(response) {
+                isLoading = false;
+                hideLoading();
+                
+                if (response.success) {
+                    displayEvents(response.data.events);
+                    displayPagination(response.data);
+                } else {
+                    showError('Erro ao carregar eventos: ' + response.data);
+                }
+            },
+            error: function() {
+                isLoading = false;
+                hideLoading();
+                showError('Erro de conexão ao carregar eventos');
+            }
+        });
+    }
+    
+    function displayEvents(events) {
+        let html = '';
+        
+        if (events.length === 0) {
+            html = '<div class="vendzz-no-events">Nenhum evento encontrado.</div>';
+        } else {
+            html = `
+                <table class="wp-list-table widefat fixed striped vendzz-events-table">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Título</th>
+                            <th>Status</th>
+                            <th>Data Início</th>
+                            <th>Tipo</th>
+                            <th>Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+            
+            events.forEach(function(event) {
+                const statusClass = event.status === 'publish' ? 'vendzz-status-published' : 'vendzz-status-draft';
+                const startDate = event.start_date ? formatDate(event.start_date) : '-';
+                const recurringBadge = event.is_recurring ? 
+                    '<span class="vendzz-recurring-badge">Recorrente</span>' : 
+                    '<span class="vendzz-single-badge">Único</span>';
+                
+                html += `
+                    <tr>
+                        <td>${event.id}</td>
+                        <td>
+                            <strong>${event.title}</strong>
+                            ${event.venue ? '<br><small>Local: ' + event.venue + '</small>' : ''}
+                        </td>
+                        <td><span class="vendzz-status ${statusClass}">${event.status}</span></td>
+                        <td>${startDate}</td>
+                        <td>${recurringBadge}</td>
+                        <td>
+                            <div class="vendzz-actions">
+                                <a href="${event.edit_url}" class="button button-small">Editar</a>
+                                <a href="${event.view_url}" class="button button-small" target="_blank">Ver</a>
+                                <button type="button" class="button button-small button-primary edit-recurring-event" data-event-id="${event.id}">
+                                    Editor Recorrente
+                                </button>
+                                <button type="button" class="button button-small vendzz-republish-btn" data-event-id="${event.id}" data-event-title="${event.title}">
+                                    Republicar
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            });
+            
+            html += '</tbody></table>';
         }
-    });
-
-})(jQuery);
+        
+        $('#vendzz-events-container').html(html);
+    }
+    
+    function displayPagination(data) {
+        if (data.total_pages <= 1) {
+            $('#vendzz-pagination-container').html('');
+            return;
+        }
+        
+        let html = '<div class="vendzz-pagination">';
+        
+        // Botão Anterior
+        if (data.current_page > 1) {
+            html += `<button type="button" class="button vendzz-pagination-btn" data-page="${data.current_page - 1}">« Anterior</button>`;
+        }
+        
+        // Números das páginas
+        for (let i = 1; i <= data.total_pages; i++) {
+            const activeClass = i === data.current_page ? 'button-primary' : '';
+            html += `<button type="button" class="button vendzz-pagination-btn ${activeClass}" data-page="${i}">${i}</button>`;
+        }
+        
+        // Botão Próximo
+        if (data.current_page < data.total_pages) {
+            html += `<button type="button" class="button vendzz-pagination-btn" data-page="${data.current_page + 1}">Próximo »</button>`;
+        }
+        
+        html += '</div>';
+        
+        // Informações da paginação
+        html += `<div class="vendzz-pagination-info">
+            Mostrando ${((data.current_page - 1) * 20) + 1} a ${Math.min(data.current_page * 20, data.total_events)} de ${data.total_events} eventos
+        </div>`;
+        
+        $('#vendzz-pagination-container').html(html);
+    }
+    
+    function republishEvent(eventId) {
+        showLoading();
+        
+        $.ajax({
+            url: vendzz_ajax.ajax_url,
+            type: 'POST',
+            data: {
+                action: 'vendzz_republish_event',
+                event_id: eventId,
+                nonce: vendzz_ajax.nonce
+            },
+            success: function(response) {
+                hideLoading();
+                
+                if (response.success) {
+                    showSuccess('Evento republicado com sucesso!');
+                    loadEvents(); // Recarregar lista
+                } else {
+                    showError('Erro ao republicar evento: ' + response.data);
+                }
+            },
+            error: function() {
+                hideLoading();
+                showError('Erro de conexão ao republicar evento');
+            }
+        });
+    }
+    
+    function showLoading() {
+        $('#vendzz-events-container').html(`
+            <div class="vendzz-loading">
+                <div class="spinner is-active"></div>
+                <p>Carregando eventos...</p>
+            </div>
+        `);
+    }
+    
+    function hideLoading() {
+        // Loading será substituído pelo conteúdo
+    }
+    
+    function showError(message) {
+        $('#vendzz-events-container').html(`
+            <div class="notice notice-error">
+                <p>${message}</p>
+            </div>
+        `);
+    }
+    
+    function showSuccess(message) {
+        // Criar notificação de sucesso
+        $('body').append(`
+            <div class="notice notice-success is-dismissible vendzz-notice">
+                <p>${message}</p>
+                <button type="button" class="notice-dismiss">
+                    <span class="screen-reader-text">Dispensar este aviso.</span>
+                </button>
+            </div>
+        `);
+        
+        // Auto-remover após 5 segundos
+        setTimeout(function() {
+            $('.vendzz-notice').fadeOut();
+        }, 5000);
+        
+        // Permitir fechar manualmente
+        $('.notice-dismiss').on('click', function() {
+            $(this).closest('.notice').fadeOut();
+        });
+    }
+    
+    function formatDate(dateString) {
+        if (!dateString) return '-';
+        
+        const date = new Date(dateString);
+        const day = String(date.getDate()).padStart(2, '0');
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const year = date.getFullYear();
+        const hours = String(date.getHours()).padStart(2, '0');
+        const minutes = String(date.getMinutes()).padStart(2, '0');
+        
+        return `${day}/${month}/${year} ${hours}:${minutes}`;
+    }
+});

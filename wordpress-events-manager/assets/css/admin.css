@@ -1,299 +1,210 @@
 /**
- * Estilos do painel administrativo do Vendzz Events Manager
+ * CSS para o painel administrativo do Vendzz Events Manager
  */
 
-/* Container principal */
+/* Estilos gerais */
 .vendzz-events-manager {
     max-width: 1200px;
-    margin: 20px 0;
+    margin: 0 auto;
 }
 
-/* Cabeçalho */
 .vendzz-events-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 20px;
-    padding: 20px;
     background: #fff;
-    border: 1px solid #ccd0d4;
-    border-radius: 4px;
+    padding: 20px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    margin-bottom: 20px;
 }
 
 .vendzz-events-header h1 {
-    margin: 0;
-    color: #1d2327;
-    font-size: 24px;
+    color: #23282d;
+    margin: 0 0 10px 0;
 }
 
 .vendzz-events-header .description {
-    color: #646970;
+    color: #666;
     font-size: 14px;
-    margin-top: 5px;
 }
 
 /* Filtros */
 .vendzz-events-filters {
     background: #fff;
     padding: 20px;
-    border: 1px solid #ccd0d4;
-    border-radius: 4px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
     margin-bottom: 20px;
-}
-
-.vendzz-events-filters h2 {
-    margin-top: 0;
-    margin-bottom: 15px;
-    font-size: 18px;
-    color: #1d2327;
 }
 
 .vendzz-filters-row {
     display: flex;
-    gap: 15px;
-    align-items: flex-end;
-    flex-wrap: wrap;
+    gap: 20px;
+    align-items: end;
 }
 
 .vendzz-filter-group {
     display: flex;
     flex-direction: column;
-    min-width: 150px;
+    gap: 5px;
 }
 
 .vendzz-filter-group label {
     font-weight: 600;
-    margin-bottom: 5px;
-    color: #1d2327;
+    color: #23282d;
 }
 
-.vendzz-filter-group input,
-.vendzz-filter-group select {
-    padding: 6px 12px;
-    border: 1px solid #8c8f94;
+.vendzz-form-control {
+    padding: 8px 12px;
+    border: 1px solid #ddd;
     border-radius: 4px;
-    background: #fff;
-}
-
-.vendzz-filter-group button {
-    padding: 8px 16px;
-    background: #2271b1;
-    color: #fff;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-    font-weight: 600;
-}
-
-.vendzz-filter-group button:hover {
-    background: #135e96;
+    font-size: 14px;
 }
 
 /* Tabela de eventos */
 .vendzz-events-table {
-    background: #fff;
-    border: 1px solid #ccd0d4;
-    border-radius: 4px;
-    overflow: hidden;
-}
-
-.vendzz-events-table table {
-    width: 100%;
-    border-collapse: collapse;
-}
-
-.vendzz-events-table th,
-.vendzz-events-table td {
-    padding: 12px 15px;
-    text-align: left;
-    border-bottom: 1px solid #f0f0f1;
+    margin-top: 20px;
 }
 
 .vendzz-events-table th {
-    background: #f6f7f7;
+    background: #f1f1f1;
     font-weight: 600;
-    color: #1d2327;
 }
 
-.vendzz-events-table tr:hover {
-    background: #f9f9f9;
-}
-
-/* Status dos eventos */
-.vendzz-event-status {
-    display: inline-block;
-    padding: 4px 8px;
+.vendzz-recurring-badge {
+    background: #0073aa;
+    color: #fff;
+    padding: 3px 8px;
     border-radius: 3px;
     font-size: 12px;
-    font-weight: 600;
-    text-transform: uppercase;
+    font-weight: 500;
 }
 
-.vendzz-event-status.publish {
-    background: #d4edda;
-    color: #155724;
-}
-
-.vendzz-event-status.draft {
-    background: #fff3cd;
-    color: #856404;
-}
-
-.vendzz-event-status.private {
-    background: #f8d7da;
-    color: #721c24;
-}
-
-/* Tipo de recorrência */
-.vendzz-recurrence-type {
-    display: inline-block;
-    padding: 2px 6px;
-    background: #e7f3ff;
-    color: #0073aa;
+.vendzz-single-badge {
+    background: #666;
+    color: #fff;
+    padding: 3px 8px;
     border-radius: 3px;
-    font-size: 11px;
+    font-size: 12px;
+    font-weight: 500;
+}
+
+.vendzz-status-published {
+    color: #46b450;
     font-weight: 600;
 }
 
-.vendzz-recurrence-type.single {
-    background: #f0f0f1;
-    color: #646970;
+.vendzz-status-draft {
+    color: #ffb900;
+    font-weight: 600;
 }
 
-/* Ações */
-.vendzz-event-actions {
+.vendzz-actions {
     display: flex;
-    gap: 8px;
+    gap: 5px;
+    flex-wrap: wrap;
 }
 
-.vendzz-event-actions a,
-.vendzz-event-actions button {
-    display: inline-block;
-    padding: 4px 8px;
-    border-radius: 3px;
-    text-decoration: none;
-    font-size: 12px;
-    font-weight: 600;
-    cursor: pointer;
-    border: none;
-    background: none;
-}
-
-.vendzz-event-actions .edit {
-    background: #2271b1;
-    color: #fff;
-}
-
-.vendzz-event-actions .edit:hover {
-    background: #135e96;
-}
-
-.vendzz-event-actions .republish {
-    background: #00a32a;
-    color: #fff;
-}
-
-.vendzz-event-actions .republish:hover {
-    background: #008a20;
-}
-
-.vendzz-event-actions .view {
-    background: #646970;
-    color: #fff;
-}
-
-.vendzz-event-actions .view:hover {
-    background: #50575e;
+.vendzz-actions .button {
+    margin: 0;
 }
 
 /* Paginação */
-.vendzz-events-pagination {
+.vendzz-pagination {
     display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-top: 20px;
-    padding: 15px 20px;
-    background: #fff;
-    border: 1px solid #ccd0d4;
-    border-radius: 4px;
-}
-
-.vendzz-pagination-info {
-    color: #646970;
-    font-size: 14px;
-}
-
-.vendzz-pagination-controls {
-    display: flex;
-    gap: 10px;
-}
-
-.vendzz-pagination-controls button {
-    padding: 8px 12px;
-    border: 1px solid #ccd0d4;
-    background: #fff;
-    color: #2271b1;
-    border-radius: 4px;
-    cursor: pointer;
-}
-
-.vendzz-pagination-controls button:hover {
-    background: #f6f7f7;
-}
-
-.vendzz-pagination-controls button:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-}
-
-/* Modal */
-.vendzz-modal {
-    display: none;
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(0, 0, 0, 0.5);
-    z-index: 100000;
-}
-
-.vendzz-modal.active {
-    display: flex;
-    align-items: center;
+    gap: 5px;
+    margin: 20px 0;
     justify-content: center;
 }
 
+.vendzz-pagination-info {
+    text-align: center;
+    color: #666;
+    font-size: 14px;
+}
+
+/* Loading */
+.vendzz-loading {
+    text-align: center;
+    padding: 40px;
+    color: #666;
+}
+
+.vendzz-loading .spinner {
+    margin: 0 auto 20px;
+}
+
+/* Estados vazios */
+.vendzz-no-events {
+    text-align: center;
+    padding: 40px;
+    color: #666;
+    font-size: 16px;
+}
+
+/* Modal do editor recorrente */
+.vendzz-modal {
+    display: none;
+    position: fixed;
+    z-index: 100000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0,0,0,0.5);
+}
+
 .vendzz-modal-content {
-    background: #fff;
-    padding: 20px;
+    background-color: #fff;
+    margin: 5% auto;
+    padding: 0;
     border-radius: 8px;
-    max-width: 600px;
     width: 90%;
-    max-height: 80vh;
-    overflow-y: auto;
+    max-width: 1000px;
+    max-height: 90vh;
+    overflow: hidden;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+}
+
+.vendzz-modal-small .vendzz-modal-content {
+    max-width: 500px;
 }
 
 .vendzz-modal-header {
+    background: #f1f1f1;
+    padding: 20px;
+    border-bottom: 1px solid #ddd;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 20px;
-    padding-bottom: 15px;
-    border-bottom: 1px solid #f0f0f1;
 }
 
-.vendzz-modal-header h2 {
+.vendzz-modal-header h2,
+.vendzz-modal-header h3 {
     margin: 0;
-    color: #1d2327;
+    color: #23282d;
 }
 
-.vendzz-modal-close {
+.vendzz-modal-body {
+    padding: 20px;
+    max-height: 60vh;
+    overflow-y: auto;
+}
+
+.vendzz-modal-footer {
+    background: #f1f1f1;
+    padding: 20px;
+    border-top: 1px solid #ddd;
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+}
+
+.close-modal {
     background: none;
     border: none;
-    font-size: 24px;
+    font-size: 28px;
+    font-weight: bold;
+    color: #666;
     cursor: pointer;
-    color: #646970;
     padding: 0;
     width: 30px;
     height: 30px;
@@ -302,187 +213,264 @@
     justify-content: center;
 }
 
-.vendzz-modal-close:hover {
-    color: #d63638;
+.close-modal:hover {
+    color: #000;
 }
 
-/* Formulário */
+/* Tabs do editor */
+.vendzz-editor-tabs {
+    display: flex;
+    border-bottom: 1px solid #ddd;
+    margin-bottom: 20px;
+}
+
+.vendzz-tab-btn {
+    background: #f1f1f1;
+    border: none;
+    padding: 12px 20px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+    border-bottom: 3px solid transparent;
+    transition: all 0.3s;
+}
+
+.vendzz-tab-btn:hover {
+    background: #e6e6e6;
+}
+
+.vendzz-tab-btn.active {
+    background: #fff;
+    border-bottom-color: #0073aa;
+    color: #0073aa;
+}
+
+.vendzz-tab-panel {
+    display: none;
+}
+
+.vendzz-tab-panel.active {
+    display: block;
+}
+
+/* Formulários */
 .vendzz-form-group {
     margin-bottom: 20px;
 }
 
 .vendzz-form-group label {
     display: block;
-    margin-bottom: 5px;
     font-weight: 600;
-    color: #1d2327;
+    margin-bottom: 5px;
+    color: #23282d;
 }
 
-.vendzz-form-group input,
-.vendzz-form-group select,
-.vendzz-form-group textarea {
+.vendzz-form-control {
     width: 100%;
     padding: 8px 12px;
-    border: 1px solid #8c8f94;
+    border: 1px solid #ddd;
     border-radius: 4px;
-    background: #fff;
     font-size: 14px;
 }
 
-.vendzz-form-group textarea {
-    resize: vertical;
-    min-height: 80px;
+.vendzz-form-control:focus {
+    border-color: #0073aa;
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(0,115,170,0.2);
 }
 
-.vendzz-form-group .description {
-    color: #646970;
-    font-size: 12px;
-    margin-top: 5px;
-}
-
-.vendzz-form-actions {
+.vendzz-form-row {
     display: flex;
-    gap: 10px;
-    justify-content: flex-end;
-    margin-top: 20px;
-    padding-top: 15px;
-    border-top: 1px solid #f0f0f1;
+    gap: 20px;
 }
 
-.vendzz-form-actions button {
-    padding: 8px 16px;
+.vendzz-form-row .vendzz-form-group {
+    flex: 1;
+}
+
+/* Botões */
+.vendzz-btn {
+    padding: 10px 20px;
+    border: none;
     border-radius: 4px;
     cursor: pointer;
-    font-weight: 600;
-    border: none;
+    font-size: 14px;
+    font-weight: 500;
+    text-decoration: none;
+    display: inline-block;
+    transition: all 0.3s;
 }
 
-.vendzz-form-actions .primary {
-    background: #2271b1;
+.vendzz-btn-primary {
+    background: #0073aa;
     color: #fff;
 }
 
-.vendzz-form-actions .primary:hover {
-    background: #135e96;
+.vendzz-btn-primary:hover {
+    background: #005a87;
 }
 
-.vendzz-form-actions .secondary {
-    background: #f6f7f7;
-    color: #2271b1;
-    border: 1px solid #ccd0d4;
+.vendzz-btn-secondary {
+    background: #666;
+    color: #fff;
 }
 
-.vendzz-form-actions .secondary:hover {
-    background: #f0f0f1;
+.vendzz-btn-secondary:hover {
+    background: #555;
 }
 
-/* Loading */
-.vendzz-loading {
+.vendzz-btn-danger {
+    background: #dc3232;
+    color: #fff;
+}
+
+.vendzz-btn-danger:hover {
+    background: #c52b2b;
+}
+
+.vendzz-btn-small {
+    padding: 5px 10px;
+    font-size: 12px;
+}
+
+/* Lista de ocorrências */
+.vendzz-occurrences-header {
     display: flex;
+    justify-content: space-between;
     align-items: center;
-    justify-content: center;
-    padding: 40px;
-    color: #646970;
-}
-
-.vendzz-loading .spinner {
-    width: 20px;
-    height: 20px;
-    border: 2px solid #f3f3f3;
-    border-top: 2px solid #2271b1;
-    border-radius: 50%;
-    animation: spin 1s linear infinite;
-    margin-right: 10px;
-}
-
-@keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
-}
-
-/* Mensagens */
-.vendzz-message {
-    padding: 12px 15px;
     margin-bottom: 20px;
-    border-radius: 4px;
-    border-left: 4px solid;
 }
 
-.vendzz-message.success {
+.vendzz-occurrences-list {
+    max-height: 400px;
+    overflow-y: auto;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+}
+
+.vendzz-occurrence-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px;
+    border-bottom: 1px solid #eee;
+}
+
+.vendzz-occurrence-item:last-child {
+    border-bottom: none;
+}
+
+.vendzz-occurrence-info h4 {
+    margin: 0 0 5px 0;
+    color: #23282d;
+}
+
+.vendzz-occurrence-date {
+    font-size: 13px;
+    color: #666;
+    margin: 0;
+}
+
+.vendzz-occurrence-status {
+    padding: 3px 8px;
+    border-radius: 3px;
+    font-size: 11px;
+    font-weight: 500;
+    text-transform: uppercase;
+    margin-top: 5px;
+    display: inline-block;
+}
+
+.vendzz-occurrence-status.publish {
     background: #d4edda;
-    border-left-color: #28a745;
     color: #155724;
 }
 
-.vendzz-message.error {
-    background: #f8d7da;
-    border-left-color: #dc3545;
-    color: #721c24;
+.vendzz-occurrence-status.draft {
+    background: #fff3cd;
+    color: #856404;
 }
 
-.vendzz-message.info {
-    background: #cce7ff;
-    border-left-color: #007cba;
-    color: #004085;
+.vendzz-occurrence-actions {
+    display: flex;
+    gap: 5px;
+}
+
+.vendzz-parent-label {
+    background: #f1f1f1;
+    padding: 5px 10px;
+    border-radius: 3px;
+    font-size: 12px;
+    color: #666;
+}
+
+.vendzz-no-occurrences {
+    padding: 40px;
+    text-align: center;
+    color: #666;
+    font-style: italic;
+}
+
+/* Texto de ajuda */
+.vendzz-help-text {
+    font-size: 13px;
+    color: #666;
+    margin-top: 5px;
 }
 
 /* Responsividade */
 @media (max-width: 768px) {
-    .vendzz-events-header {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 15px;
-    }
-    
     .vendzz-filters-row {
         flex-direction: column;
-        gap: 10px;
-    }
-    
-    .vendzz-filter-group {
-        min-width: 100%;
-    }
-    
-    .vendzz-events-table {
-        overflow-x: auto;
-    }
-    
-    .vendzz-events-pagination {
-        flex-direction: column;
         gap: 15px;
+    }
+    
+    .vendzz-form-row {
+        flex-direction: column;
+    }
+    
+    .vendzz-actions {
+        flex-direction: column;
     }
     
     .vendzz-modal-content {
         width: 95%;
-        margin: 10px;
+        margin: 2% auto;
+    }
+    
+    .vendzz-occurrence-item {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+    }
+    
+    .vendzz-occurrence-actions {
+        width: 100%;
+        justify-content: flex-end;
     }
 }
 
-/* Utilitários */
-.vendzz-text-center {
-    text-align: center;
+/* Animações */
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
 }
 
-.vendzz-text-right {
-    text-align: right;
+.vendzz-modal {
+    animation: fadeIn 0.3s ease-out;
 }
 
-.vendzz-mb-0 {
-    margin-bottom: 0;
+/* Notificações */
+.vendzz-notice {
+    position: fixed;
+    top: 30px;
+    right: 30px;
+    z-index: 100001;
+    min-width: 300px;
+    animation: slideIn 0.3s ease-out;
 }
 
-.vendzz-hidden {
-    display: none;
-}
-
-.vendzz-sr-only {
-    position: absolute;
-    width: 1px;
-    height: 1px;
-    padding: 0;
-    margin: -1px;
-    overflow: hidden;
-    clip: rect(0, 0, 0, 0);
-    white-space: nowrap;
-    border: 0;
+@keyframes slideIn {
+    from { transform: translateX(100%); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
 }
