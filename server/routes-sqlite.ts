@@ -1992,6 +1992,153 @@ export function registerSQLiteRoutes(app: Express): Server {
 // WHATSAPP AUTOMATION FILE ROUTES
 // =============================================
 
+// Endpoint para verificar atualizações do arquivo de automação
+app.get("/api/whatsapp-automation-file/:userId/:quizId/sync", verifyJWT, async (req: any, res: Response) => {
+  try {
+    const { userId, quizId } = req.params;
+    const { lastSync } = req.query;
+    const requestingUserId = req.user.id;
+    
+    // Verificar se o usuário pode acessar este arquivo
+    console.log('🔍 Sync Auth Debug:', { userId, requestingUserId, match: userId === requestingUserId });
+    if (userId !== requestingUserId) {
+      return res.status(403).json({ error: "Acesso negado" });
+    }
+    
+    // Verificar se o quiz tem automação WhatsApp habilitada
+    const quiz = await storage.getQuiz(quizId);
+    if (!quiz || !quiz.enableWhatsappAutomation) {
+      return res.status(400).json({ error: "Automação WhatsApp não habilitada" });
+    }
+    
+    // Buscar arquivo de automação para obter última atualização
+    const automationFile = await storage.getAutomationFile(userId, quizId);
+    if (!automationFile) {
+      return res.status(404).json({ error: "Arquivo de automação não encontrado" });
+    }
+    
+    // Buscar novos leads desde o último sync
+    const responses = await storage.getQuizResponses(quizId);
+    const lastSyncTime = lastSync ? new Date(lastSync) : new Date(automationFile.last_updated);
+    
+    // Debug informações de sincronização
+    console.log('🔄 DEBUG SYNC:', {
+      totalResponses: responses.length,
+      lastSync: lastSyncTime.toISOString(),
+      sampleResponse: responses[0] ? {
+        submittedAt: responses[0].submittedAt,
+        submittedAtType: typeof responses[0].submittedAt,
+        submittedAtAsDate: responses[0].submittedAt instanceof Date ? responses[0].submittedAt.toISOString() : 'NOT_DATE',
+        isAfterLastSync: responses[0].submittedAt > lastSyncTime
+      } : null,
+      recentResponses: responses.slice(0, 3).map(r => ({
+        submitted: r.submittedAt instanceof Date ? r.submittedAt.toISOString() : r.submittedAt,
+        isAfterSync: r.submittedAt > lastSyncTime
+      }))
+    });
+    
+    // Filtrar apenas respostas novas
+    const newResponses = responses.filter(response => {
+      // submittedAt já é um objeto Date convertido pelo Drizzle
+      const responseDate = response.submittedAt instanceof Date ? response.submittedAt : new Date(response.submittedAt);
+      const isNew = responseDate > lastSyncTime;
+      
+      // Debug para cada resposta
+      if (responses.indexOf(response) < 3) {
+        console.log(`🔍 Response ${responses.indexOf(response)}: ${responseDate.toISOString()} > ${lastSyncTime.toISOString()} = ${isNew}`);
+      }
+      
+      return isNew;
+    });
+    
+    console.log(`🔄 SYNC - Quiz: ${quizId}, Novos leads filtrados: ${newResponses.length}`);
+    
+    // Debug das respostas filtradas
+    if (newResponses.length > 0) {
+      console.log('🆕 Respostas novas encontradas:', newResponses.map(r => ({
+        submitted: r.submittedAt,
+        hasResponses: !!r.responses,
+        responseKeys: r.responses ? Object.keys(r.responses) : [],
+        metadata: r.metadata
+      })));
+    }
+    
+    if (newResponses.length === 0) {
+      return res.json({ 
+        hasUpdates: false, 
+        newLeads: [],
+        totalNewLeads: 0,
+        lastUpdate: new Date().toISOString()
+      });
+    }
+    
+    // Processar novos leads
+    const newLeads = [];
+    console.log(`📱 PROCESSANDO ${newResponses.length} respostas novas...`);
+    
+    newResponses.forEach((response, index) => {
+      console.log(`📱 Processando resposta ${index + 1}:`, { 
+        hasResponses: !!response.responses,
+        responseKeys: response.responses ? Object.keys(response.responses) : []
+      });
+      
+      if (response.responses) {
+        const allResponses = response.responses;
+        const phoneNumbers = [];
+        
+        // Extrair telefones
+        Object.keys(allResponses).forEach(key => {
+          if (key.includes('telefone') || key.includes('phone') || key.includes('celular')) {
+            const phoneValue = allResponses[key];
+            if (phoneValue && phoneValue.toString().trim()) {
+              phoneNumbers.push(phoneValue.toString().trim());
+            }
+          }
+        });
+        
+        phoneNumbers.forEach(phoneNumber => {
+          const cleanPhone = phoneNumber.replace(/\D/g, '');
+          if (cleanPhone.length >= 10 && cleanPhone.length <= 15 && /^\d+$/.test(cleanPhone)) {
+            const isComplete = response.metadata?.isComplete === true || 
+                              response.metadata?.completionPercentage === 100;
+            
+            newLeads.push({
+              phone: cleanPhone,
+              isComplete,
+              submittedAt: response.submittedAt,
+              nome: allResponses.nome?.value || allResponses.name?.value || allResponses.firstName?.value,
+              email: allResponses.email?.value || allResponses.email_principal?.value,
+              idade: allResponses.idade?.value || allResponses.age?.value,
+              altura: allResponses.altura?.value || allResponses.height?.value,
+              peso: allResponses.peso?.value || allResponses.weight?.value,
+              allResponses: allResponses
+            });
+          }
+        });
+      }
+    });
+    
+    // Atualizar last_updated do arquivo sempre que o sync for executado
+    const currentTimestamp = new Date().toISOString();
+    await storage.updateWhatsappAutomationFile(automationFile.id, {
+      last_updated: currentTimestamp
+    });
+    
+    console.log(`🔄 Arquivo de automação atualizado: ${automationFile.id}, last_updated: ${currentTimestamp}`);
+    
+    res.json({
+      hasUpdates: newLeads.length > 0,
+      newLeads,
+      totalNewLeads: newLeads.length,
+      lastUpdate: currentTimestamp
+    });
+    
+  } catch (error) {
+    console.error('❌ ERRO sync arquivo automação:', error);
+    res.status(500).json({ error: 'Erro interno do servidor' });
+  }
+});
+
 // Criar arquivo de automação para extensão
 app.post("/api/whatsapp-automation-file", verifyJWT, async (req: any, res: Response) => {
   try {

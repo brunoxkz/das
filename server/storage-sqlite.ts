@@ -1711,6 +1711,16 @@ export class SQLiteStorage implements IStorage {
     }
   }
 
+  async updateWhatsappAutomationFile(fileId: string, updates: { last_updated?: string }): Promise<void> {
+    const stmt = sqlite.prepare(`
+      UPDATE whatsapp_automation_files 
+      SET last_updated = ? 
+      WHERE id = ?
+    `);
+    
+    stmt.run(updates.last_updated || new Date().toISOString(), fileId);
+  }
+
   async deleteAutomationFile(fileId: string): Promise<void> {
     const stmt = sqlite.prepare(`
       DELETE FROM whatsapp_automation_files WHERE id = ?

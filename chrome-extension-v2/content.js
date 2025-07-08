@@ -15,6 +15,12 @@ if (document.getElementById('vendzz-sidebar')) {
   let automationActive = false;
   let automationStats = { sent: 0, failed: 0, total: 0 };
   let processedContacts = new Set();
+  
+  // Sistema de sincronização automática
+  let lastSyncTime = null;
+  let syncInterval = null;
+  let currentUserId = null;
+  let currentQuizId = null;
 
   // Configuração da automação
   let automationConfig = {
@@ -483,6 +489,18 @@ async function loadSelectedFile() {
     
     currentContacts = Array.isArray(contacts) ? contacts : [];
     selectedFile = fileId;
+    
+    // Extrair informações para sincronização automática
+    if (response.userId && response.quizId) {
+      currentUserId = response.userId;
+      currentQuizId = response.quizId;
+      lastSyncTime = new Date().toISOString();
+      
+      addLog(`🔄 Sincronização automática ativada para ${response.quizTitle || 'Quiz'}`);
+      
+      // Iniciar sincronização automática
+      startAutoSync();
+    }
     
     updateContactsList();
     document.getElementById('vendzz-contacts-section').style.display = 'block';
@@ -2009,6 +2027,133 @@ function forceSidebarDisplay() {
   } else {
     console.error('❌ FALHA: Não conseguiu forçar a criação da sidebar');
     return null;
+  }
+}
+
+// =============================================
+// SISTEMA DE SINCRONIZAÇÃO AUTOMÁTICA
+// =============================================
+
+// Função para iniciar sincronização automática
+function startAutoSync() {
+  if (syncInterval) {
+    clearInterval(syncInterval);
+  }
+  
+  console.log('🔄 Iniciando sincronização automática de novos leads...');
+  
+  // Verificar novos leads a cada 30 segundos
+  syncInterval = setInterval(async () => {
+    await syncNewLeads();
+  }, 30000);
+  
+  // Primeira sincronização após 5 segundos
+  setTimeout(() => syncNewLeads(), 5000);
+}
+
+// Função para sincronizar novos leads
+async function syncNewLeads() {
+  if (!currentUserId || !currentQuizId || !lastSyncTime) {
+    return;
+  }
+  
+  try {
+    const response = await chrome.runtime.sendMessage({
+      action: 'sync_new_leads',
+      userId: currentUserId,
+      quizId: currentQuizId,
+      lastSync: lastSyncTime
+    });
+    
+    if (response.error) {
+      console.error('❌ Erro na sincronização:', response.error);
+      return;
+    }
+    
+    if (response.hasUpdates && response.newLeads.length > 0) {
+      console.log(`🆕 ${response.newLeads.length} novos leads encontrados!`);
+      
+      // Converter leads para formato de contatos
+      const newContacts = response.newLeads.map(lead => ({
+        phone: lead.phone,
+        nome: lead.nome || 'Sem nome',
+        email: lead.email || 'Sem email',
+        idade: lead.idade || 'N/A',
+        altura: lead.altura || 'N/A',
+        peso: lead.peso || 'N/A',
+        isComplete: lead.isComplete,
+        submissionDate: lead.submittedAt,
+        responses: lead.allResponses || {}
+      }));
+      
+      // Filtrar duplicatas (mesmos telefones)
+      const existingPhones = new Set(currentContacts.map(c => c.phone));
+      const uniqueNewContacts = newContacts.filter(c => !existingPhones.has(c.phone));
+      
+      if (uniqueNewContacts.length > 0) {
+        // Adicionar à lista atual
+        currentContacts = [...currentContacts, ...uniqueNewContacts];
+        
+        // Se automação estiver ativa, adicionar à fila
+        if (automationActive) {
+          uniqueNewContacts.forEach(contact => {
+            if (!processedContacts.has(contact.phone)) {
+              addToAutomationQueue(contact);
+            }
+          });
+          
+          addLog(`🔄 ${uniqueNewContacts.length} novos leads adicionados à fila de automação`);
+        }
+        
+        // Atualizar interface
+        updateContactsList();
+        updateFileStatus(`${currentContacts.length} contatos (${uniqueNewContacts.length} novos)`);
+        updateAutomationStats();
+        
+        addLog(`✅ Sincronização: ${uniqueNewContacts.length} novos leads adicionados`);
+      }
+    }
+    
+    // Atualizar timestamp da última sincronização
+    lastSyncTime = response.lastUpdate;
+    
+  } catch (error) {
+    console.error('❌ Erro na sincronização automática:', error);
+  }
+}
+
+// Função para adicionar contato à fila de automação
+function addToAutomationQueue(contact) {
+  if (processedContacts.has(contact.phone)) {
+    return; // Já foi processado
+  }
+  
+  // Aplicar filtros da configuração
+  const contactDate = new Date(contact.submissionDate);
+  const filterDate = automationConfig.dateFilter ? new Date(automationConfig.dateFilter) : null;
+  
+  if (filterDate && contactDate < filterDate) {
+    return; // Não passa no filtro de data
+  }
+  
+  const shouldProcess = (
+    (contact.isComplete && automationConfig.enableCompleted) ||
+    (!contact.isComplete && automationConfig.enableAbandoned)
+  );
+  
+  if (shouldProcess) {
+    automationQueue.push(contact);
+    automationStats.total++;
+    console.log(`➕ Novo lead adicionado à fila: ${contact.phone} (${contact.isComplete ? 'completed' : 'abandoned'})`);
+  }
+}
+
+// Função para parar sincronização automática
+function stopAutoSync() {
+  if (syncInterval) {
+    clearInterval(syncInterval);
+    syncInterval = null;
+    console.log('⏹️ Sincronização automática parada');
   }
 }
 

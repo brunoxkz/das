@@ -92,34 +92,56 @@ async function fetchAutomationFiles() {
 // Buscar contatos de um arquivo específico
 async function fetchFileContacts(fileId) {
   if (!config.accessToken || !fileId) {
-    return [];
+    return { contacts: [], userId: null, quizId: null, quizTitle: null };
   }
 
   try {
     const fileData = await apiRequest(`/api/whatsapp-automation-files/${fileId}`);
     
-    // Parse phones se vier como string
-    let phones = [];
-    if (fileData.phones) {
-      if (typeof fileData.phones === 'string') {
+    // Parse contacts se vier como string
+    let contacts = [];
+    if (fileData.contacts) {
+      if (typeof fileData.contacts === 'string') {
         try {
-          phones = JSON.parse(fileData.phones);
+          contacts = JSON.parse(fileData.contacts);
         } catch (e) {
-          console.log('❌ Erro ao parsear phones:', e);
-          phones = [];
+          console.log('❌ Erro ao parsear contacts:', e);
+          contacts = [];
         }
-      } else if (Array.isArray(fileData.phones)) {
-        phones = fileData.phones;
+      } else if (Array.isArray(fileData.contacts)) {
+        contacts = fileData.contacts;
       }
     }
     
-    console.log(`📱 Contatos no arquivo ${fileId}: ${phones.length}`);
-    console.log(`📱 Sample contact:`, phones[0]);
+    console.log(`📱 Contatos no arquivo ${fileId}: ${contacts.length}`);
+    console.log(`📱 Sample contact:`, contacts[0]);
     
-    return phones;
+    return {
+      contacts,
+      userId: fileData.user_id,
+      quizId: fileData.quiz_id,
+      quizTitle: fileData.quiz_title
+    };
   } catch (error) {
     console.error('❌ Erro ao buscar contatos do arquivo:', error);
-    return [];
+    return { contacts: [], userId: null, quizId: null, quizTitle: null };
+  }
+}
+
+// Sincronizar novos leads do arquivo
+async function syncNewLeads(userId, quizId, lastSync) {
+  if (!config.accessToken || !userId || !quizId) {
+    return { hasUpdates: false, newLeads: [], error: 'Missing parameters' };
+  }
+
+  try {
+    const syncData = await apiRequest(`/api/whatsapp-automation-file/${userId}/${quizId}/sync?lastSync=${lastSync}`);
+    console.log(`🔄 Sync result:`, syncData);
+    
+    return syncData;
+  } catch (error) {
+    console.error('❌ Erro ao sincronizar novos leads:', error);
+    return { hasUpdates: false, newLeads: [], error: error.message };
   }
 }
 
@@ -233,10 +255,18 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
       return true; // Indica resposta assíncrona
 
     case 'fetch_contacts':
-      fetchFileContacts(request.fileId).then(contacts => {
-        sendResponse({ contacts });
+      fetchFileContacts(request.fileId).then(result => {
+        sendResponse(result);
       }).catch(error => {
-        sendResponse({ error: error.message });
+        sendResponse({ contacts: [], error: error.message });
+      });
+      return true; // Indica resposta assíncrona
+      
+    case 'sync_new_leads':
+      syncNewLeads(request.userId, request.quizId, request.lastSync).then(result => {
+        sendResponse(result);
+      }).catch(error => {
+        sendResponse({ hasUpdates: false, newLeads: [], error: error.message });
       });
       return true; // Indica resposta assíncrona
 
