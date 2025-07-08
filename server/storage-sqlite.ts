@@ -722,7 +722,7 @@ export class SQLiteStorage implements IStorage {
       updated_at: now
     };
 
-    const stmt = this.db.prepare(`
+    const stmt = sqlite.prepare(`
       INSERT INTO whatsapp_campaigns 
       (id, name, quiz_id, quiz_title, messages, user_id, phones, status, scheduled_at, trigger_delay, trigger_unit, target_audience, date_filter, extension_settings, created_at, updated_at)
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
@@ -739,7 +739,7 @@ export class SQLiteStorage implements IStorage {
   }
 
   async getWhatsappCampaigns(userId: string): Promise<any[]> {
-    const stmt = this.db.prepare(`
+    const stmt = sqlite.prepare(`
       SELECT wc.*, q.title as quizTitle 
       FROM whatsapp_campaigns wc
       LEFT JOIN quizzes q ON wc.quiz_id = q.id
@@ -762,7 +762,7 @@ export class SQLiteStorage implements IStorage {
   }
 
   async getWhatsappCampaignById(id: string): Promise<any | null> {
-    const stmt = this.db.prepare(`
+    const stmt = sqlite.prepare(`
       SELECT wc.*, q.title as quizTitle 
       FROM whatsapp_campaigns wc
       LEFT JOIN quizzes q ON wc.quiz_id = q.id
@@ -796,7 +796,7 @@ export class SQLiteStorage implements IStorage {
       updatedData.extension_settings = JSON.stringify(updates.extensionSettings);
     }
 
-    const stmt = this.db.prepare(`
+    const stmt = sqlite.prepare(`
       UPDATE whatsapp_campaigns 
       SET name = ?, message = ?, status = ?, phones = ?, extension_settings = ?, updated_at = ?
       WHERE id = ?
@@ -812,11 +812,11 @@ export class SQLiteStorage implements IStorage {
 
   async deleteWhatsappCampaign(id: string): Promise<boolean> {
     // Delete logs first (cascade)
-    const deleteLogsStmt = this.db.prepare('DELETE FROM whatsapp_logs WHERE campaign_id = ?');
+    const deleteLogsStmt = sqlite.prepare('DELETE FROM whatsapp_logs WHERE campaign_id = ?');
     deleteLogsStmt.run(id);
     
     // Delete campaign
-    const deleteCampaignStmt = this.db.prepare('DELETE FROM whatsapp_campaigns WHERE id = ?');
+    const deleteCampaignStmt = sqlite.prepare('DELETE FROM whatsapp_campaigns WHERE id = ?');
     const result = deleteCampaignStmt.run(id);
     
     return result.changes > 0;
@@ -840,7 +840,7 @@ export class SQLiteStorage implements IStorage {
       updated_at: now
     };
 
-    const stmt = this.db.prepare(`
+    const stmt = sqlite.prepare(`
       INSERT INTO whatsapp_logs 
       (id, campaign_id, phone, message, status, scheduled_at, sent_at, extension_status, error, created_at, updated_at)
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
@@ -856,7 +856,7 @@ export class SQLiteStorage implements IStorage {
   }
 
   async getWhatsappLogs(campaignId: string): Promise<any[]> {
-    const stmt = this.db.prepare(`
+    const stmt = sqlite.prepare(`
       SELECT * FROM whatsapp_logs 
       WHERE campaign_id = ? 
       ORDER BY created_at DESC
@@ -961,7 +961,7 @@ export class SQLiteStorage implements IStorage {
       updates.error = error;
     }
 
-    const stmt = this.db.prepare(`
+    const stmt = sqlite.prepare(`
       UPDATE whatsapp_logs 
       SET status = ?, sent_at = ?, extension_status = ?, error = ?, updated_at = ?
       WHERE id = ?
@@ -972,7 +972,7 @@ export class SQLiteStorage implements IStorage {
 
   async getScheduledWhatsappLogs(): Promise<any[]> {
     const now = Math.floor(Date.now() / 1000);
-    const stmt = this.db.prepare(`
+    const stmt = sqlite.prepare(`
       SELECT wl.*, wc.user_id, wc.extension_settings
       FROM whatsapp_logs wl
       JOIN whatsapp_campaigns wc ON wl.campaign_id = wc.id
@@ -986,7 +986,7 @@ export class SQLiteStorage implements IStorage {
   }
 
   async getWhatsappTemplates(userId: string): Promise<any[]> {
-    const stmt = this.db.prepare(`
+    const stmt = sqlite.prepare(`
       SELECT * FROM whatsapp_templates 
       WHERE user_id = ? 
       ORDER BY created_at DESC
@@ -1013,7 +1013,7 @@ export class SQLiteStorage implements IStorage {
       updated_at: now
     };
 
-    const stmt = this.db.prepare(`
+    const stmt = sqlite.prepare(`
       INSERT INTO whatsapp_templates 
       (id, name, message, category, variables, user_id, created_at, updated_at)
       VALUES (?, ?, ?, ?, ?, ?, ?, ?)
@@ -1299,7 +1299,7 @@ export class SQLiteStorage implements IStorage {
   }
 
   async getQuizPhoneNumbers(quizId: string): Promise<any[]> {
-    const stmt = this.db.prepare(`
+    const stmt = sqlite.prepare(`
       SELECT qr.responses, qr.metadata
       FROM quiz_responses qr
       WHERE qr.quiz_id = ?
