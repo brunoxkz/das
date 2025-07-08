@@ -136,7 +136,10 @@ function createSidebar() {
         </div>
 
         <div class="vendzz-section" id="vendzz-contacts-section" style="display: none;">
-          <h3>📱 Contatos (<span id="vendzz-contact-count">0</span>)</h3>
+          <div class="vendzz-section-header">
+            <h3>📱 Contatos (<span id="vendzz-contact-count">0</span>)</h3>
+            <button id="vendzz-refresh-data" class="vendzz-btn-small">🔄 Atualizar</button>
+          </div>
           <div class="vendzz-contact-list" id="vendzz-contact-list">
             <!-- Contatos aparecerão aqui -->
           </div>
@@ -302,6 +305,18 @@ function setupEventListeners() {
 
   // Refresh arquivos
   document.getElementById('vendzz-refresh-files').addEventListener('click', loadFiles);
+  
+  // Atualizar dados (botão 🔄 Atualizar)
+  document.getElementById('vendzz-refresh-data').addEventListener('click', async () => {
+    addLog('🔄 Atualizando dados...');
+    if (selectedFile) {
+      await loadSelectedFile();
+      addLog('✅ Dados atualizados');
+    } else {
+      await loadFiles();
+      addLog('✅ Lista de arquivos atualizada');
+    }
+  });
 
   // Controles de automação
   document.getElementById('vendzz-start-automation').addEventListener('click', startAutomation);
@@ -1414,8 +1429,23 @@ function tryInit() {
   });
 }
 
-// DESATIVAR criação automática da sidebar escura - usar apenas força bruta branca
-console.log('🚫 Sidebar escura desativada - usando apenas sidebar branca flutuante');
+// Reativar criação automática da sidebar escura (mais bonita e funcional)
+console.log('🎨 Reativando sidebar escura - mais bonita e funcional');
+
+// Inicializar quando o DOM estiver pronto
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', tryInit);
+} else {
+  tryInit();
+}
+
+// Tentar novamente após um tempo caso algo tenha dado errado
+setTimeout(() => {
+  if (!document.getElementById('vendzz-sidebar') && initAttempts < maxInitAttempts) {
+    console.log('🔄 Verificação adicional: sidebar não encontrada, tentando novamente...');
+    tryInit();
+  }
+}, 5000);
 
 // Forçar sidebar via mensagem da extensão (para debug)
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
@@ -1547,16 +1577,8 @@ function forceSidebarDisplay() {
   }
 }
 
-// Executar força bruta apenas uma vez após 5 segundos se não houver sidebar
-setTimeout(() => {
-  const existing = document.getElementById('vendzz-sidebar');
-  if (!existing) {
-    console.log('🚨 Nenhuma sidebar detectada após 5s, criando sidebar branca...');
-    forceSidebarDisplay();
-  } else {
-    console.log('✅ Sidebar já existe, não precisa criar outra');
-  }
-}, 5000);
+// Força bruta desativada - priorizando sidebar escura automática
+console.log('⚫ Sidebar branca desativada - usando sidebar escura automática');
 
 } else {
   console.log('🔄 Extensão Vendzz já carregada, pulando inicialização');
