@@ -183,17 +183,24 @@ app.use((req, res, next) => {
     }
   }, 30000); // A cada 30 segundos
 
-  // Sistema de detecção automática de novos leads - PERMITE RE-ENVIO APENAS SE USUÁRIO RESPONDER NOVAMENTE
+  // Sistema de detecção automática de novos leads - SMS E WHATSAPP
   const autoDetectionSystem = async () => {
     console.log(`🔍 EXECUTANDO DETECÇÃO AUTOMÁTICA - ${new Date().toLocaleTimeString()}`);
     try {
       const { storage } = await import('./storage-sqlite');
-      const campaigns = await storage.getAllSMSCampaigns();
-      console.log(`📋 CAMPANHAS ENCONTRADAS: ${campaigns.length}`);
       
-      for (const campaign of campaigns) {
+      // Processar campanhas SMS (funcionalidade existente)
+      const smsCampaigns = await storage.getAllSMSCampaigns();
+      console.log(`📋 CAMPANHAS SMS ENCONTRADAS: ${smsCampaigns.length}`);
+      
+      // Processar campanhas WhatsApp (nova funcionalidade)
+      const whatsappCampaigns = await storage.getAllWhatsappCampaigns();
+      console.log(`📱 CAMPANHAS WHATSAPP ENCONTRADAS: ${whatsappCampaigns.length}`);
+      
+      // Processar campanhas SMS ativas (funcionalidade existente mantida)
+      for (const campaign of smsCampaigns) {
         if (campaign.status === 'draft' && campaign.scheduledAt) {
-          console.log(`✅ PROCESSANDO: "${campaign.name}" - Quiz: ${campaign.quizId}`);
+          console.log(`✅ PROCESSANDO SMS: "${campaign.name}" - Quiz: ${campaign.quizId}`);
           
           const responses = await storage.getQuizResponses(campaign.quizId);
           const logs = await storage.getSMSLogs(campaign.id);
@@ -255,6 +262,82 @@ app.use((req, res, next) => {
               // Telefone já processado - NÃO reagendar automaticamente
               console.log(`⏭️ TELEFONE ${phone} JÁ PROCESSADO - status: ${processed.status}, não reagendar automaticamente`);
             }
+          }
+        }
+      }
+      
+      // Processar campanhas WhatsApp ativas (nova funcionalidade)
+      for (const campaign of whatsappCampaigns) {
+        if (campaign.status === 'active') {
+          console.log(`📱 PROCESSANDO WHATSAPP: "${campaign.name}" - Quiz: ${campaign.quizId}`);
+          
+          // Usar a mesma funcionalidade de telefones que o SMS
+          const currentPhones = await storage.getQuizPhoneNumbers(campaign.quizId);
+          const logs = await storage.getWhatsappLogs(campaign.id);
+          
+          // Aplicar filtros da campanha
+          let filteredPhones = currentPhones;
+          
+          // Filtro de data
+          if (campaign.dateFilter) {
+            const filterDate = new Date(campaign.dateFilter);
+            filteredPhones = filteredPhones.filter(p => 
+              new Date(p.submittedAt || p.created_at) >= filterDate
+            );
+          }
+          
+          // Filtro de audiência  
+          if (campaign.targetAudience === 'completed') {
+            filteredPhones = filteredPhones.filter(p => p.status === 'completed');
+          } else if (campaign.targetAudience === 'abandoned') {
+            filteredPhones = filteredPhones.filter(p => p.status === 'abandoned');
+          }
+          
+          // Mapear telefones já processados
+          const processedPhones = new Set(logs.map(log => log.phone));
+          
+          // Encontrar novos telefones
+          const newPhones = filteredPhones.filter(phone => {
+            const phoneNumber = phone.telefone || phone.phone || phone;
+            return !processedPhones.has(phoneNumber);
+          });
+          
+          console.log(`📊 WHATSAPP DADOS: ${currentPhones.length} total, ${filteredPhones.length} filtrados, ${newPhones.length} novos, ${logs.length} logs existentes`);
+          
+          // Criar logs para novos telefones
+          let newLeadsCount = 0;
+          for (const phone of newPhones) {
+            const phoneNumber = phone.telefone || phone.phone || phone;
+            if (!phoneNumber || phoneNumber.length < 10) continue;
+            
+            // Selecionar mensagem rotativa
+            const messages = Array.isArray(campaign.messages) ? campaign.messages : JSON.parse(campaign.messages || '[]');
+            const selectedMessage = messages[newLeadsCount % messages.length] || messages[0];
+            
+            console.log(`🆕 NOVO LEAD WHATSAPP: ${phoneNumber} - STATUS: ${phone.status} - CRIANDO LOG...`);
+            
+            await storage.createWhatsappLog({
+              id: crypto.randomUUID(),
+              campaignId: campaign.id,
+              phone: phoneNumber,
+              message: selectedMessage,
+              status: 'pending',
+              scheduledAt: Math.floor(Date.now() / 1000) + 60, // 1 minuto de delay
+              createdAt: new Date(),
+              updatedAt: new Date()
+            });
+            
+            newLeadsCount++;
+          }
+          
+          if (newLeadsCount > 0) {
+            console.log(`✅ WHATSAPP: ${newLeadsCount} novos leads adicionados à campanha "${campaign.name}"`);
+            
+            // Atualizar lista de telefones da campanha
+            await storage.updateWhatsappCampaign(campaign.id, {
+              phones: filteredPhones,
+              updatedAt: new Date()
+            });
           }
         }
       }

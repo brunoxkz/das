@@ -860,6 +860,16 @@ export class SQLiteStorage implements IStorage {
     return stmt.all(campaignId);
   }
 
+  // Get all WhatsApp campaigns for auto-detection
+  async getAllWhatsappCampaigns(): Promise<any[]> {
+    try {
+      return await db.select().from(whatsappCampaigns);
+    } catch (error) {
+      console.error('Error getting all WhatsApp campaigns:', error);
+      return [];
+    }
+  }
+
   async updateWhatsappLogStatus(id: string, status: string, extensionStatus?: string, error?: string): Promise<void> {
     const updates: any = {
       status,

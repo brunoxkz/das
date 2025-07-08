@@ -475,6 +475,15 @@ Changelog:
   * Clarified date filter: "Filtrar Leads por Data de Chegada" explains filtering by quiz response date
   * System ready for WhatsApp automation via Chrome extension integration
   * Complete workflow: quiz selection → audience targeting → message rotation → campaign activation
+- July 08, 2025. DYNAMIC LEAD DETECTION FOR WHATSAPP - Automated lead capture and campaign expansion:
+  * Implemented automatic lead detection system for WhatsApp campaigns reusing existing SMS infrastructure
+  * WhatsApp campaigns now automatically capture new leads from quiz responses every 20 seconds
+  * System applies campaign filters (date, audience targeting) to new leads automatically
+  * New leads get rotating messages and individual scheduling for optimal delivery
+  * Unified phone number management between SMS and WhatsApp systems for consistency
+  * Real-time campaign expansion without manual intervention - leads automatically added to active campaigns
+  * Complete integration ready for Chrome extension automation with dynamic lead lists
+  * Maintains all existing SMS functionality while adding WhatsApp auto-detection capabilities
 ```
 
 ## User Preferences
