@@ -2221,6 +2221,27 @@ app.post("/api/whatsapp-extension/status", verifyJWT, async (req: any, res: Resp
     const userEmail = req.user.email;
     const { version, pendingMessages, sentMessages, failedMessages, isActive } = req.body;
     
+    // VALIDAÇÃO RIGOROSA DE ENTRADA
+    if (!version || typeof version !== 'string' || version.trim() === '') {
+      return res.status(400).json({ error: 'Version é obrigatório e deve ser uma string válida' });
+    }
+    
+    if (pendingMessages !== undefined && (typeof pendingMessages !== 'number' || pendingMessages < 0 || !Number.isInteger(pendingMessages))) {
+      return res.status(400).json({ error: 'pendingMessages deve ser um número inteiro não negativo' });
+    }
+    
+    if (sentMessages !== undefined && (typeof sentMessages !== 'number' || sentMessages < 0 || !Number.isInteger(sentMessages))) {
+      return res.status(400).json({ error: 'sentMessages deve ser um número inteiro não negativo' });
+    }
+    
+    if (failedMessages !== undefined && (typeof failedMessages !== 'number' || failedMessages < 0 || !Number.isInteger(failedMessages))) {
+      return res.status(400).json({ error: 'failedMessages deve ser um número inteiro não negativo' });
+    }
+    
+    if (isActive !== undefined && typeof isActive !== 'boolean') {
+      return res.status(400).json({ error: 'isActive deve ser um valor boolean' });
+    }
+    
     console.log(`📱 PING EXTENSÃO ${userEmail}: v${version}, pendentes: ${pendingMessages}, enviadas: ${sentMessages}, falhas: ${failedMessages}`);
     
     // Buscar configurações atualizadas do usuário em tempo real
@@ -2262,6 +2283,33 @@ app.post("/api/whatsapp-extension/settings", verifyJWT, async (req: any, res: Re
   try {
     const userId = req.user.id;
     const settings = req.body;
+    
+    // VALIDAÇÃO DE CONFIGURAÇÕES
+    if (settings.messageDelay !== undefined) {
+      if (typeof settings.messageDelay !== 'number' || settings.messageDelay < 0 || settings.messageDelay > 3600000) {
+        return res.status(400).json({ error: 'messageDelay deve ser um número entre 0 e 3600000ms (1 hora)' });
+      }
+    }
+    
+    if (settings.maxMessagesPerDay !== undefined) {
+      if (typeof settings.maxMessagesPerDay !== 'number' || settings.maxMessagesPerDay < 1 || settings.maxMessagesPerDay > 10000) {
+        return res.status(400).json({ error: 'maxMessagesPerDay deve ser um número entre 1 e 10000' });
+      }
+    }
+    
+    if (settings.autoSend !== undefined && typeof settings.autoSend !== 'boolean') {
+      return res.status(400).json({ error: 'autoSend deve ser um valor boolean' });
+    }
+    
+    if (settings.workingHours && typeof settings.workingHours === 'object') {
+      const { start, end } = settings.workingHours;
+      if (start && !/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/.test(start)) {
+        return res.status(400).json({ error: 'workingHours.start deve estar no formato HH:MM (00:00-23:59)' });
+      }
+      if (end && !/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/.test(end)) {
+        return res.status(400).json({ error: 'workingHours.end deve estar no formato HH:MM (00:00-23:59)' });
+      }
+    }
     
     await storage.updateUserExtensionSettings(userId, settings);
     
@@ -2386,7 +2434,36 @@ app.post("/api/whatsapp-extension/logs", verifyJWT, async (req: any, res: Respon
   }
 });
 
-// Get scheduled WhatsApp messages for extension
+// Get scheduled WhatsApp messages for extension - ENDPOINT CORRIGIDO
+app.get("/api/whatsapp-extension/pending-messages", verifyJWT, async (req: any, res: Response) => {
+  try {
+    const userId = req.user.id;
+    const userEmail = req.user.email;
+    const currentTime = Math.floor(Date.now() / 1000);
+    
+    // Buscar apenas mensagens WhatsApp do usuário autenticado
+    const scheduledLogs = await storage.getScheduledWhatsappLogsByUser(userId, currentTime);
+    
+    // Formatar para a extensão
+    const pendingMessages = scheduledLogs.map(log => ({
+      logId: log.id,
+      phone: log.phone,
+      message: log.message,
+      campaignId: log.campaign_id,
+      scheduledAt: log.scheduled_at,
+      createdAt: log.created_at,
+      userId: userId // Confirmar propriedade
+    }));
+
+    console.log(`📤 MENSAGENS PENDENTES PARA ${userEmail}: ${pendingMessages.length}`);
+    res.json(pendingMessages);
+  } catch (error) {
+    console.error('❌ ERRO mensagens pendentes:', error);
+    res.status(500).json({ error: 'Erro interno do servidor' });
+  }
+});
+
+// Get scheduled WhatsApp messages for extension (mantido para compatibilidade)
 app.get("/api/whatsapp-extension/pending", verifyJWT, async (req: any, res: Response) => {
   try {
     const userId = req.user.id;
