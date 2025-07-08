@@ -1,7 +1,7 @@
 import fetch from 'node-fetch';
 
 async function testeConexaoToken() {
-  const token = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IktqY3ROQ09sTTVqY2FmZ0FfZHJWUSIsImVtYWlsIjoiYWRtaW5AdmVuZHp6LmNvbSIsInJvbGUiOiJhZG1pbiIsInBsYW4iOiJlbnRlcnByaXNlIiwiaWF0IjoxNzUxOTU2OTkyLCJleHAiOjE3NTE5NTc4OTJ9.leZzkorKweav_sw-ENG2Zr7iA3_OWBYnqM78FKvWhps';
+  const token = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IktqY3ROQ09sTTVqY2FmZ0FfZHJWUSIsImVtYWlsIjoiYWRtaW5AdmVuZHp6LmNvbSIsInJvbGUiOiJhZG1pbiIsInBsYW4iOiJlbnRlcnByaXNlIiwiaWF0IjoxNzUxOTYxNjE0LCJleHAiOjE3NTE5NjI1MTR9.6rdw9gZgcmK7aDWvVIGiVy0odnVxlvxACPpCIcpn9PU';
   const serverUrl = 'https://51f74588-7b5b-4e89-adab-b70610c96e0b-00-zr6ug9hu0yss.janeway.replit.dev';
   
   console.log('🔍 TESTANDO CONEXÃO DA EXTENSÃO CHROME\n');
