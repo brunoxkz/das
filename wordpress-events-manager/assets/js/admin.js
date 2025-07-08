@@ -1,504 +1,405 @@
-jQuery(document).ready(function($) {
-    'use strict';
-    
-    let currentPage = 1;
-    let isLoading = false;
-    let totalPages = 1;
-    
-    // Inicializar página
-    init();
-    
-    function init() {
-        bindEvents();
-        loadEvents();
-        initModal();
-    }
-    
-    function bindEvents() {
-        // Filtros
-        $('#search-events').on('input', debounce(loadEvents, 500));
-        $('#filter-status, #filter-recurrence').on('change', loadEvents);
-        $('#refresh-events').on('click', loadEvents);
-        
-        // Botões de ação
-        $(document).on('click', '.edit-event', handleEditEvent);
-        $(document).on('click', '.republish-event', handleRepublishEvent);
-        
-        // Paginação
-        $(document).on('click', '.pagination button', handlePagination);
-        
-        // Formulário de edição
-        $('#event-edit-form').on('submit', handleSaveEvent);
-    }
-    
-    function initModal() {
-        $('#event-edit-modal').dialog({
-            autoOpen: false,
-            width: 600,
-            height: 500,
-            modal: true,
-            resizable: true,
-            buttons: {
-                'Salvar': function() {
-                    $('#event-edit-form').submit();
-                },
-                'Cancelar': function() {
-                    $(this).dialog('close');
-                }
-            }
-        });
-    }
-    
-    function loadEvents() {
-        if (isLoading) return;
-        
-        isLoading = true;
-        showLoadingSpinner();
-        
-        const data = {
-            action: 'vendzz_get_events',
-            nonce: vendzz_events_ajax.nonce,
-            search: $('#search-events').val(),
-            status: $('#filter-status').val(),
-            recurrence: $('#filter-recurrence').val(),
-            page: currentPage
-        };
-        
-        $.post(vendzz_events_ajax.ajax_url, data)
-            .done(function(response) {
-                if (response.success) {
-                    displayEvents(response.data);
-                    updatePagination(response.data);
-                } else {
-                    showMessage(response.data || vendzz_events_ajax.strings.error, 'error');
-                }
-            })
-            .fail(function(xhr, status, error) {
-                console.error('AJAX Error:', error);
-                showMessage(vendzz_events_ajax.strings.error, 'error');
-            })
-            .always(function() {
-                isLoading = false;
-                hideLoadingSpinner();
-            });
-    }
-    
-    function displayEvents(data) {
-        const container = $('#events-container');
-        
-        if (!data.events || data.events.length === 0) {
-            container.html(`
-                <div class="no-events">
-                    <h3>Nenhum evento encontrado</h3>
-                    <p>Não há eventos que correspondam aos filtros selecionados.</p>
-                </div>
-            `);
-            return;
-        }
-        
-        let html = `
-            <table class="events-table">
-                <thead>
-                    <tr>
-                        <th>Evento</th>
-                        <th>Status</th>
-                        <th>Data/Hora</th>
-                        <th>Local</th>
-                        <th>Recorrência</th>
-                        <th>Ações</th>
-                    </tr>
-                </thead>
-                <tbody>
-        `;
-        
-        data.events.forEach(function(event) {
-            const startDate = new Date(event.start_date);
-            const endDate = new Date(event.end_date);
-            const statusClass = event.status;
-            const recurrenceClass = event.is_recurring ? 'recurring' : 'single';
-            
-            html += `
-                <tr>
-                    <td>
-                        <div class="event-title">${escapeHtml(event.title)}</div>
-                        <div class="event-meta">ID: ${event.id}</div>
-                    </td>
-                    <td>
-                        <span class="event-status ${statusClass}">${getStatusLabel(event.status)}</span>
-                    </td>
-                    <td>
-                        <div class="event-meta">
-                            <strong>Início:</strong> ${formatDateTime(startDate)}<br>
-                            <strong>Fim:</strong> ${formatDateTime(endDate)}
-                        </div>
-                    </td>
-                    <td>
-                        <div class="event-meta">${escapeHtml(event.venue || 'Não definido')}</div>
-                    </td>
-                    <td>
-                        <span class="event-recurrence ${recurrenceClass}">
-                            ${escapeHtml(event.recurrence_info)}
-                        </span>
-                    </td>
-                    <td>
-                        <div class="event-actions">
-                            <button class="action-btn edit edit-event" data-event-id="${event.id}">
-                                ✏️ Editar
-                            </button>
-                            <button class="action-btn republish republish-event" data-event-id="${event.id}">
-                                🔄 Republicar
-                            </button>
-                            <a href="${event.view_url}" class="action-btn view" target="_blank">
-                                👁️ Ver
-                            </a>
-                        </div>
-                    </td>
-                </tr>
-            `;
-        });
-        
-        html += `
-                </tbody>
-            </table>
-        `;
-        
-        container.html(html);
-    }
-    
-    function updatePagination(data) {
-        totalPages = data.total_pages;
-        currentPage = data.current_page;
-        
-        if (totalPages <= 1) {
-            $('.pagination').remove();
-            return;
-        }
-        
-        let paginationHtml = '<div class="pagination">';
-        
-        // Botão anterior
-        paginationHtml += `
-            <button ${currentPage <= 1 ? 'disabled' : ''} data-page="${currentPage - 1}">
-                « Anterior
-            </button>
-        `;
-        
-        // Páginas numeradas
-        for (let i = Math.max(1, currentPage - 2); i <= Math.min(totalPages, currentPage + 2); i++) {
-            const activeClass = i === currentPage ? 'current-page' : '';
-            paginationHtml += `
-                <button class="${activeClass}" data-page="${i}">
-                    ${i}
-                </button>
-            `;
-        }
-        
-        // Botão próximo
-        paginationHtml += `
-            <button ${currentPage >= totalPages ? 'disabled' : ''} data-page="${currentPage + 1}">
-                Próximo »
-            </button>
-        `;
-        
-        paginationHtml += '</div>';
-        
-        // Remover paginação existente e adicionar nova
-        $('.pagination').remove();
-        $('#events-container').after(paginationHtml);
-        
-        // Adicionar informações sobre total de eventos
-        const infoHtml = `
-            <div class="events-info">
-                <p>Mostrando ${data.events.length} de ${data.total_events} eventos (Página ${currentPage} de ${totalPages})</p>
-            </div>
-        `;
-        $('.events-info').remove();
-        $('.pagination').after(infoHtml);
-    }
-    
-    function handlePagination(e) {
-        const page = parseInt($(e.target).data('page'));
-        if (page && page !== currentPage && page >= 1 && page <= totalPages) {
-            currentPage = page;
-            loadEvents();
-        }
-    }
-    
-    function handleEditEvent(e) {
-        const eventId = $(e.target).data('event-id');
-        
-        if (!eventId) {
-            showMessage('ID do evento não encontrado', 'error');
-            return;
-        }
-        
-        showLoadingOverlay();
-        
-        $.post(vendzz_events_ajax.ajax_url, {
-            action: 'vendzz_get_event_details',
-            nonce: vendzz_events_ajax.nonce,
-            event_id: eventId
-        })
-        .done(function(response) {
-            if (response.success) {
-                populateEditForm(response.data);
-                $('#event-edit-modal').dialog('open');
-            } else {
-                showMessage(response.data || 'Erro ao carregar detalhes do evento', 'error');
-            }
-        })
-        .fail(function() {
-            showMessage('Erro ao carregar detalhes do evento', 'error');
-        })
-        .always(function() {
-            hideLoadingOverlay();
-        });
-    }
-    
-    function populateEditForm(eventData) {
-        $('#event-id').val(eventData.id);
-        $('#event-title').val(eventData.title);
-        $('#event-description').val(eventData.description);
-        $('#event-status').val(eventData.status);
-        $('#event-venue').val(eventData.venue);
-        
-        // Converter datas para formato datetime-local
-        if (eventData.start_date) {
-            const startDate = new Date(eventData.start_date);
-            $('#event-start-date').val(formatDateTimeLocal(startDate));
-        }
-        
-        if (eventData.end_date) {
-            const endDate = new Date(eventData.end_date);
-            $('#event-end-date').val(formatDateTimeLocal(endDate));
-        }
-        
-        // Mostrar informações de recorrência
-        if (eventData.recurrence_info) {
-            $('#recurrence-info').html(`
-                <strong>Recorrência atual:</strong> ${eventData.recurrence_info}
-                <br><small>Nota: As configurações de recorrência são gerenciadas pelo Events Calendar Pro e não podem ser editadas aqui.</small>
-            `);
-        } else {
-            $('#recurrence-info').html('<em>Este é um evento único (sem recorrência)</em>');
-        }
-    }
-    
-    function handleSaveEvent(e) {
-        e.preventDefault();
-        
-        const formData = {
-            action: 'vendzz_update_event',
-            nonce: vendzz_events_ajax.nonce,
-            event_id: $('#event-id').val(),
-            event_title: $('#event-title').val(),
-            event_description: $('#event-description').val(),
-            event_status: $('#event-status').val(),
-            event_start_date: $('#event-start-date').val(),
-            event_end_date: $('#event-end-date').val(),
-            event_venue: $('#event-venue').val()
-        };
-        
-        // Validação básica
-        if (!formData.event_title || !formData.event_start_date || !formData.event_end_date) {
-            showMessage('Por favor, preencha todos os campos obrigatórios', 'error');
-            return;
-        }
-        
-        // Validar se data de fim é posterior à data de início
-        const startDate = new Date(formData.event_start_date);
-        const endDate = new Date(formData.event_end_date);
-        
-        if (endDate <= startDate) {
-            showMessage('A data de fim deve ser posterior à data de início', 'error');
-            return;
-        }
-        
-        showLoadingOverlay();
-        
-        $.post(vendzz_events_ajax.ajax_url, formData)
-            .done(function(response) {
-                if (response.success) {
-                    showMessage('Evento atualizado com sucesso', 'success');
-                    $('#event-edit-modal').dialog('close');
-                    loadEvents(); // Recarregar lista de eventos
-                } else {
-                    showMessage(response.data || 'Erro ao atualizar evento', 'error');
-                }
-            })
-            .fail(function() {
-                showMessage('Erro ao atualizar evento', 'error');
-            })
-            .always(function() {
-                hideLoadingOverlay();
-            });
-    }
-    
-    function handleRepublishEvent(e) {
-        const eventId = $(e.target).data('event-id');
-        
-        if (!eventId) {
-            showMessage('ID do evento não encontrado', 'error');
-            return;
-        }
-        
-        if (!confirm(vendzz_events_ajax.strings.confirm_republish)) {
-            return;
-        }
-        
-        showLoadingOverlay();
-        
-        $.post(vendzz_events_ajax.ajax_url, {
-            action: 'vendzz_republish_event',
-            nonce: vendzz_events_ajax.nonce,
-            event_id: eventId
-        })
-        .done(function(response) {
-            if (response.success) {
-                showMessage(response.data.message || 'Evento republicado com sucesso', 'success');
-                loadEvents(); // Recarregar lista de eventos
-                
-                // Mostrar link para editar novo evento
-                if (response.data.edit_url) {
-                    setTimeout(function() {
-                        if (confirm('Deseja editar o evento republicado?')) {
-                            window.open(response.data.edit_url, '_blank');
-                        }
-                    }, 1000);
-                }
-            } else {
-                showMessage(response.data || 'Erro ao republicar evento', 'error');
-            }
-        })
-        .fail(function() {
-            showMessage('Erro ao republicar evento', 'error');
-        })
-        .always(function() {
-            hideLoadingOverlay();
-        });
-    }
-    
-    // Funções utilitárias
-    function showLoadingSpinner() {
-        $('#events-container').html(`
-            <div class="loading-spinner">
-                <div class="spinner"></div>
-                <p>${vendzz_events_ajax.strings.loading}</p>
-            </div>
-        `);
-    }
-    
-    function hideLoadingSpinner() {
-        // A função displayEvents() substituirá o conteúdo
-    }
-    
-    function showLoadingOverlay() {
-        if ($('.loading-overlay').length === 0) {
-            $('body').append(`
-                <div class="loading-overlay">
-                    <div class="spinner"></div>
-                </div>
-            `);
-        }
-    }
-    
-    function hideLoadingOverlay() {
-        $('.loading-overlay').remove();
-    }
-    
-    function showMessage(message, type) {
-        // Remover mensagens existentes
-        $('.vendzz-message').remove();
-        
-        const messageHtml = `
-            <div class="vendzz-message ${type} show">
-                ${escapeHtml(message)}
-            </div>
-        `;
-        
-        $('.wrap h1').after(messageHtml);
-        
-        // Auto-remover após 5 segundos
-        setTimeout(function() {
-            $('.vendzz-message').fadeOut(function() {
-                $(this).remove();
-            });
-        }, 5000);
-    }
-    
-    function getStatusLabel(status) {
-        const labels = {
-            'publish': 'Publicado',
-            'draft': 'Rascunho',
-            'private': 'Privado',
-            'trash': 'Lixeira'
-        };
-        return labels[status] || status;
-    }
-    
-    function formatDateTime(date) {
-        if (!date || isNaN(date)) return 'Data inválida';
-        
-        return date.toLocaleString('pt-BR', {
-            year: 'numeric',
-            month: '2-digit',
-            day: '2-digit',
-            hour: '2-digit',
-            minute: '2-digit'
-        });
-    }
-    
-    function formatDateTimeLocal(date) {
-        if (!date || isNaN(date)) return '';
-        
-        const year = date.getFullYear();
-        const month = String(date.getMonth() + 1).padStart(2, '0');
-        const day = String(date.getDate()).padStart(2, '0');
-        const hours = String(date.getHours()).padStart(2, '0');
-        const minutes = String(date.getMinutes()).padStart(2, '0');
-        
-        return `${year}-${month}-${day}T${hours}:${minutes}`;
-    }
-    
-    function escapeHtml(text) {
-        if (!text) return '';
-        const div = document.createElement('div');
-        div.textContent = text;
-        return div.innerHTML;
-    }
-    
-    function debounce(func, wait) {
-        let timeout;
-        return function executedFunction(...args) {
-            const later = () => {
-                clearTimeout(timeout);
-                func(...args);
-            };
-            clearTimeout(timeout);
-            timeout = setTimeout(later, wait);
-        };
-    }
-});
+/**
+ * JavaScript do painel administrativo do Vendzz Events Manager
+ */
 
-// Adicionar estilos CSS inline para informações de eventos
-jQuery(document).ready(function($) {
-    $('<style>')
-        .prop('type', 'text/css')
-        .html(`
-            .events-info {
-                text-align: center;
-                margin: 15px 0;
-                color: #666;
-                font-size: 13px;
+(function($) {
+    'use strict';
+
+    // Variáveis globais
+    const VendzzEventsManager = {
+        currentPage: 1,
+        totalPages: 1,
+        isLoading: false,
+        
+        // Elementos DOM
+        elements: {
+            searchInput: $('#vendzz-search-input'),
+            statusFilter: $('#vendzz-status-filter'),
+            recurrenceFilter: $('#vendzz-recurrence-filter'),
+            filterButton: $('#vendzz-filter-button'),
+            eventsContainer: $('#vendzz-events-container'),
+            paginationContainer: $('#vendzz-pagination-container'),
+            modal: $('#vendzz-event-modal'),
+            modalForm: $('#vendzz-event-form')
+        },
+        
+        // Inicializar
+        init: function() {
+            this.bindEvents();
+            this.loadEvents();
+        },
+        
+        // Vincular eventos
+        bindEvents: function() {
+            const self = this;
+            
+            // Filtros
+            this.elements.filterButton.on('click', function() {
+                self.currentPage = 1;
+                self.loadEvents();
+            });
+            
+            // Enter no campo de busca
+            this.elements.searchInput.on('keypress', function(e) {
+                if (e.which === 13) {
+                    self.currentPage = 1;
+                    self.loadEvents();
+                }
+            });
+            
+            // Paginação
+            $(document).on('click', '.vendzz-pagination-btn', function() {
+                const page = $(this).data('page');
+                if (page && page !== self.currentPage) {
+                    self.currentPage = page;
+                    self.loadEvents();
+                }
+            });
+            
+            // Ações dos eventos
+            $(document).on('click', '.vendzz-edit-event', function() {
+                const eventId = $(this).data('event-id');
+                self.editEvent(eventId);
+            });
+            
+            $(document).on('click', '.vendzz-republish-event', function() {
+                const eventId = $(this).data('event-id');
+                self.republishEvent(eventId);
+            });
+            
+            // Modal
+            $(document).on('click', '.vendzz-modal-close', function() {
+                self.closeModal();
+            });
+            
+            $(document).on('click', '.vendzz-modal', function(e) {
+                if (e.target === this) {
+                    self.closeModal();
+                }
+            });
+            
+            // Formulário do modal
+            this.elements.modalForm.on('submit', function(e) {
+                e.preventDefault();
+                self.saveEvent();
+            });
+            
+            // Tecla ESC para fechar modal
+            $(document).on('keydown', function(e) {
+                if (e.key === 'Escape') {
+                    self.closeModal();
+                }
+            });
+        },
+        
+        // Carregar eventos
+        loadEvents: function() {
+            if (this.isLoading) return;
+            
+            this.isLoading = true;
+            this.showLoading();
+            
+            const data = {
+                action: 'vendzz_get_events',
+                nonce: vendzz_ajax.nonce,
+                search: this.elements.searchInput.val(),
+                status: this.elements.statusFilter.val(),
+                recurrence: this.elements.recurrenceFilter.val(),
+                page: this.currentPage
+            };
+            
+            $.ajax({
+                url: vendzz_ajax.ajax_url,
+                type: 'POST',
+                data: data,
+                success: (response) => {
+                    this.isLoading = false;
+                    
+                    if (response.success) {
+                        this.renderEvents(response.data.events);
+                        this.renderPagination(response.data);
+                    } else {
+                        this.showError(response.data || 'Erro ao carregar eventos');
+                    }
+                },
+                error: (xhr, status, error) => {
+                    this.isLoading = false;
+                    this.showError('Erro na requisição: ' + error);
+                }
+            });
+        },
+        
+        // Renderizar eventos
+        renderEvents: function(events) {
+            let html = '';
+            
+            if (events.length === 0) {
+                html = '<div class="vendzz-text-center"><p>Nenhum evento encontrado.</p></div>';
+            } else {
+                html = '<div class="vendzz-events-table">';
+                html += '<table>';
+                html += '<thead>';
+                html += '<tr>';
+                html += '<th>Título</th>';
+                html += '<th>Status</th>';
+                html += '<th>Data de Início</th>';
+                html += '<th>Data de Fim</th>';
+                html += '<th>Local</th>';
+                html += '<th>Recorrência</th>';
+                html += '<th>Ações</th>';
+                html += '</tr>';
+                html += '</thead>';
+                html += '<tbody>';
+                
+                events.forEach(event => {
+                    html += '<tr>';
+                    html += '<td><strong>' + this.escapeHtml(event.title) + '</strong></td>';
+                    html += '<td><span class="vendzz-event-status ' + event.status + '">' + this.getStatusLabel(event.status) + '</span></td>';
+                    html += '<td>' + this.formatDate(event.start_date) + '</td>';
+                    html += '<td>' + this.formatDate(event.end_date) + '</td>';
+                    html += '<td>' + this.escapeHtml(event.venue || '-') + '</td>';
+                    html += '<td><span class="vendzz-recurrence-type ' + (event.is_recurring ? 'recurring' : 'single') + '">' + this.escapeHtml(event.recurrence_info) + '</span></td>';
+                    html += '<td>';
+                    html += '<div class="vendzz-event-actions">';
+                    html += '<button class="edit vendzz-edit-event" data-event-id="' + event.id + '">Editar</button>';
+                    html += '<button class="republish vendzz-republish-event" data-event-id="' + event.id + '">Republicar</button>';
+                    if (event.view_url) {
+                        html += '<a href="' + event.view_url + '" target="_blank" class="view">Ver</a>';
+                    }
+                    html += '</div>';
+                    html += '</td>';
+                    html += '</tr>';
+                });
+                
+                html += '</tbody>';
+                html += '</table>';
+                html += '</div>';
             }
             
-            .events-info p {
-                margin: 0;
-                padding: 10px;
-                background: #f8f9fa;
-                border-radius: 4px;
-                border: 1px solid #dee2e6;
+            this.elements.eventsContainer.html(html);
+        },
+        
+        // Renderizar paginação
+        renderPagination: function(data) {
+            let html = '';
+            
+            if (data.total_pages > 1) {
+                html += '<div class="vendzz-events-pagination">';
+                html += '<div class="vendzz-pagination-info">';
+                html += 'Mostrando página ' + data.current_page + ' de ' + data.total_pages + ' (' + data.total_events + ' eventos)';
+                html += '</div>';
+                html += '<div class="vendzz-pagination-controls">';
+                
+                // Botão anterior
+                if (data.current_page > 1) {
+                    html += '<button class="vendzz-pagination-btn" data-page="' + (data.current_page - 1) + '">« Anterior</button>';
+                } else {
+                    html += '<button class="vendzz-pagination-btn" disabled>« Anterior</button>';
+                }
+                
+                // Números das páginas
+                const startPage = Math.max(1, data.current_page - 2);
+                const endPage = Math.min(data.total_pages, data.current_page + 2);
+                
+                for (let i = startPage; i <= endPage; i++) {
+                    if (i === data.current_page) {
+                        html += '<button class="vendzz-pagination-btn active" data-page="' + i + '">' + i + '</button>';
+                    } else {
+                        html += '<button class="vendzz-pagination-btn" data-page="' + i + '">' + i + '</button>';
+                    }
+                }
+                
+                // Botão próximo
+                if (data.current_page < data.total_pages) {
+                    html += '<button class="vendzz-pagination-btn" data-page="' + (data.current_page + 1) + '">Próxima »</button>';
+                } else {
+                    html += '<button class="vendzz-pagination-btn" disabled>Próxima »</button>';
+                }
+                
+                html += '</div>';
+                html += '</div>';
             }
-        `)
-        .appendTo('head');
-});
+            
+            this.elements.paginationContainer.html(html);
+        },
+        
+        // Editar evento
+        editEvent: function(eventId) {
+            const data = {
+                action: 'vendzz_get_event_details',
+                nonce: vendzz_ajax.nonce,
+                event_id: eventId
+            };
+            
+            $.ajax({
+                url: vendzz_ajax.ajax_url,
+                type: 'POST',
+                data: data,
+                success: (response) => {
+                    if (response.success) {
+                        this.openModal(response.data);
+                    } else {
+                        this.showError(response.data || 'Erro ao carregar detalhes do evento');
+                    }
+                },
+                error: (xhr, status, error) => {
+                    this.showError('Erro na requisição: ' + error);
+                }
+            });
+        },
+        
+        // Republicar evento
+        republishEvent: function(eventId) {
+            if (!confirm('Tem certeza que deseja republicar este evento?')) {
+                return;
+            }
+            
+            const data = {
+                action: 'vendzz_republish_event',
+                nonce: vendzz_ajax.nonce,
+                event_id: eventId
+            };
+            
+            $.ajax({
+                url: vendzz_ajax.ajax_url,
+                type: 'POST',
+                data: data,
+                success: (response) => {
+                    if (response.success) {
+                        this.showSuccess(response.data.message);
+                        this.loadEvents();
+                    } else {
+                        this.showError(response.data || 'Erro ao republicar evento');
+                    }
+                },
+                error: (xhr, status, error) => {
+                    this.showError('Erro na requisição: ' + error);
+                }
+            });
+        },
+        
+        // Abrir modal
+        openModal: function(eventData) {
+            // Preencher formulário
+            $('#vendzz-event-id').val(eventData.id);
+            $('#vendzz-event-title').val(eventData.title);
+            $('#vendzz-event-description').val(eventData.description);
+            $('#vendzz-event-status').val(eventData.status);
+            $('#vendzz-event-start-date').val(eventData.start_date);
+            $('#vendzz-event-end-date').val(eventData.end_date);
+            $('#vendzz-event-venue').val(eventData.venue);
+            
+            // Mostrar modal
+            this.elements.modal.addClass('active');
+            $('body').addClass('modal-open');
+        },
+        
+        // Fechar modal
+        closeModal: function() {
+            this.elements.modal.removeClass('active');
+            $('body').removeClass('modal-open');
+            this.elements.modalForm[0].reset();
+        },
+        
+        // Salvar evento
+        saveEvent: function() {
+            const formData = {
+                action: 'vendzz_update_event',
+                nonce: vendzz_ajax.nonce,
+                event_id: $('#vendzz-event-id').val(),
+                title: $('#vendzz-event-title').val(),
+                description: $('#vendzz-event-description').val(),
+                status: $('#vendzz-event-status').val(),
+                start_date: $('#vendzz-event-start-date').val(),
+                end_date: $('#vendzz-event-end-date').val(),
+                venue: $('#vendzz-event-venue').val()
+            };
+            
+            $.ajax({
+                url: vendzz_ajax.ajax_url,
+                type: 'POST',
+                data: formData,
+                success: (response) => {
+                    if (response.success) {
+                        this.showSuccess(response.data.message);
+                        this.closeModal();
+                        this.loadEvents();
+                    } else {
+                        this.showError(response.data || 'Erro ao salvar evento');
+                    }
+                },
+                error: (xhr, status, error) => {
+                    this.showError('Erro na requisição: ' + error);
+                }
+            });
+        },
+        
+        // Mostrar loading
+        showLoading: function() {
+            this.elements.eventsContainer.html('<div class="vendzz-loading"><div class="spinner"></div>Carregando eventos...</div>');
+        },
+        
+        // Mostrar mensagem de sucesso
+        showSuccess: function(message) {
+            const html = '<div class="vendzz-message success">' + this.escapeHtml(message) + '</div>';
+            $('.vendzz-events-manager').prepend(html);
+            
+            setTimeout(() => {
+                $('.vendzz-message').fadeOut();
+            }, 3000);
+        },
+        
+        // Mostrar mensagem de erro
+        showError: function(message) {
+            const html = '<div class="vendzz-message error">' + this.escapeHtml(message) + '</div>';
+            $('.vendzz-events-manager').prepend(html);
+            
+            setTimeout(() => {
+                $('.vendzz-message').fadeOut();
+            }, 5000);
+        },
+        
+        // Formatar data
+        formatDate: function(dateString) {
+            if (!dateString) return '-';
+            
+            const date = new Date(dateString);
+            return date.toLocaleDateString('pt-BR', {
+                day: '2-digit',
+                month: '2-digit',
+                year: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+        },
+        
+        // Obter label do status
+        getStatusLabel: function(status) {
+            const labels = {
+                'publish': 'Publicado',
+                'draft': 'Rascunho',
+                'private': 'Privado',
+                'trash': 'Lixeira'
+            };
+            
+            return labels[status] || status;
+        },
+        
+        // Escapar HTML
+        escapeHtml: function(text) {
+            if (!text) return '';
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+    };
+    
+    // Inicializar quando o documento estiver pronto
+    $(document).ready(function() {
+        // Verificar se estamos na página do plugin
+        if ($('.vendzz-events-manager').length > 0) {
+            VendzzEventsManager.init();
+        }
+    });
+
+})(jQuery);

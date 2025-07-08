@@ -25,8 +25,28 @@ define('VENDZZ_EVENTS_VERSION', '1.0.0');
 define('VENDZZ_EVENTS_PLUGIN_URL', plugin_dir_url(__FILE__));
 define('VENDZZ_EVENTS_PLUGIN_PATH', plugin_dir_path(__FILE__));
 
+// Verificar se o WordPress está carregado
+if (!function_exists('add_action')) {
+    exit('Acesso negado');
+}
+
+// Verificar versão do PHP
+if (version_compare(PHP_VERSION, '7.4', '<')) {
+    add_action('admin_notices', function() {
+        echo '<div class="notice notice-error"><p>Vendzz Events Manager requer PHP 7.4 ou superior. Versão atual: ' . PHP_VERSION . '</p></div>';
+    });
+    return;
+}
+
 // Incluir classes necessárias
-require_once VENDZZ_EVENTS_PLUGIN_PATH . 'includes/class-events-database.php';
+if (file_exists(VENDZZ_EVENTS_PLUGIN_PATH . 'includes/class-events-database.php')) {
+    require_once VENDZZ_EVENTS_PLUGIN_PATH . 'includes/class-events-database.php';
+} else {
+    add_action('admin_notices', function() {
+        echo '<div class="notice notice-error"><p>Vendzz Events Manager: Arquivo de classe não encontrado.</p></div>';
+    });
+    return;
+}
 
 /**
  * Classe principal do plugin
@@ -50,8 +70,20 @@ class VendzzEventsManager {
      * Construtor
      */
     private function __construct() {
-        $this->database = new VendzzEventsDatabase();
-        $this->init_hooks();
+        try {
+            // Verificar se a classe existe antes de instanciar
+            if (!class_exists('VendzzEventsDatabase')) {
+                throw new Exception('Classe VendzzEventsDatabase não encontrada');
+            }
+            
+            $this->database = new VendzzEventsDatabase();
+            $this->init_hooks();
+        } catch (Exception $e) {
+            add_action('admin_notices', function() use ($e) {
+                echo '<div class="notice notice-error"><p>Erro no Vendzz Events Manager: ' . esc_html($e->getMessage()) . '</p></div>';
+            });
+            return;
+        }
     }
     
     /**
@@ -538,5 +570,34 @@ class VendzzEventsManager {
     }
 }
 
-// Inicializar plugin
-VendzzEventsManager::get_instance();
+// Função de inicialização segura
+function vendzz_events_manager_init() {
+    // Verificar se todas as dependências estão carregadas
+    if (!class_exists('VendzzEventsManager')) {
+        add_action('admin_notices', function() {
+            echo '<div class="notice notice-error"><p>Erro fatal: Classe VendzzEventsManager não foi definida corretamente.</p></div>';
+        });
+        return;
+    }
+    
+    // Verificar se o Events Calendar Pro está ativo
+    if (!class_exists('Tribe__Events__Pro__Main') && !class_exists('TribeEventsPro')) {
+        add_action('admin_notices', function() {
+            echo '<div class="notice notice-error"><p>Vendzz Events Manager requer o plugin Events Calendar Pro para funcionar.</p></div>';
+        });
+        return;
+    }
+    
+    // Inicializar plugin
+    try {
+        VendzzEventsManager::get_instance();
+    } catch (Exception $e) {
+        add_action('admin_notices', function() use ($e) {
+            echo '<div class="notice notice-error"><p>Erro ao inicializar Vendzz Events Manager: ' . esc_html($e->getMessage()) . '</p></div>';
+        });
+        error_log('Vendzz Events Manager Error: ' . $e->getMessage());
+    }
+}
+
+// Inicializar após todos os plugins carregarem
+add_action('plugins_loaded', 'vendzz_events_manager_init');
