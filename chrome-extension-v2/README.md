@@ -1,159 +1,89 @@
-# Vendzz WhatsApp Automation Chrome Extension v2.0
+# Chrome Extension v2.0 - Vendzz WhatsApp Automation
 
-Extensão Chrome para automação de contatos do WhatsApp Web baseada em arquivos de automação gerados pelo sistema Vendzz.
+## Configuração para Uso com Replit
 
-## 🚀 Instalação
+### Passo 1: Obter a URL Pública do Replit
 
-### 1. Preparar a Extensão
-1. Baixe ou clone todos os arquivos da pasta `chrome-extension-v2/`
-2. Certifique-se de que você tem todos os arquivos:
-   - `manifest.json`
-   - `background.js`
-   - `content.js`
-   - `popup.html`
-   - `popup.js`
-   - `styles.css`
+1. Abra seu projeto no Replit
+2. Clique em "Run" para iniciar o servidor
+3. Copie a URL pública que aparece (ex: `https://nomedobreu.replit.dev`)
 
-### 2. Instalar no Chrome
+### Passo 2: Configurar a Extensão
+
+1. Abra o arquivo `chrome-extension-v2/background.js`
+2. Na linha 3, substitua `REPL_NAME` pela URL real do seu Replit:
+   ```javascript
+   serverUrl: 'https://NOMEDOBREU.replit.dev',
+   ```
+
+### Passo 3: Instalar a Extensão
+
 1. Abra o Chrome e vá para `chrome://extensions/`
-2. Ative o "Modo do desenvolvedor" no canto superior direito
+2. Ative o "Modo do desenvolvedor" (canto superior direito)
 3. Clique em "Carregar sem compactação"
 4. Selecione a pasta `chrome-extension-v2/`
-5. A extensão aparecerá na lista e no ícone da barra de ferramentas
 
-### 3. Configurar a Extensão
-1. Clique no ícone da extensão na barra de ferramentas
-2. Configure o servidor (ex: `http://localhost:5000`)
-3. Insira seu token de acesso do sistema Vendzz
-4. Clique em "Conectar"
+### Passo 4: Configurar o Token de Acesso
 
-## 📱 Como Usar
+1. Na aplicação web, faça login com suas credenciais
+2. Copie o token de acesso das ferramentas do desenvolvedor (F12)
+3. Clique no ícone da extensão no Chrome
+4. Cole o token no campo de configuração
+5. Clique em "Conectar"
 
-### 1. Gerar Arquivo de Automação
-1. Acesse o sistema Vendzz
-2. Vá para "Automação WhatsApp"
-3. Selecione um quiz com campos de telefone
-4. Configure filtros (público-alvo, data)
-5. Clique em "Gerar Arquivo de Automação"
+### Passo 5: Usar no WhatsApp Web
 
-### 2. Usar no WhatsApp Web
-1. Abra o WhatsApp Web
-2. A sidebar aparecerá automaticamente à direita
-3. Configure servidor e token (se não fez no popup)
-4. Selecione um arquivo de automação na lista
-5. Visualize os contatos carregados
+1. Abra o WhatsApp Web (web.whatsapp.com)
+2. A sidebar da extensão aparecerá automaticamente
+3. Selecione um arquivo de automação gerado
+4. Visualize a lista de contatos filtrados
 
-## ✨ Funcionalidades
+## Funcionalidades
 
-### Interface Principal
-- **Popup**: Configuração rápida e status da extensão
-- **Sidebar**: Interface completa no WhatsApp Web
-- **Status em Tempo Real**: Conexão, arquivos e logs
+- **Detecção Automática**: Monitora novos arquivos de automação
+- **Filtros de Audiência**: Separação entre leads completos e abandonados
+- **Interface Responsiva**: Sidebar integrada ao WhatsApp Web
+- **Sincronização em Tempo Real**: Atualização automática dos dados
 
-### Gerenciamento de Contatos
-- **Lista de Arquivos**: Todos os arquivos do usuário
-- **Filtros Automáticos**: Por público-alvo e data
-- **Status de Leads**: Completos vs Abandonados
-- **Atualização Automática**: Novos contatos detectados
+## Troubleshooting
 
-### Segurança
-- **Autenticação JWT**: Token obrigatório para acesso
-- **Isolamento de Usuário**: Apenas arquivos próprios
-- **Validação de Dados**: Verificação de integridade
-- **Logs de Auditoria**: Rastreamento de ações
+### Conexão Falhando
+- Verifique se a URL do Replit está correta
+- Confirme que o servidor está rodando
+- Teste a conexão na aplicação web primeiro
 
-## 🔧 Configuração Avançada
+### Sidebar Não Aparece
+- Recarregue a página do WhatsApp Web
+- Verifique se a extensão está ativa
+- Confirme as permissões do Chrome
 
-### Variáveis de Ambiente
-```javascript
-const config = {
-  serverUrl: 'http://localhost:5000',  // URL do servidor Vendzz
-  accessToken: 'seu_token_jwt',        // Token de autenticação
-  refreshInterval: 30000               // Intervalo de atualização (ms)
-};
-```
+### Arquivos Não Carregam
+- Verifique se há arquivos de automação gerados
+- Confirme que o token de acesso está válido
+- Teste a autenticação na aplicação web
 
-### Endpoints da API
-- `GET /api/whatsapp-automation-files` - Listar arquivos
-- `GET /api/whatsapp-automation-files/:fileId` - Buscar arquivo
-- `POST /api/whatsapp-extension/status` - Enviar status
-- `GET /api/auth/verify` - Verificar autenticação
+## Estrutura de Arquivos
 
-## 🐛 Resolução de Problemas
-
-### Extensão não conecta
-1. Verifique se o servidor está rodando
-2. Confirme o token de acesso
-3. Verifique o console do navegador (F12)
-
-### Sidebar não aparece
-1. Recarregue a página do WhatsApp Web
-2. Aguarde alguns segundos para carregamento
-3. Verifique se a extensão está ativa
-
-### Contatos não carregam
-1. Gere um novo arquivo de automação
-2. Verifique se o quiz tem campos de telefone
-3. Confirme filtros aplicados
-
-## 📊 Logs e Debug
-
-### Console da Extensão
-```javascript
-// Abrir console no popup
-chrome.runtime.getBackgroundPage().console
-
-// Ver logs da sidebar
-// F12 no WhatsApp Web, console
-```
-
-### Logs do Sistema
-- **Background**: `🌐`, `✅`, `❌` - Comunicação com API
-- **Content**: `🎯`, `📱`, `📄` - Interface e contatos  
-- **Popup**: `📊`, `🔄`, `⚙️` - Status e configuração
-
-## 🚀 Desenvolvimento
-
-### Estrutura de Arquivos
 ```
 chrome-extension-v2/
-├── manifest.json         # Configurações da extensão
-├── background.js         # Service worker
-├── content.js           # Script injetado no WhatsApp
-├── popup.html           # Interface do popup
-├── popup.js             # Lógica do popup
-├── styles.css           # Estilos da sidebar
-└── README.md            # Este arquivo
+├── manifest.json      # Configuração da extensão
+├── background.js      # Service worker principal
+├── content.js         # Script injetado no WhatsApp Web
+├── popup.html         # Interface do popup
+├── popup.js           # Lógica do popup
+├── config.js          # Configurações da extensão
+├── styles.css         # Estilos da sidebar
+└── icons/             # Ícones da extensão
 ```
 
-### Ciclo de Desenvolvimento
-1. Modificar arquivos
-2. Recarregar extensão em `chrome://extensions/`
-3. Testar no WhatsApp Web
-4. Verificar logs no console
+## Domínios Suportados
 
-## 🔒 Segurança
+A extensão possui permissões para:
+- `web.whatsapp.com` (WhatsApp Web)
+- `*.replit.dev` (Domínios de desenvolvimento)
+- `*.replit.app` (Domínios de produção)
+- `*.replit.co` (Domínios alternativos)
 
-### Dados Protegidos
-- Tokens JWT criptografados
-- Isolamento por usuário
-- Validação de entrada
-- Logs de auditoria
+## Versão
 
-### Permissões Mínimas
-- `activeTab`: Acesso à aba ativa
-- `storage`: Salvar configurações
-- `scripting`: Injetar scripts
-- Hosts específicos apenas
-
-## 📞 Suporte
-
-Para problemas ou dúvidas:
-1. Verifique os logs no console
-2. Teste conexão com a API
-3. Confirme permissões da extensão
-4. Entre em contato com o suporte Vendzz
-
----
-
-**Vendzz WhatsApp Automation v2.0** - Sistema de automação de marketing via WhatsApp Web
+Chrome Extension v2.0 - Compatível com Manifest V3

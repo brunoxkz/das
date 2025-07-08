@@ -1,6 +1,6 @@
 // Background script para gerenciar a comunicação com a API
 let config = {
-  serverUrl: 'http://localhost:5000',
+  serverUrl: 'https://REPL_NAME.replit.dev',
   accessToken: null,
   autoMode: false,
   refreshInterval: 30000 // 30 segundos
