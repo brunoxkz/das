@@ -58,7 +58,7 @@ export async function apiRequest(
   urlOrOptions?: string | RequestInit,
   data?: any
 ): Promise<any> {
-  const token = localStorage.getItem("accessToken");
+  let token = localStorage.getItem("accessToken") || localStorage.getItem("token");
 
   let method: string;
   let url: string;

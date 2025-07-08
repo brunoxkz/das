@@ -80,11 +80,12 @@ export default function WhatsAppCampaignsPage() {
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
-  // Buscar quizzes com logs detalhados
-  const { data: quizzes = [], isLoading: quizzesLoading, error: quizzesError } = useQuery({
+  // Buscar quizzes
+  const { data: quizzes = [], isLoading: quizzesLoading, error: quizzesError, refetch: refetchQuizzes } = useQuery({
     queryKey: ['/api/quizzes'],
-    refetchInterval: autoRefresh ? 10000 : false,
-    // Query funcionando corretamente
+    retry: 3,
+    refetchOnWindowFocus: true,
+    staleTime: 30000,
   });
   
   // Hook de autenticação
@@ -318,16 +319,17 @@ export default function WhatsAppCampaignsPage() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <Label htmlFor="quiz-select">Selecionar Quiz</Label>
-                  <Select value={selectedQuiz} onValueChange={setSelectedQuiz}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Escolha um quiz" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {quizzes.map((quiz) => (
-                        <SelectItem key={quiz.id} value={quiz.id}>
-                          {quiz.title}
-                        </SelectItem>
-                      ))}
+                  <div className="space-y-2">
+                    <Select value={selectedQuiz} onValueChange={setSelectedQuiz}>
+                      <SelectTrigger>
+                        <SelectValue placeholder={quizzesLoading ? "🔄 Carregando..." : quizzes.length === 0 ? "❌ Nenhum quiz encontrado" : "✅ Escolha um quiz"} />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {quizzes.map((quiz) => (
+                          <SelectItem key={quiz.id} value={quiz.id}>
+                            {quiz.title}
+                          </SelectItem>
+                        ))}
                       {quizzes.length === 0 && (
                         <SelectItem value="no-quiz" disabled>
                           Carregando quizzes...
@@ -335,6 +337,23 @@ export default function WhatsAppCampaignsPage() {
                       )}
                     </SelectContent>
                   </Select>
+                  
+                  {quizzesError && (
+                    <div className="text-red-600 text-sm p-2 bg-red-50 rounded border">
+                      ❌ <strong>Erro:</strong> {String(quizzesError.message || quizzesError)}
+                    </div>
+                  )}
+                  
+                  <div className="text-sm text-gray-600">
+                    {quizzesLoading ? (
+                      "🔄 Buscando quizzes..."
+                    ) : quizzes.length === 0 ? (
+                      "📋 Nenhum quiz encontrado - crie um primeiro"
+                    ) : (
+                      `📊 ${quizzes.length} quiz(es) disponível(eis)`
+                    )}
+                  </div>
+                </div>
                 </div>
                 
                 <div>
