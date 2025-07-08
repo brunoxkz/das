@@ -6,13 +6,14 @@
   "permissions": [
     "activeTab",
     "storage",
-    "background",
     "tabs"
   ],
   "host_permissions": [
     "https://web.whatsapp.com/*",
     "http://localhost:5000/*",
-    "https://*.replit.app/*"
+    "https://*.replit.app/*",
+    "https://*.replit.dev/*",
+    "https://*.janeway.replit.dev/*"
   ],
   "background": {
     "service_worker": "background.js"
