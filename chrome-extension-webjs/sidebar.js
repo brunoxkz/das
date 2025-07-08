@@ -8,7 +8,7 @@
 
 let isMinimized = false;
 let config = {
-  serverUrl: 'http://localhost:5000',
+  serverUrl: 'https://51f74588-7b5b-4e89-adab-b70610c96e0b-00-zr6ug9hu0yss.janeway.replit.dev',
   token: null,
   refreshInterval: 15000 // 15 segundos
 };

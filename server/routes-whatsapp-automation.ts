@@ -288,7 +288,7 @@ export function setupWhatsAppAutomationRoutes(app: any) {
       let totalPhones = 0;
       
       try {
-        const userQuizzes = await storage.getQuizzesByUserId(userId);
+        const userQuizzes = await storage.getUserQuizzes(userId);
         
         for (const quiz of userQuizzes) {
           try {

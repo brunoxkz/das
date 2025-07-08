@@ -2,7 +2,7 @@
 // Interface de configuração e monitoramento da extensão
 
 let config = {
-  serverUrl: 'http://localhost:5000',
+  serverUrl: 'https://51f74588-7b5b-4e89-adab-b70610c96e0b-00-zr6ug9hu0yss.janeway.replit.dev',
   token: null,
   userId: null
 };
@@ -42,7 +42,7 @@ async function loadConfig() {
       config = { ...config, ...result.vendzz_config };
       
       // Preencher campos da interface
-      document.getElementById('serverUrl').value = config.serverUrl || 'http://localhost:5000';
+      document.getElementById('serverUrl').value = config.serverUrl || 'https://51f74588-7b5b-4e89-adab-b70610c96e0b-00-zr6ug9hu0yss.janeway.replit.dev';
       document.getElementById('authToken').value = config.token || '';
       
       console.log('📋 Configuração carregada no popup');
