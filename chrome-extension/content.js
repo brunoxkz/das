@@ -210,21 +210,39 @@ async function processMessageQueue() {
 
 // Função para verificar se WhatsApp está carregado
 function isWhatsAppLoaded() {
-  return document.querySelector('[data-testid="chat-list"]') !== null;
+  // Múltiplas verificações para melhor detecção
+  const chatList = document.querySelector('[data-testid="chat-list"]');
+  const searchInput = document.querySelector('[data-testid="chat-list-search"]');
+  const mainPanel = document.querySelector('[data-testid="main"]');
+  const leftPanel = document.querySelector('#side');
+  
+  // WhatsApp está carregado se encontrar qualquer um destes elementos
+  return chatList !== null || searchInput !== null || mainPanel !== null || leftPanel !== null;
 }
 
 // Aguardar WhatsApp carregar completamente
 async function waitForWhatsAppLoad() {
   console.log('⏳ Aguardando WhatsApp carregar...');
   
-  try {
-    await waitForElement('[data-testid="chat-list"]', 30000);
-    console.log('✅ WhatsApp carregado com sucesso');
-    return true;
-  } catch (error) {
-    console.error('❌ WhatsApp não carregou:', error);
-    return false;
+  const selectors = [
+    '[data-testid="chat-list"]',
+    '[data-testid="chat-list-search"]', 
+    '[data-testid="main"]',
+    '#side'
+  ];
+  
+  for (const selector of selectors) {
+    try {
+      await waitForElement(selector, 10000);
+      console.log(`✅ WhatsApp carregado com sucesso (detectado: ${selector})`);
+      return true;
+    } catch (error) {
+      console.log(`⏳ Tentando próximo seletor...`);
+    }
   }
+  
+  console.error('❌ WhatsApp não carregou com nenhum seletor');
+  return false;
 }
 
 // Listener para mensagens do background script
