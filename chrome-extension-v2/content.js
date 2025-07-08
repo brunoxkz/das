@@ -533,8 +533,8 @@ function updateAutomationConfig() {
   console.log('🔧 Configuração da automação atualizada:', automationConfig);
 }
 
-// Preparar fila de automação
-function prepareAutomationQueue() {
+// Preparar fila de automação com verificação de duplicatas
+async function prepareAutomationQueue() {
   automationQueue = [];
   automationStats = { sent: 0, failed: 0, total: 0 };
   
@@ -543,6 +543,8 @@ function prepareAutomationQueue() {
     return false;
   }
   
+  // Primeiro filtro: data e status
+  const filteredContacts = [];
   currentContacts.forEach(contact => {
     // Filtro por data
     if (automationConfig.dateFilter) {
@@ -561,8 +563,84 @@ function prepareAutomationQueue() {
       message = automationConfig.abandonedMessage;
     }
     
-    if (message) {
-      // Personalizar mensagem com variáveis do contato
+    if (message && contact.phone) {
+      filteredContacts.push({ contact, message });
+    }
+  });
+  
+  if (filteredContacts.length === 0) {
+    addLog('⚠️ Nenhum contato encontrado com os filtros aplicados');
+    return false;
+  }
+  
+  // Verificar duplicatas no backend
+  const allPhones = filteredContacts.map(item => item.contact.phone);
+  
+  addLog('🔍 Verificando números já enviados...');
+  
+  try {
+    const duplicateCheck = await apiRequest('/api/whatsapp-extension/check-sent', {
+      method: 'POST',
+      body: JSON.stringify({ phones: allPhones })
+    });
+    
+    if (duplicateCheck.success) {
+      const { newPhones, duplicatePhones, stats } = duplicateCheck;
+      
+      if (duplicatePhones.length > 0) {
+        addLog(`⚠️ ${duplicatePhones.length} números já enviados (serão ignorados)`);
+        console.log('📱 Números duplicados:', duplicatePhones);
+      }
+      
+      // Filtrar apenas números novos
+      filteredContacts.forEach(({ contact, message }) => {
+        if (newPhones.includes(contact.phone)) {
+          // Personalizar mensagem com variáveis do contato
+          const personalizedMessage = message
+            .replace(/{nome}/g, contact.nome || 'Cliente')
+            .replace(/{email}/g, contact.email || '')
+            .replace(/{idade}/g, contact.idade || '')
+            .replace(/{altura}/g, contact.altura || '')
+            .replace(/{peso}/g, contact.peso || '');
+          
+          automationQueue.push({
+            phone: contact.phone,
+            message: personalizedMessage,
+            contact: contact
+          });
+        }
+      });
+      
+      if (stats.duplicates > 0) {
+        addLog(`✅ ${stats.new} números novos, ${stats.duplicates} duplicatas removidas`);
+      }
+      
+    } else {
+      addLog('⚠️ Erro ao verificar duplicatas, continuando sem filtro');
+      
+      // Continuar sem verificação se der erro
+      filteredContacts.forEach(({ contact, message }) => {
+        const personalizedMessage = message
+          .replace(/{nome}/g, contact.nome || 'Cliente')
+          .replace(/{email}/g, contact.email || '')
+          .replace(/{idade}/g, contact.idade || '')
+          .replace(/{altura}/g, contact.altura || '')
+          .replace(/{peso}/g, contact.peso || '');
+        
+        automationQueue.push({
+          phone: contact.phone,
+          message: personalizedMessage,
+          contact: contact
+        });
+      });
+    }
+    
+  } catch (error) {
+    console.error('❌ Erro ao verificar duplicatas:', error);
+    addLog('⚠️ Erro ao verificar duplicatas, continuando sem filtro');
+    
+    // Continuar sem verificação se der erro
+    filteredContacts.forEach(({ contact, message }) => {
       const personalizedMessage = message
         .replace(/{nome}/g, contact.nome || 'Cliente')
         .replace(/{email}/g, contact.email || '')
@@ -575,8 +653,8 @@ function prepareAutomationQueue() {
         message: personalizedMessage,
         contact: contact
       });
-    }
-  });
+    });
+  }
   
   // Aplicar limite diário
   if (automationQueue.length > automationConfig.dailyLimit) {
@@ -601,8 +679,9 @@ async function startAutomation() {
   // Atualizar configuração
   updateAutomationConfig();
   
-  // Preparar fila
-  if (!prepareAutomationQueue()) {
+  // Preparar fila (agora é assíncrona)
+  const hasMessages = await prepareAutomationQueue();
+  if (!hasMessages) {
     addLog('❌ Não há mensagens para enviar');
     return;
   }

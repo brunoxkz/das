@@ -1474,6 +1474,36 @@ export class SQLiteStorage implements IStorage {
     }
   }
 
+  // Get already sent phones to avoid duplicates (SECURITY)
+  async getAlreadySentPhones(userId: string, phones: string[]): Promise<string[]> {
+    try {
+      if (!phones || phones.length === 0) {
+        return [];
+      }
+      
+      // Criar placeholders para o IN clause
+      const placeholders = phones.map(() => '?').join(', ');
+      
+      const stmt = sqlite.prepare(`
+        SELECT DISTINCT wl.phone FROM whatsapp_logs wl
+        INNER JOIN whatsapp_campaigns wc ON wl.campaign_id = wc.id
+        WHERE wl.phone IN (${placeholders})
+        AND wc.user_id = ?
+        AND wl.status IN ('sent', 'delivered')
+      `);
+      
+      const result = stmt.all(...phones, userId);
+      const sentPhones = result.map((row: any) => row.phone);
+      
+      console.log(`🔍 DUPLICATAS ENCONTRADAS: ${sentPhones.length}/${phones.length}`);
+      return sentPhones;
+      
+    } catch (error) {
+      console.error('❌ ERRO ao verificar telefones já enviados:', error);
+      return [];
+    }
+  }
+
   // Get WhatsApp log by ID (SECURITY)
   async getWhatsappLogById(logId: string): Promise<any | null> {
     try {

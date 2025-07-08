@@ -2608,6 +2608,48 @@ app.get("/api/whatsapp-extension/pending", verifyJWT, async (req: any, res: Resp
   }
 });
 
+// Check for already sent phones to avoid duplicates
+app.post("/api/whatsapp-extension/check-sent", verifyJWT, async (req: any, res: Response) => {
+  try {
+    const userId = req.user.id;
+    const { phones } = req.body;
+    
+    console.log(`🔍 REQUEST BODY:`, req.body);
+    console.log(`📞 PHONES RECEIVED:`, phones);
+    console.log(`📋 TYPE CHECK:`, typeof phones, Array.isArray(phones));
+    
+    if (!phones || !Array.isArray(phones)) {
+      console.log(`❌ VALIDATION FAILED: phones=${phones}, isArray=${Array.isArray(phones)}`);
+      return res.status(400).json({ error: "Phones array is required" });
+    }
+    
+    console.log(`🔍 VERIFICANDO DUPLICATAS - User: ${userId}, Phones: ${phones.length}`);
+    
+    // Buscar logs de envio bem-sucedidos para estes telefones do usuário
+    const sentPhones = await storage.getAlreadySentPhones(userId, phones);
+    
+    // Filtrar números que ainda não foram enviados
+    const newPhones = phones.filter(phone => !sentPhones.includes(phone));
+    const duplicatePhones = phones.filter(phone => sentPhones.includes(phone));
+    
+    console.log(`✅ VERIFICAÇÃO CONCLUÍDA - Novos: ${newPhones.length}, Duplicatas: ${duplicatePhones.length}`);
+    
+    res.json({
+      success: true,
+      newPhones,
+      duplicatePhones,
+      stats: {
+        total: phones.length,
+        new: newPhones.length,
+        duplicates: duplicatePhones.length
+      }
+    });
+  } catch (error) {
+    console.error("Error checking sent phones:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
 // Receive logs from extension (with ownership verification)
 app.post("/api/whatsapp-extension/logs", verifyJWT, async (req: any, res: Response) => {
   try {
