@@ -17,7 +17,7 @@ A Chrome Extension v2.0 já está configurada e pronta para uso!
 
 **A URL já está configurada automaticamente!**
 
-- URL configurada: `https://workspace--brunotamaso.replit.app`
+- URL configurada: `https://51f74588-7b5b-4e89-adab-b70610c96e0b-00-zr6ug9hu0yss.janeway.replit.dev`
 - Arquivos atualizados: `background.js`, `config.js`, `content.js`
 - Não precisa alterar nada!
 

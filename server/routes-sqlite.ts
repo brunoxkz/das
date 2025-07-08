@@ -2009,54 +2009,105 @@ app.post("/api/whatsapp-automation-file", verifyJWT, async (req: any, res: Respo
     // Buscar responses do quiz
     const responses = await storage.getQuizResponses(quizId);
     console.log(`📱 RESPONSES ENCONTRADAS: ${responses.length}`);
+    console.log(`📱 SAMPLE RESPONSE:`, responses[0] ? JSON.stringify(responses[0], null, 2) : 'No responses');
     
-    // Extrair telefones das respostas
+    // Extrair telefones das respostas com TODAS as variáveis
     const phones: any[] = [];
     
-    responses.forEach((response) => {
+    responses.forEach((response, index) => {
+      console.log(`📱 PROCESSANDO RESPONSE ${index + 1}:`, response);
+      
       if (response.responses) {
         let responseData = response.responses as any;
+        let phoneNumber = null;
+        let allResponses: Record<string, any> = {};
         
-        // Verificar se é o novo formato (array) ou antigo formato (object)
+        // Verificar se é o novo formato (array de objetos)
         if (Array.isArray(responseData)) {
-          // Novo formato - resposta é um array de objetos
-          responseData.forEach((resp: any) => {
-            if (resp.fieldId && resp.fieldId.includes('telefone') && resp.response) {
-              const phoneNumber = resp.response.toString().replace(/\D/g, '');
-              if (phoneNumber.length >= 10) {
-                const isCompleted = response.metadata?.isComplete === true || response.completionPercentage === 100;
-                phones.push({
-                  phone: phoneNumber,
-                  status: isCompleted ? 'completed' : 'abandoned',
-                  completionPercentage: response.completionPercentage || 0,
-                  submittedAt: response.submittedAt || response.completedAt,
-                  isComplete: isCompleted,
-                  quizTitle: quiz.title
-                });
-              }
+          console.log(`📱 NOVO FORMATO - RESPONSE ${index + 1} com ${responseData.length} elementos:`, responseData);
+          
+          responseData.forEach((element: any) => {
+            // Extrair telefone
+            if (element.elementType === 'phone' || element.elementFieldId?.includes('telefone')) {
+              phoneNumber = element.answer;
+              console.log(`📱 TELEFONE ENCONTRADO no elemento ${element.elementId}: ${phoneNumber}`);
+            }
+            
+            // Guardar TODAS as respostas com fieldId e tipo
+            if (element.elementFieldId && element.answer) {
+              allResponses[element.elementFieldId] = {
+                value: element.answer,
+                type: element.elementType,
+                elementId: element.elementId,
+                pageTitle: element.pageTitle,
+                timestamp: element.timestamp
+              };
             }
           });
         } else {
-          // Formato antigo - resposta é um objeto
-          Object.entries(responseData).forEach(([key, value]: [string, any]) => {
-            if (key.includes('telefone') && value) {
-              const phoneNumber = value.toString().replace(/\D/g, '');
-              if (phoneNumber.length >= 10) {
-                const isCompleted = response.metadata?.isComplete === true || response.completionPercentage === 100;
-                phones.push({
-                  phone: phoneNumber,
-                  status: isCompleted ? 'completed' : 'abandoned',
-                  completionPercentage: response.completionPercentage || 0,
-                  submittedAt: response.submittedAt || response.completedAt,
-                  isComplete: isCompleted,
-                  quizTitle: quiz.title
-                });
-              }
+          // Formato antigo (objeto plano)
+          console.log(`📱 FORMATO ANTIGO - RESPONSE ${index + 1}:`, responseData);
+          
+          Object.keys(responseData).forEach(key => {
+            const value = responseData[key];
+            
+            // Buscar telefone por padrão ou field_id
+            if (key.includes('telefone') || key.includes('phone') || 
+                (typeof value === 'string' && /^[\d\s\-\(\)\+]{8,}$/.test(value.replace(/\s/g, '')))) {
+              phoneNumber = value;
+              console.log(`📱 TELEFONE ENCONTRADO no campo ${key}: ${phoneNumber}`);
             }
+            
+            // Guardar TODAS as respostas
+            allResponses[key] = {
+              value: value,
+              type: 'legacy',
+              timestamp: response.submittedAt || response.completedAt
+            };
           });
+        }
+        
+        // Validar telefone
+        if (phoneNumber) {
+          const cleanPhone = phoneNumber.toString().replace(/\D/g, '');
+          if (cleanPhone.length >= 10 && cleanPhone.length <= 15) {
+            
+            // Determinar status de conclusão
+            const isCompleted = response.metadata?.isComplete === true || response.completionPercentage === 100;
+            
+            console.log(`📱 TELEFONE VÁLIDO: ${cleanPhone} - STATUS: ${isCompleted ? 'completed' : 'abandoned'}`);
+            
+            phones.push({
+              id: response.id,
+              phone: cleanPhone,
+              originalPhone: phoneNumber,
+              status: isCompleted ? 'completed' : 'abandoned',
+              isComplete: isCompleted,
+              completionPercentage: response.completionPercentage || 0,
+              submittedAt: response.submittedAt || response.completedAt,
+              createdAt: response.createdAt || response.submittedAt,
+              quizTitle: quiz.title,
+              quizId: quizId,
+              // TODAS as respostas do quiz
+              allResponses: allResponses,
+              // Campos extraídos para compatibilidade
+              nome: allResponses.nome?.value || allResponses.name?.value || allResponses.firstName?.value,
+              email: allResponses.email?.value || allResponses.email_principal?.value,
+              idade: allResponses.idade?.value || allResponses.age?.value,
+              altura: allResponses.altura?.value || allResponses.height?.value,
+              peso: allResponses.peso?.value || allResponses.weight?.value,
+              nascimento: allResponses.nascimento?.value || allResponses.birth_date?.value
+            });
+          } else {
+            console.log(`❌ TELEFONE INVÁLIDO IGNORADO: ${phoneNumber} (deve ter 10-15 dígitos)`);
+          }
+        } else {
+          console.log(`📱 NENHUM TELEFONE ENCONTRADO na response ${index + 1}`);
         }
       }
     });
+    
+    console.log(`📱 TOTAL DE TELEFONES EXTRAÍDOS: ${phones.length}`);
     
     // Aplicar filtros
     let filteredPhones = phones;
@@ -2067,6 +2118,7 @@ app.post("/api/whatsapp-automation-file", verifyJWT, async (req: any, res: Respo
       filteredPhones = filteredPhones.filter(phone => 
         new Date(phone.submittedAt) >= filterDate
       );
+      console.log(`📅 APÓS FILTRO DE DATA: ${filteredPhones.length} contatos`);
     }
     
     // Filtro de audiência
@@ -2074,6 +2126,7 @@ app.post("/api/whatsapp-automation-file", verifyJWT, async (req: any, res: Respo
       filteredPhones = filteredPhones.filter(phone => {
         return targetAudience === 'completed' ? phone.isComplete : !phone.isComplete;
       });
+      console.log(`👥 APÓS FILTRO DE AUDIÊNCIA (${targetAudience}): ${filteredPhones.length} contatos`);
     }
     
     // Deduplicate phones - priorizar completos sobre abandonados
@@ -2086,6 +2139,7 @@ app.post("/api/whatsapp-automation-file", verifyJWT, async (req: any, res: Respo
     });
     
     const finalPhones = Array.from(phoneMap.values());
+    console.log(`🔄 APÓS DEDUPLICAÇÃO: ${finalPhones.length} contatos únicos`);
     
     // Salvar arquivo no storage
     const automationFile = {

@@ -2,7 +2,7 @@
 // Substitua 'REPL_NAME' pelo nome real do seu Repl
 const REPLIT_CONFIG = {
   // URL base do servidor - domínio público automático do Replit
-  serverUrl: 'https://workspace--brunotamaso.replit.app',
+  serverUrl: 'https://51f74588-7b5b-4e89-adab-b70610c96e0b-00-zr6ug9hu0yss.janeway.replit.dev',
   
   // Configurações padrão
   defaultSettings: {
@@ -27,7 +27,7 @@ function getServerUrl() {
   }
   
   // Caso contrário, use a configuração padrão
-  return REPLIT_CONFIG.serverUrl;
+  return 'https://51f74588-7b5b-4e89-adab-b70610c96e0b-00-zr6ug9hu0yss.janeway.replit.dev';
 }
 
 // Exportar configuração

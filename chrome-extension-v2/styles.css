@@ -177,37 +177,77 @@
 }
 
 .vendzz-contact-item {
-  padding: 8px 10px;
+  padding: 12px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.05);
   font-size: 11px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border-radius: 6px;
+  margin-bottom: 8px;
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.vendzz-contact-item:hover {
+  background: rgba(0, 255, 136, 0.05);
+  border-color: rgba(0, 255, 136, 0.2);
 }
 
 .vendzz-contact-item:last-child {
   border-bottom: none;
 }
 
+.vendzz-contact-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
 .vendzz-contact-phone {
   font-family: 'Courier New', monospace;
   font-weight: 600;
   color: #ffffff;
-  margin-bottom: 4px;
+  font-size: 13px;
 }
 
 .vendzz-contact-status {
-  font-size: 10px;
-  padding: 2px 6px;
-  border-radius: 3px;
+  font-size: 9px;
+  padding: 3px 8px;
+  border-radius: 12px;
   display: inline-block;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
 .vendzz-contact-status.completed {
   background: rgba(0, 255, 136, 0.2);
   color: #00ff88;
+  border: 1px solid rgba(0, 255, 136, 0.3);
 }
 
 .vendzz-contact-status.abandoned {
   background: rgba(255, 165, 0, 0.2);
   color: #ffa500;
+  border: 1px solid rgba(255, 165, 0, 0.3);
+}
+
+.vendzz-contact-details {
+  font-size: 10px;
+  color: rgba(255, 255, 255, 0.7);
+  line-height: 1.4;
+}
+
+.vendzz-contact-details div {
+  margin-bottom: 3px;
+  display: flex;
+  justify-content: space-between;
+}
+
+.vendzz-contact-details strong {
+  color: rgba(255, 255, 255, 0.9);
+  font-weight: 600;
+  min-width: 50px;
 }
 
 .vendzz-status {

@@ -98,8 +98,9 @@ Os problemas identificados foram resolvidos:
 ### Configurações Atualizadas
 - ✅ `manifest.json` - Ícones SVG referenciados corretamente
 - ✅ Permissões para domínios Replit já configuradas
-- ✅ URLs atualizadas para usar domínio público do Replit
-- ✅ `config.js` e `background.js` - URL pública configurada automaticamente
+- ✅ URLs atualizadas para domínio público real do Replit
+- ✅ `config.js` e `background.js` - URL: `https://51f74588-7b5b-4e89-adab-b70610c96e0b-00-zr6ug9hu0yss.janeway.replit.dev`
+- ✅ Sistema de edição de token implementado no popup
 - ✅ Todos os arquivos principais estão presentes e funcionais
 
 ### Token de Acesso Atual

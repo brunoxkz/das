@@ -269,7 +269,18 @@ async function loadSelectedFile() {
       throw new Error(response.error);
     }
     
-    currentContacts = response.contacts;
+    // Parse contacts se vier como string JSON
+    let contacts = response.contacts || [];
+    if (typeof contacts === 'string') {
+      try {
+        contacts = JSON.parse(contacts);
+      } catch (e) {
+        console.log('❌ Erro ao parsear contatos:', e);
+        contacts = [];
+      }
+    }
+    
+    currentContacts = Array.isArray(contacts) ? contacts : [];
     selectedFile = fileId;
     
     updateContactsList();
@@ -279,6 +290,13 @@ async function loadSelectedFile() {
     updateFileStatus(fileName);
     
     addLog(`📱 ${currentContacts.length} contatos carregados`);
+    
+    // Mostrar estatísticas por status
+    if (currentContacts.length > 0) {
+      const completed = currentContacts.filter(c => c.isComplete).length;
+      const abandoned = currentContacts.length - completed;
+      addLog(`📊 Status: ${completed} completos, ${abandoned} abandonados`);
+    }
     
   } catch (error) {
     addLog(`❌ Erro ao carregar contatos: ${error.message}`);
@@ -298,10 +316,21 @@ function updateContactsList() {
   }
   
   contactList.innerHTML = currentContacts.map(contact => `
-    <div class="vendzz-contact-item">
-      <div class="vendzz-contact-phone">${contact.phone}</div>
-      <div class="vendzz-contact-status ${contact.isComplete ? 'completed' : 'abandoned'}">
-        ${contact.isComplete ? '✅' : '⏳'} ${contact.isComplete ? 'Completo' : 'Abandonado'}
+    <div class="vendzz-contact-item" data-phone="${contact.phone}">
+      <div class="vendzz-contact-header">
+        <div class="vendzz-contact-phone">${contact.phone}</div>
+        <div class="vendzz-contact-status ${contact.isComplete ? 'completed' : 'abandoned'}">
+          ${contact.isComplete ? '✅ Quiz Completo' : '⏳ Quiz Abandonado'}
+        </div>
+      </div>
+      <div class="vendzz-contact-details">
+        ${contact.nome ? `<div><strong>Nome:</strong> ${contact.nome}</div>` : ''}
+        ${contact.email ? `<div><strong>Email:</strong> ${contact.email}</div>` : ''}
+        ${contact.idade ? `<div><strong>Idade:</strong> ${contact.idade}</div>` : ''}
+        ${contact.altura ? `<div><strong>Altura:</strong> ${contact.altura}</div>` : ''}
+        ${contact.peso ? `<div><strong>Peso:</strong> ${contact.peso}</div>` : ''}
+        <div><strong>Data:</strong> ${new Date(contact.submittedAt).toLocaleString('pt-BR')}</div>
+        <div><strong>Conclusão:</strong> ${contact.completionPercentage}%</div>
       </div>
     </div>
   `).join('');

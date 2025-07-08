@@ -1,6 +1,6 @@
 // Background script para gerenciar a comunicação com a API
 let config = {
-  serverUrl: 'https://workspace--brunotamaso.replit.app',
+  serverUrl: 'https://51f74588-7b5b-4e89-adab-b70610c96e0b-00-zr6ug9hu0yss.janeway.replit.dev',
   accessToken: null,
   autoMode: false,
   refreshInterval: 30000 // 30 segundos
@@ -78,8 +78,25 @@ async function fetchFileContacts(fileId) {
 
   try {
     const fileData = await apiRequest(`/api/whatsapp-automation-files/${fileId}`);
-    const phones = JSON.parse(fileData.phones || '[]');
+    
+    // Parse phones se vier como string
+    let phones = [];
+    if (fileData.phones) {
+      if (typeof fileData.phones === 'string') {
+        try {
+          phones = JSON.parse(fileData.phones);
+        } catch (e) {
+          console.log('❌ Erro ao parsear phones:', e);
+          phones = [];
+        }
+      } else if (Array.isArray(fileData.phones)) {
+        phones = fileData.phones;
+      }
+    }
+    
     console.log(`📱 Contatos no arquivo ${fileId}: ${phones.length}`);
+    console.log(`📱 Sample contact:`, phones[0]);
+    
     return phones;
   } catch (error) {
     console.error('❌ Erro ao buscar contatos do arquivo:', error);
@@ -154,6 +171,24 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
       config = { ...config, ...request.config };
       saveConfig();
       sendResponse({ success: true });
+      break;
+
+    case 'save_token':
+      if (!request.token) {
+        sendResponse({ success: false, error: 'Token não fornecido' });
+        break;
+      }
+      
+      config.accessToken = request.token;
+      saveConfig();
+      
+      // Testar token imediatamente
+      apiRequest('/api/auth/verify').then(result => {
+        sendResponse({ success: true, message: 'Token salvo e validado!', user: result.user });
+      }).catch(error => {
+        sendResponse({ success: false, error: 'Token inválido: ' + error.message });
+      });
+      return true; // Indica resposta assíncrona
       break;
 
     case 'start_monitoring':

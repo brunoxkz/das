@@ -164,6 +164,59 @@
     @keyframes spin {
       to { transform: rotate(360deg); }
     }
+
+    .btn-primary {
+      background: #22c55e;
+      color: white;
+    }
+    
+    .btn-primary:hover {
+      background: #16a34a;
+    }
+
+    .btn-small {
+      padding: 4px 8px;
+      font-size: 12px;
+      background: #f0f0f0;
+      border: 1px solid #ddd;
+      cursor: pointer;
+      border-radius: 4px;
+    }
+
+    .btn-small:hover {
+      background: #e0e0e0;
+    }
+
+    .config-item {
+      margin-bottom: 12px;
+    }
+
+    .config-item label {
+      display: block;
+      margin-bottom: 4px;
+      font-weight: 500;
+      color: #333;
+    }
+
+    .token-input-container {
+      display: flex;
+      gap: 4px;
+      margin-bottom: 8px;
+    }
+
+    #token-input {
+      flex: 1;
+      padding: 8px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      font-size: 12px;
+      font-family: monospace;
+    }
+
+    #token-input:focus {
+      outline: none;
+      border-color: #22c55e;
+    }
   </style>
 </head>
 <body>
@@ -189,6 +242,18 @@
       <div class="status-item">
         <span class="status-label">Arquivos:</span>
         <span class="status-value" id="files-status">-</span>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">🔑 Configuração</div>
+      <div class="config-item">
+        <label for="token-input">Token de Acesso:</label>
+        <div class="token-input-container">
+          <input type="password" id="token-input" placeholder="Cole seu token JWT aqui..." />
+          <button class="btn-small" id="toggle-token">👁️</button>
+        </div>
+        <button class="btn btn-primary" id="save-token">Salvar Token</button>
       </div>
     </div>
 

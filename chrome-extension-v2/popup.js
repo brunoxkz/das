@@ -7,6 +7,9 @@ const whatsappStatus = document.getElementById('whatsapp-status');
 const filesStatus = document.getElementById('files-status');
 const openWhatsappBtn = document.getElementById('open-whatsapp');
 const refreshDataBtn = document.getElementById('refresh-data');
+const tokenInput = document.getElementById('token-input');
+const toggleTokenBtn = document.getElementById('toggle-token');
+const saveTokenBtn = document.getElementById('save-token');
 
 // Atualizar status de conexão
 function updateConnectionStatus(text, className) {
@@ -127,12 +130,73 @@ async function refreshData() {
   }
 }
 
+// Salvar token
+async function saveToken() {
+  const token = tokenInput.value.trim();
+  
+  if (!token) {
+    alert('Por favor, insira um token válido');
+    return;
+  }
+  
+  try {
+    saveTokenBtn.textContent = 'Salvando...';
+    saveTokenBtn.disabled = true;
+    
+    const response = await chrome.runtime.sendMessage({
+      action: 'save_token',
+      token: token
+    });
+    
+    if (response.success) {
+      alert('Token salvo com sucesso!');
+      tokenInput.value = '';
+      tokenInput.placeholder = 'Token configurado (clique para editar)';
+      await checkStatus();
+    } else {
+      alert('Erro ao salvar token: ' + response.error);
+    }
+  } catch (error) {
+    console.error('❌ Erro ao salvar token:', error);
+    alert('Erro ao salvar token');
+  } finally {
+    saveTokenBtn.textContent = 'Salvar Token';
+    saveTokenBtn.disabled = false;
+  }
+}
+
+// Alternar visibilidade do token
+function toggleTokenVisibility() {
+  if (tokenInput.type === 'password') {
+    tokenInput.type = 'text';
+    toggleTokenBtn.textContent = '🙈';
+  } else {
+    tokenInput.type = 'password';
+    toggleTokenBtn.textContent = '👁️';
+  }
+}
+
+// Carregar token atual
+async function loadCurrentToken() {
+  try {
+    const config = await chrome.runtime.sendMessage({ action: 'get_config' });
+    if (config.accessToken) {
+      tokenInput.placeholder = 'Token configurado (clique para editar)';
+    }
+  } catch (error) {
+    console.error('❌ Erro ao carregar token:', error);
+  }
+}
+
 // Event listeners
 openWhatsappBtn.addEventListener('click', openWhatsApp);
 refreshDataBtn.addEventListener('click', refreshData);
+saveTokenBtn.addEventListener('click', saveToken);
+toggleTokenBtn.addEventListener('click', toggleTokenVisibility);
 
 // Verificar status ao carregar
 document.addEventListener('DOMContentLoaded', () => {
+  loadCurrentToken();
   checkStatus();
   
   // Atualizar status a cada 5 segundos
@@ -141,7 +205,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // Verificar status imediatamente se já carregado
 if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', checkStatus);
+  document.addEventListener('DOMContentLoaded', () => {
+    loadCurrentToken();
+    checkStatus();
+  });
 } else {
+  loadCurrentToken();
   checkStatus();
 }
