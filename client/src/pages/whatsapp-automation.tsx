@@ -110,13 +110,23 @@ export default function WhatsAppAutomationPage() {
         description: `Arquivo criado com ${filteredPhones.length} contatos. A extensão pode acessá-lo agora.`,
       });
       
-    } catch (error) {
+    } catch (error: any) {
       console.error('Erro ao gerar arquivo:', error);
-      toast({
-        title: "Erro ao gerar arquivo",
-        description: "Tente novamente em alguns instantes.",
-        variant: "destructive",
-      });
+      
+      // Verifica se é erro de automação desabilitada
+      if (error.message && error.message.includes('Automação WhatsApp não está habilitada')) {
+        toast({
+          title: "Automação WhatsApp Desabilitada",
+          description: "Para usar esta funcionalidade, habilite a 'Automação WhatsApp' nas configurações do quiz.",
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "Erro ao gerar arquivo",
+          description: error.message || "Tente novamente em alguns instantes.",
+          variant: "destructive",
+        });
+      }
     } finally {
       setGeneratingFile(false);
     }

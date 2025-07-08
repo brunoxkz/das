@@ -53,6 +53,7 @@ export function runMigrations() {
         googlePixel TEXT,
         ga4Pixel TEXT,
         customHeadScript TEXT,
+        enableWhatsappAutomation INTEGER DEFAULT 0,
         resultTitle TEXT,
         resultDescription TEXT,
         embedCode TEXT,

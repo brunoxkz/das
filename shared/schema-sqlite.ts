@@ -35,6 +35,7 @@ export const quizzes = sqliteTable("quizzes", {
   googlePixel: text("googlePixel"),
   ga4Pixel: text("ga4Pixel"),
   customHeadScript: text("customHeadScript"),
+  enableWhatsappAutomation: integer("enableWhatsappAutomation", { mode: 'boolean' }).default(false),
   resultTitle: text("resultTitle"),
   resultDescription: text("resultDescription"),
   embedCode: text("embedCode"),

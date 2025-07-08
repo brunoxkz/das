@@ -2006,6 +2006,15 @@ app.post("/api/whatsapp-automation-file", verifyJWT, async (req: any, res: Respo
       return res.status(404).json({ error: "Quiz not found" });
     }
     
+    // Verificar se a automação WhatsApp está habilitada para este quiz
+    if (!quiz.enableWhatsappAutomation) {
+      console.log(`❌ AUTOMAÇÃO WHATSAPP DESABILITADA - Quiz: ${quizId}`);
+      return res.status(400).json({ 
+        error: "Automação WhatsApp não está habilitada para este quiz",
+        message: "Para usar esta funcionalidade, habilite a 'Automação WhatsApp' nas configurações do quiz."
+      });
+    }
+    
     // Buscar responses do quiz
     const responses = await storage.getQuizResponses(quizId);
     console.log(`📱 RESPONSES ENCONTRADAS: ${responses.length}`);
