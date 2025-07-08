@@ -766,16 +766,53 @@ export class SQLiteStorage implements IStorage {
     
     const campaigns = stmt.all(userId);
     
-    return campaigns.map(campaign => ({
-      ...campaign,
-      phones: JSON.parse(campaign.phones || '[]'),
-      extensionSettings: JSON.parse(campaign.extension_settings || '{}'),
-      sent: 0,
-      delivered: 0,
-      opened: 0,
-      clicked: 0,
-      replies: 0
-    }));
+    // Buscar estatísticas reais dos logs para cada campanha
+    const logsStmt = sqlite.prepare(`
+      SELECT 
+        status,
+        COUNT(*) as count
+      FROM whatsapp_logs 
+      WHERE campaign_id = ?
+      GROUP BY status
+    `);
+    
+    return campaigns.map(campaign => {
+      const logs = logsStmt.all(campaign.id);
+      const stats = {
+        sent: 0,
+        delivered: 0,
+        opened: 0,
+        clicked: 0,
+        replies: 0
+      };
+      
+      // Calcular estatísticas reais baseadas nos logs
+      logs.forEach(log => {
+        if (log.status === 'sent' || log.status === 'delivered') {
+          stats.sent += log.count;
+        }
+        if (log.status === 'delivered') {
+          stats.delivered += log.count;
+        }
+        if (log.status === 'read') {
+          stats.opened += log.count;
+        }
+        if (log.status === 'clicked') {
+          stats.clicked += log.count;
+        }
+        if (log.status === 'replied') {
+          stats.replies += log.count;
+        }
+      });
+      
+      return {
+        ...campaign,
+        phones: JSON.parse(campaign.phones || '[]'),
+        extensionSettings: JSON.parse(campaign.extension_settings || '{}'),
+        messages: JSON.parse(campaign.messages || '[]'),
+        ...stats
+      };
+    });
   }
 
   async getWhatsappCampaignById(id: string): Promise<any | null> {

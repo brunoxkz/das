@@ -674,7 +674,7 @@ export default function WhatsAppCampaignsPage() {
                       </div>
                       
                       <div className="text-sm text-gray-600 mb-2">
-                        Quiz: {campaign.quizTitle} | Público: {campaign.targetAudience === 'completed' ? 'Completos' : campaign.targetAudience === 'abandoned' ? 'Abandonados' : 'Todos'}
+                        Quiz: {campaign.quizTitle || campaign.quiz_title || 'Quiz não encontrado'} | Público: {campaign.targetAudience === 'completed' ? 'Completos' : campaign.targetAudience === 'abandoned' ? 'Abandonados' : 'Todos'} | Status: {campaign.status}
                       </div>
                       
                       <div className="grid grid-cols-4 gap-4 text-sm">
@@ -696,9 +696,18 @@ export default function WhatsAppCampaignsPage() {
                         </div>
                       </div>
                       
-                      {campaign.messages && (
-                        <div className="mt-3 text-xs text-gray-500">
-                          {campaign.messages.length} mensagens rotativas configuradas
+                      {campaign.messages && Array.isArray(campaign.messages) && campaign.messages.length > 0 && (
+                        <div className="mt-3 p-2 bg-gray-50 rounded text-xs">
+                          <div className="font-medium text-gray-700 mb-1">
+                            {campaign.messages.length} mensagem{campaign.messages.length > 1 ? 's' : ''} rotativa{campaign.messages.length > 1 ? 's' : ''}
+                          </div>
+                          <div className="text-gray-600 max-h-20 overflow-y-auto">
+                            {campaign.messages.map((msg, idx) => (
+                              <div key={idx} className="mb-1">
+                                {idx + 1}. {msg.substring(0, 100)}{msg.length > 100 ? '...' : ''}
+                              </div>
+                            ))}
+                          </div>
                         </div>
                       )}
                     </div>
