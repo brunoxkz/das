@@ -83,22 +83,67 @@ async function apiRequest(endpoint, options = {}) {
   }
 }
 
-// Conectar com o servidor Vendzz
+// Conectar com o servidor Vendzz e sincronizar configurações
 async function connectToServer() {
   try {
     // Testar conexão com ping
     const response = await apiRequest('/api/whatsapp-extension/status');
     
-    config.isConnected = true;
-    config.lastPing = new Date().toISOString();
-    saveConfig();
+    if (response.connected && response.authenticatedUser) {
+      config.isConnected = true;
+      config.lastPing = new Date().toISOString();
+      config.userId = response.authenticatedUser.id;
+      config.userEmail = response.authenticatedUser.email;
+      
+      console.log(`✅ Conectado como ${config.userEmail}`);
+      
+      // Sincronizar configurações do servidor
+      await syncSettingsFromServer();
+      saveConfig();
+    }
     
-    console.log('✅ Conectado ao servidor Vendzz');
     return true;
   } catch (error) {
     config.isConnected = false;
     console.error('❌ Falha ao conectar:', error);
     return false;
+  }
+}
+
+// Sincronizar configurações do servidor
+async function syncSettingsFromServer() {
+  try {
+    console.log('⚙️ Sincronizando configurações...');
+    const settings = await apiRequest('/api/whatsapp-extension/settings');
+    
+    if (settings) {
+      config.serverSettings = settings;
+      console.log('✅ Configurações sincronizadas:', settings);
+    }
+  } catch (error) {
+    console.error('❌ Erro ao sincronizar configurações:', error);
+  }
+}
+
+// Enviar configurações para o servidor
+async function syncSettingsToServer(newSettings) {
+  try {
+    console.log('📤 Enviando configurações...');
+    const response = await apiRequest('/api/whatsapp-extension/settings', {
+      method: 'POST',
+      body: JSON.stringify(newSettings)
+    });
+    
+    if (response.success) {
+      console.log('✅ Configurações salvas no servidor');
+      config.serverSettings = newSettings;
+      saveConfig();
+    }
+    
+    return response;
+  } catch (error) {
+    console.error('❌ Erro ao enviar configurações:', error);
+    throw error;
   }
 }
 

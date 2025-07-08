@@ -1443,6 +1443,54 @@ export class SQLiteStorage implements IStorage {
       return null;
     }
   }
+
+  // EXTENSION SETTINGS SYNC METHODS
+
+  // Get user extension settings
+  async getUserExtensionSettings(userId: string): Promise<any> {
+    try {
+      const stmt = sqlite.prepare('SELECT extension_settings FROM users WHERE id = ?');
+      const result = stmt.get(userId);
+      
+      if (result && result.extension_settings) {
+        return JSON.parse(result.extension_settings);
+      }
+      
+      // Configurações padrão se não existir
+      const defaultSettings = {
+        autoSend: true,
+        messageDelay: 3000, // 3 segundos entre mensagens
+        maxMessagesPerDay: 100,
+        workingHours: {
+          enabled: false,
+          start: "09:00",
+          end: "18:00"
+        },
+        antiSpam: {
+          enabled: true,
+          minDelay: 2000,
+          maxDelay: 5000,
+          randomization: true
+        }
+      };
+      
+      return defaultSettings;
+    } catch (error) {
+      console.error('❌ ERRO ao buscar configurações da extensão:', error);
+      return {};
+    }
+  }
+
+  // Update user extension settings
+  async updateUserExtensionSettings(userId: string, settings: any): Promise<void> {
+    try {
+      const stmt = sqlite.prepare('UPDATE users SET extension_settings = ? WHERE id = ?');
+      stmt.run(JSON.stringify(settings), userId);
+    } catch (error) {
+      console.error('❌ ERRO ao atualizar configurações da extensão:', error);
+      throw error;
+    }
+  }
 }
 
 export const storage = new SQLiteStorage();

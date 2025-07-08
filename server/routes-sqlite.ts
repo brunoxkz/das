@@ -2214,20 +2214,66 @@ app.get("/api/whatsapp-extension/status", verifyJWT, async (req: any, res: Respo
   }
 });
 
-// Update extension status (ping)
+// Update extension status (ping) with real-time config sync
 app.post("/api/whatsapp-extension/status", verifyJWT, async (req: any, res: Response) => {
   try {
+    const userId = req.user.id;
+    const userEmail = req.user.email;
     const { version, pendingMessages, sentMessages, failedMessages, isActive } = req.body;
     
-    console.log(`📱 PING EXTENSÃO: v${version}, pendentes: ${pendingMessages}, enviadas: ${sentMessages}, falhas: ${failedMessages}`);
+    console.log(`📱 PING EXTENSÃO ${userEmail}: v${version}, pendentes: ${pendingMessages}, enviadas: ${sentMessages}, falhas: ${failedMessages}`);
+    
+    // Buscar configurações atualizadas do usuário em tempo real
+    const userSettings = await storage.getUserExtensionSettings(userId);
     
     res.json({
       success: true,
       serverTime: new Date().toISOString(),
-      message: "Ping recebido com sucesso"
+      message: "Ping recebido com sucesso",
+      settings: userSettings, // Configurações sincronizadas
+      user: {
+        id: userId,
+        email: userEmail
+      }
     });
   } catch (error) {
     console.error('❌ ERRO ping extensão:', error);
+    res.status(500).json({ error: 'Erro interno do servidor' });
+  }
+});
+
+// Get user extension settings (real-time sync)
+app.get("/api/whatsapp-extension/settings", verifyJWT, async (req: any, res: Response) => {
+  try {
+    const userId = req.user.id;
+    const settings = await storage.getUserExtensionSettings(userId);
+    
+    console.log(`⚙️ CONFIGURAÇÕES SOLICITADAS para ${req.user.email}`);
+    
+    res.json(settings);
+  } catch (error) {
+    console.error('❌ ERRO ao buscar configurações:', error);
+    res.status(500).json({ error: 'Erro interno do servidor' });
+  }
+});
+
+// Update user extension settings (bidirectional sync)
+app.post("/api/whatsapp-extension/settings", verifyJWT, async (req: any, res: Response) => {
+  try {
+    const userId = req.user.id;
+    const settings = req.body;
+    
+    await storage.updateUserExtensionSettings(userId, settings);
+    
+    console.log(`⚙️ CONFIGURAÇÕES ATUALIZADAS para ${req.user.email}:`, JSON.stringify(settings));
+    
+    res.json({
+      success: true,
+      message: "Configurações salvas com sucesso",
+      settings: settings
+    });
+  } catch (error) {
+    console.error('❌ ERRO ao salvar configurações:', error);
     res.status(500).json({ error: 'Erro interno do servidor' });
   }
 });
