@@ -144,7 +144,14 @@ function createSidebar() {
         <div class="vendzz-section" id="vendzz-contacts-section" style="display: none;">
           <div class="vendzz-section-header">
             <h3>📱 Contatos (<span id="vendzz-contact-count">0</span>)</h3>
-            <button id="vendzz-refresh-data" class="vendzz-btn-small">🔄 Atualizar</button>
+            <div class="vendzz-controls">
+              <label class="vendzz-checkbox-label" style="margin-right: 10px;">
+                <input type="checkbox" id="vendzz-auto-sync" checked>
+                <span class="vendzz-checkmark"></span>
+                🔄 Auto-Sync (20s)
+              </label>
+              <button id="vendzz-refresh-data" class="vendzz-btn-small">🔄 Atualizar</button>
+            </div>
           </div>
           <div class="vendzz-contact-list" id="vendzz-contact-list">
             <!-- Contatos aparecerão aqui -->
@@ -342,6 +349,17 @@ function setupEventListeners() {
   document.getElementById('vendzz-message-delay').addEventListener('change', updateAutomationConfig);
   document.getElementById('vendzz-daily-limit').addEventListener('change', updateAutomationConfig);
   document.getElementById('vendzz-hourly-limit').addEventListener('change', updateAutomationConfig);
+
+  // Auto-sync toggle
+  document.getElementById('vendzz-auto-sync').addEventListener('change', function() {
+    if (this.checked) {
+      startAutoSync();
+      addLog('🔄 Auto-sync ativado (20s)');
+    } else {
+      stopAutoSync();
+      addLog('⏹️ Auto-sync desativado');
+    }
+  });
 }
 
 // Carregar configuração
@@ -709,9 +727,19 @@ async function prepareAutomationQueue() {
     return false;
   }
   
+  // Validar configurações essenciais
+  if (!automationConfig.messageCompleted && !automationConfig.messageAbandoned) {
+    addLog('❌ Nenhuma mensagem configurada');
+    return false;
+  }
+  
   // Primeiro filtro: data e status
   const filteredContacts = [];
+  let processedCount = 0;
+  
   currentContacts.forEach(contact => {
+    processedCount++;
+    
     // Filtro por data
     if (automationConfig.dateFilter) {
       const contactDate = new Date(contact.submittedAt);
@@ -733,6 +761,8 @@ async function prepareAutomationQueue() {
       filteredContacts.push({ contact, message });
     }
   });
+  
+  addLog(`📊 Processados: ${processedCount} contatos, ${filteredContacts.length} válidos`);
   
   if (filteredContacts.length === 0) {
     addLog('⚠️ Nenhum contato encontrado com os filtros aplicados');
@@ -842,9 +872,47 @@ async function prepareAutomationQueue() {
 }
 
 // Iniciar automação
+// Função para validar se a automação pode ser iniciada
+function validateAutomationStart() {
+  const errors = [];
+  
+  // Verificar se arquivo está selecionado
+  if (!selectedFile) {
+    errors.push('❌ Nenhum arquivo selecionado');
+  }
+  
+  // Verificar se há contatos
+  if (!currentContacts || currentContacts.length === 0) {
+    errors.push('❌ Nenhum contato encontrado');
+  }
+  
+  // Verificar se há mensagens configuradas
+  const completedMsg = document.getElementById('vendzz-completed-message')?.value?.trim();
+  const abandonedMsg = document.getElementById('vendzz-abandoned-message')?.value?.trim();
+  
+  if (!completedMsg && !abandonedMsg) {
+    errors.push('❌ Configure pelo menos uma mensagem');
+  }
+  
+  // Verificar se WhatsApp está carregado
+  if (!isWhatsAppLoaded()) {
+    errors.push('❌ WhatsApp não está carregado');
+  }
+  
+  return errors;
+}
+
 async function startAutomation() {
   if (automationActive) {
     addLog('⚠️ Automação já está ativa');
+    return;
+  }
+  
+  // Validar antes de iniciar
+  const validationErrors = validateAutomationStart();
+  if (validationErrors.length > 0) {
+    validationErrors.forEach(error => addLog(error));
+    alert('Corrija os problemas antes de iniciar:\n\n' + validationErrors.join('\n'));
     return;
   }
   
@@ -935,6 +1003,12 @@ async function processAutomationQueue() {
       automationStats.failed++;
       addLog(`❌ Erro ao enviar para ${item.phone}: ${error.message}`);
       updateAutomationStats();
+      
+      // Se erro for de conexão, tentar reconectar
+      if (error.message.includes('fetch') || error.message.includes('network')) {
+        addLog('🔄 Tentando reconectar...');
+        await connectToServer();
+      }
     }
   }
   
@@ -2041,62 +2115,54 @@ function startAutoSync() {
   }
   
   console.log('🔄 Iniciando sincronização automática de novos leads...');
+  addLog('🔄 Auto-sync iniciado (20s)');
   
-  // Verificar novos leads a cada 30 segundos
+  // Verificar novos leads a cada 20 segundos
   syncInterval = setInterval(async () => {
     await syncNewLeads();
-  }, 30000);
+  }, 20000);
   
-  // Primeira sincronização após 5 segundos
-  setTimeout(() => syncNewLeads(), 5000);
+  // Primeira sincronização após 3 segundos
+  setTimeout(() => syncNewLeads(), 3000);
 }
 
 // Função para sincronizar novos leads
 async function syncNewLeads() {
-  if (!currentUserId || !currentQuizId || !lastSyncTime) {
+  if (!selectedFile || !currentContacts) {
     return;
   }
   
   try {
+    // Verificar se há novos leads no arquivo selecionado
     const response = await chrome.runtime.sendMessage({
-      action: 'sync_new_leads',
-      userId: currentUserId,
-      quizId: currentQuizId,
-      lastSync: lastSyncTime
+      action: 'fetch_file_contacts',
+      fileId: selectedFile.id
     });
     
     if (response.error) {
       console.error('❌ Erro na sincronização:', response.error);
+      addLog('❌ Erro no auto-sync');
       return;
     }
     
-    if (response.hasUpdates && response.newLeads.length > 0) {
-      console.log(`🆕 ${response.newLeads.length} novos leads encontrados!`);
+    if (response.contacts && response.contacts.length > 0) {
+      const newContactsCount = response.contacts.length;
+      const currentCount = currentContacts.length;
       
-      // Converter leads para formato de contatos
-      const newContacts = response.newLeads.map(lead => ({
-        phone: lead.phone,
-        nome: lead.nome || 'Sem nome',
-        email: lead.email || 'Sem email',
-        idade: lead.idade || 'N/A',
-        altura: lead.altura || 'N/A',
-        peso: lead.peso || 'N/A',
-        isComplete: lead.isComplete,
-        submissionDate: lead.submittedAt,
-        responses: lead.allResponses || {}
-      }));
-      
-      // Filtrar duplicatas (mesmos telefones)
-      const existingPhones = new Set(currentContacts.map(c => c.phone));
-      const uniqueNewContacts = newContacts.filter(c => !existingPhones.has(c.phone));
-      
-      if (uniqueNewContacts.length > 0) {
-        // Adicionar à lista atual
-        currentContacts = [...currentContacts, ...uniqueNewContacts];
+      // Verificar se há novos contatos
+      if (newContactsCount > currentCount) {
+        const newLeadsCount = newContactsCount - currentCount;
+        console.log(`🆕 ${newLeadsCount} novos leads encontrados!`);
+        addLog(`🆕 ${newLeadsCount} novos leads detectados`);
         
-        // Se automação estiver ativa, adicionar à fila
+        // Atualizar a lista de contatos
+        currentContacts = response.contacts;
+        updateContactsList();
+        
+        // Se automação estiver ativa, adicionar novos leads à fila
         if (automationActive) {
-          uniqueNewContacts.forEach(contact => {
+          const newLeads = response.contacts.slice(currentCount);
+          newLeads.forEach(contact => {
             if (!processedContacts.has(contact.phone)) {
               addToAutomationQueue(contact);
             }
