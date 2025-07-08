@@ -1989,6 +1989,162 @@ export function registerSQLiteRoutes(app: Express): Server {
   const httpServer = createServer(app);
 
 // =============================================
+// WHATSAPP AUTOMATION FILE ROUTES
+// =============================================
+
+// Criar arquivo de automação para extensão
+app.post("/api/whatsapp-automation-file", verifyJWT, async (req: any, res: Response) => {
+  try {
+    const userId = req.user.id;
+    const { quizId, targetAudience = 'all', dateFilter } = req.body;
+    
+    console.log(`📁 CRIANDO ARQUIVO DE AUTOMAÇÃO - User: ${userId}, Quiz: ${quizId}`);
+    
+    // Verificar se o quiz pertence ao usuário
+    const quiz = await storage.getQuiz(quizId);
+    if (!quiz || quiz.userId !== userId) {
+      return res.status(404).json({ error: "Quiz not found" });
+    }
+    
+    // Buscar responses do quiz
+    const responses = await storage.getQuizResponses(quizId);
+    console.log(`📱 RESPONSES ENCONTRADAS: ${responses.length}`);
+    
+    // Extrair telefones das respostas
+    const phones: any[] = [];
+    
+    responses.forEach((response) => {
+      if (response.responses) {
+        let responseData = response.responses as any;
+        
+        // Verificar se é o novo formato (array) ou antigo formato (object)
+        if (Array.isArray(responseData)) {
+          // Novo formato - resposta é um array de objetos
+          responseData.forEach((resp: any) => {
+            if (resp.fieldId && resp.fieldId.includes('telefone') && resp.response) {
+              const phoneNumber = resp.response.toString().replace(/\D/g, '');
+              if (phoneNumber.length >= 10) {
+                const isCompleted = response.metadata?.isComplete === true || response.completionPercentage === 100;
+                phones.push({
+                  phone: phoneNumber,
+                  status: isCompleted ? 'completed' : 'abandoned',
+                  completionPercentage: response.completionPercentage || 0,
+                  submittedAt: response.submittedAt || response.completedAt,
+                  isComplete: isCompleted,
+                  quizTitle: quiz.title
+                });
+              }
+            }
+          });
+        } else {
+          // Formato antigo - resposta é um objeto
+          Object.entries(responseData).forEach(([key, value]: [string, any]) => {
+            if (key.includes('telefone') && value) {
+              const phoneNumber = value.toString().replace(/\D/g, '');
+              if (phoneNumber.length >= 10) {
+                const isCompleted = response.metadata?.isComplete === true || response.completionPercentage === 100;
+                phones.push({
+                  phone: phoneNumber,
+                  status: isCompleted ? 'completed' : 'abandoned',
+                  completionPercentage: response.completionPercentage || 0,
+                  submittedAt: response.submittedAt || response.completedAt,
+                  isComplete: isCompleted,
+                  quizTitle: quiz.title
+                });
+              }
+            }
+          });
+        }
+      }
+    });
+    
+    // Aplicar filtros
+    let filteredPhones = phones;
+    
+    // Filtro de data
+    if (dateFilter) {
+      const filterDate = new Date(dateFilter);
+      filteredPhones = filteredPhones.filter(phone => 
+        new Date(phone.submittedAt) >= filterDate
+      );
+    }
+    
+    // Filtro de audiência
+    if (targetAudience !== 'all') {
+      filteredPhones = filteredPhones.filter(phone => {
+        return targetAudience === 'completed' ? phone.isComplete : !phone.isComplete;
+      });
+    }
+    
+    // Deduplicate phones - priorizar completos sobre abandonados
+    const phoneMap = new Map();
+    filteredPhones.forEach(phone => {
+      const existing = phoneMap.get(phone.phone);
+      if (!existing || (phone.isComplete && !existing.isComplete)) {
+        phoneMap.set(phone.phone, phone);
+      }
+    });
+    
+    const finalPhones = Array.from(phoneMap.values());
+    
+    // Salvar arquivo no storage
+    const automationFile = {
+      id: `${userId}_${quizId}_${Date.now()}`,
+      userId,
+      quizId,
+      quizTitle: quiz.title,
+      targetAudience,
+      dateFilter,
+      phones: finalPhones,
+      totalPhones: finalPhones.length,
+      createdAt: new Date().toISOString(),
+      lastUpdated: new Date().toISOString()
+    };
+    
+    await storage.saveAutomationFile(automationFile);
+    
+    console.log(`✅ ARQUIVO CRIADO: ${finalPhones.length} telefones processados`);
+    
+    res.json({
+      success: true,
+      fileId: automationFile.id,
+      totalPhones: finalPhones.length,
+      message: 'Arquivo de automação criado com sucesso'
+    });
+    
+  } catch (error) {
+    console.error('❌ ERRO ao criar arquivo de automação:', error);
+    res.status(500).json({ error: 'Erro interno do servidor' });
+  }
+});
+
+// Endpoint para extensão acessar arquivo de automação
+app.get("/api/whatsapp-automation-file/:userId/:quizId", verifyJWT, async (req: any, res: Response) => {
+  try {
+    const { userId, quizId } = req.params;
+    const requestingUserId = req.user.id;
+    
+    // Verificar se o usuário pode acessar este arquivo
+    if (userId !== requestingUserId) {
+      return res.status(403).json({ error: "Acesso negado" });
+    }
+    
+    const file = await storage.getAutomationFile(userId, quizId);
+    if (!file) {
+      return res.status(404).json({ error: "Arquivo não encontrado" });
+    }
+    
+    console.log(`📁 ARQUIVO ACESSADO: ${file.totalPhones} telefones`);
+    
+    res.json(file);
+    
+  } catch (error) {
+    console.error('❌ ERRO ao acessar arquivo:', error);
+    res.status(500).json({ error: 'Erro interno do servidor' });
+  }
+});
+
+// =============================================
 // WHATSAPP CAMPAIGNS ROUTES
 // =============================================
 

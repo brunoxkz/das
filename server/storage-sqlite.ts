@@ -1545,6 +1545,97 @@ export class SQLiteStorage implements IStorage {
       throw error;
     }
   }
+  // =============================================
+  // WHATSAPP AUTOMATION FILES METHODS
+  // =============================================
+
+  async saveAutomationFile(file: any): Promise<void> {
+    // Criar tabela se não existir
+    sqlite.exec(`
+      CREATE TABLE IF NOT EXISTS whatsapp_automation_files (
+        id TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL,
+        quiz_id TEXT NOT NULL,
+        quiz_title TEXT,
+        target_audience TEXT,
+        date_filter TEXT,
+        phones TEXT,
+        total_phones INTEGER DEFAULT 0,
+        created_at TEXT NOT NULL,
+        last_updated TEXT NOT NULL
+      )
+    `);
+
+    const stmt = sqlite.prepare(`
+      INSERT OR REPLACE INTO whatsapp_automation_files 
+      (id, user_id, quiz_id, quiz_title, target_audience, date_filter, phones, total_phones, created_at, last_updated)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `);
+    
+    stmt.run(
+      file.id,
+      file.userId,
+      file.quizId,
+      file.quizTitle,
+      file.targetAudience,
+      file.dateFilter,
+      JSON.stringify(file.phones),
+      file.totalPhones,
+      file.createdAt,
+      file.lastUpdated
+    );
+  }
+
+  async getAutomationFile(userId: string, quizId: string): Promise<any | null> {
+    try {
+      const stmt = sqlite.prepare(`
+        SELECT * FROM whatsapp_automation_files 
+        WHERE user_id = ? AND quiz_id = ?
+        ORDER BY created_at DESC
+        LIMIT 1
+      `);
+      
+      const file = stmt.get(userId, quizId);
+      if (!file) return null;
+
+      return {
+        ...file,
+        phones: JSON.parse(file.phones || '[]')
+      };
+    } catch (error) {
+      // Se a tabela não existir, retornar null
+      console.log('Tabela de arquivos de automação ainda não foi criada');
+      return null;
+    }
+  }
+
+  async getAutomationFileById(fileId: string): Promise<any | null> {
+    try {
+      const stmt = sqlite.prepare(`
+        SELECT * FROM whatsapp_automation_files 
+        WHERE id = ?
+      `);
+      
+      const file = stmt.get(fileId);
+      if (!file) return null;
+
+      return {
+        ...file,
+        phones: JSON.parse(file.phones || '[]')
+      };
+    } catch (error) {
+      console.log('Tabela de arquivos de automação ainda não foi criada');
+      return null;
+    }
+  }
+
+  async deleteAutomationFile(fileId: string): Promise<void> {
+    const stmt = sqlite.prepare(`
+      DELETE FROM whatsapp_automation_files WHERE id = ?
+    `);
+    
+    stmt.run(fileId);
+  }
 }
 
 export const storage = new SQLiteStorage();

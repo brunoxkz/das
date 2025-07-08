@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { MessageSquare, Send, Users, CheckCircle, XCircle, Phone, Search, AlertCircle, Edit, Pause, Play, Trash2, Clock3, Smartphone, Eye, Settings, Plus, RefreshCw, Calendar, Filter } from "lucide-react";
+import { MessageSquare, Send, Users, CheckCircle, XCircle, Phone, Search, AlertCircle, Edit, Pause, Play, Trash2, Clock3, Smartphone, Eye, Settings, Plus, RefreshCw, Calendar, Filter, FileText, Download } from "lucide-react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Progress } from "@/components/ui/progress";
@@ -77,6 +77,7 @@ export default function WhatsAppCampaignsPage() {
   const [isCreating, setIsCreating] = useState(false);
   const [leadDelay, setLeadDelay] = useState(10); // minutos
   const [distributionDelay, setDistributionDelay] = useState(180); // segundos
+  const [generatingFile, setGeneratingFile] = useState(false);
   
   const queryClient = useQueryClient();
   const { toast } = useToast();
@@ -107,6 +108,35 @@ export default function WhatsAppCampaignsPage() {
   
   // Hook de autenticação
   const { user } = useAuth();
+
+  // Função para gerar arquivo de automação
+  const generateAutomationFile = async () => {
+    if (!selectedQuiz) return;
+    
+    setGeneratingFile(true);
+    try {
+      const response = await apiRequest('POST', '/api/whatsapp-automation-file', {
+        quizId: selectedQuiz,
+        targetAudience: selectedAudience,
+        dateFilter: dateFilter
+      });
+      
+      toast({
+        title: "Arquivo gerado com sucesso!",
+        description: `Arquivo criado para o quiz. A extensão pode acessá-lo agora.`,
+      });
+      
+    } catch (error) {
+      console.error('Erro ao gerar arquivo:', error);
+      toast({
+        title: "Erro ao gerar arquivo",
+        description: "Tente novamente em alguns instantes.",
+        variant: "destructive",
+      });
+    } finally {
+      setGeneratingFile(false);
+    }
+  };
   
   // Sistema funcionando corretamente - logs removidos
   
@@ -382,6 +412,36 @@ export default function WhatsAppCampaignsPage() {
                       `📊 ${quizzes.length} quiz(es) disponível(eis)`
                     )}
                   </div>
+
+                  {/* Gerador de Arquivo para Extensão */}
+                  {selectedQuiz && (
+                    <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                      <div className="flex items-center gap-2 mb-2">
+                        <FileText className="h-5 w-5 text-blue-600" />
+                        <h3 className="font-medium text-blue-900">Arquivo para Extensão WhatsApp</h3>
+                      </div>
+                      <p className="text-sm text-blue-700 mb-3">
+                        Gere um arquivo interno com todos os telefones deste quiz. A extensão Chrome acessará automaticamente este arquivo.
+                      </p>
+                      <Button 
+                        onClick={generateAutomationFile}
+                        disabled={generatingFile}
+                        className="bg-blue-600 hover:bg-blue-700 text-white"
+                      >
+                        {generatingFile ? (
+                          <>
+                            <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                            Gerando Arquivo...
+                          </>
+                        ) : (
+                          <>
+                            <Download className="h-4 w-4 mr-2" />
+                            Gerar Arquivo de Automação
+                          </>
+                        )}
+                      </Button>
+                    </div>
+                  )}
                 </div>
                 </div>
                 
