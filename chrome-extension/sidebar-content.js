@@ -128,29 +128,46 @@
   
   // Aguardar WhatsApp carregar completamente antes de injetar
   function waitForWhatsApp() {
+    console.log('🔍 Aguardando WhatsApp Web (funciona mesmo carregando mensagens)...');
+    
     const checkInterval = setInterval(() => {
+      // Detectores múltiplos para maior robustez
       const selectors = [
         '[data-testid="chat-list"]',
         '[data-testid="main"]',
-        '#side'
+        '#side',
+        '[data-testid="chatlist-search"]',
+        '#app',
+        'body[class*="web"]'
       ];
       
       const whatsappLoaded = selectors.some(selector => 
         document.querySelector(selector) !== null
       );
       
-      if (whatsappLoaded) {
+      // Verificar se é WhatsApp Web pela URL também
+      const isWhatsAppURL = window.location.href.includes('web.whatsapp.com');
+      
+      if (whatsappLoaded || isWhatsAppURL) {
         clearInterval(checkInterval);
-        console.log('✅ WhatsApp Web detectado, injetando sidebar...');
-        setTimeout(injectSidebar, 2000); // Aguardar 2s para garantir carregamento
+        console.log('✅ WhatsApp Web detectado! Injetando sidebar...');
+        
+        // Injetar rapidamente - funciona mesmo durante carregamento de mensagens
+        setTimeout(() => {
+          injectSidebar();
+          console.log('📱 Sidebar injetada - funcional mesmo com histórico carregando!');
+        }, 500); // Muito rápido para melhor UX
       }
-    }, 1000);
+    }, 300); // Verificar muito frequentemente
     
-    // Timeout de 30 segundos
+    // Fallback garantido - injeta depois de 5 segundos em qualquer caso
     setTimeout(() => {
       clearInterval(checkInterval);
-      console.log('⏰ Timeout na detecção do WhatsApp Web');
-    }, 30000);
+      if (!sidebarInjected) {
+        console.log('⚡ Injetando sidebar por fallback - garantia de funcionamento!');
+        injectSidebar();
+      }
+    }, 5000); // Reduzido para 5 segundos
   }
   
   // Verificar se a extensão está habilitada para este site
