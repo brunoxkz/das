@@ -131,11 +131,11 @@ export function Sidebar() {
       active: location === "/whatsapp-remarketing"
     },
     {
-      title: "Campanhas WhatsApp",
+      title: "Automação WhatsApp",
       href: "/campanhas-whatsapp",
-      icon: <MessageSquare className="w-4 h-4" />,
+      icon: <FileText className="w-4 h-4" />,
       active: location === "/campanhas-whatsapp",
-      badge: "📱"
+      badge: "🤖"
     },
     {
       title: "Cloaker",
