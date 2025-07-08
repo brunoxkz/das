@@ -41,8 +41,14 @@ app.use(express.urlencoded({
   parameterLimit: 1000
 }));
 
-// Headers para performance e cache
+// CORS configurado para extensão Chrome
 app.use((req, res, next) => {
+  // CORS para extensão Chrome
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With');
+  res.setHeader('Access-Control-Allow-Credentials', 'true');
+  
   // Headers de performance
   res.setHeader('X-Powered-By', 'Vendzz');
   res.setHeader('X-Content-Type-Options', 'nosniff');
@@ -52,6 +58,12 @@ app.use((req, res, next) => {
   // Cache para assets estáticos
   if (req.url.match(/\.(css|js|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot)$/)) {
     res.setHeader('Cache-Control', 'public, max-age=31536000'); // 1 ano
+  }
+  
+  // Handle preflight requests
+  if (req.method === 'OPTIONS') {
+    res.status(200).end();
+    return;
   }
   
   next();

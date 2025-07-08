@@ -3,7 +3,7 @@ console.log('🚀 Vendzz WhatsApp Extension iniciada');
 
 // Configuração da extensão
 let config = {
-  serverUrl: 'http://localhost:5000',
+  serverUrl: 'https://51f74588-7b5b-4e89-adab-b70610c96e0b-00-zr6ug9hu0yss.janeway.replit.dev',
   token: null, // JWT token do usuário autenticado
   userId: null, // ID do usuário para validação
   userEmail: null, // Email para logs de segurança

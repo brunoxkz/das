@@ -18,7 +18,7 @@ const elements = {
 
 // Estado atual
 let currentConfig = {
-  serverUrl: 'http://localhost:5000',
+  serverUrl: 'https://51f74588-7b5b-4e89-adab-b70610c96e0b-00-zr6ug9hu0yss.janeway.replit.dev',
   token: null,
   isConnected: false,
   lastPing: null
