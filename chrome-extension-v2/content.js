@@ -1,8 +1,10 @@
 // Content script para integração com WhatsApp Web
 console.log('🎯 Vendzz WhatsApp Automation v2.0 - Content Script carregado');
 
-// Evitar redeclarações se script já foi carregado
-if (typeof window.vendzz_extension_loaded === 'undefined') {
+// Verificar se já existe sidebar antes de prosseguir
+if (document.getElementById('vendzz-sidebar')) {
+  console.log('🔄 Sidebar já existe, evitando duplicação');
+} else if (typeof window.vendzz_extension_loaded === 'undefined') {
   window.vendzz_extension_loaded = true;
   
   let sidebar = null;
@@ -1412,20 +1414,8 @@ function tryInit() {
   });
 }
 
-// Inicializar quando o DOM estiver pronto
-if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', tryInit);
-} else {
-  tryInit();
-}
-
-// Tentar novamente após um tempo caso algo tenha dado errado
-setTimeout(() => {
-  if (!document.getElementById('vendzz-sidebar') && initAttempts < maxInitAttempts) {
-    console.log('🔄 Verificação adicional: sidebar não encontrada, tentando novamente...');
-    tryInit();
-  }
-}, 5000);
+// DESATIVAR criação automática da sidebar escura - usar apenas força bruta branca
+console.log('🚫 Sidebar escura desativada - usando apenas sidebar branca flutuante');
 
 // Forçar sidebar via mensagem da extensão (para debug)
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
@@ -1445,11 +1435,17 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 function forceSidebarDisplay() {
   console.log('💪 FORÇA BRUTA: Garantindo que sidebar seja visível...');
   
-  // Remover sidebar existente se houver
+  // Verificar se já existe uma sidebar branca funcional
   const existing = document.getElementById('vendzz-sidebar');
-  if (existing) {
+  if (existing && existing.style.background === 'white') {
+    console.log('✅ Sidebar branca funcional já existe, mantendo...');
+    return existing;
+  }
+  
+  // Remover apenas sidebars escuras/problemáticas
+  if (existing && existing.style.background !== 'white') {
     existing.remove();
-    console.log('🗑️ Sidebar existente removida');
+    console.log('🗑️ Sidebar escura removida');
   }
   
   // Criar nova sidebar forçadamente
@@ -1551,21 +1547,16 @@ function forceSidebarDisplay() {
   }
 }
 
-// Executar força bruta após 3 segundos
+// Executar força bruta apenas uma vez após 5 segundos se não houver sidebar
 setTimeout(() => {
-  if (!document.getElementById('vendzz-sidebar')) {
-    console.log('🚨 Sidebar não detectada após 3s, executando força bruta...');
+  const existing = document.getElementById('vendzz-sidebar');
+  if (!existing) {
+    console.log('🚨 Nenhuma sidebar detectada após 5s, criando sidebar branca...');
     forceSidebarDisplay();
+  } else {
+    console.log('✅ Sidebar já existe, não precisa criar outra');
   }
-}, 3000);
-
-// Executar força bruta após 8 segundos também
-setTimeout(() => {
-  if (!document.getElementById('vendzz-sidebar')) {
-    console.log('🚨 Sidebar não detectada após 8s, executando força bruta FINAL...');
-    forceSidebarDisplay();
-  }
-}, 8000);
+}, 5000);
 
 } else {
   console.log('🔄 Extensão Vendzz já carregada, pulando inicialização');
