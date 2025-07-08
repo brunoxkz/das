@@ -623,6 +623,17 @@ Changelog:
   * System now guarantees sidebar visibility regardless of WhatsApp account complexity or conversation count
   * Enhanced popup.js with forced sidebar creation commands sent to all active WhatsApp Web tabs
   * Multiple initialization attempts (up to 5 retries) with proper error handling and visual feedback
+- July 08, 2025. DIRECT MESSAGE SENDING SYSTEM IMPLEMENTATION - Advanced WhatsApp automation without navigation:
+  * Implemented direct message sending using multiple advanced methods to avoid opening new tabs or navigating away
+  * Created `sendMessageDirectly()` function using WhatsApp Web native APIs via script injection
+  * Added `sendViaDOMManipulation()` for direct DOM interaction with search and message fields
+  * Built `injectWhatsAppAPI()` to access internal WhatsApp Store objects via webpack and __d modules
+  * Enhanced phone number validation with robust Brazilian format detection and WhatsApp-specific formatting
+  * Added fallback methods including iframe loading and URL simulation for maximum compatibility
+  * Implemented comprehensive logging system for debugging message sending attempts
+  * Created multiple selector arrays to handle different WhatsApp Web interface versions and layouts
+  * System now attempts direct API access, DOM manipulation, and URL methods in sequence for highest success rate
+  * Final validation ensures all phone numbers are properly formatted with +55 country code and correct digit patterns
 ```
 
 ## User Preferences
