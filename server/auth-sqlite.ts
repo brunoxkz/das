@@ -5,7 +5,7 @@ import { storage } from "./storage-sqlite";
 import { cache } from "./cache";
 
 // USAR EXATAMENTE O MESMO SEGREDO DO AUTH-HYBRID PARA COMPATIBILIDADE
-const JWT_SECRET = process.env.JWT_SECRET || 'vendzz-jwt-secret-key-2024-super-secure';
+const JWT_SECRET = process.env.JWT_SECRET || 'vendzz-jwt-secret-key-2024';
 const JWT_REFRESH_SECRET = process.env.JWT_REFRESH_SECRET || 'vendzz-jwt-refresh-secret-2024';
 
 export function generateTokens(user: any) {

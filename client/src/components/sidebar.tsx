@@ -25,7 +25,6 @@ import {
   MessageSquare,
   Mail
 } from "lucide-react";
-import { Chrome } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export function Sidebar() {
@@ -137,12 +136,6 @@ export function Sidebar() {
       icon: <MessageSquare className="w-4 h-4" />,
       active: location === "/campanhas-whatsapp",
       badge: "📱"
-    },
-    {
-      title: "WhatsApp Extension",
-      href: "/whatsapp-extension",
-      icon: <Chrome className="w-4 h-4" />,
-      active: location === "/whatsapp-extension"
     },
     {
       title: "Cloaker",

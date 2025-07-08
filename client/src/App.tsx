@@ -22,8 +22,7 @@ import QuizPublicPage from "@/pages/quiz-public";
 import SMSCreditsPage from "@/pages/sms-credits";
 import EmailMarketingPage from "@/pages/email-marketing";
 import WhatsAppRemarketingPage from "@/pages/whatsapp-remarketing";
-import WhatsAppCampaignsPage from "@/pages/whatsapp-campaigns-new";
-import WhatsAppExtensionPage from "@/pages/whatsapp-extension";
+import WhatsAppCampaignsPage from "@/pages/whatsapp-campaigns";
 import CloakerPage from "@/pages/cloaker";
 import TesteSMSPage from "@/pages/teste-sms";
 import { useAuth } from "@/hooks/use-auth-hybrid";
@@ -152,11 +151,6 @@ function App() {
         <Route path="/campanhas-whatsapp">
           <Layout>
             <WhatsAppCampaignsPage />
-          </Layout>
-        </Route>
-        <Route path="/whatsapp-extension">
-          <Layout>
-            <WhatsAppExtensionPage />
           </Layout>
         </Route>
         <Route path="/cloaker">

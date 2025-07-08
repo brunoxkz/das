@@ -41,30 +41,12 @@ app.use(express.urlencoded({
   parameterLimit: 1000
 }));
 
-// CORS configurado especificamente para Chrome Extension + localhost
+// CORS configurado para extensão Chrome
 app.use((req, res, next) => {
-  const origin = req.headers.origin;
-  
-  // Permite Chrome Extension (chrome-extension://) + localhost + Replit
-  const allowedOrigins = [
-    'chrome-extension://*',
-    'http://localhost:5000',
-    'http://127.0.0.1:5000',
-    'https://*.replit.app',
-    'https://*.replit.dev'
-  ];
-  
-  // Chrome Extension tem origin null ou chrome-extension://
-  if (!origin || origin.startsWith('chrome-extension://') || origin === 'null') {
-    res.setHeader('Access-Control-Allow-Origin', '*');
-  } else if (allowedOrigins.some(allowed => origin.match(allowed.replace('*', '.*')))) {
-    res.setHeader('Access-Control-Allow-Origin', origin);
-  } else {
-    res.setHeader('Access-Control-Allow-Origin', '*'); // Fallback para desenvolvimento
-  }
-  
+  // CORS para extensão Chrome
+  res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, x-extension-id');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With');
   res.setHeader('Access-Control-Allow-Credentials', 'true');
   
   // Headers de performance
@@ -131,10 +113,6 @@ app.use((req, res, next) => {
   const { registerSQLiteRoutes } = await import("./routes-sqlite");
   setupSQLiteAuth(app);
   const server = registerSQLiteRoutes(app);
-
-  // Setup WhatsApp Automation routes (nova arquitetura simplificada)
-  const { setupWhatsAppAutomationRoutes } = await import('./routes-whatsapp-automation');
-  setupWhatsAppAutomationRoutes(app);
 
   // Sistema de processamento individual de SMS agendados - A CADA 30 SEGUNDOS
   setInterval(async () => {
