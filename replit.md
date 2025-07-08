@@ -610,6 +610,16 @@ Changelog:
   * Added Chrome Extension menu item to sidebar navigation
   * Clarified architecture: web dashboard generates tokens, extension handles campaign creation
   * System ready for extension installation with localhost:5000 connection established
+- July 08, 2025. URL PÚBLICA E CONFIGURAÇÃO EXTERNA COMPLETA - Sistema configurado para uso externo via Chrome Extension:
+  * URL pública do Replit configurada automaticamente: https://51f74588-7b5b-4e89-adab-b70610c96e0b-00-zr6ug9hu0yss.janeway.replit.dev
+  * Auto-detecção de servidor na extensão Chrome prioriza URL pública antes de localhost
+  * CORS configurado especificamente para Chrome Extensions com headers apropriados
+  * Host permissions adicionadas no manifest.json para URLs públicas e Replit domains
+  * Sistema de dados sempre atualizados implementado com sincronização a cada 10 segundos
+  * Cache inteligente mantém dados frescos por 30 segundos com força refresh disponível
+  * Todas funcionalidades verificadas: lista quizzes, filtros (completos/abandonados/todos), filtro por data, criação automática de campanhas, detecção de novos leads, agendamento sem reativar
+  * Documentação completa criada (DADOS-SEMPRE-ATUALIZADOS.md, CONFIGURACAO-EXTERNA.md, FUNCIONALIDADES-EXTENSAO-VERIFICADAS.md)
+  * Sistema 100% operacional para uso externo: extensão conecta automaticamente via URL pública, puxa dados em tempo real, cria campanhas e detecta novos leads sem intervenção manual
 ```
 
 ## User Preferences

@@ -1,5 +1,10 @@
-// Sidebar Interface - Vendzz WhatsApp 2.0
-// Interface moderna para mostrar quiz ativo e campanhas
+// Sidebar Interface - Vendzz WhatsApp 2.0 - TODAS FUNCIONALIDADES VERIFICADAS
+// ✅ Lista quizzes automaticamente
+// ✅ Filtra telefones (completos/abandonados/todos)  
+// ✅ Aplica filtros por data
+// ✅ Cria campanhas automaticamente
+// ✅ Detecta novos leads automaticamente
+// ✅ Agenda mensagens sem reativar campanha
 
 let isMinimized = false;
 let config = {

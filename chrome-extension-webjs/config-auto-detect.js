@@ -5,9 +5,10 @@ class ServerAutoDetector {
   constructor() {
     this.serverUrl = null;
     this.possibleUrls = [
-      'http://localhost:5000',
+      'https://51f74588-7b5b-4e89-adab-b70610c96e0b-00-zr6ug9hu0yss.janeway.replit.dev', // URL pública do Replit
+      'http://localhost:5000', // Desenvolvimento local
       'http://127.0.0.1:5000',
-      'https://51f74588-7b5b-4e89-adab-b70610c96e0b-00-zr6ug9hu0yss.janeway.replit.dev', // URL atual do Replit
+      'https://vendzz.replit.app', // URL de deploy público
     ];
   }
 
