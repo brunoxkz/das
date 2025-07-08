@@ -274,57 +274,78 @@ export function setupWhatsAppAutomationRoutes(app: any) {
     }
   });
 
-  // Status da extensão com contagem de telefones
+  // Status da extensão com contagem de telefones (versão simplificada)
   app.get("/api/whatsapp/extension-status", verifyJWT, async (req: any, res: Response) => {
     try {
       const userId = req.user.id;
       
-      // Verificar último ping da extensão
-      const lastPing = automationState.extensionStatus.lastPing;
-      const isConnected = lastPing && (Date.now() - lastPing.getTime()) < 60000; // 1 minuto
+      // Verificar último ping da extensão (valor padrão se não existir)
+      const lastPing = automationState.extensionStatus?.lastPing || null;
+      const isConnected = lastPing && (Date.now() - (lastPing instanceof Date ? lastPing.getTime() : (typeof lastPing === 'number' ? lastPing : 0))) < 60000;
       
-      // Contar total de telefones disponíveis
-      const userQuizzes = await storage.getQuizzesByUserId(userId);
+      // Contar telefones de forma mais segura
       let totalPhones = 0;
       
-      for (const quiz of userQuizzes) {
-        try {
-          const responses = await storage.getQuizResponses(quiz.id);
-          const phoneMap = new Map();
-          
-          for (const response of responses) {
-            const responseData = typeof response.data === 'string' 
-              ? JSON.parse(response.data) 
-              : response.data;
+      try {
+        const userQuizzes = await storage.getQuizzesByUserId(userId);
+        
+        for (const quiz of userQuizzes) {
+          try {
+            const responses = await storage.getQuizResponses(quiz.id);
+            const phoneMap = new Map();
             
-            const phoneFields = Object.entries(responseData).filter(([key, value]) => 
-              key.startsWith('telefone_') && value && typeof value === 'string'
-            );
-            
-            for (const [fieldId, phone] of phoneFields) {
-              const cleanPhone = (phone as string).replace(/\D/g, '');
-              if (cleanPhone.length >= 10) {
-                phoneMap.set(cleanPhone, true);
+            for (const response of responses) {
+              try {
+                const responseData = typeof response.data === 'string' 
+                  ? JSON.parse(response.data) 
+                  : (response.data || {});
+                
+                if (responseData && typeof responseData === 'object') {
+                  const phoneFields = Object.entries(responseData).filter(([key, value]) => 
+                    key.startsWith('telefone_') && value && typeof value === 'string'
+                  );
+                  
+                  for (const [fieldId, phone] of phoneFields) {
+                    const cleanPhone = (phone as string).replace(/\D/g, '');
+                    if (cleanPhone.length >= 10 && cleanPhone.length <= 15) {
+                      phoneMap.set(cleanPhone, true);
+                    }
+                  }
+                }
+              } catch (responseError) {
+                console.error(`Erro ao processar response ${response.id}:`, responseError);
+                continue;
               }
             }
+            
+            totalPhones += phoneMap.size;
+          } catch (quizError) {
+            console.error(`Erro ao processar quiz ${quiz.id}:`, quizError);
+            continue;
           }
-          
-          totalPhones += phoneMap.size;
-        } catch (error) {
-          console.error(`Erro ao processar quiz ${quiz.id}:`, error);
         }
+      } catch (userError) {
+        console.error(`Erro ao buscar quizzes do usuário ${userId}:`, userError);
       }
       
       res.json({
-        isConnected: isConnected,
-        isActive: automationState.extensionStatus.isActive,
+        isConnected: isConnected || false,
+        isActive: automationState.extensionStatus?.isActive || false,
         phoneCount: totalPhones,
-        lastSync: lastPing ? new Date(lastPing).toLocaleString() : 'Nunca'
+        lastSync: lastPing ? new Date(lastPing instanceof Date ? lastPing : new Date(lastPing)).toLocaleString() : 'Nunca',
+        status: 'operational'
       });
       
     } catch (error) {
       console.error('❌ Erro ao buscar status da extensão:', error);
-      res.status(500).json({ error: 'Erro interno do servidor' });
+      res.status(500).json({ 
+        error: 'Erro interno do servidor',
+        details: error.message,
+        isConnected: false,
+        isActive: false,
+        phoneCount: 0,
+        lastSync: 'Erro'
+      });
     }
   });
 
@@ -337,8 +358,9 @@ export function setupWhatsAppAutomationRoutes(app: any) {
       console.log(`📋 [${req.user.email}] Extensão solicitando dados do quiz ${quizId}`);
 
       // Verificar se quiz pertence ao usuário
-      const quiz = await storage.getQuizById(quizId);
-      if (!quiz || quiz.userId !== userId) {
+      const userQuizzes = await storage.getQuizzesByUserId(userId);
+      const quiz = userQuizzes.find(q => q.id === quizId);
+      if (!quiz) {
         return res.status(403).json({ error: 'Quiz não encontrado ou sem permissão' });
       }
 
@@ -347,38 +369,47 @@ export function setupWhatsAppAutomationRoutes(app: any) {
       const phoneMap = new Map();
       
       for (const response of responses) {
-        // Filtrar por data se especificado
-        if (dateFilter) {
-          const responseDate = new Date(response.submittedAt);
-          const filterDate = new Date(dateFilter);
-          if (responseDate < filterDate) continue;
-        }
+        try {
+          // Filtrar por data se especificado
+          if (dateFilter) {
+            const responseDate = new Date(response.submittedAt);
+            const filterDate = new Date(dateFilter);
+            if (responseDate < filterDate) continue;
+          }
 
-        const responseData = typeof response.data === 'string' 
-          ? JSON.parse(response.data) 
-          : response.data;
-        
-        // Buscar campos de telefone
-        const phoneFields = Object.entries(responseData).filter(([key, value]) => 
-          key.startsWith('telefone_') && value && typeof value === 'string'
-        );
-        
-        for (const [fieldId, phone] of phoneFields) {
-          const cleanPhone = (phone as string).replace(/\D/g, '');
-          if (cleanPhone.length >= 10) {
-            const status = response.metadata?.isComplete ? 'completed' : 'abandoned';
-            
-            if (!phoneMap.has(cleanPhone) || status === 'completed') {
-              phoneMap.set(cleanPhone, {
-                phone: cleanPhone,
-                fieldId: fieldId,
-                status: status,
-                completionPercentage: response.metadata?.completionPercentage || 0,
-                submittedAt: response.submittedAt,
-                responseData: responseData
-              });
+          const responseData = typeof response.data === 'string' 
+            ? JSON.parse(response.data) 
+            : response.data;
+          
+          // Buscar campos de telefone
+          const phoneFields = Object.entries(responseData || {}).filter(([key, value]) => 
+            key.startsWith('telefone_') && value && typeof value === 'string'
+          );
+          
+          for (const [fieldId, phone] of phoneFields) {
+            const cleanPhone = (phone as string).replace(/\D/g, '');
+            if (cleanPhone.length >= 10 && cleanPhone.length <= 15) {
+              // Determinar status mais robusto
+              let status = 'abandoned';
+              if (response.metadata?.isComplete === true || response.metadata?.completionPercentage === 100) {
+                status = 'completed';
+              }
+              
+              if (!phoneMap.has(cleanPhone) || status === 'completed') {
+                phoneMap.set(cleanPhone, {
+                  phone: cleanPhone,
+                  fieldId: fieldId,
+                  status: status,
+                  completionPercentage: response.metadata?.completionPercentage || 0,
+                  submittedAt: response.submittedAt,
+                  responseData: responseData || {}
+                });
+              }
             }
           }
+        } catch (error) {
+          console.error(`Erro ao processar response ${response.id}:`, error);
+          continue;
         }
       }
       

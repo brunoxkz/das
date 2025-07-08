@@ -247,7 +247,7 @@ async function handleWhatsAppReady() {
   startCommandProcessing();
 }
 
-// Processar telefones dos quizzes e agendar mensagens
+// Processar telefones dos quizzes com filtros avançados
 async function processQuizPhones() {
   if (!state.isConnected) {
     console.log('⚠️ WhatsApp não conectado, pulando processamento');
@@ -255,56 +255,112 @@ async function processQuizPhones() {
   }
   
   try {
-    console.log('🔄 Processando telefones dos quizzes...');
+    console.log('🔄 Processando telefones dos quizzes com filtros...');
     
-    // Processar cada quiz com campanhas ativas
-    for (const quiz of state.quizzes) {
-      const activeCampaignsForQuiz = state.activeCampaigns.filter(c => 
-        !c.quizId || c.quizId === quiz.id
-      );
-      
-      if (activeCampaignsForQuiz.length > 0 && quiz.phoneFilters.length > 0) {
-        console.log(`📱 Processando ${quiz.phoneFilters.length} telefones do quiz: ${quiz.title}`);
-        
-        // Processar cada telefone do quiz
-        for (const phoneData of quiz.phoneFilters) {
-          await scheduleMessageForPhone(phoneData, quiz, activeCampaignsForQuiz);
-        }
-      }
+    // Verificar se há configuração de campanha ativa
+    if (!config.selectedQuiz) {
+      console.log('⚠️ Nenhum quiz selecionado na extensão');
+      return;
     }
+    
+    // Solicitar dados do quiz com filtros
+    const quizData = await requestQuizDataFromPage(
+      config.selectedQuiz,
+      config.targetAudience || 'all',
+      config.dateFilter
+    );
+    
+    if (!quizData || !quizData.phones) {
+      console.log('⚠️ Nenhum telefone encontrado com os filtros aplicados');
+      return;
+    }
+    
+    console.log(`📱 ${quizData.phones.length} telefones filtrados para processamento`);
+    
+    // Aplicar filtro de data adicional na extensão
+    let filteredPhones = quizData.phones;
+    if (config.dateFilter) {
+      const filterDate = new Date(config.dateFilter);
+      filteredPhones = quizData.phones.filter(phone => {
+        const phoneDate = new Date(phone.submittedAt);
+        return phoneDate >= filterDate;
+      });
+      console.log(`📅 Filtro de data aplicado: ${filteredPhones.length} telefones após ${config.dateFilter}`);
+    }
+    
+    // Processar cada telefone filtrado
+    for (const phoneData of filteredPhones) {
+      await scheduleMessageForPhoneWithVariables(phoneData, quizData.quiz, quizData.variables);
+    }
+    
+    // Atualizar estatísticas
+    state.filteredPhoneCount = filteredPhones.length;
+    state.lastProcessing = Date.now();
     
   } catch (error) {
     console.error('❌ Erro ao processar telefones dos quizzes:', error);
   }
 }
 
-// Agendar mensagem para um telefone específico
-async function scheduleMessageForPhone(phoneData, quiz, campaigns) {
+// Agendar mensagem com substituição de variáveis
+async function scheduleMessageForPhoneWithVariables(phoneData, quiz, variables) {
   try {
-    // Filtrar campanhas baseadas no status do telefone
-    const relevantCampaigns = campaigns.filter(campaign => {
-      return campaign.targetAudience === 'all' || 
-             campaign.targetAudience === phoneData.status;
+    // Verificar se há mensagens configuradas
+    if (!config.messages || config.messages.length === 0) {
+      console.log('⚠️ Nenhuma mensagem configurada');
+      return;
+    }
+    
+    // Selecionar mensagem rotativa
+    const messageIndex = state.messagesSent % config.messages.length;
+    const rawMessage = config.messages[messageIndex];
+    
+    // Substituir variáveis na mensagem
+    let processedMessage = rawMessage;
+    
+    // Variáveis do quiz
+    Object.entries(variables).forEach(([key, value]) => {
+      const placeholder = `{${key}}`;
+      processedMessage = processedMessage.replace(new RegExp(placeholder, 'g'), value);
     });
     
-    for (const campaign of relevantCampaigns) {
-      // Criar comando de envio para o app
-      const command = {
-        id: generateCommandId(),
-        action: 'send_message',
-        contactId: phoneData.phone,
-        phone: phoneData.phone,
-        message: campaign.messages[0] || 'Mensagem padrão',
-        campaignId: campaign.id,
-        quizId: quiz.id,
-        scheduledAt: Date.now() + (Math.random() * 300000), // 0-5 minutos
-        status: 'pending',
-        createdAt: Date.now()
-      };
-      
-      // Enviar comando para o app
-      await sendCommandToApp(command);
-    }
+    // Variáveis específicas do telefone
+    const phoneVariables = {
+      telefone: phoneData.phone,
+      status: phoneData.status === 'completed' ? 'completo' : 'abandonado',
+      data_resposta: new Date(phoneData.submittedAt).toLocaleDateString(),
+      completacao_percentual: phoneData.completionPercentage || 0
+    };
+    
+    Object.entries(phoneVariables).forEach(([key, value]) => {
+      const placeholder = `{${key}}`;
+      processedMessage = processedMessage.replace(new RegExp(placeholder, 'g'), value);
+    });
+    
+    // Calcular delay com intervalo recomendado
+    const baseDelay = config.messageDelay || 5000; // 5 segundos padrão
+    const randomDelay = config.randomInterval ? Math.random() * baseDelay : 0;
+    const totalDelay = baseDelay + randomDelay;
+    
+    // Criar comando de envio
+    const command = {
+      id: generateCommandId(),
+      action: 'send_message',
+      contactId: phoneData.phone,
+      phone: phoneData.phone,
+      message: processedMessage,
+      originalMessage: rawMessage,
+      variables: { ...variables, ...phoneVariables },
+      quizId: quiz.id,
+      scheduledAt: Date.now() + totalDelay,
+      status: 'pending',
+      createdAt: Date.now()
+    };
+    
+    console.log(`📤 Agendando para ${phoneData.phone}: "${processedMessage.substring(0, 50)}..." (delay: ${Math.round(totalDelay/1000)}s)`);
+    
+    // Enviar comando para o app
+    await sendCommandToApp(command);
     
   } catch (error) {
     console.error('❌ Erro ao agendar mensagem:', error);

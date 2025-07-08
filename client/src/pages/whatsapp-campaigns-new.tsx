@@ -129,9 +129,10 @@ export default function WhatsAppCampaignsPage() {
       const response = await apiRequest(`/api/quiz-phones/${quizId}`);
       const phoneData = await response.json();
 
-      // Preparar dados para a extensão
+      // Preparar dados completos para a extensão
       const extensionData = {
         type: 'QUIZ_DATA_UPDATE',
+        timestamp: Date.now(),
         quiz: {
           id: quiz.id,
           title: quiz.title,
@@ -139,44 +140,49 @@ export default function WhatsAppCampaignsPage() {
           phoneFilters: phoneData.phones || [],
           responseCount: phoneData.total || 0,
           variables: {
+            nome: '{nome}',
+            telefone: '{telefone}',
             quiz_titulo: quiz.title,
             quiz_descricao: quiz.description,
             total_respostas: phoneData.total || 0,
-            data_atual: new Date().toLocaleDateString()
+            data_atual: new Date().toLocaleDateString(),
+            data_resposta: '{data_resposta}',
+            status: '{status}',
+            completacao_percentual: '{completacao_percentual}'
           }
         },
         filters: {
           completed: phoneData.phones?.filter(p => p.status === 'completed') || [],
           abandoned: phoneData.phones?.filter(p => p.status === 'abandoned') || [],
           all: phoneData.phones || []
+        },
+        recommendedConfig: {
+          interval: 5000, // 5 segundos recomendado
+          minInterval: 3000, // mínimo 3 segundos
+          maxInterval: 10000, // máximo 10 segundos
+          randomInterval: true,
+          workingHours: { start: '09:00', end: '18:00', enabled: true },
+          maxPerDay: 100
         }
       };
 
-      // Enviar para extensão via mensagem
-      if (window.chrome && window.chrome.runtime) {
-        window.chrome.runtime.sendMessage('your-extension-id', extensionData, (response) => {
-          if (response && response.success) {
-            toast({
-              title: "Dados enviados",
-              description: "Quiz enviado para a extensão WhatsApp com sucesso",
-            });
-          }
-        });
-      } else {
-        // Fallback: salvar no localStorage para a extensão ler
-        localStorage.setItem('vendzz_quiz_data', JSON.stringify(extensionData));
-        
-        toast({
-          title: "Dados preparados",
-          description: "Dados do quiz preparados para a extensão",
-        });
-      }
+      // Salvar no localStorage para a extensão ler
+      localStorage.setItem('vendzz_quiz_data', JSON.stringify(extensionData));
+      localStorage.setItem('vendzz_quiz_selected', quizId);
+      localStorage.setItem('vendzz_last_update', Date.now().toString());
+      
+      console.log('📤 Dados enviados para extensão:', extensionData);
+      
+      toast({
+        title: "Dados enviados",
+        description: `Quiz "${quiz.title}" enviado para a extensão com ${phoneData.total} telefones`,
+      });
 
     } catch (error) {
       console.error('Erro ao enviar dados:', error);
       toast({
         title: "Erro",
-        description: "Falha ao conectar com a extensão WhatsApp",
+        description: "Falha ao preparar dados para a extensão",
         variant: "destructive"
       });
     }
