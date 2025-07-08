@@ -1398,6 +1398,51 @@ export class SQLiteStorage implements IStorage {
       return 0;
     }
   }
+  // SECURITY METHODS FOR CHROME EXTENSION
+
+  // Get scheduled WhatsApp logs by user (SECURITY)
+  async getScheduledWhatsappLogsByUser(userId: string, currentTime: number): Promise<any[]> {
+    try {
+      const stmt = sqlite.prepare(`
+        SELECT wl.* FROM whatsapp_logs wl
+        INNER JOIN whatsapp_campaigns wc ON wl.campaign_id = wc.id
+        WHERE wl.status = 'scheduled' 
+        AND wl.scheduled_at <= ?
+        AND wc.user_id = ?
+        ORDER BY wl.scheduled_at ASC
+        LIMIT 100
+      `);
+      
+      return stmt.all(currentTime, userId);
+    } catch (error) {
+      console.error('❌ ERRO ao buscar logs WhatsApp por usuário:', error);
+      return [];
+    }
+  }
+
+  // Get WhatsApp log by ID (SECURITY)
+  async getWhatsappLogById(logId: string): Promise<any | null> {
+    try {
+      const stmt = sqlite.prepare('SELECT * FROM whatsapp_logs WHERE id = ?');
+      const result = stmt.get(logId);
+      return result || null;
+    } catch (error) {
+      console.error('❌ ERRO ao buscar log WhatsApp por ID:', error);
+      return null;
+    }
+  }
+
+  // Get WhatsApp campaign by ID (SECURITY)
+  async getWhatsappCampaignById(campaignId: string): Promise<any | null> {
+    try {
+      const stmt = sqlite.prepare('SELECT * FROM whatsapp_campaigns WHERE id = ?');
+      const result = stmt.get(campaignId);
+      return result || null;
+    } catch (error) {
+      console.error('❌ ERRO ao buscar campanha WhatsApp por ID:', error);
+      return null;
+    }
+  }
 }
 
 export const storage = new SQLiteStorage();

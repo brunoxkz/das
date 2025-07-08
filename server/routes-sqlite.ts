@@ -2181,15 +2181,32 @@ app.delete("/api/whatsapp-campaigns/:id", verifyJWT, async (req: any, res: Respo
 // WHATSAPP EXTENSION ROUTES
 // =============================================
 
-// Get extension status
+// Get extension status (with user authentication)
 app.get("/api/whatsapp-extension/status", verifyJWT, async (req: any, res: Response) => {
   try {
+    const userId = req.user.id;
+    const userEmail = req.user.email;
+    
+    // Verificar se usuário tem permissão para usar extensão WhatsApp
+    const user = await storage.getUser(userId);
+    if (!user) {
+      return res.status(403).json({ error: 'Usuário não encontrado' });
+    }
+
+    // Log de acesso da extensão
+    console.log(`🔐 EXTENSÃO AUTENTICADA: ${userEmail} (${userId})`);
+
     res.json({
       connected: true,
       version: "1.0.0",
       lastPing: new Date().toISOString(),
       pendingMessages: 0,
-      server: "Vendzz WhatsApp API"
+      server: "Vendzz WhatsApp API",
+      authenticatedUser: {
+        id: userId,
+        email: userEmail,
+        role: user.role
+      }
     });
   } catch (error) {
     console.error('❌ ERRO status extensão:', error);
@@ -2215,13 +2232,15 @@ app.post("/api/whatsapp-extension/status", verifyJWT, async (req: any, res: Resp
   }
 });
 
-// Get pending messages for extension
+// Get pending messages for extension (only user's campaigns)
 app.get("/api/whatsapp-extension/pending", verifyJWT, async (req: any, res: Response) => {
   try {
+    const userId = req.user.id;
+    const userEmail = req.user.email;
     const currentTime = Math.floor(Date.now() / 1000);
     
-    // Buscar mensagens WhatsApp agendadas que devem ser enviadas agora
-    const scheduledLogs = await storage.getScheduledWhatsappLogs(currentTime);
+    // Buscar apenas mensagens WhatsApp do usuário autenticado
+    const scheduledLogs = await storage.getScheduledWhatsappLogsByUser(userId, currentTime);
     
     // Formatar para a extensão
     const pendingMessages = scheduledLogs.map(log => ({
@@ -2230,10 +2249,11 @@ app.get("/api/whatsapp-extension/pending", verifyJWT, async (req: any, res: Resp
       message: log.message,
       campaignId: log.campaign_id,
       scheduledAt: log.scheduled_at,
-      createdAt: log.created_at
+      createdAt: log.created_at,
+      userId: userId // Confirmar propriedade
     }));
 
-    console.log(`📤 MENSAGENS PENDENTES PARA EXTENSÃO: ${pendingMessages.length}`);
+    console.log(`📤 MENSAGENS PENDENTES PARA ${userEmail}: ${pendingMessages.length}`);
     res.json(pendingMessages);
   } catch (error) {
     console.error('❌ ERRO mensagens pendentes:', error);
@@ -2241,23 +2261,38 @@ app.get("/api/whatsapp-extension/pending", verifyJWT, async (req: any, res: Resp
   }
 });
 
-// Receive logs from extension
+// Receive logs from extension (with ownership verification)
 app.post("/api/whatsapp-extension/logs", verifyJWT, async (req: any, res: Response) => {
   try {
+    const userId = req.user.id;
+    const userEmail = req.user.email;
     const { logId, status, phone, error: errorMsg, timestamp } = req.body;
     
     if (!logId || !status) {
       return res.status(400).json({ error: 'LogId e status são obrigatórios' });
     }
 
+    // Verificar se o log pertence ao usuário autenticado
+    const log = await storage.getWhatsappLogById(logId);
+    if (!log) {
+      return res.status(404).json({ error: 'Log não encontrado' });
+    }
+
+    // Verificar se a campanha pertence ao usuário
+    const campaign = await storage.getWhatsappCampaignById(log.campaign_id);
+    if (!campaign || campaign.userId !== userId) {
+      return res.status(403).json({ error: 'Acesso negado: log não pertence ao usuário' });
+    }
+
     // Atualizar status do log no banco
     await storage.updateWhatsappLogStatus(logId, status, 'extension', errorMsg);
     
-    console.log(`📊 LOG EXTENSÃO: ${phone} - ${status} ${errorMsg ? `(${errorMsg})` : ''}`);
+    console.log(`📊 LOG EXTENSÃO ${userEmail}: ${phone} - ${status} ${errorMsg ? `(${errorMsg})` : ''}`);
     
     res.json({
       success: true,
-      message: 'Log recebido com sucesso'
+      message: 'Log recebido com sucesso',
+      userId: userId
     });
   } catch (error) {
     console.error('❌ ERRO log extensão:', error);

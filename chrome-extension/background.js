@@ -4,7 +4,9 @@ console.log('🚀 Vendzz WhatsApp Extension iniciada');
 // Configuração da extensão
 let config = {
   serverUrl: 'http://localhost:5000',
-  token: null,
+  token: null, // JWT token do usuário autenticado
+  userId: null, // ID do usuário para validação
+  userEmail: null, // Email para logs de segurança
   isConnected: false,
   lastPing: null,
   version: '1.0.0'
@@ -32,25 +34,49 @@ function saveConfig() {
   chrome.storage.local.set({ vendzz_config: config });
 }
 
-// Função para fazer requisições à API
+// Função para fazer requisições à API com autenticação segura
 async function apiRequest(endpoint, options = {}) {
   try {
+    // Verificar se token está configurado
+    if (!config.token) {
+      throw new Error('Token de autenticação não configurado');
+    }
+
     const url = `${config.serverUrl}${endpoint}`;
     const headers = {
       'Content-Type': 'application/json',
-      ...(config.token && { 'Authorization': `Bearer ${config.token}` })
+      'Authorization': `Bearer ${config.token}`,
+      ...options.headers
     };
+
+    console.log(`📡 Requisição (${config.userEmail || 'não-autenticado'}): ${options.method || 'GET'} ${endpoint}`);
 
     const response = await fetch(url, {
       ...options,
-      headers: { ...headers, ...options.headers }
+      headers
     });
+
+    if (response.status === 401) {
+      console.error('❌ Token expirado ou inválido');
+      config.isConnected = false;
+      throw new Error('Token de autenticação inválido ou expirado');
+    }
 
     if (!response.ok) {
       throw new Error(`HTTP ${response.status}: ${response.statusText}`);
     }
 
-    return await response.json();
+    const data = await response.json();
+    
+    // Armazenar informações do usuário autenticado na primeira conexão
+    if (data.authenticatedUser && !config.userId) {
+      config.userId = data.authenticatedUser.id;
+      config.userEmail = data.authenticatedUser.email;
+      console.log(`🔐 Usuário autenticado: ${config.userEmail} (${config.userId})`);
+      await saveConfig();
+    }
+
+    return data;
   } catch (error) {
     console.error('❌ Erro na API:', error);
     throw error;

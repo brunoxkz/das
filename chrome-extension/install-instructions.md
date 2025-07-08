@@ -52,18 +52,28 @@ Os arquivos da extensão já estão prontos na pasta `chrome-extension/`:
 2. Uma janela popup será aberta
 ```
 
-#### Passo 2: Configurar Servidor
+#### Passo 2: Obter Token de Autenticação
+```
+1. Acesse o sistema Vendzz: http://localhost:5000
+2. Faça login com suas credenciais
+3. Abra o Console do navegador (F12)
+4. Digite: localStorage.getItem('token')
+5. Copie o token (texto longo começando com "ey...")
+```
+
+#### Passo 3: Configurar Extensão
 ```
 1. URL do Servidor: http://localhost:5000
-2. Token de Acesso: [Seu token JWT do sistema Vendzz]
+2. Token de Acesso: [Cole o token copiado do passo anterior]
 3. Clique em "💾 Salvar Configuração"
 ```
 
-#### Passo 3: Testar Conexão
+#### Passo 4: Testar Conexão
 ```
 1. Clique em "🔌 Testar Conexão"
 2. Status deve mostrar "Conectado" (verde)
-3. Se aparecer erro, verifique URL e token
+3. Deve aparecer seu email e ID do usuário
+4. Se aparecer erro, verifique URL e token
 ```
 
 ### 4. Configurar WhatsApp Web
