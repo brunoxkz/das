@@ -565,6 +565,14 @@ Changelog:
   * Interface responsiva e moderna seguindo design Vendzz com cores e tipografia consistentes
   * Servidor reiniciado e campanhas criadas via API funcionando corretamente no frontend
   * Sistema 100% funcional: sidebar aparece automaticamente no WhatsApp Web, controles respondem imediatamente
+- July 08, 2025. FRONTEND CAMPANHAS WHATSAPP CORRIGIDO - Resolved critical bug preventing campaigns from displaying:
+  * Fixed authentication issue in WhatsApp campaigns page - added JWT token to fetch requests
+  * Replaced mock data with real API data from SQLite database via proper authentication
+  * Added loading states and error handling for better user experience
+  * Campaigns now display correctly showing 6 active campaigns with real data
+  * Enhanced UI with loading spinners and empty state messages
+  * All campaign data (name, status, stats, quiz title) now loaded from actual database
+  * System fully operational: frontend displays real campaigns, sidebar ready for WhatsApp Web deployment
 ```
 
 ## User Preferences

@@ -130,9 +130,20 @@ export default function WhatsAppCampaignsPage() {
     refetchInterval: autoRefresh ? 10000 : false,
   });
 
-  // Buscar campanhas WhatsApp
-  const { data: campaigns = [], refetch: refetchCampaigns } = useQuery({
+  // Buscar campanhas WhatsApp usando fetch com token
+  const { data: campaigns = [], refetch: refetchCampaigns, isLoading: campaignsLoading } = useQuery({
     queryKey: ['/api/whatsapp-campaigns'],
+    queryFn: async () => {
+      const token = localStorage.getItem("accessToken");
+      const response = await fetch("/api/whatsapp-campaigns", {
+        headers: {
+          "Authorization": `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      });
+      if (!response.ok) throw new Error("Failed to fetch campaigns");
+      return response.json();
+    },
     refetchInterval: autoRefresh ? 30000 : false,
   });
 
@@ -633,7 +644,12 @@ export default function WhatsAppCampaignsPage() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              {campaigns.length > 0 ? (
+              {campaignsLoading ? (
+                <div className="text-center py-8">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+                  <p className="mt-2 text-sm text-gray-600">Carregando campanhas...</p>
+                </div>
+              ) : campaigns.length > 0 ? (
                 <div className="space-y-4">
                   {campaigns.map((campaign) => (
                     <div key={campaign.id} className="border rounded-lg p-4">
