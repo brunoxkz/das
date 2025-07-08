@@ -2158,6 +2158,7 @@ app.post("/api/whatsapp-automation-file", verifyJWT, async (req: any, res: Respo
     await storage.saveAutomationFile(automationFile);
     
     console.log(`✅ ARQUIVO CRIADO: ${finalPhones.length} telefones processados`);
+    console.log(`📱 SAMPLE FINAL PHONE:`, finalPhones[0] ? JSON.stringify(finalPhones[0], null, 2) : 'No phones');
     
     res.json({
       success: true,
@@ -2201,7 +2202,13 @@ app.get("/api/whatsapp-automation-files/:fileId", verifyJWT, async (req: any, re
     
     console.log(`📄 ARQUIVO ENCONTRADO: ${fileId}, ${file.total_phones} contatos`);
     
-    res.json(file);
+    // Transformar phones em contacts para compatibilidade com frontend
+    const responseData = {
+      ...file,
+      contacts: file.phones || []
+    };
+    
+    res.json(responseData);
   } catch (error) {
     console.error("Error fetching automation file:", error);
     res.status(500).json({ error: "Error fetching automation file" });
