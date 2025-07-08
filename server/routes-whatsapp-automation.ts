@@ -349,7 +349,88 @@ export function setupWhatsAppAutomationRoutes(app: any) {
     }
   });
 
-  // Endpoint para extensão solicitar dados de quiz específico
+  // NOVO ENDPOINT FUNCIONAL para extensão (substitui o anterior)
+  app.post("/api/extension/quiz-data", verifyJWT, async (req: any, res: Response) => {
+    try {
+      const userId = req.user.id;
+      const { quizId, targetAudience = 'all', dateFilter = null } = req.body;
+
+      console.log(`📋 [${req.user.email}] NOVO endpoint - dados do quiz ${quizId}`);
+
+      // Verificar propriedade do quiz
+      const userQuizzes = await storage.getQuizzesByUserId(userId);
+      const quiz = userQuizzes.find(q => q.id === quizId);
+      if (!quiz) {
+        return res.status(403).json({ error: 'Quiz não encontrado' });
+      }
+
+      // Buscar telefones usando lógica simplificada e funcional
+      const responses = await storage.getQuizResponses(quizId);
+      const phoneData = [];
+      
+      for (const response of responses) {
+        if (!response?.data) continue;
+        
+        try {
+          const data = typeof response.data === 'string' ? JSON.parse(response.data) : response.data;
+          
+          // Filtro de data
+          if (dateFilter) {
+            const responseDate = new Date(response.submittedAt);
+            const filterDate = new Date(dateFilter);
+            if (responseDate < filterDate) continue;
+          }
+          
+          // Extrair telefones
+          Object.entries(data || {}).forEach(([key, value]) => {
+            if (key.startsWith('telefone_') && value && typeof value === 'string') {
+              const phone = value.replace(/\D/g, '');
+              if (phone.length >= 10 && phone.length <= 15) {
+                const status = response.metadata?.isComplete ? 'completed' : 'abandoned';
+                phoneData.push({
+                  phone,
+                  status,
+                  completionPercentage: response.metadata?.completionPercentage || 0,
+                  submittedAt: response.submittedAt
+                });
+              }
+            }
+          });
+        } catch (e) {
+          continue;
+        }
+      }
+      
+      // Filtrar por audiência
+      const filteredPhones = targetAudience === 'all' 
+        ? phoneData 
+        : phoneData.filter(p => p.status === targetAudience);
+      
+      const result = {
+        success: true,
+        quiz: { id: quiz.id, title: quiz.title, description: quiz.description },
+        phones: filteredPhones,
+        total: filteredPhones.length,
+        variables: {
+          nome: '{nome}',
+          telefone: '{telefone}',
+          quiz_titulo: quiz.title,
+          status: '{status}',
+          data_resposta: '{data_resposta}'
+        },
+        filters: { targetAudience, dateFilter }
+      };
+      
+      console.log(`✅ SUCESSO: ${result.total} telefones`);
+      res.json(result);
+      
+    } catch (error) {
+      console.error('❌ Erro no novo endpoint:', error);
+      res.status(500).json({ success: false, error: 'Erro interno' });
+    }
+  });
+
+  // Endpoint para extensão solicitar dados de quiz específico (CORRIGIDO)
   app.post("/api/whatsapp/extension-quiz-data", verifyJWT, async (req: any, res: Response) => {
     try {
       const userId = req.user.id;
@@ -452,9 +533,10 @@ export function setupWhatsAppAutomationRoutes(app: any) {
       const { quizId } = req.body;
       const userId = req.user.id;
 
-      // Verificar se quiz existe
-      const quiz = await storage.getQuizById(quizId);
-      if (!quiz || quiz.userId !== userId) {
+      // Verificar se quiz existe e pertence ao usuário
+      const userQuizzes = await storage.getQuizzesByUserId(userId);
+      const quiz = userQuizzes.find(q => q.id === quizId);
+      if (!quiz) {
         return res.status(404).json({ error: 'Quiz não encontrado' });
       }
 
