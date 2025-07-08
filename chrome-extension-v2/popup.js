@@ -6,6 +6,7 @@ const connectionStatus = document.getElementById('connection-status');
 const whatsappStatus = document.getElementById('whatsapp-status');
 const filesStatus = document.getElementById('files-status');
 const openWhatsappBtn = document.getElementById('open-whatsapp');
+const injectSidebarBtn = document.getElementById('inject-sidebar');
 const refreshDataBtn = document.getElementById('refresh-data');
 const tokenInput = document.getElementById('token-input');
 const toggleTokenBtn = document.getElementById('toggle-token');
@@ -206,8 +207,42 @@ async function loadCurrentToken() {
   }
 }
 
+// Forçar injeção da sidebar
+async function injectSidebar() {
+  try {
+    injectSidebarBtn.textContent = 'Injetando...';
+    injectSidebarBtn.disabled = true;
+    
+    const tabs = await chrome.tabs.query({ url: "https://web.whatsapp.com/*" });
+    console.log('🔧 Encontradas', tabs.length, 'abas do WhatsApp');
+    
+    if (tabs.length === 0) {
+      alert('Nenhuma aba do WhatsApp Web encontrada!\nAbra o WhatsApp Web primeiro.');
+      return;
+    }
+    
+    for (const tab of tabs) {
+      try {
+        await chrome.tabs.sendMessage(tab.id, { action: 'force_sidebar' });
+        console.log('✅ Comando enviado para aba:', tab.id);
+      } catch (e) {
+        console.log('⚠️ Erro ao enviar comando para aba:', tab.id, e);
+      }
+    }
+    
+    alert(`Comando de injeção enviado para ${tabs.length} aba(s)!\nAguarde 3-8 segundos para a sidebar aparecer.`);
+  } catch (error) {
+    console.error('❌ Erro ao injetar sidebar:', error);
+    alert('Erro ao injetar sidebar: ' + error.message);
+  } finally {
+    injectSidebarBtn.textContent = '🚀 Forçar Sidebar';
+    injectSidebarBtn.disabled = false;
+  }
+}
+
 // Event listeners
 openWhatsappBtn.addEventListener('click', openWhatsApp);
+injectSidebarBtn.addEventListener('click', injectSidebar);
 refreshDataBtn.addEventListener('click', refreshData);
 saveTokenBtn.addEventListener('click', saveToken);
 toggleTokenBtn.addEventListener('click', toggleTokenVisibility);

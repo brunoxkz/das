@@ -616,13 +616,7 @@ async function init() {
 
 // ==================== SISTEMA DE AUTOMAÇÃO DE MENSAGENS ====================
 
-// Configuração global da automação com sistema anti-ban
-let automationConfig = {
-  dateFilter: null,
-  enableCompleted: true,
-  enableAbandoned: false,
-  completedMessages: [],
-  abandonedMessages: [],
+// Usar a configuração global da automação já declarada acima
   messageDelay: 25000, // 25 segundos base
   randomDelayRange: 15000, // +/- 15 segundos aleatórios
   dailyLimit: 50,

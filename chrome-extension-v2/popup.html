@@ -6,8 +6,8 @@
   <title>Vendzz WhatsApp Automation</title>
   <style>
     body {
-      width: 350px;
-      min-height: 400px;
+      width: 420px;
+      min-height: 500px;
       margin: 0;
       padding: 0;
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -58,21 +58,21 @@
     }
 
     .section-title {
-      font-size: 13px;
+      font-size: 15px;
       font-weight: 600;
       color: #00ff88;
       margin-bottom: 12px;
       display: flex;
       align-items: center;
-      gap: 6px;
+      gap: 8px;
     }
 
     .status-item {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: 8px;
-      font-size: 12px;
+      margin-bottom: 10px;
+      font-size: 14px;
     }
 
     .status-label {
@@ -94,14 +94,14 @@
     .btn {
       background: linear-gradient(135deg, #00ff88 0%, #00cc6a 100%);
       border: none;
-      border-radius: 4px;
+      border-radius: 6px;
       color: #000000;
       cursor: pointer;
-      font-size: 12px;
+      font-size: 14px;
       font-weight: 600;
-      padding: 10px 16px;
+      padding: 12px 20px;
       width: 100%;
-      margin-bottom: 8px;
+      margin-bottom: 10px;
       transition: all 0.2s ease;
       text-transform: uppercase;
     }
@@ -175,12 +175,13 @@
     }
 
     .btn-small {
-      padding: 4px 8px;
-      font-size: 12px;
-      background: #f0f0f0;
-      border: 1px solid #ddd;
+      padding: 6px 12px;
+      font-size: 14px;
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.3);
       cursor: pointer;
-      border-radius: 4px;
+      border-radius: 6px;
+      color: #ffffff;
     }
 
     .btn-small:hover {
@@ -206,11 +207,13 @@
 
     #token-input {
       flex: 1;
-      padding: 8px;
-      border: 1px solid #ddd;
-      border-radius: 4px;
-      font-size: 12px;
+      padding: 10px;
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      border-radius: 6px;
+      font-size: 13px;
       font-family: monospace;
+      background: rgba(255, 255, 255, 0.05);
+      color: #ffffff;
     }
 
     #token-input:focus {
@@ -260,6 +263,7 @@
     <div class="section">
       <div class="section-title">🎯 Ações</div>
       <button class="btn" id="open-whatsapp">Abrir WhatsApp Web</button>
+      <button class="btn btn-secondary" id="inject-sidebar">🚀 Forçar Sidebar</button>
       <button class="btn btn-secondary" id="refresh-data">Atualizar Dados</button>
     </div>
 
