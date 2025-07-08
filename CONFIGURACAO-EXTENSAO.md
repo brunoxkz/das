@@ -24,10 +24,23 @@ A Chrome Extension v2.0 já está configurada e pronta para uso!
 
 ## 3️⃣ Obter o Token de Acesso
 
+**PASSO A PASSO DETALHADO:**
+
 1. Na aplicação web, faça login (admin@vendzz.com / admin123)
-2. Abra as ferramentas do desenvolvedor (F12)
-3. Vá na aba "Application" > "Local Storage"
-4. Copie o valor de `access_token`
+2. Pressione **F12** para abrir ferramentas do desenvolvedor
+3. Clique na aba **"Application"** (ou "Aplicação")
+4. No painel esquerdo, expanda **"Local Storage"** 
+5. Clique na URL do seu site (ex: https://seusite.replit.dev)
+6. Procure pela chave **"access_token"**
+7. **Copie o valor** (uma string longa começando com "eyJ...")
+
+**Exemplo do que você vai ver:**
+```
+Key: access_token
+Value: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6Ikt...
+```
+
+**IMPORTANTE:** Copie APENAS o valor (a string longa), não a palavra "access_token"
 
 ## 4️⃣ Configurar a Extensão
 
@@ -54,10 +67,23 @@ A Chrome Extension v2.0 já está configurada e pronta para uso!
 
 ## 📱 Como Funciona
 
-1. **Você gera um arquivo** → Sistema extrai telefones do quiz
-2. **Extensão detecta** → Busca novos arquivos automaticamente  
-3. **WhatsApp Web** → Sidebar mostra lista de contatos
-4. **Você visualiza** → Contatos organizados por status
+### 🔐 **Autenticação com Token:**
+- O token do localStorage identifica você no sistema
+- A extensão usa esse token para fazer requisições autenticadas 
+- Sem o token, a extensão não consegue acessar seus dados
+
+### 🗂️ **Acesso aos Arquivos:**
+1. **Você gera um arquivo** → Sistema extrai telefones do quiz e salva no banco
+2. **Extensão autentica** → Usa o token para se conectar à API
+3. **API retorna dados** → Apenas seus arquivos (filtrados por usuário)
+4. **Sidebar atualiza** → Mostra lista de contatos em tempo real
+
+### 📊 **Endpoints que a extensão usa:**
+- `GET /api/whatsapp-automation/files` - Lista seus arquivos de automação
+- `GET /api/whatsapp-automation/file-contacts/ID` - Busca contatos de um arquivo específico  
+- `GET /api/whatsapp-extension/status` - Verifica se está conectado
+
+**IMPORTANTE:** Cada usuário só vê seus próprios arquivos graças ao token de autenticação!
 
 ## ⚠️ Importante
 
