@@ -1319,7 +1319,7 @@ export class SQLiteStorage implements IStorage {
     const stmt = sqlite.prepare(`
       SELECT responses, metadata
       FROM quiz_responses
-      WHERE quiz_id = ?
+      WHERE quizId = ?
       AND (
         (metadata->>'isComplete' = 'true') OR 
         (metadata->>'completionPercentage' = '100') OR

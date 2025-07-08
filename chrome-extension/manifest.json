@@ -21,8 +21,14 @@
   "content_scripts": [
     {
       "matches": ["https://web.whatsapp.com/*"],
-      "js": ["content.js"],
+      "js": ["content.js", "sidebar-content.js"],
       "run_at": "document_end"
+    }
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": ["sidebar.html", "sidebar.js"],
+      "matches": ["https://web.whatsapp.com/*"]
     }
   ],
   "action": {
