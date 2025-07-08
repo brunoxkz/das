@@ -554,6 +554,15 @@ Changelog:
   * Demonstração prática confirma que sistema está 100% operacional para uso real com Chrome Extension
   * Infraestrutura robusta suportando múltiplas operações simultâneas com performance sub-200ms
   * Fluxo completo validado: Quiz Response → Lead Detection → Campaign Activation → Extension Sync → Message Delivery → Status Logging
+- July 08, 2025. ARQUITETURA CORRIGIDA PÁGINA-EXTENSÃO - Sistema de comunicação direta implementado:
+  * Corrigida arquitetura: página campanhas WhatsApp envia dados dos quizzes diretamente para a extensão Chrome
+  * Criada nova página whatsapp-campaigns-new.tsx com wizard completo de configuração (quiz, audiência, mensagens, agendamento)
+  * Implementado endpoint /api/whatsapp/extension-quiz-data para extensão solicitar dados específicos de quiz
+  * Extensão recebe: quiz selecionado, lista de telefones filtrada (completed/abandoned/all), variáveis, configurações de envio
+  * Sistema funciona como especificado: página web → dados para extensão → extensão agenda mensagens → WhatsApp Web executa
+  * Interface da extensão atualizada com controles para seleção de quiz, filtros de audiência e data
+  * Novo fluxo: Seleção de Quiz na Página → Envio de Dados → Configuração na Extensão → Agendamento de Mensagens → Execução no WhatsApp
+  * Comunicação bidirecional: página envia configurações, extensão solicita dados específicos e reporta status
 - July 08, 2025. NOVA ARQUITETURA WHATSAPP WEB.JS COMPLETA - Sistema de identificação automática de quizzes e telefones implementado:
   * Extensão agora identifica automaticamente TODOS os quizzes do usuário via endpoint /api/extension/sync
   * Sistema extrai telefones filtrados por quiz com segmentação (completed/abandoned) e estatísticas detalhadas

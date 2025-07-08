@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Vendzz WhatsApp Sidebar</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      font-size: 12px;
+      line-height: 1.4;
+      color: #333;
+      background: linear-gradient(135deg, #0a4d3e 0%, #16a085 100%);
+    }
+
+    .vendzz-sidebar {
+      position: fixed;
+      top: 0;
+      right: 0;
+      width: 320px;
+      height: 100vh;
+      background: white;
+      box-shadow: -2px 0 10px rgba(0,0,0,0.1);
+      z-index: 999999;
+      display: flex;
+      flex-direction: column;
+      border-left: 3px solid #16a085;
+    }
+
+    .vendzz-sidebar.minimized {
+      width: 60px;
+    }
+
+    .vendzz-sidebar.minimized .sidebar-content {
+      display: none;
+    }
+
+    .vendzz-sidebar.minimized::before {
+      content: "📱";
+      position: absolute;
+      top: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 24px;
+      cursor: pointer;
+    }
+
+    .sidebar-content {
+      padding: 15px;
+      overflow-y: auto;
+      flex: 1;
+    }
+
+    .sidebar-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 15px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid #e0e0e0;
+    }
+
+    .sidebar-header h3 {
+      color: #16a085;
+      font-size: 16px;
+      font-weight: 600;
+    }
+
+    .header-controls {
+      display: flex;
+      gap: 5px;
+    }
+
+    .control-btn {
+      background: none;
+      border: none;
+      font-size: 16px;
+      cursor: pointer;
+      padding: 5px;
+      border-radius: 4px;
+      transition: background-color 0.2s;
+    }
+
+    .control-btn:hover {
+      background-color: #f0f0f0;
+    }
+
+    .status-section, .quiz-selection-section, .stats-section, .actions-section, .logs-section {
+      margin-bottom: 15px;
+    }
+
+    .status-section h4, .quiz-selection-section h4, .stats-section h4, .logs-section h4 {
+      font-size: 13px;
+      font-weight: 600;
+      color: #555;
+      margin-bottom: 8px;
+    }
+
+    .status-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 4px 0;
+      font-size: 11px;
+    }
+
+    .status-label {
+      color: #666;
+    }
+
+    .status-value {
+      font-weight: 500;
+      color: #333;
+    }
+
+    /* Quiz Selection Styles */
+    .input-group {
+      margin-bottom: 10px;
+    }
+
+    .input-group label {
+      display: block;
+      font-size: 11px;
+      font-weight: 500;
+      color: #555;
+      margin-bottom: 4px;
+    }
+
+    .form-select, .form-input {
+      width: 100%;
+      padding: 6px 8px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      font-size: 11px;
+      background: white;
+    }
+
+    .form-select:focus, .form-input:focus {
+      outline: none;
+      border-color: #16a085;
+      box-shadow: 0 0 0 2px rgba(22, 160, 133, 0.1);
+    }
+
+    .phone-count {
+      font-size: 11px;
+      color: #16a085;
+      font-weight: 500;
+      padding: 4px 8px;
+      background: #f0f9ff;
+      border-radius: 4px;
+      display: inline-block;
+    }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+    }
+
+    .stat-item {
+      text-align: center;
+      padding: 8px 4px;
+      background: #f8f9fa;
+      border-radius: 6px;
+      border: 1px solid #e9ecef;
+    }
+
+    .stat-number {
+      display: block;
+      font-size: 14px;
+      font-weight: 600;
+      color: #16a085;
+    }
+
+    .stat-label {
+      font-size: 10px;
+      color: #666;
+      margin-top: 2px;
+    }
+
+    .action-btn {
+      width: 100%;
+      padding: 8px 12px;
+      border: none;
+      border-radius: 6px;
+      font-size: 11px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+      margin-bottom: 6px;
+    }
+
+    .action-btn.primary {
+      background: #16a085;
+      color: white;
+    }
+
+    .action-btn.primary:hover {
+      background: #138d75;
+    }
+
+    .action-btn.secondary {
+      background: #f8f9fa;
+      color: #495057;
+      border: 1px solid #e9ecef;
+    }
+
+    .action-btn.secondary:hover {
+      background: #e9ecef;
+    }
+
+    .logs-list {
+      max-height: 120px;
+      overflow-y: auto;
+      background: #f8f9fa;
+      border-radius: 6px;
+      padding: 8px;
+    }
+
+    .log-item {
+      font-size: 10px;
+      padding: 3px 6px;
+      margin-bottom: 2px;
+      border-radius: 3px;
+      border-left: 3px solid;
+    }
+
+    .log-item.info {
+      background: #e7f3ff;
+      border-left-color: #0969da;
+      color: #0969da;
+    }
+
+    .log-item.success {
+      background: #dafbe1;
+      border-left-color: #1a7f37;
+      color: #1a7f37;
+    }
+
+    .log-item.error {
+      background: #ffebe9;
+      border-left-color: #cf222e;
+      color: #cf222e;
+    }
+
+    .log-item.warning {
+      background: #fff8c5;
+      border-left-color: #bf8700;
+      color: #bf8700;
+    }
+
+    /* Scrollbar */
+    ::-webkit-scrollbar {
+      width: 4px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: #f1f1f1;
+      border-radius: 2px;
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: #c1c1c1;
+      border-radius: 2px;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+      background: #a8a8a8;
+    }
+  </style>
+</head>
+<body>
+  <div id="vendzzSidebar" class="vendzz-sidebar">
+    <div class="sidebar-content">
+      <div class="sidebar-header">
+        <h3>🚀 Vendzz WhatsApp</h3>
+        <div class="header-controls">
+          <button id="pauseBtn" class="control-btn" title="Pausar/Retomar">⏸️</button>
+          <button id="minimizeBtn" class="control-btn" title="Minimizar">📐</button>
+        </div>
+      </div>
+      
+      <div class="status-section">
+        <div class="status-item">
+          <span class="status-label">Status:</span>
+          <span id="connectionStatus" class="status-value">Conectando...</span>
+        </div>
+        <div class="status-item">
+          <span class="status-label">Quizzes:</span>
+          <span id="quizzesCount" class="status-value">0</span>
+        </div>
+        <div class="status-item">
+          <span class="status-label">Campanhas:</span>
+          <span id="campaignsCount" class="status-value">0</span>
+        </div>
+      </div>
+      
+      <!-- Seleção de Quiz e Filtros -->
+      <div class="quiz-selection-section">
+        <h4>📋 Configuração da Extensão</h4>
+        
+        <div class="input-group">
+          <label for="quizSelect">Quiz Selecionado:</label>
+          <select id="quizSelect" class="form-select">
+            <option value="">Aguardando dados da página...</option>
+          </select>
+        </div>
+        
+        <div class="input-group">
+          <label for="audienceSelect">Público Alvo:</label>
+          <select id="audienceSelect" class="form-select">
+            <option value="all">Todos os Leads</option>
+            <option value="completed">Quiz Completo</option>
+            <option value="abandoned">Quiz Abandonado</option>
+          </select>
+        </div>
+        
+        <div class="input-group">
+          <label for="dateFilter">Filtro de Data:</label>
+          <input type="date" id="dateFilter" class="form-input" title="Leads a partir desta data">
+        </div>
+        
+        <div class="input-group">
+          <label>Telefones Filtrados:</label>
+          <span id="filteredPhoneCount" class="phone-count">0 selecionados</span>
+        </div>
+      </div>
+      
+      <div class="stats-section">
+        <h4>📊 Estatísticas de Envio</h4>
+        <div class="stats-grid">
+          <div class="stat-item">
+            <span class="stat-number" id="messagesSent">0</span>
+            <span class="stat-label">Enviadas</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-number" id="messagesDelivered">0</span>
+            <span class="stat-label">Entregues</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-number" id="phoneCount">0</span>
+            <span class="stat-label">Telefones</span>
+          </div>
+        </div>
+      </div>
+      
+      <div class="actions-section">
+        <button id="openPanelBtn" class="action-btn primary">
+          🔧 Abrir Painel Vendzz
+        </button>
+        <button id="refreshSyncBtn" class="action-btn secondary">
+          🔄 Sincronizar Dados
+        </button>
+      </div>
+      
+      <div class="logs-section">
+        <h4>📋 Logs de Atividade</h4>
+        <div id="logsList" class="logs-list">
+          <div class="log-item info">Extensão WhatsApp iniciada</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="sidebar.js"></script>
+</body>
+</html>

@@ -22,7 +22,7 @@ import QuizPublicPage from "@/pages/quiz-public";
 import SMSCreditsPage from "@/pages/sms-credits";
 import EmailMarketingPage from "@/pages/email-marketing";
 import WhatsAppRemarketingPage from "@/pages/whatsapp-remarketing";
-import WhatsAppCampaignsPage from "@/pages/whatsapp-campaigns";
+import WhatsAppCampaignsPage from "@/pages/whatsapp-campaigns-new";
 import CloakerPage from "@/pages/cloaker";
 import TesteSMSPage from "@/pages/teste-sms";
 import { useAuth } from "@/hooks/use-auth-hybrid";

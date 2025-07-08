@@ -349,11 +349,57 @@ async function sendCommandToApp(command) {
   }
 }
 
-// Sincronizar dados completos do app (quiz ativo + comandos + campanhas)
-async function syncWithApp() {
-  if (!config.token) return { commands: [], activeQuiz: null, campaigns: [] };
+// Receber dados de quiz específico da página web
+async function requestQuizDataFromPage(quizId, targetAudience = 'all', dateFilter = null) {
+  if (!config.token) return null;
   
   try {
+    console.log(`📋 Solicitando dados do quiz ${quizId} para a página web`);
+    
+    const response = await fetch(`${config.serverUrl}/api/whatsapp/extension-quiz-data`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${config.token}`
+      },
+      body: JSON.stringify({
+        quizId: quizId,
+        targetAudience: targetAudience,
+        dateFilter: dateFilter
+      })
+    });
+    
+    if (response.ok) {
+      const result = await response.json();
+      
+      console.log(`📱 Recebidos ${result.total} telefones do quiz: ${result.quiz.title}`);
+      
+      // Atualizar estado local
+      state.currentQuiz = result.quiz;
+      state.phoneList = result.phones;
+      state.quizVariables = result.variables;
+      
+      // Atualizar display
+      updateQuizDisplay(result.quiz, result.phones);
+      
+      return result;
+    } else {
+      console.error('❌ Erro ao buscar dados do quiz:', response.status);
+    }
+    
+  } catch (error) {
+    console.error('❌ Erro ao solicitar dados do quiz:', error);
+  }
+  
+  return null;
+}
+
+// Sincronizar configurações de campanha da página web
+async function syncCampaignConfig() {
+  if (!config.token) return null;
+  
+  try {
+    // Buscar configurações de campanha ativa
     const response = await fetch(`${config.serverUrl}/api/extension/sync`, {
       headers: {
         'Authorization': `Bearer ${config.token}`
@@ -363,40 +409,23 @@ async function syncWithApp() {
     if (response.ok) {
       const result = await response.json();
       
-      // Atualizar estado local com todos os quizzes
-      state.quizzes = result.quizzes || [];
-      state.activeQuizId = result.activeQuizId;
-      
-      console.log(`📋 ${state.quizzes.length} quizzes recebidos do usuário`);
-      
-      // Encontrar quiz ativo
-      const activeQuiz = state.quizzes.find(q => q.isActive);
-      if (activeQuiz) {
-        console.log(`🎯 Quiz ativo: ${activeQuiz.title} (${activeQuiz.phoneFilters.length} telefones)`);
-        updateQuizDisplay(activeQuiz);
-      } else {
-        console.log('⚠️ Nenhum quiz ativo no momento');
-        updateQuizDisplay(null);
+      // Atualizar configurações locais
+      if (result.campaignConfig) {
+        config.selectedQuiz = result.campaignConfig.quizId;
+        config.targetAudience = result.campaignConfig.targetAudience;
+        config.dateFilter = result.campaignConfig.dateFilter;
+        config.messages = result.campaignConfig.messages;
+        config.variables = result.campaignConfig.variables;
       }
       
-      // Atualizar campanhas ativas
-      state.activeCampaigns = result.campaigns || [];
-      console.log(`📋 ${state.activeCampaigns.length} campanhas ativas`);
-      
-      return {
-        commands: result.commands || [],
-        quizzes: result.quizzes || [],
-        activeQuizId: result.activeQuizId,
-        campaigns: result.campaigns || [],
-        stats: result.stats || {}
-      };
+      return result;
     }
     
   } catch (error) {
-    console.error('❌ Erro ao sincronizar com app:', error);
+    console.error('❌ Erro ao sincronizar configurações:', error);
   }
   
-  return { commands: [], activeQuiz: null, campaigns: [] };
+  return null;
 }
 
 // Executar comando

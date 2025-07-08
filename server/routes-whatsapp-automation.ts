@@ -274,6 +274,143 @@ export function setupWhatsAppAutomationRoutes(app: any) {
     }
   });
 
+  // Status da extensão com contagem de telefones
+  app.get("/api/whatsapp/extension-status", verifyJWT, async (req: any, res: Response) => {
+    try {
+      const userId = req.user.id;
+      
+      // Verificar último ping da extensão
+      const lastPing = automationState.extensionStatus.lastPing;
+      const isConnected = lastPing && (Date.now() - lastPing.getTime()) < 60000; // 1 minuto
+      
+      // Contar total de telefones disponíveis
+      const userQuizzes = await storage.getQuizzesByUserId(userId);
+      let totalPhones = 0;
+      
+      for (const quiz of userQuizzes) {
+        try {
+          const responses = await storage.getQuizResponses(quiz.id);
+          const phoneMap = new Map();
+          
+          for (const response of responses) {
+            const responseData = typeof response.data === 'string' 
+              ? JSON.parse(response.data) 
+              : response.data;
+            
+            const phoneFields = Object.entries(responseData).filter(([key, value]) => 
+              key.startsWith('telefone_') && value && typeof value === 'string'
+            );
+            
+            for (const [fieldId, phone] of phoneFields) {
+              const cleanPhone = (phone as string).replace(/\D/g, '');
+              if (cleanPhone.length >= 10) {
+                phoneMap.set(cleanPhone, true);
+              }
+            }
+          }
+          
+          totalPhones += phoneMap.size;
+        } catch (error) {
+          console.error(`Erro ao processar quiz ${quiz.id}:`, error);
+        }
+      }
+      
+      res.json({
+        isConnected: isConnected,
+        isActive: automationState.extensionStatus.isActive,
+        phoneCount: totalPhones,
+        lastSync: lastPing ? new Date(lastPing).toLocaleString() : 'Nunca'
+      });
+      
+    } catch (error) {
+      console.error('❌ Erro ao buscar status da extensão:', error);
+      res.status(500).json({ error: 'Erro interno do servidor' });
+    }
+  });
+
+  // Endpoint para extensão solicitar dados de quiz específico
+  app.post("/api/whatsapp/extension-quiz-data", verifyJWT, async (req: any, res: Response) => {
+    try {
+      const userId = req.user.id;
+      const { quizId, targetAudience, dateFilter } = req.body;
+
+      console.log(`📋 [${req.user.email}] Extensão solicitando dados do quiz ${quizId}`);
+
+      // Verificar se quiz pertence ao usuário
+      const quiz = await storage.getQuizById(quizId);
+      if (!quiz || quiz.userId !== userId) {
+        return res.status(403).json({ error: 'Quiz não encontrado ou sem permissão' });
+      }
+
+      // Buscar responses do quiz
+      const responses = await storage.getQuizResponses(quizId);
+      const phoneMap = new Map();
+      
+      for (const response of responses) {
+        // Filtrar por data se especificado
+        if (dateFilter) {
+          const responseDate = new Date(response.submittedAt);
+          const filterDate = new Date(dateFilter);
+          if (responseDate < filterDate) continue;
+        }
+
+        const responseData = typeof response.data === 'string' 
+          ? JSON.parse(response.data) 
+          : response.data;
+        
+        // Buscar campos de telefone
+        const phoneFields = Object.entries(responseData).filter(([key, value]) => 
+          key.startsWith('telefone_') && value && typeof value === 'string'
+        );
+        
+        for (const [fieldId, phone] of phoneFields) {
+          const cleanPhone = (phone as string).replace(/\D/g, '');
+          if (cleanPhone.length >= 10) {
+            const status = response.metadata?.isComplete ? 'completed' : 'abandoned';
+            
+            if (!phoneMap.has(cleanPhone) || status === 'completed') {
+              phoneMap.set(cleanPhone, {
+                phone: cleanPhone,
+                fieldId: fieldId,
+                status: status,
+                completionPercentage: response.metadata?.completionPercentage || 0,
+                submittedAt: response.submittedAt,
+                responseData: responseData
+              });
+            }
+          }
+        }
+      }
+      
+      // Filtrar por audiência
+      let filteredPhones = Array.from(phoneMap.values());
+      if (targetAudience && targetAudience !== 'all') {
+        filteredPhones = filteredPhones.filter(p => p.status === targetAudience);
+      }
+
+      res.json({
+        success: true,
+        quiz: {
+          id: quiz.id,
+          title: quiz.title,
+          description: quiz.description
+        },
+        phones: filteredPhones,
+        total: filteredPhones.length,
+        variables: {
+          quiz_titulo: quiz.title,
+          quiz_descricao: quiz.description,
+          total_respostas: responses.length,
+          data_atual: new Date().toLocaleDateString()
+        }
+      });
+
+    } catch (error) {
+      console.error('❌ Erro ao buscar dados do quiz:', error);
+      res.status(500).json({ error: 'Erro interno do servidor' });
+    }
+  });
+
   // ========================================
   // ENDPOINTS PARA O APP (Interface Rica)
   // ========================================
