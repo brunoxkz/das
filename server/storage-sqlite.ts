@@ -1317,13 +1317,13 @@ export class SQLiteStorage implements IStorage {
 
   async getQuizPhoneNumbers(quizId: string): Promise<any[]> {
     const stmt = sqlite.prepare(`
-      SELECT qr.responses, qr.metadata
-      FROM quiz_responses qr
-      WHERE qr.quiz_id = ?
+      SELECT responses, metadata
+      FROM quiz_responses
+      WHERE quiz_id = ?
       AND (
-        (qr.metadata->>'isComplete' = 'true') OR 
-        (qr.metadata->>'completionPercentage' = '100') OR
-        (qr.metadata->>'isComplete' = 'false' AND qr.metadata->>'isPartial' != 'true')
+        (metadata->>'isComplete' = 'true') OR 
+        (metadata->>'completionPercentage' = '100') OR
+        (metadata->>'isComplete' = 'false' AND metadata->>'isPartial' != 'true')
       )
     `);
     
