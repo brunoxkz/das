@@ -41,23 +41,30 @@ class VendzzEventsManagerFixed {
     }
     
     private function __construct() {
+        // Hooks básicos
         add_action('admin_menu', array($this, 'add_admin_menu'));
         add_action('admin_enqueue_scripts', array($this, 'enqueue_scripts'));
         add_action('wp_ajax_vendzz_get_events', array($this, 'ajax_get_events'));
         add_action('wp_ajax_vendzz_republish_event', array($this, 'ajax_republish_event'));
         
-        // Endpoints para editor de eventos recorrentes
+        // Hooks de ativação/desativação
+        register_activation_hook(__FILE__, array($this, 'activate'));
+        register_deactivation_hook(__FILE__, array($this, 'deactivate'));
+        
+        // Carregar classes depois da inicialização do WordPress
+        add_action('init', array($this, 'init_plugin'));
+    }
+    
+    public function init_plugin() {
+        // Incluir classe do editor de eventos recorrentes
+        $this->include_recurring_editor();
+        
+        // Registrar endpoints AJAX para editor de eventos recorrentes
         add_action('wp_ajax_vendzz_get_recurring_event', array($this, 'ajax_get_recurring_event'));
         add_action('wp_ajax_vendzz_add_occurrence', array($this, 'ajax_add_occurrence'));
         add_action('wp_ajax_vendzz_delete_occurrence', array($this, 'ajax_delete_occurrence'));
         add_action('wp_ajax_vendzz_update_recurring_event', array($this, 'ajax_update_recurring_event'));
         add_action('wp_ajax_vendzz_generate_occurrences', array($this, 'ajax_generate_occurrences'));
-        
-        register_activation_hook(__FILE__, array($this, 'activate'));
-        register_deactivation_hook(__FILE__, array($this, 'deactivate'));
-        
-        // Incluir classe do editor de eventos recorrentes
-        $this->include_recurring_editor();
     }
     
     public function add_admin_menu() {
@@ -370,11 +377,46 @@ class VendzzEventsManagerFixed {
     }
     
     public function activate() {
+        // Verificar versão do PHP
+        if (version_compare(PHP_VERSION, '7.4', '<')) {
+            deactivate_plugins(plugin_basename(__FILE__));
+            wp_die('Este plugin requer PHP 7.4 ou superior. Versão atual: ' . PHP_VERSION);
+        }
+        
+        // Verificar versão do WordPress
         if (version_compare(get_bloginfo('version'), '5.0', '<')) {
+            deactivate_plugins(plugin_basename(__FILE__));
             wp_die('Este plugin requer WordPress 5.0 ou superior.');
         }
         
+        // Verificar se o Events Calendar Pro está ativo (opcional)
+        if (!$this->is_events_calendar_pro_active()) {
+            // Apenas mostrar aviso, não desativar
+            update_option('vendzz_events_warning', 'Events Calendar Pro não está ativo. Algumas funcionalidades podem não estar disponíveis.');
+        }
+        
+        // Verificar se arquivos necessários existem
+        $required_files = array(
+            'includes/class-recurring-events-editor.php',
+            'includes/class-events-database.php',
+            'assets/js/admin.js',
+            'assets/css/admin.css'
+        );
+        
+        foreach ($required_files as $file) {
+            if (!file_exists(VENDZZ_EVENTS_PLUGIN_PATH . $file)) {
+                deactivate_plugins(plugin_basename(__FILE__));
+                wp_die('Arquivo obrigatório não encontrado: ' . $file);
+            }
+        }
+        
+        // Criar/atualizar opções do plugin
         add_option('vendzz_events_version', VENDZZ_EVENTS_VERSION);
+        
+        // Limpar cache se existir
+        if (function_exists('wp_cache_flush')) {
+            wp_cache_flush();
+        }
     }
     
     public function deactivate() {
@@ -384,9 +426,38 @@ class VendzzEventsManagerFixed {
     // Incluir classe do editor de eventos recorrentes
     private function include_recurring_editor() {
         $editor_file = VENDZZ_EVENTS_PLUGIN_PATH . 'includes/class-recurring-events-editor.php';
-        if (file_exists($editor_file)) {
-            require_once $editor_file;
+        
+        if (!file_exists($editor_file)) {
+            add_action('admin_notices', array($this, 'missing_editor_notice'));
+            return false;
         }
+        
+        try {
+            require_once $editor_file;
+            
+            if (!class_exists('VendzzRecurringEventsEditor')) {
+                add_action('admin_notices', array($this, 'class_not_found_notice'));
+                return false;
+            }
+            
+            return true;
+        } catch (Exception $e) {
+            add_action('admin_notices', array($this, 'editor_error_notice'));
+            error_log('Vendzz Events Manager: Erro ao carregar editor - ' . $e->getMessage());
+            return false;
+        }
+    }
+    
+    public function missing_editor_notice() {
+        echo '<div class="notice notice-error"><p>Vendzz Events Manager: Arquivo do editor de eventos recorrentes não encontrado.</p></div>';
+    }
+    
+    public function class_not_found_notice() {
+        echo '<div class="notice notice-error"><p>Vendzz Events Manager: Classe VendzzRecurringEventsEditor não encontrada.</p></div>';
+    }
+    
+    public function editor_error_notice() {
+        echo '<div class="notice notice-error"><p>Vendzz Events Manager: Erro ao carregar editor de eventos recorrentes.</p></div>';
     }
     
     // AJAX: Obter evento recorrente
