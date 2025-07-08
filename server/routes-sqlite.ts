@@ -6,6 +6,7 @@ import { nanoid } from "nanoid";
 import { insertQuizSchema, insertQuizResponseSchema } from "../shared/schema-sqlite";
 import { verifyJWT } from "./auth-sqlite";
 import { sendSms } from "./twilio";
+import jwt from "jsonwebtoken";
 
 export function registerSQLiteRoutes(app: Express): Server {
   // Public routes BEFORE any middleware or authentication
@@ -2535,6 +2536,77 @@ app.get("/api/whatsapp-extension/pending", verifyJWT, async (req: any, res: Resp
 
     return extracted;
   }
+
+  // ENDPOINT PARA EXTENSÃO CHROME - Sincronização
+  app.get("/api/extension/sync", async (req: any, res: Response) => {
+    try {
+      // Verificação manual de token para extensão
+      const authHeader = req.headers.authorization;
+      if (!authHeader || !authHeader.startsWith('Bearer ')) {
+        return res.status(401).json({ message: "No token provided" });
+      }
+
+      const token = authHeader.substring(7);
+      let decoded;
+      
+      try {
+        const JWT_SECRET = process.env.JWT_SECRET || 'vendzz-jwt-secret-key-2024-super-secure';
+        console.log('🔍 Verificando token com secret:', JWT_SECRET.substring(0, 10) + '...');
+        decoded = jwt.verify(token, JWT_SECRET);
+        console.log('✅ Token verificado:', decoded.email);
+      } catch (jwtError) {
+        console.error('❌ JWT Error:', jwtError.message);
+        return res.status(401).json({ message: "Invalid token", error: jwtError.message });
+      }
+      
+      const userId = decoded.id;
+      const userEmail = decoded.email;
+      
+      console.log(`🔄 EXTENSÃO SYNC - ${userEmail}: Buscando dados...`);
+      
+      // Buscar quizzes do usuário
+      let quizzes = [];
+      try {
+        quizzes = await storage.getQuizzesByUser(userId);
+      } catch (error) {
+        console.error('❌ Erro ao buscar quizzes:', error);
+        quizzes = [];
+      }
+      
+      // Configurações padrão da extensão
+      const extensionSettings = {
+        autoSend: false,
+        messageDelay: 8000,
+        maxMessagesPerDay: 100,
+        workingHours: { start: '09:00', end: '18:00' }
+      };
+      
+      console.log(`✅ EXTENSÃO SYNC - ${userEmail}: ${quizzes.length} quizzes encontrados`);
+      
+      res.json({
+        success: true,
+        user: {
+          id: userId,
+          email: userEmail
+        },
+        quizzes: quizzes.map(quiz => ({
+          id: quiz.id,
+          title: quiz.title,
+          description: quiz.description,
+          createdAt: quiz.createdAt,
+          updatedAt: quiz.updatedAt
+        })),
+        settings: extensionSettings,
+        timestamp: Date.now()
+      });
+      
+    } catch (error) {
+      console.error('❌ ERRO extensão sync:', error);
+      console.error('❌ STACK:', error.stack);
+      console.error('❌ MESSAGE:', error.message);
+      res.status(500).json({ error: 'Erro interno do servidor', details: error.message });
+    }
+  });
 
   return httpServer;
 }
