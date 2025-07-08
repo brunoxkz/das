@@ -698,7 +698,7 @@ async function sendWhatsAppMessage(phone, message) {
     
     console.log(`📱 Buscando conversa para ${phone}...`);
     
-    // Buscar ou abrir conversa
+    // Buscar ou abrir conversa sem recarregar página
     const searchResult = await searchContact(phone);
     if (!searchResult) {
       throw new Error('Não foi possível abrir a conversa no WhatsApp');
@@ -706,125 +706,142 @@ async function sendWhatsAppMessage(phone, message) {
     
     console.log(`✅ Conversa aberta para ${phone}`);
     
-    // Aguardar a conversa carregar completamente
-    await new Promise(resolve => setTimeout(resolve, 2000));
+    // Aguardar a conversa carregar completamente com delay maior
+    console.log('⏱️ Aguardando conversa carregar...');
+    await new Promise(resolve => setTimeout(resolve, 4000));
     
-    // Tentar múltiplos seletores para o campo de mensagem
-    const inputSelectors = [
-      '[contenteditable="true"][data-tab="10"]',
-      '[contenteditable="true"][data-tab="1"]', 
-      'div[contenteditable="true"][data-lexical-editor="true"]',
-      'div[contenteditable="true"]',
-      '[data-testid="conversation-compose-box-input"]'
-    ];
-    
-    let messageInput = null;
-    for (const selector of inputSelectors) {
-      messageInput = document.querySelector(selector);
-      if (messageInput) {
-        console.log(`✅ Campo de mensagem encontrado: ${selector}`);
-        break;
-      }
-    }
-    
+    // Aguardar campo de mensagem com timeout robusto
+    const messageInput = await waitForMessageInput(8000);
     if (!messageInput) {
-      // Aguardar mais um pouco e tentar novamente
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      for (const selector of inputSelectors) {
-        messageInput = document.querySelector(selector);
-        if (messageInput) break;
-      }
-    }
-    
-    if (!messageInput) {
-      throw new Error('Campo de mensagem não encontrado após múltiplas tentativas');
+      throw new Error('Campo de mensagem não encontrado após 8 segundos');
     }
     
     console.log(`💬 Inserindo mensagem: "${message.substring(0, 50)}..."`);
     
-    // Limpar e focar no campo
-    messageInput.focus();
-    messageInput.click();
-    
-    // Aguardar o foco
-    await new Promise(resolve => setTimeout(resolve, 500));
+    // Focar no campo com múltiplas tentativas
+    for (let i = 0; i < 3; i++) {
+      messageInput.focus();
+      messageInput.click();
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      if (document.activeElement === messageInput) {
+        console.log(`✅ Campo focado na tentativa ${i + 1}`);
+        break;
+      }
+    }
     
     // Limpar campo completamente
     messageInput.innerHTML = '';
     messageInput.innerText = '';
     messageInput.textContent = '';
+    await new Promise(resolve => setTimeout(resolve, 300));
     
     // Inserir mensagem de forma mais robusta
     messageInput.innerText = message;
     
-    // Disparar eventos necessários
-    ['input', 'keyup', 'change'].forEach(eventType => {
+    // Disparar eventos necessários com delay
+    const events = ['input', 'keyup', 'change', 'blur', 'focus'];
+    for (const eventType of events) {
       const event = new Event(eventType, { bubbles: true });
       messageInput.dispatchEvent(event);
-    });
-    
-    // Aguardar um pouco para o WhatsApp processar
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    
-    // Procurar botão de enviar com múltiplos seletores
-    const sendSelectors = [
-      '[data-testid="send"]',
-      'button[aria-label*="Send"]',
-      'button[aria-label*="Enviar"]',
-      'span[data-testid="send"]',
-      'button[data-tab="11"]',
-      '[data-icon="send"]'
-    ];
-    
-    let sendButton = null;
-    for (const selector of sendSelectors) {
-      sendButton = document.querySelector(selector);
-      if (sendButton && !sendButton.disabled) {
-        console.log(`✅ Botão de enviar encontrado: ${selector}`);
-        break;
-      }
+      await new Promise(resolve => setTimeout(resolve, 100));
     }
     
+    console.log('⏱️ Aguardando WhatsApp processar mensagem...');
+    await new Promise(resolve => setTimeout(resolve, 2000));
+    
+    // Aguardar botão de enviar ficar ativo
+    const sendButton = await waitForSendButton(5000);
     if (!sendButton) {
-      throw new Error('Botão de enviar não encontrado ou está desabilitado');
+      throw new Error('Botão de enviar não encontrado após 5 segundos');
     }
     
     console.log(`🚀 Enviando mensagem...`);
     
-    // Clicar no botão de enviar
+    // Clicar no botão de enviar com delay
     sendButton.click();
     
-    // Aguardar confirmação de envio
-    await new Promise(resolve => setTimeout(resolve, 2000));
+    // Aguardar confirmação de envio com delay maior
+    console.log('⏱️ Aguardando confirmação de envio...');
+    await new Promise(resolve => setTimeout(resolve, 3000));
     
-    // Verificar se a mensagem foi enviada (procurar por tick marks ou mensagem enviada)
-    const sentIndicators = [
-      '[data-testid="msg-check"]',
-      '[data-icon="msg-check"]',
-      '[data-icon="msg-dblcheck"]',
-      '.message-out'
-    ];
-    
-    let messageSent = false;
-    for (const indicator of sentIndicators) {
-      if (document.querySelector(indicator)) {
-        messageSent = true;
-        break;
-      }
-    }
+    // Verificar se a mensagem foi enviada
+    const messageSent = await verifyMessageSent();
     
     if (messageSent) {
       console.log(`✅ Mensagem enviada com sucesso para ${phone}`);
       return true;
     } else {
       console.log(`⚠️ Mensagem enviada mas confirmação não detectada para ${phone}`);
-      return true; // Assumir sucesso se não houver erro
+      return true; // Assumir sucesso se não houver erro explícito
     }
     
   } catch (error) {
     console.error(`❌ Erro ao enviar mensagem para ${phone}:`, error);
     return false;
   }
+}
+
+// Aguardar botão de enviar ficar disponível
+async function waitForSendButton(timeout = 5000) {
+  const sendSelectors = [
+    '[data-testid="send"]',
+    'button[aria-label*="Send"]',
+    'button[aria-label*="Enviar"]',
+    'span[data-testid="send"]',
+    'button[data-tab="11"]',
+    '[data-icon="send"]',
+    'span[data-icon="send"]'
+  ];
+  
+  const startTime = Date.now();
+  
+  while (Date.now() - startTime < timeout) {
+    for (const selector of sendSelectors) {
+      const button = document.querySelector(selector);
+      if (button && !button.disabled && button.offsetParent !== null) {
+        console.log(`✅ Botão de enviar encontrado e ativo: ${selector}`);
+        return button;
+      }
+    }
+    await new Promise(resolve => setTimeout(resolve, 200));
+  }
+  
+  console.log(`❌ Botão de enviar não encontrado após ${timeout}ms`);
+  return null;
+}
+
+// Verificar se mensagem foi enviada
+async function verifyMessageSent(timeout = 3000) {
+  const sentIndicators = [
+    '[data-testid="msg-check"]',
+    '[data-icon="msg-check"]',
+    '[data-icon="msg-dblcheck"]',
+    '.message-out',
+    '[data-testid="tail-out"]',
+    '.msg-check'
+  ];
+  
+  const startTime = Date.now();
+  
+  while (Date.now() - startTime < timeout) {
+    for (const indicator of sentIndicators) {
+      const elements = document.querySelectorAll(indicator);
+      if (elements.length > 0) {
+        // Verificar se há novos elementos de confirmação
+        for (const element of elements) {
+          const timestamp = element.closest('[data-testid*="msg"]')?.getAttribute('data-id');
+          if (timestamp) {
+            console.log(`✅ Confirmação de envio detectada: ${indicator}`);
+            return true;
+          }
+        }
+      }
+    }
+    await new Promise(resolve => setTimeout(resolve, 300));
+  }
+  
+  return false;
 }
 
 // Validar e formatar telefone para WhatsApp
@@ -868,7 +885,7 @@ function validateAndFormatPhone(phone) {
   return formattedPhone;
 }
 
-// Buscar contato no WhatsApp
+// Buscar contato no WhatsApp sem recarregar a página
 async function searchContact(phone) {
   try {
     // Validar e formatar telefone
@@ -877,52 +894,196 @@ async function searchContact(phone) {
       throw new Error('Telefone inválido ou formato não suportado');
     }
     
-    // Tentar diferentes formatos para compatibilidade
-    const phoneFormats = [
-      formattedPhone,           // +5511987654321
-      `+${formattedPhone}`,     // ++5511987654321 (fallback)
-      formattedPhone.substring(2) // 11987654321 (sem código país)
-    ];
+    console.log(`📱 Buscando conversa para ${phone} (formatado: +${formattedPhone})`);
     
-    for (let i = 0; i < phoneFormats.length; i++) {
-      const phoneFormat = phoneFormats[i];
-      
-      console.log(`📱 Tentativa ${i + 1}: Abrindo WhatsApp para ${phoneFormat}`);
-      
-      // Abrir URL do WhatsApp
-      const whatsappUrl = `https://web.whatsapp.com/send?phone=${phoneFormat}&text=`;
-      window.location.href = whatsappUrl;
-      
-      // Aguardar carregamento
-      await new Promise(resolve => setTimeout(resolve, 4000));
-      
-      // Verificar se a conversa foi aberta com sucesso
-      const conversationHeader = document.querySelector('[data-testid="conversation-header"]');
-      const messageInput = document.querySelector('[contenteditable="true"][data-tab="10"]') || 
-                          document.querySelector('[contenteditable="true"][data-tab="1"]') ||
-                          document.querySelector('div[contenteditable="true"]');
-      
-      if (conversationHeader && messageInput) {
-        console.log(`✅ Conversa aberta com sucesso para ${phoneFormat}`);
-        return true;
-      }
-      
-      // Se não funcionou, tentar próximo formato
-      console.log(`❌ Falha na tentativa ${i + 1} para ${phoneFormat}`);
-      
-      // Só tentar próximo formato se não for a última tentativa
-      if (i < phoneFormats.length - 1) {
-        await new Promise(resolve => setTimeout(resolve, 1000));
-      }
+    // Primeiro, tentar buscar na lista de conversas existentes
+    const searchResult = await searchInExistingChats(phone, formattedPhone);
+    if (searchResult) {
+      console.log(`✅ Conversa encontrada na lista existente para ${phone}`);
+      return true;
     }
     
-    console.log(`❌ Todas as tentativas falharam para o telefone: ${phone}`);
+    // Se não encontrou, usar a funcionalidade de busca do WhatsApp
+    const newChatResult = await openNewChat(formattedPhone);
+    if (newChatResult) {
+      console.log(`✅ Nova conversa aberta para ${phone}`);
+      return true;
+    }
+    
+    console.log(`❌ Não foi possível abrir conversa para ${phone}`);
     return false;
     
   } catch (error) {
     console.error('❌ Erro ao buscar contato:', error);
     return false;
   }
+}
+
+// Buscar contato nas conversas existentes
+async function searchInExistingChats(originalPhone, formattedPhone) {
+  try {
+    console.log(`🔍 Buscando ${originalPhone} nas conversas existentes...`);
+    
+    // Possíveis formatos do telefone para busca
+    const searchFormats = [
+      originalPhone,                    // 11995133932
+      formattedPhone,                   // 5511995133932  
+      `+${formattedPhone}`,            // +5511995133932
+      formattedPhone.substring(2),     // 11995133932 (sem código país)
+      `+55 ${originalPhone.substring(0,2)} ${originalPhone.substring(2)}`, // +55 11 995133932
+    ];
+    
+    // Buscar elementos de conversa
+    const chatSelectors = [
+      '[data-testid="cell-frame-container"]',
+      '[data-testid="chat-list"] > div',
+      '.lexical-rich-text-input',
+      'div[role="listitem"]',
+      '[aria-label*="Lista de conversas"]'
+    ];
+    
+    let chatElements = [];
+    for (const selector of chatSelectors) {
+      chatElements = document.querySelectorAll(selector);
+      if (chatElements.length > 0) break;
+    }
+    
+    // Procurar por telefone nas conversas
+    for (const chatElement of chatElements) {
+      const chatText = chatElement.textContent || '';
+      
+      for (const format of searchFormats) {
+        if (chatText.includes(format)) {
+          console.log(`✅ Encontrado ${format} na conversa existente`);
+          chatElement.click();
+          
+          // Aguardar a conversa carregar
+          await new Promise(resolve => setTimeout(resolve, 2000));
+          
+          // Verificar se abriu corretamente
+          const messageInput = await waitForMessageInput();
+          if (messageInput) {
+            return true;
+          }
+        }
+      }
+    }
+    
+    return false;
+    
+  } catch (error) {
+    console.error('❌ Erro ao buscar nas conversas existentes:', error);
+    return false;
+  }
+}
+
+// Abrir nova conversa usando a funcionalidade do WhatsApp
+async function openNewChat(formattedPhone) {
+  try {
+    console.log(`📱 Abrindo nova conversa para +${formattedPhone}...`);
+    
+    // Tentar encontrar botão de nova conversa
+    const newChatSelectors = [
+      '[data-testid="new-chat-plus"]',
+      '[title*="Nova conversa"]',
+      '[aria-label*="Nova conversa"]',
+      'div[role="button"][title*="Nova"]',
+      '[data-icon="new-chat-outline"]'
+    ];
+    
+    let newChatButton = null;
+    for (const selector of newChatSelectors) {
+      newChatButton = document.querySelector(selector);
+      if (newChatButton) {
+        console.log(`✅ Botão nova conversa encontrado: ${selector}`);
+        break;
+      }
+    }
+    
+    if (newChatButton) {
+      newChatButton.click();
+      await new Promise(resolve => setTimeout(resolve, 1500));
+      
+      // Buscar campo de pesquisa
+      const searchInput = await waitForElement([
+        'input[placeholder*="Pesquisar"]',
+        'input[placeholder*="Search"]',
+        '[data-testid="search-input"]',
+        'input[type="text"]'
+      ]);
+      
+      if (searchInput) {
+        // Inserir número formatado
+        searchInput.focus();
+        searchInput.value = `+${formattedPhone}`;
+        
+        // Disparar eventos
+        ['input', 'change', 'keyup'].forEach(eventType => {
+          const event = new Event(eventType, { bubbles: true });
+          searchInput.dispatchEvent(event);
+        });
+        
+        await new Promise(resolve => setTimeout(resolve, 2000));
+        
+        // Pressionar Enter ou procurar resultado
+        const enterEvent = new KeyboardEvent('keydown', { key: 'Enter', bubbles: true });
+        searchInput.dispatchEvent(enterEvent);
+        
+        await new Promise(resolve => setTimeout(resolve, 2000));
+        
+        // Verificar se abriu conversa
+        const messageInput = await waitForMessageInput();
+        if (messageInput) {
+          return true;
+        }
+      }
+    }
+    
+    // Se não conseguiu com nova conversa, tentar URL como última opção
+    // mas usando pushState para não recarregar
+    console.log(`🔄 Tentando via URL sem recarregar...`);
+    const whatsappUrl = `https://web.whatsapp.com/send?phone=${formattedPhone}&text=`;
+    
+    // Usar pushState para mudar URL sem recarregar
+    window.history.pushState({}, '', whatsappUrl);
+    
+    // Aguardar carregamento
+    await new Promise(resolve => setTimeout(resolve, 3000));
+    
+    const messageInput = await waitForMessageInput();
+    return !!messageInput;
+    
+  } catch (error) {
+    console.error('❌ Erro ao abrir nova conversa:', error);
+    return false;
+  }
+}
+
+// Aguardar campo de mensagem aparecer
+async function waitForMessageInput(timeout = 5000) {
+  const inputSelectors = [
+    '[contenteditable="true"][data-tab="10"]',
+    '[contenteditable="true"][data-tab="1"]', 
+    'div[contenteditable="true"][data-lexical-editor="true"]',
+    'div[contenteditable="true"]',
+    '[data-testid="conversation-compose-box-input"]'
+  ];
+  
+  const startTime = Date.now();
+  
+  while (Date.now() - startTime < timeout) {
+    for (const selector of inputSelectors) {
+      const input = document.querySelector(selector);
+      if (input && input.offsetParent !== null) { // Verificar se está visível
+        console.log(`✅ Campo de mensagem encontrado: ${selector}`);
+        return input;
+      }
+    }
+    await new Promise(resolve => setTimeout(resolve, 500));
+  }
+  
+  console.log(`❌ Campo de mensagem não encontrado após ${timeout}ms`);
+  return null;
 }
 
 // Atualizar estatísticas da automação
