@@ -3,6 +3,7 @@ import { Request, Response, NextFunction } from 'express';
 import { storage } from './storage-sqlite';
 import { verifyJWT } from './auth-hybrid';
 import { nanoid } from 'nanoid';
+import jwt from 'jsonwebtoken';
 
 interface ContactData {
   id: string;
@@ -346,6 +347,43 @@ export function setupWhatsAppAutomationRoutes(app: any) {
         phoneCount: 0,
         lastSync: 'Erro'
       });
+    }
+  });
+
+  // Endpoint para gerar token de autenticação da extensão
+  app.post("/api/whatsapp/extension-token", verifyJWT, async (req: any, res: Response) => {
+    try {
+      const userId = req.user.id;
+      const { purpose = 'chrome_extension' } = req.body;
+
+      console.log(`🔑 [${req.user.email}] Gerando token para extensão`);
+
+      // Criar token especial para extensão (válido por 30 dias)
+      const extensionToken = jwt.sign(
+        { 
+          id: userId, 
+          email: req.user.email,
+          purpose: purpose,
+          type: 'extension'
+        },
+        process.env.JWT_SECRET || 'default-secret-key-change-in-production',
+        { expiresIn: '30d' }
+      );
+
+      const tokenData = {
+        token: extensionToken,
+        expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(), // 30 dias
+        createdAt: new Date().toISOString(),
+        purpose: purpose,
+        userId: userId
+      };
+
+      console.log('✅ Token da extensão gerado com sucesso');
+      res.json(tokenData);
+
+    } catch (error) {
+      console.error('❌ Erro ao gerar token da extensão:', error);
+      res.status(500).json({ error: 'Erro ao gerar token' });
     }
   });
 
