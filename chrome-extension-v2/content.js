@@ -1,25 +1,29 @@
 // Content script para integração com WhatsApp Web
 console.log('🎯 Vendzz WhatsApp Automation v2.0 - Content Script carregado');
 
-let sidebar = null;
-let currentContacts = [];
-let selectedFile = null;
+// Evitar redeclarações se script já foi carregado
+if (typeof window.vendzz_extension_loaded === 'undefined') {
+  window.vendzz_extension_loaded = true;
+  
+  let sidebar = null;
+  let currentContacts = [];
+  let selectedFile = null;
 
-// Sistema de automação de mensagens
-let automationActive = false;
-let automationStats = { sent: 0, failed: 0, total: 0 };
-let processedContacts = new Set();
+  // Sistema de automação de mensagens
+  let automationActive = false;
+  let automationStats = { sent: 0, failed: 0, total: 0 };
+  let processedContacts = new Set();
 
-// Configuração da automação
-let automationConfig = {
-  dateFilter: null, // ISO date string or null for all
-  completedMessage: "Olá {nome}! Parabéns por completar nosso quiz! 🎉",
-  abandonedMessage: "Olá {nome}! Vimos que você começou nosso quiz mas não terminou. Que tal finalizar? 😊",
-  messageDelay: 3000, // 3 seconds between messages
-  enableCompleted: true,
-  enableAbandoned: true,
-  dailyLimit: 100
-};
+  // Configuração da automação
+  let automationConfig = {
+    dateFilter: null, // ISO date string or null for all
+    completedMessage: "Olá {nome}! Parabéns por completar nosso quiz! 🎉",
+    abandonedMessage: "Olá {nome}! Vimos que você começou nosso quiz mas não terminou. Que tal finalizar? 😊",
+    messageDelay: 3000, // 3 seconds between messages
+    enableCompleted: true,
+    enableAbandoned: true,
+    dailyLimit: 100
+  };
 
 let automationQueue = [];
 let currentlyProcessing = false;
@@ -616,16 +620,15 @@ async function init() {
 
 // ==================== SISTEMA DE AUTOMAÇÃO DE MENSAGENS ====================
 
-// Usar a configuração global da automação já declarada acima
-  messageDelay: 25000, // 25 segundos base
-  randomDelayRange: 15000, // +/- 15 segundos aleatórios
-  dailyLimit: 50,
-  hourlyLimit: 8,
-  antiSpamMode: true,
-  messageRotationIndex: { completed: 0, abandoned: 0 },
-  sentInCurrentHour: 0,
-  hourStartTime: Date.now()
-};
+// Estendendo a configuração global da automação já declarada acima
+automationConfig.messageDelay = 25000; // 25 segundos base
+automationConfig.randomDelayRange = 15000; // +/- 15 segundos aleatórios
+automationConfig.dailyLimit = 50;
+automationConfig.hourlyLimit = 8;
+automationConfig.antiSpamMode = true;
+automationConfig.messageRotationIndex = { completed: 0, abandoned: 0 };
+automationConfig.sentInCurrentHour = 0;
+automationConfig.hourStartTime = Date.now();
 
 // Atualizar configuração da automação
 function updateAutomationConfig() {
@@ -1563,3 +1566,7 @@ setTimeout(() => {
     forceSidebarDisplay();
   }
 }, 8000);
+
+} else {
+  console.log('🔄 Extensão Vendzz já carregada, pulando inicialização');
+}
