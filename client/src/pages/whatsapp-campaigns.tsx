@@ -68,7 +68,6 @@ export default function WhatsAppCampaignsPage() {
   // Estados para seleção de quiz e filtros
   const [selectedQuiz, setSelectedQuiz] = useState<string>("");
   const [selectedAudience, setSelectedAudience] = useState<'all' | 'completed' | 'abandoned'>('all');
-  const [targetAudience, setTargetAudience] = useState<'all' | 'completed' | 'abandoned'>('all');
   const [dateFilter, setDateFilter] = useState<string>("");
   const [fromDate, setFromDate] = useState<string>("");
 
@@ -388,10 +387,10 @@ export default function WhatsAppCampaignsPage() {
 
               {/* Seleção de Público-Alvo */}
               {selectedQuiz && (
-                <div>
-                  <Label htmlFor="target-audience">Público-Alvo</Label>
-                  <div className="space-y-3">
-                    <Select value={targetAudience} onValueChange={setTargetAudience}>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="target-audience">Público-Alvo</Label>
+                    <Select value={selectedAudience} onValueChange={(value: 'all' | 'completed' | 'abandoned') => setSelectedAudience(value)}>
                       <SelectTrigger>
                         <SelectValue placeholder="Selecione o público" />
                       </SelectTrigger>
@@ -399,54 +398,26 @@ export default function WhatsAppCampaignsPage() {
                         <SelectItem value="completed">
                           <div className="flex items-center gap-2">
                             <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                            Quiz Completo - Leads Qualificados
+                            Quiz Completo - Leads Qualificados ({audienceCounts.completed})
                           </div>
                         </SelectItem>
                         <SelectItem value="abandoned">
                           <div className="flex items-center gap-2">
                             <div className="w-2 h-2 bg-orange-500 rounded-full"></div>
-                            Quiz Abandonado - Recuperação
+                            Quiz Abandonado - Recuperação ({audienceCounts.abandoned})
                           </div>
                         </SelectItem>
                         <SelectItem value="all">
                           <div className="flex items-center gap-2">
                             <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-                            Todos os Leads
+                            Todos os Leads ({audienceCounts.all})
                           </div>
                         </SelectItem>
                       </SelectContent>
                     </Select>
-                    
-                    <div className="text-sm text-gray-500">
-                      Contadores em desenvolvimento...
-                    </div>
                   </div>
-                </div>
-              )}
 
-              {/* Filtros */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="audience">Público-Alvo</Label>
-                  <Select value={selectedAudience} onValueChange={(value: 'all' | 'completed' | 'abandoned') => setSelectedAudience(value)}>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">
-                        Todos ({audienceCounts.all})
-                      </SelectItem>
-                      <SelectItem value="completed">
-                        Completos ({audienceCounts.completed})
-                      </SelectItem>
-                      <SelectItem value="abandoned">
-                        Abandonados ({audienceCounts.abandoned})
-                      </SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div>
+                  <div>
                   <Label htmlFor="date-filter">Filtrar Leads por Data de Chegada</Label>
                   <Input
                     id="date-filter"
@@ -463,7 +434,8 @@ export default function WhatsAppCampaignsPage() {
                     )}
                   </p>
                 </div>
-              </div>
+                </div>
+              )}
 
               {/* Lista de Telefones */}
               {selectedQuiz && (
