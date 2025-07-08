@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <style>
+        body {
+            width: 350px;
+            padding: 20px;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            margin: 0;
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        
+        .logo {
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        
+        .subtitle {
+            opacity: 0.9;
+            font-size: 14px;
+        }
+        
+        .status-card {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 15px;
+            backdrop-filter: blur(10px);
+        }
+        
+        .status-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+        
+        .status-label {
+            font-weight: 500;
+        }
+        
+        .status-value {
+            font-weight: bold;
+        }
+        
+        .status-connected {
+            color: #34d399;
+        }
+        
+        .status-disconnected {
+            color: #fbbf24;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-top: 15px;
+        }
+        
+        .stat-item {
+            text-align: center;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 10px;
+            border-radius: 8px;
+        }
+        
+        .stat-number {
+            font-size: 20px;
+            font-weight: bold;
+            display: block;
+        }
+        
+        .stat-label {
+            font-size: 12px;
+            opacity: 0.8;
+        }
+        
+        .config-section {
+            margin-top: 20px;
+        }
+        
+        .config-title {
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        
+        .input-group {
+            margin-bottom: 10px;
+        }
+        
+        .input-label {
+            display: block;
+            font-size: 12px;
+            margin-bottom: 5px;
+            opacity: 0.9;
+        }
+        
+        .input-field {
+            width: 100%;
+            padding: 8px;
+            border: none;
+            border-radius: 5px;
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            font-size: 14px;
+            box-sizing: border-box;
+        }
+        
+        .input-field::placeholder {
+            color: rgba(255, 255, 255, 0.6);
+        }
+        
+        .button {
+            width: 100%;
+            padding: 10px;
+            border: none;
+            border-radius: 5px;
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 10px;
+            transition: background 0.2s;
+        }
+        
+        .button:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+        
+        .button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        .logs {
+            max-height: 100px;
+            overflow-y: auto;
+            background: rgba(0, 0, 0, 0.2);
+            padding: 10px;
+            border-radius: 5px;
+            font-size: 12px;
+            margin-top: 10px;
+        }
+        
+        .log-entry {
+            margin-bottom: 5px;
+            opacity: 0.9;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="logo">📱 Vendzz</div>
+        <div class="subtitle">WhatsApp Automation</div>
+    </div>
+
+    <div class="status-card">
+        <div class="status-row">
+            <span class="status-label">Conexão:</span>
+            <span class="status-value" id="connection-status">Verificando...</span>
+        </div>
+        <div class="status-row">
+            <span class="status-label">WhatsApp:</span>
+            <span class="status-value" id="whatsapp-status">Verificando...</span>
+        </div>
+        <div class="status-row">
+            <span class="status-label">Último Ping:</span>
+            <span class="status-value" id="last-ping">-</span>
+        </div>
+    </div>
+
+    <div class="stats-grid">
+        <div class="stat-item">
+            <span class="stat-number" id="pending-count">0</span>
+            <span class="stat-label">Pendentes</span>
+        </div>
+        <div class="stat-item">
+            <span class="stat-number" id="sent-count">0</span>
+            <span class="stat-label">Enviadas</span>
+        </div>
+    </div>
+
+    <div class="config-section">
+        <div class="config-title">⚙️ Configuração</div>
+        
+        <div class="input-group">
+            <label class="input-label">URL do Servidor:</label>
+            <input type="text" class="input-field" id="server-url" placeholder="http://localhost:5000">
+        </div>
+        
+        <div class="input-group">
+            <label class="input-label">Token de Acesso:</label>
+            <input type="password" class="input-field" id="access-token" placeholder="Seu token JWT">
+        </div>
+        
+        <button class="button" id="save-config">💾 Salvar Configuração</button>
+        <button class="button" id="test-connection">🔌 Testar Conexão</button>
+        <button class="button" id="open-whatsapp">📱 Abrir WhatsApp Web</button>
+    </div>
+
+    <div class="logs" id="logs">
+        <div class="log-entry">🚀 Extensão carregada</div>
+    </div>
+
+    <script src="popup.js"></script>
+</body>
+</html>

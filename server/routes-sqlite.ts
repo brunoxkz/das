@@ -2177,6 +2177,94 @@ app.delete("/api/whatsapp-campaigns/:id", verifyJWT, async (req: any, res: Respo
   }
 });
 
+// =============================================
+// WHATSAPP EXTENSION ROUTES
+// =============================================
+
+// Get extension status
+app.get("/api/whatsapp-extension/status", verifyJWT, async (req: any, res: Response) => {
+  try {
+    res.json({
+      connected: true,
+      version: "1.0.0",
+      lastPing: new Date().toISOString(),
+      pendingMessages: 0,
+      server: "Vendzz WhatsApp API"
+    });
+  } catch (error) {
+    console.error('❌ ERRO status extensão:', error);
+    res.status(500).json({ error: 'Erro interno do servidor' });
+  }
+});
+
+// Update extension status (ping)
+app.post("/api/whatsapp-extension/status", verifyJWT, async (req: any, res: Response) => {
+  try {
+    const { version, pendingMessages, sentMessages, failedMessages, isActive } = req.body;
+    
+    console.log(`📱 PING EXTENSÃO: v${version}, pendentes: ${pendingMessages}, enviadas: ${sentMessages}, falhas: ${failedMessages}`);
+    
+    res.json({
+      success: true,
+      serverTime: new Date().toISOString(),
+      message: "Ping recebido com sucesso"
+    });
+  } catch (error) {
+    console.error('❌ ERRO ping extensão:', error);
+    res.status(500).json({ error: 'Erro interno do servidor' });
+  }
+});
+
+// Get pending messages for extension
+app.get("/api/whatsapp-extension/pending", verifyJWT, async (req: any, res: Response) => {
+  try {
+    const currentTime = Math.floor(Date.now() / 1000);
+    
+    // Buscar mensagens WhatsApp agendadas que devem ser enviadas agora
+    const scheduledLogs = await storage.getScheduledWhatsappLogs(currentTime);
+    
+    // Formatar para a extensão
+    const pendingMessages = scheduledLogs.map(log => ({
+      logId: log.id,
+      phone: log.phone,
+      message: log.message,
+      campaignId: log.campaign_id,
+      scheduledAt: log.scheduled_at,
+      createdAt: log.created_at
+    }));
+
+    console.log(`📤 MENSAGENS PENDENTES PARA EXTENSÃO: ${pendingMessages.length}`);
+    res.json(pendingMessages);
+  } catch (error) {
+    console.error('❌ ERRO mensagens pendentes:', error);
+    res.status(500).json({ error: 'Erro interno do servidor' });
+  }
+});
+
+// Receive logs from extension
+app.post("/api/whatsapp-extension/logs", verifyJWT, async (req: any, res: Response) => {
+  try {
+    const { logId, status, phone, error: errorMsg, timestamp } = req.body;
+    
+    if (!logId || !status) {
+      return res.status(400).json({ error: 'LogId e status são obrigatórios' });
+    }
+
+    // Atualizar status do log no banco
+    await storage.updateWhatsappLogStatus(logId, status, 'extension', errorMsg);
+    
+    console.log(`📊 LOG EXTENSÃO: ${phone} - ${status} ${errorMsg ? `(${errorMsg})` : ''}`);
+    
+    res.json({
+      success: true,
+      message: 'Log recebido com sucesso'
+    });
+  } catch (error) {
+    console.error('❌ ERRO log extensão:', error);
+    res.status(500).json({ error: 'Erro interno do servidor' });
+  }
+});
+
 // Get WhatsApp templates
 app.get("/api/whatsapp-templates", verifyJWT, async (req: any, res: Response) => {
   try {
