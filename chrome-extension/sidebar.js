@@ -7,7 +7,7 @@ let isMonitoringEnabled = true;
 // Configurações e estado
 let config = {
   serverUrl: 'http://localhost:5000',
-  token: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IktqY3ROQ09sTTVqY2FmZ0FfZHJWUSIsImVtYWlsIjoiYWRtaW5AdmVuZHp6LmNvbSIsInJvbGUiOiJhZG1pbiIsInBsYW4iOiJlbnRlcnByaXNlIiwiaWF0IjoxNzUxOTQzOTc2LCJleHAiOjE3NTE5NDQ4NzZ9.MHqphaqAL5J9po7ebhxhZWBpTI67EqOb0JxDldawyVg',
+  token: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IktqY3ROQ09sTTVqY2FmZ0FfZHJWUSIsImVtYWlsIjoiYWRtaW5AdmVuZHp6LmNvbSIsInJvbGUiOiJhZG1pbiIsInBsYW4iOiJlbnRlcnByaXNlIiwiaWF0IjoxNzUxOTQ0MzUzLCJleHAiOjE3NTE5NDUyNTN9.bvzAQQakbeAwPY8UdAZcfDC58Q4aJeVPWC9yjVqtG84',
   autoSend: true,
   monitoring: true
 };
