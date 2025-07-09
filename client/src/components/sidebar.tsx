@@ -131,23 +131,10 @@ export function Sidebar() {
       active: location === "/sms-credits"
     },
     {
-      title: "E-mail Marketing",
+      title: "Email Marketing",
       href: "/email-marketing",
       icon: <Mail className="w-4 h-4" />,
-      active: location === "/email-marketing"
-    },
-    {
-      title: "Email Marketing Pro",
-      href: "/advanced-email",
-      icon: <Sparkles className="w-4 h-4" />,
-      active: location === "/advanced-email",
-      badge: "⚡"
-    },
-    {
-      title: "Campanhas de Email",
-      href: "/email-campaigns",
-      icon: <Mail className="w-4 h-4" />,
-      active: location === "/email-campaigns",
+      active: location === "/email-marketing",
       badge: "📧"
     },
     {
