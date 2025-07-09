@@ -6,7 +6,7 @@ Vendzz is a modern, futuristic SaaS quiz funnel platform focused on lead generat
 
 ## Additional Files
 
-The repository also contains a WordPress Events Manager plugin in the `wordpress-events-manager/` folder, which is a separate project maintained for reference purposes.
+No additional files or separate projects are maintained in this repository.
 
 ## System Architecture
 
