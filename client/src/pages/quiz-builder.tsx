@@ -200,7 +200,16 @@ export default function QuizBuilder() {
       setQuizData({
         title: (existingQuiz as any).title,
         description: (existingQuiz as any).description || "",
-        structure: (existingQuiz as any).structure ? (existingQuiz as any).structure : {
+        structure: (existingQuiz as any).structure ? {
+          ...(existingQuiz as any).structure,
+          // Garantir que o sistema de fluxo seja carregado ou inicializado
+          flowSystem: (existingQuiz as any).structure?.flowSystem || {
+            enabled: false,
+            nodes: [],
+            connections: [],
+            defaultFlow: true
+          }
+        } : {
           pages: [{
             id: Date.now(),
             title: "Página 1",
@@ -214,6 +223,12 @@ export default function QuizBuilder() {
             collectPhone: false,
             resultTitle: "",
             resultDescription: ""
+          },
+          flowSystem: {
+            enabled: false,
+            nodes: [],
+            connections: [],
+            defaultFlow: true
           }
         },
         design: {
