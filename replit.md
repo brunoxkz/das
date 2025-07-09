@@ -770,4 +770,6 @@ FUNCTIONALITY PROTECTION: NEVER AFFECT EXISTING WORKING FUNCTIONALITIES WHEN CRE
 SCALABILITY REQUIREMENT: SYSTEM MUST ALWAYS FUNCTION FOR 100,000+ SIMULTANEOUS USERS - Critical user instruction (2025-07-09)
 CURRENT STACK: SQLite + JWT authentication system - Critical user instruction (2025-07-09)
 DYNAMIC FUNNEL SYSTEM: This is a SaaS for dynamic quiz funnels - everything must absorb ALL quiz responses to be dynamic and enable remarketing in all possible ways - Critical user instruction (2025-07-09)
+TESTING REQUIREMENT: Always test button functionality after creating them - Critical user instruction (2025-07-09)
+DEVELOPMENT APPROACH: Think like a senior dev, be assertive and only do what is requested - Critical user instruction (2025-07-09)
 ```
