@@ -14,6 +14,7 @@ import { Switch } from "@/components/ui/switch";
 import { Progress } from "@/components/ui/progress";
 import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
+import { VariableHelperUnified } from "@/components/ui/variable-helper-unified";
 import { 
   MessageCircle, 
   Download, 
@@ -585,27 +586,16 @@ export default function WhatsAppRemarketingPage() {
                   </Select>
                 </div>
 
-                {/* Variables Panel */}
+                {/* Sistema unificado de variáveis */}
                 {campaignForm.quizId && (
                   <div>
                     <Label>Variáveis Disponíveis</Label>
-                    <div className="grid grid-cols-2 gap-2 p-3 bg-gray-50 rounded-lg">
-                      {['nome', 'resultado', 'pontuacao', 'email', 'telefone'].map((variable) => (
-                        <Button
-                          key={variable}
-                          variant="outline"
-                          size="sm"
-                          onClick={() => insertVariable(variable)}
-                          className="text-xs justify-start"
-                        >
-                          <Code className="w-3 h-3 mr-1" />
-                          {variable}
-                        </Button>
-                      ))}
-                    </div>
-                    <p className="text-xs text-gray-500 mt-1">
-                      Clique nas variáveis para inserir na mensagem
-                    </p>
+                    <VariableHelperUnified
+                      quizId={campaignForm.quizId}
+                      onInsertVariable={(variable) => insertVariable(variable)}
+                      compact={true}
+                      showTitle={false}
+                    />
                   </div>
                 )}
 

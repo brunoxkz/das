@@ -16,6 +16,7 @@ import { Progress } from "@/components/ui/progress";
 import { useToast } from "@/hooks/use-toast";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useLocation } from "wouter";
+import { VariableHelperUnified } from "@/components/ui/variable-helper-unified";
 
 interface SMSCredits {
   total: number;
@@ -1103,62 +1104,28 @@ export default function SMSCreditsPage() {
                   className="min-h-20"
                 />
                 
-                {/* Barra horizontal de variáveis dinâmicas */}
+                {/* Sistema unificado de variáveis */}
                 {campaignForm.quizId && (
                   <div className="mt-2 mb-2">
-                    <p className="text-xs text-gray-700 mb-2 font-medium">Variáveis disponíveis para personalização:</p>
-                    <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-thin scrollbar-thumb-gray-300">
-                      {(() => {
-                        const selectedQuiz = quizzes?.find((q: any) => q.id === campaignForm.quizId);
-                        if (!selectedQuiz?.structure) return null;
+                    <VariableHelperUnified
+                      quizId={campaignForm.quizId}
+                      onInsertVariable={(variable) => {
+                        const textarea = document.getElementById('message') as HTMLTextAreaElement;
+                        const cursorPos = textarea.selectionStart;
+                        const textBefore = campaignForm.message.substring(0, cursorPos);
+                        const textAfter = campaignForm.message.substring(cursorPos);
+                        const newText = textBefore + variable + textAfter;
+                        setCampaignForm({...campaignForm, message: newText});
                         
-                        const variables = new Set<string>();
-                        
-                        // Extrair variáveis das páginas
-                        const pages = selectedQuiz.structure.pages || [];
-                        pages.forEach((page: any) => {
-                          if (page.elements) {
-                            page.elements.forEach((element: any) => {
-                              if (element.fieldId && element.fieldId.trim()) {
-                                variables.add(element.fieldId.trim());
-                              }
-                            });
-                          }
-                        });
-                        
-                        // Adicionar variáveis padrão do sistema
-                        variables.add('nome');
-                        variables.add('telefone');
-                        variables.add('email');
-                        variables.add('quiz_titulo');
-                        
-                        const variableArray = Array.from(variables).sort();
-                        
-                        return variableArray.map((variable) => (
-                          <button
-                            key={variable}
-                            type="button"
-                            onClick={() => {
-                              const textarea = document.getElementById('message') as HTMLTextAreaElement;
-                              const cursorPos = textarea.selectionStart;
-                              const textBefore = campaignForm.message.substring(0, cursorPos);
-                              const textAfter = campaignForm.message.substring(cursorPos);
-                              const newText = textBefore + `{${variable}}` + textAfter;
-                              setCampaignForm({...campaignForm, message: newText});
-                              
-                              // Restaurar posição do cursor
-                              setTimeout(() => {
-                                textarea.selectionStart = textarea.selectionEnd = cursorPos + variable.length + 2;
-                                textarea.focus();
-                              }, 0);
-                            }}
-                            className="flex-shrink-0 px-3 py-1 bg-blue-50 hover:bg-blue-100 text-blue-700 text-xs rounded-md border border-blue-200 transition-colors whitespace-nowrap"
-                          >
-                            {variable}
-                          </button>
-                        ));
-                      })()}
-                    </div>
+                        // Restaurar posição do cursor
+                        setTimeout(() => {
+                          textarea.selectionStart = textarea.selectionEnd = cursorPos + variable.length;
+                          textarea.focus();
+                        }, 0);
+                      }}
+                      compact={true}
+                      showTitle={false}
+                    />
                   </div>
                 )}
                 
