@@ -26,7 +26,9 @@ import {
   Filter,
   Settings,
   User,
-  AtSign
+  AtSign,
+  Trash2,
+  Calendar
 } from 'lucide-react';
 
 interface EmailCampaign {
@@ -58,12 +60,87 @@ interface EmailTemplate {
   category: string;
 }
 
+// Componente para seleção de audiência com contadores
+function AudienceSelector({ selectedQuiz, targetAudience, onAudienceChange }: {
+  selectedQuiz: string,
+  targetAudience: string,
+  onAudienceChange: (value: string) => void
+}) {
+  // Query para buscar leads do quiz selecionado
+  const { data: quizResponses = [], isLoading } = useQuery({
+    queryKey: ['/api/quiz-responses', selectedQuiz],
+    queryFn: async () => {
+      if (!selectedQuiz) return [];
+      
+      const response = await fetch(`/api/quiz-responses/${selectedQuiz}`, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token') || localStorage.getItem('accessToken')}`
+        }
+      });
+      
+      if (!response.ok) return [];
+      return response.json();
+    },
+    enabled: !!selectedQuiz
+  });
+
+  // Calcular contadores
+  const completedCount = quizResponses.filter((response: any) => 
+    response.metadata?.isComplete || response.completionPercentage === 100
+  ).length;
+  
+  const abandonedCount = quizResponses.filter((response: any) => 
+    !response.metadata?.isComplete && response.completionPercentage !== 100
+  ).length;
+  
+  const totalCount = quizResponses.length;
+
+  if (!selectedQuiz) return null;
+
+  return (
+    <Select value={targetAudience} onValueChange={onAudienceChange}>
+      <SelectTrigger>
+        <SelectValue />
+      </SelectTrigger>
+      <SelectContent>
+        <SelectItem value="all">
+          <div className="flex items-center justify-between w-full">
+            <span>📊 Todos os leads</span>
+            <Badge variant="outline" className="ml-2 text-blue-600">
+              {totalCount}
+            </Badge>
+          </div>
+        </SelectItem>
+        <SelectItem value="completed">
+          <div className="flex items-center justify-between w-full">
+            <span>✅ Quiz completo</span>
+            <Badge variant="outline" className="ml-2 text-green-600">
+              {completedCount}
+            </Badge>
+          </div>
+        </SelectItem>
+        <SelectItem value="abandoned">
+          <div className="flex items-center justify-between w-full">
+            <span>⏰ Quiz abandonado</span>
+            <Badge variant="outline" className="ml-2 text-orange-600">
+              {abandonedCount}
+            </Badge>
+          </div>
+        </SelectItem>
+      </SelectContent>
+    </Select>
+  );
+}
+
 // Componente para visualizar leads filtrados
 function LeadsPreview({ selectedQuiz, targetAudience, dateFilter }: { 
   selectedQuiz: string, 
   targetAudience: string, 
   dateFilter: Date | null 
 }) {
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+  
   // Query para buscar leads do quiz selecionado
   const { data: quizResponses = [], isLoading } = useQuery({
     queryKey: ['/api/quiz-responses', selectedQuiz, targetAudience, dateFilter?.toISOString()],
@@ -80,6 +157,35 @@ function LeadsPreview({ selectedQuiz, targetAudience, dateFilter }: {
       return response.json();
     },
     enabled: !!selectedQuiz
+  });
+
+  // Mutation para deletar um lead
+  const deleteLeadMutation = useMutation({
+    mutationFn: async (leadId: string) => {
+      const response = await fetch(`/api/quiz-responses/${leadId}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token') || localStorage.getItem('accessToken')}`
+        }
+      });
+      
+      if (!response.ok) throw new Error('Erro ao excluir lead');
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/quiz-responses'] });
+      toast({
+        title: "Lead excluído!",
+        description: "O lead foi removido com sucesso.",
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Erro ao excluir lead",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
   });
 
   // Filtrar leads baseado na audiência e data
@@ -166,27 +272,51 @@ function LeadsPreview({ selectedQuiz, targetAudience, dateFilter }: {
         </div>
       ) : (
         <div className="max-h-48 overflow-y-auto bg-white dark:bg-slate-800 rounded-lg border border-blue-200 dark:border-blue-700">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 p-3">
+          <div className="space-y-2 p-3">
             {extractedEmails.slice(0, 12).map((lead) => (
-              <div key={lead.id} className="flex items-center gap-2 p-2 bg-gray-50 dark:bg-slate-700 rounded-md">
+              <div key={lead.id} className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-slate-700 rounded-md border border-gray-200 dark:border-gray-600">
                 <div className="flex-shrink-0">
                   {lead.isComplete ? (
-                    <CheckCircle className="w-4 h-4 text-green-600" />
+                    <CheckCircle className="w-5 h-5 text-green-600" />
                   ) : (
-                    <Clock className="w-4 h-4 text-orange-600" />
+                    <Clock className="w-5 h-5 text-orange-600" />
                   )}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-1 text-xs">
-                    <User className="w-3 h-3 text-gray-500" />
+                  <div className="flex items-center gap-2 text-sm">
+                    <User className="w-4 h-4 text-gray-500" />
                     <span className="font-medium text-gray-900 dark:text-white truncate">
                       {lead.nome || 'Sem nome'}
                     </span>
+                    <Badge variant="outline" className={`text-xs ${lead.isComplete ? 'text-green-600' : 'text-orange-600'}`}>
+                      {lead.isComplete ? 'Completo' : 'Abandonado'}
+                    </Badge>
                   </div>
-                  <div className="flex items-center gap-1 text-xs text-gray-600 dark:text-gray-400">
+                  <div className="flex items-center gap-2 text-xs text-gray-600 dark:text-gray-400">
                     <AtSign className="w-3 h-3" />
                     <span className="truncate">{lead.email}</span>
                   </div>
+                  <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400 mt-1">
+                    <Calendar className="w-3 h-3" />
+                    <span>{new Date(lead.submittedAt).toLocaleDateString('pt-BR', {
+                      day: '2-digit',
+                      month: '2-digit',
+                      year: 'numeric',
+                      hour: '2-digit',
+                      minute: '2-digit'
+                    })}</span>
+                  </div>
+                </div>
+                <div className="flex-shrink-0">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => deleteLeadMutation.mutate(lead.id)}
+                    disabled={deleteLeadMutation.isPending}
+                    className="h-8 w-8 p-0 text-red-500 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </Button>
                 </div>
               </div>
             ))}
@@ -198,6 +328,69 @@ function LeadsPreview({ selectedQuiz, targetAudience, dateFilter }: {
             </div>
           )}
         </div>
+      )}
+    </div>
+  );
+}
+
+// Componente para mostrar variáveis disponíveis
+function VariableHelper({ selectedQuiz }: { selectedQuiz: string }) {
+  const { data: variables = [], isLoading } = useQuery({
+    queryKey: ['/api/quizzes/variables', selectedQuiz],
+    queryFn: async () => {
+      if (!selectedQuiz) return [];
+      
+      const response = await fetch(`/api/quizzes/${selectedQuiz}/variables`, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token') || localStorage.getItem('accessToken')}`
+        }
+      });
+      
+      if (!response.ok) return [];
+      return response.json();
+    },
+    enabled: !!selectedQuiz
+  });
+
+  if (!selectedQuiz || isLoading) return null;
+
+  return (
+    <div className="mt-4 p-4 bg-gray-50 dark:bg-slate-800 rounded-lg border border-gray-200 dark:border-gray-600">
+      <div className="flex items-center gap-2 mb-3">
+        <Sparkles className="w-5 h-5 text-blue-600" />
+        <h3 className="text-sm font-medium text-gray-900 dark:text-white">
+          Variáveis de Personalização
+        </h3>
+      </div>
+      
+      {variables.variables && variables.variables.length > 0 ? (
+        <div>
+          <p className="text-xs text-gray-600 dark:text-gray-400 mb-3">
+            Use estas variáveis no assunto e conteúdo do email:
+          </p>
+          <div className="flex flex-wrap gap-2">
+            {variables.variables.map((variable: string) => (
+              <Badge 
+                key={variable} 
+                variant="outline" 
+                className="text-xs cursor-pointer hover:bg-blue-50 dark:hover:bg-blue-900/20"
+                onClick={() => {
+                  const variableText = `{${variable}}`;
+                  navigator.clipboard.writeText(variableText);
+                }}
+              >
+                <span className="font-mono">{`{${variable}}`}</span>
+              </Badge>
+            ))}
+          </div>
+          <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
+            💡 Clique na variável para copiar. Exemplo: {`{nome}`}, {`{email}`}, {`{telefone}`}
+          </p>
+        </div>
+      ) : (
+        <p className="text-xs text-gray-500 dark:text-gray-400">
+          Nenhuma variável disponível neste quiz
+        </p>
       )}
     </div>
   );
@@ -810,25 +1003,11 @@ export default function EmailMarketingPro() {
                             </div>
                             <div>
                               <Label htmlFor="audience">4. Público Alvo</Label>
-                              <Select 
-                                value={campaignForm.targetAudience} 
-                                onValueChange={(value: any) => setCampaignForm({...campaignForm, targetAudience: value})}
-                              >
-                                <SelectTrigger>
-                                  <SelectValue />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  <SelectItem value="all">📊 Todos os leads
-                                    {quizEmailsData && quizEmailsData[selectedQuiz] && (
-                                      <span className="text-blue-600 ml-2">
-                                        ({quizEmailsData[selectedQuiz].emails} emails)
-                                      </span>
-                                    )}
-                                  </SelectItem>
-                                  <SelectItem value="completed">✅ Quiz completo</SelectItem>
-                                  <SelectItem value="abandoned">⏰ Quiz abandonado</SelectItem>
-                                </SelectContent>
-                              </Select>
+                              <AudienceSelector 
+                                selectedQuiz={selectedQuiz}
+                                targetAudience={campaignForm.targetAudience}
+                                onAudienceChange={(value: any) => setCampaignForm({...campaignForm, targetAudience: value})}
+                              />
                             </div>
                           </div>
                         )}
@@ -901,6 +1080,9 @@ export default function EmailMarketingPro() {
                             <p className="text-xs text-amber-600 mt-1">
                               ⚠️ Variáveis só serão enviadas se o campo for preenchido, caso contrário será processado como espaço vazio.
                             </p>
+                            
+                            {/* Componente de variáveis */}
+                            <VariableHelper selectedQuiz={selectedQuiz} />
                           </div>
 
                           <div>

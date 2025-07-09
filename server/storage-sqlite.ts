@@ -93,6 +93,11 @@ export interface IStorage {
   // Email campaign sending operations
   getQuizResponsesForEmail(quizId: string, targetAudience: string): Promise<QuizResponse[]>;
   extractEmailsFromResponses(responses: QuizResponse[]): string[];
+  extractVariablesFromResponses(responses: QuizResponse[]): string[];
+  
+  // Quiz response operations
+  getQuizResponse(id: string): Promise<QuizResponse | undefined>;
+  deleteQuizResponse(id: string): Promise<void>;
   
   // Email Logs operations
   getEmailLogs(campaignId: string): Promise<EmailLog[]>;
@@ -742,6 +747,63 @@ export class SQLiteStorage implements IStorage {
     
     // Remover duplicatas
     return Array.from(new Set(emails));
+  }
+
+  // Método para extrair variáveis disponíveis das respostas
+  extractVariablesFromResponses(responses: QuizResponse[]): string[] {
+    const variables = new Set<string>();
+    
+    responses.forEach(response => {
+      if (response.responses) {
+        const responseData = response.responses as any;
+        
+        if (Array.isArray(responseData)) {
+          // Formato novo: array de objetos com elementType e answer
+          responseData.forEach((item) => {
+            if (item.elementFieldId && item.answer) {
+              variables.add(item.elementFieldId);
+            }
+          });
+        } else if (typeof responseData === 'object') {
+          // Formato antigo: objeto com chaves
+          Object.keys(responseData).forEach(key => {
+            if (responseData[key]) {
+              variables.add(key);
+            }
+          });
+        }
+      }
+    });
+    
+    return Array.from(variables).sort();
+  }
+
+  // Método para buscar uma resposta específica
+  async getQuizResponse(id: string): Promise<QuizResponse | undefined> {
+    const stmt = sqlite.prepare(`
+      SELECT id, quizId, responses, metadata, submittedAt
+      FROM quiz_responses
+      WHERE id = ?
+    `);
+    
+    const response = stmt.get(id);
+    if (!response) return undefined;
+    
+    return {
+      ...response,
+      responses: JSON.parse(response.responses || '{}'),
+      metadata: JSON.parse(response.metadata || '{}')
+    };
+  }
+
+  // Método para deletar uma resposta específica
+  async deleteQuizResponse(id: string): Promise<void> {
+    const stmt = sqlite.prepare(`
+      DELETE FROM quiz_responses
+      WHERE id = ?
+    `);
+    
+    stmt.run(id);
   }
 
   // Método para criar logs de email (ADICIONADO)

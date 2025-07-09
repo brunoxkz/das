@@ -3130,6 +3130,71 @@ app.get("/api/whatsapp-extension/pending", verifyJWT, async (req: any, res: Resp
     }
   });
 
+  // Buscar variáveis disponíveis das respostas de um quiz para personalização
+  app.get("/api/quizzes/:id/variables", verifyJWT, async (req: any, res) => {
+    try {
+      const { id } = req.params;
+      const userId = req.user.id;
+      
+      console.log(`📧 EXTRAINDO VARIÁVEIS DO QUIZ ${id} para usuário ${userId}`);
+      
+      // Verificar se o quiz pertence ao usuário
+      const quiz = await storage.getQuiz(id);
+      if (!quiz || quiz.userId !== userId) {
+        return res.status(404).json({ error: "Quiz não encontrado" });
+      }
+      
+      // Buscar respostas do quiz
+      const responses = await storage.getQuizResponses(id);
+      console.log(`📧 ANALISANDO ${responses.length} respostas para variáveis`);
+      
+      const variables = storage.extractVariablesFromResponses(responses);
+      
+      console.log(`📧 VARIÁVEIS ENCONTRADAS: ${variables.join(', ')}`);
+      
+      res.json({
+        variables,
+        totalResponses: responses.length,
+        quizTitle: quiz.title
+      });
+    } catch (error) {
+      console.error("Error fetching quiz variables:", error);
+      res.status(500).json({ error: "Error fetching quiz variables" });
+    }
+  });
+
+  // Deletar uma resposta de quiz
+  app.delete("/api/quiz-responses/:id", verifyJWT, async (req: any, res) => {
+    try {
+      const { id } = req.params;
+      const userId = req.user.id;
+      
+      console.log(`🗑️ DELETANDO RESPOSTA ${id} para usuário ${userId}`);
+      
+      // Buscar a resposta para verificar se pertence ao usuário
+      const response = await storage.getQuizResponse(id);
+      if (!response) {
+        return res.status(404).json({ error: "Resposta não encontrada" });
+      }
+      
+      // Verificar se o quiz da resposta pertence ao usuário
+      const quiz = await storage.getQuiz(response.quizId);
+      if (!quiz || quiz.userId !== userId) {
+        return res.status(403).json({ error: "Sem permissão para deletar esta resposta" });
+      }
+      
+      // Deletar a resposta
+      await storage.deleteQuizResponse(id);
+      
+      console.log(`🗑️ RESPOSTA ${id} DELETADA com sucesso`);
+      
+      res.json({ success: true, message: "Resposta deletada com sucesso" });
+    } catch (error) {
+      console.error("Error deleting quiz response:", error);
+      res.status(500).json({ error: "Error deleting quiz response" });
+    }
+  });
+
   // Buscar logs de email (seguindo padrão do SMS logs)
   app.get("/api/email-logs", verifyJWT, async (req: any, res) => {
     try {
