@@ -4317,8 +4317,8 @@ app.get("/api/whatsapp-extension/pending", verifyJWT, async (req: any, res: Resp
         htmlContent,
         textContent: textContent || htmlContent.replace(/<[^>]*>/g, ''),
         sender: {
-          name: "Vendzz",
-          email: "contato@vendzz.com.br"
+          name: "Sistema Vendzz",
+          email: "brunotolentino94@gmail.com"
         }
       });
       

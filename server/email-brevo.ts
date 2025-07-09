@@ -28,8 +28,8 @@ export class BrevoEmailService {
         },
         body: JSON.stringify({
           sender: params.sender || {
-            email: "contato@vendzz.com.br",
-            name: "Vendzz"
+            email: "brunotolentino94@gmail.com",
+            name: "Sistema Vendzz"
           },
           to: [{
             email: params.to
