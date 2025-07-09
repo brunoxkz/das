@@ -21,8 +21,8 @@ No additional files or separate projects are maintained in this repository.
 ### Backend Architecture
 - **Framework**: Express.js with TypeScript
 - **Runtime**: Node.js with ES modules
-- **Database**: SQLite with Drizzle ORM (completely independent)
-- **Authentication**: JWT-based authentication with refresh tokens
+- **Database**: SQLite with Drizzle ORM (completely independent) - CURRENT ACTIVE SYSTEM
+- **Authentication**: JWT-based authentication with refresh tokens - CURRENT ACTIVE SYSTEM
 - **Session Management**: Local storage with token-based authentication
 - **Payment Processing**: Stripe integration (optional)
 
@@ -765,4 +765,9 @@ Changelog:
 ```
 Preferred communication style: Simple, everyday language.
 DATABASE PROTECTION: NEVER DELETE THE DATABASE - Critical user instruction (2025-07-09)
+ROUTE PROTECTION: NEVER REWRITE ROUTES COMPLETELY OR DELETE THEM - Critical user instruction (2025-07-09)
+FUNCTIONALITY PROTECTION: NEVER AFFECT EXISTING WORKING FUNCTIONALITIES WHEN CREATING NEW ONES - Critical user instruction (2025-07-09)
+SCALABILITY REQUIREMENT: SYSTEM MUST ALWAYS FUNCTION FOR 100,000+ SIMULTANEOUS USERS - Critical user instruction (2025-07-09)
+CURRENT STACK: SQLite + JWT authentication system - Critical user instruction (2025-07-09)
+DYNAMIC FUNNEL SYSTEM: This is a SaaS for dynamic quiz funnels - everything must absorb ALL quiz responses to be dynamic and enable remarketing in all possible ways - Critical user instruction (2025-07-09)
 ```
