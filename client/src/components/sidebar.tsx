@@ -4,6 +4,7 @@ import { useAuth } from "@/hooks/useAuth-jwt";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { RealTimeNotifications } from "@/components/real-time-notifications";
 import { 
   BarChart3, 
   Plus, 
@@ -23,7 +24,11 @@ import {
   BookOpen,
   Package,
   MessageSquare,
-  Mail
+  Mail,
+  Activity,
+  Sparkles,
+  BarChart,
+  Target
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -93,6 +98,13 @@ export function Sidebar() {
       active: location === "/analytics"
     },
     {
+      title: "Analytics em Tempo Real",
+      href: "/real-time-analytics",
+      icon: <Activity className="w-4 h-4" />,
+      active: location === "/real-time-analytics",
+      badge: "🔴"
+    },
+    {
       title: "Encapsulados",
       href: "/encapsulados",
       icon: <Package className="w-4 h-4" />,
@@ -123,6 +135,13 @@ export function Sidebar() {
       href: "/email-marketing",
       icon: <Mail className="w-4 h-4" />,
       active: location === "/email-marketing"
+    },
+    {
+      title: "Email Marketing Pro",
+      href: "/advanced-email",
+      icon: <Sparkles className="w-4 h-4" />,
+      active: location === "/advanced-email",
+      badge: "⚡"
     },
     {
       title: "Campanhas de Email",
@@ -173,22 +192,29 @@ export function Sidebar() {
       "vendzz-sidebar flex flex-col transition-all duration-300",
       isCollapsed ? "w-16" : "w-64"
     )}>
-      {/* Logo */}
+      {/* Logo and Notifications */}
       <div className="p-4 border-b border-gray-200">
-        <div className="flex items-center justify-center">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center">
+            {!isCollapsed && (
+              <img 
+                src="https://vendzz.com.br/wp-content/uploads/2024/12/logo-vendzz.png" 
+                alt="Vendzz" 
+                className="h-12 w-auto"
+              />
+            )}
+            {isCollapsed && (
+              <img 
+                src="https://vendzz.com.br/wp-content/uploads/2024/12/logo-vendzz.png" 
+                alt="Vendzz" 
+                className="h-8 w-auto"
+              />
+            )}
+          </div>
           {!isCollapsed && (
-            <img 
-              src="https://vendzz.com.br/wp-content/uploads/2024/12/logo-vendzz.png" 
-              alt="Vendzz" 
-              className="h-12 w-auto"
-            />
-          )}
-          {isCollapsed && (
-            <img 
-              src="https://vendzz.com.br/wp-content/uploads/2024/12/logo-vendzz.png" 
-              alt="Vendzz" 
-              className="h-8 w-auto"
-            />
+            <div className="flex items-center">
+              <RealTimeNotifications />
+            </div>
           )}
         </div>
       </div>

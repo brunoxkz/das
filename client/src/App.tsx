@@ -28,6 +28,8 @@ import WhatsAppRemarketingPage from "@/pages/whatsapp-remarketing";
 import WhatsAppAutomationPage from "@/pages/whatsapp-automation";
 import CloakerPage from "@/pages/cloaker";
 import TesteSMSPage from "@/pages/teste-sms";
+import AdvancedEmailMarketing from "@/pages/advanced-email-marketing";
+import RealTimeAnalytics from "@/pages/real-time-analytics";
 import { useAuth } from "@/hooks/use-auth-hybrid";
 import { isUnauthorizedError } from "@/lib/authUtils";
 import { lazy } from "react";
@@ -171,6 +173,16 @@ function App() {
         <Route path="/teste-sms">
           <Layout>
             <TesteSMSPage />
+          </Layout>
+        </Route>
+        <Route path="/advanced-email">
+          <Layout>
+            <AdvancedEmailMarketing />
+          </Layout>
+        </Route>
+        <Route path="/real-time-analytics">
+          <Layout>
+            <RealTimeAnalytics />
           </Layout>
         </Route>
         <Route component={NotFoundPage} />
