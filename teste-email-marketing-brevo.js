@@ -252,7 +252,7 @@ async function enviarCampanhaBrevo(campaignId) {
   }
   
   try {
-    const response = await makeAuthenticatedRequest(`/api/email-campaigns/${campaignId}/send`, {
+    const response = await makeAuthenticatedRequest(`/api/email-campaigns/${campaignId}/send-brevo`, {
       method: 'POST',
       body: JSON.stringify({
         apiKey: BREVO_CONFIG.apiKey,

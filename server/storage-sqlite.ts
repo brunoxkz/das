@@ -1854,8 +1854,19 @@ export class SQLiteStorage implements IStorage {
   async createEmailLog(log: InsertEmailLog): Promise<EmailLog> {
     const newLog = {
       id: crypto.randomUUID(),
-      ...log,
+      campaignId: log.campaignId,
+      email: log.email,
+      personalizedSubject: log.personalizedSubject,
+      personalizedContent: log.personalizedContent,
       leadData: log.leadData ? JSON.stringify(log.leadData) : null,
+      status: log.status,
+      sendgridId: log.sendgridId || null,
+      errorMessage: log.errorMessage || null,
+      sentAt: log.sentAt || null,
+      deliveredAt: log.deliveredAt || null,
+      openedAt: log.openedAt || null,
+      clickedAt: log.clickedAt || null,
+      scheduledAt: log.scheduledAt || null,
       createdAt: Math.floor(Date.now() / 1000)
     };
     

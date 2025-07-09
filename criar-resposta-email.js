@@ -43,7 +43,7 @@ async function createQuizResponse(token) {
         elementId: 1752037212830,
         elementType: 'email',
         elementFieldId: 'email_contato',
-        answer: 'joao.silva@vendzz.com.br'
+        answer: 'brunotamaso@gmail.com'
       },
       {
         elementId: 1752037212831,

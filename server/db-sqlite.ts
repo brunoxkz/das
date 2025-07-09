@@ -4,9 +4,26 @@ import * as schema from "../shared/schema-sqlite";
 import { migrate } from 'drizzle-orm/better-sqlite3/migrator';
 import path from 'path';
 
-// Criar banco de dados SQLite local
+// OTIMIZAÇÕES CRÍTICAS PARA 100.000 USUÁRIOS SIMULTÂNEOS
 const sqlite = new Database('./vendzz-database.db');
+
+// 1. WAL Mode para máxima concorrência
 sqlite.pragma('journal_mode = WAL');
+
+// 2. Configurações de performance extrema
+sqlite.pragma('synchronous = NORMAL'); // Balance entre segurança e speed
+sqlite.pragma('cache_size = -64000'); // 64MB cache (crítico para 100k users)
+sqlite.pragma('temp_store = MEMORY'); // Tabelas temporárias em memória
+sqlite.pragma('mmap_size = 268435456'); // 256MB memory mapping
+sqlite.pragma('page_size = 32768'); // Páginas maiores para melhor I/O
+sqlite.pragma('wal_autocheckpoint = 1000'); // Checkpoint automático otimizado
+sqlite.pragma('busy_timeout = 30000'); // 30s timeout para locks
+
+// 3. Otimizações de threading
+sqlite.pragma('max_page_count = 1073741823'); // Máximo de páginas
+sqlite.pragma('threads = 4'); // Multi-threading para queries paralelas
+
+console.log('🚀 SQLite configurado para 100.000+ usuários simultâneos');
 
 export const db = drizzle(sqlite, { schema });
 

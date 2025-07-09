@@ -30,6 +30,7 @@ import CloakerPage from "@/pages/cloaker";
 import TesteSMSPage from "@/pages/teste-sms";
 import AdvancedEmailMarketing from "@/pages/advanced-email-marketing";
 import RealTimeAnalytics from "@/pages/real-time-analytics";
+import EmailMarketingPro from "@/pages/email-marketing-pro";
 import { useAuth } from "@/hooks/use-auth-hybrid";
 import { isUnauthorizedError } from "@/lib/authUtils";
 import { lazy } from "react";
@@ -183,6 +184,11 @@ function App() {
         <Route path="/real-time-analytics">
           <Layout>
             <RealTimeAnalytics />
+          </Layout>
+        </Route>
+        <Route path="/email-marketing-pro">
+          <Layout>
+            <EmailMarketingPro />
           </Layout>
         </Route>
         <Route component={NotFoundPage} />

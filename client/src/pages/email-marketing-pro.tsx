@@ -1,0 +1,860 @@
+import React, { useState } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Badge } from '@/components/ui/badge';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { useToast } from '@/hooks/use-toast';
+import { 
+  Mail, 
+  Send, 
+  Users, 
+  BarChart3, 
+  Eye, 
+  Plus,
+  Sparkles,
+  CheckCircle,
+  Clock,
+  AlertCircle,
+  TrendingUp,
+  Target,
+  Filter,
+  Settings
+} from 'lucide-react';
+
+interface EmailCampaign {
+  id: string;
+  name: string;
+  subject: string;
+  content: string;
+  quizId: string;
+  status: 'active' | 'sent' | 'draft' | 'scheduled';
+  targetAudience: 'all' | 'completed' | 'abandoned';
+  sent: number;
+  delivered: number;
+  opened: number;
+  clicked: number;
+  createdAt: number;
+}
+
+interface Quiz {
+  id: string;
+  title: string;
+  responses: number;
+}
+
+interface EmailTemplate {
+  id: string;
+  name: string;
+  subject: string;
+  content: string;
+  category: string;
+}
+
+export default function EmailMarketingPro() {
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+  
+  const [selectedTab, setSelectedTab] = useState('campaigns');
+  const [showCreateCampaign, setShowCreateCampaign] = useState(false);
+  const [showCreateTemplate, setShowCreateTemplate] = useState(false);
+  const [selectedCampaign, setSelectedCampaign] = useState<EmailCampaign | null>(null);
+  
+  const [campaignForm, setCampaignForm] = useState({
+    name: '',
+    subject: '',
+    content: '',
+    quizId: '',
+    targetAudience: 'all' as const,
+    triggerType: 'immediate' as const,
+    triggerDelay: 0,
+    triggerUnit: 'minutes' as const
+  });
+
+  const [templateForm, setTemplateForm] = useState({
+    name: '',
+    subject: '',
+    content: '',
+    category: 'welcome'
+  });
+
+  // Queries
+  const { data: campaigns = [], isLoading: campaignLoading } = useQuery({
+    queryKey: ['/api/email-campaigns'],
+    select: (data: EmailCampaign[]) => data || []
+  });
+
+  const { data: quizzes = [], isLoading: quizLoading } = useQuery({
+    queryKey: ['/api/quizzes'],
+    select: (data: Quiz[]) => data || []
+  });
+
+  const { data: templates = [], isLoading: templateLoading } = useQuery({
+    queryKey: ['/api/email-templates'],
+    select: (data: EmailTemplate[]) => data || []
+  });
+
+  // Mutations
+  const createCampaignMutation = useMutation({
+    mutationFn: async (data: any) => {
+      const response = await fetch('/api/email-campaigns', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        },
+        body: JSON.stringify(data)
+      });
+      
+      if (!response.ok) throw new Error('Failed to create campaign');
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/email-campaigns'] });
+      setShowCreateCampaign(false);
+      resetCampaignForm();
+      toast({
+        title: "Campanha criada com sucesso!",
+        description: "Sua campanha de email foi criada e está pronta para envio.",
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Erro ao criar campanha",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  });
+
+  const createTemplateMutation = useMutation({
+    mutationFn: async (data: any) => {
+      const response = await fetch('/api/email-templates', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        },
+        body: JSON.stringify(data)
+      });
+      
+      if (!response.ok) throw new Error('Failed to create template');
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/email-templates'] });
+      setShowCreateTemplate(false);
+      resetTemplateForm();
+      toast({
+        title: "Template criado com sucesso!",
+        description: "Seu template de email foi criado e pode ser usado em campanhas.",
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Erro ao criar template",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  });
+
+  const sendCampaignMutation = useMutation({
+    mutationFn: async (campaignId: string) => {
+      const response = await fetch(`/api/email-campaigns/${campaignId}/send-brevo`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        },
+        body: JSON.stringify({
+          apiKey: 'xkeysib-d9c81f8bf32940bbee0c3826b7c7bd65ad4e16fd81686265b31ab5cd7908cc6e',
+          fromEmail: 'contato@vendzz.com.br'
+        })
+      });
+      
+      if (!response.ok) throw new Error('Failed to send campaign');
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/email-campaigns'] });
+      toast({
+        title: "Campanha enviada com sucesso!",
+        description: "Sua campanha de email foi enviada para todos os destinatários.",
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Erro ao enviar campanha",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  });
+
+  const resetCampaignForm = () => {
+    setCampaignForm({
+      name: '',
+      subject: '',
+      content: '',
+      quizId: '',
+      targetAudience: 'all',
+      triggerType: 'immediate',
+      triggerDelay: 0,
+      triggerUnit: 'minutes'
+    });
+  };
+
+  const resetTemplateForm = () => {
+    setTemplateForm({
+      name: '',
+      subject: '',
+      content: '',
+      category: 'welcome'
+    });
+  };
+
+  const handleCreateCampaign = () => {
+    if (!campaignForm.name || !campaignForm.subject || !campaignForm.content || !campaignForm.quizId) {
+      toast({
+        title: "Campos obrigatórios",
+        description: "Por favor, preencha todos os campos obrigatórios.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    createCampaignMutation.mutate(campaignForm);
+  };
+
+  const handleCreateTemplate = () => {
+    if (!templateForm.name || !templateForm.subject || !templateForm.content) {
+      toast({
+        title: "Campos obrigatórios",
+        description: "Por favor, preencha todos os campos obrigatórios.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    createTemplateMutation.mutate(templateForm);
+  };
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'active': return 'bg-blue-500';
+      case 'sent': return 'bg-green-500';
+      case 'draft': return 'bg-gray-500';
+      case 'scheduled': return 'bg-yellow-500';
+      default: return 'bg-gray-500';
+    }
+  };
+
+  const getStatusText = (status: string) => {
+    switch (status) {
+      case 'active': return 'Ativa';
+      case 'sent': return 'Enviada';
+      case 'draft': return 'Rascunho';
+      case 'scheduled': return 'Agendada';
+      default: return 'Desconhecido';
+    }
+  };
+
+  const formatDate = (timestamp: number) => {
+    return new Date(timestamp * 1000).toLocaleDateString('pt-BR', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  };
+
+  const calculateOpenRate = (sent: number, opened: number) => {
+    if (sent === 0) return 0;
+    return Math.round((opened / sent) * 100);
+  };
+
+  const calculateClickRate = (sent: number, clicked: number) => {
+    if (sent === 0) return 0;
+    return Math.round((clicked / sent) * 100);
+  };
+
+  const totalCampaigns = campaigns.length;
+  const activeCampaigns = campaigns.filter(c => c.status === 'active').length;
+  const totalSent = campaigns.reduce((sum, c) => sum + c.sent, 0);
+  const totalOpened = campaigns.reduce((sum, c) => sum + c.opened, 0);
+  const avgOpenRate = totalSent > 0 ? Math.round((totalOpened / totalSent) * 100) : 0;
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800">
+      <div className="container mx-auto px-4 py-8">
+        {/* Header */}
+        <div className="mb-8">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 bg-gradient-to-br from-green-400 to-green-600 rounded-xl flex items-center justify-center">
+                <Mail className="w-6 h-6 text-white" />
+              </div>
+              <div>
+                <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
+                  Email Marketing Pro
+                </h1>
+                <p className="text-gray-600 dark:text-gray-300">
+                  Plataforma completa para campanhas de email marketing
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <Badge variant="secondary" className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-100">
+                <Sparkles className="w-3 h-3 mr-1" />
+                Pro
+              </Badge>
+            </div>
+          </div>
+        </div>
+
+        {/* Stats Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+          <Card className="bg-white dark:bg-slate-800 border-0 shadow-lg">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">Total Campanhas</p>
+                  <p className="text-2xl font-bold text-gray-900 dark:text-white">{totalCampaigns}</p>
+                </div>
+                <div className="w-12 h-12 bg-blue-100 dark:bg-blue-900 rounded-lg flex items-center justify-center">
+                  <BarChart3 className="w-6 h-6 text-blue-600 dark:text-blue-400" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-white dark:bg-slate-800 border-0 shadow-lg">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">Campanhas Ativas</p>
+                  <p className="text-2xl font-bold text-gray-900 dark:text-white">{activeCampaigns}</p>
+                </div>
+                <div className="w-12 h-12 bg-green-100 dark:bg-green-900 rounded-lg flex items-center justify-center">
+                  <Target className="w-6 h-6 text-green-600 dark:text-green-400" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-white dark:bg-slate-800 border-0 shadow-lg">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">Emails Enviados</p>
+                  <p className="text-2xl font-bold text-gray-900 dark:text-white">{totalSent}</p>
+                </div>
+                <div className="w-12 h-12 bg-purple-100 dark:bg-purple-900 rounded-lg flex items-center justify-center">
+                  <Send className="w-6 h-6 text-purple-600 dark:text-purple-400" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-white dark:bg-slate-800 border-0 shadow-lg">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">Taxa de Abertura</p>
+                  <p className="text-2xl font-bold text-gray-900 dark:text-white">{avgOpenRate}%</p>
+                </div>
+                <div className="w-12 h-12 bg-orange-100 dark:bg-orange-900 rounded-lg flex items-center justify-center">
+                  <TrendingUp className="w-6 h-6 text-orange-600 dark:text-orange-400" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Main Content */}
+        <Card className="bg-white dark:bg-slate-800 border-0 shadow-lg">
+          <CardHeader>
+            <Tabs value={selectedTab} onValueChange={setSelectedTab}>
+              <TabsList className="grid w-full grid-cols-3">
+                <TabsTrigger value="campaigns">Campanhas</TabsTrigger>
+                <TabsTrigger value="templates">Templates</TabsTrigger>
+                <TabsTrigger value="analytics">Analytics</TabsTrigger>
+              </TabsList>
+            </Tabs>
+          </CardHeader>
+
+          <CardContent>
+            <Tabs value={selectedTab} onValueChange={setSelectedTab}>
+              {/* Campaigns Tab */}
+              <TabsContent value="campaigns" className="space-y-6">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-4">
+                    <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
+                      Campanhas de Email
+                    </h2>
+                    <Badge variant="outline">{campaigns.length} campanhas</Badge>
+                  </div>
+                  <Button 
+                    onClick={() => setShowCreateCampaign(true)}
+                    className="bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700"
+                  >
+                    <Plus className="w-4 h-4 mr-2" />
+                    Nova Campanha
+                  </Button>
+                </div>
+
+                {showCreateCampaign && (
+                  <Card className="bg-slate-50 dark:bg-slate-900 border-2 border-green-200 dark:border-green-800">
+                    <CardHeader>
+                      <CardTitle className="text-lg">Criar Nova Campanha</CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                          <Label htmlFor="name">Nome da Campanha</Label>
+                          <Input
+                            id="name"
+                            value={campaignForm.name}
+                            onChange={(e) => setCampaignForm({...campaignForm, name: e.target.value})}
+                            placeholder="Ex: Boas-vindas aos novos leads"
+                          />
+                        </div>
+                        <div>
+                          <Label htmlFor="quiz">Quiz</Label>
+                          <Select 
+                            value={campaignForm.quizId} 
+                            onValueChange={(value) => setCampaignForm({...campaignForm, quizId: value})}
+                          >
+                            <SelectTrigger>
+                              <SelectValue placeholder="Selecione um quiz" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {quizzes.map((quiz) => (
+                                <SelectItem key={quiz.id} value={quiz.id}>
+                                  {quiz.title}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      </div>
+
+                      <div>
+                        <Label htmlFor="subject">Assunto do Email</Label>
+                        <Input
+                          id="subject"
+                          value={campaignForm.subject}
+                          onChange={(e) => setCampaignForm({...campaignForm, subject: e.target.value})}
+                          placeholder="Ex: Obrigado por participar, {nome}!"
+                        />
+                      </div>
+
+                      <div>
+                        <Label htmlFor="content">Conteúdo do Email</Label>
+                        <Textarea
+                          id="content"
+                          value={campaignForm.content}
+                          onChange={(e) => setCampaignForm({...campaignForm, content: e.target.value})}
+                          placeholder="Digite o conteúdo do email... Use variáveis como {nome}, {email}, {telefone}"
+                          rows={8}
+                        />
+                      </div>
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                          <Label htmlFor="audience">Público Alvo</Label>
+                          <Select 
+                            value={campaignForm.targetAudience} 
+                            onValueChange={(value: any) => setCampaignForm({...campaignForm, targetAudience: value})}
+                          >
+                            <SelectTrigger>
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="all">Todos os leads</SelectItem>
+                              <SelectItem value="completed">Quiz completo</SelectItem>
+                              <SelectItem value="abandoned">Quiz abandonado</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div>
+                          <Label htmlFor="trigger">Tipo de Disparo</Label>
+                          <Select 
+                            value={campaignForm.triggerType} 
+                            onValueChange={(value: any) => setCampaignForm({...campaignForm, triggerType: value})}
+                          >
+                            <SelectTrigger>
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="immediate">Imediato</SelectItem>
+                              <SelectItem value="delayed">Agendado</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-2 pt-4">
+                        <Button 
+                          onClick={handleCreateCampaign}
+                          disabled={createCampaignMutation.isPending}
+                          className="bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700"
+                        >
+                          {createCampaignMutation.isPending ? 'Criando...' : 'Criar Campanha'}
+                        </Button>
+                        <Button 
+                          variant="outline" 
+                          onClick={() => setShowCreateCampaign(false)}
+                        >
+                          Cancelar
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
+
+                {/* Campaigns List */}
+                <div className="space-y-4">
+                  {campaignLoading ? (
+                    <div className="flex items-center justify-center py-8">
+                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-500"></div>
+                    </div>
+                  ) : campaigns.length === 0 ? (
+                    <div className="text-center py-8 text-gray-500 dark:text-gray-400">
+                      Nenhuma campanha encontrada. Crie sua primeira campanha!
+                    </div>
+                  ) : (
+                    campaigns.map((campaign) => (
+                      <Card key={campaign.id} className="bg-white dark:bg-slate-800 border shadow-sm hover:shadow-md transition-shadow">
+                        <CardContent className="p-6">
+                          <div className="flex items-start justify-between">
+                            <div className="flex-1">
+                              <div className="flex items-center gap-3 mb-2">
+                                <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                                  {campaign.name}
+                                </h3>
+                                <Badge className={`${getStatusColor(campaign.status)} text-white`}>
+                                  {getStatusText(campaign.status)}
+                                </Badge>
+                              </div>
+                              <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
+                                {campaign.subject}
+                              </p>
+                              <div className="flex items-center gap-4 text-sm text-gray-500 dark:text-gray-400">
+                                <span>Público: {campaign.targetAudience === 'all' ? 'Todos' : campaign.targetAudience === 'completed' ? 'Quiz Completo' : 'Quiz Abandonado'}</span>
+                                <span>•</span>
+                                <span>Criado em: {formatDate(campaign.createdAt)}</span>
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              {campaign.status === 'active' && (
+                                <Button 
+                                  onClick={() => sendCampaignMutation.mutate(campaign.id)}
+                                  disabled={sendCampaignMutation.isPending}
+                                  size="sm"
+                                  className="bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700"
+                                >
+                                  <Send className="w-4 h-4 mr-1" />
+                                  Enviar
+                                </Button>
+                              )}
+                              <Button variant="outline" size="sm">
+                                <Eye className="w-4 h-4 mr-1" />
+                                Ver
+                              </Button>
+                            </div>
+                          </div>
+                          
+                          {campaign.sent > 0 && (
+                            <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+                              <div className="grid grid-cols-4 gap-4 text-sm">
+                                <div className="text-center">
+                                  <div className="text-lg font-semibold text-gray-900 dark:text-white">
+                                    {campaign.sent}
+                                  </div>
+                                  <div className="text-gray-600 dark:text-gray-400">Enviados</div>
+                                </div>
+                                <div className="text-center">
+                                  <div className="text-lg font-semibold text-gray-900 dark:text-white">
+                                    {campaign.delivered}
+                                  </div>
+                                  <div className="text-gray-600 dark:text-gray-400">Entregues</div>
+                                </div>
+                                <div className="text-center">
+                                  <div className="text-lg font-semibold text-green-600 dark:text-green-400">
+                                    {campaign.opened}
+                                  </div>
+                                  <div className="text-gray-600 dark:text-gray-400">Abertos</div>
+                                </div>
+                                <div className="text-center">
+                                  <div className="text-lg font-semibold text-blue-600 dark:text-blue-400">
+                                    {campaign.clicked}
+                                  </div>
+                                  <div className="text-gray-600 dark:text-gray-400">Cliques</div>
+                                </div>
+                              </div>
+                            </div>
+                          )}
+                        </CardContent>
+                      </Card>
+                    ))
+                  )}
+                </div>
+              </TabsContent>
+
+              {/* Templates Tab */}
+              <TabsContent value="templates" className="space-y-6">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-4">
+                    <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
+                      Templates de Email
+                    </h2>
+                    <Badge variant="outline">{templates.length} templates</Badge>
+                  </div>
+                  <Button 
+                    onClick={() => setShowCreateTemplate(true)}
+                    className="bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700"
+                  >
+                    <Plus className="w-4 h-4 mr-2" />
+                    Novo Template
+                  </Button>
+                </div>
+
+                {showCreateTemplate && (
+                  <Card className="bg-slate-50 dark:bg-slate-900 border-2 border-blue-200 dark:border-blue-800">
+                    <CardHeader>
+                      <CardTitle className="text-lg">Criar Novo Template</CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                          <Label htmlFor="templateName">Nome do Template</Label>
+                          <Input
+                            id="templateName"
+                            value={templateForm.name}
+                            onChange={(e) => setTemplateForm({...templateForm, name: e.target.value})}
+                            placeholder="Ex: Boas-vindas"
+                          />
+                        </div>
+                        <div>
+                          <Label htmlFor="category">Categoria</Label>
+                          <Select 
+                            value={templateForm.category} 
+                            onValueChange={(value) => setTemplateForm({...templateForm, category: value})}
+                          >
+                            <SelectTrigger>
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="welcome">Boas-vindas</SelectItem>
+                              <SelectItem value="followup">Follow-up</SelectItem>
+                              <SelectItem value="promotional">Promocional</SelectItem>
+                              <SelectItem value="newsletter">Newsletter</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      </div>
+
+                      <div>
+                        <Label htmlFor="templateSubject">Assunto</Label>
+                        <Input
+                          id="templateSubject"
+                          value={templateForm.subject}
+                          onChange={(e) => setTemplateForm({...templateForm, subject: e.target.value})}
+                          placeholder="Ex: Bem-vindo, {nome}!"
+                        />
+                      </div>
+
+                      <div>
+                        <Label htmlFor="templateContent">Conteúdo</Label>
+                        <Textarea
+                          id="templateContent"
+                          value={templateForm.content}
+                          onChange={(e) => setTemplateForm({...templateForm, content: e.target.value})}
+                          placeholder="Digite o conteúdo do template..."
+                          rows={8}
+                        />
+                      </div>
+
+                      <div className="flex items-center gap-2 pt-4">
+                        <Button 
+                          onClick={handleCreateTemplate}
+                          disabled={createTemplateMutation.isPending}
+                          className="bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700"
+                        >
+                          {createTemplateMutation.isPending ? 'Criando...' : 'Criar Template'}
+                        </Button>
+                        <Button 
+                          variant="outline" 
+                          onClick={() => setShowCreateTemplate(false)}
+                        >
+                          Cancelar
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
+
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {templateLoading ? (
+                    <div className="col-span-full flex items-center justify-center py-8">
+                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+                    </div>
+                  ) : templates.length === 0 ? (
+                    <div className="col-span-full text-center py-8 text-gray-500 dark:text-gray-400">
+                      Nenhum template encontrado. Crie seu primeiro template!
+                    </div>
+                  ) : (
+                    templates.map((template) => (
+                      <Card key={template.id} className="bg-white dark:bg-slate-800 border shadow-sm hover:shadow-md transition-shadow">
+                        <CardContent className="p-6">
+                          <div className="flex items-start justify-between mb-3">
+                            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                              {template.name}
+                            </h3>
+                            <Badge variant="outline">{template.category}</Badge>
+                          </div>
+                          <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                            {template.subject}
+                          </p>
+                          <div className="flex items-center gap-2">
+                            <Button variant="outline" size="sm">
+                              <Eye className="w-4 h-4 mr-1" />
+                              Ver
+                            </Button>
+                            <Button variant="outline" size="sm">
+                              <Settings className="w-4 h-4 mr-1" />
+                              Editar
+                            </Button>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))
+                  )}
+                </div>
+              </TabsContent>
+
+              {/* Analytics Tab */}
+              <TabsContent value="analytics" className="space-y-6">
+                <div className="flex items-center justify-between">
+                  <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
+                    Analytics de Email
+                  </h2>
+                  <Button variant="outline" size="sm">
+                    <Filter className="w-4 h-4 mr-1" />
+                    Filtros
+                  </Button>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  <Card className="bg-white dark:bg-slate-800 border-0 shadow-lg">
+                    <CardContent className="p-6">
+                      <div className="flex items-center justify-between mb-4">
+                        <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                          Taxa de Entrega
+                        </h3>
+                        <CheckCircle className="w-5 h-5 text-green-500" />
+                      </div>
+                      <div className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
+                        {totalSent > 0 ? Math.round((campaigns.reduce((sum, c) => sum + c.delivered, 0) / totalSent) * 100) : 0}%
+                      </div>
+                      <p className="text-sm text-gray-600 dark:text-gray-400">
+                        {campaigns.reduce((sum, c) => sum + c.delivered, 0)} de {totalSent} emails entregues
+                      </p>
+                    </CardContent>
+                  </Card>
+
+                  <Card className="bg-white dark:bg-slate-800 border-0 shadow-lg">
+                    <CardContent className="p-6">
+                      <div className="flex items-center justify-between mb-4">
+                        <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                          Taxa de Abertura
+                        </h3>
+                        <Eye className="w-5 h-5 text-blue-500" />
+                      </div>
+                      <div className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
+                        {avgOpenRate}%
+                      </div>
+                      <p className="text-sm text-gray-600 dark:text-gray-400">
+                        {totalOpened} emails abertos
+                      </p>
+                    </CardContent>
+                  </Card>
+
+                  <Card className="bg-white dark:bg-slate-800 border-0 shadow-lg">
+                    <CardContent className="p-6">
+                      <div className="flex items-center justify-between mb-4">
+                        <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                          Taxa de Cliques
+                        </h3>
+                        <Target className="w-5 h-5 text-purple-500" />
+                      </div>
+                      <div className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
+                        {totalSent > 0 ? Math.round((campaigns.reduce((sum, c) => sum + c.clicked, 0) / totalSent) * 100) : 0}%
+                      </div>
+                      <p className="text-sm text-gray-600 dark:text-gray-400">
+                        {campaigns.reduce((sum, c) => sum + c.clicked, 0)} cliques registrados
+                      </p>
+                    </CardContent>
+                  </Card>
+                </div>
+
+                <Card className="bg-white dark:bg-slate-800 border-0 shadow-lg">
+                  <CardHeader>
+                    <CardTitle>Performance por Campanha</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-4">
+                      {campaigns.filter(c => c.sent > 0).map((campaign) => (
+                        <div key={campaign.id} className="p-4 bg-slate-50 dark:bg-slate-900 rounded-lg">
+                          <div className="flex items-center justify-between mb-2">
+                            <h4 className="font-semibold text-gray-900 dark:text-white">
+                              {campaign.name}
+                            </h4>
+                            <Badge className={`${getStatusColor(campaign.status)} text-white`}>
+                              {getStatusText(campaign.status)}
+                            </Badge>
+                          </div>
+                          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                            <div>
+                              <div className="text-gray-600 dark:text-gray-400">Enviados</div>
+                              <div className="font-semibold text-gray-900 dark:text-white">{campaign.sent}</div>
+                            </div>
+                            <div>
+                              <div className="text-gray-600 dark:text-gray-400">Taxa Abertura</div>
+                              <div className="font-semibold text-green-600 dark:text-green-400">
+                                {calculateOpenRate(campaign.sent, campaign.opened)}%
+                              </div>
+                            </div>
+                            <div>
+                              <div className="text-gray-600 dark:text-gray-400">Taxa Cliques</div>
+                              <div className="font-semibold text-blue-600 dark:text-blue-400">
+                                {calculateClickRate(campaign.sent, campaign.clicked)}%
+                              </div>
+                            </div>
+                            <div>
+                              <div className="text-gray-600 dark:text-gray-400">Data</div>
+                              <div className="font-semibold text-gray-900 dark:text-white">
+                                {formatDate(campaign.createdAt)}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              </TabsContent>
+            </Tabs>
+          </CardContent>
+        </Card>
+      </div>
+    </div>
+  );
+}

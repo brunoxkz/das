@@ -3218,7 +3218,7 @@ app.get("/api/whatsapp-extension/pending", verifyJWT, async (req: any, res: Resp
     }
   });
 
-  // Enviar campanha de email
+  // Enviar campanha de email (endpoint antigo para compatibilidade)
   app.post("/api/email-campaigns/:id/send", verifyJWT, async (req: any, res) => {
     try {
       const { emails } = req.body;
@@ -3239,6 +3239,11 @@ app.get("/api/whatsapp-extension/pending", verifyJWT, async (req: any, res: Resp
 
       const results = { sent: 0, failed: 0, emails: [] };
 
+      // Verificar se emails é um array
+      if (!Array.isArray(emails)) {
+        return res.status(400).json({ error: "Emails must be an array" });
+      }
+
       // Enviar emails
       for (const email of emails) {
         try {
@@ -3257,10 +3262,10 @@ app.get("/api/whatsapp-extension/pending", verifyJWT, async (req: any, res: Resp
             await storage.createEmailLog({
               campaignId,
               email,
-              subject: campaign.subject,
-              content: campaign.content,
+              personalizedSubject: campaign.subject,
+              personalizedContent: campaign.content,
               status: 'sent',
-              sentAt: new Date()
+              sentAt: Math.floor(Date.now() / 1000)
             });
           } else {
             results.failed++;
@@ -3270,11 +3275,11 @@ app.get("/api/whatsapp-extension/pending", verifyJWT, async (req: any, res: Resp
             await storage.createEmailLog({
               campaignId,
               email,
-              subject: campaign.subject,
-              content: campaign.content,
+              personalizedSubject: campaign.subject,
+              personalizedContent: campaign.content,
               status: 'failed',
-              error: 'Failed to send email',
-              sentAt: new Date()
+              errorMessage: 'Failed to send email',
+              sentAt: Math.floor(Date.now() / 1000)
             });
           }
         } catch (error) {
@@ -3285,11 +3290,11 @@ app.get("/api/whatsapp-extension/pending", verifyJWT, async (req: any, res: Resp
           await storage.createEmailLog({
             campaignId,
             email,
-            subject: campaign.subject,
-            content: campaign.content,
+            personalizedSubject: campaign.subject,
+            personalizedContent: campaign.content,
             status: 'failed',
-            error: error.message,
-            sentAt: new Date()
+            errorMessage: error.message,
+            sentAt: Math.floor(Date.now() / 1000)
           });
         }
       }
@@ -3526,14 +3531,49 @@ app.get("/api/whatsapp-extension/pending", verifyJWT, async (req: any, res: Resp
         }
         
         if (emailAddress && emailAddress.includes('@')) {
+          // Extrair dados adicionais baseado na estrutura
+          let phoneNumber = '';
+          let age = '';
+          let height = '';
+          let currentWeight = '';
+          let targetWeight = '';
+          
+          if (Array.isArray(response.responses)) {
+            for (const item of response.responses) {
+              if (item.elementFieldId && item.elementFieldId.includes('telefone')) {
+                phoneNumber = item.answer;
+              }
+              if (item.elementFieldId && item.elementFieldId.includes('idade')) {
+                age = item.answer;
+              }
+              if (item.elementFieldId && item.elementFieldId.includes('altura')) {
+                height = item.answer;
+              }
+              if (item.elementFieldId && item.elementFieldId.includes('peso_atual')) {
+                currentWeight = item.answer;
+              }
+              if (item.elementFieldId && item.elementFieldId.includes('peso_objetivo')) {
+                targetWeight = item.answer;
+              }
+            }
+          } else if (typeof response.responses === 'object') {
+            for (const key in response.responses) {
+              if (key.includes('telefone')) phoneNumber = response.responses[key];
+              if (key.includes('idade')) age = response.responses[key];
+              if (key.includes('altura')) height = response.responses[key];
+              if (key.includes('peso_atual')) currentWeight = response.responses[key];
+              if (key.includes('peso_objetivo')) targetWeight = response.responses[key];
+            }
+          }
+          
           const leadData = {
             nome: userName,
             email: emailAddress,
-            telefone: response.responses?.telefone || response.responses?.phone || '',
-            idade: response.responses?.idade || response.responses?.age || '',
-            altura: response.responses?.altura || response.responses?.height || '',
-            peso_atual: response.responses?.peso_atual || response.responses?.current_weight || '',
-            peso_objetivo: response.responses?.peso_objetivo || response.responses?.target_weight || '',
+            telefone: phoneNumber,
+            idade: age,
+            altura: height,
+            peso_atual: currentWeight,
+            peso_objetivo: targetWeight,
             completionStatus: response.metadata?.isComplete ? 'completed' : 'abandoned',
             submittedAt: response.submittedAt || response.createdAt
           };
@@ -3587,9 +3627,9 @@ app.get("/api/whatsapp-extension/pending", verifyJWT, async (req: any, res: Resp
               campaignId: id,
               email: lead.email,
               status: 'sent',
-              sentAt: new Date(),
-              subject: personalizedSubject,
-              content: personalizedContent
+              sentAt: Math.floor(Date.now() / 1000), // Unix timestamp
+              personalizedSubject: personalizedSubject,
+              personalizedContent: personalizedContent
             });
           } else {
             failureCount++;
@@ -3599,10 +3639,10 @@ app.get("/api/whatsapp-extension/pending", verifyJWT, async (req: any, res: Resp
               campaignId: id,
               email: lead.email,
               status: 'failed',
-              sentAt: new Date(),
-              subject: personalizedSubject,
-              content: personalizedContent,
-              error: 'Falha no envio via Brevo'
+              sentAt: Math.floor(Date.now() / 1000), // Unix timestamp
+              personalizedSubject: personalizedSubject,
+              personalizedContent: personalizedContent,
+              errorMessage: 'Falha no envio via Brevo'
             });
           }
         } catch (error) {
@@ -3614,10 +3654,10 @@ app.get("/api/whatsapp-extension/pending", verifyJWT, async (req: any, res: Resp
             campaignId: id,
             email: lead.email,
             status: 'failed',
-            sentAt: new Date(),
-            subject: campaign.subject,
-            content: campaign.content,
-            error: error.message
+            sentAt: Math.floor(Date.now() / 1000), // Unix timestamp
+            personalizedSubject: campaign.subject,
+            personalizedContent: campaign.content,
+            errorMessage: error.message
           });
         }
       }
@@ -3625,9 +3665,12 @@ app.get("/api/whatsapp-extension/pending", verifyJWT, async (req: any, res: Resp
       // Atualizar status da campanha
       await storage.updateEmailCampaign(id, {
         status: 'sent',
-        sentAt: new Date(),
-        successCount,
-        failureCount
+        sentAt: Math.floor(Date.now() / 1000), // Unix timestamp
+        sent: successCount,
+        delivered: successCount,
+        opened: 0,
+        clicked: 0,
+        updatedAt: Math.floor(Date.now() / 1000)
       });
       
       res.json({
