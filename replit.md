@@ -764,4 +764,5 @@ Changelog:
 
 ```
 Preferred communication style: Simple, everyday language.
+DATABASE PROTECTION: NEVER DELETE THE DATABASE - Critical user instruction (2025-07-09)
 ```
