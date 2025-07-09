@@ -23,7 +23,12 @@ import {
   Trash2,
   Plus,
   Code,
-  Wand2
+  Wand2,
+  Settings,
+  TestTube,
+  CheckCircle,
+  Loader2,
+  Info
 } from "lucide-react";
 
 interface EmailCampaign {
@@ -88,6 +93,15 @@ export default function EmailMarketingPage() {
     content: "",
     category: "welcome" as const
   });
+
+  const [brevoConfig, setBrevoConfig] = useState({
+    apiKey: "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",
+    fromEmail: "contato@vendzz.com.br",
+    isConfigured: true
+  });
+
+  const [testingBrevo, setTestingBrevo] = useState(false);
+  const [sendingCampaign, setSendingCampaign] = useState(false);
 
   // Queries
   const { data: quizzes } = useQuery({
@@ -186,6 +200,75 @@ export default function EmailMarketingPage() {
     setCampaignForm({...campaignForm, content: newContent});
   };
 
+  const testBrevoConfig = async () => {
+    setTestingBrevo(true);
+    try {
+      const response = await apiRequest("/api/email-brevo/test", {
+        method: "POST",
+        body: JSON.stringify({
+          apiKey: brevoConfig.apiKey
+        })
+      });
+      
+      if (response.success) {
+        toast({
+          title: "Configuração OK!",
+          description: "API do Brevo configurada com sucesso!"
+        });
+        setBrevoConfig({...brevoConfig, isConfigured: true});
+      } else {
+        toast({
+          title: "Erro na configuração",
+          description: response.message || "Verifique sua API Key",
+          variant: "destructive"
+        });
+      }
+    } catch (error) {
+      toast({
+        title: "Erro no teste",
+        description: "Não foi possível testar a configuração",
+        variant: "destructive"
+      });
+    } finally {
+      setTestingBrevo(false);
+    }
+  };
+
+  const sendEmailCampaign = async (campaignId: string) => {
+    setSendingCampaign(true);
+    try {
+      const response = await apiRequest(`/api/email-campaigns/${campaignId}/send`, {
+        method: "POST",
+        body: JSON.stringify({
+          apiKey: brevoConfig.apiKey,
+          fromEmail: brevoConfig.fromEmail
+        })
+      });
+      
+      if (response.success) {
+        toast({
+          title: "Campanha Enviada!",
+          description: `${response.successCount} emails enviados com sucesso!`
+        });
+        queryClient.invalidateQueries({ queryKey: ["/api/email-campaigns"] });
+      } else {
+        toast({
+          title: "Erro no envio",
+          description: response.error || "Não foi possível enviar a campanha",
+          variant: "destructive"
+        });
+      }
+    } catch (error) {
+      toast({
+        title: "Erro no envio",
+        description: "Não foi possível enviar a campanha",
+        variant: "destructive"
+      });
+    } finally {
+      setSendingCampaign(false);
+    }
+  };
+
   return (
     <div className="container mx-auto p-6 space-y-6">
       {/* Header */}
@@ -245,11 +328,12 @@ export default function EmailMarketingPage() {
 
       {/* Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid w-full grid-cols-4">
+        <TabsList className="grid w-full grid-cols-5">
           <TabsTrigger value="overview">Visão Geral</TabsTrigger>
           <TabsTrigger value="campaigns">Campanhas</TabsTrigger>
           <TabsTrigger value="templates">Templates</TabsTrigger>
           <TabsTrigger value="analytics">Análises</TabsTrigger>
+          <TabsTrigger value="settings">Configurações</TabsTrigger>
         </TabsList>
 
         <TabsContent value="overview" className="space-y-6">
@@ -261,7 +345,7 @@ export default function EmailMarketingPage() {
                   <div>
                     <p className="text-sm text-gray-600">Campanhas Ativas</p>
                     <p className="text-2xl font-bold text-blue-600">
-                      {campaigns?.filter((c: EmailCampaign) => c.status === 'active').length || 0}
+                      {Array.isArray(campaigns) ? campaigns.filter((c: EmailCampaign) => c.status === 'active').length : 0}
                     </p>
                   </div>
                 </div>
@@ -467,7 +551,7 @@ export default function EmailMarketingPage() {
               </CardHeader>
               <CardContent>
                 <div className="space-y-3">
-                  {campaigns?.map((campaign: EmailCampaign) => (
+                  {Array.isArray(campaigns) && campaigns?.map((campaign: EmailCampaign) => (
                     <div key={campaign.id} className="border rounded-lg p-4">
                       <div className="flex items-center justify-between mb-2">
                         <h3 className="font-medium">{campaign.name}</h3>
@@ -708,6 +792,113 @@ export default function EmailMarketingPage() {
                     </div>
                   </div>
                 ))}
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="settings" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <div className="flex items-center space-x-2">
+                <Settings className="w-5 h-5 text-green-600" />
+                <div>
+                  <CardTitle>Configurações do Brevo</CardTitle>
+                  <CardDescription>Configure sua integração com o Brevo para envio de emails</CardDescription>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="grid gap-4">
+                <div>
+                  <Label htmlFor="brevoApiKey">API Key do Brevo</Label>
+                  <Input
+                    id="brevoApiKey"
+                    type="password"
+                    value={brevoConfig.apiKey}
+                    onChange={(e) => setBrevoConfig({...brevoConfig, apiKey: e.target.value})}
+                    placeholder="xkeysib-..."
+                    className="mt-1"
+                  />
+                  <p className="text-sm text-gray-500 mt-1">
+                    Obtenha sua API key em: Brevo → Configurações → API Keys
+                  </p>
+                </div>
+
+                <div>
+                  <Label htmlFor="brevoFromEmail">Email do Remetente</Label>
+                  <Input
+                    id="brevoFromEmail"
+                    type="email"
+                    value={brevoConfig.fromEmail}
+                    onChange={(e) => setBrevoConfig({...brevoConfig, fromEmail: e.target.value})}
+                    placeholder="contato@vendzz.com.br"
+                    className="mt-1"
+                  />
+                  <p className="text-sm text-gray-500 mt-1">
+                    Email que aparecerá como remetente das suas campanhas
+                  </p>
+                </div>
+
+                <div className="flex items-center space-x-3">
+                  <Button 
+                    onClick={testBrevoConfig}
+                    disabled={testingBrevo || !brevoConfig.apiKey}
+                    className="flex-1"
+                  >
+                    {testingBrevo ? (
+                      <>
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        Testando...
+                      </>
+                    ) : (
+                      <>
+                        <TestTube className="w-4 h-4 mr-2" />
+                        Testar Configuração
+                      </>
+                    )}
+                  </Button>
+
+                  {brevoConfig.isConfigured && (
+                    <div className="flex items-center space-x-2 text-green-600">
+                      <CheckCircle className="w-4 h-4" />
+                      <span className="text-sm">Configurado</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {brevoConfig.isConfigured && (
+                <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                  <div className="flex items-center space-x-2 mb-2">
+                    <CheckCircle className="w-5 h-5 text-green-600" />
+                    <h3 className="font-medium text-green-800">Brevo Configurado!</h3>
+                  </div>
+                  <p className="text-sm text-green-700">
+                    O Brevo está configurado e funcionando. Você pode criar e enviar campanhas de email.
+                  </p>
+                  <div className="mt-3 space-y-1 text-sm text-green-600">
+                    <p>• API Name: VZ</p>
+                    <p>• Remetente: {brevoConfig.fromEmail}</p>
+                    <p>• Status: ✅ Ativo</p>
+                  </div>
+                </div>
+              )}
+
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                <div className="flex items-center space-x-2 mb-2">
+                  <Info className="w-5 h-5 text-blue-600" />
+                  <h3 className="font-medium text-blue-800">Sobre o Brevo</h3>
+                </div>
+                <p className="text-sm text-blue-700 mb-2">
+                  O Brevo é uma plataforma confiável para envio de emails transacionais e marketing.
+                </p>
+                <ul className="text-sm text-blue-600 space-y-1">
+                  <li>• Alta taxa de entrega (99%+)</li>
+                  <li>• Suporte completo para HTML e personalização</li>
+                  <li>• Monitoramento de abertura e cliques</li>
+                  <li>• Integração segura com API</li>
+                </ul>
               </div>
             </CardContent>
           </Card>

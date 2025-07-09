@@ -658,24 +658,43 @@ export class SQLiteStorage implements IStorage {
 
   // Email campaign sending operations
   async getQuizResponsesForEmail(quizId: string, targetAudience: string): Promise<QuizResponse[]> {
-    let query = db.select().from(quizResponses).where(eq(quizResponses.quizId, quizId));
+    console.log(`📧 BUSCANDO RESPOSTAS PARA EMAIL - Quiz: ${quizId}, Audience: ${targetAudience}`);
     
-    if (targetAudience === 'completed') {
-      // Respostas completas - com resposta não vazia
-      query = query.where(and(
-        eq(quizResponses.quizId, quizId),
-        // Assumindo que respostas completas têm dados no campo response
-      ));
-    } else if (targetAudience === 'abandoned') {
-      // Respostas abandonadas - com resposta vazia ou incompleta
-      query = query.where(and(
-        eq(quizResponses.quizId, quizId),
-        // Condição para respostas abandonadas - implementar lógica específica
-      ));
-    }
+    const stmt = sqlite.prepare(`
+      SELECT id, quizId, responses, metadata, submittedAt, createdAt
+      FROM quiz_responses
+      WHERE quizId = ?
+      AND (
+        (metadata->>'isComplete' = 'true') OR 
+        (metadata->>'completionPercentage' = '100') OR
+        (metadata->>'isComplete' = 'false' AND metadata->>'isPartial' != 'true')
+      )
+    `);
     
-    const responses = await query;
-    return responses;
+    const allResponses = stmt.all(quizId);
+    console.log(`📧 RESPOSTAS ENCONTRADAS: ${allResponses.length}`);
+    
+    // Filtrar por audiência
+    const filteredResponses = allResponses.filter(response => {
+      const metadata = JSON.parse(response.metadata || '{}');
+      const isComplete = metadata.isComplete === true || metadata.completionPercentage === 100;
+      
+      if (targetAudience === 'completed') {
+        return isComplete;
+      } else if (targetAudience === 'abandoned') {
+        return !isComplete;
+      }
+      
+      return true; // 'all'
+    });
+    
+    console.log(`📧 RESPOSTAS FILTRADAS (${targetAudience}): ${filteredResponses.length}`);
+    
+    return filteredResponses.map(response => ({
+      ...response,
+      responses: JSON.parse(response.responses || '{}'),
+      metadata: JSON.parse(response.metadata || '{}')
+    }));
   }
 
   extractEmailsFromResponses(responses: QuizResponse[]): string[] {

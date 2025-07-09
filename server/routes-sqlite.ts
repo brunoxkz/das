@@ -7,6 +7,7 @@ import { insertQuizSchema, insertQuizResponseSchema } from "../shared/schema-sql
 import { verifyJWT } from "./auth-sqlite";
 import { sendSms } from "./twilio";
 import { emailService } from "./email-service";
+import { BrevoEmailService } from "./email-brevo";
 
 export function registerSQLiteRoutes(app: Express): Server {
   // Public routes BEFORE any middleware or authentication
@@ -3223,6 +3224,263 @@ app.get("/api/whatsapp-extension/pending", verifyJWT, async (req: any, res: Resp
     } catch (error) {
       console.error("Error creating email automation:", error);
       res.status(500).json({ error: "Error creating email automation" });
+    }
+  });
+
+  // Testar configuração do Brevo
+  app.post("/api/email-brevo/test", verifyJWT, async (req: any, res) => {
+    try {
+      const { apiKey, fromEmail } = req.body;
+      
+      if (!apiKey) {
+        return res.status(400).json({ error: "API Key é obrigatória" });
+      }
+      
+      const brevoService = new BrevoEmailService(apiKey);
+      const isValid = await brevoService.verifyApiKey();
+      
+      if (isValid) {
+        // Testar envio de email se fromEmail for fornecido
+        if (fromEmail) {
+          const testEmailSent = await brevoService.sendEmail({
+            to: fromEmail,
+            from: fromEmail,
+            subject: "Teste de Configuração Brevo - Vendzz",
+            htmlContent: `
+              <h1>Configuração do Brevo Testada com Sucesso!</h1>
+              <p>Este é um email de teste enviado através da integração Brevo do Vendzz.</p>
+              <p><strong>API Name:</strong> VZ</p>
+              <p><strong>Data:</strong> ${new Date().toLocaleString('pt-BR')}</p>
+              <p><strong>Status:</strong> ✅ Funcionando perfeitamente</p>
+              <hr>
+              <p><em>Sistema Vendzz - Email Marketing</em></p>
+            `,
+            textContent: `Configuração do Brevo Testada com Sucesso! Este é um email de teste enviado através da integração Brevo do Vendzz. API Name: VZ. Data: ${new Date().toLocaleString('pt-BR')}. Status: Funcionando perfeitamente.`
+          });
+          
+          if (testEmailSent) {
+            res.json({ 
+              success: true, 
+              message: "API Key do Brevo válida e email de teste enviado com sucesso!",
+              testEmailSent: true
+            });
+          } else {
+            res.json({ 
+              success: true, 
+              message: "API Key do Brevo válida, mas falha no envio do email de teste.",
+              testEmailSent: false
+            });
+          }
+        } else {
+          res.json({ 
+            success: true, 
+            message: "API Key do Brevo válida! Configuração OK." 
+          });
+        }
+      } else {
+        res.status(400).json({ 
+          success: false, 
+          message: "API Key do Brevo inválida. Verifique suas credenciais." 
+        });
+      }
+    } catch (error) {
+      console.error("Error testing Brevo API:", error);
+      res.status(500).json({ error: "Erro ao testar API do Brevo" });
+    }
+  });
+
+  // Enviar campanha de email via Brevo
+  app.post("/api/email-campaigns/:id/send", verifyJWT, async (req: any, res) => {
+    try {
+      const { id } = req.params;
+      const userId = req.user.id;
+      const { apiKey, fromEmail } = req.body;
+      
+      if (!apiKey || !fromEmail) {
+        return res.status(400).json({ 
+          error: "API Key do Brevo e Email do Remetente são obrigatórios" 
+        });
+      }
+      
+      const campaign = await storage.getEmailCampaign(id);
+      if (!campaign || campaign.userId !== userId) {
+        return res.status(404).json({ error: "Campanha não encontrada" });
+      }
+      
+      // Buscar emails do quiz
+      const responses = await storage.getQuizResponsesForEmail(campaign.quizId, campaign.targetAudience);
+      console.log(`📧 PROCESSANDO ${responses.length} respostas do quiz ${campaign.quizId}`);
+      
+      const emails = [];
+      
+      for (const response of responses) {
+        console.log(`📧 PROCESSANDO RESPOSTA ${response.id}:`, response.responses);
+        
+        let emailAddress = '';
+        let userName = 'Usuário';
+        
+        // Extrair email das respostas
+        if (Array.isArray(response.responses)) {
+          // Formato novo - array de elementos
+          for (const item of response.responses) {
+            if (item.elementType === 'email' && item.answer) {
+              emailAddress = item.answer;
+              console.log(`📧 EMAIL ENCONTRADO (elementType): ${emailAddress}`);
+              break;
+            }
+            if (item.elementFieldId && item.elementFieldId.includes('email') && item.answer) {
+              emailAddress = item.answer;
+              console.log(`📧 EMAIL ENCONTRADO (fieldId): ${emailAddress}`);
+              break;
+            }
+          }
+          
+          // Buscar nome
+          for (const item of response.responses) {
+            if (item.elementType === 'text' && item.elementFieldId && 
+                (item.elementFieldId.includes('nome') || item.elementFieldId.includes('name'))) {
+              userName = item.answer;
+              console.log(`📧 NOME ENCONTRADO: ${userName}`);
+              break;
+            }
+          }
+        } else if (typeof response.responses === 'object') {
+          // Formato antigo - objeto
+          for (const key in response.responses) {
+            if (key.includes('email') && response.responses[key]) {
+              emailAddress = response.responses[key];
+              console.log(`📧 EMAIL ENCONTRADO (key): ${emailAddress}`);
+              break;
+            }
+          }
+          
+          // Buscar nome
+          for (const key in response.responses) {
+            if (key.includes('nome') && response.responses[key]) {
+              userName = response.responses[key];
+              console.log(`📧 NOME ENCONTRADO: ${userName}`);
+              break;
+            }
+          }
+        }
+        
+        if (emailAddress && emailAddress.includes('@')) {
+          const leadData = {
+            nome: userName,
+            email: emailAddress,
+            telefone: response.responses?.telefone || response.responses?.phone || '',
+            idade: response.responses?.idade || response.responses?.age || '',
+            altura: response.responses?.altura || response.responses?.height || '',
+            peso_atual: response.responses?.peso_atual || response.responses?.current_weight || '',
+            peso_objetivo: response.responses?.peso_objetivo || response.responses?.target_weight || '',
+            completionStatus: response.metadata?.isComplete ? 'completed' : 'abandoned',
+            submittedAt: response.submittedAt || response.createdAt
+          };
+          
+          emails.push(leadData);
+          console.log(`📧 EMAIL ADICIONADO: ${leadData.email} - ${leadData.nome}`);
+        } else {
+          console.log(`📧 EMAIL NÃO ENCONTRADO na resposta ${response.id}`);
+        }
+      }
+      
+      if (emails.length === 0) {
+        return res.status(400).json({ 
+          error: "Nenhum email encontrado para esta campanha" 
+        });
+      }
+      
+      // Enviar emails via Brevo
+      const brevoService = new BrevoEmailService(apiKey);
+      let successCount = 0;
+      let failureCount = 0;
+      
+      for (const lead of emails) {
+        try {
+          // Personalizar conteúdo do email
+          let personalizedContent = campaign.content;
+          personalizedContent = personalizedContent.replace(/\{nome\}/g, lead.nome);
+          personalizedContent = personalizedContent.replace(/\{email\}/g, lead.email);
+          personalizedContent = personalizedContent.replace(/\{telefone\}/g, lead.telefone);
+          personalizedContent = personalizedContent.replace(/\{idade\}/g, lead.idade);
+          personalizedContent = personalizedContent.replace(/\{altura\}/g, lead.altura);
+          personalizedContent = personalizedContent.replace(/\{peso_atual\}/g, lead.peso_atual);
+          personalizedContent = personalizedContent.replace(/\{peso_objetivo\}/g, lead.peso_objetivo);
+          
+          // Personalizar subject
+          let personalizedSubject = campaign.subject;
+          personalizedSubject = personalizedSubject.replace(/\{nome\}/g, lead.nome);
+          
+          const sent = await brevoService.sendEmail({
+            to: lead.email,
+            from: fromEmail,
+            subject: personalizedSubject,
+            htmlContent: personalizedContent
+          });
+          
+          if (sent) {
+            successCount++;
+            
+            // Salvar log de sucesso
+            await storage.createEmailLog({
+              campaignId: id,
+              email: lead.email,
+              status: 'sent',
+              sentAt: new Date(),
+              subject: personalizedSubject,
+              content: personalizedContent
+            });
+          } else {
+            failureCount++;
+            
+            // Salvar log de falha
+            await storage.createEmailLog({
+              campaignId: id,
+              email: lead.email,
+              status: 'failed',
+              sentAt: new Date(),
+              subject: personalizedSubject,
+              content: personalizedContent,
+              error: 'Falha no envio via Brevo'
+            });
+          }
+        } catch (error) {
+          failureCount++;
+          console.error(`Erro ao enviar email para ${lead.email}:`, error);
+          
+          // Salvar log de erro
+          await storage.createEmailLog({
+            campaignId: id,
+            email: lead.email,
+            status: 'failed',
+            sentAt: new Date(),
+            subject: campaign.subject,
+            content: campaign.content,
+            error: error.message
+          });
+        }
+      }
+      
+      // Atualizar status da campanha
+      await storage.updateEmailCampaign(id, {
+        status: 'sent',
+        sentAt: new Date(),
+        successCount,
+        failureCount
+      });
+      
+      res.json({
+        success: true,
+        message: "Campanha enviada com sucesso!",
+        totalEmails: emails.length,
+        successCount,
+        failureCount,
+        campaignId: id
+      });
+      
+    } catch (error) {
+      console.error("Error sending email campaign:", error);
+      res.status(500).json({ error: "Erro ao enviar campanha de email" });
     }
   });
 
