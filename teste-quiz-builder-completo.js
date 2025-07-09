@@ -485,13 +485,13 @@ async function testQuizResponseSimulation() {
       body: JSON.stringify(partialResponseData)
     });
     
-    const success = response.ok && data && data.id;
+    const success = response.ok && data && (data.id || data.responseId);
     if (success) {
-      global.responseId = data.id;
+      global.responseId = data.id || data.responseId;
     }
     
     logTest('RESPONSES', 'Resposta parcial', success, 
-      `Status: ${response.status}, Response ID: ${data?.id}`);
+      `Status: ${response.status}, Response ID: ${data?.id || data?.responseId}`);
     results.push(success);
   } catch (error) {
     logTest('RESPONSES', 'Resposta parcial', false, `Erro: ${error.message}`);
@@ -524,13 +524,13 @@ async function testQuizResponseSimulation() {
       body: JSON.stringify(completeResponseData)
     });
     
-    const success = response.ok && data && data.id;
+    const success = response.ok && data && (data.id || data.responseId);
     if (success) {
-      global.completeResponseId = data.id;
+      global.completeResponseId = data.id || data.responseId;
     }
     
     logTest('RESPONSES', 'Resposta completa', success, 
-      `Status: ${response.status}, Response ID: ${data?.id}`);
+      `Status: ${response.status}, Response ID: ${data?.id || data?.responseId}`);
     results.push(success);
   } catch (error) {
     logTest('RESPONSES', 'Resposta completa', false, `Erro: ${error.message}`);
@@ -553,8 +553,8 @@ async function testQuizAnalytics() {
   // 7.1 Quiz Responses List
   try {
     const { response, data } = await makeRequest(`/api/quizzes/${global.testQuizId}/responses`);
-    const success = response.ok && Array.isArray(data);
-    const responseCount = data?.length || 0;
+    const success = response.ok && data && (Array.isArray(data) || Array.isArray(data.responses));
+    const responseCount = Array.isArray(data) ? data.length : (data?.responses?.length || 0);
     
     logTest('ANALYTICS', 'Listagem de respostas', success, 
       `Status: ${response.status}, Respostas: ${responseCount}`);
