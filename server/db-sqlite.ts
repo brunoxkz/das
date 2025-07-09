@@ -103,6 +103,24 @@ export function runMigrations() {
       );
     `;
 
+    const createResponseVariablesTable = `
+      CREATE TABLE IF NOT EXISTS response_variables (
+        id TEXT PRIMARY KEY,
+        responseId TEXT NOT NULL,
+        quizId TEXT NOT NULL,
+        variableName TEXT NOT NULL,
+        variableValue TEXT NOT NULL,
+        elementType TEXT NOT NULL,
+        pageId TEXT NOT NULL,
+        elementId TEXT NOT NULL,
+        pageOrder INTEGER NOT NULL,
+        question TEXT,
+        createdAt INTEGER DEFAULT (unixepoch() * 1000),
+        FOREIGN KEY (responseId) REFERENCES quiz_responses(id) ON DELETE CASCADE,
+        FOREIGN KEY (quizId) REFERENCES quizzes(id) ON DELETE CASCADE
+      );
+    `;
+
     const createQuizAnalyticsTable = `
       CREATE TABLE IF NOT EXISTS quiz_analytics (
         id TEXT PRIMARY KEY,
@@ -337,6 +355,7 @@ export function runMigrations() {
     sqlite.exec(createQuizzesTable);
     sqlite.exec(createQuizTemplatesTable);
     sqlite.exec(createQuizResponsesTable);
+    sqlite.exec(createResponseVariablesTable);
     sqlite.exec(createQuizAnalyticsTable);
     sqlite.exec(createSmsTransactionsTable);
     sqlite.exec(createSmsCampaignsTable);

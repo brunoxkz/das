@@ -609,6 +609,22 @@ export function registerSQLiteRoutes(app: Express): Server {
     }
   });
 
+  // Submit quiz response - endpoint geral para administradores
+  app.post("/api/quiz-responses", verifyJWT, async (req: any, res) => {
+    try {
+      const responseData = insertQuizResponseSchema.parse(req.body);
+      const response = await storage.createQuizResponse(responseData);
+      
+      // Invalidar cache de respostas
+      cache.del(`responses-${responseData.quizId}`);
+      
+      res.status(201).json(response);
+    } catch (error) {
+      console.error("Submit response error:", error);
+      res.status(500).json({ message: "Failed to submit response" });
+    }
+  });
+
   // Analytics endpoint
   app.get("/api/analytics/:quizId", async (req: any, res) => {
     try {
@@ -4200,6 +4216,166 @@ app.get("/api/whatsapp-extension/pending", verifyJWT, async (req: any, res: Resp
         success: false, 
         error: "Erro interno no envio do email de teste" 
       });
+    }
+  });
+
+  // =============================================
+  // RESPONSE VARIABLES ENDPOINTS - SISTEMA DINÂMICO
+  // Consultar variáveis capturadas automaticamente
+  // =============================================
+
+  // Buscar variáveis de uma resposta específica
+  app.get("/api/responses/:responseId/variables", verifyJWT, async (req: any, res: Response) => {
+    try {
+      const { responseId } = req.params;
+      const userId = req.user.id;
+      
+      // Verificar se a resposta pertence ao usuário
+      const response = await storage.getQuizResponse(responseId);
+      if (!response) {
+        return res.status(404).json({ error: "Resposta não encontrada" });
+      }
+      
+      const quiz = await storage.getQuiz(response.quizId);
+      if (!quiz || quiz.userId !== userId) {
+        return res.status(403).json({ error: "Acesso negado" });
+      }
+      
+      const variables = await storage.getResponseVariables(responseId);
+      res.json(variables);
+    } catch (error) {
+      console.error("Error fetching response variables:", error);
+      res.status(500).json({ error: "Erro ao buscar variáveis" });
+    }
+  });
+
+  // Buscar todas as variáveis de um quiz
+  app.get("/api/quizzes/:quizId/variables", verifyJWT, async (req: any, res: Response) => {
+    try {
+      const { quizId } = req.params;
+      const userId = req.user.id;
+      
+      // Verificar se o quiz pertence ao usuário
+      const quiz = await storage.getQuiz(quizId);
+      if (!quiz || quiz.userId !== userId) {
+        return res.status(403).json({ error: "Acesso negado" });
+      }
+      
+      const variables = await storage.getQuizVariables(quizId);
+      res.json(variables);
+    } catch (error) {
+      console.error("Error fetching quiz variables:", error);
+      res.status(500).json({ error: "Erro ao buscar variáveis do quiz" });
+    }
+  });
+
+  // Buscar variáveis com filtros avançados
+  app.get("/api/quizzes/:quizId/variables/filtered", verifyJWT, async (req: any, res: Response) => {
+    try {
+      const { quizId } = req.params;
+      const userId = req.user.id;
+      const { elementType, pageId, variableName, fromDate, toDate } = req.query;
+      
+      // Verificar se o quiz pertence ao usuário
+      const quiz = await storage.getQuiz(quizId);
+      if (!quiz || quiz.userId !== userId) {
+        return res.status(403).json({ error: "Acesso negado" });
+      }
+      
+      const filters: any = {};
+      if (elementType) filters.elementType = elementType as string;
+      if (pageId) filters.pageId = pageId as string;
+      if (variableName) filters.variableName = variableName as string;
+      if (fromDate) filters.fromDate = new Date(fromDate as string);
+      if (toDate) filters.toDate = new Date(toDate as string);
+      
+      const variables = await storage.getQuizVariablesWithFilters(quizId, filters);
+      res.json(variables);
+    } catch (error) {
+      console.error("Error fetching filtered variables:", error);
+      res.status(500).json({ error: "Erro ao buscar variáveis filtradas" });
+    }
+  });
+
+  // Estatísticas de variáveis para analytics
+  app.get("/api/quizzes/:quizId/variables/statistics", verifyJWT, async (req: any, res: Response) => {
+    try {
+      const { quizId } = req.params;
+      const userId = req.user.id;
+      
+      // Verificar se o quiz pertence ao usuário
+      const quiz = await storage.getQuiz(quizId);
+      if (!quiz || quiz.userId !== userId) {
+        return res.status(403).json({ error: "Acesso negado" });
+      }
+      
+      const statistics = await storage.getVariableStatistics(quizId);
+      res.json(statistics);
+    } catch (error) {
+      console.error("Error fetching variable statistics:", error);
+      res.status(500).json({ error: "Erro ao buscar estatísticas de variáveis" });
+    }
+  });
+
+  // Buscar variáveis específicas para remarketing
+  app.post("/api/quizzes/:quizId/variables/remarketing", verifyJWT, async (req: any, res: Response) => {
+    try {
+      const { quizId } = req.params;
+      const userId = req.user.id;
+      const { targetVariables } = req.body;
+      
+      if (!targetVariables || !Array.isArray(targetVariables)) {
+        return res.status(400).json({ error: "targetVariables deve ser um array" });
+      }
+      
+      // Verificar se o quiz pertence ao usuário
+      const quiz = await storage.getQuiz(quizId);
+      if (!quiz || quiz.userId !== userId) {
+        return res.status(403).json({ error: "Acesso negado" });
+      }
+      
+      const remarketing = await storage.getVariablesForRemarketing(quizId, targetVariables);
+      res.json(remarketing);
+    } catch (error) {
+      console.error("Error fetching remarketing variables:", error);
+      res.status(500).json({ error: "Erro ao buscar variáveis para remarketing" });
+    }
+  });
+
+  // Reprocessar respostas existentes para extrair variáveis
+  app.post("/api/quizzes/:quizId/variables/reprocess", verifyJWT, async (req: any, res: Response) => {
+    try {
+      const { quizId } = req.params;
+      const userId = req.user.id;
+      
+      // Verificar se o quiz pertence ao usuário
+      const quiz = await storage.getQuiz(quizId);
+      if (!quiz || quiz.userId !== userId) {
+        return res.status(403).json({ error: "Acesso negado" });
+      }
+      
+      // Buscar todas as respostas do quiz
+      const responses = await storage.getQuizResponses(quizId);
+      
+      let processedCount = 0;
+      for (const response of responses) {
+        try {
+          await storage.extractAndSaveVariables(response, quiz);
+          processedCount++;
+        } catch (error) {
+          console.error(`Erro ao processar resposta ${response.id}:`, error);
+        }
+      }
+      
+      res.json({
+        success: true,
+        message: `${processedCount} respostas reprocessadas com sucesso`,
+        totalResponses: responses.length,
+        processedCount
+      });
+    } catch (error) {
+      console.error("Error reprocessing variables:", error);
+      res.status(500).json({ error: "Erro ao reprocessar variáveis" });
     }
   });
 

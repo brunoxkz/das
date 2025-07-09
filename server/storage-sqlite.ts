@@ -21,11 +21,12 @@ sqlite.pragma('cache_size = 10000'); // 10MB cache
 sqlite.pragma('temp_store = MEMORY'); // Temp tables em RAM
 sqlite.pragma('mmap_size = 268435456'); // 256MB memory mapping
 import { 
-  users, quizzes, quizTemplates, quizResponses, quizAnalytics, emailCampaigns, emailTemplates, emailLogs, emailAutomations, emailSequences, smsTransactions, smsCampaigns, smsLogs,
+  users, quizzes, quizTemplates, quizResponses, responseVariables, quizAnalytics, emailCampaigns, emailTemplates, emailLogs, emailAutomations, emailSequences, smsTransactions, smsCampaigns, smsLogs,
   whatsappCampaigns, whatsappLogs, whatsappTemplates,
   type User, type UpsertUser, type InsertQuiz, type Quiz,
   type InsertQuizTemplate, type QuizTemplate,
   type InsertQuizResponse, type QuizResponse,
+  type InsertResponseVariable, type ResponseVariable,
   type InsertQuizAnalytics, type QuizAnalytics,
   type InsertEmailCampaign, type EmailCampaign,
   type InsertEmailTemplate, type EmailTemplate,
@@ -98,6 +99,12 @@ export interface IStorage {
   // Quiz response operations
   getQuizResponse(id: string): Promise<QuizResponse | undefined>;
   deleteQuizResponse(id: string): Promise<void>;
+
+  // Response Variables operations (sistema dinâmico de captura de variáveis)
+  createResponseVariable(variable: InsertResponseVariable): Promise<ResponseVariable>;
+  getResponseVariables(responseId: string): Promise<ResponseVariable[]>;
+  getQuizVariables(quizId: string): Promise<ResponseVariable[]>;
+  extractAndSaveVariables(response: QuizResponse, quiz: Quiz): Promise<void>;
   
   // Email Logs operations
   getEmailLogs(campaignId: string): Promise<EmailLog[]>;
@@ -484,7 +491,23 @@ export class SQLiteStorage implements IStorage {
         ...response,
       })
       .returning();
+    
+    // SISTEMA AUTOMÁTICO: Extrair variáveis automaticamente após criar resposta
+    try {
+      const quiz = await this.getQuiz(response.quizId);
+      if (quiz) {
+        await this.extractAndSaveVariables(newResponse, quiz);
+      }
+    } catch (error) {
+      console.error('❌ ERRO ao extrair variáveis automaticamente:', error);
+    }
+    
     return newResponse;
+  }
+
+  async getQuizResponse(responseId: string): Promise<QuizResponse | undefined> {
+    const [response] = await db.select().from(quizResponses).where(eq(quizResponses.id, responseId));
+    return response || undefined;
   }
 
   async updateQuizResponse(responseId: string, updates: Partial<QuizResponse>): Promise<QuizResponse> {
@@ -2341,6 +2364,233 @@ export class SQLiteStorage implements IStorage {
       console.error('Error updating email log status:', error);
       throw error;
     }
+  }
+
+  // =============================================
+  // RESPONSE VARIABLES OPERATIONS - SISTEMA DINÂMICO
+  // Sistema que captura automaticamente TODAS as variáveis
+  // de qualquer elemento, mesmo os que serão criados no futuro
+  // =============================================
+
+  async createResponseVariable(variable: InsertResponseVariable): Promise<ResponseVariable> {
+    const newVariable = {
+      id: nanoid(),
+      ...variable,
+      createdAt: Math.floor(Date.now() / 1000)
+    };
+    
+    await db.insert(responseVariables).values(newVariable);
+    return newVariable;
+  }
+
+  async getResponseVariables(responseId: string): Promise<ResponseVariable[]> {
+    return await db.select()
+      .from(responseVariables)
+      .where(eq(responseVariables.responseId, responseId))
+      .orderBy(asc(responseVariables.pageOrder));
+  }
+
+  async getQuizVariables(quizId: string): Promise<ResponseVariable[]> {
+    return await db.select()
+      .from(responseVariables)
+      .where(eq(responseVariables.quizId, quizId))
+      .orderBy(asc(responseVariables.pageOrder));
+  }
+
+  // FUNÇÃO PRINCIPAL: Extração automática de variáveis para elementos futuros
+  async extractAndSaveVariables(response: QuizResponse, quiz: Quiz): Promise<void> {
+    console.log(`🔍 EXTRAÇÃO AUTOMÁTICA: Iniciando para response ${response.id}`);
+    
+    try {
+      // Parse das estruturas
+      const quizStructure = typeof quiz.structure === 'string' ? JSON.parse(quiz.structure) : quiz.structure;
+      const responseData = typeof response.responses === 'object' ? response.responses : JSON.parse(response.responses);
+      
+      // Limpar variáveis existentes desta resposta
+      await db.delete(responseVariables)
+        .where(eq(responseVariables.responseId, response.id));
+      
+      // Processar cada página do quiz
+      const pages = quizStructure.pages || [];
+      
+      for (let pageIndex = 0; pageIndex < pages.length; pageIndex++) {
+        const page = pages[pageIndex];
+        const pageId = page.id || `page_${pageIndex}`;
+        
+        // Processar cada elemento da página
+        if (page.elements && Array.isArray(page.elements)) {
+          for (const element of page.elements) {
+            await this.processElementForVariables(
+              element,
+              responseData,
+              response.id,
+              quiz.id,
+              pageId,
+              pageIndex,
+              page.title || `Página ${pageIndex + 1}`
+            );
+          }
+        }
+      }
+      
+      console.log(`✅ EXTRAÇÃO AUTOMÁTICA: Concluída para response ${response.id}`);
+      
+    } catch (error) {
+      console.error(`❌ ERRO na extração automática:`, error);
+    }
+  }
+
+  // Processar elemento individual - funciona para qualquer tipo de elemento
+  private async processElementForVariables(
+    element: any,
+    responseData: any,
+    responseId: string,
+    quizId: string,
+    pageId: string,
+    pageOrder: number,
+    question: string
+  ): Promise<void> {
+    
+    // Detectar automaticamente se o elemento tem fieldId (identificador para captura)
+    const fieldId = element.fieldId || element.id;
+    if (!fieldId) return;
+    
+    // Buscar valor na resposta
+    const value = responseData[fieldId];
+    if (value === undefined || value === null || value === '') return;
+    
+    // Converter valor para string se necessário
+    const stringValue = typeof value === 'object' ? JSON.stringify(value) : String(value);
+    
+    // Criar variável automaticamente
+    const variable: InsertResponseVariable = {
+      responseId,
+      quizId,
+      variableName: fieldId,
+      variableValue: stringValue,
+      elementType: element.type || 'unknown',
+      pageId,
+      elementId: element.id || fieldId,
+      pageOrder,
+      question: element.question || element.title || element.text || question
+    };
+    
+    await this.createResponseVariable(variable);
+    
+    console.log(`📝 VARIÁVEL CAPTURADA: ${fieldId} = "${stringValue}" (${element.type})`);
+  }
+
+  // Buscar todas as variáveis de um quiz com filtros opcionais
+  async getQuizVariablesWithFilters(
+    quizId: string,
+    filters?: {
+      elementType?: string;
+      pageId?: string;
+      variableName?: string;
+      fromDate?: Date;
+      toDate?: Date;
+    }
+  ): Promise<ResponseVariable[]> {
+    let query = db.select()
+      .from(responseVariables)
+      .where(eq(responseVariables.quizId, quizId));
+    
+    // Aplicar filtros se fornecidos
+    if (filters) {
+      const conditions = [eq(responseVariables.quizId, quizId)];
+      
+      if (filters.elementType) {
+        conditions.push(eq(responseVariables.elementType, filters.elementType));
+      }
+      
+      if (filters.pageId) {
+        conditions.push(eq(responseVariables.pageId, filters.pageId));
+      }
+      
+      if (filters.variableName) {
+        conditions.push(eq(responseVariables.variableName, filters.variableName));
+      }
+      
+      if (filters.fromDate) {
+        conditions.push(gte(responseVariables.createdAt, filters.fromDate.getTime()));
+      }
+      
+      if (filters.toDate) {
+        conditions.push(lte(responseVariables.createdAt, filters.toDate.getTime()));
+      }
+      
+      query = query.where(and(...conditions));
+    }
+    
+    return await query.orderBy(asc(responseVariables.pageOrder));
+  }
+
+  // Obter estatísticas de variáveis para analytics
+  async getVariableStatistics(quizId: string): Promise<{
+    totalVariables: number;
+    uniqueVariables: number;
+    elementTypes: { type: string; count: number }[];
+    mostUsedVariables: { name: string; count: number }[];
+  }> {
+    const variables = await this.getQuizVariables(quizId);
+    
+    const uniqueVariables = new Set(variables.map(v => v.variableName)).size;
+    
+    // Contar por tipo de elemento
+    const elementTypeCounts = variables.reduce((acc, v) => {
+      acc[v.elementType] = (acc[v.elementType] || 0) + 1;
+      return acc;
+    }, {} as Record<string, number>);
+    
+    // Contar por nome de variável
+    const variableCounts = variables.reduce((acc, v) => {
+      acc[v.variableName] = (acc[v.variableName] || 0) + 1;
+      return acc;
+    }, {} as Record<string, number>);
+    
+    return {
+      totalVariables: variables.length,
+      uniqueVariables,
+      elementTypes: Object.entries(elementTypeCounts)
+        .map(([type, count]) => ({ type, count }))
+        .sort((a, b) => b.count - a.count),
+      mostUsedVariables: Object.entries(variableCounts)
+        .map(([name, count]) => ({ name, count }))
+        .sort((a, b) => b.count - a.count)
+        .slice(0, 10)
+    };
+  }
+
+  // Buscar variáveis específicas para remarketing
+  async getVariablesForRemarketing(
+    quizId: string,
+    targetVariables: string[]
+  ): Promise<{ responseId: string; variables: Record<string, string> }[]> {
+    const allVariables = await this.getQuizVariables(quizId);
+    
+    // Agrupar por responseId
+    const responseGroups = allVariables.reduce((acc, variable) => {
+      if (!acc[variable.responseId]) {
+        acc[variable.responseId] = {};
+      }
+      acc[variable.responseId][variable.variableName] = variable.variableValue;
+      return acc;
+    }, {} as Record<string, Record<string, string>>);
+    
+    // Filtrar apenas respostas que têm as variáveis desejadas
+    return Object.entries(responseGroups)
+      .filter(([_, variables]) => 
+        targetVariables.some(varName => variables[varName])
+      )
+      .map(([responseId, variables]) => ({
+        responseId,
+        variables: targetVariables.reduce((acc, varName) => {
+          if (variables[varName]) {
+            acc[varName] = variables[varName];
+          }
+          return acc;
+        }, {} as Record<string, string>)
+      }));
   }
 }
 

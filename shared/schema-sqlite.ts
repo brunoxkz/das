@@ -61,6 +61,21 @@ export const quizResponses = sqliteTable("quiz_responses", {
   submittedAt: integer("submittedAt", { mode: 'timestamp' }).notNull().$defaultFn(() => new Date()),
 });
 
+// Nova tabela para indexar todas as variáveis de resposta para remarketing ultra-personalizado
+export const responseVariables = sqliteTable("response_variables", {
+  id: text("id").primaryKey(),
+  responseId: text("responseId").notNull().references(() => quizResponses.id, { onDelete: "cascade" }),
+  quizId: text("quizId").notNull().references(() => quizzes.id, { onDelete: "cascade" }),
+  variableName: text("variableName").notNull(), // Ex: "produto_interesse", "nome_completo", "idade"
+  variableValue: text("variableValue").notNull(), // Ex: "Whey Protein", "João Silva", "28"
+  elementType: text("elementType").notNull(), // Ex: "multiple_choice", "text", "number"
+  pageId: text("pageId").notNull(), // Ex: "page_1", "page_2"
+  elementId: text("elementId").notNull(), // Ex: "element_multiple_choice_1"
+  pageOrder: integer("pageOrder").notNull(), // Ordem da página no funil
+  question: text("question"), // Pergunta original para contexto
+  createdAt: integer("createdAt").notNull().$defaultFn(() => Math.floor(Date.now() / 1000)),
+});
+
 export const quizAnalytics = sqliteTable("quiz_analytics", {
   id: text("id").primaryKey(),
   quizId: text("quizId").notNull().references(() => quizzes.id),
@@ -365,3 +380,8 @@ export type InsertWhatsappTemplate = z.infer<typeof insertWhatsappTemplateSchema
 export type WhatsappTemplate = typeof whatsappTemplates.$inferSelect;
 export type InsertWhatsappAutomationFile = z.infer<typeof insertWhatsappAutomationFileSchema>;
 export type WhatsappAutomationFile = typeof whatsappAutomationFiles.$inferSelect;
+
+// Response Variables Schema e Types
+export const insertResponseVariableSchema = createInsertSchema(responseVariables);
+export type InsertResponseVariable = z.infer<typeof insertResponseVariableSchema>;
+export type ResponseVariable = typeof responseVariables.$inferSelect;
