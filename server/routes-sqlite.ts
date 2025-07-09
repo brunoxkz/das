@@ -16,19 +16,6 @@ export function registerSQLiteRoutes(app: Express): Server {
   });
 
   // Public routes BEFORE any middleware or authentication
-  // Public quiz viewing (without auth)
-  app.get("/api/quiz/:id/public", async (req, res) => {
-    try {
-      const quiz = await storage.getQuiz(req.params.id);
-      if (!quiz || !quiz.isPublished) {
-        return res.status(404).json({ error: 'Quiz não encontrado ou não publicado' });
-      }
-      res.json(quiz);
-    } catch (error) {
-      console.error("Get public quiz error:", error);
-      res.status(500).json({ error: 'Erro ao buscar quiz público' });
-    }
-  });
 
   // Track quiz view (public endpoint without auth)
   app.post("/api/analytics/:quizId/view", async (req, res) => {
@@ -89,6 +76,49 @@ export function registerSQLiteRoutes(app: Express): Server {
         error: "Erro interno no teste SMS",
         details: error.message 
       });
+    }
+  });
+
+  // Auth validate endpoint
+  app.get("/api/auth/validate", verifyJWT, async (req: any, res) => {
+    try {
+      res.json({ 
+        valid: true, 
+        user: req.user,
+        message: "Token válido" 
+      });
+    } catch (error) {
+      console.error("Auth validate error:", error);
+      res.status(401).json({ error: "Token inválido" });
+    }
+  });
+
+  // Dashboard recent activity endpoint
+  app.get("/api/dashboard/recent-activity", verifyJWT, async (req: any, res) => {
+    try {
+      // Get recent quiz responses and activities
+      const recentQuizzes = await storage.getUserQuizzes(req.user.id);
+      const recentActivities = [];
+
+      // Add recent quiz creation activities
+      recentQuizzes.slice(0, 5).forEach(quiz => {
+        recentActivities.push({
+          id: `quiz-${quiz.id}`,
+          type: 'quiz_created',
+          title: `Quiz "${quiz.title}" criado`,
+          description: quiz.description || 'Sem descrição',
+          timestamp: quiz.createdAt || new Date().toISOString(),
+          icon: 'quiz'
+        });
+      });
+
+      // Sort by timestamp (most recent first)
+      recentActivities.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+
+      res.json(recentActivities.slice(0, 10));
+    } catch (error) {
+      console.error("Dashboard recent activity error:", error);
+      res.status(500).json({ error: "Erro ao buscar atividade recente" });
     }
   });
 
