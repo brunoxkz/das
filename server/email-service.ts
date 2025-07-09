@@ -56,7 +56,7 @@ export class EmailService {
         triggerType: options.triggerType,
         triggerDelay: options.triggerDelay || 0,
         triggerUnit: options.triggerUnit || 'minutes',
-        status: 'active',
+        status: 'draft',
         sent: 0,
         delivered: 0,
         opened: 0,

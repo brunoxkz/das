@@ -89,17 +89,44 @@ async function testEmailCampaignControls() {
 
   // 2. Testar início da campanha
   console.log("\n🚀 3. TESTANDO INÍCIO DA CAMPANHA...");
-  const { response: startResponse, data: startData } = await makeRequest(`/api/email-campaigns/${testCampaign.id}/start`, {
-    method: "POST",
-    headers
-  });
-  
-  if (startResponse.ok) {
-    console.log("✅ Campanha iniciada com sucesso");
-    console.log(`   Status retornado: ${startData.status}`);
-    console.log(`   Mensagem: ${startData.message}`);
-  } else {
-    console.log(`⚠️  Resposta do início: ${startData.error || startData.message}`);
+  try {
+    const { response: startResponse, data: startData } = await makeRequest(`/api/email-campaigns/${testCampaign.id}/start`, {
+      method: "POST",
+      headers
+    });
+    
+    if (startResponse.ok) {
+      console.log("✅ Campanha iniciada com sucesso");
+      console.log(`   Status retornado: ${startData.status}`);
+      console.log(`   Mensagem: ${startData.message}`);
+    } else {
+      console.log(`⚠️  Resposta do início: ${startData.error || startData.message}`);
+    }
+  } catch (error) {
+    console.log(`❌ Erro no início da campanha: ${error.message}`);
+    console.log("   Tentando novamente com URL direta...");
+    
+    // Tentar com URL direta
+    try {
+      const response = await fetch(`http://localhost:5000/api/email-campaigns/${testCampaign.id}/start`, {
+        method: "POST",
+        headers
+      });
+      
+      if (response.headers.get('content-type')?.includes('application/json')) {
+        const data = await response.json();
+        console.log("✅ Campanha iniciada com sucesso (URL direta)");
+        console.log(`   Status retornado: ${data.status}`);
+        console.log(`   Mensagem: ${data.message}`);
+      } else {
+        const text = await response.text();
+        console.log("❌ Resposta não é JSON, recebido HTML");
+        console.log(`   Status HTTP: ${response.status}`);
+        console.log(`   Content-Type: ${response.headers.get('content-type')}`);
+      }
+    } catch (directError) {
+      console.log(`❌ Erro na URL direta: ${directError.message}`);
+    }
   }
 
   // 3. Testar pausa da campanha

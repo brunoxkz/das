@@ -713,10 +713,13 @@ export class SQLiteStorage implements IStorage {
         
         // Procurar por campos de email nas respostas
         Object.keys(responseData).forEach(key => {
-          if (key.toLowerCase().includes('email') || key.toLowerCase().includes('e-mail')) {
-            const value = responseData[key];
-            // Verificar se é uma string válida antes de usar .includes()
-            if (value && typeof value === 'string' && value.includes('@')) {
+          const value = responseData[key];
+          
+          // Verificar se é uma string válida e contém @ (email)
+          if (value && typeof value === 'string' && value.includes('@')) {
+            // Validação básica de email
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (emailRegex.test(value)) {
               emails.push(value);
             }
           }
