@@ -10,6 +10,11 @@ import { emailService } from "./email-service";
 import { BrevoEmailService } from "./email-brevo";
 
 export function registerSQLiteRoutes(app: Express): Server {
+  // Auth system detection endpoint
+  app.get("/api/auth/system", (req, res) => {
+    res.json({ system: "sqlite" });
+  });
+
   // Public routes BEFORE any middleware or authentication
   // Public quiz viewing (without auth)
   app.get("/api/quiz/:id/public", async (req, res) => {

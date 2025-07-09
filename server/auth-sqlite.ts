@@ -9,19 +9,33 @@ const JWT_SECRET = process.env.JWT_SECRET || 'vendzz-jwt-secret-key-2024';
 const JWT_REFRESH_SECRET = process.env.JWT_REFRESH_SECRET || 'vendzz-jwt-refresh-secret-2024';
 
 export function generateTokens(user: any) {
+  const currentTime = Math.floor(Date.now() / 1000);
+  // Add a random value to ensure uniqueness
+  const randomValue = Math.random().toString(36).substring(7);
+  
   const accessToken = jwt.sign(
     { 
       id: user.id, 
       email: user.email, 
       role: user.role,
-      plan: user.plan 
+      plan: user.plan,
+      iat: currentTime,
+      // Add random value to ensure different tokens on refresh
+      nonce: randomValue
     },
     JWT_SECRET,
     { expiresIn: "15m" }
   );
 
   const refreshToken = jwt.sign(
-    { id: user.id, type: "refresh" },
+    { 
+      id: user.id, 
+      type: "refresh",
+      iat: currentTime,
+      // Add timestamp and random to make refresh tokens unique
+      timestamp: Date.now(),
+      nonce: randomValue
+    },
     JWT_REFRESH_SECRET,
     { expiresIn: "7d" }
   );
@@ -182,6 +196,9 @@ export function setupSQLiteAuth(app: Express) {
         return res.status(401).json({ message: "User not found" });
       }
 
+      // Wait 1ms to ensure different timestamp for new tokens
+      await new Promise(resolve => setTimeout(resolve, 1));
+      
       const { accessToken, refreshToken: newRefreshToken } = generateTokens(user);
       await storage.storeRefreshToken(user.id, newRefreshToken);
 
