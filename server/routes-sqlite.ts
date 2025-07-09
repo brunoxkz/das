@@ -3549,6 +3549,128 @@ app.get("/api/whatsapp-extension/pending", verifyJWT, async (req: any, res: Resp
     }
   });
 
+  // ==================== NOVOS ENDPOINTS DE CONTROLE DE CAMPANHA ====================
+
+  // Iniciar campanha de email
+  app.post("/api/email-campaigns/:id/start", verifyJWT, async (req: any, res) => {
+    try {
+      const campaignId = req.params.id;
+      const userId = req.user.id;
+      
+      console.log(`📧 INICIANDO CAMPANHA DE EMAIL ${campaignId} - User: ${userId}`);
+      
+      // Verificar se a campanha existe e pertence ao usuário
+      const campaign = await storage.getEmailCampaign(campaignId);
+      if (!campaign) {
+        return res.status(404).json({ error: "Campanha não encontrada" });
+      }
+      
+      if (campaign.userId !== userId) {
+        return res.status(403).json({ error: "Acesso negado" });
+      }
+      
+      // Verificar se a campanha não está já ativa
+      if (campaign.status === 'active') {
+        return res.status(400).json({ error: "Campanha já está ativa" });
+      }
+      
+      // Atualizar status da campanha para ativa
+      await storage.updateEmailCampaign(campaignId, {
+        status: 'active',
+        updatedAt: Math.floor(Date.now() / 1000)
+      });
+      
+      console.log(`✅ CAMPANHA DE EMAIL ${campaignId} INICIADA COM SUCESSO`);
+      
+      res.json({
+        success: true,
+        message: "Campanha iniciada com sucesso",
+        campaignId: campaignId,
+        status: 'active'
+      });
+    } catch (error) {
+      console.error("Error starting email campaign:", error);
+      res.status(500).json({ error: "Erro ao iniciar campanha de email" });
+    }
+  });
+
+  // Pausar campanha de email
+  app.post("/api/email-campaigns/:id/pause", verifyJWT, async (req: any, res) => {
+    try {
+      const campaignId = req.params.id;
+      const userId = req.user.id;
+      
+      console.log(`⏸️ PAUSANDO CAMPANHA DE EMAIL ${campaignId} - User: ${userId}`);
+      
+      // Verificar se a campanha existe e pertence ao usuário
+      const campaign = await storage.getEmailCampaign(campaignId);
+      if (!campaign) {
+        return res.status(404).json({ error: "Campanha não encontrada" });
+      }
+      
+      if (campaign.userId !== userId) {
+        return res.status(403).json({ error: "Acesso negado" });
+      }
+      
+      // Verificar se a campanha está ativa
+      if (campaign.status !== 'active') {
+        return res.status(400).json({ error: "Campanha não está ativa" });
+      }
+      
+      // Atualizar status da campanha para pausada
+      await storage.updateEmailCampaign(campaignId, {
+        status: 'paused',
+        updatedAt: Math.floor(Date.now() / 1000)
+      });
+      
+      console.log(`⏸️ CAMPANHA DE EMAIL ${campaignId} PAUSADA COM SUCESSO`);
+      
+      res.json({
+        success: true,
+        message: "Campanha pausada com sucesso",
+        campaignId: campaignId,
+        status: 'paused'
+      });
+    } catch (error) {
+      console.error("Error pausing email campaign:", error);
+      res.status(500).json({ error: "Erro ao pausar campanha de email" });
+    }
+  });
+
+  // Deletar campanha de email (endpoint duplicado, mas vou manter a versão mais específica)
+  app.delete("/api/email-campaigns/:id/delete", verifyJWT, async (req: any, res) => {
+    try {
+      const campaignId = req.params.id;
+      const userId = req.user.id;
+      
+      console.log(`🗑️ DELETANDO CAMPANHA DE EMAIL ${campaignId} - User: ${userId}`);
+      
+      // Verificar se a campanha existe e pertence ao usuário
+      const campaign = await storage.getEmailCampaign(campaignId);
+      if (!campaign) {
+        return res.status(404).json({ error: "Campanha não encontrada" });
+      }
+      
+      if (campaign.userId !== userId) {
+        return res.status(403).json({ error: "Acesso negado" });
+      }
+      
+      // Deletar campanha (que também deletará os logs associados devido ao CASCADE)
+      await storage.deleteEmailCampaign(campaignId);
+      
+      console.log(`🗑️ CAMPANHA DE EMAIL ${campaignId} DELETADA COM SUCESSO`);
+      
+      res.json({
+        success: true,
+        message: "Campanha deletada com sucesso",
+        campaignId: campaignId
+      });
+    } catch (error) {
+      console.error("Error deleting email campaign:", error);
+      res.status(500).json({ error: "Erro ao deletar campanha de email" });
+    }
+  });
+
   // Enviar campanha de email via Brevo
   app.post("/api/email-campaigns/:id/send", verifyJWT, async (req: any, res) => {
     try {

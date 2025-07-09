@@ -8,6 +8,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
 import { 
   Mail, 
@@ -64,6 +65,10 @@ export default function EmailMarketingPro() {
   const [showCreateTemplate, setShowCreateTemplate] = useState(false);
   const [selectedCampaign, setSelectedCampaign] = useState<EmailCampaign | null>(null);
   const [selectedQuiz, setSelectedQuiz] = useState('');
+  const [showCampaignLogs, setShowCampaignLogs] = useState(false);
+  const [selectedCampaignForLogs, setSelectedCampaignForLogs] = useState<EmailCampaign | null>(null);
+  const [quizEmails, setQuizEmails] = useState<{[key: string]: {emails: number, variables: string[]}}>({});
+  const [availableVariables, setAvailableVariables] = useState<string[]>([]);
   
   const [campaignForm, setCampaignForm] = useState({
     name: '',
@@ -71,8 +76,8 @@ export default function EmailMarketingPro() {
     content: '',
     quizId: '',
     targetAudience: 'all' as const,
-    triggerType: 'immediate' as const,
-    triggerDelay: 0,
+    triggerType: 'delayed' as const,
+    triggerDelay: 10,
     triggerUnit: 'minutes' as const
   });
 
@@ -97,6 +102,74 @@ export default function EmailMarketingPro() {
   const { data: templates = [], isLoading: templateLoading } = useQuery({
     queryKey: ['/api/email-templates'],
     select: (data: EmailTemplate[]) => data || []
+  });
+
+  // Query para emails disponíveis por quiz
+  const { data: quizEmailsData } = useQuery({
+    queryKey: ['/api/quiz-emails-count'],
+    queryFn: async () => {
+      const results: {[key: string]: {emails: number, variables: string[]}} = {};
+      
+      for (const quiz of quizzes) {
+        try {
+          const emailsResponse = await fetch(`/api/quizzes/${quiz.id}/responses/emails`, {
+            headers: {
+              'Authorization': `Bearer ${localStorage.getItem('token')}`
+            }
+          });
+          
+          if (emailsResponse.ok) {
+            const emailsData = await emailsResponse.json();
+            
+            // Buscar variáveis disponíveis
+            const responsesResponse = await fetch(`/api/quiz-responses/${quiz.id}`, {
+              headers: {
+                'Authorization': `Bearer ${localStorage.getItem('token')}`
+              }
+            });
+            
+            let variables: string[] = [];
+            if (responsesResponse.ok) {
+              const responsesData = await responsesResponse.json();
+              if (responsesData.length > 0) {
+                const firstResponse = responsesData[0];
+                const responseData = typeof firstResponse.responses === 'string' ? 
+                  JSON.parse(firstResponse.responses) : firstResponse.responses;
+                variables = Object.keys(responseData);
+              }
+            }
+            
+            results[quiz.id] = {
+              emails: emailsData.totalEmails || 0,
+              variables: variables
+            };
+          }
+        } catch (error) {
+          console.error(`Erro ao buscar emails para quiz ${quiz.id}:`, error);
+        }
+      }
+      
+      return results;
+    },
+    enabled: quizzes.length > 0
+  });
+
+  // Query para logs de campanha
+  const { data: campaignLogs = [], isLoading: logsLoading } = useQuery({
+    queryKey: ['/api/email-logs', selectedCampaignForLogs?.id],
+    queryFn: async () => {
+      if (!selectedCampaignForLogs) return [];
+      
+      const response = await fetch(`/api/email-logs?campaignId=${selectedCampaignForLogs.id}`, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+      });
+      
+      if (!response.ok) return [];
+      return response.json();
+    },
+    enabled: !!selectedCampaignForLogs
   });
 
   // Mutations
@@ -164,33 +237,86 @@ export default function EmailMarketingPro() {
     }
   });
 
-  const sendCampaignMutation = useMutation({
+  const startCampaignMutation = useMutation({
     mutationFn: async (campaignId: string) => {
-      const response = await fetch(`/api/email-campaigns/${campaignId}/send-brevo`, {
+      const response = await fetch(`/api/email-campaigns/${campaignId}/start`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${localStorage.getItem('token')}`
-        },
-        body: JSON.stringify({
-          apiKey: 'xkeysib-d9c81f8bf32940bbee0c3826b7c7bd65ad4e16fd81686265b31ab5cd7908cc6e',
-          fromEmail: 'contato@vendzz.com.br'
-        })
+        }
       });
       
-      if (!response.ok) throw new Error('Failed to send campaign');
+      if (!response.ok) throw new Error('Failed to start campaign');
       return response.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/email-campaigns'] });
       toast({
-        title: "Campanha enviada com sucesso!",
-        description: "Sua campanha de email foi enviada para todos os destinatários.",
+        title: "Campanha iniciada!",
+        description: "Sua campanha foi ativada e os emails serão enviados conforme agendamento.",
       });
     },
     onError: (error) => {
       toast({
-        title: "Erro ao enviar campanha",
+        title: "Erro ao iniciar campanha",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  });
+
+  const pauseCampaignMutation = useMutation({
+    mutationFn: async (campaignId: string) => {
+      const response = await fetch(`/api/email-campaigns/${campaignId}/pause`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+      });
+      
+      if (!response.ok) throw new Error('Failed to pause campaign');
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/email-campaigns'] });
+      toast({
+        title: "Campanha pausada!",
+        description: "Sua campanha foi pausada e não enviará mais emails.",
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Erro ao pausar campanha",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  });
+
+  const deleteCampaignMutation = useMutation({
+    mutationFn: async (campaignId: string) => {
+      const response = await fetch(`/api/email-campaigns/${campaignId}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+      });
+      
+      if (!response.ok) throw new Error('Failed to delete campaign');
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/email-campaigns'] });
+      toast({
+        title: "Campanha excluída!",
+        description: "Sua campanha foi excluída com sucesso.",
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Erro ao excluir campanha",
         description: error.message,
         variant: "destructive",
       });
@@ -204,10 +330,11 @@ export default function EmailMarketingPro() {
       content: '',
       quizId: '',
       targetAudience: 'all',
-      triggerType: 'immediate',
-      triggerDelay: 0,
+      triggerType: 'delayed',
+      triggerDelay: 10,
       triggerUnit: 'minutes'
     });
+    setAvailableVariables([]);
   };
 
   const resetTemplateForm = () => {
@@ -428,6 +555,11 @@ export default function EmailMarketingPro() {
                               {quizzes.map((quiz) => (
                                 <SelectItem key={quiz.id} value={quiz.id}>
                                   {quiz.title} ({quiz.responses} respostas)
+                                  {quizEmailsData && quizEmailsData[quiz.id] && (
+                                    <span className="text-green-600 ml-2">
+                                      • {quizEmailsData[quiz.id].emails} emails
+                                    </span>
+                                  )}
                                 </SelectItem>
                               ))}
                             </SelectContent>
@@ -455,7 +587,13 @@ export default function EmailMarketingPro() {
                                   <SelectValue />
                                 </SelectTrigger>
                                 <SelectContent>
-                                  <SelectItem value="all">📊 Todos os leads</SelectItem>
+                                  <SelectItem value="all">📊 Todos os leads
+                                    {quizEmailsData && quizEmailsData[selectedQuiz] && (
+                                      <span className="text-blue-600 ml-2">
+                                        ({quizEmailsData[selectedQuiz].emails} emails)
+                                      </span>
+                                    )}
+                                  </SelectItem>
                                   <SelectItem value="completed">✅ Quiz completo</SelectItem>
                                   <SelectItem value="abandoned">⏰ Quiz abandonado</SelectItem>
                                 </SelectContent>
@@ -490,7 +628,12 @@ export default function EmailMarketingPro() {
                               rows={6}
                             />
                             <p className="text-xs text-gray-500 mt-1">
-                              Personalize com: {'{nome}'}, {'{email}'}, {'{telefone}'}, {'{idade}'}, {'{altura}'}, {'{peso}'}
+                              Variáveis disponíveis: {quizEmailsData && quizEmailsData[selectedQuiz] ? 
+                                quizEmailsData[selectedQuiz].variables.map(v => `{${v}}`).join(', ') : 
+                                '{nome}, {email}, {telefone}, {idade}, {altura}, {peso}'}
+                            </p>
+                            <p className="text-xs text-amber-600 mt-1">
+                              ⚠️ Variáveis só serão enviadas se o campo for preenchido, caso contrário será processado como espaço vazio.
                             </p>
                           </div>
 
@@ -504,8 +647,7 @@ export default function EmailMarketingPro() {
                                 <SelectValue />
                               </SelectTrigger>
                               <SelectContent>
-                                <SelectItem value="immediate">⚡ Imediato (enviar agora)</SelectItem>
-                                <SelectItem value="delayed">⏰ Agendado (enviar depois)</SelectItem>
+                                <SelectItem value="delayed">⏰ Agendado (recomendado)</SelectItem>
                               </SelectContent>
                             </Select>
                           </div>
@@ -575,20 +717,48 @@ export default function EmailMarketingPro() {
                               </div>
                             </div>
                             <div className="flex items-center gap-2">
-                              {campaign.status === 'active' && (
+                              {campaign.status === 'draft' && (
                                 <Button 
-                                  onClick={() => sendCampaignMutation.mutate(campaign.id)}
-                                  disabled={sendCampaignMutation.isPending}
+                                  onClick={() => startCampaignMutation.mutate(campaign.id)}
+                                  disabled={startCampaignMutation.isPending}
                                   size="sm"
                                   className="bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700"
                                 >
                                   <Send className="w-3 h-3 mr-1" />
-                                  Enviar via Brevo
+                                  Iniciar
                                 </Button>
                               )}
-                              <Button variant="outline" size="sm">
+                              {campaign.status === 'active' && (
+                                <Button 
+                                  onClick={() => pauseCampaignMutation.mutate(campaign.id)}
+                                  disabled={pauseCampaignMutation.isPending}
+                                  size="sm"
+                                  variant="outline"
+                                >
+                                  <Clock className="w-3 h-3 mr-1" />
+                                  Pausar
+                                </Button>
+                              )}
+                              <Button 
+                                onClick={() => deleteCampaignMutation.mutate(campaign.id)}
+                                disabled={deleteCampaignMutation.isPending}
+                                size="sm"
+                                variant="outline"
+                                className="text-red-600 hover:text-red-700"
+                              >
+                                <AlertCircle className="w-3 h-3 mr-1" />
+                                Excluir
+                              </Button>
+                              <Button 
+                                variant="outline" 
+                                size="sm"
+                                onClick={() => {
+                                  setSelectedCampaignForLogs(campaign);
+                                  setShowCampaignLogs(true);
+                                }}
+                              >
                                 <Eye className="w-3 h-3 mr-1" />
-                                Detalhes
+                                Logs
                               </Button>
                             </div>
                           </div>
@@ -876,6 +1046,59 @@ export default function EmailMarketingPro() {
             </Tabs>
         </CardContent>
       </Card>
+
+      {/* Campaign Logs Dialog */}
+      <Dialog open={showCampaignLogs} onOpenChange={setShowCampaignLogs}>
+        <DialogContent className="max-w-4xl">
+          <DialogHeader>
+            <DialogTitle>
+              Logs da Campanha: {selectedCampaignForLogs?.name}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            {logsLoading ? (
+              <div className="flex items-center justify-center py-8">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-500"></div>
+              </div>
+            ) : campaignLogs.length === 0 ? (
+              <div className="text-center py-8 text-gray-500">
+                Nenhum log encontrado para esta campanha.
+              </div>
+            ) : (
+              <div className="space-y-2">
+                {campaignLogs.map((log: any) => (
+                  <div key={log.id} className="p-4 bg-slate-50 dark:bg-slate-800 rounded-lg">
+                    <div className="flex items-start justify-between">
+                      <div>
+                        <div className="font-medium text-gray-900 dark:text-white">
+                          {log.recipientEmail}
+                        </div>
+                        <div className="text-sm text-gray-600 dark:text-gray-400">
+                          {log.personalizedSubject}
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <Badge className={`${log.status === 'sent' ? 'bg-green-500' : 
+                          log.status === 'failed' ? 'bg-red-500' : 'bg-blue-500'} text-white`}>
+                          {log.status}
+                        </Badge>
+                        <div className="text-xs text-gray-500 mt-1">
+                          {new Date(log.createdAt).toLocaleString()}
+                        </div>
+                      </div>
+                    </div>
+                    {log.errorMessage && (
+                      <div className="mt-2 p-2 bg-red-50 dark:bg-red-900/20 rounded text-sm text-red-600 dark:text-red-400">
+                        {log.errorMessage}
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
