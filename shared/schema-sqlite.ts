@@ -120,32 +120,20 @@ export const emailCampaigns = sqliteTable("email_campaigns", {
   name: text("name").notNull(),
   subject: text("subject").notNull(),
   content: text("content").notNull(),
-  htmlContent: text("htmlContent"),
-  textContent: text("textContent"),
   quizId: text("quizId").notNull().references(() => quizzes.id, { onDelete: "cascade" }),
   userId: text("userId").notNull().references(() => users.id, { onDelete: "cascade" }),
-  templateId: text("templateId").references(() => emailTemplates.id),
-  fromName: text("fromName").notNull(),
-  fromEmail: text("fromEmail").notNull(),
-  replyTo: text("replyTo"),
   status: text("status").default("draft"), // draft, active, paused, completed
   triggerType: text("triggerType").default("immediate"), // immediate, delayed, scheduled
   triggerDelay: integer("triggerDelay").default(0),
   triggerUnit: text("triggerUnit").default("hours"), // minutes, hours, days
   targetAudience: text("targetAudience").default("completed"), // all, completed, abandoned
-  fromDate: integer("fromDate"),
-  toDate: integer("toDate"),
-  scheduledAt: integer("scheduledAt"),
   variables: text("variables", { mode: 'json' }).default("[]"),
   sent: integer("sent").default(0),
   delivered: integer("delivered").default(0),
   opened: integer("opened").default(0),
   clicked: integer("clicked").default(0),
-  bounced: integer("bounced").default(0),
-  complained: integer("complained").default(0),
-  unsubscribed: integer("unsubscribed").default(0),
-  createdAt: integer("createdAt", { mode: 'timestamp' }).notNull().$defaultFn(() => new Date()),
-  updatedAt: integer("updatedAt", { mode: 'timestamp' }).notNull().$defaultFn(() => new Date()),
+  createdAt: integer("createdAt").default(0),
+  updatedAt: integer("updatedAt").default(0),
 });
 
 export const emailTemplates = sqliteTable("email_templates", {
@@ -153,17 +141,11 @@ export const emailTemplates = sqliteTable("email_templates", {
   name: text("name").notNull(),
   subject: text("subject").notNull(),
   content: text("content").notNull(),
-  htmlContent: text("htmlContent"),
-  textContent: text("textContent"),
-  category: text("category").notNull(), // welcome, follow_up, promotion, abandoned_cart, transactional
+  category: text("category").notNull(),
   variables: text("variables", { mode: 'json' }).default("[]"),
-  thumbnail: text("thumbnail"),
-  description: text("description"),
-  isPublic: integer("isPublic", { mode: 'boolean' }).default(false),
-  isActive: integer("isActive", { mode: 'boolean' }).default(true),
   userId: text("userId").notNull().references(() => users.id, { onDelete: "cascade" }),
-  createdAt: integer("createdAt", { mode: 'timestamp' }).notNull().$defaultFn(() => new Date()),
-  updatedAt: integer("updatedAt", { mode: 'timestamp' }).notNull().$defaultFn(() => new Date()),
+  createdAt: integer("createdAt").default(0),
+  updatedAt: integer("updatedAt").default(0),
 });
 
 export const emailLogs = sqliteTable("email_logs", {

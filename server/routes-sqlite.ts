@@ -3017,7 +3017,6 @@ app.get("/api/whatsapp-extension/pending", verifyJWT, async (req: any, res: Resp
         quizId, 
         subject, 
         content, 
-        fromEmail, 
         targetAudience, 
         triggerType, 
         triggerDelay, 
@@ -3030,7 +3029,6 @@ app.get("/api/whatsapp-extension/pending", verifyJWT, async (req: any, res: Resp
         quizId,
         emailTemplate: content,
         subject,
-        fromEmail,
         targetAudience,
         triggerType,
         triggerDelay,
@@ -3274,15 +3272,15 @@ app.get("/api/whatsapp-extension/pending", verifyJWT, async (req: any, res: Resp
   // Testar envio de email
   app.post("/api/test-email", verifyJWT, async (req: any, res) => {
     try {
-      const { to, subject, content, fromEmail } = req.body;
+      const { to, subject, content } = req.body;
       
-      if (!to || !subject || !content || !fromEmail) {
+      if (!to || !subject || !content) {
         return res.status(400).json({ error: "Todos os campos são obrigatórios" });
       }
       
       const result = await emailService.sendEmail({
         to,
-        from: fromEmail,
+        from: 'noreply@vendzz.com',
         subject,
         html: content
       });

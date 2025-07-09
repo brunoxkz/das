@@ -123,7 +123,7 @@ class EmailService {
         // Enviar email
         const result = await this.sendEmail({
           to: emailLog.email,
-          from: campaign.fromEmail,
+          from: 'noreply@vendzz.com',
           subject: emailLog.personalizedSubject,
           html: emailLog.personalizedContent,
           campaignId: emailLog.campaignId,
@@ -152,7 +152,6 @@ class EmailService {
     quizId: string;
     emailTemplate: string;
     subject: string;
-    fromEmail: string;
     targetAudience: 'all' | 'completed' | 'abandoned';
     triggerType: 'immediate' | 'delayed';
     triggerDelay?: number;
@@ -165,7 +164,6 @@ class EmailService {
         quizId: params.quizId,
         subject: params.subject,
         content: params.emailTemplate,
-        fromEmail: params.fromEmail,
         targetAudience: params.targetAudience,
         triggerType: params.triggerType,
         triggerDelay: params.triggerDelay || 0,

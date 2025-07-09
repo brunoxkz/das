@@ -281,7 +281,7 @@ class VendzzEventsDatabase {
         $organizer_data = $this->get_organizer_data($meta_data['organizer_id'] ?? '');
         
         // Obter categorias
-        $categories = $this->get_event_categories($event_id);
+        $categories = $this->get_event_categories_for_event($event_id);
         
         // Obter tags
         $tags = $this->get_event_tags($event_id);
@@ -408,7 +408,7 @@ class VendzzEventsDatabase {
      * @param int $event_id ID do evento
      * @return array Lista de categorias
      */
-    private function get_event_categories($event_id) {
+    private function get_event_categories_for_event($event_id) {
         $categories = wp_get_post_terms($event_id, 'tribe_events_cat');
         
         if (is_wp_error($categories)) {

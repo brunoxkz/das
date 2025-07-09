@@ -21,7 +21,6 @@ const emailCampaignSchema = z.object({
   quizId: z.string().min(1, "Quiz é obrigatório"),
   subject: z.string().min(1, "Assunto é obrigatório"),
   content: z.string().min(1, "Conteúdo é obrigatório"),
-  fromEmail: z.string().email("Email inválido"),
   targetAudience: z.enum(["all", "completed", "abandoned"]),
   triggerType: z.enum(["immediate", "delayed", "scheduled"]),
   triggerDelay: z.number().min(1).default(10),
@@ -90,7 +89,6 @@ export function CreateEmailCampaignDialog({
       quizId: "",
       subject: "",
       content: "",
-      fromEmail: "noreply@vendzz.com",
       targetAudience: "all",
       triggerType: "immediate",
       triggerDelay: 10,
@@ -193,43 +191,29 @@ export function CreateEmailCampaignDialog({
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <Label htmlFor="quizId">Quiz de Origem</Label>
-                      <Select
-                        value={form.watch("quizId")}
-                        onValueChange={(value) => {
-                          form.setValue("quizId", value);
-                          setSelectedQuiz(value);
-                        }}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Selecione um quiz" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {quizzes.map((quiz: any) => (
-                            <SelectItem key={quiz.id} value={quiz.id}>
-                              {quiz.title}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      {form.formState.errors.quizId && (
-                        <p className="text-sm text-red-500">{form.formState.errors.quizId.message}</p>
-                      )}
-                    </div>
-                    <div>
-                      <Label htmlFor="fromEmail">Email de Origem</Label>
-                      <Input
-                        id="fromEmail"
-                        type="email"
-                        placeholder="Ex: noreply@vendzz.com"
-                        {...form.register("fromEmail")}
-                      />
-                      {form.formState.errors.fromEmail && (
-                        <p className="text-sm text-red-500">{form.formState.errors.fromEmail.message}</p>
-                      )}
-                    </div>
+                  <div>
+                    <Label htmlFor="quizId">Quiz de Origem</Label>
+                    <Select
+                      value={form.watch("quizId")}
+                      onValueChange={(value) => {
+                        form.setValue("quizId", value);
+                        setSelectedQuiz(value);
+                      }}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecione um quiz" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {quizzes.map((quiz: any) => (
+                          <SelectItem key={quiz.id} value={quiz.id}>
+                            {quiz.title}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    {form.formState.errors.quizId && (
+                      <p className="text-sm text-red-500">{form.formState.errors.quizId.message}</p>
+                    )}
                   </div>
                 </CardContent>
               </Card>
