@@ -1,14 +1,12 @@
-# Vendzz - Multi-Project Repository
+# Vendzz - Quiz Funnel Platform
 
 ## Overview
 
-This repository contains two distinct but related projects:
+Vendzz is a modern, futuristic SaaS quiz funnel platform focused on lead generation. Built with React, Express, and SQLite, it features a sleek green-themed UI with shadcn/ui components, JWT authentication, and comprehensive email marketing integration via Brevo. The platform enables users to create interactive quizzes for lead capture with comprehensive analytics.
 
-### 1. Vendzz Quiz Funnel Platform
-A modern, futuristic SaaS quiz funnel platform focused on lead generation. Built with React, Express, and SQLite, it features a sleek green-themed UI with shadcn/ui components, JWT authentication, and comprehensive email marketing integration via Brevo. The platform enables users to create interactive quizzes for lead capture with comprehensive analytics.
+## Additional Files
 
-### 2. WordPress Events Manager Plugin
-A complete WordPress plugin for managing Events Calendar Pro events. Located in the `wordpress-events-manager/` folder, this plugin provides database access, event editing, and recurring event management capabilities. The plugin is fully functional and ready for production use.
+The repository also contains a WordPress Events Manager plugin in the `wordpress-events-manager/` folder, which is a separate project maintained for reference purposes.
 
 ## System Architecture
 
@@ -123,33 +121,7 @@ A complete WordPress plugin for managing Events Calendar Pro events. Located in 
 - `STRIPE_SECRET_KEY`: Stripe API key (optional for payment features)
 - `NODE_ENV`: Environment mode (development/production)
 
-## WordPress Events Manager Plugin
 
-### Architecture
-- **Platform**: WordPress Plugin (PHP 7.4+)
-- **Database**: Direct WordPress database access
-- **Integration**: Events Calendar Pro compatibility
-- **Structure**: Main plugin file + includes classes + assets
-
-### Key Features
-- **Event Management**: Read, edit, and republish Events Calendar Pro events
-- **Database Access**: Direct access to WordPress wp_posts and wp_postmeta tables
-- **Recurring Events**: Full support for recurring event patterns
-- **AJAX Interface**: Admin interface with real-time updates
-- **Security**: Nonce verification, capability checks, data sanitization
-
-### Project Status
-- **Plugin Status**: 100% functional and production-ready
-- **Test Results**: 7/7 tests passed (100% success rate)
-- **Files**: All 6 essential files present and validated
-- **Classes**: 3/3 classes fully operational
-- **AJAX Endpoints**: 4/4 endpoints configured and secured
-
-### Installation
-1. Upload `wordpress-events-manager/` folder to `/wp-content/plugins/`
-2. Activate plugin in WordPress admin
-3. Access "Vendzz Events" menu item
-4. Requires Events Calendar Pro plugin to be active
 
 ## Changelog
 
