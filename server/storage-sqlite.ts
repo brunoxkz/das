@@ -696,9 +696,12 @@ export class SQLiteStorage implements IStorage {
   }
 
   async createEmailCampaign(campaign: InsertEmailCampaign): Promise<EmailCampaign> {
+    const now = Math.floor(Date.now() / 1000);
     const newCampaign = {
       id: nanoid(),
       ...campaign,
+      createdAt: campaign.createdAt || now,
+      updatedAt: campaign.updatedAt || now,
     };
     
     console.log('📧 DEBUG - CRIANDO CAMPANHA:', JSON.stringify(newCampaign, null, 2));
