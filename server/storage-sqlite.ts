@@ -2150,6 +2150,89 @@ export class SQLiteStorage implements IStorage {
       }
     }
   }
+
+  // FUNÇÕES NECESSÁRIAS PARA DETECÇÃO AUTOMÁTICA DE EMAIL
+  async getAllEmailCampaigns(): Promise<EmailCampaign[]> {
+    try {
+      const campaigns = await db.select()
+        .from(emailCampaigns)
+        .orderBy(desc(emailCampaigns.createdAt));
+      
+      return campaigns.map(campaign => ({
+        ...campaign,
+        leadData: campaign.leadData ? JSON.parse(campaign.leadData) : null
+      }));
+    } catch (error) {
+      console.error('Error getting all email campaigns:', error);
+      throw error;
+    }
+  }
+
+  async getQuizResponsesForEmails(quizId: string): Promise<QuizResponse[]> {
+    try {
+      const responses = await db.select()
+        .from(quizResponses)
+        .where(eq(quizResponses.quizId, quizId))
+        .orderBy(desc(quizResponses.submittedAt));
+      
+      return responses.map(response => ({
+        ...response,
+        responses: typeof response.responses === 'string' ? 
+          JSON.parse(response.responses) : response.responses,
+        metadata: typeof response.metadata === 'string' ? 
+          JSON.parse(response.metadata) : response.metadata
+      }));
+    } catch (error) {
+      console.error('Error getting quiz responses for emails:', error);
+      throw error;
+    }
+  }
+
+  async getEmailLogsByCampaign(campaignId: string): Promise<EmailLog[]> {
+    try {
+      const logs = await db.select()
+        .from(emailLogs)
+        .where(eq(emailLogs.campaignId, campaignId))
+        .orderBy(desc(emailLogs.createdAt));
+      
+      return logs.map(log => ({
+        ...log,
+        leadData: log.leadData ? JSON.parse(log.leadData) : null
+      }));
+    } catch (error) {
+      console.error('Error getting email logs by campaign:', error);
+      throw error;
+    }
+  }
+
+  // Função para atualizar status de email usando email + campaignId
+  async updateEmailLogStatus(email: string, campaignId: string, status: string): Promise<void> {
+    try {
+      const updateData: any = { 
+        status,
+        updatedAt: Math.floor(Date.now() / 1000)
+      };
+      
+      if (status === 'sent') {
+        updateData.sentAt = Math.floor(Date.now() / 1000);
+      } else if (status === 'delivered') {
+        updateData.deliveredAt = Math.floor(Date.now() / 1000);
+      } else if (status === 'failed') {
+        updateData.errorMessage = 'Falha no envio';
+      }
+      
+      await db.update(emailLogs)
+        .set(updateData)
+        .where(and(
+          eq(emailLogs.email, email),
+          eq(emailLogs.campaignId, campaignId)
+        ));
+      
+    } catch (error) {
+      console.error('Error updating email log status:', error);
+      throw error;
+    }
+  }
 }
 
 export const storage = new SQLiteStorage();

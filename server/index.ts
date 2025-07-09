@@ -219,8 +219,9 @@ app.use((req, res, next) => {
       // Processar campanhas SMS (funcionalidade existente mantida)
       const smsCampaigns = await storage.getAllSMSCampaigns();
       const whatsappCampaigns = await storage.getAllWhatsappCampaigns();
+      const emailCampaigns = await storage.getAllEmailCampaigns();
       
-      console.log(`📊 CAMPANHAS: ${smsCampaigns.length} SMS, ${whatsappCampaigns.length} WhatsApp`);
+      console.log(`📊 CAMPANHAS: ${smsCampaigns.length} SMS, ${whatsappCampaigns.length} WhatsApp, ${emailCampaigns.length} Email`);
       
       // Processar campanhas SMS ativas (funcionalidade existente mantida)
       for (const campaign of smsCampaigns) {
@@ -402,6 +403,150 @@ app.use((req, res, next) => {
           console.error(`❌ ERRO campanha WhatsApp "${campaign.name}":`, error.message);
         }
       }
+      
+      // Processar campanhas EMAIL ativas (NOVO SISTEMA)
+      for (const campaign of emailCampaigns) {
+        if (campaign.status === 'active') {
+          try {
+            const campaignStartTime = Date.now();
+            console.log(`📧 PROCESSANDO EMAIL: "${campaign.name}" - Quiz: ${campaign.quizId}`);
+            
+            // Buscar respostas do quiz e logs existentes em paralelo
+            const [responses, existingLogs] = await Promise.all([
+              storage.getQuizResponsesForEmails(campaign.quizId),
+              storage.getEmailLogsByCampaign(campaign.id)
+            ]);
+            
+            // Criar mapa de emails já processados
+            const processedEmails = new Map();
+            existingLogs.forEach(log => {
+              processedEmails.set(log.email, {
+                status: log.status,
+                createdAt: log.createdAt
+              });
+            });
+            
+            // Aplicar filtros da campanha
+            let eligibleLeads = responses;
+            
+            // Filtro de audiência
+            if (campaign.targetAudience === 'completed') {
+              eligibleLeads = eligibleLeads.filter(lead => 
+                lead.metadata?.isComplete === true || 
+                lead.metadata?.completionPercentage === 100
+              );
+            } else if (campaign.targetAudience === 'abandoned') {
+              eligibleLeads = eligibleLeads.filter(lead => 
+                lead.metadata?.isComplete === false && 
+                lead.metadata?.isPartial !== true
+              );
+            }
+            
+            // Extrair emails únicos
+            const emailsWithData = [];
+            eligibleLeads.forEach(lead => {
+              const responses = typeof lead.responses === 'string' ? 
+                JSON.parse(lead.responses) : lead.responses;
+              
+              const email = responses?.email;
+              if (email && !processedEmails.has(email)) {
+                emailsWithData.push({
+                  email,
+                  leadData: {
+                    nome: responses?.nome || 'Cliente',
+                    telefone: responses?.telefone || responses?.telefone_principal || '',
+                    email: email,
+                    idade: responses?.idade || '',
+                    altura: responses?.altura || '',
+                    peso: responses?.peso || responses?.current_weight || '',
+                    ...responses
+                  },
+                  submittedAt: lead.submittedAt,
+                  campaignId: campaign.id,
+                  userId: campaign.userId
+                });
+              }
+            });
+            
+            if (emailsWithData.length > 0) {
+              console.log(`🆕 EMAIL "${campaign.name}": ${emailsWithData.length} novos emails detectados`);
+              
+              // Processar emails com delay baseado na configuração
+              const baseDelay = campaign.triggerDelay || 0; // minutos
+              const delayMs = baseDelay * 60 * 1000;
+              
+              for (const emailData of emailsWithData) {
+                // Personalizar conteúdo
+                const personalizedSubject = campaign.subject.replace(
+                  /{(\w+)}/g, 
+                  (match, key) => emailData.leadData[key] || match
+                );
+                
+                const personalizedContent = campaign.content.replace(
+                  /{(\w+)}/g, 
+                  (match, key) => emailData.leadData[key] || match
+                );
+                
+                // Agendar envio
+                const scheduledAt = new Date(Date.now() + delayMs);
+                
+                // Criar log de email
+                await storage.createEmailLog({
+                  id: crypto.randomUUID(),
+                  campaignId: campaign.id,
+                  userId: campaign.userId,
+                  email: emailData.email,
+                  subject: campaign.subject,
+                  content: campaign.content,
+                  personalizedSubject,
+                  personalizedContent,
+                  leadData: JSON.stringify(emailData.leadData),
+                  status: campaign.triggerType === 'immediate' ? 'pending' : 'scheduled',
+                  scheduledAt: campaign.triggerType === 'immediate' ? null : scheduledAt,
+                  createdAt: new Date(),
+                  updatedAt: new Date()
+                });
+                
+                // Se for envio imediato, processar agora
+                if (campaign.triggerType === 'immediate') {
+                  try {
+                    const { sendBrevoEmail } = await import('./email-brevo');
+                    const success = await sendBrevoEmail(
+                      emailData.email,
+                      personalizedSubject,
+                      personalizedContent,
+                      'contato@vendzz.com.br'
+                    );
+                    
+                    // Atualizar status do log
+                    await storage.updateEmailLogStatus(
+                      emailData.email,
+                      campaign.id,
+                      success ? 'sent' : 'failed'
+                    );
+                    
+                    console.log(`📧 EMAIL enviado para ${emailData.email}: ${success ? 'sucesso' : 'falha'}`);
+                  } catch (error) {
+                    console.error(`❌ Erro ao enviar email para ${emailData.email}:`, error.message);
+                    await storage.updateEmailLogStatus(
+                      emailData.email,
+                      campaign.id,
+                      'failed'
+                    );
+                  }
+                }
+              }
+            }
+            
+            const campaignTime = Date.now() - campaignStartTime;
+            console.log(`✅ EMAIL "${campaign.name}": ${emailsWithData.length} leads processados (${campaignTime}ms)`);
+            
+          } catch (error) {
+            console.error(`❌ ERRO campanha EMAIL "${campaign.name}":`, error.message);
+          }
+        }
+      }
+      
     } catch (error) {
       console.error('❌ ERRO NA DETECÇÃO AUTOMÁTICA:', error);
     }
