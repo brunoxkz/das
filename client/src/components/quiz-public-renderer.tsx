@@ -222,20 +222,25 @@ export function QuizPublicRenderer({ quiz }: QuizPublicRendererProps) {
 
     switch (type) {
       case 'multiple_choice':
+        const multipleChoiceOptions = element.options || properties?.options || [];
         return (
           <div key={id} className="space-y-4">
-            <h3 className="text-lg font-semibold">{properties?.question || 'Pergunta'}</h3>
+            <h3 className="text-lg font-semibold">{element.content || properties?.question || properties?.content || 'Pergunta'}</h3>
             <RadioGroup 
               value={answer} 
-              onValueChange={(value) => handleElementAnswer(id, type, value, properties?.fieldId)}
+              onValueChange={(value) => handleElementAnswer(id, type, value, element.fieldId || properties?.fieldId)}
             >
-              {Array.isArray(properties?.options) && properties.options.length > 0 ? (
-                properties.options.map((option: any, index: number) => (
-                  <div key={index} className="flex items-center space-x-2">
-                    <RadioGroupItem value={option?.text || `Opção ${index + 1}`} id={`${id}-${index}`} />
-                    <Label htmlFor={`${id}-${index}`}>{option?.text || `Opção ${index + 1}`}</Label>
-                  </div>
-                ))
+              {Array.isArray(multipleChoiceOptions) && multipleChoiceOptions.length > 0 ? (
+                multipleChoiceOptions.map((option: any, index: number) => {
+                  // Suporte para opções em string simples ou objeto {text: "..."}
+                  const optionValue = typeof option === 'string' ? option : (option?.text || `Opção ${index + 1}`);
+                  return (
+                    <div key={index} className="flex items-center space-x-2">
+                      <RadioGroupItem value={optionValue} id={`${id}-${index}`} />
+                      <Label htmlFor={`${id}-${index}`}>{optionValue}</Label>
+                    </div>
+                  );
+                })
               ) : (
                 <div className="text-gray-500 p-4 border rounded-md">
                   Nenhuma opção configurada
@@ -324,30 +329,34 @@ export function QuizPublicRenderer({ quiz }: QuizPublicRendererProps) {
         );
 
       case 'checkbox':
+        const checkboxOptions = element.options || properties?.options || [];
         return (
           <div key={id} className="space-y-4">
-            {(properties?.question || properties?.label) && (
-              <h3 className="text-lg font-semibold">{properties?.question || properties?.label || 'Opções'}</h3>
+            {(element.content || properties?.question || properties?.label) && (
+              <h3 className="text-lg font-semibold">{element.content || properties?.question || properties?.label || 'Opções'}</h3>
             )}
             <div className="space-y-2">
-              {Array.isArray(properties?.options) && properties.options.length > 0 ? (
-                properties.options.map((option: any, index: number) => (
-                  <div key={index} className="flex items-center space-x-2">
-                    <Checkbox
-                      id={`${id}-${index}`}
-                      checked={Array.isArray(answer) && answer.includes(option?.text)}
-                      onCheckedChange={(checked) => {
-                        const currentAnswers = Array.isArray(answer) ? answer : [];
-                        const optionText = option?.text || `Opção ${index + 1}`;
-                        const newAnswers = checked
-                          ? [...currentAnswers, optionText]
-                          : currentAnswers.filter((a: string) => a !== optionText);
-                        handleElementAnswer(id, type, newAnswers, properties?.fieldId);
-                      }}
-                    />
-                    <Label htmlFor={`${id}-${index}`}>{option?.text || `Opção ${index + 1}`}</Label>
-                  </div>
-                ))
+              {Array.isArray(checkboxOptions) && checkboxOptions.length > 0 ? (
+                checkboxOptions.map((option: any, index: number) => {
+                  // Suporte para opções em string simples ou objeto {text: "..."}
+                  const optionValue = typeof option === 'string' ? option : (option?.text || `Opção ${index + 1}`);
+                  return (
+                    <div key={index} className="flex items-center space-x-2">
+                      <Checkbox
+                        id={`${id}-${index}`}
+                        checked={Array.isArray(answer) && answer.includes(optionValue)}
+                        onCheckedChange={(checked) => {
+                          const currentAnswers = Array.isArray(answer) ? answer : [];
+                          const newAnswers = checked
+                            ? [...currentAnswers, optionValue]
+                            : currentAnswers.filter((a: string) => a !== optionValue);
+                          handleElementAnswer(id, type, newAnswers, element.fieldId || properties?.fieldId);
+                        }}
+                      />
+                      <Label htmlFor={`${id}-${index}`}>{optionValue}</Label>
+                    </div>
+                  );
+                })
               ) : (
                 <div className="text-gray-500 p-4 border rounded-md">
                   Nenhuma opção configurada
