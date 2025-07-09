@@ -2,214 +2,97 @@
  * DEBUG - Testar extração de emails isoladamente
  */
 
-async function testEmailExtraction() {
-  console.log("\n🔍 DEBUG - EXTRAÇÃO DE EMAILS");
-  console.log("=" + "=".repeat(50));
+const API_BASE = 'http://localhost:5000/api';
+let globalToken = null;
+
+async function testeExtracao() {
+  console.log('🔍 DEBUGANDO EXTRAÇÃO DE EMAILS');
+  console.log('==================================');
   
-  // Autenticação
-  const authResponse = await fetch("http://localhost:5000/api/auth/login", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      email: "admin@vendzz.com",
-      password: "admin123"
-    })
-  });
-  
-  const authData = await authResponse.json();
-  if (!authResponse.ok) {
-    console.error("❌ Falha na autenticação:", authData);
-    return;
-  }
-  
-  const token = authData.token || authData.accessToken;
-  console.log("✅ Autenticado com sucesso");
-  
-  const headers = {
-    "Authorization": `Bearer ${token}`,
-    "Content-Type": "application/json"
-  };
-  
-  // Teste 1: Listar todos os quizzes
-  console.log("\n📋 1. LISTANDO TODOS OS QUIZZES:");
-  const quizzesResponse = await fetch("http://localhost:5000/api/dashboard/stats", {
-    headers
-  });
-  
-  const quizzesData = await quizzesResponse.json();
-  if (quizzesResponse.ok && quizzesData.quizzes) {
-    console.log(`✅ ${quizzesData.quizzes.length} quizzes encontrados:`);
-    quizzesData.quizzes.forEach((quiz, index) => {
-      console.log(`   ${index + 1}. ${quiz.title} (${quiz.id}) - ${quiz.responses} respostas`);
+  try {
+    // 1. Autenticar
+    const loginResponse = await fetch(`${API_BASE}/auth/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        email: 'admin@vendzz.com',
+        password: 'admin123'
+      })
     });
-  } else {
-    console.log("❌ Erro ao listar quizzes:", quizzesData);
-  }
-  
-  // Teste 2: Verificar quiz específico que sabemos ter emails
-  const quizId = "Qm4wxpfPgkMrwoMhDFNLZ";
-  console.log(`\n📧 2. VERIFICANDO QUIZ ${quizId}:`);
-  
-  const emailsResponse = await fetch(`http://localhost:5000/api/quizzes/${quizId}/responses/emails`, {
-    headers
-  });
-  
-  const emailsData = await emailsResponse.json();
-  if (emailsResponse.ok) {
-    console.log(`✅ ${emailsData.totalEmails} emails encontrados`);
-    console.log(`   📊 Total de respostas: ${emailsData.totalResponses}`);
     
-    if (emailsData.emails && emailsData.emails.length > 0) {
-      console.log("   📧 Primeiros 10 emails:");
-      emailsData.emails.slice(0, 10).forEach((email, index) => {
-        console.log(`      ${index + 1}. ${email}`);
+    const loginData = await loginResponse.json();
+    globalToken = loginData.token;
+    console.log('✅ Autenticado com sucesso');
+    
+    // 2. Buscar respostas do quiz
+    const response = await fetch(`${API_BASE}/quizzes/Qm4wxpfPgkMrwoMhDFNLZ/responses`, {
+      headers: { 'Authorization': `Bearer ${globalToken}` }
+    });
+    
+    const data = await response.json();
+    console.log(`📊 ${data.length} respostas encontradas`);
+    
+    // 3. Analisar estrutura das respostas
+    if (data.length > 0) {
+      console.log('\n🔍 ANALISANDO ESTRUTURA DAS RESPOSTAS:');
+      
+      // Procurar especificamente pela resposta do Bruno
+      const brunoResponse = data.find(r => {
+        if (r.responses && typeof r.responses === 'object') {
+          const responses = r.responses;
+          return responses.email === 'brunotamaso@gmail.com' || 
+                 responses.nome === 'Bruno Tamaso' ||
+                 Object.values(responses).includes('brunotamaso@gmail.com');
+        }
+        return false;
       });
       
-      if (emailsData.emails.includes("brunotamaso@gmail.com")) {
-        console.log("   ✅ Email brunotamaso@gmail.com ENCONTRADO!");
+      if (brunoResponse) {
+        console.log('✅ RESPOSTA DO BRUNO ENCONTRADA:');
+        console.log('   ID:', brunoResponse.id);
+        console.log('   Tipo responses:', typeof brunoResponse.responses);
+        console.log('   Responses:', JSON.stringify(brunoResponse.responses, null, 2));
+        console.log('   Metadata:', JSON.stringify(brunoResponse.metadata, null, 2));
+        
+        // Verificar especificamente o campo email
+        const responses = brunoResponse.responses;
+        if (responses.email) {
+          console.log('   ✅ Campo email encontrado:', responses.email);
+        } else {
+          console.log('   ❌ Campo email não encontrado');
+          console.log('   Campos disponíveis:', Object.keys(responses));
+        }
       } else {
-        console.log("   ❌ Email brunotamaso@gmail.com NÃO ENCONTRADO");
-      }
-    } else {
-      console.log("   📭 Nenhum email encontrado");
-    }
-  } else {
-    console.log("❌ Erro ao buscar emails:", emailsData);
-  }
-  
-  // Teste 3: Verificar respostas brutas do quiz
-  console.log(`\n🔍 3. VERIFICANDO RESPOSTAS BRUTAS DO QUIZ ${quizId}:`);
-  
-  const responsesResponse = await fetch(`http://localhost:5000/api/quiz-responses/${quizId}`, {
-    headers
-  });
-  
-  const responsesData = await responsesResponse.json();
-  if (responsesResponse.ok) {
-    console.log(`✅ ${responsesData.length} respostas brutas encontradas`);
-    
-    // Procurar especificamente por brunotamaso@gmail.com
-    let foundBruno = false;
-    responsesData.forEach((response, index) => {
-      if (index < 5) { // Mostrar apenas as 5 primeiras
-        console.log(`\n   📝 Resposta ${index + 1}:`);
-        console.log(`      ID: ${response.id}`);
-        console.log(`      Quiz: ${response.quizId}`);
-        console.log(`      Metadata: ${JSON.stringify(response.metadata || {})}`);
+        console.log('❌ Resposta do Bruno não encontrada');
+        console.log('   Procurando por emails em todas as respostas...');
         
-        let responses = response.responses;
-        if (typeof responses === 'string') {
-          try {
-            responses = JSON.parse(responses);
-          } catch (e) {
-            console.log(`      ❌ Erro ao fazer parse das respostas: ${e.message}`);
-          }
-        }
-        
-        if (Array.isArray(responses)) {
-          console.log(`      📊 ${responses.length} elementos de resposta:`);
-          responses.forEach((item, itemIndex) => {
-            if (itemIndex < 3) { // Mostrar apenas os 3 primeiros
-              console.log(`         ${itemIndex + 1}. Tipo: ${item.elementType}, ID: ${item.elementFieldId}, Resposta: ${item.answer}`);
+        data.forEach((response, index) => {
+          if (response.responses && typeof response.responses === 'object') {
+            const responses = response.responses;
+            const hasEmail = responses.email || Object.keys(responses).some(key => key.includes('email'));
+            
+            if (hasEmail) {
+              console.log(`   [${index}] Email encontrado:`, responses.email || 'campo email não direto');
+              console.log(`       Responses:`, JSON.stringify(responses, null, 2));
             }
-          });
-        } else if (typeof responses === 'object') {
-          console.log(`      📊 Respostas (objeto):`);
-          Object.keys(responses).slice(0, 3).forEach(key => {
-            console.log(`         ${key}: ${responses[key]}`);
-          });
-        }
+          }
+        });
       }
-      
-      // Verificar se é a resposta do Bruno
-      let responseStr = JSON.stringify(response);
-      if (responseStr.includes("brunotamaso@gmail.com")) {
-        foundBruno = true;
-        console.log(`\n   🎯 ENCONTRADO BRUNO NA RESPOSTA ${index + 1}:`);
-        console.log(`      ID: ${response.id}`);
-        console.log(`      Respostas: ${JSON.stringify(response.responses)}`);
-        console.log(`      Metadata: ${JSON.stringify(response.metadata)}`);
-      }
+    }
+    
+    // 4. Testar endpoint de extração de emails
+    console.log('\n📧 TESTANDO ENDPOINT DE EXTRAÇÃO:');
+    const extractResponse = await fetch(`${API_BASE}/quizzes/Qm4wxpfPgkMrwoMhDFNLZ/responses/emails`, {
+      headers: { 'Authorization': `Bearer ${globalToken}` }
     });
     
-    if (foundBruno) {
-      console.log("\n   ✅ Email brunotamaso@gmail.com ENCONTRADO nas respostas brutas!");
-    } else {
-      console.log("\n   ❌ Email brunotamaso@gmail.com NÃO ENCONTRADO nas respostas brutas");
-    }
-  } else {
-    console.log("❌ Erro ao buscar respostas brutas:", responsesData);
+    const extractData = await extractResponse.json();
+    console.log('Status:', extractResponse.status);
+    console.log('Data:', JSON.stringify(extractData, null, 2));
+    
+  } catch (error) {
+    console.error('❌ Erro:', error);
   }
-  
-  // Teste 4: Testar função de extração de emails para campanha
-  console.log(`\n🧪 4. TESTANDO EXTRAÇÃO PARA CAMPANHA:`);
-  
-  const campaignTest = {
-    name: "Teste Extração Debug",
-    subject: "Debug: {nome}",
-    content: "Teste de extração para {email}",
-    quizId: quizId,
-    targetAudience: "all",
-    triggerType: "delayed",
-    triggerDelay: 1,
-    triggerUnit: "minutes"
-  };
-  
-  const campaignResponse = await fetch("http://localhost:5000/api/email-campaigns", {
-    method: "POST",
-    headers,
-    body: JSON.stringify(campaignTest)
-  });
-  
-  const campaignData = await campaignResponse.json();
-  if (campaignResponse.ok) {
-    console.log(`✅ Campanha debug criada: ${campaignData.campaignId}`);
-    console.log(`   📧 Emails extraídos: ${campaignData.scheduledEmails}`);
-    
-    if (campaignData.scheduledEmails === 0) {
-      console.log("   ⚠️  PROBLEMA IDENTIFICADO: Extração retorna 0 emails");
-      console.log("   🔍 Verifique a função extractEmailsFromResponses no backend");
-    }
-  } else {
-    console.log("❌ Erro ao criar campanha debug:", campaignData);
-  }
-  
-  // Teste 5: Verificar audiência específica
-  console.log(`\n🎯 5. TESTANDO AUDIÊNCIAS ESPECÍFICAS:`);
-  
-  const audiencias = ["all", "completed", "abandoned"];
-  
-  for (const audiencia of audiencias) {
-    console.log(`\n   👥 Testando audiência: ${audiencia}`);
-    
-    const audienciaTest = {
-      name: `Debug Audiência ${audiencia}`,
-      subject: `Debug ${audiencia}: {nome}`,
-      content: `Teste audiência ${audiencia} para {email}`,
-      quizId: quizId,
-      targetAudience: audiencia,
-      triggerType: "delayed",
-      triggerDelay: 1,
-      triggerUnit: "minutes"
-    };
-    
-    const audienciaResponse = await fetch("http://localhost:5000/api/email-campaigns", {
-      method: "POST",
-      headers,
-      body: JSON.stringify(audienciaTest)
-    });
-    
-    const audienciaData = await audienciaResponse.json();
-    if (audienciaResponse.ok) {
-      console.log(`      ✅ Emails para ${audiencia}: ${audienciaData.scheduledEmails}`);
-    } else {
-      console.log(`      ❌ Erro audiência ${audiencia}: ${audienciaData.error}`);
-    }
-  }
-  
-  console.log("\n🏁 DEBUG COMPLETO");
-  console.log("=" + "=".repeat(50));
 }
 
-// Executar teste
-testEmailExtraction().catch(console.error);
+testeExtracao();

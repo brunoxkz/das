@@ -5,98 +5,81 @@
 
 import fetch from 'node-fetch';
 
-const BASE_URL = 'http://localhost:5000';
+const API_BASE = 'http://localhost:5000/api';
 
 async function login() {
-  console.log('🔐 Fazendo login...');
-  
-  const response = await fetch(`${BASE_URL}/api/auth/login`, {
+  const response = await fetch(`${API_BASE}/auth/login`, {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
+    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       email: 'admin@vendzz.com',
       password: 'admin123'
-    }),
+    })
   });
 
   const data = await response.json();
-  return data.accessToken;
+  return data.accessToken || data.token;
 }
 
 async function createQuizResponse(token) {
-  console.log('📝 Criando resposta de quiz com email...');
-  
-  const quizId = 'ey15ofZ96pBzDIWv_k19T'; // ID do quiz de teste
-  
-  const responseData = {
-    quizId: quizId,
-    responses: [
-      {
-        elementId: 1752037212829,
-        elementType: 'text',
-        elementFieldId: 'nome',
-        answer: 'João da Silva'
-      },
-      {
-        elementId: 1752037212830,
-        elementType: 'email',
-        elementFieldId: 'email_contato',
-        answer: 'brunotamaso@gmail.com'
-      },
-      {
-        elementId: 1752037212831,
-        elementType: 'text',
-        elementFieldId: 'telefone',
-        answer: '11999887766'
-      },
-      {
-        elementId: 1752037212832,
-        elementType: 'number',
-        elementFieldId: 'idade',
-        answer: '28'
-      }
-    ],
+  const quizResponse = {
+    quizId: 'Qm4wxpfPgkMrwoMhDFNLZ', // Quiz com mais respostas
+    responses: {
+      nome: 'Bruno Tamaso',
+      email: 'brunotamaso@gmail.com',
+      altura: '1.75',
+      peso: '80',
+      idade: '35',
+      telefone_principal: '11995133932'
+    },
     metadata: {
       isComplete: true,
+      isPartial: false,
       completionPercentage: 100,
-      isPartial: false
+      startTime: Date.now() - 300000, // 5 minutos atrás
+      endTime: Date.now(),
+      userAgent: 'Mozilla/5.0 (Test Browser)',
+      ipAddress: '192.168.1.1'
     }
   };
 
-  const response = await fetch(`${BASE_URL}/api/quizzes/${quizId}/submit`, {
+  console.log('📝 Criando resposta para Bruno Tamaso...');
+  
+  const response = await fetch(`${API_BASE}/quiz-responses`, {
     method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${token}`,
+    headers: { 
       'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`
     },
-    body: JSON.stringify(responseData)
+    body: JSON.stringify(quizResponse)
   });
 
   const result = await response.json();
-  
-  if (response.ok) {
-    console.log('✅ Resposta criada com sucesso:', result.responseId);
-    return result.responseId;
-  } else {
-    console.error('❌ Erro ao criar resposta:', result);
-    throw new Error(`Erro ao criar resposta: ${result.error}`);
-  }
+  console.log('✅ Resposta criada:', result);
+  return result;
 }
 
 async function main() {
+  console.log('🧪 CRIANDO RESPOSTA DE TESTE PARA EMAIL MARKETING');
+  console.log('═══════════════════════════════════════════════════════');
+
   try {
     const token = await login();
-    const responseId = await createQuizResponse(token);
+    console.log('✅ Login realizado com sucesso');
+
+    await createQuizResponse(token);
     
-    console.log('\n🎉 RESPOSTA COM EMAIL CRIADA COM SUCESSO!');
-    console.log('📧 Email incluído: joao.silva@vendzz.com.br');
-    console.log('📝 Response ID:', responseId);
-    console.log('\nAgora você pode executar o teste de email marketing completo.');
+    console.log('\n🎯 RESPOSTA CRIADA COM SUCESSO!');
+    console.log('📧 Email: brunotamaso@gmail.com');
+    console.log('👤 Nome: Bruno Tamaso');
+    console.log('📏 Altura: 1.75m');
+    console.log('⚖️ Peso: 80kg');
+    console.log('🎂 Idade: 35 anos');
+    console.log('📱 Telefone: 11995133932');
+    console.log('\n✅ Pronto para teste de email marketing!');
     
   } catch (error) {
-    console.error('❌ ERRO:', error.message);
+    console.error('❌ Erro:', error);
   }
 }
 

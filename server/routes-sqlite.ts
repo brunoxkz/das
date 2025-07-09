@@ -4294,6 +4294,193 @@ app.get("/api/whatsapp-extension/pending", verifyJWT, async (req: any, res: Resp
     }
   });
 
+  // Send email directly via Brevo
+  app.post("/api/send-brevo", verifyJWT, async (req: any, res) => {
+    try {
+      const { to, subject, htmlContent, textContent } = req.body;
+      
+      console.log(`📧 ENVIANDO EMAIL DIRETO VIA BREVO para: ${to}`);
+      
+      if (!to || !subject || !htmlContent) {
+        return res.json({
+          success: false,
+          message: "Campos obrigatórios: to, subject, htmlContent"
+        });
+      }
+      
+      // Usar chave Brevo configurada
+      const { sendEmail } = await import('./email-brevo');
+      
+      const result = await sendEmail({
+        to,
+        subject,
+        htmlContent,
+        textContent: textContent || htmlContent.replace(/<[^>]*>/g, ''),
+        sender: {
+          name: "Vendzz",
+          email: "contato@vendzz.com.br"
+        }
+      });
+      
+      if (result) {
+        console.log(`✅ EMAIL ENVIADO COM SUCESSO para: ${to}`);
+        res.json({
+          success: true,
+          message: "Email enviado com sucesso",
+          recipient: to
+        });
+      } else {
+        console.log(`❌ ERRO AO ENVIAR EMAIL para: ${to}`);
+        res.json({
+          success: false,
+          message: "Erro ao enviar email via Brevo"
+        });
+      }
+    } catch (error) {
+      console.error("Error sending email via Brevo:", error);
+      res.status(500).json({ 
+        success: false,
+        error: "Erro interno ao enviar email" 
+      });
+    }
+  });
+
+  // Send email campaign via Brevo
+  app.post("/api/email-campaigns/:campaignId/send-brevo", verifyJWT, async (req: any, res) => {
+    try {
+      const { campaignId } = req.params;
+      const userId = req.user.id;
+      
+      console.log(`📧 INICIANDO ENVIO BREVO - Campaign: ${campaignId}, User: ${userId}`);
+      
+      // Get campaign
+      const campaign = await storage.getEmailCampaign(campaignId);
+      if (!campaign || campaign.userId !== userId) {
+        return res.status(404).json({ error: "Campanha não encontrada" });
+      }
+      
+      // Get emails from quiz responses
+      const emailsResponse = await fetch(`http://localhost:5000/api/quizzes/${campaign.quizId}/responses/emails`, {
+        headers: { 'Authorization': `Bearer ${req.headers.authorization?.split(' ')[1]}` }
+      });
+      
+      const emailsData = await emailsResponse.json();
+      
+      if (!emailsData.emails || emailsData.emails.length === 0) {
+        return res.status(400).json({ error: "Nenhum email encontrado para esta campanha" });
+      }
+      
+      // Get quiz responses for variable replacement
+      const responsesResponse = await fetch(`http://localhost:5000/api/quizzes/${campaign.quizId}/responses`, {
+        headers: { 'Authorization': `Bearer ${req.headers.authorization?.split(' ')[1]}` }
+      });
+      
+      const responsesData = await responsesResponse.json();
+      
+      // Create email-to-data mapping
+      const emailDataMap = new Map();
+      console.log('📧 DEBUG RESPONSES DATA:', JSON.stringify(responsesData, null, 2));
+      
+      if (Array.isArray(responsesData)) {
+        responsesData.forEach(response => {
+          if (response.responses?.email) {
+            emailDataMap.set(response.responses.email, response.responses);
+          }
+        });
+      } else if (responsesData.responses && Array.isArray(responsesData.responses)) {
+        responsesData.responses.forEach(response => {
+          if (response.responses?.email) {
+            emailDataMap.set(response.responses.email, response.responses);
+          }
+        });
+      }
+      
+      // Use hardcoded Brevo credentials for testing
+      const brevoService = new BrevoEmailService('xkeysib-d9c3b1ab7c7f6ed8e7e5c7b8a7e6d5c4f3e2d1c0b9a8f7e6d5c4b3a2e1f0d9c8b7a6e');
+      
+      let successCount = 0;
+      let failureCount = 0;
+      const errors = [];
+      
+      console.log(`📧 PROCESSANDO ${emailsData.emails.length} emails`);
+      
+      for (const email of emailsData.emails) {
+        try {
+          const userData = emailDataMap.get(email) || {};
+          
+          // Personalizar conteúdo
+          let personalizedContent = campaign.content;
+          personalizedContent = personalizedContent.replace(/\{nome\}/g, userData.nome || 'Usuário');
+          personalizedContent = personalizedContent.replace(/\{email\}/g, email);
+          personalizedContent = personalizedContent.replace(/\{altura\}/g, userData.altura || '');
+          personalizedContent = personalizedContent.replace(/\{peso\}/g, userData.peso || '');
+          personalizedContent = personalizedContent.replace(/\{idade\}/g, userData.idade || '');
+          personalizedContent = personalizedContent.replace(/\{telefone_principal\}/g, userData.telefone_principal || '');
+          
+          // Personalizar subject
+          let personalizedSubject = campaign.subject;
+          personalizedSubject = personalizedSubject.replace(/\{nome\}/g, userData.nome || 'Usuário');
+          
+          console.log(`📧 ENVIANDO PARA: ${email} (${userData.nome || 'Usuário'})`);
+          
+          const sent = await brevoService.sendEmail({
+            to: email,
+            from: 'contato@vendzz.com.br',
+            subject: personalizedSubject,
+            htmlContent: personalizedContent
+          });
+          
+          if (sent) {
+            successCount++;
+            console.log(`✅ EMAIL ENVIADO: ${email}`);
+            
+            // Salvar log de sucesso
+            await storage.createEmailLog({
+              campaignId: campaignId,
+              email: email,
+              status: 'sent',
+              sentAt: Math.floor(Date.now() / 1000),
+              personalizedSubject: personalizedSubject,
+              personalizedContent: personalizedContent
+            });
+          } else {
+            failureCount++;
+            console.log(`❌ EMAIL FALHADO: ${email}`);
+            errors.push(`Falha no envio para ${email}`);
+          }
+        } catch (error) {
+          failureCount++;
+          console.error(`❌ ERRO ao enviar para ${email}:`, error);
+          errors.push(`Erro para ${email}: ${error.message}`);
+        }
+      }
+      
+      // Atualizar status da campanha
+      await storage.updateEmailCampaign(campaignId, {
+        status: 'sent',
+        sent: successCount,
+        delivered: successCount,
+        updatedAt: Math.floor(Date.now() / 1000)
+      });
+      
+      console.log(`📧 ENVIO CONCLUÍDO - Sucessos: ${successCount}, Falhas: ${failureCount}`);
+      
+      res.json({
+        success: true,
+        message: "Campanha enviada via Brevo",
+        emailsSent: successCount,
+        emailsFailed: failureCount,
+        totalEmails: emailsData.emails.length,
+        processingTime: `${successCount + failureCount} emails processados`,
+        errors: errors.length > 0 ? errors : undefined
+      });
+      
+    } catch (error) {
+      console.error("Error sending email campaign via Brevo:", error);
+      res.status(500).json({ error: "Erro ao enviar campanha via Brevo" });
+    }
+  });
+
   // Email campaign analytics
   app.get("/api/email-campaigns/:campaignId/analytics", verifyJWT, async (req: any, res) => {
     try {

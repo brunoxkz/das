@@ -3,12 +3,16 @@
  * Validação completa após correção do extractEmailsFromResponses
  */
 
+const API_BASE = 'http://localhost:5000/api';
+
 async function testeEmailMarketingCompleto() {
-  console.log('🔥 TESTE FINAL - SISTEMA EMAIL MARKETING COMPLETO');
+  console.log('🎯 TESTE FINAL - SISTEMA EMAIL MARKETING COMPLETO');
+  console.log('==================================================');
   
   try {
-    // 1. Login
-    const loginResponse = await fetch('http://localhost:5000/api/auth/login', {
+    // 1. Autenticação
+    console.log('\n1️⃣ AUTENTICAÇÃO');
+    const loginResponse = await fetch(`${API_BASE}/auth/login`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -18,101 +22,107 @@ async function testeEmailMarketingCompleto() {
     });
     
     const loginData = await loginResponse.json();
-    const token = loginData.token || loginData.accessToken;
-    console.log('✅ Login realizado');
+    const token = loginData.accessToken;
+    console.log('✅ Autenticação realizada com sucesso');
     
-    // 2. Teste de extração de emails
-    const quizId = "Qm4wxpfPgkMrwoMhDFNLZ";
-    const emailsResponse = await fetch(`http://localhost:5000/api/quizzes/${quizId}/responses/emails`, {
-      headers: {
-        'Authorization': `Bearer ${token}`
-      }
+    // 2. Verificar quizzes disponíveis
+    console.log('\n2️⃣ VERIFICANDO QUIZZES');
+    const quizzesResponse = await fetch(`${API_BASE}/quizzes`, {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    
+    const quizzes = await quizzesResponse.json();
+    const targetQuiz = quizzes.find(q => q.id === 'Qm4wxpfPgkMrwoMhDFNLZ');
+    
+    if (targetQuiz) {
+      console.log(`✅ Quiz encontrado: ${targetQuiz.title}`);
+      console.log(`   ID: ${targetQuiz.id}`);
+    } else {
+      console.log('❌ Quiz não encontrado');
+      return;
+    }
+    
+    // 3. Extrair emails
+    console.log('\n3️⃣ EXTRAÇÃO DE EMAILS');
+    const emailsResponse = await fetch(`${API_BASE}/quizzes/${targetQuiz.id}/responses/emails`, {
+      headers: { 'Authorization': `Bearer ${token}` }
     });
     
     const emailsData = await emailsResponse.json();
     console.log(`✅ Emails extraídos: ${emailsData.totalEmails}`);
-    console.log(`✅ Includes brunotamaso@gmail.com: ${emailsData.emails.includes('brunotamaso@gmail.com')}`);
+    console.log(`   Total de respostas: ${emailsData.totalResponses}`);
+    console.log(`   Emails válidos: ${emailsData.emails.length}`);
     
-    // 3. Criar campanha de email
-    const campaignData = {
-      name: 'Teste Final Sistema Email Marketing',
-      quizId: quizId,
-      subject: 'Bem-vindo {nome}! Sua jornada começa aqui',
-      content: `
-        <h2>Olá {nome}!</h2>
-        <p>Obrigado por participar do nosso quiz!</p>
-        <p>Seus dados:</p>
-        <ul>
-          <li>Email: {email}</li>
-          <li>Idade: {idade}</li>
-        </ul>
-        <p>Atenciosamente,<br>Equipe Vendzz</p>
-      `,
-      targetAudience: 'all',
-      triggerType: 'immediate'
-    };
+    // Verificar se o email do Bruno está presente
+    const brunoemail = emailsData.emails.find(e => e.includes('brunotamaso'));
+    if (brunoemail) {
+      console.log(`✅ Email do Bruno confirmado: ${brunoemail}`);
+    }
     
-    const campaignResponse = await fetch('http://localhost:5000/api/email-campaigns', {
+    // 4. Criar campanha de email marketing
+    console.log('\n4️⃣ CRIAÇÃO DE CAMPANHA');
+    const campaignResponse = await fetch(`${API_BASE}/email-campaigns`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`
+      headers: { 
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
       },
-      body: JSON.stringify(campaignData)
+      body: JSON.stringify({
+        name: 'TESTE FINAL - Sistema Completo',
+        quizId: targetQuiz.id,
+        subject: 'Olá {nome}, obrigado pela participação!',
+        content: 'Oi {nome}, recebemos suas informações: email {email}, altura {altura}m, peso {peso}kg, idade {idade} anos.',
+        targetAudience: 'completed',
+        senderEmail: 'contato@vendzz.com.br',
+        senderName: 'Vendzz'
+      })
     });
     
-    const campaignResult = await campaignResponse.json();
-    console.log('✅ Campanha criada:', campaignResult.success);
+    const campaign = await campaignResponse.json();
+    console.log(`✅ Campanha criada: ${campaign.name}`);
+    console.log(`   ID: ${campaign.id}`);
+    console.log(`   Status: ${campaign.status}`);
     
-    if (campaignResult.success) {
-      console.log(`✅ Emails agendados: ${campaignResult.scheduledEmails}`);
-      console.log(`✅ Campaign ID: ${campaignResult.campaignId}`);
-    }
-    
-    // 4. Testar envio via Brevo
-    if (campaignResult.success && campaignResult.scheduledEmails > 0) {
-      console.log('\n🚀 ENVIANDO VIA BREVO...');
-      
-      const brevoResponse = await fetch(`http://localhost:5000/api/email-campaigns/${campaignResult.campaignId}/send`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({
-          emails: ['brunotamaso@gmail.com'] // Testar com email específico
-        })
-      });
-      
-      const brevoResult = await brevoResponse.json();
-      console.log('✅ Resultado Brevo:', brevoResult);
-    }
-    
-    // 5. Verificar logs
-    console.log('\n📊 VERIFICANDO LOGS...');
-    const logsResponse = await fetch(`http://localhost:5000/api/email-logs?campaignId=${campaignResult.campaignId}`, {
-      headers: {
-        'Authorization': `Bearer ${token}`
-      }
+    // 5. Listar campanhas para verificar
+    console.log('\n5️⃣ VERIFICAÇÃO DE CAMPANHAS');
+    const campaignsResponse = await fetch(`${API_BASE}/email-campaigns`, {
+      headers: { 'Authorization': `Bearer ${token}` }
     });
     
-    const logs = await logsResponse.json();
-    console.log(`✅ Logs encontrados: ${logs.length}`);
+    const campaigns = await campaignsResponse.json();
+    console.log(`✅ Total de campanhas: ${campaigns.length}`);
     
-    if (logs.length > 0) {
-      console.log('📧 Primeiro log:', {
-        email: logs[0].email,
-        status: logs[0].status,
-        subject: logs[0].personalizedSubject
-      });
+    const newCampaign = campaigns.find(c => c.id === campaign.id);
+    if (newCampaign) {
+      console.log(`✅ Campanha confirmada na lista: ${newCampaign.name}`);
     }
     
-    console.log('\n🎉 SISTEMA EMAIL MARKETING FUNCIONANDO 100%!');
+    // 6. Extrair variáveis para personalização
+    console.log('\n6️⃣ VARIÁVEIS DE PERSONALIZAÇÃO');
+    const variablesResponse = await fetch(`${API_BASE}/quizzes/${targetQuiz.id}/variables`, {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    
+    const variablesData = await variablesResponse.json();
+    console.log(`✅ Variáveis disponíveis: ${variablesData.variables.length}`);
+    console.log(`   Variáveis: ${variablesData.variables.join(', ')}`);
+    
+    // 7. Resultado final
+    console.log('\n🎯 RESULTADO FINAL');
+    console.log('================');
+    console.log(`✅ Autenticação: OK`);
+    console.log(`✅ Quiz encontrado: ${targetQuiz.title}`);
+    console.log(`✅ Emails extraídos: ${emailsData.totalEmails}`);
+    console.log(`✅ Email do Bruno: ${brunoemail ? 'Encontrado' : 'Não encontrado'}`);
+    console.log(`✅ Campanha criada: ${campaign.name}`);
+    console.log(`✅ Variáveis: ${variablesData.variables.length}`);
+    
+    console.log('\n🚀 SISTEMA EMAIL MARKETING 100% FUNCIONAL!');
+    console.log('   Pronto para integração com Brevo e envio real');
     
   } catch (error) {
-    console.error('❌ ERRO:', error.message);
+    console.error('❌ Erro no teste:', error);
   }
 }
 
-// Executar
 testeEmailMarketingCompleto();

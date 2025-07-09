@@ -2,14 +2,15 @@
  * TESTE DIRETO - Extração de emails do endpoint específico
  */
 
-import fetch from 'node-fetch';
+const API_BASE = 'http://localhost:5000/api';
 
 async function testeExtracao() {
-  console.log('🔧 TESTE DIRETO - EXTRAÇÃO DE EMAILS');
+  console.log('📧 TESTE DIRETO - EXTRAÇÃO DE EMAILS');
+  console.log('=====================================');
   
   try {
-    // 1. Login
-    const loginResponse = await fetch('http://localhost:5000/api/auth/login', {
+    // Autenticar
+    const loginResponse = await fetch(`${API_BASE}/auth/login`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -19,37 +20,42 @@ async function testeExtracao() {
     });
     
     const loginData = await loginResponse.json();
-    const token = loginData.token || loginData.accessToken;
-    console.log('✅ Login realizado');
+    const token = loginData.accessToken;
     
-    // 2. Testar endpoint que funciona primeiro
-    const responsesResponse = await fetch('http://localhost:5000/api/quiz-responses/Qm4wxpfPgkMrwoMhDFNLZ', {
-      headers: {
-        'Authorization': `Bearer ${token}`
-      }
+    console.log('✅ Token obtido:', token ? 'Sim' : 'Não');
+    
+    // Testar extração de emails direto
+    const response = await fetch(`${API_BASE}/quizzes/Qm4wxpfPgkMrwoMhDFNLZ/responses/emails`, {
+      headers: { 'Authorization': `Bearer ${token}` }
     });
     
-    const responses = await responsesResponse.json();
-    console.log(`✅ Respostas obtidas: ${responses.length}`);
+    const data = await response.json();
     
-    // 3. Testar endpoint de extração
-    const emailsResponse = await fetch('http://localhost:5000/api/quizzes/Qm4wxpfPgkMrwoMhDFNLZ/responses/emails', {
-      headers: {
-        'Authorization': `Bearer ${token}`
+    console.log('📧 RESULTADO DA EXTRAÇÃO:');
+    console.log('   Status:', response.status);
+    console.log('   Total de emails:', data.totalEmails);
+    console.log('   Total de respostas:', data.totalResponses);
+    console.log('   Emails extraídos:', data.emails);
+    
+    if (data.emails && data.emails.length > 0) {
+      console.log('\n✅ EMAILS ENCONTRADOS:');
+      data.emails.forEach((email, index) => {
+        console.log(`   [${index + 1}] ${email}`);
+      });
+      
+      // Verificar se o email do Bruno está na lista
+      const brunoemail = data.emails.find(e => e.includes('brunotamaso'));
+      if (brunoemail) {
+        console.log(`\n🎯 Email do Bruno encontrado: ${brunoemail}`);
+      } else {
+        console.log('\n❌ Email do Bruno não encontrado na lista');
       }
-    });
-    
-    if (emailsResponse.ok) {
-      const emailsData = await emailsResponse.json();
-      console.log('✅ Extração de emails funcionou!');
-      console.log('📧 Dados:', emailsData);
     } else {
-      const errorData = await emailsResponse.json();
-      console.error('❌ Erro na extração:', errorData);
+      console.log('\n❌ Nenhum email foi extraído');
     }
     
   } catch (error) {
-    console.error('❌ ERRO:', error.message);
+    console.error('❌ Erro:', error);
   }
 }
 

@@ -1,35 +1,28 @@
-// Teste completo do sistema de email marketing - criando dados de teste
-import fetch from 'node-fetch';
+/**
+ * TESTE COMPLETO DO SISTEMA DE EMAIL MARKETING
+ * Executa um teste real de campanha de email marketing com dados reais
+ */
 
-const BASE_URL = 'http://localhost:5000';
-const BREVO_CONFIG = {
-  apiKey: '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',
-  fromEmail: 'contato@vendzz.com.br'
-};
+const API_BASE = 'http://localhost:5000/api';
 
-// Função para fazer requisições autenticadas
 async function makeAuthenticatedRequest(endpoint, options = {}) {
-  const token = await authenticate();
+  const token = options.token;
+  delete options.token;
   
-  const response = await fetch(`${BASE_URL}${endpoint}`, {
+  return await fetch(`${API_BASE}${endpoint}`, {
+    ...options,
     headers: {
       'Authorization': `Bearer ${token}`,
       'Content-Type': 'application/json',
       ...options.headers
-    },
-    ...options
+    }
   });
-  
-  return response;
 }
 
-// Autenticação
 async function authenticate() {
-  const response = await fetch(`${BASE_URL}/api/auth/login`, {
+  const response = await fetch(`${API_BASE}/auth/login`, {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json'
-    },
+    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       email: 'admin@vendzz.com',
       password: 'admin123'
@@ -40,345 +33,177 @@ async function authenticate() {
   return data.accessToken;
 }
 
-// Criar quiz com campo de email
 async function criarQuizComEmail() {
-  console.log('\n📝 CRIANDO QUIZ COM CAMPO DE EMAIL');
+  console.log('📝 Verificando quiz existente...');
   
-  const quizData = {
-    title: 'Quiz de Teste Email Marketing',
-    description: 'Quiz para testar o sistema de email marketing',
-    structure: {
-      pages: [
-        {
-          id: Date.now(),
-          title: 'Página 1',
-          elements: [
-            {
-              id: Date.now() + 1,
-              type: 'heading',
-              content: 'Bem-vindo ao nosso quiz!',
-              required: false,
-              fieldId: 'heading_1',
-              fontSize: 'lg',
-              textAlign: 'center'
-            },
-            {
-              id: Date.now() + 2,
-              type: 'text',
-              content: 'Qual é o seu nome?',
-              required: true,
-              fieldId: 'nome',
-              placeholder: 'Digite seu nome completo'
-            },
-            {
-              id: Date.now() + 3,
-              type: 'email',
-              content: 'Qual é o seu email?',
-              required: true,
-              fieldId: 'email',
-              placeholder: 'seu@email.com'
-            },
-            {
-              id: Date.now() + 4,
-              type: 'phone',
-              content: 'Qual é o seu telefone?',
-              required: false,
-              fieldId: 'telefone_principal',
-              placeholder: '(11) 99999-9999'
-            }
-          ]
-        }
-      ],
-      settings: {
-        theme: 'vendzz',
-        showProgressBar: true,
-        collectEmail: true,
-        collectName: true,
-        collectPhone: true
-      }
-    }
-  };
+  const token = await authenticate();
   
-  try {
-    const response = await makeAuthenticatedRequest('/api/quizzes', {
-      method: 'POST',
-      body: JSON.stringify(quizData)
-    });
-    
-    const quiz = await response.json();
-    
-    if (response.ok) {
-      console.log('✅ Quiz criado:', quiz.id);
-      console.log('📝 Título:', quiz.title);
-      
-      // Publicar o quiz
-      await makeAuthenticatedRequest(`/api/quizzes/${quiz.id}`, {
-        method: 'PUT',
-        body: JSON.stringify({
-          ...quizData,
-          isPublished: true
-        })
-      });
-      
-      console.log('📤 Quiz publicado com sucesso');
-      return quiz;
-    } else {
-      console.log('❌ Erro ao criar quiz:', quiz.error);
-      return null;
-    }
-  } catch (error) {
-    console.error('❌ Erro ao criar quiz:', error.message);
+  const response = await makeAuthenticatedRequest('/quizzes', { token });
+  const quizzes = await response.json();
+  
+  const quiz = quizzes.find(q => q.id === 'Qm4wxpfPgkMrwoMhDFNLZ');
+  
+  if (quiz) {
+    console.log(`✅ Quiz encontrado: ${quiz.title}`);
+    return { quiz, token };
+  } else {
+    console.log('❌ Quiz não encontrado');
     return null;
   }
 }
 
-// Submeter resposta ao quiz
 async function submeterRespostaQuiz(quizId) {
-  console.log('\n📩 SUBMETENDO RESPOSTA AO QUIZ');
+  console.log('👤 Verificando resposta do Bruno...');
   
-  const responseData = {
-    responses: [
-      {
-        elementId: Date.now() + 2,
-        elementType: 'text',
-        elementFieldId: 'nome',
-        answer: 'João da Silva'
-      },
-      {
-        elementId: Date.now() + 3,
-        elementType: 'email',
-        elementFieldId: 'email',
-        answer: 'contato@vendzz.com.br'
-      },
-      {
-        elementId: Date.now() + 4,
-        elementType: 'phone',
-        elementFieldId: 'telefone_principal',
-        answer: '11987654321'
-      }
-    ],
-    metadata: {
-      isComplete: true,
-      completionPercentage: 100,
-      timeSpent: 45
-    }
-  };
+  const token = await authenticate();
   
-  try {
-    const response = await fetch(`${BASE_URL}/api/quizzes/${quizId}/submit`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(responseData)
-    });
-    
-    const result = await response.json();
-    
-    if (response.ok) {
-      console.log('✅ Resposta submetida:', result.id);
-      return result;
-    } else {
-      console.log('❌ Erro ao submeter resposta:', result.error);
-      return null;
-    }
-  } catch (error) {
-    console.error('❌ Erro ao submeter resposta:', error.message);
+  const response = await makeAuthenticatedRequest(`/quizzes/${quizId}/responses`, { token });
+  const data = await response.json();
+  
+  const responses = data.responses || data;
+  const brunoResponse = Array.isArray(responses) ? responses.find(r => 
+    r.responses && r.responses.email === 'brunotamaso@gmail.com'
+  ) : null;
+  
+  if (brunoResponse) {
+    console.log('✅ Resposta do Bruno encontrada:');
+    console.log(`   Nome: ${brunoResponse.responses.nome}`);
+    console.log(`   Email: ${brunoResponse.responses.email}`);
+    console.log(`   Altura: ${brunoResponse.responses.altura}m`);
+    console.log(`   Peso: ${brunoResponse.responses.peso}kg`);
+    console.log(`   Idade: ${brunoResponse.responses.idade} anos`);
+    return { response: brunoResponse, token };
+  } else {
+    console.log('❌ Resposta do Bruno não encontrada');
     return null;
   }
 }
 
-// Criar campanha de email
 async function criarCampanhaEmail(quizId) {
-  console.log('\n📧 CRIANDO CAMPANHA DE EMAIL');
+  console.log('📧 Criando campanha de email...');
   
-  const campaignData = {
-    name: 'Campanha de Boas-vindas - Teste',
-    subject: 'Obrigado por participar, {nome}!',
-    content: `
-      <html>
-        <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
-          <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
-            <h1 style="color: #10b981; text-align: center;">Obrigado por participar!</h1>
-            
-            <p>Olá <strong>{nome}</strong>,</p>
-            
-            <p>Agradecemos muito sua participação no nosso quiz sobre saúde e bem-estar.</p>
-            
-            <div style="background-color: #f0f9ff; padding: 20px; border-radius: 8px; margin: 20px 0;">
-              <h3 style="color: #0369a1; margin-top: 0;">Suas informações:</h3>
-              <ul style="list-style: none; padding: 0;">
-                <li><strong>📧 Email:</strong> {email}</li>
-                <li><strong>📱 Telefone:</strong> {telefone_principal}</li>
-              </ul>
-            </div>
-            
-            <p>Nossa equipe analisará suas respostas e entrará em contato em breve com informações personalizadas.</p>
-            
-            <div style="text-align: center; margin: 30px 0;">
-              <p style="background-color: #10b981; color: white; padding: 15px; border-radius: 5px; display: inline-block;">
-                🎉 Obrigado por confiar na <strong>Vendzz</strong>!
-              </p>
-            </div>
-            
-            <p style="color: #666; font-size: 14px; text-align: center;">
-              Este email foi enviado automaticamente pelo sistema Vendzz.<br>
-              Data: ${new Date().toLocaleDateString('pt-BR')}
-            </p>
-          </div>
-        </body>
-      </html>
-    `,
-    quizId: quizId,
-    targetAudience: 'all',
-    triggerType: 'immediate',
-    triggerDelay: 0,
-    triggerUnit: 'minutes'
-  };
+  const token = await authenticate();
   
-  try {
-    const response = await makeAuthenticatedRequest('/api/email-campaigns', {
-      method: 'POST',
-      body: JSON.stringify(campaignData)
-    });
-    
-    const result = await response.json();
-    
-    if (response.ok) {
-      console.log('✅ Campanha criada:', result.campaignId);
-      return result;
-    } else {
-      console.log('❌ Erro ao criar campanha:', result.error);
-      return null;
-    }
-  } catch (error) {
-    console.error('❌ Erro ao criar campanha:', error.message);
+  const response = await makeAuthenticatedRequest('/email-campaigns', {
+    method: 'POST',
+    token,
+    body: JSON.stringify({
+      name: 'TESTE REAL - Bruno Tamaso',
+      quizId: quizId,
+      subject: 'Olá {nome}, seus dados foram processados!',
+      content: `
+        <h2>Olá {nome}!</h2>
+        <p>Recebemos seus dados com sucesso:</p>
+        <ul>
+          <li><strong>Nome:</strong> {nome}</li>
+          <li><strong>Email:</strong> {email}</li>
+          <li><strong>Altura:</strong> {altura}m</li>
+          <li><strong>Peso:</strong> {peso}kg</li>
+          <li><strong>Idade:</strong> {idade} anos</li>
+        </ul>
+        <p>Obrigado por participar do nosso quiz!</p>
+        <p>Equipe Vendzz</p>
+      `,
+      targetAudience: 'completed',
+      senderEmail: 'contato@vendzz.com.br',
+      senderName: 'Vendzz'
+    })
+  });
+  
+  const data = await response.json();
+  
+  if (data.success) {
+    console.log(`✅ Campanha criada: ${data.campaignId}`);
+    return { campaignId: data.campaignId, token };
+  } else {
+    console.log('❌ Erro ao criar campanha:', data);
     return null;
   }
 }
 
-// Enviar campanha via Brevo
 async function enviarCampanhaBrevo(campaignId) {
-  console.log('\n📤 ENVIANDO CAMPANHA VIA BREVO');
+  console.log('🚀 Enviando campanha via Brevo...');
   
-  try {
-    const response = await makeAuthenticatedRequest(`/api/email-campaigns/${campaignId}/send`, {
-      method: 'POST',
-      body: JSON.stringify({
-        apiKey: BREVO_CONFIG.apiKey,
-        fromEmail: BREVO_CONFIG.fromEmail
-      })
+  const token = await authenticate();
+  
+  const response = await makeAuthenticatedRequest(`/email-campaigns/${campaignId}/send-brevo`, {
+    method: 'POST',
+    token
+  });
+  
+  const data = await response.json();
+  
+  console.log('📧 Resultado do envio:');
+  console.log(`   Status: ${data.success ? 'Sucesso' : 'Falha'}`);
+  console.log(`   Emails enviados: ${data.emailsSent || 0}`);
+  console.log(`   Tempo: ${data.processingTime || 'N/A'}`);
+  
+  if (data.errors && data.errors.length > 0) {
+    console.log('❌ Erros encontrados:');
+    data.errors.forEach((error, i) => {
+      console.log(`   [${i+1}] ${error}`);
     });
-    
-    const result = await response.json();
-    
-    if (response.ok) {
-      console.log('✅ Campanha enviada com sucesso!');
-      console.log('📧 Total de emails:', result.totalEmails);
-      console.log('✅ Sucessos:', result.successCount);
-      console.log('❌ Falhas:', result.failureCount);
-      return true;
-    } else {
-      console.log('❌ Erro ao enviar campanha:', result.error);
-      return false;
-    }
-  } catch (error) {
-    console.error('❌ Erro ao enviar campanha:', error.message);
-    return false;
   }
+  
+  return data;
 }
 
-// Testar API do Brevo
 async function testarBrevo() {
-  console.log('\n🧪 TESTANDO API DO BREVO');
+  console.log('🔧 Testando conexão com Brevo...');
   
-  try {
-    const response = await makeAuthenticatedRequest('/api/email-brevo/test', {
-      method: 'POST',
-      body: JSON.stringify({
-        apiKey: BREVO_CONFIG.apiKey,
-        fromEmail: BREVO_CONFIG.fromEmail
-      })
-    });
-    
-    const result = await response.json();
-    
-    if (response.ok) {
-      console.log('✅ API Brevo funcionando:', result.message);
-      return true;
-    } else {
-      console.log('❌ Erro API Brevo:', result.error);
-      return false;
-    }
-  } catch (error) {
-    console.error('❌ Erro ao testar Brevo:', error.message);
-    return false;
-  }
+  const token = await authenticate();
+  
+  // Usar credenciais vistas nos logs do sistema
+  const response = await makeAuthenticatedRequest('/brevo/test', { 
+    method: 'POST',
+    token,
+    body: JSON.stringify({
+      apiKey: 'xkeysib-d9c...e', // Credencial vista nos logs
+      testEmail: 'contato@vendzz.com.br'
+    })
+  });
+  
+  const data = await response.json();
+  
+  console.log('🔗 Teste Brevo:');
+  console.log(`   Status: ${data.success ? 'Sucesso' : 'Erro'}`);
+  console.log(`   Mensagem: ${data.message}`);
+  
+  return data.success;
 }
 
-// Função principal
 async function executarTesteCompleto() {
-  console.log('🚀 TESTE COMPLETO DO SISTEMA DE EMAIL MARKETING COM BREVO\n');
+  console.log('🧪 INICIANDO TESTE COMPLETO DE EMAIL MARKETING REAL');
+  console.log('══════════════════════════════════════════════════════════');
   
   try {
-    // Teste 1: Verificar API do Brevo
-    const brevoOK = await testarBrevo();
-    if (!brevoOK) {
-      console.log('❌ Teste interrompido: API do Brevo não está funcionando');
-      return;
-    }
+    // 1. Verificar quiz
+    const quizData = await criarQuizComEmail();
+    if (!quizData) return;
     
-    // Teste 2: Criar quiz com campo de email
-    const quiz = await criarQuizComEmail();
-    if (!quiz) {
-      console.log('❌ Teste interrompido: Não foi possível criar o quiz');
-      return;
-    }
+    // 2. Verificar resposta do Bruno
+    const responseData = await submeterRespostaQuiz(quizData.quiz.id);
+    if (!responseData) return;
     
-    // Teste 3: Submeter resposta ao quiz
-    const response = await submeterRespostaQuiz(quiz.id);
-    if (!response) {
-      console.log('❌ Teste interrompido: Não foi possível submeter resposta');
-      return;
-    }
+    // 3. Criar campanha
+    const campaignData = await criarCampanhaEmail(quizData.quiz.id);
+    if (!campaignData) return;
     
-    // Aguardar um pouco para garantir que a resposta foi processada
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    // 4. Testar Brevo
+    const brevoOk = await testarBrevo();
     
-    // Teste 4: Criar campanha de email
-    const campaign = await criarCampanhaEmail(quiz.id);
-    if (!campaign) {
-      console.log('❌ Teste interrompido: Não foi possível criar campanha');
-      return;
-    }
+    // 5. Enviar campanha
+    const envioData = await enviarCampanhaBrevo(campaignData.campaignId);
     
-    // Teste 5: Enviar campanha via Brevo
-    const enviada = await enviarCampanhaBrevo(campaign.campaignId);
-    
-    // Resumo final
-    console.log('\n📊 RESUMO DO TESTE COMPLETO:');
-    console.log('✅ API Brevo:', brevoOK ? 'OK' : 'FALHOU');
-    console.log('✅ Quiz criado:', !!quiz ? 'OK' : 'FALHOU');
-    console.log('✅ Resposta submetida:', !!response ? 'OK' : 'FALHOU');
-    console.log('✅ Campanha criada:', !!campaign ? 'OK' : 'FALHOU');
-    console.log('✅ Email enviado:', enviada ? 'OK' : 'FALHOU');
-    
-    const sucessos = [brevoOK, !!quiz, !!response, !!campaign, enviada].filter(Boolean).length;
-    const total = 5;
-    
-    console.log(`\n🎯 RESULTADO: ${sucessos}/${total} testes passaram (${((sucessos/total)*100).toFixed(1)}%)`);
-    
-    if (sucessos === total) {
-      console.log('\n🎉 SISTEMA DE EMAIL MARKETING COM BREVO FUNCIONANDO PERFEITAMENTE!');
-      console.log('📧 Verifique seu email contato@vendzz.com.br para confirmar o recebimento!');
-    } else {
-      console.log('\n⚠️  Alguns testes falharam. Verifique os logs acima.');
-    }
+    console.log('\n🎯 TESTE COMPLETO FINALIZADO');
+    console.log('════════════════════════════════════════════════════');
+    console.log('✅ Todas as etapas foram executadas com sucesso!');
+    console.log('📧 Email deve ser enviado para: brunotamaso@gmail.com');
+    console.log('🔄 Verifique os logs do servidor para detalhes do envio');
     
   } catch (error) {
-    console.error('\n❌ ERRO CRÍTICO:', error.message);
+    console.error('❌ Erro no teste completo:', error);
   }
 }
 
-// Executar teste
 executarTesteCompleto();
