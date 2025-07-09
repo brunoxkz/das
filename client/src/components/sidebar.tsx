@@ -125,6 +125,13 @@ export function Sidebar() {
       active: location === "/email-marketing"
     },
     {
+      title: "Campanhas de Email",
+      href: "/email-campaigns",
+      icon: <Mail className="w-4 h-4" />,
+      active: location === "/email-campaigns",
+      badge: "📧"
+    },
+    {
       title: "WhatsApp Remarketing",
       href: "/whatsapp-remarketing",
       icon: <Zap className="w-4 h-4" />,

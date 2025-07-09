@@ -21,14 +21,17 @@ sqlite.pragma('cache_size = 10000'); // 10MB cache
 sqlite.pragma('temp_store = MEMORY'); // Temp tables em RAM
 sqlite.pragma('mmap_size = 268435456'); // 256MB memory mapping
 import { 
-  users, quizzes, quizTemplates, quizResponses, quizAnalytics, emailCampaigns, emailTemplates, smsTransactions, smsCampaigns, smsLogs,
+  users, quizzes, quizTemplates, quizResponses, quizAnalytics, emailCampaigns, emailTemplates, emailLogs, emailAutomations, emailSequences, smsTransactions, smsCampaigns, smsLogs,
   whatsappCampaigns, whatsappLogs, whatsappTemplates,
   type User, type UpsertUser, type InsertQuiz, type Quiz,
   type InsertQuizTemplate, type QuizTemplate,
   type InsertQuizResponse, type QuizResponse,
   type InsertQuizAnalytics, type QuizAnalytics,
   type InsertEmailCampaign, type EmailCampaign,
-  type InsertEmailTemplate, type EmailTemplate
+  type InsertEmailTemplate, type EmailTemplate,
+  type InsertEmailLog, type EmailLog,
+  type InsertEmailAutomation, type EmailAutomation,
+  type InsertEmailSequence, type EmailSequence
 } from "../shared/schema-sqlite";
 import { eq, desc, and, gte, lte, count, asc, or } from "drizzle-orm";
 import { nanoid } from "nanoid";
@@ -90,6 +93,29 @@ export interface IStorage {
   // Email campaign sending operations
   getQuizResponsesForEmail(quizId: string, targetAudience: string): Promise<QuizResponse[]>;
   extractEmailsFromResponses(responses: QuizResponse[]): string[];
+  
+  // Email Logs operations
+  getEmailLogs(campaignId: string): Promise<EmailLog[]>;
+  createEmailLog(log: InsertEmailLog): Promise<EmailLog>;
+  updateEmailLogStatus(logId: string, status: string, data?: any): Promise<EmailLog>;
+  
+  // Email Automation operations
+  getEmailAutomations(userId: string): Promise<EmailAutomation[]>;
+  getEmailAutomation(id: string): Promise<EmailAutomation | undefined>;
+  createEmailAutomation(automation: InsertEmailAutomation): Promise<EmailAutomation>;
+  updateEmailAutomation(id: string, updates: Partial<InsertEmailAutomation>): Promise<EmailAutomation>;
+  deleteEmailAutomation(id: string): Promise<void>;
+  
+  // Email Sequence operations
+  getEmailSequences(automationId: string): Promise<EmailSequence[]>;
+  createEmailSequence(sequence: InsertEmailSequence): Promise<EmailSequence>;
+  updateEmailSequence(id: string, updates: Partial<InsertEmailSequence>): Promise<EmailSequence>;
+  deleteEmailSequence(id: string): Promise<void>;
+  
+  // Email personalization operations
+  personalizeEmailContent(content: string, leadData: any): string;
+  getScheduledEmails(): Promise<EmailLog[]>;
+  processEmailSequences(): Promise<void>;
 
   // SMS Credits methods
   updateUserSmsCredits(userId: string, newCredits: number): Promise<User>;
@@ -1739,6 +1765,308 @@ export class SQLiteStorage implements IStorage {
     `);
     
     stmt.run(fileId);
+  }
+
+  // Email Logs operations
+  async getEmailLogs(campaignId: string): Promise<EmailLog[]> {
+    const logs = await db.select()
+      .from(emailLogs)
+      .where(eq(emailLogs.campaignId, campaignId))
+      .orderBy(desc(emailLogs.createdAt));
+    
+    return logs.map(log => ({
+      ...log,
+      leadData: log.leadData ? JSON.parse(log.leadData) : null
+    }));
+  }
+
+  async createEmailLog(log: InsertEmailLog): Promise<EmailLog> {
+    const newLog = {
+      id: crypto.randomUUID(),
+      ...log,
+      leadData: log.leadData ? JSON.stringify(log.leadData) : null,
+      createdAt: Math.floor(Date.now() / 1000)
+    };
+    
+    await db.insert(emailLogs).values(newLog);
+    
+    return {
+      ...newLog,
+      leadData: log.leadData || null
+    };
+  }
+
+  async updateEmailLogStatus(logId: string, status: string, data?: any): Promise<EmailLog> {
+    const updateData: any = { status };
+    const now = Math.floor(Date.now() / 1000);
+    
+    if (status === 'sent' && data?.sendgridId) {
+      updateData.sendgridId = data.sendgridId;
+      updateData.sentAt = now;
+    } else if (status === 'delivered') {
+      updateData.deliveredAt = now;
+    } else if (status === 'opened') {
+      updateData.openedAt = now;
+    } else if (status === 'clicked') {
+      updateData.clickedAt = now;
+    } else if (status === 'bounced' || status === 'complained') {
+      updateData.errorMessage = data?.errorMessage || null;
+    }
+    
+    await db.update(emailLogs)
+      .set(updateData)
+      .where(eq(emailLogs.id, logId));
+    
+    const updatedLog = await db.select()
+      .from(emailLogs)
+      .where(eq(emailLogs.id, logId))
+      .get();
+    
+    return {
+      ...updatedLog,
+      leadData: updatedLog.leadData ? JSON.parse(updatedLog.leadData) : null
+    };
+  }
+
+  // Email Automation operations
+  async getEmailAutomations(userId: string): Promise<EmailAutomation[]> {
+    const automations = await db.select()
+      .from(emailAutomations)
+      .where(eq(emailAutomations.userId, userId))
+      .orderBy(desc(emailAutomations.createdAt));
+    
+    return automations.map(automation => ({
+      ...automation,
+      conditions: automation.conditions ? JSON.parse(automation.conditions) : null,
+      sequence: JSON.parse(automation.sequence)
+    }));
+  }
+
+  async getEmailAutomation(id: string): Promise<EmailAutomation | undefined> {
+    const automation = await db.select()
+      .from(emailAutomations)
+      .where(eq(emailAutomations.id, id))
+      .get();
+    
+    if (!automation) return undefined;
+    
+    return {
+      ...automation,
+      conditions: automation.conditions ? JSON.parse(automation.conditions) : null,
+      sequence: JSON.parse(automation.sequence)
+    };
+  }
+
+  async createEmailAutomation(automation: InsertEmailAutomation): Promise<EmailAutomation> {
+    const newAutomation = {
+      id: crypto.randomUUID(),
+      ...automation,
+      conditions: automation.conditions ? JSON.stringify(automation.conditions) : null,
+      sequence: JSON.stringify(automation.sequence),
+      createdAt: new Date(),
+      updatedAt: new Date()
+    };
+    
+    await db.insert(emailAutomations).values(newAutomation);
+    
+    return {
+      ...newAutomation,
+      conditions: automation.conditions || null,
+      sequence: automation.sequence
+    };
+  }
+
+  async updateEmailAutomation(id: string, updates: Partial<InsertEmailAutomation>): Promise<EmailAutomation> {
+    const updateData: any = { ...updates, updatedAt: new Date() };
+    
+    if (updates.conditions) {
+      updateData.conditions = JSON.stringify(updates.conditions);
+    }
+    
+    if (updates.sequence) {
+      updateData.sequence = JSON.stringify(updates.sequence);
+    }
+    
+    await db.update(emailAutomations)
+      .set(updateData)
+      .where(eq(emailAutomations.id, id));
+    
+    const updatedAutomation = await db.select()
+      .from(emailAutomations)
+      .where(eq(emailAutomations.id, id))
+      .get();
+    
+    return {
+      ...updatedAutomation,
+      conditions: updatedAutomation.conditions ? JSON.parse(updatedAutomation.conditions) : null,
+      sequence: JSON.parse(updatedAutomation.sequence)
+    };
+  }
+
+  async deleteEmailAutomation(id: string): Promise<void> {
+    await db.delete(emailAutomations)
+      .where(eq(emailAutomations.id, id));
+  }
+
+  // Email Sequence operations
+  async getEmailSequences(automationId: string): Promise<EmailSequence[]> {
+    const sequences = await db.select()
+      .from(emailSequences)
+      .where(eq(emailSequences.automationId, automationId))
+      .orderBy(desc(emailSequences.createdAt));
+    
+    return sequences.map(sequence => ({
+      ...sequence,
+      leadData: sequence.leadData ? JSON.parse(sequence.leadData) : null
+    }));
+  }
+
+  async createEmailSequence(sequence: InsertEmailSequence): Promise<EmailSequence> {
+    const newSequence = {
+      id: crypto.randomUUID(),
+      ...sequence,
+      leadData: sequence.leadData ? JSON.stringify(sequence.leadData) : null,
+      createdAt: new Date(),
+      updatedAt: new Date()
+    };
+    
+    await db.insert(emailSequences).values(newSequence);
+    
+    return {
+      ...newSequence,
+      leadData: sequence.leadData || null
+    };
+  }
+
+  async updateEmailSequence(id: string, updates: Partial<InsertEmailSequence>): Promise<EmailSequence> {
+    const updateData: any = { ...updates, updatedAt: new Date() };
+    
+    if (updates.leadData) {
+      updateData.leadData = JSON.stringify(updates.leadData);
+    }
+    
+    await db.update(emailSequences)
+      .set(updateData)
+      .where(eq(emailSequences.id, id));
+    
+    const updatedSequence = await db.select()
+      .from(emailSequences)
+      .where(eq(emailSequences.id, id))
+      .get();
+    
+    return {
+      ...updatedSequence,
+      leadData: updatedSequence.leadData ? JSON.parse(updatedSequence.leadData) : null
+    };
+  }
+
+  async deleteEmailSequence(id: string): Promise<void> {
+    await db.delete(emailSequences)
+      .where(eq(emailSequences.id, id));
+  }
+
+  // Email personalization operations
+  personalizeEmailContent(content: string, leadData: any): string {
+    let personalizedContent = content;
+    
+    // Variáveis padrão
+    const variables = {
+      nome: leadData.nome || leadData.name || 'Usuário',
+      email: leadData.email || '',
+      telefone: leadData.telefone || leadData.phone || '',
+      idade: leadData.idade || leadData.age || '',
+      altura: leadData.altura || leadData.height || '',
+      peso_atual: leadData.peso_atual || leadData.current_weight || '',
+      peso_objetivo: leadData.peso_objetivo || leadData.target_weight || '',
+      data_nascimento: leadData.data_nascimento || leadData.birth_date || '',
+      primeira_vez: leadData.primeira_vez || leadData.first_time || '',
+      meta_principal: leadData.meta_principal || leadData.main_goal || '',
+      motivacao: leadData.motivacao || leadData.motivation || '',
+      desafios: leadData.desafios || leadData.challenges || '',
+      nivel_experiencia: leadData.nivel_experiencia || leadData.experience_level || '',
+      disponibilidade: leadData.disponibilidade || leadData.availability || ''
+    };
+    
+    // Substituir variáveis no conteúdo
+    for (const [key, value] of Object.entries(variables)) {
+      const regex = new RegExp(`{${key}}`, 'g');
+      personalizedContent = personalizedContent.replace(regex, value || '');
+    }
+    
+    return personalizedContent;
+  }
+
+  async getScheduledEmails(): Promise<EmailLog[]> {
+    const now = Math.floor(Date.now() / 1000);
+    
+    const scheduledEmails = await db.select()
+      .from(emailLogs)
+      .where(
+        and(
+          eq(emailLogs.status, 'scheduled'),
+          lte(emailLogs.scheduledAt, now)
+        )
+      )
+      .orderBy(emailLogs.scheduledAt);
+    
+    return scheduledEmails.map(log => ({
+      ...log,
+      leadData: log.leadData ? JSON.parse(log.leadData) : null
+    }));
+  }
+
+  async processEmailSequences(): Promise<void> {
+    const now = Math.floor(Date.now() / 1000);
+    
+    // Buscar sequências que precisam processar próximo email
+    const sequencesToProcess = await db.select()
+      .from(emailSequences)
+      .where(
+        and(
+          eq(emailSequences.status, 'active'),
+          lte(emailSequences.nextEmailAt, now)
+        )
+      );
+    
+    for (const sequence of sequencesToProcess) {
+      try {
+        // Buscar automação
+        const automation = await this.getEmailAutomation(sequence.automationId);
+        if (!automation || !automation.isActive) continue;
+        
+        const sequenceData = automation.sequence;
+        
+        // Verificar se há próximo email na sequência
+        if (sequence.currentStep < sequenceData.length) {
+          const nextEmail = sequenceData[sequence.currentStep];
+          
+          // Criar email log para envio
+          const emailLog = await this.createEmailLog({
+            campaignId: sequence.automationId,
+            email: sequence.leadEmail,
+            personalizedSubject: this.personalizeEmailContent(nextEmail.subject, sequence.leadData),
+            personalizedContent: this.personalizeEmailContent(nextEmail.content, sequence.leadData),
+            leadData: sequence.leadData,
+            status: 'scheduled',
+            scheduledAt: now
+          });
+          
+          // Atualizar sequência para próximo step
+          const nextStep = sequence.currentStep + 1;
+          const nextEmailDelay = nextStep < sequenceData.length ? 
+            sequenceData[nextStep].delay * 60 * 60 : // converter horas para segundos
+            null;
+          
+          await this.updateEmailSequence(sequence.id, {
+            currentStep: nextStep,
+            nextEmailAt: nextEmailDelay ? now + nextEmailDelay : null,
+            status: nextStep >= sequenceData.length ? 'completed' : 'active'
+          });
+        }
+      } catch (error) {
+        console.error('Erro ao processar sequência de email:', error);
+      }
+    }
   }
 }
 

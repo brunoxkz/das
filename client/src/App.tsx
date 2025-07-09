@@ -21,6 +21,7 @@ import EncapsuladosPage from "@/pages/encapsulados";
 import QuizPublicPage from "@/pages/quiz-public";
 import SMSCreditsPage from "@/pages/sms-credits";
 import EmailMarketingPage from "@/pages/email-marketing";
+import EmailCampaigns from "@/pages/EmailCampaigns";
 import WhatsAppRemarketingPage from "@/pages/whatsapp-remarketing";
 import WhatsAppAutomationPage from "@/pages/whatsapp-automation";
 import CloakerPage from "@/pages/cloaker";
@@ -141,6 +142,11 @@ function App() {
         <Route path="/email-marketing">
           <Layout>
             <EmailMarketingPage />
+          </Layout>
+        </Route>
+        <Route path="/email-campaigns">
+          <Layout>
+            <EmailCampaigns />
           </Layout>
         </Route>
         <Route path="/whatsapp-remarketing">

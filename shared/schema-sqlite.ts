@@ -120,18 +120,30 @@ export const emailCampaigns = sqliteTable("email_campaigns", {
   name: text("name").notNull(),
   subject: text("subject").notNull(),
   content: text("content").notNull(),
+  htmlContent: text("htmlContent"),
+  textContent: text("textContent"),
   quizId: text("quizId").notNull().references(() => quizzes.id, { onDelete: "cascade" }),
   userId: text("userId").notNull().references(() => users.id, { onDelete: "cascade" }),
+  templateId: text("templateId").references(() => emailTemplates.id),
+  fromName: text("fromName").notNull(),
+  fromEmail: text("fromEmail").notNull(),
+  replyTo: text("replyTo"),
   status: text("status").default("draft"), // draft, active, paused, completed
-  triggerType: text("triggerType").default("immediate"), // immediate, delayed
+  triggerType: text("triggerType").default("immediate"), // immediate, delayed, scheduled
   triggerDelay: integer("triggerDelay").default(0),
   triggerUnit: text("triggerUnit").default("hours"), // minutes, hours, days
   targetAudience: text("targetAudience").default("completed"), // all, completed, abandoned
+  fromDate: integer("fromDate"),
+  toDate: integer("toDate"),
+  scheduledAt: integer("scheduledAt"),
   variables: text("variables", { mode: 'json' }).default("[]"),
   sent: integer("sent").default(0),
   delivered: integer("delivered").default(0),
   opened: integer("opened").default(0),
   clicked: integer("clicked").default(0),
+  bounced: integer("bounced").default(0),
+  complained: integer("complained").default(0),
+  unsubscribed: integer("unsubscribed").default(0),
   createdAt: integer("createdAt", { mode: 'timestamp' }).notNull().$defaultFn(() => new Date()),
   updatedAt: integer("updatedAt", { mode: 'timestamp' }).notNull().$defaultFn(() => new Date()),
 });
@@ -141,9 +153,59 @@ export const emailTemplates = sqliteTable("email_templates", {
   name: text("name").notNull(),
   subject: text("subject").notNull(),
   content: text("content").notNull(),
-  category: text("category").notNull(), // welcome, follow_up, promotion, abandoned_cart
+  htmlContent: text("htmlContent"),
+  textContent: text("textContent"),
+  category: text("category").notNull(), // welcome, follow_up, promotion, abandoned_cart, transactional
   variables: text("variables", { mode: 'json' }).default("[]"),
+  thumbnail: text("thumbnail"),
+  description: text("description"),
+  isPublic: integer("isPublic", { mode: 'boolean' }).default(false),
+  isActive: integer("isActive", { mode: 'boolean' }).default(true),
   userId: text("userId").notNull().references(() => users.id, { onDelete: "cascade" }),
+  createdAt: integer("createdAt", { mode: 'timestamp' }).notNull().$defaultFn(() => new Date()),
+  updatedAt: integer("updatedAt", { mode: 'timestamp' }).notNull().$defaultFn(() => new Date()),
+});
+
+export const emailLogs = sqliteTable("email_logs", {
+  id: text("id").primaryKey(),
+  campaignId: text("campaignId").notNull().references(() => emailCampaigns.id, { onDelete: "cascade" }),
+  email: text("email").notNull(),
+  personalizedSubject: text("personalizedSubject").notNull(),
+  personalizedContent: text("personalizedContent").notNull(),
+  leadData: text("leadData", { mode: 'json' }),
+  status: text("status").notNull(), // sent, delivered, bounced, opened, clicked, complained, unsubscribed
+  sendgridId: text("sendgridId"),
+  errorMessage: text("errorMessage"),
+  sentAt: integer("sentAt"),
+  deliveredAt: integer("deliveredAt"),
+  openedAt: integer("openedAt"),
+  clickedAt: integer("clickedAt"),
+  scheduledAt: integer("scheduledAt"),
+  createdAt: integer("createdAt").notNull().$defaultFn(() => Math.floor(Date.now() / 1000)),
+});
+
+export const emailAutomations = sqliteTable("email_automations", {
+  id: text("id").primaryKey(),
+  name: text("name").notNull(),
+  description: text("description"),
+  userId: text("userId").notNull().references(() => users.id, { onDelete: "cascade" }),
+  quizId: text("quizId").notNull().references(() => quizzes.id, { onDelete: "cascade" }),
+  trigger: text("trigger").notNull(), // quiz_completed, quiz_abandoned, time_based, score_based
+  conditions: text("conditions", { mode: 'json' }),
+  sequence: text("sequence", { mode: 'json' }).notNull(),
+  isActive: integer("isActive", { mode: 'boolean' }).default(true),
+  createdAt: integer("createdAt", { mode: 'timestamp' }).notNull().$defaultFn(() => new Date()),
+  updatedAt: integer("updatedAt", { mode: 'timestamp' }).notNull().$defaultFn(() => new Date()),
+});
+
+export const emailSequences = sqliteTable("email_sequences", {
+  id: text("id").primaryKey(),
+  automationId: text("automationId").notNull().references(() => emailAutomations.id, { onDelete: "cascade" }),
+  leadEmail: text("leadEmail").notNull(),
+  leadData: text("leadData", { mode: 'json' }),
+  currentStep: integer("currentStep").default(0),
+  status: text("status").default("active"), // active, paused, completed, stopped
+  nextEmailAt: integer("nextEmailAt"),
   createdAt: integer("createdAt", { mode: 'timestamp' }).notNull().$defaultFn(() => new Date()),
   updatedAt: integer("updatedAt", { mode: 'timestamp' }).notNull().$defaultFn(() => new Date()),
 });
@@ -188,6 +250,23 @@ export const insertEmailTemplateSchema = createInsertSchema(emailTemplates).omit
   updatedAt: true,
 });
 
+export const insertEmailLogSchema = createInsertSchema(emailLogs).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertEmailAutomationSchema = createInsertSchema(emailAutomations).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertEmailSequenceSchema = createInsertSchema(emailSequences).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
 // Tipos TypeScript
 export type User = typeof users.$inferSelect;
 export type UpsertUser = z.infer<typeof insertUserSchema>;
@@ -203,6 +282,12 @@ export type InsertEmailCampaign = z.infer<typeof insertEmailCampaignSchema>;
 export type EmailCampaign = typeof emailCampaigns.$inferSelect;
 export type InsertEmailTemplate = z.infer<typeof insertEmailTemplateSchema>;
 export type EmailTemplate = typeof emailTemplates.$inferSelect;
+export type InsertEmailLog = z.infer<typeof insertEmailLogSchema>;
+export type EmailLog = typeof emailLogs.$inferSelect;
+export type InsertEmailAutomation = z.infer<typeof insertEmailAutomationSchema>;
+export type EmailAutomation = typeof emailAutomations.$inferSelect;
+export type InsertEmailSequence = z.infer<typeof insertEmailSequenceSchema>;
+export type EmailSequence = typeof emailSequences.$inferSelect;
 
 // WhatsApp Campaigns Schema
 export const whatsappCampaigns = sqliteTable('whatsapp_campaigns', {

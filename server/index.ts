@@ -6,6 +6,7 @@ import { registerHybridRoutes } from "./routes-hybrid";
 import { setupVite, serveStatic, log } from "./vite";
 import { setupHybridAuth, verifyJWT } from "./auth-hybrid";
 import { healthCheck, detailedHealth } from "./health-check";
+import { emailService } from "./email-service";
 
 const app = express();
 
@@ -433,6 +434,24 @@ app.use((req, res, next) => {
   
   // Executar processamento de agendados a cada 60 segundos
   setInterval(whatsappScheduledProcessor, 60000);
+
+  // Sistema de processamento de emails agendados
+  const emailScheduledProcessor = async () => {
+    try {
+      console.log(`📧 PROCESSAMENTO DE EMAILS AGENDADOS - ${new Date().toLocaleTimeString()}`);
+      
+      const processedEmails = await emailService.processScheduledEmails();
+      
+      if (processedEmails > 0) {
+        console.log(`✅ ${processedEmails} emails processados com sucesso`);
+      }
+    } catch (error) {
+      console.error('❌ Erro no processamento de emails agendados:', error);
+    }
+  };
+
+  // Executar processamento de emails a cada 60 segundos
+  setInterval(emailScheduledProcessor, 60000);
 
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
     const status = err.status || err.statusCode || 500;

@@ -6,6 +6,7 @@ import { nanoid } from "nanoid";
 import { insertQuizSchema, insertQuizResponseSchema } from "../shared/schema-sqlite";
 import { verifyJWT } from "./auth-sqlite";
 import { sendSms } from "./twilio";
+import { emailService } from "./email-service";
 
 export function registerSQLiteRoutes(app: Express): Server {
   // Public routes BEFORE any middleware or authentication
@@ -2994,6 +2995,318 @@ app.get("/api/whatsapp-extension/pending", verifyJWT, async (req: any, res: Resp
 
     return extracted;
   }
+
+  // ==================== EMAIL MARKETING ROUTES ====================
+  
+  // Listar campanhas de email
+  app.get("/api/email-campaigns", verifyJWT, async (req: any, res) => {
+    try {
+      const campaigns = await storage.getEmailCampaigns(req.user.id);
+      res.json(campaigns);
+    } catch (error) {
+      console.error("Error fetching email campaigns:", error);
+      res.status(500).json({ error: "Error fetching email campaigns" });
+    }
+  });
+
+  // Criar campanha de email
+  app.post("/api/email-campaigns", verifyJWT, async (req: any, res) => {
+    try {
+      const { 
+        name, 
+        quizId, 
+        subject, 
+        content, 
+        fromEmail, 
+        targetAudience, 
+        triggerType, 
+        triggerDelay, 
+        triggerUnit 
+      } = req.body;
+
+      const result = await emailService.createEmailCampaignFromQuiz({
+        userId: req.user.id,
+        campaignName: name,
+        quizId,
+        emailTemplate: content,
+        subject,
+        fromEmail,
+        targetAudience,
+        triggerType,
+        triggerDelay,
+        triggerUnit
+      });
+
+      if (result.success) {
+        res.json({
+          success: true,
+          campaignId: result.campaignId,
+          scheduledEmails: result.scheduledEmails,
+          message: "Campanha de email criada com sucesso"
+        });
+      } else {
+        res.status(400).json({ error: result.error });
+      }
+    } catch (error) {
+      console.error("Error creating email campaign:", error);
+      res.status(500).json({ error: "Error creating email campaign" });
+    }
+  });
+
+  // Obter campanha de email específica
+  app.get("/api/email-campaigns/:id", verifyJWT, async (req: any, res) => {
+    try {
+      const campaign = await storage.getEmailCampaign(req.params.id);
+      if (!campaign) {
+        return res.status(404).json({ error: "Campaign not found" });
+      }
+
+      // Verificar se o usuário tem permissão
+      if (campaign.userId !== req.user.id) {
+        return res.status(403).json({ error: "Access denied" });
+      }
+
+      res.json(campaign);
+    } catch (error) {
+      console.error("Error fetching email campaign:", error);
+      res.status(500).json({ error: "Error fetching email campaign" });
+    }
+  });
+
+  // Atualizar campanha de email
+  app.put("/api/email-campaigns/:id", verifyJWT, async (req: any, res) => {
+    try {
+      const campaign = await storage.getEmailCampaign(req.params.id);
+      if (!campaign) {
+        return res.status(404).json({ error: "Campaign not found" });
+      }
+
+      // Verificar se o usuário tem permissão
+      if (campaign.userId !== req.user.id) {
+        return res.status(403).json({ error: "Access denied" });
+      }
+
+      const updatedCampaign = await storage.updateEmailCampaign(req.params.id, req.body);
+      res.json(updatedCampaign);
+    } catch (error) {
+      console.error("Error updating email campaign:", error);
+      res.status(500).json({ error: "Error updating email campaign" });
+    }
+  });
+
+  // Deletar campanha de email
+  app.delete("/api/email-campaigns/:id", verifyJWT, async (req: any, res) => {
+    try {
+      const campaign = await storage.getEmailCampaign(req.params.id);
+      if (!campaign) {
+        return res.status(404).json({ error: "Campaign not found" });
+      }
+
+      // Verificar se o usuário tem permissão
+      if (campaign.userId !== req.user.id) {
+        return res.status(403).json({ error: "Access denied" });
+      }
+
+      await storage.deleteEmailCampaign(req.params.id);
+      res.json({ success: true, message: "Campaign deleted successfully" });
+    } catch (error) {
+      console.error("Error deleting email campaign:", error);
+      res.status(500).json({ error: "Error deleting email campaign" });
+    }
+  });
+
+  // Obter logs de email para uma campanha
+  app.get("/api/email-campaigns/:id/logs", verifyJWT, async (req: any, res) => {
+    try {
+      const campaign = await storage.getEmailCampaign(req.params.id);
+      if (!campaign) {
+        return res.status(404).json({ error: "Campaign not found" });
+      }
+
+      // Verificar se o usuário tem permissão
+      if (campaign.userId !== req.user.id) {
+        return res.status(403).json({ error: "Access denied" });
+      }
+
+      const logs = await storage.getEmailLogs(req.params.id);
+      res.json(logs);
+    } catch (error) {
+      console.error("Error fetching email logs:", error);
+      res.status(500).json({ error: "Error fetching email logs" });
+    }
+  });
+
+  // Listar templates de email
+  app.get("/api/email-templates", verifyJWT, async (req: any, res) => {
+    try {
+      const templates = await storage.getEmailTemplates(req.user.id);
+      res.json(templates);
+    } catch (error) {
+      console.error("Error fetching email templates:", error);
+      res.status(500).json({ error: "Error fetching email templates" });
+    }
+  });
+
+  // Criar template de email
+  app.post("/api/email-templates", verifyJWT, async (req: any, res) => {
+    try {
+      const template = await storage.createEmailTemplate({
+        ...req.body,
+        userId: req.user.id
+      });
+      res.json(template);
+    } catch (error) {
+      console.error("Error creating email template:", error);
+      res.status(500).json({ error: "Error creating email template" });
+    }
+  });
+
+  // Atualizar template de email
+  app.put("/api/email-templates/:id", verifyJWT, async (req: any, res) => {
+    try {
+      const template = await storage.getEmailTemplate(req.params.id);
+      if (!template) {
+        return res.status(404).json({ error: "Template not found" });
+      }
+
+      // Verificar se o usuário tem permissão
+      if (template.userId !== req.user.id) {
+        return res.status(403).json({ error: "Access denied" });
+      }
+
+      const updatedTemplate = await storage.updateEmailTemplate(req.params.id, req.body);
+      res.json(updatedTemplate);
+    } catch (error) {
+      console.error("Error updating email template:", error);
+      res.status(500).json({ error: "Error updating email template" });
+    }
+  });
+
+  // Deletar template de email
+  app.delete("/api/email-templates/:id", verifyJWT, async (req: any, res) => {
+    try {
+      const template = await storage.getEmailTemplate(req.params.id);
+      if (!template) {
+        return res.status(404).json({ error: "Template not found" });
+      }
+
+      // Verificar se o usuário tem permissão
+      if (template.userId !== req.user.id) {
+        return res.status(403).json({ error: "Access denied" });
+      }
+
+      await storage.deleteEmailTemplate(req.params.id);
+      res.json({ success: true, message: "Template deleted successfully" });
+    } catch (error) {
+      console.error("Error deleting email template:", error);
+      res.status(500).json({ error: "Error deleting email template" });
+    }
+  });
+
+  // Listar automações de email
+  app.get("/api/email-automations", verifyJWT, async (req: any, res) => {
+    try {
+      const automations = await storage.getEmailAutomations(req.user.id);
+      res.json(automations);
+    } catch (error) {
+      console.error("Error fetching email automations:", error);
+      res.status(500).json({ error: "Error fetching email automations" });
+    }
+  });
+
+  // Criar automação de email
+  app.post("/api/email-automations", verifyJWT, async (req: any, res) => {
+    try {
+      const automation = await storage.createEmailAutomation({
+        ...req.body,
+        userId: req.user.id
+      });
+      res.json(automation);
+    } catch (error) {
+      console.error("Error creating email automation:", error);
+      res.status(500).json({ error: "Error creating email automation" });
+    }
+  });
+
+  // Buscar emails de um quiz para campanhas
+  app.get("/api/quiz-emails/:quizId", verifyJWT, async (req: any, res) => {
+    try {
+      const { quizId } = req.params;
+      const { targetAudience = 'all', dateFilter } = req.query;
+      
+      const responses = await storage.getQuizResponsesForEmail(quizId, targetAudience as string);
+      const emails = [];
+      
+      for (const response of responses) {
+        const leadData = {
+          nome: response.responses?.nome || response.responses?.name || 'Usuário',
+          email: response.responses?.email || '',
+          telefone: response.responses?.telefone || response.responses?.phone || '',
+          idade: response.responses?.idade || response.responses?.age || '',
+          altura: response.responses?.altura || response.responses?.height || '',
+          peso_atual: response.responses?.peso_atual || response.responses?.current_weight || '',
+          peso_objetivo: response.responses?.peso_objetivo || response.responses?.target_weight || '',
+          completionStatus: response.metadata?.isComplete ? 'completed' : 'abandoned',
+          submittedAt: response.submittedAt
+        };
+        
+        if (leadData.email) {
+          emails.push(leadData);
+        }
+      }
+      
+      // Aplicar filtro de data se fornecido
+      let filteredEmails = emails;
+      if (dateFilter) {
+        const filterDate = new Date(dateFilter as string);
+        filteredEmails = emails.filter(email => 
+          new Date(email.submittedAt) >= filterDate
+        );
+      }
+      
+      res.json(filteredEmails);
+    } catch (error) {
+      console.error("Error fetching quiz emails:", error);
+      res.status(500).json({ error: "Error fetching quiz emails" });
+    }
+  });
+
+  // Testar envio de email
+  app.post("/api/test-email", verifyJWT, async (req: any, res) => {
+    try {
+      const { to, subject, content, fromEmail } = req.body;
+      
+      if (!to || !subject || !content || !fromEmail) {
+        return res.status(400).json({ error: "Todos os campos são obrigatórios" });
+      }
+      
+      const result = await emailService.sendEmail({
+        to,
+        from: fromEmail,
+        subject,
+        html: content
+      });
+      
+      if (result.success) {
+        res.json({ 
+          success: true, 
+          message: "Email de teste enviado com sucesso!", 
+          messageId: result.messageId
+        });
+      } else {
+        res.status(500).json({ 
+          success: false, 
+          error: result.error 
+        });
+      }
+    } catch (error) {
+      console.error("Error sending test email:", error);
+      res.status(500).json({ 
+        success: false, 
+        error: "Erro interno no envio do email de teste" 
+      });
+    }
+  });
 
   return httpServer;
 }
