@@ -9,10 +9,9 @@ interface EmailCampaignOptions {
   emailTemplate: string;
   subject: string;
   targetAudience: 'all' | 'completed' | 'abandoned';
-  triggerType: 'delayed' | 'mass_sending';
+  triggerType: 'immediate' | 'delayed';
   triggerDelay?: number;
   triggerUnit?: 'minutes' | 'hours' | 'days';
-  fromDate?: string; // Filtro de data para leads
 }
 
 interface EmailCampaignResult {
@@ -55,10 +54,9 @@ export class EmailService {
         content: options.emailTemplate,
         targetAudience: options.targetAudience,
         triggerType: options.triggerType,
-        triggerDelay: options.triggerDelay || 10,
+        triggerDelay: options.triggerDelay || 0,
         triggerUnit: options.triggerUnit || 'minutes',
-        fromDate: options.fromDate,
-        status: 'active',
+        status: 'draft',
         sent: 0,
         delivered: 0,
         opened: 0,

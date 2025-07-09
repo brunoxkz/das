@@ -124,12 +124,11 @@ export const emailCampaigns = sqliteTable("email_campaigns", {
   content: text("content").notNull(),
   quizId: text("quizId").notNull().references(() => quizzes.id, { onDelete: "cascade" }),
   userId: text("userId").notNull().references(() => users.id, { onDelete: "cascade" }),
-  status: text("status").default("active"), // draft, active, paused, completed
-  triggerType: text("triggerType").default("delayed"), // delayed, mass_sending
-  triggerDelay: integer("triggerDelay").default(10),
-  triggerUnit: text("triggerUnit").default("minutes"), // minutes, hours, days
+  status: text("status").default("draft"), // draft, active, paused, completed
+  triggerType: text("triggerType").default("immediate"), // immediate, delayed, scheduled
+  triggerDelay: integer("triggerDelay").default(0),
+  triggerUnit: text("triggerUnit").default("hours"), // minutes, hours, days
   targetAudience: text("targetAudience").default("completed"), // all, completed, abandoned
-  fromDate: text("fromDate"), // Filtro de data para leads que chegaram a partir de X data
   variables: text("variables", { mode: 'json' }).default("[]"),
   sent: integer("sent").default(0),
   delivered: integer("delivered").default(0),
