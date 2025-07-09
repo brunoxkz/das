@@ -3187,7 +3187,8 @@ app.get("/api/whatsapp-extension/pending", verifyJWT, async (req: any, res: Resp
         targetAudience, 
         triggerType, 
         triggerDelay, 
-        triggerUnit 
+        triggerUnit,
+        fromDate 
       } = req.body;
 
       const result = await emailService.createEmailCampaignFromQuiz({
@@ -3199,7 +3200,8 @@ app.get("/api/whatsapp-extension/pending", verifyJWT, async (req: any, res: Resp
         targetAudience,
         triggerType,
         triggerDelay,
-        triggerUnit
+        triggerUnit,
+        fromDate
       });
 
       if (result.success) {
@@ -3309,6 +3311,48 @@ app.get("/api/whatsapp-extension/pending", verifyJWT, async (req: any, res: Resp
     } catch (error) {
       console.error("Error fetching email templates:", error);
       res.status(500).json({ error: "Error fetching email templates" });
+    }
+  });
+
+  // Listar templates base disponíveis
+  app.get("/api/email-templates/base", verifyJWT, async (req: any, res) => {
+    try {
+      const { getAllBaseTemplates } = await import('./email-templates-base');
+      const baseTemplates = getAllBaseTemplates();
+      res.json(baseTemplates);
+    } catch (error) {
+      console.error("Error fetching base email templates:", error);
+      res.status(500).json({ error: "Error fetching base email templates" });
+    }
+  });
+
+  // Criar template a partir de template base
+  app.post("/api/email-templates/create-from-base", verifyJWT, async (req: any, res) => {
+    try {
+      const { baseTemplateId } = req.body;
+      
+      if (!baseTemplateId) {
+        return res.status(400).json({ error: "Base template ID é obrigatório" });
+      }
+
+      const { getBaseTemplateById, createEmailTemplateForUser } = await import('./email-templates-base');
+      const baseTemplate = getBaseTemplateById(baseTemplateId);
+      
+      if (!baseTemplate) {
+        return res.status(404).json({ error: "Template base não encontrado" });
+      }
+
+      const newTemplate = createEmailTemplateForUser(baseTemplate, req.user.id);
+      const createdTemplate = await storage.createEmailTemplate(newTemplate);
+      
+      res.json({
+        success: true,
+        template: createdTemplate,
+        message: `Template "${baseTemplate.name}" criado com sucesso`
+      });
+    } catch (error) {
+      console.error("Error creating email template from base:", error);
+      res.status(500).json({ error: "Error creating email template from base" });
     }
   });
 
