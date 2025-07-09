@@ -89,16 +89,16 @@ async function testSystem() {
     
     // Verificar variáveis extraídas
     console.log('🔍 Verificando variáveis extraídas...');
-    const variables = await makeRequest(`/api/quiz-variables/${quiz.id}`, 'GET', null, token);
-    console.log(`✅ Variáveis encontradas: ${variables.length}`);
+    const variables = await makeRequest(`/api/quizzes/${quiz.id}/variables`, 'GET', null, token);
+    console.log(`✅ Variáveis encontradas: ${variables.variables.length}`);
     
-    variables.forEach(v => {
-      console.log(`  - ${v.variable}: ${v.value} (${v.elementType})`);
+    variables.variables.forEach(v => {
+      console.log(`  - ${v.variableName}: ${v.variableValue} (${v.elementType})`);
     });
     
     // Testar endpoint de resposta única
     console.log('🔍 Testando endpoint de resposta única...');
-    const responseVars = await makeRequest(`/api/response-variables/${response.id}`, 'GET', null, token);
+    const responseVars = await makeRequest(`/api/responses/${response.id}/variables`, 'GET', null, token);
     console.log(`✅ Variáveis da resposta: ${responseVars.length}`);
     
     console.log('\n🎉 SISTEMA COMPLETAMENTE FUNCIONAL!');
