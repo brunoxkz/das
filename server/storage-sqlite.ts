@@ -33,7 +33,7 @@ import {
   type InsertEmailAutomation, type EmailAutomation,
   type InsertEmailSequence, type EmailSequence
 } from "../shared/schema-sqlite";
-import { eq, desc, and, gte, lte, count, asc, or } from "drizzle-orm";
+import { eq, desc, and, gte, lte, count, asc, or, inArray } from "drizzle-orm";
 import { nanoid } from "nanoid";
 import bcrypt from "bcryptjs";
 import crypto from "crypto";
@@ -714,9 +714,10 @@ export class SQLiteStorage implements IStorage {
         // Procurar por campos de email nas respostas
         Object.keys(responseData).forEach(key => {
           if (key.toLowerCase().includes('email') || key.toLowerCase().includes('e-mail')) {
-            const email = responseData[key];
-            if (email && typeof email === 'string' && email.includes('@')) {
-              emails.push(email);
+            const value = responseData[key];
+            // Verificar se é uma string válida antes de usar .includes()
+            if (value && typeof value === 'string' && value.includes('@')) {
+              emails.push(value);
             }
           }
         });
@@ -2201,6 +2202,36 @@ export class SQLiteStorage implements IStorage {
       }));
     } catch (error) {
       console.error('Error getting email logs by campaign:', error);
+      throw error;
+    }
+  }
+
+  async getEmailLogsByUser(userId: string): Promise<EmailLog[]> {
+    try {
+      // Buscar campanhas do usuário primeiro
+      const userCampaigns = await db.select()
+        .from(emailCampaigns)
+        .where(eq(emailCampaigns.userId, userId));
+      
+      if (userCampaigns.length === 0) {
+        return [];
+      }
+      
+      // Extrair IDs das campanhas
+      const campaignIds = userCampaigns.map(c => c.id);
+      
+      // Buscar logs das campanhas do usuário
+      const logs = await db.select()
+        .from(emailLogs)
+        .where(inArray(emailLogs.campaignId, campaignIds))
+        .orderBy(desc(emailLogs.createdAt));
+      
+      return logs.map(log => ({
+        ...log,
+        leadData: log.leadData ? JSON.parse(log.leadData) : null
+      }));
+    } catch (error) {
+      console.error('Error getting email logs by user:', error);
       throw error;
     }
   }

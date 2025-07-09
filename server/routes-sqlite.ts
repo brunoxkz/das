@@ -3071,6 +3071,100 @@ app.get("/api/whatsapp-extension/pending", verifyJWT, async (req: any, res: Resp
     }
   });
 
+  // Buscar respostas de um quiz específico (endpoint usado pelos testes) - seguindo padrão do SMS
+  app.get("/api/quiz-responses/:quizId", verifyJWT, async (req: any, res) => {
+    try {
+      const { quizId } = req.params;
+      const userId = req.user.id;
+      
+      console.log(`📧 BUSCANDO RESPOSTAS DO QUIZ ${quizId} para usuário ${userId}`);
+      
+      // Verificar se o quiz pertence ao usuário (mesmo padrão do SMS)
+      const quiz = await storage.getQuiz(quizId);
+      if (!quiz || quiz.userId !== userId) {
+        return res.status(404).json({ error: "Quiz não encontrado" });
+      }
+
+      // Buscar respostas do quiz (mesma função usada no SMS)
+      const responses = await storage.getQuizResponses(quizId);
+      console.log(`📧 ENCONTRADAS ${responses.length} respostas`);
+      
+      res.json(responses);
+    } catch (error) {
+      console.error("Error fetching quiz responses:", error);
+      res.status(500).json({ error: "Error fetching quiz responses" });
+    }
+  });
+
+  // Buscar emails extraídos das respostas de um quiz (seguindo padrão do SMS para telefones)
+  app.get("/api/quizzes/:id/responses/emails", verifyJWT, async (req: any, res) => {
+    try {
+      const { id } = req.params;
+      const userId = req.user.id;
+      
+      console.log(`📧 EXTRAINDO EMAILS DO QUIZ ${id} para usuário ${userId}`);
+      
+      // Verificar se o quiz pertence ao usuário (mesmo padrão do SMS)
+      const quiz = await storage.getQuiz(id);
+      if (!quiz || quiz.userId !== userId) {
+        return res.status(404).json({ error: "Quiz não encontrado" });
+      }
+      
+      // Buscar respostas do quiz (mesma função usada no SMS)
+      const responses = await storage.getQuizResponses(id);
+      console.log(`📧 RESPOSTAS ENCONTRADAS: ${responses.length}`);
+      
+      // Debug: mostrar uma amostra das respostas
+      if (responses.length > 0) {
+        console.log(`📧 PRIMEIRA RESPOSTA:`, JSON.stringify(responses[0], null, 2));
+      }
+      
+      const emails = storage.extractEmailsFromResponses(responses);
+      
+      console.log(`📧 EXTRAÍDOS ${emails.length} emails de ${responses.length} respostas`);
+      
+      res.json({
+        totalEmails: emails.length,
+        emails: emails.slice(0, 50), // Limitar como no SMS
+        totalResponses: responses.length
+      });
+    } catch (error) {
+      console.error("Error fetching quiz response emails:", error);
+      console.error("Stack trace:", error.stack);
+      res.status(500).json({ error: "Error fetching quiz response emails" });
+    }
+  });
+
+  // Buscar logs de email (seguindo padrão do SMS logs)
+  app.get("/api/email-logs", verifyJWT, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const { campaignId } = req.query;
+      
+      console.log(`📧 BUSCANDO LOGS DE EMAIL para usuário ${userId}, campaignId: ${campaignId}`);
+      
+      let logs;
+      if (campaignId) {
+        // Verificar se a campanha pertence ao usuário (mesmo padrão do SMS)
+        const campaign = await storage.getEmailCampaign(campaignId);
+        if (!campaign || campaign.userId !== userId) {
+          return res.status(404).json({ error: "Campanha não encontrada" });
+        }
+        logs = await storage.getEmailLogsByCampaign(campaignId);
+      } else {
+        // Buscar todos os logs do usuário (seguindo padrão do SMS)
+        logs = await storage.getEmailLogsByUser(userId);
+      }
+      
+      console.log(`📧 ENCONTRADOS ${logs.length} logs de email`);
+      
+      res.json(logs);
+    } catch (error) {
+      console.error("Error fetching email logs:", error);
+      res.status(500).json({ error: "Error fetching email logs" });
+    }
+  });
+
   // Listar campanhas de email
   app.get("/api/email-campaigns", verifyJWT, async (req: any, res) => {
     try {
