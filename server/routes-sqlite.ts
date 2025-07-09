@@ -3114,11 +3114,6 @@ app.get("/api/whatsapp-extension/pending", verifyJWT, async (req: any, res: Resp
       const responses = await storage.getQuizResponses(id);
       console.log(`📧 RESPOSTAS ENCONTRADAS: ${responses.length}`);
       
-      // Debug: mostrar uma amostra das respostas
-      if (responses.length > 0) {
-        console.log(`📧 PRIMEIRA RESPOSTA:`, JSON.stringify(responses[0], null, 2));
-      }
-      
       const emails = storage.extractEmailsFromResponses(responses);
       
       console.log(`📧 EXTRAÍDOS ${emails.length} emails de ${responses.length} respostas`);

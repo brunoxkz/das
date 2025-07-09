@@ -707,23 +707,36 @@ export class SQLiteStorage implements IStorage {
   extractEmailsFromResponses(responses: QuizResponse[]): string[] {
     const emails: string[] = [];
     
-    responses.forEach(response => {
-      if (response.responses && typeof response.responses === 'object') {
+    responses.forEach((response) => {
+      if (response.responses) {
         const responseData = response.responses as any;
         
-        // Procurar por campos de email nas respostas
-        Object.keys(responseData).forEach(key => {
-          const value = responseData[key];
-          
-          // Verificar se é uma string válida e contém @ (email)
-          if (value && typeof value === 'string' && value.includes('@')) {
-            // Validação básica de email
-            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-            if (emailRegex.test(value)) {
-              emails.push(value);
+        if (Array.isArray(responseData)) {
+          // Formato novo: array de objetos com elementType e answer
+          responseData.forEach((item) => {
+            if (item.elementType === 'email' && item.answer) {
+              // Validação básica de email
+              const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+              if (emailRegex.test(item.answer)) {
+                emails.push(item.answer);
+              }
             }
-          }
-        });
+          });
+        } else if (typeof responseData === 'object') {
+          // Formato antigo: objeto com chaves
+          Object.keys(responseData).forEach(key => {
+            const value = responseData[key];
+            
+            // Verificar se é uma string válida e contém @ (email)
+            if (value && typeof value === 'string' && value.includes('@')) {
+              // Validação básica de email
+              const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+              if (emailRegex.test(value)) {
+                emails.push(value);
+              }
+            }
+          });
+        }
       }
     });
     

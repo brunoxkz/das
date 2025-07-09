@@ -111,8 +111,18 @@ function LeadsPreview({ selectedQuiz, targetAudience, dateFilter }: {
     let email = '';
     let nome = '';
     
-    if (responseData) {
-      // Buscar email
+    if (Array.isArray(responseData)) {
+      // Formato novo: array de objetos com elementType e answer
+      responseData.forEach(item => {
+        if (item.elementType === 'email' && item.answer) {
+          email = item.answer;
+        }
+        if (item.elementType === 'text' && item.answer) {
+          nome = item.answer;
+        }
+      });
+    } else if (responseData) {
+      // Formato antigo: objeto com chaves
       Object.keys(responseData).forEach(key => {
         if (key.includes('email') && responseData[key]) {
           email = responseData[key];
