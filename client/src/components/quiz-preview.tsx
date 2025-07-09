@@ -2216,7 +2216,7 @@ export function QuizPreview({ quiz }: QuizPreviewProps) {
         </div>
 
         <div className="space-y-4">
-          {settings.collectName && (
+          {settings?.collectName && (
             <div>
               <Label htmlFor="name">Nome</Label>
               <div className="relative">
@@ -2232,7 +2232,7 @@ export function QuizPreview({ quiz }: QuizPreviewProps) {
             </div>
           )}
 
-          {settings.collectEmail && (
+          {settings?.collectEmail && (
             <div>
               <Label htmlFor="email">Email</Label>
               <div className="relative">
@@ -2249,7 +2249,7 @@ export function QuizPreview({ quiz }: QuizPreviewProps) {
             </div>
           )}
 
-          {settings.collectPhone && (
+          {settings?.collectPhone && (
             <div>
               <Label htmlFor="phone">Telefone</Label>
               <div className="relative">
@@ -2269,8 +2269,8 @@ export function QuizPreview({ quiz }: QuizPreviewProps) {
             className="w-full" 
             onClick={handleNext}
             disabled={
-              (settings.collectEmail && !leadData.email) ||
-              (settings.collectName && !leadData.name)
+              (settings?.collectEmail && !leadData.email) ||
+              (settings?.collectName && !leadData.name)
             }
           >
             Ver Meus Resultados
@@ -2323,7 +2323,7 @@ export function QuizPreview({ quiz }: QuizPreviewProps) {
 
   // Aplicar estilos baseados no tema
   const getThemeStyles = () => {
-    const theme = settings.theme;
+    const theme = settings?.theme || 'light';
     if (theme === 'dark') {
       return {
         backgroundColor: '#1a1a1a',
@@ -2377,7 +2377,7 @@ export function QuizPreview({ quiz }: QuizPreviewProps) {
             {quiz.description && (
               <p 
                 className="text-lg"
-                style={{ color: settings.theme === 'dark' ? '#d1d5db' : settings.theme === 'light' ? '#4b5563' : themeStyles.color }}
+                style={{ color: settings?.theme === 'dark' ? '#d1d5db' : settings?.theme === 'light' ? '#4b5563' : themeStyles.color }}
               >
                 {quiz.description}
               </p>
@@ -2386,7 +2386,7 @@ export function QuizPreview({ quiz }: QuizPreviewProps) {
         )}
 
         {/* Progress Bar */}
-        {(quiz.design?.showProgressBar || settings.showProgressBar) && (
+        {(quiz.design?.showProgressBar || settings?.showProgressBar) && (
           <div className="mb-8">
             <div className="flex justify-between items-center mb-2">
               <span className="text-sm text-gray-600">
