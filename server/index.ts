@@ -101,11 +101,22 @@ app.use((req, res, next) => {
 });
 
 (async () => {
-  // Configuração específica de headers para rotas API
+  // Configuração específica de headers para rotas API - DEVE VIR ANTES DO VITE!
   app.use('/api', (req, res, next) => {
     // Força headers adequados para API
     res.setHeader('Content-Type', 'application/json');
     res.setHeader('Cache-Control', 'no-cache');
+    res.setHeader('X-Content-Type-Options', 'nosniff');
+    
+    // Intercepta res.send para garantir JSON
+    const originalSend = res.send;
+    res.send = function(data) {
+      if (typeof data === 'object' && data !== null) {
+        return originalSend.call(this, JSON.stringify(data));
+      }
+      return originalSend.call(this, data);
+    };
+    
     next();
   });
 

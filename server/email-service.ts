@@ -1,270 +1,260 @@
-import { MailService } from '@sendgrid/mail';
-import { storage } from './storage-sqlite';
+import { BrevoEmailService } from './email-brevo';
+import { SQLiteStorage } from './storage-sqlite';
+import { nanoid } from 'nanoid';
 
-class EmailService {
-  private mailService: MailService;
-  private isConfigured = false;
+interface EmailCampaignOptions {
+  userId: string;
+  campaignName: string;
+  quizId: string;
+  emailTemplate: string;
+  subject: string;
+  targetAudience: 'all' | 'completed' | 'abandoned';
+  triggerType: 'immediate' | 'delayed';
+  triggerDelay?: number;
+  triggerUnit?: 'minutes' | 'hours' | 'days';
+}
 
-  constructor() {
-    this.mailService = new MailService();
-    this.configure();
+interface EmailCampaignResult {
+  success: boolean;
+  campaignId?: string;
+  scheduledEmails?: number;
+  error?: string;
+}
+
+export class EmailService {
+  private storage: SQLiteStorage;
+  private brevoService: BrevoEmailService;
+
+  constructor(storage: SQLiteStorage, brevoApiKey: string) {
+    this.storage = storage;
+    this.brevoService = new BrevoEmailService(brevoApiKey);
   }
 
-  private configure() {
-    const apiKey = process.env.SENDGRID_API_KEY;
-    if (apiKey) {
-      this.mailService.setApiKey(apiKey);
-      this.isConfigured = true;
-      console.log('📧 SendGrid configurado com sucesso');
-    } else {
-      console.warn('⚠️  SENDGRID_API_KEY não configurado - emails não serão enviados');
-    }
-  }
-
-  async sendEmail(params: {
-    to: string;
-    from: string;
-    subject: string;
-    text?: string;
-    html?: string;
-    campaignId?: string;
-    leadData?: any;
-  }): Promise<{ success: boolean; messageId?: string; error?: string }> {
-    if (!this.isConfigured) {
-      return { success: false, error: 'SendGrid não configurado' };
-    }
-
+  async createEmailCampaignFromQuiz(options: EmailCampaignOptions): Promise<EmailCampaignResult> {
     try {
-      const emailData = {
-        to: params.to,
-        from: params.from,
-        subject: params.subject,
-        text: params.text,
-        html: params.html,
+      console.log('📧 CRIANDO CAMPANHA DE EMAIL...', options);
+
+      // 1. Buscar respostas do quiz
+      const responses = await this.storage.getQuizResponsesForEmail(options.quizId, options.targetAudience);
+      console.log(`📧 RESPOSTAS ENCONTRADAS: ${responses.length}`);
+
+      // 2. Extrair emails das respostas
+      const emails = this.extractEmailsFromResponses(responses);
+      console.log(`📧 EMAILS EXTRAÍDOS: ${emails.length}`, emails);
+
+      // 3. Criar campanha no banco
+      const campaignId = nanoid();
+      const now = Math.floor(Date.now() / 1000); // Timestamp em segundos para SQLite
+      const campaignData = {
+        id: campaignId,
+        userId: options.userId,
+        name: options.campaignName,
+        quizId: options.quizId,
+        subject: options.subject,
+        content: options.emailTemplate,
+        targetAudience: options.targetAudience,
+        triggerType: options.triggerType,
+        triggerDelay: options.triggerDelay || 0,
+        triggerUnit: options.triggerUnit || 'minutes',
+        status: 'active',
+        sent: 0,
+        delivered: 0,
+        opened: 0,
+        clicked: 0,
+        createdAt: now,
+        updatedAt: now
       };
 
-      // Enviar email via SendGrid
-      const response = await this.mailService.send(emailData);
-      const messageId = response[0].headers['x-message-id'];
+      await this.storage.createEmailCampaign(campaignData);
+      console.log(`📧 CAMPANHA CRIADA: ${campaignId}`);
 
-      // Registrar log de envio
-      if (params.campaignId) {
-        await storage.createEmailLog({
-          campaignId: params.campaignId,
-          email: params.to,
-          personalizedSubject: params.subject,
-          personalizedContent: params.html || params.text || '',
-          leadData: params.leadData,
-          status: 'sent',
-          sendgridId: messageId,
-          sentAt: Math.floor(Date.now() / 1000)
-        });
+      // 4. Enviar emails imediatamente (se for immediate)
+      if (options.triggerType === 'immediate') {
+        await this.sendEmailsForCampaign(campaignId, emails, responses, options);
       }
 
-      return { success: true, messageId };
-    } catch (error: any) {
-      console.error('Erro ao enviar email:', error);
-      
-      // Registrar log de erro
-      if (params.campaignId) {
-        await storage.createEmailLog({
-          campaignId: params.campaignId,
-          email: params.to,
-          personalizedSubject: params.subject,
-          personalizedContent: params.html || params.text || '',
-          leadData: params.leadData,
-          status: 'failed',
-          errorMessage: error.message || 'Erro desconhecido'
-        });
-      }
+      return {
+        success: true,
+        campaignId,
+        scheduledEmails: emails.length
+      };
 
-      return { success: false, error: error.message || 'Erro ao enviar email' };
+    } catch (error) {
+      console.error('❌ ERRO AO CRIAR CAMPANHA DE EMAIL:', error);
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Unknown error'
+      };
     }
   }
 
-  async sendBulkEmails(emails: Array<{
-    to: string;
-    from: string;
-    subject: string;
-    text?: string;
-    html?: string;
-    campaignId?: string;
-    leadData?: any;
-  }>): Promise<{ sent: number; failed: number; errors: string[] }> {
-    let sent = 0;
-    let failed = 0;
-    const errors: string[] = [];
+  private async sendEmailsForCampaign(
+    campaignId: string, 
+    emails: string[], 
+    responses: any[], 
+    options: EmailCampaignOptions
+  ): Promise<void> {
+    console.log(`📤 ENVIANDO EMAILS DA CAMPANHA ${campaignId}...`);
+
+    let successCount = 0;
+    let errorCount = 0;
 
     for (const email of emails) {
-      const result = await this.sendEmail(email);
-      if (result.success) {
-        sent++;
-      } else {
-        failed++;
-        errors.push(`${email.to}: ${result.error}`);
-      }
-      
-      // Delay entre emails para evitar rate limiting
-      await new Promise(resolve => setTimeout(resolve, 100));
-    }
-
-    return { sent, failed, errors };
-  }
-
-  async processScheduledEmails(): Promise<void> {
-    try {
-      const scheduledEmails = await storage.getScheduledEmails();
-      
-      for (const emailLog of scheduledEmails) {
-        // Buscar dados da campanha
-        const campaign = await storage.getEmailCampaign(emailLog.campaignId);
-        if (!campaign) continue;
-
-        // Enviar email
-        const result = await this.sendEmail({
-          to: emailLog.email,
-          from: 'noreply@vendzz.com',
-          subject: emailLog.personalizedSubject,
-          html: emailLog.personalizedContent,
-          campaignId: emailLog.campaignId,
-          leadData: emailLog.leadData
-        });
-
-        // Atualizar status do log
-        if (result.success) {
-          await storage.updateEmailLogStatus(emailLog.id, 'sent', { 
-            sendgridId: result.messageId 
-          });
-        } else {
-          await storage.updateEmailLogStatus(emailLog.id, 'failed', { 
-            errorMessage: result.error 
-          });
-        }
-      }
-    } catch (error) {
-      console.error('Erro ao processar emails agendados:', error);
-    }
-  }
-
-  async createEmailCampaignFromQuiz(params: {
-    userId: string;
-    campaignName: string;
-    quizId: string;
-    emailTemplate: string;
-    subject: string;
-    targetAudience: 'all' | 'completed' | 'abandoned';
-    triggerType: 'immediate' | 'delayed';
-    triggerDelay?: number;
-    triggerUnit?: 'minutes' | 'hours' | 'days';
-  }): Promise<{ success: boolean; campaignId?: string; scheduledEmails?: number; error?: string }> {
-    try {
-      // Criar campanha
-      const campaign = await storage.createEmailCampaign({
-        name: params.campaignName,
-        quizId: params.quizId,
-        subject: params.subject,
-        content: params.emailTemplate,
-        targetAudience: params.targetAudience,
-        triggerType: params.triggerType,
-        triggerDelay: params.triggerDelay || 0,
-        triggerUnit: params.triggerUnit || 'minutes',
-        userId: params.userId,
-        status: 'active'
-      });
-
-      // Buscar respostas do quiz
-      const quizResponses = await storage.getQuizResponsesForEmail(params.quizId, params.targetAudience);
-      const emails = storage.extractEmailsFromResponses(quizResponses);
-
-      let scheduledEmails = 0;
-      const now = Math.floor(Date.now() / 1000);
-      
-      // Criar logs para cada email
-      for (const response of quizResponses) {
-        const emailAddress = this.extractEmailFromResponse(response);
-        if (!emailAddress) continue;
-
-        const leadData = this.extractLeadDataFromResponse(response);
+      try {
+        // Encontrar dados do lead para personalização
+        const leadData = this.findLeadDataForEmail(email, responses);
         
         // Personalizar conteúdo
-        const personalizedSubject = storage.personalizeEmailContent(params.subject, leadData);
-        const personalizedContent = storage.personalizeEmailContent(params.emailTemplate, leadData);
+        const personalizedSubject = this.personalizeContent(options.subject, leadData);
+        const personalizedContent = this.personalizeContent(options.emailTemplate, leadData);
 
-        // Calcular tempo de agendamento
-        let scheduledAt = now;
-        if (params.triggerType === 'delayed' && params.triggerDelay) {
-          const delayInSeconds = this.convertDelayToSeconds(params.triggerDelay, params.triggerUnit || 'minutes');
-          scheduledAt = now + delayInSeconds;
-        }
+        // Enviar email via Brevo
+        const success = await this.brevoService.sendEmail({
+          to: email,
+          subject: personalizedSubject,
+          htmlContent: personalizedContent
+        });
 
-        // Criar log de email
-        await storage.createEmailLog({
-          campaignId: campaign.id,
-          email: emailAddress,
+        // Criar log do email
+        await this.storage.createEmailLog({
+          campaignId,
+          email,
           personalizedSubject,
           personalizedContent,
           leadData,
-          status: params.triggerType === 'immediate' ? 'scheduled' : 'scheduled',
-          scheduledAt
+          status: success ? 'sent' : 'failed',
+          error: success ? null : 'Falha no envio via Brevo',
+          sentAt: success ? new Date() : null
         });
 
-        scheduledEmails++;
-      }
-
-      return { success: true, campaignId: campaign.id, scheduledEmails };
-    } catch (error: any) {
-      console.error('Erro ao criar campanha de email:', error);
-      return { success: false, error: error.message };
-    }
-  }
-
-  private extractEmailFromResponse(response: any): string | null {
-    try {
-      const responses = typeof response.responses === 'string' ? 
-        JSON.parse(response.responses) : response.responses;
-      
-      // Procurar por campos de email
-      for (const [key, value] of Object.entries(responses)) {
-        if (key.includes('email') && typeof value === 'string') {
-          return value;
+        if (success) {
+          successCount++;
+          console.log(`✅ EMAIL ENVIADO: ${email}`);
+        } else {
+          errorCount++;
+          console.log(`❌ ERRO AO ENVIAR: ${email}`);
         }
+
+      } catch (error) {
+        errorCount++;
+        console.error(`❌ ERRO NO EMAIL ${email}:`, error);
+        
+        // Criar log do erro
+        await this.storage.createEmailLog({
+          campaignId,
+          email,
+          personalizedSubject: options.subject,
+          personalizedContent: options.emailTemplate,
+          leadData: {},
+          status: 'failed',
+          error: error instanceof Error ? error.message : 'Unknown error',
+          sentAt: null
+        });
       }
-      
-      return null;
-    } catch (error) {
-      return null;
     }
+
+    // Atualizar estatísticas da campanha
+    await this.storage.updateEmailCampaignStats(campaignId, {
+      sent: successCount,
+      delivered: successCount, // Simplificado - delivered = sent por enquanto
+      opened: 0,
+      clicked: 0
+    });
+
+    console.log(`📊 CAMPANHA ${campaignId} FINALIZADA: ${successCount} enviados, ${errorCount} erros`);
   }
 
-  private extractLeadDataFromResponse(response: any): any {
-    try {
-      const responses = typeof response.responses === 'string' ? 
-        JSON.parse(response.responses) : response.responses;
-      
-      return {
-        nome: responses.nome || responses.name || 'Usuário',
-        email: this.extractEmailFromResponse(response) || '',
-        telefone: responses.telefone || responses.phone || '',
-        idade: responses.idade || responses.age || '',
-        altura: responses.altura || responses.height || '',
-        peso_atual: responses.peso_atual || responses.current_weight || '',
-        peso_objetivo: responses.peso_objetivo || responses.target_weight || '',
-        data_nascimento: responses.data_nascimento || responses.birth_date || '',
-        submittedAt: response.submittedAt || new Date().toISOString()
-      };
-    } catch (error) {
-      return {};
-    }
+  private extractEmailsFromResponses(responses: any[]): string[] {
+    const emails: string[] = [];
+    
+    responses.forEach(response => {
+      if (response.responses && Array.isArray(response.responses)) {
+        response.responses.forEach((item: any) => {
+          if (item.elementFieldId && item.elementFieldId.includes('email') && item.answer) {
+            const email = item.answer;
+            if (email && typeof email === 'string' && email.includes('@')) {
+              emails.push(email);
+            }
+          }
+        });
+      }
+    });
+    
+    // Remover duplicatas
+    return Array.from(new Set(emails));
   }
 
-  private convertDelayToSeconds(delay: number, unit: string): number {
-    switch (unit) {
-      case 'minutes': return delay * 60;
-      case 'hours': return delay * 60 * 60;
-      case 'days': return delay * 24 * 60 * 60;
-      default: return delay * 60; // default to minutes
+  private findLeadDataForEmail(email: string, responses: any[]): any {
+    const leadData: any = { email };
+    
+    // Procurar resposta que contém este email
+    const matchingResponse = responses.find(response => {
+      if (response.responses && Array.isArray(response.responses)) {
+        return response.responses.some((item: any) => 
+          item.elementFieldId && item.elementFieldId.includes('email') && item.answer === email
+        );
+      }
+      return false;
+    });
+
+    if (matchingResponse && matchingResponse.responses) {
+      // Extrair todos os dados do lead
+      matchingResponse.responses.forEach((item: any) => {
+        if (item.elementFieldId && item.answer) {
+          const fieldId = item.elementFieldId.replace(/_/g, '');
+          
+          // Mapear campos conhecidos
+          if (fieldId.includes('nome')) leadData.nome = item.answer;
+          if (fieldId.includes('idade')) leadData.idade = item.answer;
+          if (fieldId.includes('telefone')) leadData.telefone = item.answer;
+          if (fieldId.includes('altura')) leadData.altura = item.answer;
+          if (fieldId.includes('peso')) leadData.peso = item.answer;
+        }
+      });
     }
+
+    return leadData;
+  }
+
+  private personalizeContent(content: string, leadData: any): string {
+    let personalizedContent = content;
+    
+    // Substituir variáveis conhecidas
+    if (leadData.nome) {
+      personalizedContent = personalizedContent.replace(/\{nome\}/g, leadData.nome);
+      personalizedContent = personalizedContent.replace(/\{NOME\}/g, leadData.nome);
+    }
+    
+    if (leadData.email) {
+      personalizedContent = personalizedContent.replace(/\{email\}/g, leadData.email);
+      personalizedContent = personalizedContent.replace(/\{EMAIL\}/g, leadData.email);
+    }
+    
+    if (leadData.idade) {
+      personalizedContent = personalizedContent.replace(/\{idade\}/g, leadData.idade);
+      personalizedContent = personalizedContent.replace(/\{IDADE\}/g, leadData.idade);
+    }
+    
+    if (leadData.telefone) {
+      personalizedContent = personalizedContent.replace(/\{telefone\}/g, leadData.telefone);
+      personalizedContent = personalizedContent.replace(/\{TELEFONE\}/g, leadData.telefone);
+    }
+    
+    if (leadData.altura) {
+      personalizedContent = personalizedContent.replace(/\{altura\}/g, leadData.altura);
+      personalizedContent = personalizedContent.replace(/\{ALTURA\}/g, leadData.altura);
+    }
+    
+    if (leadData.peso) {
+      personalizedContent = personalizedContent.replace(/\{peso\}/g, leadData.peso);
+      personalizedContent = personalizedContent.replace(/\{PESO\}/g, leadData.peso);
+    }
+
+    return personalizedContent;
   }
 }
 
-export const emailService = new EmailService();
+// Instância padrão do serviço
+const BREVO_API_KEY = process.env.BREVO_API_KEY || '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';
+const storage = new SQLiteStorage();
+export const emailService = new EmailService(storage, BREVO_API_KEY);

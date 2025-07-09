@@ -80,6 +80,8 @@ export const smsTransactions = sqliteTable("sms_transactions", {
   createdAt: integer("createdAt", { mode: 'timestamp' }).notNull().$defaultFn(() => new Date()),
 });
 
+
+
 export const smsCampaigns = sqliteTable("sms_campaigns", {
   id: text("id").primaryKey(),
   name: text("name").notNull(),
@@ -176,8 +178,8 @@ export const emailAutomations = sqliteTable("email_automations", {
   conditions: text("conditions", { mode: 'json' }),
   sequence: text("sequence", { mode: 'json' }).notNull(),
   isActive: integer("isActive", { mode: 'boolean' }).default(true),
-  createdAt: integer("createdAt", { mode: 'timestamp' }).notNull().$defaultFn(() => new Date()),
-  updatedAt: integer("updatedAt", { mode: 'timestamp' }).notNull().$defaultFn(() => new Date()),
+  createdAt: integer("createdAt").notNull().$defaultFn(() => Math.floor(Date.now() / 1000)),
+  updatedAt: integer("updatedAt").notNull().$defaultFn(() => Math.floor(Date.now() / 1000)),
 });
 
 export const emailSequences = sqliteTable("email_sequences", {
@@ -188,8 +190,8 @@ export const emailSequences = sqliteTable("email_sequences", {
   currentStep: integer("currentStep").default(0),
   status: text("status").default("active"), // active, paused, completed, stopped
   nextEmailAt: integer("nextEmailAt"),
-  createdAt: integer("createdAt", { mode: 'timestamp' }).notNull().$defaultFn(() => new Date()),
-  updatedAt: integer("updatedAt", { mode: 'timestamp' }).notNull().$defaultFn(() => new Date()),
+  createdAt: integer("createdAt").notNull().$defaultFn(() => Math.floor(Date.now() / 1000)),
+  updatedAt: integer("updatedAt").notNull().$defaultFn(() => Math.floor(Date.now() / 1000)),
 });
 
 // Schemas para validação

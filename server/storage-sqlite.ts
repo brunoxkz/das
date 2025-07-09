@@ -614,6 +614,13 @@ export class SQLiteStorage implements IStorage {
       id: nanoid(),
       ...campaign,
     };
+    
+    console.log('📧 DEBUG - CRIANDO CAMPANHA:', JSON.stringify(newCampaign, null, 2));
+    console.log('📧 DEBUG - TIPOS DOS CAMPOS:');
+    Object.keys(newCampaign).forEach(key => {
+      console.log(`  ${key}: ${typeof newCampaign[key]} = ${newCampaign[key]}`);
+    });
+    
     await db.insert(emailCampaigns).values(newCampaign);
     return newCampaign as EmailCampaign;
   }
@@ -661,13 +668,13 @@ export class SQLiteStorage implements IStorage {
     console.log(`📧 BUSCANDO RESPOSTAS PARA EMAIL - Quiz: ${quizId}, Audience: ${targetAudience}`);
     
     const stmt = sqlite.prepare(`
-      SELECT id, quizId, responses, metadata, submittedAt, createdAt
+      SELECT id, quizId, responses, metadata, submittedAt
       FROM quiz_responses
       WHERE quizId = ?
       AND (
-        (metadata->>'isComplete' = 'true') OR 
-        (metadata->>'completionPercentage' = '100') OR
-        (metadata->>'isComplete' = 'false' AND metadata->>'isPartial' != 'true')
+        (json_extract(metadata, '$.isComplete') = 'true') OR 
+        (json_extract(metadata, '$.completionPercentage') = 100) OR
+        (json_extract(metadata, '$.isComplete') = 'false' AND json_extract(metadata, '$.isPartial') != 'true')
       )
     `);
     
@@ -718,6 +725,51 @@ export class SQLiteStorage implements IStorage {
     
     // Remover duplicatas
     return Array.from(new Set(emails));
+  }
+
+  // Método para criar logs de email (ADICIONADO)
+  async createEmailLog(logData: any): Promise<void> {
+    const logEntry = {
+      id: nanoid(),
+      campaignId: logData.campaignId,
+      email: logData.email,
+      personalizedSubject: logData.personalizedSubject || logData.subject || 'Assunto não especificado',
+      personalizedContent: logData.personalizedContent || logData.content || 'Conteúdo não especificado',
+      leadData: JSON.stringify(logData.leadData || {}),
+      status: logData.status || 'pending',
+      errorMessage: logData.error || null,
+      sentAt: logData.sentAt ? Math.floor(new Date(logData.sentAt).getTime() / 1000) : null,
+    };
+    
+    await db.insert(emailLogs).values(logEntry);
+  }
+
+  // Método para buscar logs de email (ADICIONADO)
+  async getEmailLogs(campaignId: string): Promise<any[]> {
+    const logs = await db.select()
+      .from(emailLogs)
+      .where(eq(emailLogs.campaignId, campaignId))
+      .orderBy(emailLogs.createdAt);
+    
+    return logs;
+  }
+
+  // Método para atualizar estatísticas de campanha de email (ADICIONADO)
+  async updateEmailCampaignStats(campaignId: string, stats: any): Promise<void> {
+    const stmt = sqlite.prepare(`
+      UPDATE email_campaigns 
+      SET sent = ?, delivered = ?, opened = ?, clicked = ?, updatedAt = ?
+      WHERE id = ?
+    `);
+    
+    stmt.run(
+      stats.sent || 0,
+      stats.delivered || 0,
+      stats.opened || 0,
+      stats.clicked || 0,
+      Math.floor(Date.now() / 1000),
+      campaignId
+    );
   }
 
   // SMS Credits methods implementation

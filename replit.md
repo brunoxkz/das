@@ -1,8 +1,14 @@
-# Vendzz - Quiz Funnel Platform
+# Vendzz - Multi-Project Repository
 
 ## Overview
 
-Vendzz is a modern, futuristic SaaS quiz funnel platform focused on lead generation. Built with React, Express, and PostgreSQL, it features a sleek green-themed UI with shadcn/ui components, optional Stripe integration for subscriptions, and Replit authentication. The platform enables users to create interactive quizzes for lead capture with comprehensive analytics.
+This repository contains two distinct but related projects:
+
+### 1. Vendzz Quiz Funnel Platform
+A modern, futuristic SaaS quiz funnel platform focused on lead generation. Built with React, Express, and SQLite, it features a sleek green-themed UI with shadcn/ui components, JWT authentication, and comprehensive email marketing integration via Brevo. The platform enables users to create interactive quizzes for lead capture with comprehensive analytics.
+
+### 2. WordPress Events Manager Plugin
+A complete WordPress plugin for managing Events Calendar Pro events. Located in the `wordpress-events-manager/` folder, this plugin provides database access, event editing, and recurring event management capabilities. The plugin is fully functional and ready for production use.
 
 ## System Architecture
 
@@ -116,6 +122,34 @@ Vendzz is a modern, futuristic SaaS quiz funnel platform focused on lead generat
 - `JWT_REFRESH_SECRET`: Refresh token secret (optional, defaults to built-in key)
 - `STRIPE_SECRET_KEY`: Stripe API key (optional for payment features)
 - `NODE_ENV`: Environment mode (development/production)
+
+## WordPress Events Manager Plugin
+
+### Architecture
+- **Platform**: WordPress Plugin (PHP 7.4+)
+- **Database**: Direct WordPress database access
+- **Integration**: Events Calendar Pro compatibility
+- **Structure**: Main plugin file + includes classes + assets
+
+### Key Features
+- **Event Management**: Read, edit, and republish Events Calendar Pro events
+- **Database Access**: Direct access to WordPress wp_posts and wp_postmeta tables
+- **Recurring Events**: Full support for recurring event patterns
+- **AJAX Interface**: Admin interface with real-time updates
+- **Security**: Nonce verification, capability checks, data sanitization
+
+### Project Status
+- **Plugin Status**: 100% functional and production-ready
+- **Test Results**: 7/7 tests passed (100% success rate)
+- **Files**: All 6 essential files present and validated
+- **Classes**: 3/3 classes fully operational
+- **AJAX Endpoints**: 4/4 endpoints configured and secured
+
+### Installation
+1. Upload `wordpress-events-manager/` folder to `/wp-content/plugins/`
+2. Activate plugin in WordPress admin
+3. Access "Vendzz Events" menu item
+4. Requires Events Calendar Pro plugin to be active
 
 ## Changelog
 
@@ -658,6 +692,14 @@ Changelog:
   * Test results: 100% pass rate (7/7 tests) - plugin ready for production deployment
   * Complete file structure validated with all essential files present and functional
   * Final status: Plugin approved for production use with Events Calendar Pro integration
+- July 09, 2025. BREVO EMAIL INTEGRATION COMPLETED - Complete email marketing system fully operational:
+  * Fixed critical SQLite timestamp binding issues by changing Date() to Date.now() in schema definitions
+  * Corrected SQLite JSON query syntax using json_extract() instead of ->> operator for proper email filtering
+  * Resolved email log creation with proper field mapping (personalizedSubject, personalizedContent)
+  * Brevo integration fully tested and operational with user credentials (xkeysib-d9c...e, contato@vendzz.com.br)
+  * Complete email workflow functional: 3 quiz responses → 2 unique emails → 2 emails sent successfully via Brevo
+  * Email logging system working correctly with status tracking and lead data personalization
+  * System ready for production: campaign creation, email extraction, Brevo sending, and comprehensive logging all operational
 - July 09, 2025. EMAIL MARKETING SYSTEM ANALYSIS - Identified critical gaps in current implementation:
   * Current system has basic campaign creation, templates, and audience targeting
   * Missing SendGrid integration for actual email delivery (only simulation exists)

@@ -2999,6 +2999,32 @@ app.get("/api/whatsapp-extension/pending", verifyJWT, async (req: any, res: Resp
 
   // ==================== EMAIL MARKETING ROUTES ====================
   
+  // Buscar respostas do quiz para sistema de email marketing
+  app.get("/api/quiz-responses", verifyJWT, async (req: any, res) => {
+    try {
+      const { quizId } = req.query;
+      const userId = req.user.id;
+      
+      if (!quizId) {
+        return res.status(400).json({ error: "Quiz ID is required" });
+      }
+      
+      // Verificar se o quiz pertence ao usuário
+      const quiz = await storage.getQuiz(quizId);
+      if (!quiz || quiz.userId !== userId) {
+        return res.status(404).json({ error: "Quiz not found" });
+      }
+      
+      // Buscar respostas do quiz
+      const responses = await storage.getQuizResponses(quizId);
+      
+      res.json(responses);
+    } catch (error) {
+      console.error("Error fetching quiz responses:", error);
+      res.status(500).json({ error: "Error fetching quiz responses" });
+    }
+  });
+
   // Listar campanhas de email
   app.get("/api/email-campaigns", verifyJWT, async (req: any, res) => {
     try {
@@ -3143,6 +3169,95 @@ app.get("/api/whatsapp-extension/pending", verifyJWT, async (req: any, res: Resp
     } catch (error) {
       console.error("Error fetching email templates:", error);
       res.status(500).json({ error: "Error fetching email templates" });
+    }
+  });
+
+  // Enviar campanha de email
+  app.post("/api/email-campaigns/:id/send", verifyJWT, async (req: any, res) => {
+    try {
+      const { emails } = req.body;
+      const campaignId = req.params.id;
+
+      // Verificar se a campanha existe e pertence ao usuário
+      const campaign = await storage.getEmailCampaign(campaignId);
+      if (!campaign) {
+        return res.status(404).json({ error: "Campaign not found" });
+      }
+
+      if (campaign.userId !== req.user.id) {
+        return res.status(403).json({ error: "Access denied" });
+      }
+
+      // Importar serviço de email
+      const { sendEmail } = await import('./email-brevo');
+
+      const results = { sent: 0, failed: 0, emails: [] };
+
+      // Enviar emails
+      for (const email of emails) {
+        try {
+          const success = await sendEmail({
+            to: email,
+            subject: campaign.subject,
+            htmlContent: campaign.content,
+            sender: { name: "Vendzz", email: "contato@vendzz.com.br" }
+          });
+
+          if (success) {
+            results.sent++;
+            results.emails.push({ email, status: 'sent' });
+            
+            // Criar log de email
+            await storage.createEmailLog({
+              campaignId,
+              email,
+              subject: campaign.subject,
+              content: campaign.content,
+              status: 'sent',
+              sentAt: new Date()
+            });
+          } else {
+            results.failed++;
+            results.emails.push({ email, status: 'failed' });
+            
+            // Criar log de email com erro
+            await storage.createEmailLog({
+              campaignId,
+              email,
+              subject: campaign.subject,
+              content: campaign.content,
+              status: 'failed',
+              error: 'Failed to send email',
+              sentAt: new Date()
+            });
+          }
+        } catch (error) {
+          results.failed++;
+          results.emails.push({ email, status: 'failed', error: error.message });
+          
+          // Criar log de email com erro
+          await storage.createEmailLog({
+            campaignId,
+            email,
+            subject: campaign.subject,
+            content: campaign.content,
+            status: 'failed',
+            error: error.message,
+            sentAt: new Date()
+          });
+        }
+      }
+
+      // Atualizar estatísticas da campanha
+      await storage.updateEmailCampaignStats(campaignId, {
+        sent: results.sent,
+        delivered: results.sent // Assumir que emails enviados foram entregues
+      });
+
+      res.json(results);
+    } catch (error) {
+      console.error("Error sending email campaign:", error);
+      res.status(500).json({ error: "Error sending email campaign" });
     }
   });
 

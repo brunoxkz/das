@@ -194,6 +194,60 @@ export function runMigrations() {
       );
     `;
 
+    const createEmailLogsTable = `
+      CREATE TABLE IF NOT EXISTS email_logs (
+        id TEXT PRIMARY KEY,
+        campaignId TEXT NOT NULL,
+        email TEXT NOT NULL,
+        personalizedSubject TEXT NOT NULL,
+        personalizedContent TEXT NOT NULL,
+        leadData TEXT,
+        status TEXT NOT NULL,
+        sendgridId TEXT,
+        errorMessage TEXT,
+        sentAt INTEGER,
+        deliveredAt INTEGER,
+        openedAt INTEGER,
+        clickedAt INTEGER,
+        scheduledAt INTEGER,
+        createdAt INTEGER NOT NULL DEFAULT (unixepoch()),
+        FOREIGN KEY (campaignId) REFERENCES email_campaigns(id) ON DELETE CASCADE
+      );
+    `;
+
+    const createEmailAutomationsTable = `
+      CREATE TABLE IF NOT EXISTS email_automations (
+        id TEXT PRIMARY KEY,
+        name TEXT NOT NULL,
+        description TEXT,
+        userId TEXT NOT NULL,
+        quizId TEXT NOT NULL,
+        trigger TEXT NOT NULL,
+        conditions TEXT,
+        sequence TEXT NOT NULL,
+        isActive INTEGER DEFAULT 1,
+        createdAt INTEGER DEFAULT (unixepoch() * 1000),
+        updatedAt INTEGER DEFAULT (unixepoch() * 1000),
+        FOREIGN KEY (userId) REFERENCES users(id),
+        FOREIGN KEY (quizId) REFERENCES quizzes(id)
+      );
+    `;
+
+    const createEmailSequencesTable = `
+      CREATE TABLE IF NOT EXISTS email_sequences (
+        id TEXT PRIMARY KEY,
+        automationId TEXT NOT NULL,
+        leadEmail TEXT NOT NULL,
+        leadData TEXT,
+        currentStep INTEGER DEFAULT 0,
+        status TEXT DEFAULT 'active',
+        nextEmailAt INTEGER,
+        createdAt INTEGER DEFAULT (unixepoch() * 1000),
+        updatedAt INTEGER DEFAULT (unixepoch() * 1000),
+        FOREIGN KEY (automationId) REFERENCES email_automations(id) ON DELETE CASCADE
+      );
+    `;
+
     const createWhatsappCampaignsTable = `
       CREATE TABLE IF NOT EXISTS whatsapp_campaigns (
         id TEXT PRIMARY KEY,
@@ -260,60 +314,6 @@ export function runMigrations() {
       );
     `;
 
-    const createEmailLogsTable = `
-      CREATE TABLE IF NOT EXISTS email_logs (
-        id TEXT PRIMARY KEY,
-        campaignId TEXT NOT NULL,
-        email TEXT NOT NULL,
-        personalizedSubject TEXT NOT NULL,
-        personalizedContent TEXT NOT NULL,
-        leadData TEXT,
-        status TEXT NOT NULL,
-        sendgridId TEXT,
-        errorMessage TEXT,
-        sentAt INTEGER,
-        deliveredAt INTEGER,
-        openedAt INTEGER,
-        clickedAt INTEGER,
-        scheduledAt INTEGER,
-        createdAt INTEGER NOT NULL DEFAULT (unixepoch()),
-        FOREIGN KEY (campaignId) REFERENCES email_campaigns(id) ON DELETE CASCADE
-      );
-    `;
-
-    const createEmailAutomationsTable = `
-      CREATE TABLE IF NOT EXISTS email_automations (
-        id TEXT PRIMARY KEY,
-        name TEXT NOT NULL,
-        description TEXT,
-        userId TEXT NOT NULL,
-        quizId TEXT NOT NULL,
-        trigger TEXT NOT NULL,
-        conditions TEXT,
-        sequence TEXT NOT NULL,
-        isActive INTEGER DEFAULT 1,
-        createdAt INTEGER NOT NULL DEFAULT (unixepoch()),
-        updatedAt INTEGER NOT NULL DEFAULT (unixepoch()),
-        FOREIGN KEY (userId) REFERENCES users(id) ON DELETE CASCADE,
-        FOREIGN KEY (quizId) REFERENCES quizzes(id) ON DELETE CASCADE
-      );
-    `;
-
-    const createEmailSequencesTable = `
-      CREATE TABLE IF NOT EXISTS email_sequences (
-        id TEXT PRIMARY KEY,
-        automationId TEXT NOT NULL,
-        leadEmail TEXT NOT NULL,
-        leadData TEXT,
-        currentStep INTEGER DEFAULT 0,
-        status TEXT DEFAULT 'active',
-        nextEmailAt INTEGER,
-        createdAt INTEGER NOT NULL DEFAULT (unixepoch()),
-        updatedAt INTEGER NOT NULL DEFAULT (unixepoch()),
-        FOREIGN KEY (automationId) REFERENCES email_automations(id) ON DELETE CASCADE
-      );
-    `;
-
     sqlite.exec(createUsersTable);
     sqlite.exec(createQuizzesTable);
     sqlite.exec(createQuizTemplatesTable);
@@ -321,13 +321,16 @@ export function runMigrations() {
     sqlite.exec(createQuizAnalyticsTable);
     sqlite.exec(createSmsTransactionsTable);
     sqlite.exec(createSmsCampaignsTable);
+    sqlite.exec(createSmsLogsTable);
+    sqlite.exec(createEmailCampaignsTable);
+    sqlite.exec(createEmailTemplatesTable);
+    sqlite.exec(createEmailLogsTable);
+    sqlite.exec(createEmailAutomationsTable);
+    sqlite.exec(createEmailSequencesTable);
     sqlite.exec(createWhatsappCampaignsTable);
     sqlite.exec(createWhatsappLogsTable);
     sqlite.exec(createWhatsappTemplatesTable);
     sqlite.exec(createWhatsappAutomationFilesTable);
-    sqlite.exec(createEmailLogsTable);
-    sqlite.exec(createEmailAutomationsTable);
-    sqlite.exec(createEmailSequencesTable);
     
     // Adicionar campos se não existirem
     try {
