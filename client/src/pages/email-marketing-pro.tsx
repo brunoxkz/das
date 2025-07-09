@@ -24,7 +24,9 @@ import {
   TrendingUp,
   Target,
   Filter,
-  Settings
+  Settings,
+  User,
+  AtSign
 } from 'lucide-react';
 
 interface EmailCampaign {
@@ -54,6 +56,141 @@ interface EmailTemplate {
   subject: string;
   content: string;
   category: string;
+}
+
+// Componente para visualizar leads filtrados
+function LeadsPreview({ selectedQuiz, targetAudience, dateFilter }: { 
+  selectedQuiz: string, 
+  targetAudience: string, 
+  dateFilter: Date | null 
+}) {
+  // Query para buscar leads do quiz selecionado
+  const { data: quizResponses = [], isLoading } = useQuery({
+    queryKey: ['/api/quiz-responses', selectedQuiz, targetAudience, dateFilter?.toISOString()],
+    queryFn: async () => {
+      if (!selectedQuiz) return [];
+      
+      const response = await fetch(`/api/quiz-responses/${selectedQuiz}`, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token') || localStorage.getItem('accessToken')}`
+        }
+      });
+      
+      if (!response.ok) return [];
+      return response.json();
+    },
+    enabled: !!selectedQuiz
+  });
+
+  // Filtrar leads baseado na audiência e data
+  const filteredLeads = quizResponses.filter((response: any) => {
+    // Filtro de audiência
+    if (targetAudience === 'completed' && (!response.metadata?.isComplete && response.completionPercentage !== 100)) {
+      return false;
+    }
+    if (targetAudience === 'abandoned' && (response.metadata?.isComplete || response.completionPercentage === 100)) {
+      return false;
+    }
+    
+    // Filtro de data
+    if (dateFilter) {
+      const responseDate = new Date(response.submittedAt || response.createdAt);
+      if (responseDate < dateFilter) {
+        return false;
+      }
+    }
+    
+    return true;
+  });
+
+  // Extrair emails dos leads filtrados
+  const extractedEmails = filteredLeads.map((response: any) => {
+    const responseData = typeof response.responses === 'string' ? 
+      JSON.parse(response.responses) : response.responses;
+    
+    let email = '';
+    let nome = '';
+    
+    if (responseData) {
+      // Buscar email
+      Object.keys(responseData).forEach(key => {
+        if (key.includes('email') && responseData[key]) {
+          email = responseData[key];
+        }
+        if (key.includes('nome') || key.includes('name')) {
+          nome = responseData[key];
+        }
+      });
+    }
+    
+    return {
+      id: response.id,
+      email,
+      nome,
+      isComplete: response.metadata?.isComplete || response.completionPercentage === 100,
+      submittedAt: response.submittedAt || response.createdAt,
+      completionPercentage: response.completionPercentage || 0
+    };
+  }).filter(lead => lead.email); // Só mostrar leads com email
+
+  if (!selectedQuiz) return null;
+
+  return (
+    <div className="mt-4 space-y-3">
+      <div className="flex items-center justify-between">
+        <Label className="text-sm font-medium text-blue-800 dark:text-blue-200">
+          Prévia dos Leads
+        </Label>
+        <Badge variant="outline" className="text-xs">
+          {extractedEmails.length} emails encontrados
+        </Badge>
+      </div>
+      
+      {isLoading ? (
+        <div className="flex items-center justify-center py-4">
+          <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-500"></div>
+        </div>
+      ) : extractedEmails.length === 0 ? (
+        <div className="text-center py-4 text-gray-500 dark:text-gray-400 text-sm">
+          Nenhum lead encontrado com os filtros aplicados
+        </div>
+      ) : (
+        <div className="max-h-48 overflow-y-auto bg-white dark:bg-slate-800 rounded-lg border border-blue-200 dark:border-blue-700">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 p-3">
+            {extractedEmails.slice(0, 12).map((lead) => (
+              <div key={lead.id} className="flex items-center gap-2 p-2 bg-gray-50 dark:bg-slate-700 rounded-md">
+                <div className="flex-shrink-0">
+                  {lead.isComplete ? (
+                    <CheckCircle className="w-4 h-4 text-green-600" />
+                  ) : (
+                    <Clock className="w-4 h-4 text-orange-600" />
+                  )}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-1 text-xs">
+                    <User className="w-3 h-3 text-gray-500" />
+                    <span className="font-medium text-gray-900 dark:text-white truncate">
+                      {lead.nome || 'Sem nome'}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-1 text-xs text-gray-600 dark:text-gray-400">
+                    <AtSign className="w-3 h-3" />
+                    <span className="truncate">{lead.email}</span>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+          
+          {extractedEmails.length > 12 && (
+            <div className="text-center py-2 text-xs text-gray-500 dark:text-gray-400 border-t border-blue-200 dark:border-blue-700">
+              e mais {extractedEmails.length - 12} leads...
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
 }
 
 export default function EmailMarketingPro() {
@@ -116,7 +253,7 @@ export default function EmailMarketingPro() {
         try {
           const emailsResponse = await fetch(`/api/quizzes/${quiz.id}/responses/emails`, {
             headers: {
-              'Authorization': `Bearer ${localStorage.getItem('token')}`
+              'Authorization': `Bearer ${localStorage.getItem('token') || localStorage.getItem('accessToken')}`
             }
           });
           
@@ -126,7 +263,7 @@ export default function EmailMarketingPro() {
             // Buscar variáveis disponíveis
             const responsesResponse = await fetch(`/api/quiz-responses/${quiz.id}`, {
               headers: {
-                'Authorization': `Bearer ${localStorage.getItem('token')}`
+                'Authorization': `Bearer ${localStorage.getItem('token') || localStorage.getItem('accessToken')}`
               }
             });
             
@@ -702,6 +839,13 @@ export default function EmailMarketingPro() {
                                 dateFilter: e.target.value ? new Date(e.target.value) : null
                               })}
                               className="max-w-xs"
+                            />
+                            
+                            {/* Visualização dos leads filtrados */}
+                            <LeadsPreview 
+                              selectedQuiz={selectedQuiz}
+                              targetAudience={campaignForm.targetAudience}
+                              dateFilter={campaignForm.dateFilter}
                             />
                           </div>
                         )}
