@@ -9,6 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { PageEditorHorizontal } from "@/components/page-editor-horizontal";
 import { QuizPreview } from "@/components/quiz-preview";
+import { QuizFlowEditor } from "@/components/quiz-flow-editor";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth-jwt";
@@ -27,7 +28,9 @@ import {
   TrendingUp,
   Users,
   Clock,
-  UserMinus
+  UserMinus,
+  GitBranch,
+  Network
 } from "lucide-react";
 import { Link } from "wouter";
 
@@ -57,6 +60,13 @@ export default function QuizBuilder() {
         collectPhone: false,
         resultTitle: "",
         resultDescription: ""
+      },
+      // Sistema de Fluxo (Avançado)
+      flowSystem: {
+        enabled: false,
+        nodes: [],
+        connections: [],
+        defaultFlow: true // Se true, usa navegação linear tradicional
       }
     },
     design: {
@@ -85,7 +95,7 @@ export default function QuizBuilder() {
     enableWhatsappAutomation: false
   });
 
-  const [activeTab, setActiveTab] = useState<"editor" | "preview" | "settings" | "design">("editor");
+  const [activeTab, setActiveTab] = useState<"editor" | "preview" | "settings" | "design" | "fluxo">("editor");
   const [globalTheme, setGlobalTheme] = useState<"light" | "dark" | "custom">("light");
   const [customBackgroundColor, setCustomBackgroundColor] = useState("#ffffff");
   const [currentQuizId, setCurrentQuizId] = useState<string | null>(quizId || null);
@@ -326,6 +336,38 @@ export default function QuizBuilder() {
     }));
   };
 
+  const handleFlowChange = (flowSystem: any) => {
+    setQuizData(prev => ({
+      ...prev,
+      structure: {
+        ...prev.structure,
+        flowSystem
+      }
+    }));
+  };
+
+  // Extrair variáveis dos elementos do quiz
+  const getAvailableVariables = () => {
+    const variables = ['nome', 'email', 'telefone', 'quiz_titulo']; // Variáveis padrão
+    
+    if (quizData.structure?.pages) {
+      quizData.structure.pages.forEach((page: any) => {
+        if (page.elements) {
+          page.elements.forEach((element: any) => {
+            if (element.fieldId) {
+              variables.push(element.fieldId);
+            }
+            if (element.properties?.fieldId) {
+              variables.push(element.properties.fieldId);
+            }
+          });
+        }
+      });
+    }
+    
+    return [...new Set(variables)]; // Remove duplicatas
+  };
+
   // Função removida - agora gerenciada pelo PageEditor
 
   if (authLoading || (isEditing && quizLoading)) {
@@ -397,6 +439,7 @@ export default function QuizBuilder() {
           {[
             { id: "editor", label: "Editor", icon: <Settings className="w-4 h-4" /> },
             { id: "preview", label: "Preview", icon: <Play className="w-4 h-4" /> },
+            { id: "fluxo", label: "Fluxo (Avançado)", icon: <Network className="w-4 h-4" /> },
             { id: "design", label: "Design", icon: <Palette className="w-4 h-4" /> },
             { id: "settings", label: "Configurações", icon: <Settings className="w-4 h-4" /> },
 
@@ -437,6 +480,22 @@ export default function QuizBuilder() {
         {activeTab === "preview" && (
           <div className="h-full overflow-y-auto bg-gray-50">
             <QuizPreview quiz={quizData} />
+          </div>
+        )}
+
+        {activeTab === "fluxo" && (
+          <div className="h-full">
+            <QuizFlowEditor
+              pages={quizData.structure.pages || []}
+              flowSystem={quizData.structure?.flowSystem || {
+                enabled: false,
+                nodes: [],
+                connections: [],
+                defaultFlow: true
+              }}
+              onFlowChange={handleFlowChange}
+              availableVariables={getAvailableVariables()}
+            />
           </div>
         )}
 
