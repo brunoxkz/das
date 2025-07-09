@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { useAuth } from "@/hooks/useAuth";
+import { useAuth } from "@/hooks/use-auth-hybrid";
+import { ThemeSelector } from "@/components/theme-selector";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -119,6 +120,9 @@ export default function Settings() {
           </Button>
         </CardContent>
       </Card>
+
+      {/* Theme Section */}
+      <ThemeSelector />
 
       {/* Notifications Section */}
       <Card className="border-l-4 border-l-blue-500">

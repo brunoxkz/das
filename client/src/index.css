@@ -1,194 +1,169 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@100;200;300;400;500;600;700;800;900&display=swap');
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 :root {
-  --background: hsl(0, 0%, 100%);
-  --foreground: hsl(20, 14.3%, 4.1%);
-  --muted: hsl(60, 4.8%, 95.9%);
-  --muted-foreground: hsl(25, 5.3%, 44.7%);
-  --popover: hsl(0, 0%, 100%);
-  --popover-foreground: hsl(20, 14.3%, 4.1%);
-  --card: hsl(0, 0%, 100%);
-  --card-foreground: hsl(20, 14.3%, 4.1%);
-  --border: hsl(20, 5.9%, 90%);
-  --input: hsl(20, 5.9%, 90%);
-  --primary: hsl(142, 76%, 36%);
-  --primary-foreground: hsl(0, 0%, 100%);
-  --secondary: hsl(142, 10%, 94%);
-  --secondary-foreground: hsl(240, 10%, 3.9%);
-  --accent: hsl(158, 64%, 52%);
-  --accent-foreground: hsl(0, 0%, 100%);
-  --destructive: hsl(0, 84.2%, 60.2%);
-  --destructive-foreground: hsl(60, 9.1%, 97.8%);
-  --ring: hsl(142, 76%, 36%);
-  --radius: 0.75rem;
-  --chart-1: hsl(142, 76%, 36%);
-  --chart-2: hsl(158, 64%, 52%);
-  --chart-3: hsl(120, 60%, 45%);
-  --chart-4: hsl(43, 96%, 56%);
-  --chart-5: hsl(347, 77%, 64%);
-  --sidebar-background: hsl(0, 0%, 100%);
-  --sidebar-foreground: hsl(20, 14.3%, 4.1%);
-  --sidebar-primary: hsl(247, 88%, 68%);
-  --sidebar-primary-foreground: hsl(0, 0%, 100%);
-  --sidebar-accent: hsl(60, 4.8%, 95.9%);
-  --sidebar-accent-foreground: hsl(24, 9.8%, 10%);
-  --sidebar-border: hsl(20, 5.9%, 90%);
-  --sidebar-ring: hsl(20, 14.3%, 4.1%);
+  /* Default theme variables */
+  --background: 0 0% 100%;
+  --foreground: 0 0% 3.9%;
+  --card: 0 0% 100%;
+  --card-foreground: 0 0% 3.9%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 0 0% 3.9%;
+  --primary: 142 76% 36%;
+  --primary-foreground: 355 7% 97%;
+  --secondary: 0 0% 96.1%;
+  --secondary-foreground: 0 0% 9%;
+  --muted: 0 0% 96.1%;
+  --muted-foreground: 0 0% 45.1%;
+  --accent: 0 0% 96.1%;
+  --accent-foreground: 0 0% 9%;
+  --destructive: 0 84.2% 60.2%;
+  --destructive-foreground: 0 0% 98%;
+  --border: 0 0% 89.8%;
+  --input: 0 0% 89.8%;
+  --ring: 142 76% 36%;
+  --radius: 0.5rem;
 }
 
-/* Scrollbar personalizada para barra de variáveis SMS */
-.scrollbar-thin {
-  scrollbar-width: thin;
-  scrollbar-color: rgb(209, 213, 219) transparent;
+.theme-dark {
+  /* Dark theme variables */
+  --background: 0 0% 9%;
+  --foreground: 0 0% 98%;
+  --card: 0 0% 11%;
+  --card-foreground: 0 0% 98%;
+  --popover: 0 0% 11%;
+  --popover-foreground: 0 0% 98%;
+  --primary: 142 76% 36%;
+  --primary-foreground: 355 7% 97%;
+  --secondary: 0 0% 15%;
+  --secondary-foreground: 0 0% 98%;
+  --muted: 0 0% 15%;
+  --muted-foreground: 0 0% 65%;
+  --accent: 0 0% 15%;
+  --accent-foreground: 0 0% 98%;
+  --destructive: 0 84.2% 60.2%;
+  --destructive-foreground: 0 0% 98%;
+  --border: 0 0% 20%;
+  --input: 0 0% 20%;
+  --ring: 142 76% 36%;
 }
 
-.scrollbar-thin::-webkit-scrollbar {
-  height: 6px;
-}
-
-.scrollbar-thin::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-.scrollbar-thin::-webkit-scrollbar-thumb {
-  background-color: rgb(209, 213, 219);
-  border-radius: 3px;
-}
-
-.scrollbar-thin::-webkit-scrollbar-thumb:hover {
-  background-color: rgb(156, 163, 175);
-}
-
-.scrollbar-thumb-gray-300::-webkit-scrollbar-thumb {
-  background-color: rgb(209, 213, 219);
-}
-
-.dark {
-  --background: hsl(240, 10%, 3.9%);
-  --foreground: hsl(0, 0%, 98%);
-  --muted: hsl(240, 3.7%, 15.9%);
-  --muted-foreground: hsl(240, 5%, 64.9%);
-  --popover: hsl(240, 10%, 3.9%);
-  --popover-foreground: hsl(0, 0%, 98%);
-  --card: hsl(240, 10%, 3.9%);
-  --card-foreground: hsl(0, 0%, 98%);
-  --border: hsl(240, 3.7%, 15.9%);
-  --input: hsl(240, 3.7%, 15.9%);
-  --primary: hsl(247, 88%, 68%);
-  --primary-foreground: hsl(0, 0%, 100%);
-  --secondary: hsl(269, 71%, 69%);
-  --secondary-foreground: hsl(0, 0%, 100%);
-  --accent: hsl(158, 64%, 52%);
-  --accent-foreground: hsl(0, 0%, 100%);
-  --destructive: hsl(0, 62.8%, 30.6%);
-  --destructive-foreground: hsl(0, 0%, 98%);
-  --ring: hsl(240, 4.9%, 83.9%);
-  --sidebar-background: hsl(240, 10%, 3.9%);
-  --sidebar-foreground: hsl(0, 0%, 98%);
-  --sidebar-primary: hsl(247, 88%, 68%);
-  --sidebar-primary-foreground: hsl(0, 0%, 100%);
-  --sidebar-accent: hsl(240, 3.7%, 15.9%);
-  --sidebar-accent-foreground: hsl(0, 0%, 98%);
-  --sidebar-border: hsl(240, 3.7%, 15.9%);
-  --sidebar-ring: hsl(240, 4.9%, 83.9%);
+.theme-future {
+  /* Future/Huly theme variables */
+  --background: 240 10% 3.9%;
+  --foreground: 0 0% 98%;
+  --card: 240 10% 8%;
+  --card-foreground: 0 0% 98%;
+  --popover: 240 10% 8%;
+  --popover-foreground: 0 0% 98%;
+  --primary: 263 70% 50%;
+  --primary-foreground: 355 7% 97%;
+  --secondary: 240 3.7% 15.9%;
+  --secondary-foreground: 0 0% 98%;
+  --muted: 240 3.7% 15.9%;
+  --muted-foreground: 240 5% 64.9%;
+  --accent: 240 3.7% 15.9%;
+  --accent-foreground: 0 0% 98%;
+  --destructive: 0 84.2% 60.2%;
+  --destructive-foreground: 0 0% 98%;
+  --border: 240 3.7% 15.9%;
+  --input: 240 3.7% 15.9%;
+  --ring: 263 70% 50%;
 }
 
 @layer base {
   * {
     @apply border-border;
   }
-
   body {
-    @apply font-sans antialiased bg-background text-foreground;
+    @apply bg-background text-foreground;
+    font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
   }
 }
 
-/* Vendzz Custom Styles - Modern Futuristic Theme */
-.vendzz-gradient {
-  background: linear-gradient(135deg, hsl(142, 76%, 36%) 0%, hsl(158, 64%, 52%) 100%);
+/* Global theme application */
+.theme-default {
+  background: hsl(var(--background));
+  color: hsl(var(--foreground));
 }
 
-.vendzz-glow {
-  box-shadow: 0 0 20px hsla(142, 76%, 36%, 0.3);
+.theme-dark {
+  background: hsl(var(--background));
+  color: hsl(var(--foreground));
 }
 
-.vendzz-card {
-  background: linear-gradient(145deg, rgba(255,255,255,0.95), rgba(142, 181, 165, 0.05));
-  backdrop-filter: blur(10px);
-  border: 1px solid rgba(142, 181, 165, 0.2);
+.theme-future {
+  background: linear-gradient(135deg, 
+    hsl(263 45% 12%) 0%, 
+    hsl(240 39% 12%) 30%, 
+    hsl(219 39% 14%) 60%, 
+    hsl(240 10% 8%) 100%);
+  color: hsl(var(--foreground));
+  min-height: 100vh;
 }
 
-.vendzz-button {
-  background: linear-gradient(135deg, hsl(142, 76%, 36%) 0%, hsl(158, 64%, 52%) 100%);
-  transition: all 0.3s ease;
+/* Scrollbar customization for each theme */
+.theme-default ::-webkit-scrollbar {
+  width: 8px;
+}
+.theme-default ::-webkit-scrollbar-track {
+  background: hsl(var(--muted));
+}
+.theme-default ::-webkit-scrollbar-thumb {
+  background: hsl(var(--border));
+  border-radius: 4px;
 }
 
-.vendzz-button:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 25px hsla(142, 76%, 36%, 0.3);
+.theme-dark ::-webkit-scrollbar {
+  width: 8px;
+}
+.theme-dark ::-webkit-scrollbar-track {
+  background: hsl(var(--muted));
+}
+.theme-dark ::-webkit-scrollbar-thumb {
+  background: hsl(var(--border));
+  border-radius: 4px;
 }
 
-.vendzz-text-gradient {
-  background: linear-gradient(135deg, hsl(142, 76%, 36%) 0%, hsl(158, 64%, 52%) 100%);
+.theme-future ::-webkit-scrollbar {
+  width: 8px;
+}
+.theme-future ::-webkit-scrollbar-track {
+  background: rgba(99, 102, 241, 0.1);
+}
+.theme-future ::-webkit-scrollbar-thumb {
+  background: rgba(99, 102, 241, 0.3);
+  border-radius: 4px;
+}
+
+/* Card animations and effects for Future theme */
+.theme-future .card-glow {
+  box-shadow: 0 0 20px rgba(99, 102, 241, 0.1);
+  border: 1px solid rgba(99, 102, 241, 0.2);
+}
+
+.theme-future .button-glow {
+  box-shadow: 0 0 15px rgba(34, 197, 94, 0.2);
+}
+
+/* Glass effect for Future theme */
+.theme-future .glass-effect {
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Gradient text for Future theme */
+.theme-future .gradient-text {
+  background: linear-gradient(135deg, #6366f1, #8b5cf6, #06b6d4);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
 }
 
-.vendzz-sidebar {
-  background: linear-gradient(180deg, rgba(255,255,255,0.98) 0%, rgba(142, 181, 165, 0.02) 100%);
-  border-right: 1px solid rgba(142, 181, 165, 0.15);
-}
-
-/* Futuristic animations */
-@keyframes vendzz-pulse {
-  0%, 100% {
-    opacity: 1;
-  }
-  50% {
-    opacity: 0.7;
-  }
-}
-
-.vendzz-pulse {
-  animation: vendzz-pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-}
-
-@keyframes vendzz-float {
-  0%, 100% {
-    transform: translateY(0px);
-  }
-  50% {
-    transform: translateY(-5px);
-  }
-}
-
-.vendzz-float {
-  animation: vendzz-float 3s ease-in-out infinite;
-}
-
-@layer components {
-  .gradient-bg {
-    background: linear-gradient(135deg, hsl(247, 88%, 68%) 0%, hsl(269, 71%, 69%) 100%);
-  }
-  
-  .card-hover {
-    transition: all 0.3s ease;
-  }
-  
-  .card-hover:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
-  }
-  
-  .pulse-animation {
-    animation: pulse 2s infinite;
-  }
-  
-  @keyframes pulse {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.7; }
-  }
+/* Transition animations */
+* {
+  transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
 }

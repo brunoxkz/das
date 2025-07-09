@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { Link, useLocation } from "wouter";
-import { useAuth } from "@/hooks/useAuth-jwt";
+import { useAuth } from "@/hooks/use-auth-hybrid";
+import { useTheme } from "@/contexts/theme-context";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -36,6 +37,7 @@ export function Sidebar() {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [location] = useLocation();
   const { user } = useAuth();
+  const { theme } = useTheme();
   const userData = user as any;
 
   // Buscar dados dos quizzes em tempo real
@@ -55,6 +57,29 @@ export function Sidebar() {
     const responseDate = new Date(response.createdAt);
     return responseDate.toDateString() === today.toDateString();
   }).length;
+
+  const getSidebarClasses = () => {
+    switch (theme) {
+      case 'dark':
+        return 'bg-gray-800 border-gray-700 text-white';
+      case 'future':
+        return 'bg-gray-900/80 border-purple-500/30 text-white glass-effect backdrop-blur-xl';
+      default:
+        return 'bg-white border-gray-200 text-gray-900';
+    }
+  };
+
+  const getItemClasses = (active: boolean, className?: string) => {
+    const baseClasses = active
+      ? `${theme === 'default' ? 'bg-green-50 text-green-700 border-green-200' : 
+          theme === 'dark' ? 'bg-green-900/30 text-green-400 border-green-700' :
+          'bg-green-500/20 text-green-300 border-green-400'}`
+      : `${theme === 'default' ? 'text-gray-700 hover:bg-gray-50' :
+          theme === 'dark' ? 'text-gray-300 hover:bg-gray-700' :
+          'text-gray-300 hover:bg-white/10'}`;
+    
+    return className || baseClasses;
+  };
 
   // Auto-collapse when entering quiz builder
   useEffect(() => {
@@ -189,11 +214,11 @@ export function Sidebar() {
 
   return (
     <div className={cn(
-      "vendzz-sidebar flex flex-col transition-all duration-300",
+      `vendzz-sidebar flex flex-col transition-all duration-300 ${getSidebarClasses()}`,
       isCollapsed ? "w-16" : "w-64"
     )}>
       {/* Logo and Notifications */}
-      <div className="p-4 border-b border-gray-200">
+      <div className={`p-4 border-b ${theme === 'default' ? 'border-gray-200' : theme === 'dark' ? 'border-gray-700' : 'border-purple-500/30'}`}>
         <div className="flex items-center justify-between">
           <div className="flex items-center">
             {!isCollapsed && (
@@ -220,7 +245,7 @@ export function Sidebar() {
       </div>
 
       {/* Create Button */}
-      <div className="p-4 border-b border-gray-200">
+      <div className={`p-4 border-b ${theme === 'default' ? 'border-gray-200' : theme === 'dark' ? 'border-gray-700' : 'border-purple-500/30'}`}>
         <Link href="/quizzes/new">
           <Button className={cn(
             "w-full",

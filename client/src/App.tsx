@@ -33,6 +33,7 @@ import RealTimeAnalytics from "@/pages/real-time-analytics";
 import EmailMarketingPro from "@/pages/email-marketing-pro";
 import { useAuth } from "@/hooks/use-auth-hybrid";
 import { isUnauthorizedError } from "@/lib/authUtils";
+import { ThemeProvider } from "@/contexts/theme-context";
 import { lazy } from "react";
 
 function App() {
@@ -63,7 +64,7 @@ function App() {
   }
 
   return (
-    <>
+    <ThemeProvider>
       <Switch>
         {/* Public routes without sidebar */}
         <Route path="/" component={LandingPage} />
@@ -194,7 +195,7 @@ function App() {
         <Route component={NotFoundPage} />
       </Switch>
       <Toaster />
-    </>
+    </ThemeProvider>
   );
 }
 
