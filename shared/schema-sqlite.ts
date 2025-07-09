@@ -39,8 +39,8 @@ export const quizzes = sqliteTable("quizzes", {
   resultTitle: text("resultTitle"),
   resultDescription: text("resultDescription"),
   embedCode: text("embedCode"),
-  createdAt: integer("createdAt", { mode: 'timestamp' }).notNull().$defaultFn(() => new Date()),
-  updatedAt: integer("updatedAt", { mode: 'timestamp' }).notNull().$defaultFn(() => new Date()),
+  createdAt: integer("createdAt").notNull().$defaultFn(() => Math.floor(Date.now() / 1000)),
+  updatedAt: integer("updatedAt").notNull().$defaultFn(() => Math.floor(Date.now() / 1000)),
 });
 
 export const quizTemplates = sqliteTable("quiz_templates", {

@@ -439,6 +439,7 @@ export class SQLiteStorage implements IStorage {
 
   async createQuiz(quiz: InsertQuiz): Promise<Quiz> {
     const quizId = nanoid();
+    const now = Math.floor(Date.now() / 1000);
     
     // Garantir estrutura básica se não fornecida
     const defaultStructure = {
@@ -464,6 +465,8 @@ export class SQLiteStorage implements IStorage {
         id: quizId,
         ...quiz,
         structure: quiz.structure || defaultStructure,
+        createdAt: now,
+        updatedAt: now
       })
       .returning();
     return newQuiz;
@@ -471,7 +474,7 @@ export class SQLiteStorage implements IStorage {
 
   async updateQuiz(id: string, updates: Partial<InsertQuiz>): Promise<Quiz> {
     const [updatedQuiz] = await db.update(quizzes)
-      .set({ ...updates, updatedAt: new Date() })
+      .set({ ...updates, updatedAt: Math.floor(Date.now() / 1000) })
       .where(eq(quizzes.id, id))
       .returning();
     return updatedQuiz;
