@@ -439,10 +439,31 @@ export class SQLiteStorage implements IStorage {
 
   async createQuiz(quiz: InsertQuiz): Promise<Quiz> {
     const quizId = nanoid();
+    
+    // Garantir estrutura básica se não fornecida
+    const defaultStructure = {
+      pages: [
+        {
+          id: "page_1",
+          name: "Página Inicial",
+          type: "normal",
+          elements: []
+        }
+      ],
+      settings: {
+        theme: "blue",
+        showProgressBar: true,
+        collectEmail: true,
+        collectName: true,
+        collectPhone: false
+      }
+    };
+    
     const [newQuiz] = await db.insert(quizzes)
       .values({
         id: quizId,
         ...quiz,
+        structure: quiz.structure || defaultStructure,
       })
       .returning();
     return newQuiz;
@@ -457,7 +478,44 @@ export class SQLiteStorage implements IStorage {
   }
 
   async deleteQuiz(id: string): Promise<void> {
-    await db.delete(quizzes).where(eq(quizzes.id, id));
+    // Deletar em cascata para resolver FOREIGN KEY constraints
+    console.log(`🗑️ Deletando quiz ${id} com cascade...`);
+    
+    try {
+      // 1. Deletar todas as variáveis de resposta relacionadas
+      await db.delete(responseVariables).where(eq(responseVariables.quizId, id));
+      console.log('✅ Variáveis de resposta deletadas');
+      
+      // 2. Deletar todas as respostas do quiz
+      await db.delete(quizResponses).where(eq(quizResponses.quizId, id));
+      console.log('✅ Respostas do quiz deletadas');
+      
+      // 3. Deletar analytics do quiz
+      await db.delete(quizAnalytics).where(eq(quizAnalytics.quizId, id));
+      console.log('✅ Analytics do quiz deletadas');
+      
+      // 4. Deletar campanhas relacionadas (SMS, Email, WhatsApp)
+      const campaigns = await db.select().from(smsCampaigns).where(eq(smsCampaigns.quizId, id));
+      for (const campaign of campaigns) {
+        await db.delete(smsLogs).where(eq(smsLogs.campaignId, campaign.id));
+      }
+      await db.delete(smsCampaigns).where(eq(smsCampaigns.quizId, id));
+      
+      const emailCampaignsData = await db.select().from(emailCampaigns).where(eq(emailCampaigns.quizId, id));
+      for (const campaign of emailCampaignsData) {
+        await db.delete(emailLogs).where(eq(emailLogs.campaignId, campaign.id));
+      }
+      await db.delete(emailCampaigns).where(eq(emailCampaigns.quizId, id));
+      
+      console.log('✅ Campanhas relacionadas deletadas');
+      
+      // 5. Finalmente deletar o quiz
+      await db.delete(quizzes).where(eq(quizzes.id, id));
+      console.log('✅ Quiz deletado com sucesso');
+    } catch (error) {
+      console.error('❌ Erro ao deletar quiz:', error);
+      throw error;
+    }
   }
 
   async getQuizTemplates(): Promise<QuizTemplate[]> {
