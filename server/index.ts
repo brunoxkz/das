@@ -494,17 +494,12 @@ app.use((req, res, next) => {
                 await storage.createEmailLog({
                   id: crypto.randomUUID(),
                   campaignId: campaign.id,
-                  userId: campaign.userId,
                   email: emailData.email,
-                  subject: campaign.subject,
-                  content: campaign.content,
                   personalizedSubject,
                   personalizedContent,
-                  leadData: JSON.stringify(emailData.leadData),
+                  leadData: emailData.leadData,
                   status: campaign.triggerType === 'immediate' ? 'pending' : 'scheduled',
-                  scheduledAt: campaign.triggerType === 'immediate' ? null : scheduledAt,
-                  createdAt: new Date(),
-                  updatedAt: new Date()
+                  scheduledAt: campaign.triggerType === 'immediate' ? null : Math.floor(scheduledAt.getTime() / 1000)
                 });
                 
                 // Se for envio imediato, processar agora
