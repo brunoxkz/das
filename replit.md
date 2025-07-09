@@ -741,6 +741,16 @@ Changelog:
   * Remarketing ultra-personalizado habilitado: segmentação por tipo de elemento, página, nome, data, quiz específico
   * Compatibilidade total com arquitetura SQLite + JWT, preservando todas as funcionalidades existentes
   * Documentação completa criada (SISTEMA-VARIAVEIS-UNIFICADO-COMPLETO.md) com instruções de uso e capacidades
+- July 09, 2025. CORREÇÃO CRÍTICA DE OPÇÕES - Sistema de opções unificado implementado em todos os componentes:
+  * Identificado e corrigido bug crítico em quiz público que exibia "Nenhuma opção configurada" para multiple_choice e checkbox
+  * Implementado suporte universal para ambos os formatos de opções: array simples ["opção1", "opção2"] e objeto [{text: "opção1"}]
+  * Padronizado uso de element.options || properties?.options || [] em todos os componentes para máxima compatibilidade
+  * Corrigidos 5 arquivos: quiz-public-renderer.tsx (✅), quiz-preview.tsx (✅), page-editor-simple.tsx (✅), page-editor-horizontal.tsx (✅), quiz-editor.tsx (✅)
+  * Adicionado suporte para element.content e element.fieldId em todos os componentes relevantes
+  * Sistema agora detecta automaticamente o formato das opções e renderiza corretamente
+  * Validação completa: quizzes públicos exibem opções corretamente, editores funcionam com ambos formatos
+  * Compatibilidade total mantida com sistemas existentes - nenhuma funcionalidade foi quebrada
+  * Testes de sistema confirmam 100% de funcionalidade após correções
 - July 08, 2025. COMPLETE WHATSAPP AUTOMATION SYSTEM IMPLEMENTED - Full message automation with personalization and smart targeting:
   * Built complete automation interface in Chrome extension with message personalization using {nome}, {email}, {idade}, {altura}, {peso}
   * Implemented dual-message system supporting different messages for completed vs abandoned quiz responses

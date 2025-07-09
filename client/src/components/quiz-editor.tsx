@@ -352,8 +352,8 @@ export function QuizEditor({ questions, onQuestionsChange }: QuizEditorProps) {
                 </p>
               </div>
 
-              {/* Options for Multiple Choice */}
-              {selectedQuestionData.type === "multiple_choice" && (
+              {/* Options for Multiple Choice and Checkbox */}
+              {(selectedQuestionData.type === "multiple_choice" || selectedQuestionData.type === "checkbox") && (
                 <div>
                   <div className="flex items-center justify-between mb-3">
                     <Label>Opções de Resposta</Label>

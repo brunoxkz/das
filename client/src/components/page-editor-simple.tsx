@@ -711,7 +711,7 @@ export function PageEditor({ pages, onPagesChange }: PageEditorProps) {
                   <Label htmlFor="required">Campo obrigatório</Label>
                 </div>
 
-                {selectedElementData.type === "multiple_choice" && (
+                {(selectedElementData.type === "multiple_choice" || selectedElementData.type === "checkbox") && (
                   <div>
                     <Label>Opções de Resposta</Label>
                     <div className="space-y-2 mt-2">

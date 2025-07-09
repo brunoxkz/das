@@ -851,41 +851,50 @@ export function QuizPreview({ quiz }: QuizPreviewProps) {
         );
 
       case 'multiple_choice':
+        const multipleChoiceOptions = element.options || element.properties?.options || [];
         return (
           <div className="mb-6">
-            {element.question && (
+            {(element.question || element.content || element.properties?.question) && (
               <label className="block text-lg font-medium text-gray-700 mb-4">
-                {element.question}
+                {element.question || element.content || element.properties?.question}
               </label>
             )}
             {element.description && (
               <p className="text-gray-600 mb-4 text-sm">{element.description}</p>
             )}
             <div className={`space-y-3 ${element.optionLayout === 'grid' ? 'grid grid-cols-2 gap-3' : ''}`}>
-              {element.options?.map((option: string, index: number) => {
-                const buttonStyle = element.buttonStyle || 'rectangular';
-                const baseClasses = "w-full p-4 border text-left transition-all duration-200 hover:bg-green-50 hover:border-green-500";
-                const styleClasses = buttonStyle === 'rounded' ? 'rounded-lg' : 
-                                  buttonStyle === 'pills' ? 'rounded-full' : 'rounded-md';
-                
-                return (
-                  <button
-                    key={index}
-                    className={`${baseClasses} ${styleClasses} border-gray-300 bg-white`}
-                  >
-                    <div className="flex items-center">
-                      {element.optionImages?.[index] && (
-                        <img 
-                          src={element.optionImages[index]} 
-                          alt={option}
-                          className="w-8 h-8 object-cover rounded mr-3"
-                        />
-                      )}
-                      <span className="text-gray-700">{option}</span>
-                    </div>
-                  </button>
-                );
-              })}
+              {Array.isArray(multipleChoiceOptions) && multipleChoiceOptions.length > 0 ? (
+                multipleChoiceOptions.map((option: any, index: number) => {
+                  // Suporte para opções em string simples ou objeto {text: "..."}
+                  const optionValue = typeof option === 'string' ? option : (option?.text || `Opção ${index + 1}`);
+                  const buttonStyle = element.buttonStyle || 'rectangular';
+                  const baseClasses = "w-full p-4 border text-left transition-all duration-200 hover:bg-green-50 hover:border-green-500";
+                  const styleClasses = buttonStyle === 'rounded' ? 'rounded-lg' : 
+                                    buttonStyle === 'pills' ? 'rounded-full' : 'rounded-md';
+                  
+                  return (
+                    <button
+                      key={index}
+                      className={`${baseClasses} ${styleClasses} border-gray-300 bg-white`}
+                    >
+                      <div className="flex items-center">
+                        {element.optionImages?.[index] && (
+                          <img 
+                            src={element.optionImages[index]} 
+                            alt={optionValue}
+                            className="w-8 h-8 object-cover rounded mr-3"
+                          />
+                        )}
+                        <span className="text-gray-700">{optionValue}</span>
+                      </div>
+                    </button>
+                  );
+                })
+              ) : (
+                <div className="text-gray-500 p-4 border rounded-md">
+                  Nenhuma opção configurada
+                </div>
+              )}
             </div>
           </div>
         );
@@ -913,11 +922,12 @@ export function QuizPreview({ quiz }: QuizPreviewProps) {
         );
 
       case 'checkbox':
+        const checkboxOptions = element.options || element.properties?.options || [];
         return (
           <div className="mb-6">
-            {element.question && (
+            {(element.question || element.content || element.properties?.question) && (
               <label className="block text-lg font-medium text-gray-700 mb-4">
-                {element.question}
+                {element.question || element.content || element.properties?.question}
                 {element.required && <span className="text-red-500 ml-1">*</span>}
               </label>
             )}
@@ -925,23 +935,33 @@ export function QuizPreview({ quiz }: QuizPreviewProps) {
               <p className="text-gray-600 mb-4 text-sm">{element.description}</p>
             )}
             <div className="space-y-3">
-              {element.options?.map((option: string, index: number) => (
-                <label key={index} className="flex items-center space-x-3 cursor-pointer">
-                  <input 
-                    type="checkbox" 
-                    className="h-4 w-4 text-green-600 border-gray-300 rounded focus:ring-green-500"
-                    onChange={(e) => {
-                      const values = answers[element.id] || [];
-                      if (e.target.checked) {
-                        handleAnswer(element.id, [...values, option], element);
-                      } else {
-                        handleAnswer(element.id, values.filter((v: string) => v !== option), element);
-                      }
-                    }}
-                  />
-                  <span className="text-gray-700">{option}</span>
-                </label>
-              ))}
+              {Array.isArray(checkboxOptions) && checkboxOptions.length > 0 ? (
+                checkboxOptions.map((option: any, index: number) => {
+                  // Suporte para opções em string simples ou objeto {text: "..."}
+                  const optionValue = typeof option === 'string' ? option : (option?.text || `Opção ${index + 1}`);
+                  return (
+                    <label key={index} className="flex items-center space-x-3 cursor-pointer">
+                      <input 
+                        type="checkbox" 
+                        className="h-4 w-4 text-green-600 border-gray-300 rounded focus:ring-green-500"
+                        onChange={(e) => {
+                          const values = answers[element.id] || [];
+                          if (e.target.checked) {
+                            handleAnswer(element.id, [...values, optionValue], element);
+                          } else {
+                            handleAnswer(element.id, values.filter((v: string) => v !== optionValue), element);
+                          }
+                        }}
+                      />
+                      <span className="text-gray-700">{optionValue}</span>
+                    </label>
+                  );
+                })
+              ) : (
+                <div className="text-gray-500 p-4 border rounded-md">
+                  Nenhuma opção configurada
+                </div>
+              )}
             </div>
           </div>
         );

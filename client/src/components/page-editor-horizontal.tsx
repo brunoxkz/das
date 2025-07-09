@@ -2603,7 +2603,7 @@ const gameElementCategories = [
                 </div>
               )}
 
-              {selectedElementData.type === "multiple_choice" && (
+              {(selectedElementData.type === "multiple_choice" || selectedElementData.type === "checkbox") && (
                 <div className="space-y-6">
                   {/* Pergunta */}
                   <div>
