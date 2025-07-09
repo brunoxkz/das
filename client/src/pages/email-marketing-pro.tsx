@@ -75,10 +75,12 @@ export default function EmailMarketingPro() {
     subject: '',
     content: '',
     quizId: '',
+    campaignType: 'remarketing' as const,
     targetAudience: 'all' as const,
     triggerType: 'delayed' as const,
     triggerDelay: 10,
-    triggerUnit: 'minutes' as const
+    triggerUnit: 'minutes' as const,
+    dateFilter: null as Date | null
   });
 
   const [templateForm, setTemplateForm] = useState({
@@ -329,10 +331,12 @@ export default function EmailMarketingPro() {
       subject: '',
       content: '',
       quizId: '',
+      campaignType: 'remarketing',
       targetAudience: 'all',
       triggerType: 'delayed',
       triggerDelay: 10,
-      triggerUnit: 'minutes'
+      triggerUnit: 'minutes',
+      dateFilter: null
     });
     setAvailableVariables([]);
   };
@@ -347,7 +351,7 @@ export default function EmailMarketingPro() {
   };
 
   const handleCreateCampaign = () => {
-    if (!campaignForm.name || !campaignForm.subject || !campaignForm.content || !campaignForm.quizId) {
+    if (!campaignForm.name || !campaignForm.subject || !campaignForm.content || !campaignForm.quizId || !campaignForm.campaignType) {
       toast({
         title: "Campos obrigatórios",
         description: "Por favor, preencha todos os campos obrigatórios.",
@@ -356,7 +360,13 @@ export default function EmailMarketingPro() {
       return;
     }
 
-    createCampaignMutation.mutate(campaignForm);
+    const campaignData = {
+      ...campaignForm,
+      dateFilter: campaignForm.dateFilter ? Math.floor(campaignForm.dateFilter.getTime() / 1000) : null,
+      variables: []
+    };
+
+    createCampaignMutation.mutate(campaignData);
   };
 
   const handleCreateTemplate = () => {
@@ -567,18 +577,92 @@ export default function EmailMarketingPro() {
                         </div>
 
                         {selectedQuiz && (
+                          <div className="border-2 border-dashed border-orange-200 dark:border-orange-700 rounded-lg p-4 bg-orange-50 dark:bg-orange-900/20">
+                            <Label className="text-base font-medium text-orange-800 dark:text-orange-200">
+                              2. Tipo de Campanha
+                            </Label>
+                            <p className="text-sm text-orange-700 dark:text-orange-300 mb-3">
+                              Escolha como deseja capturar leads para essa campanha:
+                            </p>
+                            <div className="space-y-3">
+                              <div 
+                                className={`p-3 rounded-lg border-2 cursor-pointer transition-all ${
+                                  campaignForm.campaignType === 'live' 
+                                    ? 'border-green-500 bg-green-50 dark:bg-green-900/20' 
+                                    : 'border-gray-200 dark:border-gray-700 hover:border-green-300'
+                                }`}
+                                onClick={() => setCampaignForm({...campaignForm, campaignType: 'live'})}
+                              >
+                                <div className="flex items-center gap-3">
+                                  <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${
+                                    campaignForm.campaignType === 'live' 
+                                      ? 'border-green-500 bg-green-500' 
+                                      : 'border-gray-300'
+                                  }`}>
+                                    {campaignForm.campaignType === 'live' && (
+                                      <div className="w-2 h-2 bg-white rounded-full" />
+                                    )}
+                                  </div>
+                                  <div>
+                                    <p className="font-medium text-green-800 dark:text-green-200">
+                                      🔴 CAMPANHA AO VIVO
+                                    </p>
+                                    <p className="text-sm text-green-700 dark:text-green-300">
+                                      Captura leads em tempo real conforme chegam novos quiz responses
+                                    </p>
+                                  </div>
+                                </div>
+                              </div>
+                              
+                              <div 
+                                className={`p-3 rounded-lg border-2 cursor-pointer transition-all ${
+                                  campaignForm.campaignType === 'remarketing' 
+                                    ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20' 
+                                    : 'border-gray-200 dark:border-gray-700 hover:border-blue-300'
+                                }`}
+                                onClick={() => setCampaignForm({...campaignForm, campaignType: 'remarketing'})}
+                              >
+                                <div className="flex items-center gap-3">
+                                  <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${
+                                    campaignForm.campaignType === 'remarketing' 
+                                      ? 'border-blue-500 bg-blue-500' 
+                                      : 'border-gray-300'
+                                  }`}>
+                                    {campaignForm.campaignType === 'remarketing' && (
+                                      <div className="w-2 h-2 bg-white rounded-full" />
+                                    )}
+                                  </div>
+                                  <div>
+                                    <p className="font-medium text-blue-800 dark:text-blue-200">
+                                      📧 CAMPANHA REMARKETING
+                                    </p>
+                                    <p className="text-sm text-blue-700 dark:text-blue-300">
+                                      Envia para leads antigos que já responderam o quiz anteriormente
+                                    </p>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        )}
+
+                        {campaignForm.campaignType && (
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
-                              <Label htmlFor="name">2. Nome da Campanha</Label>
+                              <Label htmlFor="name">3. Nome da Campanha</Label>
                               <Input
                                 id="name"
                                 value={campaignForm.name}
                                 onChange={(e) => setCampaignForm({...campaignForm, name: e.target.value})}
-                                placeholder="Ex: Boas-vindas aos novos leads"
+                                placeholder={
+                                  campaignForm.campaignType === 'live' 
+                                    ? "Ex: Boas-vindas em tempo real" 
+                                    : "Ex: Remarketing - Completaram quiz"
+                                }
                               />
                             </div>
                             <div>
-                              <Label htmlFor="audience">3. Público Alvo</Label>
+                              <Label htmlFor="audience">4. Público Alvo</Label>
                               <Select 
                                 value={campaignForm.targetAudience} 
                                 onValueChange={(value: any) => setCampaignForm({...campaignForm, targetAudience: value})}
@@ -601,17 +685,41 @@ export default function EmailMarketingPro() {
                             </div>
                           </div>
                         )}
+
+                        {campaignForm.campaignType === 'remarketing' && (
+                          <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg border border-blue-200 dark:border-blue-700">
+                            <Label className="text-sm font-medium text-blue-800 dark:text-blue-200">
+                              Filtro de Data (Opcional)
+                            </Label>
+                            <p className="text-xs text-blue-700 dark:text-blue-300 mb-2">
+                              Escolha leads que responderam o quiz a partir de uma data específica
+                            </p>
+                            <Input
+                              type="date"
+                              value={campaignForm.dateFilter ? new Date(campaignForm.dateFilter).toISOString().split('T')[0] : ''}
+                              onChange={(e) => setCampaignForm({
+                                ...campaignForm, 
+                                dateFilter: e.target.value ? new Date(e.target.value) : null
+                              })}
+                              className="max-w-xs"
+                            />
+                          </div>
+                        )}
                       </div>
 
-                      {selectedQuiz && (
+                      {campaignForm.campaignType && (
                         <>
                           <div>
-                            <Label htmlFor="subject">4. Assunto do Email</Label>
+                            <Label htmlFor="subject">5. Assunto do Email</Label>
                             <Input
                               id="subject"
                               value={campaignForm.subject}
                               onChange={(e) => setCampaignForm({...campaignForm, subject: e.target.value})}
-                              placeholder="Ex: Obrigado por participar, {nome}!"
+                              placeholder={
+                                campaignForm.campaignType === 'live' 
+                                  ? "Ex: Bem-vindo, {nome}! Sua resposta foi recebida"
+                                  : "Ex: {nome}, não perca esta oportunidade!"
+                              }
                             />
                             <p className="text-xs text-gray-500 mt-1">
                               Use variáveis: {'{nome}'}, {'{email}'}, {'{telefone}'}
@@ -619,12 +727,16 @@ export default function EmailMarketingPro() {
                           </div>
 
                           <div>
-                            <Label htmlFor="content">5. Conteúdo do Email</Label>
+                            <Label htmlFor="content">6. Conteúdo do Email</Label>
                             <Textarea
                               id="content"
                               value={campaignForm.content}
                               onChange={(e) => setCampaignForm({...campaignForm, content: e.target.value})}
-                              placeholder="Digite o conteúdo do email..."
+                              placeholder={
+                                campaignForm.campaignType === 'live' 
+                                  ? "Olá {nome}, obrigado por responder nosso quiz! Sua resposta foi registrada..."
+                                  : "Olá {nome}, notamos que você já participou do nosso quiz. Que tal conhecer nossa oferta especial?"
+                              }
                               rows={6}
                             />
                             <p className="text-xs text-gray-500 mt-1">
@@ -638,7 +750,7 @@ export default function EmailMarketingPro() {
                           </div>
 
                           <div>
-                            <Label htmlFor="trigger">6. Tipo de Disparo</Label>
+                            <Label htmlFor="trigger">7. Tipo de Disparo</Label>
                             <Select 
                               value={campaignForm.triggerType} 
                               onValueChange={(value: any) => setCampaignForm({...campaignForm, triggerType: value})}
@@ -651,6 +763,32 @@ export default function EmailMarketingPro() {
                               </SelectContent>
                             </Select>
                           </div>
+
+                          {campaignForm.campaignType === 'live' && (
+                            <div className="bg-green-50 dark:bg-green-900/20 p-4 rounded-lg border border-green-200 dark:border-green-700">
+                              <h4 className="font-medium text-green-800 dark:text-green-200 mb-2">
+                                🔴 Campanha ao Vivo Ativa
+                              </h4>
+                              <p className="text-sm text-green-700 dark:text-green-300">
+                                Esta campanha será executada automaticamente para todos os novos leads que responderem o quiz selecionado.
+                                O sistema monitora continuamente e enviará emails conforme chegam novas respostas.
+                              </p>
+                            </div>
+                          )}
+
+                          {campaignForm.campaignType === 'remarketing' && (
+                            <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg border border-blue-200 dark:border-blue-700">
+                              <h4 className="font-medium text-blue-800 dark:text-blue-200 mb-2">
+                                📧 Campanha de Remarketing
+                              </h4>
+                              <p className="text-sm text-blue-700 dark:text-blue-300">
+                                Esta campanha será enviada para leads que já responderam o quiz anteriormente.
+                                {campaignForm.dateFilter ? 
+                                  ` Apenas leads que responderam a partir de ${new Date(campaignForm.dateFilter).toLocaleDateString('pt-BR')} serão incluídos.` :
+                                  ' Todos os leads históricos serão incluídos.'}
+                              </p>
+                            </div>
+                          )}
                         </>
                       )}
 
@@ -658,10 +796,11 @@ export default function EmailMarketingPro() {
                         <div className="flex items-center gap-2 pt-4 border-t">
                           <Button 
                             onClick={handleCreateCampaign}
-                            disabled={createCampaignMutation.isPending || !campaignForm.name || !campaignForm.subject || !campaignForm.content}
+                            disabled={createCampaignMutation.isPending || !campaignForm.name || !campaignForm.subject || !campaignForm.content || !campaignForm.campaignType}
                             className="bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700"
                           >
-                            {createCampaignMutation.isPending ? 'Criando...' : 'Criar Campanha'}
+                            {createCampaignMutation.isPending ? 'Criando...' : 
+                             campaignForm.campaignType === 'live' ? 'Ativar Campanha ao Vivo' : 'Criar Campanha Remarketing'}
                           </Button>
                           <Button 
                             variant="outline" 

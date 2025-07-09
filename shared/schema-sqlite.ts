@@ -125,10 +125,12 @@ export const emailCampaigns = sqliteTable("email_campaigns", {
   quizId: text("quizId").notNull().references(() => quizzes.id, { onDelete: "cascade" }),
   userId: text("userId").notNull().references(() => users.id, { onDelete: "cascade" }),
   status: text("status").default("draft"), // draft, active, paused, completed
+  campaignType: text("campaignType").default("remarketing"), // "live" (tempo real) ou "remarketing" (leads antigos)
   triggerType: text("triggerType").default("immediate"), // immediate, delayed, scheduled
   triggerDelay: integer("triggerDelay").default(0),
   triggerUnit: text("triggerUnit").default("hours"), // minutes, hours, days
   targetAudience: text("targetAudience").default("completed"), // all, completed, abandoned
+  dateFilter: integer("dateFilter"), // Unix timestamp para filtrar leads por data
   variables: text("variables", { mode: 'json' }).default("[]"),
   sent: integer("sent").default(0),
   delivered: integer("delivered").default(0),

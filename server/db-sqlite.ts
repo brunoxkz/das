@@ -180,10 +180,12 @@ export function runMigrations() {
         quizId TEXT NOT NULL,
         userId TEXT NOT NULL,
         status TEXT DEFAULT 'draft',
+        campaignType TEXT DEFAULT 'remarketing',
         triggerType TEXT DEFAULT 'immediate',
         triggerDelay INTEGER DEFAULT 0,
         triggerUnit TEXT DEFAULT 'hours',
         targetAudience TEXT DEFAULT 'completed',
+        dateFilter INTEGER,
         variables TEXT DEFAULT '[]',
         sent INTEGER DEFAULT 0,
         delivered INTEGER DEFAULT 0,
@@ -384,6 +386,15 @@ export function runMigrations() {
     
     try {
       sqlite.exec("ALTER TABLE sms_campaigns ADD COLUMN fromDate INTEGER;");
+    } catch (e) {} // Ignora se já existe
+    
+    // Adicionar novas colunas para email_campaigns
+    try {
+      sqlite.exec("ALTER TABLE email_campaigns ADD COLUMN campaignType TEXT DEFAULT 'remarketing';");
+    } catch (e) {} // Ignora se já existe
+    
+    try {
+      sqlite.exec("ALTER TABLE email_campaigns ADD COLUMN dateFilter INTEGER;");
     } catch (e) {} // Ignora se já existe
     
     sqlite.exec(createSmsLogsTable);
