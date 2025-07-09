@@ -4,6 +4,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Layout } from "@/components/layout";
 import LandingPage from "@/pages/landing";
 import DarkLandingPage from "@/pages/dark-landing";
+import ModernHomePage from "@/pages/modern-home";
 import LoginPage from "@/pages/login";
 import Dashboard from "@/pages/dashboard";
 import QuizBuilder from "@/pages/quiz-builder";
@@ -44,7 +45,7 @@ function App() {
   }
 
   // Public routes that don't require authentication
-  const publicRoutes = ["/", "/dark", "/login"];
+  const publicRoutes = ["/", "/dark", "/modern", "/login"];
   const isQuizRoute = location.startsWith("/quiz/");
   const isPublicRoute = publicRoutes.includes(location) || isQuizRoute;
 
@@ -64,6 +65,7 @@ function App() {
         {/* Public routes without sidebar */}
         <Route path="/" component={LandingPage} />
         <Route path="/dark" component={DarkLandingPage} />
+        <Route path="/modern" component={ModernHomePage} />
         <Route path="/login" component={LoginPage} />
         <Route path="/quiz/:id" component={QuizPublicPage} />
 
