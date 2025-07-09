@@ -3645,6 +3645,165 @@ app.get("/api/whatsapp-extension/pending", verifyJWT, async (req: any, res: Resp
     }
   });
 
+  // Advanced Email Marketing Pro endpoints
+  app.post("/api/email-campaigns/advanced", verifyJWT, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const { 
+        name, 
+        quizId, 
+        subject, 
+        content, 
+        targetAudience, 
+        scheduleType, 
+        scheduledAt,
+        abTestEnabled,
+        abTestSubject,
+        personalizedContent,
+        templateId,
+        segmentationRules,
+        automationTriggers
+      } = req.body;
+
+      // Validate required fields
+      if (!name || !quizId || !subject || !content) {
+        return res.status(400).json({ error: "Nome, quiz, assunto e conteúdo são obrigatórios" });
+      }
+
+      // Get quiz data for variable extraction
+      const quiz = await storage.getQuiz(quizId);
+      if (!quiz || quiz.userId !== userId) {
+        return res.status(404).json({ error: "Quiz não encontrado ou sem permissão" });
+      }
+
+      // Extract available variables from quiz responses
+      const responses = await storage.getQuizResponses(quizId);
+      const availableVariables = extractAvailableVariables(responses);
+
+      // Create advanced campaign
+      const campaignId = nanoid();
+      const campaign = await storage.createEmailCampaign({
+        id: campaignId,
+        userId,
+        name,
+        quizId,
+        subject,
+        content,
+        status: scheduleType === 'immediate' ? 'active' : 'scheduled',
+        scheduledAt: scheduledAt ? new Date(scheduledAt) : undefined,
+        targetAudience: targetAudience || 'all',
+        createdAt: new Date(),
+        updatedAt: new Date()
+      });
+
+      // Get targeted leads preview
+      const targetedLeads = await getTargetedLeadsForEmail(quizId, targetAudience || 'all', segmentationRules);
+
+      res.json({
+        success: true,
+        campaign,
+        targetedLeads: targetedLeads.length,
+        availableVariables,
+        message: scheduleType === 'immediate' ? 'Campanha criada - pronta para envio' : 'Campanha agendada com sucesso'
+      });
+    } catch (error) {
+      console.error("Error creating advanced email campaign:", error);
+      res.status(500).json({ error: "Erro ao criar campanha avançada" });
+    }
+  });
+
+  // Get quiz variables for email personalization
+  app.get("/api/quiz/:quizId/variables", verifyJWT, async (req: any, res) => {
+    try {
+      const { quizId } = req.params;
+      const userId = req.user.id;
+      
+      const quiz = await storage.getQuiz(quizId);
+      if (!quiz || quiz.userId !== userId) {
+        return res.status(404).json({ error: "Quiz não encontrado" });
+      }
+
+      const responses = await storage.getQuizResponses(quizId);
+      const variables = extractAvailableVariables(responses);
+      
+      // Get sample data for preview
+      const sampleData = responses.length > 0 ? 
+        extractSampleDataFromResponse(responses[0]) : 
+        getDefaultSampleData();
+
+      res.json({
+        variables,
+        sampleData,
+        totalResponses: responses.length,
+        quiz: {
+          id: quiz.id,
+          title: quiz.title
+        }
+      });
+    } catch (error) {
+      console.error("Error fetching quiz variables:", error);
+      res.status(500).json({ error: "Erro ao buscar variáveis do quiz" });
+    }
+  });
+
+  // Get targeted leads preview for campaigns
+  app.post("/api/email-campaigns/preview-audience", verifyJWT, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const { quizId, targetAudience, segmentationRules, dateFilter } = req.body;
+      
+      const quiz = await storage.getQuiz(quizId);
+      if (!quiz || quiz.userId !== userId) {
+        return res.status(404).json({ error: "Quiz não encontrado" });
+      }
+      
+      const leads = await getTargetedLeadsForEmail(quizId, targetAudience, segmentationRules, dateFilter);
+      
+      const stats = {
+        totalLeads: leads.length,
+        completedLeads: leads.filter(l => l.status === 'completed').length,
+        abandonedLeads: leads.filter(l => l.status === 'abandoned').length,
+        estimatedOpenRate: calculateEstimatedOpenRate(targetAudience),
+        estimatedClickRate: calculateEstimatedClickRate(targetAudience),
+        estimatedDeliveryRate: 98.5
+      };
+
+      res.json({
+        leads: leads.slice(0, 50), // Preview first 50
+        stats,
+        totalCount: leads.length
+      });
+    } catch (error) {
+      console.error("Error getting audience preview:", error);
+      res.status(500).json({ error: "Erro ao obter preview da audiência" });
+    }
+  });
+
+  // Email campaign analytics
+  app.get("/api/email-campaigns/:campaignId/analytics", verifyJWT, async (req: any, res) => {
+    try {
+      const { campaignId } = req.params;
+      const userId = req.user.id;
+      
+      const campaign = await storage.getEmailCampaign(campaignId);
+      if (!campaign || campaign.userId !== userId) {
+        return res.status(404).json({ error: "Campanha não encontrada" });
+      }
+
+      const logs = await storage.getEmailLogs(campaignId);
+      const analytics = calculateEmailAnalytics(logs);
+
+      res.json({
+        campaign,
+        analytics,
+        logs: logs.slice(0, 100)
+      });
+    } catch (error) {
+      console.error("Error fetching email analytics:", error);
+      res.status(500).json({ error: "Erro ao buscar analytics da campanha" });
+    }
+  });
+
   // Buscar emails de um quiz para campanhas
   app.get("/api/quiz-emails/:quizId", verifyJWT, async (req: any, res) => {
     try {
@@ -3726,4 +3885,172 @@ app.get("/api/whatsapp-extension/pending", verifyJWT, async (req: any, res: Resp
   });
 
   return httpServer;
+}
+
+// Advanced Email Marketing Pro helper functions
+function extractAvailableVariables(responses: any[]) {
+  const variables = new Set<string>();
+  
+  responses.forEach(response => {
+    if (response.responses) {
+      if (Array.isArray(response.responses)) {
+        // New format - array of elements
+        response.responses.forEach((element: any) => {
+          if (element.elementFieldId) {
+            variables.add(element.elementFieldId);
+          }
+        });
+      } else {
+        // Old format - object
+        Object.keys(response.responses).forEach(key => {
+          variables.add(key);
+        });
+      }
+    }
+  });
+  
+  return Array.from(variables).sort();
+}
+
+function extractSampleDataFromResponse(response: any): Record<string, any> {
+  const sampleData: Record<string, any> = {};
+  
+  if (response.responses) {
+    if (Array.isArray(response.responses)) {
+      // New format - array of elements
+      response.responses.forEach((element: any) => {
+        if (element.elementFieldId && element.answer) {
+          sampleData[element.elementFieldId] = element.answer;
+        }
+      });
+    } else {
+      // Old format - object
+      Object.keys(response.responses).forEach(key => {
+        sampleData[key] = response.responses[key];
+      });
+    }
+  }
+  
+  return sampleData;
+}
+
+function getDefaultSampleData(): Record<string, any> {
+  return {
+    nome: "João Silva",
+    email: "joao@email.com",
+    telefone: "11999999999",
+    idade: "30",
+    altura: "1.75",
+    peso_atual: "80",
+    peso_objetivo: "75"
+  };
+}
+
+async function getTargetedLeadsForEmail(
+  quizId: string, 
+  targetAudience: string, 
+  segmentationRules?: any,
+  dateFilter?: string
+): Promise<any[]> {
+  const responses = await storage.getQuizResponses(quizId);
+  const leads: any[] = [];
+  
+  responses.forEach(response => {
+    if (response.responses) {
+      let email = '';
+      let name = 'Usuário';
+      let allData: Record<string, any> = {};
+      
+      if (Array.isArray(response.responses)) {
+        // New format - array of elements
+        response.responses.forEach((element: any) => {
+          if (element.elementType === 'email' && element.answer) {
+            email = element.answer;
+          }
+          if (element.elementFieldId && element.answer) {
+            allData[element.elementFieldId] = element.answer;
+            if (element.elementFieldId.includes('nome') || element.elementFieldId.includes('name')) {
+              name = element.answer;
+            }
+          }
+        });
+      } else {
+        // Old format - object
+        Object.keys(response.responses).forEach(key => {
+          const value = response.responses[key];
+          allData[key] = value;
+          if (key.includes('email') && value) {
+            email = value;
+          }
+          if (key.includes('nome') && value) {
+            name = value;
+          }
+        });
+      }
+      
+      if (email && email.includes('@')) {
+        const isCompleted = response.metadata?.isComplete === true || 
+                           response.metadata?.completionPercentage === 100;
+        
+        const lead = {
+          id: response.id,
+          email,
+          name,
+          status: isCompleted ? 'completed' : 'abandoned',
+          submittedAt: response.submittedAt,
+          data: allData
+        };
+        
+        // Apply audience filter
+        if (targetAudience === 'completed' && !isCompleted) return;
+        if (targetAudience === 'abandoned' && isCompleted) return;
+        
+        // Apply date filter
+        if (dateFilter) {
+          const filterDate = new Date(dateFilter);
+          if (new Date(response.submittedAt) < filterDate) return;
+        }
+        
+        leads.push(lead);
+      }
+    }
+  });
+  
+  return leads;
+}
+
+function calculateEstimatedOpenRate(targetAudience: string): number {
+  switch (targetAudience) {
+    case 'completed': return 25.8;
+    case 'abandoned': return 18.5;
+    default: return 22.3;
+  }
+}
+
+function calculateEstimatedClickRate(targetAudience: string): number {
+  switch (targetAudience) {
+    case 'completed': return 4.8;
+    case 'abandoned': return 3.2;
+    default: return 4.1;
+  }
+}
+
+function calculateEmailAnalytics(logs: any[]): any {
+  const total = logs.length;
+  const sent = logs.filter(log => log.status === 'sent').length;
+  const failed = logs.filter(log => log.status === 'failed').length;
+  const opened = logs.filter(log => log.status === 'opened').length;
+  const clicked = logs.filter(log => log.status === 'clicked').length;
+  
+  return {
+    total,
+    sent,
+    failed,
+    opened,
+    clicked,
+    deliveryRate: total > 0 ? (sent / total) * 100 : 0,
+    openRate: sent > 0 ? (opened / sent) * 100 : 0,
+    clickRate: opened > 0 ? (clicked / opened) * 100 : 0,
+    failureRate: total > 0 ? (failed / total) * 100 : 0
+  };
 }
