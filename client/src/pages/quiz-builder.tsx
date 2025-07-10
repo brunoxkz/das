@@ -107,7 +107,7 @@ export default function QuizBuilder() {
     enableWhatsappAutomation: false
   });
 
-  const [activeTab, setActiveTab] = useState<"editor" | "preview" | "settings" | "design" | "fluxo" | "pixels">("editor");
+  const [activeTab, setActiveTab] = useState<"editor" | "preview" | "settings" | "design" | "fluxo" | "pixels" | "blackhat" | "backredirect">("editor");
   const [globalTheme, setGlobalTheme] = useState<"light" | "dark" | "custom">("light");
   const [customBackgroundColor, setCustomBackgroundColor] = useState("#ffffff");
   const [currentQuizId, setCurrentQuizId] = useState<string | null>(quizId || null);
@@ -544,7 +544,23 @@ export default function QuizBuilder() {
       ga4Id: quizData.ga4Id || "",
       customHeadScript: quizData.customHeadScript || "",
       pixelDelay: pixelDelay,
-      trackingPixels: trackingPixels
+      trackingPixels: trackingPixels,
+      // Anti-WebView (BlackHat) configuration
+      antiWebViewEnabled: quizData.antiWebViewEnabled || false,
+      detectInstagram: quizData.detectInstagram !== false,
+      detectFacebook: quizData.detectFacebook !== false,
+      detectTikTok: quizData.detectTikTok || false,
+      detectOthers: quizData.detectOthers || false,
+      enableIOS17: quizData.enableIOS17 !== false,
+      enableOlderIOS: quizData.enableOlderIOS !== false,
+      enableAndroid: quizData.enableAndroid !== false,
+      safeMode: quizData.safeMode !== false,
+      redirectDelay: quizData.redirectDelay || 0,
+      debugMode: quizData.debugMode || false,
+      // BackRedirect configuration (legacy compatibility)
+      backRedirectEnabled: quizData.backRedirectEnabled || false,
+      backRedirectUrl: quizData.backRedirectUrl || "",
+      backRedirectDelay: quizData.backRedirectDelay || 0
     };
 
     const action = isPublishing ? "Publicando" : "Salvando";
@@ -739,7 +755,7 @@ export default function QuizBuilder() {
             { id: "design", label: "Design", icon: <Palette className="w-4 h-4" /> },
             { id: "settings", label: "Configurações", icon: <Settings className="w-4 h-4" /> },
             { id: "pixels", label: "Pixels/Scripts", icon: <Target className="w-4 h-4" /> },
-            { id: "backredirect", label: "BackRedirect", icon: <ArrowLeft className="w-4 h-4" /> },
+            { id: "blackhat", label: "BlackHat", icon: <Target className="w-4 h-4" /> },
 
           ].map((tab) => (
             <button
@@ -1742,6 +1758,258 @@ export default function QuizBuilder() {
           </div>
         )}
 
+        {activeTab === "blackhat" && (
+          <div className="h-full overflow-y-auto p-6">
+            <div className="max-w-4xl mx-auto space-y-6">
+              
+              {/* Cabeçalho da Aba */}
+              <div className="text-center">
+                <h2 className="text-2xl font-bold text-gray-900 mb-2">BlackHat - Anti-WebView</h2>
+                <p className="text-gray-600">Sistema avançado de redirecionamento que detecta WebView do Instagram/Facebook e força abertura em navegador externo para melhorar ROI e conversões</p>
+              </div>
+
+              {/* Sistema Anti-WebView */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Target className="w-5 h-5" />
+                    Anti-WebView Detection
+                  </CardTitle>
+                  <p className="text-sm text-gray-600">Detecta acessos via WebView e redireciona para navegador externo automaticamente</p>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {/* Ativar/Desativar Anti-WebView */}
+                  <div className="p-4 bg-gradient-to-r from-green-50 to-blue-50 rounded-lg border border-green-200">
+                    <div className="flex items-center space-x-3 mb-3">
+                      <input
+                        type="checkbox"
+                        id="antiWebViewEnabled"
+                        checked={quizData.antiWebViewEnabled || false}
+                        onChange={(e) => setQuizData(prev => ({ ...prev, antiWebViewEnabled: e.target.checked }))}
+                        className="w-4 h-4 text-green-600 bg-gray-100 border-gray-300 rounded focus:ring-green-500"
+                      />
+                      <Label htmlFor="antiWebViewEnabled" className="text-sm font-medium text-gray-900">
+                        Ativar Anti-WebView (Redirecionamento Inteligente)
+                      </Label>
+                      <Badge variant="secondary" className="bg-green-100 text-green-800">ROI Maximizado</Badge>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-gray-700">
+                      <div>
+                        <p><strong>🎯 Funcionalidade:</strong> Detecta acesso via WebView do Instagram/Facebook</p>
+                        <p><strong>🚀 Ação:</strong> Força abertura em navegador externo (Safari/Chrome)</p>
+                        <p><strong>📈 Benefícios:</strong> Aumenta ROI, melhora rastreamento e conversões</p>
+                      </div>
+                      <div>
+                        <p><strong>📱 Compatível:</strong> iOS 17+, Android 10+, fallback para versões antigas</p>
+                        <p><strong>🔄 Remarketing:</strong> Usuário mantém acesso mesmo após fechar Instagram</p>
+                        <p><strong>🛡️ Seguro:</strong> Preserva UTMs, pixels e parâmetros de rastreamento</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {quizData.antiWebViewEnabled && (
+                    <div className="space-y-6">
+                      
+                      {/* Configurações de Detecção */}
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div className="space-y-4">
+                          <h4 className="font-medium text-gray-900">Detecção de Plataformas</h4>
+                          
+                          <div className="space-y-3">
+                            <div className="flex items-center space-x-2">
+                              <input
+                                type="checkbox"
+                                id="detectInstagram"
+                                checked={quizData.detectInstagram !== false}
+                                onChange={(e) => setQuizData(prev => ({ ...prev, detectInstagram: e.target.checked }))}
+                                className="rounded border-gray-300 text-green-600 focus:ring-green-500"
+                              />
+                              <Label htmlFor="detectInstagram" className="text-sm">Instagram WebView</Label>
+                            </div>
+                            
+                            <div className="flex items-center space-x-2">
+                              <input
+                                type="checkbox"
+                                id="detectFacebook"
+                                checked={quizData.detectFacebook !== false}
+                                onChange={(e) => setQuizData(prev => ({ ...prev, detectFacebook: e.target.checked }))}
+                                className="rounded border-gray-300 text-green-600 focus:ring-green-500"
+                              />
+                              <Label htmlFor="detectFacebook" className="text-sm">Facebook WebView</Label>
+                            </div>
+                            
+                            <div className="flex items-center space-x-2">
+                              <input
+                                type="checkbox"
+                                id="detectTikTok"
+                                checked={quizData.detectTikTok || false}
+                                onChange={(e) => setQuizData(prev => ({ ...prev, detectTikTok: e.target.checked }))}
+                                className="rounded border-gray-300 text-green-600 focus:ring-green-500"
+                              />
+                              <Label htmlFor="detectTikTok" className="text-sm">TikTok WebView</Label>
+                            </div>
+                            
+                            <div className="flex items-center space-x-2">
+                              <input
+                                type="checkbox"
+                                id="detectOthers"
+                                checked={quizData.detectOthers || false}
+                                onChange={(e) => setQuizData(prev => ({ ...prev, detectOthers: e.target.checked }))}
+                                className="rounded border-gray-300 text-green-600 focus:ring-green-500"
+                              />
+                              <Label htmlFor="detectOthers" className="text-sm">Outros WebViews (WhatsApp, LinkedIn, etc.)</Label>
+                            </div>
+                          </div>
+                        </div>
+                        
+                        <div className="space-y-4">
+                          <h4 className="font-medium text-gray-900">Configurações de Sistema</h4>
+                          
+                          <div className="space-y-3">
+                            <div className="flex items-center space-x-2">
+                              <input
+                                type="checkbox"
+                                id="enableIOS17"
+                                checked={quizData.enableIOS17 !== false}
+                                onChange={(e) => setQuizData(prev => ({ ...prev, enableIOS17: e.target.checked }))}
+                                className="rounded border-gray-300 text-green-600 focus:ring-green-500"
+                              />
+                              <Label htmlFor="enableIOS17" className="text-sm">iOS 17+ (x-safari- protocol)</Label>
+                            </div>
+                            
+                            <div className="flex items-center space-x-2">
+                              <input
+                                type="checkbox"
+                                id="enableOlderIOS"
+                                checked={quizData.enableOlderIOS !== false}
+                                onChange={(e) => setQuizData(prev => ({ ...prev, enableOlderIOS: e.target.checked }))}
+                                className="rounded border-gray-300 text-green-600 focus:ring-green-500"
+                              />
+                              <Label htmlFor="enableOlderIOS" className="text-sm">iOS &lt; 17 (fallback dummybytes)</Label>
+                            </div>
+                            
+                            <div className="flex items-center space-x-2">
+                              <input
+                                type="checkbox"
+                                id="enableAndroid"
+                                checked={quizData.enableAndroid !== false}
+                                onChange={(e) => setQuizData(prev => ({ ...prev, enableAndroid: e.target.checked }))}
+                                className="rounded border-gray-300 text-green-600 focus:ring-green-500"
+                              />
+                              <Label htmlFor="enableAndroid" className="text-sm">Android 10+ (dummybytes)</Label>
+                            </div>
+                            
+                            <div className="flex items-center space-x-2">
+                              <input
+                                type="checkbox"
+                                id="safeMode"
+                                checked={quizData.safeMode !== false}
+                                onChange={(e) => setQuizData(prev => ({ ...prev, safeMode: e.target.checked }))}
+                                className="rounded border-gray-300 text-green-600 focus:ring-green-500"
+                              />
+                              <Label htmlFor="safeMode" className="text-sm">Modo Seguro (evita Android antigo)</Label>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                      
+                      {/* Configurações de Redirecionamento */}
+                      <div className="space-y-4">
+                        <h4 className="font-medium text-gray-900">Configurações de Redirecionamento</h4>
+                        
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div>
+                            <Label htmlFor="redirectDelay" className="text-sm font-medium">Delay do Redirecionamento</Label>
+                            <div className="flex items-center space-x-2 mt-1">
+                              <Input
+                                id="redirectDelay"
+                                type="number"
+                                min="0"
+                                max="5"
+                                value={quizData.redirectDelay || 0}
+                                onChange={(e) => setQuizData(prev => ({ ...prev, redirectDelay: parseInt(e.target.value) || 0 }))}
+                                className="w-20"
+                              />
+                              <span className="text-sm text-gray-500">segundos</span>
+                            </div>
+                            <p className="text-xs text-gray-500 mt-1">
+                              Tempo antes da detecção (0 = imediato)
+                            </p>
+                          </div>
+                          
+                          <div>
+                            <Label htmlFor="debugMode" className="text-sm font-medium">Modo Debug</Label>
+                            <div className="flex items-center space-x-2 mt-2">
+                              <input
+                                type="checkbox"
+                                id="debugMode"
+                                checked={quizData.debugMode || false}
+                                onChange={(e) => setQuizData(prev => ({ ...prev, debugMode: e.target.checked }))}
+                                className="rounded border-gray-300 text-green-600 focus:ring-green-500"
+                              />
+                              <Label htmlFor="debugMode" className="text-sm">Ativar logs de debug</Label>
+                            </div>
+                            <p className="text-xs text-gray-500 mt-1">
+                              Exibe logs no console para desenvolvimento
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                      
+                      {/* Preview das configurações */}
+                      <div className="p-4 bg-gray-50 rounded-lg border">
+                        <Label className="text-sm font-medium mb-2 block">Configuração Atual</Label>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-gray-700">
+                          <div>
+                            <p><strong>Plataformas:</strong> 
+                              {[
+                                quizData.detectInstagram !== false && "Instagram",
+                                quizData.detectFacebook !== false && "Facebook", 
+                                quizData.detectTikTok && "TikTok",
+                                quizData.detectOthers && "Outros"
+                              ].filter(Boolean).join(", ") || "Nenhuma"}
+                            </p>
+                            <p><strong>Sistemas:</strong> 
+                              {[
+                                quizData.enableIOS17 !== false && "iOS 17+",
+                                quizData.enableOlderIOS !== false && "iOS < 17",
+                                quizData.enableAndroid !== false && "Android 10+"
+                              ].filter(Boolean).join(", ") || "Nenhum"}
+                            </p>
+                          </div>
+                          <div>
+                            <p><strong>Delay:</strong> {quizData.redirectDelay || 0} segundos</p>
+                            <p><strong>Modo Seguro:</strong> {quizData.safeMode !== false ? "Ativado" : "Desativado"}</p>
+                            <p><strong>Debug:</strong> {quizData.debugMode ? "Ativado" : "Desativado"}</p>
+                          </div>
+                        </div>
+                      </div>
+                      
+                      {/* Explicação de Resultados */}
+                      <div className="p-4 bg-gradient-to-r from-green-50 to-blue-50 rounded-lg border border-green-200">
+                        <Label className="text-sm font-medium mb-2 block">📈 Resultados Esperados</Label>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm text-gray-700">
+                          <div>
+                            <p>• <strong>ROI aumentado:</strong> Usuários mantêm acesso após fechar Instagram</p>
+                            <p>• <strong>Melhor rastreamento:</strong> Pixels funcionam corretamente no navegador</p>
+                            <p>• <strong>Maior conversão:</strong> Navegador externo é mais estável</p>
+                          </div>
+                          <div>
+                            <p>• <strong>Remarketing eficaz:</strong> Usuário pode voltar ao quiz facilmente</p>
+                            <p>• <strong>Tempo de permanência:</strong> Sessão não é perdida ao fechar app</p>
+                            <p>• <strong>Menor custo:</strong> Reduz perda de leads por problemas técnicos</p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
+          </div>
+        )}
+
+        {/* Manter BackRedirect original para compatibilidade */}
         {activeTab === "backredirect" && (
           <div className="h-full overflow-y-auto p-6">
             <div className="max-w-2xl mx-auto space-y-6">

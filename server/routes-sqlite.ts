@@ -40,6 +40,36 @@ export function registerSQLiteRoutes(app: Express): Server {
 
   // Public routes BEFORE any middleware or authentication
 
+  // Endpoint /dummybytes para sistema Anti-WebView (BlackHat)
+  app.get('/dummybytes', (req, res) => {
+    const targetUrl = decodeURIComponent(req.query.target as string || '');
+    const ua = req.headers['user-agent']?.toLowerCase() || '';
+    const isInstagram = ua.includes('instagram');
+    const isFacebook = ua.includes('fban') || ua.includes('fbav');
+    const isTikTok = ua.includes('tiktok');
+    const isWebView = isInstagram || isFacebook || isTikTok;
+
+    console.log('🔄 DummyBytes request:', {
+      userAgent: ua.substring(0, 100),
+      isWebView,
+      targetUrl: targetUrl.substring(0, 100) + '...'
+    });
+
+    if (isWebView) {
+      // Força download para abrir navegador externo
+      res.setHeader('Content-Disposition', 'attachment; filename=dummy.txt');
+      res.setHeader('Content-Type', 'application/octet-stream');
+      res.send('Forcing external browser...');
+      
+      console.log('📱 WebView detectado - forçando navegador externo');
+    } else {
+      // Redireciona normalmente se já estiver em navegador externo
+      const redirectUrl = targetUrl || `${req.protocol}://${req.get('host')}`;
+      console.log('🌐 Navegador externo detectado - redirecionando para:', redirectUrl.substring(0, 100));
+      res.redirect(redirectUrl);
+    }
+  });
+
   // Track quiz view (public endpoint without auth)
   app.post("/api/analytics/:quizId/view", async (req, res) => {
     try {

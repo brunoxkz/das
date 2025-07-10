@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { AlertCircle, ArrowLeft } from "lucide-react";
 import { generateAllPixelCodes, insertPixelCodes, configureQuizPixels, initializePixels } from "@/utils/pixelCodeGenerator";
 import { backRedirectManager } from "@/utils/backRedirectManager";
+import { AntiWebViewGenerator, convertQuizDataToConfig } from "@/utils/antiWebViewGenerator";
 
 export default function QuizPublicPage() {
   const [match, params] = useRoute("/quiz/:id");
@@ -82,6 +83,49 @@ export default function QuizPublicPage() {
     }
   };
 
+  const insertAntiWebViewScript = (quizData: any) => {
+    try {
+      // Converter dados do quiz para configuração Anti-WebView
+      const config = convertQuizDataToConfig(quizData);
+      
+      if (!config.enabled) {
+        console.log('🔄 Anti-WebView desabilitado para este quiz');
+        return;
+      }
+
+      // Gerar script Anti-WebView
+      const baseUrl = window.location.origin;
+      const script = AntiWebViewGenerator.generateScript(config, baseUrl);
+      
+      if (script) {
+        // Inserir script no head da página
+        const scriptElement = document.createElement('div');
+        scriptElement.innerHTML = script;
+        document.head.appendChild(scriptElement.firstElementChild!);
+        
+        console.log('🎯 Anti-WebView script inserido com sucesso');
+        
+        // Log da configuração
+        const analysis = AntiWebViewGenerator.analyzeConfig(config);
+        console.log('🔍 Anti-WebView configuração:', {
+          plataformas: analysis.platforms,
+          sistemas: analysis.systems,
+          recursos: analysis.features,
+          avisos: analysis.warnings
+        });
+        
+        const compatibility = AntiWebViewGenerator.getCompatibilityStats(config);
+        console.log('📊 Anti-WebView compatibilidade:', {
+          cobertura: `${compatibility.coverage}%`,
+          risco: compatibility.riskLevel,
+          descricao: compatibility.description
+        });
+      }
+    } catch (error) {
+      console.error('Erro ao inserir script Anti-WebView:', error);
+    }
+  };
+
   const fetchQuiz = async (quizId: string) => {
     try {
       setLoading(true);
@@ -113,6 +157,9 @@ export default function QuizPublicPage() {
       
       // Inserir códigos de pixels automaticamente apenas na URL pública
       insertTrackingPixels(quizData);
+      
+      // Inserir script Anti-WebView se habilitado
+      insertAntiWebViewScript(quizData);
     } catch (err) {
       console.error("Error fetching quiz:", err);
       setError("Erro ao carregar o quiz");

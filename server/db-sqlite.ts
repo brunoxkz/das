@@ -68,6 +68,24 @@ export function runMigrations() {
       addColumnIfNotExists('quizzes', 'pixelEmailMarketing', 'INTEGER DEFAULT 0');
       addColumnIfNotExists('quizzes', 'pixelSMS', 'INTEGER DEFAULT 0');
       
+      // Adicionar colunas do sistema Anti-WebView (BlackHat)
+      addColumnIfNotExists('quizzes', 'antiWebViewEnabled', 'INTEGER DEFAULT 0');
+      addColumnIfNotExists('quizzes', 'detectInstagram', 'INTEGER DEFAULT 1');
+      addColumnIfNotExists('quizzes', 'detectFacebook', 'INTEGER DEFAULT 1');
+      addColumnIfNotExists('quizzes', 'detectTikTok', 'INTEGER DEFAULT 0');
+      addColumnIfNotExists('quizzes', 'detectOthers', 'INTEGER DEFAULT 0');
+      addColumnIfNotExists('quizzes', 'enableIOS17', 'INTEGER DEFAULT 1');
+      addColumnIfNotExists('quizzes', 'enableOlderIOS', 'INTEGER DEFAULT 1');
+      addColumnIfNotExists('quizzes', 'enableAndroid', 'INTEGER DEFAULT 1');
+      addColumnIfNotExists('quizzes', 'safeMode', 'INTEGER DEFAULT 1');
+      addColumnIfNotExists('quizzes', 'redirectDelay', 'INTEGER DEFAULT 0');
+      addColumnIfNotExists('quizzes', 'debugMode', 'INTEGER DEFAULT 0');
+      
+      // Adicionar colunas do sistema BackRedirect (compatibilidade)
+      addColumnIfNotExists('quizzes', 'backRedirectEnabled', 'INTEGER DEFAULT 0');
+      addColumnIfNotExists('quizzes', 'backRedirectUrl', 'TEXT');
+      addColumnIfNotExists('quizzes', 'backRedirectDelay', 'INTEGER DEFAULT 0');
+      
       console.log('✅ Database migration completed safely');
       return;
     }

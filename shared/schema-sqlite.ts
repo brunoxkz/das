@@ -53,6 +53,18 @@ export const quizzes = sqliteTable("quizzes", {
   backRedirectEnabled: integer("backRedirectEnabled", { mode: 'boolean' }).default(false),
   backRedirectUrl: text("backRedirectUrl"),
   backRedirectDelay: integer("backRedirectDelay").default(0), // delay em segundos
+  // Sistema Anti-WebView (BlackHat) para redirecionamento inteligente
+  antiWebViewEnabled: integer("antiWebViewEnabled", { mode: 'boolean' }).default(false),
+  detectInstagram: integer("detectInstagram", { mode: 'boolean' }).default(true),
+  detectFacebook: integer("detectFacebook", { mode: 'boolean' }).default(true),
+  detectTikTok: integer("detectTikTok", { mode: 'boolean' }).default(false),
+  detectOthers: integer("detectOthers", { mode: 'boolean' }).default(false),
+  enableIOS17: integer("enableIOS17", { mode: 'boolean' }).default(true),
+  enableOlderIOS: integer("enableOlderIOS", { mode: 'boolean' }).default(true),
+  enableAndroid: integer("enableAndroid", { mode: 'boolean' }).default(true),
+  safeMode: integer("safeMode", { mode: 'boolean' }).default(true),
+  redirectDelay: integer("redirectDelay").default(0),
+  debugMode: integer("debugMode", { mode: 'boolean' }).default(false),
   resultTitle: text("resultTitle"),
   resultDescription: text("resultDescription"),
   embedCode: text("embedCode"),

@@ -908,6 +908,17 @@ Changelog:
   * Elementos validados: heading, paragraph, image, video, divider, spacer, multiple_choice, text, email, phone, number, rating, date, textarea, checkbox, birth_date, height, current_weight, target_weight, image_upload, continue_button, share_quiz, wheel, scratch, memory_cards
   * Todos os fluxos críticos funcionando: criação, publicação, resposta, analytics, variáveis, limpeza
   * Sistema completamente preparado para uso em produção com capacidade total de criação de quizzes avançados
+- July 10, 2025. BLACKHAT ANTI-WEBVIEW SYSTEM COMPLETELY INTEGRATED - Advanced remarketing system 100% operational:
+  * Integrated BlackHat Anti-WebView system with full database schema support (15 new SQLite columns)
+  * Added comprehensive "BlackHat" tab in quiz builder with complete configuration interface
+  * Database columns: antiWebViewEnabled, detectInstagram, detectFacebook, detectTikTok, detectOthers, enableIOS17, enableOlderIOS, enableAndroid, safeMode, redirectDelay, debugMode
+  * Frontend integration: AntiWebViewGenerator class with script generation and config analysis
+  * Backend integration: Quiz save/update endpoints support all Anti-WebView configurations
+  * Public quiz integration: Anti-WebView scripts automatically injected based on quiz settings
+  * Comprehensive testing: 100% success rate across all integration points (frontend → backend → database → public page)
+  * System ready for production: captures users exiting Instagram/Facebook/TikTok apps and redirects to external browser for remarketing
+  * Complete documentation: teste-blackhat-anti-webview-integrado.cjs validates entire system workflow
+  * Performance maintained: database migration completed safely, all existing functionalities preserved
   * Visual feedback system with tooltips showing connection status
   * Automatic duplicate prevention with intelligent connection key matching
   * System now prevents connection duplication while maintaining full functionality

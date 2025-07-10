@@ -1,0 +1,126 @@
+
+📄 Projeto: Anti-WebView – Documentação Técnica Avançada para Instalação e Uso
+
+---
+
+## 🔍 Visão Geral
+
+Anti-WebView é um módulo de redirecionamento avançado que detecta acessos via navegador interno do Instagram (WebView) e força o carregamento da URL em um navegador externo nativo do sistema (Safari no iOS, Chrome no Android).
+
+Esse comportamento é essencial para funis de quiz e páginas de vendas, pois melhora rastreamento, performance, conversão e persistência da sessão mesmo após o usuário fechar o Instagram.
+
+---
+
+## ✅ Objetivo:
+
+- Detectar acessos vindos do WebView do Instagram e Facebook
+- Redirecionar automaticamente para navegador externo
+- Preservar todos os parâmetros UTM e de rastreamento, mesmo se o script estiver no <head>
+- Garantir compatibilidade com pixels (Meta, Google, TikTok), que já estão presentes na página
+- Prevenir loops, erros ou falhas visuais em qualquer sistema operacional
+- Manter fallback silencioso (se não funcionar, exibir página normalmente no WebView)
+
+---
+
+## 📦 Estrutura necessária:
+
+1. Script JavaScript client-side
+2. Endpoint backend opcional (/dummybytes) para fallback em Android e iOS antigo
+3. Variável de ativação por quiz/usuário (ex: openInBrowser = true)
+4. Mecanismo de proteção contra redirecionamento duplo (redirected=1)
+
+---
+
+## 🧠 Script JavaScript (client-side)
+
+Este script pode ser inserido no <head> da página. Ele mantém todos os parâmetros UTM da URL intactos e não interfere no carregamento do pixel.
+
+<script>
+  const openInBrowser = true;
+
+  const ua = navigator.userAgent.toLowerCase();
+  const isInstagram = ua.includes('instagram');
+  const isAndroid = ua.includes('android');
+  const isIOS = /iphone|ipad|ipod/.test(ua);
+  const iOSVersion = parseInt((ua.match(/os (\d+)_/i) || [])[1]) || 0;
+
+  const url = new URL(window.location.href);
+  const alreadyRedirected = url.searchParams.get('redirected') === '1';
+
+  if (openInBrowser && isInstagram && !alreadyRedirected) {
+    if (isIOS && iOSVersion >= 17) {
+      const newUrl = `x-safari-${window.location.href}${window.location.search.includes('?') ? '&' : '?'}redirected=1`;
+      window.location.href = newUrl;
+    } else if (isAndroid || isIOS) {
+      const encodedUrl = encodeURIComponent(window.location.href);
+      window.location.href = `https://seudominio.com/dummybytes?target=${encodedUrl}`;
+    }
+  }
+</script>
+
+---
+
+## 🛠️ Endpoint /dummybytes (Node.js/Express)
+
+app.get('/dummybytes', (req, res) => {
+  const targetUrl = decodeURIComponent(req.query.target || '');
+  const ua = req.headers['user-agent']?.toLowerCase() || '';
+  const isInstagram = ua.includes('instagram');
+
+  if (isInstagram) {
+    res.setHeader('Content-Disposition', 'attachment; filename=dummy.txt');
+    res.setHeader('Content-Type', 'application/octet-stream');
+    res.send('Forcing external browser...');
+  } else {
+    res.redirect(targetUrl || 'https://seudominio.com');
+  }
+});
+
+---
+
+## 🧪 Compatibilidade de Sistemas
+
+| Sistema       | Comportamento esperado              | Risco          | Ação recomendada                     |
+|---------------|-------------------------------------|----------------|--------------------------------------|
+| iOS 17+       | Redireciona via x-safari-          | Baixo          | Ativar normalmente                   |
+| iOS < 17      | Usa dummybytes                     | Leve           | Funciona, mas menos suave            |
+| Android 10+   | Usa dummybytes                     | Baixo          | Compatível                           |
+| Android 6–9   | Pode falhar ou travar download      | Médio          | Detectar versão e evitar redirect    |
+| Android < 6   | Alta chance de erro/travamento      | Alto           | Não redirecionar                     |
+
+---
+
+## 🔄 O que acontece se não funcionar?
+
+- iOS < 17: fallback dummybytes é chamado silenciosamente
+- Android antigo: pode falhar ou travar, mas a página é exibida normalmente
+- Nenhum redirecionamento? Página segue em WebView sem erro
+- O pixel continuará carregando normalmente, pois o redirecionamento acontece antes de bloquear carregamentos e respeita o DOM
+
+---
+
+## 🛡️ Regras de segurança
+
+- Nunca use replace(), pois pode causar quebra silenciosa
+- Nunca remova UTMs: preserve todos os parâmetros
+- Nunca exiba botão de fallback – o script deve ser invisível
+- Sempre usar HTTPS real (nunca localhost)
+- Backend deve redirecionar silenciosamente se fora do WebView
+
+---
+
+## ✅ Requisitos para ativação no SaaS
+
+- Flag por quiz: openInBrowser = true
+- Variável embutida no HTML dinâmico
+- Script e endpoint ativados apenas se a flag for verdadeira
+- Pode ser inserido no <head> com total compatibilidade
+
+---
+
+## 📈 Resultados esperados
+
+- Melhora no CTR da página
+- Aumento de tempo de permanência
+- Diminuição de perda de cookies e eventos
+- Aumento das conversões com menor custo por aquisição
