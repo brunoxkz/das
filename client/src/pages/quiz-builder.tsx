@@ -91,7 +91,14 @@ export default function QuizBuilder() {
     facebookPixel: "",
     googlePixel: "",
     ga4Id: "",
+    taboolaPixel: "",
+    pinterestPixel: "",
+    linkedinPixel: "",
+    outbrainPixel: "",
+    mgidPixel: "",
     customHeadScript: "",
+    pixelDelay: false,
+    trackingPixels: [],
     enableWhatsappAutomation: false
   });
 
@@ -99,6 +106,80 @@ export default function QuizBuilder() {
   const [globalTheme, setGlobalTheme] = useState<"light" | "dark" | "custom">("light");
   const [customBackgroundColor, setCustomBackgroundColor] = useState("#ffffff");
   const [currentQuizId, setCurrentQuizId] = useState<string | null>(quizId || null);
+  
+  // Estado para pixels dinâmicos
+  const [trackingPixels, setTrackingPixels] = useState([
+    { id: 'facebook', name: 'Facebook Pixel', type: 'facebook', mode: 'normal', value: '', placeholder: '123456789012345', description: 'ID do pixel do Facebook para rastreamento de conversões' },
+    { id: 'google', name: 'Google Ads', type: 'google', mode: 'normal', value: '', placeholder: 'AW-123456789', description: 'ID do pixel do Google Ads para rastreamento' },
+    { id: 'ga4', name: 'Google Analytics 4', type: 'ga4', mode: 'normal', value: '', placeholder: 'G-XXXXXXXXXX', description: 'ID de medição do Google Analytics 4' }
+  ]);
+  
+  // Estado para delay dos pixels
+  const [pixelDelay, setPixelDelay] = useState(false);
+  
+  // Pixels disponíveis para adicionar
+  const availablePixelTypes = [
+    { type: 'facebook', name: 'Facebook', placeholder: '123456789012345', description: 'ID do pixel do Facebook para rastreamento de conversões', hasApi: true },
+    { type: 'google', name: 'Google Ads', placeholder: 'AW-123456789', description: 'ID do pixel do Google Ads para rastreamento', hasApi: true },
+    { type: 'ga4', name: 'Google Analytics 4', placeholder: 'G-XXXXXXXXXX', description: 'ID de medição do Google Analytics 4', hasApi: false },
+    { type: 'taboola', name: 'Taboola', placeholder: '1234567', description: 'ID do pixel do Taboola para rastreamento', hasApi: false },
+    { type: 'pinterest', name: 'Pinterest', placeholder: '2612345678901', description: 'ID do pixel do Pinterest para rastreamento', hasApi: false },
+    { type: 'linkedin', name: 'LinkedIn', placeholder: '123456', description: 'ID do pixel do LinkedIn para rastreamento', hasApi: false },
+    { type: 'outbrain', name: 'Outbrain', placeholder: '00abcdef12345678', description: 'ID do pixel do Outbrain para rastreamento', hasApi: false },
+    { type: 'mgid', name: 'MGID', placeholder: '123456', description: 'ID do pixel do MGID para rastreamento', hasApi: false },
+    { type: 'tiktok', name: 'TikTok', placeholder: 'C4A7..._..._...', description: 'ID do pixel do TikTok para rastreamento', hasApi: false },
+    { type: 'snapchat', name: 'Snapchat', placeholder: '12345678-1234-1234-1234-123456789012', description: 'ID do pixel do Snapchat para rastreamento', hasApi: false }
+  ];
+
+  // Função para obter o ícone do pixel
+  const getPixelIcon = (type: string) => {
+    const iconMap = {
+      facebook: <div className="w-6 h-6 bg-blue-600 rounded-full flex items-center justify-center text-white text-xs font-bold">f</div>,
+      google: <div className="w-6 h-6 bg-red-500 rounded-full flex items-center justify-center text-white text-xs font-bold">G</div>,
+      ga4: <div className="w-6 h-6 bg-orange-500 rounded-full flex items-center justify-center text-white text-xs font-bold">GA</div>,
+      taboola: <div className="w-6 h-6 bg-blue-400 rounded-full flex items-center justify-center text-white text-xs font-bold">T</div>,
+      pinterest: <div className="w-6 h-6 bg-red-600 rounded-full flex items-center justify-center text-white text-xs font-bold">P</div>,
+      linkedin: <div className="w-6 h-6 bg-blue-700 rounded-full flex items-center justify-center text-white text-xs font-bold">in</div>,
+      outbrain: <div className="w-6 h-6 bg-orange-600 rounded-full flex items-center justify-center text-white text-xs font-bold">O</div>,
+      mgid: <div className="w-6 h-6 bg-purple-600 rounded-full flex items-center justify-center text-white text-xs font-bold">M</div>,
+      tiktok: <div className="w-6 h-6 bg-black rounded-full flex items-center justify-center text-white text-xs font-bold">TT</div>,
+      snapchat: <div className="w-6 h-6 bg-yellow-400 rounded-full flex items-center justify-center text-white text-xs font-bold">S</div>
+    };
+    return iconMap[type] || <div className="w-6 h-6 bg-gray-500 rounded-full flex items-center justify-center text-white text-xs font-bold">?</div>;
+  };
+
+  // Função para adicionar pixel
+  const addPixel = (type: string) => {
+    const pixelType = availablePixelTypes.find(p => p.type === type);
+    if (pixelType) {
+      const newPixel = {
+        id: Date.now().toString(),
+        name: pixelType.name,
+        type: pixelType.type,
+        mode: 'normal',
+        value: '',
+        placeholder: pixelType.placeholder,
+        description: pixelType.description
+      };
+      setTrackingPixels(prev => [...prev, newPixel]);
+    }
+  };
+
+  // Função para remover pixel
+  const removePixel = (id: string) => {
+    setTrackingPixels(prev => prev.filter(pixel => pixel.id !== id));
+  };
+
+  // Função para atualizar pixel
+  const updatePixel = (id: string, field: string, value: string) => {
+    setTrackingPixels(prev => 
+      prev.map(pixel => 
+        pixel.id === id ? { ...pixel, [field]: value } : pixel
+      )
+    );
+  };
+
+  // Estados de controle já definidos anteriormente não são redefinidos aqui
 
   // Fetch quiz data if editing
   console.log("QUIZ BUILDER - Estados:", { isEditing, quizId, shouldFetch: !!isEditing && !!quizId });
@@ -252,7 +333,9 @@ export default function QuizBuilder() {
         facebookPixel: (existingQuiz as any).facebookPixel || "",
         googlePixel: (existingQuiz as any).googlePixel || "",
         ga4Id: (existingQuiz as any).ga4Id || "",
-        customHeadScript: (existingQuiz as any).customHeadScript || ""
+        customHeadScript: (existingQuiz as any).customHeadScript || "",
+        pixelDelay: (existingQuiz as any).pixelDelay || false,
+        trackingPixels: (existingQuiz as any).trackingPixels || []
       });
       console.log("QUIZ BUILDER DEBUG - Dados carregados:", {
         title: existingQuiz.title,
@@ -283,6 +366,16 @@ export default function QuizBuilder() {
       }));
     }
   }, [existingQuiz]);
+
+  // Sincronizar pixels dinâmicos quando quizData muda
+  useEffect(() => {
+    if (quizData.trackingPixels && Array.isArray(quizData.trackingPixels)) {
+      setTrackingPixels(quizData.trackingPixels);
+    }
+    if (quizData.pixelDelay !== undefined) {
+      setPixelDelay(quizData.pixelDelay);
+    }
+  }, [quizData.trackingPixels, quizData.pixelDelay]);
 
   // Auth check
   useEffect(() => {
@@ -348,7 +441,9 @@ export default function QuizBuilder() {
       facebookPixel: quizData.facebookPixel || "",
       googlePixel: quizData.googlePixel || "",
       ga4Id: quizData.ga4Id || "",
-      customHeadScript: quizData.customHeadScript || ""
+      customHeadScript: quizData.customHeadScript || "",
+      pixelDelay: pixelDelay,
+      trackingPixels: trackingPixels
     };
 
     const action = isPublishing ? "Publicando" : "Salvando";
@@ -943,47 +1038,112 @@ export default function QuizBuilder() {
                     <Settings className="w-5 h-5" />
                     Pixels de Rastreamento
                   </CardTitle>
-                  <p className="text-sm text-gray-600">Configure pixels para rastrear conversões e análises</p>
+                  <p className="text-sm text-gray-600">Configure pixels para rastrear conversões e análises (apenas na página publicada)</p>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  <div>
-                    <Label htmlFor="facebookPixel">Facebook Pixel ID</Label>
-                    <Input
-                      id="facebookPixel"
-                      value={quizData.facebookPixel || ""}
-                      onChange={(e) => setQuizData(prev => ({ ...prev, facebookPixel: e.target.value }))}
-                      placeholder="Ex: 123456789012345"
-                      className="mt-2"
-                    />
-                    <p className="text-xs text-gray-500 mt-1">ID do pixel do Facebook para rastreamento de conversões</p>
+                  {/* Opção de Delay */}
+                  <div className="p-4 bg-gradient-to-r from-green-50 to-blue-50 rounded-lg border border-green-200">
+                    <div className="flex items-center space-x-3 mb-3">
+                      <input
+                        type="checkbox"
+                        id="pixelDelay"
+                        checked={pixelDelay}
+                        onChange={(e) => setPixelDelay(e.target.checked)}
+                        className="w-4 h-4 text-green-600 bg-gray-100 border-gray-300 rounded focus:ring-green-500"
+                      />
+                      <Label htmlFor="pixelDelay" className="text-sm font-medium text-gray-900">
+                        Disparar pixels após 3 segundos
+                      </Label>
+                      <Badge variant="secondary" className="bg-green-100 text-green-800">Otimização CPA</Badge>
+                    </div>
+                    <p className="text-sm text-gray-700 leading-relaxed">
+                      <strong>💡 Sabia que disparar o pixel após 3 segundos de carregamento melhora seu CPA?</strong> 
+                      Assim ele evita aquelas pessoas que saem antes de carregar a página, e otimiza para pessoas que veem o conteúdo todo.
+                    </p>
                   </div>
 
-                  <div>
-                    <Label htmlFor="googlePixel">Google Ads Pixel ID</Label>
-                    <Input
-                      id="googlePixel"
-                      value={quizData.googlePixel || ""}
-                      onChange={(e) => setQuizData(prev => ({ ...prev, googlePixel: e.target.value }))}
-                      placeholder="Ex: AW-123456789"
-                      className="mt-2"
-                    />
-                    <p className="text-xs text-gray-500 mt-1">ID do pixel do Google Ads para rastreamento</p>
+                  {/* Pixels Ativos */}
+                  <div className="space-y-3">
+                    {trackingPixels.map((pixel) => (
+                      <Card key={pixel.id} className="border-2 border-gray-200 hover:border-green-300 transition-colors">
+                        <CardContent className="p-4">
+                          <div className="flex items-center justify-between mb-3">
+                            <div className="flex items-center gap-3">
+                              {getPixelIcon(pixel.type)}
+                              <div>
+                                <h4 className="font-medium text-gray-900">{pixel.name}</h4>
+                                <p className="text-xs text-gray-500">{pixel.description}</p>
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              {/* Seletor de Modo para pixels que suportam API */}
+                              {availablePixelTypes.find(p => p.type === pixel.type)?.hasApi && (
+                                <select
+                                  value={pixel.mode}
+                                  onChange={(e) => updatePixel(pixel.id, 'mode', e.target.value)}
+                                  className="text-xs px-2 py-1 border rounded-md bg-white"
+                                >
+                                  <option value="normal">Normal</option>
+                                  <option value="api">API</option>
+                                </select>
+                              )}
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => removePixel(pixel.id)}
+                                className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                              >
+                                <X className="w-4 h-4" />
+                              </Button>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <Input
+                              value={pixel.value}
+                              onChange={(e) => updatePixel(pixel.id, 'value', e.target.value)}
+                              placeholder={pixel.placeholder}
+                              className="flex-1"
+                            />
+                            {pixel.mode === 'api' && (
+                              <Badge variant="outline" className="bg-purple-50 text-purple-700 border-purple-200">
+                                API
+                              </Badge>
+                            )}
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))}
                   </div>
 
-                  <div>
-                    <Label htmlFor="ga4Id">Google Analytics 4 (GA4) ID</Label>
-                    <Input
-                      id="ga4Id"
-                      value={quizData.ga4Id || ""}
-                      onChange={(e) => setQuizData(prev => ({ ...prev, ga4Id: e.target.value }))}
-                      placeholder="Ex: G-XXXXXXXXXX"
-                      className="mt-2"
-                    />
-                    <p className="text-xs text-gray-500 mt-1">ID de medição do Google Analytics 4</p>
+                  {/* Botões para Adicionar Pixels */}
+                  <div className="pt-4 border-t">
+                    <div className="flex items-center justify-between mb-3">
+                      <h4 className="font-medium text-gray-900">Adicionar Pixels</h4>
+                      <Badge variant="outline" className="text-green-600 border-green-200">
+                        + Clique para adicionar
+                      </Badge>
+                    </div>
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                      {availablePixelTypes
+                        .filter(pixelType => !trackingPixels.find(p => p.type === pixelType.type))
+                        .map((pixelType) => (
+                          <Button
+                            key={pixelType.type}
+                            variant="outline"
+                            size="sm"
+                            onClick={() => addPixel(pixelType.type)}
+                            className="flex items-center gap-2 hover:bg-green-50 hover:border-green-300"
+                          >
+                            <Plus className="w-4 h-4" />
+                            {pixelType.name}
+                          </Button>
+                        ))}
+                    </div>
                   </div>
 
-                  <div>
-                    <Label htmlFor="customHeadScript">Script Personalizado (Head)</Label>
+                  {/* Script Personalizado */}
+                  <div className="pt-4 border-t">
+                    <Label htmlFor="customHeadScript" className="text-sm font-medium">Script Personalizado (Head)</Label>
                     <Textarea
                       id="customHeadScript"
                       value={quizData.customHeadScript || ""}
@@ -993,6 +1153,14 @@ export default function QuizBuilder() {
                       rows={4}
                     />
                     <p className="text-xs text-gray-500 mt-1">Scripts personalizados para adicionar no &lt;head&gt; da página</p>
+                  </div>
+
+                  {/* Informações importantes */}
+                  <div className="p-3 bg-blue-50 rounded-lg">
+                    <p className="text-sm text-blue-800">
+                      <strong>ℹ️ Importante:</strong> Os pixels são inseridos apenas na página publicada do quiz, não no preview. 
+                      Cada quiz tem seus próprios pixels configurados individualmente.
+                    </p>
                   </div>
                 </CardContent>
               </Card>
