@@ -875,36 +875,95 @@ export default function QuizBuilder() {
                     <Palette className="w-5 h-5" />
                     Cores e Fundo
                   </CardTitle>
-                  <p className="text-sm text-gray-600">Personalize as cores do seu funil</p>
+                  <p className="text-sm text-gray-600">Defina a cor padrão dos botões de continuar</p>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  {/* Tema Escuro */}
+                  {/* Cor do Botão Continuar */}
                   <div>
-                    <Label htmlFor="darkMode">Tema Escuro</Label>
-                    <div className="flex items-center space-x-2 mt-2">
+                    <Label htmlFor="buttonColor">Cor dos Botões Continuar</Label>
+                    <div className="flex items-center space-x-3 mt-2">
                       <input
-                        type="checkbox"
-                        id="darkMode"
-                        checked={quizData.design?.darkMode || false}
+                        type="color"
+                        id="buttonColor"
+                        value={quizData.design?.buttonColor || "#10b981"}
                         onChange={(e) => {
-                          const isDark = e.target.checked;
                           setQuizData(prev => ({ 
                             ...prev, 
                             design: { 
                               ...prev.design, 
-                              darkMode: isDark,
-                              backgroundColor: isDark ? "#1f2937" : "#f9fafb",
-                              globalBackgroundColor: isDark ? "#1f2937" : "#f9fafb",
-                              textColor: isDark ? "#f9fafb" : "#1f2937"
+                              buttonColor: e.target.value
                             }
                           }));
-                          setCustomBackgroundColor(isDark ? "#1f2937" : "#f9fafb");
                         }}
-                        className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500"
+                        className="w-8 h-8 rounded-full border-2 border-gray-300 cursor-pointer"
                       />
-                      <Label htmlFor="darkMode" className="font-medium">Ativar tema escuro</Label>
+                      <div className="flex-1">
+                        <Input
+                          type="text"
+                          value={quizData.design?.buttonColor || "#10b981"}
+                          onChange={(e) => {
+                            setQuizData(prev => ({ 
+                              ...prev, 
+                              design: { 
+                                ...prev.design, 
+                                buttonColor: e.target.value
+                              }
+                            }));
+                          }}
+                          placeholder="#10b981"
+                          className="text-sm"
+                        />
+                      </div>
                     </div>
-                    <p className="text-xs text-gray-500 mt-1">Aplica cores escuras automaticamente em todos os elementos</p>
+                    <p className="text-xs text-gray-500 mt-1">Esta cor será aplicada em todos os botões "Continuar" do quiz</p>
+                  </div>
+
+                  {/* Estilo dos Botões */}
+                  <div>
+                    <Label htmlFor="buttonStyle">Estilo dos Botões</Label>
+                    <select 
+                      id="buttonStyle"
+                      className="w-full px-3 py-2 border rounded-md text-sm mt-2"
+                      value={quizData.design?.buttonStyle || "rounded"}
+                      onChange={(e) => {
+                        setQuizData(prev => ({ 
+                          ...prev, 
+                          design: { 
+                            ...prev.design, 
+                            buttonStyle: e.target.value
+                          }
+                        }));
+                      }}
+                    >
+                      <option value="rounded">Arredondado</option>
+                      <option value="square">Quadrado</option>
+                      <option value="pill">Pill (muito arredondado)</option>
+                    </select>
+                    <p className="text-xs text-gray-500 mt-1">Formato visual dos botões de continuar</p>
+                  </div>
+
+                  {/* Tamanho dos Botões */}
+                  <div>
+                    <Label htmlFor="buttonSize">Tamanho dos Botões</Label>
+                    <select 
+                      id="buttonSize"
+                      className="w-full px-3 py-2 border rounded-md text-sm mt-2"
+                      value={quizData.design?.buttonSize || "medium"}
+                      onChange={(e) => {
+                        setQuizData(prev => ({ 
+                          ...prev, 
+                          design: { 
+                            ...prev.design, 
+                            buttonSize: e.target.value
+                          }
+                        }));
+                      }}
+                    >
+                      <option value="small">Pequeno</option>
+                      <option value="medium">Médio</option>
+                      <option value="large">Grande</option>
+                    </select>
+                    <p className="text-xs text-gray-500 mt-1">Tamanho dos botões de continuar</p>
                   </div>
                 </CardContent>
               </Card>

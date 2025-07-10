@@ -359,6 +359,18 @@ export function QuizPreview({ quiz }: QuizPreviewProps) {
     }
   }, [quiz]);
   
+  // Função para ajustar brilho da cor para hover
+  const adjustColorBrightness = (hexColor: string, percent: number) => {
+    const num = parseInt(hexColor.replace("#", ""), 16);
+    const amt = Math.round(2.55 * percent);
+    const R = (num >> 16) + amt;
+    const G = (num >> 8 & 0x00FF) + amt;
+    const B = (num & 0x0000FF) + amt;
+    return "#" + (0x1000000 + (R < 255 ? R < 1 ? 0 : R : 255) * 0x10000 +
+      (G < 255 ? G < 1 ? 0 : G : 255) * 0x100 +
+      (B < 255 ? B < 1 ? 0 : B : 255)).toString(16).slice(1);
+  };
+  
   // Determinar se é página de transição e encontrar elemento de fundo
   const currentPage = allPages[currentStep];
   const isTransitionPage = currentPage?.isTransition;
@@ -731,11 +743,11 @@ export function QuizPreview({ quiz }: QuizPreviewProps) {
 
       case 'continue_button':
         const buttonText = element.buttonText || "Continuar";
-        const buttonSize = element.buttonSize || "medium";
-        const buttonBorderRadius = element.buttonBorderRadius || "medium";
-        const buttonBgColor = element.buttonBackgroundColor || "#10B981";
+        const buttonSize = element.buttonSize || quiz.design?.buttonSize || "medium";
+        const buttonBorderRadius = element.buttonBorderRadius || quiz.design?.buttonStyle === "square" ? "none" : quiz.design?.buttonStyle === "pill" ? "full" : "medium";
+        const buttonBgColor = element.buttonBackgroundColor || quiz.design?.buttonColor || "#10B981";
         const buttonTextColor = element.buttonTextColor || "#FFFFFF";
-        const buttonHoverColor = element.buttonHoverColor || "#059669";
+        const buttonHoverColor = element.buttonHoverColor || (quiz.design?.buttonColor ? adjustColorBrightness(quiz.design.buttonColor, -20) : "#059669");
         
         const sizeClasses = {
           small: "px-4 py-2 text-sm",

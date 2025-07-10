@@ -1339,9 +1339,9 @@ const gameElementCategories = [
       case "continue_button":
         const buttonText = element.buttonText || "Continuar";
         const buttonAction = element.buttonAction || "next_page";
-        const buttonSize = element.buttonSize || "medium";
-        const buttonBorderRadius = element.buttonBorderRadius || "medium";
-        const buttonBgColor = element.buttonBackgroundColor || "#10B981";
+        const buttonSize = element.buttonSize || quiz.design?.buttonSize || "medium";
+        const buttonBorderRadius = element.buttonBorderRadius || quiz.design?.buttonStyle === "square" ? "none" : quiz.design?.buttonStyle === "pill" ? "full" : "medium";
+        const buttonBgColor = element.buttonBackgroundColor || quiz.design?.buttonColor || "#10B981";
         const buttonTextColor = element.buttonTextColor || "#FFFFFF";
         
         const sizeClasses = {

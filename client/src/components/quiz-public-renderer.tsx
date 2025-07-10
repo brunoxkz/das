@@ -573,12 +573,34 @@ export function QuizPublicRenderer({ quiz }: QuizPublicRendererProps) {
         );
 
       case 'continue_button':
+        const buttonBgColor = properties.buttonBackgroundColor || quiz.design?.buttonColor || "#10b981";
+        const buttonTextColor = properties.buttonTextColor || "#ffffff";
+        const buttonSize = properties.buttonSize || quiz.design?.buttonSize || "medium";
+        const buttonStyle = properties.buttonBorderRadius || quiz.design?.buttonStyle || "rounded";
+        
+        const sizeClasses = {
+          small: "px-4 py-2 text-sm",
+          medium: "px-6 py-3 text-base", 
+          large: "px-8 py-4 text-lg"
+        };
+        
+        const styleClasses = {
+          square: "rounded-none",
+          rounded: "rounded-md",
+          pill: "rounded-full"
+        };
+        
         return (
           <div key={id} className="flex justify-center">
             <Button
               onClick={handleNextPage}
               disabled={isSubmitting}
-              className="bg-green-500 hover:bg-green-600 text-white"
+              className={`${sizeClasses[buttonSize]} ${styleClasses[buttonStyle]} font-medium shadow-lg transition-all duration-200 hover:shadow-xl`}
+              style={{
+                backgroundColor: buttonBgColor,
+                color: buttonTextColor,
+                border: 'none'
+              }}
             >
               {isSubmitting ? (
                 <>
