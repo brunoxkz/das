@@ -48,7 +48,7 @@ import {
 
 interface Element {
   id: number;
-  type: "multiple_choice" | "text" | "rating" | "email" | "checkbox" | "date" | "phone" | "number" | "textarea" | "image_upload" | "animated_transition" | "heading" | "paragraph" | "image" | "divider" | "video" | "audio" | "birth_date" | "height" | "current_weight" | "target_weight" | "transition_background" | "transition_text" | "transition_counter" | "transition_loader" | "transition_redirect" | "spacer" | "game_wheel" | "game_scratch" | "game_color_pick" | "game_brick_break" | "game_memory_cards" | "game_slot_machine" | "continue_button" | "loading_question" | "share_quiz" | "price";
+  type: "multiple_choice" | "text" | "rating" | "email" | "checkbox" | "date" | "phone" | "number" | "textarea" | "image_upload" | "animated_transition" | "heading" | "paragraph" | "image" | "divider" | "video" | "audio" | "birth_date" | "height" | "current_weight" | "target_weight" | "transition_background" | "transition_text" | "transition_counter" | "transition_loader" | "transition_redirect" | "transition_button" | "spacer" | "game_wheel" | "game_scratch" | "game_color_pick" | "game_brick_break" | "game_memory_cards" | "game_slot_machine" | "continue_button" | "loading_question" | "share_quiz" | "price";
   content: string;
   question?: string;
   description?: string;
@@ -527,6 +527,11 @@ const transitionElementCategories = [
   {
     name: "🔄 Navegação",
     elements: [
+      {
+        type: "transition_button",
+        label: "Botão Continuar",
+        icon: <ArrowRight className="w-4 h-4" />,
+      },
       {
         type: "transition_redirect",
         label: "Redirecionamento",
@@ -1403,6 +1408,62 @@ const gameElementCategories = [
             <div className="text-xs text-blue-600 text-center">
               Ação: {buttonAction === "next_page" ? "Próxima página" : "URL personalizada"}
               {buttonAction === "url" && element.buttonUrl && (
+                <div className="text-gray-600 mt-1">→ {element.buttonUrl}</div>
+              )}
+            </div>
+          </div>
+        );
+
+      case "transition_button":
+        const transitionButtonText = element.buttonText || "Continuar";
+        const transitionButtonAction = element.buttonAction || "next_page";
+        const transitionButtonSize = element.buttonSize || "medium";
+        const transitionButtonBorderRadius = element.buttonBorderRadius || "medium";
+        const transitionButtonBgColor = element.buttonBackgroundColor || "#10B981";
+        const transitionButtonTextColor = element.buttonTextColor || "#FFFFFF";
+        
+        const transitionSizeClasses = {
+          small: "px-4 py-2 text-sm",
+          medium: "px-6 py-3 text-base",
+          large: "px-8 py-4 text-lg"
+        };
+        
+        const transitionRadiusClasses = {
+          none: "rounded-none",
+          small: "rounded-sm",
+          medium: "rounded-md",
+          large: "rounded-lg",
+          full: "rounded-full"
+        };
+        
+        return (
+          <div className="space-y-3 p-4 border-2 border-dashed border-green-200 rounded-lg bg-green-50">
+            <div className="flex items-center gap-2">
+              <ArrowRight className="w-4 h-4 text-green-600" />
+              <span className="font-medium text-green-800">Botão de Transição</span>
+            </div>
+            
+            <div className="flex justify-center">
+              <button
+                style={{
+                  backgroundColor: transitionButtonBgColor,
+                  color: transitionButtonTextColor,
+                }}
+                className={`
+                  ${transitionSizeClasses[transitionButtonSize]} 
+                  ${transitionRadiusClasses[transitionButtonBorderRadius]}
+                  font-medium shadow-lg transform transition-all duration-200
+                  hover:scale-105 hover:shadow-xl
+                  relative overflow-hidden
+                `}
+              >
+                <span className="relative z-10">{transitionButtonText}</span>
+              </button>
+            </div>
+            
+            <div className="text-xs text-green-600 text-center">
+              Ação: {transitionButtonAction === "next_page" ? "Próxima página" : "URL personalizada"}
+              {transitionButtonAction === "url" && element.buttonUrl && (
                 <div className="text-gray-600 mt-1">→ {element.buttonUrl}</div>
               )}
             </div>
@@ -4248,6 +4309,109 @@ const gameElementCategories = [
                           </Label>
                         </div>
                       )}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Propriedades para Botão de Transição */}
+              {selectedElementData.type === "transition_button" && (
+                <div className="space-y-4">
+                  <div>
+                    <Label>Texto do Botão</Label>
+                    <Input
+                      value={selectedElementData.buttonText || ""}
+                      onChange={(e) => updateElement(selectedElementData.id, { buttonText: e.target.value })}
+                      placeholder="Continuar"
+                      className="mt-1"
+                    />
+                  </div>
+
+                  <div>
+                    <Label>Ação do Botão</Label>
+                    <select 
+                      className="w-full px-3 py-2 border rounded-md mt-1"
+                      value={selectedElementData.buttonAction || "next_page"}
+                      onChange={(e) => updateElement(selectedElementData.id, { buttonAction: e.target.value })}
+                    >
+                      <option value="next_page">Próxima Página</option>
+                      <option value="url">URL Personalizada</option>
+                    </select>
+                  </div>
+
+                  {selectedElementData.buttonAction === "url" && (
+                    <div>
+                      <Label>URL de Destino</Label>
+                      <Input
+                        value={selectedElementData.buttonUrl || ""}
+                        onChange={(e) => updateElement(selectedElementData.id, { buttonUrl: e.target.value })}
+                        placeholder="https://exemplo.com"
+                        className="mt-1"
+                      />
+                    </div>
+                  )}
+
+                  <div>
+                    <Label>Tamanho do Botão</Label>
+                    <select 
+                      className="w-full px-3 py-2 border rounded-md mt-1"
+                      value={selectedElementData.buttonSize || "medium"}
+                      onChange={(e) => updateElement(selectedElementData.id, { buttonSize: e.target.value })}
+                    >
+                      <option value="small">Pequeno</option>
+                      <option value="medium">Médio</option>
+                      <option value="large">Grande</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <Label>Bordas</Label>
+                    <select 
+                      className="w-full px-3 py-2 border rounded-md mt-1"
+                      value={selectedElementData.buttonBorderRadius || "medium"}
+                      onChange={(e) => updateElement(selectedElementData.id, { buttonBorderRadius: e.target.value })}
+                    >
+                      <option value="none">Sem bordas</option>
+                      <option value="small">Pequenas</option>
+                      <option value="medium">Médias</option>
+                      <option value="large">Grandes</option>
+                      <option value="full">Totalmente arredondado</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <Label>Cor de Fundo</Label>
+                    <div className="flex gap-2 mt-1">
+                      <Input
+                        type="color"
+                        value={selectedElementData.buttonBackgroundColor || "#10B981"}
+                        onChange={(e) => updateElement(selectedElementData.id, { buttonBackgroundColor: e.target.value })}
+                        className="w-16 h-10 p-1"
+                      />
+                      <Input
+                        value={selectedElementData.buttonBackgroundColor || "#10B981"}
+                        onChange={(e) => updateElement(selectedElementData.id, { buttonBackgroundColor: e.target.value })}
+                        placeholder="#10B981"
+                        className="flex-1"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <Label>Cor do Texto</Label>
+                    <div className="flex gap-2 mt-1">
+                      <Input
+                        type="color"
+                        value={selectedElementData.buttonTextColor || "#FFFFFF"}
+                        onChange={(e) => updateElement(selectedElementData.id, { buttonTextColor: e.target.value })}
+                        className="w-16 h-10 p-1"
+                      />
+                      <Input
+                        value={selectedElementData.buttonTextColor || "#FFFFFF"}
+                        onChange={(e) => updateElement(selectedElementData.id, { buttonTextColor: e.target.value })}
+                        placeholder="#FFFFFF"
+                        className="flex-1"
+                      />
                     </div>
                   </div>
                 </div>
