@@ -111,6 +111,7 @@ export default function QuizBuilder() {
   const [globalTheme, setGlobalTheme] = useState<"light" | "dark" | "custom">("light");
   const [customBackgroundColor, setCustomBackgroundColor] = useState("#ffffff");
   const [currentQuizId, setCurrentQuizId] = useState<string | null>(quizId || null);
+  const [currentPageIndex, setCurrentPageIndex] = useState(0);
   
   // Estado para pixels dinâmicos
   const [trackingPixels, setTrackingPixels] = useState([
@@ -683,13 +684,16 @@ export default function QuizBuilder() {
                   }
                 }));
               }}
+              onActivePageChange={(pageIndex) => {
+                setCurrentPageIndex(pageIndex);
+              }}
             />
           </div>
         )}
 
         {activeTab === "preview" && (
           <div className="h-full overflow-y-auto bg-gray-50">
-            <QuizPreview quiz={quizData} />
+            <QuizPreview quiz={quizData} initialPageIndex={currentPageIndex} />
           </div>
         )}
 

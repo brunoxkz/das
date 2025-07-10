@@ -194,10 +194,11 @@ interface QuizPreviewProps {
       };
     };
   };
+  initialPageIndex?: number;
 }
 
-export function QuizPreview({ quiz }: QuizPreviewProps) {
-  const [currentStep, setCurrentStep] = useState(0);
+export function QuizPreview({ quiz, initialPageIndex = 0 }: QuizPreviewProps) {
+  const [currentStep, setCurrentStep] = useState(initialPageIndex);
   const [answers, setAnswers] = useState<Record<number, any>>({});
   const [gameStates, setGameStates] = useState<Record<string, any>>({});
   const [leadData, setLeadData] = useState({
@@ -207,6 +208,11 @@ export function QuizPreview({ quiz }: QuizPreviewProps) {
   });
 
   const { pages, settings } = quiz.structure;
+  
+  // Atualizar currentStep quando initialPageIndex muda
+  useEffect(() => {
+    setCurrentStep(initialPageIndex);
+  }, [initialPageIndex]);
   
   // Tema escuro - CORRIGIDO para usar a estrutura correta
   const isDarkMode = quiz.design?.darkMode || false;

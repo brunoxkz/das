@@ -264,6 +264,7 @@ interface PageEditorProps {
   globalTheme?: "light" | "dark" | "custom";
   customBackgroundColor?: string;
   onThemeChange?: (theme: "light" | "dark" | "custom", customColor?: string) => void;
+  onActivePageChange?: (pageIndex: number) => void;
 }
 
 export function PageEditorHorizontal({ 
@@ -271,9 +272,18 @@ export function PageEditorHorizontal({
   onPagesChange, 
   globalTheme: initialGlobalTheme = "light",
   customBackgroundColor: initialCustomBackgroundColor = "#ffffff",
-  onThemeChange 
+  onThemeChange,
+  onActivePageChange 
 }: PageEditorProps) {
   const [activePage, setActivePage] = useState(0);
+
+  // Notificar mudança de página ativa
+  const handleActivePageChange = (pageIndex: number) => {
+    setActivePage(pageIndex);
+    if (onActivePageChange) {
+      onActivePageChange(pageIndex);
+    }
+  };
   const [selectedElement, setSelectedElement] = useState<number | null>(null);
   const [activeTab, setActiveTab] = useState<'visual' | 'comportamento'>('visual');
   const [editingPageId, setEditingPageId] = useState<number | null>(null);
@@ -624,7 +634,7 @@ const gameElementCategories = [
       const newPages = pages.filter((_, i) => i !== index);
       onPagesChange(newPages);
       if (activePage >= newPages.length) {
-        setActivePage(newPages.length - 1);
+        handleActivePageChange(newPages.length - 1);
       }
     }
   };
@@ -640,11 +650,11 @@ const gameElementCategories = [
     
     // Ajustar página ativa após reordenação
     if (activePage === fromIndex) {
-      setActivePage(toIndex);
+      handleActivePageChange(toIndex);
     } else if (activePage > fromIndex && activePage <= toIndex) {
-      setActivePage(activePage - 1);
+      handleActivePageChange(activePage - 1);
     } else if (activePage < fromIndex && activePage >= toIndex) {
-      setActivePage(activePage + 1);
+      handleActivePageChange(activePage + 1);
     }
   };
 
@@ -2088,7 +2098,7 @@ const gameElementCategories = [
                   draggedPage === index && 'opacity-50 scale-95',
                   dragOverPage === index && 'border-primary-500 border-2 bg-primary-100 transform scale-105'
                 )}
-                onClick={() => setActivePage(index)}
+                onClick={() => handleActivePageChange(index)}
               >
                 <div className="flex items-center justify-between">
                   <div className="flex-1">
