@@ -414,7 +414,7 @@ export function QuizPreview({ quiz }: QuizPreviewProps) {
     );
 
     const contentElements = page.elements.filter((el: any) => 
-      ['heading', 'paragraph', 'image', 'video', 'divider'].includes(el.type)
+      ['heading', 'paragraph', 'image', 'video', 'divider', 'audio', 'spacer', 'share_quiz', 'animated_transition'].includes(el.type)
     );
 
     return (
@@ -472,6 +472,12 @@ export function QuizPreview({ quiz }: QuizPreviewProps) {
       
       case 'divider':
         return <hr className="my-6 border-gray-300" />;
+      
+      case 'spacer':
+        const spacerSize = element.spacerSize || "medium";
+        const spacerHeight = spacerSize === "small" ? "20px" : 
+                            spacerSize === "large" ? "60px" : "40px";
+        return <div style={{ height: spacerHeight }} className="w-full" />;
 
       case 'birth_date':
         return (
@@ -658,11 +664,7 @@ export function QuizPreview({ quiz }: QuizPreviewProps) {
       case 'loading_question':
         return <LoadingQuestionElement element={element} onAnswer={(answer) => handleAnswer(element.id, answer, element)} />;
       
-      case 'spacer':
-        const spacerSize = element.spacerSize || "medium";
-        const spacerHeight = spacerSize === "small" ? "20px" : 
-                            spacerSize === "large" ? "60px" : "40px";
-        return <div style={{ height: spacerHeight }} />;
+
 
       case 'text':
         return (
@@ -1390,7 +1392,18 @@ export function QuizPreview({ quiz }: QuizPreviewProps) {
         );
 
       default:
-        return null;
+        console.warn(`Elemento não suportado no preview: ${element.type}`, element);
+        return (
+          <div className="mb-4 p-4 border border-orange-200 bg-orange-50 rounded-lg">
+            <div className="flex items-center gap-2 mb-2">
+              <span className="text-orange-600 font-medium">⚠️ Elemento não suportado:</span>
+              <code className="text-orange-800 bg-orange-100 px-2 py-1 rounded text-sm">{element.type}</code>
+            </div>
+            <p className="text-orange-700 text-sm">
+              Este elemento será renderizado corretamente no quiz publicado.
+            </p>
+          </div>
+        );
     }
   };
 
