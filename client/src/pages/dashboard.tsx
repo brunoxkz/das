@@ -26,9 +26,10 @@ import { useAuth } from "@/hooks/use-auth-hybrid";
 import { useToast } from "@/hooks/use-toast";
 import { isUnauthorizedError } from "@/lib/authUtils";
 import { useEffect, useState } from "react";
+import React from "react";
 import { TutorialTour, dashboardTutorialSteps } from "@/components/tutorial-tour";
 import { HelpCircle, RefreshCcw } from "lucide-react";
-import { forceRefreshCache } from "@/lib/queryClient";
+import { forceRefreshCache, queryClient, apiRequest } from "@/lib/queryClient";
 
 export default function Dashboard() {
   const { toast } = useToast();
@@ -57,6 +58,85 @@ export default function Dashboard() {
     Math.round(allAnalytics.reduce((sum: number, a: any) => sum + (a.conversionRate || 0), 0) / allAnalytics.length) : 0;
 
   const dashboardLoading = quizzesLoading || analyticsLoading;
+
+  // Criar mapa de analytics por quiz para mostrar dados reais
+  const quizAnalyticsMap = React.useMemo(() => {
+    const map = new Map();
+    if (userQuizzes && Array.isArray(userQuizzes) && allAnalytics) {
+      userQuizzes.forEach((quiz: any) => {
+        const quizAnalytic = Array.isArray(allAnalytics) ? allAnalytics.find((a: any) => a.quizId === quiz.id) : null;
+        
+        const totalViews = quizAnalytic?.totalViews || 0;
+        const leadsWithContact = quizAnalytic?.leadsWithContact || 0;
+        const conversionRate = quizAnalytic?.conversionRate || 0;
+        
+        map.set(quiz.id, {
+          views: totalViews,
+          leads: leadsWithContact,
+          conversions: Math.round(conversionRate)
+        });
+      });
+    }
+    return map;
+  }, [userQuizzes, allAnalytics]);
+
+  // Funções dos botões
+  const handleDuplicateQuiz = async (quiz: any) => {
+    try {
+      console.log('Duplicando quiz:', quiz.id);
+      
+      const response = await apiRequest(`/api/quizzes/${quiz.id}/duplicate`, {
+        method: 'POST'
+      });
+      
+      if (response.quiz) {
+        toast({
+          title: "Quiz Duplicado",
+          description: `Uma cópia de "${quiz.title}" foi criada com sucesso!`,
+        });
+        
+        // Invalidar cache e recarregar dados
+        queryClient.invalidateQueries({ queryKey: ['/api/quizzes'] });
+        queryClient.invalidateQueries({ queryKey: ['/api/analytics'] });
+        
+        console.log('Quiz duplicado com sucesso:', response.quiz.id);
+      }
+    } catch (error) {
+      console.error('Erro ao duplicar quiz:', error);
+      toast({
+        title: "Erro",
+        description: "Não foi possível duplicar o quiz. Tente novamente.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handlePreviewQuiz = (quiz: any) => {
+    const previewUrl = `/quiz/${quiz.id}?preview=true`;
+    window.open(previewUrl, '_blank');
+  };
+
+  const handlePublicUrl = (quiz: any) => {
+    if (!quiz.isPublished) {
+      toast({
+        title: "Quiz não publicado",
+        description: "Este quiz precisa ser publicado antes de ter uma URL pública.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    const publicUrl = `${window.location.origin}/quiz/${quiz.id}`;
+    navigator.clipboard.writeText(publicUrl).then(() => {
+      toast({
+        title: "URL Copiada",
+        description: "A URL pública do quiz foi copiada para a área de transferência!",
+      });
+    }).catch(() => {
+      // Fallback - abrir em nova aba se não conseguir copiar
+      window.open(publicUrl, '_blank');
+    });
+  };
 
   // Redirect if not authenticated
   useEffect(() => {
@@ -119,7 +199,7 @@ export default function Dashboard() {
             <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-blue-800 bg-clip-text text-transparent">
               Dashboard
             </h1>
-            <p className="text-gray-600 text-lg">Plataforma otimizada para 100k+ usuários simultâneos</p>
+            <p className="text-gray-600 text-lg">Gerencie seus quizzes e campanhas de marketing</p>
             <div className="flex items-center gap-2 text-sm text-green-600 bg-green-50 px-3 py-1 rounded-full w-fit">
               <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
               Sistema em tempo real ativo
@@ -166,11 +246,11 @@ export default function Dashboard() {
           <Card className="relative overflow-hidden bg-gradient-to-br from-blue-500 via-blue-600 to-blue-700 text-white border-0 shadow-xl hover:shadow-2xl transition-all duration-300 group">
             <div className="absolute inset-0 bg-gradient-to-r from-blue-400/20 to-transparent"></div>
             <CardContent className="relative p-6">
-              <div className="flex items-center justify-between mb-4">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
                 <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center backdrop-blur-sm">
                   <BarChart3 className="w-6 h-6" />
                 </div>
-                <div className="text-blue-100 text-sm font-medium bg-blue-400/30 px-2 py-1 rounded-full">
+                <div className="text-blue-100 text-sm font-medium bg-blue-400/30 px-3 py-1 rounded-full text-center">
                   +2 esta semana
                 </div>
               </div>
@@ -186,17 +266,17 @@ export default function Dashboard() {
           <Card className="relative overflow-hidden bg-gradient-to-br from-green-500 via-green-600 to-emerald-700 text-white border-0 shadow-xl hover:shadow-2xl transition-all duration-300 group">
             <div className="absolute inset-0 bg-gradient-to-r from-green-400/20 to-transparent"></div>
             <CardContent className="relative p-6">
-              <div className="flex items-center justify-between mb-4">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
                 <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center backdrop-blur-sm">
                   <Eye className="w-6 h-6" />
                 </div>
-                <div className="text-green-100 text-sm font-medium bg-green-400/30 px-2 py-1 rounded-full">
+                <div className="text-green-100 text-sm font-medium bg-green-400/30 px-3 py-1 rounded-full text-center">
                   +15% hoje
                 </div>
               </div>
               <div>
                 <p className="text-green-100 text-sm font-medium mb-1">Visualizações</p>
-                <p className="text-3xl font-bold mb-1">{dashboardStats[1]?.value || 0}</p>
+                <p className="text-3xl font-bold mb-1">{dashboardStats[2]?.value || 0}</p>
                 <p className="text-green-200 text-xs">acessos únicos</p>
               </div>
             </CardContent>
@@ -216,7 +296,7 @@ export default function Dashboard() {
               </div>
               <div>
                 <p className="text-purple-100 text-sm font-medium mb-1">Respostas</p>
-                <p className="text-3xl font-bold mb-1">{dashboardStats[2]?.value || 0}</p>
+                <p className="text-3xl font-bold mb-1">{dashboardStats[1]?.value || 0}</p>
                 <p className="text-purple-200 text-xs">leads capturados</p>
               </div>
             </CardContent>
@@ -245,6 +325,7 @@ export default function Dashboard() {
       </div>
 
       {/* Recent Quizzes com Design Futurístico */}
+      <div className="mt-12">
       <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-xl" data-tutorial="quizzes-list">
         <CardHeader className="bg-gradient-to-r from-gray-50 to-blue-50 border-b border-gray-100">
           <CardTitle className="flex items-center gap-3 text-gray-900">
@@ -317,28 +398,50 @@ export default function Dashboard() {
                     <div className="flex items-center gap-3">
                       <div className="hidden lg:flex items-center gap-6 mr-6">
                         <div className="text-center">
-                          <div className="text-lg font-bold text-blue-600">0</div>
+                          <div className="text-lg font-bold text-blue-600">
+                            {quizAnalyticsMap.get(quiz.id)?.views || 0}
+                          </div>
                           <div className="text-xs text-gray-500 uppercase tracking-wide">Views</div>
                         </div>
                         <div className="text-center">
-                          <div className="text-lg font-bold text-green-600">0</div>
+                          <div className="text-lg font-bold text-green-600">
+                            {quizAnalyticsMap.get(quiz.id)?.leads || 0}
+                          </div>
                           <div className="text-xs text-gray-500 uppercase tracking-wide">Leads</div>
                         </div>
                       </div>
                       
                       <div className="flex items-center gap-2">
-                        <Button variant="ghost" size="sm" className="hover:bg-blue-100">
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          className="hover:bg-blue-100"
+                          onClick={() => handlePreviewQuiz(quiz)}
+                          title="Visualizar Preview"
+                        >
                           <Eye className="w-4 h-4" />
                         </Button>
                         <Link href={`/quizzes/${quiz.id}/edit`}>
-                          <Button variant="ghost" size="sm" className="hover:bg-purple-100">
+                          <Button variant="ghost" size="sm" className="hover:bg-purple-100" title="Editar Quiz">
                             <Edit className="w-4 h-4" />
                           </Button>
                         </Link>
-                        <Button variant="ghost" size="sm" className="hover:bg-gray-100">
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          className="hover:bg-gray-100"
+                          onClick={() => handleDuplicateQuiz(quiz)}
+                          title="Duplicar Quiz"
+                        >
                           <Copy className="w-4 h-4" />
                         </Button>
-                        <Button variant="ghost" size="sm" className="hover:bg-green-100">
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          className="hover:bg-green-100"
+                          onClick={() => handlePublicUrl(quiz)}
+                          title="Copiar URL Pública"
+                        >
                           <ExternalLink className="w-4 h-4" />
                         </Button>
                       </div>
@@ -360,9 +463,10 @@ export default function Dashboard() {
           )}
         </CardContent>
       </Card>
+      </div>
 
       {/* Dashboard de Ações Principais */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+      <div className="mt-12 grid grid-cols-1 lg:grid-cols-2 gap-8">
         {/* Botões Rápidos */}
         <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-xl hover:shadow-2xl transition-all duration-300">
           <CardHeader className="bg-gradient-to-r from-blue-50 to-purple-50 border-b border-gray-100">
@@ -460,7 +564,7 @@ export default function Dashboard() {
       </div>
 
       {/* Ações Rápidas com Design Futurístico */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="mt-12 grid grid-cols-2 lg:grid-cols-4 gap-6">
         <Link href="/analytics">
           <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-lg hover:shadow-2xl transition-all duration-300 cursor-pointer group">
             <CardContent className="p-6 text-center">

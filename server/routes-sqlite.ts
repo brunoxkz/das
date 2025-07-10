@@ -472,6 +472,46 @@ export function registerSQLiteRoutes(app: Express): Server {
     }
   });
 
+  // Duplicate quiz
+  app.post("/api/quizzes/:id/duplicate", verifyJWT, async (req: any, res) => {
+    try {
+      const quizId = req.params.id;
+      const userId = req.user.id;
+      
+      console.log(`📋 DUPLICANDO QUIZ: ${quizId} para usuário ${userId}`);
+      
+      // Verificar se o quiz existe e pertence ao usuário
+      const existingQuiz = await storage.getQuiz(quizId);
+      
+      if (!existingQuiz) {
+        return res.status(404).json({ message: "Quiz not found" });
+      }
+
+      if (existingQuiz.userId !== userId) {
+        return res.status(403).json({ message: "Access denied" });
+      }
+
+      // Duplicar o quiz
+      const duplicatedQuiz = await storage.duplicateQuiz(quizId, userId);
+
+      // Invalidar caches para atualizar a lista de quizzes
+      cache.invalidateUserCaches(userId);
+      
+      console.log(`✅ QUIZ DUPLICADO COM SUCESSO: ${duplicatedQuiz.id}`);
+      
+      res.json({ 
+        message: "Quiz duplicated successfully", 
+        quiz: duplicatedQuiz 
+      });
+    } catch (error) {
+      console.error("❌ ERRO AO DUPLICAR QUIZ:", error);
+      res.status(500).json({ 
+        message: "Failed to duplicate quiz",
+        error: error.message 
+      });
+    }
+  });
+
   // Get quiz responses with advanced filtering
   app.get("/api/quizzes/:id/responses", verifyJWT, async (req: any, res) => {
     try {

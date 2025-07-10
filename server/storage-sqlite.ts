@@ -60,6 +60,7 @@ export interface IStorage {
   createQuiz(quiz: InsertQuiz): Promise<Quiz>;
   updateQuiz(id: string, updates: Partial<InsertQuiz>): Promise<Quiz>;
   deleteQuiz(id: string): Promise<void>;
+  duplicateQuiz(id: string, userId: number): Promise<Quiz>;
 
   // Quiz template operations
   getQuizTemplates(): Promise<QuizTemplate[]>;
@@ -577,6 +578,46 @@ export class SQLiteStorage implements IStorage {
       console.log('✅ Quiz deletado com sucesso');
     } catch (error) {
       console.error('❌ Erro ao deletar quiz:', error);
+      throw error;
+    }
+  }
+
+  async duplicateQuiz(id: string, userId: number): Promise<Quiz> {
+    console.log(`📋 Duplicando quiz ${id} para usuário ${userId}...`);
+    
+    try {
+      // 1. Buscar quiz original
+      const originalQuiz = await this.getQuiz(id);
+      if (!originalQuiz) {
+        throw new Error(`Quiz ${id} não encontrado`);
+      }
+      
+      // 2. Verificar se o usuário tem permissão para duplicar
+      if (originalQuiz.userId !== userId) {
+        throw new Error(`Usuário ${userId} não tem permissão para duplicar quiz ${id}`);
+      }
+      
+      // 3. Criar novo quiz com dados do original
+      const newQuizId = nanoid();
+      const now = Math.floor(Date.now() / 1000);
+      
+      const duplicatedQuiz = await db.insert(quizzes)
+        .values({
+          id: newQuizId,
+          title: `${originalQuiz.title} (Cópia)`,
+          description: originalQuiz.description,
+          structure: originalQuiz.structure, // Mantém a estrutura completa
+          isPublished: false, // Sempre começa como rascunho
+          userId: userId,
+          createdAt: now,
+          updatedAt: now
+        })
+        .returning();
+      
+      console.log(`✅ Quiz duplicado com sucesso: ${newQuizId}`);
+      return duplicatedQuiz[0];
+    } catch (error) {
+      console.error('❌ Erro ao duplicar quiz:', error);
       throw error;
     }
   }
