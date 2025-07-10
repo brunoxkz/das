@@ -411,6 +411,46 @@ export function runMigrations() {
       );
     `;
 
+    const createAiConversionCampaignsTable = `
+      CREATE TABLE IF NOT EXISTS ai_conversion_campaigns (
+        id TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL,
+        name TEXT NOT NULL,
+        quiz_id TEXT NOT NULL,
+        quiz_title TEXT NOT NULL,
+        script_template TEXT NOT NULL,
+        heygen_avatar TEXT NOT NULL,
+        heygen_voice TEXT NOT NULL,
+        is_active INTEGER DEFAULT 1,
+        total_generated INTEGER DEFAULT 0,
+        total_views INTEGER DEFAULT 0,
+        total_conversions INTEGER DEFAULT 0,
+        created_at INTEGER NOT NULL DEFAULT (unixepoch()),
+        updated_at INTEGER NOT NULL DEFAULT (unixepoch()),
+        FOREIGN KEY (user_id) REFERENCES users(id),
+        FOREIGN KEY (quiz_id) REFERENCES quizzes(id)
+      );
+    `;
+
+    const createAiVideoGenerationsTable = `
+      CREATE TABLE IF NOT EXISTS ai_video_generations (
+        id TEXT PRIMARY KEY,
+        campaign_id TEXT NOT NULL,
+        response_id TEXT NOT NULL,
+        personalized_script TEXT NOT NULL,
+        heygen_video_id TEXT,
+        heygen_video_url TEXT,
+        status TEXT NOT NULL DEFAULT 'pending',
+        views INTEGER DEFAULT 0,
+        conversions INTEGER DEFAULT 0,
+        error TEXT,
+        created_at INTEGER NOT NULL DEFAULT (unixepoch()),
+        updated_at INTEGER NOT NULL DEFAULT (unixepoch()),
+        FOREIGN KEY (campaign_id) REFERENCES ai_conversion_campaigns(id) ON DELETE CASCADE,
+        FOREIGN KEY (response_id) REFERENCES quiz_responses(id) ON DELETE CASCADE
+      );
+    `;
+
     sqlite.exec(createUsersTable);
     sqlite.exec(createQuizzesTable);
     sqlite.exec(createQuizTemplatesTable);
@@ -429,6 +469,8 @@ export function runMigrations() {
     sqlite.exec(createWhatsappLogsTable);
     sqlite.exec(createWhatsappTemplatesTable);
     sqlite.exec(createWhatsappAutomationFilesTable);
+    sqlite.exec(createAiConversionCampaignsTable);
+    sqlite.exec(createAiVideoGenerationsTable);
     
     // Adicionar campos se não existirem
     try {

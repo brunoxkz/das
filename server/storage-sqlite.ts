@@ -23,6 +23,7 @@ sqlite.pragma('mmap_size = 268435456'); // 256MB memory mapping
 import { 
   users, quizzes, quizTemplates, quizResponses, responseVariables, quizAnalytics, emailCampaigns, emailTemplates, emailLogs, emailAutomations, emailSequences, smsTransactions, smsCampaigns, smsLogs,
   whatsappCampaigns, whatsappLogs, whatsappTemplates,
+  aiConversionCampaigns, aiVideoGenerations,
   type User, type UpsertUser, type InsertQuiz, type Quiz,
   type InsertQuizTemplate, type QuizTemplate,
   type InsertQuizResponse, type QuizResponse,
@@ -32,7 +33,9 @@ import {
   type InsertEmailTemplate, type EmailTemplate,
   type InsertEmailLog, type EmailLog,
   type InsertEmailAutomation, type EmailAutomation,
-  type InsertEmailSequence, type EmailSequence
+  type InsertEmailSequence, type EmailSequence,
+  type InsertAiConversionCampaign, type AiConversionCampaign,
+  type InsertAiVideoGeneration, type AiVideoGeneration
 } from "../shared/schema-sqlite";
 import { eq, desc, and, gte, lte, count, asc, or, inArray } from "drizzle-orm";
 import { nanoid } from "nanoid";
@@ -145,6 +148,20 @@ export interface IStorage {
   storeRefreshToken(userId: string, refreshToken: string): Promise<void>;
   isValidRefreshToken(userId: string, refreshToken: string): Promise<boolean>;
   invalidateRefreshTokens(userId: string): Promise<void>;
+
+  // I.A. CONVERSION + operations
+  getAiConversionCampaigns(userId: string): Promise<AiConversionCampaign[]>;
+  getAiConversionCampaign(id: string): Promise<AiConversionCampaign | undefined>;
+  createAiConversionCampaign(campaign: InsertAiConversionCampaign): Promise<AiConversionCampaign>;
+  updateAiConversionCampaign(id: string, updates: Partial<InsertAiConversionCampaign>): Promise<AiConversionCampaign>;
+  deleteAiConversionCampaign(id: string): Promise<void>;
+  
+  // AI Video Generation operations
+  getAiVideoGenerations(campaignId: string): Promise<AiVideoGeneration[]>;
+  getAiVideoGeneration(id: string): Promise<AiVideoGeneration | undefined>;
+  createAiVideoGeneration(generation: InsertAiVideoGeneration): Promise<AiVideoGeneration>;
+  updateAiVideoGeneration(id: string, updates: Partial<InsertAiVideoGeneration>): Promise<AiVideoGeneration>;
+  deleteAiVideoGeneration(id: string): Promise<void>;
 }
 
 export class SQLiteStorage implements IStorage {
@@ -2759,6 +2776,97 @@ export class SQLiteStorage implements IStorage {
           return acc;
         }, {} as Record<string, string>)
       }));
+  }
+
+  // ==================== I.A. CONVERSION + OPERATIONS ====================
+  
+  // AI Conversion Campaign operations
+  async getAiConversionCampaigns(userId: string): Promise<AiConversionCampaign[]> {
+    return await db.select()
+      .from(aiConversionCampaigns)
+      .where(eq(aiConversionCampaigns.userId, userId))
+      .orderBy(desc(aiConversionCampaigns.createdAt));
+  }
+
+  async getAiConversionCampaign(id: string): Promise<AiConversionCampaign | undefined> {
+    const campaigns = await db.select()
+      .from(aiConversionCampaigns)
+      .where(eq(aiConversionCampaigns.id, id));
+    return campaigns[0];
+  }
+
+  async createAiConversionCampaign(campaign: InsertAiConversionCampaign): Promise<AiConversionCampaign> {
+    const insertedCampaigns = await db.insert(aiConversionCampaigns)
+      .values({
+        ...campaign,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      })
+      .returning();
+    return insertedCampaigns[0];
+  }
+
+  async updateAiConversionCampaign(id: string, updates: Partial<InsertAiConversionCampaign>): Promise<AiConversionCampaign> {
+    const updatedCampaigns = await db.update(aiConversionCampaigns)
+      .set({
+        ...updates,
+        updatedAt: new Date()
+      })
+      .where(eq(aiConversionCampaigns.id, id))
+      .returning();
+    return updatedCampaigns[0];
+  }
+
+  async deleteAiConversionCampaign(id: string): Promise<void> {
+    // Primeiro deletar todas as gerações de vídeo relacionadas
+    await db.delete(aiVideoGenerations)
+      .where(eq(aiVideoGenerations.campaignId, id));
+    
+    // Depois deletar a campanha
+    await db.delete(aiConversionCampaigns)
+      .where(eq(aiConversionCampaigns.id, id));
+  }
+
+  // AI Video Generation operations
+  async getAiVideoGenerations(campaignId: string): Promise<AiVideoGeneration[]> {
+    return await db.select()
+      .from(aiVideoGenerations)
+      .where(eq(aiVideoGenerations.campaignId, campaignId))
+      .orderBy(desc(aiVideoGenerations.createdAt));
+  }
+
+  async getAiVideoGeneration(id: string): Promise<AiVideoGeneration | undefined> {
+    const generations = await db.select()
+      .from(aiVideoGenerations)
+      .where(eq(aiVideoGenerations.id, id));
+    return generations[0];
+  }
+
+  async createAiVideoGeneration(generation: InsertAiVideoGeneration): Promise<AiVideoGeneration> {
+    const insertedGenerations = await db.insert(aiVideoGenerations)
+      .values({
+        ...generation,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      })
+      .returning();
+    return insertedGenerations[0];
+  }
+
+  async updateAiVideoGeneration(id: string, updates: Partial<InsertAiVideoGeneration>): Promise<AiVideoGeneration> {
+    const updatedGenerations = await db.update(aiVideoGenerations)
+      .set({
+        ...updates,
+        updatedAt: new Date()
+      })
+      .where(eq(aiVideoGenerations.id, id))
+      .returning();
+    return updatedGenerations[0];
+  }
+
+  async deleteAiVideoGeneration(id: string): Promise<void> {
+    await db.delete(aiVideoGenerations)
+      .where(eq(aiVideoGenerations.id, id));
   }
 }
 

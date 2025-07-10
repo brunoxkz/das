@@ -117,7 +117,22 @@ export function Sidebar() {
       active: location === "/email-marketing",
       badge: "📧"
     },
-
+    {
+      title: "I.A. CONVERSION +",
+      href: "/ai-conversion",
+      icon: <Sparkles className="w-4 h-4" />,
+      active: location === "/ai-conversion",
+      badge: "🤖",
+      className: "text-purple-600 border-purple-200 bg-purple-50 hover:bg-purple-100"
+    },
+    {
+      title: "LIVEGRAM UGC",
+      href: "/livegram-ugc",
+      icon: <Users className="w-4 h-4" />,
+      active: location === "/livegram-ugc",
+      badge: "📸",
+      className: "text-blue-600 border-blue-200 bg-blue-50 hover:bg-blue-100"
+    },
     {
       title: "Automação WhatsApp",
       href: "/campanhas-whatsapp",

@@ -414,3 +414,47 @@ export type WhatsappAutomationFile = typeof whatsappAutomationFiles.$inferSelect
 export const insertResponseVariableSchema = createInsertSchema(responseVariables);
 export type InsertResponseVariable = z.infer<typeof insertResponseVariableSchema>;
 export type ResponseVariable = typeof responseVariables.$inferSelect;
+
+// AI Conversion Campaigns Schema
+export const aiConversionCampaigns = sqliteTable('ai_conversion_campaigns', {
+  id: text('id').primaryKey().notNull(),
+  userId: text('user_id').notNull().references(() => users.id),
+  name: text('name').notNull(),
+  quizId: text('quiz_id').notNull().references(() => quizzes.id),
+  quizTitle: text('quiz_title').notNull(),
+  scriptTemplate: text('script_template').notNull(),
+  heygenAvatar: text('heygen_avatar').notNull(),
+  heygenVoice: text('heygen_voice').notNull(),
+  isActive: integer('is_active', { mode: 'boolean' }).default(true),
+  totalGenerated: integer('total_generated').default(0),
+  totalViews: integer('total_views').default(0),
+  totalConversions: integer('total_conversions').default(0),
+  createdAt: integer('created_at', { mode: 'timestamp' }).notNull().default(sql`(unixepoch())`),
+  updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull().default(sql`(unixepoch())`)
+});
+
+// AI Video Generations Schema
+export const aiVideoGenerations = sqliteTable('ai_video_generations', {
+  id: text('id').primaryKey().notNull(),
+  campaignId: text('campaign_id').notNull().references(() => aiConversionCampaigns.id, { onDelete: 'cascade' }),
+  responseId: text('response_id').notNull().references(() => quizResponses.id, { onDelete: 'cascade' }),
+  personalizedScript: text('personalized_script').notNull(),
+  heygenVideoId: text('heygen_video_id'),
+  heygenVideoUrl: text('heygen_video_url'),
+  status: text('status').notNull().default('pending'), // pending, generating, completed, failed
+  views: integer('views').default(0),
+  conversions: integer('conversions').default(0),
+  error: text('error'),
+  createdAt: integer('created_at', { mode: 'timestamp' }).notNull().default(sql`(unixepoch())`),
+  updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull().default(sql`(unixepoch())`)
+});
+
+// AI Conversion Zod Schemas
+export const insertAiConversionCampaignSchema = createInsertSchema(aiConversionCampaigns);
+export const insertAiVideoGenerationSchema = createInsertSchema(aiVideoGenerations);
+
+// AI Conversion Types
+export type InsertAiConversionCampaign = z.infer<typeof insertAiConversionCampaignSchema>;
+export type AiConversionCampaign = typeof aiConversionCampaigns.$inferSelect;
+export type InsertAiVideoGeneration = z.infer<typeof insertAiVideoGenerationSchema>;
+export type AiVideoGeneration = typeof aiVideoGenerations.$inferSelect;

@@ -28,6 +28,7 @@ import CloakerPage from "@/pages/cloaker";
 import TesteSMSPage from "@/pages/teste-sms";
 
 import EmailMarketingPro from "@/pages/email-marketing-pro";
+import AIConversionPage from "@/pages/ai-conversion";
 import { useAuth } from "@/hooks/use-auth-hybrid";
 import { isUnauthorizedError } from "@/lib/authUtils";
 
@@ -137,6 +138,11 @@ function App() {
         <Route path="/email-marketing">
           <Layout>
             <EmailMarketingPro />
+          </Layout>
+        </Route>
+        <Route path="/ai-conversion">
+          <Layout>
+            <AIConversionPage />
           </Layout>
         </Route>
 
