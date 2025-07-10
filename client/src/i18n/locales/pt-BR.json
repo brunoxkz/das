@@ -1,0 +1,132 @@
+{
+  "nav": {
+    "dashboard": "Dashboard",
+    "quizzes": "Quizzes",
+    "myQuizzes": "Meus Quizzes",
+    "analytics": "Analytics",
+    "emailMarketing": "Email Marketing",
+    "smsMarketing": "SMS Marketing",
+    "whatsappMarketing": "WhatsApp Marketing",
+    "blackhatMarketing": "BlackHat Marketing",
+    "iaConversion": "I.A. Conversion +",
+    "settings": "Configurações",
+    "logout": "Sair"
+  },
+  "dashboard": {
+    "title": "Dashboard",
+    "subtitle": "Gerencie seus quizzes e campanhas de marketing",
+    "systemStatus": "Sistema em tempo real ativo",
+    "refresh": "Atualizar",
+    "tutorial": "Tutorial",
+    "createQuiz": "Criar Quiz",
+    "stats": {
+      "quizzes": "Quizzes",
+      "views": "Visualizações",
+      "responses": "Respostas",
+      "conversion": "Conversão",
+      "sms": "SMS",
+      "whatsapp": "WhatsApp",
+      "email": "Email"
+    },
+    "quickButtons": {
+      "title": "Botões Rápidos",
+      "subtitle": "Acesso rápido às principais funcionalidades",
+      "newQuiz": "Novo Quiz",
+      "templates": "Templates",
+      "analytics": "Ver Analytics",
+      "campaigns": "Campanhas"
+    },
+    "quickActions": {
+      "title": "Ações Rápidas",
+      "subtitle": "Ferramentas e utilitários",
+      "tutorials": "Tutoriais",
+      "plans": "Planos",
+      "support": "Suporte",
+      "documentation": "Documentação"
+    },
+    "yourQuizzes": {
+      "title": "Seus Quizzes",
+      "subtitle": "Gerencie e monitore performance",
+      "count": "quizzes",
+      "startJourney": "Comece sua jornada",
+      "createFirstQuiz": "Crie seu primeiro quiz para começar a capturar leads qualificados e impulsionar seu negócio",
+      "createFirstButton": "Criar Primeiro Quiz",
+      "views": "Views",
+      "leads": "Leads",
+      "published": "Publicado",
+      "draft": "Rascunho"
+    }
+  },
+  "common": {
+    "loading": "Carregando...",
+    "save": "Salvar",
+    "cancel": "Cancelar",
+    "delete": "Excluir",
+    "edit": "Editar",
+    "view": "Visualizar",
+    "create": "Criar",
+    "update": "Atualizar",
+    "search": "Pesquisar",
+    "filter": "Filtrar",
+    "export": "Exportar",
+    "import": "Importar",
+    "close": "Fechar",
+    "back": "Voltar",
+    "next": "Próximo",
+    "previous": "Anterior",
+    "confirm": "Confirmar",
+    "yes": "Sim",
+    "no": "Não"
+  },
+  "auth": {
+    "login": "Entrar",
+    "register": "Cadastrar",
+    "email": "Email",
+    "password": "Senha",
+    "firstName": "Primeiro Nome",
+    "lastName": "Sobrenome",
+    "forgotPassword": "Esqueci minha senha",
+    "loginSuccess": "Login realizado com sucesso",
+    "registerSuccess": "Cadastro realizado com sucesso",
+    "accessDenied": "Acesso negado",
+    "needLogin": "Você precisa estar logado para acessar o dashboard"
+  },
+  "quiz": {
+    "title": "Título",
+    "description": "Descrição",
+    "create": "Criar Quiz",
+    "edit": "Editar Quiz",
+    "preview": "Visualizar",
+    "publish": "Publicar",
+    "unpublish": "Despublicar",
+    "duplicate": "Duplicar",
+    "analytics": "Analytics",
+    "responses": "Respostas",
+    "settings": "Configurações"
+  },
+  "campaigns": {
+    "create": "Criar Campanha",
+    "name": "Nome da Campanha",
+    "status": "Status",
+    "active": "Ativa",
+    "paused": "Pausada",
+    "completed": "Concluída",
+    "sent": "Enviado",
+    "delivered": "Entregue",
+    "failed": "Falhou"
+  },
+  "language": {
+    "selector": "Idioma",
+    "portuguese": "Português",
+    "english": "English",
+    "spanish": "Español"
+  },
+  "notifications": {
+    "success": "Sucesso",
+    "error": "Erro",
+    "warning": "Aviso",
+    "info": "Informação",
+    "cacheUpdated": "Cache Atualizado",
+    "dataRefreshed": "Dados mais recentes carregados com sucesso!"
+  }
+}

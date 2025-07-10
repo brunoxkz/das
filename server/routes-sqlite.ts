@@ -1879,6 +1879,40 @@ export function registerSQLiteRoutes(app: Express): Server {
     }
   });
 
+  // User Credits endpoint (general credits for all services)
+  app.get("/api/user/credits", verifyJWT, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const user = await storage.getUser(userId);
+      
+      if (!user) {
+        return res.status(404).json({ error: "User not found" });
+      }
+      
+      // Calcular créditos totais do usuário
+      const smsCredits = user.smsCredits || 100;
+      const emailCredits = user.emailCredits || 500;
+      const whatsappCredits = user.whatsappCredits || 250;
+      const aiCredits = user.aiCredits || 50;
+      
+      // Calcular total de créditos disponíveis
+      const totalCredits = smsCredits + emailCredits + whatsappCredits + aiCredits;
+      
+      res.json({
+        credits: totalCredits,
+        breakdown: {
+          sms: smsCredits,
+          email: emailCredits,
+          whatsapp: whatsappCredits,
+          ai: aiCredits
+        }
+      });
+    } catch (error) {
+      console.error("Error fetching user credits:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
   app.get("/api/health", (req, res) => {
     res.json({ 
       status: "ok", 

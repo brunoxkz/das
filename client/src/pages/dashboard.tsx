@@ -69,11 +69,18 @@ export default function Dashboard() {
     retry: false,
   });
 
+  // Buscar créditos do usuário
+  const { data: userCredits } = useQuery({
+    queryKey: ["/api/user/credits"],
+    enabled: isAuthenticated,
+    retry: false,
+  });
+
   // Calcular estatísticas reais baseadas nos analytics
   const totalQuizzes = userQuizzes?.length || 0;
-  const totalLeads = allAnalytics ? allAnalytics.reduce((sum: number, a: any) => sum + (a.leadsWithContact || 0), 0) : 0;
-  const totalViews = allAnalytics ? allAnalytics.reduce((sum: number, a: any) => sum + (a.totalViews || 0), 0) : 0;
-  const avgConversionRate = allAnalytics && allAnalytics.length > 0 ? 
+  const totalLeads = (allAnalytics && Array.isArray(allAnalytics)) ? allAnalytics.reduce((sum: number, a: any) => sum + (a.leadsWithContact || 0), 0) : 0;
+  const totalViews = (allAnalytics && Array.isArray(allAnalytics)) ? allAnalytics.reduce((sum: number, a: any) => sum + (a.totalViews || 0), 0) : 0;
+  const avgConversionRate = (allAnalytics && Array.isArray(allAnalytics) && allAnalytics.length > 0) ? 
     Math.round(allAnalytics.reduce((sum: number, a: any) => sum + (a.conversionRate || 0), 0) / allAnalytics.length) : 0;
 
   const dashboardLoading = quizzesLoading || analyticsLoading;
@@ -331,7 +338,7 @@ export default function Dashboard() {
         </div>
 
         {/* Nova linha de disparos de campanhas - Design Minimalista */}
-        <div className="grid grid-cols-3 gap-4 mt-6">
+        <div className="grid grid-cols-4 gap-4 mt-6">
           {/* SMS Disparos */}
           <Card className="bg-white/80 backdrop-blur-sm border border-gray-100 shadow-sm hover:shadow-md transition-all duration-200">
             <CardContent className="p-4">
@@ -377,6 +384,23 @@ export default function Dashboard() {
                   <div>
                     <p className="text-sm text-gray-600">Email</p>
                     <p className="text-lg font-semibold text-gray-900">{emailCount?.count || 0}</p>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Créditos Card */}
+          <Card className="bg-white/80 backdrop-blur-sm border border-gray-100 shadow-sm hover:shadow-md transition-all duration-200">
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <div className="w-6 h-6 bg-yellow-100 rounded-md flex items-center justify-center">
+                    <Shield className="w-3 h-3 text-yellow-600" />
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-600">Créditos</p>
+                    <p className="text-lg font-semibold text-gray-900">{userCredits?.credits || 0}</p>
                   </div>
                 </div>
               </div>
