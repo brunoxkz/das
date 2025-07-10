@@ -215,8 +215,35 @@ export const QuizFlowEditor: React.FC<QuizFlowEditorProps> = ({
     return elements;
   };
 
+  const validateConnection = (fromNodeId: string, elementId?: string) => {
+    const pageConnections = flowSystem.connections.filter(conn => conn.from === fromNodeId);
+    
+    if (elementId) {
+      // Tentando criar conexão específica de elemento/opção
+      const pageRedirection = pageConnections.find(conn => !conn.condition?.elementId);
+      if (pageRedirection) {
+        alert('⚠️ CONFLITO DE REDIRECIONAMENTO\n\nEsta página já tem redirecionamento geral (verde) configurado.\n\nPara usar redirecionamentos específicos (azul), primeiro remova o redirecionamento da página.');
+        return false;
+      }
+    } else {
+      // Tentando criar conexão geral da página
+      const elementRedirections = pageConnections.filter(conn => conn.condition?.elementId);
+      if (elementRedirections.length > 0) {
+        alert('⚠️ CONFLITO DE REDIRECIONAMENTO\n\nEsta página já tem redirecionamentos específicos (azul) configurados.\n\nPara usar redirecionamento geral da página (verde), primeiro remova todos os redirecionamentos específicos.');
+        return false;
+      }
+    }
+    
+    return true;
+  };
+
   const startConnection = (fromNodeId: string, event: React.MouseEvent, elementId?: string, optionIndex?: number) => {
     event.stopPropagation();
+    
+    // Validar se a conexão é permitida
+    if (!validateConnection(fromNodeId, elementId)) {
+      return;
+    }
     
     const rect = canvasRef.current?.getBoundingClientRect();
     if (!rect) return;
@@ -273,37 +300,48 @@ export const QuizFlowEditor: React.FC<QuizFlowEditorProps> = ({
   };
 
   const finishConnection = (toNodeId: string) => {
-    if (!connectionDrawing) return;
+    if (!connectionDrawing || connectionDrawing.from === toNodeId) return;
     
-    // Verificar se já existe uma conexão com o mesmo elemento/opção
-    const connectionKey = `${connectionDrawing.from}_${connectionDrawing.elementId || 'page'}_${connectionDrawing.optionIndex !== undefined ? connectionDrawing.optionIndex : 'main'}`;
+    const fromNode = flowSystem.nodes.find(n => n.id === connectionDrawing.from);
+    const toNode = flowSystem.nodes.find(n => n.id === toNodeId);
     
-    // Remover conexão existente se houver
-    const filteredConnections = flowSystem.connections.filter(conn => {
-      const existingKey = `${conn.from}_${conn.condition?.elementId || 'page'}_${conn.condition?.optionIndex !== undefined ? conn.condition.optionIndex : 'main'}`;
-      return existingKey !== connectionKey;
-    });
+    if (!fromNode || !toNode) return;
+    
+    // NOVA LÓGICA: Permitir múltiplas conexões para a mesma página
+    // Apenas verificar se a conexão específica já existe (elementId + optionIndex)
+    const duplicateConnection = flowSystem.connections.find(conn => 
+      conn.from === connectionDrawing.from &&
+      conn.to === toNodeId &&
+      conn.condition?.elementId === connectionDrawing.elementId &&
+      conn.condition?.optionIndex === connectionDrawing.optionIndex
+    );
+    
+    // Se a conexão exata já existe, não criar duplicata
+    if (duplicateConnection) {
+      setConnectionDrawing(null);
+      return;
+    }
     
     const newConnection: FlowConnection = {
       id: `conn_${Date.now()}`,
       from: connectionDrawing.from,
       to: toNodeId,
-      label: `${connectionDrawing.from} → ${toNodeId}`,
       condition: connectionDrawing.elementId ? {
-        pageId: connectionDrawing.from,
+        pageId: fromNode.pageId,
         elementId: connectionDrawing.elementId,
-        elementType: connectionDrawing.elementType || 'text',
-        field: connectionDrawing.field || 'value',
-        operator: 'equals',
-        value: connectionDrawing.value || '',
+        elementType: 'multiple_choice',
+        field: `field_${connectionDrawing.elementId}`,
+        operator: connectionDrawing.optionIndex !== undefined ? 'option_selected' : 'exists',
+        value: connectionDrawing.optionIndex !== undefined ? `option_${connectionDrawing.optionIndex}` : 'true',
         optionIndex: connectionDrawing.optionIndex
-      } : undefined
+      } : undefined,
+      label: 'redireciona para'
     };
     
-    // Adicionar nova conexão sem duplicatas
+    // Adicionar nova conexão SEM remover existentes
     const updatedFlowSystem = {
       ...flowSystem,
-      connections: [...filteredConnections, newConnection]
+      connections: [...flowSystem.connections, newConnection]
     };
     
     onFlowChange(updatedFlowSystem);
@@ -535,7 +573,7 @@ export const QuizFlowEditor: React.FC<QuizFlowEditorProps> = ({
                         className="pointer-events-auto"
                         onClick={() => editCondition(connection)}
                       />
-                      {/* Texto da conexão sempre "redireciona para" */}
+                      {/* Texto da conexão "redirecionar" */}
                       <text
                         x={(fromX + toX) / 2}
                         y={(fromY + toY) / 2 - 5}
@@ -543,8 +581,62 @@ export const QuizFlowEditor: React.FC<QuizFlowEditorProps> = ({
                         className="text-xs fill-gray-600 pointer-events-auto cursor-pointer"
                         onClick={() => editCondition(connection)}
                       >
-                        redireciona para
+                        redirecionar
                       </text>
+                      
+                      {/* Botão lixeira para remover conexão */}
+                      <g>
+                        <circle
+                          cx={(fromX + toX) / 2 + 35}
+                          cy={(fromY + toY) / 2 + 8}
+                          r="10"
+                          fill="#ef4444"
+                          className="cursor-pointer hover:fill-red-600 pointer-events-auto"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            removeConnection(connection.id);
+                          }}
+                        />
+                        {/* Ícone de lixeira */}
+                        <g transform={`translate(${(fromX + toX) / 2 + 35}, ${(fromY + toY) / 2 + 8})`}>
+                          <rect
+                            x="-3"
+                            y="-4"
+                            width="6"
+                            height="7"
+                            fill="none"
+                            stroke="white"
+                            strokeWidth="1"
+                            className="pointer-events-none"
+                          />
+                          <rect
+                            x="-2"
+                            y="-5"
+                            width="4"
+                            height="1"
+                            fill="white"
+                            className="pointer-events-none"
+                          />
+                          <line
+                            x1="-1"
+                            y1="-2"
+                            x2="-1"
+                            y2="1"
+                            stroke="white"
+                            strokeWidth="0.5"
+                            className="pointer-events-none"
+                          />
+                          <line
+                            x1="1"
+                            y1="-2"
+                            x2="1"
+                            y2="1"
+                            stroke="white"
+                            strokeWidth="0.5"
+                            className="pointer-events-none"
+                          />
+                        </g>
+                      </g>
                     </g>
                   );
                 })}
@@ -629,18 +721,17 @@ export const QuizFlowEditor: React.FC<QuizFlowEditorProps> = ({
                           <span className="font-medium text-sm">{node.title}</span>
                         </div>
                         <div className="flex items-center gap-1">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="h-6 w-6 p-0"
+                          {/* Botão VERDE para redirecionamento geral da página */}
+                          <div 
+                            className="w-6 h-6 bg-green-500 hover:bg-green-600 rounded-full cursor-crosshair flex items-center justify-center transition-all shadow-lg"
                             onClick={(e) => {
                               e.stopPropagation();
                               startConnection(node.id, e);
                             }}
-                            title="Criar conexão"
+                            title="Redirecionamento da página (verde) - todas as respostas vão para o mesmo destino"
                           >
-                            <Link2 className="w-3 h-3" />
-                          </Button>
+                            <Link2 className="w-3 h-3 text-white" />
+                          </div>
                           <MousePointer className="w-4 h-4 text-gray-400" />
                         </div>
                       </div>
@@ -673,15 +764,16 @@ export const QuizFlowEditor: React.FC<QuizFlowEditorProps> = ({
                                         {element.type}: {element.properties?.text || element.content || 'Sem texto'}
                                       </span>
                                       
-                                      {/* Bolinha de conexão do elemento */}
+                                      {/* Bolinha de conexão do elemento - AZUL para elementos específicos */}
                                       <div 
                                         className={`w-4 h-4 border-2 border-white rounded-full cursor-crosshair flex-shrink-0 hover:scale-110 transition-all ${
                                           hasConnection 
                                             ? 'bg-gray-400 hover:bg-gray-500 shadow-lg' 
-                                            : isClickable 
-                                              ? 'bg-orange-500 hover:bg-orange-600 shadow-lg' 
-                                              : 'bg-blue-500 hover:bg-blue-600 shadow-lg'
+                                            : 'bg-blue-500 hover:bg-blue-600 shadow-lg'
                                         }`}
+                                        title={hasConnection 
+                                          ? "Já conectado - arrastar para reconectar" 
+                                          : "Criar redirecionamento específico (azul) - arrastar para conectar elemento"}
                                         onMouseDown={(e) => {
                                           e.preventDefault();
                                           e.stopPropagation();
@@ -691,11 +783,6 @@ export const QuizFlowEditor: React.FC<QuizFlowEditorProps> = ({
                                           e.preventDefault();
                                           e.stopPropagation();
                                         }}
-                                        title={hasConnection 
-                                          ? "🔗 Já conectado - arrastar para reconectar" 
-                                          : isClickable 
-                                            ? "🔗 Arrastar para conectar elemento clicável" 
-                                            : "🔗 Arrastar para conectar elemento"}
                                       />
                                     </div>
                                     
