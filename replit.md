@@ -922,6 +922,21 @@ Changelog:
   * Suporte completo para elementos múltipla escolha com conexões por opção individual
   * Interface aprimorada com feedback visual durante criação de conexões
   * Sistema de conexões responsivo com tooltips informativos para cada ponto de conexão
+- July 10, 2025. SISTEMA DE TEMPLATES EXPANDIDO PARA 50 TEMPLATES COMPLETOS - Implementação abrangente finalizada:
+  * Expandidas as categorias de templates para 18 categorias distintas (E-commerce, SaaS, Saúde, Educação, Negócios, Imóveis, Finanças, Alimentação, Fitness, Design, Automotivo, Games, Música, Fotografia, Estilo de Vida, Viagens, Tecnologia)
+  * Criados 50 templates completos com estruturas detalhadas prontas para uso
+  * Cada template inclui páginas completas com elementos pré-configurados (múltipla escolha, texto, email, telefone, campos especiais)
+  * Implementado sistema de preview avançado com modal detalhado mostrando estrutura completa do template
+  * Modal de confirmação com preview visual de todos os elementos, páginas e configurações
+  * Seções informativas sobre funcionalidades incluídas e processo de importação
+  * Botões separados para Preview e "Usar Template" com interface otimizada
+  * Templates organizados por categoria com thumbnails emoji distintivos
+  * Sistema de popularidade implementado com badges visuais para templates destacados
+  * Estruturas prontas incluem: campos de captura de leads, perguntas otimizadas, elementos especiais (altura, peso, data nascimento)
+  * Cobertura completa de nichos: desde e-commerce até tecnologia, saúde mental, investimentos, imóveis
+  * Interface de confirmação com avisos educativos sobre importação e uso dos templates
+  * Sistema totalmente funcional permitindo importação direta para o quiz builder
+  * 50 templates prontos distribuídos estrategicamente nas categorias mais demandadas do mercado
 - July 10, 2025. SISTEMA DE DETECÇÃO AUTOMÁTICA REATIVADO - Restored critical lead detection functionality with intelligent protections:
   * Reativado sistema de detecção automática de novos leads (a cada 20 segundos) com proteções contra execução simultânea
   * Implementadas flags autoDetectionRunning, whatsappProcessingRunning, emailProcessingRunning para evitar conflitos
