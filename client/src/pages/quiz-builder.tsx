@@ -30,7 +30,11 @@ import {
   Clock,
   UserMinus,
   GitBranch,
-  Network
+  Network,
+  Plus,
+  Minus,
+  Target,
+  Activity
 } from "lucide-react";
 import { Link } from "wouter";
 
@@ -102,7 +106,7 @@ export default function QuizBuilder() {
     enableWhatsappAutomation: false
   });
 
-  const [activeTab, setActiveTab] = useState<"editor" | "preview" | "settings" | "design" | "fluxo">("editor");
+  const [activeTab, setActiveTab] = useState<"editor" | "preview" | "settings" | "design" | "fluxo" | "pixels">("editor");
   const [globalTheme, setGlobalTheme] = useState<"light" | "dark" | "custom">("light");
   const [customBackgroundColor, setCustomBackgroundColor] = useState("#ffffff");
   const [currentQuizId, setCurrentQuizId] = useState<string | null>(quizId || null);
@@ -637,6 +641,7 @@ export default function QuizBuilder() {
             { id: "fluxo", label: "Fluxo (Avançado)", icon: <Network className="w-4 h-4" /> },
             { id: "design", label: "Design", icon: <Palette className="w-4 h-4" /> },
             { id: "settings", label: "Configurações", icon: <Settings className="w-4 h-4" /> },
+            { id: "pixels", label: "Pixels", icon: <Target className="w-4 h-4" /> },
 
           ].map((tab) => (
             <button
@@ -1031,11 +1036,57 @@ export default function QuizBuilder() {
 
 
 
+
+
+
+
+              <Card>
+                <CardHeader>
+                  <CardTitle>Compartilhamento</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div>
+                    <Label>Link público</Label>
+                    <div className="flex mt-2">
+                      <Input
+                        value={quizData.isPublished && currentQuizId ? `${window.location.origin}/quiz/${currentQuizId}` : "Quiz não publicado"}
+                        readOnly
+                        className="flex-1"
+                      />
+                      <Button variant="outline" size="sm" className="ml-2">
+                        <Share className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  </div>
+
+                  <div>
+                    <Label>Código de incorporação</Label>
+                    <div className="flex mt-2">
+                      <Textarea
+                        value={quizData.isPublished ? `<iframe src="${window.location.origin}/quiz/${quizId}" width="100%" height="600"></iframe>` : "Quiz não publicado"}
+                        readOnly
+                        className="flex-1"
+                        rows={3}
+                      />
+                      <Button variant="outline" size="sm" className="ml-2">
+                        <Code className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          </div>
+        )}
+
+        {activeTab === "pixels" && (
+          <div className="h-full overflow-y-auto p-6">
+            <div className="max-w-2xl mx-auto space-y-6">
               {/* Pixels de Rastreamento */}
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
-                    <Settings className="w-5 h-5" />
+                    <Target className="w-5 h-5" />
                     Pixels de Rastreamento
                   </CardTitle>
                   <p className="text-sm text-gray-600">Configure pixels para rastrear conversões e análises (apenas na página publicada)</p>
@@ -1093,7 +1144,7 @@ export default function QuizBuilder() {
                                 onClick={() => removePixel(pixel.id)}
                                 className="text-red-600 hover:text-red-700 hover:bg-red-50"
                               >
-                                <X className="w-4 h-4" />
+                                <Minus className="w-4 h-4" />
                               </Button>
                             </div>
                           </div>
@@ -1161,44 +1212,6 @@ export default function QuizBuilder() {
                       <strong>ℹ️ Importante:</strong> Os pixels são inseridos apenas na página publicada do quiz, não no preview. 
                       Cada quiz tem seus próprios pixels configurados individualmente.
                     </p>
-                  </div>
-                </CardContent>
-              </Card>
-
-
-
-              <Card>
-                <CardHeader>
-                  <CardTitle>Compartilhamento</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div>
-                    <Label>Link público</Label>
-                    <div className="flex mt-2">
-                      <Input
-                        value={quizData.isPublished && currentQuizId ? `${window.location.origin}/quiz/${currentQuizId}` : "Quiz não publicado"}
-                        readOnly
-                        className="flex-1"
-                      />
-                      <Button variant="outline" size="sm" className="ml-2">
-                        <Share className="w-4 h-4" />
-                      </Button>
-                    </div>
-                  </div>
-
-                  <div>
-                    <Label>Código de incorporação</Label>
-                    <div className="flex mt-2">
-                      <Textarea
-                        value={quizData.isPublished ? `<iframe src="${window.location.origin}/quiz/${quizId}" width="100%" height="600"></iframe>` : "Quiz não publicado"}
-                        readOnly
-                        className="flex-1"
-                        rows={3}
-                      />
-                      <Button variant="outline" size="sm" className="ml-2">
-                        <Code className="w-4 h-4" />
-                      </Button>
-                    </div>
                   </div>
                 </CardContent>
               </Card>
