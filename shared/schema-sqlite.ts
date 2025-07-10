@@ -458,3 +458,22 @@ export type InsertAiConversionCampaign = z.infer<typeof insertAiConversionCampai
 export type AiConversionCampaign = typeof aiConversionCampaigns.$inferSelect;
 export type InsertAiVideoGeneration = z.infer<typeof insertAiVideoGenerationSchema>;
 export type AiVideoGeneration = typeof aiVideoGenerations.$inferSelect;
+
+// Notifications Schema
+export const notifications = sqliteTable('notifications', {
+  id: text('id').primaryKey().notNull(),
+  title: text('title').notNull(),
+  message: text('message').notNull(),
+  type: text('type').notNull().default('info'), // info, success, warning, error
+  userId: text('user_id').references(() => users.id), // null for global notifications
+  isRead: integer('is_read', { mode: 'boolean' }).default(false),
+  createdAt: integer('created_at', { mode: 'timestamp' }).notNull().default(sql`(unixepoch())`),
+  updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull().default(sql`(unixepoch())`)
+});
+
+// Notifications Zod Schemas
+export const insertNotificationSchema = createInsertSchema(notifications);
+
+// Notifications Types
+export type InsertNotification = z.infer<typeof insertNotificationSchema>;
+export type Notification = typeof notifications.$inferSelect;

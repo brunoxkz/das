@@ -76,6 +76,13 @@ export default function Dashboard() {
     retry: false,
   });
 
+  // Buscar dados do usuário
+  const { data: userData } = useQuery({
+    queryKey: ["/api/auth/verify"],
+    enabled: isAuthenticated,
+    retry: false,
+  });
+
   // Calcular estatísticas reais baseadas nos analytics
   const totalQuizzes = userQuizzes?.length || 0;
   const totalLeads = (allAnalytics && Array.isArray(allAnalytics)) ? allAnalytics.reduce((sum: number, a: any) => sum + (a.leadsWithContact || 0), 0) : 0;
@@ -390,7 +397,7 @@ export default function Dashboard() {
             </CardContent>
           </Card>
 
-          {/* Créditos Card */}
+          {/* Plano Card */}
           <Card className="bg-white/80 backdrop-blur-sm border border-gray-100 shadow-sm hover:shadow-md transition-all duration-200">
             <CardContent className="p-4">
               <div className="flex items-center justify-between">
@@ -399,10 +406,18 @@ export default function Dashboard() {
                     <Shield className="w-3 h-3 text-yellow-600" />
                   </div>
                   <div>
-                    <p className="text-sm text-gray-600">Créditos</p>
-                    <p className="text-lg font-semibold text-gray-900">{userCredits?.credits || 0}</p>
+                    <p className="text-sm text-gray-600">Plano</p>
+                    <p className="text-lg font-semibold text-gray-900 capitalize">{userData?.user?.plan || 'Free'}</p>
                   </div>
                 </div>
+                <Button 
+                  size="sm"
+                  className="w-6 h-6 p-0 rounded-full bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 shadow-sm"
+                  onClick={() => window.location.href = '/planos'}
+                  title="Fazer upgrade do plano"
+                >
+                  <Plus className="w-3 h-3 text-white" />
+                </Button>
               </div>
             </CardContent>
           </Card>

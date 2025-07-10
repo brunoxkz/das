@@ -23,7 +23,7 @@ sqlite.pragma('mmap_size = 268435456'); // 256MB memory mapping
 import { 
   users, quizzes, quizTemplates, quizResponses, responseVariables, quizAnalytics, emailCampaigns, emailTemplates, emailLogs, emailAutomations, emailSequences, smsTransactions, smsCampaigns, smsLogs,
   whatsappCampaigns, whatsappLogs, whatsappTemplates,
-  aiConversionCampaigns, aiVideoGenerations,
+  aiConversionCampaigns, aiVideoGenerations, notifications,
   type User, type UpsertUser, type InsertQuiz, type Quiz,
   type InsertQuizTemplate, type QuizTemplate,
   type InsertQuizResponse, type QuizResponse,
@@ -35,7 +35,8 @@ import {
   type InsertEmailAutomation, type EmailAutomation,
   type InsertEmailSequence, type EmailSequence,
   type InsertAiConversionCampaign, type AiConversionCampaign,
-  type InsertAiVideoGeneration, type AiVideoGeneration
+  type InsertAiVideoGeneration, type AiVideoGeneration,
+  type InsertNotification, type Notification
 } from "../shared/schema-sqlite";
 import { eq, desc, and, gte, lte, count, asc, or, inArray } from "drizzle-orm";
 import { nanoid } from "nanoid";
@@ -163,6 +164,13 @@ export interface IStorage {
   createAiVideoGeneration(generation: InsertAiVideoGeneration): Promise<AiVideoGeneration>;
   updateAiVideoGeneration(id: string, updates: Partial<InsertAiVideoGeneration>): Promise<AiVideoGeneration>;
   deleteAiVideoGeneration(id: string): Promise<void>;
+
+  // Notification operations
+  getUserNotifications(userId: string): Promise<Notification[]>;
+  createNotification(notification: Omit<InsertNotification, 'id' | 'createdAt' | 'updatedAt'>): Promise<Notification>;
+  markNotificationAsRead(notificationId: string, userId: string): Promise<void>;
+  deleteNotification(notificationId: string, userId: string): Promise<void>;
+  markAllNotificationsAsRead(userId: string): Promise<void>;
 }
 
 export class SQLiteStorage implements IStorage {
@@ -2973,6 +2981,126 @@ export class SQLiteStorage implements IStorage {
   async deleteAiVideoGeneration(id: string): Promise<void> {
     await db.delete(aiVideoGenerations)
       .where(eq(aiVideoGenerations.id, id));
+  }
+
+  // ===== NOTIFICATION OPERATIONS =====
+
+  async getUserNotifications(userId: string): Promise<Notification[]> {
+    try {
+      // Buscar notificações específicas do usuário + notificações globais (userId = null)
+      const userNotifications = await db.select()
+        .from(notifications)
+        .where(
+          or(
+            eq(notifications.userId, userId),
+            eq(notifications.userId, null as any) // Notificações globais
+          )
+        )
+        .orderBy(desc(notifications.createdAt));
+
+      return userNotifications;
+    } catch (error) {
+      console.error('❌ ERRO ao buscar notificações do usuário:', error);
+      throw error;
+    }
+  }
+
+  async createNotification(notification: Omit<InsertNotification, 'id' | 'createdAt' | 'updatedAt'>): Promise<Notification> {
+    try {
+      const now = Math.floor(Date.now() / 1000);
+      const notificationId = nanoid();
+
+      const [newNotification] = await db.insert(notifications)
+        .values({
+          id: notificationId,
+          ...notification,
+          isRead: false,
+          createdAt: now,
+          updatedAt: now
+        })
+        .returning();
+
+      console.log('✅ Notificação criada:', {
+        id: newNotification.id,
+        title: newNotification.title,
+        type: newNotification.type,
+        userId: newNotification.userId || 'GLOBAL'
+      });
+
+      return newNotification;
+    } catch (error) {
+      console.error('❌ ERRO ao criar notificação:', error);
+      throw error;
+    }
+  }
+
+  async markNotificationAsRead(notificationId: string, userId: string): Promise<void> {
+    try {
+      const now = Math.floor(Date.now() / 1000);
+      
+      await db.update(notifications)
+        .set({ 
+          isRead: true, 
+          updatedAt: now 
+        })
+        .where(
+          and(
+            eq(notifications.id, notificationId),
+            or(
+              eq(notifications.userId, userId),
+              eq(notifications.userId, null as any) // Permitir marcar notificações globais como lidas
+            )
+          )
+        );
+
+      console.log('✅ Notificação marcada como lida:', { notificationId, userId });
+    } catch (error) {
+      console.error('❌ ERRO ao marcar notificação como lida:', error);
+      throw error;
+    }
+  }
+
+  async deleteNotification(notificationId: string, userId: string): Promise<void> {
+    try {
+      await db.delete(notifications)
+        .where(
+          and(
+            eq(notifications.id, notificationId),
+            or(
+              eq(notifications.userId, userId),
+              eq(notifications.userId, null as any) // Permitir deletar notificações globais
+            )
+          )
+        );
+
+      console.log('✅ Notificação deletada:', { notificationId, userId });
+    } catch (error) {
+      console.error('❌ ERRO ao deletar notificação:', error);
+      throw error;
+    }
+  }
+
+  async markAllNotificationsAsRead(userId: string): Promise<void> {
+    try {
+      const now = Math.floor(Date.now() / 1000);
+      
+      await db.update(notifications)
+        .set({ 
+          isRead: true, 
+          updatedAt: now 
+        })
+        .where(
+          or(
+            eq(notifications.userId, userId),
+            eq(notifications.userId, null as any) // Incluir notificações globais
+          )
+        );
+
+      console.log('✅ Todas as notificações marcadas como lidas para usuário:', userId);
+    } catch (error) {
+      console.error('❌ ERRO ao marcar todas as notificações como lidas:', error);
+      throw error;
+    }
   }
 }
 

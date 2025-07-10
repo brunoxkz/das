@@ -182,6 +182,18 @@ No additional files or separate projects are maintained in this repository.
 
 ```
 Changelog:
+- July 10, 2025. CARD DE PLANO COM UPGRADE BUTTON IMPLEMENTADO - Sistema dinâmico de planos no dashboard:
+  * Substituído card "Créditos" por "Plano" mostrando plano atual do usuário (Enterprise/Pro/Free)
+  * Adicionado botão redondo de upgrade (+) que redireciona para página /planos
+  * Plano exibido dinamicamente baseado nos dados do usuário (userData.user.plan)
+  * Botão com design gradiente azul-roxo e hover effects para boa UX
+  * Sistema preparado para futuras implementações de upgrade de plano
+- July 10, 2025. SISTEMA DE CRÉDITOS UNIFICADO IMPLEMENTADO - Backend endpoint para créditos totais do usuário:
+  * Criado endpoint /api/user/credits que calcula créditos totais (SMS + Email + WhatsApp + IA)
+  * Frontend integrado com query dinâmica para buscar créditos reais do usuário
+  * Sistema retorna breakdown detalhado de créditos por categoria
+  * Performance otimizada com caching e validação JWT
+  * Preparado para expansão futura com mais tipos de créditos
 - July 10, 2025. DASHBOARD ULTRA-FUTURÍSTICO IMPLEMENTADO - Design moderno otimizado para 100k+ usuários simultâneos:
   * Background gradient azul-índigo com efeito glassmorphism em todos os cards
   * Header modernizado com título em gradiente e indicador de sistema em tempo real ativo

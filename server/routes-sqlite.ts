@@ -2726,6 +2726,136 @@ export function registerSQLiteRoutes(app: Express): Server {
     }
   }));
 
+  // ===== NOTIFICATION SYSTEM ENDPOINTS =====
+
+  // Get user notifications
+  app.get("/api/notifications", verifyJWT, async (req: any, res: Response) => {
+    try {
+      const userId = req.user.id;
+      const notifications = await storage.getUserNotifications(userId);
+      res.json(notifications);
+    } catch (error) {
+      console.error('❌ ERRO ao buscar notificações:', error);
+      res.status(500).json({ error: 'Erro interno do servidor' });
+    }
+  });
+
+  // Create notification (admin only)
+  app.post("/api/notifications", verifyJWT, async (req: any, res: Response) => {
+    try {
+      const userId = req.user.id;
+      const user = await storage.getUser(userId);
+      
+      if (!user || user.role !== 'admin') {
+        return res.status(403).json({ error: 'Acesso negado. Apenas administradores podem criar notificações.' });
+      }
+
+      const { title, message, type, isGlobal, targetUsers } = req.body;
+      
+      if (!title || !message) {
+        return res.status(400).json({ error: 'Título e mensagem são obrigatórios' });
+      }
+
+      if (isGlobal) {
+        // Criar notificação global (userId = null)
+        const notification = await storage.createNotification({
+          title,
+          message,
+          type: type || 'info',
+          userId: null
+        });
+        res.json(notification);
+      } else if (targetUsers && Array.isArray(targetUsers)) {
+        // Criar notificações para usuários específicos
+        const notifications = [];
+        for (const targetUserId of targetUsers) {
+          const notification = await storage.createNotification({
+            title,
+            message,
+            type: type || 'info',
+            userId: targetUserId
+          });
+          notifications.push(notification);
+        }
+        res.json({ notifications, count: notifications.length });
+      } else {
+        return res.status(400).json({ error: 'É necessário especificar se é global ou selecionar usuários' });
+      }
+
+    } catch (error) {
+      console.error('❌ ERRO ao criar notificação:', error);
+      res.status(500).json({ error: 'Erro interno do servidor' });
+    }
+  });
+
+  // Mark notification as read
+  app.patch("/api/notifications/:id/read", verifyJWT, async (req: any, res: Response) => {
+    try {
+      const notificationId = req.params.id;
+      const userId = req.user.id;
+      
+      await storage.markNotificationAsRead(notificationId, userId);
+      res.json({ success: true });
+    } catch (error) {
+      console.error('❌ ERRO ao marcar notificação como lida:', error);
+      res.status(500).json({ error: 'Erro interno do servidor' });
+    }
+  });
+
+  // Delete notification
+  app.delete("/api/notifications/:id", verifyJWT, async (req: any, res: Response) => {
+    try {
+      const notificationId = req.params.id;
+      const userId = req.user.id;
+      
+      await storage.deleteNotification(notificationId, userId);
+      res.json({ success: true });
+    } catch (error) {
+      console.error('❌ ERRO ao deletar notificação:', error);
+      res.status(500).json({ error: 'Erro interno do servidor' });
+    }
+  });
+
+  // Mark all notifications as read
+  app.patch("/api/notifications/mark-all-read", verifyJWT, async (req: any, res: Response) => {
+    try {
+      const userId = req.user.id;
+      await storage.markAllNotificationsAsRead(userId);
+      res.json({ success: true });
+    } catch (error) {
+      console.error('❌ ERRO ao marcar todas as notificações como lidas:', error);
+      res.status(500).json({ error: 'Erro interno do servidor' });
+    }
+  });
+
+  // Get all users (admin only) - for notification targeting
+  app.get("/api/admin/users", verifyJWT, async (req: any, res: Response) => {
+    try {
+      const userId = req.user.id;
+      const user = await storage.getUser(userId);
+      
+      if (!user || user.role !== 'admin') {
+        return res.status(403).json({ error: 'Acesso negado' });
+      }
+
+      const users = await storage.getAllUsers();
+      const safeUsers = users.map(u => ({
+        id: u.id,
+        email: u.email,
+        firstName: u.firstName,
+        lastName: u.lastName,
+        plan: u.plan,
+        role: u.role,
+        createdAt: u.createdAt
+      }));
+      
+      res.json(safeUsers);
+    } catch (error) {
+      console.error('❌ ERRO ao buscar usuários:', error);
+      res.status(500).json({ error: 'Erro interno do servidor' });
+    }
+  });
+
   const httpServer = createServer(app);
 
 // =============================================
