@@ -332,8 +332,19 @@ export const QuizFlowEditor: React.FC<QuizFlowEditorProps> = ({
   };
 
   const testFlow = () => {
-    // Simulação de teste do fluxo
-    alert('Simulação de teste do fluxo - funcionalidade será implementada');
+    // Sugerir publicação do quiz para teste
+    const confirmTest = confirm(
+      '🚀 Para testar o fluxo, publique o quiz primeiro!\n\n' +
+      '✅ Clique em "Publicar Quiz" no canto superior direito\n' +
+      '🔗 Depois acesse a URL pública para testar o fluxo\n\n' +
+      'Deseja ir para as configurações de publicação agora?'
+    );
+    
+    if (confirmTest) {
+      // Disparar evento para ir para a aba de configurações
+      const event = new CustomEvent('switchToConfigTab');
+      window.dispatchEvent(event);
+    }
   };
 
   const resetFlow = () => {
@@ -524,17 +535,16 @@ export const QuizFlowEditor: React.FC<QuizFlowEditorProps> = ({
                         className="pointer-events-auto"
                         onClick={() => editCondition(connection)}
                       />
-                      {connection.label && (
-                        <text
-                          x={(fromX + toX) / 2}
-                          y={(fromY + toY) / 2 - 5}
-                          textAnchor="middle"
-                          className="text-xs fill-gray-600 pointer-events-auto cursor-pointer"
-                          onClick={() => editCondition(connection)}
-                        >
-                          {connection.label}
-                        </text>
-                      )}
+                      {/* Texto da conexão sempre "redireciona para" */}
+                      <text
+                        x={(fromX + toX) / 2}
+                        y={(fromY + toY) / 2 - 5}
+                        textAnchor="middle"
+                        className="text-xs fill-gray-600 pointer-events-auto cursor-pointer"
+                        onClick={() => editCondition(connection)}
+                      >
+                        redireciona para
+                      </text>
                     </g>
                   );
                 })}
@@ -777,19 +787,21 @@ export const QuizFlowEditor: React.FC<QuizFlowEditorProps> = ({
                       <div className="w-3 h-3 bg-white rounded-full"></div>
                     </div>
                     
-                    {/* Drop zone for connections */}
-                    <div
-                      className="absolute inset-0 opacity-0 hover:opacity-100 transition-opacity"
-                      onMouseUp={() => {
-                        if (connectionDrawing && connectionDrawing.from !== node.id) {
-                          finishConnection(node.id);
-                        }
-                      }}
-                    >
-                      <div className="absolute inset-0 bg-green-100 border-2 border-green-400 border-dashed rounded-lg flex items-center justify-center">
-                        <CheckCircle className="w-6 h-6 text-green-600" />
+                    {/* Drop zone for connections - apenas quando arrastando */}
+                    {connectionDrawing && connectionDrawing.from !== node.id && (
+                      <div
+                        className="absolute inset-0 opacity-0 hover:opacity-100 transition-opacity pointer-events-none"
+                        onMouseUp={() => {
+                          if (connectionDrawing && connectionDrawing.from !== node.id) {
+                            finishConnection(node.id);
+                          }
+                        }}
+                      >
+                        <div className="absolute inset-0 bg-green-100 border-2 border-green-400 border-dashed rounded-lg flex items-center justify-center pointer-events-auto">
+                          <CheckCircle className="w-6 h-6 text-green-600" />
+                        </div>
                       </div>
-                    </div>
+                    )}
                   </div>
                 );
               })}
