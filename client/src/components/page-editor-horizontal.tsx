@@ -175,7 +175,10 @@ interface Element {
   popupQuestion?: string;
   popupYesText?: string;
   popupNoText?: string;
-  animationType?: "smooth" | "fast" | "bouncy" | "elastic";
+  animationType?: "smooth" | "fast" | "bouncy" | "elastic" | "pulse" | "glow" | "wave" | "bounce";
+  animationSpeed?: "slow" | "normal" | "fast";
+  gradientStart?: string;
+  gradientEnd?: string;
   showGlow?: boolean;
   showPercentage?: boolean;
   showTimeRemaining?: boolean;
@@ -1941,6 +1944,44 @@ const gameElementCategories = [
             <div className="text-xs text-green-600 text-center">
               Redes selecionadas: {networks.length} • Layout: {element.shareLayout || "horizontal"}
             </div>
+          </div>
+        );
+
+      case "animated_transition":
+        const gradientStart = element.gradientStart || "#10B981";
+        const gradientEnd = element.gradientEnd || "#8B5CF6";
+        const animationType = element.animationType || "pulse";
+        const animationSpeed = element.animationSpeed || "normal";
+        
+        const animationClass = animationType === "pulse" ? "animate-pulse" :
+                              animationType === "glow" ? "animate-ping" :
+                              animationType === "wave" ? "animate-bounce" :
+                              animationType === "bounce" ? "animate-bounce" : "animate-pulse";
+        
+        const speedClass = animationSpeed === "slow" ? "duration-2000" :
+                          animationSpeed === "fast" ? "duration-500" : "duration-1000";
+        
+        return (
+          <div className="space-y-2">
+            <div 
+              className={`w-full h-32 bg-gradient-to-r rounded-lg flex items-center justify-center relative ${animationClass} ${speedClass}`}
+              style={{ 
+                backgroundImage: `linear-gradient(to right, ${gradientStart}, #3B82F6, ${gradientEnd})`
+              }}
+            >
+              <div className="text-white text-center">
+                <div className="text-lg font-bold mb-1">
+                  {element.content || "Processando..."}
+                </div>
+                {element.description && (
+                  <p className="text-sm opacity-90">{element.description}</p>
+                )}
+              </div>
+              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white to-transparent opacity-10 animate-pulse rounded-lg"></div>
+            </div>
+            <p className="text-xs text-gray-500 text-center">
+              Elemento de transição • {animationType} • {animationSpeed}
+            </p>
           </div>
         );
 
@@ -3892,6 +3933,92 @@ const gameElementCategories = [
                       <option value="4xl">Extra Grande</option>
                       <option value="5xl">Gigante</option>
                     </select>
+                  </div>
+                </div>
+              )}
+
+              {/* Propriedades para Transição Animada */}
+              {selectedElementData.type === "animated_transition" && (
+                <div className="space-y-4">
+                  <div>
+                    <Label>Texto Principal</Label>
+                    <Input
+                      value={selectedElementData.content || ""}
+                      onChange={(e) => updateElement(selectedElementData.id, { content: e.target.value })}
+                      placeholder="Processando..."
+                      className="mt-1"
+                    />
+                  </div>
+
+                  <div>
+                    <Label>Descrição (opcional)</Label>
+                    <Input
+                      value={selectedElementData.description || ""}
+                      onChange={(e) => updateElement(selectedElementData.id, { description: e.target.value })}
+                      placeholder="Aguarde um momento..."
+                      className="mt-1"
+                    />
+                  </div>
+
+                  <div>
+                    <Label>Tipo de Animação</Label>
+                    <select 
+                      className="w-full px-3 py-2 border rounded-md mt-1"
+                      value={selectedElementData.animationType || "pulse"}
+                      onChange={(e) => updateElement(selectedElementData.id, { animationType: e.target.value })}
+                    >
+                      <option value="pulse">Pulso Suave</option>
+                      <option value="glow">Brilho Intenso</option>
+                      <option value="wave">Onda de Luz</option>
+                      <option value="bounce">Salto Suave</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <Label>Velocidade da Animação</Label>
+                    <select 
+                      className="w-full px-3 py-2 border rounded-md mt-1"
+                      value={selectedElementData.animationSpeed || "normal"}
+                      onChange={(e) => updateElement(selectedElementData.id, { animationSpeed: e.target.value })}
+                    >
+                      <option value="slow">Lenta</option>
+                      <option value="normal">Normal</option>
+                      <option value="fast">Rápida</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <Label>Cores do Gradiente</Label>
+                    <div className="space-y-2 mt-1">
+                      <div className="flex gap-2">
+                        <Input
+                          type="color"
+                          value={selectedElementData.gradientStart || "#10B981"}
+                          onChange={(e) => updateElement(selectedElementData.id, { gradientStart: e.target.value })}
+                          className="w-16 h-10 p-1"
+                        />
+                        <Input
+                          value={selectedElementData.gradientStart || "#10B981"}
+                          onChange={(e) => updateElement(selectedElementData.id, { gradientStart: e.target.value })}
+                          placeholder="Cor inicial"
+                          className="flex-1"
+                        />
+                      </div>
+                      <div className="flex gap-2">
+                        <Input
+                          type="color"
+                          value={selectedElementData.gradientEnd || "#8B5CF6"}
+                          onChange={(e) => updateElement(selectedElementData.id, { gradientEnd: e.target.value })}
+                          className="w-16 h-10 p-1"
+                        />
+                        <Input
+                          value={selectedElementData.gradientEnd || "#8B5CF6"}
+                          onChange={(e) => updateElement(selectedElementData.id, { gradientEnd: e.target.value })}
+                          placeholder="Cor final"
+                          className="flex-1"
+                        />
+                      </div>
+                    </div>
                   </div>
                 </div>
               )}

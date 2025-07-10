@@ -10,7 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { PageEditorHorizontal } from "@/components/page-editor-horizontal";
 import { QuizPreview } from "@/components/quiz-preview";
 import { QuizFlowEditor } from "@/components/quiz-flow-editor";
-import { apiRequest } from "@/lib/queryClient";
+import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth-jwt";
 import { isUnauthorizedError } from "@/lib/authUtils";
@@ -1208,9 +1208,17 @@ export default function QuizBuilder() {
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => {
-                          setQuizData(prev => ({ ...prev, isPublished: false }));
-                          handleSave();
+                        onClick={async () => {
+                          try {
+                            await apiRequest(`/api/quizzes/${currentQuizId}/unpublish`, {
+                              method: "POST",
+                            });
+                            setQuizData(prev => ({ ...prev, isPublished: false }));
+                            queryClient.invalidateQueries({ queryKey: ['/api/quizzes', currentQuizId] });
+                            queryClient.invalidateQueries({ queryKey: ['/api/dashboard'] });
+                          } catch (error) {
+                            console.error("Erro ao despublicar quiz:", error);
+                          }
                         }}
                         className="w-full mt-2"
                       >

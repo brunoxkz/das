@@ -1081,14 +1081,32 @@ export function QuizPreview({ quiz }: QuizPreviewProps) {
         );
 
       case 'animated_transition':
+        const gradientStart = element.gradientStart || "#10B981";
+        const gradientEnd = element.gradientEnd || "#8B5CF6";
+        const animationType = element.animationType || "pulse";
+        const animationSpeed = element.animationSpeed || "normal";
+        
+        const animationClass = animationType === "pulse" ? "animate-pulse" :
+                              animationType === "glow" ? "animate-ping" :
+                              animationType === "wave" ? "animate-bounce" :
+                              animationType === "bounce" ? "animate-bounce" : "animate-pulse";
+        
+        const speedClass = animationSpeed === "slow" ? "duration-2000" :
+                          animationSpeed === "fast" ? "duration-500" : "duration-1000";
+        
         return (
           <div className="mb-6 text-center">
             <div className="relative">
               {/* Elemento de transição animada */}
-              <div className="animate-pulse bg-gradient-to-r from-green-400 via-blue-500 to-purple-600 rounded-lg p-6">
+              <div 
+                className={`bg-gradient-to-r rounded-lg p-6 ${animationClass} ${speedClass}`}
+                style={{ 
+                  backgroundImage: `linear-gradient(to right, ${gradientStart}, #3B82F6, ${gradientEnd})`
+                }}
+              >
                 <div className="text-white">
                   <div className="text-xl font-bold mb-2">
-                    {element.content || "Transição Animada"}
+                    {element.content || "Processando..."}
                   </div>
                   {element.description && (
                     <p className="text-sm opacity-90">{element.description}</p>
@@ -1096,8 +1114,8 @@ export function QuizPreview({ quiz }: QuizPreviewProps) {
                 </div>
               </div>
               
-              {/* Efeito de brilho */}
-              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white to-transparent opacity-25 animate-ping rounded-lg"></div>
+              {/* Efeito de brilho suave */}
+              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white to-transparent opacity-10 animate-pulse rounded-lg"></div>
             </div>
           </div>
         );
