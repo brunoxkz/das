@@ -139,6 +139,12 @@ export function registerSQLiteRoutes(app: Express): Server {
   const dashboardStatsHandler = async (req: any, res: any) => {
     try {
       console.log('📊 Dashboard Stats - User ID:', req.user.id);
+      console.log('📊 Request URL:', req.url);
+      console.log('📊 Request Method:', req.method);
+
+      // Forçar headers JSON no início
+      res.setHeader('Content-Type', 'application/json');
+      res.setHeader('Cache-Control', 'no-cache');
 
       // Verificar cache primeiro
       const cacheKey = `dashboard-${req.user.id}`;
@@ -171,6 +177,7 @@ export function registerSQLiteRoutes(app: Express): Server {
       // Salvar no cache
       cache.setDashboardStats(cacheKey, dashboardData);
       
+      console.log('📊 Dashboard data sent successfully');
       res.json(dashboardData);
     } catch (error) {
       console.error("Dashboard stats error:", error);
@@ -181,6 +188,7 @@ export function registerSQLiteRoutes(app: Express): Server {
   // Register both endpoints
   app.get("/api/dashboard/stats", verifyJWT, dashboardStatsHandler);
   app.get("/api/dashboard-stats", verifyJWT, dashboardStatsHandler);
+  app.get("/api/dashboard", verifyJWT, dashboardStatsHandler);
 
   // Get user quizzes
   app.get("/api/quizzes", verifyJWT, async (req: any, res) => {

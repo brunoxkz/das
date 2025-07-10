@@ -104,8 +104,10 @@ app.use((req, res, next) => {
     res.setHeader('Cache-Control', 'no-cache');
     res.setHeader('X-Content-Type-Options', 'nosniff');
     
-    // Intercepta res.send para garantir JSON
+    // Intercepta res.send para garantir JSON válido
     const originalSend = res.send;
+    const originalJson = res.json;
+    
     res.send = function(data) {
       if (typeof data === 'object' && data !== null) {
         return originalSend.call(this, JSON.stringify(data));
@@ -113,6 +115,22 @@ app.use((req, res, next) => {
       return originalSend.call(this, data);
     };
     
+    res.json = function(data) {
+      res.setHeader('Content-Type', 'application/json');
+      return originalJson.call(this, data);
+    };
+    
+    next();
+  });
+
+  // Middleware para interceptar rotas API ANTES do Vite
+  app.use((req, res, next) => {
+    if (req.url.startsWith('/api/')) {
+      // Marcar como API route
+      req.isAPIRoute = true;
+      res.setHeader('Content-Type', 'application/json');
+      res.setHeader('Cache-Control', 'no-cache');
+    }
     next();
   });
 
