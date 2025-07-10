@@ -33,6 +33,40 @@ export function runMigrations() {
     migrate(db, { migrationsFolder: './migrations' });
     console.log('✅ Database migrations completed successfully');
   } catch (error) {
+    // Verificar se o banco já existe e tem dados
+    const existingTables = sqlite.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='quizzes'").all();
+    
+    if (existingTables.length > 0) {
+      console.log('✅ Database already exists, only adding missing columns...');
+      
+      // Adicionar apenas as colunas que faltam
+      const addColumnIfNotExists = (table: string, column: string, definition: string) => {
+        try {
+          const columns = sqlite.prepare(`PRAGMA table_info(${table})`).all();
+          const columnExists = columns.some((col: any) => col.name === column);
+          
+          if (!columnExists) {
+            sqlite.exec(`ALTER TABLE ${table} ADD COLUMN ${column} ${definition}`);
+            console.log(`✅ Added column ${column} to ${table}`);
+          }
+        } catch (e) {
+          console.log(`Column ${column} already exists or error: ${e}`);
+        }
+      };
+      
+      // Adicionar colunas de pixels dinâmicos
+      addColumnIfNotExists('quizzes', 'taboolaPixel', 'TEXT');
+      addColumnIfNotExists('quizzes', 'pinterestPixel', 'TEXT');
+      addColumnIfNotExists('quizzes', 'linkedinPixel', 'TEXT');
+      addColumnIfNotExists('quizzes', 'outbrainPixel', 'TEXT');
+      addColumnIfNotExists('quizzes', 'mgidPixel', 'TEXT');
+      addColumnIfNotExists('quizzes', 'pixelDelay', 'INTEGER DEFAULT 0');
+      addColumnIfNotExists('quizzes', 'trackingPixels', 'TEXT');
+      
+      console.log('✅ Database migration completed safely');
+      return;
+    }
+    
     console.log('⚡ Creating fresh database schema...');
     
     // Criar tabelas manualmente se as migrações falharem
@@ -417,6 +451,35 @@ export function runMigrations() {
     
     try {
       sqlite.exec("ALTER TABLE email_campaigns ADD COLUMN dateFilter INTEGER;");
+    } catch (e) {} // Ignora se já existe
+    
+    // Adicionar novas colunas para pixels dinâmicos
+    try {
+      sqlite.exec("ALTER TABLE quizzes ADD COLUMN taboolaPixel TEXT;");
+    } catch (e) {} // Ignora se já existe
+    
+    try {
+      sqlite.exec("ALTER TABLE quizzes ADD COLUMN pinterestPixel TEXT;");
+    } catch (e) {} // Ignora se já existe
+    
+    try {
+      sqlite.exec("ALTER TABLE quizzes ADD COLUMN linkedinPixel TEXT;");
+    } catch (e) {} // Ignora se já existe
+    
+    try {
+      sqlite.exec("ALTER TABLE quizzes ADD COLUMN outbrainPixel TEXT;");
+    } catch (e) {} // Ignora se já existe
+    
+    try {
+      sqlite.exec("ALTER TABLE quizzes ADD COLUMN mgidPixel TEXT;");
+    } catch (e) {} // Ignora se já existe
+    
+    try {
+      sqlite.exec("ALTER TABLE quizzes ADD COLUMN pixelDelay INTEGER DEFAULT 0;");
+    } catch (e) {} // Ignora se já existe
+    
+    try {
+      sqlite.exec("ALTER TABLE quizzes ADD COLUMN trackingPixels TEXT;");
     } catch (e) {} // Ignora se já existe
     
     sqlite.exec(createSmsLogsTable);
