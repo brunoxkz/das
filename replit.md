@@ -182,6 +182,23 @@ No additional files or separate projects are maintained in this repository.
 
 ```
 Changelog:
+- July 10, 2025. SISTEMA DE NOTIFICAÇÕES ADMIN COMPLETAMENTE IMPLEMENTADO - Interface de administração com tabs para gerenciar usuários e enviar notificações:
+  * Criada interface de administração com tabs para "Gerenciar Usuários" e "Enviar Notificações"
+  * Implementado formulário completo para envio de notificações globais ou específicas
+  * Sistema permite seleção de tipo de notificação (info, success, warning, error)
+  * Funcionalidade para envio para todos os usuários ou usuários específicos com checkboxes
+  * Endpoints backend já implementados (GET, POST, PATCH, DELETE /api/notifications)
+  * Métodos de storage SQLite funcionais para criação, leitura e gerenciamento de notificações
+  * Interface moderna com validação de formulário e feedback visual adequado
+- July 10, 2025. PROBLEMAS DE LAYOUT CRÍTICOS CORRIGIDOS - Resolvido problema de dupla sidebar e conteúdo cortado:
+  * Corrigido problema visual de "duas barras laterais" e conteúdo aparecer como embedado
+  * Sidebar agora usa position fixed com height 100vh garantindo layout correto
+  * Main content usa margin-left dinâmico (ml-64 normal, ml-16 collapsed) com transições suaves
+  * Layout responsivo mantém funcionalidade de auto-collapse no quiz builder
+  * Conteúdo agora ocupa tela inteira corretamente sem barras de rolagem extras
+- July 10, 2025. MENU ITEMS TEMPORARIAMENTE OCULTOS - Conforme solicitado pelo usuário:
+  * Items "I.A. CONVERSION +" e "LIVEGRAM UGC" comentados na sidebar
+  * Itens podem ser facilmente reativados removendo comentários quando necessário
 - July 10, 2025. CARD DE PLANO COM UPGRADE BUTTON IMPLEMENTADO - Sistema dinâmico de planos no dashboard:
   * Substituído card "Créditos" por "Plano" mostrando plano atual do usuário (Enterprise/Pro/Free)
   * Adicionado botão redondo de upgrade (+) que redireciona para página /planos
