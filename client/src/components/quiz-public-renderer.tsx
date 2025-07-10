@@ -94,9 +94,10 @@ export function QuizPublicRenderer({ quiz }: QuizPublicRendererProps) {
   const currentPage = pages[currentPageIndex];
   const isLastPage = currentPageIndex === pages.length - 1;
   
-  // Tema escuro
+  // Tema escuro - CORRIGIDO para usar a estrutura correta
   const isDarkMode = quiz.design?.darkMode || false;
-  const backgroundColor = isDarkMode ? (quiz.design?.backgroundColor || '#1f2937') : (quiz.design?.backgroundColor || '#f9fafb');
+  const customBackgroundColor = quiz.design?.globalBackgroundColor || null;
+  const backgroundColor = customBackgroundColor || (isDarkMode ? '#1f2937' : '#f9fafb');
   const textColor = isDarkMode ? '#f9fafb' : '#1f2937';
   const cardBgColor = isDarkMode ? '#374151' : '#ffffff';
   const borderColor = isDarkMode ? '#4b5563' : '#e5e7eb';

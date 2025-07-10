@@ -191,9 +191,10 @@ export function QuizPreview({ quiz }: QuizPreviewProps) {
 
   const { pages, settings } = quiz.structure;
   
-  // Tema escuro
+  // Tema escuro - CORRIGIDO para usar a estrutura correta
   const isDarkMode = quiz.design?.darkMode || false;
-  const backgroundColor = isDarkMode ? (quiz.design?.backgroundColor || '#1f2937') : (quiz.design?.backgroundColor || '#f9fafb');
+  const customBackgroundColor = quiz.design?.globalBackgroundColor || null;
+  const backgroundColor = customBackgroundColor || (isDarkMode ? '#1f2937' : '#f9fafb');
   const textColor = isDarkMode ? '#f9fafb' : '#1f2937';
   const cardBgColor = isDarkMode ? '#374151' : '#ffffff';
   const borderColor = isDarkMode ? '#4b5563' : '#e5e7eb';
@@ -1521,6 +1522,91 @@ export function QuizPreview({ quiz }: QuizPreviewProps) {
           </div>
         );
 
+      case 'transition_counter':
+        return <AnimatedCounter element={element} />;
+
+      case 'transition_text':
+        return (
+          <div className="mb-6 text-center">
+            <h2 
+              className="font-bold"
+              style={{ 
+                color: element.textColor || textColor,
+                fontSize: element.fontSize === 'xs' ? '1rem' :
+                          element.fontSize === 'sm' ? '1.25rem' :
+                          element.fontSize === 'base' ? '1.5rem' :
+                          element.fontSize === 'lg' ? '2rem' :
+                          element.fontSize === 'xl' ? '2.5rem' : '3rem',
+                fontWeight: element.fontWeight || 'bold',
+                textAlign: element.textAlign || 'center'
+              }}
+            >
+              {element.content}
+            </h2>
+          </div>
+        );
+
+      case 'transition_loader':
+        return (
+          <div className="mb-6 flex justify-center">
+            {element.loaderType === 'spinner' && (
+              <div 
+                className={`animate-spin rounded-full border-4 border-t-transparent ${
+                  element.loaderSize === 'sm' ? 'w-8 h-8' :
+                  element.loaderSize === 'lg' ? 'w-16 h-16' : 'w-12 h-12'
+                }`}
+                style={{ 
+                  borderColor: `${element.loaderColor || '#10b981'} transparent transparent transparent`
+                }}
+              />
+            )}
+            
+            {element.loaderType === 'dots' && (
+              <div className="flex space-x-2">
+                {[0, 1, 2].map(i => (
+                  <div 
+                    key={i}
+                    className={`animate-bounce rounded-full ${
+                      element.loaderSize === 'sm' ? 'w-2 h-2' :
+                      element.loaderSize === 'lg' ? 'w-4 h-4' : 'w-3 h-3'
+                    }`}
+                    style={{ 
+                      backgroundColor: element.loaderColor || '#10b981',
+                      animationDelay: `${i * 0.1}s`
+                    }}
+                  />
+                ))}
+              </div>
+            )}
+            
+            {element.loaderType === 'bars' && (
+              <div className="flex space-x-1">
+                {[0, 1, 2, 3, 4].map(i => (
+                  <div 
+                    key={i}
+                    className={`animate-pulse ${
+                      element.loaderSize === 'sm' ? 'w-1 h-4' :
+                      element.loaderSize === 'lg' ? 'w-2 h-8' : 'w-1.5 h-6'
+                    }`}
+                    style={{ 
+                      backgroundColor: element.loaderColor || '#10b981',
+                      animationDelay: `${i * 0.1}s`
+                    }}
+                  />
+                ))}
+              </div>
+            )}
+          </div>
+        );
+
+      case 'transition_redirect':
+        return (
+          <RedirectComponent 
+            element={element} 
+            onRedirect={handleNext}
+          />
+        );
+
       default:
         console.warn(`Elemento não suportado no preview: ${element.type}`, element);
         return (
@@ -2524,7 +2610,11 @@ export function QuizPreview({ quiz }: QuizPreviewProps) {
           backgroundColor: backgroundColor,
           color: textColor,
           transition: 'background-color 0.3s ease, color 0.3s ease'
-        })
+        }),
+        // Aplicar cor personalizada se definida
+        ...(customBackgroundColor && !isTransitionPage ? {
+          backgroundColor: customBackgroundColor + ' !important'
+        } : {})
       }}
     >
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
