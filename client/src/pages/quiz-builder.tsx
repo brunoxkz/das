@@ -1348,17 +1348,44 @@ export default function QuizBuilder() {
                               </Button>
                             </div>
                           </div>
-                          <div className="flex items-center gap-2">
-                            <Input
-                              value={pixel.value}
-                              onChange={(e) => updatePixel(pixel.id, 'value', e.target.value)}
-                              placeholder={pixel.placeholder}
-                              className="flex-1"
-                            />
+                          <div className="space-y-2">
+                            <div className="flex items-center gap-2">
+                              <Input
+                                value={pixel.value}
+                                onChange={(e) => updatePixel(pixel.id, 'value', e.target.value)}
+                                placeholder={pixel.placeholder}
+                                className="flex-1"
+                              />
+                              {pixel.mode === 'api' && (
+                                <Badge variant="outline" className="bg-purple-50 text-purple-700 border-purple-200">
+                                  API
+                                </Badge>
+                              )}
+                            </div>
                             {pixel.mode === 'api' && (
-                              <Badge variant="outline" className="bg-purple-50 text-purple-700 border-purple-200">
-                                API
-                              </Badge>
+                              <div className="flex items-center gap-2">
+                                <Input
+                                  value={pixel.accessToken || ''}
+                                  onChange={(e) => updatePixel(pixel.id, 'accessToken', e.target.value)}
+                                  placeholder="Token de acesso da API"
+                                  className="flex-1 text-xs"
+                                />
+                                <Input
+                                  value={pixel.testEventCode || ''}
+                                  onChange={(e) => updatePixel(pixel.id, 'testEventCode', e.target.value)}
+                                  placeholder="Código de teste"
+                                  className="flex-1 text-xs"
+                                />
+                              </div>
+                            )}
+                            {pixel.value && (
+                              <div className="mt-2 p-2 bg-gray-50 rounded text-xs">
+                                <div className="text-green-600 font-medium mb-1">✅ Código será inserido automaticamente na URL pública</div>
+                                <div className="text-gray-600">
+                                  Trigger: <span className="font-mono">pageview</span>
+                                  {pixel.mode === 'api' && <span className="text-purple-600"> + Enhanced API tracking</span>}
+                                </div>
+                              </div>
                             )}
                           </div>
                         </CardContent>
@@ -1391,6 +1418,50 @@ export default function QuizBuilder() {
                         ))}
                     </div>
                   </div>
+
+                  {/* Prévia dos Códigos */}
+                  {trackingPixels.length > 0 && (
+                    <div className="pt-4 border-t">
+                      <h4 className="font-medium text-gray-900 mb-3">Códigos Gerados (Preview)</h4>
+                      <div className="p-3 bg-gray-900 rounded-lg text-green-400 text-xs font-mono max-h-32 overflow-y-auto">
+                        {trackingPixels.filter(p => p.value).length > 0 ? (
+                          <div className="space-y-1">
+                            {trackingPixels
+                              .filter(p => p.value)
+                              .map(pixel => (
+                                <div key={pixel.id}>
+                                  <span className="text-blue-400">/* {pixel.name} */</span>
+                                  <br />
+                                  <span className="text-yellow-400">&lt;script&gt;</span>
+                                  <span className="text-gray-300"> {pixel.type}_pixel('{pixel.value}') </span>
+                                  <span className="text-yellow-400">&lt;/script&gt;</span>
+                                  {pixel.mode === 'api' && (
+                                    <>
+                                      <br />
+                                      <span className="text-purple-400">/* + Enhanced API tracking */</span>
+                                    </>
+                                  )}
+                                </div>
+                              ))
+                            }
+                          </div>
+                        ) : (
+                          <div className="text-gray-500">Configure os pixels acima para ver os códigos...</div>
+                        )}
+                      </div>
+                      <div className="mt-2 text-xs text-gray-600 bg-amber-50 p-2 rounded border border-amber-200">
+                        <div className="flex items-center gap-1">
+                          <div className="w-2 h-2 bg-amber-500 rounded-full"></div>
+                          <span className="font-medium">Importante:</span> Códigos são inseridos automaticamente apenas na URL pública do quiz
+                        </div>
+                        <div className="mt-1 text-amber-700">
+                          • No editor: Nenhum código é executado
+                          <br />
+                          • Na URL pública: Todos os códigos são inseridos automaticamente
+                        </div>
+                      </div>
+                    </div>
+                  )}
 
                   {/* Script Personalizado */}
                   <div className="pt-4 border-t">

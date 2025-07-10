@@ -4,6 +4,7 @@ import { QuizPublicRenderer } from "@/components/quiz-public-renderer";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { AlertCircle, ArrowLeft } from "lucide-react";
+import { generateAllPixelCodes, insertPixelCodes } from "@/utils/pixelCodeGenerator";
 
 export default function QuizPublicPage() {
   const [match, params] = useRoute("/quiz/:id");
@@ -28,6 +29,38 @@ export default function QuizPublicPage() {
       console.log('Quiz view tracked successfully');
     } catch (error) {
       console.error('Error tracking quiz view:', error);
+    }
+  };
+
+  const insertTrackingPixels = (quizData: any) => {
+    try {
+      // Verificar se existem pixels configurados
+      const hasPixels = quizData.trackingPixels && Array.isArray(quizData.trackingPixels) && quizData.trackingPixels.length > 0;
+      
+      if (!hasPixels) {
+        console.log('Nenhum pixel configurado para este quiz');
+        return;
+      }
+
+      // Gerar códigos de pixels
+      const pixelCodes = generateAllPixelCodes(quizData.trackingPixels, quizData.pixelDelay || false);
+      
+      if (pixelCodes.trim()) {
+        // Inserir códigos no head da página
+        insertPixelCodes(pixelCodes);
+        console.log(`✅ Pixels inseridos automaticamente: ${quizData.trackingPixels.length} pixels`);
+        
+        // Log detalhado dos pixels inseridos
+        quizData.trackingPixels.forEach((pixel: any) => {
+          console.log(`📊 Pixel ${pixel.name} (${pixel.type}): ${pixel.value} - Modo: ${pixel.mode}`);
+        });
+        
+        if (quizData.pixelDelay) {
+          console.log('⏱️ Delay de 3 segundos aplicado aos pixels para otimização de CPA');
+        }
+      }
+    } catch (error) {
+      console.error('Erro ao inserir pixels de rastreamento:', error);
     }
   };
 
@@ -59,6 +92,9 @@ export default function QuizPublicPage() {
       
       // Track view when quiz is loaded successfully
       trackQuizView(quizId);
+      
+      // Inserir códigos de pixels automaticamente apenas na URL pública
+      insertTrackingPixels(quizData);
     } catch (err) {
       console.error("Error fetching quiz:", err);
       setError("Erro ao carregar o quiz");
