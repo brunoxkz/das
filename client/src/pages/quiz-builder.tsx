@@ -134,21 +134,19 @@ export default function QuizBuilder() {
 
 
 
-  // Save quiz mutation
+  // SISTEMA DE SALVAMENTO SIMPLES E EFICAZ
   const saveMutation = useMutation({
     mutationFn: async (data: any) => {
-      // Usar currentQuizId se disponível, caso contrário verificar se é edição com quizId da URL
-      const hasQuizId = currentQuizId || (isEditing && quizId);
-      const url = hasQuizId ? `/api/quizzes/${currentQuizId || quizId}` : "/api/quizzes";
-      const method = hasQuizId ? "PUT" : "POST";
+      const targetQuizId = currentQuizId || quizId;
+      const url = targetQuizId ? `/api/quizzes/${targetQuizId}` : "/api/quizzes";
+      const method = targetQuizId ? "PUT" : "POST";
       
-      console.log("SAVE MUTATION - Debug:", {
-        isEditing,
-        quizId,
-        currentQuizId,
-        hasQuizId,
+      console.log("SALVANDO QUIZ:", {
+        quizId: targetQuizId,
         url,
-        method
+        method,
+        pagesCount: data.structure?.pages?.length || 0,
+        elementsCount: data.structure?.pages?.reduce((sum, p) => sum + (p.elements?.length || 0), 0) || 0
       });
       
       return await apiRequest(url, {
@@ -157,17 +155,26 @@ export default function QuizBuilder() {
       });
     },
     onSuccess: (result) => {
-      // Se é um novo quiz (não editing), capturar o ID retornado
+      // Atualizar ID se é novo quiz
       if (!currentQuizId && result?.id) {
         setCurrentQuizId(result.id);
-        console.log("SAVE MUTATION - Novo quiz criado com ID:", result.id);
       }
+      
+      // Limpar cache específico do quiz
+      const quizIdToInvalidate = currentQuizId || quizId || result?.id;
+      if (quizIdToInvalidate) {
+        queryClient.removeQueries({ queryKey: [`/api/quizzes/${quizIdToInvalidate}`] });
+        queryClient.invalidateQueries({ queryKey: [`/api/quizzes/${quizIdToInvalidate}`] });
+      }
+      
+      // Limpar cache geral
+      queryClient.removeQueries({ queryKey: ["/api/quizzes"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/quizzes"] });
       
       toast({
         title: "Quiz salvo com sucesso!",
-        description: "Aguarde 5 minutos para que todos os salvamentos façam efeito. (Lembre-se de publicar)",
+        description: "Dados salvos e cache atualizado.",
       });
-      queryClient.invalidateQueries({ queryKey: ["/api/quizzes"] });
     },
     onError: (error) => {
       if (isUnauthorizedError(error)) {
@@ -181,6 +188,7 @@ export default function QuizBuilder() {
         }, 500);
         return;
       }
+      
       toast({
         title: "Erro ao salvar quiz",
         description: "Tente novamente mais tarde.",
@@ -348,11 +356,19 @@ export default function QuizBuilder() {
       title: dataToSave.title,
       pagesCount: dataToSave.structure.pages.length,
       totalElements: dataToSave.structure.pages.reduce((sum, p) => sum + (p.elements?.length || 0), 0),
-      flowEnabled: dataToSave.structure.flowSystem.enabled
+      flowEnabled: dataToSave.structure.flowSystem.enabled,
+      quizId: currentQuizId || quizId
     });
     
-    // Log detalhado para debug
+    // Log detalhado para debug incluindo elementos específicos
     console.log('ESTRUTURA COMPLETA:', JSON.stringify(dataToSave.structure, null, 2));
+    
+    // Forçar limpeza de cache antes de salvar
+    const cleanCacheQuizId = currentQuizId || quizId;
+    if (cleanCacheQuizId) {
+      console.log("LIMPANDO CACHE ANTES DE SALVAR:", cleanCacheQuizId);
+      queryClient.removeQueries({ queryKey: [`/api/quizzes/${cleanCacheQuizId}`] });
+    }
     
     saveMutation.mutate(dataToSave);
   };

@@ -473,11 +473,54 @@ export class SQLiteStorage implements IStorage {
   }
 
   async updateQuiz(id: string, updates: Partial<InsertQuiz>): Promise<Quiz> {
-    const [updatedQuiz] = await db.update(quizzes)
-      .set({ ...updates, updatedAt: Math.floor(Date.now() / 1000) })
-      .where(eq(quizzes.id, id))
-      .returning();
-    return updatedQuiz;
+    console.log(`💾 STORAGE - updateQuiz iniciado para ID: ${id}`);
+    console.log(`📝 STORAGE - Updates recebidos:`, {
+      title: updates.title,
+      hasStructure: !!updates.structure,
+      pagesCount: updates.structure?.pages?.length || 0,
+      elementsCount: updates.structure?.pages?.reduce((sum, p) => sum + (p.elements?.length || 0), 0) || 0
+    });
+    
+    try {
+      // Primeiro verificar se o quiz existe
+      const existingQuiz = await this.getQuiz(id);
+      if (!existingQuiz) {
+        throw new Error(`Quiz com ID ${id} não encontrado`);
+      }
+      
+      console.log(`📊 STORAGE - Quiz existente encontrado:`, {
+        currentTitle: existingQuiz.title,
+        currentPagesCount: existingQuiz.structure?.pages?.length || 0
+      });
+      
+      // Executar update com timestamp Unix
+      const updateData = {
+        ...updates,
+        updatedAt: Math.floor(Date.now() / 1000)
+      };
+      
+      const [updatedQuiz] = await db.update(quizzes)
+        .set(updateData)
+        .where(eq(quizzes.id, id))
+        .returning();
+      
+      if (!updatedQuiz) {
+        throw new Error(`Falha ao atualizar quiz ${id} - nenhum resultado retornado`);
+      }
+      
+      console.log(`✅ STORAGE - Quiz atualizado com sucesso:`, {
+        id: updatedQuiz.id,
+        title: updatedQuiz.title,
+        finalPagesCount: updatedQuiz.structure?.pages?.length || 0,
+        finalElementsCount: updatedQuiz.structure?.pages?.reduce((sum, p) => sum + (p.elements?.length || 0), 0) || 0,
+        updatedAt: updatedQuiz.updatedAt
+      });
+      
+      return updatedQuiz;
+    } catch (error) {
+      console.error(`❌ STORAGE - Erro ao atualizar quiz ${id}:`, error);
+      throw error;
+    }
   }
 
   async deleteQuiz(id: string): Promise<void> {

@@ -4,12 +4,25 @@ import { storage } from "./storage-sqlite";
 import { cache } from "./cache";
 import { nanoid } from "nanoid";
 import { insertQuizSchema, insertQuizResponseSchema } from "../shared/schema-sqlite";
+import { z } from "zod";
 import { verifyJWT } from "./auth-sqlite";
 import { sendSms } from "./twilio";
 import { emailService } from "./email-service";
 import { BrevoEmailService } from "./email-brevo";
 
 export function registerSQLiteRoutes(app: Express): Server {
+  // Middleware de debug para todas as rotas POST
+  app.use((req, res, next) => {
+    if (req.method === 'POST' && req.path.startsWith('/api/')) {
+      console.log(`🔍 MIDDLEWARE DEBUG - ${req.method} ${req.path}`);
+      console.log(`📝 Headers:`, req.headers);
+      console.log(`📝 Body type:`, typeof req.body);
+      console.log(`📝 Body keys:`, Object.keys(req.body || {}));
+      console.log(`📝 Body content:`, JSON.stringify(req.body, null, 2));
+    }
+    next();
+  });
+
   // Auth system detection endpoint
   app.get("/api/auth/system", (req, res) => {
     res.json({ system: "sqlite" });
@@ -204,48 +217,99 @@ export function registerSQLiteRoutes(app: Express): Server {
   // Create quiz
   app.post("/api/quizzes", verifyJWT, async (req: any, res) => {
     try {
+      const userId = req.user.id;
+      console.log(`🔄 CRIANDO NOVO QUIZ - User: ${userId}`);
+      console.log(`📝 REQ.BODY COMPLETO:`, JSON.stringify(req.body, null, 2));
+      console.log(`📝 DADOS RECEBIDOS:`, {
+        title: req.body.title,
+        description: req.body.description,
+        hasStructure: !!req.body.structure,
+        pagesCount: req.body.structure?.pages?.length || 0,
+        elementsCount: req.body.structure?.pages?.reduce((sum, p) => sum + (p.elements?.length || 0), 0) || 0
+      });
 
       // Validar dados do quiz
       const quizData = insertQuizSchema.parse({
         ...req.body,
-        userId: req.user.id,
+        userId: userId,
       });
 
+      console.log(`✅ DADOS VALIDADOS COM SUCESSO`);
+      console.log(`💾 CRIANDO NO STORAGE...`);
+      
       const quiz = await storage.createQuiz(quizData);
 
+      console.log(`✅ QUIZ CRIADO COM SUCESSO:`, {
+        id: quiz.id,
+        title: quiz.title,
+        pagesCount: quiz.structure?.pages?.length || 0,
+        elementsCount: quiz.structure?.pages?.reduce((sum, p) => sum + (p.elements?.length || 0), 0) || 0
+      });
+
       // Invalidar caches relevantes
-      cache.invalidateUserCaches(req.user.id);
+      cache.invalidateUserCaches(userId);
       
       res.status(201).json(quiz);
     } catch (error) {
-      console.error("Create quiz error:", error);
-      res.status(500).json({ message: "Failed to create quiz" });
+      console.error("❌ ERRO NA CRIAÇÃO DO QUIZ:", error);
+      if (error instanceof z.ZodError) {
+        console.error("❌ ERRO DE VALIDAÇÃO ZOD:", error.issues);
+        res.status(400).json({ message: "Validation error", issues: error.issues });
+      } else {
+        res.status(500).json({ message: "Failed to create quiz" });
+      }
     }
   });
 
   // Update quiz
   app.put("/api/quizzes/:id", verifyJWT, async (req: any, res) => {
     try {
+      const quizId = req.params.id;
+      const userId = req.user.id;
+      
+      console.log(`🔄 ATUALIZANDO QUIZ ${quizId} - User: ${userId}`);
+      console.log(`📝 DADOS RECEBIDOS:`, {
+        title: req.body.title,
+        pagesCount: req.body.structure?.pages?.length || 0,
+        elementsCount: req.body.structure?.pages?.reduce((sum, p) => sum + (p.elements?.length || 0), 0) || 0,
+        hasFlowSystem: !!req.body.structure?.flowSystem,
+        flowEnabled: req.body.structure?.flowSystem?.enabled || false
+      });
 
-      const existingQuiz = await storage.getQuiz(req.params.id);
+      const existingQuiz = await storage.getQuiz(quizId);
       
       if (!existingQuiz) {
+        console.log(`❌ QUIZ NÃO ENCONTRADO: ${quizId}`);
         return res.status(404).json({ message: "Quiz not found" });
       }
 
-      if (existingQuiz.userId !== req.user.id) {
+      if (existingQuiz.userId !== userId) {
+        console.log(`🚫 ACESSO NEGADO: Quiz ${quizId} não pertence ao usuário ${userId}`);
         return res.status(403).json({ message: "Access denied" });
       }
 
-      const updatedQuiz = await storage.updateQuiz(req.params.id, req.body);
+      // Forçar limpeza do cache antes da atualização
+      cache.invalidateUserCaches(userId);
+      cache.invalidateQuizCaches(quizId, userId);
+      
+      console.log(`💾 EXECUTANDO UPDATE NO STORAGE...`);
+      const updatedQuiz = await storage.updateQuiz(quizId, req.body);
 
-      // Invalidar caches relevantes
-      cache.invalidateUserCaches(req.user.id);
-      cache.invalidateQuizCaches(req.params.id, req.user.id);
+      console.log(`✅ QUIZ ATUALIZADO COM SUCESSO:`, {
+        id: updatedQuiz.id,
+        title: updatedQuiz.title,
+        pagesCount: updatedQuiz.structure?.pages?.length || 0,
+        elementsCount: updatedQuiz.structure?.pages?.reduce((sum, p) => sum + (p.elements?.length || 0), 0) || 0,
+        updatedAt: new Date().toISOString()
+      });
+
+      // Invalidar caches novamente após atualização
+      cache.invalidateUserCaches(userId);
+      cache.invalidateQuizCaches(quizId, userId);
       
       res.json(updatedQuiz);
     } catch (error) {
-      console.error("Update quiz error:", error);
+      console.error("❌ ERRO NA ATUALIZAÇÃO DO QUIZ:", error);
       res.status(500).json({ message: "Failed to update quiz" });
     }
   });

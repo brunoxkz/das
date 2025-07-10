@@ -28,19 +28,15 @@ app.use(compression({
   threshold: 1024 // Só comprime se > 1KB
 }));
 
-// Configurações otimizadas para JSON
+// SOLUÇÃO CRÍTICA: JSON parser robusto que funciona com fetch() do Node.js
 app.use(express.json({ 
-  limit: '10mb', // Limite de 10MB para uploads
+  limit: '10mb',
   inflate: true,
   strict: true,
-  type: 'application/json'
+  type: ['application/json', 'text/plain', 'application/octet-stream']
 }));
 
-app.use(express.urlencoded({ 
-  extended: false,
-  limit: '10mb',
-  parameterLimit: 1000
-}));
+// Removemos express.urlencoded() para evitar interceptação das requisições JSON do fetch()
 
 // CORS configurado para extensão Chrome
 app.use((req, res, next) => {
