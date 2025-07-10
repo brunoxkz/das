@@ -69,12 +69,12 @@ export default function Analytics() {
         
         // Use the correct field names from backend response
         const totalViews = quizAnalytic?.totalViews || 0;
-        const totalCompletions = quizAnalytic?.completedResponses || quizAnalytic?.totalResponses || 0;
+        const leadsWithContact = quizAnalytic?.leadsWithContact || 0; // NEW: Real leads with email/phone
         const conversionRate = quizAnalytic?.conversionRate || 0;
         
         map.set(quiz.id, {
           views: totalViews,
-          leads: totalCompletions,
+          leads: leadsWithContact, // Real leads with contact info
           conversions: Math.round(conversionRate)
         });
       });
@@ -139,12 +139,13 @@ export default function Analytics() {
               />
               <StatsCard
                 title="Leads Gerados"
-                value={quizAnalytics.totalLeads || 0}
+                value={quizAnalytics.leadsWithContact || 0}
                 icon={<Users className="w-5 h-5 text-green-600" />}
                 color="green"
                 change="+8%"
                 changeType="positive"
               />
+              <div className="text-xs text-gray-500 mt-1">Leads = Email ou telefone capturado</div>
               <StatsCard
                 title="Taxa de Conversão"
                 value={`${quizAnalytics.conversionRate || 0}%`}
@@ -153,6 +154,7 @@ export default function Analytics() {
                 change="+5%"
                 changeType="positive"
               />
+              <div className="text-xs text-gray-500 mt-1">Conversão = Chegaram até a última página do quiz</div>
               <StatsCard
                 title="Completados"
                 value={quizAnalytics.completedCount || 0}
@@ -200,12 +202,13 @@ export default function Analytics() {
           />
           <StatsCard
             title="Total de Leads"
-            value={allAnalytics ? allAnalytics.reduce((sum: number, a: any) => sum + (a.completedResponses || 0), 0) : 0}
+            value={allAnalytics ? allAnalytics.reduce((sum: number, a: any) => sum + (a.leadsWithContact || 0), 0) : 0}
             icon={<Users className="w-5 h-5 text-green-600" />}
             color="green"
             change="+12%"
             changeType="positive"
           />
+          <div className="text-xs text-gray-500 mt-1">Leads = Respostas que captaram email ou telefone</div>
           <StatsCard
             title="Total de Visualizações"
             value={allAnalytics ? allAnalytics.reduce((sum: number, a: any) => sum + (a.totalViews || 0), 0) : 0}

@@ -623,6 +623,24 @@ export class SQLiteStorage implements IStorage {
       console.error('❌ ERRO ao extrair variáveis automaticamente:', error);
     }
     
+    // SISTEMA AUTOMÁTICO: Atualizar analytics quando resposta for completa
+    try {
+      if (response.metadata && typeof response.metadata === 'object') {
+        const metadata = response.metadata as any;
+        if (metadata.isComplete === true || metadata.completionPercentage === 100) {
+          console.log(`📊 ATUALIZANDO ANALYTICS: Resposta completa para quiz ${response.quizId}`);
+          await this.updateQuizAnalytics(response.quizId, {
+            date: new Date().toISOString().split('T')[0],
+            views: 0,
+            completions: 1,
+            conversionRate: 0 // Será recalculado no update
+          });
+        }
+      }
+    } catch (error) {
+      console.error('❌ ERRO ao atualizar analytics automaticamente:', error);
+    }
+    
     return newResponse;
   }
 
@@ -676,14 +694,23 @@ export class SQLiteStorage implements IStorage {
       // Primeiro tentar UPDATE
       const updateStmt = sqlite.prepare(`
         UPDATE quiz_analytics 
-        SET views = views + ?, completions = completions + ?, conversionRate = ?
+        SET views = views + ?, completions = completions + ?, 
+            conversionRate = CASE 
+              WHEN (views + ?) > 0 THEN (CAST((completions + ?) AS FLOAT) / (views + ?)) * 100 
+              ELSE 0 
+            END
         WHERE quizId = ? AND date = ?
       `);
       
+      const newViews = analytics.views || 0;
+      const newCompletions = analytics.completions || 0;
+      
       const result = updateStmt.run(
-        analytics.views || 0,
-        analytics.completions || 0, 
-        analytics.conversionRate || 0,
+        newViews,
+        newCompletions,
+        newViews,
+        newCompletions,
+        newViews,
         quizId,
         today
       );
@@ -700,13 +727,17 @@ export class SQLiteStorage implements IStorage {
         `);
         
         const insertId = nanoid();
+        const views = analytics.views || 0;
+        const completions = analytics.completions || 0;
+        const conversionRate = views > 0 ? (completions / views) * 100 : 0;
+        
         const insertResult = insertStmt.run(
           insertId,
           quizId,
           today,
-          analytics.views || 0,
-          analytics.completions || 0,
-          analytics.conversionRate || 0
+          views,
+          completions,
+          conversionRate
         );
         
         console.log(`📊 [ANALYTICS] INSERT RESULT: ${insertResult.changes} rows inserted, ID: ${insertId}`);

@@ -964,6 +964,27 @@ export function registerSQLiteRoutes(app: Express): Server {
         // Calculate enhanced analytics
         const totalViews = analytics.reduce((sum: number, a: any) => sum + (a.views || 0), 0);
         const totalResponses = responses.length;
+        // Count responses with email or phone (real leads)
+        const leadsWithContact = responses.filter(r => {
+          if (!r.responses) return false;
+          
+          let parsedResponses;
+          try {
+            parsedResponses = typeof r.responses === 'string' ? JSON.parse(r.responses) : r.responses;
+          } catch {
+            return false;
+          }
+          
+          if (!Array.isArray(parsedResponses)) return false;
+          
+          // Check if has email or phone field
+          return parsedResponses.some(response => {
+            const fieldId = response.elementFieldId || '';
+            return fieldId.includes('email') || fieldId.includes('telefone') || fieldId.includes('phone');
+          });
+        }).length;
+        
+        // Count completed responses (conversions - reached final page)
         const completedResponses = responses.filter(r => {
           const metadata = r.metadata && typeof r.metadata === 'object' ? r.metadata as any : {};
           return metadata.isPartial === false || metadata.isComplete === true;
@@ -1015,7 +1036,8 @@ export function registerSQLiteRoutes(app: Express): Server {
           quizTitle: quiz.title,
           totalViews,
           totalResponses,
-          completedResponses,
+          leadsWithContact, // NEW: Leads that captured email/phone
+          completedResponses, // Conversions (reached final page)
           conversionRate: parseFloat(conversionRate.toFixed(1)),
           abandonmentRate: parseFloat(abandonmentRate.toFixed(1)),
           insights,
