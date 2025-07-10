@@ -4,7 +4,7 @@ import { useAuth } from "@/hooks/useAuth-jwt";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { RealTimeNotifications } from "@/components/real-time-notifications";
+
 import { 
   BarChart3, 
   Plus, 
@@ -97,27 +97,7 @@ export function Sidebar() {
       icon: <TrendingUp className="w-4 h-4" />,
       active: location === "/analytics"
     },
-    {
-      title: "Analytics em Tempo Real",
-      href: "/real-time-analytics",
-      icon: <Activity className="w-4 h-4" />,
-      active: location === "/real-time-analytics",
-      badge: "🔴"
-    },
-    {
-      title: "Encapsulados",
-      href: "/encapsulados",
-      icon: <Package className="w-4 h-4" />,
-      active: location === "/encapsulados",
-      badge: "🛍️"
-    },
-    {
-      title: "Premiações",
-      href: "/premiacoes",
-      icon: <Trophy className="w-4 h-4" />,
-      active: location === "/premiacoes",
-      badge: "🏆"
-    },
+
     {
       title: "Tutoriais",
       href: "/tutoriais",
@@ -137,12 +117,7 @@ export function Sidebar() {
       active: location === "/email-marketing",
       badge: "📧"
     },
-    {
-      title: "WhatsApp Remarketing",
-      href: "/whatsapp-remarketing",
-      icon: <Zap className="w-4 h-4" />,
-      active: location === "/whatsapp-remarketing"
-    },
+
     {
       title: "Automação WhatsApp",
       href: "/campanhas-whatsapp",
@@ -198,11 +173,7 @@ export function Sidebar() {
               />
             )}
           </div>
-          {!isCollapsed && (
-            <div className="flex items-center">
-              <RealTimeNotifications />
-            </div>
-          )}
+
         </div>
       </div>
 

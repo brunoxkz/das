@@ -3149,48 +3149,7 @@ app.get("/api/whatsapp-extension/pending", verifyJWT, async (req: any, res: Resp
   // ==================== NOTIFICATIONS ROUTES ====================
   
   // Buscar notificações do usuário
-  app.get("/api/notifications", verifyJWT, async (req: any, res) => {
-    try {
-      // Por enquanto, retornar notificações mockadas
-      const mockNotifications = [
-        {
-          id: "1",
-          type: "success",
-          title: "Novo Lead Capturado",
-          message: "João Silva completou o Quiz de Vendas",
-          timestamp: "2 min atrás",
-          read: false,
-          actionType: "lead_capture",
-          actionData: { leadName: "João Silva", quizTitle: "Quiz de Vendas" }
-        },
-        {
-          id: "2",
-          type: "info",
-          title: "Quiz Visualizado",
-          message: "5 novas visualizações no Quiz de Marketing",
-          timestamp: "5 min atrás",
-          read: false,
-          actionType: "quiz_view",
-          actionData: { quizTitle: "Quiz de Marketing", views: 5 }
-        },
-        {
-          id: "3",
-          type: "success",
-          title: "Email Enviado",
-          message: "Campanha promocional enviada para 150 contatos",
-          timestamp: "8 min atrás",
-          read: true,
-          actionType: "email_sent",
-          actionData: { campaignName: "Campanha Promocional", count: 150 }
-        }
-      ];
-      
-      res.json(mockNotifications);
-    } catch (error) {
-      console.error("Error fetching notifications:", error);
-      res.status(500).json({ error: "Error fetching notifications" });
-    }
-  });
+
 
   // ==================== EMAIL MARKETING ROUTES ====================
   

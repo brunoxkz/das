@@ -18,20 +18,19 @@ import AdminPage from "@/pages/admin";
 import LeadsPage from "@/pages/leads";
 import NotFoundPage from "@/pages/not-found";
 import TutoriaisPage from "@/pages/tutoriais";
-import PremiacoesPage from "@/pages/premiacoes";
-import EncapsuladosPage from "@/pages/encapsulados";
+
 import QuizPublicPage from "@/pages/quiz-public";
 import SMSCreditsPage from "@/pages/sms-credits";
 
-import WhatsAppRemarketingPage from "@/pages/whatsapp-remarketing";
+
 import WhatsAppAutomationPage from "@/pages/whatsapp-automation";
 import CloakerPage from "@/pages/cloaker";
 import TesteSMSPage from "@/pages/teste-sms";
-import RealTimeAnalytics from "@/pages/real-time-analytics";
+
 import EmailMarketingPro from "@/pages/email-marketing-pro";
 import { useAuth } from "@/hooks/use-auth-hybrid";
 import { isUnauthorizedError } from "@/lib/authUtils";
-import { lazy } from "react";
+
 
 function App() {
   const { isAuthenticated, isLoading } = useAuth();
@@ -129,16 +128,7 @@ function App() {
             <TutoriaisPage />
           </Layout>
         </Route>
-        <Route path="/premiacoes">
-          <Layout>
-            <PremiacoesPage />
-          </Layout>
-        </Route>
-        <Route path="/encapsulados">
-          <Layout>
-            <EncapsuladosPage />
-          </Layout>
-        </Route>
+
         <Route path="/sms-credits">
           <Layout>
             <SMSCreditsPage />
@@ -149,11 +139,7 @@ function App() {
             <EmailMarketingPro />
           </Layout>
         </Route>
-        <Route path="/whatsapp-remarketing">
-          <Layout>
-            <WhatsAppRemarketingPage />
-          </Layout>
-        </Route>
+
         <Route path="/campanhas-whatsapp">
           <Layout>
             <WhatsAppAutomationPage />
@@ -169,11 +155,7 @@ function App() {
             <TesteSMSPage />
           </Layout>
         </Route>
-        <Route path="/real-time-analytics">
-          <Layout>
-            <RealTimeAnalytics />
-          </Layout>
-        </Route>
+
         <Route component={NotFoundPage} />
       </Switch>
       <Toaster />
