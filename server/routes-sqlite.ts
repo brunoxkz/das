@@ -735,6 +735,73 @@ export function registerSQLiteRoutes(app: Express): Server {
     }
   });
 
+  // Get quiz analytics (padrão alternativo)
+  app.get("/api/quizzes/:id/analytics", verifyJWT, async (req: any, res) => {
+    try {
+      if (!req.user) {
+        return res.status(401).json({ message: "Unauthorized" });
+      }
+
+      const quiz = await storage.getQuiz(req.params.id);
+      
+      if (!quiz || quiz.userId !== req.user.id) {
+        return res.status(403).json({ message: "Access denied" });
+      }
+
+      const analytics = await storage.getQuizAnalytics(req.params.id);
+      
+      // Formato de resposta mais robusto
+      const response = {
+        totalViews: analytics.reduce((total, day) => total + day.views, 0),
+        totalResponses: analytics.reduce((total, day) => total + day.completions, 0),
+        completionRate: analytics.length > 0 ? 
+          ((analytics.reduce((total, day) => total + day.completions, 0) / 
+            analytics.reduce((total, day) => total + day.views, 0)) * 100).toFixed(1) : "0.0",
+        analytics: analytics
+      };
+      
+      res.json(response);
+    } catch (error) {
+      console.error("Get quiz analytics error:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  // Get quiz variables
+  app.get("/api/quizzes/:id/variables", verifyJWT, async (req: any, res) => {
+    try {
+      if (!req.user) {
+        return res.status(401).json({ message: "Unauthorized" });
+      }
+
+      const quiz = await storage.getQuiz(req.params.id);
+      
+      if (!quiz || quiz.userId !== req.user.id) {
+        return res.status(403).json({ message: "Access denied" });
+      }
+
+      const variables = await storage.getResponseVariables(req.params.id);
+      
+      // Formato de resposta com variáveis padrão + personalizadas
+      const response = [
+        { name: "nome", description: "Nome do respondente", type: "text" },
+        { name: "email", description: "Email do respondente", type: "email" },
+        { name: "telefone", description: "Telefone do respondente", type: "phone" },
+        { name: "quiz_titulo", description: "Título do quiz", type: "text" },
+        ...variables.map(v => ({
+          name: v.variableName,
+          description: `Variável ${v.variableName}`,
+          type: v.variableType || "text"
+        }))
+      ];
+      
+      res.json(response);
+    } catch (error) {
+      console.error("Get quiz variables error:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
   // Get all quiz analytics for user
   app.get("/api/analytics", verifyJWT, async (req: any, res) => {
     try {

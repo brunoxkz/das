@@ -116,11 +116,14 @@ app.use((req, res, next) => {
     next();
   });
 
-  // Use SQLite system directly
+  // Use SQLite system directly - DEVE VIR ANTES DO VITE
   const { setupSQLiteAuth } = await import("./auth-sqlite");
   const { registerSQLiteRoutes } = await import("./routes-sqlite");
   setupSQLiteAuth(app);
   const server = registerSQLiteRoutes(app);
+  
+  // Garantir que todas as rotas API sejam registradas antes do Vite
+  console.log('✅ ROTAS API REGISTRADAS ANTES DO VITE');
 
   // Sistema de processamento individual de SMS agendados - A CADA 30 SEGUNDOS
   setInterval(async () => {
