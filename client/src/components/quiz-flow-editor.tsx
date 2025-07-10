@@ -558,7 +558,7 @@ export const QuizFlowEditor: React.FC<QuizFlowEditorProps> = ({
             <div className="relative w-full h-full min-h-[600px]"
                  onMouseMove={updateConnectionDrawing}
                  onMouseUp={() => setConnectionDrawing(null)}>
-              <svg className="absolute inset-0 w-full h-full pointer-events-none">
+              <svg className="absolute inset-0 w-full h-full pointer-events-none z-20">
                 {/* Render connections */}
                 {flowSystem.connections.map((connection) => {
                   const fromNode = flowSystem.nodes.find(n => n.id === connection.from);
@@ -692,9 +692,9 @@ export const QuizFlowEditor: React.FC<QuizFlowEditorProps> = ({
                 return (
                   <div
                     key={node.id}
-                    className={`absolute w-80 bg-white rounded-lg shadow-lg border-2 ${
+                    className={`absolute w-80 bg-white/85 backdrop-blur-sm rounded-lg shadow-md border-2 ${
                       selectedNode === node.id ? 'border-green-500' : 'border-gray-200'
-                    } ${draggedNode === node.id ? 'scale-105 z-50' : 'scale-100'}`}
+                    } ${draggedNode === node.id ? 'scale-105 z-50' : 'scale-100 z-10'}`}
                     style={{
                       left: node.x,
                       top: node.y,
