@@ -802,88 +802,42 @@ export default function QuizBuilder() {
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div>
-                    <Label htmlFor="backgroundColor">Cor de Fundo</Label>
+                    <Label htmlFor="backgroundColor">Cor de Fundo Global</Label>
                     <div className="flex items-center gap-3 mt-2">
                       <input
                         type="color"
                         id="backgroundColor"
-                        value={quizData.design?.backgroundColor || "#f9fafb"}
-                        onChange={(e) => setQuizData(prev => ({ 
-                          ...prev, 
-                          design: { ...prev.design, backgroundColor: e.target.value }
-                        }))}
-                        className="w-12 h-12 border border-gray-300 rounded-md cursor-pointer"
+                        value={quizData.design?.backgroundColor || customBackgroundColor || "#f9fafb"}
+                        onChange={(e) => {
+                          const newColor = e.target.value;
+                          setQuizData(prev => ({ 
+                            ...prev, 
+                            design: { ...prev.design, backgroundColor: newColor, globalBackgroundColor: newColor }
+                          }));
+                          setCustomBackgroundColor(newColor); // Sincroniza com o editor
+                        }}
+                        className="w-8 h-8 border border-gray-300 rounded-full cursor-pointer"
                       />
                       <Input
-                        value={quizData.design?.backgroundColor || "#f9fafb"}
-                        onChange={(e) => setQuizData(prev => ({ 
-                          ...prev, 
-                          design: { ...prev.design, backgroundColor: e.target.value }
-                        }))}
+                        value={quizData.design?.backgroundColor || customBackgroundColor || "#f9fafb"}
+                        onChange={(e) => {
+                          const newColor = e.target.value;
+                          setQuizData(prev => ({ 
+                            ...prev, 
+                            design: { ...prev.design, backgroundColor: newColor, globalBackgroundColor: newColor }
+                          }));
+                          setCustomBackgroundColor(newColor); // Sincroniza com o editor
+                        }}
                         placeholder="#f9fafb"
                         className="flex-1"
                       />
                     </div>
+                    <p className="text-xs text-gray-500 mt-1">Esta cor será aplicada como fundo de todas as páginas</p>
                   </div>
 
-                  <div>
-                    <Label htmlFor="primaryColor">Cor Primária (Botões e Barra de Progresso)</Label>
-                    <div className="flex items-center gap-3 mt-2">
-                      <input
-                        type="color"
-                        id="primaryColor"
-                        value={quizData.design?.primaryColor || "#10b981"}
-                        onChange={(e) => setQuizData(prev => ({ 
-                          ...prev, 
-                          design: { 
-                            ...prev.design, 
-                            primaryColor: e.target.value,
-                            progressBarColor: e.target.value // Sincroniza com barra de progresso
-                          }
-                        }))}
-                        className="w-12 h-12 border border-gray-300 rounded-md cursor-pointer"
-                      />
-                      <Input
-                        value={quizData.design?.primaryColor || "#10b981"}
-                        onChange={(e) => setQuizData(prev => ({ 
-                          ...prev, 
-                          design: { 
-                            ...prev.design, 
-                            primaryColor: e.target.value,
-                            progressBarColor: e.target.value // Sincroniza com barra de progresso
-                          }
-                        }))}
-                        placeholder="#10b981"
-                        className="flex-1"
-                      />
-                    </div>
-                    <p className="text-xs text-gray-500 mt-1">Esta cor também será aplicada à barra de progresso</p>
-                  </div>
 
-                  <div>
-                    <Label htmlFor="progressBarColor">Cor da Barra de Progresso</Label>
-                    <div className="flex items-center gap-3 mt-2">
-                      <input
-                        type="color"
-                        id="progressBarColor"
-                        value={quizData.design?.progressBarColor || "#10b981"}
-                        onChange={(e) => setQuizData(prev => ({ 
-                          ...prev, 
-                          design: { ...prev.design, progressBarColor: e.target.value }
-                        }))}
-                        className="w-12 h-12 border border-gray-300 rounded-md cursor-pointer"
-                      />
-                      <Input
-                        value={quizData.design?.progressBarColor || "#10b981"}
-                        onChange={(e) => setQuizData(prev => ({ 
-                          ...prev, 
-                          design: { ...prev.design, progressBarColor: e.target.value }
-                        }))}
-                        placeholder="#10b981"
-                        className="flex-1"
-                      />
-                    </div>
-                  </div>
+
+
                 </CardContent>
               </Card>
 
