@@ -2159,15 +2159,28 @@ const gameElementCategories = [
             
             {globalTheme === "custom" && (
               <div className="mt-3">
-                <Input
-                  type="color"
-                  value={customBackgroundColor}
-                  onChange={(e) => {
-                    setCustomBackgroundColor(e.target.value);
-                    onThemeChange?.("custom", e.target.value);
-                  }}
-                  className="w-full h-10"
-                />
+                <Label className="text-xs font-medium mb-2 block">Cor personalizada</Label>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="color"
+                    value={customBackgroundColor}
+                    onChange={(e) => {
+                      setCustomBackgroundColor(e.target.value);
+                      onThemeChange?.("custom", e.target.value);
+                    }}
+                    className="w-8 h-8 rounded-full border-2 border-gray-300 cursor-pointer"
+                  />
+                  <Input
+                    type="text"
+                    value={customBackgroundColor}
+                    onChange={(e) => {
+                      setCustomBackgroundColor(e.target.value);
+                      onThemeChange?.("custom", e.target.value);
+                    }}
+                    className="flex-1 h-8 text-xs"
+                    placeholder="#000000"
+                  />
+                </div>
                 <div className="text-xs text-gray-500 mt-2">
                   Contraste automático aplicado ao texto
                 </div>

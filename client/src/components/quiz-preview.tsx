@@ -199,6 +199,122 @@ export function QuizPreview({ quiz }: QuizPreviewProps) {
   const borderColor = isDarkMode ? '#4b5563' : '#e5e7eb';
   const inputBgColor = isDarkMode ? '#1f2937' : '#ffffff';
   const inputTextColor = isDarkMode ? '#f9fafb' : '#1f2937';
+
+  // Aplicar CSS dinâmico para tema escuro
+  useEffect(() => {
+    const styleId = 'quiz-preview-theme-styles';
+    let existingStyle = document.getElementById(styleId);
+    
+    if (!existingStyle) {
+      existingStyle = document.createElement('style');
+      existingStyle.id = styleId;
+      document.head.appendChild(existingStyle);
+    }
+    
+    existingStyle.textContent = `
+      .quiz-preview-dark label,
+      .quiz-preview-dark .text-gray-700,
+      .quiz-preview-dark .text-gray-600,
+      .quiz-preview-dark .text-gray-800 {
+        color: #f9fafb !important;
+      }
+      
+      .quiz-preview-light label,
+      .quiz-preview-light .text-gray-700,
+      .quiz-preview-light .text-gray-600,
+      .quiz-preview-light .text-gray-800 {
+        color: #1f2937 !important;
+      }
+      
+      .quiz-preview-dark input,
+      .quiz-preview-dark textarea,
+      .quiz-preview-dark select {
+        background-color: #374151 !important;
+        color: #f9fafb !important;
+        border-color: #4b5563 !important;
+      }
+      
+      .quiz-preview-light input,
+      .quiz-preview-light textarea,
+      .quiz-preview-light select {
+        background-color: #ffffff !important;
+        color: #1f2937 !important;
+        border-color: #d1d5db !important;
+      }
+      
+      .quiz-preview-dark input::placeholder,
+      .quiz-preview-dark textarea::placeholder {
+        color: #9ca3af !important;
+      }
+      
+      .quiz-preview-light input::placeholder,
+      .quiz-preview-light textarea::placeholder {
+        color: #6b7280 !important;
+      }
+      
+      .quiz-preview-dark .bg-gray-50 {
+        background-color: #374151 !important;
+      }
+      
+      .quiz-preview-dark .bg-gray-100 {
+        background-color: #4b5563 !important;
+      }
+      
+      .quiz-preview-dark .bg-blue-50 {
+        background-color: #1e3a8a !important;
+      }
+      
+      .quiz-preview-dark .bg-orange-50 {
+        background-color: #9a3412 !important;
+      }
+      
+      .quiz-preview-dark .bg-purple-50 {
+        background-color: #581c87 !important;
+      }
+      
+      .quiz-preview-dark .border-blue-200 {
+        border-color: #1e40af !important;
+      }
+      
+      .quiz-preview-dark .border-orange-200 {
+        border-color: #ea580c !important;
+      }
+      
+      .quiz-preview-dark .border-purple-200 {
+        border-color: #7c3aed !important;
+      }
+      
+      .quiz-preview-dark .text-blue-600 {
+        color: #3b82f6 !important;
+      }
+      
+      .quiz-preview-dark .text-orange-600 {
+        color: #ea580c !important;
+      }
+      
+      .quiz-preview-dark .text-purple-600 {
+        color: #7c3aed !important;
+      }
+      
+      .quiz-preview-dark .text-blue-800 {
+        color: #1e40af !important;
+      }
+      
+      .quiz-preview-dark .text-orange-800 {
+        color: #9a3412 !important;
+      }
+      
+      .quiz-preview-dark .text-purple-800 {
+        color: #581c87 !important;
+      }
+    `;
+    
+    return () => {
+      if (existingStyle) {
+        existingStyle.remove();
+      }
+    };
+  }, [quiz.design?.darkMode]);
   
   // Incluir todas as páginas (normais e de transição)
   const allPages = pages || [];
@@ -679,7 +795,7 @@ export function QuizPreview({ quiz }: QuizPreviewProps) {
         return (
           <div className="mb-6">
             {(element.question && element.question.trim() !== '') && (
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium mb-2" style={{ color: textColor }}>
                 {element.question}
                 {element.required && <span className="text-red-500 ml-1">*</span>}
               </label>
@@ -687,7 +803,12 @@ export function QuizPreview({ quiz }: QuizPreviewProps) {
             <input
               type="text"
               placeholder={element.placeholder || "Digite sua resposta..."}
-              className="w-full px-4 py-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+              className="w-full px-4 py-3 border rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+              style={{ 
+                backgroundColor: cardBgColor,
+                color: textColor,
+                borderColor: isDarkMode ? '#4b5563' : '#d1d5db'
+              }}
               onChange={(e) => handleAnswer(element.id, e.target.value, element)}
             />
           </div>
@@ -2397,7 +2518,7 @@ export function QuizPreview({ quiz }: QuizPreviewProps) {
 
   return (
     <div 
-      className={`min-h-screen py-12 ${isTransitionPage ? '' : ''}`}
+      className={`min-h-screen py-12 ${isTransitionPage ? '' : ''} ${isDarkMode ? 'quiz-preview-dark' : 'quiz-preview-light'}`}
       style={{
         ...(isTransitionPage ? getPageBackgroundStyle() : {
           backgroundColor: backgroundColor,
