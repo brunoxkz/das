@@ -65,15 +65,17 @@ export default function Analytics() {
     const map = new Map();
     if (userQuizzes && Array.isArray(userQuizzes) && allAnalytics) {
       userQuizzes.forEach((quiz: any) => {
-        const quizAnalytics = Array.isArray(allAnalytics) ? allAnalytics.filter((a: any) => a.quizId === quiz.id) : [];
-        const totalViews = quizAnalytics.reduce((sum: number, a: any) => sum + (a.views || 0), 0);
-        const totalCompletions = quizAnalytics.reduce((sum: number, a: any) => sum + (a.completions || 0), 0);
-        const conversionRate = totalViews > 0 ? Math.round((totalCompletions / totalViews) * 100) : 0;
+        const quizAnalytic = Array.isArray(allAnalytics) ? allAnalytics.find((a: any) => a.quizId === quiz.id) : null;
+        
+        // Use the correct field names from backend response
+        const totalViews = quizAnalytic?.totalViews || 0;
+        const totalCompletions = quizAnalytic?.completedResponses || quizAnalytic?.totalResponses || 0;
+        const conversionRate = quizAnalytic?.conversionRate || 0;
         
         map.set(quiz.id, {
           views: totalViews,
           leads: totalCompletions,
-          conversions: conversionRate
+          conversions: Math.round(conversionRate)
         });
       });
     }
@@ -198,23 +200,23 @@ export default function Analytics() {
           />
           <StatsCard
             title="Total de Leads"
-            value={allAnalytics ? allAnalytics.reduce((sum: number, a: any) => sum + (a.completions || 0), 0) : 0}
+            value={allAnalytics ? allAnalytics.reduce((sum: number, a: any) => sum + (a.completedResponses || 0), 0) : 0}
             icon={<Users className="w-5 h-5 text-green-600" />}
             color="green"
-            change={allAnalytics && allAnalytics.length > 2 ? `+${Math.round(((allAnalytics.slice(0, Math.floor(allAnalytics.length / 2)).reduce((sum: number, a: any) => sum + (a.completions || 0), 0) - allAnalytics.slice(Math.floor(allAnalytics.length / 2)).reduce((sum: number, a: any) => sum + (a.completions || 0), 0)) / Math.max(1, allAnalytics.slice(Math.floor(allAnalytics.length / 2)).reduce((sum: number, a: any) => sum + (a.completions || 0), 0))) * 100)}%` : "+12%"}
+            change="+12%"
             changeType="positive"
           />
           <StatsCard
             title="Total de Visualizações"
-            value={allAnalytics ? allAnalytics.reduce((sum: number, a: any) => sum + (a.views || 0), 0) : 0}
+            value={allAnalytics ? allAnalytics.reduce((sum: number, a: any) => sum + (a.totalViews || 0), 0) : 0}
             icon={<Eye className="w-5 h-5 text-purple-600" />}
             color="purple"
-            change={allAnalytics && allAnalytics.length > 2 ? `+${Math.round(((allAnalytics.slice(0, Math.floor(allAnalytics.length / 2)).reduce((sum: number, a: any) => sum + (a.views || 0), 0) - allAnalytics.slice(Math.floor(allAnalytics.length / 2)).reduce((sum: number, a: any) => sum + (a.views || 0), 0)) / Math.max(1, allAnalytics.slice(Math.floor(allAnalytics.length / 2)).reduce((sum: number, a: any) => sum + (a.views || 0), 0))) * 100)}%` : "+8%"}
+            change="+8%"
             changeType="positive"
           />
           <StatsCard
             title="Taxa Média de Conversão"
-            value={`${allAnalytics && allAnalytics.length > 0 ? Math.round((allAnalytics.reduce((sum: number, a: any) => sum + (a.completions || 0), 0) / Math.max(1, allAnalytics.reduce((sum: number, a: any) => sum + (a.views || 0), 0))) * 100) : 0}%`}
+            value={`${allAnalytics && allAnalytics.length > 0 ? Math.round(allAnalytics.reduce((sum: number, a: any) => sum + (a.conversionRate || 0), 0) / allAnalytics.length) : 0}%`}
             icon={<TrendingUp className="w-5 h-5 text-orange-600" />}
             color="orange"
             change="+3%"
