@@ -194,8 +194,28 @@ export function QuizPreview({ quiz }: QuizPreviewProps) {
   // Tema escuro - CORRIGIDO para usar a estrutura correta
   const isDarkMode = quiz.design?.darkMode || false;
   const customBackgroundColor = quiz.design?.globalBackgroundColor || null;
+  
+  // Priorizar cor personalizada se definida
   const backgroundColor = customBackgroundColor || (isDarkMode ? '#1f2937' : '#f9fafb');
-  const textColor = isDarkMode ? '#f9fafb' : '#1f2937';
+  
+  // Calcular cor do texto baseada no fundo
+  const calculateTextColor = (bgColor: string) => {
+    if (!bgColor) return isDarkMode ? '#f9fafb' : '#1f2937';
+    
+    // Remover # se existir
+    const hex = bgColor.replace('#', '');
+    const r = parseInt(hex.substr(0, 2), 16);
+    const g = parseInt(hex.substr(2, 2), 16);
+    const b = parseInt(hex.substr(4, 2), 16);
+    
+    // Calcular luminância
+    const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+    
+    // Retornar cor do texto baseada na luminância
+    return luminance > 0.5 ? '#1f2937' : '#f9fafb';
+  };
+  
+  const textColor = calculateTextColor(backgroundColor);
   const cardBgColor = isDarkMode ? '#374151' : '#ffffff';
   const borderColor = isDarkMode ? '#4b5563' : '#e5e7eb';
   const inputBgColor = isDarkMode ? '#1f2937' : '#ffffff';
@@ -2622,11 +2642,7 @@ export function QuizPreview({ quiz }: QuizPreviewProps) {
           backgroundColor: backgroundColor,
           color: textColor,
           transition: 'background-color 0.3s ease, color 0.3s ease'
-        }),
-        // Aplicar cor personalizada se definida
-        ...(customBackgroundColor && !isTransitionPage ? {
-          backgroundColor: customBackgroundColor + ' !important'
-        } : {})
+        })
       }}
     >
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">

@@ -439,6 +439,7 @@ export default function QuizBuilder() {
       brandingLogo: quizData.design?.brandingLogo || "",
       progressBarColor: quizData.design?.progressBarColor || "#10b981",
       buttonColor: quizData.design?.buttonColor || "#10b981",
+      globalBackgroundColor: quizData.design?.globalBackgroundColor || "",
       favicon: quizData.design?.favicon || "",
       seoTitle: quizData.design?.seoTitle || "",
       seoDescription: quizData.design?.seoDescription || "",
@@ -673,6 +674,14 @@ export default function QuizBuilder() {
               onThemeChange={(theme, customColor) => {
                 setGlobalTheme(theme);
                 setCustomBackgroundColor(customColor || "#ffffff");
+                // Salvar cor global no design do quiz
+                setQuizData(prev => ({
+                  ...prev,
+                  design: {
+                    ...prev.design,
+                    globalBackgroundColor: customColor || (theme === "dark" ? "#000000" : theme === "light" ? "#ffffff" : "#ffffff")
+                  }
+                }));
               }}
             />
           </div>
@@ -1176,16 +1185,39 @@ export default function QuizBuilder() {
                     />
                   </div>
                   
-                  <div>
-                    <Label htmlFor="description">Descrição</Label>
-                    <Textarea
-                      id="description"
-                      value={quizData.description || ""}
-                      onChange={(e) => setQuizData(prev => ({ ...prev, description: e.target.value }))}
-                      placeholder="Descreva o objetivo do quiz"
-                      className="mt-2"
-                      rows={3}
-                    />
+                  
+                  {/* Status de Publicação */}
+                  <div className="p-4 bg-gray-50 rounded-lg">
+                    <div className="flex items-center justify-between mb-2">
+                      <div>
+                        <p className="font-medium text-gray-900">Status de Publicação</p>
+                        <p className="text-sm text-gray-600">
+                          {quizData.isPublished ? "Quiz publicado e disponível" : "Quiz em modo rascunho"}
+                        </p>
+                      </div>
+                      <div className={`px-2 py-1 rounded text-xs font-medium ${
+                        quizData.isPublished 
+                          ? "bg-green-100 text-green-800" 
+                          : "bg-yellow-100 text-yellow-800"
+                      }`}>
+                        {quizData.isPublished ? "Publicado" : "Rascunho"}
+                      </div>
+                    </div>
+                    
+                    {quizData.isPublished && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          setQuizData(prev => ({ ...prev, isPublished: false }));
+                          handleSave();
+                        }}
+                        className="w-full mt-2"
+                      >
+                        <Eye className="w-4 h-4 mr-2" />
+                        Despublicar Quiz
+                      </Button>
+                    )}
                   </div>
                 </CardContent>
               </Card>
