@@ -789,6 +789,15 @@ Changelog:
   * Suporte completo para elementos múltipla escolha com conexões por opção individual
   * Interface aprimorada com feedback visual durante criação de conexões
   * Sistema de conexões responsivo com tooltips informativos para cada ponto de conexão
+- July 10, 2025. SISTEMA DE CONEXÕES ÚNICAS TOTALMENTE CORRIGIDO - Eliminated duplicates and UI errors:
+  * Resolved "showConditionEditor is not defined" error by completely removing modal interface
+  * Implemented unique connection validation - each element/option can have only one connection
+  * Added visual indicators: gray dots for connected elements, colored dots for available connections
+  * Connection replacement system - dragging from connected element replaces previous connection
+  * Simplified drag-and-drop interface without complex modal popups
+  * Visual feedback system with tooltips showing connection status
+  * Automatic duplicate prevention with intelligent connection key matching
+  * System now prevents connection duplication while maintaining full functionality
 - July 09, 2025. CORREÇÃO CRÍTICA DE OPÇÕES - Sistema de opções unificado implementado em todos os componentes:
   * Identificado e corrigido bug crítico em quiz público que exibia "Nenhuma opção configurada" para multiple_choice e checkbox
   * Implementado suporte universal para ambos os formatos de opções: array simples ["opção1", "opção2"] e objeto [{text: "opção1"}]
