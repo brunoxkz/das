@@ -863,6 +863,13 @@ Changelog:
   * Sistema de arrastar e soltar para criar conexões visuais entre páginas e elementos
 - July 10, 2025. SISTEMA DE DESIGN QUIZ BUILDER 100% APROVADO - Resolução definitiva de todos os problemas críticos:
   * Taxa de sucesso alcançada: 100.0% (Sistema APROVADO) - melhoria significativa do sistema anterior
+- July 10, 2025. BACKREDIRECT SYSTEM TAB IMPLEMENTATION - Reorganização da interface para melhor organização:
+  * Criada nova aba "BackRedirect" separada da aba "Pixels/Scripts" 
+  * Movido sistema BackRedirect para aba dedicada com interface completa
+  * Integração automática no QuizPublicRenderer para aplicar redirecionamento após conclusão do quiz
+  * Sistema de compatibilidade móvel universal com 5 métodos de redirecionamento
+  * Interface de teste e preview em tempo real na aba BackRedirect
+  * Funcionalidade permanente independente de login do usuário na plataforma
   * Resolvido problema crítico de database schema: adicionada coluna designConfig à tabela quizzes com estrutura SQLite correta
   * Corrigidos endpoints API: PUT e PATCH funcionando corretamente para diferentes cenários de atualização
   * Implementado sistema de renovação automática de token para evitar expiração durante testes longos

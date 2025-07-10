@@ -49,6 +49,10 @@ export const quizzes = sqliteTable("quizzes", {
   pixelDelay: integer("pixelDelay", { mode: 'boolean' }).default(false),
   trackingPixels: text("trackingPixels", { mode: 'json' }),
   enableWhatsappAutomation: integer("enableWhatsappAutomation", { mode: 'boolean' }).default(false),
+  // Sistema BackRedirect para compatibilidade universal móvel
+  backRedirectEnabled: integer("backRedirectEnabled", { mode: 'boolean' }).default(false),
+  backRedirectUrl: text("backRedirectUrl"),
+  backRedirectDelay: integer("backRedirectDelay").default(0), // delay em segundos
   resultTitle: text("resultTitle"),
   resultDescription: text("resultDescription"),
   embedCode: text("embedCode"),

@@ -2301,7 +2301,7 @@ export class SQLiteStorage implements IStorage {
         updateData.pixelDelay = pixelData.pixelDelay;
       }
 
-      await this.db.update(quizzes)
+      await db.update(quizzes)
         .set(updateData)
         .where(eq(quizzes.id, quizId));
       return {

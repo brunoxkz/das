@@ -739,6 +739,7 @@ export default function QuizBuilder() {
             { id: "design", label: "Design", icon: <Palette className="w-4 h-4" /> },
             { id: "settings", label: "Configurações", icon: <Settings className="w-4 h-4" /> },
             { id: "pixels", label: "Pixels/Scripts", icon: <Target className="w-4 h-4" /> },
+            { id: "backredirect", label: "BackRedirect", icon: <ArrowLeft className="w-4 h-4" /> },
 
           ].map((tab) => (
             <button
@@ -1735,6 +1736,215 @@ export default function QuizBuilder() {
                 </CardContent>
               </Card>
 
+
+
+            </div>
+          </div>
+        )}
+
+        {activeTab === "backredirect" && (
+          <div className="h-full overflow-y-auto p-6">
+            <div className="max-w-2xl mx-auto space-y-6">
+              
+              {/* Cabeçalho da Aba */}
+              <div className="text-center">
+                <h2 className="text-2xl font-bold text-gray-900 mb-2">BackRedirect Universal</h2>
+                <p className="text-gray-600">Sistema de redirecionamento permanente para compatibilidade móvel total</p>
+              </div>
+
+              {/* Sistema BackRedirect */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <ArrowLeft className="w-5 h-5" />
+                    Configurações de Redirecionamento
+                  </CardTitle>
+                  <p className="text-sm text-gray-600">Configure redirecionamento após completar o quiz</p>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {/* Ativar/Desativar BackRedirect */}
+                  <div className="p-4 bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg border border-blue-200">
+                    <div className="flex items-center space-x-3 mb-3">
+                      <input
+                        type="checkbox"
+                        id="backRedirectEnabled"
+                        checked={quizData.backRedirectEnabled || false}
+                        onChange={(e) => setQuizData(prev => ({ ...prev, backRedirectEnabled: e.target.checked }))}
+                        className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500"
+                      />
+                      <Label htmlFor="backRedirectEnabled" className="text-sm font-medium text-gray-900">
+                        Ativar BackRedirect Universal
+                      </Label>
+                      <Badge variant="secondary" className="bg-blue-100 text-blue-800">Compatibilidade Total</Badge>
+                    </div>
+                    <p className="text-sm text-gray-700 leading-relaxed">
+                      <strong>📱 Sistema ultra-compatível:</strong> Funciona em todos os dispositivos móveis (Android/iPhone) 
+                      e dentro de apps sociais (Instagram, Facebook, WhatsApp, etc.)
+                    </p>
+                  </div>
+
+                  {quizData.backRedirectEnabled && (
+                    <div className="space-y-4">
+                      {/* URL de Redirecionamento */}
+                      <div>
+                        <Label htmlFor="backRedirectUrl" className="text-sm font-medium">URL de Redirecionamento</Label>
+                        <Input
+                          id="backRedirectUrl"
+                          value={quizData.backRedirectUrl || ""}
+                          onChange={(e) => setQuizData(prev => ({ ...prev, backRedirectUrl: e.target.value }))}
+                          placeholder="https://exemplo.com/obrigado"
+                          className="mt-2"
+                          type="url"
+                        />
+                        <p className="text-xs text-gray-500 mt-1">
+                          URL para onde o usuário será redirecionado após completar o quiz
+                        </p>
+                      </div>
+
+                      {/* Delay do Redirecionamento */}
+                      <div>
+                        <Label htmlFor="backRedirectDelay" className="text-sm font-medium">Delay do Redirecionamento</Label>
+                        <div className="mt-2 flex items-center space-x-2">
+                          <Input
+                            id="backRedirectDelay"
+                            type="number"
+                            min="0"
+                            max="60"
+                            value={quizData.backRedirectDelay || 0}
+                            onChange={(e) => setQuizData(prev => ({ ...prev, backRedirectDelay: parseInt(e.target.value) || 0 }))}
+                            className="w-20"
+                          />
+                          <span className="text-sm text-gray-600">segundos</span>
+                        </div>
+                        <p className="text-xs text-gray-500 mt-1">
+                          Tempo de espera antes do redirecionamento (0 = imediato)
+                        </p>
+                      </div>
+
+                      {/* Preview do Redirecionamento */}
+                      <div className="p-4 bg-gray-50 rounded-lg border">
+                        <Label className="text-sm font-medium mb-2 block">Preview do Redirecionamento</Label>
+                        <div className="text-sm text-gray-700">
+                          <p><strong>URL:</strong> {quizData.backRedirectUrl || "Não configurado"}</p>
+                          <p><strong>Delay:</strong> {quizData.backRedirectDelay || 0} segundos</p>
+                          <p><strong>Execução:</strong> {quizData.backRedirectDelay === 0 ? "Imediata" : `Aguarda ${quizData.backRedirectDelay}s`}</p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+
+              {/* Informações Técnicas */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Activity className="w-5 h-5" />
+                    Compatibilidade Técnica
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    {/* Compatibilidade Garantida */}
+                    <div className="p-3 bg-green-50 rounded-lg border border-green-200">
+                      <p className="text-sm text-green-800 font-medium mb-2">
+                        <strong>✅ Compatibilidade Garantida:</strong>
+                      </p>
+                      <div className="grid grid-cols-2 gap-2 text-xs text-green-700">
+                        <div>
+                          <strong>Dispositivos:</strong>
+                          <ul className="mt-1 space-y-1">
+                            <li>• iOS Safari (nativo e WebView)</li>
+                            <li>• Android Chrome/WebView</li>
+                            <li>• Todos os navegadores móveis</li>
+                          </ul>
+                        </div>
+                        <div>
+                          <strong>Apps Sociais:</strong>
+                          <ul className="mt-1 space-y-1">
+                            <li>• Instagram In-App Browser</li>
+                            <li>• Facebook In-App Browser</li>
+                            <li>• WhatsApp In-App Browser</li>
+                            <li>• TikTok In-App Browser</li>
+                          </ul>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Aviso de Funcionamento Permanente */}
+                    <div className="p-3 bg-yellow-50 rounded-lg border border-yellow-200">
+                      <p className="text-sm text-yellow-800">
+                        <strong>⚡ Sistema Permanente:</strong> O redirecionamento funciona de forma permanente 
+                        após inserido no quiz publicado, mesmo sem o usuário estar logado na plataforma.
+                      </p>
+                    </div>
+
+                    {/* Métodos de Redirecionamento */}
+                    <div className="p-3 bg-blue-50 rounded-lg border border-blue-200">
+                      <p className="text-sm text-blue-800 font-medium mb-2">
+                        <strong>🔧 Métodos de Redirecionamento:</strong>
+                      </p>
+                      <div className="text-xs text-blue-700 space-y-1">
+                        <p>• <strong>Método 1:</strong> window.location.href (principal)</p>
+                        <p>• <strong>Método 2:</strong> window.location.replace (fallback)</p>
+                        <p>• <strong>Método 3:</strong> window.open (WebViews)</p>
+                        <p>• <strong>Método 4:</strong> window.top.location (apps sociais)</p>
+                        <p>• <strong>Método 5:</strong> history.pushState (fallback final)</p>
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Testes e Validação */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Search className="w-5 h-5" />
+                    Testes e Validação
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    {/* Teste de URL */}
+                    <div>
+                      <Label className="text-sm font-medium">Teste de URL</Label>
+                      <div className="mt-2 p-3 bg-gray-50 rounded-lg">
+                        <p className="text-sm text-gray-700 mb-2">
+                          URL configurada: 
+                          <span className="font-mono text-blue-600 ml-1">
+                            {quizData.backRedirectUrl || "Não configurado"}
+                          </span>
+                        </p>
+                        {quizData.backRedirectUrl && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => window.open(quizData.backRedirectUrl, '_blank')}
+                            className="mt-2"
+                          >
+                            Testar URL
+                          </Button>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Instruções de Teste */}
+                    <div className="p-3 bg-gray-50 rounded-lg border">
+                      <p className="text-sm text-gray-800 font-medium mb-2">
+                        <strong>📋 Como Testar:</strong>
+                      </p>
+                      <ol className="text-xs text-gray-700 space-y-1">
+                        <li>1. Configure a URL de redirecionamento acima</li>
+                        <li>2. Salve o quiz e publique</li>
+                        <li>3. Acesse o quiz do celular</li>
+                        <li>4. Complete o quiz até o final</li>
+                        <li>5. Verifique se o redirecionamento funciona</li>
+                      </ol>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
 
             </div>
           </div>

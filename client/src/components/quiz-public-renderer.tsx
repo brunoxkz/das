@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
 import { ArrowRight, ArrowLeft, CheckCircle, Calendar, Star, Target, Scale, ArrowUpDown, Share2, Loader2 } from "lucide-react";
 import { nanoid } from "nanoid";
+import { backRedirectManager } from "@/utils/backRedirectManager";
 
 // Função para ajustar brilho da cor
 function adjustColorBrightness(color: string, amount: number): string {
@@ -76,6 +77,9 @@ interface QuizPublicRendererProps {
       seoKeywords: string;
       globalBackgroundColor: string;
     };
+    backRedirectEnabled?: boolean;
+    backRedirectUrl?: string;
+    backRedirectDelay?: number;
   };
 }
 
@@ -207,6 +211,15 @@ export function QuizPublicRenderer({ quiz }: QuizPublicRendererProps) {
       if (finalResponse.ok) {
         console.log('Quiz completado com sucesso!');
         setShowResults(true);
+        
+        // Aplicar BackRedirect se configurado
+        if (quiz.backRedirectEnabled && quiz.backRedirectUrl) {
+          console.log('🔄 Aplicando BackRedirect:', quiz.backRedirectUrl);
+          backRedirectManager.executeRedirect(
+            quiz.backRedirectUrl,
+            quiz.backRedirectDelay || 0
+          );
+        }
       } else {
         console.error('Erro ao finalizar quiz');
       }

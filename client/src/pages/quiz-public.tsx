@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { AlertCircle, ArrowLeft } from "lucide-react";
 import { generateAllPixelCodes, insertPixelCodes, configureQuizPixels, initializePixels } from "@/utils/pixelCodeGenerator";
+import { backRedirectManager } from "@/utils/backRedirectManager";
 
 export default function QuizPublicPage() {
   const [match, params] = useRoute("/quiz/:id");
