@@ -592,7 +592,7 @@ export const QuizFlowEditor: React.FC<QuizFlowEditorProps> = ({
               
               {/* Render nodes */}
               {flowSystem.nodes.map((node) => {
-                const pageElements = getPageElements(node.pageId);
+                const pageElements = getAllPageElements().filter(el => el.pageId === node.pageId);
                 
                 return (
                   <div

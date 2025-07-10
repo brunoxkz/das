@@ -184,7 +184,8 @@
   }
   
   .pulse-animation {
-    animation: pulse 2s infinite;
+    /* Removido efeito piscante do botão continuar */
+    animation: none;
   }
   
   @keyframes pulse {
