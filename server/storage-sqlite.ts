@@ -893,8 +893,15 @@ export class SQLiteStorage implements IStorage {
     stmt.run(id);
   }
 
-  // Método para criar logs de email (ADICIONADO)
+  // Método para criar logs de email (CORRIGIDO)
   async createEmailLog(logData: any): Promise<void> {
+    const stmt = sqlite.prepare(`
+      INSERT INTO email_logs (
+        id, campaignId, email, personalizedSubject, personalizedContent, 
+        leadData, status, errorMessage, sentAt, createdAt
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `);
+    
     const logEntry = {
       id: nanoid(),
       campaignId: logData.campaignId,
@@ -905,19 +912,36 @@ export class SQLiteStorage implements IStorage {
       status: logData.status || 'pending',
       errorMessage: logData.error || null,
       sentAt: logData.sentAt ? Math.floor(new Date(logData.sentAt).getTime() / 1000) : null,
+      createdAt: Math.floor(Date.now() / 1000)
     };
     
-    await db.insert(emailLogs).values(logEntry);
+    stmt.run(
+      logEntry.id,
+      logEntry.campaignId,
+      logEntry.email,
+      logEntry.personalizedSubject,
+      logEntry.personalizedContent,
+      logEntry.leadData,
+      logEntry.status,
+      logEntry.errorMessage,
+      logEntry.sentAt,
+      logEntry.createdAt
+    );
   }
 
-  // Método para buscar logs de email (ADICIONADO)
+  // Método para buscar logs de email (CORRIGIDO)
   async getEmailLogs(campaignId: string): Promise<any[]> {
-    const logs = await db.select()
-      .from(emailLogs)
-      .where(eq(emailLogs.campaignId, campaignId))
-      .orderBy(emailLogs.createdAt);
+    const stmt = sqlite.prepare(`
+      SELECT * FROM email_logs 
+      WHERE campaignId = ? 
+      ORDER BY createdAt DESC
+    `);
     
-    return logs;
+    const logs = stmt.all(campaignId);
+    return logs.map(log => ({
+      ...log,
+      leadData: JSON.parse(log.leadData || '{}')
+    }));
   }
 
   // Método para atualizar estatísticas de campanha de email (ADICIONADO)

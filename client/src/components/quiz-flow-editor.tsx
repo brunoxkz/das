@@ -356,7 +356,7 @@ export const QuizFlowEditor: React.FC<QuizFlowEditorProps> = ({
             <Button
               variant={flowSystem.enabled ? "destructive" : "default"}
               size="sm"
-              onClick={() => setFlowEnabled(!flowSystem.enabled)}
+              onClick={() => handleEnableFlow(!flowSystem.enabled)}
             >
               {flowSystem.enabled ? (
                 <>
@@ -395,7 +395,7 @@ export const QuizFlowEditor: React.FC<QuizFlowEditorProps> = ({
       <div className={`mx-4 mt-2 mb-4 p-3 rounded-lg border ${
         flowSystem.enabled 
           ? 'bg-green-50 border-green-200 text-green-800' 
-          : 'bg-gray-50 border-gray-200 text-gray-800'
+          : 'bg-yellow-50 border-yellow-200 text-yellow-800'
       }`}>
         <div className="flex items-center gap-2">
           {flowSystem.enabled ? (
@@ -403,12 +403,19 @@ export const QuizFlowEditor: React.FC<QuizFlowEditorProps> = ({
           ) : (
             <AlertCircle className="w-4 h-4" />
           )}
-          <span className="text-sm font-medium">
-            {flowSystem.enabled 
-              ? "Fluxo ativo: O sistema seguirá as conexões personalizadas criadas no fluxo (PRIORIDADE)"
-              : "Fluxo inativo: O sistema seguirá a ordem padrão do editor (página 1 → página 2 → página 3...)"
-            }
-          </span>
+          <div className="flex-1">
+            <span className="text-sm font-medium block">
+              {flowSystem.enabled 
+                ? "Fluxo ativo: O sistema seguirá as conexões personalizadas criadas no fluxo (PRIORIDADE)"
+                : "Fluxo inativo: O sistema seguirá a ordem padrão do editor (página 1 → página 2 → página 3...)"
+              }
+            </span>
+            {!flowSystem.enabled && (
+              <span className="text-xs font-medium text-yellow-700 mt-1 block">
+                ⚠️ IMPORTANTE: SOMENTE ATIVE O FLUXO SE SEU QUIZ TIVER MAIS DE 1 CAMINHO, se não mantenha desativado.
+              </span>
+            )}
+          </div>
         </div>
       </div>
 
@@ -431,6 +438,20 @@ export const QuizFlowEditor: React.FC<QuizFlowEditorProps> = ({
                     Crie caminhos condicionais inteligentes baseados nas respostas dos usuários. 
                     Transforme seu quiz linear em uma experiência dinâmica e personalizada.
                   </p>
+                  
+                  <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
+                    <div className="flex items-start gap-2">
+                      <div className="w-4 h-4 bg-yellow-500 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                        <span className="text-white text-xs font-bold">!</span>
+                      </div>
+                      <div>
+                        <h4 className="font-medium text-yellow-900 text-sm mb-1">⚠️ IMPORTANTE</h4>
+                        <p className="text-xs text-yellow-800 font-medium">
+                          SOMENTE ATIVE O FLUXO SE SEU QUIZ TIVER MAIS DE 1 CAMINHO, se não mantenha desativado.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
                   
                   <div className="space-y-3">
                     <div className="flex items-center gap-3">
@@ -583,7 +604,7 @@ export const QuizFlowEditor: React.FC<QuizFlowEditorProps> = ({
                   >
                     <div className="p-4">
                       <div className="flex items-center justify-between mb-3">
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-2" title={node.title}>
                           <div className="w-3 h-3 bg-green-500 rounded-full"></div>
                           <span className="font-medium text-sm">{node.title}</span>
                         </div>
@@ -596,6 +617,7 @@ export const QuizFlowEditor: React.FC<QuizFlowEditorProps> = ({
                               e.stopPropagation();
                               startConnection(node.id, e);
                             }}
+                            title="Criar conexão"
                           >
                             <Link2 className="w-3 h-3" />
                           </Button>

@@ -772,6 +772,14 @@ Changelog:
   * Performance otimizada: sub-segundo para todas as operações principais
   * Validação completa confirma sistema pronto para produção empresarial
   * Teste automatizado criado para monitoramento contínuo da qualidade
+- July 10, 2025. SISTEMA DE FLUXO AVANÇADO APRIMORADO - Implementação de avisos críticos para uso correto:
+  * Adicionado aviso crítico "SOMENTE ATIVE O FLUXO SE SEU QUIZ TIVER MAIS DE 1 CAMINHO, se não mantenha desativado"
+  * Aviso aparece em múltiplos locais: alerta de status (amarelo), modo desativado (destaque amarelo), tooltip nos botões
+  * Sistema de tooltips implementado para melhor UX: hover mostra nome da página, botões têm descrições claras
+  * Correção de erros SQLite "Too few parameter values were provided" no sistema de email marketing
+  * Campanhas problemáticas pausadas automaticamente para estabilidade do sistema
+  * Banco de dados recriado com schema atualizado garantindo integridade das tabelas
+  * Flow system mantém funcionalidade completa com orientações visuais aprimoradas
 - July 09, 2025. CORREÇÃO CRÍTICA DE OPÇÕES - Sistema de opções unificado implementado em todos os componentes:
   * Identificado e corrigido bug crítico em quiz público que exibia "Nenhuma opção configurada" para multiple_choice e checkbox
   * Implementado suporte universal para ambos os formatos de opções: array simples ["opção1", "opção2"] e objeto [{text: "opção1"}]
