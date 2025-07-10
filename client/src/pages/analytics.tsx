@@ -208,7 +208,6 @@ export default function Analytics() {
             change="+12%"
             changeType="positive"
           />
-          <div className="text-xs text-gray-500 mt-1">Leads = Respostas que captaram email ou telefone</div>
           <StatsCard
             title="Total de Visualizações"
             value={allAnalytics ? allAnalytics.reduce((sum: number, a: any) => sum + (a.totalViews || 0), 0) : 0}
@@ -225,6 +224,27 @@ export default function Analytics() {
             change="+3%"
             changeType="positive"
           />
+        </div>
+
+        {/* Definições dos Dados */}
+        <div className="bg-gradient-to-r from-blue-50 to-green-50 rounded-lg p-4 mb-8 border border-blue-200">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+            <div className="flex items-center gap-2">
+              <Users className="w-4 h-4 text-green-600" />
+              <span className="font-medium text-gray-700">Leads:</span>
+              <span className="text-gray-600">Respostas com email/telefone</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <TrendingUp className="w-4 h-4 text-purple-600" />
+              <span className="font-medium text-gray-700">Conversões:</span>
+              <span className="text-gray-600">Chegaram na última página</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <Eye className="w-4 h-4 text-blue-600" />
+              <span className="font-medium text-gray-700">Views:</span>
+              <span className="text-gray-600">Acessos ao quiz público</span>
+            </div>
+          </div>
         </div>
 
         {/* Quiz List with Analytics */}
