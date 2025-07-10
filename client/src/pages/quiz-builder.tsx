@@ -878,28 +878,62 @@ export default function QuizBuilder() {
                 </CardContent>
               </Card>
 
-              {/* Estilo da Barra de Progresso */}
+              {/* Configurações da Barra de Progresso */}
               <Card>
                 <CardHeader>
-                  <CardTitle>Estilo da Barra de Progresso</CardTitle>
-                  <p className="text-sm text-gray-600">Personalize a aparência da barra de progresso</p>
+                  <CardTitle>Configurações da Barra de Progresso</CardTitle>
+                  <p className="text-sm text-gray-600">Barra de progresso sempre ativa - personalize como será exibida</p>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  <div className="flex items-center space-x-2">
-                    <input
-                      type="checkbox"
-                      id="showProgressBar"
-                      checked={quizData.design?.showProgressBar || false}
-                      onChange={(e) => setQuizData(prev => ({ 
-                        ...prev, 
-                        design: { ...prev.design, showProgressBar: e.target.checked }
-                      }))}
-                    />
-                    <Label htmlFor="showProgressBar">Mostrar barra de progresso</Label>
+                  {/* Sempre ativa - só mostra informação */}
+                  <div className="p-3 bg-green-50 rounded-lg border border-green-200">
+                    <p className="text-sm text-green-800">
+                      <strong>✅ Barra de progresso sempre ativa</strong> - Configure abaixo como será exibida
+                    </p>
                   </div>
 
+                  {/* Tipo de Contador */}
                   <div>
-                    <Label htmlFor="progressBarStyle">Estilo</Label>
+                    <Label htmlFor="progressBarType">Tipo de Contador</Label>
+                    <select
+                      id="progressBarType"
+                      value={quizData.design?.progressBarType || "percentage"}
+                      onChange={(e) => setQuizData(prev => ({ 
+                        ...prev, 
+                        design: { ...prev.design, progressBarType: e.target.value }
+                      }))}
+                      className="mt-2 w-full px-3 py-2 border border-gray-300 rounded-md"
+                    >
+                      <option value="percentage">Porcentagem (ex: 75%)</option>
+                      <option value="steps">Etapas (ex: 3/10)</option>
+                      <option value="none">Sem contador (apenas barra)</option>
+                    </select>
+                  </div>
+
+                  {/* Preview do Contador */}
+                  <div className="p-4 bg-gray-50 rounded-lg">
+                    <Label className="text-sm font-medium mb-2 block">Preview do Contador</Label>
+                    <div className="space-y-2">
+                      <div className="w-full bg-gray-200 rounded-full h-2">
+                        <div 
+                          className="h-2 rounded-full transition-all duration-300"
+                          style={{ 
+                            width: "60%",
+                            backgroundColor: quizData.design?.progressBarColor || "#10b981"
+                          }}
+                        />
+                      </div>
+                      <div className="text-center text-sm text-gray-600">
+                        {quizData.design?.progressBarType === "percentage" && "60%"}
+                        {quizData.design?.progressBarType === "steps" && "3/5"}
+                        {quizData.design?.progressBarType === "none" && ""}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Estilo Visual */}
+                  <div>
+                    <Label htmlFor="progressBarStyle">Estilo Visual</Label>
                     <select
                       id="progressBarStyle"
                       value={quizData.design?.progressBarStyle || "rounded"}
@@ -930,6 +964,85 @@ export default function QuizBuilder() {
                       max="20"
                       className="mt-2"
                     />
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Favicon */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Globe className="w-5 h-5" />
+                    Favicon
+                  </CardTitle>
+                  <p className="text-sm text-gray-600">Ícone que aparece na aba do navegador</p>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div>
+                    <Label htmlFor="faviconUpload">Upload de Favicon</Label>
+                    <Input
+                      id="faviconUpload"
+                      type="file"
+                      accept="image/*,.ico"
+                      onChange={async (e) => {
+                        const file = e.target.files?.[0];
+                        if (file) {
+                          // Validação de segurança
+                          if (file.size > 1024 * 1024) { // 1MB
+                            alert("Arquivo muito grande. Máximo 1MB permitido.");
+                            return;
+                          }
+                          const faviconUrl = URL.createObjectURL(file);
+                          setQuizData(prev => ({ 
+                            ...prev, 
+                            design: { ...prev.design, faviconUrl, favicon: file.name }
+                          }));
+                        }
+                      }}
+                      className="mt-2"
+                    />
+                    <p className="text-xs text-gray-500 mt-1">Formatos aceitos: ICO, PNG, JPG (16x16 ou 32x32 pixels, máx. 1MB)</p>
+                  </div>
+
+                  <div>
+                    <Label htmlFor="faviconUrl">URL do Favicon (alternativa)</Label>
+                    <Input
+                      id="faviconUrl"
+                      value={quizData.design?.faviconUrl || ""}
+                      onChange={(e) => setQuizData(prev => ({ 
+                        ...prev, 
+                        design: { ...prev.design, faviconUrl: e.target.value }
+                      }))}
+                      placeholder="https://exemplo.com/favicon.ico"
+                      className="mt-2"
+                    />
+                    <p className="text-xs text-gray-500 mt-1">URL alternativa se não fizer upload</p>
+                  </div>
+
+                  {/* Preview do Favicon */}
+                  {quizData.design?.faviconUrl && (
+                    <div className="mt-4 p-4 bg-gray-50 rounded-lg">
+                      <Label className="text-sm font-medium mb-2 block">Preview do Favicon</Label>
+                      <div className="flex items-center gap-3">
+                        <img
+                          src={quizData.design.faviconUrl}
+                          alt="Favicon Preview"
+                          className="w-4 h-4 object-contain"
+                          onError={(e) => {
+                            e.currentTarget.style.display = 'none';
+                          }}
+                        />
+                        <span className="text-sm text-gray-600">16x16 pixels</span>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Aviso de Segurança para Favicon */}
+                  <div className="p-3 bg-yellow-50 rounded-lg border border-yellow-200">
+                    <p className="text-sm text-yellow-800">
+                      <strong>🔒 SEGURANÇA:</strong> Faça upload apenas de arquivos de fontes confiáveis. 
+                      Evite usar URLs de sites desconhecidos.
+                    </p>
                   </div>
                 </CardContent>
               </Card>
@@ -1221,84 +1334,7 @@ export default function QuizBuilder() {
                 </CardContent>
               </Card>
 
-              {/* Favicon */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Globe className="w-5 h-5" />
-                    Favicon
-                  </CardTitle>
-                  <p className="text-sm text-gray-600">Ícone que aparece na aba do navegador</p>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div>
-                    <Label htmlFor="faviconUpload">Upload de Favicon</Label>
-                    <Input
-                      id="faviconUpload"
-                      type="file"
-                      accept="image/*,.ico"
-                      onChange={async (e) => {
-                        const file = e.target.files?.[0];
-                        if (file) {
-                          // Validação de segurança
-                          if (file.size > 1024 * 1024) { // 1MB
-                            alert("Arquivo muito grande. Máximo 1MB permitido.");
-                            return;
-                          }
-                          const faviconUrl = URL.createObjectURL(file);
-                          setQuizData(prev => ({ 
-                            ...prev, 
-                            design: { ...prev.design, faviconUrl, favicon: file.name }
-                          }));
-                        }
-                      }}
-                      className="mt-2"
-                    />
-                    <p className="text-xs text-gray-500 mt-1">Formatos aceitos: ICO, PNG, JPG (16x16 ou 32x32 pixels, máx. 1MB)</p>
-                  </div>
 
-                  <div>
-                    <Label htmlFor="faviconUrl">URL do Favicon (alternativa)</Label>
-                    <Input
-                      id="faviconUrl"
-                      value={quizData.design?.faviconUrl || ""}
-                      onChange={(e) => setQuizData(prev => ({ 
-                        ...prev, 
-                        design: { ...prev.design, faviconUrl: e.target.value }
-                      }))}
-                      placeholder="https://exemplo.com/favicon.ico"
-                      className="mt-2"
-                    />
-                    <p className="text-xs text-gray-500 mt-1">URL alternativa se não fizer upload</p>
-                  </div>
-
-                  {/* Preview do Favicon */}
-                  {quizData.design?.faviconUrl && (
-                    <div className="mt-4 p-4 bg-gray-50 rounded-lg">
-                      <Label className="text-sm font-medium mb-2 block">Preview do Favicon</Label>
-                      <div className="flex items-center gap-3">
-                        <img
-                          src={quizData.design.faviconUrl}
-                          alt="Favicon Preview"
-                          className="w-4 h-4 object-contain"
-                          onError={(e) => {
-                            e.currentTarget.style.display = 'none';
-                          }}
-                        />
-                        <span className="text-sm text-gray-600">16x16 pixels</span>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Aviso de Segurança para Favicon */}
-                  <div className="p-3 bg-yellow-50 rounded-lg border border-yellow-200">
-                    <p className="text-sm text-yellow-800">
-                      <strong>🔒 SEGURANÇA:</strong> Faça upload apenas de arquivos de fontes confiáveis. 
-                      Evite usar URLs de sites desconhecidos.
-                    </p>
-                  </div>
-                </CardContent>
-              </Card>
             </div>
           </div>
         )}
