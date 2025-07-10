@@ -801,43 +801,34 @@ export default function QuizBuilder() {
                   <p className="text-sm text-gray-600">Personalize as cores do seu funil</p>
                 </CardHeader>
                 <CardContent className="space-y-4">
+                  {/* Tema Escuro */}
                   <div>
-                    <Label htmlFor="backgroundColor">Cor de Fundo Global</Label>
-                    <div className="flex items-center gap-3 mt-2">
+                    <Label htmlFor="darkMode">Tema Escuro</Label>
+                    <div className="flex items-center space-x-2 mt-2">
                       <input
-                        type="color"
-                        id="backgroundColor"
-                        value={quizData.design?.backgroundColor || customBackgroundColor || "#f9fafb"}
+                        type="checkbox"
+                        id="darkMode"
+                        checked={quizData.design?.darkMode || false}
                         onChange={(e) => {
-                          const newColor = e.target.value;
+                          const isDark = e.target.checked;
                           setQuizData(prev => ({ 
                             ...prev, 
-                            design: { ...prev.design, backgroundColor: newColor, globalBackgroundColor: newColor }
+                            design: { 
+                              ...prev.design, 
+                              darkMode: isDark,
+                              backgroundColor: isDark ? "#1f2937" : "#f9fafb",
+                              globalBackgroundColor: isDark ? "#1f2937" : "#f9fafb",
+                              textColor: isDark ? "#f9fafb" : "#1f2937"
+                            }
                           }));
-                          setCustomBackgroundColor(newColor); // Sincroniza com o editor
+                          setCustomBackgroundColor(isDark ? "#1f2937" : "#f9fafb");
                         }}
-                        className="w-8 h-8 border border-gray-300 rounded-full cursor-pointer"
+                        className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500"
                       />
-                      <Input
-                        value={quizData.design?.backgroundColor || customBackgroundColor || "#f9fafb"}
-                        onChange={(e) => {
-                          const newColor = e.target.value;
-                          setQuizData(prev => ({ 
-                            ...prev, 
-                            design: { ...prev.design, backgroundColor: newColor, globalBackgroundColor: newColor }
-                          }));
-                          setCustomBackgroundColor(newColor); // Sincroniza com o editor
-                        }}
-                        placeholder="#f9fafb"
-                        className="flex-1"
-                      />
+                      <Label htmlFor="darkMode" className="font-medium">Ativar tema escuro</Label>
                     </div>
-                    <p className="text-xs text-gray-500 mt-1">Esta cor será aplicada como fundo de todas as páginas</p>
+                    <p className="text-xs text-gray-500 mt-1">Aplica cores escuras automaticamente em todos os elementos</p>
                   </div>
-
-
-
-
                 </CardContent>
               </Card>
 
@@ -905,6 +896,32 @@ export default function QuizBuilder() {
                           </select>
                         </div>
                       )}
+
+                      {/* Cor da Barra de Progresso */}
+                      <div>
+                        <Label htmlFor="progressBarColor">Cor da Barra de Progresso</Label>
+                        <div className="flex items-center gap-3 mt-2">
+                          <input
+                            type="color"
+                            id="progressBarColor"
+                            value={quizData.design?.progressBarColor || "#10b981"}
+                            onChange={(e) => setQuizData(prev => ({ 
+                              ...prev, 
+                              design: { ...prev.design, progressBarColor: e.target.value }
+                            }))}
+                            className="w-8 h-8 border border-gray-300 rounded-full cursor-pointer"
+                          />
+                          <Input
+                            value={quizData.design?.progressBarColor || "#10b981"}
+                            onChange={(e) => setQuizData(prev => ({ 
+                              ...prev, 
+                              design: { ...prev.design, progressBarColor: e.target.value }
+                            }))}
+                            placeholder="#10b981"
+                            className="flex-1"
+                          />
+                        </div>
+                      </div>
 
                       {/* Preview do Contador */}
                       <div className="p-4 bg-gray-50 rounded-lg">

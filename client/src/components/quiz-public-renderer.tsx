@@ -93,6 +93,15 @@ export function QuizPublicRenderer({ quiz }: QuizPublicRendererProps) {
   const pages = quiz.structure.pages || [];
   const currentPage = pages[currentPageIndex];
   const isLastPage = currentPageIndex === pages.length - 1;
+  
+  // Tema escuro
+  const isDarkMode = quiz.design?.darkMode || false;
+  const backgroundColor = isDarkMode ? (quiz.design?.backgroundColor || '#1f2937') : (quiz.design?.backgroundColor || '#f9fafb');
+  const textColor = isDarkMode ? '#f9fafb' : '#1f2937';
+  const cardBgColor = isDarkMode ? '#374151' : '#ffffff';
+  const borderColor = isDarkMode ? '#4b5563' : '#e5e7eb';
+  const inputBgColor = isDarkMode ? '#1f2937' : '#ffffff';
+  const inputTextColor = isDarkMode ? '#f9fafb' : '#1f2937';
 
   // Função para salvar resposta automática
   const saveResponseAutomatically = async (response: QuizResponse) => {
@@ -598,21 +607,21 @@ export function QuizPublicRenderer({ quiz }: QuizPublicRendererProps) {
 
   if (showResults) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
-        <Card className="w-full max-w-2xl">
+      <div className="min-h-screen flex items-center justify-center p-4" style={{ backgroundColor: backgroundColor, color: textColor }}>
+        <Card className="w-full max-w-2xl" style={{ backgroundColor: cardBgColor, border: `1px solid ${borderColor}` }}>
           <CardHeader className="text-center">
-            <div className="mx-auto w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mb-4">
-              <CheckCircle className="w-8 h-8 text-green-600" />
+            <div className="mx-auto w-16 h-16 rounded-full flex items-center justify-center mb-4" style={{ backgroundColor: isDarkMode ? '#047857' : '#dcfce7' }}>
+              <CheckCircle className="w-8 h-8" style={{ color: isDarkMode ? '#10b981' : '#059669' }} />
             </div>
-            <CardTitle className="text-2xl text-gray-900">
+            <CardTitle className="text-2xl" style={{ color: textColor }}>
               {quiz.structure.settings.resultTitle || 'Obrigado!'}
             </CardTitle>
           </CardHeader>
           <CardContent className="text-center space-y-4">
-            <p className="text-gray-600">
+            <p style={{ color: isDarkMode ? '#d1d5db' : '#6b7280' }}>
               {quiz.structure.settings.resultDescription || 'Suas respostas foram enviadas com sucesso!'}
             </p>
-            <div className="text-sm text-gray-500">
+            <div className="text-sm" style={{ color: isDarkMode ? '#9ca3af' : '#9ca3af' }}>
               Total de respostas capturadas: {quizResponses.length}
             </div>
           </CardContent>
@@ -623,8 +632,8 @@ export function QuizPublicRenderer({ quiz }: QuizPublicRendererProps) {
 
   if (!currentPage) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <p className="text-gray-500">Nenhuma página encontrada</p>
+      <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: backgroundColor, color: textColor }}>
+        <p style={{ color: isDarkMode ? '#9ca3af' : '#6b7280' }}>Nenhuma página encontrada</p>
       </div>
     );
   }
@@ -633,7 +642,9 @@ export function QuizPublicRenderer({ quiz }: QuizPublicRendererProps) {
     <div 
       className="min-h-screen p-4"
       style={{ 
-        backgroundColor: quiz.design?.globalBackgroundColor || '#f9fafb' 
+        backgroundColor: backgroundColor,
+        color: textColor,
+        transition: 'background-color 0.3s ease, color 0.3s ease'
       }}
     >
       <div className="max-w-4xl mx-auto">
@@ -656,7 +667,7 @@ export function QuizPublicRenderer({ quiz }: QuizPublicRendererProps) {
               };
 
               const counterElement = progressBarType !== "none" ? (
-                <span className="text-sm font-medium text-gray-700">
+                <span className="text-sm font-medium" style={{ color: textColor }}>
                   {getCounterText()}
                 </span>
               ) : null;
@@ -683,13 +694,16 @@ export function QuizPublicRenderer({ quiz }: QuizPublicRendererProps) {
 
                   {/* Barra de progresso */}
                   <div 
-                    className={`w-full bg-gray-200 overflow-hidden ${
+                    className={`w-full overflow-hidden ${
                       quiz.design?.progressBarStyle === 'square' ? 'rounded-none' :
                       quiz.design?.progressBarStyle === 'thin' ? 'rounded-sm' :
                       quiz.design?.progressBarStyle === 'thick' ? 'rounded-lg' :
                       'rounded-full'
                     }`}
-                    style={{ height: `${quiz.design?.progressBarHeight || 8}px` }}
+                    style={{ 
+                      height: `${quiz.design?.progressBarHeight || 8}px`,
+                      backgroundColor: isDarkMode ? '#4b5563' : '#e5e7eb'
+                    }}
                   >
                     <div
                       className={`h-full transition-all duration-300 ${
@@ -718,9 +732,9 @@ export function QuizPublicRenderer({ quiz }: QuizPublicRendererProps) {
         )}
 
         {/* Conteúdo da Página */}
-        <Card>
+        <Card style={{ backgroundColor: cardBgColor, border: `1px solid ${borderColor}` }}>
           <CardHeader>
-            <CardTitle className="text-center">{currentPage.title}</CardTitle>
+            <CardTitle className="text-center" style={{ color: textColor }}>{currentPage.title}</CardTitle>
           </CardHeader>
           <CardContent className="space-y-6">
             {currentPage.elements.map(renderElement)}
@@ -733,12 +747,17 @@ export function QuizPublicRenderer({ quiz }: QuizPublicRendererProps) {
             variant="outline" 
             onClick={handlePrevPage}
             disabled={currentPageIndex === 0}
+            style={{ 
+              backgroundColor: isDarkMode ? '#374151' : '#ffffff',
+              color: isDarkMode ? '#f9fafb' : '#1f2937',
+              borderColor: isDarkMode ? '#4b5563' : '#e5e7eb'
+            }}
           >
             <ArrowLeft className="w-4 h-4 mr-2" />
             Anterior
           </Button>
 
-          <div className="text-sm text-gray-500">
+          <div className="text-sm" style={{ color: isDarkMode ? '#9ca3af' : '#6b7280' }}>
             Respostas salvas: {quizResponses.length}
           </div>
 

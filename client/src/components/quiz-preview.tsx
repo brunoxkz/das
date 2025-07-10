@@ -191,6 +191,15 @@ export function QuizPreview({ quiz }: QuizPreviewProps) {
 
   const { pages, settings } = quiz.structure;
   
+  // Tema escuro
+  const isDarkMode = quiz.design?.darkMode || false;
+  const backgroundColor = isDarkMode ? (quiz.design?.backgroundColor || '#1f2937') : (quiz.design?.backgroundColor || '#f9fafb');
+  const textColor = isDarkMode ? '#f9fafb' : '#1f2937';
+  const cardBgColor = isDarkMode ? '#374151' : '#ffffff';
+  const borderColor = isDarkMode ? '#4b5563' : '#e5e7eb';
+  const inputBgColor = isDarkMode ? '#1f2937' : '#ffffff';
+  const inputTextColor = isDarkMode ? '#f9fafb' : '#1f2937';
+  
   // Incluir todas as páginas (normais e de transição)
   const allPages = pages || [];
   const totalSteps = allPages.length;
@@ -442,8 +451,8 @@ export function QuizPreview({ quiz }: QuizPreviewProps) {
                           element.fontSize === 'xl' ? 'h2' : 'h1';
         return (
           <HeadingTag 
-            className={`font-bold text-gray-900 mb-4 text-${element.textAlign || 'left'}`}
-            style={{ color: element.textColor }}
+            className={`font-bold mb-4 text-${element.textAlign || 'left'}`}
+            style={{ color: element.textColor || textColor }}
           >
             {processVariables(element.content || '')}
           </HeadingTag>
@@ -452,8 +461,8 @@ export function QuizPreview({ quiz }: QuizPreviewProps) {
       case 'paragraph':
         return (
           <p 
-            className={`text-gray-600 mb-4 text-${element.textAlign || 'left'}`}
-            style={{ color: element.textColor }}
+            className={`mb-4 text-${element.textAlign || 'left'}`}
+            style={{ color: element.textColor || textColor }}
           >
             {processVariables(element.content || '')}
           </p>
@@ -1664,10 +1673,19 @@ export function QuizPreview({ quiz }: QuizPreviewProps) {
                 value={answers[element.id] || ""}
                 onChange={(e) => handleAnswer(element.id, e.target.value)}
                 className="text-center"
+                style={{ 
+                  backgroundColor: inputBgColor,
+                  color: inputTextColor,
+                  borderColor: borderColor
+                }}
               />
               <Button 
                 onClick={handleNext}
                 disabled={!answers[element.id]?.trim()}
+                style={{ 
+                  backgroundColor: isDarkMode ? '#10b981' : '#059669',
+                  color: '#ffffff'
+                }}
               >
                 Próxima <ArrowRight className="w-4 h-4 ml-2" />
               </Button>
@@ -1700,10 +1718,19 @@ export function QuizPreview({ quiz }: QuizPreviewProps) {
                 value={answers[element.id] || ""}
                 onChange={(e) => handleAnswer(element.id, e.target.value)}
                 className="text-center"
+                style={{ 
+                  backgroundColor: inputBgColor,
+                  color: inputTextColor,
+                  borderColor: borderColor
+                }}
               />
               <Button 
                 onClick={handleNext}
                 disabled={element.required && !answers[element.id]?.toString().trim()}
+                style={{ 
+                  backgroundColor: isDarkMode ? '#10b981' : '#059669',
+                  color: '#ffffff'
+                }}
               >
                 Próxima <ArrowRight className="w-4 h-4 ml-2" />
               </Button>
@@ -1729,18 +1756,18 @@ export function QuizPreview({ quiz }: QuizPreviewProps) {
 
           {element.type === "birth_date" && (
             <div className="space-y-4">
-              <div className="bg-blue-50 border-2 border-dashed border-blue-200 rounded-lg p-6">
+              <div className="border-2 border-dashed rounded-lg p-6" style={{ backgroundColor: isDarkMode ? '#1f2937' : '#eff6ff', borderColor: isDarkMode ? '#4b5563' : '#bfdbfe' }}>
                 <div className="flex items-center gap-3 mb-4">
-                  <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
+                  <div className="w-12 h-12 rounded-full flex items-center justify-center" style={{ backgroundColor: isDarkMode ? '#374151' : '#dbeafe' }}>
                     <span className="text-2xl">🎂</span>
                   </div>
                   <div>
-                    <h3 className="font-semibold text-blue-800">Data de Nascimento</h3>
-                    <p className="text-sm text-blue-600">Para cálculo automático da idade</p>
+                    <h3 className="font-semibold" style={{ color: isDarkMode ? '#60a5fa' : '#1e40af' }}>Data de Nascimento</h3>
+                    <p className="text-sm" style={{ color: isDarkMode ? '#93c5fd' : '#2563eb' }}>Para cálculo automático da idade</p>
                   </div>
                 </div>
                 
-                <div className="bg-white rounded-lg p-4 shadow-sm">
+                <div className="rounded-lg p-4 shadow-sm" style={{ backgroundColor: isDarkMode ? '#111827' : '#ffffff' }}>
                   <Input
                     type="date"
                     value={answers[element.id] || ""}
@@ -1750,7 +1777,12 @@ export function QuizPreview({ quiz }: QuizPreviewProps) {
                       setTimeout(() => handleNext(), 1000);
                     }}
                     className="text-center text-lg font-semibold"
-                    style={{ fontSize: '18px' }}
+                    style={{ 
+                      fontSize: '18px',
+                      backgroundColor: isDarkMode ? '#111827' : '#ffffff',
+                      color: isDarkMode ? '#f9fafb' : '#1f2937',
+                      borderColor: isDarkMode ? '#4b5563' : '#e5e7eb'
+                    }}
                   />
                 </div>
                 
@@ -1780,18 +1812,18 @@ export function QuizPreview({ quiz }: QuizPreviewProps) {
 
           {element.type === "height" && (
             <div className="space-y-4">
-              <div className="bg-purple-50 border-2 border-dashed border-purple-200 rounded-lg p-6">
+              <div className="border-2 border-dashed rounded-lg p-6" style={{ backgroundColor: isDarkMode ? '#1f2937' : '#faf5ff', borderColor: isDarkMode ? '#4b5563' : '#d8b4fe' }}>
                 <div className="flex items-center gap-3 mb-4">
-                  <div className="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center">
-                    <ArrowUpDown className="w-6 h-6 text-purple-600" />
+                  <div className="w-12 h-12 rounded-full flex items-center justify-center" style={{ backgroundColor: isDarkMode ? '#374151' : '#ede9fe' }}>
+                    <ArrowUpDown className="w-6 h-6" style={{ color: isDarkMode ? '#a855f7' : '#7c3aed' }} />
                   </div>
                   <div>
-                    <h3 className="font-semibold text-purple-800">Altura</h3>
-                    <p className="text-sm text-purple-600">Para cálculo do IMC</p>
+                    <h3 className="font-semibold" style={{ color: isDarkMode ? '#a855f7' : '#6b21a8' }}>Altura</h3>
+                    <p className="text-sm" style={{ color: isDarkMode ? '#c084fc' : '#7c3aed' }}>Para cálculo do IMC</p>
                   </div>
                 </div>
                 
-                <div className="bg-white rounded-lg p-4 shadow-sm">
+                <div className="rounded-lg p-4 shadow-sm" style={{ backgroundColor: isDarkMode ? '#111827' : '#ffffff' }}>
                   <div className="flex items-center gap-3">
                     <div className="flex-1 relative">
                       <Input
@@ -1803,7 +1835,12 @@ export function QuizPreview({ quiz }: QuizPreviewProps) {
                         className="text-center text-lg font-semibold pr-12"
                         min={element.unit === "cm" ? "120" : "1.20"}
                         max={element.unit === "cm" ? "220" : "2.20"}
-                        style={{ fontSize: '18px' }}
+                        style={{ 
+                          fontSize: '18px',
+                          backgroundColor: isDarkMode ? '#111827' : '#ffffff',
+                          color: isDarkMode ? '#f9fafb' : '#1f2937',
+                          borderColor: isDarkMode ? '#4b5563' : '#e5e7eb'
+                        }}
                       />
                       <span className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 font-medium">
                         {element.unit || "cm"}
@@ -2362,7 +2399,11 @@ export function QuizPreview({ quiz }: QuizPreviewProps) {
     <div 
       className={`min-h-screen py-12 ${isTransitionPage ? '' : ''}`}
       style={{
-        ...(isTransitionPage ? getPageBackgroundStyle() : themeStyles)
+        ...(isTransitionPage ? getPageBackgroundStyle() : {
+          backgroundColor: backgroundColor,
+          color: textColor,
+          transition: 'background-color 0.3s ease, color 0.3s ease'
+        })
       }}
     >
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
