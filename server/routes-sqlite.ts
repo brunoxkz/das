@@ -5767,6 +5767,64 @@ app.get("/api/whatsapp-extension/pending", verifyJWT, async (req: any, res: Resp
 
   console.log('✅ I.A. CONVERSION + ENDPOINTS REGISTRADOS');
 
+  // =============================================
+  // CAMPAIGN COUNT ENDPOINTS FOR DASHBOARD
+  // =============================================
+
+  // SMS Campaigns Count
+  app.get("/api/sms-campaigns/count", verifyJWT, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const campaigns = await storage.getSMSCampaigns(userId);
+      
+      console.log(`📊 SMS CAMPAIGNS COUNT - User: ${userId}, Total: ${campaigns.length}`);
+      
+      res.json({ 
+        count: campaigns.length,
+        success: true
+      });
+    } catch (error) {
+      console.error("Error getting SMS campaigns count:", error);
+      res.status(500).json({ error: "Error getting SMS campaigns count" });
+    }
+  });
+
+  // WhatsApp Campaigns Count  
+  app.get("/api/whatsapp-campaigns/count", verifyJWT, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const campaigns = await storage.getWhatsappCampaigns(userId);
+      
+      console.log(`📊 WHATSAPP CAMPAIGNS COUNT - User: ${userId}, Total: ${campaigns.length}`);
+      
+      res.json({ 
+        count: campaigns.length,
+        success: true
+      });
+    } catch (error) {
+      console.error("Error getting WhatsApp campaigns count:", error);
+      res.status(500).json({ error: "Error getting WhatsApp campaigns count" });
+    }
+  });
+
+  // Email Campaigns Count
+  app.get("/api/email-campaigns/count", verifyJWT, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const campaigns = await storage.getEmailCampaigns(userId);
+      
+      console.log(`📊 EMAIL CAMPAIGNS COUNT - User: ${userId}, Total: ${campaigns.length}`);
+      
+      res.json({ 
+        count: campaigns.length,
+        success: true
+      });
+    } catch (error) {
+      console.error("Error getting email campaigns count:", error);
+      res.status(500).json({ error: "Error getting email campaigns count" });
+    }
+  });
+
   return httpServer;
 }
 

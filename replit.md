@@ -947,6 +947,15 @@ Changelog:
   * Altura automática dos cards garante layout uniforme independente do conteúdo
   * Texto otimizado com line-clamp para evitar quebras de layout
   * Interface totalmente responsiva mantendo usabilidade em todas as resoluções
+- July 10, 2025. REORGANIZAÇÃO DASHBOARD STATS E NOVOS CONTADORES IMPLEMENTADOS - Interface reorganizada conforme solicitado:
+  * Reorganizados cards de estatísticas principais: indicadores de crescimento (+2 esta semana, +15% hoje, etc.) movidos para baixo do texto principal
+  * Layout padronizado em todos os cards: ícone no topo → título → valor → descrição → indicador de crescimento na base
+  * Adicionados 3 novos contadores de disparos minimalistas e funcionais: SMS, WhatsApp, Email
+  * Contadores de disparo com design diferenciado: cards menores, gradientes específicos (cyan-blue, emerald-teal, rose-red)
+  * Integração com dados reais através de queries específicas: /api/sms-campaigns/count, /api/whatsapp-campaigns/count, /api/email-campaigns/count
+  * Layout responsivo: grid 4 colunas (stats principais) + grid 3 colunas (disparos) com quebra automática em mobile
+  * Visual hierarquia clara: stats principais (shadow-xl) destacados dos disparos (shadow-lg) para diferenciação
+  * Sistema de contadores preparado para exibir dados reais de campanhas ativas do sistema
 - July 10, 2025. SISTEMA DE DETECÇÃO AUTOMÁTICA REATIVADO - Restored critical lead detection functionality with intelligent protections:
   * Reativado sistema de detecção automática de novos leads (a cada 20 segundos) com proteções contra execução simultânea
   * Implementadas flags autoDetectionRunning, whatsappProcessingRunning, emailProcessingRunning para evitar conflitos

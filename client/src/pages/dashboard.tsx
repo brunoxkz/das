@@ -50,6 +50,25 @@ export default function Dashboard() {
     retry: false,
   });
 
+  // Buscar dados de disparos de campanhas
+  const { data: smsCount } = useQuery({
+    queryKey: ["/api/sms-campaigns/count"],
+    enabled: isAuthenticated,
+    retry: false,
+  });
+
+  const { data: whatsappCount } = useQuery({
+    queryKey: ["/api/whatsapp-campaigns/count"],
+    enabled: isAuthenticated,
+    retry: false,
+  });
+
+  const { data: emailCount } = useQuery({
+    queryKey: ["/api/email-campaigns/count"],
+    enabled: isAuthenticated,
+    retry: false,
+  });
+
   // Calcular estatísticas reais baseadas nos analytics
   const totalQuizzes = userQuizzes?.length || 0;
   const totalLeads = allAnalytics ? allAnalytics.reduce((sum: number, a: any) => sum + (a.leadsWithContact || 0), 0) : 0;
@@ -246,18 +265,18 @@ export default function Dashboard() {
           <Card className="relative overflow-hidden bg-gradient-to-br from-blue-500 via-blue-600 to-blue-700 text-white border-0 shadow-xl hover:shadow-2xl transition-all duration-300 group">
             <div className="absolute inset-0 bg-gradient-to-r from-blue-400/20 to-transparent"></div>
             <CardContent className="relative p-6">
-              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
+              <div className="flex items-center gap-3 mb-4">
                 <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center backdrop-blur-sm">
                   <BarChart3 className="w-6 h-6" />
-                </div>
-                <div className="text-blue-100 text-sm font-medium bg-blue-400/30 px-3 py-1 rounded-full text-center">
-                  +2 esta semana
                 </div>
               </div>
               <div>
                 <p className="text-blue-100 text-sm font-medium mb-1">Total de Quizzes</p>
-                <p className="text-3xl font-bold mb-1">{dashboardStats[0]?.value || 0}</p>
-                <p className="text-blue-200 text-xs">quizzes criados</p>
+                <p className="text-3xl font-bold mb-2">{dashboardStats[0]?.value || 0}</p>
+                <p className="text-blue-200 text-xs mb-2">quizzes criados</p>
+                <div className="text-blue-100 text-sm font-medium bg-blue-400/30 px-3 py-1 rounded-full text-center">
+                  +2 esta semana
+                </div>
               </div>
             </CardContent>
           </Card>
@@ -266,18 +285,18 @@ export default function Dashboard() {
           <Card className="relative overflow-hidden bg-gradient-to-br from-green-500 via-green-600 to-emerald-700 text-white border-0 shadow-xl hover:shadow-2xl transition-all duration-300 group">
             <div className="absolute inset-0 bg-gradient-to-r from-green-400/20 to-transparent"></div>
             <CardContent className="relative p-6">
-              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
+              <div className="flex items-center gap-3 mb-4">
                 <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center backdrop-blur-sm">
                   <Eye className="w-6 h-6" />
-                </div>
-                <div className="text-green-100 text-sm font-medium bg-green-400/30 px-3 py-1 rounded-full text-center">
-                  +15% hoje
                 </div>
               </div>
               <div>
                 <p className="text-green-100 text-sm font-medium mb-1">Visualizações</p>
-                <p className="text-3xl font-bold mb-1">{dashboardStats[2]?.value || 0}</p>
-                <p className="text-green-200 text-xs">acessos únicos</p>
+                <p className="text-3xl font-bold mb-2">{dashboardStats[2]?.value || 0}</p>
+                <p className="text-green-200 text-xs mb-2">acessos únicos</p>
+                <div className="text-green-100 text-sm font-medium bg-green-400/30 px-3 py-1 rounded-full text-center">
+                  +15% hoje
+                </div>
               </div>
             </CardContent>
           </Card>
@@ -286,18 +305,18 @@ export default function Dashboard() {
           <Card className="relative overflow-hidden bg-gradient-to-br from-purple-500 via-purple-600 to-violet-700 text-white border-0 shadow-xl hover:shadow-2xl transition-all duration-300 group">
             <div className="absolute inset-0 bg-gradient-to-r from-purple-400/20 to-transparent"></div>
             <CardContent className="relative p-6">
-              <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-3 mb-4">
                 <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center backdrop-blur-sm">
                   <Users className="w-6 h-6" />
-                </div>
-                <div className="text-purple-100 text-sm font-medium bg-purple-400/30 px-2 py-1 rounded-full">
-                  +8% semana
                 </div>
               </div>
               <div>
                 <p className="text-purple-100 text-sm font-medium mb-1">Respostas</p>
-                <p className="text-3xl font-bold mb-1">{dashboardStats[1]?.value || 0}</p>
-                <p className="text-purple-200 text-xs">leads capturados</p>
+                <p className="text-3xl font-bold mb-2">{dashboardStats[1]?.value || 0}</p>
+                <p className="text-purple-200 text-xs mb-2">leads capturados</p>
+                <div className="text-purple-100 text-sm font-medium bg-purple-400/30 px-3 py-1 rounded-full text-center">
+                  +8% semana
+                </div>
               </div>
             </CardContent>
           </Card>
@@ -306,18 +325,81 @@ export default function Dashboard() {
           <Card className="relative overflow-hidden bg-gradient-to-br from-orange-500 via-orange-600 to-red-600 text-white border-0 shadow-xl hover:shadow-2xl transition-all duration-300 group">
             <div className="absolute inset-0 bg-gradient-to-r from-orange-400/20 to-transparent"></div>
             <CardContent className="relative p-6">
-              <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-3 mb-4">
                 <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center backdrop-blur-sm">
                   <TrendingUp className="w-6 h-6" />
-                </div>
-                <div className="text-orange-100 text-sm font-medium bg-orange-400/30 px-2 py-1 rounded-full">
-                  +3% mês
                 </div>
               </div>
               <div>
                 <p className="text-orange-100 text-sm font-medium mb-1">Taxa de Conversão</p>
-                <p className="text-3xl font-bold mb-1">{dashboardStats[3]?.value || "0%"}</p>
-                <p className="text-orange-200 text-xs">média geral</p>
+                <p className="text-3xl font-bold mb-2">{dashboardStats[3]?.value || "0%"}</p>
+                <p className="text-orange-200 text-xs mb-2">média geral</p>
+                <div className="text-orange-100 text-sm font-medium bg-orange-400/30 px-3 py-1 rounded-full text-center">
+                  +3% mês
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Nova linha de disparos de campanhas */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-6">
+          {/* SMS Disparos */}
+          <Card className="relative overflow-hidden bg-gradient-to-br from-cyan-500 via-cyan-600 to-blue-600 text-white border-0 shadow-lg hover:shadow-xl transition-all duration-300">
+            <div className="absolute inset-0 bg-gradient-to-r from-cyan-400/20 to-transparent"></div>
+            <CardContent className="relative p-4">
+              <div className="flex items-center gap-3 mb-3">
+                <div className="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center backdrop-blur-sm">
+                  <MessageSquare className="w-5 h-5" />
+                </div>
+              </div>
+              <div>
+                <p className="text-cyan-100 text-sm font-medium mb-1">Disparos SMS</p>
+                <p className="text-2xl font-bold mb-1">{smsCount?.total || 0}</p>
+                <p className="text-cyan-200 text-xs mb-2">mensagens enviadas</p>
+                <div className="text-cyan-100 text-xs bg-cyan-400/30 px-2 py-1 rounded-full text-center">
+                  hoje
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* WhatsApp Disparos */}
+          <Card className="relative overflow-hidden bg-gradient-to-br from-emerald-500 via-green-600 to-teal-600 text-white border-0 shadow-lg hover:shadow-xl transition-all duration-300">
+            <div className="absolute inset-0 bg-gradient-to-r from-emerald-400/20 to-transparent"></div>
+            <CardContent className="relative p-4">
+              <div className="flex items-center gap-3 mb-3">
+                <div className="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center backdrop-blur-sm">
+                  <MessageSquare className="w-5 h-5" />
+                </div>
+              </div>
+              <div>
+                <p className="text-emerald-100 text-sm font-medium mb-1">Disparos WhatsApp</p>
+                <p className="text-2xl font-bold mb-1">{whatsappCount?.total || 0}</p>
+                <p className="text-emerald-200 text-xs mb-2">mensagens enviadas</p>
+                <div className="text-emerald-100 text-xs bg-emerald-400/30 px-2 py-1 rounded-full text-center">
+                  hoje
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Email Disparos */}
+          <Card className="relative overflow-hidden bg-gradient-to-br from-rose-500 via-pink-600 to-red-600 text-white border-0 shadow-lg hover:shadow-xl transition-all duration-300">
+            <div className="absolute inset-0 bg-gradient-to-r from-rose-400/20 to-transparent"></div>
+            <CardContent className="relative p-4">
+              <div className="flex items-center gap-3 mb-3">
+                <div className="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center backdrop-blur-sm">
+                  <Mail className="w-5 h-5" />
+                </div>
+              </div>
+              <div>
+                <p className="text-rose-100 text-sm font-medium mb-1">Disparos Email</p>
+                <p className="text-2xl font-bold mb-1">{emailCount?.total || 0}</p>
+                <p className="text-rose-200 text-xs mb-2">emails enviados</p>
+                <div className="text-rose-100 text-xs bg-rose-400/30 px-2 py-1 rounded-full text-center">
+                  hoje
+                </div>
               </div>
             </CardContent>
           </Card>
