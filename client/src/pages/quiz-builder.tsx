@@ -113,43 +113,37 @@ export default function QuizBuilder() {
   const [currentQuizId, setCurrentQuizId] = useState<string | null>(quizId || null);
   const [currentPageIndex, setCurrentPageIndex] = useState(0);
   
-  // Estado para pixels dinâmicos
-  const [trackingPixels, setTrackingPixels] = useState([
-    { id: 'facebook', name: 'Facebook Pixel', type: 'facebook', mode: 'normal', value: '', placeholder: '123456789012345', description: 'ID do pixel do Facebook para rastreamento de conversões' },
-    { id: 'google', name: 'Google Ads', type: 'google', mode: 'normal', value: '', placeholder: 'AW-123456789', description: 'ID do pixel do Google Ads para rastreamento' },
-    { id: 'ga4', name: 'Google Analytics 4', type: 'ga4', mode: 'normal', value: '', placeholder: 'G-XXXXXXXXXX', description: 'ID de medição do Google Analytics 4' }
-  ]);
+  // Estado para pixels dinâmicos - iniciar vazio, carregará da API
+  const [trackingPixels, setTrackingPixels] = useState([]);
   
   // Estado para delay dos pixels
   const [pixelDelay, setPixelDelay] = useState(false);
   
-  // Pixels disponíveis para adicionar
+  // Pixels disponíveis para adicionar - compatível com API
   const availablePixelTypes = [
-    { type: 'facebook', name: 'Facebook', placeholder: '123456789012345', description: 'ID do pixel do Facebook para rastreamento de conversões', hasApi: true },
-    { type: 'google', name: 'Google Ads', placeholder: 'AW-123456789', description: 'ID do pixel do Google Ads para rastreamento', hasApi: true },
-    { type: 'ga4', name: 'Google Analytics 4', placeholder: 'G-XXXXXXXXXX', description: 'ID de medição do Google Analytics 4', hasApi: false },
+    { type: 'meta', name: 'Meta/Facebook', placeholder: '123456789012345', description: 'ID do pixel do Facebook/Instagram para rastreamento de conversões', hasApi: true },
+    { type: 'tiktok', name: 'TikTok', placeholder: 'C4A7..._..._...', description: 'ID do pixel do TikTok para rastreamento', hasApi: true },
+    { type: 'ga4', name: 'Google Analytics 4', placeholder: 'G-XXXXXXXXXX', description: 'ID de medição do Google Analytics 4', hasApi: true },
+    { type: 'linkedin', name: 'LinkedIn', placeholder: '123456', description: 'ID do pixel do LinkedIn para rastreamento', hasApi: true },
+    { type: 'pinterest', name: 'Pinterest', placeholder: '2612345678901', description: 'ID do pixel do Pinterest para rastreamento', hasApi: true },
+    { type: 'snapchat', name: 'Snapchat', placeholder: '12345678-1234-1234-1234-123456789012', description: 'ID do pixel do Snapchat para rastreamento', hasApi: false },
     { type: 'taboola', name: 'Taboola', placeholder: '1234567', description: 'ID do pixel do Taboola para rastreamento', hasApi: false },
-    { type: 'pinterest', name: 'Pinterest', placeholder: '2612345678901', description: 'ID do pixel do Pinterest para rastreamento', hasApi: false },
-    { type: 'linkedin', name: 'LinkedIn', placeholder: '123456', description: 'ID do pixel do LinkedIn para rastreamento', hasApi: false },
-    { type: 'outbrain', name: 'Outbrain', placeholder: '00abcdef12345678', description: 'ID do pixel do Outbrain para rastreamento', hasApi: false },
     { type: 'mgid', name: 'MGID', placeholder: '123456', description: 'ID do pixel do MGID para rastreamento', hasApi: false },
-    { type: 'tiktok', name: 'TikTok', placeholder: 'C4A7..._..._...', description: 'ID do pixel do TikTok para rastreamento', hasApi: false },
-    { type: 'snapchat', name: 'Snapchat', placeholder: '12345678-1234-1234-1234-123456789012', description: 'ID do pixel do Snapchat para rastreamento', hasApi: false }
+    { type: 'outbrain', name: 'Outbrain', placeholder: '00abcdef12345678', description: 'ID do pixel do Outbrain para rastreamento', hasApi: false }
   ];
 
   // Função para obter o ícone do pixel
   const getPixelIcon = (type: string) => {
     const iconMap = {
-      facebook: <div className="w-6 h-6 bg-blue-600 rounded-full flex items-center justify-center text-white text-xs font-bold">f</div>,
-      google: <div className="w-6 h-6 bg-red-500 rounded-full flex items-center justify-center text-white text-xs font-bold">G</div>,
-      ga4: <div className="w-6 h-6 bg-orange-500 rounded-full flex items-center justify-center text-white text-xs font-bold">GA</div>,
-      taboola: <div className="w-6 h-6 bg-blue-400 rounded-full flex items-center justify-center text-white text-xs font-bold">T</div>,
-      pinterest: <div className="w-6 h-6 bg-red-600 rounded-full flex items-center justify-center text-white text-xs font-bold">P</div>,
-      linkedin: <div className="w-6 h-6 bg-blue-700 rounded-full flex items-center justify-center text-white text-xs font-bold">in</div>,
-      outbrain: <div className="w-6 h-6 bg-orange-600 rounded-full flex items-center justify-center text-white text-xs font-bold">O</div>,
-      mgid: <div className="w-6 h-6 bg-purple-600 rounded-full flex items-center justify-center text-white text-xs font-bold">M</div>,
+      meta: <div className="w-6 h-6 bg-blue-600 rounded-full flex items-center justify-center text-white text-xs font-bold">f</div>,
       tiktok: <div className="w-6 h-6 bg-black rounded-full flex items-center justify-center text-white text-xs font-bold">TT</div>,
-      snapchat: <div className="w-6 h-6 bg-yellow-400 rounded-full flex items-center justify-center text-white text-xs font-bold">S</div>
+      ga4: <div className="w-6 h-6 bg-orange-500 rounded-full flex items-center justify-center text-white text-xs font-bold">GA</div>,
+      linkedin: <div className="w-6 h-6 bg-blue-700 rounded-full flex items-center justify-center text-white text-xs font-bold">in</div>,
+      pinterest: <div className="w-6 h-6 bg-red-600 rounded-full flex items-center justify-center text-white text-xs font-bold">P</div>,
+      snapchat: <div className="w-6 h-6 bg-yellow-400 rounded-full flex items-center justify-center text-white text-xs font-bold">S</div>,
+      taboola: <div className="w-6 h-6 bg-blue-400 rounded-full flex items-center justify-center text-white text-xs font-bold">T</div>,
+      mgid: <div className="w-6 h-6 bg-purple-600 rounded-full flex items-center justify-center text-white text-xs font-bold">M</div>,
+      outbrain: <div className="w-6 h-6 bg-orange-600 rounded-full flex items-center justify-center text-white text-xs font-bold">O</div>
     };
     return iconMap[type] || <div className="w-6 h-6 bg-gray-500 rounded-full flex items-center justify-center text-white text-xs font-bold">?</div>;
   };
@@ -176,6 +170,41 @@ export default function QuizBuilder() {
     setTrackingPixels(prev => prev.filter(pixel => pixel.id !== id));
   };
 
+  // Função para carregar pixels via API
+  const loadPixelsFromAPI = async (quizId: string) => {
+    try {
+      const response = await fetch(`/api/quiz/${quizId}/pixels/config`, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+      });
+      
+      if (response.ok) {
+        const pixelData = await response.json();
+        if (pixelData.pixels && Array.isArray(pixelData.pixels)) {
+          setTrackingPixels(pixelData.pixels);
+          setPixelDelay(pixelData.pixelDelay || false);
+          
+          // Atualizar também o customHeadScript se existir
+          if (pixelData.customScripts && pixelData.customScripts.length > 0) {
+            setQuizData(prev => ({
+              ...prev,
+              customHeadScript: pixelData.customScripts.join('\n')
+            }));
+          }
+          
+          console.log('✅ Pixels carregados via API:', pixelData.pixels.length);
+        }
+      } else {
+        console.log('ℹ️ Nenhum pixel configurado ou erro ao carregar pixels');
+      }
+    } catch (error) {
+      console.error('Erro ao carregar pixels:', error);
+    }
+  };
+
+
+
   // Função para atualizar pixel
   const updatePixel = (id: string, field: string, value: string) => {
     setTrackingPixels(prev => 
@@ -183,6 +212,65 @@ export default function QuizBuilder() {
         pixel.id === id ? { ...pixel, [field]: value } : pixel
       )
     );
+  };
+
+  // Função para gerar preview real dos códigos usando a API pixelCodeGenerator
+  const generateRealPreview = (pixel: any) => {
+    // Simular estrutura QuizPixelData
+    const quizPixelData = {
+      quizId: currentQuizId || 'preview',
+      quizUrl: window.location.href,
+      pixels: [pixel],
+      customScripts: [],
+      utmCode: ''
+    };
+
+    // Gerar códigos usando a mesma lógica da API
+    try {
+      if (pixel.type === 'meta') {
+        return `<!-- Meta Pixel Code -->
+<script>
+  !function(f,b,e,v,n,t,s){
+    if(f.fbq)return;n=f.fbq=function(){n.callMethod?n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+    if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];
+    t=b.createElement(e);t.async=!0;t.src=v;
+    s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)
+  }(window, document,'script','https://connect.facebook.net/en_US/fbevents.js');
+  fbq('init', '${pixel.value}');
+  fbq('track', 'PageView');
+</script>
+<noscript><img height="1" width="1" src="https://www.facebook.com/tr?id=${pixel.value}&ev=PageView&noscript=1"/></noscript>`;
+      }
+      
+      if (pixel.type === 'ga4') {
+        return `<!-- Google Analytics 4 Code -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=${pixel.value}"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', '${pixel.value}');
+</script>`;
+      }
+      
+      if (pixel.type === 'tiktok') {
+        return `<!-- TikTok Pixel Code -->
+<script>
+  !function (w, d, t) {
+    w.TiktokAnalyticsObject=t;var ttq=w[t]=w[t]||[];ttq.methods=["page","track","identify","instances","debug","on","off","once","ready","alias","group","enableCookie","disableCookie"],ttq.setAndDefer=function(t,e){t[e]=function(){t.push([e].concat(Array.prototype.slice.call(arguments,0)))}};for(var i=0;i<ttq.methods.length;i++)ttq.setAndDefer(ttq,ttq.methods[i]);ttq.instance=function(t){for(var e=ttq._i[t]||[],n=0;n<ttq.methods.length;n++)ttq.setAndDefer(e,ttq.methods[n]);return e},ttq.load=function(e,n){var i="https://analytics.tiktok.com/i18n/pixel/events.js";ttq._i=ttq._i||{},ttq._i[e]=[],ttq._i[e]._u=i,ttq._t=ttq._t||{},ttq._t[e]=+new Date,ttq._o=ttq._o||{},ttq._o[e]=n||{};var o=document.createElement("script");o.type="text/javascript",o.async=!0,o.src=i+"?sdkid="+e+"&lib="+t;var a=document.getElementsByTagName("script")[0];a.parentNode.insertBefore(o,a)};
+    ttq.load('${pixel.value}');
+    ttq.page();
+  }(window, document, 'ttq');
+</script>`;
+      }
+      
+      return `<!-- ${pixel.name} -->
+<script>
+  ${pixel.type}_pixel('${pixel.value}');
+</script>`;
+    } catch (error) {
+      return `<!-- Erro ao gerar código para ${pixel.name} -->`;
+    }
   };
 
   // Estados de controle já definidos anteriormente não são redefinidos aqui
@@ -343,6 +431,12 @@ export default function QuizBuilder() {
         pixelDelay: (existingQuiz as any).pixelDelay || false,
         trackingPixels: (existingQuiz as any).trackingPixels || []
       });
+      
+      // Carregar pixels via API se o quiz está publicado
+      if (existingQuiz.isPublished) {
+        loadPixelsFromAPI(existingQuiz.id);
+      }
+      
       console.log("QUIZ BUILDER DEBUG - Dados carregados:", {
         title: existingQuiz.title,
         structure: existingQuiz.structure,
@@ -1462,21 +1556,17 @@ export default function QuizBuilder() {
                       <h4 className="font-medium text-gray-900 mb-3">Códigos Gerados (Preview)</h4>
                       <div className="p-3 bg-gray-900 rounded-lg text-green-400 text-xs font-mono max-h-32 overflow-y-auto">
                         {trackingPixels.filter(p => p.value).length > 0 ? (
-                          <div className="space-y-1">
+                          <div className="space-y-4">
                             {trackingPixels
                               .filter(p => p.value)
                               .map(pixel => (
                                 <div key={pixel.id}>
-                                  <span className="text-blue-400">/* {pixel.name} */</span>
-                                  <br />
-                                  <span className="text-yellow-400">&lt;script&gt;</span>
-                                  <span className="text-gray-300"> {pixel.type}_pixel('{pixel.value}') </span>
-                                  <span className="text-yellow-400">&lt;/script&gt;</span>
+                                  <div className="text-blue-400 mb-2">/* {pixel.name} */</div>
+                                  <pre className="text-gray-300 text-xs whitespace-pre-wrap">
+                                    {generateRealPreview(pixel)}
+                                  </pre>
                                   {pixel.mode === 'api' && (
-                                    <>
-                                      <br />
-                                      <span className="text-purple-400">/* + Enhanced API tracking */</span>
-                                    </>
+                                    <div className="text-purple-400 mt-2">/* + Enhanced API tracking */</div>
                                   )}
                                 </div>
                               ))
