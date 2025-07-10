@@ -114,6 +114,17 @@ export function QuizPublicRenderer({ quiz }: QuizPublicRendererProps) {
   const pages = quiz.structure.pages || [];
   const currentPage = pages[currentPageIndex];
   const isLastPage = currentPageIndex === pages.length - 1;
+
+  // Configurar BackRedirect quando o quiz carrega
+  useEffect(() => {
+    if (quiz.backRedirectEnabled && quiz.backRedirectUrl) {
+      backRedirectManager.configure({
+        enabled: true,
+        url: quiz.backRedirectUrl,
+        delay: quiz.backRedirectDelay || 0
+      });
+    }
+  }, [quiz.backRedirectEnabled, quiz.backRedirectUrl, quiz.backRedirectDelay]);
   
   // Tema escuro - CORRIGIDO para usar a estrutura correta
   const isDarkMode = quiz.design?.darkMode || false;
@@ -211,15 +222,6 @@ export function QuizPublicRenderer({ quiz }: QuizPublicRendererProps) {
       if (finalResponse.ok) {
         console.log('Quiz completado com sucesso!');
         setShowResults(true);
-        
-        // Aplicar BackRedirect se configurado
-        if (quiz.backRedirectEnabled && quiz.backRedirectUrl) {
-          console.log('🔄 Aplicando BackRedirect:', quiz.backRedirectUrl);
-          backRedirectManager.executeRedirect(
-            quiz.backRedirectUrl,
-            quiz.backRedirectDelay || 0
-          );
-        }
       } else {
         console.error('Erro ao finalizar quiz');
       }

@@ -1749,7 +1749,7 @@ export default function QuizBuilder() {
               {/* Cabeçalho da Aba */}
               <div className="text-center">
                 <h2 className="text-2xl font-bold text-gray-900 mb-2">BackRedirect Universal</h2>
-                <p className="text-gray-600">Sistema de redirecionamento permanente para compatibilidade móvel total</p>
+                <p className="text-gray-600">Sistema de redirecionamento para compatibilidade móvel total</p>
               </div>
 
               {/* Sistema BackRedirect */}
@@ -1759,7 +1759,7 @@ export default function QuizBuilder() {
                     <ArrowLeft className="w-5 h-5" />
                     Configurações de Redirecionamento
                   </CardTitle>
-                  <p className="text-sm text-gray-600">Configure redirecionamento após completar o quiz</p>
+                  <p className="text-sm text-gray-600">Configure redirecionamento quando usuário tenta voltar pelo navegador</p>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   {/* Ativar/Desativar BackRedirect */}
@@ -1871,13 +1871,7 @@ export default function QuizBuilder() {
                       </div>
                     </div>
 
-                    {/* Aviso de Funcionamento Permanente */}
-                    <div className="p-3 bg-yellow-50 rounded-lg border border-yellow-200">
-                      <p className="text-sm text-yellow-800">
-                        <strong>⚡ Sistema Permanente:</strong> O redirecionamento funciona de forma permanente 
-                        após inserido no quiz publicado, mesmo sem o usuário estar logado na plataforma.
-                      </p>
-                    </div>
+
 
                     {/* Métodos de Redirecionamento */}
                     <div className="p-3 bg-blue-50 rounded-lg border border-blue-200">
@@ -1896,55 +1890,7 @@ export default function QuizBuilder() {
                 </CardContent>
               </Card>
 
-              {/* Testes e Validação */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Search className="w-5 h-5" />
-                    Testes e Validação
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    {/* Teste de URL */}
-                    <div>
-                      <Label className="text-sm font-medium">Teste de URL</Label>
-                      <div className="mt-2 p-3 bg-gray-50 rounded-lg">
-                        <p className="text-sm text-gray-700 mb-2">
-                          URL configurada: 
-                          <span className="font-mono text-blue-600 ml-1">
-                            {quizData.backRedirectUrl || "Não configurado"}
-                          </span>
-                        </p>
-                        {quizData.backRedirectUrl && (
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => window.open(quizData.backRedirectUrl, '_blank')}
-                            className="mt-2"
-                          >
-                            Testar URL
-                          </Button>
-                        )}
-                      </div>
-                    </div>
 
-                    {/* Instruções de Teste */}
-                    <div className="p-3 bg-gray-50 rounded-lg border">
-                      <p className="text-sm text-gray-800 font-medium mb-2">
-                        <strong>📋 Como Testar:</strong>
-                      </p>
-                      <ol className="text-xs text-gray-700 space-y-1">
-                        <li>1. Configure a URL de redirecionamento acima</li>
-                        <li>2. Salve o quiz e publique</li>
-                        <li>3. Acesse o quiz do celular</li>
-                        <li>4. Complete o quiz até o final</li>
-                        <li>5. Verifique se o redirecionamento funciona</li>
-                      </ol>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
 
             </div>
           </div>

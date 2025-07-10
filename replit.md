@@ -866,10 +866,12 @@ Changelog:
 - July 10, 2025. BACKREDIRECT SYSTEM TAB IMPLEMENTATION - Reorganização da interface para melhor organização:
   * Criada nova aba "BackRedirect" separada da aba "Pixels/Scripts" 
   * Movido sistema BackRedirect para aba dedicada com interface completa
-  * Integração automática no QuizPublicRenderer para aplicar redirecionamento após conclusão do quiz
-  * Sistema de compatibilidade móvel universal com 5 métodos de redirecionamento
-  * Interface de teste e preview em tempo real na aba BackRedirect
-  * Funcionalidade permanente independente de login do usuário na plataforma
+  * Sistema agora intercepta botão "voltar" do navegador em vez de redirecionar após conclusão do quiz
+  * Implementados 6 métodos de interceptação para máxima compatibilidade: popstate, beforeunload, pagehide, hashchange, visibilitychange
+  * Sistema desativado por padrão - só funciona se habilitado pelo usuário
+  * Compatibilidade universal com iOS Safari, Android WebView, apps sociais (Instagram, Facebook, WhatsApp)
+  * Interface limpa sem elementos desnecessários de teste
+  * Sistema permanente que funciona independente de login do usuário
   * Resolvido problema crítico de database schema: adicionada coluna designConfig à tabela quizzes com estrutura SQLite correta
   * Corrigidos endpoints API: PUT e PATCH funcionando corretamente para diferentes cenários de atualização
   * Implementado sistema de renovação automática de token para evitar expiração durante testes longos
