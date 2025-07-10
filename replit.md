@@ -937,6 +937,16 @@ Changelog:
   * Interface de confirmação com avisos educativos sobre importação e uso dos templates
   * Sistema totalmente funcional permitindo importação direta para o quiz builder
   * 50 templates prontos distribuídos estrategicamente nas categorias mais demandadas do mercado
+- July 10, 2025. MELHORIAS DE DESIGN PÁGINA TEMPLATES - Interface otimizada e layout corrigido:
+  * Corrigido posicionamento dos botões que estavam saindo da tela - agora em grid 2 colunas responsivo
+  * Removida subdescrição desnecessária no modal de preview para design mais limpo
+  * Implementada altura uniforme para todos os cards com flex layout flexível
+  * Botões de ação redimensionados e otimizados (Preview + Usar) com ícones bem posicionados
+  * Preview área reduzida para melhor proporção (h-40) e elementos mais compactos
+  * Badge de categoria centralizado para melhor apresentação visual
+  * Altura automática dos cards garante layout uniforme independente do conteúdo
+  * Texto otimizado com line-clamp para evitar quebras de layout
+  * Interface totalmente responsiva mantendo usabilidade em todas as resoluções
 - July 10, 2025. SISTEMA DE DETECÇÃO AUTOMÁTICA REATIVADO - Restored critical lead detection functionality with intelligent protections:
   * Reativado sistema de detecção automática de novos leads (a cada 20 segundos) com proteções contra execução simultânea
   * Implementadas flags autoDetectionRunning, whatsappProcessingRunning, emailProcessingRunning para evitar conflitos

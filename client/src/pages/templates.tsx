@@ -1268,60 +1268,62 @@ export default function Templates() {
       {/* Templates Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {filteredTemplates.map((template) => (
-          <Card key={template.id} className="overflow-hidden hover:shadow-lg transition-shadow">
+          <Card key={template.id} className="overflow-hidden hover:shadow-lg transition-shadow flex flex-col h-full">
             {/* Template Preview */}
-            <div className="h-48 bg-gradient-to-br from-primary/20 to-secondary/20 flex items-center justify-center">
-              <div className="bg-white rounded-lg p-4 max-w-[200px] mx-auto shadow-sm">
+            <div className="h-40 bg-gradient-to-br from-primary/20 to-secondary/20 flex items-center justify-center">
+              <div className="bg-white rounded-lg p-3 max-w-[180px] mx-auto shadow-sm">
                 <div className="text-center">
-                  <div className="text-3xl mb-2">{template.thumbnail}</div>
-                  <h4 className="text-sm font-semibold mb-2">{template.name}</h4>
+                  <div className="text-2xl mb-2">{template.thumbnail}</div>
+                  <h4 className="text-xs font-semibold mb-2 line-clamp-1">{template.name}</h4>
                   <div className="space-y-1">
-                    <div className="w-full h-2 bg-gray-100 rounded"></div>
-                    <div className="w-3/4 h-2 bg-gray-100 rounded"></div>
-                    <div className="w-1/2 h-2 bg-gray-100 rounded"></div>
+                    <div className="w-full h-1.5 bg-gray-100 rounded"></div>
+                    <div className="w-3/4 h-1.5 bg-gray-100 rounded"></div>
+                    <div className="w-1/2 h-1.5 bg-gray-100 rounded"></div>
                   </div>
                 </div>
               </div>
             </div>
 
-            <CardContent className="p-6">
+            <CardContent className="p-4 flex flex-col flex-1">
               <div className="flex items-start justify-between mb-2">
-                <h3 className="text-lg font-semibold text-gray-900">{template.name}</h3>
+                <h3 className="text-base font-semibold text-gray-900 line-clamp-1 flex-1">{template.name}</h3>
                 {template.isPopular && (
-                  <Badge className="bg-yellow-100 text-yellow-800">
+                  <Badge className="bg-yellow-100 text-yellow-800 flex-shrink-0 ml-2">
                     <Star className="w-3 h-3 mr-1" />
                     Popular
                   </Badge>
                 )}
               </div>
               
-              <p className="text-gray-600 mb-4 text-sm">{template.description}</p>
+              <p className="text-gray-600 mb-3 text-sm line-clamp-2 flex-grow">{template.description}</p>
               
-              <div className="flex items-center justify-between mb-3">
-                <Badge variant="outline" className="text-xs">
-                  {categories.find(c => c.id === template.category)?.label || template.category}
-                </Badge>
-              </div>
-              
-              <div className="flex gap-2">
-                <Button 
-                  size="sm" 
-                  variant="outline"
-                  onClick={() => handlePreviewTemplate(template)}
-                  className="flex items-center gap-1 flex-1"
-                >
-                  <Eye className="w-3 h-3" />
-                  Preview
-                </Button>
+              <div className="space-y-3 mt-auto">
+                <div className="flex justify-center">
+                  <Badge variant="outline" className="text-xs">
+                    {categories.find(c => c.id === template.category)?.label || template.category}
+                  </Badge>
+                </div>
                 
-                <Button 
-                  size="sm" 
-                  onClick={() => handlePreviewTemplate(template)}
-                  className="flex items-center gap-1 flex-1"
-                >
-                  Usar Template
-                  <ArrowRight className="w-3 h-3" />
-                </Button>
+                <div className="grid grid-cols-2 gap-2">
+                  <Button 
+                    size="sm" 
+                    variant="outline"
+                    onClick={() => handlePreviewTemplate(template)}
+                    className="w-full text-xs"
+                  >
+                    <Eye className="w-3 h-3 mr-1" />
+                    Preview
+                  </Button>
+                  
+                  <Button 
+                    size="sm" 
+                    onClick={() => handleUseTemplate(template)}
+                    className="w-full text-xs"
+                  >
+                    Usar
+                    <ArrowRight className="w-3 h-3 ml-1" />
+                  </Button>
+                </div>
               </div>
             </CardContent>
           </Card>
@@ -1353,9 +1355,6 @@ export default function Templates() {
                 </div>
               </div>
             </DialogTitle>
-            <DialogDescription>
-              {selectedTemplate?.description}
-            </DialogDescription>
           </DialogHeader>
 
           {selectedTemplate && (
