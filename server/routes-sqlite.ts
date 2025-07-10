@@ -135,18 +135,22 @@ export function registerSQLiteRoutes(app: Express): Server {
     }
   });
 
-  // Dashboard Stats
-  app.get("/api/dashboard/stats", verifyJWT, async (req: any, res) => {
+  // Dashboard Stats (with alias for compatibility)
+  const dashboardStatsHandler = async (req: any, res: any) => {
     try {
+      console.log('📊 Dashboard Stats - User ID:', req.user.id);
 
       // Verificar cache primeiro
       const cacheKey = `dashboard-${req.user.id}`;
       const cachedStats = cache.getDashboardStats(cacheKey);
       if (cachedStats) {
+        console.log('📋 Cache hit for dashboard stats');
         return res.json(cachedStats);
       }
 
+      console.log('📋 Cache miss, fetching from database...');
       const stats = await storage.getDashboardStats(req.user.id);
+      console.log('📊 Raw stats from storage:', stats);
       
       // Buscar quizzes para estatísticas detalhadas
       const quizzes = await storage.getUserQuizzes(req.user.id);
@@ -172,7 +176,11 @@ export function registerSQLiteRoutes(app: Express): Server {
       console.error("Dashboard stats error:", error);
       res.status(500).json({ message: "Internal server error" });
     }
-  });
+  };
+
+  // Register both endpoints
+  app.get("/api/dashboard/stats", verifyJWT, dashboardStatsHandler);
+  app.get("/api/dashboard-stats", verifyJWT, dashboardStatsHandler);
 
   // Get user quizzes
   app.get("/api/quizzes", verifyJWT, async (req: any, res) => {
