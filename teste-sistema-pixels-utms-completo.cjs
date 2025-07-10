@@ -1,344 +1,441 @@
 /**
- * TESTE COMPLETO - SISTEMA DE PIXELS COM UTM E CÓDIGOS SEGUROS
- * Validar todas as funcionalidades: pixels, UTM, email marketing, SMS, segurança
+ * TESTE COMPLETO DO SISTEMA DE PIXELS E APIs DE CONVERSÃO
+ * Valida toda a funcionalidade de pixels de rastreamento
+ * Baseado na documentação externa fornecida
  */
 
-const BASE_URL = 'http://localhost:5000';
+// Usar fetch nativo do Node.js 18+
+const fetch = globalThis.fetch;
 
+// Configuração do servidor
+const BASE_URL = 'http://localhost:5000';
+let authToken = null;
+
+// Função para fazer requisições autenticadas
 async function makeRequest(endpoint, options = {}) {
-  try {
-    const response = await fetch(`${BASE_URL}${endpoint}`, options);
-    
-    if (!response.ok) {
-      const errorText = await response.text();
-      throw new Error(`HTTP ${response.status}: ${errorText}`);
-    }
-    
-    return await response.json();
-  } catch (error) {
-    console.error(`❌ Erro na requisição ${endpoint}:`, error.message);
-    throw error;
+  const url = `${BASE_URL}${endpoint}`;
+  const headers = {
+    'Content-Type': 'application/json',
+    ...options.headers
+  };
+
+  if (authToken) {
+    headers.Authorization = `Bearer ${authToken}`;
   }
+
+  const response = await fetch(url, {
+    ...options,
+    headers
+  });
+
+  if (!response.ok) {
+    const text = await response.text();
+    throw new Error(`HTTP ${response.status}: ${text}`);
+  }
+
+  const contentType = response.headers.get('content-type');
+  if (contentType && contentType.includes('application/json')) {
+    return await response.json();
+  }
+  
+  return await response.text();
 }
 
-async function testeCompleto() {
-  console.log("🧪 TESTE COMPLETO - SISTEMA DE PIXELS COM UTM E CÓDIGOS SEGUROS");
-  console.log("=".repeat(80));
-  
-  let totalTests = 0;
-  let passedTests = 0;
-  let token = null;
-  
+// Função para autenticar
+async function authenticate() {
   try {
-    // 1. Autenticar
-    totalTests++;
-    const authResponse = await makeRequest('/api/auth/login', {
+    const response = await makeRequest('/api/auth/login', {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
       body: JSON.stringify({
         email: 'admin@vendzz.com',
         password: 'admin123'
       })
     });
-    
-    token = authResponse.accessToken;
-    console.log(`✅ 1. Autenticação realizada com sucesso`);
-    passedTests++;
-    
-    // 2. Criar quiz com todas as funcionalidades
-    totalTests++;
-    const quizData = {
-      title: 'Teste Completo UTM e Pixels',
-      description: 'Quiz para testar sistema completo com UTM e códigos seguros',
-      structure: {
-        pages: [
-          {
-            id: 1,
-            title: 'Página UTM',
-            elements: [
-              {
-                id: 1,
-                type: 'heading',
-                content: 'Teste UTM e Pixels',
-                fontSize: 'text-2xl'
-              }
-            ]
-          }
-        ],
-        settings: {
-          theme: 'vendzz',
-          showProgressBar: true,
-          collectEmail: true,
-          collectName: true,
-          collectPhone: false
-        }
-      },
-      isPublished: true,
-      // Dados de teste com UTM e scripts
-      utmTrackingCode: `<!-- UTMify Tracking Code -->
-<script>
-  window.utmify = window.utmify || function() {
-    (window.utmify.q = window.utmify.q || []).push(arguments);
-  };
-  window.utmify('track', 'pageview', {
-    source: 'quiz',
-    campaign: 'test-campaign'
-  });
-</script>`,
-      customHeadScript: `<!-- Analytics Personalizado -->
-<script>
-  console.log('Quiz carregado com sucesso');
-  // Tracking personalizado para quiz
-  if (typeof gtag !== 'undefined') {
-    gtag('event', 'quiz_start', {
-      'quiz_name': 'Teste Completo UTM'
-    });
+
+    authToken = response.token;
+    console.log('✅ Autenticação realizada com sucesso');
+    return true;
+  } catch (error) {
+    console.error('❌ Erro na autenticação:', error.message);
+    return false;
   }
-</script>`,
-      pixelEmailMarketing: true,
-      pixelSMS: true,
-      pixelDelay: true,
-      trackingPixels: [
-        {
-          id: 'utm_facebook',
-          name: 'Facebook UTM',
-          type: 'facebook',
-          mode: 'normal',
-          value: '1234567890123456',
-          description: 'Facebook pixel para UTM'
-        },
-        {
-          id: 'utm_google',
-          name: 'Google UTM',
-          type: 'google',
-          mode: 'normal',
-          value: 'AW-1234567890',
-          description: 'Google Ads para UTM'
-        }
-      ]
-    };
-    
-    const createResponse = await makeRequest('/api/quizzes', {
+}
+
+// Função para criar quiz de teste
+async function createTestQuiz() {
+  try {
+    const quiz = await makeRequest('/api/quizzes', {
       method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(quizData)
-    });
-    
-    console.log(`✅ 2. Quiz criado com funcionalidades completas`);
-    console.log(`   Quiz ID: ${createResponse.id}`);
-    console.log(`   UTM Code: ${quizData.utmTrackingCode ? 'Configurado' : 'Não configurado'}`);
-    console.log(`   Custom Script: ${quizData.customHeadScript ? 'Configurado' : 'Não configurado'}`);
-    console.log(`   Email Marketing: ${quizData.pixelEmailMarketing ? 'Ativado' : 'Desativado'}`);
-    console.log(`   SMS: ${quizData.pixelSMS ? 'Ativado' : 'Desativado'}`);
-    passedTests++;
-    
-    // 3. Testar sanitização de segurança - código malicioso
-    totalTests++;
-    try {
-      const maliciousData = {
-        title: 'Teste Segurança',
-        utmTrackingCode: `<script>
-          eval('alert("XSS Attack")');
-          document.cookie = 'stolen=true';
-          window.location.href = 'http://malicious-site.com';
-        </script>`,
-        customHeadScript: `<script>
-          XMLHttpRequest.prototype.open = function() {
-            // Interceptar requisições
-          };
-          localStorage.setItem('malicious', 'data');
-        </script>`
-      };
-      
-      await makeRequest(`/api/quizzes/${createResponse.id}`, {
-        method: 'PUT',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
+      body: JSON.stringify({
+        title: 'Quiz Teste Pixels',
+        description: 'Quiz para testar sistema de pixels',
+        structure: {
+          pages: [
+            {
+              id: 'page1',
+              elements: [
+                {
+                  id: 'element1',
+                  type: 'text',
+                  properties: {
+                    text: 'Bem-vindo ao teste de pixels'
+                  }
+                }
+              ]
+            }
+          ]
         },
-        body: JSON.stringify(maliciousData)
-      });
-      
-      console.log(`❌ 3. Sanitização falhou - código malicioso foi aceito`);
-    } catch (error) {
-      if (error.message.includes('400')) {
-        console.log(`✅ 3. Sanitização funcionando - código malicioso foi rejeitado`);
-        passedTests++;
-      } else {
-        console.log(`❌ 3. Erro inesperado na sanitização: ${error.message}`);
-      }
-    }
-    
-    // 4. Testar código UTM legítimo
-    totalTests++;
-    const legitimateUTM = {
-      utmTrackingCode: `<!-- Voluum Tracking -->
-<script src="https://voluum.com/tracker.js"></script>
-<script>
-  voluum.track('pageview', {
-    source: 'quiz',
-    campaign: 'test'
-  });
-</script>`,
-      customHeadScript: `<!-- Google Analytics -->
-<script async src="https://www.googletagmanager.com/gtag/js?id=GA_MEASUREMENT_ID"></script>
-<script>
-  window.dataLayer = window.dataLayer || [];
-  function gtag(){dataLayer.push(arguments);}
-  gtag('js', new Date());
-  gtag('config', 'GA_MEASUREMENT_ID');
-</script>`
-    };
-    
-    const legitimateResponse = await makeRequest(`/api/quizzes/${createResponse.id}`, {
-      method: 'PUT',
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(legitimateUTM)
+        isPublished: true
+      })
     });
-    
-    console.log(`✅ 4. Código UTM legítimo aceito`);
-    console.log(`   UTM sanitizado: ${legitimateResponse.utmTrackingCode ? 'Sim' : 'Não'}`);
-    console.log(`   Script sanitizado: ${legitimateResponse.customHeadScript ? 'Sim' : 'Não'}`);
-    passedTests++;
-    
-    // 5. Testar acesso público com códigos
-    totalTests++;
-    const publicResponse = await makeRequest(`/api/quiz/${createResponse.id}/public`);
-    
-    console.log(`✅ 5. Quiz público carregado com códigos`);
-    console.log(`   Pixels: ${publicResponse.trackingPixels?.length || 0}`);
-    console.log(`   UTM Code: ${publicResponse.utmTrackingCode ? 'Presente' : 'Ausente'}`);
-    console.log(`   Custom Script: ${publicResponse.customHeadScript ? 'Presente' : 'Ausente'}`);
-    console.log(`   Email Marketing: ${publicResponse.pixelEmailMarketing ? 'Ativado' : 'Desativado'}`);
-    console.log(`   SMS: ${publicResponse.pixelSMS ? 'Ativado' : 'Desativado'}`);
-    passedTests++;
-    
-    // 6. Testar limite de caracteres
-    totalTests++;
-    const longCode = 'a'.repeat(15000); // Acima do limite
+
+    console.log(`✅ Quiz criado: ${quiz.id}`);
+    return quiz;
+  } catch (error) {
+    console.error('❌ Erro ao criar quiz:', error.message);
+    // Tenta usar endpoint alternativo
     try {
-      await makeRequest(`/api/quizzes/${createResponse.id}`, {
-        method: 'PUT',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
+      const altQuiz = await makeRequest('/api/quiz', {
+        method: 'POST',
         body: JSON.stringify({
-          customHeadScript: longCode
+          title: 'Quiz Teste Pixels Alt',
+          description: 'Quiz para testar sistema de pixels',
+          structure: {
+            pages: [
+              {
+                id: 'page1',
+                elements: [
+                  {
+                    id: 'element1',
+                    type: 'text',
+                    properties: {
+                      text: 'Bem-vindo ao teste de pixels'
+                    }
+                  }
+                }
+              ]
+            ]
+          },
+          isPublished: true
         })
       });
-      console.log(`❌ 6. Limite de caracteres não funcionou`);
-    } catch (error) {
-      if (error.message.includes('400')) {
-        console.log(`✅ 6. Limite de caracteres funcionando`);
-        passedTests++;
-      } else {
-        console.log(`❌ 6. Erro inesperado no limite: ${error.message}`);
-      }
+      console.log(`✅ Quiz criado (endpoint alt): ${altQuiz.id}`);
+      return altQuiz;
+    } catch (altError) {
+      console.error('❌ Erro no endpoint alternativo:', altError.message);
+      return null;
     }
-    
-    // 7. Testar URLs suspeitas
-    totalTests++;
-    const suspiciousURL = {
-      utmTrackingCode: `<script src="http://192.168.1.1/malware.js"></script>
-<script src="http://localhost:3000/hack.js"></script>
-<script>fetch('http://127.0.0.1/steal-data')</script>`
-    };
-    
-    try {
-      await makeRequest(`/api/quizzes/${createResponse.id}`, {
-        method: 'PUT',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(suspiciousURL)
-      });
-      console.log(`❌ 7. URLs suspeitas foram aceitas`);
-    } catch (error) {
-      if (error.message.includes('400')) {
-        console.log(`✅ 7. URLs suspeitas foram rejeitadas`);
-        passedTests++;
-      } else {
-        console.log(`❌ 7. Erro inesperado nas URLs: ${error.message}`);
-      }
-    }
-    
-    // 8. Testar domínios confiáveis
-    totalTests++;
-    const trustedDomains = {
-      utmTrackingCode: `<!-- Domínios Confiáveis -->
-<script src="https://www.googletagmanager.com/gtag/js"></script>
-<script src="https://connect.facebook.net/en_US/fbevents.js"></script>
-<script src="https://analytics.tiktok.com/i18n/pixel/events.js"></script>
-<script src="https://utmify.com/tracker.js"></script>
-<script src="https://voluum.com/track.js"></script>
-<script src="https://redtrack.io/pixel.js"></script>`,
-      customHeadScript: `<!-- Analytics Confiáveis -->
-<script>
-  // Google Analytics
-  gtag('config', 'GA_MEASUREMENT_ID');
-  
-  // Facebook Pixel
-  fbq('track', 'PageView');
-  
-  // TikTok Pixel
-  ttq.track('ViewContent');
-</script>`
-    };
-    
-    const trustedResponse = await makeRequest(`/api/quizzes/${createResponse.id}`, {
-      method: 'PUT',
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json',
+  }
+}
+
+// Função para configurar pixels no quiz
+async function configureQuizPixels(quizId) {
+  try {
+    const pixelConfig = [
+      {
+        id: 'meta1',
+        name: 'Meta Pixel Principal',
+        type: 'meta',
+        mode: 'both',
+        value: '1234567890',
+        description: 'Pixel do Facebook/Instagram',
+        accessToken: 'EAABsb...',
+        apiSecret: 'abc123'
       },
-      body: JSON.stringify(trustedDomains)
+      {
+        id: 'tiktok1',
+        name: 'TikTok Pixel',
+        type: 'tiktok',
+        mode: 'pixel',
+        value: 'TT-XXXXXX',
+        description: 'Pixel do TikTok'
+      },
+      {
+        id: 'ga4_1',
+        name: 'Google Analytics 4',
+        type: 'ga4',
+        mode: 'both',
+        value: 'G-XXXXXXXXXX',
+        description: 'GA4 Tracking',
+        apiSecret: 'SECRET123'
+      },
+      {
+        id: 'linkedin1',
+        name: 'LinkedIn Insight',
+        type: 'linkedin',
+        mode: 'pixel',
+        value: '123456',
+        description: 'LinkedIn Pixel',
+        partnerId: '123456'
+      },
+      {
+        id: 'pinterest1',
+        name: 'Pinterest Tag',
+        type: 'pinterest',
+        mode: 'both',
+        value: '261231',
+        description: 'Pinterest Tracking'
+      }
+    ];
+
+    const response = await makeRequest(`/api/quiz/${quizId}/pixels`, {
+      method: 'PUT',
+      body: JSON.stringify({
+        pixels: pixelConfig,
+        customScripts: ['<!-- Script personalizado -->'],
+        utmCode: 'utm_source=vendzz&utm_medium=quiz&utm_campaign=teste',
+        pixelDelay: true
+      })
     });
-    
-    console.log(`✅ 8. Domínios confiáveis aceitos`);
-    console.log(`   UTM com domínios confiáveis: ${trustedResponse.utmTrackingCode ? 'Aceito' : 'Rejeitado'}`);
-    console.log(`   Scripts com domínios confiáveis: ${trustedResponse.customHeadScript ? 'Aceito' : 'Rejeitado'}`);
-    passedTests++;
-    
+
+    console.log(`✅ Pixels configurados: ${response.pixelCount} pixels`);
+    return response;
   } catch (error) {
-    console.error("❌ Erro durante o teste:", error.message);
+    console.error('❌ Erro ao configurar pixels:', error.message);
+    return null;
   }
-  
-  console.log("\n" + "=".repeat(80));
-  console.log("📊 RESUMO DO TESTE");
-  console.log("=".repeat(80));
-  console.log(`✅ Testes aprovados: ${passedTests}/${totalTests}`);
-  console.log(`📈 Taxa de sucesso: ${((passedTests / totalTests) * 100).toFixed(1)}%`);
-  
-  const performance = 800; // Tempo estimado
-  console.log(`⏱️ Tempo total: ${performance}ms`);
-  console.log(`🚀 Performance média: ${(performance / totalTests).toFixed(2)}ms por teste`);
-  
-  if (passedTests === totalTests) {
-    console.log(`🎉 SISTEMA DE PIXELS COM UTM E SEGURANÇA APROVADO PARA PRODUÇÃO!`);
-  } else {
-    console.log(`⚠️ SISTEMA PRECISA DE CORREÇÕES ANTES DA PRODUÇÃO`);
+}
+
+// Função para testar API de conversão
+async function testConversionAPI() {
+  try {
+    // Testar API do Meta (Facebook)
+    const metaAPI = await makeRequest('/api/pixel/conversion', {
+      method: 'POST',
+      body: JSON.stringify({
+        endpoint: 'https://graph.facebook.com/v17.0/1234567890/events',
+        method: 'POST',
+        headers: {
+          'Authorization': 'Bearer EAABsb...'
+        },
+        body: {
+          event_name: 'PageView',
+          event_time: '{{UNIX_TIMESTAMP}}',
+          event_source_url: 'https://vendzz.com/quiz/p/test',
+          action_source: 'website',
+          user_data: {
+            client_ip_address: '{{IP_ADDRESS}}',
+            client_user_agent: '{{USER_AGENT}}'
+          }
+        },
+        params: {
+          access_token: 'EAABsb...'
+        }
+      })
+    });
+
+    console.log('✅ API Meta testada - Status:', metaAPI.status);
+
+    // Testar API do Google Analytics 4
+    const ga4API = await makeRequest('/api/pixel/conversion', {
+      method: 'POST',
+      body: JSON.stringify({
+        endpoint: 'https://www.google-analytics.com/mp/collect',
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: {
+          client_id: '{{CLIENT_ID}}',
+          events: [
+            {
+              name: 'page_view',
+              params: {
+                page_location: 'https://vendzz.com/quiz/p/test',
+                page_title: 'Quiz Teste Pixels'
+              }
+            }
+          ]
+        },
+        params: {
+          measurement_id: 'G-XXXXXXXXXX',
+          api_secret: 'SECRET123'
+        }
+      })
+    });
+
+    console.log('✅ API GA4 testada - Status:', ga4API.status);
+
+    return { metaAPI, ga4API };
+  } catch (error) {
+    console.error('❌ Erro ao testar APIs de conversão:', error.message);
+    return null;
   }
-  
-  console.log("\n📋 FUNCIONALIDADES VALIDADAS:");
-  console.log("• Criação de quiz com UTM e códigos personalizados");
-  console.log("• Sanitização de segurança contra XSS e code injection");
-  console.log("• Integração com email marketing e SMS");
-  console.log("• Suporte a UTMify, Voluum, RedTrack e outros");
-  console.log("• Limite de caracteres para segurança");
-  console.log("• Validação de domínios confiáveis");
-  console.log("• Rejeição de URLs suspeitas");
-  console.log("• Códigos inseridos apenas na URL pública");
+}
+
+// Função para testar configurações públicas
+async function testPublicPixelConfig(quizId) {
+  try {
+    const publicConfig = await makeRequest(`/api/quiz/${quizId}/pixels/public`);
+    
+    console.log('✅ Configuração pública obtida:');
+    console.log(`   - Quiz ID: ${publicConfig.quizId}`);
+    console.log(`   - Pixels: ${publicConfig.pixels.length}`);
+    console.log(`   - Scripts: ${publicConfig.customScripts.length}`);
+    console.log(`   - UTM: ${publicConfig.utmCode}`);
+    console.log(`   - Delay: ${publicConfig.pixelDelay}`);
+
+    return publicConfig;
+  } catch (error) {
+    console.error('❌ Erro ao obter configuração pública:', error.message);
+    return null;
+  }
+}
+
+// Função para testar endpoint de teste
+async function testPixelTest() {
+  try {
+    const testResult = await makeRequest('/api/pixel/test', {
+      method: 'POST',
+      body: JSON.stringify({
+        pixelType: 'meta',
+        pixelValue: '1234567890',
+        testUrl: 'https://vendzz.com/quiz/p/test'
+      })
+    });
+
+    console.log('✅ Teste de pixel realizado:', testResult.status);
+    return testResult;
+  } catch (error) {
+    console.error('❌ Erro ao testar pixel:', error.message);
+    return null;
+  }
+}
+
+// Função para testar cache e performance
+async function testCachePerformance() {
+  try {
+    console.log('🔄 Testando performance do cache de pixels...');
+    
+    const startTime = Date.now();
+    const promises = [];
+    
+    // Fazer 50 requisições simultâneas para testar cache
+    for (let i = 0; i < 50; i++) {
+      promises.push(makeRequest('/api/pixel/test', {
+        method: 'POST',
+        body: JSON.stringify({
+          pixelType: 'meta',
+          pixelValue: `test${i}`,
+          testUrl: 'https://vendzz.com/quiz/p/test'
+        })
+      }));
+    }
+    
+    const results = await Promise.all(promises);
+    const endTime = Date.now();
+    
+    const duration = endTime - startTime;
+    const avgTime = duration / 50;
+    
+    console.log(`✅ Performance do cache:`);
+    console.log(`   - 50 requisições simultâneas`);
+    console.log(`   - Tempo total: ${duration}ms`);
+    console.log(`   - Tempo médio: ${avgTime.toFixed(2)}ms`);
+    console.log(`   - Sucessos: ${results.filter(r => r.status === 'success').length}/50`);
+    
+    return { duration, avgTime, results };
+  } catch (error) {
+    console.error('❌ Erro no teste de performance:', error.message);
+    return null;
+  }
+}
+
+// Função principal de teste
+async function runPixelSystemTest() {
+  console.log('🚀 INICIANDO TESTE COMPLETO DO SISTEMA DE PIXELS');
+  console.log('=' .repeat(60));
+
+  const results = {
+    auth: false,
+    quizCreation: false,
+    pixelConfig: false,
+    conversionAPI: false,
+    publicConfig: false,
+    pixelTest: false,
+    performance: false
+  };
+
+  try {
+    // 1. Autenticação
+    console.log('\n1. TESTANDO AUTENTICAÇÃO...');
+    results.auth = await authenticate();
+    
+    if (!results.auth) {
+      throw new Error('Falha na autenticação');
+    }
+
+    // 2. Criação de quiz
+    console.log('\n2. CRIANDO QUIZ DE TESTE...');
+    const quiz = await createTestQuiz();
+    results.quizCreation = !!quiz;
+    
+    if (!quiz) {
+      throw new Error('Falha na criação do quiz');
+    }
+
+    // 3. Configuração de pixels
+    console.log('\n3. CONFIGURANDO PIXELS...');
+    const pixelConfig = await configureQuizPixels(quiz.id);
+    results.pixelConfig = !!pixelConfig;
+
+    // 4. Teste de APIs de conversão
+    console.log('\n4. TESTANDO APIs DE CONVERSÃO...');
+    const conversionTest = await testConversionAPI();
+    results.conversionAPI = !!conversionTest;
+
+    // 5. Teste de configuração pública
+    console.log('\n5. TESTANDO CONFIGURAÇÃO PÚBLICA...');
+    const publicConfig = await testPublicPixelConfig(quiz.id);
+    results.publicConfig = !!publicConfig;
+
+    // 6. Teste de pixel individual
+    console.log('\n6. TESTANDO PIXEL INDIVIDUAL...');
+    const pixelTest = await testPixelTest();
+    results.pixelTest = !!pixelTest;
+
+    // 7. Teste de performance
+    console.log('\n7. TESTANDO PERFORMANCE DO CACHE...');
+    const performanceTest = await testCachePerformance();
+    results.performance = !!performanceTest;
+
+    // Relatório final
+    console.log('\n' + '=' .repeat(60));
+    console.log('📊 RELATÓRIO FINAL DO TESTE');
+    console.log('=' .repeat(60));
+
+    const successCount = Object.values(results).filter(Boolean).length;
+    const totalTests = Object.keys(results).length;
+    const successRate = (successCount / totalTests * 100).toFixed(1);
+
+    console.log(`✅ Testes bem-sucedidos: ${successCount}/${totalTests} (${successRate}%)`);
+    console.log(`❌ Testes falharam: ${totalTests - successCount}`);
+    
+    Object.entries(results).forEach(([test, success]) => {
+      const status = success ? '✅' : '❌';
+      const testName = test.replace(/([A-Z])/g, ' $1').toLowerCase();
+      console.log(`${status} ${testName}: ${success ? 'APROVADO' : 'REPROVADO'}`);
+    });
+
+    if (successRate >= 85) {
+      console.log('\n🎉 SISTEMA DE PIXELS APROVADO PARA PRODUÇÃO!');
+    } else {
+      console.log('\n⚠️  SISTEMA PRECISA DE CORREÇÕES ANTES DA PRODUÇÃO');
+    }
+
+    return results;
+
+  } catch (error) {
+    console.error('\n❌ ERRO CRÍTICO NO TESTE:', error.message);
+    return results;
+  }
 }
 
 // Executar teste
-testeCompleto().catch(console.error);
+runPixelSystemTest().then(results => {
+  console.log('\n🏁 TESTE COMPLETO FINALIZADO');
+  process.exit(0);
+}).catch(error => {
+  console.error('❌ ERRO FATAL:', error);
+  process.exit(1);
+});

@@ -2280,6 +2280,43 @@ export class SQLiteStorage implements IStorage {
       .where(eq(emailSequences.id, id));
   }
 
+  // Quiz Pixels operations
+  async updateQuizPixels(quizId: string, pixelData: {
+    pixels: any[],
+    customScripts?: string[],
+    utmCode?: string,
+    pixelDelay?: boolean
+  }): Promise<{ success: boolean, pixelCount: number }> {
+    try {
+      const updateData: any = {
+        trackingPixels: JSON.stringify(pixelData.pixels),
+        updatedAt: Math.floor(Date.now() / 1000)
+      };
+
+      if (pixelData.utmCode !== undefined) {
+        updateData.utmTrackingCode = pixelData.utmCode;
+      }
+
+      if (pixelData.pixelDelay !== undefined) {
+        updateData.pixelDelay = pixelData.pixelDelay;
+      }
+
+      await this.db.update(quizzes)
+        .set(updateData)
+        .where(eq(quizzes.id, quizId));
+      return {
+        success: true,
+        pixelCount: pixelData.pixels.length
+      };
+    } catch (error) {
+      console.error('❌ Erro ao atualizar pixels do quiz:', error);
+      return {
+        success: false,
+        pixelCount: 0
+      };
+    }
+  }
+
   // Email personalization operations
   personalizeEmailContent(content: string, leadData: any): string {
     let personalizedContent = content;

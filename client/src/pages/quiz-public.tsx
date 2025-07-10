@@ -4,7 +4,7 @@ import { QuizPublicRenderer } from "@/components/quiz-public-renderer";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { AlertCircle, ArrowLeft } from "lucide-react";
-import { generateAllPixelCodes, insertPixelCodes } from "@/utils/pixelCodeGenerator";
+import { generateAllPixelCodes, insertPixelCodes, configureQuizPixels, initializePixels } from "@/utils/pixelCodeGenerator";
 
 export default function QuizPublicPage() {
   const [match, params] = useRoute("/quiz/:id");
@@ -32,32 +32,49 @@ export default function QuizPublicPage() {
     }
   };
 
-  const insertTrackingPixels = (quizData: any) => {
+  const insertTrackingPixels = async (quizData: any) => {
     try {
+      // Carregar configurações de pixels via API otimizada
+      const pixelResponse = await fetch(`/api/quiz/${quizData.id}/pixels/public`);
+      
+      if (!pixelResponse.ok) {
+        console.log('Nenhuma configuração de pixel encontrada ou quiz não publicado');
+        return;
+      }
+      
+      const pixelConfig = await pixelResponse.json();
+      
       // Verificar se existem pixels configurados
-      const hasPixels = quizData.trackingPixels && Array.isArray(quizData.trackingPixels) && quizData.trackingPixels.length > 0;
+      const hasPixels = pixelConfig.pixels && Array.isArray(pixelConfig.pixels) && pixelConfig.pixels.length > 0;
       
       if (!hasPixels) {
         console.log('Nenhum pixel configurado para este quiz');
         return;
       }
 
-      // Gerar códigos de pixels
-      const pixelCodes = generateAllPixelCodes(quizData.trackingPixels, quizData.pixelDelay || false);
+      // Configurar pixels usando o novo sistema otimizado
+      const quizPixelData = {
+        quizId: pixelConfig.quizId,
+        quizUrl: window.location.href,
+        pixels: pixelConfig.pixels,
+        customScripts: pixelConfig.customScripts || [],
+        utmCode: pixelConfig.utmCode || ''
+      };
+
+      // Configurar pixels no localStorage para cache
+      configureQuizPixels(pixelConfig.quizId, pixelConfig.pixels, pixelConfig.customScripts, pixelConfig.utmCode);
+
+      // Inserir códigos no head da página com otimizações
+      insertPixelCodes(quizPixelData);
+      console.log(`✅ Pixels inseridos automaticamente: ${pixelConfig.pixels.length} pixels`);
       
-      if (pixelCodes.trim()) {
-        // Inserir códigos no head da página
-        insertPixelCodes(pixelCodes);
-        console.log(`✅ Pixels inseridos automaticamente: ${quizData.trackingPixels.length} pixels`);
-        
-        // Log detalhado dos pixels inseridos
-        quizData.trackingPixels.forEach((pixel: any) => {
-          console.log(`📊 Pixel ${pixel.name} (${pixel.type}): ${pixel.value} - Modo: ${pixel.mode}`);
-        });
-        
-        if (quizData.pixelDelay) {
-          console.log('⏱️ Delay de 3 segundos aplicado aos pixels para otimização de CPA');
-        }
+      // Log detalhado dos pixels inseridos
+      pixelConfig.pixels.forEach((pixel: any) => {
+        console.log(`📊 Pixel ${pixel.name} (${pixel.type}): ${pixel.value} - Modo: ${pixel.mode}`);
+      });
+      
+      if (pixelConfig.pixelDelay) {
+        console.log('⏱️ Lazy loading aplicado aos pixels não críticos para otimização de performance');
       }
     } catch (error) {
       console.error('Erro ao inserir pixels de rastreamento:', error);
