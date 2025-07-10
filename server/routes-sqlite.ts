@@ -788,7 +788,21 @@ export function registerSQLiteRoutes(app: Express): Server {
         return res.status(403).json({ message: "Access denied" });
       }
 
-      const variables = await storage.getResponseVariables(req.params.id);
+      // CORREÇÃO: Buscar variáveis por quizId, não responseId
+      const variables = await storage.getQuizVariables(req.params.id);
+      
+      // Extrair variáveis únicas por nome
+      const uniqueVariables = variables.reduce((acc, variable) => {
+        if (!acc.find(v => v.variableName === variable.variableName)) {
+          acc.push(variable);
+        }
+        return acc;
+      }, [] as any[]);
+      
+      console.log(`🔍 VARIÁVEIS EXTRAÍDAS: ${uniqueVariables.length} variáveis únicas para quiz ${req.params.id}`);
+      uniqueVariables.forEach(v => {
+        console.log(`   📝 ${v.variableName} (${v.elementType})`);
+      });
       
       // Formato de resposta com variáveis padrão + personalizadas
       const response = [
@@ -796,10 +810,10 @@ export function registerSQLiteRoutes(app: Express): Server {
         { name: "email", description: "Email do respondente", type: "email" },
         { name: "telefone", description: "Telefone do respondente", type: "phone" },
         { name: "quiz_titulo", description: "Título do quiz", type: "text" },
-        ...variables.map(v => ({
+        ...uniqueVariables.map(v => ({
           name: v.variableName,
           description: `Variável ${v.variableName}`,
-          type: v.variableType || "text"
+          type: v.elementType || "text"
         }))
       ];
       
