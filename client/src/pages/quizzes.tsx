@@ -63,6 +63,24 @@ export default function Quizzes() {
     enabled: !!quizzes,
   });
 
+  // Criar mapa de analytics para acesso rápido aos dados por quiz
+  const quizAnalyticsMap = useMemo(() => {
+    if (!allAnalytics || !Array.isArray(allAnalytics)) return new Map();
+    
+    const map = new Map();
+    allAnalytics.forEach((analytics: any) => {
+      if (analytics.quizId) {
+        map.set(analytics.quizId, {
+          totalViews: analytics.totalViews || 0,
+          totalResponses: analytics.totalResponses || 0,
+          leadsWithContact: analytics.leadsWithContact || 0,
+          conversionRate: analytics.conversionRate || 0
+        });
+      }
+    });
+    return map;
+  }, [allAnalytics]);
+
   const deleteMutation = useMutation({
     mutationFn: async (quizId: string) => {
       await apiRequest("DELETE", `/api/quizzes/${quizId}`);
