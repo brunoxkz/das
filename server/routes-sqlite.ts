@@ -76,28 +76,7 @@ export function registerSQLiteRoutes(app: Express): Server {
     }
   });
 
-  // Track quiz view (public endpoint without auth)
-  app.post("/api/analytics/:quizId/view", async (req, res) => {
-    try {
-      const { quizId } = req.params;
-      
-      // Verify quiz exists and is published
-      const quizData = await storage.getQuiz(quizId);
-      if (!quizData) {
-        return res.status(404).json({ message: "Quiz not found" });
-      }
-
-      if (!quizData.isPublished) {
-        return res.status(403).json({ message: "Quiz not published" });
-      }
-
-      // For now, just return success (analytics storage can be added later)
-      res.json({ success: true, message: "View tracked" });
-    } catch (error) {
-      console.error("Error tracking quiz view:", error);
-      res.status(500).json({ message: "Internal server error" });
-    }
-  });
+  // REMOVIDO: Endpoint duplicado - implementação completa está mais abaixo (linha 1056)
 
   // Endpoint de teste SMS (público para teste)
   app.post("/api/test-sms", async (req, res) => {
@@ -968,17 +947,86 @@ export function registerSQLiteRoutes(app: Express): Server {
     }
   });
 
-  // Get all quiz analytics for user
+  // Get analytics data with insights and recommendations
   app.get("/api/analytics", verifyJWT, async (req: any, res) => {
     try {
-      if (!req.user) {
-        return res.status(401).json({ message: "Unauthorized" });
+      const userId = req.user.id;
+      
+      // Get all user's quizzes
+      const quizzes = await storage.getUserQuizzes(userId);
+      
+      // Get analytics for all quizzes
+      const allAnalytics = [];
+      for (const quiz of quizzes) {
+        const analytics = await storage.getQuizAnalytics(quiz.id);
+        const responses = await storage.getQuizResponses(quiz.id);
+        
+        // Calculate enhanced analytics
+        const totalViews = analytics.reduce((sum: number, a: any) => sum + (a.views || 0), 0);
+        const totalResponses = responses.length;
+        const completedResponses = responses.filter(r => {
+          const metadata = r.metadata && typeof r.metadata === 'object' ? r.metadata as any : {};
+          return metadata.isPartial === false || metadata.isComplete === true;
+        }).length;
+        
+        const conversionRate = totalViews > 0 ? (completedResponses / totalViews) * 100 : 0;
+        const abandonmentRate = totalResponses > 0 ? ((totalResponses - completedResponses) / totalResponses) * 100 : 0;
+        
+        // Generate insights
+        const insights = [];
+        if (conversionRate < 20 && totalViews > 10) {
+          insights.push({
+            type: 'warning',
+            title: 'Taxa de Conversão Baixa',
+            description: `Taxa de conversão de ${conversionRate.toFixed(1)}% está abaixo do recomendado (20%+)`,
+            recommendation: 'Considere simplificar as perguntas ou melhorar o design do quiz'
+          });
+        }
+        
+        if (conversionRate > 40) {
+          insights.push({
+            type: 'success',
+            title: 'Excelente Performance',
+            description: `Taxa de conversão de ${conversionRate.toFixed(1)}% está acima da média`,
+            recommendation: 'Continue com esta estratégia e considere escalar o alcance'
+          });
+        }
+        
+        if (abandonmentRate > 60 && totalResponses > 5) {
+          insights.push({
+            type: 'error',
+            title: 'Alta Taxa de Abandono',
+            description: `${abandonmentRate.toFixed(1)}% dos usuários abandonam antes de completar`,
+            recommendation: 'Reduza o número de perguntas ou melhore a experiência do usuário'
+          });
+        }
+        
+        if (totalViews < 10 && quiz.isPublished) {
+          insights.push({
+            type: 'info',
+            title: 'Poucas Visualizações',
+            description: 'Quiz tem poucas visualizações para análise significativa',
+            recommendation: 'Aumente a divulgação do quiz para obter mais dados analíticos'
+          });
+        }
+        
+        allAnalytics.push({
+          quizId: quiz.id,
+          quizTitle: quiz.title,
+          totalViews,
+          totalResponses,
+          completedResponses,
+          conversionRate: parseFloat(conversionRate.toFixed(1)),
+          abandonmentRate: parseFloat(abandonmentRate.toFixed(1)),
+          insights,
+          isPublished: quiz.isPublished,
+          createdAt: quiz.createdAt
+        });
       }
 
-      const analytics = await storage.getAllQuizAnalytics(req.user.id);
-      res.json(analytics);
+      res.json(allAnalytics);
     } catch (error) {
-      console.error("Get all quiz analytics error:", error);
+      console.error("Get analytics error:", error);
       res.status(500).json({ message: "Internal server error" });
     }
   });
@@ -986,14 +1034,26 @@ export function registerSQLiteRoutes(app: Express): Server {
   // Track quiz view (public endpoint)
   app.post("/api/analytics/:quizId/view", async (req, res) => {
     try {
+      console.log(`🔍 [TRACKING] Iniciando tracking para quiz: ${req.params.quizId}`);
+      
       const quiz = await storage.getQuiz(req.params.quizId);
       
       if (!quiz) {
+        console.log(`❌ [TRACKING] Quiz não encontrado: ${req.params.quizId}`);
         return res.status(404).json({ message: "Quiz não encontrado" });
       }
 
-      // Permitir tracking mesmo para quizzes não publicados (para testes)
+      console.log(`📊 [TRACKING] Quiz encontrado: ${quiz.title}, Publicado: ${quiz.isPublished}`);
+
+      // IMPORTANTE: Só rastrear visualizações de quizzes PUBLICADOS
+      if (!quiz.isPublished) {
+        console.log(`⚠️ [TRACKING] Quiz não publicado - view não rastreada: ${req.params.quizId}`);
+        return res.status(403).json({ message: "Quiz não publicado - view não rastreada" });
+      }
+
       const today = new Date().toISOString().split('T')[0];
+      
+      console.log(`📊 [TRACKING] Chamando updateQuizAnalytics para quiz ${req.params.quizId} em ${today}`);
       
       await storage.updateQuizAnalytics(req.params.quizId, {
         date: today,
@@ -1002,12 +1062,17 @@ export function registerSQLiteRoutes(app: Express): Server {
         conversionRate: 0,
       });
 
+      console.log(`✅ [TRACKING] updateQuizAnalytics executado com sucesso`);
+
       // Invalidar cache relevante
       cache.invalidateUserCaches(quiz.userId);
       
+      console.log(`🔄 [TRACKING] Cache invalidado para user: ${quiz.userId}`);
+      
       res.json({ message: "View tracked", success: true });
     } catch (error) {
-      console.error("Track view error:", error);
+      console.error(`❌ [TRACKING] ERRO CRÍTICO:`, error);
+      console.error(`❌ [TRACKING] Stack trace:`, error.stack);
       res.status(500).json({ message: "Failed to track view" });
     }
   });

@@ -63,9 +63,9 @@ export default function Analytics() {
   // Create map of quiz analytics for displaying real data
   const quizAnalyticsMap = React.useMemo(() => {
     const map = new Map();
-    if (userQuizzes && allAnalytics) {
+    if (userQuizzes && Array.isArray(userQuizzes) && allAnalytics) {
       userQuizzes.forEach((quiz: any) => {
-        const quizAnalytics = allAnalytics.filter((a: any) => a.quizId === quiz.id);
+        const quizAnalytics = Array.isArray(allAnalytics) ? allAnalytics.filter((a: any) => a.quizId === quiz.id) : [];
         const totalViews = quizAnalytics.reduce((sum: number, a: any) => sum + (a.views || 0), 0);
         const totalCompletions = quizAnalytics.reduce((sum: number, a: any) => sum + (a.completions || 0), 0);
         const conversionRate = totalViews > 0 ? Math.round((totalCompletions / totalViews) * 100) : 0;

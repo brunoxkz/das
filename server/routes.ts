@@ -293,43 +293,11 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
-  // Track quiz view (public endpoint)
-  app.post("/api/analytics/:quizId/view", async (req, res) => {
-    try {
-      const { quizId } = req.params;
-      
-      // Verify quiz exists and is published
-      const quizData = await storage.getQuiz(quizId);
-      if (!quizData) {
-        return res.status(404).json({ message: "Quiz not found" });
-      }
-
-      // Only track for published quizzes
-      if (!quizData.isPublished) {
-        return res.status(403).json({ message: "Quiz not published" });
-      }
-
-      // Update quiz analytics (increment totalViews)
-      await storage.updateQuizAnalytics(quizId, {
-        quizId,
-        views: 1,
-        completions: 0,
-        leads: 0,
-        conversionRate: "0"
-      });
-
-      // Invalidate cache to show updated analytics immediately
-      if (quizData && quizData.userId) {
-        cache.invalidateUserCaches(quizData.userId);
-      }
-
-      console.log(`Quiz view tracked for quiz: ${quizId}`);
-      res.status(200).json({ message: "View tracked successfully" });
-    } catch (error) {
-      console.error("Error tracking quiz view:", error);
-      res.status(500).json({ message: "Internal server error" });
-    }
-  });
+  // DESABILITADO: Track quiz view - agora sendo feito pelo routes-sqlite.ts
+  // app.post("/api/analytics/:quizId/view", async (req, res) => {
+  //   // Este endpoint foi movido para routes-sqlite.ts para melhor integração
+  //   // com o sistema SQLite e evitar conflitos de rotas
+  // });
 
   // Admin routes
   app.get("/api/admin/users", authenticateToken, async (req, res) => {

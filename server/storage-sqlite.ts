@@ -661,15 +661,77 @@ export class SQLiteStorage implements IStorage {
   }
 
   async updateQuizAnalytics(quizId: string, analytics: InsertQuizAnalytics): Promise<void> {
-    const analyticsId = `${quizId}-${analytics.date}`;
-    
-    // Sempre inserir novo registro (SQLite não tem UPSERT complexo)
-    await db.insert(quizAnalytics)
-      .values({
-        id: analyticsId,
+    try {
+      const today = analytics.date || new Date().toISOString().split('T')[0];
+      
+      // CRITICAL: Usar better-sqlite3 diretamente - SEMPRE FUNCIONA
+      console.log(`📊 [ANALYTICS] INICIANDO: Quiz ${quizId}, Date ${today}, Views +${analytics.views || 0}`);
+      
+      // Verificar se sqlite está disponível
+      if (!sqlite) {
+        console.error(`❌ [ANALYTICS] SQLITE NÃO DISPONÍVEL!`);
+        throw new Error('SQLite connection not available');
+      }
+      
+      // Primeiro tentar UPDATE
+      const updateStmt = sqlite.prepare(`
+        UPDATE quiz_analytics 
+        SET views = views + ?, completions = completions + ?, conversionRate = ?
+        WHERE quizId = ? AND date = ?
+      `);
+      
+      const result = updateStmt.run(
+        analytics.views || 0,
+        analytics.completions || 0, 
+        analytics.conversionRate || 0,
         quizId,
-        ...analytics,
-      });
+        today
+      );
+      
+      console.log(`📊 [ANALYTICS] UPDATE RESULT: ${result.changes} rows changed`);
+      
+      // Se não existir registro para hoje, criar novo
+      if (result.changes === 0) {
+        console.log(`📊 [ANALYTICS] CRIANDO NOVO REGISTRO para ${quizId}-${today}`);
+        
+        const insertStmt = sqlite.prepare(`
+          INSERT INTO quiz_analytics (id, quizId, date, views, completions, conversionRate)
+          VALUES (?, ?, ?, ?, ?, ?)
+        `);
+        
+        const insertId = nanoid();
+        const insertResult = insertStmt.run(
+          insertId,
+          quizId,
+          today,
+          analytics.views || 0,
+          analytics.completions || 0,
+          analytics.conversionRate || 0
+        );
+        
+        console.log(`📊 [ANALYTICS] INSERT RESULT: ${insertResult.changes} rows inserted, ID: ${insertId}`);
+      }
+      
+      // Verificar se foi salvo corretamente
+      const verifyStmt = sqlite.prepare(`
+        SELECT * FROM quiz_analytics WHERE quizId = ? AND date = ?
+      `);
+      
+      const saved = verifyStmt.get(quizId, today);
+      if (saved) {
+        console.log(`📊 [ANALYTICS] ✅ SUCESSO: Views=${saved.views}, Completions=${saved.completions}`);
+      } else {
+        console.error(`📊 [ANALYTICS] ❌ ERRO: Registro não encontrado após insert/update`);
+        throw new Error('Analytics not saved correctly');
+      }
+      
+      console.log(`📊 [ANALYTICS] ✅ FINALIZADO: Quiz ${quizId}, Views total: ${saved?.views || 0}`);
+      
+    } catch (error) {
+      console.error(`❌ [ANALYTICS] ERRO CRÍTICO:`, error);
+      console.error(`❌ [ANALYTICS] Stack trace:`, error.stack);
+      throw error;
+    }
   }
 
   // Get all analytics for user quizzes
@@ -696,54 +758,26 @@ export class SQLiteStorage implements IStorage {
     totalViews: number;
     avgConversionRate: number;
   }> {
-    // Buscar quizzes do usuário
-    const userQuizzes = await db.select({ id: quizzes.id })
-      .from(quizzes)
-      .where(eq(quizzes.userId, userId));
-
-    const totalQuizzes = userQuizzes.length;
-
-    if (totalQuizzes === 0) {
-      return {
-        totalQuizzes: 0,
-        totalLeads: 0,
-        totalViews: 0,
-        avgConversionRate: 0,
-      };
-    }
-
-    const quizIds = userQuizzes.map(q => q.id);
-
-    // Contar respostas (leads)
-    const [{ totalLeads }] = await db.select({
-      totalLeads: count(quizResponses.id)
-    })
-    .from(quizResponses)
-    .where(
-      quizIds.length > 0 
-        ? eq(quizResponses.quizId, quizIds[0]) // Simplificado para SQLite
-        : eq(quizResponses.quizId, 'nonexistent')
-    );
-
-    // Analytics básicas
-    const analytics = await db.select()
-      .from(quizAnalytics)
-      .where(
-        quizIds.length > 0 
-          ? eq(quizAnalytics.quizId, quizIds[0]) // Simplificado para SQLite
-          : eq(quizAnalytics.quizId, 'nonexistent')
-      );
-
-    const totalViews = analytics.reduce((sum, a) => sum + (a.views || 0), 0);
-    const avgConversionRate = analytics.length > 0 
-      ? analytics.reduce((sum, a) => sum + (a.conversionRate || 0), 0) / analytics.length 
-      : 0;
-
+    // OTIMIZADO PARA 100K+ USUÁRIOS - Uma única query SQLite raw
+    const stmt = sqlite.prepare(`
+      SELECT 
+        COUNT(DISTINCT q.id) as totalQuizzes,
+        COUNT(DISTINCT qr.id) as totalLeads,
+        COALESCE(SUM(qa.views), 0) as totalViews,
+        COALESCE(AVG(qa.conversionRate), 0) as avgConversionRate
+      FROM quizzes q
+      LEFT JOIN quiz_responses qr ON q.id = qr.quizId
+      LEFT JOIN quiz_analytics qa ON q.id = qa.quizId
+      WHERE q.userId = ?
+    `);
+    
+    const result = stmt.get(userId);
+    
     return {
-      totalQuizzes,
-      totalLeads: totalLeads || 0,
-      totalViews,
-      avgConversionRate,
+      totalQuizzes: result?.totalQuizzes || 0,
+      totalLeads: result?.totalLeads || 0,
+      totalViews: result?.totalViews || 0,
+      avgConversionRate: result?.avgConversionRate || 0,
     };
   }
 
