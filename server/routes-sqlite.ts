@@ -3941,6 +3941,24 @@ app.get("/api/whatsapp-extension/pending", verifyJWT, async (req: any, res: Resp
     }
   });
 
+  // Email Campaigns Count - DEVE VIR ANTES DO :id
+  app.get("/api/email-campaigns/count", verifyJWT, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const campaigns = await storage.getEmailCampaigns(userId);
+      
+      console.log(`📊 EMAIL CAMPAIGNS COUNT - User: ${userId}, Total: ${campaigns.length}`);
+      
+      res.json({ 
+        count: campaigns.length,
+        success: true
+      });
+    } catch (error) {
+      console.error("Error getting email campaigns count:", error);
+      res.status(500).json({ error: "Error getting email campaigns count" });
+    }
+  });
+
   // Obter campanha de email específica
   app.get("/api/email-campaigns/:id", verifyJWT, async (req: any, res) => {
     try {
