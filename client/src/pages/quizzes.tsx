@@ -221,8 +221,8 @@ export default function Quizzes() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-gray-100 pb-8">
-      <div className="p-4 md:p-6 max-w-7xl mx-auto space-y-6">
+    <div className="w-full bg-gradient-to-br from-slate-50 to-gray-100 pb-8">
+      <div className="p-4 md:p-6 max-w-7xl mx-auto">
         {/* Header moderno */}
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-8">
           <div className="space-y-1">

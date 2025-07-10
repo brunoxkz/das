@@ -191,7 +191,7 @@ export default function Dashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100" data-tutorial="dashboard-main">
+    <div className="w-full bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 pb-8" data-tutorial="dashboard-main">
       <div className="p-4 md:p-6 max-w-7xl mx-auto">
         {/* Header Futurístico */}
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6 mb-8">
