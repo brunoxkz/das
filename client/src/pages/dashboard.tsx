@@ -13,7 +13,8 @@ import {
   Copy,
   Trash2,
   ExternalLink,
-  Calendar
+  Calendar,
+  Video
 } from "lucide-react";
 import { Link } from "wouter";
 import { useAuth } from "@/hooks/use-auth-hybrid";
@@ -241,7 +242,7 @@ export default function Dashboard() {
       </Card>
 
       {/* Quick Actions */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
         <Link href="/quizzes/new">
           <Card className="cursor-pointer hover:shadow-lg transition-shadow">
             <CardContent className="p-4 md:p-6">
@@ -268,6 +269,22 @@ export default function Dashboard() {
                 <div className="min-w-0 flex-1">
                   <h3 className="font-semibold text-gray-900">Templates</h3>
                   <p className="text-sm text-gray-600">Usar template pronto</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </Link>
+
+        <Link href="/vsl-player">
+          <Card className="cursor-pointer hover:shadow-lg transition-shadow">
+            <CardContent className="p-4 md:p-6">
+              <div className="flex items-center space-x-4">
+                <div className="w-12 h-12 bg-red-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                  <Video className="w-6 h-6 text-red-600" />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <h3 className="font-semibold text-gray-900">VSL Player</h3>
+                  <p className="text-sm text-gray-600">Grátis</p>
                 </div>
               </div>
             </CardContent>
