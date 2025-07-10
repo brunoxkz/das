@@ -57,6 +57,12 @@ export default function Quizzes() {
     },
   });
 
+  // Buscar analytics para obter dados reais de visualizações e respostas
+  const { data: allAnalytics } = useQuery({
+    queryKey: ["/api/analytics"],
+    enabled: !!quizzes,
+  });
+
   const deleteMutation = useMutation({
     mutationFn: async (quizId: string) => {
       await apiRequest("DELETE", `/api/quizzes/${quizId}`);
@@ -387,14 +393,14 @@ export default function Quizzes() {
                         <div className="bg-blue-50 rounded-lg p-3">
                           <div className="flex items-center justify-between">
                             <Eye className="w-4 h-4 text-blue-600" />
-                            <span className="text-sm font-medium text-blue-900">{quiz.totalViews || 0}</span>
+                            <span className="text-sm font-medium text-blue-900">{quizAnalyticsMap.get(quiz.id)?.totalViews || 0}</span>
                           </div>
                           <p className="text-xs text-blue-700 mt-1">Visualizações</p>
                         </div>
                         <div className="bg-green-50 rounded-lg p-3">
                           <div className="flex items-center justify-between">
                             <Users className="w-4 h-4 text-green-600" />
-                            <span className="text-sm font-medium text-green-900">{quiz.totalResponses || 0}</span>
+                            <span className="text-sm font-medium text-green-900">{quizAnalyticsMap.get(quiz.id)?.totalResponses || 0}</span>
                           </div>
                           <p className="text-xs text-green-700 mt-1">Respostas</p>
                         </div>
@@ -456,11 +462,11 @@ export default function Quizzes() {
                           <div className="flex items-center gap-4 text-xs text-gray-500">
                             <span className="flex items-center gap-1">
                               <Eye className="w-3 h-3" />
-                              {quiz.totalViews || 0} views
+                              {quizAnalyticsMap.get(quiz.id)?.totalViews || 0} views
                             </span>
                             <span className="flex items-center gap-1">
                               <Users className="w-3 h-3" />
-                              {quiz.totalResponses || 0} respostas
+                              {quizAnalyticsMap.get(quiz.id)?.totalResponses || 0} respostas
                             </span>
                             <span className="flex items-center gap-1">
                               <Calendar className="w-3 h-3" />

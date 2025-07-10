@@ -251,28 +251,40 @@ export default function Dashboard() {
 
       {/* Dashboard de Ações Principais */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Criação de Conteúdo */}
+        {/* Botões Rápidos */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Plus className="w-5 h-5 text-blue-600" />
-              Criar Conteúdo
+              Botões Rápidos
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="grid grid-cols-2 gap-3">
               <Link href="/quizzes/new">
-                <Button className="w-full h-16 flex flex-col items-center justify-center gap-2">
-                  <BarChart3 className="w-6 h-6" />
-                  <span className="text-sm font-medium">Criar Quiz</span>
+                <Button className="w-full h-14 flex flex-col items-center justify-center gap-1">
+                  <BarChart3 className="w-5 h-5" />
+                  <span className="text-xs font-medium">Criar Quiz</span>
                 </Button>
               </Link>
+              <Button 
+                variant="outline" 
+                className="w-full h-14 flex flex-col items-center justify-center gap-1"
+                onClick={() => setShowTutorial(true)}
+              >
+                <HelpCircle className="w-5 h-5" />
+                <span className="text-xs font-medium">Tutoriais</span>
+              </Button>
               <Link href="/templates">
-                <Button variant="outline" className="w-full h-16 flex flex-col items-center justify-center gap-2">
-                  <Palette className="w-6 h-6" />
-                  <span className="text-sm font-medium">Templates</span>
+                <Button variant="outline" className="w-full h-14 flex flex-col items-center justify-center gap-1">
+                  <Palette className="w-5 h-5" />
+                  <span className="text-xs font-medium">Templates</span>
                 </Button>
               </Link>
+              <Button variant="outline" className="w-full h-14 flex flex-col items-center justify-center gap-1">
+                <Shield className="w-5 h-5" />
+                <span className="text-xs font-medium">Planos</span>
+              </Button>
             </div>
           </CardContent>
         </Card>
