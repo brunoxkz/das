@@ -78,6 +78,8 @@ export const QuizFlowEditor: React.FC<QuizFlowEditorProps> = ({
   const [editingConnection, setEditingConnection] = useState<FlowConnection | null>(null);
   const [connectionDrawing, setConnectionDrawing] = useState<{
     from: string;
+    elementId?: string;
+    optionIndex?: number;
     startX: number;
     startY: number;
     currentX: number;
@@ -214,7 +216,9 @@ export const QuizFlowEditor: React.FC<QuizFlowEditorProps> = ({
     return elements;
   };
 
-  const startConnection = (fromNodeId: string, event: React.MouseEvent) => {
+  const startConnection = (fromNodeId: string, event: React.MouseEvent, elementId?: string, optionIndex?: number) => {
+    event.stopPropagation();
+    
     const rect = canvasRef.current?.getBoundingClientRect();
     if (!rect) return;
     
@@ -223,11 +227,36 @@ export const QuizFlowEditor: React.FC<QuizFlowEditorProps> = ({
     
     setConnectionDrawing({
       from: fromNodeId,
+      elementId: elementId,
+      optionIndex: optionIndex,
       startX,
       startY,
       currentX: startX,
       currentY: startY
     });
+    
+    // Adicionar event listeners para desenhar a linha
+    const handleMouseMove = (e: MouseEvent) => {
+      if (!rect) return;
+      
+      const currentX = e.clientX - rect.left;
+      const currentY = e.clientY - rect.top;
+      
+      setConnectionDrawing(prev => prev ? {
+        ...prev,
+        currentX,
+        currentY
+      } : null);
+    };
+    
+    const handleMouseUp = () => {
+      setConnectionDrawing(null);
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+    };
+    
+    document.addEventListener('mousemove', handleMouseMove);
+    document.addEventListener('mouseup', handleMouseUp);
   };
 
   const updateConnectionDrawing = (event: React.MouseEvent) => {
@@ -563,7 +592,7 @@ export const QuizFlowEditor: React.FC<QuizFlowEditorProps> = ({
               
               {/* Render nodes */}
               {flowSystem.nodes.map((node) => {
-                const pageElements = getAllPageElements().filter(el => el.pageId === node.pageId);
+                const pageElements = getPageElements(node.pageId);
                 
                 return (
                   <div
@@ -635,22 +664,94 @@ export const QuizFlowEditor: React.FC<QuizFlowEditorProps> = ({
                             <p className="text-xs font-medium text-gray-700 mb-1">
                               Elementos ({pageElements.length}):
                             </p>
-                            <div className="space-y-1 max-h-20 overflow-y-auto">
-                              {pageElements.slice(0, 3).map((element) => (
-                                <div key={element.elementId} className="text-xs text-gray-600 flex items-center gap-1">
-                                  <span className="w-2 h-2 bg-blue-400 rounded-full"></span>
-                                  <span className="truncate">{element.elementType}: {element.elementTitle}</span>
-                                </div>
-                              ))}
-                              {pageElements.length > 3 && (
-                                <div className="text-xs text-gray-500">
-                                  +{pageElements.length - 3} mais...
-                                </div>
-                              )}
+                            <div className="space-y-1 max-h-32 overflow-y-auto">
+                              {pageElements.map((element, idx) => {
+                                const isMultipleChoice = element.type === 'multiple_choice';
+                                const isCheckbox = element.type === 'checkbox';
+                                const isClickable = ['continue_button', 'button', 'image', 'image_upload', 'wheel', 'scratch', 'color_pick', 'brick_break', 'memory_cards', 'slot_machine', 'share_quiz'].includes(element.type);
+                                
+                                return (
+                                  <div key={idx} className="relative">
+                                    <div className="flex items-center justify-between bg-gray-50 p-2 rounded">
+                                      <span className="text-xs truncate">
+                                        {element.type}: {element.properties?.text || element.content || 'Sem texto'}
+                                      </span>
+                                      
+                                      {/* Bolinha de conexão do elemento */}
+                                      <div 
+                                        className={`w-3 h-3 border border-white rounded-full cursor-crosshair flex-shrink-0 hover:opacity-80 ${
+                                          isClickable ? 'bg-orange-500 hover:bg-orange-600' : 'bg-blue-500 hover:bg-blue-600'
+                                        }`}
+                                        onMouseDown={(e) => {
+                                          e.stopPropagation();
+                                          startConnection(node.id, e, element.id);
+                                        }}
+                                        title={isClickable ? "Conectar elemento clicável" : "Conectar elemento"}
+                                      />
+                                    </div>
+                                    
+                                    {/* Opções de múltipla escolha com bolinhas individuais */}
+                                    {(isMultipleChoice || isCheckbox) && element.properties?.options && Array.isArray(element.properties.options) && (
+                                      <div className="ml-2 mt-1 space-y-1">
+                                        {element.properties.options.map((option, optIdx) => (
+                                          <div key={optIdx} className="flex items-center justify-between text-xs bg-green-50 p-1 rounded">
+                                            <span className="truncate text-xs">
+                                              Opção {optIdx + 1}: {typeof option === 'string' ? option : option.text || option.label || 'Sem texto'}
+                                            </span>
+                                            <div 
+                                              className="w-2 h-2 bg-green-500 border border-white rounded-full cursor-crosshair flex-shrink-0 hover:bg-green-600"
+                                              onMouseDown={(e) => {
+                                                e.stopPropagation();
+                                                startConnection(node.id, e, element.id, optIdx);
+                                              }}
+                                              title={`Conectar opção: ${typeof option === 'string' ? option : option.text || option.label}`}
+                                            />
+                                          </div>
+                                        ))}
+                                      </div>
+                                    )}
+                                    
+                                    {/* Indicador visual para elementos clicáveis */}
+                                    {isClickable && (
+                                      <div className="ml-2 mt-1">
+                                        <div className="text-xs text-orange-600 bg-orange-50 p-1 rounded">
+                                          ⚡ Elemento clicável - pode redirecionar o fluxo
+                                        </div>
+                                      </div>
+                                    )}
+                                  </div>
+                                );
+                              })}
                             </div>
                           </div>
                         )}
                       </div>
+                    </div>
+                    
+                    {/* Pontos de entrada e saída visuais */}
+                    {/* Ponto de entrada (lado esquerdo) */}
+                    <div 
+                      className="absolute -left-3 top-1/2 transform -translate-y-1/2 w-6 h-6 bg-gray-400 border-2 border-white rounded-full flex items-center justify-center cursor-pointer hover:bg-gray-500 transition-colors"
+                      title="Ponto de entrada"
+                      onMouseUp={() => {
+                        if (connectionDrawing && connectionDrawing.from !== node.id) {
+                          finishConnection(node.id);
+                        }
+                      }}
+                    >
+                      <div className="w-2 h-2 bg-white rounded-full"></div>
+                    </div>
+                    
+                    {/* Ponto de saída principal (lado direito) */}
+                    <div 
+                      className="absolute -right-3 top-1/2 transform -translate-y-1/2 w-6 h-6 bg-green-500 border-2 border-white rounded-full flex items-center justify-center cursor-crosshair hover:bg-green-600 transition-colors"
+                      title="Conectar página"
+                      onMouseDown={(e) => {
+                        e.stopPropagation();
+                        startConnection(node.id, e);
+                      }}
+                    >
+                      <div className="w-2 h-2 bg-white rounded-full"></div>
                     </div>
                     
                     {/* Drop zone for connections */}
@@ -744,7 +845,25 @@ export const QuizFlowEditor: React.FC<QuizFlowEditorProps> = ({
                                 variant="outline"
                                 size="sm"
                                 className="w-full"
-                                onClick={() => setShowConditionEditor(true)}
+                                onClick={() => {
+                                  // Criar uma nova conexão vazia para editar
+                                  const newConnection: FlowConnection = {
+                                    id: `conn_${Date.now()}`,
+                                    from: selectedNode,
+                                    to: '',
+                                    condition: {
+                                      pageId: '',
+                                      elementId: '',
+                                      elementType: 'text',
+                                      field: availableVariables[0] || 'nome',
+                                      operator: 'equals',
+                                      value: ''
+                                    },
+                                    label: 'Nova condição'
+                                  };
+                                  setEditingConnection(newConnection);
+                                  setShowConditionEditor(true);
+                                }}
                               >
                                 <Plus className="w-4 h-4 mr-2" />
                                 Adicionar Condição

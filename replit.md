@@ -780,6 +780,15 @@ Changelog:
   * Campanhas problemáticas pausadas automaticamente para estabilidade do sistema
   * Banco de dados recriado com schema atualizado garantindo integridade das tabelas
   * Flow system mantém funcionalidade completa com orientações visuais aprimoradas
+- July 10, 2025. CONEXÕES VISUAIS E MÚLTIPLA ESCOLHA IMPLEMENTADOS - Sistema de fluxo totalmente funcional:
+  * Implementadas "bolinhas" de conexão visuais: azuis para elementos, verdes para opções de múltipla escolha
+  * Cada opção de múltipla escolha agora tem ponto de conexão individual para direcionamento específico
+  * Pontos de entrada (cinza) e saída (verde) visuais nas páginas para facilitar conexões
+  * Funcionalidade "Adicionar Condição" corrigida - agora abre editor de condições corretamente
+  * Sistema de arrastar e soltar para criar conexões visuais entre páginas e elementos
+  * Suporte completo para elementos múltipla escolha com conexões por opção individual
+  * Interface aprimorada com feedback visual durante criação de conexões
+  * Sistema de conexões responsivo com tooltips informativos para cada ponto de conexão
 - July 09, 2025. CORREÇÃO CRÍTICA DE OPÇÕES - Sistema de opções unificado implementado em todos os componentes:
   * Identificado e corrigido bug crítico em quiz público que exibia "Nenhuma opção configurada" para multiple_choice e checkbox
   * Implementado suporte universal para ambos os formatos de opções: array simples ["opção1", "opção2"] e objeto [{text: "opção1"}]
