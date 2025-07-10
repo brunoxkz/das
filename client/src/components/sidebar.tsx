@@ -78,7 +78,13 @@ export function Sidebar() {
       className: "text-red-600 border-red-200 bg-red-50 hover:bg-red-100",
       badge: "⚡"
     }] : []),
-
+    {
+      title: "Meus Quizzes",
+      href: "/quizzes",
+      icon: <BarChart3 className="w-4 h-4" />,
+      active: location.startsWith("/quizzes"),
+      badge: totalQuizzes > 0 ? totalQuizzes.toString() : undefined
+    },
     {
       title: "Templates",
       href: "/templates",

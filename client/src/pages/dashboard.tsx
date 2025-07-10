@@ -14,7 +14,12 @@ import {
   Trash2,
   ExternalLink,
   Calendar,
-  Video
+  Video,
+  MessageSquare,
+  Mail,
+  FileText,
+  Shield,
+  Palette
 } from "lucide-react";
 import { Link } from "wouter";
 import { useAuth } from "@/hooks/use-auth-hybrid";
@@ -244,68 +249,113 @@ export default function Dashboard() {
         </CardContent>
       </Card>
 
-      {/* Quick Actions */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
-        <Link href="/quizzes/new">
+      {/* Dashboard de Ações Principais */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Criação de Conteúdo */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Plus className="w-5 h-5 text-blue-600" />
+              Criar Conteúdo
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <Link href="/quizzes/new">
+                <Button className="w-full h-16 flex flex-col items-center justify-center gap-2">
+                  <BarChart3 className="w-6 h-6" />
+                  <span className="text-sm font-medium">Criar Quiz</span>
+                </Button>
+              </Link>
+              <Link href="/templates">
+                <Button variant="outline" className="w-full h-16 flex flex-col items-center justify-center gap-2">
+                  <Palette className="w-6 h-6" />
+                  <span className="text-sm font-medium">Templates</span>
+                </Button>
+              </Link>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Campanhas de Marketing */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <TrendingUp className="w-5 h-5 text-green-600" />
+              Campanhas de Marketing
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 gap-3">
+              <Link href="/sms-credits">
+                <Button variant="outline" className="w-full h-12 flex items-center justify-start gap-3 bg-blue-50 hover:bg-blue-100 border-blue-200">
+                  <MessageSquare className="w-5 h-5 text-blue-600" />
+                  <span className="font-medium">Criar Campanha SMS</span>
+                </Button>
+              </Link>
+              <Link href="/email-marketing">
+                <Button variant="outline" className="w-full h-12 flex items-center justify-start gap-3 bg-green-50 hover:bg-green-100 border-green-200">
+                  <Mail className="w-5 h-5 text-green-600" />
+                  <span className="font-medium">Criar Campanha Email</span>
+                </Button>
+              </Link>
+              <Link href="/campanhas-whatsapp">
+                <Button variant="outline" className="w-full h-12 flex items-center justify-start gap-3 bg-emerald-50 hover:bg-emerald-100 border-emerald-200">
+                  <FileText className="w-5 h-5 text-emerald-600" />
+                  <span className="font-medium">Criar Campanha WhatsApp</span>
+                </Button>
+              </Link>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Ações Rápidas */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+        <Link href="/analytics">
           <Card className="cursor-pointer hover:shadow-lg transition-shadow">
-            <CardContent className="p-4 md:p-6">
-              <div className="flex items-center space-x-4">
-                <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                  <Plus className="w-6 h-6 text-blue-600" />
-                </div>
-                <div className="min-w-0 flex-1">
-                  <h3 className="font-semibold text-gray-900">Criar Quiz</h3>
-                  <p className="text-sm text-gray-600">Novo quiz do zero</p>
-                </div>
+            <CardContent className="p-4 text-center">
+              <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center mx-auto mb-3">
+                <TrendingUp className="w-6 h-6 text-purple-600" />
               </div>
+              <h3 className="font-semibold text-gray-900 text-sm">Analytics</h3>
+              <p className="text-xs text-gray-600 mt-1">Ver relatórios</p>
             </CardContent>
           </Card>
         </Link>
 
-        <Link href="/templates">
+        <Link href="/ai-conversion">
           <Card className="cursor-pointer hover:shadow-lg transition-shadow">
-            <CardContent className="p-4 md:p-6">
-              <div className="flex items-center space-x-4">
-                <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                  <BarChart3 className="w-6 h-6 text-green-600" />
-                </div>
-                <div className="min-w-0 flex-1">
-                  <h3 className="font-semibold text-gray-900">Templates</h3>
-                  <p className="text-sm text-gray-600">Usar template pronto</p>
-                </div>
+            <CardContent className="p-4 text-center">
+              <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center mx-auto mb-3">
+                <Video className="w-6 h-6 text-purple-600" />
               </div>
+              <h3 className="font-semibold text-gray-900 text-sm">I.A. Videos</h3>
+              <p className="text-xs text-gray-600 mt-1">HeyGen API</p>
+            </CardContent>
+          </Card>
+        </Link>
+
+        <Link href="/cloaker">
+          <Card className="cursor-pointer hover:shadow-lg transition-shadow">
+            <CardContent className="p-4 text-center">
+              <div className="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center mx-auto mb-3">
+                <Shield className="w-6 h-6 text-gray-600" />
+              </div>
+              <h3 className="font-semibold text-gray-900 text-sm">Cloaker</h3>
+              <p className="text-xs text-gray-600 mt-1">Proteção</p>
             </CardContent>
           </Card>
         </Link>
 
         <Link href="/vsl-player">
           <Card className="cursor-pointer hover:shadow-lg transition-shadow">
-            <CardContent className="p-4 md:p-6">
-              <div className="flex items-center space-x-4">
-                <div className="w-12 h-12 bg-red-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                  <Video className="w-6 h-6 text-red-600" />
-                </div>
-                <div className="min-w-0 flex-1">
-                  <h3 className="font-semibold text-gray-900">VSL Player</h3>
-                  <p className="text-sm text-gray-600">Grátis</p>
-                </div>
+            <CardContent className="p-4 text-center">
+              <div className="w-12 h-12 bg-red-100 rounded-lg flex items-center justify-center mx-auto mb-3">
+                <Video className="w-6 h-6 text-red-600" />
               </div>
-            </CardContent>
-          </Card>
-        </Link>
-
-        <Link href="/analytics">
-          <Card className="cursor-pointer hover:shadow-lg transition-shadow">
-            <CardContent className="p-4 md:p-6">
-              <div className="flex items-center space-x-4">
-                <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                  <TrendingUp className="w-6 h-6 text-purple-600" />
-                </div>
-                <div className="min-w-0 flex-1">
-                  <h3 className="font-semibold text-gray-900">Analytics</h3>
-                  <p className="text-sm text-gray-600">Ver relatórios</p>
-                </div>
-              </div>
+              <h3 className="font-semibold text-gray-900 text-sm">VSL Player</h3>
+              <p className="text-xs text-gray-600 mt-1">Grátis</p>
             </CardContent>
           </Card>
         </Link>
