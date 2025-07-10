@@ -552,8 +552,8 @@ app.use((req, res, next) => {
     }
   };
   
-  // Executar a cada 30 segundos (otimizado para não sobrecarregar)
-  setInterval(autoDetectionSystem, 30000);
+  // TEMPORARIAMENTE DESABILITADO - corrigindo problema de persistência
+  // setInterval(autoDetectionSystem, 30000);
   
   // Sistema de processamento de WhatsApp agendados
   const whatsappScheduledProcessor = async () => {
@@ -583,8 +583,8 @@ app.use((req, res, next) => {
     }
   };
   
-  // Executar processamento de agendados a cada 60 segundos
-  setInterval(whatsappScheduledProcessor, 60000);
+  // TEMPORARIAMENTE DESABILITADO - corrigindo problema de persistência
+  // setInterval(whatsappScheduledProcessor, 60000);
 
   // Sistema de processamento de emails agendados
   const emailScheduledProcessor = async () => {
@@ -601,8 +601,8 @@ app.use((req, res, next) => {
     }
   };
 
-  // Executar processamento de emails a cada 60 segundos
-  setInterval(emailScheduledProcessor, 60000);
+  // TEMPORARIAMENTE DESABILITADO - corrigindo problema de persistência
+  // setInterval(emailScheduledProcessor, 60000);
 
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
     const status = err.status || err.statusCode || 500;

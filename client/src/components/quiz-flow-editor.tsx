@@ -748,20 +748,20 @@ export const QuizFlowEditor: React.FC<QuizFlowEditorProps> = ({
                             </p>
                             <div className="space-y-1 max-h-32 overflow-y-auto">
                               {pageElements.map((element, idx) => {
-                                const isMultipleChoice = element.type === 'multiple_choice';
-                                const isCheckbox = element.type === 'checkbox';
-                                const isClickable = ['continue_button', 'button', 'image', 'image_upload', 'wheel', 'scratch', 'color_pick', 'brick_break', 'memory_cards', 'slot_machine', 'share_quiz'].includes(element.type);
+                                const isMultipleChoice = element.elementType === 'multiple_choice';
+                                const isCheckbox = element.elementType === 'checkbox';
+                                const isClickable = ['continue_button', 'button', 'image', 'image_upload', 'wheel', 'scratch', 'color_pick', 'brick_break', 'memory_cards', 'slot_machine', 'share_quiz'].includes(element.elementType);
                                 
                                 // Verificar se elemento já tem conexão
                                 const hasConnection = flowSystem.connections.some(conn => 
-                                  conn.from === node.id && conn.condition?.elementId === element.id
+                                  conn.from === node.id && conn.condition?.elementId === element.elementId
                                 );
                                 
                                 return (
                                   <div key={idx} className="relative">
                                     <div className="flex items-center justify-between bg-gray-50 p-2 rounded">
                                       <span className="text-xs truncate">
-                                        {element.type}: {element.properties?.text || element.content || 'Sem texto'}
+                                        <span className="font-medium text-blue-600">{element.elementType}:</span> {element.elementTitle}
                                       </span>
                                       
                                       {/* Bolinha de conexão do elemento - AZUL para elementos específicos */}
@@ -777,7 +777,7 @@ export const QuizFlowEditor: React.FC<QuizFlowEditorProps> = ({
                                         onMouseDown={(e) => {
                                           e.preventDefault();
                                           e.stopPropagation();
-                                          startConnection(node.id, e, element.id);
+                                          startConnection(node.id, e, element.elementId);
                                         }}
                                         onClick={(e) => {
                                           e.preventDefault();
@@ -787,38 +787,40 @@ export const QuizFlowEditor: React.FC<QuizFlowEditorProps> = ({
                                     </div>
                                     
                                     {/* Opções de múltipla escolha com bolinhas individuais */}
-                                    {(isMultipleChoice || isCheckbox) && element.properties?.options && Array.isArray(element.properties.options) && (
+                                    {(isMultipleChoice || isCheckbox) && element.options && Array.isArray(element.options) && (
                                       <div className="ml-2 mt-1 space-y-1">
-                                        {element.properties.options.map((option, optIdx) => {
+                                        {element.options.map((option, optIdx) => {
                                           const optionHasConnection = flowSystem.connections.some(conn => 
                                             conn.from === node.id && 
-                                            conn.condition?.elementId === element.id && 
+                                            conn.condition?.elementId === element.elementId && 
                                             conn.condition?.optionIndex === optIdx
                                           );
                                           
                                           return (
                                             <div key={optIdx} className="flex items-center justify-between text-xs bg-green-50 p-1 rounded">
-                                              <span className="truncate text-xs">
-                                                Opção {optIdx + 1}: {typeof option === 'string' ? option : option.text || option.label || 'Sem texto'}
+                                              <span className="truncate">
+                                                {typeof option === 'string' ? option : option.text || `Opção ${optIdx + 1}`}
                                               </span>
+                                              
+                                              {/* Bolinha individual para cada opção - VERDE para opções */}
                                               <div 
-                                                className={`w-3 h-3 border-2 border-white rounded-full cursor-crosshair flex-shrink-0 hover:scale-110 transition-all shadow-md ${
+                                                className={`w-3 h-3 border border-white rounded-full cursor-crosshair flex-shrink-0 ml-1 hover:scale-125 transition-all ${
                                                   optionHasConnection 
-                                                    ? 'bg-gray-400 hover:bg-gray-500' 
-                                                    : 'bg-green-500 hover:bg-green-600'
+                                                    ? 'bg-gray-400 hover:bg-gray-500 shadow-md' 
+                                                    : 'bg-green-500 hover:bg-green-600 shadow-md'
                                                 }`}
+                                                title={optionHasConnection 
+                                                  ? `Opção "${typeof option === 'string' ? option : option.text}" já conectada - arrastar para reconectar` 
+                                                  : `Conectar opção "${typeof option === 'string' ? option : option.text}" - arrastar para destino`}
                                                 onMouseDown={(e) => {
                                                   e.preventDefault();
                                                   e.stopPropagation();
-                                                  startConnection(node.id, e, element.id, optIdx);
+                                                  startConnection(node.id, e, element.elementId, optIdx);
                                                 }}
                                                 onClick={(e) => {
                                                   e.preventDefault();
                                                   e.stopPropagation();
                                                 }}
-                                                title={optionHasConnection 
-                                                  ? `🔗 Já conectado - arrastar para reconectar: ${typeof option === 'string' ? option : option.text || option.label}`
-                                                  : `🔗 Arrastar para conectar: ${typeof option === 'string' ? option : option.text || option.label}`}
                                               />
                                             </div>
                                           );

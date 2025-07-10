@@ -84,7 +84,8 @@ async function testSimple() {
     });
     
     console.log('✅ Quiz criado:', quizCriado.id);
-    console.log('📊 Elementos iniciais:', quizCriado.structure.pages[0].elements.length);
+    console.log('📊 Estrutura completa:', JSON.stringify(quizCriado.structure, null, 2));
+    console.log('📊 Elementos iniciais:', quizCriado.structure?.pages?.[0]?.elements?.length || 0);
     
     // Recarregar o quiz
     console.log('🔄 Recarregando quiz...');
