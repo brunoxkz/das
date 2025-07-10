@@ -552,8 +552,18 @@ app.use((req, res, next) => {
     }
   };
   
-  // TEMPORARIAMENTE DESABILITADO - corrigindo problema de persistência
-  // setInterval(autoDetectionSystem, 30000);
+  // Sistema de detecção automática REATIVADO com proteções inteligentes
+  let autoDetectionRunning = false;
+  const autoDetectionInterval = setInterval(async () => {
+    if (!autoDetectionRunning) {
+      autoDetectionRunning = true;
+      try {
+        await autoDetectionSystem();
+      } finally {
+        autoDetectionRunning = false;
+      }
+    }
+  }, 20000); // A cada 20 segundos
   
   // Sistema de processamento de WhatsApp agendados
   const whatsappScheduledProcessor = async () => {
@@ -583,8 +593,18 @@ app.use((req, res, next) => {
     }
   };
   
-  // TEMPORARIAMENTE DESABILITADO - corrigindo problema de persistência
-  // setInterval(whatsappScheduledProcessor, 60000);
+  // Sistema de processamento WhatsApp REATIVADO com proteções
+  let whatsappProcessingRunning = false;
+  const whatsappInterval = setInterval(async () => {
+    if (!whatsappProcessingRunning) {
+      whatsappProcessingRunning = true;
+      try {
+        await whatsappScheduledProcessor();
+      } finally {
+        whatsappProcessingRunning = false;
+      }
+    }
+  }, 60000); // A cada 1 minuto
 
   // Sistema de processamento de emails agendados
   const emailScheduledProcessor = async () => {
@@ -601,8 +621,18 @@ app.use((req, res, next) => {
     }
   };
 
-  // TEMPORARIAMENTE DESABILITADO - corrigindo problema de persistência
-  // setInterval(emailScheduledProcessor, 60000);
+  // Sistema de processamento Email REATIVADO com proteções
+  let emailProcessingRunning = false;
+  const emailInterval = setInterval(async () => {
+    if (!emailProcessingRunning) {
+      emailProcessingRunning = true;
+      try {
+        await emailScheduledProcessor();
+      } finally {
+        emailProcessingRunning = false;
+      }
+    }
+  }, 60000); // A cada 1 minuto
 
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
     const status = err.status || err.statusCode || 500;

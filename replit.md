@@ -789,6 +789,15 @@ Changelog:
   * Suporte completo para elementos múltipla escolha com conexões por opção individual
   * Interface aprimorada com feedback visual durante criação de conexões
   * Sistema de conexões responsivo com tooltips informativos para cada ponto de conexão
+- July 10, 2025. SISTEMA DE DETECÇÃO AUTOMÁTICA REATIVADO - Restored critical lead detection functionality with intelligent protections:
+  * Reativado sistema de detecção automática de novos leads (a cada 20 segundos) com proteções contra execução simultânea
+  * Implementadas flags autoDetectionRunning, whatsappProcessingRunning, emailProcessingRunning para evitar conflitos
+  * Sistema agora funciona em paralelo com o editor de fluxo visual sem interferir na persistência
+  * Mantidas todas as 3 funcionalidades críticas: detecção de leads, processamento WhatsApp, processamento Email
+  * Correções aplicadas na visualização do fluxo: mapeamento correto de elementId, tipos de elemento, e opções individuais
+  * Sistema de conexões individuais para múltipla escolha totalmente funcional com bolinhas verdes por opção
+  * Performance mantida com processamento não-bloqueante e logs otimizados
+  * Funcionalidade essencial de remarketing automático restaurada sem comprometer a estabilidade do sistema
 - July 10, 2025. SISTEMA DE CONEXÕES ÚNICAS TOTALMENTE CORRIGIDO - Eliminated duplicates and UI errors:
   * Resolved "showConditionEditor is not defined" error by completely removing modal interface
   * Implemented unique connection validation - each element/option can have only one connection
