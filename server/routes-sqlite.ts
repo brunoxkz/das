@@ -10,6 +10,7 @@ import { sendSms } from "./twilio";
 import { emailService } from "./email-service";
 import { BrevoEmailService } from "./email-brevo";
 import { handleSecureUpload, uploadMiddleware } from "./upload-secure";
+import { sanitizeAllScripts, sanitizeUTMCode, sanitizeCustomScript } from './script-sanitizer-new';
 import express from 'express';
 import path from 'path';
 import fs from 'fs';
@@ -312,12 +313,39 @@ export function registerSQLiteRoutes(app: Express): Server {
         return res.status(403).json({ message: "Access denied" });
       }
 
+      // Sanitizar códigos personalizados e UTM antes de salvar
+      let sanitizedData = { ...req.body };
+      if (req.body.customHeadScript || req.body.utmTrackingCode || req.body.trackingPixels) {
+        console.log(`🔒 APLICANDO SANITIZAÇÃO DE SEGURANÇA...`);
+        const sanitizationResult = sanitizeAllScripts({
+          utmTrackingCode: req.body.utmTrackingCode,
+          customHeadScript: req.body.customHeadScript,
+          trackingPixels: req.body.trackingPixels
+        });
+
+        if (!sanitizationResult.isValid) {
+          console.log(`❌ SANITIZAÇÃO FALHOU:`, sanitizationResult.errors);
+          return res.status(400).json({ 
+            message: "Código contém conteúdo inseguro", 
+            errors: sanitizationResult.errors,
+            warnings: sanitizationResult.warnings
+          });
+        }
+
+        // Aplicar dados sanitizados
+        sanitizedData = { ...sanitizedData, ...sanitizationResult.sanitizedData };
+        
+        if (sanitizationResult.warnings.length > 0) {
+          console.log(`⚠️ AVISOS DE SEGURANÇA:`, sanitizationResult.warnings);
+        }
+      }
+
       // Forçar limpeza do cache antes da atualização
       cache.invalidateUserCaches(userId);
       cache.invalidateQuizCaches(quizId, userId);
       
       console.log(`💾 EXECUTANDO UPDATE NO STORAGE...`);
-      const updatedQuiz = await storage.updateQuiz(quizId, req.body);
+      const updatedQuiz = await storage.updateQuiz(quizId, sanitizedData);
 
       console.log(`✅ QUIZ ATUALIZADO COM SUCESSO:`, {
         id: updatedQuiz.id,

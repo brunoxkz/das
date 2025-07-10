@@ -1313,6 +1313,43 @@ export default function QuizBuilder() {
                     </p>
                   </div>
 
+                  {/* Opções de Integração com Marketing */}
+                  <div className="space-y-3">
+                    <div className="flex items-center space-x-3">
+                      <input
+                        type="checkbox"
+                        id="pixelEmailMarketing"
+                        checked={quizData.pixelEmailMarketing || false}
+                        onChange={(e) => setQuizData(prev => ({ ...prev, pixelEmailMarketing: e.target.checked }))}
+                        className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500"
+                      />
+                      <Label htmlFor="pixelEmailMarketing" className="text-sm font-medium text-gray-900">
+                        Adicionar pixels no Email Marketing
+                      </Label>
+                    </div>
+                    
+                    <div className="p-3 bg-green-50 rounded-lg border border-green-200">
+                      <div className="flex items-center space-x-3 mb-2">
+                        <input
+                          type="checkbox"
+                          id="pixelSMS"
+                          checked={quizData.pixelSMS || false}
+                          onChange={(e) => setQuizData(prev => ({ ...prev, pixelSMS: e.target.checked }))}
+                          className="w-4 h-4 text-green-600 bg-gray-100 border-gray-300 rounded focus:ring-green-500"
+                        />
+                        <Label htmlFor="pixelSMS" className="text-sm font-medium text-green-800">
+                          Adicionar pixels no SMS
+                        </Label>
+                        <Badge variant="outline" className="bg-green-100 text-green-700 border-green-300">
+                          Recomendado
+                        </Badge>
+                      </div>
+                      <p className="text-xs text-green-700 ml-7">
+                        Recomendado para melhorar otimização, audiências e CPA das campanhas
+                      </p>
+                    </div>
+                  </div>
+
                   {/* Pixels Ativos */}
                   <div className="space-y-3">
                     {trackingPixels.map((pixel) => (
@@ -1463,18 +1500,63 @@ export default function QuizBuilder() {
                     </div>
                   )}
 
+                  {/* UTM e Rastreamento Avançado */}
+                  <div className="pt-4 border-t">
+                    <div className="flex items-center gap-2 mb-3">
+                      <Label htmlFor="utmTrackingCode" className="text-sm font-medium">UTM e Rastreamento Avançado</Label>
+                      <Badge variant="outline" className="bg-purple-50 text-purple-700 border-purple-200">
+                        UTMify, Voluum, RedTrack
+                      </Badge>
+                    </div>
+                    <Textarea
+                      id="utmTrackingCode"
+                      value={quizData.utmTrackingCode || ""}
+                      onChange={(e) => {
+                        const value = e.target.value;
+                        // Limite de segurança: 5000 caracteres
+                        if (value.length <= 5000) {
+                          setQuizData(prev => ({ ...prev, utmTrackingCode: value }));
+                        }
+                      }}
+                      placeholder="<!-- Códigos UTM/Tracking (UTMify, Voluum, RedTrack, etc.) -->"
+                      className="mt-2"
+                      rows={4}
+                      maxLength={5000}
+                    />
+                    <div className="flex justify-between items-center mt-2">
+                      <p className="text-xs text-gray-500">
+                        Códigos para UTMify, Voluum, RedTrack e outros rastreadores
+                      </p>
+                      <span className="text-xs text-gray-400">
+                        {(quizData.utmTrackingCode || "").length}/5000
+                      </span>
+                    </div>
+                  </div>
+
                   {/* Script Personalizado */}
                   <div className="pt-4 border-t">
                     <Label htmlFor="customHeadScript" className="text-sm font-medium">Script Personalizado (Head)</Label>
                     <Textarea
                       id="customHeadScript"
                       value={quizData.customHeadScript || ""}
-                      onChange={(e) => setQuizData(prev => ({ ...prev, customHeadScript: e.target.value }))}
+                      onChange={(e) => {
+                        const value = e.target.value;
+                        // Limite de segurança: 10000 caracteres
+                        if (value.length <= 10000) {
+                          setQuizData(prev => ({ ...prev, customHeadScript: value }));
+                        }
+                      }}
                       placeholder="<script>/* Seu código personalizado aqui */</script>"
                       className="mt-2"
                       rows={4}
+                      maxLength={10000}
                     />
-                    <p className="text-xs text-gray-500 mt-1">Scripts personalizados para adicionar no &lt;head&gt; da página</p>
+                    <div className="flex justify-between items-center mt-2">
+                      <p className="text-xs text-gray-500">Scripts personalizados para adicionar no &lt;head&gt; da página</p>
+                      <span className="text-xs text-gray-400">
+                        {(quizData.customHeadScript || "").length}/10000
+                      </span>
+                    </div>
                     
                     {/* Aviso de Segurança */}
                     <div className="mt-3 p-3 bg-red-50 rounded-lg border border-red-200">
@@ -1482,6 +1564,14 @@ export default function QuizBuilder() {
                         <strong>⚠️ AVISO DE SEGURANÇA:</strong> Insira apenas código de fontes confiáveis. 
                         Scripts maliciosos podem comprometer a segurança do seu quiz e capturar dados dos usuários.
                       </p>
+                      <div className="mt-2 text-xs text-red-700">
+                        <strong>Proteções ativas:</strong>
+                        <ul className="list-disc list-inside mt-1">
+                          <li>Limite de 10.000 caracteres por script</li>
+                          <li>Sanitização automática de conteúdo perigoso</li>
+                          <li>Validação de estrutura HTML/JS</li>
+                        </ul>
+                      </div>
                     </div>
                   </div>
 

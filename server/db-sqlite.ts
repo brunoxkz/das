@@ -63,6 +63,11 @@ export function runMigrations() {
       addColumnIfNotExists('quizzes', 'pixelDelay', 'INTEGER DEFAULT 0');
       addColumnIfNotExists('quizzes', 'trackingPixels', 'TEXT');
       
+      // Adicionar novas colunas para UTM e email/SMS marketing
+      addColumnIfNotExists('quizzes', 'utmTrackingCode', 'TEXT');
+      addColumnIfNotExists('quizzes', 'pixelEmailMarketing', 'INTEGER DEFAULT 0');
+      addColumnIfNotExists('quizzes', 'pixelSMS', 'INTEGER DEFAULT 0');
+      
       console.log('✅ Database migration completed safely');
       return;
     }
