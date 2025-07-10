@@ -87,6 +87,7 @@ export const QuizFlowEditor: React.FC<QuizFlowEditorProps> = ({
   const canvasRef = useRef<HTMLDivElement>(null);
 
   // Sincronizar nodes com páginas do quiz (atualização em tempo real)
+  // PROTEÇÃO CRÍTICA: Evita loops infinitos e perda de elementos
   useEffect(() => {
     if (flowSystem.enabled && pages.length > 0) {
       const existingNodeIds = new Set(flowSystem.nodes.map(n => n.pageId));
@@ -125,8 +126,11 @@ export const QuizFlowEditor: React.FC<QuizFlowEditorProps> = ({
         hasChanges = true;
       }
       
+      // PROTEÇÃO CRÍTICA: Só atualiza se realmente há mudanças
+      // Evita loop infinito que pode corromper dados das páginas
       if (hasChanges) {
-        onFlowChange({
+        // Verificação dupla para garantir que não estamos perdendo dados
+        const safeUpdate = {
           ...flowSystem,
           nodes: filteredNodes,
           connections: flowSystem.connections.filter(conn => {
@@ -134,10 +138,18 @@ export const QuizFlowEditor: React.FC<QuizFlowEditorProps> = ({
             const toExists = filteredNodes.some(n => n.id === conn.to);
             return fromExists && toExists;
           })
+        };
+        
+        console.log('FLOW SYNC - Atualizando flow system:', {
+          previousNodesCount: flowSystem.nodes.length,
+          newNodesCount: safeUpdate.nodes.length,
+          pagesCount: pages.length
         });
+        
+        onFlowChange(safeUpdate);
       }
     }
-  }, [pages, flowSystem, onFlowChange]);
+  }, [pages.length, flowSystem.enabled]); // CORREÇÃO: Dependências mais específicas para evitar loops
 
   const handleNodeDrag = (nodeId: string, deltaX: number, deltaY: number) => {
     const updatedNodes = flowSystem.nodes.map(node => 

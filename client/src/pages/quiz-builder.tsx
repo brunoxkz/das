@@ -300,11 +300,35 @@ export default function QuizBuilder() {
       return;
     }
 
+    // PROTEÇÃO CRÍTICA: Validar e sanitizar dados antes de salvar
+    const validatedStructure = {
+      ...quizData.structure,
+      pages: quizData.structure.pages?.map(page => ({
+        ...page,
+        elements: page.elements || [] // Garantir que elementos sempre existam
+      })) || [],
+      settings: quizData.structure.settings || {
+        theme: "vendzz",
+        showProgressBar: true,
+        collectEmail: true,
+        collectName: true,
+        collectPhone: false,
+        resultTitle: "",
+        resultDescription: ""
+      },
+      flowSystem: quizData.structure.flowSystem || {
+        enabled: false,
+        nodes: [],
+        connections: [],
+        defaultFlow: true
+      }
+    };
+
     // Prepare data for backend - match schema structure
     const dataToSave = {
       title: quizData.title,
       description: quizData.description || "",
-      structure: quizData.structure,
+      structure: validatedStructure,
       isPublished: isPublishing || quizData.isPublished || false,
       brandingLogo: quizData.design?.brandingLogo || "",
       progressBarColor: quizData.design?.progressBarColor || "#10b981",
@@ -320,7 +344,16 @@ export default function QuizBuilder() {
     };
 
     const action = isPublishing ? "Publicando" : "Salvando";
-    console.log(`${action} quiz com dados:`, JSON.stringify(dataToSave, null, 2));
+    console.log(`${action} quiz com dados validados:`, {
+      title: dataToSave.title,
+      pagesCount: dataToSave.structure.pages.length,
+      totalElements: dataToSave.structure.pages.reduce((sum, p) => sum + (p.elements?.length || 0), 0),
+      flowEnabled: dataToSave.structure.flowSystem.enabled
+    });
+    
+    // Log detalhado para debug
+    console.log('ESTRUTURA COMPLETA:', JSON.stringify(dataToSave.structure, null, 2));
+    
     saveMutation.mutate(dataToSave);
   };
 
@@ -332,13 +365,31 @@ export default function QuizBuilder() {
   };
 
   const handlePageChange = (pages: any[]) => {
-    setQuizData(prev => ({
-      ...prev,
-      structure: {
-        ...prev.structure,
-        pages
-      }
-    }));
+    console.log('QUIZ BUILDER - handlePageChange chamado com:', {
+      pagesCount: pages.length,
+      pages: pages.map(p => ({ 
+        id: p.id, 
+        title: p.title, 
+        elementsCount: p.elements?.length || 0 
+      }))
+    });
+    
+    setQuizData(prev => {
+      const newData = {
+        ...prev,
+        structure: {
+          ...prev.structure,
+          pages
+        }
+      };
+      
+      console.log('QUIZ BUILDER - Estado atualizado:', {
+        pagesCount: newData.structure.pages.length,
+        totalElements: newData.structure.pages.reduce((sum, p) => sum + (p.elements?.length || 0), 0)
+      });
+      
+      return newData;
+    });
   };
 
   const handleSettingsChange = (settings: any) => {
@@ -352,13 +403,31 @@ export default function QuizBuilder() {
   };
 
   const handleFlowChange = (flowSystem: any) => {
-    setQuizData(prev => ({
-      ...prev,
-      structure: {
-        ...prev.structure,
-        flowSystem
-      }
-    }));
+    console.log('QUIZ BUILDER - handleFlowChange chamado:', {
+      enabled: flowSystem.enabled,
+      nodesCount: flowSystem.nodes?.length || 0,
+      connectionsCount: flowSystem.connections?.length || 0
+    });
+    
+    setQuizData(prev => {
+      // PROTEÇÃO CRÍTICA: Preservar dados das páginas durante mudanças de fluxo
+      const newData = {
+        ...prev,
+        structure: {
+          ...prev.structure,
+          flowSystem,
+          // Garantir que as páginas não sejam afetadas por mudanças no fluxo
+          pages: prev.structure.pages || []
+        }
+      };
+      
+      console.log('QUIZ BUILDER - Flow atualizado, páginas preservadas:', {
+        pagesCount: newData.structure.pages.length,
+        totalElements: newData.structure.pages.reduce((sum, p) => sum + (p.elements?.length || 0), 0)
+      });
+      
+      return newData;
+    });
   };
 
   // Extrair variáveis dos elementos do quiz

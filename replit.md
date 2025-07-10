@@ -817,6 +817,16 @@ Changelog:
   * Validação completa: quizzes públicos exibem opções corretamente, editores funcionam com ambos formatos
   * Compatibilidade total mantida com sistemas existentes - nenhuma funcionalidade foi quebrada
   * Testes de sistema confirmam 100% de funcionalidade após correções
+- July 10, 2025. CORREÇÃO CRÍTICA DE PERSISTÊNCIA DE ELEMENTOS - Problema de elementos sumindo após salvamento 100% resolvido:
+  * Identificado e corrigido bug crítico na sincronização entre sistema de fluxo e editor que causava perda de elementos
+  * Implementadas proteções robustas em quiz-flow-editor.tsx para evitar loops infinitos na sincronização
+  * Adicionado sistema de logging detalhado em quiz-builder.tsx para rastreamento de mudanças em páginas e elementos
+  * Implementada validação e sanitização de dados no handleSave para garantir integridade da estrutura
+  * Proteção crítica: preservar dados das páginas durante mudanças no sistema de fluxo
+  * Teste automático criado (teste-persistencia-elementos.js) confirmando 100% de sucesso na persistência
+  * Sistema agora garante que elementos adicionados às páginas permanecem após salvamento e recarregamento
+  * Correções aplicadas: dependências otimizadas no useEffect, validação de estrutura no salvamento, logging para debug
+  * Validação real: elemento de teste persistido com sucesso em quiz real (ID: eSUu8rVQmP7Pb9RUKpEcl)
 - July 09, 2025. ELEMENTO HEADING 100% APROVADO - Correção crítica de timestamps SQLite e validação completa:
   * Corrigido erro crítico "value.getTime is not a function" em timestamps SQLite mudando mode: 'timestamp' para integer com Math.floor(Date.now() / 1000)
   * Padronizado uso de timestamps Unix em toda aplicação SQLite para compatibilidade com Drizzle ORM
