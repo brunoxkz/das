@@ -2399,38 +2399,81 @@ export function QuizPreview({ quiz }: QuizPreviewProps) {
         )}
 
         {/* Progress Bar */}
-        {(quiz.design?.showProgressBar || settings?.showProgressBar) && (
+        {(quiz.design?.showProgressBar !== false) && (
           <div className="mb-8">
-            <div className="flex justify-between items-center mb-2">
-              <span className="text-sm text-gray-600">
-                Etapa {currentStep + 1} de {totalSteps}
-              </span>
-              <span className="text-sm text-gray-600">
-                {Math.round(progress)}% completo
-              </span>
-            </div>
-            <div 
-              className={`w-full bg-gray-200 overflow-hidden ${
-                quiz.design?.progressBarStyle === 'square' ? 'rounded-none' :
-                quiz.design?.progressBarStyle === 'thin' ? 'rounded-sm' :
-                quiz.design?.progressBarStyle === 'thick' ? 'rounded-lg' :
-                'rounded-full'
-              }`}
-              style={{ height: `${quiz.design?.progressBarHeight || 8}px` }}
-            >
-              <div
-                className={`h-full transition-all duration-300 ${
-                  quiz.design?.progressBarStyle === 'square' ? 'rounded-none' :
-                  quiz.design?.progressBarStyle === 'thin' ? 'rounded-sm' :
-                  quiz.design?.progressBarStyle === 'thick' ? 'rounded-lg' :
-                  'rounded-full'
-                }`}
-                style={{ 
-                  width: `${progress}%`,
-                  backgroundColor: quiz.design?.progressBarColor || '#10b981'
-                }}
-              />
-            </div>
+            {/* Renderizar contador baseado na posição */}
+            {(() => {
+              const progressBarType = quiz.design?.progressBarType || "percentage";
+              const progressBarPosition = quiz.design?.progressBarPosition || "center";
+              
+              const getCounterText = () => {
+                if (progressBarType === "percentage") {
+                  return `${Math.round(progress)}%`;
+                } else if (progressBarType === "steps") {
+                  return `${currentStep + 1}/${totalSteps}`;
+                }
+                return "";
+              };
+
+              const counterElement = progressBarType !== "none" ? (
+                <span className="text-sm text-gray-600">
+                  {getCounterText()}
+                </span>
+              ) : null;
+
+              return (
+                <div className="space-y-2">
+                  {/* Contador acima da barra */}
+                  {progressBarPosition === "above" && counterElement && (
+                    <div className="text-center">
+                      {counterElement}
+                    </div>
+                  )}
+
+                  {/* Contador na mesma linha da barra */}
+                  {(progressBarPosition === "left" || progressBarPosition === "center" || progressBarPosition === "right") && counterElement && (
+                    <div className={`flex items-center mb-2 ${
+                      progressBarPosition === "left" ? "justify-start" :
+                      progressBarPosition === "center" ? "justify-center" :
+                      "justify-end"
+                    }`}>
+                      {counterElement}
+                    </div>
+                  )}
+
+                  {/* Barra de progresso */}
+                  <div 
+                    className={`w-full bg-gray-200 overflow-hidden ${
+                      quiz.design?.progressBarStyle === 'square' ? 'rounded-none' :
+                      quiz.design?.progressBarStyle === 'thin' ? 'rounded-sm' :
+                      quiz.design?.progressBarStyle === 'thick' ? 'rounded-lg' :
+                      'rounded-full'
+                    }`}
+                    style={{ height: `${quiz.design?.progressBarHeight || 8}px` }}
+                  >
+                    <div
+                      className={`h-full transition-all duration-300 ${
+                        quiz.design?.progressBarStyle === 'square' ? 'rounded-none' :
+                        quiz.design?.progressBarStyle === 'thin' ? 'rounded-sm' :
+                        quiz.design?.progressBarStyle === 'thick' ? 'rounded-lg' :
+                        'rounded-full'
+                      }`}
+                      style={{ 
+                        width: `${progress}%`,
+                        backgroundColor: quiz.design?.progressBarColor || '#10b981'
+                      }}
+                    />
+                  </div>
+
+                  {/* Contador abaixo da barra */}
+                  {progressBarPosition === "below" && counterElement && (
+                    <div className="text-center">
+                      {counterElement}
+                    </div>
+                  )}
+                </div>
+              );
+            })()}
           </div>
         )}
 

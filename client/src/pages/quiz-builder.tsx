@@ -827,7 +827,7 @@ export default function QuizBuilder() {
                   </div>
 
                   <div>
-                    <Label htmlFor="primaryColor">Cor Primária (Botões)</Label>
+                    <Label htmlFor="primaryColor">Cor Primária (Botões e Barra de Progresso)</Label>
                     <div className="flex items-center gap-3 mt-2">
                       <input
                         type="color"
@@ -835,7 +835,11 @@ export default function QuizBuilder() {
                         value={quizData.design?.primaryColor || "#10b981"}
                         onChange={(e) => setQuizData(prev => ({ 
                           ...prev, 
-                          design: { ...prev.design, primaryColor: e.target.value }
+                          design: { 
+                            ...prev.design, 
+                            primaryColor: e.target.value,
+                            progressBarColor: e.target.value // Sincroniza com barra de progresso
+                          }
                         }))}
                         className="w-12 h-12 border border-gray-300 rounded-md cursor-pointer"
                       />
@@ -843,12 +847,17 @@ export default function QuizBuilder() {
                         value={quizData.design?.primaryColor || "#10b981"}
                         onChange={(e) => setQuizData(prev => ({ 
                           ...prev, 
-                          design: { ...prev.design, primaryColor: e.target.value }
+                          design: { 
+                            ...prev.design, 
+                            primaryColor: e.target.value,
+                            progressBarColor: e.target.value // Sincroniza com barra de progresso
+                          }
                         }))}
                         placeholder="#10b981"
                         className="flex-1"
                       />
                     </div>
+                    <p className="text-xs text-gray-500 mt-1">Esta cor também será aplicada à barra de progresso</p>
                   </div>
 
                   <div>
@@ -882,89 +891,156 @@ export default function QuizBuilder() {
               <Card>
                 <CardHeader>
                   <CardTitle>Configurações da Barra de Progresso</CardTitle>
-                  <p className="text-sm text-gray-600">Barra de progresso sempre ativa - personalize como será exibida</p>
+                  <p className="text-sm text-gray-600">Personalize como a barra de progresso será exibida</p>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  {/* Sempre ativa - só mostra informação */}
-                  <div className="p-3 bg-green-50 rounded-lg border border-green-200">
-                    <p className="text-sm text-green-800">
-                      <strong>✅ Barra de progresso sempre ativa</strong> - Configure abaixo como será exibida
-                    </p>
-                  </div>
-
-                  {/* Tipo de Contador */}
-                  <div>
-                    <Label htmlFor="progressBarType">Tipo de Contador</Label>
-                    <select
-                      id="progressBarType"
-                      value={quizData.design?.progressBarType || "percentage"}
+                  {/* Ativar/Desativar Barra de Progresso */}
+                  <div className="flex items-center space-x-2">
+                    <input
+                      type="checkbox"
+                      id="showProgressBar"
+                      checked={quizData.design?.showProgressBar !== false} // Padrão: ativado
                       onChange={(e) => setQuizData(prev => ({ 
                         ...prev, 
-                        design: { ...prev.design, progressBarType: e.target.value }
+                        design: { ...prev.design, showProgressBar: e.target.checked }
                       }))}
-                      className="mt-2 w-full px-3 py-2 border border-gray-300 rounded-md"
-                    >
-                      <option value="percentage">Porcentagem (ex: 75%)</option>
-                      <option value="steps">Etapas (ex: 3/10)</option>
-                      <option value="none">Sem contador (apenas barra)</option>
-                    </select>
+                      className="w-4 h-4 text-green-600 bg-gray-100 border-gray-300 rounded focus:ring-green-500"
+                    />
+                    <Label htmlFor="showProgressBar" className="font-medium">Mostrar barra de progresso</Label>
                   </div>
 
-                  {/* Preview do Contador */}
-                  <div className="p-4 bg-gray-50 rounded-lg">
-                    <Label className="text-sm font-medium mb-2 block">Preview do Contador</Label>
-                    <div className="space-y-2">
-                      <div className="w-full bg-gray-200 rounded-full h-2">
-                        <div 
-                          className="h-2 rounded-full transition-all duration-300"
-                          style={{ 
-                            width: "60%",
-                            backgroundColor: quizData.design?.progressBarColor || "#10b981"
-                          }}
+                  {/* Configurações só aparecem se a barra estiver ativa */}
+                  {quizData.design?.showProgressBar !== false && (
+                    <>
+                      {/* Tipo de Contador */}
+                      <div>
+                        <Label htmlFor="progressBarType">Tipo de Contador</Label>
+                        <select
+                          id="progressBarType"
+                          value={quizData.design?.progressBarType || "percentage"}
+                          onChange={(e) => setQuizData(prev => ({ 
+                            ...prev, 
+                            design: { ...prev.design, progressBarType: e.target.value }
+                          }))}
+                          className="mt-2 w-full px-3 py-2 border border-gray-300 rounded-md"
+                        >
+                          <option value="percentage">Porcentagem (ex: 75%)</option>
+                          <option value="steps">Etapas (ex: 3/10)</option>
+                          <option value="none">Sem contador (apenas barra)</option>
+                        </select>
+                      </div>
+
+                      {/* Posição do Contador */}
+                      {quizData.design?.progressBarType !== "none" && (
+                        <div>
+                          <Label htmlFor="progressBarPosition">Posição do Contador</Label>
+                          <select
+                            id="progressBarPosition"
+                            value={quizData.design?.progressBarPosition || "center"}
+                            onChange={(e) => setQuizData(prev => ({ 
+                              ...prev, 
+                              design: { ...prev.design, progressBarPosition: e.target.value }
+                            }))}
+                            className="mt-2 w-full px-3 py-2 border border-gray-300 rounded-md"
+                          >
+                            <option value="left">Esquerda</option>
+                            <option value="center">Centralizado</option>
+                            <option value="right">Direita</option>
+                            <option value="above">Acima da barra</option>
+                            <option value="below">Abaixo da barra</option>
+                          </select>
+                        </div>
+                      )}
+
+                      {/* Preview do Contador */}
+                      <div className="p-4 bg-gray-50 rounded-lg">
+                        <Label className="text-sm font-medium mb-2 block">Preview da Barra de Progresso</Label>
+                        <div className="space-y-2">
+                          {/* Contador acima */}
+                          {quizData.design?.progressBarPosition === "above" && quizData.design?.progressBarType !== "none" && (
+                            <div className="text-center text-sm text-gray-600">
+                              {quizData.design?.progressBarType === "percentage" && "60%"}
+                              {quizData.design?.progressBarType === "steps" && "3/5"}
+                            </div>
+                          )}
+
+                          {/* Contador na mesma linha */}
+                          {(quizData.design?.progressBarPosition === "left" || quizData.design?.progressBarPosition === "center" || quizData.design?.progressBarPosition === "right") && quizData.design?.progressBarType !== "none" && (
+                            <div className={`flex items-center ${
+                              quizData.design?.progressBarPosition === "left" ? "justify-start" :
+                              quizData.design?.progressBarPosition === "center" ? "justify-center" :
+                              "justify-end"
+                            }`}>
+                              <span className="text-sm text-gray-600 mr-2">
+                                {quizData.design?.progressBarType === "percentage" && "60%"}
+                                {quizData.design?.progressBarType === "steps" && "3/5"}
+                              </span>
+                            </div>
+                          )}
+
+                          {/* Barra de progresso */}
+                          <div className="w-full bg-gray-200 rounded-full" style={{ height: `${quizData.design?.progressBarHeight || 8}px` }}>
+                            <div 
+                              className={`rounded-full transition-all duration-300 ${
+                                quizData.design?.progressBarStyle === "square" ? "rounded-none" :
+                                quizData.design?.progressBarStyle === "thin" ? "rounded-full" :
+                                quizData.design?.progressBarStyle === "thick" ? "rounded-full" :
+                                "rounded-full"
+                              }`}
+                              style={{ 
+                                width: "60%",
+                                height: `${quizData.design?.progressBarHeight || 8}px`,
+                                backgroundColor: quizData.design?.progressBarColor || "#10b981"
+                              }}
+                            />
+                          </div>
+
+                          {/* Contador abaixo */}
+                          {quizData.design?.progressBarPosition === "below" && quizData.design?.progressBarType !== "none" && (
+                            <div className="text-center text-sm text-gray-600">
+                              {quizData.design?.progressBarType === "percentage" && "60%"}
+                              {quizData.design?.progressBarType === "steps" && "3/5"}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Estilo Visual */}
+                      <div>
+                        <Label htmlFor="progressBarStyle">Estilo Visual</Label>
+                        <select
+                          id="progressBarStyle"
+                          value={quizData.design?.progressBarStyle || "rounded"}
+                          onChange={(e) => setQuizData(prev => ({ 
+                            ...prev, 
+                            design: { ...prev.design, progressBarStyle: e.target.value }
+                          }))}
+                          className="mt-2 w-full px-3 py-2 border border-gray-300 rounded-md"
+                        >
+                          <option value="rounded">Arredondada</option>
+                          <option value="square">Quadrada</option>
+                          <option value="thin">Fina</option>
+                          <option value="thick">Grossa</option>
+                        </select>
+                      </div>
+
+                      <div>
+                        <Label htmlFor="progressBarHeight">Altura (px)</Label>
+                        <Input
+                          type="number"
+                          id="progressBarHeight"
+                          value={quizData.design?.progressBarHeight || 8}
+                          onChange={(e) => setQuizData(prev => ({ 
+                            ...prev, 
+                            design: { ...prev.design, progressBarHeight: parseInt(e.target.value) }
+                          }))}
+                          min="4"
+                          max="20"
+                          className="mt-2"
                         />
                       </div>
-                      <div className="text-center text-sm text-gray-600">
-                        {quizData.design?.progressBarType === "percentage" && "60%"}
-                        {quizData.design?.progressBarType === "steps" && "3/5"}
-                        {quizData.design?.progressBarType === "none" && ""}
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Estilo Visual */}
-                  <div>
-                    <Label htmlFor="progressBarStyle">Estilo Visual</Label>
-                    <select
-                      id="progressBarStyle"
-                      value={quizData.design?.progressBarStyle || "rounded"}
-                      onChange={(e) => setQuizData(prev => ({ 
-                        ...prev, 
-                        design: { ...prev.design, progressBarStyle: e.target.value }
-                      }))}
-                      className="mt-2 w-full px-3 py-2 border border-gray-300 rounded-md"
-                    >
-                      <option value="rounded">Arredondada</option>
-                      <option value="square">Quadrada</option>
-                      <option value="thin">Fina</option>
-                      <option value="thick">Grossa</option>
-                    </select>
-                  </div>
-
-                  <div>
-                    <Label htmlFor="progressBarHeight">Altura (px)</Label>
-                    <Input
-                      type="number"
-                      id="progressBarHeight"
-                      value={quizData.design?.progressBarHeight || 8}
-                      onChange={(e) => setQuizData(prev => ({ 
-                        ...prev, 
-                        design: { ...prev.design, progressBarHeight: parseInt(e.target.value) }
-                      }))}
-                      min="4"
-                      max="20"
-                      className="mt-2"
-                    />
-                  </div>
+                    </>
+                  )}
                 </CardContent>
               </Card>
 
