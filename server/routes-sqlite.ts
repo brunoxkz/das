@@ -9,6 +9,14 @@ import { verifyJWT } from "./auth-sqlite";
 import { sendSms } from "./twilio";
 import { emailService } from "./email-service";
 import { BrevoEmailService } from "./email-brevo";
+import { handleSecureUpload, uploadMiddleware } from "./upload-secure";
+import express from 'express';
+import path from 'path';
+import fs from 'fs';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 export function registerSQLiteRoutes(app: Express): Server {
   // Middleware de debug para todas as rotas POST
@@ -326,6 +334,69 @@ export function registerSQLiteRoutes(app: Express): Server {
       res.json(updatedQuiz);
     } catch (error) {
       console.error("❌ ERRO NA ATUALIZAÇÃO DO QUIZ:", error);
+      res.status(500).json({ message: "Failed to update quiz" });
+    }
+  });
+
+  // Update quiz with PATCH - used for design and partial updates
+  app.patch("/api/quizzes/:id", verifyJWT, async (req: any, res) => {
+    try {
+      const quizId = req.params.id;
+      const userId = req.user.id;
+      
+      const existingQuiz = await storage.getQuiz(quizId);
+      
+      if (!existingQuiz) {
+        return res.status(404).json({ message: "Quiz not found" });
+      }
+
+      if (existingQuiz.userId !== userId) {
+        return res.status(403).json({ message: "Access denied" });
+      }
+
+      // Validar design config se presente
+      if (req.body.designConfig) {
+        const { designConfig } = req.body;
+        
+        // Validações de segurança
+        if (designConfig.theme) {
+          const { primaryColor, secondaryColor, fontFamily, fontSize } = designConfig.theme;
+          
+          if (primaryColor && !primaryColor.match(/^#[0-9A-F]{6}$/i)) {
+            return res.status(400).json({ message: "Invalid primary color format" });
+          }
+          
+          if (secondaryColor && !secondaryColor.match(/^#[0-9A-F]{6}$/i)) {
+            return res.status(400).json({ message: "Invalid secondary color format" });
+          }
+          
+          if (fontFamily && typeof fontFamily !== 'string') {
+            return res.status(400).json({ message: "Invalid font family" });
+          }
+          
+          if (fontSize && (!fontSize.match(/^\d+px$/) || parseInt(fontSize) > 100)) {
+            return res.status(400).json({ message: "Invalid font size" });
+          }
+        }
+      }
+
+      // Invalidar caches antes da atualização
+      cache.invalidateUserCaches(userId);
+      cache.invalidateQuizCaches(quizId, userId);
+      
+      const updatedQuiz = await storage.updateQuiz(quizId, req.body);
+
+      // Invalidar caches após atualização
+      cache.invalidateUserCaches(userId);
+      cache.invalidateQuizCaches(quizId, userId);
+      
+      res.json({ 
+        success: true, 
+        message: "Quiz updated successfully",
+        quiz: updatedQuiz
+      });
+    } catch (error) {
+      console.error("❌ ERRO NA ATUALIZAÇÃO PATCH DO QUIZ:", error);
       res.status(500).json({ message: "Failed to update quiz" });
     }
   });
@@ -2297,6 +2368,53 @@ export function registerSQLiteRoutes(app: Express): Server {
 
     return extracted;
   }
+
+  // =============================================
+  // UPLOAD SEGURO PARA DESIGN (LOGO/FAVICON)
+  // =============================================
+
+  // Endpoint para upload seguro de logo/favicon
+  app.post("/api/upload/quiz-assets", verifyJWT, uploadMiddleware, handleSecureUpload);
+
+  // Endpoint para servir arquivos de upload (com verificação de segurança)
+  app.get("/uploads/:userId/:fileName", verifyJWT, async (req: any, res: Response) => {
+    try {
+      const { userId, fileName } = req.params;
+      const requestingUserId = req.user.id;
+      
+      // Verificar se o usuário pode acessar este arquivo
+      if (userId !== requestingUserId) {
+        return res.status(403).json({ error: "Acesso negado" });
+      }
+      
+      const filePath = path.join(__dirname, '../uploads', userId, fileName);
+      
+      // Verificar se arquivo existe
+      if (!fs.existsSync(filePath)) {
+        return res.status(404).json({ error: "Arquivo não encontrado" });
+      }
+      
+      // Servir arquivo com headers de segurança
+      res.setHeader('Content-Security-Policy', "default-src 'none'");
+      res.setHeader('X-Content-Type-Options', 'nosniff');
+      res.setHeader('X-Frame-Options', 'DENY');
+      res.sendFile(filePath);
+      
+    } catch (error) {
+      console.error("Erro ao servir arquivo:", error);
+      res.status(500).json({ error: "Erro interno do servidor" });
+    }
+  });
+
+  // Middleware para servir arquivos estáticos de upload (público)
+  app.use('/uploads', express.static(path.join(__dirname, '../uploads'), {
+    setHeaders: (res, filePath) => {
+      res.setHeader('Content-Security-Policy', "default-src 'none'");
+      res.setHeader('X-Content-Type-Options', 'nosniff');
+      res.setHeader('X-Frame-Options', 'DENY');
+      res.setHeader('Cache-Control', 'public, max-age=31536000'); // 1 ano
+    }
+  }));
 
   const httpServer = createServer(app);
 
