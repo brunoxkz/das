@@ -993,41 +993,125 @@ export function registerSQLiteRoutes(app: Express): Server {
         const conversionRate = totalViews > 0 ? (completedResponses / totalViews) * 100 : 0;
         const abandonmentRate = totalResponses > 0 ? ((totalResponses - completedResponses) / totalResponses) * 100 : 0;
         
-        // Generate insights
+        // Generate insights - SISTEMA INTELIGENTE MELHORADO
         const insights = [];
-        if (conversionRate < 20 && totalViews > 10) {
+        
+        // 1. ANÁLISE DE CONVERSÃO
+        if (conversionRate === 0 && totalViews > 0) {
+          insights.push({
+            type: 'error',
+            title: 'Problema Crítico de Conversão',
+            description: `Nenhuma conversão registrada em ${totalViews} visualizações`,
+            recommendation: 'Revise urgentemente o fluxo do quiz - pode haver problema técnico ou UX'
+          });
+        } else if (conversionRate < 15 && totalViews > 10) {
+          insights.push({
+            type: 'warning',
+            title: 'Taxa de Conversão Muito Baixa',
+            description: `Taxa de conversão de ${conversionRate.toFixed(1)}% está crítica (ideal: 20%+)`,
+            recommendation: 'Simplifique as perguntas, reduza etapas ou melhore o design'
+          });
+        } else if (conversionRate < 25 && totalViews > 10) {
           insights.push({
             type: 'warning',
             title: 'Taxa de Conversão Baixa',
-            description: `Taxa de conversão de ${conversionRate.toFixed(1)}% está abaixo do recomendado (20%+)`,
-            recommendation: 'Considere simplificar as perguntas ou melhorar o design do quiz'
+            description: `Taxa de conversão de ${conversionRate.toFixed(1)}% pode melhorar (ideal: 25%+)`,
+            recommendation: 'Otimize as primeiras perguntas para engajar melhor os usuários'
           });
-        }
-        
-        if (conversionRate > 40) {
+        } else if (conversionRate > 45) {
           insights.push({
             type: 'success',
-            title: 'Excelente Performance',
+            title: 'Performance Excepcional',
+            description: `Taxa de conversão de ${conversionRate.toFixed(1)}% está excelente!`,
+            recommendation: 'Escale esta estratégia - considere aumentar investimento em tráfego'
+          });
+        } else if (conversionRate > 30) {
+          insights.push({
+            type: 'success',
+            title: 'Boa Performance',
             description: `Taxa de conversão de ${conversionRate.toFixed(1)}% está acima da média`,
-            recommendation: 'Continue com esta estratégia e considere escalar o alcance'
+            recommendation: 'Continue com esta estratégia e monitore mudanças'
           });
         }
         
-        if (abandonmentRate > 60 && totalResponses > 5) {
+        // 2. ANÁLISE DE LEADS (CAPTURA DE CONTATO)
+        if (leadsWithContact === 0 && totalResponses > 0) {
           insights.push({
             type: 'error',
-            title: 'Alta Taxa de Abandono',
-            description: `${abandonmentRate.toFixed(1)}% dos usuários abandonam antes de completar`,
-            recommendation: 'Reduza o número de perguntas ou melhore a experiência do usuário'
+            title: 'Sem Captura de Leads',
+            description: `${totalResponses} respostas mas nenhum contato capturado`,
+            recommendation: 'Adicione campos de email/telefone obrigatórios para capturar leads'
+          });
+        } else if (leadsWithContact < totalResponses * 0.5 && totalResponses > 3) {
+          insights.push({
+            type: 'warning',
+            title: 'Baixa Captura de Contatos',
+            description: `Apenas ${leadsWithContact} de ${totalResponses} respostas captaram contato`,
+            recommendation: 'Torne campos de email/telefone obrigatórios ou melhore incentivos'
           });
         }
         
-        if (totalViews < 10 && quiz.isPublished) {
+        // 3. ANÁLISE DE ABANDONO
+        if (abandonmentRate > 70 && totalResponses > 5) {
+          insights.push({
+            type: 'error',
+            title: 'Taxa de Abandono Crítica',
+            description: `${abandonmentRate.toFixed(1)}% dos usuários abandonam antes de completar`,
+            recommendation: 'Quiz muito longo ou complexo - reduza drasticamente o número de perguntas'
+          });
+        } else if (abandonmentRate > 50 && totalResponses > 5) {
+          insights.push({
+            type: 'warning',
+            title: 'Alta Taxa de Abandono',
+            description: `${abandonmentRate.toFixed(1)}% dos usuários abandonam o quiz`,
+            recommendation: 'Simplifique o quiz ou adicione barra de progresso motivacional'
+          });
+        }
+        
+        // 4. ANÁLISE DE TRÁFEGO
+        if (totalViews === 0) {
+          insights.push({
+            type: 'info',
+            title: 'Quiz Sem Visualizações',
+            description: 'Quiz ainda não recebeu nenhuma visualização',
+            recommendation: quiz.isPublished ? 'Comece a divulgar o quiz em redes sociais e campanhas' : 'Publique o quiz para começar a receber tráfego'
+          });
+        } else if (totalViews < 5 && quiz.isPublished) {
           insights.push({
             type: 'info',
             title: 'Poucas Visualizações',
-            description: 'Quiz tem poucas visualizações para análise significativa',
-            recommendation: 'Aumente a divulgação do quiz para obter mais dados analíticos'
+            description: 'Quiz precisa de mais tráfego para análise confiável',
+            recommendation: 'Invista em divulgação - ideal ter pelo menos 50+ views para insights precisos'
+          });
+        } else if (totalViews > 100) {
+          insights.push({
+            type: 'success',
+            title: 'Quiz Popular',
+            description: `${totalViews} visualizações - boa penetração de mercado`,
+            recommendation: 'Analise padrões de resposta para criar quizzes similares'
+          });
+        }
+        
+        // 5. INSIGHTS BASEADOS NO TEMPO (se quiz tem mais de 7 dias)
+        const quizAge = Date.now() - new Date(quiz.createdAt).getTime();
+        const daysOld = Math.floor(quizAge / (1000 * 60 * 60 * 24));
+        
+        if (daysOld > 7 && totalViews < 20) {
+          insights.push({
+            type: 'warning',
+            title: 'Quiz Estagnado',
+            description: `Apenas ${totalViews} views em ${daysOld} dias`,
+            recommendation: 'Considere revisar o quiz ou intensificar estratégias de divulgação'
+          });
+        }
+        
+        // 6. INSIGHTS DE OTIMIZAÇÃO AVANÇADA
+        if (totalViews > 50 && conversionRate > 25 && leadsWithContact > 10) {
+          insights.push({
+            type: 'success',
+            title: 'Quiz Otimizado',
+            description: 'Boa combinação de tráfego, conversão e captura de leads',
+            recommendation: 'Use este quiz como modelo para criar variações A/B'
           });
         }
         
