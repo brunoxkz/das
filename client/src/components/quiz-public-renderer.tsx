@@ -10,6 +10,23 @@ import { Progress } from "@/components/ui/progress";
 import { ArrowRight, ArrowLeft, CheckCircle, Calendar, Star, Target, Scale, ArrowUpDown, Share2, Loader2 } from "lucide-react";
 import { nanoid } from "nanoid";
 
+// Função para ajustar brilho da cor
+function adjustColorBrightness(color: string, amount: number): string {
+  const usePound = color[0] === '#';
+  const col = usePound ? color.slice(1) : color;
+  
+  const num = parseInt(col, 16);
+  let r = (num >> 16) + amount;
+  let g = (num >> 8 & 0x00FF) + amount;
+  let b = (num & 0x0000FF) + amount;
+  
+  r = r > 255 ? 255 : r < 0 ? 0 : r;
+  g = g > 255 ? 255 : g < 0 ? 0 : g;
+  b = b > 255 ? 255 : b < 0 ? 0 : b;
+  
+  return (usePound ? '#' : '') + (r << 16 | g << 8 | b).toString(16).padStart(6, '0');
+}
+
 interface Element {
   id: string;
   type: string;
@@ -575,8 +592,10 @@ export function QuizPublicRenderer({ quiz }: QuizPublicRendererProps) {
       case 'continue_button':
         const buttonBgColor = properties.buttonBackgroundColor || quiz.design?.buttonColor || "#10b981";
         const buttonTextColor = properties.buttonTextColor || "#ffffff";
+        const buttonHoverColor = properties.buttonHoverColor || (properties.buttonBackgroundColor ? adjustColorBrightness(properties.buttonBackgroundColor, -20) : quiz.design?.buttonColor ? adjustColorBrightness(quiz.design.buttonColor, -20) : "#059669");
         const buttonSize = properties.buttonSize || quiz.design?.buttonSize || "medium";
         const buttonStyle = properties.buttonBorderRadius || quiz.design?.buttonStyle || "rounded";
+        const isFixedFooter = properties.isFixedFooter || false;
         
         const sizeClasses = {
           small: "px-4 py-2 text-sm",
@@ -591,7 +610,7 @@ export function QuizPublicRenderer({ quiz }: QuizPublicRendererProps) {
         };
         
         return (
-          <div key={id} className="flex justify-center">
+          <div key={id} className={`flex justify-center ${isFixedFooter ? 'fixed bottom-0 left-0 right-0 z-50 bg-white/90 backdrop-blur-sm border-t shadow-lg py-4' : ''}`}>
             <Button
               onClick={handleNextPage}
               disabled={isSubmitting}
@@ -599,20 +618,15 @@ export function QuizPublicRenderer({ quiz }: QuizPublicRendererProps) {
               style={{
                 backgroundColor: buttonBgColor,
                 color: buttonTextColor,
-                border: 'none'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = buttonHoverColor;
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = buttonBgColor;
               }}
             >
-              {isSubmitting ? (
-                <>
-                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  Enviando...
-                </>
-              ) : (
-                <>
-                  {properties.text || (isLastPage ? 'Finalizar' : 'Continuar')}
-                  <ArrowRight className="w-4 h-4 ml-2" />
-                </>
-              )}
+              {properties.buttonText || "Continuar"}
             </Button>
           </div>
         );

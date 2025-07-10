@@ -160,6 +160,7 @@ interface Element {
   buttonHoverColor?: string;
   buttonBorderRadius?: "none" | "small" | "medium" | "large" | "full";
   buttonSize?: "small" | "medium" | "large";
+  isFixedFooter?: boolean;
   
   // Propriedades específicas para carregamento + pergunta
   loadingDuration?: number; // duração em segundos
@@ -717,7 +718,8 @@ const gameElementCategories = [
         buttonBorderRadius: "medium" as const,
         buttonBackgroundColor: "#10B981",
         buttonTextColor: "#FFFFFF",
-        buttonHoverColor: "#059669"
+        buttonHoverColor: "#059669",
+        isFixedFooter: false
       }),
       ...(type === "loading_question" && {
         loadingDuration: 3,
@@ -1343,6 +1345,7 @@ const gameElementCategories = [
         const buttonBorderRadius = element.buttonBorderRadius || quiz.design?.buttonStyle === "square" ? "none" : quiz.design?.buttonStyle === "pill" ? "full" : "medium";
         const buttonBgColor = element.buttonBackgroundColor || quiz.design?.buttonColor || "#10B981";
         const buttonTextColor = element.buttonTextColor || "#FFFFFF";
+        const isFixedFooter = element.isFixedFooter || false;
         
         const sizeClasses = {
           small: "px-4 py-2 text-sm",
@@ -1365,7 +1368,7 @@ const gameElementCategories = [
               <span className="font-medium text-blue-800">Botão de Navegação</span>
             </div>
             
-            <div className="flex justify-center">
+            <div className={`flex justify-center ${isFixedFooter ? 'p-4 bg-gray-100 border-t' : ''}`}>
               <button
                 style={{
                   backgroundColor: buttonBgColor,
@@ -1376,14 +1379,18 @@ const gameElementCategories = [
                   ${radiusClasses[buttonBorderRadius]}
                   font-medium shadow-lg transform transition-all duration-200
                   hover:scale-105 hover:shadow-xl
-                  animate-pulse
                   relative overflow-hidden
                 `}
               >
                 <span className="relative z-10">{buttonText}</span>
-                <div className="absolute inset-0 bg-white opacity-20 animate-ping rounded-full"></div>
               </button>
             </div>
+            
+            {isFixedFooter && (
+              <div className="text-xs text-orange-600 text-center mt-2">
+                🔒 Fixado no rodapé (sempre visível)
+              </div>
+            )}
             
             <div className="text-xs text-blue-600 text-center">
               Ação: {buttonAction === "next_page" ? "Próxima página" : "URL personalizada"}
@@ -4970,6 +4977,35 @@ const gameElementCategories = [
                       onChange={(e) => updateElement(selectedElementData.id, { buttonHoverColor: e.target.value })}
                       className="mt-1 h-10"
                     />
+                  </div>
+
+                  <div className="border-t pt-4">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <Label className="text-sm font-medium">Fixar no Rodapé</Label>
+                        <p className="text-xs text-gray-500 mt-1">
+                          Botão sempre visível na parte inferior da tela
+                        </p>
+                      </div>
+                      <input
+                        type="checkbox"
+                        checked={selectedElementData.isFixedFooter || false}
+                        onChange={(e) => updateElement(selectedElementData.id, { isFixedFooter: e.target.checked })}
+                        className="h-4 w-4 text-green-600 border-gray-300 rounded focus:ring-green-500"
+                      />
+                    </div>
+                    
+                    {selectedElementData.isFixedFooter && (
+                      <div className="mt-3 p-3 bg-orange-50 border border-orange-200 rounded-lg">
+                        <div className="flex items-center gap-2 mb-2">
+                          <span className="text-orange-600">🔒</span>
+                          <span className="font-medium text-orange-800">Botão Fixo Ativo</span>
+                        </div>
+                        <div className="text-xs text-orange-700">
+                          O botão permanecerá sempre visível na parte inferior da tela, mesmo quando o usuário rolar a página.
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
               )}

@@ -21,6 +21,23 @@ import {
 import { globalVariableProcessor, processVariables, setQuizResponse, addCalculationRule, VariableProcessor } from "@/lib/variables";
 import { apiRequest } from "@/lib/queryClient";
 
+// Função para ajustar brilho da cor
+function adjustColorBrightness(color: string, amount: number): string {
+  const usePound = color[0] === '#';
+  const col = usePound ? color.slice(1) : color;
+  
+  const num = parseInt(col, 16);
+  let r = (num >> 16) + amount;
+  let g = (num >> 8 & 0x00FF) + amount;
+  let b = (num & 0x0000FF) + amount;
+  
+  r = r > 255 ? 255 : r < 0 ? 0 : r;
+  g = g > 255 ? 255 : g < 0 ? 0 : g;
+  b = b > 255 ? 255 : b < 0 ? 0 : b;
+  
+  return (usePound ? '#' : '') + (r << 16 | g << 8 | b).toString(16).padStart(6, '0');
+}
+
 // Componente para textos alternantes
 const AlternatingText = ({ texts, color, fontSize }: { 
   texts: Array<{ text: string; duration: number }>, 
@@ -767,7 +784,8 @@ export function QuizPreview({ quiz }: QuizPreviewProps) {
         const buttonBorderRadius = element.buttonBorderRadius || quiz.design?.buttonStyle === "square" ? "none" : quiz.design?.buttonStyle === "pill" ? "full" : "medium";
         const buttonBgColor = element.buttonBackgroundColor || quiz.design?.buttonColor || "#10B981";
         const buttonTextColor = element.buttonTextColor || "#FFFFFF";
-        const buttonHoverColor = element.buttonHoverColor || (quiz.design?.buttonColor ? adjustColorBrightness(quiz.design.buttonColor, -20) : "#059669");
+        const buttonHoverColor = element.buttonHoverColor || (element.buttonBackgroundColor ? adjustColorBrightness(element.buttonBackgroundColor, -20) : quiz.design?.buttonColor ? adjustColorBrightness(quiz.design.buttonColor, -20) : "#059669");
+        const isFixedFooter = element.isFixedFooter || false;
         
         const sizeClasses = {
           small: "px-4 py-2 text-sm",
@@ -784,7 +802,7 @@ export function QuizPreview({ quiz }: QuizPreviewProps) {
         };
         
         return (
-          <div className="mb-6 flex justify-center">
+          <div className={`mb-6 flex justify-center ${isFixedFooter ? 'fixed bottom-0 left-0 right-0 z-50 bg-white/90 backdrop-blur-sm border-t shadow-lg py-4' : ''}`}>
             <button
               style={{
                 backgroundColor: buttonBgColor,
@@ -795,7 +813,6 @@ export function QuizPreview({ quiz }: QuizPreviewProps) {
                 ${radiusClasses[buttonBorderRadius]}
                 font-medium shadow-lg transform transition-all duration-200
                 hover:scale-105 hover:shadow-xl
-                animate-pulse
                 relative overflow-hidden
               `}
               onMouseEnter={(e) => {
@@ -814,7 +831,6 @@ export function QuizPreview({ quiz }: QuizPreviewProps) {
               }}
             >
               <span className="relative z-10">{buttonText}</span>
-              <div className="absolute inset-0 bg-white opacity-20 animate-ping rounded-full"></div>
             </button>
           </div>
         );
