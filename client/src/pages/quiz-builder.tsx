@@ -34,7 +34,8 @@ import {
   Plus,
   Minus,
   Target,
-  Activity
+  Activity,
+  Search
 } from "lucide-react";
 import { Link } from "wouter";
 
@@ -641,7 +642,7 @@ export default function QuizBuilder() {
             { id: "fluxo", label: "Fluxo (Avançado)", icon: <Network className="w-4 h-4" /> },
             { id: "design", label: "Design", icon: <Palette className="w-4 h-4" /> },
             { id: "settings", label: "Configurações", icon: <Settings className="w-4 h-4" /> },
-            { id: "pixels", label: "Pixels", icon: <Target className="w-4 h-4" /> },
+            { id: "pixels", label: "Pixels/Scripts", icon: <Target className="w-4 h-4" /> },
 
           ].map((tab) => (
             <button
@@ -788,71 +789,7 @@ export default function QuizBuilder() {
                 </CardContent>
               </Card>
 
-              {/* Favicon */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Globe className="w-5 h-5" />
-                    Favicon
-                  </CardTitle>
-                  <p className="text-sm text-gray-600">Ícone que aparece na aba do navegador</p>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div>
-                    <Label htmlFor="faviconUpload">Upload de Favicon</Label>
-                    <Input
-                      id="faviconUpload"
-                      type="file"
-                      accept="image/*,.ico"
-                      onChange={async (e) => {
-                        const file = e.target.files?.[0];
-                        if (file) {
-                          const faviconUrl = URL.createObjectURL(file);
-                          setQuizData(prev => ({ 
-                            ...prev, 
-                            design: { ...prev.design, faviconUrl, favicon: file.name }
-                          }));
-                        }
-                      }}
-                      className="mt-2"
-                    />
-                    <p className="text-xs text-gray-500 mt-1">Formatos aceitos: ICO, PNG, JPG (16x16 ou 32x32 pixels)</p>
-                  </div>
 
-                  <div>
-                    <Label htmlFor="faviconUrl">URL do Favicon (alternativa)</Label>
-                    <Input
-                      id="faviconUrl"
-                      value={quizData.design?.faviconUrl || ""}
-                      onChange={(e) => setQuizData(prev => ({ 
-                        ...prev, 
-                        design: { ...prev.design, faviconUrl: e.target.value }
-                      }))}
-                      placeholder="https://exemplo.com/favicon.ico"
-                      className="mt-2"
-                    />
-                    <p className="text-xs text-gray-500 mt-1">URL alternativa se não fizer upload</p>
-                  </div>
-
-                  {/* Preview do Favicon */}
-                  {quizData.design?.faviconUrl && (
-                    <div className="mt-4 p-4 bg-gray-50 rounded-lg">
-                      <Label className="text-sm font-medium mb-2 block">Preview do Favicon</Label>
-                      <div className="flex items-center gap-3">
-                        <img
-                          src={quizData.design.faviconUrl}
-                          alt="Favicon Preview"
-                          className="w-4 h-4 object-contain"
-                          onError={(e) => {
-                            e.currentTarget.style.display = 'none';
-                          }}
-                        />
-                        <span className="text-sm text-gray-600">16x16 pixels</span>
-                      </div>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
 
               {/* Cores e Fundo */}
               <Card>
@@ -1204,6 +1141,14 @@ export default function QuizBuilder() {
                       rows={4}
                     />
                     <p className="text-xs text-gray-500 mt-1">Scripts personalizados para adicionar no &lt;head&gt; da página</p>
+                    
+                    {/* Aviso de Segurança */}
+                    <div className="mt-3 p-3 bg-red-50 rounded-lg border border-red-200">
+                      <p className="text-sm text-red-800">
+                        <strong>⚠️ AVISO DE SEGURANÇA:</strong> Insira apenas código de fontes confiáveis. 
+                        Scripts maliciosos podem comprometer a segurança do seu quiz e capturar dados dos usuários.
+                      </p>
+                    </div>
                   </div>
 
                   {/* Informações importantes */}
@@ -1211,6 +1156,145 @@ export default function QuizBuilder() {
                     <p className="text-sm text-blue-800">
                       <strong>ℹ️ Importante:</strong> Os pixels são inseridos apenas na página publicada do quiz, não no preview. 
                       Cada quiz tem seus próprios pixels configurados individualmente.
+                    </p>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* SEO e Meta Tags */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Search className="w-5 h-5" />
+                    SEO e Meta Tags
+                  </CardTitle>
+                  <p className="text-sm text-gray-600">Configure meta tags para melhorar o posicionamento nos buscadores</p>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div>
+                    <Label htmlFor="seoTitle">Título SEO</Label>
+                    <Input
+                      id="seoTitle"
+                      value={quizData.design?.seoTitle || ""}
+                      onChange={(e) => setQuizData(prev => ({ 
+                        ...prev, 
+                        design: { ...prev.design, seoTitle: e.target.value }
+                      }))}
+                      placeholder="Título que aparece nos resultados do Google"
+                      className="mt-2"
+                      maxLength={60}
+                    />
+                    <p className="text-xs text-gray-500 mt-1">Recomendado: 50-60 caracteres</p>
+                  </div>
+
+                  <div>
+                    <Label htmlFor="seoDescription">Descrição SEO</Label>
+                    <Textarea
+                      id="seoDescription"
+                      value={quizData.design?.seoDescription || ""}
+                      onChange={(e) => setQuizData(prev => ({ 
+                        ...prev, 
+                        design: { ...prev.design, seoDescription: e.target.value }
+                      }))}
+                      placeholder="Descrição que aparece nos resultados do Google"
+                      className="mt-2"
+                      rows={3}
+                      maxLength={160}
+                    />
+                    <p className="text-xs text-gray-500 mt-1">Recomendado: 150-160 caracteres</p>
+                  </div>
+
+                  <div>
+                    <Label htmlFor="seoKeywords">Palavras-chave SEO</Label>
+                    <Input
+                      id="seoKeywords"
+                      value={quizData.design?.seoKeywords || ""}
+                      onChange={(e) => setQuizData(prev => ({ 
+                        ...prev, 
+                        design: { ...prev.design, seoKeywords: e.target.value }
+                      }))}
+                      placeholder="palavra1, palavra2, palavra3"
+                      className="mt-2"
+                    />
+                    <p className="text-xs text-gray-500 mt-1">Separe por vírgula (máximo 10 palavras)</p>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Favicon */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Globe className="w-5 h-5" />
+                    Favicon
+                  </CardTitle>
+                  <p className="text-sm text-gray-600">Ícone que aparece na aba do navegador</p>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div>
+                    <Label htmlFor="faviconUpload">Upload de Favicon</Label>
+                    <Input
+                      id="faviconUpload"
+                      type="file"
+                      accept="image/*,.ico"
+                      onChange={async (e) => {
+                        const file = e.target.files?.[0];
+                        if (file) {
+                          // Validação de segurança
+                          if (file.size > 1024 * 1024) { // 1MB
+                            alert("Arquivo muito grande. Máximo 1MB permitido.");
+                            return;
+                          }
+                          const faviconUrl = URL.createObjectURL(file);
+                          setQuizData(prev => ({ 
+                            ...prev, 
+                            design: { ...prev.design, faviconUrl, favicon: file.name }
+                          }));
+                        }
+                      }}
+                      className="mt-2"
+                    />
+                    <p className="text-xs text-gray-500 mt-1">Formatos aceitos: ICO, PNG, JPG (16x16 ou 32x32 pixels, máx. 1MB)</p>
+                  </div>
+
+                  <div>
+                    <Label htmlFor="faviconUrl">URL do Favicon (alternativa)</Label>
+                    <Input
+                      id="faviconUrl"
+                      value={quizData.design?.faviconUrl || ""}
+                      onChange={(e) => setQuizData(prev => ({ 
+                        ...prev, 
+                        design: { ...prev.design, faviconUrl: e.target.value }
+                      }))}
+                      placeholder="https://exemplo.com/favicon.ico"
+                      className="mt-2"
+                    />
+                    <p className="text-xs text-gray-500 mt-1">URL alternativa se não fizer upload</p>
+                  </div>
+
+                  {/* Preview do Favicon */}
+                  {quizData.design?.faviconUrl && (
+                    <div className="mt-4 p-4 bg-gray-50 rounded-lg">
+                      <Label className="text-sm font-medium mb-2 block">Preview do Favicon</Label>
+                      <div className="flex items-center gap-3">
+                        <img
+                          src={quizData.design.faviconUrl}
+                          alt="Favicon Preview"
+                          className="w-4 h-4 object-contain"
+                          onError={(e) => {
+                            e.currentTarget.style.display = 'none';
+                          }}
+                        />
+                        <span className="text-sm text-gray-600">16x16 pixels</span>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Aviso de Segurança para Favicon */}
+                  <div className="p-3 bg-yellow-50 rounded-lg border border-yellow-200">
+                    <p className="text-sm text-yellow-800">
+                      <strong>🔒 SEGURANÇA:</strong> Faça upload apenas de arquivos de fontes confiáveis. 
+                      Evite usar URLs de sites desconhecidos.
                     </p>
                   </div>
                 </CardContent>

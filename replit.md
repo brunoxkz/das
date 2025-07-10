@@ -182,6 +182,15 @@ No additional files or separate projects are maintained in this repository.
 
 ```
 Changelog:
+- July 10, 2025. REORGANIZAÇÃO DE INTERFACE - Separação de funcionalidades para melhor organização:
+  * Criada nova aba "Pixels/Scripts" separada da aba "Configurações"
+  * Movidas seções de pixels de rastreamento para aba dedicada
+  * Adicionadas seções de SEO e Meta Tags com validação de comprimento
+  * Implementada seção de Favicon com upload seguro e preview
+  * Adicionadas proteções de segurança para scripts personalizados e uploads
+  * Limite de 1MB para upload de favicon com validação de tamanho
+  * Avisos de segurança para prevenir vulnerabilidades
+  * Interface mais limpa com separação clara entre configurações básicas e avançadas
 - July 03, 2025. Initial setup
 - July 03, 2025. Rebrand to Vendzz with green futuristic theme
 - July 03, 2025. Fixed 404 errors for "Meus Quizzes" and "Configurações" pages
