@@ -517,6 +517,11 @@ const transitionElementCategories = [
         label: "Carregamento",
         icon: <Loader className="w-4 h-4" />,
       },
+      {
+        type: "animated_transition",
+        label: "Transição Animada",
+        icon: <Sparkles className="w-4 h-4" />,
+      },
     ],
   },
   {
