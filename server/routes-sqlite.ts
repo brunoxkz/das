@@ -2032,6 +2032,19 @@ export function registerSQLiteRoutes(app: Express): Server {
     }
   });
 
+  // SMS Credits History endpoint
+  app.get("/api/sms-credits/history", verifyJWT, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const transactions = await storage.getSmsTransactions(userId);
+      
+      res.json(transactions);
+    } catch (error) {
+      console.error("Error fetching SMS transactions:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
   app.get("/api/health", (req, res) => {
     res.json({ 
       status: "ok", 
@@ -2053,6 +2066,21 @@ export function registerSQLiteRoutes(app: Express): Server {
         return res.status(400).json({ error: "Phones array is required" });
       }
 
+      // Validar formato dos telefones
+      const validPhones = phones.filter(phone => {
+        const phoneStr = (phone.phone || phone).toString();
+        const cleanPhone = phoneStr.replace(/\D/g, '');
+        return cleanPhone.length >= 10 && cleanPhone.length <= 15 && /^\d+$/.test(cleanPhone);
+      });
+
+      if (validPhones.length === 0) {
+        return res.status(400).json({ error: "Nenhum telefone válido encontrado" });
+      }
+
+      if (validPhones.length !== phones.length) {
+        console.log(`⚠️ TELEFONES INVÁLIDOS FILTRADOS: ${phones.length - validPhones.length} telefones removidos`);
+      }
+
       if (!message || message.trim() === "") {
         return res.status(400).json({ error: "Message is required" });
       }
@@ -2060,27 +2088,33 @@ export function registerSQLiteRoutes(app: Express): Server {
       // Importar função sendSms do twilio
       const { sendSms } = await import("./twilio");
 
-      // Verificar créditos SMS antes do envio
+      // Buscar dados do usuário
+      const user = await storage.getUser(userId);
+      if (!user) {
+        return res.status(404).json({ error: "User not found" });
+      }
+
+      // Verificar créditos SMS antes do envio (usar validPhones)
       const currentSentSMS = await storage.getSentSMSCount(userId);
       const remainingCredits = Math.max(0, (user.smsCredits || 100) - currentSentSMS);
       
-      console.log(`💰 VERIFICAÇÃO DE CRÉDITOS: Tem ${remainingCredits}, precisa ${phones.length}`);
+      console.log(`💰 VERIFICAÇÃO DE CRÉDITOS: Tem ${remainingCredits}, precisa ${validPhones.length}`);
       
       if (remainingCredits <= 0) {
         console.log(`🚫 CRÉDITOS ESGOTADOS`);
         return res.status(400).json({ 
-          error: "Créditos SMS esgotados", 
+          error: "Créditos SMS insuficientes", 
           remaining: remainingCredits,
-          needed: phones.length 
+          needed: validPhones.length 
         });
       }
       
-      if (phones.length > remainingCredits) {
+      if (validPhones.length > remainingCredits) {
         console.log(`🚫 CRÉDITOS INSUFICIENTES`);
         return res.status(400).json({ 
-          error: `Créditos insuficientes. Precisa de ${phones.length} créditos, restam ${remainingCredits}`,
+          error: `Créditos insuficientes. Precisa de ${validPhones.length} créditos, restam ${remainingCredits}`,
           remaining: remainingCredits,
-          needed: phones.length 
+          needed: validPhones.length 
         });
       }
 
@@ -2088,7 +2122,7 @@ export function registerSQLiteRoutes(app: Express): Server {
       let successCount = 0;
       let failureCount = 0;
 
-      for (const phone of phones) {
+      for (const phone of validPhones) {
         try {
           const phoneNumber = phone.phone || phone;
           console.log(`📲 Enviando SMS para: ${phoneNumber}`);
@@ -2182,6 +2216,18 @@ export function registerSQLiteRoutes(app: Express): Server {
       if (!name || !quizId || !message) {
         console.log("📱 SMS CAMPAIGN CREATE - ERRO: Dados obrigatórios em falta");
         return res.status(400).json({ error: "Dados obrigatórios em falta" });
+      }
+
+      // Verificar se o quiz existe e pertence ao usuário
+      const quiz = await storage.getQuiz(quizId);
+      if (!quiz) {
+        console.log("📱 SMS CAMPAIGN CREATE - ERRO: Quiz não encontrado");
+        return res.status(404).json({ error: "Quiz não encontrado" });
+      }
+      
+      if (quiz.userId !== userId) {
+        console.log("📱 SMS CAMPAIGN CREATE - ERRO: Quiz não pertence ao usuário");
+        return res.status(403).json({ error: "Acesso negado - Quiz não pertence ao usuário" });
       }
 
       // Buscar automaticamente os telefones do quiz
