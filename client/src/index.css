@@ -2,6 +2,58 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Sidebar Responsive Styles */
+.vendzz-sidebar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 100vh;
+  z-index: 30;
+  transition: width 0.3s ease-in-out;
+  background: white;
+  border-right: 1px solid #e5e7eb;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+.vendzz-sidebar.collapsed {
+  width: 4rem; /* 64px */
+}
+
+.vendzz-sidebar.expanded {
+  width: 16rem; /* 256px */
+}
+
+/* Main content margin adjustment */
+.main-content {
+  margin-left: 16rem; /* 256px - default expanded */
+  transition: margin-left 0.3s ease-in-out;
+  min-height: 100vh;
+}
+
+.main-content.sidebar-collapsed {
+  margin-left: 4rem; /* 64px */
+}
+
+/* Mobile responsive */
+@media (max-width: 768px) {
+  .vendzz-sidebar {
+    transform: translateX(-100%);
+    z-index: 50;
+  }
+  
+  .vendzz-sidebar.mobile-open {
+    transform: translateX(0);
+  }
+  
+  .main-content {
+    margin-left: 0;
+  }
+  
+  .main-content.sidebar-collapsed {
+    margin-left: 0;
+  }
+}
+
 :root {
   --background: hsl(0, 0%, 100%);
   --foreground: hsl(20, 14.3%, 4.1%);

@@ -33,7 +33,9 @@ import {
   BarChart,
   Target,
   Bell,
-  Globe
+  Globe,
+  Menu,
+  X
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -42,7 +44,7 @@ export function Sidebar() {
   const { user } = useAuth();
   const userData = user as any;
   const { t } = useLanguage();
-  const { isCollapsed } = useSidebar();
+  const { isCollapsed, toggleSidebar } = useSidebar();
 
   // Buscar dados dos quizzes em tempo real
   const { data: quizzes } = useQuery({
@@ -168,8 +170,8 @@ export function Sidebar() {
 
   return (
     <aside className={cn(
-      "vendzz-sidebar flex flex-col transition-all duration-300 h-screen bg-white border-r border-gray-200 fixed top-0 left-0 z-30",
-      isCollapsed ? "w-16" : "w-64"
+      "vendzz-sidebar flex flex-col",
+      isCollapsed ? "collapsed" : "expanded"
     )}>
       {/* Logo and Notifications */}
       <div className="p-4 border-b border-gray-200">
@@ -191,27 +193,37 @@ export function Sidebar() {
             )}
           </div>
 
-          {/* Language and Notification Icons (reordered) */}
-          {!isCollapsed && (
-            <div className="flex items-center space-x-2">
-              {/* Language Selector */}
-              <LanguageSelector />
-              
-              {/* Notification Bell */}
-              <NotificationSystem />
-            </div>
-          )}
-
-          {isCollapsed && (
-            <div className="flex flex-col space-y-1">
-              {/* Language Selector - Collapsed */}
-              <LanguageSelector collapsed={true} />
-              
-              {/* Notification Bell - Collapsed */}
-              <NotificationSystem />
-            </div>
-          )}
+          {/* Toggle Button */}
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={toggleSidebar}
+            className="h-8 w-8 p-0 hover:bg-gray-100"
+          >
+            {isCollapsed ? <Menu className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
+          </Button>
         </div>
+
+        {/* Language and Notification Icons (moved below) */}
+        {!isCollapsed && (
+          <div className="flex items-center justify-center space-x-2 mt-3">
+            {/* Language Selector */}
+            <LanguageSelector />
+            
+            {/* Notification Bell */}
+            <NotificationSystem />
+          </div>
+        )}
+
+        {isCollapsed && (
+          <div className="flex flex-col items-center space-y-1 mt-3">
+            {/* Language Selector - Collapsed */}
+            <LanguageSelector collapsed={true} />
+            
+            {/* Notification Bell - Collapsed */}
+            <NotificationSystem />
+          </div>
+        )}
       </div>
 
       {/* Create Button */}

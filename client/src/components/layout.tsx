@@ -21,8 +21,8 @@ export function Layout({ children, showSidebar = true }: LayoutProps) {
     <div className="min-h-screen bg-gray-50">
       <Sidebar />
       <main className={cn(
-        "min-h-screen transition-all duration-300",
-        isCollapsed ? "ml-16" : "ml-64"
+        "main-content",
+        isCollapsed ? "sidebar-collapsed" : ""
       )}>
         {children}
       </main>
