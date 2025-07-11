@@ -2032,6 +2032,91 @@ export function registerSQLiteRoutes(app: Express): Server {
     }
   });
 
+  // Unified Credits Purchase endpoint
+  app.post("/api/credits/purchase", verifyJWT, async (req: any, res) => {
+    try {
+      const { type, packageId } = req.body;
+      const userId = req.user.id;
+      
+      // Define package options for each credit type
+      const packages = {
+        sms: [
+          { id: 'sms_100', credits: 100, price: 9.90 },
+          { id: 'sms_500', credits: 500, price: 39.90 },
+          { id: 'sms_1000', credits: 1000, price: 69.90 },
+          { id: 'sms_5000', credits: 5000, price: 299.90 }
+        ],
+        email: [
+          { id: 'email_1000', credits: 1000, price: 4.90 },
+          { id: 'email_5000', credits: 5000, price: 19.90 },
+          { id: 'email_10000', credits: 10000, price: 34.90 },
+          { id: 'email_50000', credits: 50000, price: 149.90 }
+        ],
+        whatsapp: [
+          { id: 'whatsapp_100', credits: 100, price: 19.90 },
+          { id: 'whatsapp_500', credits: 500, price: 89.90 },
+          { id: 'whatsapp_1000', credits: 1000, price: 159.90 },
+          { id: 'whatsapp_5000', credits: 5000, price: 699.90 }
+        ],
+        ai: [
+          { id: 'ai_50', credits: 50, price: 29.90 },
+          { id: 'ai_200', credits: 200, price: 99.90 },
+          { id: 'ai_500', credits: 500, price: 199.90 },
+          { id: 'ai_1000', credits: 1000, price: 349.90 }
+        ]
+      };
+
+      if (!packages[type as keyof typeof packages]) {
+        return res.status(400).json({ error: "Invalid credit type" });
+      }
+
+      const selectedPackage = packages[type as keyof typeof packages].find(pkg => pkg.id === packageId);
+      if (!selectedPackage) {
+        return res.status(404).json({ error: "Package not found" });
+      }
+
+      // For development mode, simulate successful purchase
+      console.log(`🔄 SIMULANDO COMPRA DE CRÉDITOS - Tipo: ${type}, Pacote: ${packageId}, Créditos: ${selectedPackage.credits}, Preço: R$ ${selectedPackage.price}`);
+      
+      // Update user credits based on type
+      const user = await storage.getUser(userId);
+      if (!user) {
+        return res.status(404).json({ error: "User not found" });
+      }
+
+      const updatedUser = { ...user };
+      switch (type) {
+        case 'sms':
+          updatedUser.smsCredits = (user.smsCredits || 0) + selectedPackage.credits;
+          break;
+        case 'email':
+          updatedUser.emailCredits = (user.emailCredits || 0) + selectedPackage.credits;
+          break;
+        case 'whatsapp':
+          updatedUser.whatsappCredits = (user.whatsappCredits || 0) + selectedPackage.credits;
+          break;
+        case 'ai':
+          updatedUser.aiCredits = (user.aiCredits || 0) + selectedPackage.credits;
+          break;
+      }
+
+      // Update user in database
+      await storage.updateUser(userId, updatedUser);
+
+      res.json({
+        success: true,
+        message: `${selectedPackage.credits} créditos ${type} adicionados com sucesso!`,
+        credits: selectedPackage.credits,
+        type,
+        development: true
+      });
+
+    } catch (error) {
+      console.error("Error purchasing credits:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
   // SMS Credits History endpoint
   app.get("/api/sms-credits/history", verifyJWT, async (req: any, res) => {
     try {

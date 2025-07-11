@@ -47,6 +47,7 @@ export interface IStorage {
   // User operations (required for Replit Auth)
   getUser(id: string): Promise<User | undefined>;
   upsertUser(user: UpsertUser): Promise<User>;
+  updateUser(userId: string, updates: Partial<User>): Promise<User>;
   updateUserStripeInfo(userId: string, stripeCustomerId: string, stripeSubscriptionId: string): Promise<User>;
   updateUserPlan(userId: string, plan: string, subscriptionStatus?: string): Promise<User>;
 
@@ -428,6 +429,17 @@ export class SQLiteStorage implements IStorage {
       .set({ 
         plan, 
         subscriptionStatus,
+        updatedAt: new Date(),
+      })
+      .where(eq(users.id, userId))
+      .returning();
+    return updatedUser;
+  }
+
+  async updateUser(userId: string, updates: Partial<User>): Promise<User> {
+    const [updatedUser] = await db.update(users)
+      .set({ 
+        ...updates,
         updatedAt: new Date(),
       })
       .where(eq(users.id, userId))
