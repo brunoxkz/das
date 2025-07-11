@@ -120,6 +120,13 @@ export function Sidebar() {
       active: location === "/email-marketing",
       badge: "📧"
     },
+    {
+      title: "Super Afiliados",
+      href: "/super-afiliados",
+      icon: <Crown className="w-4 h-4" />,
+      active: location === "/super-afiliados",
+      badge: "👑"
+    },
     // Hidden temporarily
     // {
     //   title: "I.A. CONVERSION +",

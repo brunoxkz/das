@@ -3147,6 +3147,116 @@ export function registerSQLiteRoutes(app: Express): Server {
     }
   });
 
+  // ===== SUPER AFILIADOS ENDPOINTS =====
+
+  // Get available affiliate quizzes (only main user's quizzes)
+  app.get("/api/super-affiliates/quizzes", verifyJWT, async (req: any, res: Response) => {
+    try {
+      // Only return quizzes from the main user (admin)
+      const mainUser = await storage.getUser('1EaY6vE0rYAkTXv5vHClm'); // ID do usuário principal
+      if (!mainUser) {
+        return res.status(404).json({ error: 'Usuário principal não encontrado' });
+      }
+      
+      const quizzes = await storage.getUserQuizzes(mainUser.id);
+      const affiliateQuizzes = quizzes.slice(0, 4).map(quiz => ({
+        id: quiz.id,
+        title: quiz.title,
+        description: quiz.description,
+        totalViews: 0, // Will be calculated from analytics
+        totalLeads: 0,  // Will be calculated from responses
+        conversionRate: 0,
+        commissionRate: 0.1, // 10% default
+        isAffiliated: false // Will be checked per user
+      }));
+      
+      res.json(affiliateQuizzes);
+    } catch (error) {
+      console.error('❌ ERRO ao buscar quizzes de afiliados:', error);
+      res.status(500).json({ error: 'Erro interno do servidor' });
+    }
+  });
+
+  // Get user's affiliate stats
+  app.get("/api/super-affiliates/stats", verifyJWT, async (req: any, res: Response) => {
+    try {
+      const userId = req.user.id;
+      
+      // Get user's affiliates
+      const affiliates = await storage.getUserAffiliates(userId);
+      
+      const stats = {
+        totalViews: 0,
+        totalLeads: 0,
+        totalSales: 0,
+        totalCommission: 0,
+        conversionRate: 0
+      };
+      
+      // Calculate stats from affiliates
+      for (const affiliate of affiliates) {
+        stats.totalViews += affiliate.totalViews;
+        stats.totalLeads += affiliate.totalLeads;
+        stats.totalSales += affiliate.totalSales;
+        stats.totalCommission += affiliate.totalCommission;
+      }
+      
+      stats.conversionRate = stats.totalViews > 0 ? (stats.totalLeads / stats.totalViews) * 100 : 0;
+      
+      res.json(stats);
+    } catch (error) {
+      console.error('❌ ERRO ao buscar estatísticas de afiliados:', error);
+      res.status(500).json({ error: 'Erro interno do servidor' });
+    }
+  });
+
+  // Create affiliate relationship
+  app.post("/api/super-affiliates/affiliate", verifyJWT, async (req: any, res: Response) => {
+    try {
+      const userId = req.user.id;
+      const { quizId } = req.body;
+      
+      if (!quizId) {
+        return res.status(400).json({ error: 'Quiz ID é obrigatório' });
+      }
+      
+      // Check if quiz belongs to main user
+      const quiz = await storage.getQuiz(quizId);
+      if (!quiz || quiz.userId !== '1EaY6vE0rYAkTXv5vHClm') {
+        return res.status(403).json({ error: 'Quiz não disponível para afiliação' });
+      }
+      
+      // Generate unique affiliate code
+      const affiliateCode = nanoid(8);
+      
+      const affiliate = await storage.createAffiliate({
+        userId,
+        quizId,
+        affiliateCode,
+        commissionRate: 0.1,
+        status: 'active'
+      });
+      
+      res.json(affiliate);
+    } catch (error) {
+      console.error('❌ ERRO ao criar afiliação:', error);
+      res.status(500).json({ error: 'Erro interno do servidor' });
+    }
+  });
+
+  // Get user's affiliates
+  app.get("/api/super-affiliates/my-affiliates", verifyJWT, async (req: any, res: Response) => {
+    try {
+      const userId = req.user.id;
+      const affiliates = await storage.getUserAffiliates(userId);
+      
+      res.json(affiliates);
+    } catch (error) {
+      console.error('❌ ERRO ao buscar afiliações:', error);
+      res.status(500).json({ error: 'Erro interno do servidor' });
+    }
+  });
+
   const httpServer = createServer(app);
 
 // =============================================

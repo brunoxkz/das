@@ -24,6 +24,7 @@ import {
   users, quizzes, quizTemplates, quizResponses, responseVariables, quizAnalytics, emailCampaigns, emailTemplates, emailLogs, emailAutomations, emailSequences, smsTransactions, smsCampaigns, smsLogs,
   whatsappCampaigns, whatsappLogs, whatsappTemplates,
   aiConversionCampaigns, aiVideoGenerations, notifications,
+  superAffiliates, affiliateSales,
   type User, type UpsertUser, type InsertQuiz, type Quiz,
   type InsertQuizTemplate, type QuizTemplate,
   type InsertQuizResponse, type QuizResponse,
@@ -36,7 +37,9 @@ import {
   type InsertEmailSequence, type EmailSequence,
   type InsertAiConversionCampaign, type AiConversionCampaign,
   type InsertAiVideoGeneration, type AiVideoGeneration,
-  type InsertNotification, type Notification
+  type InsertNotification, type Notification,
+  type InsertSuperAffiliate, type SuperAffiliate,
+  type InsertAffiliateSale, type AffiliateSale
 } from "../shared/schema-sqlite";
 import { eq, desc, and, gte, lte, count, asc, or, inArray } from "drizzle-orm";
 import { nanoid } from "nanoid";
@@ -172,6 +175,18 @@ export interface IStorage {
   markNotificationAsRead(notificationId: string, userId: string): Promise<void>;
   deleteNotification(notificationId: string, userId: string): Promise<void>;
   markAllNotificationsAsRead(userId: string): Promise<void>;
+
+  // Super Affiliates operations
+  createAffiliate(affiliate: Omit<InsertSuperAffiliate, 'id' | 'createdAt' | 'updatedAt'>): Promise<SuperAffiliate>;
+  getUserAffiliates(userId: string): Promise<SuperAffiliate[]>;
+  getAffiliate(id: string): Promise<SuperAffiliate | undefined>;
+  updateAffiliate(id: string, updates: Partial<InsertSuperAffiliate>): Promise<SuperAffiliate>;
+  deleteAffiliate(id: string): Promise<void>;
+  
+  // Affiliate Sales operations
+  createAffiliateSale(sale: Omit<InsertAffiliateSale, 'id' | 'createdAt' | 'updatedAt'>): Promise<AffiliateSale>;
+  getAffiliateSales(affiliateId: string): Promise<AffiliateSale[]>;
+  updateAffiliateSale(id: string, updates: Partial<InsertAffiliateSale>): Promise<AffiliateSale>;
 }
 
 export class SQLiteStorage implements IStorage {
@@ -3326,6 +3341,156 @@ export class SQLiteStorage implements IStorage {
       console.log('✅ Todas as notificações marcadas como lidas para usuário:', userId);
     } catch (error) {
       console.error('❌ ERRO ao marcar todas as notificações como lidas:', error);
+      throw error;
+    }
+  }
+
+  // ===== SUPER AFFILIATES METHODS =====
+
+  async createAffiliate(affiliate: Omit<InsertSuperAffiliate, 'id' | 'createdAt' | 'updatedAt'>): Promise<SuperAffiliate> {
+    try {
+      const now = Math.floor(Date.now() / 1000);
+      const id = nanoid();
+      
+      const result = await db.insert(superAffiliates)
+        .values({
+          id,
+          ...affiliate,
+          createdAt: now,
+          updatedAt: now
+        })
+        .returning();
+
+      console.log('✅ Afiliado criado:', result[0]);
+      return result[0];
+    } catch (error) {
+      console.error('❌ ERRO ao criar afiliado:', error);
+      throw error;
+    }
+  }
+
+  async getUserAffiliates(userId: string): Promise<SuperAffiliate[]> {
+    try {
+      const affiliates = await db.select()
+        .from(superAffiliates)
+        .where(eq(superAffiliates.userId, userId))
+        .orderBy(desc(superAffiliates.createdAt));
+
+      return affiliates;
+    } catch (error) {
+      console.error('❌ ERRO ao buscar afiliados do usuário:', error);
+      throw error;
+    }
+  }
+
+  async getAffiliate(id: string): Promise<SuperAffiliate | undefined> {
+    try {
+      const affiliate = await db.select()
+        .from(superAffiliates)
+        .where(eq(superAffiliates.id, id))
+        .limit(1);
+
+      return affiliate[0];
+    } catch (error) {
+      console.error('❌ ERRO ao buscar afiliado:', error);
+      throw error;
+    }
+  }
+
+  async updateAffiliate(id: string, updates: Partial<InsertSuperAffiliate>): Promise<SuperAffiliate> {
+    try {
+      const now = Math.floor(Date.now() / 1000);
+      
+      const result = await db.update(superAffiliates)
+        .set({
+          ...updates,
+          updatedAt: now
+        })
+        .where(eq(superAffiliates.id, id))
+        .returning();
+
+      if (result.length === 0) {
+        throw new Error('Afiliado não encontrado');
+      }
+
+      console.log('✅ Afiliado atualizado:', result[0]);
+      return result[0];
+    } catch (error) {
+      console.error('❌ ERRO ao atualizar afiliado:', error);
+      throw error;
+    }
+  }
+
+  async deleteAffiliate(id: string): Promise<void> {
+    try {
+      await db.delete(superAffiliates)
+        .where(eq(superAffiliates.id, id));
+
+      console.log('✅ Afiliado deletado:', id);
+    } catch (error) {
+      console.error('❌ ERRO ao deletar afiliado:', error);
+      throw error;
+    }
+  }
+
+  // ===== AFFILIATE SALES METHODS =====
+
+  async createAffiliateSale(sale: Omit<InsertAffiliateSale, 'id' | 'createdAt' | 'updatedAt'>): Promise<AffiliateSale> {
+    try {
+      const now = Math.floor(Date.now() / 1000);
+      const id = nanoid();
+      
+      const result = await db.insert(affiliateSales)
+        .values({
+          id,
+          ...sale,
+          createdAt: now,
+          updatedAt: now
+        })
+        .returning();
+
+      console.log('✅ Venda de afiliado criada:', result[0]);
+      return result[0];
+    } catch (error) {
+      console.error('❌ ERRO ao criar venda de afiliado:', error);
+      throw error;
+    }
+  }
+
+  async getAffiliateSales(affiliateId: string): Promise<AffiliateSale[]> {
+    try {
+      const sales = await db.select()
+        .from(affiliateSales)
+        .where(eq(affiliateSales.affiliateId, affiliateId))
+        .orderBy(desc(affiliateSales.createdAt));
+
+      return sales;
+    } catch (error) {
+      console.error('❌ ERRO ao buscar vendas do afiliado:', error);
+      throw error;
+    }
+  }
+
+  async updateAffiliateSale(id: string, updates: Partial<InsertAffiliateSale>): Promise<AffiliateSale> {
+    try {
+      const now = Math.floor(Date.now() / 1000);
+      
+      const result = await db.update(affiliateSales)
+        .set({
+          ...updates,
+          updatedAt: now
+        })
+        .where(eq(affiliateSales.id, id))
+        .returning();
+
+      if (result.length === 0) {
+        throw new Error('Venda de afiliado não encontrada');
+      }
+
+      console.log('✅ Venda de afiliado atualizada:', result[0]);
+      return result[0];
+    } catch (error) {
+      console.error('❌ ERRO ao atualizar venda de afiliado:', error);
       throw error;
     }
   }

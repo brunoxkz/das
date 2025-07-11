@@ -32,6 +32,7 @@ export const quizzes = sqliteTable("quizzes", {
   structure: text("structure", { mode: 'json' }).notNull(),
   userId: text("userId").notNull().references(() => users.id),
   isPublished: integer("isPublished", { mode: 'boolean' }).default(false),
+  isSuperAffiliate: integer("isSuperAffiliate", { mode: 'boolean' }).default(false),
   settings: text("settings", { mode: 'json' }),
   design: text("design", { mode: 'json' }),
   designConfig: text("designConfig", { mode: 'json' }),
@@ -91,6 +92,9 @@ export const quizResponses = sqliteTable("quiz_responses", {
   responses: text("responses", { mode: 'json' }).notNull(),
   metadata: text("metadata", { mode: 'json' }),
   submittedAt: integer("submittedAt", { mode: 'timestamp' }).notNull().$defaultFn(() => new Date()),
+  country: text("country"),
+  phoneCountryCode: text("phoneCountryCode"),
+  affiliateId: text("affiliateId"),
 });
 
 // Nova tabela para indexar todas as variáveis de resposta para remarketing ultra-personalizado
@@ -144,6 +148,7 @@ export const smsCampaigns = sqliteTable("sms_campaigns", {
   replies: integer("replies").default(0),
   scheduledAt: integer("scheduledAt"), // Para campanhas agendadas
   targetAudience: text("targetAudience").default("all"), // all, completed, abandoned
+  campaignMode: text("campaignMode").default("leads_ja_na_base"), // "modo_ao_vivo" ou "leads_ja_na_base"
   triggerDelay: integer("triggerDelay").default(10),
   triggerUnit: text("triggerUnit").default("minutes"),
   createdAt: integer("createdAt").notNull().$defaultFn(() => Math.floor(Date.now() / 1000)),
@@ -161,6 +166,8 @@ export const smsLogs = sqliteTable("sms_logs", {
   sentAt: integer("sentAt"),
   deliveredAt: integer("deliveredAt"),
   scheduledAt: integer("scheduledAt"), // Agendamento individual para cada SMS
+  country: text("country"), // País detectado do telefone
+  countryCode: text("countryCode"), // Código do país (+55, +1, etc.)
   createdAt: integer("createdAt").notNull().$defaultFn(() => Math.floor(Date.now() / 1000)),
 });
 
@@ -331,7 +338,6 @@ export const whatsappCampaigns = sqliteTable('whatsapp_campaigns', {
   id: text('id').primaryKey().notNull(),
   name: text('name').notNull(),
   quizId: text('quiz_id').notNull(),
-  quizTitle: text('quiz_title').notNull(),
   messages: text('messages', { mode: 'json' }).notNull().$type<string[]>(), // Array de mensagens rotativas
   userId: text('user_id').notNull().references(() => users.id),
   phones: text('phones', { mode: 'json' }).notNull().$type<Array<{
@@ -339,12 +345,15 @@ export const whatsappCampaigns = sqliteTable('whatsapp_campaigns', {
     name?: string;
     status?: 'completed' | 'abandoned';
     submittedAt?: string;
+    country?: string;
+    countryCode?: string;
   }>>(),
   status: text('status').notNull().default('active'),
   scheduledAt: integer('scheduled_at'),
   triggerDelay: integer('trigger_delay').default(10),
   triggerUnit: text('trigger_unit').default('minutes'),
   targetAudience: text('target_audience').notNull().default('all'),
+  campaignMode: text('campaign_mode').default('leads_ja_na_base'), // "modo_ao_vivo" ou "leads_ja_na_base"
   dateFilter: text('date_filter'), // Filtro de data para frente
   extensionSettings: text('extension_settings', { mode: 'json' }).$type<{
     delay: number;
@@ -366,6 +375,8 @@ export const whatsappLogs = sqliteTable('whatsapp_logs', {
   sentAt: integer('sent_at'),
   extensionStatus: text('extension_status'),
   error: text('error'),
+  country: text('country'), // País detectado do telefone
+  countryCode: text('country_code'), // Código do país (+55, +1, etc.)
   createdAt: integer('created_at', { mode: 'timestamp' }).notNull().default(sql`(unixepoch())`),
   updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull().default(sql`(unixepoch())`)
 });
@@ -484,3 +495,41 @@ export const insertNotificationSchema = createInsertSchema(notifications);
 // Notifications Types
 export type InsertNotification = z.infer<typeof insertNotificationSchema>;
 export type Notification = typeof notifications.$inferSelect;
+
+// Super Affiliates Schema
+export const superAffiliates = sqliteTable('super_affiliates', {
+  id: text('id').primaryKey().notNull(),
+  userId: text('user_id').notNull().references(() => users.id),
+  quizId: text('quiz_id').notNull().references(() => quizzes.id),
+  affiliateCode: text('affiliate_code').unique().notNull(),
+  commissionRate: real('commission_rate').default(0.1), // 10% padrão
+  totalViews: integer('total_views').default(0),
+  totalLeads: integer('total_leads').default(0),
+  totalSales: integer('total_sales').default(0),
+  totalCommission: real('total_commission').default(0),
+  status: text('status').notNull().default('active'), // active, inactive, suspended
+  createdAt: integer('created_at', { mode: 'timestamp' }).notNull().default(sql`(unixepoch())`),
+  updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull().default(sql`(unixepoch())`)
+});
+
+// Affiliate Sales Schema
+export const affiliateSales = sqliteTable('affiliate_sales', {
+  id: text('id').primaryKey().notNull(),
+  affiliateId: text('affiliate_id').notNull().references(() => superAffiliates.id),
+  responseId: text('response_id').notNull().references(() => quizResponses.id),
+  saleAmount: real('sale_amount').notNull(),
+  commissionAmount: real('commission_amount').notNull(),
+  status: text('status').notNull().default('pending'), // pending, approved, paid
+  createdAt: integer('created_at', { mode: 'timestamp' }).notNull().default(sql`(unixepoch())`),
+  updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull().default(sql`(unixepoch())`)
+});
+
+// Super Affiliates Zod Schemas
+export const insertSuperAffiliateSchema = createInsertSchema(superAffiliates);
+export const insertAffiliateSaleSchema = createInsertSchema(affiliateSales);
+
+// Super Affiliates Types
+export type InsertSuperAffiliate = z.infer<typeof insertSuperAffiliateSchema>;
+export type SuperAffiliate = typeof superAffiliates.$inferSelect;
+export type InsertAffiliateSale = z.infer<typeof insertAffiliateSaleSchema>;
+export type AffiliateSale = typeof affiliateSales.$inferSelect;
