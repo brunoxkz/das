@@ -31,12 +31,14 @@ import {
 } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { useLanguage } from "@/hooks/useLanguage";
 
 export default function Quizzes() {
   const [searchTerm, setSearchTerm] = useState("");
   const [activeTab, setActiveTab] = useState("all");
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const { toast } = useToast();
+  const { t } = useLanguage();
   
   const { data: quizzes, isLoading, error, refetch } = useQuery({
     queryKey: ["/api/quizzes"],
@@ -227,9 +229,9 @@ export default function Quizzes() {
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-8">
           <div className="space-y-1">
             <h1 className="text-3xl font-bold bg-gradient-to-r from-gray-900 to-gray-600 bg-clip-text text-transparent">
-              Meus Quizzes
+              {t("my_quizzes")}
             </h1>
-            <p className="text-gray-600">Gerencie e monitore seus quizzes com performance em tempo real</p>
+            <p className="text-gray-600">{t("manage_your_quizzes")}</p>
           </div>
           
           <div className="flex items-center gap-3">
@@ -256,7 +258,7 @@ export default function Quizzes() {
             <Link href="/quizzes/new">
               <Button className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 shadow-lg">
                 <Plus className="w-4 h-4 mr-2" />
-                Criar Quiz
+{t("create_quiz")}
               </Button>
             </Link>
           </div>
@@ -267,7 +269,7 @@ export default function Quizzes() {
           <div className="relative flex-1 max-w-md">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
             <Input
-              placeholder="Pesquisar por título ou descrição..."
+              placeholder={t("search_quizzes")}
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="pl-10 bg-white border-0 shadow-sm"
@@ -281,9 +283,9 @@ export default function Quizzes() {
             <CardContent className="p-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-blue-100 text-sm font-medium">Total</p>
+                  <p className="text-blue-100 text-sm font-medium">{t("total")}</p>
                   <p className="text-2xl font-bold">{quizzesList.length}</p>
-                  <p className="text-blue-100 text-xs">quizzes criados</p>
+                  <p className="text-blue-100 text-xs">{t("quizzes_created")}</p>
                 </div>
                 <BarChart3 className="w-10 h-10 text-blue-200" />
               </div>
@@ -294,9 +296,9 @@ export default function Quizzes() {
             <CardContent className="p-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-green-100 text-sm font-medium">Publicados</p>
+                  <p className="text-green-100 text-sm font-medium">{t("published")}</p>
                   <p className="text-2xl font-bold">{publishedCount}</p>
-                  <p className="text-green-100 text-xs">ativos</p>
+                  <p className="text-green-100 text-xs">{t("active")}</p>
                 </div>
                 <CheckCircle className="w-10 h-10 text-green-200" />
               </div>

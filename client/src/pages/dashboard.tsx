@@ -30,11 +30,13 @@ import React from "react";
 import { TutorialTour, dashboardTutorialSteps } from "@/components/tutorial-tour";
 import { HelpCircle, RefreshCcw } from "lucide-react";
 import { forceRefreshCache, queryClient, apiRequest } from "@/lib/queryClient";
+import { useLanguage } from "@/hooks/useLanguage";
 
 export default function Dashboard() {
   const { toast } = useToast();
   const { isAuthenticated, isLoading: authLoading } = useAuth();
   const [showTutorial, setShowTutorial] = useState(false);
+  const { t } = useLanguage();
 
   // Buscar quizzes do usuário
   const { data: userQuizzes, isLoading: quizzesLoading } = useQuery({
@@ -284,7 +286,7 @@ export default function Dashboard() {
                     <BarChart3 className="w-3 h-3 text-blue-600" />
                   </div>
                   <div>
-                    <p className="text-sm text-gray-600">Quizzes</p>
+                    <p className="text-sm text-gray-600">{t("total_quizzes")}</p>
                     <p className="text-lg font-semibold text-gray-900">{dashboardStats[0]?.value || 0}</p>
                   </div>
                 </div>
@@ -301,7 +303,7 @@ export default function Dashboard() {
                     <Eye className="w-3 h-3 text-green-600" />
                   </div>
                   <div>
-                    <p className="text-sm text-gray-600">Visualizações</p>
+                    <p className="text-sm text-gray-600">{t("views")}</p>
                     <p className="text-lg font-semibold text-gray-900">{dashboardStats[2]?.value || 0}</p>
                   </div>
                 </div>
@@ -318,7 +320,7 @@ export default function Dashboard() {
                     <Users className="w-3 h-3 text-purple-600" />
                   </div>
                   <div>
-                    <p className="text-sm text-gray-600">Respostas</p>
+                    <p className="text-sm text-gray-600">{t("responses")}</p>
                     <p className="text-lg font-semibold text-gray-900">{dashboardStats[1]?.value || 0}</p>
                   </div>
                 </div>
@@ -335,7 +337,7 @@ export default function Dashboard() {
                     <TrendingUp className="w-3 h-3 text-orange-600" />
                   </div>
                   <div>
-                    <p className="text-sm text-gray-600">Conversão</p>
+                    <p className="text-sm text-gray-600">{t("conversion_rate")}</p>
                     <p className="text-lg font-semibold text-gray-900">{dashboardStats[3]?.value || "0%"}</p>
                   </div>
                 </div>
@@ -433,11 +435,11 @@ export default function Dashboard() {
               <BarChart3 className="w-5 h-5 text-white" />
             </div>
             <div>
-              <h3 className="text-xl font-semibold">Seus Quizzes</h3>
-              <p className="text-sm text-gray-600 font-normal">Gerencie e monitore performance</p>
+              <h3 className="text-xl font-semibold">{t("your_quizzes_title")}</h3>
+              <p className="text-sm text-gray-600 font-normal">{t("manage_and_monitor")}</p>
             </div>
             <Badge variant="secondary" className="ml-auto bg-blue-100 text-blue-800 px-3 py-1">
-              {userQuizzes?.length || 0} quizzes
+              {userQuizzes?.length || 0} {t("quizzes_count")}
             </Badge>
           </CardTitle>
         </CardHeader>
@@ -448,15 +450,15 @@ export default function Dashboard() {
                 <BarChart3 className="w-12 h-12 text-blue-600" />
               </div>
               <h3 className="text-2xl font-semibold text-gray-900 mb-3">
-                Comece sua jornada
+                {t("start_your_journey")}
               </h3>
               <p className="text-gray-600 mb-8 max-w-md mx-auto">
-                Crie seu primeiro quiz para começar a capturar leads qualificados e impulsionar seu negócio
+                {t("create_first_quiz_desc")}
               </p>
               <Link href="/quizzes/new">
                 <Button className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 shadow-lg hover:shadow-xl transition-all duration-200 px-8 py-3 text-lg">
                   <Plus className="w-5 h-5 mr-2" />
-                  Criar Primeiro Quiz
+                  {t("create_first_quiz")}
                 </Button>
               </Link>
             </div>
@@ -489,7 +491,7 @@ export default function Dashboard() {
                               "bg-orange-100 text-orange-800 border-orange-200"
                             }
                           >
-                            {quiz.isPublished ? "Publicado" : "Rascunho"}
+                            {quiz.isPublished ? t("published") : t("draft")}
                           </Badge>
                         </div>
                       </div>
@@ -501,13 +503,13 @@ export default function Dashboard() {
                           <div className="text-lg font-bold text-blue-600">
                             {quizAnalyticsMap.get(quiz.id)?.views || 0}
                           </div>
-                          <div className="text-xs text-gray-500 uppercase tracking-wide">Views</div>
+                          <div className="text-xs text-gray-500 uppercase tracking-wide">{t("views")}</div>
                         </div>
                         <div className="text-center">
                           <div className="text-lg font-bold text-green-600">
                             {quizAnalyticsMap.get(quiz.id)?.leads || 0}
                           </div>
-                          <div className="text-xs text-gray-500 uppercase tracking-wide">Leads</div>
+                          <div className="text-xs text-gray-500 uppercase tracking-wide">{t("leads")}</div>
                         </div>
                       </div>
                       
@@ -517,12 +519,12 @@ export default function Dashboard() {
                           size="sm" 
                           className="hover:bg-blue-100"
                           onClick={() => handlePreviewQuiz(quiz)}
-                          title="Visualizar Preview"
+                          title={t("view_preview")}
                         >
                           <Eye className="w-4 h-4" />
                         </Button>
                         <Link href={`/quizzes/${quiz.id}/edit`}>
-                          <Button variant="ghost" size="sm" className="hover:bg-purple-100" title="Editar Quiz">
+                          <Button variant="ghost" size="sm" className="hover:bg-purple-100" title={t("edit_quiz")}>
                             <Edit className="w-4 h-4" />
                           </Button>
                         </Link>
@@ -531,7 +533,7 @@ export default function Dashboard() {
                           size="sm" 
                           className="hover:bg-gray-100"
                           onClick={() => handleDuplicateQuiz(quiz)}
-                          title="Duplicar Quiz"
+                          title={t("duplicate_quiz")}
                         >
                           <Copy className="w-4 h-4" />
                         </Button>
@@ -540,7 +542,7 @@ export default function Dashboard() {
                           size="sm" 
                           className="hover:bg-green-100"
                           onClick={() => handlePublicUrl(quiz)}
-                          title="Copiar URL Pública"
+                          title={t("copy_public_url")}
                         >
                           <ExternalLink className="w-4 h-4" />
                         </Button>
@@ -554,7 +556,7 @@ export default function Dashboard() {
                 <div className="text-center p-6 bg-gradient-to-r from-gray-50 to-blue-50">
                   <Link href="/quizzes">
                     <Button variant="outline" className="bg-white hover:bg-blue-50 border-blue-200 text-blue-700">
-                      Ver Todos os Quizzes ({userQuizzes.length})
+                      {t("view_all_quizzes")} ({userQuizzes.length})
                     </Button>
                   </Link>
                 </div>
@@ -575,8 +577,8 @@ export default function Dashboard() {
                 <Plus className="w-5 h-5 text-white" />
               </div>
               <div>
-                <h3 className="text-xl font-semibold text-gray-900">Botões Rápidos</h3>
-                <p className="text-sm text-gray-600 font-normal">Acesso direto às principais funcionalidades</p>
+                <h3 className="text-xl font-semibold text-gray-900">{t("quick_buttons")}</h3>
+                <p className="text-sm text-gray-600 font-normal">{t("direct_access_main_features")}</p>
               </div>
             </CardTitle>
           </CardHeader>
@@ -585,7 +587,7 @@ export default function Dashboard() {
               <Link href="/quizzes/new">
                 <Button className="w-full h-12 flex items-center justify-center gap-2 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 shadow-md hover:shadow-lg transition-all duration-200">
                   <BarChart3 className="w-4 h-4" />
-                  <span className="text-sm font-medium">Criar Quiz</span>
+                  <span className="text-sm font-medium">{t("create_quiz")}</span>
                 </Button>
               </Link>
               <Button 
@@ -594,17 +596,17 @@ export default function Dashboard() {
                 onClick={() => setShowTutorial(true)}
               >
                 <HelpCircle className="w-4 h-4" />
-                <span className="text-sm font-medium">Tutoriais</span>
+                <span className="text-sm font-medium">{t("tutorials")}</span>
               </Button>
               <Link href="/templates">
                 <Button variant="outline" className="w-full h-12 flex items-center justify-center gap-2 bg-white hover:bg-green-50 border-green-200 text-green-700 hover:text-green-800 shadow-sm hover:shadow-md transition-all duration-200">
                   <Palette className="w-4 h-4" />
-                  <span className="text-sm font-medium">Templates</span>
+                  <span className="text-sm font-medium">{t("templates")}</span>
                 </Button>
               </Link>
               <Button variant="outline" className="w-full h-12 flex items-center justify-center gap-2 bg-white hover:bg-orange-50 border-orange-200 text-orange-700 hover:text-orange-800 shadow-sm hover:shadow-md transition-all duration-200">
                 <Shield className="w-4 h-4" />
-                <span className="text-sm font-medium">Planos</span>
+                <span className="text-sm font-medium">{t("plans")}</span>
               </Button>
             </div>
           </CardContent>
@@ -618,8 +620,8 @@ export default function Dashboard() {
                 <TrendingUp className="w-5 h-5 text-white" />
               </div>
               <div>
-                <h3 className="text-xl font-semibold text-gray-900">Marketing Automation</h3>
-                <p className="text-sm text-gray-600 font-normal">Campanhas multi-canal para conversão</p>
+                <h3 className="text-xl font-semibold text-gray-900">{t("marketing_automation")}</h3>
+                <p className="text-sm text-gray-600 font-normal">{t("multichannel_campaigns")}</p>
               </div>
             </CardTitle>
           </CardHeader>
