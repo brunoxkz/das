@@ -5,6 +5,8 @@ import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { NotificationSystem } from "@/components/notification-system";
+import { LanguageSelector } from "@/components/language-selector";
+import { useLanguage } from "@/hooks/useLanguage";
 
 import { 
   BarChart3, 
@@ -40,6 +42,7 @@ export function Sidebar() {
   const [location] = useLocation();
   const { user } = useAuth();
   const userData = user as any;
+  const { t } = useLanguage();
 
   // Buscar dados dos quizzes em tempo real
   const { data: quizzes } = useQuery({
@@ -68,13 +71,13 @@ export function Sidebar() {
 
   const navItems = [
     {
-      title: "Dashboard",
+      title: t("dashboard"),
       href: "/dashboard",
       icon: <Home className="w-4 h-4" />,
       active: location === "/" || location === "/dashboard"
     },
     ...(userData?.role === "admin" ? [{
-      title: "Admin",
+      title: t("admin"),
       href: "/admin",
       icon: <Shield className="w-4 h-4" />,
       active: location === "/admin",
@@ -82,39 +85,39 @@ export function Sidebar() {
       badge: "⚡"
     }] : []),
     {
-      title: "Meus Quizzes",
+      title: t("my_quizzes"),
       href: "/quizzes",
       icon: <BarChart3 className="w-4 h-4" />,
       active: location.startsWith("/quizzes"),
       badge: totalQuizzes > 0 ? totalQuizzes.toString() : undefined
     },
     {
-      title: "Templates",
+      title: t("templates"),
       href: "/templates",
       icon: <Palette className="w-4 h-4" />,
       active: location === "/templates"
     },
     {
-      title: "Analytics",
+      title: t("analytics"),
       href: "/analytics",
       icon: <TrendingUp className="w-4 h-4" />,
       active: location === "/analytics"
     },
 
     {
-      title: "Tutoriais",
+      title: t("tutorials"),
       href: "/tutoriais",
       icon: <BookOpen className="w-4 h-4" />,
       active: location === "/tutoriais"
     },
     {
-      title: "Remarketing SMS",
+      title: t("remarketing_sms"),
       href: "/sms-credits",
       icon: <MessageSquare className="w-4 h-4" />,
       active: location === "/sms-credits"
     },
     {
-      title: "Email Marketing",
+      title: t("email_marketing"),
       href: "/email-marketing",
       icon: <Mail className="w-4 h-4" />,
       active: location === "/email-marketing",
@@ -138,14 +141,14 @@ export function Sidebar() {
     //   className: "text-blue-600 border-blue-200 bg-blue-50 hover:bg-blue-100"
     // },
     {
-      title: "Automação WhatsApp",
+      title: t("whatsapp_automation"),
       href: "/campanhas-whatsapp",
       icon: <FileText className="w-4 h-4" />,
       active: location === "/campanhas-whatsapp",
       badge: "🤖"
     },
     {
-      title: "Cloaker",
+      title: t("cloaker"),
       href: "/cloaker",
       icon: <Shield className="w-4 h-4" />,
       active: location === "/cloaker"
@@ -154,14 +157,14 @@ export function Sidebar() {
 
   const bottomItems = [
     {
-      title: "Upgrade",
+      title: t("upgrade"),
       href: "/subscribe",
       icon: <Crown className="w-4 h-4" />,
       active: location === "/subscribe",
       className: "text-primary border-primary/20 bg-primary/5 hover:bg-primary/10"
     },
     {
-      title: "Configurações",
+      title: t("settings"),
       href: "/settings",
       icon: <Settings className="w-4 h-4" />,
       active: location === "/settings"
@@ -197,20 +200,7 @@ export function Sidebar() {
           {!isCollapsed && (
             <div className="flex items-center space-x-2">
               {/* Language Selector */}
-              <Button 
-                variant="ghost" 
-                size="sm" 
-                className="p-2"
-                onClick={() => {
-                  // Simulação de seletor de idioma
-                  const currentLang = localStorage.getItem('language') || 'pt-BR';
-                  const newLang = currentLang === 'pt-BR' ? 'en-US' : 'pt-BR';
-                  localStorage.setItem('language', newLang);
-                  alert(`Idioma alterado para: ${newLang === 'pt-BR' ? 'Português' : 'English'}`);
-                }}
-              >
-                <Globe className="w-4 h-4 text-gray-600" />
-              </Button>
+              <LanguageSelector />
               
               {/* Notification Bell */}
               <NotificationSystem />
@@ -220,19 +210,7 @@ export function Sidebar() {
           {isCollapsed && (
             <div className="flex flex-col space-y-1">
               {/* Language Selector - Collapsed */}
-              <Button 
-                variant="ghost" 
-                size="sm" 
-                className="p-1"
-                onClick={() => {
-                  const currentLang = localStorage.getItem('language') || 'pt-BR';
-                  const newLang = currentLang === 'pt-BR' ? 'en-US' : 'pt-BR';
-                  localStorage.setItem('language', newLang);
-                  alert(`Idioma: ${newLang === 'pt-BR' ? 'PT' : 'EN'}`);
-                }}
-              >
-                <Globe className="w-3 h-3 text-gray-600" />
-              </Button>
+              <LanguageSelector collapsed={true} />
               
               {/* Notification Bell - Collapsed */}
               <NotificationSystem />
@@ -249,7 +227,7 @@ export function Sidebar() {
             isCollapsed ? "px-0" : "px-4"
           )}>
             <Plus className="w-4 h-4" />
-            {!isCollapsed && <span className="ml-2">Criar Quiz</span>}
+            {!isCollapsed && <span className="ml-2">{t("create_quiz_btn")}</span>}
           </Button>
         </Link>
       </div>
@@ -312,19 +290,19 @@ export function Sidebar() {
         {!isCollapsed && userData && (
           <div className="mt-4 p-3 bg-gray-50 rounded-lg">
             <div className="flex items-center justify-between mb-2">
-              <span className="text-sm font-medium text-gray-900">Plano Atual</span>
+              <span className="text-sm font-medium text-gray-900">{t("current_plan")}</span>
               <Badge variant="outline" className="text-xs capitalize">
                 {userData.plan === 'enterprise' ? 'Enterprise' : userData.plan === 'premium' ? 'Premium' : 'Free'}
               </Badge>
             </div>
             {userData.plan === 'enterprise' ? (
               <div className="text-xs text-gray-600">
-                {totalQuizzes} quizzes criados (ilimitado)
+                {totalQuizzes} {t("quizzes_created")} ({t("unlimited")})
               </div>
             ) : (
               <>
                 <div className="text-xs text-gray-600 mb-2">
-                  {totalQuizzes} de {userData.plan === 'premium' ? '25' : '3'} quizzes utilizados
+                  {totalQuizzes} de {userData.plan === 'premium' ? '25' : '3'} {t("quizzes_used")}
                 </div>
                 <div className="w-full bg-gray-200 rounded-full h-1.5">
                   <div className="bg-primary h-1.5 rounded-full" style={{ 
