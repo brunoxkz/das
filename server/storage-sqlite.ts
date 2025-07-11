@@ -1396,7 +1396,6 @@ export class SQLiteStorage implements IStorage {
       id,
       name: data.name,
       quiz_id: data.quizId,
-      quiz_title: data.quizTitle || "Quiz",
       messages: JSON.stringify(data.messages || []),
       user_id: data.userId,
       phones: JSON.stringify(data.phones || []),
@@ -1405,7 +1404,6 @@ export class SQLiteStorage implements IStorage {
       trigger_delay: data.triggerDelay || 10,
       trigger_unit: data.triggerUnit || 'minutes',
       target_audience: data.targetAudience || 'all',
-      date_filter: data.dateFilter,
       extension_settings: JSON.stringify(data.extensionSettings || {
         delay: 3000,
         maxRetries: 3,
@@ -1417,14 +1415,14 @@ export class SQLiteStorage implements IStorage {
 
     const stmt = sqlite.prepare(`
       INSERT INTO whatsapp_campaigns 
-      (id, name, quiz_id, quiz_title, messages, user_id, phones, status, scheduled_at, trigger_delay, trigger_unit, target_audience, date_filter, extension_settings, created_at, updated_at)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      (id, name, quiz_id, message, user_id, phones, status, scheduled_at, trigger_delay, trigger_unit, target_audience, extension_settings, created_at, updated_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `);
     
     stmt.run(
-      campaign.id, campaign.name, campaign.quiz_id, campaign.quiz_title, campaign.messages, 
+      campaign.id, campaign.name, campaign.quiz_id, campaign.messages, 
       campaign.user_id, campaign.phones, campaign.status, campaign.scheduled_at,
-      campaign.trigger_delay, campaign.trigger_unit, campaign.target_audience, campaign.date_filter,
+      campaign.trigger_delay, campaign.trigger_unit, campaign.target_audience,
       campaign.extension_settings, campaign.created_at, campaign.updated_at
     );
 
@@ -2042,17 +2040,20 @@ export class SQLiteStorage implements IStorage {
 
   async getQuizPhoneNumbers(quizId: string): Promise<any[]> {
     const stmt = sqlite.prepare(`
-      SELECT responses, metadata
+      SELECT responses, metadata, submittedAt
       FROM quiz_responses
       WHERE quizId = ?
       AND (
-        (metadata->>'isComplete' = 'true') OR 
-        (metadata->>'completionPercentage' = '100') OR
-        (metadata->>'isComplete' = 'false' AND metadata->>'isPartial' != 'true')
+        (json_extract(metadata, '$.isComplete') = 'true') OR 
+        (json_extract(metadata, '$.completionPercentage') = 100) OR
+        (json_extract(metadata, '$.isComplete') = 'false' AND json_extract(metadata, '$.isPartial') != 'true')
       )
     `);
     
+    console.log(`🔍 BUSCANDO TELEFONES PARA QUIZ: ${quizId}`);
     const responses = stmt.all(quizId);
+    console.log(`📊 RESPOSTAS ENCONTRADAS: ${responses.length}`);
+    
     const phoneSet = new Set();
     const phoneData: any[] = [];
     
@@ -2077,8 +2078,12 @@ export class SQLiteStorage implements IStorage {
       
       if (Array.isArray(parsedResponses)) {
         for (const item of parsedResponses) {
-          if (item.elementFieldId && item.elementFieldId.includes('telefone') && item.answer) {
+          // Buscar por element type 'phone' ou fieldId que contenha 'telefone'
+          if ((item.elementType === 'phone' || 
+               (item.elementFieldId && item.elementFieldId.includes('telefone'))) && 
+              item.answer) {
             phoneNumber = item.answer;
+            console.log(`📱 TELEFONE ENCONTRADO: ${phoneNumber} (${item.elementType || 'fieldId'})`);
             break;
           }
         }
@@ -2086,6 +2091,7 @@ export class SQLiteStorage implements IStorage {
         for (const [key, value] of Object.entries(parsedResponses)) {
           if (key.includes('telefone') && value) {
             phoneNumber = value;
+            console.log(`📱 TELEFONE ENCONTRADO: ${phoneNumber} (chave: ${key})`);
             break;
           }
         }
@@ -2109,13 +2115,14 @@ export class SQLiteStorage implements IStorage {
               phone: cleanPhone,
               status: isComplete ? 'completed' : 'abandoned',
               completionPercentage: parsedMetadata?.completionPercentage || 0,
-              submittedAt: response.submitted_at
+              submittedAt: response.submittedAt
             });
           }
         }
       }
     }
     
+    console.log(`📱 TELEFONES EXTRAÍDOS: ${phoneData.length}`);
     return phoneData;
   }
 

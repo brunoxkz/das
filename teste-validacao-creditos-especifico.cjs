@@ -1,12 +1,16 @@
-#!/usr/bin/env node
-
 /**
- * 🔒 TESTE ESPECÍFICO DE VALIDAÇÃO DE CRÉDITOS
- * Testa o sistema anti-fraude com cenários específicos
+ * TESTE ESPECÍFICO - VALIDAÇÃO DE CRÉDITOS ANTI-FRAUDE
+ * Testa cada canal individualmente com foco na validação de créditos
+ * Data: 11 de Janeiro de 2025
  */
 
 const http = require('http');
-const sqlite3 = require('better-sqlite3');
+const Database = require('better-sqlite3');
+const path = require('path');
+
+// Conectar ao banco de dados
+const dbPath = path.join(__dirname, 'vendzz-database.db');
+const db = new Database(dbPath);
 
 // Configurações
 const BASE_URL = 'http://localhost:5000';
@@ -23,14 +27,16 @@ const colors = {
   blue: '\x1b[34m',
   yellow: '\x1b[33m',
   cyan: '\x1b[36m',
-  magenta: '\x1b[35m'
+  magenta: '\x1b[35m',
+  gray: '\x1b[90m'
 };
 
 function log(message, color = 'reset') {
-  console.log(colors[color] + message + colors.reset);
+  const timestamp = new Date().toLocaleTimeString();
+  console.log(`${colors.gray}[${timestamp}]${colors.reset} ${colors[color]}${message}${colors.reset}`);
 }
 
-// Função para fazer requisições
+// Função para fazer requisições HTTP
 function makeRequest(method, path, data = null, token = null) {
   return new Promise((resolve, reject) => {
     const options = {
@@ -67,39 +73,18 @@ function makeRequest(method, path, data = null, token = null) {
   });
 }
 
-// Função para modificar créditos diretamente no banco
-function modifyCreditsInDatabase(userId, creditType, newAmount) {
-  try {
-    const db = sqlite3('./vendzz-database.db');
-    
-    // Buscar créditos atuais
-    const user = db.prepare('SELECT * FROM users WHERE id = ?').get(userId);
-    if (!user) {
-      throw new Error('Usuário não encontrado');
-    }
-    
-    // Atualizar créditos
-    const updateColumn = `${creditType}Credits`;
-    const updateStmt = db.prepare(`UPDATE users SET ${updateColumn} = ? WHERE id = ?`);
-    updateStmt.run(newAmount, userId);
-    
-    db.close();
-    
-    log(`✅ Créditos ${creditType} atualizados para ${newAmount}`, 'green');
-    return true;
-  } catch (error) {
-    log(`❌ Erro ao modificar créditos: ${error.message}`, 'red');
-    return false;
-  }
-}
-
 // Função de autenticação
 async function authenticate() {
   try {
+    log('🔐 Fazendo login...', 'blue');
     const response = await makeRequest('POST', '/api/auth/login', TEST_USER);
+    
     if (response.status === 200 && (response.data.accessToken || response.data.token)) {
-      return response.data.accessToken || response.data.token;
+      const token = response.data.accessToken || response.data.token;
+      log('✅ Login realizado com sucesso', 'green');
+      return { token, userId: response.data.user.id };
     }
+    
     throw new Error(`Falha na autenticação - Status: ${response.status}`);
   } catch (error) {
     log(`❌ Erro na autenticação: ${error.message}`, 'red');
@@ -107,214 +92,225 @@ async function authenticate() {
   }
 }
 
-// Função para testar criação de campanha SMS com créditos insuficientes
-async function testSMSCampaignWithInsufficientCredits(token, userId) {
+// Função para zerar créditos específicos
+function zeroSpecificCredits(userId, creditType) {
   try {
-    log('\n🔒 TESTE: Criação de campanha SMS com créditos insuficientes', 'blue');
+    log(`🔧 Zerando créditos ${creditType.toUpperCase()} do usuário`, 'yellow');
     
-    // Reduzir créditos SMS para 0
-    modifyCreditsInDatabase(userId, 'sms', 0);
-    
-    // Tentar criar campanha
-    const campaignData = {
-      name: 'Teste SMS Créditos Insuficientes',
-      quizId: 'Fwu7L-y0L7eS8xA5sZQmq',
-      message: 'Mensagem de teste que deveria ser bloqueada',
-      targetAudience: 'all',
-      triggerType: 'immediate'
+    const updateFields = {
+      sms: 'smsCredits = 0',
+      email: 'emailCredits = 0',
+      whatsapp: 'whatsappCredits = 0',
+      ai: 'aiCredits = 0'
     };
-
-    const response = await makeRequest('POST', '/api/sms-campaigns', campaignData, token);
     
-    if (response.status === 402 || response.status === 400) {
-      log(`✅ TESTE APROVADO: Sistema bloqueou campanha SMS (Status: ${response.status})`, 'green');
-      log(`📊 Resposta: ${JSON.stringify(response.data, null, 2)}`, 'cyan');
-      return true;
-    } else {
-      log(`❌ TESTE FALHOU: Sistema permitiu campanha SMS sem créditos (Status: ${response.status})`, 'red');
-      log(`📊 Resposta: ${JSON.stringify(response.data, null, 2)}`, 'cyan');
-      return false;
-    }
+    const query = `UPDATE users SET ${updateFields[creditType]} WHERE id = ?`;
+    db.prepare(query).run(userId);
+    
+    log(`✅ Créditos ${creditType.toUpperCase()} zerados`, 'green');
+    return true;
   } catch (error) {
-    log(`❌ Erro no teste SMS: ${error.message}`, 'red');
+    log(`❌ Erro ao zerar créditos ${creditType}: ${error.message}`, 'red');
     return false;
   }
 }
 
-// Função para testar criação de campanha Email com créditos insuficientes
-async function testEmailCampaignWithInsufficientCredits(token, userId) {
+// Função para restaurar créditos específicos
+function restoreSpecificCredits(userId, creditType, amount) {
   try {
-    log('\n🔒 TESTE: Criação de campanha Email com créditos insuficientes', 'blue');
+    log(`🔧 Restaurando ${amount} créditos ${creditType.toUpperCase()}`, 'yellow');
     
-    // Reduzir créditos Email para 0
-    modifyCreditsInDatabase(userId, 'email', 0);
-    
-    // Tentar criar campanha
-    const campaignData = {
-      name: 'Teste Email Créditos Insuficientes',
-      quizId: 'Fwu7L-y0L7eS8xA5sZQmq',
-      subject: 'Teste que deveria ser bloqueado',
-      content: 'Conteúdo de teste que deveria ser bloqueado',
-      targetAudience: 'all',
-      triggerType: 'immediate'
+    const updateFields = {
+      sms: `smsCredits = ${amount}`,
+      email: `emailCredits = ${amount}`,
+      whatsapp: `whatsappCredits = ${amount}`,
+      ai: `aiCredits = ${amount}`
     };
-
-    const response = await makeRequest('POST', '/api/email-campaigns', campaignData, token);
     
-    if (response.status === 402 || response.status === 400) {
-      log(`✅ TESTE APROVADO: Sistema bloqueou campanha Email (Status: ${response.status})`, 'green');
-      log(`📊 Resposta: ${JSON.stringify(response.data, null, 2)}`, 'cyan');
-      return true;
-    } else {
-      log(`❌ TESTE FALHOU: Sistema permitiu campanha Email sem créditos (Status: ${response.status})`, 'red');
-      log(`📊 Resposta: ${JSON.stringify(response.data, null, 2)}`, 'cyan');
-      return false;
-    }
+    const query = `UPDATE users SET ${updateFields[creditType]} WHERE id = ?`;
+    db.prepare(query).run(userId);
+    
+    log(`✅ ${amount} créditos ${creditType.toUpperCase()} restaurados`, 'green');
+    return true;
   } catch (error) {
-    log(`❌ Erro no teste Email: ${error.message}`, 'red');
+    log(`❌ Erro ao restaurar créditos ${creditType}: ${error.message}`, 'red');
     return false;
   }
 }
 
-// Função para testar criação de campanha WhatsApp com créditos insuficientes
-async function testWhatsAppCampaignWithInsufficientCredits(token, userId) {
-  try {
-    log('\n🔒 TESTE: Criação de campanha WhatsApp com créditos insuficientes', 'blue');
-    
-    // Reduzir créditos WhatsApp para 0
-    modifyCreditsInDatabase(userId, 'whatsapp', 0);
-    
-    // Tentar criar campanha
-    const campaignData = {
-      name: 'Teste WhatsApp Créditos Insuficientes',
-      quizId: 'Fwu7L-y0L7eS8xA5sZQmq',
-      messages: ['Mensagem de teste que deveria ser bloqueada'],
-      targetAudience: 'all',
-      triggerType: 'immediate'
-    };
-
-    const response = await makeRequest('POST', '/api/whatsapp-campaigns', campaignData, token);
-    
-    if (response.status === 402 || response.status === 400) {
-      log(`✅ TESTE APROVADO: Sistema bloqueou campanha WhatsApp (Status: ${response.status})`, 'green');
-      log(`📊 Resposta: ${JSON.stringify(response.data, null, 2)}`, 'cyan');
-      return true;
-    } else {
-      log(`❌ TESTE FALHOU: Sistema permitiu campanha WhatsApp sem créditos (Status: ${response.status})`, 'red');
-      log(`📊 Resposta: ${JSON.stringify(response.data, null, 2)}`, 'cyan');
-      return false;
-    }
-  } catch (error) {
-    log(`❌ Erro no teste WhatsApp: ${error.message}`, 'red');
-    return false;
-  }
-}
-
-// Função para restaurar créditos
-function restoreCredits(userId) {
-  try {
-    log('\n🔧 Restaurando créditos para teste...', 'blue');
-    modifyCreditsInDatabase(userId, 'sms', 100);
-    modifyCreditsInDatabase(userId, 'email', 500);
-    modifyCreditsInDatabase(userId, 'whatsapp', 250);
-    modifyCreditsInDatabase(userId, 'ai', 50);
-    log('✅ Créditos restaurados com sucesso', 'green');
-  } catch (error) {
-    log(`❌ Erro ao restaurar créditos: ${error.message}`, 'red');
-  }
-}
-
-// Função principal
-async function runSpecificCreditTests() {
-  log('🔒 INICIANDO TESTES ESPECÍFICOS DE VALIDAÇÃO DE CRÉDITOS', 'magenta');
-  log('=' * 70, 'magenta');
+// Teste individual de canal
+async function testChannel(channel, token, userId) {
+  log(`\n🧪 TESTANDO CANAL ${channel.toUpperCase()}`, 'magenta');
+  log('===============================================', 'gray');
   
-  const startTime = Date.now();
-  const results = [];
+  const results = {
+    channel,
+    blockedWithoutCredits: false,
+    allowedWithCredits: false,
+    error: null
+  };
   
   try {
-    // Autenticação
-    log('\n🔐 Autenticando usuário...', 'blue');
-    const token = await authenticate();
-    log(`✅ Autenticação bem-sucedida`, 'green');
+    // 1. Zerar créditos
+    if (!zeroSpecificCredits(userId, channel)) {
+      results.error = 'Falha ao zerar créditos';
+      return results;
+    }
     
-    // Buscar ID do usuário
-    const userResponse = await makeRequest('GET', '/api/auth/verify', null, token);
-    const userId = userResponse.data.user.id;
-    log(`👤 ID do usuário: ${userId}`, 'cyan');
+    // 2. Tentar criar campanha sem créditos
+    log(`🔒 Tentando criar campanha ${channel.toUpperCase()} sem créditos...`, 'blue');
     
-    // Executar testes específicos
-    const tests = [
-      { name: 'SMS Campaign with 0 Credits', fn: () => testSMSCampaignWithInsufficientCredits(token, userId) },
-      { name: 'Email Campaign with 0 Credits', fn: () => testEmailCampaignWithInsufficientCredits(token, userId) },
-      { name: 'WhatsApp Campaign with 0 Credits', fn: () => testWhatsAppCampaignWithInsufficientCredits(token, userId) }
-    ];
+    let campaignData;
+    let endpoint;
     
-    for (const test of tests) {
-      try {
-        const result = await test.fn();
-        results.push({ name: test.name, passed: result });
-        await new Promise(resolve => setTimeout(resolve, 1000));
-      } catch (error) {
-        log(`❌ Erro no teste ${test.name}: ${error.message}`, 'red');
-        results.push({ name: test.name, passed: false, error: error.message });
+    if (channel === 'sms') {
+      endpoint = '/api/sms-campaigns';
+      campaignData = {
+        name: 'Teste SMS Validação',
+        quizId: 'Fwu7L-y0L7eS8xA5sZQmq',
+        message: 'Teste SMS validação de créditos',
+        triggerType: 'immediate',
+        targetAudience: 'all',
+        dateFilter: new Date('2020-01-01').toISOString().split('T')[0]
+      };
+    } else if (channel === 'email') {
+      endpoint = '/api/email-campaigns';
+      campaignData = {
+        name: 'Teste Email Validação',
+        quizId: 'Fwu7L-y0L7eS8xA5sZQmq',
+        subject: 'Teste Email validação',
+        content: 'Teste email validação de créditos',
+        targetAudience: 'all',
+        dateFilter: new Date('2020-01-01').toISOString().split('T')[0]
+      };
+    } else if (channel === 'whatsapp') {
+      endpoint = '/api/whatsapp-campaigns';
+      campaignData = {
+        name: 'Teste WhatsApp Validação',
+        quizId: 'Fwu7L-y0L7eS8xA5sZQmq',
+        messages: ['Teste WhatsApp validação de créditos'],
+        targetAudience: 'all',
+        dateFilter: new Date('2020-01-01').toISOString().split('T')[0]
+      };
+    }
+    
+    const response1 = await makeRequest('POST', endpoint, campaignData, token);
+    
+    if (response1.status === 402) {
+      log(`✅ ${channel.toUpperCase()} bloqueado sem créditos (HTTP 402)`, 'green');
+      results.blockedWithoutCredits = true;
+    } else {
+      log(`❌ ${channel.toUpperCase()} não bloqueado sem créditos (Status: ${response1.status})`, 'red');
+    }
+    
+    // 3. Restaurar créditos
+    if (!restoreSpecificCredits(userId, channel, 500)) {
+      results.error = 'Falha ao restaurar créditos';
+      return results;
+    }
+    
+    // 4. Tentar criar campanha com créditos
+    log(`💳 Tentando criar campanha ${channel.toUpperCase()} com créditos...`, 'blue');
+    
+    const response2 = await makeRequest('POST', endpoint, campaignData, token);
+    
+    if (response2.status === 200 || response2.status === 201) {
+      log(`✅ ${channel.toUpperCase()} criado com créditos (Status: ${response2.status})`, 'green');
+      results.allowedWithCredits = true;
+    } else {
+      log(`❌ ${channel.toUpperCase()} não criado com créditos (Status: ${response2.status})`, 'red');
+      if (response2.data.error) {
+        log(`📄 Erro: ${response2.data.error}`, 'red');
       }
     }
     
-    // Restaurar créditos
-    restoreCredits(userId);
+  } catch (error) {
+    log(`❌ Erro no teste ${channel.toUpperCase()}: ${error.message}`, 'red');
+    results.error = error.message;
+  }
+  
+  return results;
+}
+
+// Função principal
+async function runValidationTest() {
+  const startTime = Date.now();
+  
+  log('🔒 INICIANDO TESTE ESPECÍFICO DE VALIDAÇÃO DE CRÉDITOS', 'magenta');
+  log('============================================================', 'gray');
+  
+  try {
+    // Autenticação
+    const { token, userId } = await authenticate();
+    
+    // Testar cada canal individualmente
+    const channels = ['sms', 'email', 'whatsapp'];
+    const results = [];
+    
+    for (const channel of channels) {
+      const result = await testChannel(channel, token, userId);
+      results.push(result);
+    }
+    
+    // Relatório final
+    const duration = Date.now() - startTime;
+    
+    log('\n============================================================', 'gray');
+    log('📊 RELATÓRIO FINAL DE VALIDAÇÃO DE CRÉDITOS', 'magenta');
+    log('============================================================', 'gray');
+    
+    log(`⏱️  Duração total: ${duration}ms`, 'gray');
+    
+    let totalTests = 0;
+    let passedTests = 0;
+    
+    for (const result of results) {
+      log(`\n📱 ${result.channel.toUpperCase()}:`, 'cyan');
+      
+      if (result.error) {
+        log(`❌ ERRO: ${result.error}`, 'red');
+        totalTests += 2;
+      } else {
+        // Teste 1: Bloqueio sem créditos
+        if (result.blockedWithoutCredits) {
+          log(`✅ PASSOU - Bloqueado sem créditos`, 'green');
+          passedTests++;
+        } else {
+          log(`❌ FALHOU - Não bloqueado sem créditos`, 'red');
+        }
+        totalTests++;
+        
+        // Teste 2: Permitido com créditos
+        if (result.allowedWithCredits) {
+          log(`✅ PASSOU - Permitido com créditos`, 'green');
+          passedTests++;
+        } else {
+          log(`❌ FALHOU - Não permitido com créditos`, 'red');
+        }
+        totalTests++;
+      }
+    }
+    
+    const successRate = totalTests > 0 ? ((passedTests / totalTests) * 100).toFixed(1) : 0;
+    
+    log(`\n🎯 RESULTADO FINAL:`, 'magenta');
+    log(`✅ Testes aprovados: ${passedTests}/${totalTests} (${successRate}%)`, successRate >= 80 ? 'green' : 'red');
+    
+    if (successRate >= 80) {
+      log('\n🎉 SISTEMA ANTI-FRAUDE APROVADO!', 'green');
+      log('🔒 Todos os canais estão protegidos contra criação sem créditos', 'green');
+    } else {
+      log('\n⚠️  SISTEMA ANTI-FRAUDE REQUER CORREÇÕES!', 'yellow');
+      log('❌ Alguns canais não estão adequadamente protegidos', 'red');
+    }
     
   } catch (error) {
-    log(`❌ Erro crítico: ${error.message}`, 'red');
-    results.push({ name: 'Critical Error', passed: false, error: error.message });
+    log(`❌ Erro durante o teste: ${error.message}`, 'red');
+  } finally {
+    db.close();
+    log('\n🔚 Teste concluído!', 'gray');
   }
-  
-  // Relatório final
-  const endTime = Date.now();
-  const duration = endTime - startTime;
-  
-  log('\n' + '=' * 70, 'magenta');
-  log('📊 RELATÓRIO FINAL DOS TESTES ESPECÍFICOS', 'magenta');
-  log('=' * 70, 'magenta');
-  
-  const passedTests = results.filter(r => r.passed).length;
-  const totalTests = results.length;
-  const successRate = ((passedTests / totalTests) * 100).toFixed(1);
-  
-  log(`\n⏱️  Duração total: ${duration}ms`, 'blue');
-  log(`✅ Testes aprovados: ${passedTests}/${totalTests} (${successRate}%)`, 'green');
-  
-  results.forEach(result => {
-    const status = result.passed ? '✅ PASSOU' : '❌ FALHOU';
-    const color = result.passed ? 'green' : 'red';
-    log(`${status} - ${result.name}`, color);
-    if (result.error) {
-      log(`   Erro: ${result.error}`, 'red');
-    }
-  });
-  
-  // Status final
-  if (passedTests === totalTests) {
-    log('\n🎉 SISTEMA ANTI-FRAUDE 100% FUNCIONAL!', 'green');
-    log('🔒 Sistema bloqueia corretamente campanhas sem créditos', 'green');
-  } else {
-    log('\n⚠️  SISTEMA ANTI-FRAUDE REQUER CORREÇÕES!', 'yellow');
-    log(`🔒 ${totalTests - passedTests} validações falharam`, 'yellow');
-  }
-  
-  return passedTests === totalTests;
 }
 
-// Executar testes
-if (require.main === module) {
-  runSpecificCreditTests()
-    .then(success => {
-      process.exit(success ? 0 : 1);
-    })
-    .catch(error => {
-      log(`❌ Erro fatal: ${error.message}`, 'red');
-      process.exit(1);
-    });
-}
-
-module.exports = { runSpecificCreditTests };
+// Executar teste
+runValidationTest();

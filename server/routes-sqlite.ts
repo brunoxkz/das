@@ -3613,9 +3613,13 @@ app.post("/api/whatsapp-campaigns", verifyJWT, async (req: any, res: Response) =
     let filteredPhones = phones;
     if (dateFilter) {
       const filterDate = new Date(dateFilter);
-      filteredPhones = filteredPhones.filter(p => 
-        new Date(p.submittedAt || p.created_at) >= filterDate
-      );
+      console.log(`🔍 FILTRO DE DATA: ${dateFilter} (${filterDate.toISOString()})`);
+      filteredPhones = filteredPhones.filter(p => {
+        const responseDate = new Date(p.submittedAt || p.created_at);
+        console.log(`📅 Comparando: ${responseDate.toISOString()} >= ${filterDate.toISOString()}`);
+        return responseDate >= filterDate;
+      });
+      console.log(`📱 APÓS FILTRO DE DATA: ${filteredPhones.length} de ${phones.length}`);
     }
     
     // Apply audience filter
