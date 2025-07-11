@@ -2,17 +2,18 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Sidebar Responsive Styles */
+/* Sidebar Responsive Styles - Synchronized Scrolling */
 .vendzz-sidebar {
-  position: fixed;
+  position: absolute;
   top: 0;
   left: 0;
-  height: 100vh;
+  height: 100%;
   z-index: 30;
   transition: width 0.3s ease-in-out;
   background: white;
   border-right: 1px solid #e5e7eb;
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  min-height: 100vh;
 }
 
 .vendzz-sidebar.collapsed {
@@ -28,17 +29,27 @@
   margin-left: 16rem; /* 256px - default expanded */
   transition: margin-left 0.3s ease-in-out;
   min-height: 100vh;
+  position: relative;
 }
 
 .main-content.sidebar-collapsed {
   margin-left: 4rem; /* 64px */
 }
 
+/* Container wrapper for synchronized scrolling */
+.app-container {
+  position: relative;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
 /* Mobile responsive */
 @media (max-width: 768px) {
   .vendzz-sidebar {
+    position: fixed;
     transform: translateX(-100%);
     z-index: 50;
+    height: 100vh;
   }
   
   .vendzz-sidebar.mobile-open {
