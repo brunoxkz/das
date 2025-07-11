@@ -1279,38 +1279,43 @@ export class SQLiteStorage implements IStorage {
 
   // Método para criar logs de email (CORRIGIDO)
   async createEmailLog(logData: any): Promise<void> {
-    const stmt = sqlite.prepare(`
-      INSERT INTO email_logs (
-        id, campaignId, email, personalizedSubject, personalizedContent, 
-        leadData, status, errorMessage, sentAt, createdAt
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    `);
-    
-    const logEntry = {
-      id: nanoid(),
-      campaignId: logData.campaignId,
-      email: logData.email,
-      personalizedSubject: logData.personalizedSubject || logData.subject || 'Assunto não especificado',
-      personalizedContent: logData.personalizedContent || logData.content || 'Conteúdo não especificado',
-      leadData: JSON.stringify(logData.leadData || {}),
-      status: logData.status || 'pending',
-      errorMessage: logData.error || null,
-      sentAt: logData.sentAt ? Math.floor(new Date(logData.sentAt).getTime() / 1000) : null,
-      createdAt: Math.floor(Date.now() / 1000)
-    };
-    
-    stmt.run(
-      logEntry.id,
-      logEntry.campaignId,
-      logEntry.email,
-      logEntry.personalizedSubject,
-      logEntry.personalizedContent,
-      logEntry.leadData,
-      logEntry.status,
-      logEntry.errorMessage,
-      logEntry.sentAt,
-      logEntry.createdAt
-    );
+    try {
+      const stmt = sqlite.prepare(`
+        INSERT INTO email_logs (
+          id, campaignId, email, personalizedSubject, personalizedContent, 
+          leadData, status, errorMessage, sentAt, createdAt
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      `);
+      
+      const logEntry = {
+        id: nanoid(),
+        campaignId: String(logData.campaignId || ''),
+        email: String(logData.email || ''),
+        personalizedSubject: String(logData.personalizedSubject || logData.subject || 'Assunto não especificado'),
+        personalizedContent: String(logData.personalizedContent || logData.content || 'Conteúdo não especificado'),
+        leadData: JSON.stringify(logData.leadData || {}),
+        status: String(logData.status || 'pending'),
+        errorMessage: logData.error ? String(logData.error) : null,
+        sentAt: logData.sentAt ? (typeof logData.sentAt === 'number' ? logData.sentAt : Math.floor(new Date(logData.sentAt).getTime() / 1000)) : null,
+        createdAt: Math.floor(Date.now() / 1000)
+      };
+      
+      stmt.run(
+        logEntry.id,
+        logEntry.campaignId,
+        logEntry.email,
+        logEntry.personalizedSubject,
+        logEntry.personalizedContent,
+        logEntry.leadData,
+        logEntry.status,
+        logEntry.errorMessage,
+        logEntry.sentAt,
+        logEntry.createdAt
+      );
+    } catch (error) {
+      console.error('❌ ERRO ao criar log de email:', error);
+      throw error;
+    }
   }
 
   // Método para buscar logs de email (CORRIGIDO)
@@ -2844,6 +2849,11 @@ export class SQLiteStorage implements IStorage {
       console.error('Error getting email logs by user:', error);
       throw error;
     }
+  }
+
+  // Método getEmailLogs que é chamado pelo endpoint
+  async getEmailLogs(campaignId: string): Promise<EmailLog[]> {
+    return this.getEmailLogsByCampaign(campaignId);
   }
 
   // Função para atualizar status de email usando email + campaignId

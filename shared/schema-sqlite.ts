@@ -18,6 +18,9 @@ export const users = sqliteTable("users", {
   refreshToken: text("refreshToken"),
   subscriptionStatus: text("subscriptionStatus"),
   smsCredits: integer("smsCredits").default(0),
+  emailCredits: integer("emailCredits").default(0),
+  whatsappCredits: integer("whatsappCredits").default(0),
+  aiCredits: integer("aiCredits").default(0),
   createdAt: integer("createdAt", { mode: 'timestamp' }).notNull().$defaultFn(() => new Date()),
   updatedAt: integer("updatedAt", { mode: 'timestamp' }).notNull().$defaultFn(() => new Date()),
 });

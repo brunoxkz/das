@@ -86,6 +86,11 @@ export function runMigrations() {
       addColumnIfNotExists('quizzes', 'backRedirectUrl', 'TEXT');
       addColumnIfNotExists('quizzes', 'backRedirectDelay', 'INTEGER DEFAULT 0');
       
+      // Adicionar colunas de créditos para sistema anti-fraude
+      addColumnIfNotExists('users', 'emailCredits', 'INTEGER DEFAULT 0');
+      addColumnIfNotExists('users', 'whatsappCredits', 'INTEGER DEFAULT 0');
+      addColumnIfNotExists('users', 'aiCredits', 'INTEGER DEFAULT 0');
+      
       console.log('✅ Database migration completed safely');
       return;
     }
