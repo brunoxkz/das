@@ -451,6 +451,19 @@ export function runMigrations() {
       );
     `;
 
+    const createNotificationsTable = `
+      CREATE TABLE IF NOT EXISTS notifications (
+        id TEXT PRIMARY KEY,
+        title TEXT NOT NULL,
+        message TEXT NOT NULL,
+        type TEXT NOT NULL DEFAULT 'info',
+        user_id TEXT REFERENCES users(id) ON DELETE CASCADE,
+        is_read INTEGER DEFAULT 0,
+        created_at INTEGER NOT NULL DEFAULT (unixepoch()),
+        updated_at INTEGER NOT NULL DEFAULT (unixepoch())
+      );
+    `;
+
     sqlite.exec(createUsersTable);
     sqlite.exec(createQuizzesTable);
     sqlite.exec(createQuizTemplatesTable);
@@ -471,6 +484,7 @@ export function runMigrations() {
     sqlite.exec(createWhatsappAutomationFilesTable);
     sqlite.exec(createAiConversionCampaignsTable);
     sqlite.exec(createAiVideoGenerationsTable);
+    sqlite.exec(createNotificationsTable);
     
     // Adicionar campos se não existirem
     try {

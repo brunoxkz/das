@@ -4,6 +4,7 @@ import { useAuth } from "@/hooks/useAuth-jwt";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { NotificationSystem } from "@/components/notification-system";
 
 import { 
   BarChart3, 
@@ -168,8 +169,8 @@ export function Sidebar() {
   ];
 
   return (
-    <div className={cn(
-      "vendzz-sidebar flex flex-col transition-all duration-300 h-screen fixed left-0 top-0 z-50 bg-white border-r border-gray-200",
+    <aside className={cn(
+      "vendzz-sidebar flex flex-col transition-all duration-300 h-screen bg-white border-r border-gray-200 sticky top-0",
       isCollapsed ? "w-16" : "w-64"
     )}>
       {/* Logo and Notifications */}
@@ -192,38 +193,49 @@ export function Sidebar() {
             )}
           </div>
 
-          {/* Notification and Language Icons */}
+          {/* Language and Notification Icons (reordered) */}
           {!isCollapsed && (
             <div className="flex items-center space-x-2">
-              {/* Notification Bell */}
-              <Button variant="ghost" size="sm" className="relative p-2">
-                <Bell className="w-4 h-4 text-gray-600" />
-                <Badge className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center text-xs bg-red-500 text-white p-0">
-                  3
-                </Badge>
-              </Button>
-              
               {/* Language Selector */}
-              <Button variant="ghost" size="sm" className="p-2">
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                className="p-2"
+                onClick={() => {
+                  // Simulação de seletor de idioma
+                  const currentLang = localStorage.getItem('language') || 'pt-BR';
+                  const newLang = currentLang === 'pt-BR' ? 'en-US' : 'pt-BR';
+                  localStorage.setItem('language', newLang);
+                  alert(`Idioma alterado para: ${newLang === 'pt-BR' ? 'Português' : 'English'}`);
+                }}
+              >
                 <Globe className="w-4 h-4 text-gray-600" />
               </Button>
+              
+              {/* Notification Bell */}
+              <NotificationSystem />
             </div>
           )}
 
           {isCollapsed && (
             <div className="flex flex-col space-y-1">
-              {/* Notification Bell - Collapsed */}
-              <Button variant="ghost" size="sm" className="relative p-1">
-                <Bell className="w-3 h-3 text-gray-600" />
-                <Badge className="absolute -top-0.5 -right-0.5 h-3 w-3 flex items-center justify-center text-xs bg-red-500 text-white p-0 text-[10px]">
-                  3
-                </Badge>
-              </Button>
-              
               {/* Language Selector - Collapsed */}
-              <Button variant="ghost" size="sm" className="p-1">
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                className="p-1"
+                onClick={() => {
+                  const currentLang = localStorage.getItem('language') || 'pt-BR';
+                  const newLang = currentLang === 'pt-BR' ? 'en-US' : 'pt-BR';
+                  localStorage.setItem('language', newLang);
+                  alert(`Idioma: ${newLang === 'pt-BR' ? 'PT' : 'EN'}`);
+                }}
+              >
                 <Globe className="w-3 h-3 text-gray-600" />
               </Button>
+              
+              {/* Notification Bell - Collapsed */}
+              <NotificationSystem />
             </div>
           )}
         </div>
@@ -324,6 +336,6 @@ export function Sidebar() {
           </div>
         )}
       </div>
-    </div>
+    </aside>
   );
 }

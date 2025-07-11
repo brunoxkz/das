@@ -10,7 +10,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
 import { Bell, X, Check, AlertCircle, Info, CheckCircle, AlertTriangle } from "lucide-react";
-import { useAuth } from "@/hooks/use-auth-hybrid";
+import { useAuth } from "@/hooks/useAuth-jwt";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { formatDistanceToNow } from "date-fns";
@@ -41,7 +41,8 @@ const typeColors = {
 };
 
 export function NotificationSystem() {
-  const { userData, isAuthenticated } = useAuth();
+  const { user, isAuthenticated } = useAuth();
+  const userData = user as any;
   const { toast } = useToast();
   const [isOpen, setIsOpen] = useState(false);
 

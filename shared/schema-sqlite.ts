@@ -240,6 +240,8 @@ export const emailSequences = sqliteTable("email_sequences", {
   updatedAt: integer("updatedAt").notNull().$defaultFn(() => Math.floor(Date.now() / 1000)),
 });
 
+
+
 // Schemas para validação
 export const insertUserSchema = createInsertSchema(users).omit({
   id: true,
@@ -273,6 +275,8 @@ export const insertEmailCampaignSchema = createInsertSchema(emailCampaigns).omit
   createdAt: true,
   updatedAt: true,
 });
+
+
 
 export const insertEmailTemplateSchema = createInsertSchema(emailTemplates).omit({
   id: true,
