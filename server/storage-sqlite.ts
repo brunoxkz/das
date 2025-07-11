@@ -447,6 +447,182 @@ export class SQLiteStorage implements IStorage {
     return updatedUser;
   }
 
+  // 🔒 SISTEMA DE SEGURANÇA DE CRÉDITOS - ANTI-BURLA
+  async validateCreditsForCampaign(userId: string, creditType: 'sms' | 'email' | 'whatsapp' | 'ai', requiredAmount: number): Promise<{ valid: boolean; currentCredits: number; message?: string }> {
+    try {
+      console.log(`🔒 VALIDANDO CRÉDITOS - User: ${userId}, Tipo: ${creditType}, Necessário: ${requiredAmount}`);
+      
+      const user = await this.getUser(userId);
+      if (!user) {
+        return { valid: false, currentCredits: 0, message: "Usuário não encontrado" };
+      }
+
+      let currentCredits = 0;
+      switch (creditType) {
+        case 'sms':
+          currentCredits = user.smsCredits || 0;
+          break;
+        case 'email':
+          currentCredits = user.emailCredits || 0;
+          break;
+        case 'whatsapp':
+          currentCredits = user.whatsappCredits || 0;
+          break;
+        case 'ai':
+          currentCredits = user.aiCredits || 0;
+          break;
+      }
+
+      const isValid = currentCredits >= requiredAmount;
+      
+      console.log(`💰 RESULTADO VALIDAÇÃO - Créditos atuais: ${currentCredits}, Necessário: ${requiredAmount}, Válido: ${isValid}`);
+      
+      return {
+        valid: isValid,
+        currentCredits,
+        message: isValid ? undefined : `Créditos insuficientes. Você tem ${currentCredits} créditos ${creditType}, mas precisa de ${requiredAmount}.`
+      };
+    } catch (error) {
+      console.error(`❌ ERRO na validação de créditos:`, error);
+      return { valid: false, currentCredits: 0, message: "Erro interno na validação" };
+    }
+  }
+
+  async debitCredits(userId: string, creditType: 'sms' | 'email' | 'whatsapp' | 'ai', amount: number): Promise<{ success: boolean; newBalance: number; message?: string }> {
+    try {
+      console.log(`💳 DEBITANDO CRÉDITOS - User: ${userId}, Tipo: ${creditType}, Quantidade: ${amount}`);
+      
+      const user = await this.getUser(userId);
+      if (!user) {
+        return { success: false, newBalance: 0, message: "Usuário não encontrado" };
+      }
+
+      let currentCredits = 0;
+      const updateData: Partial<User> = {};
+
+      switch (creditType) {
+        case 'sms':
+          currentCredits = user.smsCredits || 0;
+          updateData.smsCredits = Math.max(0, currentCredits - amount);
+          break;
+        case 'email':
+          currentCredits = user.emailCredits || 0;
+          updateData.emailCredits = Math.max(0, currentCredits - amount);
+          break;
+        case 'whatsapp':
+          currentCredits = user.whatsappCredits || 0;
+          updateData.whatsappCredits = Math.max(0, currentCredits - amount);
+          break;
+        case 'ai':
+          currentCredits = user.aiCredits || 0;
+          updateData.aiCredits = Math.max(0, currentCredits - amount);
+          break;
+      }
+
+      if (currentCredits < amount) {
+        return {
+          success: false,
+          newBalance: currentCredits,
+          message: `Créditos insuficientes. Saldo atual: ${currentCredits}, tentativa de débito: ${amount}`
+        };
+      }
+
+      await this.updateUser(userId, updateData);
+      const newBalance = currentCredits - amount;
+      
+      console.log(`✅ CRÉDITOS DEBITADOS - Saldo anterior: ${currentCredits}, Novo saldo: ${newBalance}`);
+      
+      return {
+        success: true,
+        newBalance,
+        message: `${amount} créditos ${creditType} debitados. Novo saldo: ${newBalance}`
+      };
+    } catch (error) {
+      console.error(`❌ ERRO ao debitar créditos:`, error);
+      return { success: false, newBalance: 0, message: "Erro interno no débito" };
+    }
+  }
+
+  async pauseCampaignsWithoutCredits(userId: string): Promise<{ sms: number; email: number; whatsapp: number }> {
+    try {
+      console.log(`⏸️ VERIFICANDO CAMPANHAS PARA PAUSAR - User: ${userId}`);
+      
+      const user = await this.getUser(userId);
+      if (!user) {
+        return { sms: 0, email: 0, whatsapp: 0 };
+      }
+
+      let pausedCounts = { sms: 0, email: 0, whatsapp: 0 };
+
+      // Pausar campanhas SMS se créditos insuficientes
+      if ((user.smsCredits || 0) <= 0) {
+        const smsCampaigns = await db.select()
+          .from(smsCampaigns)
+          .where(and(
+            eq(smsCampaigns.userId, userId),
+            eq(smsCampaigns.status, 'active')
+          ));
+
+        for (const campaign of smsCampaigns) {
+          await db.update(smsCampaigns)
+            .set({ 
+              status: 'paused',
+              pausedReason: 'Créditos SMS insuficientes'
+            })
+            .where(eq(smsCampaigns.id, campaign.id));
+          pausedCounts.sms++;
+        }
+      }
+
+      // Pausar campanhas Email se créditos insuficientes
+      if ((user.emailCredits || 0) <= 0) {
+        const emailCampaigns = await db.select()
+          .from(emailCampaigns)
+          .where(and(
+            eq(emailCampaigns.userId, userId),
+            eq(emailCampaigns.status, 'active')
+          ));
+
+        for (const campaign of emailCampaigns) {
+          await db.update(emailCampaigns)
+            .set({ 
+              status: 'paused',
+              pausedReason: 'Créditos Email insuficientes'
+            })
+            .where(eq(emailCampaigns.id, campaign.id));
+          pausedCounts.email++;
+        }
+      }
+
+      // Pausar campanhas WhatsApp se créditos insuficientes
+      if ((user.whatsappCredits || 0) <= 0) {
+        const whatsappCampaigns = await db.select()
+          .from(whatsappCampaigns)
+          .where(and(
+            eq(whatsappCampaigns.userId, userId),
+            eq(whatsappCampaigns.status, 'active')
+          ));
+
+        for (const campaign of whatsappCampaigns) {
+          await db.update(whatsappCampaigns)
+            .set({ 
+              status: 'paused',
+              pausedReason: 'Créditos WhatsApp insuficientes'
+            })
+            .where(eq(whatsappCampaigns.id, campaign.id));
+          pausedCounts.whatsapp++;
+        }
+      }
+
+      console.log(`⏸️ CAMPANHAS PAUSADAS - SMS: ${pausedCounts.sms}, Email: ${pausedCounts.email}, WhatsApp: ${pausedCounts.whatsapp}`);
+      
+      return pausedCounts;
+    } catch (error) {
+      console.error(`❌ ERRO ao pausar campanhas:`, error);
+      return { sms: 0, email: 0, whatsapp: 0 };
+    }
+  }
+
   async getAllUsers(): Promise<User[]> {
     return await db.select().from(users).orderBy(desc(users.createdAt));
   }

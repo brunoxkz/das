@@ -156,7 +156,7 @@ app.use((req, res, next) => {
         
         for (const smsLog of scheduledSMS) {
           try {
-            // Verificar créditos antes de enviar cada SMS
+            // 🔒 VALIDAÇÃO DE CRÉDITOS ULTRA-SEGURA - ANTI-BURLA
             const campaigns = await storage.getAllSMSCampaigns();
             const campaign = campaigns.find(c => c.id === smsLog.campaignId);
             
@@ -165,45 +165,50 @@ app.use((req, res, next) => {
               continue;
             }
             
-            const user = await storage.getUser(campaign.userId);
-            
-            const sentSMS = await storage.getSentSMSCount(campaign.userId);
-            const remainingCredits = Math.max(0, (user.smsCredits || 100) - sentSMS);
-            
-            if (remainingCredits <= 0) {
-              console.log(`🚫 CRÉDITOS ESGOTADOS - Pausando SMS ${smsLog.id}`);
+            // Verificar créditos usando função segura
+            const creditValidation = await storage.validateCreditsForCampaign(campaign.userId, 'sms', 1);
+            if (!creditValidation.valid) {
+              console.log(`🚫 CRÉDITOS INSUFICIENTES - Pausando SMS ${smsLog.id}`);
               await storage.updateSMSLog(smsLog.id, { 
                 status: 'failed', 
-                errorMessage: 'Créditos SMS esgotados' 
+                errorMessage: `Créditos SMS insuficientes. Atual: ${creditValidation.currentCredits}` 
               });
+              
+              // Pausar campanha automaticamente
+              await storage.pauseCampaignsWithoutCredits(campaign.userId);
               continue;
             }
             console.log(`📞 PROCESSANDO SMS AGENDADO: ${smsLog.id} - ${smsLog.phone}`);
             const result = await twilio.sendSMS(smsLog.phone, smsLog.message);
             
             if (result.success) {
-              await storage.updateSMSLog(smsLog.id, {
-                status: 'sent',
-                twilioSid: result.sid,
-                sentAt: Math.floor(Date.now() / 1000)
-              });
+              // 🔒 DÉBITO DE CRÉDITO SEGURO - 1 SMS = 1 CRÉDITO
+              const debitResult = await storage.debitCredits(campaign.userId, 'sms', 1);
               
-              // Consumir crédito SMS
-              await storage.updateUserSmsCredits(campaign.userId, user.smsCredits - 1);
-              
-              // Registrar transação
-              await storage.createSmsTransaction({
-                userId: campaign.userId,
-                type: 'envio_individual',
-                amount: -1,
-                description: `SMS individual: ${smsLog.phone}`
-              });
-              
-              // Invalidar cache de créditos SMS para atualizar dashboard
-              cache.del(`sms-credits-${campaign.userId}`);
-              cache.invalidateUserCaches(campaign.userId);
-              
-              console.log(`✅ SMS ENVIADO: ${smsLog.id} - ${smsLog.phone}`);
+              if (debitResult.success) {
+                await storage.updateSMSLog(smsLog.id, {
+                  status: 'sent',
+                  twilioSid: result.sid,
+                  sentAt: Math.floor(Date.now() / 1000)
+                });
+                
+                console.log(`✅ SMS ENVIADO: ${smsLog.id} - ${smsLog.phone} - Crédito debitado: ${debitResult.newBalance} restantes`);
+                
+                // Se créditos acabaram, pausar todas as campanhas do usuário
+                if (debitResult.newBalance <= 0) {
+                  console.log(`🚫 CRÉDITOS ESGOTADOS - Pausando todas as campanhas do usuário ${campaign.userId}`);
+                  await storage.pauseCampaignsWithoutCredits(campaign.userId);
+                }
+              } else {
+                // SMS foi enviado mas erro no débito - registrar problema
+                await storage.updateSMSLog(smsLog.id, {
+                  status: 'sent',
+                  twilioSid: result.sid,
+                  sentAt: Math.floor(Date.now() / 1000),
+                  errorMessage: `SMS enviado mas erro no débito: ${debitResult.message}`
+                });
+                console.log(`⚠️ SMS ENVIADO mas erro no débito: ${smsLog.id} - ${debitResult.message}`);
+              }
             } else {
               await storage.updateSMSLog(smsLog.id, {
                 status: 'failed',
@@ -596,9 +601,20 @@ app.use((req, res, next) => {
         
         for (const log of scheduledLogs) {
           try {
+            // 🔒 VALIDAÇÃO DE CRÉDITOS WHATSAPP - ANTI-BURLA
+            const creditValidation = await storage.validateCreditsForCampaign(log.user_id, 'whatsapp', 1);
+            if (!creditValidation.valid) {
+              console.log(`🚫 CRÉDITOS WHATSAPP INSUFICIENTES - Pausando mensagem ${log.id}`);
+              await storage.updateWhatsappLogStatus(log.id, 'failed', undefined, `Créditos WhatsApp insuficientes. Atual: ${creditValidation.currentCredits}`);
+              
+              // Pausar campanhas automaticamente
+              await storage.pauseCampaignsWithoutCredits(log.user_id);
+              continue;
+            }
+            
             // Marcar como pronto para extensão
             await storage.updateWhatsappLogStatus(log.id, 'pending');
-            console.log(`📤 WhatsApp ${log.phone} pronto para envio via extensão`);
+            console.log(`📤 WhatsApp ${log.phone} pronto para envio via extensão (${creditValidation.currentCredits} créditos restantes)`);
           } catch (error) {
             console.error(`❌ Erro ao processar WhatsApp ${log.phone}:`, error.message);
             await storage.updateWhatsappLogStatus(log.id, 'failed', undefined, error.message);

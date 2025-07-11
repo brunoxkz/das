@@ -2315,6 +2315,9 @@ export function registerSQLiteRoutes(app: Express): Server {
         return res.status(403).json({ error: "Acesso negado - Quiz não pertence ao usuário" });
       }
 
+      // 🔒 VALIDAÇÃO DE SEGURANÇA DE CRÉDITOS - ANTI-BURLA
+      console.log("🔒 VALIDAÇÃO DE CRÉDITOS SMS - Iniciando verificação...");
+      
       // Buscar automaticamente os telefones do quiz
       console.log("📱 BUSCANDO TELEFONES - Quiz:", quizId, ", User:", userId);
       const allResponses = await storage.getQuizResponses(quizId);
@@ -2524,6 +2527,29 @@ export function registerSQLiteRoutes(app: Express): Server {
       
       console.log(`📱 TELEFONES EXTRAÍDOS: ${allPhones.length}, FILTRADOS: ${filteredPhones.length}`);
 
+      // 🔒 VALIDAÇÃO CRÍTICA DE CRÉDITOS - ANTI-BURLA
+      if (filteredPhones.length === 0) {
+        console.log("❌ ERRO: Nenhum telefone válido encontrado após filtros");
+        return res.status(400).json({ error: "Nenhum telefone válido encontrado para envio" });
+      }
+
+      const requiredCredits = filteredPhones.length;
+      console.log(`🔒 VALIDAÇÃO DE CRÉDITOS - Necessário: ${requiredCredits} créditos SMS`);
+      
+      const creditValidation = await storage.validateCreditsForCampaign(userId, 'sms', requiredCredits);
+      if (!creditValidation.valid) {
+        console.log(`❌ CRÉDITOS INSUFICIENTES - Atual: ${creditValidation.currentCredits}, Necessário: ${requiredCredits}`);
+        return res.status(402).json({ 
+          error: "Créditos SMS insuficientes para criar esta campanha",
+          message: creditValidation.message,
+          currentCredits: creditValidation.currentCredits,
+          requiredCredits: requiredCredits,
+          shortfall: requiredCredits - creditValidation.currentCredits
+        });
+      }
+      
+      console.log(`✅ CRÉDITOS SUFICIENTES - Pode criar campanha para ${requiredCredits} SMS`);
+
       // Determinar status inicial baseado no triggerType
       let initialStatus = 'active';
       let scheduledAt = null;
@@ -2645,11 +2671,26 @@ export function registerSQLiteRoutes(app: Express): Server {
             
             if (success) {
               successCount++;
-              // Atualizar log com sucesso
-              await storage.updateSMSLog(logId, {
-                status: 'sent',
-                sentAt: Math.floor(Date.now() / 1000)
-              });
+              
+              // 🔒 DÉBITO DE CRÉDITO SEGURO - 1 SMS = 1 CRÉDITO
+              const debitResult = await storage.debitCredits(userId, 'sms', 1);
+              if (!debitResult.success) {
+                console.log(`🚫 ERRO AO DEBITAR CRÉDITO: ${debitResult.message}`);
+                // Ainda atualizar log como enviado pois o SMS foi enviado
+                await storage.updateSMSLog(logId, {
+                  status: 'sent',
+                  sentAt: Math.floor(Date.now() / 1000),
+                  errorMessage: `SMS enviado mas erro ao debitar crédito: ${debitResult.message}`
+                });
+              } else {
+                console.log(`💳 CRÉDITO DEBITADO - Novo saldo: ${debitResult.newBalance} créditos SMS`);
+                // Atualizar log com sucesso
+                await storage.updateSMSLog(logId, {
+                  status: 'sent',
+                  sentAt: Math.floor(Date.now() / 1000)
+                });
+              }
+              
               console.log(`📱 SMS ENVIADO com sucesso para: ${phoneNumber} (Log: ${logId})`);
             } else {
               failureCount++;
@@ -3586,6 +3627,28 @@ app.post("/api/whatsapp-campaigns", verifyJWT, async (req: any, res: Response) =
     
     console.log(`📱 LEADS FILTRADOS: ${filteredPhones.length} de ${phones.length} total (dateFilter: ${dateFilter}, audience: ${targetAudience})`);
     
+    // 🔒 VALIDAÇÃO DE CRÉDITOS WHATSAPP - ANTI-BURLA
+    if (filteredPhones.length === 0) {
+      return res.status(400).json({ error: "Nenhum telefone válido encontrado após filtros" });
+    }
+
+    const requiredCredits = filteredPhones.length;
+    console.log(`🔒 VALIDAÇÃO DE CRÉDITOS WHATSAPP - Necessário: ${requiredCredits} créditos`);
+    
+    const creditValidation = await storage.validateCreditsForCampaign(userId, 'whatsapp', requiredCredits);
+    if (!creditValidation.valid) {
+      console.log(`❌ CRÉDITOS WHATSAPP INSUFICIENTES - Atual: ${creditValidation.currentCredits}, Necessário: ${requiredCredits}`);
+      return res.status(402).json({ 
+        error: "Créditos WhatsApp insuficientes para criar esta campanha",
+        message: creditValidation.message,
+        currentCredits: creditValidation.currentCredits,
+        requiredCredits: requiredCredits,
+        shortfall: requiredCredits - creditValidation.currentCredits
+      });
+    }
+    
+    console.log(`✅ CRÉDITOS WHATSAPP SUFICIENTES - Pode criar campanha para ${requiredCredits} mensagens`);
+    
     let scheduledAt;
     let initialStatus = 'active';
     
@@ -3957,6 +4020,22 @@ app.post("/api/whatsapp-extension/logs", verifyJWT, async (req: any, res: Respon
       return res.status(403).json({ error: 'Acesso negado: log não pertence ao usuário' });
     }
 
+    // 🔒 DÉBITO DE CRÉDITO SEGURO - 1 WhatsApp = 1 CRÉDITO
+    if (status === 'sent' || status === 'delivered') {
+      const debitResult = await storage.debitCredits(userId, 'whatsapp', 1);
+      if (debitResult.success) {
+        console.log(`💳 CRÉDITO WHATSAPP DEBITADO - Novo saldo: ${debitResult.newBalance} créditos`);
+        
+        // Se créditos acabaram, pausar campanhas
+        if (debitResult.newBalance <= 0) {
+          console.log(`🚫 CRÉDITOS WHATSAPP ESGOTADOS - Pausando campanhas do usuário ${userId}`);
+          await storage.pauseCampaignsWithoutCredits(userId);
+        }
+      } else {
+        console.log(`🚫 ERRO AO DEBITAR CRÉDITO WHATSAPP: ${debitResult.message}`);
+      }
+    }
+    
     // Atualizar status do log no banco
     await storage.updateWhatsappLogStatus(logId, status, 'extension', errorMsg);
     
@@ -4326,6 +4405,29 @@ app.get("/api/whatsapp-extension/pending", verifyJWT, async (req: any, res: Resp
         triggerDelay, 
         triggerUnit 
       } = req.body;
+
+      // 🔒 VALIDAÇÃO DE CRÉDITOS EMAIL - ANTI-BURLA
+      console.log(`🔒 VALIDAÇÃO DE CRÉDITOS EMAIL - Iniciando verificação...`);
+      
+      // Buscar emails do quiz para calcular créditos necessários
+      const responses = await storage.getQuizResponsesForEmail(quizId, targetAudience);
+      const requiredCredits = responses.length;
+      
+      console.log(`📧 CRÉDITOS NECESSÁRIOS: ${requiredCredits} créditos EMAIL`);
+      
+      const creditValidation = await storage.validateCreditsForCampaign(req.user.id, 'email', requiredCredits);
+      if (!creditValidation.valid) {
+        console.log(`❌ CRÉDITOS EMAIL INSUFICIENTES - Atual: ${creditValidation.currentCredits}, Necessário: ${requiredCredits}`);
+        return res.status(402).json({ 
+          error: "Créditos Email insuficientes para criar esta campanha",
+          message: creditValidation.message,
+          currentCredits: creditValidation.currentCredits,
+          requiredCredits: requiredCredits,
+          shortfall: requiredCredits - creditValidation.currentCredits
+        });
+      }
+      
+      console.log(`✅ CRÉDITOS EMAIL SUFICIENTES - Pode criar campanha para ${requiredCredits} emails`);
 
       const result = await emailService.createEmailCampaignFromQuiz({
         userId: req.user.id,
@@ -4992,6 +5094,20 @@ app.get("/api/whatsapp-extension/pending", verifyJWT, async (req: any, res: Resp
           
           if (sent) {
             successCount++;
+            
+            // 🔒 DÉBITO DE CRÉDITO SEGURO - 1 EMAIL = 1 CRÉDITO
+            const debitResult = await storage.debitCredits(userId, 'email', 1);
+            if (debitResult.success) {
+              console.log(`💳 CRÉDITO EMAIL DEBITADO - Novo saldo: ${debitResult.newBalance} créditos`);
+              
+              // Se créditos acabaram, pausar campanhas
+              if (debitResult.newBalance <= 0) {
+                console.log(`🚫 CRÉDITOS EMAIL ESGOTADOS - Pausando campanhas do usuário ${userId}`);
+                await storage.pauseCampaignsWithoutCredits(userId);
+              }
+            } else {
+              console.log(`🚫 ERRO AO DEBITAR CRÉDITO EMAIL: ${debitResult.message}`);
+            }
             
             // Salvar log de sucesso
             await storage.createEmailLog({
