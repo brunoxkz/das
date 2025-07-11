@@ -533,3 +533,95 @@ export type InsertSuperAffiliate = z.infer<typeof insertSuperAffiliateSchema>;
 export type SuperAffiliate = typeof superAffiliates.$inferSelect;
 export type InsertAffiliateSale = z.infer<typeof insertAffiliateSaleSchema>;
 export type AffiliateSale = typeof affiliateSales.$inferSelect;
+
+// A/B Testing Schema
+export const abTests = sqliteTable('ab_tests', {
+  id: text('id').primaryKey().notNull(),
+  userId: text('user_id').notNull().references(() => users.id),
+  name: text('name').notNull(),
+  description: text('description'),
+  quizIds: text('quiz_ids', { mode: 'json' }).notNull().$type<string[]>(),
+  isActive: integer('is_active', { mode: 'boolean' }).default(true),
+  totalViews: integer('total_views').default(0),
+  createdAt: integer('created_at', { mode: 'timestamp' }).notNull().default(sql`(unixepoch())`),
+  updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull().default(sql`(unixepoch())`)
+});
+
+// A/B Test Views Schema
+export const abTestViews = sqliteTable('ab_test_views', {
+  id: text('id').primaryKey().notNull(),
+  testId: text('test_id').notNull().references(() => abTests.id, { onDelete: 'cascade' }),
+  quizId: text('quiz_id').notNull().references(() => quizzes.id),
+  visitorId: text('visitor_id').notNull(),
+  ipAddress: text('ip_address'),
+  userAgent: text('user_agent'),
+  completed: integer('completed', { mode: 'boolean' }).default(false),
+  createdAt: integer('created_at', { mode: 'timestamp' }).notNull().default(sql`(unixepoch())`)
+});
+
+// Webhooks Schema
+export const webhooks = sqliteTable('webhooks', {
+  id: text('id').primaryKey().notNull(),
+  userId: text('user_id').notNull().references(() => users.id),
+  name: text('name').notNull(),
+  url: text('url').notNull(),
+  events: text('events', { mode: 'json' }).notNull().$type<string[]>(),
+  secret: text('secret'),
+  isActive: integer('is_active', { mode: 'boolean' }).default(true),
+  lastTriggered: integer('last_triggered', { mode: 'timestamp' }),
+  totalTriggers: integer('total_triggers').default(0),
+  createdAt: integer('created_at', { mode: 'timestamp' }).notNull().default(sql`(unixepoch())`),
+  updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull().default(sql`(unixepoch())`)
+});
+
+// Webhook Logs Schema
+export const webhookLogs = sqliteTable('webhook_logs', {
+  id: text('id').primaryKey().notNull(),
+  webhookId: text('webhook_id').notNull().references(() => webhooks.id, { onDelete: 'cascade' }),
+  event: text('event').notNull(),
+  payload: text('payload', { mode: 'json' }).notNull(),
+  response: text('response'),
+  statusCode: integer('status_code'),
+  success: integer('success', { mode: 'boolean' }).default(false),
+  createdAt: integer('created_at', { mode: 'timestamp' }).notNull().default(sql`(unixepoch())`)
+});
+
+// Integrations Schema
+export const integrations = sqliteTable('integrations', {
+  id: text('id').primaryKey().notNull(),
+  userId: text('user_id').notNull().references(() => users.id),
+  type: text('type').notNull(), // shopify, woocommerce, zapier, etc.
+  name: text('name').notNull(),
+  config: text('config', { mode: 'json' }).notNull().$type<Record<string, any>>(),
+  isActive: integer('is_active', { mode: 'boolean' }).default(true),
+  lastSync: integer('last_sync', { mode: 'timestamp' }),
+  createdAt: integer('created_at', { mode: 'timestamp' }).notNull().default(sql`(unixepoch())`),
+  updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull().default(sql`(unixepoch())`)
+});
+
+// A/B Testing Zod Schemas
+export const insertAbTestSchema = createInsertSchema(abTests);
+export const insertAbTestViewSchema = createInsertSchema(abTestViews);
+
+// Webhooks Zod Schemas
+export const insertWebhookSchema = createInsertSchema(webhooks);
+export const insertWebhookLogSchema = createInsertSchema(webhookLogs);
+
+// Integrations Zod Schemas
+export const insertIntegrationSchema = createInsertSchema(integrations);
+
+// A/B Testing Types
+export type InsertAbTest = z.infer<typeof insertAbTestSchema>;
+export type AbTest = typeof abTests.$inferSelect;
+export type InsertAbTestView = z.infer<typeof insertAbTestViewSchema>;
+export type AbTestView = typeof abTestViews.$inferSelect;
+
+// Webhooks Types
+export type InsertWebhook = z.infer<typeof insertWebhookSchema>;
+export type Webhook = typeof webhooks.$inferSelect;
+export type InsertWebhookLog = z.infer<typeof insertWebhookLogSchema>;
+export type WebhookLog = typeof webhookLogs.$inferSelect;
+
+// Integrations Types
+export type InsertIntegration = z.infer<typeof insertIntegrationSchema>;
+export type Integration = typeof integrations.$inferSelect;

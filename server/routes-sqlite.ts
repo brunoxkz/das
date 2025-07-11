@@ -6487,201 +6487,394 @@ app.get("/api/whatsapp-extension/pending", verifyJWT, async (req: any, res: Resp
     }
   });
 
+  // ===== A/B TESTING ROUTES =====
+
+  // Get user A/B tests
+  app.get("/api/ab-tests", verifyJWT, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const tests = await storage.getUserAbTests(userId);
+      res.json(tests);
+    } catch (error) {
+      console.error("❌ ERRO ao buscar testes A/B:", error);
+      res.status(500).json({ message: "Erro ao buscar testes A/B" });
+    }
+  });
+
+  // Create A/B test
+  app.post("/api/ab-tests", verifyJWT, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const { name, description, quizIds } = req.body;
+
+      if (!name || !quizIds || quizIds.length < 2 || quizIds.length > 3) {
+        return res.status(400).json({ 
+          message: "Nome e 2-3 quiz IDs são obrigatórios" 
+        });
+      }
+
+      const test = await storage.createAbTest({
+        userId,
+        name,
+        description,
+        quizIds,
+        isActive: true,
+        totalViews: 0
+      });
+
+      console.log("✅ Teste A/B criado:", test.id);
+      res.status(201).json(test);
+    } catch (error) {
+      console.error("❌ ERRO ao criar teste A/B:", error);
+      res.status(500).json({ message: "Erro ao criar teste A/B" });
+    }
+  });
+
+  // Update A/B test
+  app.patch("/api/ab-tests/:id", verifyJWT, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const testId = req.params.id;
+
+      const existingTest = await storage.getAbTest(testId);
+      if (!existingTest || existingTest.userId !== userId) {
+        return res.status(404).json({ message: "Teste A/B não encontrado" });
+      }
+
+      const updatedTest = await storage.updateAbTest(testId, req.body);
+      res.json(updatedTest);
+    } catch (error) {
+      console.error("❌ ERRO ao atualizar teste A/B:", error);
+      res.status(500).json({ message: "Erro ao atualizar teste A/B" });
+    }
+  });
+
+  // Delete A/B test
+  app.delete("/api/ab-tests/:id", verifyJWT, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const testId = req.params.id;
+
+      const existingTest = await storage.getAbTest(testId);
+      if (!existingTest || existingTest.userId !== userId) {
+        return res.status(404).json({ message: "Teste A/B não encontrado" });
+      }
+
+      await storage.deleteAbTest(testId);
+      res.json({ message: "Teste A/B deletado com sucesso" });
+    } catch (error) {
+      console.error("❌ ERRO ao deletar teste A/B:", error);
+      res.status(500).json({ message: "Erro ao deletar teste A/B" });
+    }
+  });
+
+  // Record A/B test view
+  app.post("/api/ab-tests/:id/view", async (req, res) => {
+    try {
+      const testId = req.params.id;
+      const { visitorId, ipAddress, userAgent, quizId } = req.body;
+
+      const test = await storage.getAbTest(testId);
+      if (!test || !test.isActive) {
+        return res.status(404).json({ message: "Teste A/B não encontrado ou inativo" });
+      }
+
+      await storage.recordAbTestView({
+        testId,
+        quizId,
+        visitorId,
+        ipAddress,
+        userAgent,
+        completed: false
+      });
+
+      res.json({ message: "Visualização registrada" });
+    } catch (error) {
+      console.error("❌ ERRO ao registrar visualização A/B:", error);
+      res.status(500).json({ message: "Erro ao registrar visualização" });
+    }
+  });
+
+  // ===== WEBHOOK ROUTES =====
+
+  // Get user webhooks
+  app.get("/api/webhooks", verifyJWT, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const webhooks = await storage.getUserWebhooks(userId);
+      res.json(webhooks);
+    } catch (error) {
+      console.error("❌ ERRO ao buscar webhooks:", error);
+      res.status(500).json({ message: "Erro ao buscar webhooks" });
+    }
+  });
+
+  // Create webhook
+  app.post("/api/webhooks", verifyJWT, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const { name, url, events, secret } = req.body;
+
+      if (!name || !url || !events || events.length === 0) {
+        return res.status(400).json({ 
+          message: "Nome, URL e eventos são obrigatórios" 
+        });
+      }
+
+      const webhook = await storage.createWebhook({
+        userId,
+        name,
+        url,
+        events,
+        secret,
+        isActive: true,
+        totalTriggers: 0
+      });
+
+      console.log("✅ Webhook criado:", webhook.id);
+      res.status(201).json(webhook);
+    } catch (error) {
+      console.error("❌ ERRO ao criar webhook:", error);
+      res.status(500).json({ message: "Erro ao criar webhook" });
+    }
+  });
+
+  // Update webhook
+  app.patch("/api/webhooks/:id", verifyJWT, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const webhookId = req.params.id;
+
+      const existingWebhook = await storage.getWebhook(webhookId);
+      if (!existingWebhook || existingWebhook.userId !== userId) {
+        return res.status(404).json({ message: "Webhook não encontrado" });
+      }
+
+      const updatedWebhook = await storage.updateWebhook(webhookId, req.body);
+      res.json(updatedWebhook);
+    } catch (error) {
+      console.error("❌ ERRO ao atualizar webhook:", error);
+      res.status(500).json({ message: "Erro ao atualizar webhook" });
+    }
+  });
+
+  // Delete webhook
+  app.delete("/api/webhooks/:id", verifyJWT, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const webhookId = req.params.id;
+
+      const existingWebhook = await storage.getWebhook(webhookId);
+      if (!existingWebhook || existingWebhook.userId !== userId) {
+        return res.status(404).json({ message: "Webhook não encontrado" });
+      }
+
+      await storage.deleteWebhook(webhookId);
+      res.json({ message: "Webhook deletado com sucesso" });
+    } catch (error) {
+      console.error("❌ ERRO ao deletar webhook:", error);
+      res.status(500).json({ message: "Erro ao deletar webhook" });
+    }
+  });
+
+  // Test webhook
+  app.post("/api/webhooks/:id/test", verifyJWT, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const webhookId = req.params.id;
+
+      const webhook = await storage.getWebhook(webhookId);
+      if (!webhook || webhook.userId !== userId) {
+        return res.status(404).json({ message: "Webhook não encontrado" });
+      }
+
+      // Simular disparo de teste
+      const testPayload = {
+        event: 'webhook.test',
+        timestamp: new Date().toISOString(),
+        data: {
+          message: 'Este é um teste do webhook do Vendzz',
+          webhook_id: webhookId
+        }
+      };
+
+      try {
+        const response = await fetch(webhook.url, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-Vendzz-Signature': webhook.secret ? 
+              require('crypto').createHmac('sha256', webhook.secret).update(JSON.stringify(testPayload)).digest('hex') 
+              : undefined
+          },
+          body: JSON.stringify(testPayload)
+        });
+
+        await storage.logWebhookTrigger({
+          webhookId,
+          event: 'webhook.test',
+          payload: testPayload,
+          response: await response.text(),
+          statusCode: response.status,
+          success: response.ok
+        });
+
+        res.json({ 
+          message: "Teste enviado", 
+          status: response.status,
+          success: response.ok 
+        });
+
+      } catch (fetchError) {
+        await storage.logWebhookTrigger({
+          webhookId,
+          event: 'webhook.test',
+          payload: testPayload,
+          response: fetchError.message,
+          statusCode: 0,
+          success: false
+        });
+
+        res.json({ 
+          message: "Erro ao enviar teste", 
+          error: fetchError.message,
+          success: false 
+        });
+      }
+
+    } catch (error) {
+      console.error("❌ ERRO ao testar webhook:", error);
+      res.status(500).json({ message: "Erro ao testar webhook" });
+    }
+  });
+
+  // Get webhook logs
+  app.get("/api/webhooks/:id/logs", verifyJWT, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const webhookId = req.params.id;
+
+      const webhook = await storage.getWebhook(webhookId);
+      if (!webhook || webhook.userId !== userId) {
+        return res.status(404).json({ message: "Webhook não encontrado" });
+      }
+
+      const logs = await storage.getWebhookLogs(webhookId);
+      res.json(logs);
+    } catch (error) {
+      console.error("❌ ERRO ao buscar logs do webhook:", error);
+      res.status(500).json({ message: "Erro ao buscar logs" });
+    }
+  });
+
+  // ===== INTEGRATION ROUTES =====
+
+  // Get user integrations
+  app.get("/api/integrations", verifyJWT, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const integrations = await storage.getUserIntegrations(userId);
+      res.json(integrations);
+    } catch (error) {
+      console.error("❌ ERRO ao buscar integrações:", error);
+      res.status(500).json({ message: "Erro ao buscar integrações" });
+    }
+  });
+
+  // Create integration
+  app.post("/api/integrations", verifyJWT, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const { type, name, config } = req.body;
+
+      if (!type || !name || !config) {
+        return res.status(400).json({ 
+          message: "Tipo, nome e configuração são obrigatórios" 
+        });
+      }
+
+      const integration = await storage.createIntegration({
+        userId,
+        type,
+        name,
+        config,
+        isActive: true
+      });
+
+      console.log("✅ Integração criada:", integration.id);
+      res.status(201).json(integration);
+    } catch (error) {
+      console.error("❌ ERRO ao criar integração:", error);
+      res.status(500).json({ message: "Erro ao criar integração" });
+    }
+  });
+
+  // Update integration
+  app.patch("/api/integrations/:id", verifyJWT, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const integrationId = req.params.id;
+
+      const existingIntegration = await storage.getIntegration(integrationId);
+      if (!existingIntegration || existingIntegration.userId !== userId) {
+        return res.status(404).json({ message: "Integração não encontrada" });
+      }
+
+      const updatedIntegration = await storage.updateIntegration(integrationId, req.body);
+      res.json(updatedIntegration);
+    } catch (error) {
+      console.error("❌ ERRO ao atualizar integração:", error);
+      res.status(500).json({ message: "Erro ao atualizar integração" });
+    }
+  });
+
+  // Delete integration
+  app.delete("/api/integrations/:id", verifyJWT, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const integrationId = req.params.id;
+
+      const existingIntegration = await storage.getIntegration(integrationId);
+      if (!existingIntegration || existingIntegration.userId !== userId) {
+        return res.status(404).json({ message: "Integração não encontrada" });
+      }
+
+      await storage.deleteIntegration(integrationId);
+      res.json({ message: "Integração deletada com sucesso" });
+    } catch (error) {
+      console.error("❌ ERRO ao deletar integração:", error);
+      res.status(500).json({ message: "Erro ao deletar integração" });
+    }
+  });
+
+  // Sync integration
+  app.post("/api/integrations/:id/sync", verifyJWT, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const integrationId = req.params.id;
+
+      const integration = await storage.getIntegration(integrationId);
+      if (!integration || integration.userId !== userId) {
+        return res.status(404).json({ message: "Integração não encontrada" });
+      }
+
+      if (!integration.isActive) {
+        return res.status(400).json({ message: "Integração está inativa" });
+      }
+
+      // Atualizar timestamp da última sincronização
+      await storage.updateIntegration(integrationId, {
+        lastSync: Math.floor(Date.now() / 1000)
+      });
+
+      console.log("✅ Sincronização iniciada para integração:", integrationId);
+      res.json({ message: "Sincronização iniciada com sucesso" });
+    } catch (error) {
+      console.error("❌ ERRO ao sincronizar integração:", error);
+      res.status(500).json({ message: "Erro ao sincronizar integração" });
+    }
+  });
+
   return httpServer;
-}
-
-// Advanced Email Marketing Pro helper functions
-function extractAvailableVariables(responses: any[]) {
-  const variables = new Set<string>();
-  
-  responses.forEach(response => {
-    if (response.responses) {
-      if (Array.isArray(response.responses)) {
-        // New format - array of elements
-        response.responses.forEach((element: any) => {
-          if (element.elementFieldId) {
-            variables.add(element.elementFieldId);
-          }
-        });
-      } else {
-        // Old format - object
-        Object.keys(response.responses).forEach(key => {
-          variables.add(key);
-        });
-      }
-    }
-  });
-  
-  return Array.from(variables).sort();
-}
-
-function extractSampleDataFromResponse(response: any): Record<string, any> {
-  const sampleData: Record<string, any> = {};
-  
-  if (response.responses) {
-    if (Array.isArray(response.responses)) {
-      // New format - array of elements
-      response.responses.forEach((element: any) => {
-        if (element.elementFieldId && element.answer) {
-          sampleData[element.elementFieldId] = element.answer;
-        }
-      });
-    } else {
-      // Old format - object
-      Object.keys(response.responses).forEach(key => {
-        sampleData[key] = response.responses[key];
-      });
-    }
-  }
-  
-  return sampleData;
-}
-
-function getDefaultSampleData(): Record<string, any> {
-  return {
-    nome: "João Silva",
-    email: "joao@email.com",
-    telefone: "11999999999",
-    idade: "30",
-    altura: "1.75",
-    peso_atual: "80",
-    peso_objetivo: "75"
-  };
-}
-
-async function getTargetedLeadsForEmail(
-  quizId: string, 
-  targetAudience: string, 
-  segmentationRules?: any,
-  dateFilter?: string
-): Promise<any[]> {
-  const responses = await storage.getQuizResponses(quizId);
-  const leads: any[] = [];
-  
-  responses.forEach(response => {
-    if (response.responses) {
-      let email = '';
-      let name = 'Usuário';
-      let allData: Record<string, any> = {};
-      
-      if (Array.isArray(response.responses)) {
-        // New format - array of elements
-        response.responses.forEach((element: any) => {
-          if (element.elementType === 'email' && element.answer) {
-            email = element.answer;
-          }
-          if (element.elementFieldId && element.answer) {
-            allData[element.elementFieldId] = element.answer;
-            if (element.elementFieldId.includes('nome') || element.elementFieldId.includes('name')) {
-              name = element.answer;
-            }
-          }
-        });
-      } else {
-        // Old format - object
-        Object.keys(response.responses).forEach(key => {
-          const value = response.responses[key];
-          allData[key] = value;
-          if (key.includes('email') && value) {
-            email = value;
-          }
-          if (key.includes('nome') && value) {
-            name = value;
-          }
-        });
-      }
-      
-      if (email && email.includes('@')) {
-        const isCompleted = response.metadata?.isComplete === true || 
-                           response.metadata?.completionPercentage === 100;
-        
-        const lead = {
-          id: response.id,
-          email,
-          name,
-          status: isCompleted ? 'completed' : 'abandoned',
-          submittedAt: response.submittedAt,
-          data: allData
-        };
-        
-        // Apply audience filter
-        if (targetAudience === 'completed' && !isCompleted) return;
-        if (targetAudience === 'abandoned' && isCompleted) return;
-        
-        // Apply date filter
-        if (dateFilter) {
-          const filterDate = new Date(dateFilter);
-          if (new Date(response.submittedAt) < filterDate) return;
-        }
-        
-        leads.push(lead);
-      }
-    }
-  });
-  
-  return leads;
-}
-
-function calculateEstimatedOpenRate(targetAudience: string): number {
-  switch (targetAudience) {
-    case 'completed': return 25.8;
-    case 'abandoned': return 18.5;
-    default: return 22.3;
-  }
-}
-
-function calculateEstimatedClickRate(targetAudience: string): number {
-  switch (targetAudience) {
-    case 'completed': return 4.8;
-    case 'abandoned': return 3.2;
-    default: return 4.1;
-  }
-}
-
-function calculateEmailAnalytics(logs: any[]): any {
-  const total = logs.length;
-  const sent = logs.filter(log => log.status === 'sent').length;
-  const failed = logs.filter(log => log.status === 'failed').length;
-  const opened = logs.filter(log => log.status === 'opened').length;
-  const clicked = logs.filter(log => log.status === 'clicked').length;
-  
-  return {
-    total,
-    sent,
-    failed,
-    opened,
-    clicked,
-    deliveryRate: total > 0 ? (sent / total) * 100 : 0,
-    openRate: sent > 0 ? (opened / sent) * 100 : 0,
-    clickRate: opened > 0 ? (clicked / opened) * 100 : 0,
-    failureRate: total > 0 ? (failed / total) * 100 : 0
-  };
-}
-
-// Função para extrair variáveis de uma resposta
-function extractVariablesFromResponse(response: any): Record<string, string> {
-  const variables: Record<string, string> = {};
-  
-  if (Array.isArray(response.responses)) {
-    for (const item of response.responses) {
-      if (item.elementFieldId && item.answer) {
-        variables[item.elementFieldId] = item.answer;
-      }
-    }
-  } else if (typeof response.responses === 'object') {
-    Object.entries(response.responses).forEach(([key, value]) => {
-      if (value) {
-        variables[key] = String(value);
-      }
-    });
-  }
-  
-  // Adicionar variáveis padrão
-  variables.quiz_titulo = response.quizTitle || 'Quiz';
-  variables.nome = variables.nome || variables.name || 'Usuário';
-  variables.email = variables.email || variables.email_contato || '';
-  variables.telefone = variables.telefone || variables.phone || '';
-  
-  return variables;
 }
 

@@ -152,22 +152,39 @@ export function QuizPublicRenderer({ quiz }: QuizPublicRendererProps) {
         
         autoSaveRef.current = setTimeout(async () => {
           try {
-            await fetch(`/api/quizzes/${quiz.id}/partial-responses`, {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-              },
-              body: JSON.stringify({
-                sessionId,
-                responses: updated,
-                isPartial: true
-              })
+            // Filtrar apenas campos completos/válidos para salvar
+            const validResponses = updated.filter(r => {
+              // Para telefones, só salvar se tiver pelo menos 10 dígitos
+              if (r.elementType === 'phone' && r.answer) {
+                const phoneNumber = r.answer.replace(/\D/g, '');
+                return phoneNumber.length >= 10;
+              }
+              // Para emails, só salvar se for válido
+              if (r.elementType === 'email' && r.answer) {
+                return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(r.answer);
+              }
+              // Para outros campos, só salvar se não estiver vazio
+              return r.answer && r.answer.toString().trim().length > 0;
             });
-            console.log('Resposta salva automaticamente:', response);
+
+            if (validResponses.length > 0) {
+              await fetch(`/api/quizzes/${quiz.id}/partial-responses`, {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                  sessionId,
+                  responses: validResponses,
+                  isPartial: true
+                })
+              });
+              console.log('Resposta válida salva automaticamente:', validResponses.length, 'campos');
+            }
           } catch (error) {
             console.error('Erro ao salvar resposta automática:', error);
           }
-        }, 1000); // Salvar após 1 segundo de inatividade
+        }, 2000); // Salvar após 2 segundos de inatividade
         
         return updated;
       });

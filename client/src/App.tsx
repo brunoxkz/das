@@ -29,6 +29,9 @@ import TesteSMSPage from "@/pages/teste-sms";
 
 import EmailMarketingPro from "@/pages/email-marketing-pro";
 import AIConversionPage from "@/pages/ai-conversion";
+import TesteAbPage from "@/pages/teste-ab";
+import WebhooksPage from "@/pages/webhooks";
+import IntegracoesPage from "@/pages/integracoes";
 import { useAuth } from "@/hooks/use-auth-hybrid";
 import { isUnauthorizedError } from "@/lib/authUtils";
 import { SidebarProvider } from "@/hooks/useSidebar";
@@ -144,6 +147,24 @@ function App() {
         <Route path="/ai-conversion">
           <Layout>
             <AIConversionPage />
+          </Layout>
+        </Route>
+        
+        <Route path="/teste-ab">
+          <Layout>
+            <TesteAbPage />
+          </Layout>
+        </Route>
+        
+        <Route path="/webhooks">
+          <Layout>
+            <WebhooksPage />
+          </Layout>
+        </Route>
+        
+        <Route path="/integracoes">
+          <Layout>
+            <IntegracoesPage />
           </Layout>
         </Route>
 

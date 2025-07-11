@@ -25,6 +25,7 @@ import {
   whatsappCampaigns, whatsappLogs, whatsappTemplates,
   aiConversionCampaigns, aiVideoGenerations, notifications,
   superAffiliates, affiliateSales,
+  abTests, abTestViews, webhooks, webhookLogs, integrations,
   type User, type UpsertUser, type InsertQuiz, type Quiz,
   type InsertQuizTemplate, type QuizTemplate,
   type InsertQuizResponse, type QuizResponse,
@@ -39,7 +40,12 @@ import {
   type InsertAiVideoGeneration, type AiVideoGeneration,
   type InsertNotification, type Notification,
   type InsertSuperAffiliate, type SuperAffiliate,
-  type InsertAffiliateSale, type AffiliateSale
+  type InsertAffiliateSale, type AffiliateSale,
+  type InsertAbTest, type AbTest,
+  type InsertAbTestView, type AbTestView,
+  type InsertWebhook, type Webhook,
+  type InsertWebhookLog, type WebhookLog,
+  type InsertIntegration, type Integration
 } from "../shared/schema-sqlite";
 import { eq, desc, and, gte, lte, count, asc, or, inArray } from "drizzle-orm";
 import { nanoid } from "nanoid";
@@ -3491,6 +3497,354 @@ export class SQLiteStorage implements IStorage {
       return result[0];
     } catch (error) {
       console.error('❌ ERRO ao atualizar venda de afiliado:', error);
+      throw error;
+    }
+  }
+
+  // ===== A/B TESTING METHODS =====
+
+  async createAbTest(test: Omit<InsertAbTest, 'id' | 'createdAt' | 'updatedAt'>): Promise<AbTest> {
+    try {
+      const now = Math.floor(Date.now() / 1000);
+      const id = nanoid();
+      
+      const result = await db.insert(abTests)
+        .values({
+          id,
+          ...test,
+          createdAt: now,
+          updatedAt: now
+        })
+        .returning();
+
+      console.log('✅ Teste A/B criado:', result[0]);
+      return result[0];
+    } catch (error) {
+      console.error('❌ ERRO ao criar teste A/B:', error);
+      throw error;
+    }
+  }
+
+  async getUserAbTests(userId: string): Promise<AbTest[]> {
+    try {
+      const tests = await db.select()
+        .from(abTests)
+        .where(eq(abTests.userId, userId))
+        .orderBy(desc(abTests.createdAt));
+
+      return tests;
+    } catch (error) {
+      console.error('❌ ERRO ao buscar testes A/B do usuário:', error);
+      throw error;
+    }
+  }
+
+  async getAbTest(id: string): Promise<AbTest | undefined> {
+    try {
+      const test = await db.select()
+        .from(abTests)
+        .where(eq(abTests.id, id))
+        .limit(1);
+
+      return test[0];
+    } catch (error) {
+      console.error('❌ ERRO ao buscar teste A/B:', error);
+      throw error;
+    }
+  }
+
+  async updateAbTest(id: string, updates: Partial<InsertAbTest>): Promise<AbTest> {
+    try {
+      const now = Math.floor(Date.now() / 1000);
+      
+      const result = await db.update(abTests)
+        .set({
+          ...updates,
+          updatedAt: now
+        })
+        .where(eq(abTests.id, id))
+        .returning();
+
+      if (result.length === 0) {
+        throw new Error('Teste A/B não encontrado');
+      }
+
+      console.log('✅ Teste A/B atualizado:', result[0]);
+      return result[0];
+    } catch (error) {
+      console.error('❌ ERRO ao atualizar teste A/B:', error);
+      throw error;
+    }
+  }
+
+  async deleteAbTest(id: string): Promise<void> {
+    try {
+      await db.delete(abTests)
+        .where(eq(abTests.id, id));
+
+      console.log('✅ Teste A/B deletado:', id);
+    } catch (error) {
+      console.error('❌ ERRO ao deletar teste A/B:', error);
+      throw error;
+    }
+  }
+
+  async recordAbTestView(view: Omit<InsertAbTestView, 'id' | 'createdAt'>): Promise<AbTestView> {
+    try {
+      const now = Math.floor(Date.now() / 1000);
+      const id = nanoid();
+      
+      const result = await db.insert(abTestViews)
+        .values({
+          id,
+          ...view,
+          createdAt: now
+        })
+        .returning();
+
+      // Incrementar contador de visualizações do teste
+      await db.update(abTests)
+        .set({ totalViews: sql`total_views + 1` })
+        .where(eq(abTests.id, view.testId));
+
+      console.log('✅ Visualização A/B registrada:', result[0]);
+      return result[0];
+    } catch (error) {
+      console.error('❌ ERRO ao registrar visualização A/B:', error);
+      throw error;
+    }
+  }
+
+  async getAbTestViews(testId: string): Promise<AbTestView[]> {
+    try {
+      const views = await db.select()
+        .from(abTestViews)
+        .where(eq(abTestViews.testId, testId))
+        .orderBy(desc(abTestViews.createdAt));
+
+      return views;
+    } catch (error) {
+      console.error('❌ ERRO ao buscar visualizações do teste A/B:', error);
+      throw error;
+    }
+  }
+
+  // ===== WEBHOOK METHODS =====
+
+  async createWebhook(webhook: Omit<InsertWebhook, 'id' | 'createdAt' | 'updatedAt'>): Promise<Webhook> {
+    try {
+      const now = Math.floor(Date.now() / 1000);
+      const id = nanoid();
+      
+      const result = await db.insert(webhooks)
+        .values({
+          id,
+          ...webhook,
+          createdAt: now,
+          updatedAt: now
+        })
+        .returning();
+
+      console.log('✅ Webhook criado:', result[0]);
+      return result[0];
+    } catch (error) {
+      console.error('❌ ERRO ao criar webhook:', error);
+      throw error;
+    }
+  }
+
+  async getUserWebhooks(userId: string): Promise<Webhook[]> {
+    try {
+      const webhooks_list = await db.select()
+        .from(webhooks)
+        .where(eq(webhooks.userId, userId))
+        .orderBy(desc(webhooks.createdAt));
+
+      return webhooks_list;
+    } catch (error) {
+      console.error('❌ ERRO ao buscar webhooks do usuário:', error);
+      throw error;
+    }
+  }
+
+  async getWebhook(id: string): Promise<Webhook | undefined> {
+    try {
+      const webhook = await db.select()
+        .from(webhooks)
+        .where(eq(webhooks.id, id))
+        .limit(1);
+
+      return webhook[0];
+    } catch (error) {
+      console.error('❌ ERRO ao buscar webhook:', error);
+      throw error;
+    }
+  }
+
+  async updateWebhook(id: string, updates: Partial<InsertWebhook>): Promise<Webhook> {
+    try {
+      const now = Math.floor(Date.now() / 1000);
+      
+      const result = await db.update(webhooks)
+        .set({
+          ...updates,
+          updatedAt: now
+        })
+        .where(eq(webhooks.id, id))
+        .returning();
+
+      if (result.length === 0) {
+        throw new Error('Webhook não encontrado');
+      }
+
+      console.log('✅ Webhook atualizado:', result[0]);
+      return result[0];
+    } catch (error) {
+      console.error('❌ ERRO ao atualizar webhook:', error);
+      throw error;
+    }
+  }
+
+  async deleteWebhook(id: string): Promise<void> {
+    try {
+      await db.delete(webhooks)
+        .where(eq(webhooks.id, id));
+
+      console.log('✅ Webhook deletado:', id);
+    } catch (error) {
+      console.error('❌ ERRO ao deletar webhook:', error);
+      throw error;
+    }
+  }
+
+  async logWebhookTrigger(log: Omit<InsertWebhookLog, 'id' | 'createdAt'>): Promise<WebhookLog> {
+    try {
+      const now = Math.floor(Date.now() / 1000);
+      const id = nanoid();
+      
+      const result = await db.insert(webhookLogs)
+        .values({
+          id,
+          ...log,
+          createdAt: now
+        })
+        .returning();
+
+      // Atualizar estatísticas do webhook
+      await db.update(webhooks)
+        .set({ 
+          totalTriggers: sql`total_triggers + 1`,
+          lastTriggered: now
+        })
+        .where(eq(webhooks.id, log.webhookId));
+
+      console.log('✅ Log de webhook registrado:', result[0]);
+      return result[0];
+    } catch (error) {
+      console.error('❌ ERRO ao registrar log de webhook:', error);
+      throw error;
+    }
+  }
+
+  async getWebhookLogs(webhookId: string): Promise<WebhookLog[]> {
+    try {
+      const logs = await db.select()
+        .from(webhookLogs)
+        .where(eq(webhookLogs.webhookId, webhookId))
+        .orderBy(desc(webhookLogs.createdAt))
+        .limit(100);
+
+      return logs;
+    } catch (error) {
+      console.error('❌ ERRO ao buscar logs do webhook:', error);
+      throw error;
+    }
+  }
+
+  // ===== INTEGRATION METHODS =====
+
+  async createIntegration(integration: Omit<InsertIntegration, 'id' | 'createdAt' | 'updatedAt'>): Promise<Integration> {
+    try {
+      const now = Math.floor(Date.now() / 1000);
+      const id = nanoid();
+      
+      const result = await db.insert(integrations)
+        .values({
+          id,
+          ...integration,
+          createdAt: now,
+          updatedAt: now
+        })
+        .returning();
+
+      console.log('✅ Integração criada:', result[0]);
+      return result[0];
+    } catch (error) {
+      console.error('❌ ERRO ao criar integração:', error);
+      throw error;
+    }
+  }
+
+  async getUserIntegrations(userId: string): Promise<Integration[]> {
+    try {
+      const integrations_list = await db.select()
+        .from(integrations)
+        .where(eq(integrations.userId, userId))
+        .orderBy(desc(integrations.createdAt));
+
+      return integrations_list;
+    } catch (error) {
+      console.error('❌ ERRO ao buscar integrações do usuário:', error);
+      throw error;
+    }
+  }
+
+  async getIntegration(id: string): Promise<Integration | undefined> {
+    try {
+      const integration = await db.select()
+        .from(integrations)
+        .where(eq(integrations.id, id))
+        .limit(1);
+
+      return integration[0];
+    } catch (error) {
+      console.error('❌ ERRO ao buscar integração:', error);
+      throw error;
+    }
+  }
+
+  async updateIntegration(id: string, updates: Partial<InsertIntegration>): Promise<Integration> {
+    try {
+      const now = Math.floor(Date.now() / 1000);
+      
+      const result = await db.update(integrations)
+        .set({
+          ...updates,
+          updatedAt: now
+        })
+        .where(eq(integrations.id, id))
+        .returning();
+
+      if (result.length === 0) {
+        throw new Error('Integração não encontrada');
+      }
+
+      console.log('✅ Integração atualizada:', result[0]);
+      return result[0];
+    } catch (error) {
+      console.error('❌ ERRO ao atualizar integração:', error);
+      throw error;
+    }
+  }
+
+  async deleteIntegration(id: string): Promise<void> {
+    try {
+      await db.delete(integrations)
+        .where(eq(integrations.id, id));
+
+      console.log('✅ Integração deletada:', id);
+    } catch (error) {
+      console.error('❌ ERRO ao deletar integração:', error);
       throw error;
     }
   }
