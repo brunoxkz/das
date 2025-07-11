@@ -1,4 +1,3 @@
-import { useState, useEffect } from "react";
 import { Link, useLocation } from "wouter";
 import { useAuth } from "@/hooks/useAuth-jwt";
 import { useQuery } from "@tanstack/react-query";
@@ -7,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { NotificationSystem } from "@/components/notification-system";
 import { LanguageSelector } from "@/components/language-selector";
 import { useLanguage } from "@/hooks/useLanguage";
+import { useSidebar } from "@/hooks/useSidebar";
 
 import { 
   BarChart3, 
@@ -38,11 +38,11 @@ import {
 import { cn } from "@/lib/utils";
 
 export function Sidebar() {
-  const [isCollapsed, setIsCollapsed] = useState(false);
   const [location] = useLocation();
   const { user } = useAuth();
   const userData = user as any;
   const { t } = useLanguage();
+  const { isCollapsed } = useSidebar();
 
   // Buscar dados dos quizzes em tempo real
   const { data: quizzes } = useQuery({
@@ -62,12 +62,7 @@ export function Sidebar() {
     return responseDate.toDateString() === today.toDateString();
   }).length;
 
-  // Auto-collapse when entering quiz builder
-  useEffect(() => {
-    if (location.includes('/quiz-builder') || location.includes('/quizzes') && location.includes('/edit')) {
-      setIsCollapsed(true);
-    }
-  }, [location]);
+  // State is now managed by useSidebar hook
 
   const navItems = [
     {
@@ -173,7 +168,7 @@ export function Sidebar() {
 
   return (
     <aside className={cn(
-      "vendzz-sidebar flex flex-col transition-all duration-300 h-screen bg-white border-r border-gray-200 sticky top-0",
+      "vendzz-sidebar flex flex-col transition-all duration-300 h-screen bg-white border-r border-gray-200 fixed top-0 left-0 z-30",
       isCollapsed ? "w-16" : "w-64"
     )}>
       {/* Logo and Notifications */}

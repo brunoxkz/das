@@ -31,6 +31,7 @@ import EmailMarketingPro from "@/pages/email-marketing-pro";
 import AIConversionPage from "@/pages/ai-conversion";
 import { useAuth } from "@/hooks/use-auth-hybrid";
 import { isUnauthorizedError } from "@/lib/authUtils";
+import { SidebarProvider } from "@/hooks/useSidebar";
 
 
 function App() {
@@ -61,7 +62,7 @@ function App() {
   }
 
   return (
-    <>
+    <SidebarProvider>
       <Switch>
         {/* Public routes without sidebar */}
         <Route path="/" component={LandingPage} />
@@ -165,7 +166,7 @@ function App() {
         <Route component={NotFoundPage} />
       </Switch>
       <Toaster />
-    </>
+    </SidebarProvider>
   );
 }
 

@@ -197,6 +197,7 @@ function getTranslation(key: string, language: string, params?: Record<string, s
       'quizzes_created': 'quizzes criados',
       'active': 'ativos',
       'in_progress': 'em andamento',
+      'create_quiz_btn': 'Criar Quiz',
     },
     'en-US': {
       // Sidebar
