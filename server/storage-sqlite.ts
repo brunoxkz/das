@@ -814,6 +814,28 @@ export class SQLiteStorage implements IStorage {
     }
   }
 
+  async resetQuizAnalytics(quizId: string): Promise<void> {
+    try {
+      console.log(`🔄 [RESET] Iniciando reset de analytics para quiz: ${quizId}`);
+      
+      // Delete all analytics data for this quiz
+      const deleteAnalyticsStmt = sqlite.prepare(`DELETE FROM quiz_analytics WHERE quizId = ?`);
+      const analyticsResult = deleteAnalyticsStmt.run(quizId);
+      
+      // Delete all quiz responses for this quiz  
+      const deleteResponsesStmt = sqlite.prepare(`DELETE FROM quiz_responses WHERE quizId = ?`);
+      const responsesResult = deleteResponsesStmt.run(quizId);
+      
+      console.log(`✅ [RESET] Analytics deletados: ${analyticsResult.changes} registros`);
+      console.log(`✅ [RESET] Respostas deletadas: ${responsesResult.changes} registros`);
+      console.log(`✅ [RESET] Reset completo para quiz: ${quizId}`);
+      
+    } catch (error) {
+      console.error(`❌ [RESET] Erro ao resetar analytics:`, error);
+      throw error;
+    }
+  }
+
   // Get all analytics for user quizzes
   async getAllQuizAnalytics(userId: string) {
     try {

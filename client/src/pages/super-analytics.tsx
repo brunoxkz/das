@@ -75,8 +75,13 @@ export default function SuperAnalytics() {
   
   console.log("SUPER ANALYTICS - URL:", window.location.search);
   console.log("SUPER ANALYTICS - Quiz ID:", quizId);
-  const [timeRange, setTimeRange] = useState('7d');
-  const [dateFilter, setDateFilter] = useState("7");
+  const [timeRange, setTimeRange] = useState('30');
+  const [dateFilter, setDateFilter] = useState("30");
+  
+  // Sync timeRange with dateFilter
+  useEffect(() => {
+    setTimeRange(dateFilter);
+  }, [dateFilter]);
   const [isDataReset, setIsDataReset] = useState(false);
   const queryClient = useQueryClient();
 
@@ -106,10 +111,10 @@ export default function SuperAnalytics() {
   const quizLoading = !quizzes;
 
   const { data: analytics, isLoading: analyticsLoading, refetch } = useQuery({
-    queryKey: ["/api/analytics", quizId, timeRange],
+    queryKey: ["/api/analytics", quizId, dateFilter],
     queryFn: async () => {
       const token = localStorage.getItem("accessToken");
-      const response = await fetch(`/api/analytics/${quizId}`, {
+      const response = await fetch(`/api/analytics/${quizId}?timeRange=${dateFilter}`, {
         headers: {
           "Authorization": `Bearer ${token}`,
           "Content-Type": "application/json",
@@ -133,20 +138,43 @@ export default function SuperAnalytics() {
 
   // Função para exportar dados como CSV
   const exportToCSV = () => {
-    const csvData = (analyticsData?.pageAnalytics || []).map(page => ({
-      'Página': page.pageName,
-      'Tipo': page.pageType,
-      'Visualizações': page.views,
-      'Cliques': page.clicks,
-      'Taxa de Clique (%)': page.clickRate.toFixed(1),
-      'Abandonos': page.dropOffs,
-      'Taxa de Abandono (%)': page.dropOffRate.toFixed(1),
-      'Tempo Médio (s)': page.avgTimeOnPage.toFixed(0),
+    if (!analyticsData?.pageAnalytics || analyticsData.pageAnalytics.length === 0) {
+      toast({
+        title: "Erro na Exportação",
+        description: "Não há dados para exportar.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const csvData = analyticsData.pageAnalytics.map(page => ({
+      'Página': page.pageName || 'Sem Nome',
+      'Tipo': page.pageType || 'normal',
+      'Visualizações': page.views || 0,
+      'Cliques': page.clicks || 0,
+      'Taxa de Clique (%)': (page.clickRate || 0).toFixed(1),
+      'Abandonos': page.dropOffs || 0,
+      'Taxa de Abandono (%)': (page.dropOffRate || 0).toFixed(1),
+      'Tempo Médio (s)': Math.round(page.avgTimeOnPage || 0),
+      'Página Final': page.isLastPage ? 'Sim' : 'Não',
     }));
+
+    // Add summary row
+    csvData.push({
+      'Página': 'RESUMO GERAL',
+      'Tipo': 'summary',
+      'Visualizações': analyticsData.totalViews || 0,
+      'Cliques': '-',
+      'Taxa de Clique (%)': '-',
+      'Abandonos': analyticsData.totalDropOffs || 0,
+      'Taxa de Abandono (%)': '-',
+      'Tempo Médio (s)': Math.round(analyticsData.avgCompletionTime || 0),
+      'Página Final': '-',
+    });
 
     const csvContent = [
       Object.keys(csvData[0]).join(','),
-      ...csvData.map(row => Object.values(row).join(','))
+      ...csvData.map(row => Object.values(row).map(v => `"${v}"`).join(','))
     ].join('\n');
 
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
@@ -157,7 +185,7 @@ export default function SuperAnalytics() {
     
     toast({
       title: "CSV Exportado",
-      description: "Os dados de analytics foram exportados com sucesso.",
+      description: `Dados de ${analyticsData.pageAnalytics.length} páginas exportados com sucesso.`,
     });
   };
 
