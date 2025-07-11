@@ -126,7 +126,10 @@ export default function SuperAnalytics() {
     retry: false,
   });
   
-  console.log("SUPER ANALYTICS - Analytics data:", analytics);
+  // Debug logs (can be removed in production)
+  // console.log("SUPER ANALYTICS - Analytics data:", analytics);
+  // console.log("SUPER ANALYTICS - Analytics structure:", analytics?.analytics);
+  // console.log("SUPER ANALYTICS - Total views:", analytics?.analytics?.totalViews);
 
   // Função para exportar dados como CSV
   const exportToCSV = () => {
@@ -252,7 +255,7 @@ export default function SuperAnalytics() {
   }
 
   // Use real analytics data from API
-  const analyticsData = analytics || {
+  const analyticsData = analytics?.analytics || {
     totalViews: 0,
     totalCompletions: 0,
     totalDropOffs: 0,
