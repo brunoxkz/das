@@ -1,4 +1,4 @@
-import { QueryClient, QueryFunction } from "@tanstack/react-query";
+import { QueryClient, QueryFunction, QueryCache, MutationCache } from "@tanstack/react-query";
 import { localCache } from "./performance";
 
 async function throwIfResNotOk(res: Response) {
@@ -301,6 +301,16 @@ export const queryClient = new QueryClient({
       },
     },
   },
+  queryCache: new QueryCache({
+    onError: (error, query) => {
+      console.error('Query error:', error);
+    },
+  }),
+  mutationCache: new MutationCache({
+    onError: (error, variables, context, mutation) => {
+      console.error('Mutation error:', error);
+    },
+  }),
 });
 
 // Force cache refresh function - use this to fix sync issues

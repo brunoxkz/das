@@ -200,6 +200,13 @@ export default function Dashboard() {
         title: "URL Copiada",
         description: "A URL pública do quiz foi copiada para a área de transferência.",
       });
+    }).catch((error) => {
+      console.error('Erro ao copiar URL:', error);
+      toast({
+        title: "Erro ao copiar",
+        description: "Não foi possível copiar a URL. Tente novamente.",
+        variant: "destructive",
+      });
     });
   };
 

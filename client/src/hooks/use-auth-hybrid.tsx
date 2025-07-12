@@ -78,7 +78,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // Verificar se token é válido, tentar renovar se expirado
       checkCurrentUser()
         .then(setUser)
-        .catch(async () => {
+        .catch(async (error) => {
+          console.error('Erro ao verificar usuário:', error);
           try {
             await refreshToken();
             const userData = await checkCurrentUser();
