@@ -59,12 +59,19 @@ export default function TesteAbPage() {
     enabled: !!user,
   });
 
+  // Filtrar apenas quizzes publicados
+  const publishedQuizzes = quizzes?.filter(quiz => quiz.isPublished) || [];
+
   // Mutação para criar teste A/B
   const createTestMutation = useMutation({
     mutationFn: async (testData: { name: string; description: string; quizIds: string[] }) => {
+      const token = localStorage.getItem('token');
       const response = await fetch("/api/ab-tests", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { 
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`
+        },
         body: JSON.stringify(testData),
       });
       if (!response.ok) throw new Error("Erro ao criar teste A/B");
@@ -77,14 +84,21 @@ export default function TesteAbPage() {
       setNewTestDescription("");
       setSelectedQuizzes([]);
     },
+    onError: (error) => {
+      console.error("Erro ao criar teste A/B:", error);
+    },
   });
 
   // Mutação para ativar/desativar teste A/B
   const toggleTestMutation = useMutation({
     mutationFn: async ({ id, isActive }: { id: string; isActive: boolean }) => {
+      const token = localStorage.getItem('token');
       const response = await fetch(`/api/ab-tests/${id}`, {
         method: "PATCH",
-        headers: { "Content-Type": "application/json" },
+        headers: { 
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`
+        },
         body: JSON.stringify({ isActive }),
       });
       if (!response.ok) throw new Error("Erro ao atualizar teste A/B");
@@ -120,8 +134,6 @@ export default function TesteAbPage() {
     const url = `${window.location.origin}/ab-test/${testId}`;
     navigator.clipboard.writeText(url);
   };
-
-  const publishedQuizzes = quizzes?.filter(q => q.isPublished) || [];
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 dark:from-gray-900 dark:via-blue-900 dark:to-indigo-900">

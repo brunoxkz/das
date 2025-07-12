@@ -7,6 +7,13 @@ import { setupVite, serveStatic, log } from "./vite";
 import { setupHybridAuth, verifyJWT } from "./auth-hybrid";
 import { healthCheck, detailedHealth } from "./health-check";
 import { emailService } from "./email-service";
+import { 
+  initAdvancedSecurity, 
+  honeypotMiddleware, 
+  timingAttackProtection, 
+  attackSignatureAnalyzer, 
+  blacklistMiddleware 
+} from "./advanced-security";
 
 const app = express();
 
