@@ -104,7 +104,8 @@ export default function QuizBuilder() {
     customHeadScript: "",
     pixelDelay: false,
     trackingPixels: [],
-    enableWhatsappAutomation: false
+    enableWhatsappAutomation: false,
+    subdomains: []
   });
 
   const [activeTab, setActiveTab] = useState<"editor" | "preview" | "settings" | "design" | "fluxo" | "pixels" | "blackhat" | "backredirect">("editor");
@@ -1463,6 +1464,73 @@ export default function QuizBuilder() {
                   </div>
                 </CardContent>
               </Card>
+
+              {/* Configurações de Subdomínios */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Globe className="w-5 h-5" />
+                    Subdomínios Personalizados
+                  </CardTitle>
+                  <p className="text-sm text-gray-600">Configure até 3 subdomínios para seu quiz (ex: quiz.seudominio.com)</p>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {/* Lista de subdomínios */}
+                  <div className="space-y-3">
+                    {(quizData.subdomains || []).map((subdomain, index) => (
+                      <div key={index} className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+                        <div className="flex-1">
+                          <Input
+                            value={subdomain}
+                            onChange={(e) => {
+                              const newSubdomains = [...(quizData.subdomains || [])];
+                              newSubdomains[index] = e.target.value;
+                              setQuizData(prev => ({ ...prev, subdomains: newSubdomains }));
+                            }}
+                            placeholder="quiz.seudominio.com"
+                            className="font-mono text-sm"
+                          />
+                        </div>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            const newSubdomains = (quizData.subdomains || []).filter((_, i) => i !== index);
+                            setQuizData(prev => ({ ...prev, subdomains: newSubdomains }));
+                          }}
+                        >
+                          <Minus className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Botão para adicionar subdomínio */}
+                  {(quizData.subdomains?.length || 0) < 3 && (
+                    <Button
+                      variant="outline"
+                      onClick={() => {
+                        const newSubdomains = [...(quizData.subdomains || []), ""];
+                        setQuizData(prev => ({ ...prev, subdomains: newSubdomains }));
+                      }}
+                      className="w-full"
+                    >
+                      <Plus className="w-4 h-4 mr-2" />
+                      Adicionar Subdomínio ({(quizData.subdomains?.length || 0)}/3)
+                    </Button>
+                  )}
+
+                  {/* Informações sobre subdomínios */}
+                  <div className="p-3 bg-blue-50 rounded-lg border border-blue-200">
+                    <p className="text-sm text-blue-800">
+                      <strong>💡 Como usar:</strong> Configure seu DNS para apontar o subdomínio para nossos servidores. 
+                      Após configurar, seu quiz estará disponível em seu domínio personalizado.
+                    </p>
+                  </div>
+                </CardContent>
+              </Card>
+
+
             </div>
           </div>
         )}

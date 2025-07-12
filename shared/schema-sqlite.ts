@@ -628,6 +628,7 @@ export const abTests = sqliteTable('ab_tests', {
   name: text('name').notNull(),
   description: text('description'),
   quizIds: text('quiz_ids', { mode: 'json' }).notNull().$type<string[]>(),
+  subdomains: text('subdomains', { mode: 'json' }).default('[]').$type<string[]>(),
   isActive: integer('is_active', { mode: 'boolean' }).default(true),
   totalViews: integer('total_views').default(0),
   createdAt: integer('created_at', { mode: 'timestamp' }).notNull().default(sql`(unixepoch())`),
