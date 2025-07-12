@@ -22,14 +22,14 @@ const app = express();
 // 🔒 CONFIGURAÇÃO DE PROXY PARA RATE LIMITING
 app.set('trust proxy', 1); // Confia no primeiro proxy (necessário para rate limiting no Replit)
 
-// Configurações de segurança relaxadas para desenvolvimento
-app.use(helmet({
-  contentSecurityPolicy: false, // Desabilita CSP para dev
-  crossOriginEmbedderPolicy: false,
-  hsts: false, // Desabilita HSTS em dev
-  noSniff: false, // Relaxa noSniff
-  frameguard: false // Desabilita X-Frame-Options
-}));
+// Helmet desabilitado para desenvolvimento no Replit
+// app.use(helmet({
+//   contentSecurityPolicy: false,
+//   crossOriginEmbedderPolicy: false,
+//   hsts: false,
+//   noSniff: false,
+//   frameguard: false
+// }));
 
 // Compressão gzip/deflate para reduzir tamanho das respostas
 app.use(compression({
@@ -53,26 +53,18 @@ app.use(express.json({
 
 // Removemos express.urlencoded() para evitar interceptação das requisições JSON do fetch()
 
-// CORS configurado para extensão Chrome
+// CORS e Headers minimalistas para Replit
 app.use((req, res, next) => {
-  // CORS para extensão Chrome
+  // CORS totalmente liberado
   res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With');
+  res.setHeader('Access-Control-Allow-Methods', '*');
+  res.setHeader('Access-Control-Allow-Headers', '*');
   res.setHeader('Access-Control-Allow-Credentials', 'true');
   
-  // Headers de performance
+  // Headers minimalistas
   res.setHeader('X-Powered-By', 'Vendzz');
-  res.setHeader('X-Content-Type-Options', 'nosniff');
-  res.setHeader('X-Frame-Options', 'SAMEORIGIN');
-  res.setHeader('X-XSS-Protection', '1; mode=block');
   
-  // Cache para assets estáticos
-  if (req.url.match(/\.(css|js|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot)$/)) {
-    res.setHeader('Cache-Control', 'public, max-age=31536000'); // 1 ano
-  }
-  
-  // Handle preflight requests
+  // Preflight sempre aceito
   if (req.method === 'OPTIONS') {
     res.status(200).end();
     return;
