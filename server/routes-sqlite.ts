@@ -7210,26 +7210,23 @@ app.get("/api/whatsapp-extension/pending", verifyJWT, async (req: any, res: Resp
       const { name, description, typebotData, theme, settings } = req.body;
       
       const project = await storage.createTypebotProject({
-        id: nanoid(),
         userId,
         name: name || "Novo Chatbot",
         description: description || "",
-        typebotData: typebotData || {
+        typebotData: JSON.stringify(typebotData || {
           version: "6.0",
           name: name || "Novo Chatbot",
           groups: [],
           variables: [],
           edges: []
-        },
-        theme: theme || null,
-        settings: settings || null,
+        }),
+        theme: theme || "default",
+        settings: JSON.stringify(settings || {}),
         isPublished: false,
         publicId: nanoid(),
         totalViews: 0,
         totalConversations: 0,
-        totalCompletions: 0,
-        createdAt: new Date(),
-        updatedAt: new Date()
+        totalCompletions: 0
       });
       
       res.json(project);

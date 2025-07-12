@@ -3863,20 +3863,42 @@ export class SQLiteStorage implements IStorage {
   // TypeBot Project Methods
   async createTypebotProject(project: Omit<InsertTypebotProject, 'id' | 'createdAt' | 'updatedAt'>): Promise<TypebotProject> {
     try {
-      const now = Math.floor(Date.now() / 1000);
+      const now = Date.now();
       const id = nanoid();
       
-      const result = await db.insert(typebotProjects)
-        .values({
-          id,
-          ...project,
-          createdAt: now,
-          updatedAt: now
-        })
-        .returning();
+      const stmt = sqlite.prepare(`
+        INSERT INTO typebot_projects (
+          id, user_id, name, description, source_quiz_id, typebot_data, 
+          theme, settings, is_published, public_id, total_views, 
+          total_conversations, total_completions, created_at, updated_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      `);
+      
+      const result = stmt.run(
+        id,
+        project.userId,
+        project.name,
+        project.description || null,
+        project.sourceQuizId || null,
+        project.typebotData || '{}',
+        project.theme || 'default',
+        project.settings || '{}',
+        project.isPublished ? 1 : 0,
+        project.publicId || null,
+        project.totalViews || 0,
+        project.totalConversations || 0,
+        project.totalCompletions || 0,
+        now,
+        now
+      );
 
-      console.log('✅ Projeto TypeBot criado:', result[0]);
-      return result[0];
+      // Buscar o projeto criado
+      const createdProject = sqlite.prepare(`
+        SELECT * FROM typebot_projects WHERE id = ?
+      `).get(id);
+
+      console.log('✅ Projeto TypeBot criado:', createdProject);
+      return createdProject as TypebotProject;
     } catch (error) {
       console.error('❌ ERRO ao criar projeto TypeBot:', error);
       throw error;
@@ -3885,12 +3907,14 @@ export class SQLiteStorage implements IStorage {
 
   async getTypebotProjects(userId: string): Promise<TypebotProject[]> {
     try {
-      const projects = await db.select()
-        .from(typebotProjects)
-        .where(eq(typebotProjects.userId, userId))
-        .orderBy(desc(typebotProjects.createdAt));
-
-      return projects;
+      const stmt = sqlite.prepare(`
+        SELECT * FROM typebot_projects 
+        WHERE user_id = ? 
+        ORDER BY created_at DESC
+      `);
+      
+      const projects = stmt.all(userId);
+      return projects as TypebotProject[];
     } catch (error) {
       console.error('❌ ERRO ao buscar projetos TypeBot:', error);
       throw error;
@@ -3899,12 +3923,12 @@ export class SQLiteStorage implements IStorage {
 
   async getTypebotProject(id: string): Promise<TypebotProject | undefined> {
     try {
-      const result = await db.select()
-        .from(typebotProjects)
-        .where(eq(typebotProjects.id, id))
-        .limit(1);
-
-      return result[0];
+      const stmt = sqlite.prepare(`
+        SELECT * FROM typebot_projects WHERE id = ?
+      `);
+      
+      const result = stmt.get(id);
+      return result as TypebotProject;
     } catch (error) {
       console.error('❌ ERRO ao buscar projeto TypeBot:', error);
       throw error;

@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Form, FormControl, FormField, FormItem, FormLabel } from "@/components/ui/form";
 import { useForm } from "react-hook-form";
-import { queryClient } from "@/lib/queryClient";
+import { queryClient, apiRequest } from "@/lib/queryClient";
 import { Bot, Plus, Eye, Settings, Trash2, Copy, Share, MessageSquare, BarChart3, FileCode, Users } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
@@ -49,13 +49,10 @@ export default function TypebotPage() {
   // Mutation para criar projeto
   const createProjectMutation = useMutation({
     mutationFn: async (data: { name: string; description?: string }) => {
-      const response = await fetch("/api/typebot/projects", {
+      return apiRequest("/api/typebot/projects", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
       });
-      if (!response.ok) throw new Error("Erro ao criar projeto");
-      return response.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/typebot/projects"] });
@@ -66,13 +63,10 @@ export default function TypebotPage() {
   // Mutation para converter quiz
   const convertQuizMutation = useMutation({
     mutationFn: async (data: { quizId: string; name: string; description?: string }) => {
-      const response = await fetch(`/api/typebot/convert-quiz/${data.quizId}`, {
+      return apiRequest(`/api/typebot/convert-quiz/${data.quizId}`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name: data.name, description: data.description }),
       });
-      if (!response.ok) throw new Error("Erro ao converter quiz");
-      return response.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/typebot/projects"] });
