@@ -69,131 +69,172 @@ export function Sidebar() {
 
   // State is now managed by useSidebar hook
 
-  const navItems = [
+  const navCategories = [
     {
-      title: t("dashboard"),
-      href: "/dashboard",
-      icon: <Home className="w-4 h-4" />,
-      active: location === "/" || location === "/dashboard"
-    },
-    ...(userData?.role === "admin" ? [{
-      title: t("admin"),
-      href: "/admin",
-      icon: <Shield className="w-4 h-4" />,
-      active: location === "/admin",
-      className: "text-red-600 border-red-200 bg-red-50 hover:bg-red-100",
-      badge: "⚡"
-    }] : []),
-    {
-      title: t("my_quizzes"),
-      href: "/quizzes",
-      icon: <BarChart3 className="w-4 h-4" />,
-      active: location.startsWith("/quizzes"),
-      badge: totalQuizzes > 0 ? totalQuizzes.toString() : undefined
-    },
-    {
-      title: t("templates"),
-      href: "/templates",
-      icon: <Palette className="w-4 h-4" />,
-      active: location === "/templates"
+      title: "Principal",
+      icon: <Home className="w-3 h-3" />,
+      items: [
+        {
+          title: t("dashboard"),
+          href: "/dashboard",
+          icon: <Home className="w-4 h-4" />,
+          active: location === "/" || location === "/dashboard"
+        },
+        ...(userData?.role === "admin" ? [{
+          title: t("admin"),
+          href: "/admin",
+          icon: <Shield className="w-4 h-4" />,
+          active: location === "/admin",
+          className: "text-red-600 border-red-200 bg-red-50 hover:bg-red-100",
+          badge: "⚡"
+        }] : []),
+      ]
     },
     {
-      title: t("analytics"),
-      href: "/analytics",
-      icon: <TrendingUp className="w-4 h-4" />,
-      active: location === "/analytics"
-    },
-
-    {
-      title: t("tutorials"),
-      href: "/tutoriais",
-      icon: <BookOpen className="w-4 h-4" />,
-      active: location === "/tutoriais"
-    },
-    {
-      title: t("remarketing_sms"),
-      href: "/sms-credits",
-      icon: <MessageSquare className="w-4 h-4" />,
-      active: location === "/sms-credits"
-    },
-    {
-      title: t("email_marketing"),
-      href: "/email-marketing",
-      icon: <Mail className="w-4 h-4" />,
-      active: location === "/email-marketing",
-      badge: "📧"
-    },
-    {
-      title: "Teste A/B",
-      href: "/teste-ab",
-      icon: <BarChart3 className="w-4 h-4" />,
-      active: location === "/teste-ab",
-      badge: "🧪"
+      title: "Criação",
+      icon: <Plus className="w-3 h-3" />,
+      items: [
+        {
+          title: t("my_quizzes"),
+          href: "/quizzes",
+          icon: <BarChart3 className="w-4 h-4" />,
+          active: location.startsWith("/quizzes"),
+          badge: totalQuizzes > 0 ? totalQuizzes.toString() : undefined
+        },
+        {
+          title: t("templates"),
+          href: "/templates",
+          icon: <Palette className="w-4 h-4" />,
+          active: location === "/templates"
+        },
+        {
+          title: "TypeBot",
+          href: "/typebot",
+          icon: <MessageSquare className="w-4 h-4" />,
+          active: location === "/typebot",
+          badge: "🤖"
+        },
+      ]
     },
     {
-      title: "Webhooks",
-      href: "/webhooks",
-      icon: <Webhook className="w-4 h-4" />,
-      active: location === "/webhooks",
-      badge: "🔗"
+      title: "Analytics",
+      icon: <TrendingUp className="w-3 h-3" />,
+      items: [
+        {
+          title: t("analytics"),
+          href: "/analytics",
+          icon: <TrendingUp className="w-4 h-4" />,
+          active: location === "/analytics"
+        },
+        {
+          title: "Teste A/B",
+          href: "/teste-ab",
+          icon: <BarChart className="w-4 h-4" />,
+          active: location === "/teste-ab",
+          badge: "🧪"
+        },
+      ]
+    },
+    {
+      title: "Marketing",
+      icon: <Target className="w-3 h-3" />,
+      items: [
+        {
+          title: t("remarketing_sms"),
+          href: "/sms-credits",
+          icon: <MessageSquare className="w-4 h-4" />,
+          active: location === "/sms-credits"
+        },
+        {
+          title: t("email_marketing"),
+          href: "/email-marketing",
+          icon: <Mail className="w-4 h-4" />,
+          active: location === "/email-marketing",
+          badge: "📧"
+        },
+        {
+          title: t("whatsapp_automation"),
+          href: "/campanhas-whatsapp",
+          icon: <FileText className="w-4 h-4" />,
+          active: location === "/campanhas-whatsapp",
+          badge: "🤖"
+        },
+        {
+          title: "Super Afiliados",
+          href: "/super-afiliados",
+          icon: <Crown className="w-4 h-4" />,
+          active: location === "/super-afiliados",
+          badge: "👑"
+        },
+      ]
     },
     {
       title: "Integrações",
-      href: "/integracoes",
-      icon: <Plug className="w-4 h-4" />,
-      active: location === "/integracoes",
-      badge: "🔧"
+      icon: <Plug className="w-3 h-3" />,
+      items: [
+        {
+          title: "Webhooks",
+          href: "/webhooks",
+          icon: <Webhook className="w-4 h-4" />,
+          active: location === "/webhooks",
+          badge: "🔗"
+        },
+        {
+          title: "Integrações",
+          href: "/integracoes",
+          icon: <Plug className="w-4 h-4" />,
+          active: location === "/integracoes",
+          badge: "🔧"
+        },
+        {
+          title: "Extensões",
+          href: "/extensoes",
+          icon: <Package className="w-4 h-4" />,
+          active: location === "/extensoes",
+          badge: "🔧"
+        },
+      ]
     },
     {
-      title: "TypeBot",
-      href: "/typebot",
-      icon: <MessageSquare className="w-4 h-4" />,
-      active: location === "/typebot",
-      badge: "🤖"
+      title: "Avançado",
+      icon: <Shield className="w-3 h-3" />,
+      items: [
+        {
+          title: t("cloaker"),
+          href: "/cloaker",
+          icon: <Shield className="w-4 h-4" />,
+          active: location === "/cloaker"
+        },
+        // Hidden temporarily
+        // {
+        //   title: "I.A. CONVERSION +",
+        //   href: "/ai-conversion",
+        //   icon: <Sparkles className="w-4 h-4" />,
+        //   active: location === "/ai-conversion",
+        //   badge: "🤖",
+        //   className: "text-purple-600 border-purple-200 bg-purple-50 hover:bg-purple-100"
+        // },
+        // {
+        //   title: "LIVEGRAM UGC",
+        //   href: "/livegram-ugc",
+        //   icon: <Users className="w-4 h-4" />,
+        //   active: location === "/livegram-ugc",
+        //   badge: "📸",
+        //   className: "text-blue-600 border-blue-200 bg-blue-50 hover:bg-blue-100"
+        // },
+      ]
     },
     {
-      title: "Super Afiliados",
-      href: "/super-afiliados",
-      icon: <Crown className="w-4 h-4" />,
-      active: location === "/super-afiliados",
-      badge: "👑"
-    },
-    // Hidden temporarily
-    // {
-    //   title: "I.A. CONVERSION +",
-    //   href: "/ai-conversion",
-    //   icon: <Sparkles className="w-4 h-4" />,
-    //   active: location === "/ai-conversion",
-    //   badge: "🤖",
-    //   className: "text-purple-600 border-purple-200 bg-purple-50 hover:bg-purple-100"
-    // },
-    // {
-    //   title: "LIVEGRAM UGC",
-    //   href: "/livegram-ugc",
-    //   icon: <Users className="w-4 h-4" />,
-    //   active: location === "/livegram-ugc",
-    //   badge: "📸",
-    //   className: "text-blue-600 border-blue-200 bg-blue-50 hover:bg-blue-100"
-    // },
-    {
-      title: t("whatsapp_automation"),
-      href: "/campanhas-whatsapp",
-      icon: <FileText className="w-4 h-4" />,
-      active: location === "/campanhas-whatsapp",
-      badge: "🤖"
-    },
-    {
-      title: t("cloaker"),
-      href: "/cloaker",
-      icon: <Shield className="w-4 h-4" />,
-      active: location === "/cloaker"
-    },
-    {
-      title: "Extensões",
-      href: "/extensoes",
-      icon: <Plug className="w-4 h-4" />,
-      active: location === "/extensoes",
-      badge: "🔧"
+      title: "Recursos",
+      icon: <BookOpen className="w-3 h-3" />,
+      items: [
+        {
+          title: t("tutorials"),
+          href: "/tutoriais",
+          icon: <BookOpen className="w-4 h-4" />,
+          active: location === "/tutoriais"
+        },
+      ]
     }
   ];
 
@@ -292,31 +333,46 @@ export function Sidebar() {
 
       {/* Navigation */}
       <nav className="flex-1 p-4">
-        <div className="space-y-1">
-          {navItems.map((item) => (
-            <Link key={item.href} href={item.href}>
-              <Button
-                variant={item.active ? "secondary" : "ghost"}
-                className={cn(
-                  "w-full justify-start",
-                  isCollapsed ? "px-0" : "px-3",
-                  item.className,
-                  item.active && !item.className && "bg-primary/10 text-primary"
-                )}
-              >
-                {item.icon}
-                {!isCollapsed && (
-                  <>
-                    <span className="ml-2 flex-1 text-left">{item.title}</span>
-                    {item.badge && (
-                      <Badge variant="secondary" className="ml-auto">
-                        {item.badge}
-                      </Badge>
-                    )}
-                  </>
-                )}
-              </Button>
-            </Link>
+        <div className="space-y-4">
+          {navCategories.map((category) => (
+            <div key={category.title} className="space-y-2">
+              {/* Category Header */}
+              {!isCollapsed && (
+                <div className="flex items-center text-xs font-medium text-gray-500 uppercase tracking-wider px-3">
+                  {category.icon}
+                  <span className="ml-2">{category.title}</span>
+                </div>
+              )}
+              
+              {/* Category Items */}
+              <div className="space-y-1">
+                {category.items.map((item) => (
+                  <Link key={item.href} href={item.href}>
+                    <Button
+                      variant={item.active ? "secondary" : "ghost"}
+                      className={cn(
+                        "w-full justify-start",
+                        isCollapsed ? "px-0" : "px-3",
+                        item.className,
+                        item.active && !item.className && "bg-primary/10 text-primary"
+                      )}
+                    >
+                      {item.icon}
+                      {!isCollapsed && (
+                        <>
+                          <span className="ml-2 flex-1 text-left">{item.title}</span>
+                          {item.badge && (
+                            <Badge variant="secondary" className="ml-auto">
+                              {item.badge}
+                            </Badge>
+                          )}
+                        </>
+                      )}
+                    </Button>
+                  </Link>
+                ))}
+              </div>
+            </div>
           ))}
         </div>
       </nav>

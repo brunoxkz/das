@@ -208,6 +208,14 @@ No additional files or separate projects are maintained in this repository.
 
 ```
 Changelog:
+- July 12, 2025. SIDEBAR REORGANIZADA POR CATEGORIAS - Melhoria na navegação com organização hierárquica:
+  * Reorganizada sidebar com 7 categorias principais: Principal, Criação, Analytics, Marketing, Integrações, Avançado, Recursos
+  * Implementados cabeçalhos visuais para cada categoria com ícones específicos
+  * Melhor organização das funcionalidades por contexto de uso
+  * Mantida compatibilidade com modo colapsado e expandido
+  * Navegação mais intuitiva com agrupamento lógico das funcionalidades
+  * Categorias com espaçamento apropriado para melhor visual
+  * Sistema de badges mantido para contadores e indicadores visuais
 - July 11, 2025. SISTEMA ANTI-FRAUDE DE CRÉDITOS 100% IMPLEMENTADO E APROVADO PARA PRODUÇÃO - Sistema de segurança completo contra fraudes com 100% de taxa de sucesso:
   * Implementada validação PRÉ-CRIAÇÃO em todos os endpoints de campanhas (SMS, Email, WhatsApp)
   * Sistema bloqueia campanhas com status HTTP 402 quando créditos insuficientes
