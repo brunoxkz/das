@@ -87,12 +87,12 @@ async function checkPlanExpiration(req: any, res: any, next: any) {
 export function registerSQLiteRoutes(app: Express): Server {
   // 🔒 SISTEMA DE SEGURANÇA - Aplicar middlewares de proteção
   app.use(helmetSecurity);
-  app.use(antiDdosMiddleware);
+  // app.use(antiDdosMiddleware); // TEMPORARIAMENTE DESATIVADO
   app.use(antiInvasionMiddleware);
   app.use(loginAttemptMiddleware);
   
   // 🧠 RATE LIMITING INTELIGENTE - Diferencia usuários legítimos de invasores
-  app.use(intelligentRateLimiter.middleware());
+  // app.use(intelligentRateLimiter.middleware()); // TEMPORARIAMENTE DESATIVADO
   
   // Middleware de debug para todas as rotas POST
   app.use((req, res, next) => {
@@ -1120,26 +1120,11 @@ export function registerSQLiteRoutes(app: Express): Server {
 
   // Submit final quiz response (ULTRA-OTIMIZADO para alto volume)
   app.post("/api/quizzes/:id/submit", 
-    // Rate limiting inteligente
+    // Rate limiting inteligente - TEMPORARIAMENTE DESATIVADO
     async (req, res, next) => {
       const startTime = Date.now();
       
       try {
-        // Rate limiting por IP para evitar spam
-        const ip = req.ip || req.connection.remoteAddress;
-        const submissionKey = `submission:${ip}:${req.params.id}`;
-        
-        const recentSubmission = cache.get(submissionKey);
-        if (recentSubmission) {
-          return res.status(429).json({ 
-            error: 'Rate limit exceeded. Try again in 10 seconds.',
-            retryAfter: 10 
-          });
-        }
-
-        // Marcar submissão recente (10 segundos)
-        cache.set(submissionKey, Date.now(), 10);
-
         // Validação ultra-rápida do payload
         if (!req.body || typeof req.body !== 'object') {
           return res.status(400).json({ error: 'Invalid request body' });
