@@ -43,12 +43,35 @@ import {
   Activity,
   Target,
   Calculator,
-  Share2
+  Share2,
+  CreditCard,
+  DollarSign,
+  BarChart,
+  LineChart,
+  PieChart,
+  TrendingUp,
+  Users,
+  UserCheck,
+  Shield,
+  Award,
+  Crown,
+  Trophy,
+  Package,
+  Gift,
+  MessageSquare,
+  ThumbsUp,
+  Globe,
+  Zap,
+  Heart,
+  CheckCircle,
+  ExternalLink,
+  ArrowLeftRight,
+  HelpCircle
 } from "lucide-react";
 
 interface Element {
   id: number;
-  type: "multiple_choice" | "text" | "rating" | "email" | "checkbox" | "date" | "phone" | "number" | "textarea" | "image_upload" | "animated_transition" | "heading" | "paragraph" | "image" | "divider" | "video" | "audio" | "birth_date" | "height" | "current_weight" | "target_weight" | "transition_background" | "transition_text" | "transition_counter" | "transition_loader" | "transition_redirect" | "transition_button" | "spacer" | "game_wheel" | "game_scratch" | "game_color_pick" | "game_brick_break" | "game_memory_cards" | "game_slot_machine" | "continue_button" | "loading_question" | "share_quiz" | "price" | "icon_list" | "testimonials" | "guarantee" | "paypal" | "image_with_text";
+  type: "multiple_choice" | "text" | "rating" | "email" | "checkbox" | "date" | "phone" | "number" | "textarea" | "image_upload" | "animated_transition" | "heading" | "paragraph" | "image" | "divider" | "video" | "audio" | "birth_date" | "height" | "current_weight" | "target_weight" | "transition_background" | "transition_text" | "transition_counter" | "transition_loader" | "transition_redirect" | "transition_button" | "spacer" | "game_wheel" | "game_scratch" | "game_color_pick" | "game_brick_break" | "game_memory_cards" | "game_slot_machine" | "continue_button" | "loading_question" | "share_quiz" | "price" | "icon_list" | "testimonials" | "guarantee" | "paypal" | "image_with_text" | "chart" | "metrics" | "before_after" | "pricing_plans" | "stripe_embed" | "hotmart_upsell" | "faq" | "image_carousel";
   content: string;
   question?: string;
   description?: string;
