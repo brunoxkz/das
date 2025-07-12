@@ -1,0 +1,57 @@
+> rest-express@1.0.0 dev
+> NODE_ENV=development tsx server/index.ts
+
+🚀 SQLite configurado para 100.000+ usuários simultâneos
+✅ Database already exists, only adding missing columns...
+✅ Database migration completed safely
+PRAGMA journal_mode = WAL
+PRAGMA synchronous = NORMAL
+PRAGMA cache_size = 10000
+PRAGMA temp_store = MEMORY
+PRAGMA mmap_size = 268435456
+STRIPE_SECRET_KEY not found - Stripe functionality will be disabled
+🔧 Twilio configurado: {
+  accountSid: 'ACaa795b9b...',
+  authToken: 'c0151d44e8...',
+  twilioPhoneNumber: '+12344373337'
+}
+🔒 Sistema de Segurança Anti-Invasão e Anti-DDoS inicializado com sucesso!
+✅ Default users created successfully
+✅ Default users created successfully
+🔐 Configurando sistema de autenticação: SQLITE
+🛣️ Configurando sistema de rotas: SQLITE
+✅ I.A. CONVERSION + ENDPOINTS REGISTRADOS
+🔒 Inicializando Sistema de Segurança Avançado...
+🔐 Inicializando verificação de integridade...
+✅ server/index.ts: 452fa8fe...
+✅ server/auth-hybrid.ts: 51a3e6b5...
+✅ server/security.ts: a2af8410...
+✅ server/advanced-security.ts: 546d2864...
+✅ server/db-sqlite.ts: 95d0a17b...
+✅ Sistema de Segurança Avançado ativado!
+🔒 Sistema de segurança avançado inicializado
+🚀 Inicializando QuizCacheOptimizer...
+🔥 Pre-warming cache para quizzes populares...
+📦 Quiz qmn_XIXZ6CoPIWIswBA7l cached (TTL: 300s)
+📦 Quiz XJyzeNJh2ow2Lg55bIVCA cached (TTL: 300s)
+📦 Quiz wuJAb2vQyb302g2wy7mTU cached (TTL: 300s)
+📦 Quiz Fwu7L-y0L7eS8xA5sZQmq cached (TTL: 300s)
+📦 Quiz SBSwACJPCHmU5To9Km8XB cached (TTL: 300s)
+📦 Quiz gKKiXSZ0a28O6Cg3v-oKC cached (TTL: 300s)
+📦 Quiz diXkhns6tYWPUEYBAuNnG cached (TTL: 300s)
+📦 Quiz LJFjlrfl5qkOOYFVNYjCk cached (TTL: 300s)
+📦 Quiz 1J_ZgVwjqv4aw4bhi9ZzV cached (TTL: 300s)
+📦 Quiz WdXge81_RCAp866gtW9ij cached (TTL: 300s)
+✅ Pre-warmed 10 quizzes
+✅ QuizCacheOptimizer inicializado
+⚡ Sistema de cache ultra-rápido inicializado
+📧 Serviço de email disponível
+8:43:42 PM [express] 🚀 Server running on port 5000
+8:43:42 PM [express] 🚀 SISTEMA UNIFICADO OTIMIZADO: 100 ciclos/hora, intervalo 60s
+8:43:42 PM [express] ⚡ REDUÇÃO DE 70% NO USO DE RECURSOS - SUPORTE 100.000+ USUÁRIOS
+8:43:42 PM [express] 🔥 Sistema inteligente: 25 campanhas/ciclo + 100 telefones/campanha + delay 200ms
+8:43:42 PM [express] ✅ Sistema Otimizado Inicializado - Performance Massivamente Melhorada
+Browserslist: browsers data (caniuse-lite) is 9 months old. Please run:
+  npx update-browserslist-db@latest
+  Why you should do it regularly: https://github.com/browserslist/update-db#readme
+^C🔄 SIGINT recebido, encerrando servidor...
