@@ -77,6 +77,7 @@ export interface IStorage {
 
   // Quiz operations
   getUserQuizzes(userId: string): Promise<Quiz[]>;
+  getAllQuizzes(): Promise<Quiz[]>;
   getQuiz(id: string): Promise<Quiz | undefined>;
   createQuiz(quiz: InsertQuiz): Promise<Quiz>;
   updateQuiz(id: string, updates: Partial<InsertQuiz>): Promise<Quiz>;
@@ -676,6 +677,17 @@ export class SQLiteStorage implements IStorage {
       .from(quizzes)
       .where(eq(quizzes.userId, userId))
       .orderBy(desc(quizzes.updatedAt));
+  }
+
+  async getAllQuizzes(): Promise<Quiz[]> {
+    try {
+      return await db.select()
+        .from(quizzes)
+        .orderBy(desc(quizzes.updatedAt));
+    } catch (error) {
+      console.error('❌ Erro ao buscar todos os quizzes:', error);
+      return [];
+    }
   }
 
   async getQuiz(id: string): Promise<Quiz | undefined> {

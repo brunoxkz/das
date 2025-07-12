@@ -152,8 +152,11 @@ class QuizCacheOptimizer {
    */
   async cleanupCache(): Promise<void> {
     try {
-      const keys = cache.keys();
+      const stats = cache.getStats();
       let cleaned = 0;
+      
+      // Usar método correto para obter chaves do NodeCache
+      const keys = cache.cache ? cache.cache.keys() : [];
       
       // Limpar entradas expiradas manualmente
       keys.forEach(key => {
