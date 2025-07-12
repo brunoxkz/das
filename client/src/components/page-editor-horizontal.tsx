@@ -789,14 +789,14 @@ export function PageEditorHorizontal({
       ]
     },
     {
-      name: "🎮 Jogos",
+      name: "📄 Conteúdo Avançado",
       elements: [
-        { type: "game_wheel", label: "Roleta", icon: <BarChart3 className="w-4 h-4" /> },
-        { type: "game_scratch", label: "Raspadinha", icon: <Palette className="w-4 h-4" /> },
-        { type: "game_color_pick", label: "Escolha Cor", icon: <Palette className="w-4 h-4" /> },
-        { type: "game_memory_cards", label: "Memória", icon: <Star className="w-4 h-4" /> },
-        { type: "game_brick_break", label: "Quebra Muro", icon: <Calculator className="w-4 h-4" /> },
-        { type: "game_slot_machine", label: "Caça-Níquel", icon: <Activity className="w-4 h-4" /> },
+        { type: "testimonials", label: "Depoimentos", icon: <MessageSquare className="w-4 h-4" /> },
+        { type: "guarantee", label: "Garantia", icon: <Shield className="w-4 h-4" /> },
+        { type: "icon_list", label: "Lista de Ícones", icon: <Star className="w-4 h-4" /> },
+        { type: "faq", label: "FAQ", icon: <HelpCircle className="w-4 h-4" /> },
+        { type: "image_with_text", label: "Imagem com Texto", icon: <ImageIcon className="w-4 h-4" /> },
+        { type: "image_carousel", label: "Carrossel", icon: <ImageIcon className="w-4 h-4" /> },
       ]
     },
     {
@@ -821,6 +821,7 @@ export function PageEditorHorizontal({
         { type: "pricing_plans", label: "Planos", icon: <CreditCard className="w-4 h-4" /> },
         { type: "stripe_embed", label: "Stripe", icon: <Shield className="w-4 h-4" /> },
         { type: "paypal", label: "PayPal", icon: <CreditCard className="w-4 h-4" /> },
+        { type: "hotmart_upsell", label: "Upsell Hotmart", icon: <Target className="w-4 h-4" /> },
       ]
     }
   ];
@@ -882,86 +883,7 @@ const transitionElementCategories = [
       },
     ],
   },
-  {
-    name: "📊 Visualizações",
-    elements: [
-      {
-        type: "chart",
-        label: "Gráfico",
-        icon: <BarChart3 className="w-4 h-4" />,
-      },
-      {
-        type: "metrics",
-        label: "Métricas",
-        icon: <TrendingUp className="w-4 h-4" />,
-      },
-      {
-        type: "before_after",
-        label: "Antes/Depois",
-        icon: <ArrowLeftRight className="w-4 h-4" />,
-      },
-    ],
-  },
-  {
-    name: "💰 Vendas",
-    elements: [
-      {
-        type: "pricing_plans",
-        label: "Planos",
-        icon: <CreditCard className="w-4 h-4" />,
-      },
-      {
-        type: "stripe_embed",
-        label: "Stripe Checkout",
-        icon: <Shield className="w-4 h-4" />,
-      },
-      {
-        type: "paypal",
-        label: "PayPal",
-        icon: <CreditCard className="w-4 h-4" />,
-      },
-      {
-        type: "hotmart_upsell",
-        label: "Upsell Hotmart",
-        icon: <Target className="w-4 h-4" />,
-      },
-    ],
-  },
-  {
-    name: "❓ Conteúdo",
-    elements: [
-      {
-        type: "faq",
-        label: "FAQ",
-        icon: <HelpCircle className="w-4 h-4" />,
-      },
-      {
-        type: "image_carousel",
-        label: "Carrossel",
-        icon: <ImageIcon className="w-4 h-4" />,
-      },
-      {
-        type: "icon_list",
-        label: "Lista de Ícones",
-        icon: <Star className="w-4 h-4" />,
-      },
-      {
-        type: "testimonials",
-        label: "Depoimentos",
-        icon: <MessageSquare className="w-4 h-4" />,
-      },
-      {
-        type: "guarantee",
-        label: "Garantia",
-        icon: <Shield className="w-4 h-4" />,
-      },
-      {
-        type: "image_with_text",
-        label: "Imagem com Texto",
-        icon: <ImageIcon className="w-4 h-4" />,
-      },
-    ],
-  },
+
 ];
 
 // Elementos específicos para páginas de jogos
