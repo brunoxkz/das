@@ -160,7 +160,7 @@ export default function QuizBuilder() {
           id: Date.now().toString(),
           name: pixelType.name,
           type: pixelType.type,
-          mode: 'normal',
+          mode: 'pixel', // Padrão para pixel ao invés de 'normal'
           value: '',
           placeholder: pixelType.placeholder,
           description: pixelType.description
@@ -168,7 +168,7 @@ export default function QuizBuilder() {
         setTrackingPixels(prev => [...prev, newPixel]);
         toast({
           title: "Pixel adicionado",
-          description: `${pixelType.name} foi adicionado com sucesso.`,
+          description: `${pixelType.name} foi adicionado. Configure os dados e clique em "Salvar Pixels" para confirmar.`,
         });
       } else {
         throw new Error(`Tipo de pixel não encontrado: ${type}`);
@@ -526,9 +526,10 @@ export default function QuizBuilder() {
     if (!quizData.title?.trim()) {
       toast({
         title: "Título obrigatório",
-        description: "Por favor, adicione um título ao seu quiz.",
+        description: "Por favor, adicione um título para o quiz na aba 'Configurações' antes de salvar.",
         variant: "destructive",
       });
+      setActiveTab("settings"); // Redireciona para a aba de configurações
       return;
     }
 
@@ -931,6 +932,23 @@ export default function QuizBuilder() {
                       className="mt-2"
                     />
                     <p className="text-xs text-gray-500 mt-1">Logo será redimensionada automaticamente para altura de 40px</p>
+                  </div>
+                  
+                  <div>
+                    <Label htmlFor="logoSize">Tamanho da Logo</Label>
+                    <select
+                      id="logoSize"
+                      value={quizData.design?.logoSize || "medium"}
+                      onChange={(e) => setQuizData(prev => ({ 
+                        ...prev, 
+                        design: { ...prev.design, logoSize: e.target.value }
+                      }))}
+                      className="mt-2 w-full px-3 py-2 border border-gray-300 rounded-md"
+                    >
+                      <option value="small">Pequeno (30px)</option>
+                      <option value="medium">Médio (40px)</option>
+                      <option value="large">Grande (60px)</option>
+                    </select>
                   </div>
                   
                   <div>

@@ -63,6 +63,7 @@ interface QuizPublicRendererProps {
       logoUpload: string;
       logoUrl: string;
       logoPosition: string;
+      logoSize: string;
       progressBarColor: string;
       progressBarStyle: string;
       progressBarHeight: string;
@@ -836,6 +837,44 @@ export function QuizPublicRenderer({ quiz }: QuizPublicRendererProps) {
             })()}
           </div>
         )}
+
+        {/* Header com Logo */}
+        <div className="text-center mb-8">
+          {/* Logo */}
+          {quiz.design?.logoUrl && (
+            <div className={`mb-6 flex ${
+              quiz.design.logoPosition === 'left' ? 'justify-start' :
+              quiz.design.logoPosition === 'right' ? 'justify-end' :
+              'justify-center'
+            }`}>
+              <img
+                src={quiz.design.logoUrl}
+                alt="Logo"
+                className={`max-w-[200px] object-contain ${
+                  quiz.design.logoSize === 'small' ? 'h-8' :
+                  quiz.design.logoSize === 'large' ? 'h-16' :
+                  'h-10'
+                }`}
+                onError={(e) => {
+                  e.currentTarget.style.display = 'none';
+                }}
+              />
+            </div>
+          )}
+          
+          {/* Título e descrição do quiz */}
+          {quiz.title && (
+            <h1 className="text-3xl font-bold mb-4" style={{ color: textColor }}>
+              {quiz.title}
+            </h1>
+          )}
+          
+          {quiz.description && (
+            <p className="text-lg mb-6" style={{ color: isDarkMode ? '#d1d5db' : '#6b7280' }}>
+              {quiz.description}
+            </p>
+          )}
+        </div>
 
         {/* Conteúdo da Página */}
         <Card style={{ backgroundColor: cardBgColor, border: `1px solid ${borderColor}` }}>

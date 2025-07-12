@@ -2699,7 +2699,11 @@ export function QuizPreview({ quiz, initialPageIndex = 0 }: QuizPreviewProps) {
                 <img
                   src={quiz.design.logoUrl}
                   alt="Logo"
-                  className="h-10 max-w-[200px] object-contain"
+                  className={`max-w-[200px] object-contain ${
+                    quiz.design.logoSize === 'small' ? 'h-8' :
+                    quiz.design.logoSize === 'large' ? 'h-16' :
+                    'h-10'
+                  }`}
                   onError={(e) => {
                     e.currentTarget.style.display = 'none';
                   }}
