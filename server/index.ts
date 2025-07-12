@@ -97,6 +97,16 @@ setupHybridAuth(app);
 // Register all routes
 registerHybridRoutes(app);
 
+// Error handling middleware para interceptar erros do Vite
+app.use((err: any, req: Request, res: Response, next: NextFunction) => {
+  if (err && err.message && err.message.includes('Unexpected end of input')) {
+    console.warn('Vite compilation error intercepted:', err.message);
+    res.status(500).json({ error: 'Compilation error' });
+    return;
+  }
+  next(err);
+});
+
 // Setup Vite middleware for dev and production
 setupVite(app);
 
