@@ -1,7 +1,27 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { ArrowRight, ArrowLeft } from 'lucide-react';
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Card } from "@/components/ui/card";
+import { Progress } from "@/components/ui/progress";
+import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
+import { 
+  ArrowRight, 
+  ArrowLeft, 
+  Check, 
+  X, 
+  Star, 
+  Heart, 
+  ThumbsUp, 
+  Mail, 
+  Phone, 
+  User, 
+  Calendar
+} from 'lucide-react';
 
 interface QuizPreviewProps {
   quiz: any;
@@ -15,47 +35,36 @@ export default function QuizPreview({ quiz, onClose, onSave, currentUser }: Quiz
   const [answers, setAnswers] = useState<Record<string, any>>({});
 
   const renderBasicElement = (element: any) => {
-    if (!element || !element.type) {
-      return (
-        <div className="p-4 border border-gray-300 rounded-lg text-center">
-          <p className="text-gray-500">Elemento inválido</p>
-        </div>
-      );
-    }
-
     switch (element.type) {
       case 'heading':
         return (
-          <div 
-            className="font-bold mb-4"
-            style={{
-              fontSize: element.fontSize || '24px',
-              textAlign: element.textAlign || 'left',
-              color: element.color || '#000',
-            }}
-          >
+          <div style={{
+            fontSize: element.fontSize || '24px',
+            fontWeight: element.fontWeight || 'bold',
+            textAlign: element.textAlign || 'left',
+            color: element.color || '#000',
+            marginBottom: element.marginBottom || '16px'
+          }}>
             {element.content || "Título"}
           </div>
         );
 
       case 'paragraph':
         return (
-          <div 
-            className="mb-4"
-            style={{
-              fontSize: element.fontSize || '16px',
-              textAlign: element.textAlign || 'left',
-              color: element.color || '#000',
-              lineHeight: element.lineHeight || '1.5',
-            }}
-          >
+          <div style={{
+            fontSize: element.fontSize || '16px',
+            textAlign: element.textAlign || 'left',
+            color: element.color || '#000',
+            lineHeight: element.lineHeight || '1.5',
+            marginBottom: element.marginBottom || '16px'
+          }}>
             {element.content || "Texto do parágrafo"}
           </div>
         );
 
       case 'multiple_choice':
         return (
-          <div className="space-y-4 p-4 border rounded-lg mb-4">
+          <div className="space-y-4 p-4 border rounded-lg">
             <h3 className="text-lg font-medium">{element.question || "Pergunta de múltipla escolha"}</h3>
             <div className="space-y-2">
               {(element.options || ['Opção 1', 'Opção 2', 'Opção 3']).map((option: string, index: number) => (
@@ -78,8 +87,8 @@ export default function QuizPreview({ quiz, onClose, onSave, currentUser }: Quiz
       case 'phone':
       case 'number':
         return (
-          <div className="space-y-2 p-4 border rounded-lg mb-4">
-            <label className="text-sm font-medium block">
+          <div className="space-y-2 p-4 border rounded-lg">
+            <label className="text-sm font-medium">
               {element.question || `Campo ${element.type}`}
               {element.required && <span className="text-red-500 ml-1">*</span>}
             </label>
@@ -87,20 +96,19 @@ export default function QuizPreview({ quiz, onClose, onSave, currentUser }: Quiz
               type={element.type === 'email' ? 'email' : element.type === 'phone' ? 'tel' : element.type === 'number' ? 'number' : 'text'}
               placeholder={element.placeholder || `Digite ${element.type}`}
               required={element.required}
-              className="w-full"
             />
           </div>
         );
 
       case 'image':
         return (
-          <div className="space-y-2 p-4 border rounded-lg mb-4">
+          <div className="space-y-2 p-4 border rounded-lg">
             <div className="text-center">
               {element.src ? (
                 <img 
                   src={element.src} 
                   alt={element.alt || "Imagem"} 
-                  className="max-w-full h-auto rounded-lg mx-auto"
+                  className="max-w-full h-auto rounded-lg"
                   style={{
                     maxWidth: element.maxWidth || '100%',
                     height: element.height || 'auto'
@@ -117,12 +125,12 @@ export default function QuizPreview({ quiz, onClose, onSave, currentUser }: Quiz
 
       case 'video':
         return (
-          <div className="space-y-2 p-4 border rounded-lg mb-4">
+          <div className="space-y-2 p-4 border rounded-lg">
             <div className="text-center">
               {element.src ? (
                 <video 
                   controls 
-                  className="w-full rounded-lg max-w-full"
+                  className="w-full rounded-lg"
                   style={{
                     maxWidth: element.maxWidth || '100%',
                     height: element.height || 'auto'
@@ -142,13 +150,13 @@ export default function QuizPreview({ quiz, onClose, onSave, currentUser }: Quiz
 
       case 'continue_button':
         return (
-          <div className="text-center p-4 mb-4">
+          <div className="text-center p-4">
             <Button
-              className="px-6 py-3"
               style={{
                 backgroundColor: element.backgroundColor || '#007bff',
                 color: element.textColor || 'white',
                 fontSize: element.fontSize || '16px',
+                padding: element.padding || '12px 24px',
                 borderRadius: element.borderRadius || '8px'
               }}
             >
@@ -159,61 +167,30 @@ export default function QuizPreview({ quiz, onClose, onSave, currentUser }: Quiz
 
       default:
         return (
-          <div className="p-4 border-2 border-dashed border-gray-300 rounded-lg text-center mb-4">
+          <div className="p-4 border-2 border-dashed border-gray-300 rounded-lg text-center">
             <p className="text-gray-500">Elemento: {element.type}</p>
-            <p className="text-xs text-gray-400">Preview não implementado</p>
+            <p className="text-xs text-gray-400">Não implementado ainda</p>
           </div>
         );
     }
   };
 
   const renderContent = () => {
-    try {
-      if (!quiz || !quiz.structure || !Array.isArray(quiz.structure)) {
-        return (
-          <div className="text-center py-8">
-            <p className="text-gray-500">Nenhum conteúdo para mostrar</p>
-          </div>
-        );
-      }
+    if (!quiz || !quiz.structure) return null;
 
-      const currentPage = quiz.structure[currentStep];
-      if (!currentPage) {
-        return (
-          <div className="text-center py-8">
-            <p className="text-gray-500">Página não encontrada</p>
-          </div>
-        );
-      }
+    const currentPage = quiz.structure[currentStep];
+    if (!currentPage) return null;
 
-      if (!currentPage.elements || !Array.isArray(currentPage.elements)) {
-        return (
-          <div className="text-center py-8">
-            <p className="text-gray-500">Nenhum elemento nesta página</p>
+    return (
+      <div className="space-y-6">
+        {currentPage.elements?.map((element: any, index: number) => (
+          <div key={index}>
+            {renderBasicElement(element)}
           </div>
-        );
-      }
-
-      return (
-        <div className="space-y-6">
-          {currentPage.elements.map((element: any, index: number) => (
-            <div key={index}>
-              {renderBasicElement(element)}
-            </div>
-          ))}
-        </div>
-      );
-    } catch (error) {
-      console.error('Erro ao renderizar conteúdo:', error);
-      return (
-        <div className="text-center py-8">
-          <p className="text-red-500">Erro ao carregar conteúdo</p>
-        </div>
-      );
-    }
+        ))}
+      </div>
+    );
   };
-
-  const totalPages = quiz?.structure?.length || 1;
 
   return (
     <div className="min-h-screen bg-gray-50 py-8">
@@ -228,7 +205,7 @@ export default function QuizPreview({ quiz, onClose, onSave, currentUser }: Quiz
           
           {renderContent()}
           
-          <div className="mt-8 flex justify-between items-center">
+          <div className="mt-8 flex justify-between">
             <Button 
               variant="outline" 
               onClick={() => setCurrentStep(Math.max(0, currentStep - 1))}
@@ -238,13 +215,9 @@ export default function QuizPreview({ quiz, onClose, onSave, currentUser }: Quiz
               Anterior
             </Button>
             
-            <span className="text-sm text-gray-500">
-              Página {currentStep + 1} de {totalPages}
-            </span>
-            
             <Button 
-              onClick={() => setCurrentStep(Math.min(totalPages - 1, currentStep + 1))}
-              disabled={currentStep >= totalPages - 1}
+              onClick={() => setCurrentStep(Math.min((quiz?.structure?.length || 1) - 1, currentStep + 1))}
+              disabled={currentStep >= ((quiz?.structure?.length || 1) - 1)}
             >
               Próximo
               <ArrowRight className="w-4 h-4 ml-2" />
