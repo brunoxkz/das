@@ -8,6 +8,7 @@ import { LanguageSelector } from "@/components/language-selector";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { useLanguage } from "@/hooks/useLanguage";
 import { useSidebar } from "@/hooks/useSidebar";
+import { useState } from "react";
 
 import { 
   BarChart3, 
@@ -18,6 +19,8 @@ import {
   Crown,
   ChevronLeft,
   ChevronRight,
+  ChevronDown,
+  ChevronUp,
   Vote,
   Home,
   FileText,
@@ -49,6 +52,7 @@ export function Sidebar() {
   const userData = user as any;
   const { t } = useLanguage();
   const { isCollapsed, toggleSidebar } = useSidebar();
+  const [expandedCategories, setExpandedCategories] = useState<string[]>(["Principal"]);
 
   // Buscar dados dos quizzes em tempo real
   const { data: quizzes } = useQuery({
@@ -68,7 +72,14 @@ export function Sidebar() {
     return responseDate.toDateString() === today.toDateString();
   }).length;
 
-  // State is now managed by useSidebar hook
+  // Função para alternar expansão de categorias
+  const toggleCategory = (categoryTitle: string) => {
+    setExpandedCategories(prev => 
+      prev.includes(categoryTitle) 
+        ? prev.filter(cat => cat !== categoryTitle)
+        : [...prev, categoryTitle]
+    );
+  };
 
   const navCategories = [
     {
@@ -341,45 +352,62 @@ export function Sidebar() {
 
       {/* Navigation */}
       <nav className="flex-1 p-4">
-        <div className="space-y-4">
+        <div className="space-y-2">
           {navCategories.map((category) => (
-            <div key={category.title} className="space-y-2">
-              {/* Category Header */}
-              {!isCollapsed && (
-                <div className="flex items-center text-xs font-medium text-gray-500 uppercase tracking-wider px-3">
-                  {category.icon}
-                  <span className="ml-2">{category.title}</span>
-                </div>
-              )}
+            <div key={category.title} className="space-y-1">
+              {/* Category Header Button */}
+              <Button
+                variant="ghost"
+                onClick={() => !isCollapsed && toggleCategory(category.title)}
+                className={cn(
+                  "category-header w-full justify-start",
+                  isCollapsed ? "px-0" : "px-3 py-2",
+                  !isCollapsed && "cursor-pointer"
+                )}
+              >
+                {category.icon}
+                {!isCollapsed && (
+                  <>
+                    <span className="ml-2 flex-1 text-left">{category.title}</span>
+                    {expandedCategories.includes(category.title) ? (
+                      <ChevronDown className="w-3 h-3 ml-auto" />
+                    ) : (
+                      <ChevronUp className="w-3 h-3 ml-auto" />
+                    )}
+                  </>
+                )}
+              </Button>
               
               {/* Category Items */}
-              <div className="space-y-1">
-                {category.items.map((item) => (
-                  <Link key={item.href} href={item.href}>
-                    <Button
-                      variant={item.active ? "secondary" : "ghost"}
-                      className={cn(
-                        "w-full justify-start",
-                        isCollapsed ? "px-0" : "px-3",
-                        item.className,
-                        item.active && !item.className && "bg-primary/10 text-primary"
-                      )}
-                    >
-                      {item.icon}
-                      {!isCollapsed && (
-                        <>
-                          <span className="ml-2 flex-1 text-left">{item.title}</span>
-                          {item.badge && (
-                            <Badge variant="secondary" className="ml-auto">
-                              {item.badge}
-                            </Badge>
-                          )}
-                        </>
-                      )}
-                    </Button>
-                  </Link>
-                ))}
-              </div>
+              {(isCollapsed || expandedCategories.includes(category.title)) && (
+                <div className={cn("category-items space-y-1", isCollapsed ? "pl-0" : "pl-2")}>
+                  {category.items.map((item) => (
+                    <Link key={item.href} href={item.href}>
+                      <Button
+                        variant="ghost"
+                        className={cn(
+                          "nav-item w-full justify-start",
+                          isCollapsed ? "px-0" : "px-3",
+                          item.className,
+                          item.active && "active"
+                        )}
+                      >
+                        {item.icon}
+                        {!isCollapsed && (
+                          <>
+                            <span className="ml-2 flex-1 text-left">{item.title}</span>
+                            {item.badge && (
+                              <Badge variant="secondary" className="ml-auto">
+                                {item.badge}
+                              </Badge>
+                            )}
+                          </>
+                        )}
+                      </Button>
+                    </Link>
+                  ))}
+                </div>
+              )}
             </div>
           ))}
         </div>
