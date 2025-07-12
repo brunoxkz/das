@@ -541,6 +541,22 @@ export function runMigrations() {
       );
     `;
 
+    const createAbTestsTable = `
+      CREATE TABLE IF NOT EXISTS ab_tests (
+        id TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL,
+        name TEXT NOT NULL,
+        description TEXT,
+        quiz_ids TEXT NOT NULL,
+        subdomains TEXT DEFAULT '[]',
+        is_active INTEGER DEFAULT 1,
+        total_views INTEGER DEFAULT 0,
+        created_at INTEGER NOT NULL,
+        updated_at INTEGER NOT NULL,
+        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+      );
+    `;
+
     sqlite.exec(createUsersTable);
     sqlite.exec(createQuizzesTable);
     sqlite.exec(createQuizTemplatesTable);
@@ -562,6 +578,7 @@ export function runMigrations() {
     sqlite.exec(createAiConversionCampaignsTable);
     sqlite.exec(createAiVideoGenerationsTable);
     sqlite.exec(createNotificationsTable);
+    sqlite.exec(createAbTestsTable);
     
     // Adicionar campos se não existirem
     try {
@@ -643,6 +660,7 @@ export function runMigrations() {
     sqlite.exec(createVoiceLogsTable);
     sqlite.exec(createEmailCampaignsTable);
     sqlite.exec(createEmailTemplatesTable);
+    sqlite.exec(createAbTestsTable);
 
     // ===============================================
     // TYPEBOT AUTO-HOSPEDADO - DESATIVADO TEMPORARIAMENTE
