@@ -23,7 +23,7 @@ let processingTimeout: NodeJS.Timeout | null = null;
 export interface PixelConfig {
   id: string;
   name: string;
-  type: 'meta' | 'tiktok' | 'ga4' | 'linkedin' | 'pinterest' | 'snapchat' | 'taboola' | 'mgid' | 'outbrain';
+  type: 'meta' | 'tiktok' | 'ga4' | 'gtm' | 'linkedin' | 'pinterest' | 'snapchat' | 'taboola' | 'mgid' | 'outbrain';
   mode: 'pixel' | 'api' | 'both';
   value: string;
   description?: string;
@@ -103,6 +103,37 @@ export function generateGA4Pixel(config: PixelConfig): string {
   gtag('config', '${measurementId}');
 </script>
 <!-- End Google Analytics 4 Code -->
+  `.trim();
+}
+
+/**
+ * Gera código Google Tag Manager completo
+ */
+export function generateGTMPixel(config: PixelConfig): string {
+  const { value: containerId } = config;
+  
+  if (!containerId || !containerId.trim()) {
+    return '';
+  }
+
+  // Validação do formato GTM-XXXXXXX
+  if (!containerId.startsWith('GTM-')) {
+    console.warn('ID do Google Tag Manager deve começar com GTM-');
+  }
+
+  return `
+<!-- Google Tag Manager -->
+<script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+})(window,document,'script','dataLayer','${containerId}');</script>
+<!-- End Google Tag Manager -->
+
+<!-- Google Tag Manager (noscript) -->
+<noscript><iframe src="https://www.googletagmanager.com/ns.html?id=${containerId}"
+height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+<!-- End Google Tag Manager (noscript) -->
   `.trim();
 }
 

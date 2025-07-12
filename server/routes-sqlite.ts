@@ -3599,6 +3599,27 @@ export function registerSQLiteRoutes(app: Express): Server {
         extracted.nascimento = response;
       }
       
+      // Novos elementos visuais
+      if (key.includes('icon_list') || key.includes('iconlist')) {
+        extracted.icon_list = response;
+      }
+      
+      if (key.includes('testimonials') || key.includes('depoimentos')) {
+        extracted.testimonials = response;
+      }
+      
+      if (key.includes('guarantee') || key.includes('garantia')) {
+        extracted.guarantee = response;
+      }
+      
+      if (key.includes('paypal') || key.includes('payment')) {
+        extracted.paypal = response;
+      }
+      
+      if (key.includes('image_with_text') || key.includes('imagem_com_texto')) {
+        extracted.image_with_text = response;
+      }
+      
       // Adicionar outros campos genéricos
       if (response && response.toString().trim()) {
         extracted[key] = response;
@@ -4935,6 +4956,27 @@ app.get("/api/whatsapp-extension/pending", verifyJWT, async (req: any, res: Resp
       
       if (key.includes('nascimento') || key.includes('birth')) {
         extracted.nascimento = response;
+      }
+      
+      // Novos elementos visuais
+      if (key.includes('icon_list') || key.includes('iconlist')) {
+        extracted.icon_list = response;
+      }
+      
+      if (key.includes('testimonials') || key.includes('depoimentos')) {
+        extracted.testimonials = response;
+      }
+      
+      if (key.includes('guarantee') || key.includes('garantia')) {
+        extracted.guarantee = response;
+      }
+      
+      if (key.includes('paypal') || key.includes('payment')) {
+        extracted.paypal = response;
+      }
+      
+      if (key.includes('image_with_text') || key.includes('imagem_com_texto')) {
+        extracted.image_with_text = response;
       }
       
       // Adicionar outros campos genéricos
@@ -7930,6 +7972,231 @@ app.get("/api/whatsapp-extension/pending", verifyJWT, async (req: any, res: Resp
 
   // TYPEBOT DESATIVADO - Todas as rotas acima foram comentadas
   // */
+
+  // Health Check Endpoint
+  app.get('/api/health', (req, res) => {
+    res.json({ 
+      status: 'ok', 
+      timestamp: new Date().toISOString(),
+      version: '1.0.0',
+      database: 'sqlite',
+      environment: process.env.NODE_ENV || 'development'
+    });
+  });
+
+  // User profile endpoint
+  app.get('/api/users/me', verifyJWT, async (req: any, res: Response) => {
+    try {
+      const userId = req.user.id;
+      const user = await storage.getUser(userId);
+      
+      if (!user) {
+        return res.status(404).json({ error: 'Usuário não encontrado' });
+      }
+      
+      // Remove sensitive information
+      const { password, ...userWithoutPassword } = user;
+      
+      res.json({
+        user: userWithoutPassword,
+        profile: {
+          id: user.id,
+          email: user.email,
+          name: user.name,
+          role: user.role,
+          plan: user.plan,
+          credits: {
+            sms: user.smsCredits || 0,
+            email: user.emailCredits || 0,
+            whatsapp: user.whatsappCredits || 0,
+            ia: user.iaCredits || 0
+          },
+          planExpiresAt: user.planExpiresAt,
+          createdAt: user.createdAt
+        }
+      });
+    } catch (error) {
+      console.error('Error fetching user profile:', error);
+      res.status(500).json({ error: 'Erro ao buscar perfil do usuário' });
+    }
+  });
+
+  // Templates endpoint
+  app.get('/api/templates', verifyJWT, async (req: any, res: Response) => {
+    try {
+      // Default templates for the system
+      const defaultTemplates = [
+        {
+          id: 'template-1',
+          name: 'Quiz de Produto',
+          description: 'Template para descobrir preferências de produto',
+          category: 'ecommerce',
+          structure: {
+            pages: [
+              {
+                id: 'page1',
+                title: 'Informações Básicas',
+                elements: [
+                  {
+                    id: 'elem1',
+                    type: 'text',
+                    properties: {
+                      label: 'Qual é o seu nome?',
+                      placeholder: 'Digite seu nome',
+                      required: true,
+                      fieldId: 'nome_completo'
+                    }
+                  },
+                  {
+                    id: 'elem2',
+                    type: 'email',
+                    properties: {
+                      label: 'Qual é o seu email?',
+                      placeholder: 'seuemail@exemplo.com',
+                      required: true,
+                      fieldId: 'email_contato'
+                    }
+                  }
+                ]
+              },
+              {
+                id: 'page2',
+                title: 'Preferências',
+                elements: [
+                  {
+                    id: 'elem3',
+                    type: 'multiple_choice',
+                    properties: {
+                      label: 'Qual produto mais te interessa?',
+                      options: [
+                        { id: 'opt1', text: 'Produto A', value: 'produto_a' },
+                        { id: 'opt2', text: 'Produto B', value: 'produto_b' },
+                        { id: 'opt3', text: 'Produto C', value: 'produto_c' }
+                      ],
+                      required: true,
+                      fieldId: 'produto_interesse'
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        },
+        {
+          id: 'template-2',
+          name: 'Quiz de Leads',
+          description: 'Template para captação de leads qualificados',
+          category: 'marketing',
+          structure: {
+            pages: [
+              {
+                id: 'page1',
+                title: 'Perfil do Cliente',
+                elements: [
+                  {
+                    id: 'elem1',
+                    type: 'text',
+                    properties: {
+                      label: 'Nome completo',
+                      placeholder: 'Digite seu nome completo',
+                      required: true,
+                      fieldId: 'nome_completo'
+                    }
+                  },
+                  {
+                    id: 'elem2',
+                    type: 'phone',
+                    properties: {
+                      label: 'Telefone',
+                      placeholder: '(11) 99999-9999',
+                      required: true,
+                      fieldId: 'telefone_principal'
+                    }
+                  },
+                  {
+                    id: 'elem3',
+                    type: 'multiple_choice',
+                    properties: {
+                      label: 'Qual sua faixa etária?',
+                      options: [
+                        { id: 'opt1', text: '18-25 anos', value: '18-25' },
+                        { id: 'opt2', text: '26-35 anos', value: '26-35' },
+                        { id: 'opt3', text: '36-45 anos', value: '36-45' },
+                        { id: 'opt4', text: '46+ anos', value: '46+' }
+                      ],
+                      required: true,
+                      fieldId: 'faixa_etaria'
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        },
+        {
+          id: 'template-3',
+          name: 'Quiz de Saúde',
+          description: 'Template para avaliação de perfil de saúde',
+          category: 'saude',
+          structure: {
+            pages: [
+              {
+                id: 'page1',
+                title: 'Informações Pessoais',
+                elements: [
+                  {
+                    id: 'elem1',
+                    type: 'text',
+                    properties: {
+                      label: 'Nome completo',
+                      placeholder: 'Digite seu nome',
+                      required: true,
+                      fieldId: 'nome_completo'
+                    }
+                  },
+                  {
+                    id: 'elem2',
+                    type: 'height',
+                    properties: {
+                      label: 'Qual sua altura?',
+                      placeholder: '1.75',
+                      required: true,
+                      fieldId: 'altura'
+                    }
+                  },
+                  {
+                    id: 'elem3',
+                    type: 'current_weight',
+                    properties: {
+                      label: 'Qual seu peso atual?',
+                      placeholder: '70',
+                      required: true,
+                      fieldId: 'peso_atual'
+                    }
+                  },
+                  {
+                    id: 'elem4',
+                    type: 'target_weight',
+                    properties: {
+                      label: 'Qual seu peso ideal?',
+                      placeholder: '65',
+                      required: true,
+                      fieldId: 'peso_ideal'
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      ];
+      
+      res.json(defaultTemplates);
+    } catch (error) {
+      console.error('Error fetching templates:', error);
+      res.status(500).json({ error: 'Erro ao buscar templates' });
+    }
+  });
 
   return httpServer;
 }

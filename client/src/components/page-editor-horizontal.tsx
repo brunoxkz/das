@@ -48,7 +48,7 @@ import {
 
 interface Element {
   id: number;
-  type: "multiple_choice" | "text" | "rating" | "email" | "checkbox" | "date" | "phone" | "number" | "textarea" | "image_upload" | "animated_transition" | "heading" | "paragraph" | "image" | "divider" | "video" | "audio" | "birth_date" | "height" | "current_weight" | "target_weight" | "transition_background" | "transition_text" | "transition_counter" | "transition_loader" | "transition_redirect" | "transition_button" | "spacer" | "game_wheel" | "game_scratch" | "game_color_pick" | "game_brick_break" | "game_memory_cards" | "game_slot_machine" | "continue_button" | "loading_question" | "share_quiz" | "price";
+  type: "multiple_choice" | "text" | "rating" | "email" | "checkbox" | "date" | "phone" | "number" | "textarea" | "image_upload" | "animated_transition" | "heading" | "paragraph" | "image" | "divider" | "video" | "audio" | "birth_date" | "height" | "current_weight" | "target_weight" | "transition_background" | "transition_text" | "transition_counter" | "transition_loader" | "transition_redirect" | "transition_button" | "spacer" | "game_wheel" | "game_scratch" | "game_color_pick" | "game_brick_break" | "game_memory_cards" | "game_slot_machine" | "continue_button" | "loading_question" | "share_quiz" | "price" | "icon_list" | "testimonials" | "guarantee" | "paypal" | "image_with_text";
   content: string;
   question?: string;
   description?: string;
@@ -82,11 +82,23 @@ interface Element {
   shadowStyle?: string;
   hideInputs?: boolean;
   // Novos campos para elementos específicos
-  unit?: "cm" | "m"; // Para altura
+  heightUnit?: "cm" | "ft"; // Para altura - cm ou pés
+  weightUnit?: "kg" | "lb"; // Para peso - kg ou libras
   showAgeCalculation?: boolean; // Para data de nascimento
   showBMICalculation?: boolean; // Para peso
   minAge?: number;
   maxAge?: number;
+  
+  // Opções visuais para elementos de altura e peso
+  showUnitSelector?: boolean; // Mostrar seletor de unidade
+  inputStyle?: "minimal" | "bordered" | "filled" | "rounded";
+  labelPosition?: "top" | "left" | "inline";
+  showIcon?: boolean;
+  iconColor?: string;
+  labelColor?: string;
+  inputBackgroundColor?: string;
+  inputBorderColor?: string;
+  unitSelectorStyle?: "dropdown" | "tabs" | "buttons";
   
   // Campos específicos para elementos de transição
   backgroundType?: "solid" | "gradient" | "image";
@@ -200,6 +212,17 @@ interface Element {
   shareIconSize?: "small" | "medium" | "large";
   shareLayout?: "vertical" | "horizontal";
   
+  // Propriedades específicas para Análise de Respostas
+  analysisTitle?: string;
+  analysisItems?: string[];
+  analysisLoadingDuration?: number; // duração em segundos para completar 100%
+  analysisItemDelay?: number; // delay entre aparição dos itens em ms
+  analysisCircleColor?: string;
+  analysisTextColor?: string;
+  analysisItemColor?: string;
+  analysisCheckColor?: string;
+  analysisAutoStart?: boolean;
+  
   // Propriedades específicas para preço
   priceValue?: string;
   priceOriginalValue?: string;
@@ -248,6 +271,277 @@ interface Element {
   priceFeatures?: string[];
   priceShowFeatures?: boolean;
   priceFeatureIcon?: string;
+  
+  // Gráfico Properties
+  chartType?: "area" | "line" | "bar" | "pie" | "donut";
+  chartData?: { label: string; value: number; color?: string }[];
+  chartWidth?: string;
+  chartHeight?: string;
+  chartTitle?: string;
+  chartShowLegend?: boolean;
+  chartShowGrid?: boolean;
+  chartShowAxes?: boolean;
+  chartXLabel?: string;
+  chartYLabel?: string;
+  chartColors?: string[];
+  chartGradient?: boolean;
+  chartAnimation?: boolean;
+  chartAnimationDuration?: number;
+  chartBackgroundColor?: string;
+  chartBorderRadius?: string;
+  chartShadow?: boolean;
+  
+  // Métricas Properties
+  metricsData?: { label: string; value: number; maxValue: number; color?: string; unit?: string }[];
+  metricsLayout?: "horizontal" | "vertical" | "grid";
+  metricsShowPercentage?: boolean;
+  metricsShowValue?: boolean;
+  metricsBarHeight?: string;
+  metricsBarRadius?: string;
+  metricsAnimation?: boolean;
+  metricsAnimationDuration?: number;
+  metricsLabelPosition?: "top" | "left" | "right" | "bottom";
+  metricsBackgroundColor?: string;
+  metricsTextColor?: string;
+  
+  // Planos Properties
+  plansData?: {
+    id: string;
+    name: string;
+    price: string;
+    originalPrice?: string;
+    currency: string;
+    period: string;
+    features: string[];
+    highlighted?: boolean;
+    badge?: string;
+    buttonText: string;
+    buttonLink: string;
+    image?: string;
+  }[];
+  plansLayout?: "horizontal" | "vertical" | "grid";
+  plansColumns?: number;
+  plansStyle?: "card" | "simple" | "premium" | "minimal";
+  plansShowDiscount?: boolean;
+  plansAnimation?: boolean;
+  plansCardRadius?: string;
+  plansCardShadow?: boolean;
+  plansHighlightColor?: string;
+  
+  // Antes/Depois Properties
+  beforeAfterImages?: { before: string; after: string };
+  beforeAfterMode?: "slider" | "auto" | "hover" | "click";
+  beforeAfterOrientation?: "horizontal" | "vertical";
+  beforeAfterLabels?: { before: string; after: string };
+  beforeAfterShowLabels?: boolean;
+  beforeAfterSliderColor?: string;
+  beforeAfterBorderRadius?: string;
+  beforeAfterAutoSpeed?: number;
+  beforeAfterWidth?: string;
+  beforeAfterHeight?: string;
+  
+  // FAQ Properties
+  faqData?: { question: string; answer: string; id: string }[];
+  faqStyle?: "accordion" | "card" | "simple" | "modern";
+  faqOpenMultiple?: boolean;
+  faqDefaultOpen?: string[];
+  faqAnimation?: boolean;
+  faqIconPosition?: "left" | "right";
+  faqIcon?: string;
+  faqBackgroundColor?: string;
+  faqBorderColor?: string;
+  faqTextColor?: string;
+  faqHeaderColor?: string;
+  
+  // Carrossel Properties
+  carouselImages?: { url: string; alt: string; caption?: string }[];
+  carouselAutoplay?: boolean;
+  carouselSpeed?: number;
+  carouselShowDots?: boolean;
+  carouselShowArrows?: boolean;
+  carouselInfinite?: boolean;
+  carouselSlidesToShow?: number;
+  carouselSlidesToScroll?: number;
+  carouselEffect?: "slide" | "fade" | "cube" | "coverflow";
+  carouselArrowStyle?: "simple" | "rounded" | "square";
+  carouselDotStyle?: "dots" | "lines" | "squares";
+  carouselBorderRadius?: string;
+  carouselImageFit?: "cover" | "contain" | "fill";
+  
+  // Stripe Embed Properties
+  stripePublishableKey?: string;
+  stripePrice?: string;
+  stripeMode?: "payment" | "subscription";
+  stripeSuccessUrl?: string;
+  stripeCancelUrl?: string;
+  stripeAllowPromotion?: boolean;
+  stripeCustomerEmail?: string;
+  stripeButtonText?: string;
+  stripeButtonStyle?: "stripe" | "custom";
+  stripeButtonColor?: string;
+  stripeButtonRadius?: string;
+  stripeTitle?: string;
+  stripeDescription?: string;
+  stripeShowLogo?: boolean;
+  
+  // Icon List Properties
+  iconListData?: {
+    id: string;
+    icon: string;
+    iconColor?: string;
+    iconSize?: "small" | "medium" | "large";
+    mainText: string;
+    subText?: string;
+    textColor?: string;
+    subTextColor?: string;
+    backgroundColor?: string;
+    borderColor?: string;
+  }[];
+  iconListLayout?: "vertical" | "horizontal" | "grid";
+  iconListColumns?: number;
+  iconListSpacing?: "small" | "medium" | "large";
+  iconListAlignment?: "left" | "center" | "right";
+  iconListStyle?: "card" | "minimal" | "bordered" | "shadow";
+  iconListAnimation?: boolean;
+  iconListAnimationType?: "fade" | "slide" | "zoom" | "bounce";
+  iconListIconPosition?: "left" | "top" | "right";
+  iconListBackgroundColor?: string;
+  iconListBorderRadius?: string;
+  iconListPadding?: "small" | "medium" | "large";
+  iconListMargin?: "small" | "medium" | "large";
+  
+  // Testimonials Properties
+  testimonialsData?: {
+    id: string;
+    name: string;
+    role?: string;
+    company?: string;
+    testimonial: string;
+    rating?: number;
+    avatar?: string;
+    date?: string;
+    verified?: boolean;
+    featured?: boolean;
+  }[];
+  testimonialsLayout?: "single" | "grid" | "carousel" | "masonry";
+  testimonialsColumns?: number;
+  testimonialsStyle?: "card" | "quote" | "minimal" | "modern" | "elegant";
+  testimonialsShowRating?: boolean;
+  testimonialsShowDate?: boolean;
+  testimonialsShowAvatar?: boolean;
+  testimonialsShowVerified?: boolean;
+  testimonialsAutoplay?: boolean;
+  testimonialsSpeed?: number;
+  testimonialsAnimation?: boolean;
+  testimonialsAnimationType?: "fade" | "slide" | "zoom" | "flip";
+  testimonialsBackgroundColor?: string;
+  testimonialsTextColor?: string;
+  testimonialsAccentColor?: string;
+  testimonialsBorderColor?: string;
+  testimonialsBorderRadius?: string;
+  testimonialsPadding?: "small" | "medium" | "large";
+  testimonialsMargin?: "small" | "medium" | "large";
+  testimonialsShadow?: "none" | "small" | "medium" | "large";
+  testimonialsQuoteIcon?: boolean;
+  testimonialsQuoteColor?: string;
+  testimonialsNameColor?: string;
+  testimonialsRoleColor?: string;
+  testimonialsCompanyColor?: string;
+  
+  // Guarantee Properties
+  guaranteeTitle?: string;
+  guaranteeDescription?: string;
+  guaranteePeriod?: string;
+  guaranteeIcon?: string;
+  guaranteeIconColor?: string;
+  guaranteeStyle?: "card" | "badge" | "minimal" | "modern" | "elegant";
+  guaranteeBackgroundColor?: string;
+  guaranteeBorderColor?: string;
+  guaranteeTextColor?: string;
+  guaranteeAccentColor?: string;
+  guaranteeBorderRadius?: string;
+  guaranteePadding?: "small" | "medium" | "large";
+  guaranteeMargin?: "small" | "medium" | "large";
+  guaranteeShadow?: "none" | "small" | "medium" | "large";
+  guaranteeAnimation?: boolean;
+  guaranteeAnimationType?: "fade" | "slide" | "zoom" | "bounce" | "pulse";
+  guaranteeShowBadge?: boolean;
+  guaranteeBadgeText?: string;
+  guaranteeBadgeColor?: string;
+  guaranteeFeatures?: string[];
+  guaranteeShowFeatures?: boolean;
+  guaranteeAlignment?: "left" | "center" | "right";
+  
+  // PayPal Properties
+  paypalAmount?: string;
+  paypalCurrency?: "USD" | "EUR" | "BRL" | "GBP" | "CAD" | "AUD";
+  paypalIntent?: "sale" | "authorize" | "order";
+  paypalButtonText?: string;
+  paypalButtonStyle?: "gold" | "blue" | "silver" | "white" | "black";
+  paypalButtonShape?: "rect" | "pill";
+  paypalButtonSize?: "small" | "medium" | "large" | "responsive";
+  paypalButtonLayout?: "vertical" | "horizontal";
+  paypalDescription?: string;
+  paypalTitle?: string;
+  paypalShowLogo?: boolean;
+  paypalEnvironment?: "sandbox" | "production";
+  paypalClientId?: string;
+  paypalSuccessUrl?: string;
+  paypalCancelUrl?: string;
+  paypalCustomStyle?: boolean;
+  paypalCustomBackgroundColor?: string;
+  paypalCustomTextColor?: string;
+  paypalCustomBorderColor?: string;
+  paypalCustomBorderRadius?: string;
+  paypalAlignment?: "left" | "center" | "right";
+  paypalMargin?: "small" | "medium" | "large";
+  paypalPadding?: "small" | "medium" | "large";
+  
+  // Image with Text Properties
+  imageWithTextUrl?: string;
+  imageWithTextFile?: File;
+  imageWithTextText?: string;
+  imageWithTextTextPosition?: "bottom" | "top" | "overlay-bottom" | "overlay-top" | "overlay-center";
+  imageWithTextTextAlign?: "left" | "center" | "right";
+  imageWithTextTextSize?: "small" | "medium" | "large" | "xl";
+  imageWithTextTextColor?: string;
+  imageWithTextTextBackground?: string;
+  imageWithTextTextPadding?: "small" | "medium" | "large";
+  imageWithTextBorderStyle?: "none" | "solid" | "dashed" | "dotted" | "double";
+  imageWithTextBorderColor?: string;
+  imageWithTextBorderWidth?: "1" | "2" | "3" | "4" | "5";
+  imageWithTextBorderRadius?: "none" | "small" | "medium" | "large" | "full";
+  imageWithTextShadow?: "none" | "small" | "medium" | "large";
+  imageWithTextWidth?: "auto" | "full" | "1/2" | "1/3" | "2/3" | "1/4" | "3/4";
+  imageWithTextHeight?: "auto" | "small" | "medium" | "large" | "xl";
+  imageWithTextObjectFit?: "cover" | "contain" | "fill" | "none";
+  imageWithTextAlignment?: "left" | "center" | "right";
+  imageWithTextMargin?: "small" | "medium" | "large";
+  imageWithTextPadding?: "small" | "medium" | "large";
+  imageWithTextAnimation?: boolean;
+  imageWithTextAnimationType?: "fade" | "slide" | "zoom" | "bounce";
+  imageWithTextOverlayOpacity?: "0" | "25" | "50" | "75" | "100";
+  
+  // Upsell Hotmart Properties
+  hotmartProduct?: string;
+  hotmartAffiliate?: string;
+  hotmartTitle?: string;
+  hotmartDescription?: string;
+  hotmartPrice?: string;
+  hotmartOriginalPrice?: string;
+  hotmartDiscount?: string;
+  hotmartImage?: string;
+  hotmartButtonText?: string;
+  hotmartButtonColor?: string;
+  hotmartBadge?: string;
+  hotmartFeatures?: string[];
+  hotmartTestimonial?: string;
+  hotmartTestimonialAuthor?: string;
+  hotmartUrgency?: string;
+  hotmartTimer?: boolean;
+  hotmartTimerEndDate?: string;
+  hotmartStyle?: "card" | "banner" | "popup" | "minimal";
+  hotmartAnimation?: boolean;
 }
 
 interface QuizPage {
@@ -489,6 +783,14 @@ export function PageEditorHorizontal({
         { type: "share_quiz", label: "Compartilhar", icon: <Share2 className="w-4 h-4" /> },
         { type: "animated_transition", label: "Transição", icon: <Sparkles className="w-4 h-4" /> },
       ]
+    },
+    {
+      name: "💰 Vendas",
+      elements: [
+        { type: "pricing_plans", label: "Planos", icon: <CreditCard className="w-4 h-4" /> },
+        { type: "stripe_embed", label: "Stripe", icon: <Shield className="w-4 h-4" /> },
+        { type: "paypal", label: "PayPal", icon: <CreditCard className="w-4 h-4" /> },
+      ]
     }
   ];
 
@@ -546,6 +848,86 @@ const transitionElementCategories = [
         type: "transition_redirect",
         label: "Redirecionamento",
         icon: <ArrowRight className="w-4 h-4" />,
+      },
+    ],
+  },
+  {
+    name: "📊 Visualizações",
+    elements: [
+      {
+        type: "chart",
+        label: "Gráfico",
+        icon: <BarChart3 className="w-4 h-4" />,
+      },
+      {
+        type: "metrics",
+        label: "Métricas",
+        icon: <TrendingUp className="w-4 h-4" />,
+      },
+      {
+        type: "before_after",
+        label: "Antes/Depois",
+        icon: <ArrowLeftRight className="w-4 h-4" />,
+      },
+    ],
+  },
+  {
+    name: "💰 Vendas",
+    elements: [
+      {
+        type: "pricing_plans",
+        label: "Planos",
+        icon: <CreditCard className="w-4 h-4" />,
+      },
+      {
+        type: "stripe_embed",
+        label: "Stripe Checkout",
+        icon: <Shield className="w-4 h-4" />,
+      },
+      {
+        type: "paypal",
+        label: "PayPal",
+        icon: <CreditCard className="w-4 h-4" />,
+      },
+      {
+        type: "hotmart_upsell",
+        label: "Upsell Hotmart",
+        icon: <Target className="w-4 h-4" />,
+      },
+    ],
+  },
+  {
+    name: "❓ Conteúdo",
+    elements: [
+      {
+        type: "faq",
+        label: "FAQ",
+        icon: <HelpCircle className="w-4 h-4" />,
+      },
+      {
+        type: "image_carousel",
+        label: "Carrossel",
+        icon: <ImageIcon className="w-4 h-4" />,
+      },
+      {
+        type: "icon_list",
+        label: "Lista de Ícones",
+        icon: <Star className="w-4 h-4" />,
+      },
+      {
+        type: "testimonials",
+        label: "Depoimentos",
+        icon: <MessageSquare className="w-4 h-4" />,
+      },
+      {
+        type: "guarantee",
+        label: "Garantia",
+        icon: <Shield className="w-4 h-4" />,
+      },
+      {
+        type: "image_with_text",
+        label: "Imagem com Texto",
+        icon: <ImageIcon className="w-4 h-4" />,
       },
     ],
   },
@@ -1106,128 +1488,232 @@ const gameElementCategories = [
           </div>
         );
       case "height":
+        const heightUnit = element.heightUnit || "cm";
+        const showUnitSelector = element.showUnitSelector !== false;
+        const inputStyle = element.inputStyle || "bordered";
+        const labelPosition = element.labelPosition || "top";
+        const showIcon = element.showIcon !== false;
+        const unitSelectorStyle = element.unitSelectorStyle || "dropdown";
+        
+        const inputClasses = {
+          minimal: "w-full p-3 border-0 border-b-2 bg-transparent focus:outline-none focus:border-purple-500",
+          bordered: "w-full p-3 border border-purple-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500",
+          filled: "w-full p-3 bg-purple-50 border-0 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500",
+          rounded: "w-full p-3 border border-purple-200 rounded-full focus:outline-none focus:ring-2 focus:ring-purple-500"
+        };
+        
         return (
-          <div className="space-y-3 p-4 border-2 border-dashed border-purple-200 rounded-lg bg-purple-50">
-            <div className="flex items-center gap-2">
-              <ArrowUpDown className="w-4 h-4 text-purple-600" />
-              <span className="font-medium text-purple-800">Altura</span>
-            </div>
-            
-            <div className="bg-white rounded-lg p-4 shadow-sm">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                {element.question || "Qual é sua altura?"}
-                {element.required && <span className="text-red-500 ml-1">*</span>}
-              </label>
-              
-              <div className="flex items-center gap-3">
-                <div className="flex-1 relative">
-                  <input
-                    type="number"
-                    step="0.01"
-                    min={element.unit === "cm" ? "120" : "1.20"}
-                    max={element.unit === "cm" ? "220" : "2.20"}
-                    className="w-full px-4 py-3 text-lg border border-gray-300 rounded-lg text-center font-semibold"
-                    placeholder={element.unit === "cm" ? "175" : "1.75"}
-                    style={{ fontSize: '18px' }}
-                  />
-                  <span className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 font-medium">
-                    {element.unit || "cm"}
-                  </span>
-                </div>
-                
-                <div className="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center">
-                  <div className="text-center">
-                    <ArrowUpDown className="w-6 h-6 text-purple-700 mx-auto" />
-                    <div className="text-xs text-purple-600 font-semibold mt-1">
-                      {element.unit === "cm" ? "CM" : "M"}
-                    </div>
-                  </div>
-                </div>
-              </div>
-              
-              <div className="mt-3 p-3 bg-purple-50 rounded-lg border border-purple-200">
-                <div className="flex items-center gap-2 mb-2">
-                  <Activity className="w-4 h-4 text-purple-600" />
-                  <span className="text-sm font-medium text-purple-800">Altura para cálculo do IMC</span>
-                </div>
-                <div className="text-xs text-purple-700">
-                  Esta altura será usada para calcular automaticamente o IMC quando combinada com o peso
-                </div>
-              </div>
-              
-              {element.description && (
-                <div className="mt-3 text-sm text-gray-600 bg-gray-50 p-2 rounded">
-                  {element.description}
+          <div 
+            className="space-y-3 p-4 border-2 border-dashed rounded-lg"
+            style={{ 
+              backgroundColor: element.inputBackgroundColor || "#faf5ff",
+              borderColor: element.inputBorderColor || "#e5e7eb"
+            }}
+          >
+            <div className={`flex ${labelPosition === "left" ? "flex-row items-center space-x-3" : "flex-col"} gap-2`}>
+              {showIcon && (
+                <div className="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center">
+                  <ArrowUpDown className="w-5 h-5" style={{ color: element.iconColor || "#9333ea" }} />
                 </div>
               )}
-            </div>
-            
-            <div className="text-xs text-purple-600 text-center">
-              Elemento: Altura • Range: {element.unit === "cm" ? "120-220cm" : "1.20-2.20m"} • Necessário para IMC
-            </div>
-          </div>
-        );
-      case "current_weight":
-        return (
-          <div className="space-y-3 p-4 border-2 border-dashed border-blue-200 rounded-lg bg-blue-50">
-            <div className="flex items-center gap-2">
-              <Scale className="w-4 h-4 text-blue-600" />
-              <span className="font-medium text-blue-800">Peso Atual</span>
+              <div>
+                <h3 
+                  className="font-semibold text-purple-800"
+                  style={{ color: element.labelColor || "#6b21a8" }}
+                >
+                  {element.question || "Altura"}
+                </h3>
+                <p className="text-sm text-purple-600">
+                  {element.description || "Capture a altura do usuário"}
+                </p>
+              </div>
             </div>
             
             <div className="bg-white rounded-lg p-4 shadow-sm">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                {element.question || "Qual é seu peso atual?"}
-                {element.required && <span className="text-red-500 ml-1">*</span>}
-              </label>
-              
-              <div className="flex items-center gap-3">
-                <div className="flex-1 relative">
+              <div className="space-y-3">
+                <div className="flex items-center space-x-2">
                   <input
                     type="number"
-                    step="0.1"
-                    min="30"
-                    max="300"
-                    className="w-full px-4 py-3 text-lg border border-gray-300 rounded-lg text-center font-semibold"
-                    placeholder="70.5"
-                    style={{ fontSize: '18px' }}
+                    placeholder={heightUnit === "cm" ? "Ex: 175" : "Ex: 5.9"}
+                    className={inputClasses[inputStyle]}
+                    style={{ 
+                      backgroundColor: element.inputBackgroundColor || (inputStyle === "filled" ? "#faf5ff" : "white"),
+                      borderColor: element.inputBorderColor || "#e5e7eb",
+                      fontSize: '18px'
+                    }}
+                    min={element.min || (heightUnit === "cm" ? 120 : 3)}
+                    max={element.max || (heightUnit === "cm" ? 250 : 8)}
+                    step={heightUnit === "cm" ? 1 : 0.1}
                   />
-                  <span className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 font-medium">
-                    kg
-                  </span>
+                  
+                  {showUnitSelector && (
+                    <div className="flex-shrink-0">
+                      {unitSelectorStyle === "dropdown" && (
+                        <select 
+                          className="p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+                          value={heightUnit}
+                        >
+                          <option value="cm">cm</option>
+                          <option value="ft">ft</option>
+                        </select>
+                      )}
+                      
+                      {unitSelectorStyle === "tabs" && (
+                        <div className="flex bg-gray-100 rounded-lg p-1">
+                          <button className={`px-3 py-1 text-sm rounded ${heightUnit === "cm" ? "bg-purple-500 text-white" : "text-gray-600"}`}>
+                            cm
+                          </button>
+                          <button className={`px-3 py-1 text-sm rounded ${heightUnit === "ft" ? "bg-purple-500 text-white" : "text-gray-600"}`}>
+                            ft
+                          </button>
+                        </div>
+                      )}
+                      
+                      {unitSelectorStyle === "buttons" && (
+                        <div className="flex space-x-2">
+                          <button className={`px-3 py-2 text-sm border rounded-lg ${heightUnit === "cm" ? "bg-purple-500 text-white border-purple-500" : "border-gray-300"}`}>
+                            cm
+                          </button>
+                          <button className={`px-3 py-2 text-sm border rounded-lg ${heightUnit === "ft" ? "bg-purple-500 text-white border-purple-500" : "border-gray-300"}`}>
+                            ft
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
                 
                 {element.showBMICalculation && (
-                  <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center">
-                    <div className="text-center">
-                      <div className="text-xs text-green-600 font-semibold">IMC</div>
-                      <div className="text-sm font-bold text-green-700">--</div>
+                  <div className="mt-3 p-3 bg-purple-50 rounded-lg border border-purple-200">
+                    <div className="flex items-center gap-2 mb-2">
+                      <Activity className="w-4 h-4 text-purple-600" />
+                      <span className="text-sm font-medium text-purple-800">Integração com IMC</span>
+                    </div>
+                    <div className="text-xs text-purple-700">
+                      Será usado para calcular automaticamente o IMC quando combinado com o peso
                     </div>
                   </div>
                 )}
               </div>
-              
-              {element.showBMICalculation && (
-                <div className="mt-3 p-3 bg-blue-50 rounded-lg border border-blue-200">
-                  <div className="flex items-center gap-2 mb-2">
-                    <Activity className="w-4 h-4 text-blue-600" />
-                    <span className="text-sm font-medium text-blue-800">Cálculo automático do IMC</span>
-                  </div>
-                  <div className="text-xs text-blue-700">
-                    Será calculado automaticamente quando altura e peso forem preenchidos
-                  </div>
+            </div>
+            
+            <div className="text-xs text-purple-600 text-center">
+              Elemento: Altura • Range: {heightUnit === "cm" ? "120-250cm" : "3-8ft"} • Unidade: {heightUnit.toUpperCase()}
+            </div>
+          </div>
+        );
+      case "current_weight":
+        const currentWeightUnit = element.weightUnit || "kg";
+        const showWeightUnitSelector = element.showUnitSelector !== false;
+        const weightInputStyle = element.inputStyle || "bordered";
+        const weightLabelPosition = element.labelPosition || "top";
+        const showWeightIcon = element.showIcon !== false;
+        const weightUnitSelectorStyle = element.unitSelectorStyle || "dropdown";
+        
+        const weightInputClasses = {
+          minimal: "w-full p-3 border-0 border-b-2 bg-transparent focus:outline-none focus:border-blue-500",
+          bordered: "w-full p-3 border border-blue-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500",
+          filled: "w-full p-3 bg-blue-50 border-0 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500",
+          rounded: "w-full p-3 border border-blue-200 rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500"
+        };
+        
+        return (
+          <div 
+            className="space-y-3 p-4 border-2 border-dashed rounded-lg"
+            style={{ 
+              backgroundColor: element.inputBackgroundColor || "#eff6ff",
+              borderColor: element.inputBorderColor || "#e5e7eb"
+            }}
+          >
+            <div className={`flex ${weightLabelPosition === "left" ? "flex-row items-center space-x-3" : "flex-col"} gap-2`}>
+              {showWeightIcon && (
+                <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+                  <Scale className="w-5 h-5" style={{ color: element.iconColor || "#3b82f6" }} />
                 </div>
               )}
-              
-              {element.description && (
-                <div className="mt-3 text-sm text-gray-600 bg-gray-50 p-2 rounded">
-                  {element.description}
+              <div>
+                <h3 
+                  className="font-semibold text-blue-800"
+                  style={{ color: element.labelColor || "#1e40af" }}
+                >
+                  {element.question || "Peso Atual"}
+                </h3>
+                <p className="text-sm text-blue-600">
+                  {element.description || "Capture o peso atual do usuário"}
+                </p>
+              </div>
+            </div>
+            
+            <div className="bg-white rounded-lg p-4 shadow-sm">
+              <div className="space-y-3">
+                <div className="flex items-center space-x-2">
+                  <input
+                    type="number"
+                    placeholder={currentWeightUnit === "kg" ? "Ex: 70.5" : "Ex: 155"}
+                    className={weightInputClasses[weightInputStyle]}
+                    style={{ 
+                      backgroundColor: element.inputBackgroundColor || (weightInputStyle === "filled" ? "#eff6ff" : "white"),
+                      borderColor: element.inputBorderColor || "#e5e7eb",
+                      fontSize: '18px'
+                    }}
+                    min={element.min || (currentWeightUnit === "kg" ? 30 : 66)}
+                    max={element.max || (currentWeightUnit === "kg" ? 300 : 660)}
+                    step={currentWeightUnit === "kg" ? 0.1 : 0.1}
+                  />
+                  
+                  {showWeightUnitSelector && (
+                    <div className="flex-shrink-0">
+                      {weightUnitSelectorStyle === "dropdown" && (
+                        <select 
+                          className="p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          value={currentWeightUnit}
+                        >
+                          <option value="kg">kg</option>
+                          <option value="lb">lb</option>
+                        </select>
+                      )}
+                      
+                      {weightUnitSelectorStyle === "tabs" && (
+                        <div className="flex bg-gray-100 rounded-lg p-1">
+                          <button className={`px-3 py-1 text-sm rounded ${currentWeightUnit === "kg" ? "bg-blue-500 text-white" : "text-gray-600"}`}>
+                            kg
+                          </button>
+                          <button className={`px-3 py-1 text-sm rounded ${currentWeightUnit === "lb" ? "bg-blue-500 text-white" : "text-gray-600"}`}>
+                            lb
+                          </button>
+                        </div>
+                      )}
+                      
+                      {weightUnitSelectorStyle === "buttons" && (
+                        <div className="flex space-x-2">
+                          <button className={`px-3 py-2 text-sm border rounded-lg ${currentWeightUnit === "kg" ? "bg-blue-500 text-white border-blue-500" : "border-gray-300"}`}>
+                            kg
+                          </button>
+                          <button className={`px-3 py-2 text-sm border rounded-lg ${currentWeightUnit === "lb" ? "bg-blue-500 text-white border-blue-500" : "border-gray-300"}`}>
+                            lb
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
-              )}
+                
+                {element.showBMICalculation && (
+                  <div className="mt-3 p-3 bg-blue-50 rounded-lg border border-blue-200">
+                    <div className="flex items-center gap-2 mb-2">
+                      <Activity className="w-4 h-4 text-blue-600" />
+                      <span className="text-sm font-medium text-blue-800">Cálculo automático do IMC</span>
+                    </div>
+                    <div className="text-xs text-blue-700">
+                      Será calculado automaticamente quando altura e peso forem preenchidos
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
             
             <div className="text-xs text-blue-600 text-center">
-              Elemento: Peso Atual • Range: 30-300kg
+              Elemento: Peso Atual • Range: {currentWeightUnit === "kg" ? "30-300kg" : "66-660lb"} • Unidade: {currentWeightUnit.toUpperCase()}
             </div>
           </div>
         );
@@ -2058,6 +2544,829 @@ const gameElementCategories = [
             <p className="text-xs text-gray-500 text-center">
               Elemento de transição • {animationType} • {animationSpeed}
             </p>
+          </div>
+        );
+
+      case "response_analysis":
+        const analysisItems = element.analysisItems || [
+          "Calculating your overthinking score",
+          "Evaluating your behavioral patterns", 
+          "Identifying areas for improvement",
+          "Generating potential solutions",
+          "Developing your personalized plan"
+        ];
+        
+        return (
+          <div className="space-y-6 p-6 bg-white rounded-lg border border-gray-200 max-w-md mx-auto">
+            {/* Círculo de progresso */}
+            <div className="flex flex-col items-center">
+              <div className="relative w-32 h-32">
+                <svg className="w-32 h-32 transform -rotate-90" viewBox="0 0 120 120">
+                  {/* Círculo de fundo */}
+                  <circle
+                    cx="60"
+                    cy="60"
+                    r="50"
+                    stroke="#f3f4f6"
+                    strokeWidth="8"
+                    fill="none"
+                  />
+                  {/* Círculo de progresso */}
+                  <circle
+                    cx="60"
+                    cy="60"
+                    r="50"
+                    stroke={element.analysisCircleColor || "#10b981"}
+                    strokeWidth="8"
+                    fill="none"
+                    strokeLinecap="round"
+                    strokeDasharray="314"
+                    strokeDashoffset="0"
+                    className="transition-all duration-2000 ease-out"
+                  />
+                </svg>
+                {/* Texto 100% no centro */}
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <span 
+                    className="text-3xl font-bold"
+                    style={{ color: element.analysisCircleColor || "#10b981" }}
+                  >
+                    100%
+                  </span>
+                </div>
+              </div>
+              
+              {/* Título da análise */}
+              <h3 
+                className="text-lg font-medium mt-4 text-center"
+                style={{ color: element.analysisTextColor || "#10b981" }}
+              >
+                {element.analysisTitle || "Analyzing your answers..."}
+              </h3>
+            </div>
+            
+            {/* Lista de itens com checkmarks */}
+            <div className="space-y-3">
+              {analysisItems.map((item, index) => (
+                <div 
+                  key={index}
+                  className="flex items-start space-x-3 opacity-100 transform translate-x-0 transition-all duration-500"
+                  style={{ 
+                    animationDelay: `${index * (element.analysisItemDelay || 800)}ms`,
+                    color: element.analysisItemColor || "#374151"
+                  }}
+                >
+                  <div 
+                    className="w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5"
+                    style={{ backgroundColor: element.analysisCheckColor || "#10b981" }}
+                  >
+                    <CheckCircle className="w-4 h-4 text-white" />
+                  </div>
+                  <span className="text-sm leading-relaxed">{item}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        );
+
+      // Novos elementos visuais
+      case "chart":
+        const chartData = element.chartData || [
+          { label: "Ontem", value: 10, color: "#ef4444" },
+          { label: "Hoje", value: 30, color: "#f59e0b" },
+          { label: "Amanhã", value: 90, color: "#10b981" }
+        ];
+        
+        return (
+          <div className="space-y-4 p-4 border border-gray-200 rounded-lg bg-white">
+            {element.chartTitle && (
+              <h3 className="text-lg font-semibold text-gray-800">
+                {element.chartTitle}
+              </h3>
+            )}
+            
+            <div className="relative" style={{ 
+              width: element.chartWidth || "100%", 
+              height: element.chartHeight || "300px" 
+            }}>
+              {element.chartType === "bar" && (
+                <div className="w-full h-full flex items-end justify-center space-x-8 bg-gray-50 rounded-lg border p-4">
+                  {chartData.map((item, index) => (
+                    <div key={index} className="flex flex-col items-center">
+                      <div 
+                        className="w-12 rounded-t-lg transition-all duration-500"
+                        style={{ 
+                          height: `${(item.value / 100) * 150}px`, 
+                          backgroundColor: item.color || "#10b981"
+                        }}
+                      />
+                      <span className="text-xs mt-2 text-gray-600">{item.label}</span>
+                      <span className="text-xs text-gray-400">{item.value}%</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+              
+              {element.chartType === "pie" && (
+                <div className="w-full h-full flex items-center justify-center">
+                  <svg viewBox="0 0 200 200" className="w-48 h-48">
+                    <circle cx="100" cy="100" r="80" fill="#ef4444" />
+                    <path d="M 100 100 L 100 20 A 80 80 0 0 1 180 100 Z" fill="#f59e0b" />
+                    <path d="M 100 100 L 180 100 A 80 80 0 0 1 100 180 Z" fill="#10b981" />
+                    <text x="100" y="105" textAnchor="middle" className="text-sm font-medium" fill="white">
+                      Dados
+                    </text>
+                  </svg>
+                </div>
+              )}
+            </div>
+            
+            {element.chartShowLegend && (
+              <div className="flex justify-center space-x-4">
+                {chartData.map((item, index) => (
+                  <div key={index} className="flex items-center space-x-2">
+                    <div 
+                      className="w-3 h-3 rounded-full"
+                      style={{ backgroundColor: item.color || "#10b981" }}
+                    />
+                    <span className="text-xs text-gray-600">{item.label}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        );
+
+      case "metrics":
+        const metricsData = element.metricsData || [
+          { label: "Conversões", value: 85, maxValue: 100, color: "#10b981", unit: "%" },
+          { label: "Engajamento", value: 72, maxValue: 100, color: "#3b82f6", unit: "%" },
+          { label: "Retenção", value: 94, maxValue: 100, color: "#8b5cf6", unit: "%" }
+        ];
+        
+        return (
+          <div className="space-y-4 p-4 border border-gray-200 rounded-lg bg-white">
+            <div className="space-y-3">
+              {metricsData.map((metric, index) => (
+                <div key={index} className="space-y-2">
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm font-medium text-gray-700">
+                      {metric.label}
+                    </span>
+                    {element.metricsShowValue && (
+                      <span className="text-sm font-bold" style={{ color: metric.color }}>
+                        {metric.value}{metric.unit}
+                      </span>
+                    )}
+                  </div>
+                  
+                  <div className="w-full bg-gray-200 rounded-full h-2">
+                    <div 
+                      className="h-2 rounded-full transition-all duration-700"
+                      style={{ 
+                        width: `${(metric.value / metric.maxValue) * 100}%`,
+                        backgroundColor: metric.color
+                      }}
+                    />
+                  </div>
+                  
+                  {element.metricsShowPercentage && (
+                    <div className="text-xs text-gray-500 text-right">
+                      {Math.round((metric.value / metric.maxValue) * 100)}% do objetivo
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        );
+
+      case "pricing_plans":
+        const plansData = element.plansData || [
+          {
+            id: "7days",
+            name: "7-day plan",
+            price: "$6.93",
+            originalPrice: "$13.86",
+            currency: "USD",
+            period: "per day",
+            pricePerDay: "0.99",
+            highlighted: false,
+            badge: "",
+            buttonText: "Claim my plan",
+            buttonLink: "#"
+          },
+          {
+            id: "1month",
+            name: "1-month plan",
+            price: "$19.99",
+            originalPrice: "$39.98",
+            currency: "USD", 
+            period: "per day",
+            pricePerDay: "0.66",
+            highlighted: true,
+            badge: "MOST POPULAR",
+            buttonText: "Claim my plan",
+            buttonLink: "#"
+          },
+          {
+            id: "3months",
+            name: "3-month plan",
+            price: "$39.99",
+            originalPrice: "$79.98",
+            currency: "USD",
+            period: "per day", 
+            pricePerDay: "0.44",
+            highlighted: false,
+            badge: "",
+            buttonText: "Claim my plan",
+            buttonLink: "#"
+          }
+        ];
+        
+        return (
+          <div className="space-y-4 p-4 max-w-md mx-auto">
+            <div className="space-y-3">
+              {plansData.map((plan, index) => (
+                <div key={plan.id} className="relative">
+                  {/* Badge destacado */}
+                  {plan.highlighted && plan.badge && (
+                    <div className="mb-2">
+                      <div className="bg-green-500 text-white text-center py-2 px-4 rounded-lg text-sm font-semibold">
+                        {plan.badge}
+                      </div>
+                    </div>
+                  )}
+                  
+                  {/* Card do plano */}
+                  <div 
+                    className={`border rounded-lg p-4 transition-all duration-200 hover:shadow-md ${
+                      plan.highlighted 
+                        ? 'border-green-500 bg-green-50' 
+                        : 'border-gray-200 bg-white'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between">
+                      {/* Radio button e informações do plano */}
+                      <div className="flex items-center space-x-3">
+                        <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
+                          plan.highlighted 
+                            ? 'border-green-500 bg-green-500' 
+                            : 'border-gray-300'
+                        }`}>
+                          {plan.highlighted && (
+                            <CheckCircle className="w-4 h-4 text-white" />
+                          )}
+                        </div>
+                        
+                        <div>
+                          <h3 className="font-medium text-gray-800">{plan.name}</h3>
+                          <div className="flex items-center space-x-2">
+                            {plan.originalPrice && (
+                              <span className="text-sm text-gray-500 line-through">
+                                {plan.originalPrice}
+                              </span>
+                            )}
+                            <span className="font-bold text-gray-800">{plan.price}</span>
+                          </div>
+                        </div>
+                      </div>
+                      
+                      {/* Preço por dia */}
+                      <div className="text-right">
+                        <div className="bg-gray-100 rounded-lg px-3 py-2">
+                          <div className="text-xs text-gray-600 uppercase">{plan.currency}</div>
+                          <div className="text-2xl font-bold text-gray-800">
+                            {plan.pricePerDay}
+                          </div>
+                          <div className="text-xs text-gray-600">{plan.period}</div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+            
+            {/* Botão principal */}
+            <button className="w-full bg-green-500 hover:bg-green-600 text-white font-semibold py-4 px-6 rounded-lg transition-colors duration-200 flex items-center justify-center space-x-2">
+              <span>{plansData[0]?.buttonText || "Claim my plan"}</span>
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
+              </svg>
+            </button>
+          </div>
+        );
+
+      case "before_after":
+        return (
+          <div className="space-y-4 p-4 border border-gray-200 rounded-lg bg-white">
+            <div className="relative overflow-hidden rounded-lg" style={{ 
+              width: element.beforeAfterWidth || "100%", 
+              height: element.beforeAfterHeight || "400px" 
+            }}>
+              <div className="absolute inset-0 flex">
+                <div className="w-1/2 bg-gradient-to-r from-red-400 to-red-600 flex items-center justify-center">
+                  <div className="text-white text-center">
+                    <div className="text-6xl mb-2">😔</div>
+                    <h3 className="text-xl font-bold">
+                      {element.beforeAfterLabels?.before || "ANTES"}
+                    </h3>
+                    <p className="text-sm opacity-90">Situação anterior</p>
+                  </div>
+                </div>
+                
+                <div className="w-1/2 bg-gradient-to-r from-green-400 to-green-600 flex items-center justify-center">
+                  <div className="text-white text-center">
+                    <div className="text-6xl mb-2">😊</div>
+                    <h3 className="text-xl font-bold">
+                      {element.beforeAfterLabels?.after || "DEPOIS"}
+                    </h3>
+                    <p className="text-sm opacity-90">Resultado alcançado</p>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="absolute inset-y-0 left-1/2 transform -translate-x-1/2 w-1 bg-white shadow-lg">
+                <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-8 h-8 bg-white rounded-full shadow-lg flex items-center justify-center border-2 border-gray-300">
+                  <ArrowLeftRight className="w-4 h-4 text-gray-600" />
+                </div>
+              </div>
+            </div>
+            
+            <div className="text-center text-sm text-gray-600">
+              Arraste o controle para comparar
+            </div>
+          </div>
+        );
+
+      case "faq":
+        const faqData = element.faqData || [
+          {
+            id: "faq-1",
+            question: "Como funciona o sistema?",
+            answer: "O sistema é muito simples de usar. Você cria seus quizzes, compartilha com sua audiência e acompanha os resultados em tempo real através do dashboard."
+          },
+          {
+            id: "faq-2", 
+            question: "Posso cancelar a qualquer momento?",
+            answer: "Sim, você pode cancelar sua assinatura a qualquer momento. Não há taxas de cancelamento ou multas."
+          },
+          {
+            id: "faq-3",
+            question: "Há limite de respostas?",
+            answer: "Depende do seu plano. O plano básico tem 1000 respostas/mês, o profissional tem 10000 e o enterprise é ilimitado."
+          }
+        ];
+        
+        return (
+          <div className="space-y-4 p-4 border border-gray-200 rounded-lg bg-white">
+            <div className="space-y-3">
+              {faqData.map((faq, index) => (
+                <div key={faq.id} className="border border-gray-200 rounded-lg">
+                  <button className="w-full px-4 py-3 text-left flex items-center justify-between hover:bg-gray-50">
+                    <span className="font-medium text-gray-800">{faq.question}</span>
+                    <ChevronDown className="w-4 h-4 text-gray-500" />
+                  </button>
+                  
+                  <div className="px-4 pb-3 text-sm text-gray-600 border-t border-gray-100">
+                    {faq.answer}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        );
+
+      case "image_carousel":
+        const carouselImages = element.carouselImages || [
+          { url: "https://via.placeholder.com/600x300/10b981/white?text=Imagem+1", alt: "Imagem 1", caption: "Primeira imagem" },
+          { url: "https://via.placeholder.com/600x300/3b82f6/white?text=Imagem+2", alt: "Imagem 2", caption: "Segunda imagem" },
+          { url: "https://via.placeholder.com/600x300/8b5cf6/white?text=Imagem+3", alt: "Imagem 3", caption: "Terceira imagem" }
+        ];
+        
+        return (
+          <div className="space-y-4 p-4 border border-gray-200 rounded-lg bg-white">
+            <div className="relative">
+              <div className="overflow-hidden rounded-lg">
+                <div className="flex transition-transform duration-300">
+                  {carouselImages.map((image, index) => (
+                    <div key={index} className="w-full flex-shrink-0 relative">
+                      <img 
+                        src={image.url} 
+                        alt={image.alt}
+                        className="w-full h-64 object-cover"
+                      />
+                      {image.caption && (
+                        <div className="absolute bottom-0 left-0 right-0 bg-black bg-opacity-50 text-white p-2 text-sm">
+                          {image.caption}
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+              
+              {element.carouselShowArrows && (
+                <>
+                  <button className="absolute left-2 top-1/2 transform -translate-y-1/2 bg-white bg-opacity-80 hover:bg-opacity-100 rounded-full p-2 shadow-lg">
+                    <ChevronLeft className="w-4 h-4" />
+                  </button>
+                  <button className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-white bg-opacity-80 hover:bg-opacity-100 rounded-full p-2 shadow-lg">
+                    <ChevronRight className="w-4 h-4" />
+                  </button>
+                </>
+              )}
+            </div>
+            
+            {element.carouselShowDots && (
+              <div className="flex justify-center space-x-2">
+                {carouselImages.map((_, index) => (
+                  <button 
+                    key={index}
+                    className={`w-2 h-2 rounded-full transition-all duration-200 ${
+                      index === 0 ? 'bg-blue-500' : 'bg-gray-300'
+                    }`}
+                  />
+                ))}
+              </div>
+            )}
+          </div>
+        );
+
+      case "stripe_embed":
+        return (
+          <div className="space-y-4 p-4 border border-gray-200 rounded-lg bg-white">
+            <div className="text-center">
+              <h3 className="text-xl font-bold text-gray-800 mb-2">
+                {element.stripeTitle || "Finalizar Compra"}
+              </h3>
+              <p className="text-gray-600 mb-4">
+                {element.stripeDescription || "Pague com segurança usando Stripe"}
+              </p>
+            </div>
+            
+            <div className="bg-gray-50 border border-gray-200 rounded-lg p-6">
+              <div className="space-y-4">
+                <div className="flex items-center justify-center space-x-2 mb-4">
+                  <Shield className="w-5 h-5 text-blue-500" />
+                  <span className="text-sm font-medium text-gray-700">
+                    Pagamento Seguro com Stripe
+                  </span>
+                </div>
+                
+                <div className="space-y-3">
+                  <div className="p-3 bg-white border border-gray-200 rounded">
+                    <div className="text-sm text-gray-600 mb-1">Email</div>
+                    <div className="text-gray-400">seu.email@exemplo.com</div>
+                  </div>
+                  
+                  <div className="p-3 bg-white border border-gray-200 rounded">
+                    <div className="text-sm text-gray-600 mb-1">Informações do Cartão</div>
+                    <div className="text-gray-400">**** **** **** ****</div>
+                  </div>
+                  
+                  <div className="flex space-x-2">
+                    <div className="flex-1 p-3 bg-white border border-gray-200 rounded">
+                      <div className="text-sm text-gray-600 mb-1">Validade</div>
+                      <div className="text-gray-400">MM/AA</div>
+                    </div>
+                    <div className="flex-1 p-3 bg-white border border-gray-200 rounded">
+                      <div className="text-sm text-gray-600 mb-1">CVC</div>
+                      <div className="text-gray-400">***</div>
+                    </div>
+                  </div>
+                </div>
+                
+                <button 
+                  className="w-full bg-blue-500 hover:bg-blue-600 text-white font-medium py-3 px-4 rounded-lg transition-colors duration-200"
+                  disabled
+                >
+                  {element.stripeButtonText || "Pagar Agora"}
+                </button>
+                
+                <div className="text-xs text-gray-500 text-center">
+                  Seus dados estão protegidos com criptografia SSL
+                </div>
+              </div>
+            </div>
+          </div>
+        );
+
+      case "hotmart_upsell":
+        return (
+          <div className="space-y-4 p-4 border border-gray-200 rounded-lg bg-white">
+            <div className="bg-gradient-to-r from-orange-500 to-red-500 text-white p-6 rounded-lg">
+              <div className="flex items-center justify-between mb-4">
+                <div className="bg-white bg-opacity-20 px-3 py-1 rounded-full text-sm font-medium">
+                  {element.hotmartBadge || "OFERTA ESPECIAL"}
+                </div>
+                {element.hotmartTimer && (
+                  <div className="text-right">
+                    <div className="text-sm opacity-90">Termina em:</div>
+                    <div className="text-lg font-bold">23:59:47</div>
+                  </div>
+                )}
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <h3 className="text-2xl font-bold mb-2">
+                    {element.hotmartTitle || "Curso Completo de Marketing Digital"}
+                  </h3>
+                  <p className="opacity-90 mb-4">
+                    {element.hotmartDescription || "Aprenda as estratégias que os profissionais usam para gerar resultados extraordinários."}
+                  </p>
+                  
+                  <div className="space-y-2 mb-4">
+                    {(element.hotmartFeatures || [
+                      "Acesso vitalício ao conteúdo",
+                      "Certificado de conclusão",
+                      "Suporte direto com especialistas",
+                      "Garantia de 30 dias"
+                    ]).map((feature, index) => (
+                      <div key={index} className="flex items-center space-x-2">
+                        <CheckCircle className="w-4 h-4" />
+                        <span className="text-sm">{feature}</span>
+                      </div>
+                    ))}
+                  </div>
+                  
+                  <div className="flex items-center space-x-3 mb-4">
+                    <div className="text-3xl font-bold">
+                      {element.hotmartPrice || "R$ 197"}
+                    </div>
+                    {element.hotmartOriginalPrice && (
+                      <div className="text-xl opacity-75 line-through">
+                        {element.hotmartOriginalPrice}
+                      </div>
+                    )}
+                    {element.hotmartDiscount && (
+                      <div className="bg-yellow-400 text-yellow-900 px-2 py-1 rounded text-sm font-bold">
+                        {element.hotmartDiscount}
+                      </div>
+                    )}
+                  </div>
+                  
+                  <button 
+                    className="w-full bg-yellow-400 hover:bg-yellow-500 text-yellow-900 font-bold py-4 px-6 rounded-lg text-lg transition-colors duration-200"
+                  >
+                    {element.hotmartButtonText || "QUERO APROVEITAR A OFERTA"}
+                  </button>
+                </div>
+                
+                <div className="flex items-center justify-center">
+                  <div className="w-full h-48 bg-white bg-opacity-20 rounded-lg flex items-center justify-center">
+                    {element.hotmartImage ? (
+                      <img 
+                        src={element.hotmartImage} 
+                        alt="Produto" 
+                        className="w-full h-full object-cover rounded-lg"
+                      />
+                    ) : (
+                      <div className="text-center">
+                        <Target className="w-16 h-16 mx-auto mb-2" />
+                        <div className="text-sm opacity-75">Imagem do Produto</div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+              
+              {element.hotmartTestimonial && (
+                <div className="mt-6 bg-white bg-opacity-10 p-4 rounded-lg">
+                  <div className="flex items-start space-x-3">
+                    <div className="text-2xl">"</div>
+                    <div>
+                      <p className="italic">{element.hotmartTestimonial}</p>
+                      <div className="text-sm opacity-75 mt-2">
+                        - {element.hotmartTestimonialAuthor || "Cliente Satisfeito"}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        );
+
+      case "icon_list":
+        const iconListData = element.iconListData || [
+          { id: "1", icon: "CheckCircle", iconColor: "#10b981", mainText: "Benefício 1", subText: "Descrição do benefício" },
+          { id: "2", icon: "Star", iconColor: "#f59e0b", mainText: "Benefício 2", subText: "Descrição do benefício" },
+          { id: "3", icon: "Shield", iconColor: "#3b82f6", mainText: "Benefício 3", subText: "Descrição do benefício" }
+        ];
+        
+        const iconListLayout = element.iconListLayout || "vertical";
+        const iconListColumns = element.iconListColumns || 1;
+        
+        return (
+          <div className={`space-y-3 p-4 rounded-lg ${iconListLayout === "grid" ? `grid grid-cols-${iconListColumns} gap-4` : "space-y-3"}`}>
+            {iconListData.map((item) => (
+              <div 
+                key={item.id}
+                className={`flex ${element.iconListIconPosition === "top" ? "flex-col" : "flex-row"} items-center gap-3 p-3 rounded-lg border hover:shadow-md transition-all duration-200`}
+                style={{ backgroundColor: element.iconListBackgroundColor || "#f8fafc" }}
+              >
+                <div className="flex-shrink-0">
+                  <div 
+                    className="w-8 h-8 rounded-full flex items-center justify-center"
+                    style={{ backgroundColor: item.iconColor || "#10b981" }}
+                  >
+                    <CheckCircle className="w-4 h-4 text-white" />
+                  </div>
+                </div>
+                <div className="flex-1">
+                  <div className="font-medium text-gray-800">{item.mainText}</div>
+                  {item.subText && (
+                    <div className="text-sm text-gray-600 mt-1">{item.subText}</div>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        );
+
+      case "testimonials":
+        const testimonialsData = element.testimonialsData || [
+          {
+            id: "1",
+            name: "Debi Macdonald",
+            testimonial: "É fácil de usar e seguir. Perdi 6 kg em 25 dias.",
+            rating: 5,
+            avatar: "/api/placeholder/40/40"
+          },
+          {
+            id: "2", 
+            name: "Theresa Hamilton",
+            testimonial: "Perdi 3 kg em uma semana. ❤️ Às vezes o estômago reclama da fome, mas é muito melhor do que o sofrimento que eu passava com os vigilantes do peso ou fazendo dietas 'low carb'.",
+            rating: 5,
+            avatar: "/api/placeholder/40/40"
+          },
+          {
+            id: "3",
+            name: "Alicia Wheeler Johnson", 
+            testimonial: "É um jeito mais fácil de introduzir a alimentação saudável e a perda de peso na sua rotina e no seu estilo de vida. 🚀",
+            rating: 5,
+            avatar: "/api/placeholder/40/40"
+          }
+        ];
+        
+        return (
+          <div className="space-y-4 p-4">
+            <h3 className="text-lg font-semibold text-gray-800 mb-4">Avaliações de clientes</h3>
+            {testimonialsData.map((testimonial) => (
+              <div 
+                key={testimonial.id}
+                className="bg-white p-4 rounded-lg border border-gray-200 shadow-sm hover:shadow-md transition-shadow duration-200"
+              >
+                <div className="flex items-start gap-3">
+                  <div className="w-10 h-10 rounded-full bg-gray-200 flex-shrink-0 overflow-hidden">
+                    <img 
+                      src={testimonial.avatar} 
+                      alt={testimonial.name}
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2 mb-2">
+                      <span className="font-medium text-gray-800">{testimonial.name}</span>
+                      <div className="flex">
+                        {[...Array(5)].map((_, i) => (
+                          <Star
+                            key={i}
+                            className={`w-4 h-4 ${i < testimonial.rating ? 'text-yellow-400 fill-current' : 'text-gray-300'}`}
+                          />
+                        ))}
+                      </div>
+                    </div>
+                    <p className="text-gray-700 text-sm leading-relaxed">{testimonial.testimonial}</p>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        );
+
+      case "guarantee":
+        const guaranteeTitle = element.guaranteeTitle || "Garantia de 30 dias";
+        const guaranteeDescription = element.guaranteeDescription || "Se você não ficar satisfeito, devolvemos seu dinheiro";
+        
+        return (
+          <div className="p-6 bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg border border-green-200">
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
+                <Shield className="w-6 h-6 text-green-600" />
+              </div>
+              <div className="flex-1">
+                <h3 className="text-lg font-semibold text-green-800">{guaranteeTitle}</h3>
+                <p className="text-green-700 mt-1">{guaranteeDescription}</p>
+                {element.guaranteeFeatures && (
+                  <ul className="mt-3 space-y-1">
+                    {element.guaranteeFeatures.map((feature, index) => (
+                      <li key={index} className="flex items-center gap-2 text-sm text-green-700">
+                        <CheckCircle className="w-3 h-3 text-green-600" />
+                        {feature}
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            </div>
+          </div>
+        );
+
+      case "paypal":
+        const paypalAmount = element.paypalAmount || "29.99";
+        const paypalCurrency = element.paypalCurrency || "USD";
+        
+        return (
+          <div className="p-6 bg-white rounded-lg border border-gray-200 shadow-sm">
+            <div className="text-center mb-4">
+              <h3 className="text-lg font-semibold text-gray-800 mb-2">
+                {element.paypalTitle || "Finalizar Compra"}
+              </h3>
+              <div className="text-2xl font-bold text-gray-900">
+                {paypalCurrency} {paypalAmount}
+              </div>
+            </div>
+            
+            <div className="space-y-3">
+              <div className="bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-6 rounded-lg cursor-pointer transition-colors duration-200 text-center">
+                <div className="flex items-center justify-center gap-2">
+                  <CreditCard className="w-5 h-5" />
+                  <span>Pagar com PayPal</span>
+                </div>
+              </div>
+              
+              <div className="text-xs text-gray-500 text-center">
+                Pagamento seguro processado pelo PayPal
+              </div>
+            </div>
+          </div>
+        );
+
+      case "image_with_text":
+        const imageUrl = element.imageWithTextUrl || "/api/placeholder/400/300";
+        const imageText = element.imageWithTextText || "Texto da imagem";
+        const textPosition = element.imageWithTextTextPosition || "bottom";
+        
+        return (
+          <div className="relative">
+            <div className="relative overflow-hidden rounded-lg">
+              <img 
+                src={imageUrl}
+                alt="Imagem com texto"
+                className="w-full h-64 object-cover"
+                style={{ 
+                  borderRadius: element.imageWithTextBorderRadius === "full" ? "50%" : "0.5rem",
+                  borderWidth: element.imageWithTextBorderWidth ? `${element.imageWithTextBorderWidth}px` : "0",
+                  borderColor: element.imageWithTextBorderColor || "transparent",
+                  borderStyle: element.imageWithTextBorderStyle || "solid"
+                }}
+              />
+              
+              {textPosition.includes("overlay") && (
+                <div 
+                  className={`absolute inset-0 flex items-center justify-center text-white text-center p-4 ${
+                    textPosition === "overlay-top" ? "items-start" : 
+                    textPosition === "overlay-bottom" ? "items-end" : "items-center"
+                  }`}
+                  style={{ 
+                    backgroundColor: element.imageWithTextTextBackground || "rgba(0,0,0,0.5)"
+                  }}
+                >
+                  <div 
+                    className="font-medium"
+                    style={{ 
+                      color: element.imageWithTextTextColor || "#ffffff",
+                      fontSize: element.imageWithTextTextSize === "large" ? "1.25rem" : "1rem"
+                    }}
+                  >
+                    {imageText}
+                  </div>
+                </div>
+              )}
+            </div>
+            
+            {!textPosition.includes("overlay") && (
+              <div 
+                className={`p-3 text-center ${textPosition === "top" ? "order-first" : ""}`}
+                style={{ 
+                  backgroundColor: element.imageWithTextTextBackground || "transparent",
+                  color: element.imageWithTextTextColor || "#374151"
+                }}
+              >
+                <div 
+                  className="font-medium"
+                  style={{ 
+                    fontSize: element.imageWithTextTextSize === "large" ? "1.25rem" : "1rem"
+                  }}
+                >
+                  {imageText}
+                </div>
+              </div>
+            )}
           </div>
         );
 
@@ -3680,6 +4989,396 @@ const gameElementCategories = [
                     <div className="text-xs text-gray-500 mt-1">
                       Identificador único para capturar esse dado na geração de leads
                     </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Propriedades para Lista de Ícones */}
+              {selectedElementData.type === "icon_list" && (
+                <div className="space-y-4">
+                  <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                    <div className="flex items-center gap-2 mb-2">
+                      <Star className="w-4 h-4 text-blue-600" />
+                      <span className="font-medium text-blue-800">Lista de Ícones - Configurações</span>
+                    </div>
+                    <div className="text-xs text-blue-700">
+                      Exiba benefícios, características ou pontos importantes com ícones visuais
+                    </div>
+                  </div>
+
+                  <div>
+                    <Label>Layout</Label>
+                    <select 
+                      className="w-full px-3 py-2 border rounded-md mt-1"
+                      value={selectedElementData.iconListLayout || "vertical"}
+                      onChange={(e) => updateElement(selectedElementData.id, { iconListLayout: e.target.value })}
+                    >
+                      <option value="vertical">Vertical</option>
+                      <option value="grid">Grade</option>
+                    </select>
+                  </div>
+
+                  {selectedElementData.iconListLayout === "grid" && (
+                    <div>
+                      <Label>Colunas</Label>
+                      <select 
+                        className="w-full px-3 py-2 border rounded-md mt-1"
+                        value={selectedElementData.iconListColumns || 2}
+                        onChange={(e) => updateElement(selectedElementData.id, { iconListColumns: parseInt(e.target.value) })}
+                      >
+                        <option value={1}>1 Coluna</option>
+                        <option value={2}>2 Colunas</option>
+                        <option value={3}>3 Colunas</option>
+                      </select>
+                    </div>
+                  )}
+
+                  <div>
+                    <Label>Posição do Ícone</Label>
+                    <select 
+                      className="w-full px-3 py-2 border rounded-md mt-1"
+                      value={selectedElementData.iconListIconPosition || "left"}
+                      onChange={(e) => updateElement(selectedElementData.id, { iconListIconPosition: e.target.value })}
+                    >
+                      <option value="left">Esquerda</option>
+                      <option value="top">Topo</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <Label>Cor de Fundo</Label>
+                    <Input
+                      type="color"
+                      value={selectedElementData.iconListBackgroundColor || "#f8fafc"}
+                      onChange={(e) => updateElement(selectedElementData.id, { iconListBackgroundColor: e.target.value })}
+                      className="mt-1 h-10"
+                    />
+                  </div>
+                </div>
+              )}
+
+              {/* Propriedades para Depoimentos */}
+              {selectedElementData.type === "testimonials" && (
+                <div className="space-y-4">
+                  <div className="p-3 bg-green-50 border border-green-200 rounded-lg">
+                    <div className="flex items-center gap-2 mb-2">
+                      <MessageSquare className="w-4 h-4 text-green-600" />
+                      <span className="font-medium text-green-800">Depoimentos - Configurações</span>
+                    </div>
+                    <div className="text-xs text-green-700">
+                      Exiba avaliações e comentários de clientes para aumentar a credibilidade
+                    </div>
+                  </div>
+
+                  <div>
+                    <Label>Título dos Depoimentos</Label>
+                    <Input
+                      value={selectedElementData.testimonialsTitle || ""}
+                      onChange={(e) => updateElement(selectedElementData.id, { testimonialsTitle: e.target.value })}
+                      className="mt-1"
+                      placeholder="Avaliações de clientes"
+                    />
+                  </div>
+
+                  <div>
+                    <Label>Estilo do Layout</Label>
+                    <select 
+                      className="w-full px-3 py-2 border rounded-md mt-1"
+                      value={selectedElementData.testimonialsLayout || "stacked"}
+                      onChange={(e) => updateElement(selectedElementData.id, { testimonialsLayout: e.target.value })}
+                    >
+                      <option value="stacked">Empilhado</option>
+                      <option value="carousel">Carrossel</option>
+                      <option value="grid">Grade</option>
+                    </select>
+                  </div>
+
+                  <div className="flex items-center space-x-2">
+                    <input
+                      type="checkbox"
+                      id="show-ratings"
+                      checked={selectedElementData.testimonialsShowRating !== false}
+                      onChange={(e) => updateElement(selectedElementData.id, { testimonialsShowRating: e.target.checked })}
+                    />
+                    <Label htmlFor="show-ratings">Mostrar estrelas de avaliação</Label>
+                  </div>
+
+                  <div className="flex items-center space-x-2">
+                    <input
+                      type="checkbox"
+                      id="show-avatars"
+                      checked={selectedElementData.testimonialsShowAvatar !== false}
+                      onChange={(e) => updateElement(selectedElementData.id, { testimonialsShowAvatar: e.target.checked })}
+                    />
+                    <Label htmlFor="show-avatars">Mostrar fotos dos clientes</Label>
+                  </div>
+                </div>
+              )}
+
+              {/* Propriedades para Garantia */}
+              {selectedElementData.type === "guarantee" && (
+                <div className="space-y-4">
+                  <div className="p-3 bg-green-50 border border-green-200 rounded-lg">
+                    <div className="flex items-center gap-2 mb-2">
+                      <Shield className="w-4 h-4 text-green-600" />
+                      <span className="font-medium text-green-800">Garantia - Configurações</span>
+                    </div>
+                    <div className="text-xs text-green-700">
+                      Transmita confiança e segurança com garantias claras
+                    </div>
+                  </div>
+
+                  <div>
+                    <Label>Título da Garantia</Label>
+                    <Input
+                      value={selectedElementData.guaranteeTitle || ""}
+                      onChange={(e) => updateElement(selectedElementData.id, { guaranteeTitle: e.target.value })}
+                      className="mt-1"
+                      placeholder="Garantia de 30 dias"
+                    />
+                  </div>
+
+                  <div>
+                    <Label>Descrição</Label>
+                    <Input
+                      value={selectedElementData.guaranteeDescription || ""}
+                      onChange={(e) => updateElement(selectedElementData.id, { guaranteeDescription: e.target.value })}
+                      className="mt-1"
+                      placeholder="Se você não ficar satisfeito, devolvemos seu dinheiro"
+                    />
+                  </div>
+
+                  <div>
+                    <Label>Tipo de Garantia</Label>
+                    <select 
+                      className="w-full px-3 py-2 border rounded-md mt-1"
+                      value={selectedElementData.guaranteeType || "satisfaction"}
+                      onChange={(e) => updateElement(selectedElementData.id, { guaranteeType: e.target.value })}
+                    >
+                      <option value="satisfaction">Satisfação</option>
+                      <option value="money_back">Dinheiro de volta</option>
+                      <option value="quality">Qualidade</option>
+                      <option value="lifetime">Vitalícia</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <Label>Cor do Ícone</Label>
+                    <Input
+                      type="color"
+                      value={selectedElementData.guaranteeIconColor || "#10b981"}
+                      onChange={(e) => updateElement(selectedElementData.id, { guaranteeIconColor: e.target.value })}
+                      className="mt-1 h-10"
+                    />
+                  </div>
+                </div>
+              )}
+
+              {/* Propriedades para PayPal */}
+              {selectedElementData.type === "paypal" && (
+                <div className="space-y-4">
+                  <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                    <div className="flex items-center gap-2 mb-2">
+                      <CreditCard className="w-4 h-4 text-blue-600" />
+                      <span className="font-medium text-blue-800">PayPal - Configurações</span>
+                    </div>
+                    <div className="text-xs text-blue-700">
+                      Configure o botão de pagamento PayPal para processar transações
+                    </div>
+                  </div>
+
+                  <div>
+                    <Label>Título</Label>
+                    <Input
+                      value={selectedElementData.paypalTitle || ""}
+                      onChange={(e) => updateElement(selectedElementData.id, { paypalTitle: e.target.value })}
+                      className="mt-1"
+                      placeholder="Finalizar Compra"
+                    />
+                  </div>
+
+                  <div>
+                    <Label>Valor</Label>
+                    <Input
+                      type="number"
+                      step="0.01"
+                      value={selectedElementData.paypalAmount || ""}
+                      onChange={(e) => updateElement(selectedElementData.id, { paypalAmount: e.target.value })}
+                      className="mt-1"
+                      placeholder="29.99"
+                    />
+                  </div>
+
+                  <div>
+                    <Label>Moeda</Label>
+                    <select 
+                      className="w-full px-3 py-2 border rounded-md mt-1"
+                      value={selectedElementData.paypalCurrency || "USD"}
+                      onChange={(e) => updateElement(selectedElementData.id, { paypalCurrency: e.target.value })}
+                    >
+                      <option value="USD">USD - Dólar</option>
+                      <option value="EUR">EUR - Euro</option>
+                      <option value="BRL">BRL - Real</option>
+                      <option value="GBP">GBP - Libra</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <Label>Alinhamento</Label>
+                    <select 
+                      className="w-full px-3 py-2 border rounded-md mt-1"
+                      value={selectedElementData.paypalAlignment || "center"}
+                      onChange={(e) => updateElement(selectedElementData.id, { paypalAlignment: e.target.value })}
+                    >
+                      <option value="left">Esquerda</option>
+                      <option value="center">Centro</option>
+                      <option value="right">Direita</option>
+                    </select>
+                  </div>
+                </div>
+              )}
+
+              {/* Propriedades para Imagem com Texto */}
+              {selectedElementData.type === "image_with_text" && (
+                <div className="space-y-4">
+                  <div className="p-3 bg-purple-50 border border-purple-200 rounded-lg">
+                    <div className="flex items-center gap-2 mb-2">
+                      <ImageIcon className="w-4 h-4 text-purple-600" />
+                      <span className="font-medium text-purple-800">Imagem com Texto - Configurações</span>
+                    </div>
+                    <div className="text-xs text-purple-700">
+                      Combine imagens com textos personalizados para criar elementos visuais impactantes
+                    </div>
+                  </div>
+
+                  <div>
+                    <Label>URL da Imagem</Label>
+                    <Input
+                      value={selectedElementData.imageWithTextUrl || ""}
+                      onChange={(e) => updateElement(selectedElementData.id, { imageWithTextUrl: e.target.value })}
+                      className="mt-1"
+                      placeholder="https://exemplo.com/imagem.jpg"
+                    />
+                  </div>
+
+                  <div>
+                    <Label>Texto</Label>
+                    <Input
+                      value={selectedElementData.imageWithTextText || ""}
+                      onChange={(e) => updateElement(selectedElementData.id, { imageWithTextText: e.target.value })}
+                      className="mt-1"
+                      placeholder="Texto da imagem"
+                    />
+                  </div>
+
+                  <div>
+                    <Label>Posição do Texto</Label>
+                    <select 
+                      className="w-full px-3 py-2 border rounded-md mt-1"
+                      value={selectedElementData.imageWithTextTextPosition || "bottom"}
+                      onChange={(e) => updateElement(selectedElementData.id, { imageWithTextTextPosition: e.target.value })}
+                    >
+                      <option value="bottom">Abaixo da imagem</option>
+                      <option value="top">Acima da imagem</option>
+                      <option value="overlay-bottom">Sobreposto - Embaixo</option>
+                      <option value="overlay-top">Sobreposto - Topo</option>
+                      <option value="overlay-center">Sobreposto - Centro</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <Label>Alinhamento do Texto</Label>
+                    <select 
+                      className="w-full px-3 py-2 border rounded-md mt-1"
+                      value={selectedElementData.imageWithTextTextAlign || "center"}
+                      onChange={(e) => updateElement(selectedElementData.id, { imageWithTextTextAlign: e.target.value })}
+                    >
+                      <option value="left">Esquerda</option>
+                      <option value="center">Centro</option>
+                      <option value="right">Direita</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <Label>Tamanho do Texto</Label>
+                    <select 
+                      className="w-full px-3 py-2 border rounded-md mt-1"
+                      value={selectedElementData.imageWithTextTextSize || "medium"}
+                      onChange={(e) => updateElement(selectedElementData.id, { imageWithTextTextSize: e.target.value })}
+                    >
+                      <option value="small">Pequeno</option>
+                      <option value="medium">Médio</option>
+                      <option value="large">Grande</option>
+                      <option value="xl">Extra Grande</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <Label>Cor do Texto</Label>
+                    <Input
+                      type="color"
+                      value={selectedElementData.imageWithTextTextColor || "#374151"}
+                      onChange={(e) => updateElement(selectedElementData.id, { imageWithTextTextColor: e.target.value })}
+                      className="mt-1 h-10"
+                    />
+                  </div>
+
+                  <div>
+                    <Label>Estilo da Borda</Label>
+                    <select 
+                      className="w-full px-3 py-2 border rounded-md mt-1"
+                      value={selectedElementData.imageWithTextBorderStyle || "none"}
+                      onChange={(e) => updateElement(selectedElementData.id, { imageWithTextBorderStyle: e.target.value })}
+                    >
+                      <option value="none">Sem borda</option>
+                      <option value="solid">Sólida</option>
+                      <option value="dashed">Tracejada</option>
+                      <option value="dotted">Pontilhada</option>
+                    </select>
+                  </div>
+
+                  {selectedElementData.imageWithTextBorderStyle !== "none" && (
+                    <>
+                      <div>
+                        <Label>Cor da Borda</Label>
+                        <Input
+                          type="color"
+                          value={selectedElementData.imageWithTextBorderColor || "#d1d5db"}
+                          onChange={(e) => updateElement(selectedElementData.id, { imageWithTextBorderColor: e.target.value })}
+                          className="mt-1 h-10"
+                        />
+                      </div>
+
+                      <div>
+                        <Label>Espessura da Borda</Label>
+                        <select 
+                          className="w-full px-3 py-2 border rounded-md mt-1"
+                          value={selectedElementData.imageWithTextBorderWidth || "1"}
+                          onChange={(e) => updateElement(selectedElementData.id, { imageWithTextBorderWidth: e.target.value })}
+                        >
+                          <option value="1">1px</option>
+                          <option value="2">2px</option>
+                          <option value="3">3px</option>
+                          <option value="4">4px</option>
+                          <option value="5">5px</option>
+                        </select>
+                      </div>
+                    </>
+                  )}
+
+                  <div>
+                    <Label>Arredondamento</Label>
+                    <select 
+                      className="w-full px-3 py-2 border rounded-md mt-1"
+                      value={selectedElementData.imageWithTextBorderRadius || "small"}
+                      onChange={(e) => updateElement(selectedElementData.id, { imageWithTextBorderRadius: e.target.value })}
+                    >
+                      <option value="none">Sem arredondamento</option>
+                      <option value="small">Pequeno</option>
+                      <option value="medium">Médio</option>
+                      <option value="large">Grande</option>
+                      <option value="full">Circular</option>
+                    </select>
                   </div>
                 </div>
               )}
