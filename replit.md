@@ -208,6 +208,13 @@ No additional files or separate projects are maintained in this repository.
 
 ```
 Changelog:
+- July 12, 2025. SIDEBAR OTIMIZADA COM EMOJIS REMOVIDOS E WHATSAPP ATUALIZADO - Melhoria na aparência e usabilidade da navegação:
+  * Removidos todos os emojis coloridos dos badges para design mais limpo e profissional
+  * "AUTO WHATSAPP" renomeado para "WHATSAPP" com ícone Bot ao invés de FileText
+  * Adicionado badge "grátis" em verde pequeno para WhatsApp indicando funcionalidade gratuita
+  * Hover com fundo verde (hsl(142, 76%, 36%)) implementado para todas as opções de navegação
+  * Navegação mais clean sem elementos visuais desnecessários
+  * Mantida funcionalidade completa com melhor experiência visual
 - July 12, 2025. VOICE CALLING INTEGRADO NA SIDEBAR E TYPEBOT DESATIVADO - Finalização da navegação e limpeza de funcionalidades:
   * Adicionado Voice Calling na seção Marketing da sidebar com ícone Phone e badge 📞
   * Sistema TypeBot completamente desativado conforme solicitação do usuário

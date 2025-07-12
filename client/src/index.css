@@ -35,11 +35,43 @@ body.dark {
   padding: 0.5rem 0.75rem;
   margin: 0;
   font-size: 0.75rem;
-  font-weight: 500;
-  color: hsl(var(--muted-foreground));
+  font-weight: 600;
+  color: hsl(var(--foreground) / 0.8);
   text-transform: uppercase;
   letter-spacing: 0.05em;
   transition: all 0.2s ease-in-out;
+}
+
+.vendzz-sidebar .category-header:hover {
+  background: hsl(142, 76%, 36%) !important;
+  color: white !important;
+}
+
+/* Navigation items hover effect */
+.vendzz-sidebar .nav-item:hover {
+  background: hsl(142, 76%, 36%) !important;
+  color: white !important;
+}
+
+/* Collapsed sidebar fixes */
+.vendzz-sidebar.collapsed {
+  width: 4rem !important;
+  min-width: 4rem !important;
+}
+
+.vendzz-sidebar.collapsed .nav-item {
+  justify-content: center !important;
+  padding: 0.5rem !important;
+}
+
+.vendzz-sidebar.collapsed .category-header {
+  justify-content: center !important;
+  padding: 0.5rem !important;
+}
+
+.vendzz-sidebar.collapsed .category-header:hover {
+  background: hsl(142, 76%, 36%) !important;
+  color: white !important;
 }
 
 .vendzz-sidebar .category-header:hover {

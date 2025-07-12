@@ -42,7 +42,8 @@ import {
   X,
   Webhook,
   Plug,
-  Phone
+  Phone,
+  Bot
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -81,177 +82,129 @@ export function Sidebar() {
     );
   };
 
+  // Standalone items
+  const dashboardItem = {
+    title: "DASHBOARD",
+    href: "/dashboard",
+    icon: <Home className="w-4 h-4" />,
+    active: location === "/" || location === "/dashboard"
+  };
+
+  const tutorialsItem = {
+    title: "TUTORIAIS",
+    href: "/tutoriais",
+    icon: <BookOpen className="w-4 h-4" />,
+    active: location === "/tutoriais"
+  };
+
   const navCategories = [
     {
-      title: "Principal",
-      icon: <Home className="w-3 h-3" />,
-      items: [
-        {
-          title: t("dashboard"),
-          href: "/dashboard",
-          icon: <Home className="w-4 h-4" />,
-          active: location === "/" || location === "/dashboard"
-        },
-        ...(userData?.role === "admin" ? [{
-          title: t("admin"),
-          href: "/admin",
-          icon: <Shield className="w-4 h-4" />,
-          active: location === "/admin",
-          className: "text-red-600 border-red-200 bg-red-50 hover:bg-red-100",
-          badge: "⚡"
-        }] : []),
-      ]
-    },
-    {
-      title: "Criação",
+      title: "CRIAÇÃO",
       icon: <Plus className="w-3 h-3" />,
       items: [
         {
-          title: t("my_quizzes"),
+          title: "MEUS QUIZZES",
           href: "/quizzes",
           icon: <BarChart3 className="w-4 h-4" />,
           active: location.startsWith("/quizzes"),
           badge: totalQuizzes > 0 ? totalQuizzes.toString() : undefined
         },
         {
-          title: t("templates"),
+          title: "TEMPLATES",
           href: "/templates",
           icon: <Palette className="w-4 h-4" />,
           active: location === "/templates"
         },
-        {
-          title: "TypeBot",
-          href: "/typebot",
-          icon: <MessageSquare className="w-4 h-4" />,
-          active: location === "/typebot",
-          badge: "🤖"
-        },
       ]
     },
     {
-      title: "Analytics",
+      title: "ANÁLISE",
       icon: <TrendingUp className="w-3 h-3" />,
       items: [
         {
-          title: t("analytics"),
+          title: "ANÁLISE",
           href: "/analytics",
           icon: <TrendingUp className="w-4 h-4" />,
           active: location === "/analytics"
         },
         {
-          title: "Teste A/B",
+          title: "TESTE A/B",
           href: "/teste-ab",
           icon: <BarChart className="w-4 h-4" />,
-          active: location === "/teste-ab",
-          badge: "🧪"
+          active: location === "/teste-ab"
         },
       ]
     },
     {
-      title: "Marketing",
+      title: "MARKETING",
       icon: <Target className="w-3 h-3" />,
       items: [
         {
-          title: t("remarketing_sms"),
+          title: "SMS",
           href: "/sms-credits",
           icon: <MessageSquare className="w-4 h-4" />,
           active: location === "/sms-credits"
         },
         {
-          title: t("email_marketing"),
+          title: "E-MAIL",
           href: "/email-marketing",
           icon: <Mail className="w-4 h-4" />,
-          active: location === "/email-marketing",
-          badge: "📧"
+          active: location === "/email-marketing"
         },
         {
-          title: t("whatsapp_automation"),
+          title: "WHATSAPP",
           href: "/campanhas-whatsapp",
-          icon: <FileText className="w-4 h-4" />,
+          icon: <Bot className="w-4 h-4" />,
           active: location === "/campanhas-whatsapp",
-          badge: "🤖"
+          badge: <span className="text-xs text-green-500 font-medium">grátis</span>
         },
         {
-          title: "Voice Calling",
+          title: "VOZ",
           href: "/voice-calling",
           icon: <Phone className="w-4 h-4" />,
-          active: location === "/voice-calling",
-          badge: "📞"
+          active: location === "/voice-calling"
         },
         {
-          title: "Super Afiliados",
+          title: "SUPER AFILIADOS",
           href: "/super-afiliados",
           icon: <Crown className="w-4 h-4" />,
-          active: location === "/super-afiliados",
-          badge: "👑"
+          active: location === "/super-afiliados"
         },
       ]
     },
     {
-      title: "Integrações",
+      title: "INTEGRAÇÕES",
       icon: <Plug className="w-3 h-3" />,
       items: [
         {
-          title: "Webhooks",
+          title: "WEBHOOKS",
           href: "/webhooks",
           icon: <Webhook className="w-4 h-4" />,
-          active: location === "/webhooks",
-          badge: "🔗"
+          active: location === "/webhooks"
         },
         {
-          title: "Integrações",
+          title: "INTEGRAÇÕES",
           href: "/integracoes",
           icon: <Plug className="w-4 h-4" />,
-          active: location === "/integracoes",
-          badge: "🔧"
+          active: location === "/integracoes"
         },
         {
-          title: "Extensões",
+          title: "EXTENSÕES",
           href: "/extensoes",
           icon: <Package className="w-4 h-4" />,
-          active: location === "/extensoes",
-          badge: "🔧"
+          active: location === "/extensoes"
         },
       ]
     },
     {
-      title: "Avançado",
+      title: "AVANÇADO",
       icon: <Shield className="w-3 h-3" />,
       items: [
         {
-          title: t("cloaker"),
+          title: "CLOAKER",
           href: "/cloaker",
           icon: <Shield className="w-4 h-4" />,
           active: location === "/cloaker"
-        },
-        // Hidden temporarily
-        // {
-        //   title: "I.A. CONVERSION +",
-        //   href: "/ai-conversion",
-        //   icon: <Sparkles className="w-4 h-4" />,
-        //   active: location === "/ai-conversion",
-        //   badge: "🤖",
-        //   className: "text-purple-600 border-purple-200 bg-purple-50 hover:bg-purple-100"
-        // },
-        // {
-        //   title: "LIVEGRAM UGC",
-        //   href: "/livegram-ugc",
-        //   icon: <Users className="w-4 h-4" />,
-        //   active: location === "/livegram-ugc",
-        //   badge: "📸",
-        //   className: "text-blue-600 border-blue-200 bg-blue-50 hover:bg-blue-100"
-        // },
-      ]
-    },
-    {
-      title: "Recursos",
-      icon: <BookOpen className="w-3 h-3" />,
-      items: [
-        {
-          title: t("tutorials"),
-          href: "/tutoriais",
-          icon: <BookOpen className="w-4 h-4" />,
-          active: location === "/tutoriais"
         },
       ]
     }
@@ -353,6 +306,24 @@ export function Sidebar() {
       {/* Navigation */}
       <nav className="flex-1 p-4">
         <div className="space-y-2">
+          {/* Dashboard - Standalone */}
+          <Link href={dashboardItem.href}>
+            <Button
+              variant="ghost"
+              className={cn(
+                "nav-item w-full justify-start",
+                isCollapsed ? "px-0" : "px-3",
+                dashboardItem.active && "active"
+              )}
+            >
+              {dashboardItem.icon}
+              {!isCollapsed && (
+                <span className="ml-2 flex-1 text-left">{dashboardItem.title}</span>
+              )}
+            </Button>
+          </Link>
+
+          {/* Categories */}
           {navCategories.map((category) => (
             <div key={category.title} className="space-y-1">
               {/* Category Header Button */}
@@ -410,6 +381,23 @@ export function Sidebar() {
               )}
             </div>
           ))}
+
+          {/* Tutoriais - Standalone */}
+          <Link href={tutorialsItem.href}>
+            <Button
+              variant="ghost"
+              className={cn(
+                "nav-item w-full justify-start",
+                isCollapsed ? "px-0" : "px-3",
+                tutorialsItem.active && "active"
+              )}
+            >
+              {tutorialsItem.icon}
+              {!isCollapsed && (
+                <span className="ml-2 flex-1 text-left">{tutorialsItem.title}</span>
+              )}
+            </Button>
+          </Link>
         </div>
       </nav>
 
