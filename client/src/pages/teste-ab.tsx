@@ -38,7 +38,7 @@ interface AbTest {
 interface Quiz {
   id: string;
   title: string;
-  published: boolean;
+  isPublished: boolean;
 }
 
 export default function TesteAbPage() {
@@ -121,7 +121,7 @@ export default function TesteAbPage() {
     navigator.clipboard.writeText(url);
   };
 
-  const publishedQuizzes = quizzes?.filter(q => q.published) || [];
+  const publishedQuizzes = quizzes?.filter(q => q.isPublished) || [];
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 dark:from-gray-900 dark:via-blue-900 dark:to-indigo-900">

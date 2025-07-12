@@ -36,6 +36,37 @@ export class TypebotConverter {
    * Converte um Quiz Vendzz para formato TypeBot
    */
   public convertQuizToTypebot(quiz: Quiz): TypebotData {
+    // Validações antes da conversão
+    if (!quiz) {
+      throw new Error('Quiz não fornecido para conversão');
+    }
+
+    if (!quiz.structure) {
+      throw new Error('Estrutura do quiz não encontrada');
+    }
+
+    if (!quiz.structure.pages || quiz.structure.pages.length === 0) {
+      throw new Error('Quiz não possui páginas para conversão');
+    }
+
+    // Verificar se existe pelo menos uma página com elementos
+    const hasValidElements = quiz.structure.pages.some(page => 
+      page.elements && page.elements.length > 0
+    );
+
+    if (!hasValidElements) {
+      throw new Error('Quiz não possui elementos válidos para conversão. Adicione perguntas de múltipla escolha para converter.');
+    }
+
+    // Verificar se possui ao menos uma pergunta de múltipla escolha
+    const hasMultipleChoiceQuestions = quiz.structure.pages.some(page =>
+      page.elements && page.elements.some(element => element.type === 'multiple_choice')
+    );
+
+    if (!hasMultipleChoiceQuestions) {
+      throw new Error('Quiz deve conter pelo menos uma pergunta de múltipla escolha para ser convertido em chatbot');
+    }
+
     const groups: TypebotGroup[] = [];
     const variables: TypebotVariable[] = [];
     const edges: TypebotEdge[] = [];
