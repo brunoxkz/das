@@ -42,12 +42,16 @@ import { useAuth } from "@/hooks/useAuth-jwt";
 import { isUnauthorizedError } from "@/lib/authUtils";
 import { SidebarProvider } from "@/hooks/useSidebar";
 import { useTheme } from "@/hooks/useTheme";
+import { useServiceWorker } from "@/hooks/use-service-worker";
 
 
 function App() {
   const { isAuthenticated, isLoading } = useAuth();
   const [location] = useLocation();
   const { theme } = useTheme();
+  
+  // 🚀 INICIALIZAR SERVICE WORKER PARA CACHE INTELIGENTE
+  const serviceWorker = useServiceWorker();
 
   if (isLoading) {
     return (

@@ -2,6 +2,8 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage-sqlite";
 import { cache } from "./cache";
+import { globalCache, quizCache, analyticsCache } from "./memory-cache-advanced";
+import { applyRequestOptimizations } from "./request-optimizer";
 import { nanoid } from "nanoid";
 import { insertQuizSchema, insertQuizResponseSchema } from "../shared/schema-sqlite";
 import { z } from "zod";
@@ -84,6 +86,9 @@ async function checkPlanExpiration(req: any, res: any, next: any) {
 }
 
 export function registerSQLiteRoutes(app: Express): Server {
+  // 🚀 APLICAR REQUEST OPTIMIZATIONS
+  const requestOptimizations = applyRequestOptimizations();
+  requestOptimizations.forEach(middleware => app.use(middleware));
   // 🔒 SISTEMA DE SEGURANÇA - Aplicar middlewares de proteção
   app.use(helmetSecurity);
   app.use(antiDdosMiddleware);
@@ -1763,7 +1768,7 @@ export function registerSQLiteRoutes(app: Express): Server {
 
   // Get public quiz (ULTRA-OTIMIZADO para carregamento instantâneo)
   app.get("/api/quiz/:id/public", 
-    // Performance middleware para cache ultra-rápido
+    // 🚀 MIDDLEWARE DE CACHE ULTRA-AVANÇADO
     async (req, res, next) => {
       const startTime = Date.now();
       const quizId = req.params.id;
@@ -1780,16 +1785,47 @@ export function registerSQLiteRoutes(app: Express): Server {
           'Access-Control-Allow-Headers': 'Content-Type'
         });
 
-        // Verificar cache ultra-rápido
+        // 🔥 CACHE MULTI-LAYER: globalCache > quizCache > cache
         const cacheKey = `quiz-public-${quizId}`;
-        const cached = cache.get(cacheKey);
         
+        // Layer 1: Global Cache (mais rápido)
+        let cached = globalCache.get(cacheKey);
         if (cached) {
           const responseTime = Date.now() - startTime;
           res.set({
-            'X-Cache': 'HIT',
-            'X-Response-Time': `${responseTime}ms`
+            'X-Cache': 'GLOBAL-HIT',
+            'X-Response-Time': `${responseTime}ms`,
+            'X-Cache-Layer': 'L1-Global'
           });
+          return res.json(cached);
+        }
+
+        // Layer 2: Quiz Cache (rápido)
+        cached = quizCache.get(cacheKey);
+        if (cached) {
+          const responseTime = Date.now() - startTime;
+          res.set({
+            'X-Cache': 'QUIZ-HIT',
+            'X-Response-Time': `${responseTime}ms`,
+            'X-Cache-Layer': 'L2-Quiz'
+          });
+          // Promover para global cache
+          globalCache.setIntelligent(cacheKey, cached, 'high');
+          return res.json(cached);
+        }
+
+        // Layer 3: Basic Cache (fallback)
+        cached = cache.get(cacheKey);
+        if (cached) {
+          const responseTime = Date.now() - startTime;
+          res.set({
+            'X-Cache': 'BASIC-HIT',
+            'X-Response-Time': `${responseTime}ms`,
+            'X-Cache-Layer': 'L3-Basic'
+          });
+          // Promover para camadas superiores
+          quizCache.setIntelligent(cacheKey, cached, 'high');
+          globalCache.setIntelligent(cacheKey, cached, 'high');
           return res.json(cached);
         }
 
@@ -1820,18 +1856,26 @@ export function registerSQLiteRoutes(app: Express): Server {
           return res.status(403).json({ error: "Quiz não publicado" });
         }
 
-        // Cache por 5 minutos para próximas requisições
+        // 🔥 SALVAR EM TODAS AS CAMADAS DE CACHE
         if (req.cacheKey) {
-          cache.set(req.cacheKey, quiz, 300); // 5 minutos
+          // TTL inteligente baseado na popularidade
+          const ttl = 600; // 10 minutos para quiz público
+          
+          // Salvar em todas as camadas
+          cache.set(req.cacheKey, quiz, ttl);
+          quizCache.setIntelligent(req.cacheKey, quiz, 'high');
+          globalCache.setIntelligent(req.cacheKey, quiz, 'high');
         }
 
-        // Headers de performance
+        // Headers de performance otimizados
         const responseTime = Date.now() - startTime;
         res.set({
           'X-Cache': 'MISS',
           'X-Response-Time': `${responseTime}ms`,
+          'X-Cache-Layer': 'Database',
           'ETag': `"quiz-${req.params.id}-${quiz.updatedAt || Date.now()}"`,
-          'Last-Modified': new Date(quiz.updatedAt || Date.now()).toUTCString()
+          'Last-Modified': new Date(quiz.updatedAt || Date.now()).toUTCString(),
+          'Vary': 'Accept-Encoding'
         });
 
         res.json(quiz);
