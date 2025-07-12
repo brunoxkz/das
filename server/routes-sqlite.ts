@@ -7341,21 +7341,20 @@ app.get("/api/whatsapp-extension/pending", verifyJWT, async (req: any, res: Resp
       const projectId = req.params.id;
       
       const project = await storage.getTypebotProject(projectId);
-      if (!project || project.userId !== userId) {
+      if (!project || project.user_id !== userId) {
         return res.status(404).json({ message: "Projeto TypeBot não encontrado" });
       }
       
       const updatedProject = await storage.updateTypebotProject(projectId, {
-        isPublished: true,
-        publicId: project.publicId || nanoid(),
-        updatedAt: new Date()
+        is_published: 1,
+        public_id: project.public_id || nanoid()
       });
       
       res.json({
         success: true,
         message: "Projeto TypeBot publicado com sucesso",
         project: updatedProject,
-        publicUrl: `/typebot/${updatedProject.publicId}`
+        publicUrl: `/typebot/${updatedProject.public_id}`
       });
     } catch (error) {
       console.error("❌ ERRO ao publicar projeto TypeBot:", error);
@@ -7370,13 +7369,12 @@ app.get("/api/whatsapp-extension/pending", verifyJWT, async (req: any, res: Resp
       const projectId = req.params.id;
       
       const project = await storage.getTypebotProject(projectId);
-      if (!project || project.userId !== userId) {
+      if (!project || project.user_id !== userId) {
         return res.status(404).json({ message: "Projeto TypeBot não encontrado" });
       }
       
       const updatedProject = await storage.updateTypebotProject(projectId, {
-        isPublished: false,
-        updatedAt: new Date()
+        is_published: 0
       });
       
       res.json({

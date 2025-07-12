@@ -9,7 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Form, FormControl, FormField, FormItem, FormLabel } from "@/components/ui/form";
 import { useForm } from "react-hook-form";
 import { queryClient, apiRequest } from "@/lib/queryClient";
-import { Bot, Plus, Edit3, Play, Pause, ArrowRight, Settings, Trash2, Copy, MessageSquare, BarChart3, PlusCircle, Target, Zap, Brain, Layers, Eye, Globe } from "lucide-react";
+import { Bot, Plus, Edit3, Play, Pause, ArrowRight, Settings, Trash2, Copy, MessageSquare, BarChart3, PlusCircle, Target, Zap, Brain, Layers, Eye, Globe, MousePointer, GitBranch, Clock, Type, Mail, Phone, Hash, Calendar, Link, Upload, Star, List, Image, Video, Volume2, Code, Send, FileSpreadsheet, BarChart, CreditCard, Cog, SkipForward, Shuffle } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
@@ -35,7 +35,7 @@ interface TypebotProject {
 
 interface ChatbotBlock {
   id: string;
-  type: 'text' | 'input' | 'button' | 'condition' | 'webhook' | 'start';
+  type: 'text' | 'input' | 'button' | 'condition' | 'webhook' | 'start' | 'image' | 'video' | 'audio' | 'embed' | 'typing' | 'email' | 'phone' | 'number' | 'url' | 'date' | 'rating' | 'file' | 'picture_choice' | 'set_variable' | 'code' | 'redirect' | 'wait' | 'jump' | 'send_email' | 'google_sheets' | 'openai' | 'google_analytics' | 'payment';
   title: string;
   content: any;
   position: { x: number; y: number };
@@ -412,12 +412,119 @@ export default function TypebotPage() {
   };
 
   // Funções para manipular blocks
-  const addNewBlock = (type: ChatbotBlock['type']) => {
+  const addNewBlock = (type: string) => {
+    const getDefaultContent = (blockType: string) => {
+      switch (blockType) {
+        // Bubbles
+        case 'text':
+          return { message: 'Digite sua mensagem aqui' };
+        case 'image':
+          return { url: '', caption: '' };
+        case 'video':
+          return { url: '', caption: '' };
+        case 'audio':
+          return { url: '' };
+        case 'embed':
+          return { url: '', height: 400 };
+        case 'typing':
+          return { duration: 2 };
+        
+        // Inputs
+        case 'input':
+          return { message: 'Digite sua pergunta', placeholder: 'Sua resposta...' };
+        case 'email':
+          return { message: 'Digite seu email', placeholder: 'seu@email.com' };
+        case 'phone':
+          return { message: 'Digite seu telefone', placeholder: '(11) 99999-9999' };
+        case 'number':
+          return { message: 'Digite um número', placeholder: '123', min: 0, max: 999 };
+        case 'url':
+          return { message: 'Digite uma URL', placeholder: 'https://exemplo.com' };
+        case 'date':
+          return { message: 'Selecione uma data', format: 'dd/mm/yyyy' };
+        case 'rating':
+          return { message: 'Avalie de 1 a 5', max: 5, buttonType: 'stars' };
+        case 'file':
+          return { message: 'Envie um arquivo', accept: 'image/*', maxSize: '10MB' };
+        
+        // Choices
+        case 'button':
+          return { message: 'Escolha uma opção', buttons: [{ text: 'Opção 1', value: 'opt1' }, { text: 'Opção 2', value: 'opt2' }] };
+        case 'picture_choice':
+          return { message: 'Escolha uma imagem', options: [{ image: '', title: 'Opção 1' }, { image: '', title: 'Opção 2' }] };
+        
+        // Logic
+        case 'condition':
+          return { condition: 'variavel = valor', ifTrue: [], ifFalse: [] };
+        case 'set_variable':
+          return { variable: 'minha_variavel', value: '{{resposta}}' };
+        case 'code':
+          return { code: 'console.log("Olá mundo!");' };
+        case 'redirect':
+          return { url: 'https://exemplo.com', newTab: true };
+        case 'wait':
+          return { duration: 1000 };
+        case 'jump':
+          return { target: 'block_id' };
+        
+        // Integrations
+        case 'webhook':
+          return { url: 'https://api.exemplo.com/webhook', method: 'POST', headers: {}, body: {} };
+        case 'send_email':
+          return { recipient: '{{email}}', subject: 'Assunto', body: 'Mensagem' };
+        case 'google_sheets':
+          return { spreadsheetId: '', range: 'A1' };
+        case 'openai':
+          return { model: 'gpt-3.5-turbo', prompt: 'Você é um assistente útil' };
+        case 'google_analytics':
+          return { eventName: 'custom_event', parameters: {} };
+        case 'payment':
+          return { amount: 1000, currency: 'BRL', description: 'Pagamento' };
+        
+        default:
+          return { message: 'Conteúdo do bloco' };
+      }
+    };
+
+    const getBlockTitle = (blockType: string) => {
+      const titles: { [key: string]: string } = {
+        text: 'Texto',
+        image: 'Imagem',
+        video: 'Vídeo',
+        audio: 'Áudio',
+        embed: 'Embed',
+        typing: 'Digitando',
+        input: 'Entrada de Texto',
+        email: 'Email',
+        phone: 'Telefone',
+        number: 'Número',
+        url: 'URL',
+        date: 'Data',
+        rating: 'Avaliação',
+        file: 'Arquivo',
+        button: 'Botões',
+        picture_choice: 'Escolha de Imagem',
+        condition: 'Condição',
+        set_variable: 'Definir Variável',
+        code: 'Código',
+        redirect: 'Redirecionamento',
+        wait: 'Aguardar',
+        jump: 'Pular',
+        webhook: 'Webhook',
+        send_email: 'Enviar Email',
+        google_sheets: 'Google Sheets',
+        openai: 'OpenAI',
+        google_analytics: 'Google Analytics',
+        payment: 'Pagamento'
+      };
+      return titles[blockType] || blockType;
+    };
+
     const newBlock: ChatbotBlock = {
       id: `block_${Date.now()}`,
-      type,
-      title: `Novo ${type}`,
-      content: type === 'text' ? { text: '' } : type === 'input' ? { question: '', placeholder: '' } : {},
+      type: type as ChatbotBlock['type'],
+      title: getBlockTitle(type),
+      content: getDefaultContent(type),
       position: { x: chatbotBlocks.length * 200 + 100, y: 100 },
       connections: []
     };
@@ -856,50 +963,155 @@ export default function TypebotPage() {
       <div className="flex-1 flex">
         {/* Sidebar com Elementos */}
         {!previewMode && (
-          <div className="w-64 border-r bg-background p-4">
-            <div className="space-y-4">
-              <h3 className="font-medium">Elementos</h3>
+          <div className="w-80 border-r bg-background p-4 overflow-y-auto">
+            <div className="space-y-6">
+              <h3 className="font-medium text-lg">Elementos TypeBot</h3>
+              
+              {/* Bubbles */}
               <div className="space-y-2">
-                <Button
-                  onClick={() => addNewBlock('text')}
-                  variant="outline"
-                  className="w-full justify-start"
-                >
-                  <MessageSquare className="h-4 w-4 mr-2" />
-                  Texto
-                </Button>
-                <Button
-                  onClick={() => addNewBlock('input')}
-                  variant="outline"
-                  className="w-full justify-start"
-                >
-                  <Target className="h-4 w-4 mr-2" />
-                  Entrada
-                </Button>
-                <Button
-                  onClick={() => addNewBlock('button')}
-                  variant="outline"
-                  className="w-full justify-start"
-                >
-                  <Zap className="h-4 w-4 mr-2" />
-                  Botão
-                </Button>
-                <Button
-                  onClick={() => addNewBlock('condition')}
-                  variant="outline"
-                  className="w-full justify-start"
-                >
-                  <Brain className="h-4 w-4 mr-2" />
-                  Condição
-                </Button>
-                <Button
-                  onClick={() => addNewBlock('webhook')}
-                  variant="outline"
-                  className="w-full justify-start"
-                >
-                  <Layers className="h-4 w-4 mr-2" />
-                  Webhook
-                </Button>
+                <h4 className="font-medium text-sm text-muted-foreground">💬 Bubbles</h4>
+                <div className="grid grid-cols-2 gap-2">
+                  <Button onClick={() => addNewBlock('text')} variant="outline" size="sm" className="h-20 flex-col">
+                    <MessageSquare className="h-4 w-4 mb-1" />
+                    <span className="text-xs">Texto</span>
+                  </Button>
+                  <Button onClick={() => addNewBlock('image')} variant="outline" size="sm" className="h-20 flex-col">
+                    <Image className="h-4 w-4 mb-1" />
+                    <span className="text-xs">Imagem</span>
+                  </Button>
+                  <Button onClick={() => addNewBlock('video')} variant="outline" size="sm" className="h-20 flex-col">
+                    <Video className="h-4 w-4 mb-1" />
+                    <span className="text-xs">Vídeo</span>
+                  </Button>
+                  <Button onClick={() => addNewBlock('audio')} variant="outline" size="sm" className="h-20 flex-col">
+                    <Volume2 className="h-4 w-4 mb-1" />
+                    <span className="text-xs">Áudio</span>
+                  </Button>
+                  <Button onClick={() => addNewBlock('embed')} variant="outline" size="sm" className="h-20 flex-col">
+                    <Code className="h-4 w-4 mb-1" />
+                    <span className="text-xs">Embed</span>
+                  </Button>
+                  <Button onClick={() => addNewBlock('typing')} variant="outline" size="sm" className="h-20 flex-col">
+                    <Clock className="h-4 w-4 mb-1" />
+                    <span className="text-xs">Digitando</span>
+                  </Button>
+                </div>
+              </div>
+
+              {/* Inputs */}
+              <div className="space-y-2">
+                <h4 className="font-medium text-sm text-muted-foreground">📝 Inputs</h4>
+                <div className="grid grid-cols-2 gap-2">
+                  <Button onClick={() => addNewBlock('input')} variant="outline" size="sm" className="h-20 flex-col">
+                    <MessageSquare className="h-4 w-4 mb-1" />
+                    <span className="text-xs">Texto</span>
+                  </Button>
+                  <Button onClick={() => addNewBlock('email')} variant="outline" size="sm" className="h-20 flex-col">
+                    <Mail className="h-4 w-4 mb-1" />
+                    <span className="text-xs">Email</span>
+                  </Button>
+                  <Button onClick={() => addNewBlock('phone')} variant="outline" size="sm" className="h-20 flex-col">
+                    <Phone className="h-4 w-4 mb-1" />
+                    <span className="text-xs">Telefone</span>
+                  </Button>
+                  <Button onClick={() => addNewBlock('number')} variant="outline" size="sm" className="h-20 flex-col">
+                    <Hash className="h-4 w-4 mb-1" />
+                    <span className="text-xs">Número</span>
+                  </Button>
+                  <Button onClick={() => addNewBlock('url')} variant="outline" size="sm" className="h-20 flex-col">
+                    <Link className="h-4 w-4 mb-1" />
+                    <span className="text-xs">URL</span>
+                  </Button>
+                  <Button onClick={() => addNewBlock('date')} variant="outline" size="sm" className="h-20 flex-col">
+                    <Calendar className="h-4 w-4 mb-1" />
+                    <span className="text-xs">Data</span>
+                  </Button>
+                  <Button onClick={() => addNewBlock('rating')} variant="outline" size="sm" className="h-20 flex-col">
+                    <Star className="h-4 w-4 mb-1" />
+                    <span className="text-xs">Avaliação</span>
+                  </Button>
+                  <Button onClick={() => addNewBlock('file')} variant="outline" size="sm" className="h-20 flex-col">
+                    <Upload className="h-4 w-4 mb-1" />
+                    <span className="text-xs">Arquivo</span>
+                  </Button>
+                </div>
+              </div>
+
+              {/* Choices */}
+              <div className="space-y-2">
+                <h4 className="font-medium text-sm text-muted-foreground">🎯 Escolhas</h4>
+                <div className="grid grid-cols-2 gap-2">
+                  <Button onClick={() => addNewBlock('button')} variant="outline" size="sm" className="h-20 flex-col">
+                    <MousePointer className="h-4 w-4 mb-1" />
+                    <span className="text-xs">Botões</span>
+                  </Button>
+                  <Button onClick={() => addNewBlock('picture_choice')} variant="outline" size="sm" className="h-20 flex-col">
+                    <Image className="h-4 w-4 mb-1" />
+                    <span className="text-xs">Imagem</span>
+                  </Button>
+                </div>
+              </div>
+
+              {/* Logic */}
+              <div className="space-y-2">
+                <h4 className="font-medium text-sm text-muted-foreground">🧠 Lógica</h4>
+                <div className="grid grid-cols-2 gap-2">
+                  <Button onClick={() => addNewBlock('condition')} variant="outline" size="sm" className="h-20 flex-col">
+                    <GitBranch className="h-4 w-4 mb-1" />
+                    <span className="text-xs">Condição</span>
+                  </Button>
+                  <Button onClick={() => addNewBlock('set_variable')} variant="outline" size="sm" className="h-20 flex-col">
+                    <Settings className="h-4 w-4 mb-1" />
+                    <span className="text-xs">Variável</span>
+                  </Button>
+                  <Button onClick={() => addNewBlock('code')} variant="outline" size="sm" className="h-20 flex-col">
+                    <Code className="h-4 w-4 mb-1" />
+                    <span className="text-xs">Código</span>
+                  </Button>
+                  <Button onClick={() => addNewBlock('redirect')} variant="outline" size="sm" className="h-20 flex-col">
+                    <ArrowRight className="h-4 w-4 mb-1" />
+                    <span className="text-xs">Redirecionar</span>
+                  </Button>
+                  <Button onClick={() => addNewBlock('wait')} variant="outline" size="sm" className="h-20 flex-col">
+                    <Clock className="h-4 w-4 mb-1" />
+                    <span className="text-xs">Aguardar</span>
+                  </Button>
+                  <Button onClick={() => addNewBlock('jump')} variant="outline" size="sm" className="h-20 flex-col">
+                    <SkipForward className="h-4 w-4 mb-1" />
+                    <span className="text-xs">Pular</span>
+                  </Button>
+                </div>
+              </div>
+
+              {/* Integrations */}
+              <div className="space-y-2">
+                <h4 className="font-medium text-sm text-muted-foreground">🔗 Integrações</h4>
+                <div className="grid grid-cols-2 gap-2">
+                  <Button onClick={() => addNewBlock('webhook')} variant="outline" size="sm" className="h-20 flex-col">
+                    <Zap className="h-4 w-4 mb-1" />
+                    <span className="text-xs">Webhook</span>
+                  </Button>
+                  <Button onClick={() => addNewBlock('send_email')} variant="outline" size="sm" className="h-20 flex-col">
+                    <Send className="h-4 w-4 mb-1" />
+                    <span className="text-xs">Email</span>
+                  </Button>
+                  <Button onClick={() => addNewBlock('google_sheets')} variant="outline" size="sm" className="h-20 flex-col">
+                    <FileSpreadsheet className="h-4 w-4 mb-1" />
+                    <span className="text-xs">Sheets</span>
+                  </Button>
+                  <Button onClick={() => addNewBlock('openai')} variant="outline" size="sm" className="h-20 flex-col">
+                    <Bot className="h-4 w-4 mb-1" />
+                    <span className="text-xs">OpenAI</span>
+                  </Button>
+                  <Button onClick={() => addNewBlock('google_analytics')} variant="outline" size="sm" className="h-20 flex-col">
+                    <BarChart className="h-4 w-4 mb-1" />
+                    <span className="text-xs">Analytics</span>
+                  </Button>
+                  <Button onClick={() => addNewBlock('payment')} variant="outline" size="sm" className="h-20 flex-col">
+                    <CreditCard className="h-4 w-4 mb-1" />
+                    <span className="text-xs">Pagamento</span>
+                  </Button>
+                </div>
               </div>
             </div>
           </div>
@@ -918,9 +1130,235 @@ export default function TypebotPage() {
                 <div className="p-4 space-y-4">
                   {chatbotBlocks.map((block, index) => (
                     <div key={block.id} className="space-y-2">
+                      {/* Bubble Elements */}
                       {block.type === 'text' && (
                         <div className="bg-gray-100 p-3 rounded-lg">
-                          <p>{block.content?.text || 'Texto do chatbot'}</p>
+                          <p>{block.content?.message || block.content?.text || 'Mensagem de texto'}</p>
+                        </div>
+                      )}
+                      {block.type === 'image' && (
+                        <div className="bg-gray-100 p-3 rounded-lg">
+                          <div className="bg-gray-200 h-24 rounded flex items-center justify-center">
+                            <Image className="h-8 w-8 text-gray-400" />
+                          </div>
+                          {block.content?.caption && <p className="text-sm mt-2">{block.content.caption}</p>}
+                        </div>
+                      )}
+                      {block.type === 'video' && (
+                        <div className="bg-gray-100 p-3 rounded-lg">
+                          <div className="bg-gray-200 h-24 rounded flex items-center justify-center">
+                            <Video className="h-8 w-8 text-gray-400" />
+                          </div>
+                          {block.content?.caption && <p className="text-sm mt-2">{block.content.caption}</p>}
+                        </div>
+                      )}
+                      {block.type === 'audio' && (
+                        <div className="bg-gray-100 p-3 rounded-lg">
+                          <div className="bg-gray-200 h-12 rounded flex items-center justify-center">
+                            <Volume2 className="h-6 w-6 text-gray-400" />
+                          </div>
+                        </div>
+                      )}
+                      {block.type === 'embed' && (
+                        <div className="bg-gray-100 p-3 rounded-lg">
+                          <div className="bg-gray-200 h-24 rounded flex items-center justify-center">
+                            <Code className="h-8 w-8 text-gray-400" />
+                          </div>
+                          <p className="text-sm text-gray-600 mt-2">Código incorporado</p>
+                        </div>
+                      )}
+                      {block.type === 'typing' && (
+                        <div className="bg-gray-100 p-3 rounded-lg flex items-center">
+                          <Clock className="h-4 w-4 mr-2 text-gray-400" />
+                          <span className="text-sm text-gray-600">Digitando...</span>
+                        </div>
+                      )}
+                      
+                      {/* Input Elements */}
+                      {(block.type === 'input' || block.type === 'email' || block.type === 'phone' || block.type === 'number' || block.type === 'url') && (
+                        <div className="space-y-2">
+                          <div className="bg-gray-100 p-3 rounded-lg">
+                            <p>{block.content?.message || 'Pergunta'}</p>
+                          </div>
+                          <div className="bg-white border rounded-lg p-2">
+                            <input
+                              type={block.type === 'email' ? 'email' : block.type === 'phone' ? 'tel' : block.type === 'number' ? 'number' : block.type === 'url' ? 'url' : 'text'}
+                              placeholder={block.content?.placeholder || `Digite seu ${block.type}`}
+                              className="w-full border-none outline-none"
+                              disabled
+                            />
+                          </div>
+                        </div>
+                      )}
+                      
+                      {block.type === 'date' && (
+                        <div className="space-y-2">
+                          <div className="bg-gray-100 p-3 rounded-lg">
+                            <p>{block.content?.message || 'Selecione uma data'}</p>
+                          </div>
+                          <div className="bg-white border rounded-lg p-2">
+                            <input type="date" className="w-full border-none outline-none" disabled />
+                          </div>
+                        </div>
+                      )}
+                      
+                      {block.type === 'rating' && (
+                        <div className="space-y-2">
+                          <div className="bg-gray-100 p-3 rounded-lg">
+                            <p>{block.content?.message || 'Avalie de 1 a 5'}</p>
+                          </div>
+                          <div className="flex gap-2">
+                            {[1, 2, 3, 4, 5].map(i => (
+                              <Star key={i} className="h-6 w-6 text-yellow-400 cursor-pointer" />
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                      
+                      {block.type === 'file' && (
+                        <div className="space-y-2">
+                          <div className="bg-gray-100 p-3 rounded-lg">
+                            <p>{block.content?.message || 'Envie um arquivo'}</p>
+                          </div>
+                          <div className="bg-white border-2 border-dashed rounded-lg p-4 text-center">
+                            <Upload className="h-8 w-8 mx-auto text-gray-400" />
+                            <p className="text-sm text-gray-600 mt-2">Clique para enviar</p>
+                          </div>
+                        </div>
+                      )}
+                      
+                      {/* Choice Elements */}
+                      {block.type === 'button' && (
+                        <div className="space-y-2">
+                          <div className="bg-gray-100 p-3 rounded-lg">
+                            <p>{block.content?.message || 'Escolha uma opção'}</p>
+                          </div>
+                          <div className="space-y-2">
+                            {(block.content?.buttons || [{ text: 'Opção 1' }, { text: 'Opção 2' }]).map((button, idx) => (
+                              <Button key={idx} variant="outline" className="w-full">
+                                {button.text}
+                              </Button>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                      
+                      {block.type === 'picture_choice' && (
+                        <div className="space-y-2">
+                          <div className="bg-gray-100 p-3 rounded-lg">
+                            <p>{block.content?.message || 'Escolha uma imagem'}</p>
+                          </div>
+                          <div className="grid grid-cols-2 gap-2">
+                            {[1, 2].map(i => (
+                              <div key={i} className="bg-white border rounded-lg p-2 text-center cursor-pointer">
+                                <div className="bg-gray-200 h-16 rounded flex items-center justify-center">
+                                  <Image className="h-6 w-6 text-gray-400" />
+                                </div>
+                                <p className="text-sm mt-1">Opção {i}</p>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                      
+                      {/* Logic Elements */}
+                      {block.type === 'condition' && (
+                        <div className="bg-blue-50 p-3 rounded-lg border-l-4 border-blue-400">
+                          <div className="flex items-center">
+                            <GitBranch className="h-5 w-5 text-blue-600 mr-2" />
+                            <span className="text-sm font-medium">Condição: {block.content?.condition || 'Se... então...'}</span>
+                          </div>
+                        </div>
+                      )}
+                      
+                      {block.type === 'set_variable' && (
+                        <div className="bg-purple-50 p-3 rounded-lg border-l-4 border-purple-400">
+                          <div className="flex items-center">
+                            <Settings className="h-5 w-5 text-purple-600 mr-2" />
+                            <span className="text-sm font-medium">Definir variável: {block.content?.variable || 'variavel'}</span>
+                          </div>
+                        </div>
+                      )}
+                      
+                      {block.type === 'code' && (
+                        <div className="bg-gray-50 p-3 rounded-lg border-l-4 border-gray-400">
+                          <div className="flex items-center">
+                            <Code className="h-5 w-5 text-gray-600 mr-2" />
+                            <span className="text-sm font-medium">Executar código JavaScript</span>
+                          </div>
+                        </div>
+                      )}
+                      
+                      {block.type === 'redirect' && (
+                        <div className="bg-green-50 p-3 rounded-lg border-l-4 border-green-400">
+                          <div className="flex items-center">
+                            <ArrowRight className="h-5 w-5 text-green-600 mr-2" />
+                            <span className="text-sm font-medium">Redirecionar para: {block.content?.url || 'https://exemplo.com'}</span>
+                          </div>
+                        </div>
+                      )}
+                      
+                      {block.type === 'wait' && (
+                        <div className="bg-yellow-50 p-3 rounded-lg border-l-4 border-yellow-400">
+                          <div className="flex items-center">
+                            <Clock className="h-5 w-5 text-yellow-600 mr-2" />
+                            <span className="text-sm font-medium">Aguardar {block.content?.duration || 1} segundo(s)</span>
+                          </div>
+                        </div>
+                      )}
+                      
+                      {block.type === 'jump' && (
+                        <div className="bg-indigo-50 p-3 rounded-lg border-l-4 border-indigo-400">
+                          <div className="flex items-center">
+                            <SkipForward className="h-5 w-5 text-indigo-600 mr-2" />
+                            <span className="text-sm font-medium">Pular para: {block.content?.target || 'próximo bloco'}</span>
+                          </div>
+                        </div>
+                      )}
+                      
+                      {/* Integration Elements */}
+                      {block.type === 'webhook' && (
+                        <div className="bg-red-50 p-3 rounded-lg border-l-4 border-red-400">
+                          <div className="flex items-center">
+                            <Zap className="h-5 w-5 text-red-600 mr-2" />
+                            <span className="text-sm font-medium">Webhook: {block.content?.url || 'https://api.exemplo.com'}</span>
+                          </div>
+                        </div>
+                      )}
+                      
+                      {block.type === 'send_email' && (
+                        <div className="bg-blue-50 p-3 rounded-lg border-l-4 border-blue-400">
+                          <div className="flex items-center">
+                            <Send className="h-5 w-5 text-blue-600 mr-2" />
+                            <span className="text-sm font-medium">Enviar email para: {block.content?.recipient || 'destinatário'}</span>
+                          </div>
+                        </div>
+                      )}
+                      
+                      {block.type === 'google_sheets' && (
+                        <div className="bg-green-50 p-3 rounded-lg border-l-4 border-green-400">
+                          <div className="flex items-center">
+                            <FileSpreadsheet className="h-5 w-5 text-green-600 mr-2" />
+                            <span className="text-sm font-medium">Salvar no Google Sheets</span>
+                          </div>
+                        </div>
+                      )}
+                      
+                      {block.type === 'openai' && (
+                        <div className="bg-purple-50 p-3 rounded-lg border-l-4 border-purple-400">
+                          <div className="flex items-center">
+                            <Bot className="h-5 w-5 text-purple-600 mr-2" />
+                            <span className="text-sm font-medium">Integração OpenAI</span>
+                          </div>
+                        </div>
+                      )}
+                      
+                      {block.type === 'payment' && (
+                        <div className="bg-emerald-50 p-3 rounded-lg border-l-4 border-emerald-400">
+                          <div className="flex items-center">
+                            <CreditCard className="h-5 w-5 text-emerald-600 mr-2" />
+                            <span className="text-sm font-medium">Pagamento: R$ {block.content?.amount || '0,00'}</span>
+                          </div>
                         </div>
                       )}
                       {block.type === 'input' && (
@@ -959,11 +1397,44 @@ export default function TypebotPage() {
                       <CardHeader className="pb-3">
                         <div className="flex items-center justify-between">
                           <div className="flex items-center space-x-2">
+                            {/* Bubble Elements */}
                             {block.type === 'text' && <MessageSquare className="h-4 w-4 text-blue-500" />}
-                            {block.type === 'input' && <Target className="h-4 w-4 text-green-500" />}
-                            {block.type === 'button' && <Zap className="h-4 w-4 text-purple-500" />}
-                            {block.type === 'condition' && <Brain className="h-4 w-4 text-orange-500" />}
-                            {block.type === 'webhook' && <Layers className="h-4 w-4 text-red-500" />}
+                            {block.type === 'image' && <Image className="h-4 w-4 text-green-500" />}
+                            {block.type === 'video' && <Video className="h-4 w-4 text-purple-500" />}
+                            {block.type === 'audio' && <Volume2 className="h-4 w-4 text-orange-500" />}
+                            {block.type === 'embed' && <Code className="h-4 w-4 text-gray-500" />}
+                            {block.type === 'typing' && <Clock className="h-4 w-4 text-yellow-500" />}
+                            
+                            {/* Input Elements */}
+                            {block.type === 'input' && <MessageSquare className="h-4 w-4 text-blue-500" />}
+                            {block.type === 'email' && <Mail className="h-4 w-4 text-red-500" />}
+                            {block.type === 'phone' && <Phone className="h-4 w-4 text-green-500" />}
+                            {block.type === 'number' && <Hash className="h-4 w-4 text-blue-500" />}
+                            {block.type === 'url' && <Link className="h-4 w-4 text-purple-500" />}
+                            {block.type === 'date' && <Calendar className="h-4 w-4 text-orange-500" />}
+                            {block.type === 'rating' && <Star className="h-4 w-4 text-yellow-500" />}
+                            {block.type === 'file' && <Upload className="h-4 w-4 text-gray-500" />}
+                            
+                            {/* Choice Elements */}
+                            {block.type === 'button' && <MousePointer className="h-4 w-4 text-purple-500" />}
+                            {block.type === 'picture_choice' && <Image className="h-4 w-4 text-indigo-500" />}
+                            
+                            {/* Logic Elements */}
+                            {block.type === 'condition' && <GitBranch className="h-4 w-4 text-blue-500" />}
+                            {block.type === 'set_variable' && <Settings className="h-4 w-4 text-purple-500" />}
+                            {block.type === 'code' && <Code className="h-4 w-4 text-gray-500" />}
+                            {block.type === 'redirect' && <ArrowRight className="h-4 w-4 text-green-500" />}
+                            {block.type === 'wait' && <Clock className="h-4 w-4 text-yellow-500" />}
+                            {block.type === 'jump' && <SkipForward className="h-4 w-4 text-indigo-500" />}
+                            
+                            {/* Integration Elements */}
+                            {block.type === 'webhook' && <Zap className="h-4 w-4 text-red-500" />}
+                            {block.type === 'send_email' && <Send className="h-4 w-4 text-blue-500" />}
+                            {block.type === 'google_sheets' && <FileSpreadsheet className="h-4 w-4 text-green-500" />}
+                            {block.type === 'openai' && <Bot className="h-4 w-4 text-purple-500" />}
+                            {block.type === 'google_analytics' && <BarChart className="h-4 w-4 text-orange-500" />}
+                            {block.type === 'payment' && <CreditCard className="h-4 w-4 text-emerald-500" />}
+                            
                             {block.type === 'start' && <Play className="h-4 w-4 text-green-500" />}
                             <span className="font-medium">{block.title}</span>
                           </div>
