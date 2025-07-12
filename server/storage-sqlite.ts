@@ -1896,6 +1896,43 @@ export class SQLiteStorage implements IStorage {
     }
   }
 
+  // OTIMIZAÇÃO: Buscar campanhas ativas com limite para reduzir sobrecarga
+  async getActiveCampaignsLimited(limit: number = 25): Promise<any[]> {
+    try {
+      const campaigns = await db.select()
+        .from(smsCampaigns)
+        .where(eq(smsCampaigns.isActive, true))
+        .orderBy(desc(smsCampaigns.createdAt))
+        .limit(limit);
+      
+      return campaigns.map(campaign => ({
+        ...campaign,
+        phones: JSON.parse(campaign.phones || '[]')
+      }));
+    } catch (error) {
+      console.error('Erro ao buscar campanhas ativas limitadas:', error);
+      return [];
+    }
+  }
+
+  // OTIMIZAÇÃO: Buscar telefones por campanha com limite
+  async getPhonesByCampaign(campaignId: string, limit: number = 100): Promise<string[]> {
+    try {
+      const campaign = await db.select()
+        .from(smsCampaigns)
+        .where(eq(smsCampaigns.id, campaignId))
+        .limit(1);
+      
+      if (!campaign[0] || !campaign[0].phones) return [];
+      
+      const phones = JSON.parse(campaign[0].phones);
+      return Array.isArray(phones) ? phones.slice(0, limit) : [];
+    } catch (error) {
+      console.error('Erro ao buscar telefones por campanha:', error);
+      return [];
+    }
+  }
+
   async getAllSMSCampaigns(): Promise<any[]> {
     try {
       const campaigns = await db.select()

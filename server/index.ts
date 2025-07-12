@@ -259,6 +259,9 @@ const unifiedDetectionInterval = setInterval(async () => {
   }
   
   try {
+    // Importar storage dentro do try-catch
+    const { storage } = await import('./storage-sqlite');
+    
     // Processa apenas campanhas ativas com limite inteligente
     const activeCampaigns = await storage.getActiveCampaignsLimited(25); // Max 25 campanhas por ciclo
     
@@ -270,11 +273,16 @@ const unifiedDetectionInterval = setInterval(async () => {
         const batch = activeCampaigns.slice(i, i + 3);
         
         await Promise.allSettled(batch.map(async (campaign) => {
-          const phones = await storage.getPhonesByCampaign(campaign.id, 100); // Max 100 phones por campanha
-          
-          if (phones.length > 0) {
-            console.log(`📱 Campanha ${campaign.id}: ${phones.length} telefones para processar`);
-            // Aqui processar os telefones...
+          try {
+            const phones = await storage.getPhonesByCampaign(campaign.id, 100); // Max 100 phones por campanha
+            
+            if (phones.length > 0) {
+              console.log(`📱 Campanha ${campaign.id}: ${phones.length} telefones para processar`);
+              // Processar agendamentos dos telefones aqui
+              // Sistema vai respeitar o horário programado por cada usuário
+            }
+          } catch (error) {
+            console.error(`Erro ao processar campanha ${campaign.id}:`, error.message);
           }
         }));
         
