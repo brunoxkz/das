@@ -9,7 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Form, FormControl, FormField, FormItem, FormLabel } from "@/components/ui/form";
 import { useForm } from "react-hook-form";
 import { queryClient, apiRequest } from "@/lib/queryClient";
-import { Bot, Plus, Edit3, Play, Pause, ArrowRight, Settings, Trash2, Copy, MessageSquare, BarChart3, PlusCircle, Target, Zap, Brain, Layers, Eye } from "lucide-react";
+import { Bot, Plus, Edit3, Play, Pause, ArrowRight, Settings, Trash2, Copy, MessageSquare, BarChart3, PlusCircle, Target, Zap, Brain, Layers, Eye, Globe } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
@@ -48,13 +48,212 @@ interface Quiz {
   description?: string;
 }
 
+// Templates para diferentes plataformas
+const TEMPLATES = {
+  instagram: {
+    name: "Instagram Stories",
+    description: "Template otimizado para Instagram Stories e DM",
+    icon: "📸",
+    blocks: [
+      {
+        id: "start",
+        type: "start" as const,
+        title: "Início",
+        content: { message: "Olá! 👋 Bem-vindo ao nosso Instagram!" },
+        position: { x: 100, y: 100 },
+        connections: ["welcome"]
+      },
+      {
+        id: "welcome",
+        type: "text" as const,
+        title: "Boas-vindas",
+        content: { message: "Que bom te ver aqui! 🎉\n\nEu sou seu assistente virtual e vou te ajudar a descobrir nossos produtos incríveis!" },
+        position: { x: 100, y: 250 },
+        connections: ["interest"]
+      },
+      {
+        id: "interest",
+        type: "button" as const,
+        title: "Interesse",
+        content: { 
+          message: "O que você está procurando hoje?",
+          buttons: [
+            { text: "👗 Roupas", value: "roupas" },
+            { text: "👟 Calçados", value: "calcados" },
+            { text: "💄 Beleza", value: "beleza" }
+          ]
+        },
+        position: { x: 100, y: 400 },
+        connections: ["contact"]
+      },
+      {
+        id: "contact",
+        type: "input" as const,
+        title: "Contato",
+        content: { 
+          message: "Perfeito! Para te enviar ofertas exclusivas, me conta seu melhor WhatsApp:",
+          inputType: "phone",
+          placeholder: "(11) 99999-9999"
+        },
+        position: { x: 100, y: 550 },
+        connections: ["thanks"]
+      },
+      {
+        id: "thanks",
+        type: "text" as const,
+        title: "Agradecimento",
+        content: { message: "Obrigado! 🙏\n\nEm breve você receberá ofertas incríveis no seu WhatsApp! 📱✨" },
+        position: { x: 100, y: 700 },
+        connections: []
+      }
+    ]
+  },
+  whatsapp: {
+    name: "WhatsApp Web",
+    description: "Template para automação no WhatsApp Web",
+    icon: "💬",
+    blocks: [
+      {
+        id: "start",
+        type: "start" as const,
+        title: "Início",
+        content: { message: "Olá! Bem-vindo ao nosso atendimento!" },
+        position: { x: 100, y: 100 },
+        connections: ["menu"]
+      },
+      {
+        id: "menu",
+        type: "button" as const,
+        title: "Menu Principal",
+        content: { 
+          message: "Como posso te ajudar hoje? 🤔",
+          buttons: [
+            { text: "🛒 Ver Produtos", value: "produtos" },
+            { text: "📞 Falar com Atendente", value: "atendente" },
+            { text: "📋 Fazer Pedido", value: "pedido" },
+            { text: "❓ Dúvidas", value: "duvidas" }
+          ]
+        },
+        position: { x: 100, y: 250 },
+        connections: ["info"]
+      },
+      {
+        id: "info",
+        type: "input" as const,
+        title: "Informações",
+        content: { 
+          message: "Para personalizar melhor seu atendimento, me conta seu nome:",
+          inputType: "text",
+          placeholder: "Digite seu nome"
+        },
+        position: { x: 100, y: 400 },
+        connections: ["email"]
+      },
+      {
+        id: "email",
+        type: "input" as const,
+        title: "E-mail",
+        content: { 
+          message: "Ótimo! Agora me passa seu e-mail para enviarmos novidades:",
+          inputType: "email",
+          placeholder: "seu@email.com"
+        },
+        position: { x: 100, y: 550 },
+        connections: ["final"]
+      },
+      {
+        id: "final",
+        type: "text" as const,
+        title: "Finalização",
+        content: { message: "Perfeito! 🎉\n\nEm breve um atendente entrará em contato com você. Obrigado pela preferência!" },
+        position: { x: 100, y: 700 },
+        connections: []
+      }
+    ]
+  },
+  messenger: {
+    name: "Messenger",
+    description: "Template para Facebook Messenger",
+    icon: "💙",
+    blocks: [
+      {
+        id: "start",
+        type: "start" as const,
+        title: "Início",
+        content: { message: "Olá! 👋 Bem-vindo ao nosso Messenger!" },
+        position: { x: 100, y: 100 },
+        connections: ["greeting"]
+      },
+      {
+        id: "greeting",
+        type: "text" as const,
+        title: "Saudação",
+        content: { message: "Que bom te ver aqui! 😊\n\nSou seu assistente virtual e vou te ajudar com tudo que precisar!" },
+        position: { x: 100, y: 250 },
+        connections: ["service"]
+      },
+      {
+        id: "service",
+        type: "button" as const,
+        title: "Serviços",
+        content: { 
+          message: "Qual serviço você precisa?",
+          buttons: [
+            { text: "🛍️ Comprar", value: "comprar" },
+            { text: "📦 Rastrear Pedido", value: "rastrear" },
+            { text: "🔄 Trocar/Devolver", value: "trocar" },
+            { text: "💬 Suporte", value: "suporte" }
+          ]
+        },
+        position: { x: 100, y: 400 },
+        connections: ["lead"]
+      },
+      {
+        id: "lead",
+        type: "input" as const,
+        title: "Lead",
+        content: { 
+          message: "Para te atender melhor, preciso de algumas informações.\n\nQual seu nome completo?",
+          inputType: "text",
+          placeholder: "Nome completo"
+        },
+        position: { x: 100, y: 550 },
+        connections: ["phone"]
+      },
+      {
+        id: "phone",
+        type: "input" as const,
+        title: "Telefone",
+        content: { 
+          message: "Agora me passa seu telefone para contato:",
+          inputType: "phone",
+          placeholder: "(11) 99999-9999"
+        },
+        position: { x: 100, y: 700 },
+        connections: ["completion"]
+      },
+      {
+        id: "completion",
+        type: "text" as const,
+        title: "Finalização",
+        content: { message: "Excelente! 🎉\n\nTodas as informações foram registradas. Em breve retornaremos o contato!" },
+        position: { x: 100, y: 850 },
+        connections: []
+      }
+    ]
+  }
+};
+
 export default function TypebotPage() {
   const [selectedProject, setSelectedProject] = useState<TypebotProject | null>(null);
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
+  const [templateDialogOpen, setTemplateDialogOpen] = useState(false);
   const [editorMode, setEditorMode] = useState<'list' | 'editor'>('list');
   const [chatbotBlocks, setChatbotBlocks] = useState<ChatbotBlock[]>([]);
   const [selectedBlock, setSelectedBlock] = useState<ChatbotBlock | null>(null);
   const [previewMode, setPreviewMode] = useState(false);
+  const [draggedBlock, setDraggedBlock] = useState<ChatbotBlock | null>(null);
+  const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
 
   // Buscar projetos TypeBot
   const { data: projects = [], isLoading: loadingProjects } = useQuery({
@@ -68,15 +267,53 @@ export default function TypebotPage() {
 
   // Mutation para criar projeto
   const createProjectMutation = useMutation({
-    mutationFn: async (data: { name: string; description?: string }) => {
+    mutationFn: async (data: { name: string; description?: string; template?: string }) => {
+      let typebotData = {
+        version: "6.0",
+        name: data.name,
+        groups: [],
+        variables: [],
+        edges: []
+      };
+
+      // Se foi selecionado um template, usar os blocos do template
+      if (data.template && TEMPLATES[data.template as keyof typeof TEMPLATES]) {
+        const template = TEMPLATES[data.template as keyof typeof TEMPLATES];
+        typebotData = {
+          version: "6.0",
+          name: data.name,
+          groups: template.blocks.map(block => ({
+            id: block.id,
+            title: block.title,
+            blocks: [{
+              id: block.id,
+              type: block.type,
+              content: block.content
+            }]
+          })),
+          variables: [],
+          edges: template.blocks.flatMap(block => 
+            block.connections.map(connection => ({
+              id: `${block.id}-${connection}`,
+              from: { groupId: block.id },
+              to: { groupId: connection }
+            }))
+          )
+        };
+      }
+
       return apiRequest("/api/typebot/projects", {
         method: "POST",
-        body: JSON.stringify(data),
+        body: JSON.stringify({
+          ...data,
+          typebotData
+        }),
       });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/typebot/projects"] });
       setCreateDialogOpen(false);
+      setTemplateDialogOpen(false);
     },
   });
 
@@ -104,6 +341,34 @@ export default function TypebotPage() {
       queryClient.invalidateQueries({ queryKey: ["/api/typebot/projects"] });
       setSelectedProject(null);
       setEditorMode('list');
+    },
+  });
+
+  // Mutation para publicar projeto
+  const publishProjectMutation = useMutation({
+    mutationFn: async (projectId: string) => {
+      return apiRequest(`/api/typebot/projects/${projectId}/publish`, {
+        method: "POST",
+      });
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ["/api/typebot/projects"] });
+      // Mostrar notificação de sucesso
+      if (data.publicUrl) {
+        navigator.clipboard.writeText(window.location.origin + data.publicUrl);
+      }
+    },
+  });
+
+  // Mutation para despublicar projeto
+  const unpublishProjectMutation = useMutation({
+    mutationFn: async (projectId: string) => {
+      return apiRequest(`/api/typebot/projects/${projectId}/unpublish`, {
+        method: "POST",
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/typebot/projects"] });
     },
   });
 
@@ -190,21 +455,43 @@ export default function TypebotPage() {
         }]
       })),
       variables: [],
-      edges: []
+      edges: chatbotBlocks.flatMap(block => 
+        block.connections.map(connection => ({
+          id: `${block.id}-${connection}`,
+          from: { groupId: block.id },
+          to: { groupId: connection }
+        }))
+      )
     };
 
     try {
       await updateProjectMutation.mutateAsync({
         id: selectedProject.id,
-        data: {
-          typebot_data: JSON.stringify(typebotData)
-        }
+        typebot_data: JSON.stringify(typebotData)
       });
       alert('Projeto salvo com sucesso!');
     } catch (error) {
       console.error('Erro ao salvar projeto:', error);
       alert('Erro ao salvar projeto');
     }
+  };
+
+  // Carregar template
+  const loadTemplate = (templateKey: string) => {
+    const template = TEMPLATES[templateKey as keyof typeof TEMPLATES];
+    if (template) {
+      setChatbotBlocks(template.blocks);
+      setSelectedBlock(null);
+    }
+  };
+
+  // Criar projeto a partir de template
+  const createFromTemplate = (templateKey: string, name: string, description?: string) => {
+    createProjectMutation.mutate({
+      name,
+      description,
+      template: templateKey
+    });
   };
 
   const createForm = useForm({
@@ -262,50 +549,102 @@ export default function TypebotPage() {
             </p>
           </div>
           
-          <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
-            <DialogTrigger asChild>
-              <Button className="bg-green-500 hover:bg-green-600 text-white">
-                <Plus className="h-4 w-4 mr-2" />
-                Novo Chatbot
-              </Button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Criar Novo Chatbot</DialogTitle>
-              </DialogHeader>
-              <Form {...createForm}>
-                <form onSubmit={createForm.handleSubmit(handleCreateProject)} className="space-y-4">
-                  <FormField
-                    control={createForm.control}
-                    name="name"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Nome do Chatbot</FormLabel>
-                        <FormControl>
-                          <Input placeholder="Ex: Chatbot de Vendas" {...field} />
-                        </FormControl>
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={createForm.control}
-                    name="description"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Descrição (opcional)</FormLabel>
-                        <FormControl>
-                          <Textarea placeholder="Descreva o objetivo do chatbot..." {...field} />
-                        </FormControl>
-                      </FormItem>
-                    )}
-                  />
-                  <Button type="submit" disabled={createProjectMutation.isPending}>
-                    {createProjectMutation.isPending ? "Criando..." : "Criar Chatbot"}
-                  </Button>
-                </form>
-              </Form>
-            </DialogContent>
-          </Dialog>
+          <div className="flex gap-2">
+            <Button onClick={() => setTemplateDialogOpen(true)} className="bg-green-500 hover:bg-green-600 text-white">
+              <Plus className="h-4 w-4 mr-2" />
+              Usar Template
+            </Button>
+            <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
+              <DialogTrigger asChild>
+                <Button variant="outline">
+                  <Plus className="h-4 w-4 mr-2" />
+                  Chatbot Personalizado
+                </Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Criar Chatbot Personalizado</DialogTitle>
+                </DialogHeader>
+                <Form {...createForm}>
+                  <form onSubmit={createForm.handleSubmit(handleCreateProject)} className="space-y-4">
+                    <FormField
+                      control={createForm.control}
+                      name="name"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Nome do Chatbot</FormLabel>
+                          <FormControl>
+                            <Input placeholder="Ex: Chatbot de Vendas" {...field} />
+                          </FormControl>
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={createForm.control}
+                      name="description"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Descrição (opcional)</FormLabel>
+                          <FormControl>
+                            <Textarea placeholder="Descreva o objetivo do chatbot..." {...field} />
+                          </FormControl>
+                        </FormItem>
+                      )}
+                    />
+                    <Button type="submit" disabled={createProjectMutation.isPending}>
+                      {createProjectMutation.isPending ? "Criando..." : "Criar Chatbot"}
+                    </Button>
+                  </form>
+                </Form>
+              </DialogContent>
+            </Dialog>
+
+            {/* Dialog para Templates */}
+            <Dialog open={templateDialogOpen} onOpenChange={setTemplateDialogOpen}>
+              <DialogContent className="max-w-4xl">
+                <DialogHeader>
+                  <DialogTitle>Escolha um Template</DialogTitle>
+                  <p className="text-muted-foreground">
+                    Selecione um template otimizado para sua plataforma
+                  </p>
+                </DialogHeader>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  {Object.entries(TEMPLATES).map(([key, template]) => (
+                    <Card key={key} className="hover:shadow-lg transition-shadow cursor-pointer" onClick={() => {
+                      const name = prompt("Nome do seu chatbot:", template.name);
+                      if (name) {
+                        const description = prompt("Descrição (opcional):", template.description);
+                        createFromTemplate(key, name, description || "");
+                      }
+                    }}>
+                      <CardHeader>
+                        <div className="flex items-center space-x-3">
+                          <div className="text-3xl">{template.icon}</div>
+                          <div>
+                            <CardTitle className="text-lg">{template.name}</CardTitle>
+                            <p className="text-sm text-muted-foreground mt-1">
+                              {template.description}
+                            </p>
+                          </div>
+                        </div>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="space-y-2">
+                          <div className="text-sm font-medium">Recursos inclusos:</div>
+                          <ul className="text-sm text-muted-foreground space-y-1">
+                            <li>• Fluxo de conversação otimizado</li>
+                            <li>• Captura de leads automática</li>
+                            <li>• Mensagens personalizadas</li>
+                            <li>• {template.blocks.length} blocos pré-configurados</li>
+                          </ul>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              </DialogContent>
+            </Dialog>
+          </div>
         </div>
 
         {/* Estatísticas */}
@@ -424,15 +763,38 @@ export default function TypebotPage() {
                           <Edit3 className="h-4 w-4 mr-2" />
                           Editar
                         </Button>
-                        <Button
-                          onClick={() => copyPublicUrl(project.public_id)}
-                          size="sm"
-                          variant="outline"
-                          className="flex-1"
-                        >
-                          <Copy className="h-4 w-4 mr-2" />
-                          Copiar URL
-                        </Button>
+                        {project.is_published ? (
+                          <div className="flex space-x-1 flex-1">
+                            <Button
+                              onClick={() => copyPublicUrl(project.public_id)}
+                              size="sm"
+                              variant="outline"
+                              className="flex-1"
+                            >
+                              <Copy className="h-4 w-4 mr-2" />
+                              Copiar URL
+                            </Button>
+                            <Button
+                              onClick={() => unpublishProjectMutation.mutate(project.id)}
+                              size="sm"
+                              variant="outline"
+                              className="text-orange-600 hover:text-orange-700"
+                              disabled={unpublishProjectMutation.isPending}
+                            >
+                              <Eye className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        ) : (
+                          <Button
+                            onClick={() => publishProjectMutation.mutate(project.id)}
+                            size="sm"
+                            className="flex-1 bg-green-500 hover:bg-green-600 text-white"
+                            disabled={publishProjectMutation.isPending}
+                          >
+                            <Globe className="h-4 w-4 mr-2" />
+                            {publishProjectMutation.isPending ? "Publicando..." : "Publicar"}
+                          </Button>
+                        )}
                         <Button
                           onClick={() => handleDelete(project.id)}
                           size="sm"

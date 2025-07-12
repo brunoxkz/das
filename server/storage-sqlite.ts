@@ -3953,16 +3953,64 @@ export class SQLiteStorage implements IStorage {
     try {
       const now = Math.floor(Date.now() / 1000);
       
-      const result = await db.update(typebotProjects)
-        .set({
-          ...updates,
-          updatedAt: now
-        })
-        .where(eq(typebotProjects.id, id))
-        .returning();
-
-      console.log('✅ Projeto TypeBot atualizado:', result[0]);
-      return result[0];
+      // Construir query SQL dinamicamente baseado nos campos fornecidos
+      const updateFields = [];
+      const values = [];
+      
+      if (updates.name !== undefined) {
+        updateFields.push('name = ?');
+        values.push(updates.name);
+      }
+      
+      if (updates.description !== undefined) {
+        updateFields.push('description = ?');
+        values.push(updates.description);
+      }
+      
+      if (updates.typebot_data !== undefined) {
+        updateFields.push('typebot_data = ?');
+        values.push(updates.typebot_data);
+      }
+      
+      if (updates.theme !== undefined) {
+        updateFields.push('theme = ?');
+        values.push(updates.theme);
+      }
+      
+      if (updates.settings !== undefined) {
+        updateFields.push('settings = ?');
+        values.push(updates.settings);
+      }
+      
+      if (updates.is_published !== undefined) {
+        updateFields.push('is_published = ?');
+        values.push(updates.is_published);
+      }
+      
+      // Sempre atualizar updated_at
+      updateFields.push('updated_at = ?');
+      values.push(now);
+      
+      // Adicionar ID para WHERE
+      values.push(id);
+      
+      const stmt = sqlite.prepare(`
+        UPDATE typebot_projects 
+        SET ${updateFields.join(', ')}
+        WHERE id = ?
+      `);
+      
+      const result = stmt.run(...values);
+      
+      if (result.changes === 0) {
+        throw new Error('Projeto TypeBot não encontrado');
+      }
+      
+      // Buscar projeto atualizado
+      const updatedProject = await this.getTypebotProject(id);
+      
+      console.log('✅ Projeto TypeBot atualizado:', updatedProject);
+      return updatedProject;
     } catch (error) {
       console.error('❌ ERRO ao atualizar projeto TypeBot:', error);
       throw error;
@@ -3971,8 +4019,15 @@ export class SQLiteStorage implements IStorage {
 
   async deleteTypebotProject(id: string): Promise<void> {
     try {
-      await db.delete(typebotProjects)
-        .where(eq(typebotProjects.id, id));
+      const stmt = sqlite.prepare(`
+        DELETE FROM typebot_projects WHERE id = ?
+      `);
+      
+      const result = stmt.run(id);
+      
+      if (result.changes === 0) {
+        throw new Error('Projeto TypeBot não encontrado');
+      }
 
       console.log('✅ Projeto TypeBot deletado:', id);
     } catch (error) {
