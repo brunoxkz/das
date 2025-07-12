@@ -779,7 +779,8 @@ export class SQLiteStorage implements IStorage {
       console.log('✅ Variáveis de resposta deletadas');
       
       // 2. Deletar todas as respostas do quiz
-      await db.delete(quizResponses).where(eq(quizResponses.quizId, id));
+      const deleteResponsesStmt = sqlite.prepare('DELETE FROM quiz_responses WHERE quizId = ?');
+      deleteResponsesStmt.run(id);
       console.log('✅ Respostas do quiz deletadas');
       
       // 3. Deletar analytics do quiz
@@ -867,10 +868,29 @@ export class SQLiteStorage implements IStorage {
   }
 
   async getQuizResponses(quizId: string): Promise<QuizResponse[]> {
-    return await db.select()
-      .from(quizResponses)
-      .where(eq(quizResponses.quizId, quizId))
-      .orderBy(desc(quizResponses.submittedAt));
+    // Usar SQL direto para evitar problemas com colunas não sincronizadas
+    const stmt = sqlite.prepare(`
+      SELECT 
+        id,
+        quizId,
+        responses,
+        metadata,
+        submittedAt
+      FROM quiz_responses 
+      WHERE quizId = ? 
+      ORDER BY submittedAt DESC
+    `);
+    
+    const results = stmt.all(quizId);
+    
+    // Converter para formato QuizResponse
+    return results.map((row: any) => ({
+      id: row.id,
+      quizId: row.quizId,
+      responses: typeof row.responses === 'string' ? JSON.parse(row.responses) : row.responses,
+      metadata: typeof row.metadata === 'string' ? JSON.parse(row.metadata) : row.metadata,
+      submittedAt: row.submittedAt
+    }));
   }
 
   // MÉTODO ULTRA-SCALE: Buscar respostas recentes dos últimos X segundos
@@ -945,22 +965,43 @@ export class SQLiteStorage implements IStorage {
   }
 
   async getQuizResponse(responseId: string): Promise<QuizResponse | undefined> {
-    const [response] = await db.select().from(quizResponses).where(eq(quizResponses.id, responseId));
-    return response || undefined;
+    const stmt = sqlite.prepare(`SELECT id, quizId, responses, metadata, submittedAt FROM quiz_responses WHERE id = ?`);
+    const row = stmt.get(responseId);
+    
+    if (!row) return undefined;
+    
+    return {
+      id: row.id,
+      quizId: row.quizId,
+      responses: typeof row.responses === 'string' ? JSON.parse(row.responses) : row.responses,
+      metadata: typeof row.metadata === 'string' ? JSON.parse(row.metadata) : row.metadata,
+      submittedAt: row.submittedAt
+    };
   }
 
   async updateQuizResponse(responseId: string, updates: Partial<QuizResponse>): Promise<QuizResponse> {
-    const [updatedResponse] = await db
-      .update(quizResponses)
-      .set(updates)
-      .where(eq(quizResponses.id, responseId))
-      .returning();
+    // Construir query dinamicamente baseado nos updates
+    const setClause = Object.keys(updates).map(key => `${key} = ?`).join(', ');
+    const values = Object.values(updates);
     
-    if (!updatedResponse) {
+    const stmt = sqlite.prepare(`UPDATE quiz_responses SET ${setClause} WHERE id = ?`);
+    const result = stmt.run(...values, responseId);
+    
+    if (result.changes === 0) {
       throw new Error(`Response with id ${responseId} not found`);
     }
     
-    return updatedResponse;
+    // Buscar o registro atualizado
+    const getStmt = sqlite.prepare(`SELECT id, quizId, responses, metadata, submittedAt FROM quiz_responses WHERE id = ?`);
+    const row = getStmt.get(responseId);
+    
+    return {
+      id: row.id,
+      quizId: row.quizId,
+      responses: typeof row.responses === 'string' ? JSON.parse(row.responses) : row.responses,
+      metadata: typeof row.metadata === 'string' ? JSON.parse(row.metadata) : row.metadata,
+      submittedAt: row.submittedAt
+    };
   }
 
   async getQuizAnalytics(quizId: string, startDate?: Date, endDate?: Date): Promise<QuizAnalytics[]> {
