@@ -261,9 +261,11 @@ export default function TypebotPage() {
   });
 
   // Buscar quizzes para conversão
-  const { data: quizzes = [] } = useQuery({
+  const quizzesQuery = useQuery({
     queryKey: ["/api/quizzes"],
   });
+  
+  const { data: quizzes = [] } = quizzesQuery;
 
   // Mutation para criar projeto
   const createProjectMutation = useMutation({
