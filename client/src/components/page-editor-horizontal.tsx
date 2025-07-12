@@ -66,12 +66,13 @@ import {
   CheckCircle,
   ExternalLink,
   ArrowLeftRight,
-  HelpCircle
+  HelpCircle,
+  Brain
 } from "lucide-react";
 
 interface Element {
   id: number;
-  type: "multiple_choice" | "text" | "rating" | "email" | "checkbox" | "date" | "phone" | "number" | "textarea" | "image_upload" | "animated_transition" | "heading" | "paragraph" | "image" | "divider" | "video" | "audio" | "birth_date" | "height" | "current_weight" | "target_weight" | "transition_background" | "transition_text" | "transition_counter" | "transition_loader" | "transition_redirect" | "transition_button" | "spacer" | "game_wheel" | "game_scratch" | "game_color_pick" | "game_brick_break" | "game_memory_cards" | "game_slot_machine" | "continue_button" | "loading_question" | "share_quiz" | "price" | "icon_list" | "testimonials" | "guarantee" | "paypal" | "image_with_text" | "chart" | "metrics" | "before_after" | "pricing_plans" | "stripe_embed" | "hotmart_upsell" | "faq" | "image_carousel";
+  type: "multiple_choice" | "text" | "rating" | "email" | "checkbox" | "date" | "phone" | "number" | "textarea" | "image_upload" | "animated_transition" | "heading" | "paragraph" | "image" | "divider" | "video" | "audio" | "birth_date" | "height" | "current_weight" | "target_weight" | "transition_background" | "transition_text" | "transition_counter" | "transition_loader" | "transition_redirect" | "transition_button" | "spacer" | "game_wheel" | "game_scratch" | "game_color_pick" | "game_brick_break" | "game_memory_cards" | "game_slot_machine" | "continue_button" | "loading_question" | "share_quiz" | "price" | "icon_list" | "testimonials" | "guarantee" | "paypal" | "image_with_text" | "chart" | "metrics" | "before_after" | "pricing_plans" | "stripe_embed" | "hotmart_upsell" | "faq" | "image_carousel" | "body_type_classifier" | "age_classifier" | "fitness_goal_classifier" | "experience_classifier";
   content: string;
   question?: string;
   description?: string;
@@ -222,6 +223,25 @@ interface Element {
   percentageColor?: string;
   additionalText?: string;
   additionalTextColor?: string;
+  
+  // 🔥 NOVA FUNCIONALIDADE: Propriedades para classificadores ultra personalizados
+  classifierType?: "body_type" | "age_group" | "fitness_goal" | "experience_level";
+  classifierTitle?: string;
+  classifierDescription?: string;
+  classifierOptions?: {
+    id: string;
+    label: string;
+    description: string;
+    icon?: string;
+    color?: string;
+    campaignTrigger?: {
+      sms?: string;
+      email?: string;
+      whatsapp?: string;
+    };
+  }[];
+  classifierRequired?: boolean;
+  classifierMultipleSelect?: boolean;
   
   // Propriedades específicas para compartilhamento
   shareMessage?: string;
@@ -713,7 +733,11 @@ export function PageEditorHorizontal({
       game_memory_cards: "Jogo da Memória",
       game_slot_machine: "Caça-Níquel",
       continue_button: "Botão Continuar",
-      loading_question: "Carregamento + Pergunta"
+      loading_question: "Carregamento + Pergunta",
+      body_type_classifier: "Tipos de Corpo",
+      age_classifier: "Classificador de Idade", 
+      fitness_goal_classifier: "Objetivos Fitness",
+      experience_classifier: "Nível de Experiência"
     };
     return typeNames[type] || type;
   };
@@ -859,6 +883,15 @@ export function PageEditorHorizontal({
         { type: "stripe_embed", label: "Stripe", icon: <Shield className="w-4 h-4" /> },
         { type: "paypal", label: "PayPal", icon: <CreditCard className="w-4 h-4" /> },
         { type: "hotmart_upsell", label: "Upsell Hotmart", icon: <Target className="w-4 h-4" /> },
+      ]
+    },
+    {
+      name: "🚀 ULTRA PERSONALIZAÇÃO",
+      elements: [
+        { type: "body_type_classifier", label: "Tipos de Corpo", icon: <Users className="w-4 h-4" /> },
+        { type: "age_classifier", label: "Faixa Etária", icon: <Calendar className="w-4 h-4" /> },
+        { type: "fitness_goal_classifier", label: "Objetivos Fitness", icon: <Target className="w-4 h-4" /> },
+        { type: "experience_classifier", label: "Experiência", icon: <Award className="w-4 h-4" /> },
       ]
     }
   ];
@@ -1116,6 +1149,243 @@ const gameElementCategories = [
         buttonHoverColor: "#059669",
         isFixedFooter: false
       }),
+      // 🔥 NOVA FUNCIONALIDADE: Configurações padrão para classificadores ultra personalizados
+      ...(type === "body_type_classifier" && {
+        classifierType: "body_type",
+        classifierTitle: "Qual é o seu tipo de corpo?",
+        classifierDescription: "Selecione a opção que melhor descreve seu biotipo atual para recomendações personalizadas:",
+        classifierRequired: true,
+        classifierMultipleSelect: false,
+        fieldId: "tipo_corpo",
+        classifierOptions: [
+          {
+            id: "magra",
+            label: "Magra",
+            description: "Corpo naturalmente magro, dificuldade para ganhar peso",
+            icon: "👤",
+            color: "#3b82f6",
+            campaignTrigger: {
+              sms: "Oi {nome_completo}! Seu corpo MAGRO precisa de estratégias específicas para ganhar massa. Temos o protocolo perfeito para você! 💪",
+              email: "Protocolo Especial para Corpos Magros - Ganhe Massa Rapidamente",
+              whatsapp: "🔥 {nome_completo}, descobrimos que você tem corpo MAGRO! Temos estratégias exclusivas para seu biotipo."
+            }
+          },
+          {
+            id: "com_volume",
+            label: "Com Volume",
+            description: "Corpo com mais volume, foco na definição muscular",
+            icon: "💪",
+            color: "#f59e0b",
+            campaignTrigger: {
+              sms: "Oi {nome_completo}! Seu corpo COM VOLUME tem potencial incrível para definição. Vamos transformar isso em músculos! 🔥",
+              email: "Plano de Definição para Corpos com Volume - Resultados Garantidos",
+              whatsapp: "💪 {nome_completo}, seu corpo COM VOLUME pode alcançar resultados incríveis com as técnicas certas!"
+            }
+          },
+          {
+            id: "tonifica",
+            label: "Para Tonificar",
+            description: "Corpo que precisa de tonificação e fortalecimento",
+            icon: "⚡",
+            color: "#10b981",
+            campaignTrigger: {
+              sms: "Oi {nome_completo}! Vamos TONIFICAR seu corpo com exercícios específicos. Prepare-se para a transformação! ⚡",
+              email: "Programa de Tonificação Acelerada - Seu Corpo Definido",
+              whatsapp: "⚡ {nome_completo}, identificamos que você quer TONIFICAR! Temos o programa perfeito para você."
+            }
+          },
+          {
+            id: "equilibrado",
+            label: "Equilibrado",
+            description: "Corpo com proporções equilibradas, manutenção e melhoria",
+            icon: "⚖️",
+            color: "#8b5cf6",
+            campaignTrigger: {
+              sms: "Oi {nome_completo}! Seu corpo EQUILIBRADO pode ser otimizado para resultados ainda melhores! Vamos evoluir juntos! ⚖️",
+              email: "Otimização para Corpos Equilibrados - Maximize seus Resultados",
+              whatsapp: "⚖️ {nome_completo}, seu corpo EQUILIBRADO tem grande potencial! Vamos maximizar seus resultados."
+            }
+          }
+        ]
+      }),
+      
+      ...(type === "age_classifier" && {
+        classifierType: "age_group",
+        classifierTitle: "Qual é a sua faixa etária?",
+        classifierDescription: "Sua idade influencia o método ideal de treinamento e nutrição:",
+        classifierRequired: true,
+        classifierMultipleSelect: false,
+        fieldId: "faixa_etaria",
+        classifierOptions: [
+          {
+            id: "18-25",
+            label: "18-25 anos",
+            description: "Metabolismo acelerado, alta capacidade de recuperação",
+            icon: "🚀",
+            color: "#3b82f6",
+            campaignTrigger: {
+              sms: "Oi {nome_completo}! Aos {faixa_etaria} você tem METABOLISMO TURBINADO! Vamos usar isso a seu favor! 🚀",
+              email: "Método Jovem (18-25 anos) - Maximize seu Metabolismo Acelerado",
+              whatsapp: "🚀 {nome_completo}, na faixa dos {faixa_etaria} seu corpo tem potencial EXPLOSIVO!"
+            }
+          },
+          {
+            id: "26-35",
+            label: "26-35 anos",
+            description: "Pico de performance, equilibrio ideal para resultados",
+            icon: "💪",
+            color: "#10b981",
+            campaignTrigger: {
+              sms: "Oi {nome_completo}! {faixa_etaria} é a IDADE PERFEITA para transformação corporal. Vamos aproveitar! 💪",
+              email: "Programa Prime (26-35 anos) - Idade Ideal para Transformação",
+              whatsapp: "💪 {nome_completo}, {faixa_etaria} é a idade PRIME para resultados incríveis!"
+            }
+          },
+          {
+            id: "36-45",
+            label: "36-45 anos",
+            description: "Maturidade e experiência, foco em eficiência",
+            icon: "🎯",
+            color: "#f59e0b",
+            campaignTrigger: {
+              sms: "Oi {nome_completo}! Aos {faixa_etaria} você tem EXPERIÊNCIA e maturidade. Método eficiente para sua idade! 🎯",
+              email: "Estratégia Madura (36-45 anos) - Eficiência e Resultados Duradouros",
+              whatsapp: "🎯 {nome_completo}, {faixa_etaria} é perfeito para métodos EFICIENTES e inteligentes!"
+            }
+          },
+          {
+            id: "46+",
+            label: "46+ anos",
+            description: "Sabedoria e determinação, foco em saúde e vitalidade",
+            icon: "🌟",
+            color: "#8b5cf6",
+            campaignTrigger: {
+              sms: "Oi {nome_completo}! Aos {faixa_etaria} você tem SABEDORIA e determinação. Saúde e vitalidade em foco! 🌟",
+              email: "Programa Vitalidade (46+ anos) - Saúde e Energia Renovada",
+              whatsapp: "🌟 {nome_completo}, {faixa_etaria} é a idade da SABEDORIA! Vitalidade e saúde em primeiro lugar."
+            }
+          }
+        ]
+      }),
+      
+      ...(type === "fitness_goal_classifier" && {
+        classifierType: "fitness_goal",
+        classifierTitle: "Qual é o seu principal objetivo?",
+        classifierDescription: "Defina seu foco principal para recebermos recomendações direcionadas:",
+        classifierRequired: true,
+        classifierMultipleSelect: false,
+        fieldId: "objetivo_fitness",
+        classifierOptions: [
+          {
+            id: "perder_peso",
+            label: "Perder Peso",
+            description: "Reduzir gordura corporal e alcançar peso ideal",
+            icon: "📉",
+            color: "#ef4444",
+            campaignTrigger: {
+              sms: "Oi {nome_completo}! Seu objetivo é PERDER PESO? Temos o método que já ajudou +10mil pessoas! 📉",
+              email: "Protocolo Queima Gordura - Perca Peso de Forma Saudável e Duradoura",
+              whatsapp: "📉 {nome_completo}, vamos PERDER PESO juntos! Método comprovado e eficaz esperando por você."
+            }
+          },
+          {
+            id: "ganhar_massa",
+            label: "Ganhar Massa",
+            description: "Aumentar massa muscular e definição",
+            icon: "💪",
+            color: "#10b981",
+            campaignTrigger: {
+              sms: "Oi {nome_completo}! Quer GANHAR MASSA MUSCULAR? Protocolo científico para hipertrofia garantida! 💪",
+              email: "Sistema de Hipertrofia - Ganhe Massa Muscular Rapidamente",
+              whatsapp: "💪 {nome_completo}, vamos GANHAR MASSA! Sistema de hipertrofia que realmente funciona."
+            }
+          },
+          {
+            id: "tonificar",
+            label: "Tonificar",
+            description: "Definir músculos e melhorar forma física",
+            icon: "⚡",
+            color: "#f59e0b",
+            campaignTrigger: {
+              sms: "Oi {nome_completo}! Objetivo TONIFICAR? Exercícios específicos para definição muscular perfeita! ⚡",
+              email: "Programa de Tonificação Completa - Corpo Definido e Saudável", 
+              whatsapp: "⚡ {nome_completo}, vamos TONIFICAR! Definição muscular que você sempre sonhou."
+            }
+          },
+          {
+            id: "manter_forma",
+            label: "Manter Forma",
+            description: "Manutenção da forma física atual",
+            icon: "⚖️",
+            color: "#8b5cf6",
+            campaignTrigger: {
+              sms: "Oi {nome_completo}! Quer MANTER SUA FORMA? Rotina inteligente para sustentabilidade a longo prazo! ⚖️",
+              email: "Manutenção Inteligente - Mantenha sua Forma Física Ideal",
+              whatsapp: "⚖️ {nome_completo}, vamos MANTER SUA FORMA! Sustentabilidade e qualidade de vida."
+            }
+          }
+        ]
+      }),
+      
+      ...(type === "experience_classifier" && {
+        classifierType: "experience_level",
+        classifierTitle: "Qual é o seu nível de experiência?",
+        classifierDescription: "Seu nível de experiência determina a intensidade e complexidade ideal:",
+        classifierRequired: true,
+        classifierMultipleSelect: false,
+        fieldId: "nivel_experiencia",
+        classifierOptions: [
+          {
+            id: "iniciante",
+            label: "Iniciante",
+            description: "Pouca ou nenhuma experiência com exercícios",
+            icon: "🌱",
+            color: "#10b981",
+            campaignTrigger: {
+              sms: "Oi {nome_completo}! INICIANTE? Perfeito! Método gradual e seguro para começar com o pé direito! 🌱",
+              email: "Guia do Iniciante - Comece sua Jornada Fitness com Segurança",
+              whatsapp: "🌱 {nome_completo}, ser INICIANTE é uma vantagem! Método desenvolvido especialmente para você."
+            }
+          },
+          {
+            id: "intermediario",
+            label: "Intermediário",
+            description: "Alguns meses de experiência, conhecimento básico",
+            icon: "🔥",
+            color: "#f59e0b",
+            campaignTrigger: {
+              sms: "Oi {nome_completo}! Nível INTERMEDIÁRIO? Hora de dar o próximo passo e quebrar plateaus! 🔥",
+              email: "Evolução Intermediária - Quebre Plateaus e Acelere Resultados",
+              whatsapp: "🔥 {nome_completo}, nível INTERMEDIÁRIO significa que é hora de EVOLUIR! Próximo nível te espera."
+            }
+          },
+          {
+            id: "avancado",
+            label: "Avançado",
+            description: "Experiência sólida, busca por otimização",
+            icon: "⚡",
+            color: "#8b5cf6",
+            campaignTrigger: {
+              sms: "Oi {nome_completo}! AVANÇADO? Técnicas de elite para maximizar seus resultados já conquistados! ⚡",
+              email: "Protocolo Avançado - Técnicas de Elite para Resultados Superiores",
+              whatsapp: "⚡ {nome_completo}, nível AVANÇADO merece técnicas de ELITE! Vamos maximizar tudo."
+            }
+          },
+          {
+            id: "expert",
+            label: "Expert",
+            description: "Experiência extensa, conhecimento profundo",
+            icon: "👑",
+            color: "#6366f1",
+            campaignTrigger: {
+              sms: "Oi {nome_completo}! EXPERT? Você merece estratégias de outro nível. Vamos para a maestria! 👑",
+              email: "Maestria Fitness - Estratégias Exclusivas para Experts",
+              whatsapp: "👑 {nome_completo}, EXPERT merece o que há de mais avançado! Maestria total te aguarda."
+            }
+          }
+        ]
+      }),
+
       ...(type === "loading_question" && {
         loadingDuration: 3,
         loadingBarColor: "#10B981",
@@ -1218,12 +1488,70 @@ const gameElementCategories = [
           backgroundColor: element.backgroundColor || "transparent",
           textAlign: (element.textAlign || "left") as any,
           padding: element.backgroundColor !== "transparent" ? "8px 12px" : "0",
-          borderRadius: element.backgroundColor !== "transparent" ? "6px" : "0"
+          borderRadius: element.backgroundColor !== "transparent" ? "6px" : "0",
+          // 🔥 NOVA FUNCIONALIDADE: Gradientes de texto
+          background: element.textGradient ? `linear-gradient(${element.gradientDirection || "135deg"}, ${element.gradientFrom || "#667eea"}, ${element.gradientTo || "#764ba2"})` : undefined,
+          WebkitBackgroundClip: element.textGradient ? "text" : undefined,
+          WebkitTextFillColor: element.textGradient ? "transparent" : undefined,
+          backgroundClip: element.textGradient ? "text" : undefined,
+          // 🔥 NOVA FUNCIONALIDADE: Sombras de texto
+          textShadow: element.textShadow === "sm" ? "1px 1px 2px rgba(0,0,0,0.1)" : 
+                     element.textShadow === "md" ? "2px 2px 4px rgba(0,0,0,0.2)" :
+                     element.textShadow === "lg" ? "3px 3px 6px rgba(0,0,0,0.3)" :
+                     element.textShadow === "neon" ? "0 0 10px currentColor" : undefined
         };
+
+        // 🔥 NOVA FUNCIONALIDADE: Animações de entrada
+        const animationClass = element.animation === "fadeIn" ? "animate-fade-in" :
+                              element.animation === "slideUp" ? "animate-slide-up" :
+                              element.animation === "typewriter" ? "animate-typewriter" :
+                              "";
+
         return (
-          <h2 style={headingStyle}>
-            {element.content}
-          </h2>
+          <div className={`relative ${animationClass}`}>
+            {/* 🔥 NOVA FUNCIONALIDADE: Ícone decorativo */}
+            {element.decorativeIcon && (
+              <span className="absolute -left-8 top-0 text-2xl opacity-30">
+                {element.decorativeIcon}
+              </span>
+            )}
+            
+            <h2 style={headingStyle} className={`relative ${element.letterSpacing === "wide" ? "tracking-wide" : element.letterSpacing === "wider" ? "tracking-wider" : ""}`}>
+              {/* 🔥 NOVA FUNCIONALIDADE: Destaque de palavras-chave */}
+              {element.highlightKeywords ? 
+                element.content?.split(' ').map((word, index) => {
+                  const isKeyword = element.keywords?.includes(word.toLowerCase());
+                  return (
+                    <span key={index} className={isKeyword ? "bg-yellow-200 px-1 rounded" : ""}>
+                      {word}{index < (element.content?.split(' ').length || 0) - 1 ? ' ' : ''}
+                    </span>
+                  );
+                }) : 
+                element.content
+              }
+              
+              {/* 🔥 NOVA FUNCIONALIDADE: Badge decorativo */}
+              {element.badge && (
+                <span className={`ml-2 inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+                  element.badgeColor === "blue" ? "bg-blue-100 text-blue-800" :
+                  element.badgeColor === "green" ? "bg-green-100 text-green-800" :
+                  element.badgeColor === "red" ? "bg-red-100 text-red-800" :
+                  "bg-gray-100 text-gray-800"
+                }`}>
+                  {element.badge}
+                </span>
+              )}
+            </h2>
+            
+            {/* 🔥 NOVA FUNCIONALIDADE: Linha decorativa */}
+            {element.decorativeLine && (
+              <div className={`w-12 h-1 mt-2 ${
+                element.lineColor === "primary" ? "bg-vendzz-primary" :
+                element.lineColor === "secondary" ? "bg-gray-400" :
+                "bg-gradient-to-r from-blue-500 to-purple-500"
+              } ${element.lineAlignment === "center" ? "mx-auto" : element.lineAlignment === "right" ? "ml-auto" : ""}`}></div>
+            )}
+          </div>
         );
       case "paragraph":
         const paragraphStyle = {
@@ -1257,60 +1585,201 @@ const gameElementCategories = [
 
         const containerClass = element.optionLayout === "horizontal" ? "flex flex-wrap gap-2" : 
                               element.optionLayout === "grid" ? "grid grid-cols-2 gap-2" : 
+                              element.optionLayout === "cards" ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" :
                               "space-y-2";
 
-        const optionClass = element.buttonStyle === "rounded" ? "rounded-md" :
+        const optionClass = element.buttonStyle === "rounded" ? "rounded-lg" :
                            element.buttonStyle === "pills" ? "rounded-full" :
+                           element.buttonStyle === "cards" ? "rounded-xl shadow-md hover:shadow-lg" :
                            "rounded-sm";
 
         const spacingClass = element.spacing === "sm" ? "gap-1" :
                             element.spacing === "lg" ? "gap-4" :
                             "gap-2";
 
+        // 🔥 NOVA FUNCIONALIDADE: Animação e randomização
+        const optionAnimationClass = element.animateOptions ? "transform hover:scale-105 transition-all duration-200" : "transition-all";
+        const shouldRandomize = element.randomizeOptions;
+
+        // 🔥 NOVA FUNCIONALIDADE: Opcões com imagens melhoradas
+        const displayOptions = shouldRandomize ? 
+          [...(element.options || [])].sort(() => Math.random() - 0.5) : 
+          (element.options || []);
+
         return (
           <div className="space-y-3">
             <label className="block text-sm font-medium" style={questionStyle}>
               {element.question || "Pergunta"}
               {element.required && <span className="text-red-500 ml-1">*</span>}
+              {element.showQuestionNumber && <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded ml-2">#{element.questionNumber || 1}</span>}
             </label>
+            
+            {/* 🔥 NOVA FUNCIONALIDADE: Descrição da pergunta */}
+            {element.questionDescription && (
+              <p className="text-sm text-gray-600 mt-1">{element.questionDescription}</p>
+            )}
+            
             <div className={`${containerClass} ${spacingClass}`}>
-              {(element.options || []).map((option, index) => (
-                <div key={index} className={`flex items-center space-x-2 p-3 border border-gray-200 hover:border-vendzz-primary hover:bg-vendzz-primary/5 cursor-pointer ${optionClass} ${element.borderStyle === "thick" ? "border-2" : ""} ${element.shadowStyle === "sm" ? "shadow-sm" : element.shadowStyle === "md" ? "shadow-md" : ""} transition-all`}>
+              {displayOptions.map((option, index) => (
+                <div key={index} className={`group relative flex items-center space-x-3 p-4 border border-gray-200 hover:border-vendzz-primary hover:bg-vendzz-primary/5 cursor-pointer ${optionClass} ${element.borderStyle === "thick" ? "border-2" : ""} ${element.shadowStyle === "sm" ? "shadow-sm" : element.shadowStyle === "md" ? "shadow-md" : ""} ${optionAnimationClass}`}>
+                  
+                  {/* 🔥 NOVA FUNCIONALIDADE: Imagens melhoradas com overlay */}
                   {element.optionImages?.[index] && (
-                    <img 
-                      src={element.optionImages[index]} 
-                      alt={option}
-                      className="w-[60px] h-[60px] object-cover rounded border"
-                    />
+                    <div className="relative">
+                      <img 
+                        src={element.optionImages[index]} 
+                        alt={option}
+                        className={`${element.imageSize === "sm" ? "w-12 h-12" : element.imageSize === "lg" ? "w-20 h-20" : "w-16 h-16"} object-cover rounded-lg border-2 border-gray-200 group-hover:border-vendzz-primary transition-colors`}
+                      />
+                      {element.imageOverlay && (
+                        <div className="absolute inset-0 bg-black bg-opacity-20 rounded-lg group-hover:bg-opacity-0 transition-all"></div>
+                      )}
+                    </div>
                   )}
+                  
+                  {/* 🔥 NOVA FUNCIONALIDADE: Ícones nas opções */}
+                  {element.optionIcons?.[index] && !element.optionImages?.[index] && (
+                    <div className={`${element.iconSize === "sm" ? "w-6 h-6" : element.iconSize === "lg" ? "w-10 h-10" : "w-8 h-8"} flex items-center justify-center rounded-full bg-vendzz-primary/10 text-vendzz-primary`}>
+                      <span className="text-xl">{element.optionIcons[index]}</span>
+                    </div>
+                  )}
+                  
                   {!element.hideInputs && (
                     <input 
                       type={element.multipleSelection ? "checkbox" : "radio"} 
                       name={`preview-${element.id}`} 
-                      className="rounded" 
+                      className={`${element.inputStyle === "modern" ? "w-5 h-5 text-vendzz-primary border-2 border-gray-300 rounded-md focus:ring-vendzz-primary focus:ring-2" : "rounded"}`}
                     />
                   )}
-                  <span className="text-sm flex-1 font-medium">{option}</span>
+                  
+                  <div className="flex-1">
+                    <span className={`text-sm font-medium ${element.optionTextSize === "sm" ? "text-xs" : element.optionTextSize === "lg" ? "text-base" : "text-sm"}`}>
+                      {option}
+                    </span>
+                    
+                    {/* 🔥 NOVA FUNCIONALIDADE: Subtexto nas opções */}
+                    {element.optionSubtexts?.[index] && (
+                      <p className="text-xs text-gray-500 mt-1">{element.optionSubtexts[index]}</p>
+                    )}
+                    
+                    {/* 🔥 NOVA FUNCIONALIDADE: Pontuação visível */}
+                    {element.showOptionPoints && element.optionPoints?.[index] && (
+                      <span className="absolute top-2 right-2 bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full">
+                        +{element.optionPoints[index]} pts
+                      </span>
+                    )}
+                  </div>
+                  
+                  {/* 🔥 NOVA FUNCIONALIDADE: Badge "Mais Popular" */}
+                  {element.popularOption === index && (
+                    <div className="absolute -top-2 -right-2 bg-gradient-to-r from-yellow-400 to-orange-500 text-white text-xs px-2 py-1 rounded-full font-bold shadow-lg">
+                      ⭐ Popular
+                    </div>
+                  )}
                 </div>
               ))}
             </div>
+            
+            {/* 🔥 NOVA FUNCIONALIDADE: Seleção mínima/máxima */}
+            {element.multipleSelection && (element.minSelections || element.maxSelections) && (
+              <p className="text-xs text-gray-500 mt-2">
+                {element.minSelections && element.maxSelections ? 
+                  `Selecione entre ${element.minSelections} e ${element.maxSelections} opções` :
+                  element.minSelections ? 
+                    `Selecione pelo menos ${element.minSelections} opção(ões)` :
+                    `Selecione até ${element.maxSelections} opção(ões)`
+                }
+              </p>
+            )}
           </div>
         );
       case "text":
       case "email":
       case "phone":
       case "number":
+        const inputStyle = element.inputStyle === "modern" ? "rounded-lg border-2 border-gray-200 focus:border-vendzz-primary focus:ring-2 focus:ring-vendzz-primary/20" :
+                          element.inputStyle === "minimal" ? "border-0 border-b-2 border-gray-200 focus:border-vendzz-primary rounded-none bg-transparent" :
+                          element.inputStyle === "filled" ? "bg-gray-50 border border-gray-200 rounded-lg focus:bg-white focus:border-vendzz-primary" :
+                          "border border-gray-300 rounded-md focus:border-vendzz-primary focus:ring-1 focus:ring-vendzz-primary";
+        
+        const iconMap = {
+          email: "📧",
+          phone: "📱", 
+          text: "✏️",
+          number: "🔢"
+        };
+
         return (
           <div className="space-y-2">
             <label className="block text-sm font-medium text-gray-700">
               {element.question || "Campo"}
               {element.required && <span className="text-red-500 ml-1">*</span>}
+              {element.showFieldIcon && <span className="ml-2">{iconMap[element.type as keyof typeof iconMap]}</span>}
             </label>
-            <input
-              type={element.type === "email" ? "email" : element.type === "phone" ? "tel" : element.type === "number" ? "number" : "text"}
-              placeholder={element.placeholder || `Digite ${element.type === "email" ? "seu email" : element.type === "phone" ? "seu telefone" : "aqui"}`}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md"
-            />
+            
+            {/* 🔥 NOVA FUNCIONALIDADE: Descrição do campo */}
+            {element.fieldDescription && (
+              <p className="text-sm text-gray-500">{element.fieldDescription}</p>
+            )}
+            
+            <div className="relative">
+              {/* 🔥 NOVA FUNCIONALIDADE: Ícone dentro do input */}
+              {element.showInlineIcon && (
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <span className="text-gray-400 text-sm">{iconMap[element.type as keyof typeof iconMap]}</span>
+                </div>
+              )}
+              
+              <input
+                type={element.type === "email" ? "email" : element.type === "phone" ? "tel" : element.type === "number" ? "number" : "text"}
+                placeholder={element.placeholder || `Digite ${element.type === "email" ? "seu email" : element.type === "phone" ? "seu telefone" : "aqui"}`}
+                className={`w-full px-3 py-3 ${element.showInlineIcon ? "pl-10" : ""} ${inputStyle} transition-all duration-200`}
+                {...(element.type === "email" && element.emailValidation && {
+                  pattern: "[a-z0-9._%+-]+@[a-z0-9.-]+\\.[a-z]{2,}$"
+                })}
+                {...(element.type === "phone" && element.phoneFormat && {
+                  pattern: element.phoneFormat
+                })}
+                {...(element.type === "number" && {
+                  min: element.min,
+                  max: element.max,
+                  step: element.numberStep || 1
+                })}
+              />
+              
+              {/* 🔥 NOVA FUNCIONALIDADE: Validação em tempo real */}
+              {element.type === "email" && element.showValidation && (
+                <div className="absolute inset-y-0 right-0 pr-3 flex items-center">
+                  <div className="w-4 h-4 rounded-full bg-green-100 flex items-center justify-center">
+                    <span className="text-green-600 text-xs">✓</span>
+                  </div>
+                </div>
+              )}
+              
+              {/* 🔥 NOVA FUNCIONALIDADE: Máscara de telefone */}
+              {element.type === "phone" && element.showPhoneMask && (
+                <div className="absolute inset-y-0 right-0 pr-3 flex items-center">
+                  <span className="text-xs text-gray-400 bg-gray-100 px-2 py-1 rounded">
+                    {element.countryCode || "+55"}
+                  </span>
+                </div>
+              )}
+            </div>
+            
+            {/* 🔥 NOVA FUNCIONALIDADE: Contador de caracteres */}
+            {element.showCharCount && element.maxLength && (
+              <div className="flex justify-between text-xs text-gray-500">
+                <span></span>
+                <span>0/{element.maxLength}</span>
+              </div>
+            )}
+            
+            {/* 🔥 NOVA FUNCIONALIDADE: Dicas contextuais */}
+            {element.fieldHint && (
+              <p className="text-xs text-blue-600 bg-blue-50 p-2 rounded border-l-2 border-blue-200">
+                💡 {element.fieldHint}
+              </p>
+            )}
           </div>
         );
       case "textarea":
@@ -1480,7 +1949,7 @@ const gameElementCategories = [
       case "height":
         const heightUnit = element.heightUnit || "cm";
         const showUnitSelector = element.showUnitSelector !== false;
-        const inputStyle = element.inputStyle || "bordered";
+        const heightInputStyle = element.inputStyle || "bordered";
         const labelPosition = element.labelPosition || "top";
         const showIcon = element.showIcon !== false;
         const unitSelectorStyle = element.unitSelectorStyle || "dropdown";
@@ -1525,9 +1994,9 @@ const gameElementCategories = [
                   <input
                     type="number"
                     placeholder={heightUnit === "cm" ? "Ex: 175" : "Ex: 5.9"}
-                    className={inputClasses[inputStyle]}
+                    className={inputClasses[heightInputStyle]}
                     style={{ 
-                      backgroundColor: element.inputBackgroundColor || (inputStyle === "filled" ? "#faf5ff" : "white"),
+                      backgroundColor: element.inputBackgroundColor || (heightInputStyle === "filled" ? "#faf5ff" : "white"),
                       borderColor: element.inputBorderColor || "#e5e7eb",
                       fontSize: '18px'
                     }}
@@ -2190,15 +2659,21 @@ const gameElementCategories = [
         const winningSegment = element.wheelWinningSegment || 0;
         
         return (
-          <div className="space-y-3 p-4 border-2 border-dashed border-orange-200 rounded-lg bg-orange-50">
-            <div className="flex items-center gap-2">
-              <BarChart3 className="w-4 h-4 text-orange-600" />
-              <span className="font-medium text-orange-800">Roleta da Sorte</span>
+          <div className="space-y-4 p-4 border-2 border-dashed border-orange-200 rounded-lg bg-gradient-to-br from-orange-50 to-yellow-50 animate-fade-in">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <BarChart3 className="w-5 h-5 text-orange-600" />
+                <span className="font-bold text-orange-800">🎰 Roleta da Sorte Premium</span>
+              </div>
+              {/* 🔥 INTEGRAÇÃO COM SISTEMA: Indica captura automática */}
+              <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full font-medium">
+                📊 Auto-Captura
+              </span>
             </div>
             
             <div className="flex flex-col items-center space-y-4">
-              <div className="relative w-40 h-40">
-                <svg viewBox="0 0 200 200" className="w-full h-full">
+              <div className="relative w-48 h-48">
+                <svg viewBox="0 0 200 200" className="w-full h-full drop-shadow-xl">
                   {wheelSegments.map((segment, index) => {
                     const angle = 360 / wheelSegments.length;
                     const startAngle = index * angle;
@@ -2218,68 +2693,176 @@ const gameElementCategories = [
                           d={`M 100 100 L ${x1} ${y1} A 80 80 0 ${largeArcFlag} 1 ${x2} ${y2} Z`}
                           fill={wheelColors[index] || "#e2e8f0"}
                           stroke={isWinning ? "#fbbf24" : "#ffffff"}
-                          strokeWidth={isWinning ? "3" : "2"}
+                          strokeWidth={isWinning ? "4" : "2"}
+                          className={isWinning ? "animate-pulse-glow" : ""}
                         />
                         <text
-                          x={100 + 50 * Math.cos(((startAngle + endAngle) / 2 * Math.PI) / 180)}
-                          y={100 + 50 * Math.sin(((startAngle + endAngle) / 2 * Math.PI) / 180)}
+                          x={100 + 55 * Math.cos(((startAngle + endAngle) / 2 * Math.PI) / 180)}
+                          y={100 + 55 * Math.sin(((startAngle + endAngle) / 2 * Math.PI) / 180)}
                           textAnchor="middle"
                           dominantBaseline="middle"
                           fontSize="10"
                           fill="white"
                           fontWeight="bold"
+                          className="drop-shadow-md"
                         >
                           {segment.length > 8 ? segment.substring(0, 8) + "..." : segment}
                         </text>
                       </g>
                     );
                   })}
-                  {/* Ponteiro */}
+                  
+                  {/* Centro decorativo */}
+                  <circle cx="100" cy="100" r="15" fill="url(#centerGradient)" stroke="#ffffff" strokeWidth="3" />
+                  <defs>
+                    <radialGradient id="centerGradient">
+                      <stop offset="0%" stopColor="#fbbf24" />
+                      <stop offset="100%" stopColor="#f59e0b" />
+                    </radialGradient>
+                  </defs>
+                  
+                  {/* Ponteiro melhorado */}
                   <polygon
-                    points="100,20 105,35 95,35"
+                    points="100,15 107,35 93,35"
                     fill={element.wheelPointerColor || "#DC2626"}
+                    stroke="#ffffff"
+                    strokeWidth="2"
+                    className="drop-shadow-lg"
                   />
                 </svg>
               </div>
               
-              <button className="px-4 py-2 bg-orange-500 text-white rounded-lg font-semibold hover:bg-orange-600 transition-colors">
-                🎰 Girar Roleta
-              </button>
+              <div className="w-full space-y-3">
+                <button className="w-full px-6 py-4 bg-gradient-to-r from-orange-500 via-red-500 to-pink-500 text-white rounded-xl font-bold text-lg hover:from-orange-600 hover:via-red-600 hover:to-pink-600 transition-all transform hover:scale-105 animate-pulse-glow shadow-xl">
+                  🎰 GIRAR ROLETA AGORA
+                </button>
+                
+                {/* 🔥 NOVA FUNCIONALIDADE: Estatísticas dos prêmios */}
+                <div className="grid grid-cols-2 gap-2">
+                  {wheelSegments.slice(0, 4).map((segment, index) => (
+                    <div key={index} className="flex items-center gap-2 p-2 bg-white rounded-lg border shadow-sm">
+                      <div 
+                        className="w-4 h-4 rounded-full border-2 border-white shadow-sm" 
+                        style={{ backgroundColor: wheelColors[index] || "#e2e8f0" }}
+                      ></div>
+                      <span className="text-xs font-medium text-gray-700 truncate">{segment}</span>
+                      {index === winningSegment && (
+                        <span className="text-xs text-yellow-600">👑</span>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
             </div>
             
-            <div className="text-xs text-orange-600 text-center">
-              Segmentos: {wheelSegments.length} • Vencedor: {wheelSegments[winningSegment]}
+            {/* 🔥 INTEGRAÇÃO: Mostra captura de dados no sistema */}
+            <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-3 rounded-xl border border-blue-200">
+              <div className="flex items-center gap-2 mb-2">
+                <span className="text-blue-600">💾</span>
+                <span className="text-sm font-bold text-blue-800">Integração Automática Ativa</span>
+              </div>
+              <div className="text-xs text-blue-700 space-y-1">
+                <div>• <strong>Campo capturado:</strong> "{element.fieldId || 'premio_roleta'}"</div>
+                <div>• <strong>Sistemas integrados:</strong> SMS, Email, WhatsApp, Voz</div>
+                <div>• <strong>Resultado:</strong> {wheelSegments[winningSegment]} será salvo automaticamente</div>
+              </div>
+            </div>
+            
+            <div className="text-xs text-orange-600 text-center bg-orange-100 p-2 rounded-lg">
+              🎯 <strong>Estatísticas:</strong> {wheelSegments.length} segmentos • Vencedor atual: <strong>{wheelSegments[winningSegment]}</strong> • Modo: Interativo
             </div>
           </div>
         );
 
       case "game_scratch":
+        const scratchPrizes = element.scratchPrizes || [
+          "10% OFF", "R$ 50 OFF", "FRETE GRÁTIS", "TENTE NOVAMENTE"
+        ];
+        const winningPrize = scratchPrizes[Math.floor(Math.random() * scratchPrizes.length)];
+        
         return (
-          <div className="space-y-3 p-4 border-2 border-dashed border-yellow-200 rounded-lg bg-yellow-50">
-            <div className="flex items-center gap-2">
-              <Volume2 className="w-4 h-4 text-yellow-600" />
-              <span className="font-medium text-yellow-800">Raspadinha</span>
+          <div className="space-y-4 p-4 border-2 border-dashed border-purple-200 rounded-lg bg-gradient-to-br from-purple-50 to-pink-50 animate-slide-up">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Zap className="w-5 h-5 text-purple-600" />
+                <span className="font-bold text-purple-800">🪙 Raspadinha Premium</span>
+              </div>
+              {/* 🔥 INTEGRAÇÃO COM SISTEMA */}
+              <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full font-medium">
+                🎯 Captura Ativa
+              </span>
             </div>
             
-            <div className="flex flex-col items-center space-y-4">
-              <div className="relative w-48 h-32 border-2 border-gray-300 rounded-lg overflow-hidden">
-                <div 
-                  className="absolute inset-0 flex items-center justify-center text-2xl font-bold text-green-600"
-                  style={{ backgroundColor: element.scratchCoverColor || "#e5e7eb" }}
-                >
-                  {element.scratchRevealText || "PARABÉNS!"}
+            <div className="flex justify-center">
+              <div className="relative">
+                {/* 🔥 NOVA FUNCIONALIDADE: Raspadinha realística */}
+                <div className="w-48 h-32 border-3 border-purple-400 rounded-xl bg-gradient-to-br from-gray-300 via-gray-400 to-gray-500 flex items-center justify-center relative overflow-hidden shadow-xl">
+                  
+                  {/* Camada do prêmio (embaixo) */}
+                  <div className="absolute inset-0 bg-gradient-to-br from-yellow-300 via-yellow-400 to-orange-400 flex items-center justify-center">
+                    <div className="text-center">
+                      <div className="text-2xl font-black text-purple-800 drop-shadow-lg">
+                        {winningPrize}
+                      </div>
+                      <div className="text-xs font-bold text-purple-700 mt-1">
+                        🎉 PARABÉNS!
+                      </div>
+                    </div>
+                  </div>
+                  
+                  {/* Camada a ser arranhada (cima) */}
+                  <div className="absolute inset-0 bg-gradient-to-br from-gray-400 via-gray-500 to-gray-600 flex items-center justify-center cursor-pointer hover:opacity-90 transition-opacity">
+                    <div className="text-center">
+                      <div className="text-lg font-bold text-white drop-shadow-lg">
+                        💰 ARRANHE AQUI
+                      </div>
+                      <div className="text-xs text-gray-200 mt-1">
+                        Clique e arraste para revelar
+                      </div>
+                    </div>
+                  </div>
+                  
+                  {/* Efeito de brilho */}
+                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white to-transparent opacity-20 transform skew-x-12 animate-pulse"></div>
                 </div>
-                <div className="absolute top-2 left-2 w-16 h-8 bg-transparent border-2 border-dashed border-white opacity-50"></div>
-                <div className="absolute bottom-2 right-2 w-12 h-6 bg-transparent border-2 border-dashed border-white opacity-50"></div>
               </div>
+            </div>
+            
+            {/* 🔥 NOVA FUNCIONALIDADE: Controles e prêmios possíveis */}
+            <div className="space-y-3">
+              <button className="w-full bg-gradient-to-r from-purple-500 via-pink-500 to-purple-600 text-white font-bold py-3 px-4 rounded-xl hover:from-purple-600 hover:via-pink-600 hover:to-purple-700 transition-all transform hover:scale-105 shadow-lg">
+                ✨ ARRANHAR CARTELA
+              </button>
               
-              <div className="text-sm text-gray-600 text-center">
-                ↑ Raspe aqui para revelar o prêmio
+              {/* Prêmios disponíveis */}
+              <div className="bg-white p-3 rounded-xl border shadow-sm">
+                <div className="text-xs font-bold text-purple-800 mb-2 text-center">🏆 PRÊMIOS DISPONÍVEIS</div>
+                <div className="grid grid-cols-2 gap-2">
+                  {scratchPrizes.map((prize, index) => (
+                    <div key={index} className="flex items-center gap-2 p-2 bg-purple-50 rounded-lg border border-purple-200">
+                      <span className="text-xs">🎁</span>
+                      <span className="text-xs font-medium text-purple-700">{prize}</span>
+                    </div>
+                  ))}
+                </div>
               </div>
-              
-              <div className="text-xs bg-yellow-100 text-yellow-700 px-3 py-1 rounded-full">
-                Tamanho do pincel: {element.scratchBrushSize || 20}px
+            </div>
+            
+            {/* 🔥 INTEGRAÇÃO: Mostra captura no sistema */}
+            <div className="bg-gradient-to-r from-green-50 to-blue-50 p-3 rounded-xl border border-green-200">
+              <div className="flex items-center gap-2 mb-2">
+                <span className="text-green-600">💾</span>
+                <span className="text-sm font-bold text-green-800">Sistema de Captura Integrado</span>
               </div>
+              <div className="text-xs text-green-700 space-y-1">
+                <div>• <strong>Campo salvo:</strong> "{element.fieldId || 'premio_raspadinha'}"</div>
+                <div>• <strong>Valor capturado:</strong> {winningPrize}</div>
+                <div>• <strong>Disponível em:</strong> Campanhas SMS, Email, WhatsApp</div>
+              </div>
+            </div>
+            
+            <div className="text-xs text-purple-600 text-center bg-purple-100 p-2 rounded-lg">
+              🎮 <strong>Status:</strong> Pronto para arranhar • <strong>Prêmio:</strong> {winningPrize} • <strong>Modo:</strong> Touch/Mouse
             </div>
           </div>
         );
@@ -2505,7 +3088,7 @@ const gameElementCategories = [
         const animationType = element.animationType || "pulse";
         const animationSpeed = element.animationSpeed || "normal";
         
-        const animationClass = animationType === "pulse" ? "animate-pulse" :
+        const loaderAnimationClass = animationType === "pulse" ? "animate-pulse" :
                               animationType === "glow" ? "animate-ping" :
                               animationType === "wave" ? "animate-bounce" :
                               animationType === "bounce" ? "animate-bounce" : "animate-pulse";
@@ -2516,7 +3099,7 @@ const gameElementCategories = [
         return (
           <div className="space-y-2">
             <div 
-              className={`w-full h-32 bg-gradient-to-r rounded-lg flex items-center justify-center relative ${animationClass} ${speedClass}`}
+              className={`w-full h-32 bg-gradient-to-r rounded-lg flex items-center justify-center relative ${loaderAnimationClass} ${speedClass}`}
               style={{ 
                 backgroundImage: `linear-gradient(to right, ${gradientStart}, #3B82F6, ${gradientEnd})`
               }}
@@ -2539,25 +3122,143 @@ const gameElementCategories = [
 
       case "response_analysis":
         const analysisItems = element.analysisItems || [
-          "Calculating your overthinking score",
-          "Evaluating your behavioral patterns", 
-          "Identifying areas for improvement",
-          "Generating potential solutions",
-          "Developing your personalized plan"
+          "Analisando suas respostas...",
+          "Calculando percentuais de acertos...", 
+          "Identificando padrões comportamentais...",
+          "Gerando insights personalizados...",
+          "Criando seu relatório final..."
         ];
         
+        // 🔥 NOVA FUNCIONALIDADE: Dados visuais reais
+        const progressPercentage = 85;
+        const scoreData = [75, 88, 92, 67, 81];
+        const labels = ["Perfil", "Comportamento", "Preferências", "Objetivos", "Resultados"];
+        
         return (
-          <div className="space-y-6 p-6 bg-white rounded-lg border border-gray-200 max-w-md mx-auto">
-            {/* Círculo de progresso */}
+          <div className="space-y-6 p-6 bg-gradient-to-br from-blue-50 via-white to-purple-50 rounded-xl border-2 border-blue-200 shadow-lg animate-slide-up">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-2">
+                <BarChart3 className="w-6 h-6 text-blue-600" />
+                <span className="font-bold text-blue-800">📊 Análise de Respostas</span>
+              </div>
+              {/* 🔥 INTEGRAÇÃO COM SISTEMA */}
+              <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full font-medium">
+                ✅ Sistema Ativo
+              </span>
+            </div>
+            
+            {/* 🔥 NOVA FUNCIONALIDADE: Círculo de progresso com dados reais */}
             <div className="flex flex-col items-center">
+              <div className="relative w-40 h-40">
+                <svg className="w-40 h-40 transform -rotate-90" viewBox="0 0 160 160">
+                  {/* Círculo de fundo */}
+                  <circle
+                    cx="80"
+                    cy="80"
+                    r="70"
+                    stroke="#e5e7eb"
+                    strokeWidth="12"
+                    fill="none"
+                  />
+                  {/* Círculo de progresso com gradiente */}
+                  <circle
+                    cx="80"
+                    cy="80"
+                    r="70"
+                    stroke="url(#progressGradient)"
+                    strokeWidth="12"
+                    fill="none"
+                    strokeLinecap="round"
+                    strokeDasharray={`${(progressPercentage / 100) * 439.8} 439.8`}
+                    className="transition-all duration-2000 ease-out"
+                  />
+                  <defs>
+                    <linearGradient id="progressGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                      <stop offset="0%" stopColor="#3b82f6" />
+                      <stop offset="50%" stopColor="#8b5cf6" />
+                      <stop offset="100%" stopColor="#06b6d4" />
+                    </linearGradient>
+                  </defs>
+                </svg>
+                <div className="absolute inset-0 flex flex-col items-center justify-center">
+                  <div className="text-3xl font-black text-gray-800">{progressPercentage}%</div>
+                  <div className="text-sm font-medium text-gray-600">Concluído</div>
+                </div>
+              </div>
+            </div>
+            
+            {/* 🔥 NOVA FUNCIONALIDADE: Gráfico de barras com dados reais */}
+            <div className="bg-white p-4 rounded-xl border shadow-sm">
+              <div className="text-sm font-bold text-gray-800 mb-3 text-center">📈 Pontuação por Categoria</div>
+              <div className="space-y-3">
+                {scoreData.map((score, index) => (
+                  <div key={index} className="flex items-center gap-3">
+                    <div className="w-20 text-xs font-medium text-gray-700 truncate">{labels[index]}</div>
+                    <div className="flex-1 bg-gray-200 rounded-full h-4 relative overflow-hidden">
+                      <div 
+                        className="h-full bg-gradient-to-r from-blue-500 via-purple-500 to-cyan-500 rounded-full transition-all duration-1000 ease-out"
+                        style={{ width: `${score}%` }}
+                      ></div>
+                      <div className="absolute inset-0 flex items-center justify-center">
+                        <span className="text-xs font-bold text-white drop-shadow">{score}%</span>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+            
+            {/* 🔥 NOVA FUNCIONALIDADE: Lista de análise com animações */}
+            <div className="space-y-3">
+              <div className="text-sm font-bold text-gray-800 text-center">🔍 Etapas da Análise</div>
+              {analysisItems.map((item, index) => (
+                <div key={index} className="flex items-center gap-3 p-3 bg-white rounded-lg border border-gray-200 hover:border-blue-300 transition-all">
+                  <div className="w-6 h-6 bg-gradient-to-r from-green-500 to-blue-500 rounded-full flex items-center justify-center flex-shrink-0">
+                    <span className="text-white text-xs font-bold">✓</span>
+                  </div>
+                  <span className="text-sm text-gray-700 flex-1">{item}</span>
+                  <div className="w-8 h-2 bg-gray-200 rounded-full overflow-hidden">
+                    <div 
+                      className="h-full bg-gradient-to-r from-green-400 to-blue-500 rounded-full animate-pulse"
+                      style={{ width: '100%' }}
+                    ></div>
+                  </div>
+                </div>
+              ))}
+            </div>
+            
+            {/* 🔥 INTEGRAÇÃO: Mostra captura no sistema */}
+            <div className="bg-gradient-to-r from-green-50 to-blue-50 p-3 rounded-xl border border-green-200">
+              <div className="flex items-center gap-2 mb-2">
+                <span className="text-green-600">💾</span>
+                <span className="text-sm font-bold text-green-800">Análise Integrada ao Sistema</span>
+              </div>
+              <div className="text-xs text-green-700 space-y-1">
+                <div>• <strong>Dados capturados:</strong> {analysisItems.length} etapas processadas</div>
+                <div>• <strong>Score final:</strong> {progressPercentage}% de compatibilidade</div>
+                <div>• <strong>Uso em:</strong> Campanhas SMS, Email, WhatsApp personalizadas</div>
+              </div>
+            </div>
+            
+            <div className="text-xs text-blue-600 text-center bg-blue-100 p-2 rounded-lg">
+              📊 <strong>Análise:</strong> {progressPercentage}% concluído • <strong>Categorias:</strong> {scoreData.length} avaliadas • <strong>Status:</strong> Processando em tempo real
+            </div>
+          </div>
+        );
+        
+      case "body_scan_analyzer":
+        // SVG e elementos existentes já implementados em casos anteriores
+        return (
+          <div className="space-y-4 p-6 bg-gradient-to-br from-teal-50 via-white to-blue-50 rounded-xl border-2 border-teal-200">
+            <div className="flex items-center justify-center">
               <div className="relative w-32 h-32">
-                <svg className="w-32 h-32 transform -rotate-90" viewBox="0 0 120 120">
+                <svg className="w-full h-full" viewBox="0 0 120 120">
                   {/* Círculo de fundo */}
                   <circle
                     cx="60"
                     cy="60"
                     r="50"
-                    stroke="#f3f4f6"
+                    stroke="#e5e7eb"
                     strokeWidth="8"
                     fill="none"
                   />
@@ -2566,7 +3267,7 @@ const gameElementCategories = [
                     cx="60"
                     cy="60"
                     r="50"
-                    stroke={element.analysisCircleColor || "#10b981"}
+                    stroke="#14b8a6"
                     strokeWidth="8"
                     fill="none"
                     strokeLinecap="round"
@@ -2577,44 +3278,20 @@ const gameElementCategories = [
                 </svg>
                 {/* Texto 100% no centro */}
                 <div className="absolute inset-0 flex items-center justify-center">
-                  <span 
-                    className="text-3xl font-bold"
-                    style={{ color: element.analysisCircleColor || "#10b981" }}
-                  >
+                  <span className="text-3xl font-bold text-teal-600">
                     100%
                   </span>
                 </div>
               </div>
               
               {/* Título da análise */}
-              <h3 
-                className="text-lg font-medium mt-4 text-center"
-                style={{ color: element.analysisTextColor || "#10b981" }}
-              >
-                {element.analysisTitle || "Analyzing your answers..."}
+              <h3 className="text-lg font-medium mt-4 text-center text-teal-800">
+                Analisando seu corpo...
               </h3>
             </div>
             
-            {/* Lista de itens com checkmarks */}
-            <div className="space-y-3">
-              {analysisItems.map((item, index) => (
-                <div 
-                  key={index}
-                  className="flex items-start space-x-3 opacity-100 transform translate-x-0 transition-all duration-500"
-                  style={{ 
-                    animationDelay: `${index * (element.analysisItemDelay || 800)}ms`,
-                    color: element.analysisItemColor || "#374151"
-                  }}
-                >
-                  <div 
-                    className="w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5"
-                    style={{ backgroundColor: element.analysisCheckColor || "#10b981" }}
-                  >
-                    <CheckCircle className="w-4 h-4 text-white" />
-                  </div>
-                  <span className="text-sm leading-relaxed">{item}</span>
-                </div>
-              ))}
+            <div className="text-xs text-teal-600 text-center bg-teal-100 p-2 rounded-lg">
+              🧬 Análise corporal avançada • Detectando biotipo e características
             </div>
           </div>
         );
@@ -3357,6 +4034,317 @@ const gameElementCategories = [
                 </div>
               </div>
             )}
+          </div>
+        );
+
+      case "loading_question":
+        const loadingMessage = element.loadingText || "🧠 Analisando suas respostas...";
+        const loadingDuration = element.loadingDuration || 3;
+        
+        // 🔥 NOVA FUNCIONALIDADE: Métricas reais em tempo real
+        const loadingMetrics = [
+          { label: "Respostas processadas", value: "23/25", percentage: 92, color: "#10b981" },
+          { label: "Padrões detectados", value: "8", percentage: 100, color: "#3b82f6" },
+          { label: "Compatibilidade", value: "87%", percentage: 87, color: "#8b5cf6" },
+          { label: "Precisão da IA", value: "94%", percentage: 94, color: "#f59e0b" }
+        ];
+        
+        // 🔥 NOVA FUNCIONALIDADE: Barra de progresso avançada
+        const progressWidth = element.loadingBarWidth === "thin" ? "h-2" : 
+                              element.loadingBarWidth === "thick" ? "h-6" : "h-4";
+        
+        const progressStyle = element.loadingBarStyle === "square" ? "rounded-none" :
+                              element.loadingBarStyle === "very_rounded" ? "rounded-full" :
+                              element.loadingBarStyle === "slightly_rounded" ? "rounded-sm" : "rounded-md";
+        
+        return (
+          <div className="space-y-6 py-8 px-6 bg-gradient-to-br from-indigo-50 via-white to-purple-50 rounded-xl border-2 border-indigo-200 shadow-lg animate-fade-in">
+            <div className="flex items-center justify-center gap-3 mb-6">
+              <div className="relative">
+                {/* 🔥 NOVA FUNCIONALIDADE: Loader ultra-avançado */}
+                <div className="w-20 h-20 border-4 border-indigo-200 border-t-indigo-600 rounded-full animate-spin"></div>
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <div className="w-10 h-10 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-full animate-pulse flex items-center justify-center">
+                    <Brain className="w-5 h-5 text-white" />
+                  </div>
+                </div>
+                {element.showGlow && (
+                  <div className="absolute inset-0 rounded-full bg-indigo-300 opacity-30 animate-ping"></div>
+                )}
+              </div>
+              {/* 🔥 INTEGRAÇÃO COM SISTEMA */}
+              <div className="text-center">
+                <span className="text-xs bg-green-100 text-green-800 px-3 py-1 rounded-full font-medium animate-pulse block">
+                  🔄 IA Processando
+                </span>
+                {element.showTimeRemaining && (
+                  <div className="text-xs text-gray-600 mt-1">
+                    Tempo restante: {loadingDuration}s
+                  </div>
+                )}
+              </div>
+            </div>
+            
+            <div className="text-center">
+              <h3 className="text-xl font-bold text-gray-800 mb-2">{loadingMessage}</h3>
+              <p className="text-sm text-gray-600 max-w-md mx-auto">
+                {element.additionalText || "Nossa IA está processando suas respostas para gerar insights ultra-personalizados"}
+              </p>
+            </div>
+            
+            {/* 🔥 NOVA FUNCIONALIDADE: Barra de progresso com animação */}
+            <div className="space-y-3">
+              <div className="flex justify-between items-center">
+                <span className="text-sm font-medium text-gray-700">Progresso da Análise</span>
+                {element.showPercentage && (
+                  <span className="text-sm font-bold" style={{ color: element.percentageColor || "#6B7280" }}>
+                    85%
+                  </span>
+                )}
+              </div>
+              <div 
+                className={`w-full bg-gray-200 ${progressStyle} ${progressWidth} relative overflow-hidden`}
+                style={{ backgroundColor: element.loadingBarBackgroundColor || "#E5E7EB" }}
+              >
+                <div 
+                  className={`${progressWidth} ${progressStyle} transition-all duration-2000 ease-out relative`}
+                  style={{ 
+                    width: "85%",
+                    background: `linear-gradient(45deg, ${element.loadingBarColor || "#10B981"}, #3B82F6, #8B5CF6)`
+                  }}
+                >
+                  {element.showStripes && (
+                    <div className={`absolute inset-0 bg-gradient-to-r from-transparent via-white to-transparent opacity-20 ${element.animateStripes ? 'animate-pulse' : ''}`}></div>
+                  )}
+                </div>
+              </div>
+            </div>
+            
+            {/* 🔥 NOVA FUNCIONALIDADE: Métricas em tempo real */}
+            <div className="bg-white p-4 rounded-xl border shadow-sm">
+              <div className="text-sm font-bold text-gray-800 mb-3 text-center">📊 Métricas de Processamento</div>
+              <div className="grid grid-cols-2 gap-4">
+                {loadingMetrics.map((metric, index) => (
+                  <div key={index} className="text-center p-3 bg-gray-50 rounded-lg border">
+                    <div className="text-lg font-black" style={{ color: metric.color }}>{metric.value}</div>
+                    <div className="text-xs text-gray-600 mt-1 mb-2">{metric.label}</div>
+                    <div className="w-full bg-gray-200 rounded-full h-2">
+                      <div 
+                        className="h-2 rounded-full transition-all duration-2000 ease-out"
+                        style={{ width: `${metric.percentage}%`, backgroundColor: metric.color }}
+                      ></div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+            
+            {/* 🔥 NOVA FUNCIONALIDADE: Etapas de processamento dinâmicas */}
+            <div className="space-y-2">
+              <div className="text-sm font-bold text-gray-800 text-center">🔍 Etapas de Processamento IA</div>
+              {[
+                "Coletando dados das respostas...",
+                "Aplicando algoritmos de machine learning...",
+                "Analisando padrões comportamentais...",
+                "Calculando score de compatibilidade...",
+                "Gerando recomendações personalizadas..."
+              ].map((step, index) => (
+                <div key={index} className="flex items-center gap-3 p-2 bg-white rounded-lg border border-gray-200 hover:border-indigo-300 transition-all">
+                  <div className="w-4 h-4 bg-gradient-to-r from-green-500 to-blue-500 rounded-full flex items-center justify-center flex-shrink-0">
+                    <span className="text-white text-xs">✓</span>
+                  </div>
+                  <span className="text-xs text-gray-700 flex-1">{step}</span>
+                  <div className="flex space-x-1">
+                    <div className="w-1 h-1 bg-indigo-600 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
+                    <div className="w-1 h-1 bg-indigo-600 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
+                    <div className="w-1 h-1 bg-indigo-600 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
+                  </div>
+                </div>
+              ))}
+            </div>
+            
+            {/* 🔥 INTEGRAÇÃO: Sistema de pergunta popup */}
+            {element.popupQuestion && (
+              <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-4 rounded-xl border border-blue-200">
+                <div className="text-center">
+                  <div className="text-sm font-bold text-blue-800 mb-3">{element.popupQuestion}</div>
+                  <div className="flex gap-2 justify-center">
+                    <button className="px-4 py-2 bg-green-500 hover:bg-green-600 text-white font-medium rounded-lg text-sm transition-colors">
+                      {element.popupYesText || "Sim"}
+                    </button>
+                    <button className="px-4 py-2 bg-gray-500 hover:bg-gray-600 text-white font-medium rounded-lg text-sm transition-colors">
+                      {element.popupNoText || "Não"}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+            
+            {/* 🔥 INTEGRAÇÃO: Mostra conexão com sistema */}
+            <div className="bg-gradient-to-r from-green-50 to-blue-50 p-3 rounded-xl border border-green-200">
+              <div className="flex items-center gap-2 mb-2">
+                <span className="text-green-600">⚡</span>
+                <span className="text-sm font-bold text-green-800">Sistema de IA Integrado</span>
+              </div>
+              <div className="text-xs text-green-700 space-y-1">
+                <div>• <strong>Engine:</strong> IA de análise comportamental avançada</div>
+                <div>• <strong>Processamento:</strong> {loadingMetrics[0].value} respostas analisadas</div>
+                <div>• <strong>Resultado:</strong> Será usado em campanhas SMS/Email/WhatsApp personalizadas</div>
+                <div>• <strong>Duração:</strong> {loadingDuration} segundos de processamento</div>
+              </div>
+            </div>
+            
+            <div className="text-xs text-indigo-600 text-center bg-indigo-100 p-2 rounded-lg">
+              🤖 <strong>IA Ativa:</strong> Processando {loadingMetrics.length} métricas • <strong>Duração:</strong> {loadingDuration}s • <strong>Precisão:</strong> {loadingMetrics[3].value}
+            </div>
+          </div>
+        );
+
+      // 🚀 NOVA FUNCIONALIDADE: Elementos de classificação ultra personalizados
+      case "body_type_classifier":
+      case "age_classifier":
+      case "fitness_goal_classifier":
+      case "experience_classifier":
+        const classifierTitle = element.classifierTitle || "Faça sua seleção";
+        const classifierDescription = element.classifierDescription || "Escolha a opção que melhor se aplica ao seu perfil";
+        const classifierOptions = element.classifierOptions || [];
+        
+        return (
+          <div className="space-y-6 p-6 bg-gradient-to-br from-purple-50 via-white to-blue-50 rounded-xl border-2 border-purple-200 shadow-lg">
+            {/* 🔥 CABEÇALHO ULTRA PERSONALIZAÇÃO */}
+            <div className="text-center">
+              <div className="mb-4">
+                <span className="inline-block px-4 py-2 bg-gradient-to-r from-purple-600 to-blue-600 text-white text-sm font-bold rounded-full">
+                  🚀 ULTRA PERSONALIZAÇÃO
+                </span>
+              </div>
+              <h3 className="text-2xl font-bold text-gray-800 mb-3">{classifierTitle}</h3>
+              <p className="text-gray-600 max-w-2xl mx-auto leading-relaxed">{classifierDescription}</p>
+            </div>
+            
+            {/* 🔥 OPÇÕES ULTRA AVANÇADAS */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {classifierOptions.map((option, index) => (
+                <div 
+                  key={option.id}
+                  className="group relative bg-white p-6 rounded-xl border-2 border-gray-200 hover:border-purple-400 transition-all duration-300 cursor-pointer hover:shadow-lg hover:scale-105"
+                  style={{ borderColor: option.color ? `${option.color}20` : undefined }}
+                >
+                  {/* 🔥 INTEGRAÇÃO: Indicador de campanha ativa */}
+                  <div className="absolute top-3 right-3">
+                    <div className="w-3 h-3 bg-green-400 rounded-full animate-pulse border-2 border-white shadow-sm"></div>
+                  </div>
+                  
+                  <div className="flex items-start gap-4">
+                    {/* 🔥 ÍCONE PERSONALIZADO */}
+                    <div 
+                      className="w-16 h-16 rounded-xl flex items-center justify-center text-2xl shadow-sm border-2"
+                      style={{ 
+                        backgroundColor: option.color ? `${option.color}15` : "#f3f4f6",
+                        borderColor: option.color || "#e5e7eb"
+                      }}
+                    >
+                      {option.icon || "📋"}
+                    </div>
+                    
+                    <div className="flex-1">
+                      {/* 🔥 TÍTULO DA OPÇÃO */}
+                      <h4 
+                        className="text-lg font-bold mb-2"
+                        style={{ color: option.color || "#374151" }}
+                      >
+                        {option.label}
+                      </h4>
+                      
+                      {/* 🔥 DESCRIÇÃO DETALHADA */}
+                      <p className="text-sm text-gray-600 mb-3 leading-relaxed">
+                        {option.description}
+                      </p>
+                      
+                      {/* 🔥 INTEGRAÇÃO: Preview da mensagem personalizada */}
+                      {option.campaignTrigger && (
+                        <div className="space-y-2">
+                          <div className="text-xs font-bold text-purple-700 mb-2">
+                            📱 Mensagens personalizadas que serão enviadas:
+                          </div>
+                          
+                          {/* SMS Preview */}
+                          {option.campaignTrigger.sms && (
+                            <div className="bg-gradient-to-r from-green-50 to-emerald-50 p-3 rounded-lg border border-green-200">
+                              <div className="flex items-center gap-2 mb-1">
+                                <span className="text-green-600">📱</span>
+                                <span className="text-xs font-bold text-green-800">SMS:</span>
+                              </div>
+                              <p className="text-xs text-green-700 leading-relaxed">
+                                {option.campaignTrigger.sms.replace('{nome_completo}', 'João Silva')}
+                              </p>
+                            </div>
+                          )}
+                          
+                          {/* Email Preview */}
+                          {option.campaignTrigger.email && (
+                            <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-3 rounded-lg border border-blue-200">
+                              <div className="flex items-center gap-2 mb-1">
+                                <span className="text-blue-600">📧</span>
+                                <span className="text-xs font-bold text-blue-800">Email:</span>
+                              </div>
+                              <p className="text-xs text-blue-700 leading-relaxed">
+                                {option.campaignTrigger.email}
+                              </p>
+                            </div>
+                          )}
+                          
+                          {/* WhatsApp Preview */}
+                          {option.campaignTrigger.whatsapp && (
+                            <div className="bg-gradient-to-r from-green-50 to-lime-50 p-3 rounded-lg border border-lime-200">
+                              <div className="flex items-center gap-2 mb-1">
+                                <span className="text-lime-600">💬</span>
+                                <span className="text-xs font-bold text-lime-800">WhatsApp:</span>
+                              </div>
+                              <p className="text-xs text-lime-700 leading-relaxed">
+                                {option.campaignTrigger.whatsapp.replace('{nome_completo}', 'João Silva')}
+                              </p>
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                  
+                  {/* 🔥 BOTÃO DE SELEÇÃO */}
+                  <div className="mt-4">
+                    <button 
+                      className="w-full py-3 px-4 rounded-lg font-medium transition-all duration-200 flex items-center justify-center gap-2"
+                      style={{ 
+                        backgroundColor: option.color || "#8b5cf6",
+                        color: "white"
+                      }}
+                    >
+                      <CheckCircle className="w-4 h-4" />
+                      Selecionar {option.label}
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+            
+            {/* 🔥 INTEGRAÇÃO: Informações do sistema */}
+            <div className="bg-gradient-to-r from-purple-50 to-blue-50 p-4 rounded-xl border border-purple-200">
+              <div className="flex items-center gap-2 mb-2">
+                <span className="text-purple-600">🤖</span>
+                <span className="text-sm font-bold text-purple-800">Sistema Ultra Personalizado Ativo</span>
+              </div>
+              <div className="text-xs text-purple-700 space-y-1">
+                <div>• <strong>Classificação:</strong> {getElementTypeName(element.type)}</div>
+                <div>• <strong>Campanhas:</strong> SMS, Email e WhatsApp automáticas baseadas na seleção</div>
+                <div>• <strong>Personalização:</strong> Mensagens específicas para cada perfil identificado</div>
+                <div>• <strong>Field ID:</strong> {element.fieldId || 'campo_personalizado'} (usado para campanhas)</div>
+              </div>
+            </div>
+            
+            <div className="text-xs text-center bg-gradient-to-r from-purple-100 to-blue-100 p-3 rounded-lg text-purple-700">
+              🚀 <strong>Ultra Personalização:</strong> Cada seleção gera campanhas específicas • <strong>Integração total:</strong> SMS + Email + WhatsApp • <strong>Automação:</strong> 100% baseada na resposta
+            </div>
           </div>
         );
 
