@@ -16,6 +16,7 @@ import {
   ExternalLink,
   Calendar,
   MessageSquare,
+  MessageCircle,
   Mail,
   FileText,
   Shield,
@@ -319,7 +320,14 @@ export default function Dashboard() {
               </p>
             </div>
             <div className="flex items-center gap-4">
-              <ThemeSelector />
+              {/* Status Indicator - Live */}
+              <div className="flex items-center gap-2">
+                <div className="relative">
+                  <div className="w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
+                  <div className="absolute inset-0 w-3 h-3 bg-green-500 rounded-full animate-ping opacity-75"></div>
+                </div>
+                <span className="text-sm font-medium text-green-600">Sistema Ativo</span>
+              </div>
               <Button
                 variant="outline"
                 onClick={() => setShowTutorial(true)}
@@ -380,7 +388,7 @@ export default function Dashboard() {
                     <p className="text-2xl font-bold dashboard-text-primary">{whatsappCount?.count || 0}</p>
                   </div>
                   <div className="w-12 h-12 rounded-lg bg-green-500 flex items-center justify-center text-white">
-                    <FileText className="w-5 h-5" />
+                    <MessageCircle className="w-5 h-5" />
                   </div>
                 </div>
               </CardContent>
@@ -418,7 +426,17 @@ export default function Dashboard() {
           {/* Seus Quizzes */}
           <Card className="dashboard-card shadow-xl mb-8">
             <CardHeader className="dashboard-header border-b">
-              <CardTitle className="text-xl dashboard-text-primary">Seus Quizzes</CardTitle>
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-xl dashboard-text-primary">Seus Quizzes</CardTitle>
+                {userQuizzes && userQuizzes.length > 6 && (
+                  <Link href="/quizzes">
+                    <Button variant="outline" size="sm" className="dashboard-button">
+                      <Eye className="w-4 h-4 mr-2" />
+                      Ver Todos ({userQuizzes.length})
+                    </Button>
+                  </Link>
+                )}
+              </div>
             </CardHeader>
             <CardContent className="p-6">
               {userQuizzes && userQuizzes.length > 0 ? (

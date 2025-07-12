@@ -133,11 +133,11 @@ export function Sidebar() {
       ]
     },
     {
-      title: "ANÁLISE",
+      title: "ANALYTICS",
       icon: <TrendingUp className="w-3 h-3" />,
       items: [
         {
-          title: "ANÁLISE",
+          title: "ANALYTICS",
           href: "/analytics",
           icon: <TrendingUp className="w-4 h-4" />,
           active: location === "/analytics"
@@ -283,9 +283,6 @@ export function Sidebar() {
             {/* Language Selector */}
             <LanguageSelector />
             
-            {/* Theme Toggle */}
-            <ThemeToggle />
-            
             {/* Notification Bell */}
             <NotificationSystem />
           </div>
@@ -295,9 +292,6 @@ export function Sidebar() {
           <div className="flex flex-col items-center space-y-1 mt-3">
             {/* Language Selector - Collapsed */}
             <LanguageSelector collapsed={true} />
-            
-            {/* Theme Toggle - Collapsed */}
-            <ThemeToggle />
             
             {/* Notification Bell - Collapsed */}
             <NotificationSystem />

@@ -208,6 +208,15 @@ No additional files or separate projects are maintained in this repository.
 
 ```
 Changelog:
+- July 12, 2025. MELHORIAS NO DASHBOARD E LIMPEZA DE INTERFACE - Removido seletor de tema e adicionado indicador de status:
+  * Removido ThemeSelector da sidebar e do dashboard conforme solicitado
+  * Adicionado indicador de status "ao vivo" no dashboard com bolinha verde pulsante
+  * Incluído botão "Ver Todos" na seção "Seus Quizzes" quando há mais de 6 quizzes
+  * Mantida apenas funcionalidade essencial de notificações e seletor de idioma na sidebar
+- July 12, 2025. CORREÇÕES VISUAIS NO DASHBOARD E SIDEBAR - Ícones e categorias atualizadas:
+  * Corrigido ícone do WhatsApp no dashboard (de FileText para MessageCircle)
+  * Atualizada categoria "ANÁLISE" para "ANALYTICS" na sidebar para melhor internacionalização
+  * Mantida consistência visual e funcionalidade completa do sistema
 - July 12, 2025. SISTEMA DE TEMAS COMPLETO IMPLEMENTADO - Seletor de tema integrado ao dashboard com suporte completo a modo escuro:
   * Adicionado ThemeSelector component no header do dashboard com dropdown para Light/Dark/Auto
   * Implementadas 15 classes CSS temáticas no index.css com suporte completo a modo escuro
