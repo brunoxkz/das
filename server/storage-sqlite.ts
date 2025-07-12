@@ -1901,7 +1901,7 @@ export class SQLiteStorage implements IStorage {
     try {
       const campaigns = await db.select()
         .from(smsCampaigns)
-        .where(eq(smsCampaigns.isActive, 1))
+        .where(eq(smsCampaigns.status, 'active'))
         .orderBy(desc(smsCampaigns.createdAt))
         .limit(limit);
       
