@@ -5,22 +5,19 @@ import { AuthProvider } from "@/hooks/useAuth-jwt";
 import App from "./App";
 import "./index.css";
 
-// Versão limpa sem Service Worker e com error handling
-try {
-  const rootElement = document.getElementById("root");
-  if (!rootElement) {
-    throw new Error("Root element not found");
-  }
+// Service Worker desabilitado temporariamente para resolver bloqueios
+// if ('serviceWorker' in navigator) {
+//   window.addEventListener('load', () => {
+//     navigator.serviceWorker.register('/sw.js')
+//       .then(() => console.log('🚀 PWA Service Worker registrado'))
+//       .catch(() => console.warn('⚠️ PWA Service Worker falhou'));
+//   });
+// }
 
-  const root = createRoot(rootElement);
-  root.render(
-    <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        <App />
-      </AuthProvider>
-    </QueryClientProvider>
-  );
-} catch (error) {
-  console.error("Error initializing app:", error);
-  document.body.innerHTML = "<div>Error loading application. Please refresh the page.</div>";
-}
+createRoot(document.getElementById("root")!).render(
+  <QueryClientProvider client={queryClient}>
+    <AuthProvider>
+      <App />
+    </AuthProvider>
+  </QueryClientProvider>
+);

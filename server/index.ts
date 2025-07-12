@@ -7,14 +7,13 @@ import { setupVite, serveStatic, log } from "./vite";
 import { setupHybridAuth, verifyJWT } from "./auth-hybrid";
 import { healthCheck, detailedHealth } from "./health-check";
 import { emailService } from "./email-service";
-// DESABILITADO TEMPORARIAMENTE - SEGURANÇA ESTAVA BLOQUEANDO VITE
-// import { 
-//   initAdvancedSecurity, 
-//   honeypotMiddleware, 
-//   timingAttackProtection, 
-//   attackSignatureAnalyzer, 
-//   blacklistMiddleware 
-// } from "./advanced-security";
+import { 
+  initAdvancedSecurity, 
+  honeypotMiddleware, 
+  timingAttackProtection, 
+  attackSignatureAnalyzer, 
+  blacklistMiddleware 
+} from "./advanced-security";
 import UltraScaleProcessor from "./ultra-scale-processor";
 import { quizCacheOptimizer } from "./quiz-cache-optimizer";
 
@@ -82,12 +81,11 @@ app.use((req, res, next) => {
   next();
 });
 
-// DESABILITADO TEMPORARIAMENTE - SEGURANÇA ESTAVA BLOQUEANDO VITE
 // Apply security middleware que funciona com Express 4.x
-// app.use(honeypotMiddleware);
-// app.use(timingAttackProtection);
-// app.use(attackSignatureAnalyzer);
-// app.use(blacklistMiddleware);
+app.use(honeypotMiddleware);
+app.use(timingAttackProtection);
+app.use(attackSignatureAnalyzer);
+app.use(blacklistMiddleware);
 
 // Health check endpoints
 app.get('/health', healthCheck);
@@ -346,10 +344,9 @@ const PORT = Number(process.env.PORT) || 5000;
 
 async function startServer() {
   try {
-    // DESABILITADO TEMPORARIAMENTE - SEGURANÇA ESTAVA BLOQUEANDO VITE
     // Initialize security system primeiro
-    // await initAdvancedSecurity();
-    console.log('🔒 Sistema de segurança avançado DESABILITADO para desenvolvimento');
+    await initAdvancedSecurity();
+    console.log('🔒 Sistema de segurança avançado inicializado');
     
     // Inicializar cache optimizer para performance ultra-rápida
     await quizCacheOptimizer.initialize();
