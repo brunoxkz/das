@@ -35,7 +35,9 @@ import {
   Bell,
   Globe,
   Menu,
-  X
+  X,
+  Webhook,
+  Plug
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -119,6 +121,27 @@ export function Sidebar() {
       icon: <Mail className="w-4 h-4" />,
       active: location === "/email-marketing",
       badge: "📧"
+    },
+    {
+      title: "Teste A/B",
+      href: "/teste-ab",
+      icon: <BarChart3 className="w-4 h-4" />,
+      active: location === "/teste-ab",
+      badge: "🧪"
+    },
+    {
+      title: "Webhooks",
+      href: "/webhooks",
+      icon: <Webhook className="w-4 h-4" />,
+      active: location === "/webhooks",
+      badge: "🔗"
+    },
+    {
+      title: "Integrações",
+      href: "/integracoes",
+      icon: <Plug className="w-4 h-4" />,
+      active: location === "/integracoes",
+      badge: "🔧"
     },
     {
       title: "Super Afiliados",

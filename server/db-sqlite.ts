@@ -73,6 +73,14 @@ export function runMigrations() {
       addColumnIfNotExists('quizzes', 'detectInstagram', 'INTEGER DEFAULT 1');
       addColumnIfNotExists('quizzes', 'detectFacebook', 'INTEGER DEFAULT 1');
       addColumnIfNotExists('quizzes', 'detectTikTok', 'INTEGER DEFAULT 0');
+      
+      // Adicionar coluna Super Afiliados
+      addColumnIfNotExists('quizzes', 'isSuperAffiliate', 'INTEGER DEFAULT 0');
+      
+      // Adicionar colunas para 2FA
+      addColumnIfNotExists('users', 'twoFactorEnabled', 'INTEGER DEFAULT 0');
+      addColumnIfNotExists('users', 'twoFactorSecret', 'TEXT');
+      addColumnIfNotExists('users', 'twoFactorBackupCodes', 'TEXT');
       addColumnIfNotExists('quizzes', 'detectOthers', 'INTEGER DEFAULT 0');
       addColumnIfNotExists('quizzes', 'enableIOS17', 'INTEGER DEFAULT 1');
       addColumnIfNotExists('quizzes', 'enableOlderIOS', 'INTEGER DEFAULT 1');
