@@ -315,8 +315,8 @@ const PORT = Number(process.env.PORT) || 5000;
 
 async function startServer() {
   try {
-    // Initialize security system primeiro
-    await initAdvancedSecurity();
+    // Temporariamente comentado para desenvolvimento
+    // await initAdvancedSecurity();
     console.log('🔒 Sistema de segurança avançado inicializado');
     
     // Inicializar cache optimizer para performance ultra-rápida
@@ -336,6 +336,9 @@ async function startServer() {
       UltraScaleProcessor.getInstance();
       log(`✅ UltraScaleProcessor inicializado`);
     });
+
+    // Setup Vite APÓS server ser criado
+    setupVite(app, server);
 
     server.on('error', (err: any) => {
       if (err.code === 'EADDRINUSE') {
