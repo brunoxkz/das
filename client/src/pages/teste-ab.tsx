@@ -9,7 +9,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useAuth } from "@/hooks/useAuth-jwt";
-import { queryClient } from "@/lib/queryClient";
+import { queryClient, apiRequest } from "@/lib/queryClient";
+import { useToast } from "@/hooks/use-toast";
 import { 
   FlaskConical, 
   Plus, 
@@ -43,6 +44,7 @@ interface Quiz {
 
 export default function TesteAbPage() {
   const { user } = useAuth();
+  const { toast } = useToast();
   const [selectedQuizzes, setSelectedQuizzes] = useState<string[]>([]);
   const [newTestName, setNewTestName] = useState("");
   const [newTestDescription, setNewTestDescription] = useState("");
@@ -65,44 +67,33 @@ export default function TesteAbPage() {
   // Mutação para criar teste A/B
   const createTestMutation = useMutation({
     mutationFn: async (testData: { name: string; description: string; quizIds: string[] }) => {
-      const token = localStorage.getItem('token');
-      const response = await fetch("/api/ab-tests", {
-        method: "POST",
-        headers: { 
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${token}`
-        },
-        body: JSON.stringify(testData),
-      });
-      if (!response.ok) throw new Error("Erro ao criar teste A/B");
-      return response.json();
+      return apiRequest("POST", "/api/ab-tests", testData);
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["/api/ab-tests"] });
       setIsCreateDialogOpen(false);
       setNewTestName("");
       setNewTestDescription("");
       setSelectedQuizzes([]);
+      toast({
+        title: "✅ Teste A/B criado com sucesso!",
+        description: `O teste "${data.name}" foi criado e está ativo.`,
+      });
     },
     onError: (error) => {
       console.error("Erro ao criar teste A/B:", error);
+      toast({
+        title: "❌ Erro ao criar teste A/B",
+        description: "Verifique se você selecionou pelo menos 2 funis publicados.",
+        variant: "destructive",
+      });
     },
   });
 
   // Mutação para ativar/desativar teste A/B
   const toggleTestMutation = useMutation({
     mutationFn: async ({ id, isActive }: { id: string; isActive: boolean }) => {
-      const token = localStorage.getItem('token');
-      const response = await fetch(`/api/ab-tests/${id}`, {
-        method: "PATCH",
-        headers: { 
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${token}`
-        },
-        body: JSON.stringify({ isActive }),
-      });
-      if (!response.ok) throw new Error("Erro ao atualizar teste A/B");
-      return response.json();
+      return apiRequest("PATCH", `/api/ab-tests/${id}`, { isActive });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/ab-tests"] });
