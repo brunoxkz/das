@@ -16,7 +16,8 @@ import {
   ArrowUpDown,
   Scale,
   Target,
-  Activity
+  Activity,
+  ChevronDown
 } from "lucide-react";
 import { globalVariableProcessor, processVariables, setQuizResponse, addCalculationRule, VariableProcessor } from "@/lib/variables";
 import { apiRequest } from "@/lib/queryClient";
@@ -2712,10 +2713,272 @@ export function QuizPreview({ quiz, initialPageIndex = 0 }: QuizPreviewProps) {
                         ))}
                       </div>
                       <button className={`w-full py-2 rounded-lg font-semibold ${plan.popular ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-800'}`}>
-                        Escolher
+                        Escolher Plano
                       </button>
                     </div>
                   ))}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {element.type === "testimonials" && (
+            <div className="space-y-4">
+              <div className="bg-white rounded-lg p-6 border-2 border-purple-200">
+                {element.testimonialsTitle && (
+                  <h3 className="text-lg font-semibold mb-6 text-center text-purple-900">
+                    {element.testimonialsTitle}
+                  </h3>
+                )}
+                
+                <div className={`grid gap-4 ${
+                  element.testimonialsLayout === 'horizontal' ? 'grid-cols-1 md:grid-cols-2' :
+                  element.testimonialsLayout === 'grid' ? 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3' :
+                  'grid-cols-1'
+                }`}>
+                  {(element.testimonialsData || [
+                    { id: "1", name: "Maria Silva", text: "Produto incrível! Superou minhas expectativas.", rating: 5, position: "Empresária", photo: "" },
+                    { id: "2", name: "João Santos", text: "Excelente qualidade e atendimento.", rating: 5, position: "Consultor", photo: "" }
+                  ]).map((testimonial: any) => (
+                    <div key={testimonial.id} className={`
+                      ${element.testimonialsStyle === 'card' ? 'bg-gray-50 p-4 rounded-lg border' :
+                        element.testimonialsStyle === 'quote' ? 'relative pl-8 border-l-4 border-purple-500' :
+                        element.testimonialsStyle === 'modern' ? 'bg-gradient-to-br from-purple-50 to-pink-50 p-4 rounded-lg' :
+                        'p-4'
+                      }
+                    `}>
+                      {element.testimonialsStyle === 'quote' && (
+                        <div className="absolute left-2 top-2 text-purple-500 text-2xl">"</div>
+                      )}
+                      
+                      <div className="flex items-start space-x-3">
+                        {element.testimonialsShowPhotos !== false && (
+                          <div className="flex-shrink-0">
+                            {testimonial.photo ? (
+                              <img 
+                                src={testimonial.photo} 
+                                alt={testimonial.name}
+                                className="w-12 h-12 rounded-full object-cover"
+                              />
+                            ) : (
+                              <div className="w-12 h-12 bg-purple-500 rounded-full flex items-center justify-center">
+                                <span className="text-white font-semibold text-sm">
+                                  {testimonial.name?.charAt(0) || "?"}
+                                </span>
+                              </div>
+                            )}
+                          </div>
+                        )}
+                        
+                        <div className="flex-1">
+                          <p className="text-gray-700 mb-2 text-sm">{testimonial.text}</p>
+                          
+                          {element.testimonialsShowRatings !== false && (
+                            <div className="flex items-center mb-2">
+                              {Array.from({ length: 5 }, (_, i) => (
+                                <span key={i} className={`text-sm ${i < testimonial.rating ? 'text-yellow-500' : 'text-gray-300'}`}>
+                                  ⭐
+                                </span>
+                              ))}
+                            </div>
+                          )}
+                          
+                          <div className="text-xs text-gray-600">
+                            <span className="font-semibold">{testimonial.name}</span>
+                            {testimonial.position && <span className="ml-2">• {testimonial.position}</span>}
+                            {testimonial.company && <span className="ml-2">• {testimonial.company}</span>}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {element.type === "guarantee" && (
+            <div className="space-y-4">
+              <div className={`
+                ${element.guaranteeStyle === 'card' ? 'bg-white p-6 rounded-lg border-2 border-blue-200' :
+                  element.guaranteeStyle === 'banner' ? 'bg-gradient-to-r from-blue-500 to-green-500 text-white p-6 rounded-lg' :
+                  element.guaranteeStyle === 'seal' ? 'bg-blue-100 p-6 rounded-full border-4 border-blue-500 inline-block' :
+                  'bg-blue-50 p-4 rounded-lg border border-blue-200'
+                }
+                ${element.guaranteePosition === 'center' ? 'text-center' :
+                  element.guaranteePosition === 'left' ? 'text-left' :
+                  element.guaranteePosition === 'right' ? 'text-right' :
+                  'text-center'
+                }
+              `}>
+                <div className="flex items-center justify-center space-x-3">
+                  <div className={`
+                    ${element.guaranteeSize === 'small' ? 'w-8 h-8 text-lg' :
+                      element.guaranteeSize === 'large' ? 'w-16 h-16 text-3xl' :
+                      'w-12 h-12 text-2xl'
+                    }
+                    flex items-center justify-center rounded-full
+                    ${element.guaranteeStyle === 'banner' ? 'bg-white text-blue-500' : 'bg-blue-500 text-white'}
+                  `}>
+                    {element.guaranteeType === 'days' ? '📅' :
+                     element.guaranteeType === 'money_back' ? '💰' :
+                     element.guaranteeType === 'satisfaction' ? '😊' :
+                     element.guaranteeType === 'lifetime' ? '♾️' :
+                     '🛡️'
+                    }
+                  </div>
+                  <div>
+                    <h4 className={`font-bold ${
+                      element.guaranteeSize === 'small' ? 'text-sm' :
+                      element.guaranteeSize === 'large' ? 'text-xl' :
+                      'text-lg'
+                    }`}>
+                      {element.guaranteeTitle || 
+                       (element.guaranteeType === 'days' ? `Garantia ${element.guaranteeDays || 30} Dias` :
+                        element.guaranteeType === 'money_back' ? 'Garantia Dinheiro de Volta' :
+                        element.guaranteeType === 'satisfaction' ? 'Garantia de Satisfação' :
+                        element.guaranteeType === 'lifetime' ? 'Garantia Vitalícia' :
+                        'Garantia Total'
+                       )
+                      }
+                    </h4>
+                    <p className={`${
+                      element.guaranteeSize === 'small' ? 'text-xs' :
+                      element.guaranteeSize === 'large' ? 'text-base' :
+                      'text-sm'
+                    } opacity-80`}>
+                      {element.guaranteeDescription || '100% seguro e confiável'}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {element.type === "icon_list" && (
+            <div className="space-y-4">
+              <div className="bg-white rounded-lg p-6 border-2 border-gray-200">
+                {element.iconListTitle && (
+                  <h3 className="text-lg font-semibold mb-4 text-gray-900">
+                    {element.iconListTitle}
+                  </h3>
+                )}
+                
+                <div className={`
+                  ${element.iconListLayout === 'horizontal' ? 'flex flex-wrap gap-4' :
+                    element.iconListLayout === 'grid' ? `grid grid-cols-1 md:grid-cols-${element.iconListColumns || 2} gap-4` :
+                    'space-y-4'
+                  }
+                `}>
+                  {(element.iconListData || [
+                    { id: "1", icon: "✅", mainText: "Qualidade Premium", subText: "Produtos de alta qualidade", iconColor: "#10b981" },
+                    { id: "2", icon: "🚀", mainText: "Entrega Rápida", subText: "Receba em até 24h", iconColor: "#3b82f6" },
+                    { id: "3", icon: "🔒", mainText: "Pagamento Seguro", subText: "Transações protegidas", iconColor: "#f59e0b" }
+                  ]).map((item: any) => (
+                    <div key={item.id} className={`
+                      flex items-start space-x-3 p-3 rounded-lg
+                      ${element.iconListShowBackground ? 'bg-gray-50 border' : ''}
+                    `}>
+                      <div className={`
+                        flex-shrink-0 flex items-center justify-center rounded-full
+                        ${item.iconSize === 'small' ? 'w-8 h-8 text-sm' :
+                          item.iconSize === 'large' ? 'w-16 h-16 text-xl' :
+                          'w-12 h-12'
+                        }
+                      `} style={{ backgroundColor: item.iconColor || '#10b981', color: 'white' }}>
+                        {item.icon}
+                      </div>
+                      <div className="flex-1">
+                        <h4 className="font-semibold text-gray-900 text-sm" style={{ color: item.textColor }}>
+                          {item.mainText}
+                        </h4>
+                        {item.subText && (
+                          <p className="text-xs text-gray-600 mt-1" style={{ color: item.subTextColor }}>
+                            {item.subText}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {element.type === "faq" && (
+            <div className="space-y-4">
+              <div className="bg-white rounded-lg p-6 border-2 border-gray-200">
+                <h3 className="text-lg font-semibold mb-6 text-gray-900">
+                  {element.faqTitle || "Perguntas Frequentes"}
+                </h3>
+                
+                <div className="space-y-3">
+                  {(element.faqData || [
+                    { id: "1", question: "Como funciona o produto?", answer: "Nosso produto é fácil de usar e oferece resultados rápidos." },
+                    { id: "2", question: "Qual é a garantia?", answer: "Oferecemos 30 dias de garantia total para sua satisfação." },
+                    { id: "3", question: "Como posso entrar em contato?", answer: "Você pode nos contatar pelo email ou telefone disponível." }
+                  ]).map((faq: any, index: number) => (
+                    <div key={faq.id} className={`
+                      ${element.faqStyle === 'card' ? 'bg-gray-50 rounded-lg' :
+                        element.faqStyle === 'modern' ? 'bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg' :
+                        'border-b border-gray-200'
+                      }
+                    `}>
+                      <button className={`
+                        w-full text-left p-4 flex items-center justify-between
+                        ${element.faqStyle === 'simple' ? 'hover:bg-gray-50' : ''}
+                      `}>
+                        <span className="font-semibold text-gray-900 text-sm">{faq.question}</span>
+                        <ChevronDown className="w-4 h-4 text-gray-500" />
+                      </button>
+                      <div className={`
+                        px-4 pb-4 text-sm text-gray-700
+                        ${element.faqDefaultOpen?.includes(faq.id) ? 'block' : 'hidden'}
+                      `}>
+                        {faq.answer}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {element.type === "image_with_text" && (
+            <div className="space-y-4">
+              <div className="bg-white rounded-lg p-6 border-2 border-gray-200">
+                <div className={`
+                  ${element.imageWithTextLayout === 'horizontal' ? 'flex items-center space-x-6' :
+                    element.imageWithTextLayout === 'reverse' ? 'flex flex-row-reverse items-center space-x-6' :
+                    'text-center space-y-4'
+                  }
+                `}>
+                  <div className={`
+                    ${element.imageWithTextLayout === 'horizontal' || element.imageWithTextLayout === 'reverse' ? 'w-1/2' : 'w-full'}
+                  `}>
+                    {element.imageWithTextImage ? (
+                      <img 
+                        src={element.imageWithTextImage} 
+                        alt={element.imageWithTextTitle || "Imagem"}
+                        className="w-full rounded-lg object-cover"
+                      />
+                    ) : (
+                      <div className="w-full aspect-video bg-gray-200 rounded-lg flex items-center justify-center">
+                        <span className="text-gray-500">Adicione uma imagem</span>
+                      </div>
+                    )}
+                  </div>
+                  
+                  <div className={`
+                    ${element.imageWithTextLayout === 'horizontal' || element.imageWithTextLayout === 'reverse' ? 'w-1/2' : 'w-full'}
+                  `}>
+                    <h3 className="text-lg font-semibold mb-3 text-gray-900">
+                      {element.imageWithTextTitle || "Título da Seção"}
+                    </h3>
+                    <p className="text-gray-700 text-sm">
+                      {element.imageWithTextDescription || "Adicione uma descrição aqui para explicar o conteúdo da imagem."}
+                    </p>
+                  </div>
                 </div>
               </div>
             </div>

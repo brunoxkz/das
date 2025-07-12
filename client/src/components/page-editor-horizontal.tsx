@@ -423,6 +423,43 @@ interface Element {
   iconListLayout?: "vertical" | "horizontal" | "grid";
   iconListColumns?: number;
   iconListSpacing?: "small" | "medium" | "large";
+  iconListShowBackground?: boolean;
+  iconListBorderRadius?: string;
+  iconListTitle?: string;
+  
+  // Testimonials Properties
+  testimonialsData?: {
+    id: string;
+    name: string;
+    text: string;
+    rating: number;
+    photo?: string;
+    position?: string;
+    company?: string;
+  }[];
+  testimonialsLayout?: "vertical" | "horizontal" | "grid";
+  testimonialsColumns?: number;
+  testimonialsShowPhotos?: boolean;
+  testimonialsShowRatings?: boolean;
+  testimonialsStyle?: "card" | "quote" | "minimal" | "modern";
+  testimonialsBackgroundColor?: string;
+  testimonialsTextColor?: string;
+  testimonialsTitle?: string;
+  
+  // Guarantee Properties
+  guaranteeType?: "days" | "money_back" | "satisfaction" | "lifetime" | "custom";
+  guaranteeTitle?: string;
+  guaranteeDescription?: string;
+  guaranteeDays?: number;
+  guaranteeIcon?: string;
+  guaranteeIconColor?: string;
+  guaranteeBackgroundColor?: string;
+  guaranteeBorderColor?: string;
+  guaranteeTextColor?: string;
+  guaranteeStyle?: "badge" | "card" | "banner" | "seal";
+  guaranteePosition?: "center" | "left" | "right";
+  guaranteeSize?: "small" | "medium" | "large";
+  guaranteeAnimation?: boolean;
   iconListAlignment?: "left" | "center" | "right";
   iconListStyle?: "card" | "minimal" | "bordered" | "shadow";
   iconListAnimation?: boolean;
@@ -7729,6 +7766,295 @@ const gameElementCategories = [
                         </select>
                       </div>
                     )}
+                  </div>
+                </div>
+              )}
+
+              {selectedElementData.type === "testimonials" && (
+                <div className="space-y-4 max-h-96 overflow-y-auto">
+                  <div className="bg-purple-50 p-3 rounded-lg">
+                    <h4 className="text-sm font-semibold text-purple-800 mb-2">💬 Depoimentos</h4>
+                    <p className="text-xs text-purple-700">
+                      Avaliações e comentários de clientes satisfeitos
+                    </p>
+                  </div>
+
+                  <div className="border-b pb-4">
+                    <h5 className="font-semibold text-sm mb-3">📝 Conteúdo</h5>
+                    
+                    <div>
+                      <Label>Título</Label>
+                      <Input
+                        value={selectedElementData.testimonialsTitle || ""}
+                        onChange={(e) => updateElement(selectedElementData.id, { testimonialsTitle: e.target.value })}
+                        placeholder="O que nossos clientes dizem"
+                        className="mt-1"
+                      />
+                    </div>
+
+                    <div className="mt-3">
+                      <Label>Depoimentos</Label>
+                      <div className="space-y-2 mt-2">
+                        {(selectedElementData.testimonialsData || []).map((testimonial: any, index: number) => (
+                          <div key={testimonial.id} className="border p-3 rounded-lg bg-gray-50">
+                            <div className="flex justify-between items-start mb-2">
+                              <span className="text-xs font-medium text-gray-600">Depoimento {index + 1}</span>
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                onClick={() => {
+                                  const newTestimonials = selectedElementData.testimonialsData.filter((t: any) => t.id !== testimonial.id);
+                                  updateElement(selectedElementData.id, { testimonialsData: newTestimonials });
+                                }}
+                                className="h-6 w-6 p-0 text-red-500 hover:text-red-700"
+                              >
+                                <Trash2 className="h-3 w-3" />
+                              </Button>
+                            </div>
+                            <div className="space-y-2">
+                              <Input
+                                placeholder="Nome do cliente"
+                                value={testimonial.name}
+                                onChange={(e) => {
+                                  const newTestimonials = selectedElementData.testimonialsData.map((t: any) => 
+                                    t.id === testimonial.id ? { ...t, name: e.target.value } : t
+                                  );
+                                  updateElement(selectedElementData.id, { testimonialsData: newTestimonials });
+                                }}
+                                className="text-xs"
+                              />
+                              <Input
+                                placeholder="Depoimento"
+                                value={testimonial.text}
+                                onChange={(e) => {
+                                  const newTestimonials = selectedElementData.testimonialsData.map((t: any) => 
+                                    t.id === testimonial.id ? { ...t, text: e.target.value } : t
+                                  );
+                                  updateElement(selectedElementData.id, { testimonialsData: newTestimonials });
+                                }}
+                                className="text-xs"
+                              />
+                              <div className="flex gap-2">
+                                <Input
+                                  placeholder="Cargo"
+                                  value={testimonial.position || ""}
+                                  onChange={(e) => {
+                                    const newTestimonials = selectedElementData.testimonialsData.map((t: any) => 
+                                      t.id === testimonial.id ? { ...t, position: e.target.value } : t
+                                    );
+                                    updateElement(selectedElementData.id, { testimonialsData: newTestimonials });
+                                  }}
+                                  className="text-xs flex-1"
+                                />
+                                <select
+                                  className="text-xs px-2 py-1 border rounded"
+                                  value={testimonial.rating || 5}
+                                  onChange={(e) => {
+                                    const newTestimonials = selectedElementData.testimonialsData.map((t: any) => 
+                                      t.id === testimonial.id ? { ...t, rating: parseInt(e.target.value) } : t
+                                    );
+                                    updateElement(selectedElementData.id, { testimonialsData: newTestimonials });
+                                  }}
+                                >
+                                  <option value={1}>⭐</option>
+                                  <option value={2}>⭐⭐</option>
+                                  <option value={3}>⭐⭐⭐</option>
+                                  <option value={4}>⭐⭐⭐⭐</option>
+                                  <option value={5}>⭐⭐⭐⭐⭐</option>
+                                </select>
+                              </div>
+                              <div>
+                                <Label className="text-xs">Foto do Cliente</Label>
+                                <input
+                                  type="file"
+                                  accept="image/*"
+                                  onChange={(e) => {
+                                    if (e.target.files && e.target.files[0]) {
+                                      const reader = new FileReader();
+                                      reader.onload = (event) => {
+                                        const newTestimonials = selectedElementData.testimonialsData.map((t: any) => 
+                                          t.id === testimonial.id ? { ...t, photo: event.target?.result as string } : t
+                                        );
+                                        updateElement(selectedElementData.id, { testimonialsData: newTestimonials });
+                                      };
+                                      reader.readAsDataURL(e.target.files[0]);
+                                    }
+                                  }}
+                                  className="w-full text-xs mt-1"
+                                />
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                        <Button
+                          onClick={() => {
+                            const newTestimonial = {
+                              id: Date.now().toString(),
+                              name: "Cliente",
+                              text: "Excelente produto! Recomendo.",
+                              rating: 5,
+                              position: "",
+                              photo: ""
+                            };
+                            const currentTestimonials = selectedElementData.testimonialsData || [];
+                            updateElement(selectedElementData.id, { testimonialsData: [...currentTestimonials, newTestimonial] });
+                          }}
+                          className="w-full bg-purple-600 hover:bg-purple-700 text-white"
+                          size="sm"
+                        >
+                          <Plus className="h-4 w-4 mr-2" />
+                          Adicionar Depoimento
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div>
+                    <h5 className="font-semibold text-sm mb-3">🎨 Estilo</h5>
+                    
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <Label>Layout</Label>
+                        <select 
+                          className="w-full px-2 py-1 border rounded text-xs mt-1"
+                          value={selectedElementData.testimonialsLayout || "grid"}
+                          onChange={(e) => updateElement(selectedElementData.id, { testimonialsLayout: e.target.value })}
+                        >
+                          <option value="vertical">Vertical</option>
+                          <option value="horizontal">Horizontal</option>
+                          <option value="grid">Grid</option>
+                        </select>
+                      </div>
+                      <div>
+                        <Label>Estilo</Label>
+                        <select 
+                          className="w-full px-2 py-1 border rounded text-xs mt-1"
+                          value={selectedElementData.testimonialsStyle || "card"}
+                          onChange={(e) => updateElement(selectedElementData.id, { testimonialsStyle: e.target.value })}
+                        >
+                          <option value="card">Card</option>
+                          <option value="quote">Quote</option>
+                          <option value="minimal">Minimal</option>
+                          <option value="modern">Modern</option>
+                        </select>
+                      </div>
+                    </div>
+
+                    <div className="mt-3 grid grid-cols-2 gap-3">
+                      <div className="flex items-center justify-between">
+                        <Label>Mostrar Fotos</Label>
+                        <input
+                          type="checkbox"
+                          checked={selectedElementData.testimonialsShowPhotos !== false}
+                          onChange={(e) => updateElement(selectedElementData.id, { testimonialsShowPhotos: e.target.checked })}
+                          className="h-4 w-4"
+                        />
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <Label>Mostrar Estrelas</Label>
+                        <input
+                          type="checkbox"
+                          checked={selectedElementData.testimonialsShowRatings !== false}
+                          onChange={(e) => updateElement(selectedElementData.id, { testimonialsShowRatings: e.target.checked })}
+                          className="h-4 w-4"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {selectedElementData.type === "guarantee" && (
+                <div className="space-y-4 max-h-96 overflow-y-auto">
+                  <div className="bg-blue-50 p-3 rounded-lg">
+                    <h4 className="text-sm font-semibold text-blue-800 mb-2">🛡️ Garantia</h4>
+                    <p className="text-xs text-blue-700">
+                      Selo de garantia para transmitir confiança
+                    </p>
+                  </div>
+
+                  <div className="border-b pb-4">
+                    <h5 className="font-semibold text-sm mb-3">📝 Configurações</h5>
+                    
+                    <div>
+                      <Label>Tipo de Garantia</Label>
+                      <select 
+                        className="w-full px-2 py-1 border rounded text-xs mt-1"
+                        value={selectedElementData.guaranteeType || "days"}
+                        onChange={(e) => updateElement(selectedElementData.id, { guaranteeType: e.target.value })}
+                      >
+                        <option value="days">Dias</option>
+                        <option value="money_back">Dinheiro de Volta</option>
+                        <option value="satisfaction">Satisfação</option>
+                        <option value="lifetime">Vitalícia</option>
+                        <option value="custom">Personalizada</option>
+                      </select>
+                    </div>
+
+                    {selectedElementData.guaranteeType === "days" && (
+                      <div className="mt-3">
+                        <Label>Número de Dias</Label>
+                        <Input
+                          type="number"
+                          value={selectedElementData.guaranteeDays || 30}
+                          onChange={(e) => updateElement(selectedElementData.id, { guaranteeDays: parseInt(e.target.value) })}
+                          className="mt-1"
+                          min="1"
+                        />
+                      </div>
+                    )}
+
+                    <div className="mt-3">
+                      <Label>Título</Label>
+                      <Input
+                        value={selectedElementData.guaranteeTitle || ""}
+                        onChange={(e) => updateElement(selectedElementData.id, { guaranteeTitle: e.target.value })}
+                        placeholder="Garantia de Satisfação"
+                        className="mt-1"
+                      />
+                    </div>
+
+                    <div className="mt-3">
+                      <Label>Descrição</Label>
+                      <Input
+                        value={selectedElementData.guaranteeDescription || ""}
+                        onChange={(e) => updateElement(selectedElementData.id, { guaranteeDescription: e.target.value })}
+                        placeholder="100% seguro e confiável"
+                        className="mt-1"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <h5 className="font-semibold text-sm mb-3">🎨 Estilo</h5>
+                    
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <Label>Estilo</Label>
+                        <select 
+                          className="w-full px-2 py-1 border rounded text-xs mt-1"
+                          value={selectedElementData.guaranteeStyle || "badge"}
+                          onChange={(e) => updateElement(selectedElementData.id, { guaranteeStyle: e.target.value })}
+                        >
+                          <option value="badge">Badge</option>
+                          <option value="card">Card</option>
+                          <option value="banner">Banner</option>
+                          <option value="seal">Selo</option>
+                        </select>
+                      </div>
+                      <div>
+                        <Label>Tamanho</Label>
+                        <select 
+                          className="w-full px-2 py-1 border rounded text-xs mt-1"
+                          value={selectedElementData.guaranteeSize || "medium"}
+                          onChange={(e) => updateElement(selectedElementData.id, { guaranteeSize: e.target.value })}
+                        >
+                          <option value="small">Pequeno</option>
+                          <option value="medium">Médio</option>
+                          <option value="large">Grande</option>
+                        </select>
+                      </div>
+                    </div>
                   </div>
                 </div>
               )}

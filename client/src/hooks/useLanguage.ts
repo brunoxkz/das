@@ -548,7 +548,7 @@ function getTranslation(key: string, language: string, params?: Record<string, s
       'create_campaign': 'Créer Campagne',
       'send_sms': 'Envoyer SMS',
       'send_email': 'Envoyer Email',
-      'send_whatsapp': 'Envoyer WhatsApp',
+      'send_whatsapp': 'Envoyer WhatsApp'
     }
   };
 
