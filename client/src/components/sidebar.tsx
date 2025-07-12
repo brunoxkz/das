@@ -43,7 +43,8 @@ import {
   Webhook,
   Plug,
   Phone,
-  Bot
+  Bot,
+  Coins
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -95,6 +96,20 @@ export function Sidebar() {
     href: "/tutoriais",
     icon: <BookOpen className="w-4 h-4" />,
     active: location === "/tutoriais"
+  };
+
+  const planosItem = {
+    title: "PLANOS",
+    href: "/planos",
+    icon: <Crown className="w-4 h-4" />,
+    active: location === "/planos"
+  };
+
+  const creditosItem = {
+    title: "CRÉDITOS",
+    href: "/credits",
+    icon: <Coins className="w-4 h-4" />,
+    active: location === "/credits"
   };
 
   const navCategories = [
@@ -395,6 +410,40 @@ export function Sidebar() {
               {tutorialsItem.icon}
               {!isCollapsed && (
                 <span className="ml-2 flex-1 text-left">{tutorialsItem.title}</span>
+              )}
+            </Button>
+          </Link>
+
+          {/* Planos - Standalone */}
+          <Link href={planosItem.href}>
+            <Button
+              variant="ghost"
+              className={cn(
+                "nav-item w-full justify-start",
+                isCollapsed ? "px-0" : "px-3",
+                planosItem.active && "active"
+              )}
+            >
+              {planosItem.icon}
+              {!isCollapsed && (
+                <span className="ml-2 flex-1 text-left">{planosItem.title}</span>
+              )}
+            </Button>
+          </Link>
+
+          {/* Créditos - Standalone */}
+          <Link href={creditosItem.href}>
+            <Button
+              variant="ghost"
+              className={cn(
+                "nav-item w-full justify-start",
+                isCollapsed ? "px-0" : "px-3",
+                creditosItem.active && "active"
+              )}
+            >
+              {creditosItem.icon}
+              {!isCollapsed && (
+                <span className="ml-2 flex-1 text-left">{creditosItem.title}</span>
               )}
             </Button>
           </Link>

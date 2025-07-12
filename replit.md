@@ -208,6 +208,15 @@ No additional files or separate projects are maintained in this repository.
 
 ```
 Changelog:
+- July 12, 2025. PÁGINAS PLANOS E CRÉDITOS IMPLEMENTADAS - Adicionadas seções dedicadas para gerenciamento de planos e créditos:
+  * Criada página completa de PLANOS (/planos) com 3 tiers: Gratuito, Premium e Enterprise
+  * Implementada página de CRÉDITOS (/credits) com gestão de SMS, Email, Voice e IA
+  * Sidebar atualizada com botões standalone para PLANOS (ícone Crown) e CRÉDITOS (ícone Coins)
+  * Página PLANOS inclui comparação de recursos, preços e FAQ completo
+  * Página CRÉDITOS oferece tabs para pacotes, compra avulsa e histórico de transações
+  * Ambas páginas seguem design moderno com gradientes e cards visuais
+  * Adicionadas rotas no App.tsx para as novas páginas com layout completo
+  * Sistema de créditos detalhado com preços: SMS (R$ 0,12), Email (R$ 0,05), Voice (R$ 0,25), IA (R$ 2,50)
 - July 12, 2025. DASHBOARD BOTÕES RÁPIDOS ATUALIZADOS - Substituição de funcionalidades conforme solicitado:
   * Botão "I.A. VÍDEOS" substituído por "CRÉDITOS" com ícone Coins e link para /credits
   * Botão "VSL PLAYER" substituído por "TUTORIAIS" com ícone BookOpen e link para /tutoriais

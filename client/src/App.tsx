@@ -18,6 +18,8 @@ import AdminPage from "@/pages/admin";
 import LeadsPage from "@/pages/leads";
 import NotFoundPage from "@/pages/not-found";
 import TutoriaisPage from "@/pages/tutoriais";
+import PlanosPage from "@/pages/planos";
+import CreditsPage from "@/pages/credits";
 
 import QuizPublicPage from "@/pages/quiz-public";
 import SMSCreditsPage from "@/pages/sms-credits";
@@ -136,6 +138,16 @@ function App() {
         <Route path="/tutoriais">
           <Layout>
             <TutoriaisPage />
+          </Layout>
+        </Route>
+        <Route path="/planos">
+          <Layout>
+            <PlanosPage />
+          </Layout>
+        </Route>
+        <Route path="/credits">
+          <Layout>
+            <CreditsPage />
           </Layout>
         </Route>
 
