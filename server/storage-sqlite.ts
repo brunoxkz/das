@@ -26,6 +26,7 @@ import {
   aiConversionCampaigns, aiVideoGenerations, notifications,
   superAffiliates, affiliateSales,
   abTests, abTestViews, webhooks, webhookLogs, integrations,
+  typebotProjects, typebotConversations, typebotMessages, typebotAnalytics, typebotWebhooks, typebotIntegrations,
   type User, type UpsertUser, type InsertQuiz, type Quiz,
   type InsertQuizTemplate, type QuizTemplate,
   type InsertQuizResponse, type QuizResponse,
@@ -45,7 +46,13 @@ import {
   type InsertAbTestView, type AbTestView,
   type InsertWebhook, type Webhook,
   type InsertWebhookLog, type WebhookLog,
-  type InsertIntegration, type Integration
+  type InsertIntegration, type Integration,
+  type InsertTypebotProject, type TypebotProject,
+  type InsertTypebotConversation, type TypebotConversation,
+  type InsertTypebotMessage, type TypebotMessage,
+  type InsertTypebotAnalytics, type TypebotAnalytics,
+  type InsertTypebotWebhook, type TypebotWebhook,
+  type InsertTypebotIntegration, type TypebotIntegration
 } from "../shared/schema-sqlite";
 import { eq, desc, and, gte, lte, count, asc, or, inArray } from "drizzle-orm";
 import { nanoid } from "nanoid";
@@ -3845,6 +3852,310 @@ export class SQLiteStorage implements IStorage {
       console.log('✅ Integração deletada:', id);
     } catch (error) {
       console.error('❌ ERRO ao deletar integração:', error);
+      throw error;
+    }
+  }
+
+  // ===============================================
+  // TYPEBOT AUTO-HOSPEDADO - MÉTODOS COMPLETOS
+  // ===============================================
+
+  // TypeBot Project Methods
+  async createTypebotProject(project: Omit<InsertTypebotProject, 'id' | 'createdAt' | 'updatedAt'>): Promise<TypebotProject> {
+    try {
+      const now = Math.floor(Date.now() / 1000);
+      const id = nanoid();
+      
+      const result = await db.insert(typebotProjects)
+        .values({
+          id,
+          ...project,
+          createdAt: now,
+          updatedAt: now
+        })
+        .returning();
+
+      console.log('✅ Projeto TypeBot criado:', result[0]);
+      return result[0];
+    } catch (error) {
+      console.error('❌ ERRO ao criar projeto TypeBot:', error);
+      throw error;
+    }
+  }
+
+  async getTypebotProjects(userId: string): Promise<TypebotProject[]> {
+    try {
+      const projects = await db.select()
+        .from(typebotProjects)
+        .where(eq(typebotProjects.userId, userId))
+        .orderBy(desc(typebotProjects.createdAt));
+
+      return projects;
+    } catch (error) {
+      console.error('❌ ERRO ao buscar projetos TypeBot:', error);
+      throw error;
+    }
+  }
+
+  async getTypebotProject(id: string): Promise<TypebotProject | undefined> {
+    try {
+      const result = await db.select()
+        .from(typebotProjects)
+        .where(eq(typebotProjects.id, id))
+        .limit(1);
+
+      return result[0];
+    } catch (error) {
+      console.error('❌ ERRO ao buscar projeto TypeBot:', error);
+      throw error;
+    }
+  }
+
+  async getTypebotProjectByPublicId(publicId: string): Promise<TypebotProject | undefined> {
+    try {
+      const result = await db.select()
+        .from(typebotProjects)
+        .where(eq(typebotProjects.publicId, publicId))
+        .limit(1);
+
+      return result[0];
+    } catch (error) {
+      console.error('❌ ERRO ao buscar projeto TypeBot por ID público:', error);
+      throw error;
+    }
+  }
+
+  async updateTypebotProject(id: string, updates: Partial<TypebotProject>): Promise<TypebotProject> {
+    try {
+      const now = Math.floor(Date.now() / 1000);
+      
+      const result = await db.update(typebotProjects)
+        .set({
+          ...updates,
+          updatedAt: now
+        })
+        .where(eq(typebotProjects.id, id))
+        .returning();
+
+      console.log('✅ Projeto TypeBot atualizado:', result[0]);
+      return result[0];
+    } catch (error) {
+      console.error('❌ ERRO ao atualizar projeto TypeBot:', error);
+      throw error;
+    }
+  }
+
+  async deleteTypebotProject(id: string): Promise<void> {
+    try {
+      await db.delete(typebotProjects)
+        .where(eq(typebotProjects.id, id));
+
+      console.log('✅ Projeto TypeBot deletado:', id);
+    } catch (error) {
+      console.error('❌ ERRO ao deletar projeto TypeBot:', error);
+      throw error;
+    }
+  }
+
+  // TypeBot Conversation Methods
+  async createTypebotConversation(conversation: Omit<InsertTypebotConversation, 'id' | 'createdAt' | 'updatedAt'>): Promise<TypebotConversation> {
+    try {
+      const now = Math.floor(Date.now() / 1000);
+      const id = nanoid();
+      
+      const result = await db.insert(typebotConversations)
+        .values({
+          id,
+          ...conversation,
+          createdAt: now,
+          updatedAt: now
+        })
+        .returning();
+
+      console.log('✅ Conversa TypeBot criada:', result[0]);
+      return result[0];
+    } catch (error) {
+      console.error('❌ ERRO ao criar conversa TypeBot:', error);
+      throw error;
+    }
+  }
+
+  async getTypebotConversation(id: string): Promise<TypebotConversation | undefined> {
+    try {
+      const result = await db.select()
+        .from(typebotConversations)
+        .where(eq(typebotConversations.id, id))
+        .limit(1);
+
+      return result[0];
+    } catch (error) {
+      console.error('❌ ERRO ao buscar conversa TypeBot:', error);
+      throw error;
+    }
+  }
+
+  async updateTypebotConversation(id: string, updates: Partial<TypebotConversation>): Promise<TypebotConversation> {
+    try {
+      const now = Math.floor(Date.now() / 1000);
+      
+      const result = await db.update(typebotConversations)
+        .set({
+          ...updates,
+          updatedAt: now
+        })
+        .where(eq(typebotConversations.id, id))
+        .returning();
+
+      console.log('✅ Conversa TypeBot atualizada:', result[0]);
+      return result[0];
+    } catch (error) {
+      console.error('❌ ERRO ao atualizar conversa TypeBot:', error);
+      throw error;
+    }
+  }
+
+  // TypeBot Message Methods
+  async createTypebotMessage(message: Omit<InsertTypebotMessage, 'id' | 'timestamp'>): Promise<TypebotMessage> {
+    try {
+      const now = Math.floor(Date.now() / 1000);
+      const id = nanoid();
+      
+      const result = await db.insert(typebotMessages)
+        .values({
+          id,
+          ...message,
+          timestamp: now
+        })
+        .returning();
+
+      console.log('✅ Mensagem TypeBot criada:', result[0]);
+      return result[0];
+    } catch (error) {
+      console.error('❌ ERRO ao criar mensagem TypeBot:', error);
+      throw error;
+    }
+  }
+
+  async getTypebotMessages(conversationId: string): Promise<TypebotMessage[]> {
+    try {
+      const messages = await db.select()
+        .from(typebotMessages)
+        .where(eq(typebotMessages.conversationId, conversationId))
+        .orderBy(asc(typebotMessages.timestamp));
+
+      return messages;
+    } catch (error) {
+      console.error('❌ ERRO ao buscar mensagens TypeBot:', error);
+      throw error;
+    }
+  }
+
+  // TypeBot Analytics Methods
+  async getTypebotAnalytics(projectId: string): Promise<TypebotAnalytics[]> {
+    try {
+      const analytics = await db.select()
+        .from(typebotAnalytics)
+        .where(eq(typebotAnalytics.projectId, projectId))
+        .orderBy(desc(typebotAnalytics.date));
+
+      return analytics;
+    } catch (error) {
+      console.error('❌ ERRO ao buscar analytics TypeBot:', error);
+      throw error;
+    }
+  }
+
+  async createTypebotAnalytics(analytics: Omit<InsertTypebotAnalytics, 'id' | 'createdAt'>): Promise<TypebotAnalytics> {
+    try {
+      const now = Math.floor(Date.now() / 1000);
+      const id = nanoid();
+      
+      const result = await db.insert(typebotAnalytics)
+        .values({
+          id,
+          ...analytics,
+          createdAt: now
+        })
+        .returning();
+
+      console.log('✅ Analytics TypeBot criado:', result[0]);
+      return result[0];
+    } catch (error) {
+      console.error('❌ ERRO ao criar analytics TypeBot:', error);
+      throw error;
+    }
+  }
+
+  // TypeBot Webhook Methods
+  async createTypebotWebhook(webhook: Omit<InsertTypebotWebhook, 'id' | 'createdAt' | 'updatedAt'>): Promise<TypebotWebhook> {
+    try {
+      const now = Math.floor(Date.now() / 1000);
+      const id = nanoid();
+      
+      const result = await db.insert(typebotWebhooks)
+        .values({
+          id,
+          ...webhook,
+          createdAt: now,
+          updatedAt: now
+        })
+        .returning();
+
+      console.log('✅ Webhook TypeBot criado:', result[0]);
+      return result[0];
+    } catch (error) {
+      console.error('❌ ERRO ao criar webhook TypeBot:', error);
+      throw error;
+    }
+  }
+
+  async getTypebotWebhooks(projectId: string): Promise<TypebotWebhook[]> {
+    try {
+      const webhooks = await db.select()
+        .from(typebotWebhooks)
+        .where(eq(typebotWebhooks.projectId, projectId))
+        .orderBy(desc(typebotWebhooks.createdAt));
+
+      return webhooks;
+    } catch (error) {
+      console.error('❌ ERRO ao buscar webhooks TypeBot:', error);
+      throw error;
+    }
+  }
+
+  // TypeBot Integration Methods
+  async createTypebotIntegration(integration: Omit<InsertTypebotIntegration, 'id' | 'createdAt' | 'updatedAt'>): Promise<TypebotIntegration> {
+    try {
+      const now = Math.floor(Date.now() / 1000);
+      const id = nanoid();
+      
+      const result = await db.insert(typebotIntegrations)
+        .values({
+          id,
+          ...integration,
+          createdAt: now,
+          updatedAt: now
+        })
+        .returning();
+
+      console.log('✅ Integração TypeBot criada:', result[0]);
+      return result[0];
+    } catch (error) {
+      console.error('❌ ERRO ao criar integração TypeBot:', error);
+      throw error;
+    }
+  }
+
+  async getTypebotIntegrations(projectId: string): Promise<TypebotIntegration[]> {
+    try {
+      const integrations = await db.select()
+        .from(typebotIntegrations)
+        .where(eq(typebotIntegrations.projectId, projectId))
+        .orderBy(desc(typebotIntegrations.createdAt));
+
+      return integrations;
+    } catch (error) {
+      console.error('❌ ERRO ao buscar integrações TypeBot:', error);
       throw error;
     }
   }

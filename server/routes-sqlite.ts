@@ -7169,6 +7169,399 @@ app.get("/api/whatsapp-extension/pending", verifyJWT, async (req: any, res: Resp
     }
   });
 
+  // ===============================================
+  // TYPEBOT AUTO-HOSPEDADO - ENDPOINTS COMPLETOS
+  // ===============================================
+
+  // Get all TypeBot projects for user
+  app.get("/api/typebot/projects", verifyJWT, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const projects = await storage.getTypebotProjects(userId);
+      res.json(projects);
+    } catch (error) {
+      console.error("❌ ERRO ao buscar projetos TypeBot:", error);
+      res.status(500).json({ message: "Erro ao buscar projetos TypeBot" });
+    }
+  });
+
+  // Get specific TypeBot project
+  app.get("/api/typebot/projects/:id", verifyJWT, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const projectId = req.params.id;
+      
+      const project = await storage.getTypebotProject(projectId);
+      if (!project || project.userId !== userId) {
+        return res.status(404).json({ message: "Projeto TypeBot não encontrado" });
+      }
+      
+      res.json(project);
+    } catch (error) {
+      console.error("❌ ERRO ao buscar projeto TypeBot:", error);
+      res.status(500).json({ message: "Erro ao buscar projeto TypeBot" });
+    }
+  });
+
+  // Create new TypeBot project
+  app.post("/api/typebot/projects", verifyJWT, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const { name, description, typebotData, theme, settings } = req.body;
+      
+      const project = await storage.createTypebotProject({
+        id: nanoid(),
+        userId,
+        name: name || "Novo Chatbot",
+        description: description || "",
+        typebotData: typebotData || {
+          version: "6.0",
+          name: name || "Novo Chatbot",
+          groups: [],
+          variables: [],
+          edges: []
+        },
+        theme: theme || null,
+        settings: settings || null,
+        isPublished: false,
+        publicId: nanoid(),
+        totalViews: 0,
+        totalConversations: 0,
+        totalCompletions: 0,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      });
+      
+      res.json(project);
+    } catch (error) {
+      console.error("❌ ERRO ao criar projeto TypeBot:", error);
+      res.status(500).json({ message: "Erro ao criar projeto TypeBot" });
+    }
+  });
+
+  // Update TypeBot project
+  app.put("/api/typebot/projects/:id", verifyJWT, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const projectId = req.params.id;
+      const updateData = req.body;
+      
+      const project = await storage.getTypebotProject(projectId);
+      if (!project || project.userId !== userId) {
+        return res.status(404).json({ message: "Projeto TypeBot não encontrado" });
+      }
+      
+      const updatedProject = await storage.updateTypebotProject(projectId, {
+        ...updateData,
+        updatedAt: new Date()
+      });
+      
+      res.json(updatedProject);
+    } catch (error) {
+      console.error("❌ ERRO ao atualizar projeto TypeBot:", error);
+      res.status(500).json({ message: "Erro ao atualizar projeto TypeBot" });
+    }
+  });
+
+  // Delete TypeBot project
+  app.delete("/api/typebot/projects/:id", verifyJWT, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const projectId = req.params.id;
+      
+      const project = await storage.getTypebotProject(projectId);
+      if (!project || project.userId !== userId) {
+        return res.status(404).json({ message: "Projeto TypeBot não encontrado" });
+      }
+      
+      await storage.deleteTypebotProject(projectId);
+      res.json({ message: "Projeto TypeBot deletado com sucesso" });
+    } catch (error) {
+      console.error("❌ ERRO ao deletar projeto TypeBot:", error);
+      res.status(500).json({ message: "Erro ao deletar projeto TypeBot" });
+    }
+  });
+
+  // Convert Quiz to TypeBot
+  app.post("/api/typebot/convert-quiz/:quizId", verifyJWT, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const quizId = req.params.quizId;
+      const { name, description } = req.body;
+      
+      const quiz = await storage.getQuizById(quizId);
+      if (!quiz || quiz.userId !== userId) {
+        return res.status(404).json({ message: "Quiz não encontrado" });
+      }
+      
+      // Importar conversor dinamicamente
+      const { TypebotConverter } = await import('./typebot-converter');
+      const converter = new TypebotConverter();
+      
+      // Converter quiz para TypeBot
+      const typebotData = converter.convertQuizToTypebot({
+        id: quiz.id,
+        title: quiz.title,
+        description: quiz.description,
+        structure: quiz.structure as any
+      });
+      
+      // Criar projeto TypeBot
+      const project = await storage.createTypebotProject({
+        id: nanoid(),
+        userId,
+        name: name || `${quiz.title} - Chatbot`,
+        description: description || `Chatbot convertido do quiz: ${quiz.title}`,
+        sourceQuizId: quizId,
+        typebotData,
+        theme: null,
+        settings: null,
+        isPublished: false,
+        publicId: nanoid(),
+        totalViews: 0,
+        totalConversations: 0,
+        totalCompletions: 0,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      });
+      
+      res.json({
+        success: true,
+        message: "Quiz convertido para TypeBot com sucesso",
+        project,
+        typebotData
+      });
+    } catch (error) {
+      console.error("❌ ERRO ao converter quiz para TypeBot:", error);
+      res.status(500).json({ message: "Erro ao converter quiz para TypeBot" });
+    }
+  });
+
+  // Publish TypeBot project
+  app.post("/api/typebot/projects/:id/publish", verifyJWT, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const projectId = req.params.id;
+      
+      const project = await storage.getTypebotProject(projectId);
+      if (!project || project.userId !== userId) {
+        return res.status(404).json({ message: "Projeto TypeBot não encontrado" });
+      }
+      
+      const updatedProject = await storage.updateTypebotProject(projectId, {
+        isPublished: true,
+        publicId: project.publicId || nanoid(),
+        updatedAt: new Date()
+      });
+      
+      res.json({
+        success: true,
+        message: "Projeto TypeBot publicado com sucesso",
+        project: updatedProject,
+        publicUrl: `/typebot/${updatedProject.publicId}`
+      });
+    } catch (error) {
+      console.error("❌ ERRO ao publicar projeto TypeBot:", error);
+      res.status(500).json({ message: "Erro ao publicar projeto TypeBot" });
+    }
+  });
+
+  // Unpublish TypeBot project
+  app.post("/api/typebot/projects/:id/unpublish", verifyJWT, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const projectId = req.params.id;
+      
+      const project = await storage.getTypebotProject(projectId);
+      if (!project || project.userId !== userId) {
+        return res.status(404).json({ message: "Projeto TypeBot não encontrado" });
+      }
+      
+      const updatedProject = await storage.updateTypebotProject(projectId, {
+        isPublished: false,
+        updatedAt: new Date()
+      });
+      
+      res.json({
+        success: true,
+        message: "Projeto TypeBot despublicado com sucesso",
+        project: updatedProject
+      });
+    } catch (error) {
+      console.error("❌ ERRO ao despublicar projeto TypeBot:", error);
+      res.status(500).json({ message: "Erro ao despublicar projeto TypeBot" });
+    }
+  });
+
+  // Get TypeBot project by public ID (for public access)
+  app.get("/api/typebot/public/:publicId", async (req: any, res) => {
+    try {
+      const publicId = req.params.publicId;
+      
+      const project = await storage.getTypebotProjectByPublicId(publicId);
+      if (!project || !project.isPublished) {
+        return res.status(404).json({ message: "Chatbot não encontrado ou não publicado" });
+      }
+      
+      // Incrementar view count
+      await storage.updateTypebotProject(project.id, {
+        totalViews: (project.totalViews || 0) + 1,
+        updatedAt: new Date()
+      });
+      
+      res.json({
+        id: project.id,
+        name: project.name,
+        description: project.description,
+        typebotData: project.typebotData,
+        theme: project.theme,
+        settings: project.settings,
+        publicId: project.publicId
+      });
+    } catch (error) {
+      console.error("❌ ERRO ao buscar projeto TypeBot público:", error);
+      res.status(500).json({ message: "Erro ao buscar chatbot" });
+    }
+  });
+
+  // Start TypeBot conversation
+  app.post("/api/typebot/conversations", async (req: any, res) => {
+    try {
+      const { projectId, publicId, visitorId, sessionId } = req.body;
+      
+      let project;
+      if (publicId) {
+        project = await storage.getTypebotProjectByPublicId(publicId);
+      } else if (projectId) {
+        project = await storage.getTypebotProject(projectId);
+      }
+      
+      if (!project) {
+        return res.status(404).json({ message: "Projeto TypeBot não encontrado" });
+      }
+      
+      const conversation = await storage.createTypebotConversation({
+        id: nanoid(),
+        projectId: project.id,
+        visitorId: visitorId || nanoid(),
+        sessionId: sessionId || nanoid(),
+        isCompleted: false,
+        variables: {},
+        results: [],
+        currentBlockId: null,
+        ipAddress: req.ip,
+        userAgent: req.get('User-Agent'),
+        createdAt: new Date(),
+        updatedAt: new Date()
+      });
+      
+      // Incrementar contador de conversas
+      await storage.updateTypebotProject(project.id, {
+        totalConversations: (project.totalConversations || 0) + 1,
+        updatedAt: new Date()
+      });
+      
+      res.json({
+        success: true,
+        conversation,
+        typebotData: project.typebotData,
+        theme: project.theme,
+        settings: project.settings
+      });
+    } catch (error) {
+      console.error("❌ ERRO ao iniciar conversa TypeBot:", error);
+      res.status(500).json({ message: "Erro ao iniciar conversa" });
+    }
+  });
+
+  // Update TypeBot conversation
+  app.put("/api/typebot/conversations/:id", async (req: any, res) => {
+    try {
+      const conversationId = req.params.id;
+      const updateData = req.body;
+      
+      const conversation = await storage.getTypebotConversation(conversationId);
+      if (!conversation) {
+        return res.status(404).json({ message: "Conversa não encontrada" });
+      }
+      
+      const updatedConversation = await storage.updateTypebotConversation(conversationId, {
+        ...updateData,
+        updatedAt: new Date()
+      });
+      
+      res.json(updatedConversation);
+    } catch (error) {
+      console.error("❌ ERRO ao atualizar conversa TypeBot:", error);
+      res.status(500).json({ message: "Erro ao atualizar conversa" });
+    }
+  });
+
+  // Get TypeBot conversation messages
+  app.get("/api/typebot/conversations/:id/messages", async (req: any, res) => {
+    try {
+      const conversationId = req.params.id;
+      
+      const conversation = await storage.getTypebotConversation(conversationId);
+      if (!conversation) {
+        return res.status(404).json({ message: "Conversa não encontrada" });
+      }
+      
+      const messages = await storage.getTypebotMessages(conversationId);
+      res.json(messages);
+    } catch (error) {
+      console.error("❌ ERRO ao buscar mensagens TypeBot:", error);
+      res.status(500).json({ message: "Erro ao buscar mensagens" });
+    }
+  });
+
+  // Add message to TypeBot conversation
+  app.post("/api/typebot/conversations/:id/messages", async (req: any, res) => {
+    try {
+      const conversationId = req.params.id;
+      const { blockId, type, content, isFromBot } = req.body;
+      
+      const conversation = await storage.getTypebotConversation(conversationId);
+      if (!conversation) {
+        return res.status(404).json({ message: "Conversa não encontrada" });
+      }
+      
+      const message = await storage.createTypebotMessage({
+        id: nanoid(),
+        conversationId,
+        blockId,
+        type,
+        content,
+        isFromBot: isFromBot ?? true,
+        timestamp: new Date()
+      });
+      
+      res.json(message);
+    } catch (error) {
+      console.error("❌ ERRO ao adicionar mensagem TypeBot:", error);
+      res.status(500).json({ message: "Erro ao adicionar mensagem" });
+    }
+  });
+
+  // Get TypeBot analytics
+  app.get("/api/typebot/projects/:id/analytics", verifyJWT, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const projectId = req.params.id;
+      
+      const project = await storage.getTypebotProject(projectId);
+      if (!project || project.userId !== userId) {
+        return res.status(404).json({ message: "Projeto TypeBot não encontrado" });
+      }
+      
+      const analytics = await storage.getTypebotAnalytics(projectId);
+      res.json(analytics);
+    } catch (error) {
+      console.error("❌ ERRO ao buscar analytics TypeBot:", error);
+      res.status(500).json({ message: "Erro ao buscar analytics" });
+    }
+  });
+
   return httpServer;
 }
 

@@ -32,6 +32,7 @@ import AIConversionPage from "@/pages/ai-conversion";
 import TesteAbPage from "@/pages/teste-ab";
 import WebhooksPage from "@/pages/webhooks";
 import IntegracoesPage from "@/pages/integracoes";
+import TypebotPage from "@/pages/typebot";
 import { useAuth } from "@/hooks/useAuth-jwt";
 import { isUnauthorizedError } from "@/lib/authUtils";
 import { SidebarProvider } from "@/hooks/useSidebar";
@@ -165,6 +166,12 @@ function App() {
         <Route path="/integracoes">
           <Layout>
             <IntegracoesPage />
+          </Layout>
+        </Route>
+
+        <Route path="/typebot">
+          <Layout>
+            <TypebotPage />
           </Layout>
         </Route>
 

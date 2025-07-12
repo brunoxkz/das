@@ -642,3 +642,247 @@ export type WebhookLog = typeof webhookLogs.$inferSelect;
 // Integrations Types
 export type InsertIntegration = z.infer<typeof insertIntegrationSchema>;
 export type Integration = typeof integrations.$inferSelect;
+
+// ===============================================
+// TYPEBOT AUTO-HOSPEDADO - SISTEMA COMPLETO
+// ===============================================
+
+// TypeBot Projects Schema
+export const typebotProjects = sqliteTable('typebot_projects', {
+  id: text('id').primaryKey().notNull(),
+  userId: text('user_id').notNull().references(() => users.id),
+  name: text('name').notNull(),
+  description: text('description'),
+  sourceQuizId: text('source_quiz_id').references(() => quizzes.id), // Quiz origem da conversão
+  typebotData: text('typebot_data', { mode: 'json' }).notNull().$type<TypebotData>(),
+  isPublished: integer('is_published', { mode: 'boolean' }).default(false),
+  publicId: text('public_id').unique(), // ID público para acessar o chatbot
+  theme: text('theme', { mode: 'json' }).$type<TypebotTheme>(),
+  settings: text('settings', { mode: 'json' }).$type<TypebotSettings>(),
+  totalViews: integer('total_views').default(0),
+  totalConversations: integer('total_conversations').default(0),
+  totalCompletions: integer('total_completions').default(0),
+  createdAt: integer('created_at', { mode: 'timestamp' }).notNull().default(sql`(unixepoch())`),
+  updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull().default(sql`(unixepoch())`)
+});
+
+// TypeBot Conversations Schema
+export const typebotConversations = sqliteTable('typebot_conversations', {
+  id: text('id').primaryKey().notNull(),
+  projectId: text('project_id').notNull().references(() => typebotProjects.id, { onDelete: 'cascade' }),
+  visitorId: text('visitor_id').notNull(),
+  sessionId: text('session_id').notNull(),
+  isCompleted: integer('is_completed', { mode: 'boolean' }).default(false),
+  variables: text('variables', { mode: 'json' }).$type<Record<string, any>>(),
+  results: text('results', { mode: 'json' }).$type<TypebotResult[]>(),
+  currentBlockId: text('current_block_id'),
+  ipAddress: text('ip_address'),
+  userAgent: text('user_agent'),
+  createdAt: integer('created_at', { mode: 'timestamp' }).notNull().default(sql`(unixepoch())`),
+  updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull().default(sql`(unixepoch())`)
+});
+
+// TypeBot Messages Schema
+export const typebotMessages = sqliteTable('typebot_messages', {
+  id: text('id').primaryKey().notNull(),
+  conversationId: text('conversation_id').notNull().references(() => typebotConversations.id, { onDelete: 'cascade' }),
+  blockId: text('block_id').notNull(),
+  type: text('type').notNull(), // text, image, video, input, etc.
+  content: text('content', { mode: 'json' }).notNull().$type<TypebotMessageContent>(),
+  isFromBot: integer('is_from_bot', { mode: 'boolean' }).default(true),
+  timestamp: integer('timestamp', { mode: 'timestamp' }).notNull().default(sql`(unixepoch())`)
+});
+
+// TypeBot Analytics Schema
+export const typebotAnalytics = sqliteTable('typebot_analytics', {
+  id: text('id').primaryKey().notNull(),
+  projectId: text('project_id').notNull().references(() => typebotProjects.id, { onDelete: 'cascade' }),
+  date: text('date').notNull(), // YYYY-MM-DD
+  views: integer('views').default(0),
+  conversations: integer('conversations').default(0),
+  completions: integer('completions').default(0),
+  completionRate: real('completion_rate').default(0),
+  avgSessionTime: real('avg_session_time').default(0),
+  dropOffBlocks: text('drop_off_blocks', { mode: 'json' }).$type<Record<string, number>>(),
+  createdAt: integer('created_at', { mode: 'timestamp' }).notNull().default(sql`(unixepoch())`)
+});
+
+// TypeBot Webhooks Schema
+export const typebotWebhooks = sqliteTable('typebot_webhooks', {
+  id: text('id').primaryKey().notNull(),
+  projectId: text('project_id').notNull().references(() => typebotProjects.id, { onDelete: 'cascade' }),
+  name: text('name').notNull(),
+  url: text('url').notNull(),
+  events: text('events', { mode: 'json' }).notNull().$type<string[]>(),
+  headers: text('headers', { mode: 'json' }).$type<Record<string, string>>(),
+  isActive: integer('is_active', { mode: 'boolean' }).default(true),
+  lastTriggered: integer('last_triggered', { mode: 'timestamp' }),
+  totalTriggers: integer('total_triggers').default(0),
+  createdAt: integer('created_at', { mode: 'timestamp' }).notNull().default(sql`(unixepoch())`),
+  updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull().default(sql`(unixepoch())`)
+});
+
+// TypeBot Integrations Schema
+export const typebotIntegrations = sqliteTable('typebot_integrations', {
+  id: text('id').primaryKey().notNull(),
+  projectId: text('project_id').notNull().references(() => typebotProjects.id, { onDelete: 'cascade' }),
+  type: text('type').notNull(), // email, google-sheets, openai, etc.
+  name: text('name').notNull(),
+  config: text('config', { mode: 'json' }).notNull().$type<Record<string, any>>(),
+  isActive: integer('is_active', { mode: 'boolean' }).default(true),
+  lastUsed: integer('last_used', { mode: 'timestamp' }),
+  totalUses: integer('total_uses').default(0),
+  createdAt: integer('created_at', { mode: 'timestamp' }).notNull().default(sql`(unixepoch())`),
+  updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull().default(sql`(unixepoch())`)
+});
+
+// TypeBot Types
+export interface TypebotData {
+  version: string;
+  name: string;
+  groups: TypebotGroup[];
+  variables: TypebotVariable[];
+  edges: TypebotEdge[];
+  settings?: TypebotSettings;
+  theme?: TypebotTheme;
+}
+
+export interface TypebotGroup {
+  id: string;
+  title: string;
+  graphCoordinates: { x: number; y: number };
+  blocks: TypebotBlock[];
+}
+
+export interface TypebotBlock {
+  id: string;
+  type: string;
+  content?: any;
+  settings?: any;
+  options?: any;
+}
+
+export interface TypebotVariable {
+  id: string;
+  name: string;
+  value?: any;
+  type?: string;
+}
+
+export interface TypebotEdge {
+  id: string;
+  from: {
+    groupId: string;
+    blockId: string;
+  };
+  to: {
+    groupId: string;
+    blockId?: string;
+  };
+}
+
+export interface TypebotTheme {
+  general: {
+    font: string;
+    background: {
+      type: string;
+      content: string;
+    };
+  };
+  chat: {
+    container: {
+      backgroundColor: string;
+      color: string;
+    };
+    hostBubbles: {
+      backgroundColor: string;
+      color: string;
+    };
+    guestBubbles: {
+      backgroundColor: string;
+      color: string;
+    };
+    inputs: {
+      backgroundColor: string;
+      color: string;
+      placeholderColor: string;
+    };
+    buttons: {
+      backgroundColor: string;
+      color: string;
+    };
+  };
+}
+
+export interface TypebotSettings {
+  general: {
+    isBrandingEnabled: boolean;
+    isInputPrefillEnabled: boolean;
+    isHideQueryParamsEnabled: boolean;
+    isNewResultOnRefreshEnabled: boolean;
+  };
+  typingEmulation: {
+    enabled: boolean;
+    speed: number;
+    maxDelay: number;
+  };
+  security: {
+    allowedOrigins: string[];
+  };
+}
+
+export interface TypebotResult {
+  id: string;
+  blockId: string;
+  value: any;
+  timestamp: Date;
+}
+
+export interface TypebotMessageContent {
+  text?: string;
+  richText?: any;
+  image?: {
+    url: string;
+    alt?: string;
+  };
+  video?: {
+    url: string;
+    type: string;
+  };
+  audio?: {
+    url: string;
+    type: string;
+  };
+  input?: {
+    type: string;
+    placeholder?: string;
+    value?: any;
+  };
+  buttons?: Array<{
+    id: string;
+    text: string;
+    url?: string;
+  }>;
+}
+
+// TypeBot Zod Schemas
+export const insertTypebotProjectSchema = createInsertSchema(typebotProjects);
+export const insertTypebotConversationSchema = createInsertSchema(typebotConversations);
+export const insertTypebotMessageSchema = createInsertSchema(typebotMessages);
+export const insertTypebotAnalyticsSchema = createInsertSchema(typebotAnalytics);
+export const insertTypebotWebhookSchema = createInsertSchema(typebotWebhooks);
+export const insertTypebotIntegrationSchema = createInsertSchema(typebotIntegrations);
+
+// TypeBot Types
+export type InsertTypebotProject = z.infer<typeof insertTypebotProjectSchema>;
+export type TypebotProject = typeof typebotProjects.$inferSelect;
+export type InsertTypebotConversation = z.infer<typeof insertTypebotConversationSchema>;
+export type TypebotConversation = typeof typebotConversations.$inferSelect;
+export type InsertTypebotMessage = z.infer<typeof insertTypebotMessageSchema>;
+export type TypebotMessage = typeof typebotMessages.$inferSelect;
+export type InsertTypebotAnalytics = z.infer<typeof insertTypebotAnalyticsSchema>;
+export type TypebotAnalytics = typeof typebotAnalytics.$inferSelect;
+export type InsertTypebotWebhook = z.infer<typeof insertTypebotWebhookSchema>;
+export type TypebotWebhook = typeof typebotWebhooks.$inferSelect;
+export type InsertTypebotIntegration = z.infer<typeof insertTypebotIntegrationSchema>;
+export type TypebotIntegration = typeof typebotIntegrations.$inferSelect;

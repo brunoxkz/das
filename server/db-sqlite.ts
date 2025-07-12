@@ -584,7 +584,121 @@ export function runMigrations() {
     sqlite.exec(createEmailCampaignsTable);
     sqlite.exec(createEmailTemplatesTable);
 
+    // ===============================================
+    // TYPEBOT AUTO-HOSPEDADO - TABELAS COMPLETAS
+    // ===============================================
+    
+    const createTypebotProjectsTable = `
+      CREATE TABLE IF NOT EXISTS typebot_projects (
+        id TEXT PRIMARY KEY,
+        userId TEXT NOT NULL,
+        name TEXT NOT NULL,
+        description TEXT,
+        sourceQuizId TEXT,
+        typebotData TEXT NOT NULL,
+        theme TEXT,
+        settings TEXT,
+        isPublished INTEGER DEFAULT 0,
+        publicId TEXT UNIQUE,
+        totalViews INTEGER DEFAULT 0,
+        totalConversations INTEGER DEFAULT 0,
+        totalCompletions INTEGER DEFAULT 0,
+        createdAt INTEGER NOT NULL,
+        updatedAt INTEGER NOT NULL,
+        FOREIGN KEY (userId) REFERENCES users(id),
+        FOREIGN KEY (sourceQuizId) REFERENCES quizzes(id)
+      );
+    `;
+
+    const createTypebotConversationsTable = `
+      CREATE TABLE IF NOT EXISTS typebot_conversations (
+        id TEXT PRIMARY KEY,
+        projectId TEXT NOT NULL,
+        visitorId TEXT NOT NULL,
+        sessionId TEXT NOT NULL,
+        isCompleted INTEGER DEFAULT 0,
+        variables TEXT DEFAULT '{}',
+        results TEXT DEFAULT '[]',
+        currentBlockId TEXT,
+        ipAddress TEXT,
+        userAgent TEXT,
+        createdAt INTEGER NOT NULL,
+        updatedAt INTEGER NOT NULL,
+        FOREIGN KEY (projectId) REFERENCES typebot_projects(id)
+      );
+    `;
+
+    const createTypebotMessagesTable = `
+      CREATE TABLE IF NOT EXISTS typebot_messages (
+        id TEXT PRIMARY KEY,
+        conversationId TEXT NOT NULL,
+        blockId TEXT,
+        type TEXT NOT NULL,
+        content TEXT NOT NULL,
+        isFromBot INTEGER DEFAULT 1,
+        timestamp INTEGER NOT NULL,
+        FOREIGN KEY (conversationId) REFERENCES typebot_conversations(id)
+      );
+    `;
+
+    const createTypebotAnalyticsTable = `
+      CREATE TABLE IF NOT EXISTS typebot_analytics (
+        id TEXT PRIMARY KEY,
+        projectId TEXT NOT NULL,
+        date TEXT NOT NULL,
+        totalViews INTEGER DEFAULT 0,
+        totalConversations INTEGER DEFAULT 0,
+        totalCompletions INTEGER DEFAULT 0,
+        uniqueVisitors INTEGER DEFAULT 0,
+        avgSessionDuration REAL DEFAULT 0,
+        bounceRate REAL DEFAULT 0,
+        conversionRate REAL DEFAULT 0,
+        createdAt INTEGER NOT NULL,
+        FOREIGN KEY (projectId) REFERENCES typebot_projects(id)
+      );
+    `;
+
+    const createTypebotWebhooksTable = `
+      CREATE TABLE IF NOT EXISTS typebot_webhooks (
+        id TEXT PRIMARY KEY,
+        projectId TEXT NOT NULL,
+        name TEXT NOT NULL,
+        url TEXT NOT NULL,
+        method TEXT DEFAULT 'POST',
+        headers TEXT DEFAULT '{}',
+        queryParams TEXT DEFAULT '{}',
+        bodyContent TEXT,
+        isActive INTEGER DEFAULT 1,
+        createdAt INTEGER NOT NULL,
+        updatedAt INTEGER NOT NULL,
+        FOREIGN KEY (projectId) REFERENCES typebot_projects(id)
+      );
+    `;
+
+    const createTypebotIntegrationsTable = `
+      CREATE TABLE IF NOT EXISTS typebot_integrations (
+        id TEXT PRIMARY KEY,
+        projectId TEXT NOT NULL,
+        type TEXT NOT NULL,
+        name TEXT NOT NULL,
+        config TEXT NOT NULL,
+        isActive INTEGER DEFAULT 1,
+        createdAt INTEGER NOT NULL,
+        updatedAt INTEGER NOT NULL,
+        FOREIGN KEY (projectId) REFERENCES typebot_projects(id)
+      );
+    `;
+
+    // Criar todas as tabelas TypeBot
+    sqlite.exec(createTypebotProjectsTable);
+    sqlite.exec(createTypebotConversationsTable);
+    sqlite.exec(createTypebotMessagesTable);
+    sqlite.exec(createTypebotAnalyticsTable);
+    sqlite.exec(createTypebotWebhooksTable);
+    sqlite.exec(createTypebotIntegrationsTable);
+
     console.log('✅ Fresh SQLite database schema created successfully');
+    console.log('🤖 TypeBot tables created: projects, conversations, messages, analytics, webhooks, integrations');
   }
 }
 

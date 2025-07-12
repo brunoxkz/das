@@ -144,6 +144,13 @@ export function Sidebar() {
       badge: "🔧"
     },
     {
+      title: "TypeBot",
+      href: "/typebot",
+      icon: <MessageSquare className="w-4 h-4" />,
+      active: location === "/typebot",
+      badge: "🤖"
+    },
+    {
       title: "Super Afiliados",
       href: "/super-afiliados",
       icon: <Crown className="w-4 h-4" />,
