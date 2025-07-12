@@ -7,29 +7,6 @@
     <link rel="manifest" href="/manifest.json">
     <meta name="theme-color" content="#22c55e">
     <meta name="description" content="Plataforma de quiz funil para geração de leads">
-    <!-- Chart.js para roleta premium -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/chartjs-plugin-datalabels/2.1.0/chartjs-plugin-datalabels.min.js"></script>
-    
-    <!-- CSS para animações dos jogos -->
-    <style>
-      @keyframes jolt {
-        from { transform: translate(-50%, -16px) rotate(150deg); }
-        to { transform: translate(-50%, -16px) rotate(180deg); }
-      }
-      
-      .pin.jolt {
-        animation: jolt 250ms ease-out forwards;
-      }
-      
-      .reel {
-        transition: background-position-y 0s;
-      }
-      
-      .slots-container .reel-container .reel {
-        background-size: 79px auto;
-      }
-    </style>
   </head>
   <body>
     <div id="root"></div>

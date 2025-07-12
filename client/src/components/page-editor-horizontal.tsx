@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
@@ -68,276 +68,12 @@ import {
   ArrowLeftRight,
   HelpCircle,
   QrCode,
-  Hand,
-  Bell
+  Hand
 } from "lucide-react";
-
-// Função para inicializar Chart.js da roleta
-declare global {
-  interface Window {
-    Chart: any;
-    ChartDataLabels: any;
-    initializeWheelChart: (canvasId: string, segments: string[], colors: string[], winningSegment: number) => void;
-  }
-}
-
-// Função global para inicializar roleta
-if (typeof window !== 'undefined') {
-  (window as any).initializeWheelChart = (canvasId: string, segments: string[], colors: string[], winningSegment: number) => {
-    const canvas = document.getElementById(canvasId) as HTMLCanvasElement;
-    if (!canvas || !window.Chart) return;
-    
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-    
-    // Configuração do rotationValues baseado nos segmentos
-    const rotationValues = segments.map((_, index) => {
-      const angle = 360 / segments.length;
-      return {
-        minDegree: index * angle,
-        maxDegree: (index + 1) * angle,
-        value: index
-      };
-    });
-    
-    // Dados para o Chart.js
-    const data = Array(segments.length).fill(16); // Tamanho igual para cada segmento
-    
-    // Criar o gráfico
-    const wheelChart = new window.Chart(ctx, {
-      plugins: [window.ChartDataLabels],
-      type: 'pie',
-      data: {
-        labels: segments,
-        datasets: [{
-          backgroundColor: colors,
-          data: data,
-          borderWidth: 2,
-          borderColor: '#ffffff'
-        }]
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        animation: { duration: 0 },
-        plugins: {
-          tooltip: false,
-          legend: { display: false },
-          datalabels: {
-            color: '#ffffff',
-            formatter: (_, context) => context.chart.data.labels[context.dataIndex],
-            font: { size: 12, weight: 'bold' }
-          }
-        }
-      }
-    });
-    
-    // Função para determinar resultado baseado no ângulo
-    const valueGenerator = (angleValue: number) => {
-      for (let i of rotationValues) {
-        if (angleValue >= i.minDegree && angleValue <= i.maxDegree) {
-          return segments[i.value];
-        }
-      }
-      return segments[winningSegment];
-    };
-    
-    // Função de spin
-    const spinWheel = () => {
-      const randomDegree = Math.floor(Math.random() * 360);
-      let count = 0;
-      let resultValue = 101;
-      
-      const rotationInterval = setInterval(() => {
-        wheelChart.options.rotation = (wheelChart.options.rotation || 0) + resultValue;
-        wheelChart.update();
-        
-        if (wheelChart.options.rotation >= 360) {
-          count += 1;
-          resultValue -= 5;
-          wheelChart.options.rotation = 0;
-        } else if (count > 15 && wheelChart.options.rotation >= randomDegree) {
-          const result = valueGenerator(randomDegree);
-          console.log(`Resultado: ${result}`);
-          clearInterval(rotationInterval);
-          count = 0;
-          resultValue = 101;
-        }
-      }, 10);
-    };
-    
-    // Adicionar evento de clique
-    canvas.addEventListener('click', spinWheel);
-  };
-
-  // Função para Slot Machine Premium
-  (window as any).spinSlotMachine = (containerId: string, symbols: string[], reels: number) => {
-    const container = document.getElementById(containerId);
-    if (!container) return;
-
-    const debugEl = document.getElementById(`debug-${containerId.split('-')[1]}`);
-    const reelElements = container.querySelectorAll('.reel');
-    const iconHeight = 79;
-    const numIcons = symbols.length;
-    const timePerIcon = 100;
-    
-    // Função para rolar um reel
-    const rollReel = (reel: HTMLElement, offset = 0) => {
-      const delta = (offset + 2) * numIcons + Math.round(Math.random() * numIcons);
-      
-      return new Promise((resolve) => {
-        const style = getComputedStyle(reel);
-        const currentPos = parseFloat(style.backgroundPositionY) || 0;
-        const targetPos = currentPos + delta * iconHeight;
-        const normalizedPos = targetPos % (numIcons * iconHeight);
-        
-        setTimeout(() => {
-          reel.style.transition = `background-position-y ${(8 + 1 * delta) * timePerIcon}ms cubic-bezier(.41,-0.01,.63,1.09)`;
-          reel.style.backgroundPositionY = `${targetPos}px`;
-        }, offset * 150);
-        
-        setTimeout(() => {
-          reel.style.transition = 'none';
-          reel.style.backgroundPositionY = `${normalizedPos}px`;
-          resolve(delta % numIcons);
-        }, (8 + 1 * delta) * timePerIcon + offset * 150);
-      });
-    };
-
-    // Rolar todos os reels
-    if (debugEl) debugEl.textContent = 'Girando...';
-    
-    Promise.all(
-      Array.from(reelElements).map((reel, i) => rollReel(reel as HTMLElement, i))
-    ).then((results: any[]) => {
-      const finalSymbols = results.map(r => symbols[r]);
-      
-      if (debugEl) {
-        debugEl.textContent = finalSymbols.join(' - ');
-      }
-      
-      // Verificar vitórias
-      const isWin = finalSymbols[0] === finalSymbols[1] || finalSymbols[1] === finalSymbols[2];
-      const isJackpot = finalSymbols.every(s => s === finalSymbols[0]);
-      
-      if (isJackpot) {
-        container.style.background = 'linear-gradient(45deg, #FFD700, #FFA500)';
-        container.style.boxShadow = '0 0 30px #FFD700';
-        if (debugEl) debugEl.textContent = '🎉 JACKPOT! ' + finalSymbols.join(' - ');
-      } else if (isWin) {
-        container.style.background = 'linear-gradient(45deg, #90EE90, #32CD32)';
-        container.style.boxShadow = '0 0 20px #32CD32';
-        if (debugEl) debugEl.textContent = '✨ Vitória! ' + finalSymbols.join(' - ');
-      }
-      
-      // Reset visual após 2 segundos
-      setTimeout(() => {
-        container.style.background = '';
-        container.style.boxShadow = '';
-        if (debugEl && !isWin) debugEl.textContent = 'Pronto para jogar...';
-      }, 2000);
-    });
-  };
-
-  // Função para Roda da Fortuna Premium
-  (window as any).spinFortuneWheel = (wheelId: string, segments: string[], colors: string[], elementId: string) => {
-    const wheel = document.getElementById(wheelId);
-    const scoreEl = document.getElementById(`score-${elementId}`);
-    const roundEl = document.getElementById(`round-${elementId}`);
-    const pin = document.getElementById(`pin-${elementId}`);
-    
-    if (!wheel || !scoreEl || !roundEl) return;
-    
-    const currentScore = parseInt(scoreEl.textContent || '0');
-    const currentRound = parseInt(roundEl.textContent || '10');
-    
-    if (currentRound <= 0) {
-      // Game over - reset
-      scoreEl.textContent = '0';
-      roundEl.textContent = '10';
-      return;
-    }
-    
-    // Diminuir round
-    roundEl.textContent = (currentRound - 1).toString();
-    
-    // Animação do ponteiro
-    if (pin) {
-      pin.style.animation = 'none';
-      setTimeout(() => {
-        pin.style.animation = 'jolt 250ms ease-out forwards';
-      }, 10);
-    }
-    
-    // Girar a roda
-    const getRotationAngle = (el: HTMLElement) => {
-      const computedStyle = window.getComputedStyle(el);
-      const transform = computedStyle.transform || computedStyle.webkitTransform;
-      if (transform === 'none') return 0;
-      const values = transform.split('(')[1].split(')')[0].split(',');
-      const a = parseFloat(values[0]);
-      const b = parseFloat(values[1]);
-      return Math.round(Math.atan2(b, a) * (180 / Math.PI));
-    };
-    
-    const currentRotation = getRotationAngle(wheel);
-    const minimumRotation = 600;
-    const newRotation = minimumRotation + Math.round(Math.random() * 720);
-    const time = Math.round((1 + newRotation / 180) * 1000);
-    
-    wheel.style.transition = `transform ${time}ms cubic-bezier(0.42, -0.1, 0.58, 1.02)`;
-    wheel.style.transform = `rotate(${newRotation}deg)`;
-    wheel.style.cursor = 'initial';
-    
-    setTimeout(() => {
-      const finalRotation = newRotation % 360;
-      wheel.style.transition = 'none';
-      wheel.style.transform = `rotate(${finalRotation}deg)`;
-      wheel.style.cursor = 'pointer';
-      
-      // Determinar segmento vencedor
-      const segmentAngle = 360 / segments.length;
-      const segmentIndex = finalRotation < 0.5 * segmentAngle
-        ? segments.length - 1
-        : Math.floor((finalRotation - 0.5 * segmentAngle) / segmentAngle);
-      
-      const reward = segments[segmentIndex];
-      let newScore = currentScore;
-      
-      // Calcular novo score
-      if (reward === 'x2') {
-        newScore = Math.min(currentScore * 2, 999999);
-      } else if (reward === ':2') {
-        newScore = Math.floor(currentScore / 2);
-      } else if (reward === '*') {
-        newScore = 0;
-      } else {
-        const points = parseInt(reward);
-        if (!isNaN(points)) {
-          newScore = Math.min(currentScore + points, 999999);
-        }
-      }
-      
-      scoreEl.textContent = newScore.toString();
-      
-      // Efeito visual para o resultado
-      wheel.style.background = `radial-gradient(circle, ${colors[segmentIndex]}, #333)`;
-      wheel.style.boxShadow = `0 0 30px ${colors[segmentIndex]}`;
-      
-      setTimeout(() => {
-        wheel.style.background = 'conic-gradient(from 0deg, ' + colors.map((color, i) => 
-          `${color} ${i * segmentAngle}deg ${(i + 1) * segmentAngle}deg`
-        ).join(', ') + ')';
-        wheel.style.boxShadow = '0 0 20px 4px rgba(0,0,0,0.3)';
-      }, 1500);
-      
-    }, time + 100);
-  };
-}
 
 interface Element {
   id: number;
-  type: "multiple_choice" | "text" | "rating" | "email" | "checkbox" | "date" | "phone" | "number" | "textarea" | "image_upload" | "animated_transition" | "heading" | "paragraph" | "image" | "divider" | "video" | "audio" | "birth_date" | "height" | "current_weight" | "target_weight" | "transition_background" | "transition_text" | "transition_counter" | "transition_loader" | "transition_redirect" | "transition_button" | "spacer" | "game_wheel" | "game_scratch" | "game_color_pick" | "game_brick_break" | "game_memory_cards" | "game_slot_machine" | "continue_button" | "loading_question" | "share_quiz" | "price" | "icon_list" | "testimonials" | "guarantee" | "paypal" | "image_with_text" | "chart" | "metrics" | "before_after" | "pricing_plans" | "stripe_embed" | "hotmart_upsell" | "faq" | "image_carousel" | "pix_payment" | "facial_reading" | "palm_reading" | "notification";
+  type: "multiple_choice" | "text" | "rating" | "email" | "checkbox" | "date" | "phone" | "number" | "textarea" | "image_upload" | "animated_transition" | "heading" | "paragraph" | "image" | "divider" | "video" | "audio" | "birth_date" | "height" | "current_weight" | "target_weight" | "transition_background" | "transition_text" | "transition_counter" | "transition_loader" | "transition_redirect" | "transition_button" | "spacer" | "game_wheel" | "game_scratch" | "game_color_pick" | "game_brick_break" | "game_memory_cards" | "game_slot_machine" | "continue_button" | "loading_question" | "share_quiz" | "price" | "icon_list" | "testimonials" | "guarantee" | "paypal" | "image_with_text" | "chart" | "metrics" | "before_after" | "pricing_plans" | "stripe_embed" | "hotmart_upsell" | "faq" | "image_carousel" | "pix_payment" | "facial_reading" | "palm_reading";
   content: string;
   question?: string;
   description?: string;
@@ -399,7 +135,7 @@ interface Element {
   counterEndValue?: number;
   counterDuration?: number;
   counterSuffix?: string;
-  loaderType?: "spinner" | "dots" | "bars" | "pulse" | "ring" | "rotating-plane" | "double-bounce" | "wave" | "wandering-cubes" | "spinner-pulse" | "chasing-dots" | "three-bounce" | "circle-bounce" | "cube-grid" | "fading-circle" | "folding-cube";
+  loaderType?: "spinner" | "dots" | "bars" | "pulse" | "ring";
   loaderColor?: string;
   loaderSize?: "sm" | "md" | "lg";
   redirectUrl?: string;
@@ -902,16 +638,6 @@ interface Element {
   palmMessage?: string;
   palmButtonText?: string;
   palmButtonColor?: string;
-  
-  // Campos específicos para Notificação
-  notificationTitle?: string;
-  notificationMessage?: string;
-  notificationPosition?: "top" | "bottom";
-  notificationInterval?: number; // segundos
-  notificationDuration?: number; // segundos
-  notificationCount?: number; // quantas vezes aparece
-  notificationIcon?: "success" | "info" | "warning" | "error";
-  notificationColor?: string;
 }
 
 interface QuizPage {
@@ -1146,7 +872,6 @@ export function PageEditorHorizontal({
         { type: "image_carousel", label: "Carrossel", icon: <ImageIcon className="w-4 h-4" /> },
         { type: "facial_reading", label: "Leitura Facial", icon: <Eye className="w-4 h-4" /> },
         { type: "palm_reading", label: "Leitura de Mãos", icon: <Hand className="w-4 h-4" /> },
-        { type: "notification", label: "Notificação", icon: <Bell className="w-4 h-4" /> },
       ]
     },
     {
@@ -1393,7 +1118,7 @@ const gameElementCategories = [
     const baseElement: Element = {
       id: Date.now(),
       type,
-      content: type === "heading" ? "Novo título" : type === "paragraph" ? "Novo parágrafo" : type === "continue_button" ? "Continuar" : type === "facial_reading" ? "Leitura Facial" : type === "palm_reading" ? "Leitura de Mãos" : type === "notification" ? "Nova Notificação" : "",
+      content: type === "heading" ? "Novo título" : type === "paragraph" ? "Novo parágrafo" : type === "continue_button" ? "Continuar" : type === "facial_reading" ? "Leitura Facial" : type === "palm_reading" ? "Leitura de Mãos" : "",
       question: undefined,
       options: type === "multiple_choice" ? ["Opção 1", "Opção 2"] : undefined,
       required: false,
@@ -1467,17 +1192,6 @@ const gameElementCategories = [
         palmMessage: "As linhas da sua mão revelam uma vida longa e próspera com grandes oportunidades!",
         palmButtonText: "Iniciar Leitura de Mãos",
         palmButtonColor: "#A855F7"
-      }),
-      
-      ...(type === "notification" && {
-        notificationTitle: "Sucesso!",
-        notificationMessage: "Suas alterações foram salvas com sucesso",
-        notificationPosition: "top",
-        notificationInterval: 5,
-        notificationDuration: 4,
-        notificationCount: 3,
-        notificationIcon: "success",
-        notificationColor: "#49a87d"
       })
     };
 
@@ -2436,90 +2150,6 @@ const gameElementCategories = [
                   <div className={`${loaderSize} border-2 border-current rounded-full animate-ping absolute`} style={{ borderColor: loaderColor, animationDelay: "0.5s" }}></div>
                 </div>
               );
-            case "rotating-plane":
-              return (
-                <div className={`${loaderSize} sk-rotating-plane`} style={{ backgroundColor: loaderColor }}></div>
-              );
-            case "double-bounce":
-              return (
-                <div className={`${loaderSize} sk-double-bounce`}>
-                  <div className="sk-child sk-double-bounce-1" style={{ backgroundColor: loaderColor }}></div>
-                  <div className="sk-child sk-double-bounce-2" style={{ backgroundColor: loaderColor }}></div>
-                </div>
-              );
-            case "wave":
-              return (
-                <div className={`${loaderSize} sk-wave`} style={{ width: "auto" }}>
-                  <div className="sk-rect sk-rect-1" style={{ backgroundColor: loaderColor }}></div>
-                  <div className="sk-rect sk-rect-2" style={{ backgroundColor: loaderColor }}></div>
-                  <div className="sk-rect sk-rect-3" style={{ backgroundColor: loaderColor }}></div>
-                  <div className="sk-rect sk-rect-4" style={{ backgroundColor: loaderColor }}></div>
-                  <div className="sk-rect sk-rect-5" style={{ backgroundColor: loaderColor }}></div>
-                </div>
-              );
-            case "wandering-cubes":
-              return (
-                <div className={`${loaderSize} sk-wandering-cubes`}>
-                  <div className="sk-cube sk-cube-1" style={{ backgroundColor: loaderColor }}></div>
-                  <div className="sk-cube sk-cube-2" style={{ backgroundColor: loaderColor }}></div>
-                </div>
-              );
-            case "spinner-pulse":
-              return (
-                <div className={`${loaderSize} sk-spinner-pulse`} style={{ backgroundColor: loaderColor }}></div>
-              );
-            case "chasing-dots":
-              return (
-                <div className={`${loaderSize} sk-chasing-dots`}>
-                  <div className="sk-child sk-dot-1" style={{ backgroundColor: loaderColor }}></div>
-                  <div className="sk-child sk-dot-2" style={{ backgroundColor: loaderColor }}></div>
-                </div>
-              );
-            case "three-bounce":
-              return (
-                <div className={`${loaderSize} sk-three-bounce`} style={{ width: "auto" }}>
-                  <div className="sk-child sk-bounce-1" style={{ backgroundColor: loaderColor }}></div>
-                  <div className="sk-child sk-bounce-2" style={{ backgroundColor: loaderColor }}></div>
-                  <div className="sk-child sk-bounce-3" style={{ backgroundColor: loaderColor }}></div>
-                </div>
-              );
-            case "circle-bounce":
-              return (
-                <div className={`${loaderSize} sk-circle-bounce`}>
-                  {[...Array(12)].map((_, i) => (
-                    <div key={i} className={`sk-child sk-circle-${i + 1}`}>
-                      <div style={{ backgroundColor: loaderColor }}></div>
-                    </div>
-                  ))}
-                </div>
-              );
-            case "cube-grid":
-              return (
-                <div className={`${loaderSize} sk-cube-grid`}>
-                  {[...Array(9)].map((_, i) => (
-                    <div key={i} className={`sk-cube sk-cube-${i + 1}`} style={{ backgroundColor: loaderColor }}></div>
-                  ))}
-                </div>
-              );
-            case "fading-circle":
-              return (
-                <div className={`${loaderSize} sk-fading-circle`}>
-                  {[...Array(12)].map((_, i) => (
-                    <div key={i} className={`sk-circle sk-circle-${i + 1}`}>
-                      <div style={{ backgroundColor: loaderColor }}></div>
-                    </div>
-                  ))}
-                </div>
-              );
-            case "folding-cube":
-              return (
-                <div className={`${loaderSize} sk-folding-cube`}>
-                  <div className="sk-cube sk-cube-1" style={{ backgroundColor: loaderColor }}></div>
-                  <div className="sk-cube sk-cube-2" style={{ backgroundColor: loaderColor }}></div>
-                  <div className="sk-cube sk-cube-3" style={{ backgroundColor: loaderColor }}></div>
-                  <div className="sk-cube sk-cube-4" style={{ backgroundColor: loaderColor }}></div>
-                </div>
-              );
             default:
               return (
                 <div className={`${loaderSize} border-2 border-gray-200 border-t-current rounded-full animate-spin`} style={{ borderTopColor: loaderColor }}></div>
@@ -2608,116 +2238,70 @@ const gameElementCategories = [
         
       // Elementos de jogos
       case "game_wheel":
-        const wheelSegments = element.wheelSegments || ["5000", "10", "500", "100", "2500", "50", "250", "x2", "100", ":2", "1000", "50", "250", "20", "*"];
-        const wheelColors = element.wheelColors || ["#FF0000", "#0000FF", "#FFDD00", "#FFA500", "#4B0082", "#00CC00", "#EE82EE", "#FF0000", "#FFA500", "#FFDD00", "#00CC00", "#0000FF", "#4B0082", "#EE82EE", "#222222"];
+        const wheelSegments = element.wheelSegments || ["Prêmio 1", "Prêmio 2", "Prêmio 3", "Prêmio 4"];
+        const wheelColors = element.wheelColors || ["#FF6B6B", "#4ECDC4", "#45B7D1", "#96CEB4"];
         const winningSegment = element.wheelWinningSegment || 0;
         
         return (
-          <div className="space-y-4 p-6 border-2 border-dashed border-yellow-200 rounded-lg bg-gradient-to-br from-gray-800 to-gray-900 shadow-2xl">
+          <div className="space-y-3 p-4 border-2 border-dashed border-orange-200 rounded-lg bg-orange-50">
             <div className="flex items-center gap-2">
-              <BarChart3 className="w-6 h-6 text-yellow-400" />
-              <span className="font-bold text-yellow-300 text-lg">🎡 Roda da Fortuna Premium</span>
+              <BarChart3 className="w-4 h-4 text-orange-600" />
+              <span className="font-medium text-orange-800">Roleta da Sorte</span>
             </div>
             
-            <div className="flex flex-col items-center space-y-6">
-              {/* Scores */}
-              <div className="flex justify-between w-full max-w-md text-white font-mono text-2xl">
-                <div>Score: <span id={`score-${element.id}`} className="text-yellow-400">0</span></div>
-                <div>Round: <span id={`round-${element.id}`} className="text-green-400">10</span></div>
+            <div className="flex flex-col items-center space-y-4">
+              <div className="relative w-40 h-40">
+                <svg viewBox="0 0 200 200" className="w-full h-full">
+                  {wheelSegments.map((segment, index) => {
+                    const angle = 360 / wheelSegments.length;
+                    const startAngle = index * angle;
+                    const endAngle = (index + 1) * angle;
+                    const isWinning = index === winningSegment;
+                    
+                    const x1 = 100 + 80 * Math.cos((startAngle * Math.PI) / 180);
+                    const y1 = 100 + 80 * Math.sin((startAngle * Math.PI) / 180);
+                    const x2 = 100 + 80 * Math.cos((endAngle * Math.PI) / 180);
+                    const y2 = 100 + 80 * Math.sin((endAngle * Math.PI) / 180);
+                    
+                    const largeArcFlag = angle > 180 ? 1 : 0;
+                    
+                    return (
+                      <g key={index}>
+                        <path
+                          d={`M 100 100 L ${x1} ${y1} A 80 80 0 ${largeArcFlag} 1 ${x2} ${y2} Z`}
+                          fill={wheelColors[index] || "#e2e8f0"}
+                          stroke={isWinning ? "#fbbf24" : "#ffffff"}
+                          strokeWidth={isWinning ? "3" : "2"}
+                        />
+                        <text
+                          x={100 + 50 * Math.cos(((startAngle + endAngle) / 2 * Math.PI) / 180)}
+                          y={100 + 50 * Math.sin(((startAngle + endAngle) / 2 * Math.PI) / 180)}
+                          textAnchor="middle"
+                          dominantBaseline="middle"
+                          fontSize="10"
+                          fill="white"
+                          fontWeight="bold"
+                        >
+                          {segment.length > 8 ? segment.substring(0, 8) + "..." : segment}
+                        </text>
+                      </g>
+                    );
+                  })}
+                  {/* Ponteiro */}
+                  <polygon
+                    points="100,20 105,35 95,35"
+                    fill={element.wheelPointerColor || "#DC2626"}
+                  />
+                </svg>
               </div>
               
-              {/* Container da roda da fortuna */}
-              <div className="casing relative">
-                <div 
-                  id={`wheel-fortune-${element.id}`}
-                  className="wheel relative w-96 h-96 border-2 border-gray-400 rounded-full shadow-xl cursor-pointer overflow-hidden"
-                  style={{ 
-                    boxShadow: '0 0 20px 4px rgba(0,0,0,0.3)',
-                    background: 'conic-gradient(from 0deg, ' + wheelColors.map((color, i) => 
-                      `${color} ${i * 360/wheelSegments.length}deg ${(i + 1) * 360/wheelSegments.length}deg`
-                    ).join(', ') + ')'
-                  }}
-                  onClick={() => {
-                    if (typeof window !== 'undefined') {
-                      (window as any).spinFortuneWheel && (window as any).spinFortuneWheel(`wheel-fortune-${element.id}`, wheelSegments, wheelColors, element.id);
-                    }
-                  }}
-                >
-                  {/* Segmentos com texto */}
-                  <div className="center absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
-                    {wheelSegments.map((segment, index) => {
-                      const angle = (360 / wheelSegments.length) * index;
-                      return (
-                        <div
-                          key={index}
-                          className="txt absolute text-white font-bold text-xl"
-                          style={{
-                            transform: `rotate(${angle + 180}deg) translateY(-140px) rotate(180deg)`,
-                            transformOrigin: '50% 140px',
-                            textShadow: '0 0 6px rgba(255,165,0,0.8)',
-                            fontFamily: 'monospace'
-                          }}
-                        >
-                          {segment.toString().split('').join('\n')}
-                        </div>
-                      );
-                    })}
-                    
-                    {/* Divisores */}
-                    {wheelSegments.map((_, index) => (
-                      <div
-                        key={`divider-${index}`}
-                        className="divider absolute w-px h-48 bg-black"
-                        style={{
-                          transform: `rotate(${(360 / wheelSegments.length) * (index + 0.5)}deg)`,
-                          transformOrigin: '50% 0'
-                        }}
-                      >
-                        <div className="absolute bottom-1 left-1/2 transform -translate-x-1/2 w-2 h-2 bg-white rounded-full shadow-md"></div>
-                      </div>
-                    ))}
-                  </div>
-                  
-                  {/* Centro da roda */}
-                  <div className="cap absolute top-1/2 left-1/2 w-20 h-20 bg-black border-4 border-white rounded-full transform -translate-x-1/2 -translate-y-1/2 shadow-lg z-10"></div>
-                </div>
-                
-                {/* Ponteiro */}
-                <div 
-                  id={`pin-${element.id}`}
-                  className="pin absolute top-0 left-1/2 transform -translate-x-1/2 -translate-y-4 z-20"
-                  style={{
-                    transformOrigin: '50% 4px',
-                    width: '0px',
-                    height: '0px',
-                    borderStyle: 'solid',
-                    borderWidth: '0 20px 40px 20px',
-                    borderColor: 'transparent transparent #ffffff transparent',
-                    borderRadius: '8px',
-                    filter: 'drop-shadow(0 4px 8px rgba(0,0,0,0.3))'
-                  }}
-                >
-                </div>
-              </div>
+              <button className="px-4 py-2 bg-orange-500 text-white rounded-lg font-semibold hover:bg-orange-600 transition-colors">
+                🎰 Girar Roleta
+              </button>
             </div>
             
-            {/* Informações dos prêmios */}
-            <div className="bg-black/50 rounded-lg p-4 backdrop-blur-sm">
-              <div className="grid grid-cols-5 gap-2 text-xs">
-                {wheelSegments.slice(0, 10).map((segment, index) => (
-                  <span 
-                    key={index}
-                    className="px-2 py-1 rounded text-white font-bold text-center"
-                    style={{ backgroundColor: wheelColors[index] || "#333" }}
-                  >
-                    {segment}
-                  </span>
-                ))}
-              </div>
-            </div>
-            
-            <div className="text-xs text-yellow-400 text-center font-medium">
-              ⚡ Roda da Fortuna Realística • {wheelSegments.length} Prêmios • Animação Premium • Clique para girar
+            <div className="text-xs text-orange-600 text-center">
+              Segmentos: {wheelSegments.length} • Vencedor: {wheelSegments[winningSegment]}
             </div>
           </div>
         );
@@ -2872,90 +2456,36 @@ const gameElementCategories = [
         );
 
       case "game_slot_machine":
-        const symbols = element.slotSymbols || ["🍌", "7️⃣", "🍒", "🍇", "🍊", "🔔", "❌", "🍋", "🍈"];
+        const symbols = element.slotSymbols || ["🍒", "🍋", "🍊", "🔔", "⭐"];
         const reels = element.slotReels || 3;
         
         return (
-          <div className="space-y-4 p-6 border-2 border-dashed border-yellow-200 rounded-lg bg-gradient-to-br from-yellow-50 to-orange-50 shadow-lg">
+          <div className="space-y-3 p-4 border-2 border-dashed border-red-200 rounded-lg bg-red-50">
             <div className="flex items-center gap-2">
-              <AlertCircle className="w-6 h-6 text-yellow-600" />
-              <span className="font-bold text-yellow-800">🎰 Slot Machine Premium</span>
+              <AlertCircle className="w-4 h-4 text-red-600" />
+              <span className="font-medium text-red-800">Caça-Níquel</span>
             </div>
             
-            <div className="flex flex-col items-center space-y-6">
-              {/* Container principal do slot machine */}
-              <div className="relative bg-gradient-to-b from-gray-200 via-gray-300 to-gray-400 p-6 rounded-2xl border-4 border-gray-500 shadow-2xl">
-                <div className="absolute inset-0 bg-gradient-to-br from-yellow-200/20 to-orange-200/20 rounded-2xl"></div>
-                
-                {/* Slots container */}
-                <div className="slots-container flex gap-3 relative z-10" id={`slots-${element.id}`}>
+            <div className="flex flex-col items-center space-y-4">
+              <div className="bg-gradient-to-b from-yellow-300 to-yellow-500 p-4 rounded-lg border-4 border-yellow-600">
+                <div className="flex gap-2">
                   {Array.from({ length: reels }, (_, index) => (
-                    <div key={index} className="reel-container relative">
-                      <div 
-                        className="reel w-20 h-24 border-2 border-gray-700 rounded-lg overflow-hidden bg-white shadow-inner"
-                        style={{
-                          backgroundImage: `url(data:image/svg+xml;base64,${btoa(`
-                            <svg width="79" height="${79 * symbols.length}" xmlns="http://www.w3.org/2000/svg">
-                              ${symbols.map((symbol, i) => `
-                                <text x="39.5" y="${i * 79 + 55}" text-anchor="middle" 
-                                      font-size="40" font-family="Arial, sans-serif">${symbol}</text>
-                              `).join('')}
-                            </svg>
-                          `)})`,
-                          backgroundRepeat: 'repeat-y',
-                          backgroundPosition: '0 0'
-                        }}
-                      >
-                        {/* Sobreposição com gradiente para efeito de profundidade */}
-                        <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-black/40 pointer-events-none"></div>
-                        <div className="absolute inset-0 shadow-inner rounded-lg pointer-events-none" style={{
-                          boxShadow: 'inset 0 0 12px 4px rgba(0,0,0,0.3)'
-                        }}></div>
-                      </div>
+                    <div key={index} className="bg-white w-16 h-20 rounded border-2 border-gray-300 flex items-center justify-center">
+                      <span className="text-2xl">
+                        {symbols[index % symbols.length]}
+                      </span>
                     </div>
                   ))}
                 </div>
-                
-                {/* Indicadores de linha de vitória */}
-                <div className="absolute left-0 right-0 top-1/2 transform -translate-y-1/2 h-1 bg-gradient-to-r from-transparent via-red-500 to-transparent opacity-60 z-20"></div>
               </div>
               
-              {/* Painel de controle */}
-              <div className="flex flex-col items-center space-y-3">
-                <button 
-                  className="px-8 py-3 bg-gradient-to-r from-red-500 to-red-600 text-white rounded-full font-bold text-lg hover:from-red-600 hover:to-red-700 transition-all transform hover:scale-105 shadow-lg border-2 border-red-400"
-                  onClick={() => {
-                    if (typeof window !== 'undefined') {
-                      (window as any).spinSlotMachine && (window as any).spinSlotMachine(`slots-${element.id}`, symbols, reels);
-                    }
-                  }}
-                >
-                  🎰 SPIN & WIN
-                </button>
-                
-                {/* Debug info */}
-                <div className="bg-black/80 text-yellow-400 px-3 py-1 rounded-full text-xs font-mono">
-                  <span id={`debug-${element.id}`}>Pronto para jogar...</span>
-                </div>
+              <button className="px-6 py-2 bg-red-500 text-white rounded-lg font-bold hover:bg-red-600 transition-colors">
+                🎰 JOGAR
+              </button>
+              
+              <div className="text-xs text-red-600 text-center">
+                {reels} rolos • {symbols.length} símbolos • Combinação: {element.slotWinningCombination?.join(" ") || symbols.slice(0, reels).join(" ")}
               </div>
-            </div>
-            
-            {/* Informações do jogo */}
-            <div className="bg-white rounded-lg p-3 shadow-sm">
-              <div className="flex flex-wrap gap-2 text-xs justify-center">
-                {symbols.map((symbol, index) => (
-                  <span 
-                    key={index}
-                    className="px-2 py-1 rounded-full bg-gray-100 border border-gray-300"
-                  >
-                    {symbol}
-                  </span>
-                ))}
-              </div>
-            </div>
-            
-            <div className="text-xs text-yellow-700 text-center font-medium">
-              ⚡ Animação Premium • {reels} Rolos • {symbols.length} Símbolos • Combinações Dinâmicas
             </div>
           </div>
         );
@@ -3880,42 +3410,6 @@ const gameElementCategories = [
                 </div>
               </div>
             )}
-          </div>
-        );
-
-      case "notification":
-        return (
-          <div className="space-y-2">
-            <div className="bg-white p-3 rounded-lg border border-gray-200 shadow-sm">
-              <div className="flex items-start gap-3">
-                <div 
-                  className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0"
-                  style={{ backgroundColor: element.notificationColor || "#49a87d" }}
-                >
-                  {element.notificationIcon === "success" && <CheckCircle className="w-4 h-4 text-white" />}
-                  {element.notificationIcon === "info" && <AlertCircle className="w-4 h-4 text-white" />}
-                  {element.notificationIcon === "warning" && <AlertCircle className="w-4 h-4 text-white" />}
-                  {element.notificationIcon === "error" && <AlertCircle className="w-4 h-4 text-white" />}
-                  {!element.notificationIcon && <Bell className="w-4 h-4 text-white" />}
-                </div>
-                <div className="flex-1">
-                  <h4 className="font-medium text-gray-900 text-sm">
-                    {element.notificationTitle || "Título da Notificação"}
-                  </h4>
-                  <p className="text-gray-600 text-sm mt-1">
-                    {element.notificationMessage || "Mensagem da notificação"}
-                  </p>
-                </div>
-                <button className="text-gray-400 hover:text-gray-600">
-                  <span className="sr-only">Fechar</span>
-                  ×
-                </button>
-              </div>
-            </div>
-            <div className="text-xs text-gray-500 bg-blue-50 p-2 rounded">
-              📍 Posição: {element.notificationPosition === "top" ? "Topo" : "Base"} | 
-              ⏱️ Aparece a cada {element.notificationInterval || 5}s por {element.notificationDuration || 4}s
-            </div>
           </div>
         );
 
@@ -6363,17 +5857,6 @@ const gameElementCategories = [
                       <option value="pulse">Pulso</option>
                       <option value="ring">Anel</option>
                       <option value="ripple">Ondas</option>
-                      <option value="rotating-plane">Plano Giratório</option>
-                      <option value="double-bounce">Duplo Bounce</option>
-                      <option value="wave">Onda</option>
-                      <option value="wandering-cubes">Cubos Vagantes</option>
-                      <option value="spinner-pulse">Spinner Pulse</option>
-                      <option value="chasing-dots">Pontos Perseguindo</option>
-                      <option value="three-bounce">Triplo Bounce</option>
-                      <option value="circle-bounce">Círculo Bounce</option>
-                      <option value="cube-grid">Grid de Cubos</option>
-                      <option value="fading-circle">Círculo Desvanecer</option>
-                      <option value="folding-cube">Cubo Dobrável</option>
                     </select>
                   </div>
 
@@ -9451,128 +8934,6 @@ const gameElementCategories = [
                           onChange={(e) => updateElement(selectedElementData.id, { palmButtonColor: e.target.value })}
                           className="mt-1 h-10 w-full"
                         />
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* Notification Properties */}
-              {selectedElementData.type === "notification" && (
-                <div className="space-y-4 max-h-96 overflow-y-auto">
-                  <div className="bg-blue-50 p-3 rounded-lg">
-                    <h4 className="text-sm font-semibold text-blue-800 mb-2">🔔 Notificação</h4>
-                    <p className="text-xs text-blue-700">
-                      Sistema de notificação popover configurável com timing e posicionamento
-                    </p>
-                  </div>
-
-                  <div className="border-b pb-4">
-                    <h5 className="font-semibold text-sm mb-3">📝 Conteúdo</h5>
-                    
-                    <div className="space-y-3">
-                      <div>
-                        <Label>Título</Label>
-                        <Input
-                          value={selectedElementData.notificationTitle || ""}
-                          onChange={(e) => updateElement(selectedElementData.id, { notificationTitle: e.target.value })}
-                          placeholder="Sucesso!"
-                          className="mt-1"
-                        />
-                      </div>
-
-                      <div>
-                        <Label>Mensagem</Label>
-                        <Input
-                          value={selectedElementData.notificationMessage || ""}
-                          onChange={(e) => updateElement(selectedElementData.id, { notificationMessage: e.target.value })}
-                          placeholder="Suas alterações foram salvas com sucesso"
-                          className="mt-1"
-                        />
-                      </div>
-
-                      <div>
-                        <Label>Ícone</Label>
-                        <select
-                          value={selectedElementData.notificationIcon || "success"}
-                          onChange={(e) => updateElement(selectedElementData.id, { notificationIcon: e.target.value })}
-                          className="w-full px-2 py-1 border rounded text-xs mt-1"
-                        >
-                          <option value="success">✅ Sucesso</option>
-                          <option value="info">ℹ️ Informação</option>
-                          <option value="warning">⚠️ Aviso</option>
-                          <option value="error">❌ Erro</option>
-                        </select>
-                      </div>
-
-                      <div>
-                        <Label>Cor do Ícone</Label>
-                        <Input
-                          type="color"
-                          value={selectedElementData.notificationColor || "#49a87d"}
-                          onChange={(e) => updateElement(selectedElementData.id, { notificationColor: e.target.value })}
-                          className="mt-1 h-10 w-full"
-                        />
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="border-b pb-4">
-                    <h5 className="font-semibold text-sm mb-3">⚙️ Comportamento</h5>
-                    
-                    <div className="space-y-3">
-                      <div>
-                        <Label>Posição</Label>
-                        <select
-                          value={selectedElementData.notificationPosition || "top"}
-                          onChange={(e) => updateElement(selectedElementData.id, { notificationPosition: e.target.value })}
-                          className="w-full px-2 py-1 border rounded text-xs mt-1"
-                        >
-                          <option value="top">🔝 Topo</option>
-                          <option value="bottom">⬇️ Base</option>
-                        </select>
-                      </div>
-
-                      <div>
-                        <Label>Intervalo (segundos)</Label>
-                        <Input
-                          type="number"
-                          min="1"
-                          max="60"
-                          value={selectedElementData.notificationInterval || 5}
-                          onChange={(e) => updateElement(selectedElementData.id, { notificationInterval: parseInt(e.target.value) })}
-                          placeholder="5"
-                          className="mt-1"
-                        />
-                        <p className="text-xs text-gray-500 mt-1">A cada quantos segundos aparece</p>
-                      </div>
-
-                      <div>
-                        <Label>Duração (segundos)</Label>
-                        <Input
-                          type="number"
-                          min="1"
-                          max="20"
-                          value={selectedElementData.notificationDuration || 4}
-                          onChange={(e) => updateElement(selectedElementData.id, { notificationDuration: parseInt(e.target.value) })}
-                          placeholder="4"
-                          className="mt-1"
-                        />
-                        <p className="text-xs text-gray-500 mt-1">Por quanto tempo fica visível</p>
-                      </div>
-
-                      <div>
-                        <Label>Repetições</Label>
-                        <Input
-                          type="number"
-                          min="1"
-                          max="10"
-                          value={selectedElementData.notificationCount || 3}
-                          onChange={(e) => updateElement(selectedElementData.id, { notificationCount: parseInt(e.target.value) })}
-                          placeholder="3"
-                          className="mt-1"
-                        />
-                        <p className="text-xs text-gray-500 mt-1">Quantas vezes aparece</p>
                       </div>
                     </div>
                   </div>
