@@ -54,7 +54,7 @@ export default function TesteAbPage() {
   });
 
   // Buscar quizzes para seleção
-  const { data: quizzes } = useQuery<Quiz[]>({
+  const { data: quizzes, isLoading: isLoadingQuizzes } = useQuery<Quiz[]>({
     queryKey: ["/api/quizzes"],
   });
 
@@ -78,7 +78,7 @@ export default function TesteAbPage() {
     },
   });
 
-  // Mutação para ativar/pausar teste
+  // Mutação para ativar/desativar teste A/B
   const toggleTestMutation = useMutation({
     mutationFn: async ({ id, isActive }: { id: string; isActive: boolean }) => {
       const response = await fetch(`/api/ab-tests/${id}`, {
@@ -86,7 +86,7 @@ export default function TesteAbPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ isActive }),
       });
-      if (!response.ok) throw new Error("Erro ao atualizar teste");
+      if (!response.ok) throw new Error("Erro ao atualizar teste A/B");
       return response.json();
     },
     onSuccess: () => {
@@ -230,26 +230,38 @@ export default function TesteAbPage() {
                   <p className="text-sm text-gray-600">
                     Selecionados: {selectedQuizzes.length}/3
                   </p>
-                  <div className="grid grid-cols-1 gap-2 max-h-60 overflow-y-auto">
-                    {publishedQuizzes.map((quiz) => (
-                      <div
-                        key={quiz.id}
-                        className={`p-3 border rounded-lg cursor-pointer transition-all ${
-                          selectedQuizzes.includes(quiz.id)
-                            ? 'border-purple-500 bg-purple-50 dark:bg-purple-900/20'
-                            : 'border-gray-200 dark:border-gray-700 hover:border-gray-300'
-                        }`}
-                        onClick={() => handleQuizSelection(quiz.id)}
-                      >
-                        <div className="flex items-center justify-between">
-                          <span className="font-medium">{quiz.title}</span>
-                          {selectedQuizzes.includes(quiz.id) && (
-                            <CheckCircle className="w-5 h-5 text-purple-600" />
-                          )}
+                  {isLoadingQuizzes ? (
+                    <div className="text-center py-8">
+                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600 mx-auto"></div>
+                      <p className="text-gray-600 mt-2">Carregando funis...</p>
+                    </div>
+                  ) : publishedQuizzes.length === 0 ? (
+                    <div className="text-center py-8">
+                      <p className="text-gray-600">Nenhum funil publicado encontrado</p>
+                      <p className="text-sm text-gray-500 mt-1">Publique pelo menos 2 quizzes para criar um teste A/B</p>
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-1 gap-2 max-h-60 overflow-y-auto">
+                      {publishedQuizzes.map((quiz) => (
+                        <div
+                          key={quiz.id}
+                          className={`p-3 border rounded-lg cursor-pointer transition-all ${
+                            selectedQuizzes.includes(quiz.id)
+                              ? 'border-purple-500 bg-purple-50 dark:bg-purple-900/20'
+                              : 'border-gray-200 dark:border-gray-700 hover:border-gray-300'
+                          }`}
+                          onClick={() => handleQuizSelection(quiz.id)}
+                        >
+                          <div className="flex items-center justify-between">
+                            <span className="font-medium">{quiz.title}</span>
+                            {selectedQuizzes.includes(quiz.id) && (
+                              <CheckCircle className="w-5 h-5 text-purple-600" />
+                            )}
+                          </div>
                         </div>
-                      </div>
-                    ))}
-                  </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
 
                 <div className="flex gap-3">
