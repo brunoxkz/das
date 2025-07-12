@@ -2,6 +2,16 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Global dark mode styles */
+body {
+  transition: background-color 0.3s ease-in-out, color 0.3s ease-in-out;
+}
+
+body.dark {
+  background-color: hsl(var(--background));
+  color: hsl(var(--foreground));
+}
+
 /* Sidebar Responsive Styles - Synchronized Scrolling */
 .vendzz-sidebar {
   position: absolute;
@@ -10,8 +20,8 @@
   height: 100%;
   z-index: 30;
   transition: width 0.3s ease-in-out;
-  background: white;
-  border-right: 1px solid #e5e7eb;
+  background: hsl(var(--background));
+  border-right: 1px solid hsl(var(--border));
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
   min-height: 100vh;
 }
@@ -30,6 +40,8 @@
   transition: margin-left 0.3s ease-in-out;
   min-height: 100vh;
   position: relative;
+  background: hsl(var(--background));
+  color: hsl(var(--foreground));
 }
 
 .main-content.sidebar-collapsed {

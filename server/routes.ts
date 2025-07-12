@@ -1440,5 +1440,36 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
+  // Chrome Extensions Download Routes
+  app.get("/api/extensions/:id/download", authenticateToken, async (req, res) => {
+    try {
+      const { id } = req.params;
+      const extensionPath = `chrome-extension-v2/${id}`;
+      
+      // Verificar se a extensão existe
+      const fs = require('fs');
+      const path = require('path');
+      
+      if (!fs.existsSync(extensionPath)) {
+        return res.status(404).json({ error: "Extension not found" });
+      }
+      
+      // Criar arquivo ZIP da extensão
+      const archiver = require('archiver');
+      const archive = archiver('zip', { zlib: { level: 9 } });
+      
+      res.setHeader('Content-Type', 'application/zip');
+      res.setHeader('Content-Disposition', `attachment; filename="${id}.zip"`);
+      
+      archive.pipe(res);
+      archive.directory(extensionPath, false);
+      archive.finalize();
+      
+    } catch (error) {
+      console.error("Error downloading extension:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
   return httpServer;
 }

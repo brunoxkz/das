@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <style>
+        body {
+            width: 350px;
+            min-height: 450px;
+            margin: 0;
+            padding: 20px;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #1877f2 0%, #42a5f5 100%);
+            color: white;
+        }
+        .container {
+            text-align: center;
+        }
+        .logo {
+            font-size: 20px;
+            font-weight: bold;
+            margin-bottom: 20px;
+            background: linear-gradient(45deg, #10b981, #059669);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .status {
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 10px;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+        }
+        .status.connected {
+            background: rgba(16, 185, 129, 0.2);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+        }
+        .status.disconnected {
+            background: rgba(239, 68, 68, 0.2);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+        }
+        button {
+            background: linear-gradient(45deg, #10b981, #059669);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            margin: 8px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            width: 100%;
+        }
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+        }
+        button:disabled {
+            background: #64748b;
+            cursor: not-allowed;
+            transform: none;
+        }
+        .data-section {
+            margin: 20px 0;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            text-align: left;
+        }
+        .data-item {
+            display: flex;
+            justify-content: space-between;
+            margin: 8px 0;
+            font-size: 14px;
+        }
+        .data-value {
+            font-weight: bold;
+            color: #10b981;
+        }
+        .export-options {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+        .export-btn {
+            flex: 1;
+            padding: 8px 16px;
+            font-size: 12px;
+            margin: 0;
+        }
+        .log-section {
+            max-height: 150px;
+            overflow-y: auto;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 8px;
+            padding: 10px;
+            margin-top: 15px;
+        }
+        .log-item {
+            font-size: 12px;
+            margin: 5px 0;
+            padding: 5px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 4px;
+        }
+        .timestamp {
+            opacity: 0.7;
+            font-size: 11px;
+        }
+        .settings {
+            margin-top: 20px;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+        }
+        .setting-group {
+            margin: 10px 0;
+        }
+        .setting-group label {
+            display: block;
+            font-size: 12px;
+            margin-bottom: 5px;
+        }
+        .setting-group input,
+        .setting-group select {
+            width: 100%;
+            padding: 8px;
+            border: none;
+            border-radius: 5px;
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            font-size: 14px;
+        }
+        .setting-group input::placeholder {
+            color: rgba(255, 255, 255, 0.7);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="logo">FB AD MANAGER CHECKER</div>
+        
+        <div class="status" id="connectionStatus">
+            <div id="statusText">Verificando conexão...</div>
+        </div>
+        
+        <div class="controls">
+            <button id="checkAdsBtn">Verificar Anúncios</button>
+            <button id="scanCampaignsBtn">Escanear Campanhas</button>
+            <button id="refreshBtn">Atualizar Dados</button>
+        </div>
+        
+        <div class="data-section" id="dataSection" style="display: none;">
+            <h3>Dados Capturados</h3>
+            <div class="data-item">
+                <span>Campanhas Ativas:</span>
+                <span class="data-value" id="activeCampaigns">0</span>
+            </div>
+            <div class="data-item">
+                <span>Anúncios Ativos:</span>
+                <span class="data-value" id="activeAds">0</span>
+            </div>
+            <div class="data-item">
+                <span>Gasto Total:</span>
+                <span class="data-value" id="totalSpent">R$ 0,00</span>
+            </div>
+            <div class="data-item">
+                <span>Impressões:</span>
+                <span class="data-value" id="totalImpressions">0</span>
+            </div>
+            <div class="data-item">
+                <span>Cliques:</span>
+                <span class="data-value" id="totalClicks">0</span>
+            </div>
+            <div class="data-item">
+                <span>CTR:</span>
+                <span class="data-value" id="ctr">0%</span>
+            </div>
+            
+            <div class="export-options">
+                <button class="export-btn" id="exportCsvBtn">Exportar CSV</button>
+                <button class="export-btn" id="exportJsonBtn">Exportar JSON</button>
+            </div>
+        </div>
+        
+        <div class="log-section">
+            <h4>Log de Atividades</h4>
+            <div id="logContainer">
+                <div class="log-item">
+                    <span class="timestamp">Aguardando verificação...</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="settings">
+            <h4>Configurações</h4>
+            <div class="setting-group">
+                <label>Intervalo de Verificação (seg)</label>
+                <input type="number" id="refreshInterval" value="30" min="10" max="300">
+            </div>
+            <div class="setting-group">
+                <label>Período de Dados</label>
+                <select id="datePeriod">
+                    <option value="today">Hoje</option>
+                    <option value="yesterday">Ontem</option>
+                    <option value="7days">Últimos 7 dias</option>
+                    <option value="30days">Últimos 30 dias</option>
+                </select>
+            </div>
+            <div class="setting-group">
+                <label>Auto-refresh</label>
+                <input type="checkbox" id="autoRefresh" checked>
+            </div>
+        </div>
+    </div>
+    
+    <script src="popup.js"></script>
+</body>
+</html>

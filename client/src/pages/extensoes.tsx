@@ -75,9 +75,70 @@ export default function ExtensoesPage() {
     ? extensions 
     : extensions.filter(e => e.category === activeCategory);
 
-  const handleDownload = (extension: ChromeExtension) => {
-    // Aqui você pode implementar a lógica de download
-    console.log(`Downloading ${extension.name}`);
+  const handleDownload = async (extension: ChromeExtension) => {
+    try {
+      // Fazer download da extensão real do servidor
+      const response = await fetch(`/api/extensions/${extension.id}/download`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error(`Erro ao baixar extensão: ${response.status}`);
+      }
+
+      const blob = await response.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${extension.id}.zip`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      
+      console.log(`Downloading ${extension.name}`);
+    } catch (error) {
+      console.error('Erro no download:', error);
+      // Fallback para download de documentação
+      const content = `# ${extension.name} - Chrome Extension
+
+## Instalação
+
+1. Descompacte este arquivo
+2. Abra o Chrome e vá para chrome://extensions/
+3. Ative o "Modo do desenvolvedor"
+4. Clique em "Carregar sem compactação"
+5. Selecione a pasta descompactada
+
+## Sobre
+
+${extension.description}
+
+## Funcionalidades
+
+${extension.features.map(f => `- ${f}`).join('\n')}
+
+## Versão
+
+v${extension.version}
+
+---
+© 2025 Vendzz - Todos os direitos reservados
+`;
+
+      const blob = new Blob([content], { type: 'text/plain' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${extension.id}-readme.txt`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }
   };
 
   return (
@@ -136,15 +197,7 @@ export default function ExtensoesPage() {
                         <Badge variant="outline" className="text-xs">
                           v{extension.version}
                         </Badge>
-                        <div className="flex items-center gap-1">
-                          <Star className="w-4 h-4 text-yellow-500 fill-current" />
-                          <span className="text-sm text-gray-600 dark:text-gray-400">
-                            {extension.rating}
-                          </span>
-                        </div>
-                        <span className="text-sm text-gray-500 dark:text-gray-400">
-                          {extension.downloads.toLocaleString()} downloads
-                        </span>
+
                       </div>
                     </div>
                   </div>
@@ -173,17 +226,10 @@ export default function ExtensoesPage() {
                 <div className="flex gap-2 pt-4">
                   <Button 
                     onClick={() => handleDownload(extension)}
-                    className="flex-1 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
+                    className="flex-1 bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800"
                   >
                     <Download className="w-4 h-4 mr-2" />
                     Download
-                  </Button>
-                  <Button 
-                    variant="outline" 
-                    onClick={() => window.open('https://chrome.google.com/webstore', '_blank')}
-                  >
-                    <Chrome className="w-4 h-4 mr-2" />
-                    Chrome Store
                   </Button>
                 </div>
               </CardContent>

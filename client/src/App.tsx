@@ -37,11 +37,13 @@ import ExtensoesPage from "@/pages/extensoes";
 import { useAuth } from "@/hooks/useAuth-jwt";
 import { isUnauthorizedError } from "@/lib/authUtils";
 import { SidebarProvider } from "@/hooks/useSidebar";
+import { useTheme } from "@/hooks/useTheme";
 
 
 function App() {
   const { isAuthenticated, isLoading } = useAuth();
   const [location] = useLocation();
+  const { theme } = useTheme();
 
   if (isLoading) {
     return (
