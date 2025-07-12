@@ -16,9 +16,65 @@ import path from 'path';
 import fs from 'fs';
 import { fileURLToPath } from 'url';
 import jwt from 'jsonwebtoken';
+import speakeasy from 'speakeasy';
+import QRCode from 'qrcode';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+
+// Middleware para verificar expiração de plano
+async function checkPlanExpiration(req: any, res: any, next: any) {
+  try {
+    // Pular verificação para rotas públicas e admin
+    const publicRoutes = ['/api/auth/', '/api/quiz/', '/dummybytes', '/api/webhooks/', '/api/notifications'];
+    const isPublicRoute = publicRoutes.some(route => req.path.includes(route));
+    
+    if (isPublicRoute) {
+      return next();
+    }
+
+    // Verificar se é admin
+    if (req.user && req.user.role === 'admin') {
+      return next();
+    }
+
+    // Verificar se o usuário está bloqueado
+    if (req.user && req.user.isBlocked) {
+      return res.status(403).json({ 
+        error: 'Conta bloqueada',
+        message: req.user.blockReason || 'Sua conta foi bloqueada. Entre em contato com o suporte.',
+        renewalRequired: true
+      });
+    }
+
+    // Verificar se o plano expirou
+    if (req.user && req.user.planExpiresAt) {
+      const now = new Date();
+      const expirationDate = new Date(req.user.planExpiresAt);
+      
+      if (now > expirationDate) {
+        // Bloquear usuário se plano expirou
+        await storage.updateUser(req.user.id, {
+          isBlocked: true,
+          planRenewalRequired: true,
+          blockReason: 'Plano expirado - Renovação necessária'
+        });
+        
+        return res.status(402).json({
+          error: 'Plano expirado',
+          message: 'Seu plano expirou. Renove para continuar usando o sistema.',
+          renewalRequired: true,
+          expirationDate: expirationDate.toISOString()
+        });
+      }
+    }
+
+    next();
+  } catch (error) {
+    console.error('Erro ao verificar expiração de plano:', error);
+    next();
+  }
+}
 
 export function registerSQLiteRoutes(app: Express): Server {
   // Middleware de debug para todas as rotas POST
@@ -39,9 +95,247 @@ export function registerSQLiteRoutes(app: Express): Server {
     next();
   });
 
+  // Aplicar middleware de verificação de plano apenas em rotas protegidas
+  // (As rotas já têm verifyJWT individualmente)
+
   // Auth system detection endpoint
   app.get("/api/auth/system", (req, res) => {
     res.json({ system: "sqlite" });
+  });
+
+  // 2FA Endpoints
+  app.post("/api/auth/2fa/setup", verifyJWT, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      
+      // Gerar secret para 2FA
+      const secret = speakeasy.generateSecret({
+        name: `Vendzz - ${req.user.email}`,
+        issuer: 'Vendzz',
+        length: 32
+      });
+
+      // Gerar códigos de backup
+      const backupCodes = Array.from({ length: 10 }, () => 
+        Math.random().toString(36).substr(2, 8).toUpperCase()
+      );
+
+      // Gerar QR code
+      const qrCode = await QRCode.toDataURL(secret.otpauth_url);
+
+      // Salvar secret temporariamente (será confirmado quando usuário verificar)
+      await storage.updateUser(userId, {
+        twoFactorSecret: secret.base32,
+        twoFactorBackupCodes: backupCodes
+      });
+
+      res.json({
+        secret: secret.base32,
+        qrCode,
+        backupCodes,
+        manualEntryKey: secret.base32
+      });
+    } catch (error) {
+      console.error('Erro ao configurar 2FA:', error);
+      res.status(500).json({ error: 'Erro interno do servidor' });
+    }
+  });
+
+  app.post("/api/auth/2fa/verify", verifyJWT, async (req: any, res) => {
+    try {
+      const { token } = req.body;
+      const userId = req.user.id;
+      
+      const user = await storage.getUser(userId);
+      if (!user || !user.twoFactorSecret) {
+        return res.status(400).json({ error: 'Configuração 2FA não encontrada' });
+      }
+
+      const verified = speakeasy.totp.verify({
+        secret: user.twoFactorSecret,
+        encoding: 'base32',
+        token: token,
+        window: 1
+      });
+
+      if (verified) {
+        await storage.updateUser(userId, {
+          twoFactorEnabled: true
+        });
+        res.json({ success: true, message: '2FA ativado com sucesso' });
+      } else {
+        res.status(400).json({ error: 'Token inválido' });
+      }
+    } catch (error) {
+      console.error('Erro ao verificar 2FA:', error);
+      res.status(500).json({ error: 'Erro interno do servidor' });
+    }
+  });
+
+  app.post("/api/auth/2fa/disable", verifyJWT, async (req: any, res) => {
+    try {
+      const { token } = req.body;
+      const userId = req.user.id;
+      
+      const user = await storage.getUser(userId);
+      if (!user || !user.twoFactorEnabled) {
+        return res.status(400).json({ error: '2FA não está ativado' });
+      }
+
+      // Verificar se é token válido ou código de backup
+      let verified = false;
+      
+      if (user.twoFactorSecret) {
+        verified = speakeasy.totp.verify({
+          secret: user.twoFactorSecret,
+          encoding: 'base32',
+          token: token,
+          window: 1
+        });
+      }
+
+      // Se não foi verificado com TOTP, verificar códigos de backup
+      if (!verified && user.twoFactorBackupCodes) {
+        const backupCodes = user.twoFactorBackupCodes as string[];
+        verified = backupCodes.includes(token.toUpperCase());
+      }
+
+      if (verified) {
+        await storage.updateUser(userId, {
+          twoFactorEnabled: false,
+          twoFactorSecret: null,
+          twoFactorBackupCodes: null
+        });
+        res.json({ success: true, message: '2FA desativado com sucesso' });
+      } else {
+        res.status(400).json({ error: 'Token inválido' });
+      }
+    } catch (error) {
+      console.error('Erro ao desativar 2FA:', error);
+      res.status(500).json({ error: 'Erro interno do servidor' });
+    }
+  });
+
+  // Gerenciamento de Planos - Admin apenas
+  app.get("/api/admin/users", verifyJWT, async (req: any, res) => {
+    try {
+      if (req.user.role !== 'admin') {
+        return res.status(403).json({ error: 'Acesso negado' });
+      }
+
+      const users = await storage.getAllUsers();
+      res.json(users);
+    } catch (error) {
+      console.error('Erro ao buscar usuários:', error);
+      res.status(500).json({ error: 'Erro interno do servidor' });
+    }
+  });
+
+  app.put("/api/admin/users/:id/plan", verifyJWT, async (req: any, res) => {
+    try {
+      if (req.user.role !== 'admin') {
+        return res.status(403).json({ error: 'Acesso negado' });
+      }
+
+      const { id } = req.params;
+      const { plan, expiresAt, credits } = req.body;
+
+      const updateData: any = { plan };
+      
+      if (expiresAt) {
+        updateData.planExpiresAt = new Date(expiresAt);
+      }
+      
+      if (credits) {
+        updateData.smsCredits = credits.sms || 0;
+        updateData.emailCredits = credits.email || 0;
+        updateData.whatsappCredits = credits.whatsapp || 0;
+        updateData.aiCredits = credits.ai || 0;
+      }
+
+      // Desbloquear usuário se estiver bloqueado
+      updateData.isBlocked = false;
+      updateData.planRenewalRequired = false;
+      updateData.blockReason = null;
+
+      await storage.updateUser(id, updateData);
+      res.json({ success: true, message: 'Plano atualizado com sucesso' });
+    } catch (error) {
+      console.error('Erro ao atualizar plano:', error);
+      res.status(500).json({ error: 'Erro interno do servidor' });
+    }
+  });
+
+  app.post("/api/admin/users/:id/block", verifyJWT, async (req: any, res) => {
+    try {
+      if (req.user.role !== 'admin') {
+        return res.status(403).json({ error: 'Acesso negado' });
+      }
+
+      const { id } = req.params;
+      const { reason } = req.body;
+
+      await storage.updateUser(id, {
+        isBlocked: true,
+        blockReason: reason || 'Bloqueado pelo administrador'
+      });
+
+      res.json({ success: true, message: 'Usuário bloqueado com sucesso' });
+    } catch (error) {
+      console.error('Erro ao bloquear usuário:', error);
+      res.status(500).json({ error: 'Erro interno do servidor' });
+    }
+  });
+
+  app.post("/api/admin/users/:id/unblock", verifyJWT, async (req: any, res) => {
+    try {
+      if (req.user.role !== 'admin') {
+        return res.status(403).json({ error: 'Acesso negado' });
+      }
+
+      const { id } = req.params;
+
+      await storage.updateUser(id, {
+        isBlocked: false,
+        planRenewalRequired: false,
+        blockReason: null
+      });
+
+      res.json({ success: true, message: 'Usuário desbloqueado com sucesso' });
+    } catch (error) {
+      console.error('Erro ao desbloquear usuário:', error);
+      res.status(500).json({ error: 'Erro interno do servidor' });
+    }
+  });
+
+  // Endpoint para usuário verificar status do plano
+  app.get("/api/user/plan-status", verifyJWT, async (req: any, res) => {
+    try {
+      const user = await storage.getUser(req.user.id);
+      if (!user) {
+        return res.status(404).json({ error: 'Usuário não encontrado' });
+      }
+
+      const planStatus = {
+        plan: user.plan,
+        expiresAt: user.planExpiresAt,
+        isBlocked: user.isBlocked,
+        renewalRequired: user.planRenewalRequired,
+        blockReason: user.blockReason,
+        twoFactorEnabled: user.twoFactorEnabled,
+        credits: {
+          sms: user.smsCredits,
+          email: user.emailCredits,
+          whatsapp: user.whatsappCredits,
+          ai: user.aiCredits
+        }
+      };
+
+      res.json(planStatus);
+    } catch (error) {
+      console.error('Erro ao buscar status do plano:', error);
+      res.status(500).json({ error: 'Erro interno do servidor' });
+    }
   });
 
   // Public routes BEFORE any middleware or authentication

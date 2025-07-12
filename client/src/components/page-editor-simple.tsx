@@ -24,7 +24,8 @@ import {
   Heading1,
   Menu,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  Copy
 } from "lucide-react";
 
 interface Element {
@@ -106,6 +107,22 @@ export function PageEditor({ pages, onPagesChange }: PageEditorProps) {
     };
     onPagesChange([...pages, newPage]);
     setActivePage(pages.length);
+  };
+
+  const duplicatePage = (pageIndex: number) => {
+    const pageToDuplicate = pages[pageIndex];
+    const duplicatedPage: QuizPage = {
+      id: Date.now(),
+      title: `${pageToDuplicate.title} (Cópia)`,
+      elements: pageToDuplicate.elements.map(el => ({
+        ...el,
+        id: Date.now() + Math.random()
+      }))
+    };
+    const newPages = [...pages];
+    newPages.splice(pageIndex + 1, 0, duplicatedPage);
+    onPagesChange(newPages);
+    setActivePage(pageIndex + 1);
   };
 
   const deletePage = (pageIndex: number) => {
@@ -242,17 +259,37 @@ export function PageEditor({ pages, onPagesChange }: PageEditorProps) {
       case "divider":
         return <hr className="my-4 border-gray-300" />;
       case "multiple_choice":
+        // Configurações de estilo para múltipla escolha
+        const containerClass = element.optionLayout === "horizontal" ? "flex flex-wrap gap-2" : 
+                              element.optionLayout === "grid" ? "grid grid-cols-2 gap-2" : 
+                              "space-y-2";
+
+        const optionClass = element.buttonStyle === "rounded" ? "rounded-md" :
+                           element.buttonStyle === "pills" ? "rounded-full" :
+                           "rounded-sm";
+
+        const spacingClass = element.spacing === "sm" ? "gap-1" :
+                            element.spacing === "lg" ? "gap-4" :
+                            "gap-2";
+
         return (
-          <div className="space-y-2">
+          <div className="space-y-3">
             <label className="block text-sm font-medium text-gray-700">
               {element.question || "Pergunta"}
               {element.required && <span className="text-red-500 ml-1">*</span>}
             </label>
-            <div className="space-y-2">
+            <div className={`${containerClass} ${spacingClass}`}>
               {(element.options || ["Opção 1", "Opção 2"]).map((option, index) => (
-                <div key={index} className="flex items-center space-x-2">
-                  <input type="radio" name={`preview-${element.id}`} disabled />
-                  <span className="text-sm">{option}</span>
+                <div key={index} className={`flex items-center space-x-2 p-3 border border-gray-200 hover:border-vendzz-primary hover:bg-vendzz-primary/5 cursor-pointer ${optionClass} ${element.borderStyle === "thick" ? "border-2" : ""} ${element.shadowStyle === "sm" ? "shadow-sm" : element.shadowStyle === "md" ? "shadow-md" : ""} transition-all`}>
+                  {!element.hideInputs && (
+                    <input 
+                      type={element.multipleSelection ? "checkbox" : "radio"} 
+                      name={`preview-${element.id}`} 
+                      className="rounded" 
+                      disabled
+                    />
+                  )}
+                  <span className="text-sm flex-1 font-medium">{option}</span>
                 </div>
               ))}
             </div>
@@ -362,6 +399,18 @@ export function PageEditor({ pages, onPagesChange }: PageEditorProps) {
                             <span className="text-xs text-gray-500">{page.elements.length} elementos</span>
                           </div>
                           <div className="flex items-center gap-1">
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              className="w-6 h-6 p-0 text-blue-500 hover:bg-blue-50"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                duplicatePage(index);
+                              }}
+                              title="Duplicar página"
+                            >
+                              <Copy className="w-3 h-3" />
+                            </Button>
                             {pages.length > 1 && (
                               <Button
                                 size="sm"
@@ -371,6 +420,7 @@ export function PageEditor({ pages, onPagesChange }: PageEditorProps) {
                                   e.stopPropagation();
                                   deletePage(index);
                                 }}
+                                title="Deletar página"
                               >
                                 <Trash2 className="w-3 h-3" />
                               </Button>
@@ -750,6 +800,94 @@ export function PageEditor({ pages, onPagesChange }: PageEditorProps) {
                         <Plus className="w-4 h-4 mr-1" />
                         Adicionar Opção
                       </Button>
+                    </div>
+                  </div>
+                )}
+
+                {selectedElementData.type === "multiple_choice" && (
+                  <div className="border rounded-lg p-4 bg-gray-50">
+                    <h4 className="font-semibold text-sm mb-3">Estilo Visual</h4>
+                    
+                    <div className="space-y-3">
+                      {/* Disposição das opções */}
+                      <div>
+                        <Label className="text-xs">Disposição</Label>
+                        <select 
+                          className="w-full px-2 py-1 border rounded text-xs mt-1"
+                          value={selectedElementData.optionLayout || "vertical"}
+                          onChange={(e) => updateElement(selectedElementData.id, { optionLayout: e.target.value })}
+                        >
+                          <option value="vertical">Vertical</option>
+                          <option value="horizontal">Horizontal</option>
+                          <option value="grid">Grade 2x2</option>
+                        </select>
+                      </div>
+
+                      {/* Estilo dos botões */}
+                      <div>
+                        <Label className="text-xs">Estilo dos Botões</Label>
+                        <select 
+                          className="w-full px-2 py-1 border rounded text-xs mt-1"
+                          value={selectedElementData.buttonStyle || "rectangular"}
+                          onChange={(e) => updateElement(selectedElementData.id, { buttonStyle: e.target.value })}
+                        >
+                          <option value="rectangular">Retangular</option>
+                          <option value="rounded">Arredondado</option>
+                          <option value="pills">Pills</option>
+                        </select>
+                      </div>
+
+                      {/* Espaçamento */}
+                      <div>
+                        <Label className="text-xs">Espaçamento</Label>
+                        <select 
+                          className="w-full px-2 py-1 border rounded text-xs mt-1"
+                          value={selectedElementData.spacing || "md"}
+                          onChange={(e) => updateElement(selectedElementData.id, { spacing: e.target.value })}
+                        >
+                          <option value="sm">Pequeno</option>
+                          <option value="md">Médio</option>
+                          <option value="lg">Grande</option>
+                        </select>
+                      </div>
+
+                      {/* Borda */}
+                      <div>
+                        <Label className="text-xs">Estilo da Borda</Label>
+                        <select 
+                          className="w-full px-2 py-1 border rounded text-xs mt-1"
+                          value={selectedElementData.borderStyle || "normal"}
+                          onChange={(e) => updateElement(selectedElementData.id, { borderStyle: e.target.value })}
+                        >
+                          <option value="normal">Normal</option>
+                          <option value="thick">Grosso</option>
+                        </select>
+                      </div>
+
+                      {/* Sombra */}
+                      <div>
+                        <Label className="text-xs">Sombra</Label>
+                        <select 
+                          className="w-full px-2 py-1 border rounded text-xs mt-1"
+                          value={selectedElementData.shadowStyle || "none"}
+                          onChange={(e) => updateElement(selectedElementData.id, { shadowStyle: e.target.value })}
+                        >
+                          <option value="none">Nenhuma</option>
+                          <option value="sm">Pequena</option>
+                          <option value="md">Média</option>
+                        </select>
+                      </div>
+
+                      {/* Ocultar inputs */}
+                      <div className="flex items-center space-x-2">
+                        <input
+                          type="checkbox"
+                          id="hide-inputs"
+                          checked={selectedElementData.hideInputs || false}
+                          onChange={(e) => updateElement(selectedElementData.id, { hideInputs: e.target.checked })}
+                        />
+                        <Label htmlFor="hide-inputs" className="text-xs">Ocultar radio/checkbox</Label>
+                      </div>
                     </div>
                   </div>
                 )}

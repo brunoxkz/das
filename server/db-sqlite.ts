@@ -81,6 +81,12 @@ export function runMigrations() {
       addColumnIfNotExists('users', 'twoFactorEnabled', 'INTEGER DEFAULT 0');
       addColumnIfNotExists('users', 'twoFactorSecret', 'TEXT');
       addColumnIfNotExists('users', 'twoFactorBackupCodes', 'TEXT');
+      
+      // Adicionar colunas para expiração de plano
+      addColumnIfNotExists('users', 'planExpiresAt', 'INTEGER');
+      addColumnIfNotExists('users', 'planRenewalRequired', 'INTEGER DEFAULT 0');
+      addColumnIfNotExists('users', 'isBlocked', 'INTEGER DEFAULT 0');
+      addColumnIfNotExists('users', 'blockReason', 'TEXT');
       addColumnIfNotExists('quizzes', 'detectOthers', 'INTEGER DEFAULT 0');
       addColumnIfNotExists('quizzes', 'enableIOS17', 'INTEGER DEFAULT 1');
       addColumnIfNotExists('quizzes', 'enableOlderIOS', 'INTEGER DEFAULT 1');

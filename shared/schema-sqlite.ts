@@ -17,6 +17,15 @@ export const users = sqliteTable("users", {
   role: text("role").default("user"),
   refreshToken: text("refreshToken"),
   subscriptionStatus: text("subscriptionStatus"),
+  // Campos para expiração de plano
+  planExpiresAt: integer("planExpiresAt", { mode: 'timestamp' }),
+  planRenewalRequired: integer("planRenewalRequired", { mode: 'boolean' }).default(false),
+  isBlocked: integer("isBlocked", { mode: 'boolean' }).default(false),
+  blockReason: text("blockReason"),
+  // Campos para 2FA
+  twoFactorEnabled: integer("twoFactorEnabled", { mode: 'boolean' }).default(false),
+  twoFactorSecret: text("twoFactorSecret"),
+  twoFactorBackupCodes: text("twoFactorBackupCodes", { mode: 'json' }),
   smsCredits: integer("smsCredits").default(0),
   emailCredits: integer("emailCredits").default(0),
   whatsappCredits: integer("whatsappCredits").default(0),

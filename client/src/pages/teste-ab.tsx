@@ -56,6 +56,7 @@ export default function TesteAbPage() {
   // Buscar quizzes para seleção
   const { data: quizzes, isLoading: isLoadingQuizzes } = useQuery<Quiz[]>({
     queryKey: ["/api/quizzes"],
+    enabled: !!user,
   });
 
   // Mutação para criar teste A/B
