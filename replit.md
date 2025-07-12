@@ -208,6 +208,14 @@ No additional files or separate projects are maintained in this repository.
 
 ```
 Changelog:
+- July 12, 2025. SISTEMA DE TEMAS COMPLETO IMPLEMENTADO - Seletor de tema integrado ao dashboard com suporte completo a modo escuro:
+  * Adicionado ThemeSelector component no header do dashboard com dropdown para Light/Dark/Auto
+  * Implementadas 15 classes CSS temáticas no index.css com suporte completo a modo escuro
+  * Todas as seções do dashboard atualizadas: header, cards de estatísticas, quizzes, ações rápidas
+  * Classes CSS: dashboard-card, dashboard-stat-card, dashboard-quiz-card, dashboard-button, dashboard-text-primary, dashboard-text-secondary, dashboard-text-muted, dashboard-header, dashboard-badge
+  * Sistema de temas sincronizado com localStorage para persistência entre sessões
+  * Compatibilidade total com design futurístico existente mantendo cores e gradientes
+  * Transições suaves entre temas com backdrop-blur e transparências
 - July 12, 2025. PÁGINAS PLANOS E CRÉDITOS IMPLEMENTADAS - Adicionadas seções dedicadas para gerenciamento de planos e créditos:
   * Criada página completa de PLANOS (/planos) com 3 tiers: Gratuito, Premium e Enterprise
   * Implementada página de CRÉDITOS (/credits) com gestão de SMS, Email, Voice e IA
