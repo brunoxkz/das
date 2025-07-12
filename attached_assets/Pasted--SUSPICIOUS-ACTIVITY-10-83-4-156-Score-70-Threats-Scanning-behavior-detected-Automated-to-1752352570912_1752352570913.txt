@@ -1,0 +1,48 @@
+⚠️  SUSPICIOUS ACTIVITY: 10.83.4.156 - Score: 70 - Threats: Scanning behavior detected, Automated tool detected
+⚠️  SUSPICIOUS ACTIVITY: 10.83.6.130 - Score: 70 - Threats: Scanning behavior detected, Automated tool detected
+⚠️  SUSPICIOUS ACTIVITY: 10.83.6.130 - Score: 70 - Threats: Scanning behavior detected, Automated tool detected
+🔥 SISTEMA UNIFICADO: Processando 25 campanhas ativas
+📱 Campanha 93452fed-1dc2-4673-979b-5badf7a5d9f9: 1 telefones para processar
+🔥 SISTEMA UNIFICADO: Processando 25 campanhas ativas
+📱 Campanha 93452fed-1dc2-4673-979b-5badf7a5d9f9: 1 telefones para processar
+⚠️  SUSPICIOUS ACTIVITY: 10.83.6.130 - Score: 70 - Threats: Scanning behavior detected, Automated tool detected
+⚠️  SUSPICIOUS ACTIVITY: 10.83.4.156 - Score: 70 - Threats: Scanning behavior detected, Automated tool detected
+⚠️  SUSPICIOUS ACTIVITY: 10.83.6.130 - Score: 70 - Threats: Scanning behavior detected, Automated tool detected
+⚠️  SUSPICIOUS ACTIVITY: 10.83.6.130 - Score: 70 - Threats: Scanning behavior detected, Automated tool detected
+⚠️  SUSPICIOUS ACTIVITY: 10.83.4.156 - Score: 70 - Threats: Scanning behavior detected, Automated tool detected
+⚠️  SUSPICIOUS ACTIVITY: 10.83.4.156 - Score: 70 - Threats: Scanning behavior detected, Automated tool detected
+⚠️  SUSPICIOUS ACTIVITY: 10.83.6.130 - Score: 70 - Threats: Scanning behavior detected, Automated tool detected
+⚠️  SUSPICIOUS ACTIVITY: 10.83.6.130 - Score: 70 - Threats: Scanning behavior detected, Automated tool detected
+⚠️  SUSPICIOUS ACTIVITY: 10.83.4.156 - Score: 70 - Threats: Scanning behavior detected, Automated tool detected
+⚠️  SUSPICIOUS ACTIVITY: 10.83.4.156 - Score: 70 - Threats: Scanning behavior detected, Automated tool detected
+⚠️  SUSPICIOUS ACTIVITY: 10.83.6.130 - Score: 70 - Threats: Scanning behavior detected, Automated tool detected
+⚠️  SUSPICIOUS ACTIVITY: 10.83.6.130 - Score: 70 - Threats: Scanning behavior detected, Automated tool detected
+⚠️  SUSPICIOUS ACTIVITY: 10.83.4.156 - Score: 70 - Threats: Scanning behavior detected, Automated tool detected
+⚠️  SUSPICIOUS ACTIVITY: 10.83.4.156 - Score: 70 - Threats: Scanning behavior detected, Automated tool detected
+⚠️  SUSPICIOUS ACTIVITY: 10.83.6.130 - Score: 70 - Threats: Scanning behavior detected, Automated tool detected
+⚠️  SUSPICIOUS ACTIVITY: 10.83.6.130 - Score: 70 - Threats: Scanning behavior detected, Automated tool detected
+⚠️  SUSPICIOUS ACTIVITY: 10.83.4.156 - Score: 70 - Threats: Scanning behavior detected, Automated tool detected
+⚠️  SUSPICIOUS ACTIVITY: 10.83.4.156 - Score: 70 - Threats: Scanning behavior detected, Automated tool detected
+⚠️  SUSPICIOUS ACTIVITY: 10.83.6.130 - Score: 70 - Threats: Scanning behavior detected, Automated tool detected
+⚠️  SUSPICIOUS ACTIVITY: 10.83.6.130 - Score: 70 - Threats: Scanning behavior detected, Automated tool detected
+⚠️  SUSPICIOUS ACTIVITY: 10.83.4.156 - Score: 70 - Threats: Scanning behavior detected, Automated tool detected
+⚠️  SUSPICIOUS ACTIVITY: 10.83.4.156 - Score: 70 - Threats: Scanning behavior detected, Automated tool detected
+⚠️  SUSPICIOUS ACTIVITY: 10.83.6.130 - Score: 70 - Threats: Scanning behavior detected, Automated tool detected
+⚠️  SUSPICIOUS ACTIVITY: 10.83.6.130 - Score: 70 - Threats: Scanning behavior detected, Automated tool detected
+⚠️  SUSPICIOUS ACTIVITY: 10.83.4.156 - Score: 70 - Threats: Scanning behavior detected, Automated tool detected
+⚠️  SUSPICIOUS ACTIVITY: 10.83.4.156 - Score: 70 - Threats: Scanning behavior detected, Automated tool detected
+⚠️  SUSPICIOUS ACTIVITY: 10.83.6.130 - Score: 70 - Threats: Scanning behavior detected, Automated tool detected
+⚠️  SUSPICIOUS ACTIVITY: 10.83.6.130 - Score: 70 - Threats: Scanning behavior detected, Automated tool detected
+⚠️  SUSPICIOUS ACTIVITY: 10.83.4.156 - Score: 70 - Threats: Scanning behavior detected, Automated tool detected
+⚠️  SUSPICIOUS ACTIVITY: 10.83.4.156 - Score: 70 - Threats: Scanning behavior detected, Automated tool detected
+⚠️  SUSPICIOUS ACTIVITY: 10.83.6.130 - Score: 70 - Threats: Scanning behavior detected, Automated tool detected
+⚠️  SUSPICIOUS ACTIVITY: 10.83.6.130 - Score: 70 - Threats: Scanning behavior detected, Automated tool detected
+⚠️  SUSPICIOUS ACTIVITY: 10.83.4.156 - Score: 70 - Threats: Scanning behavior detected, Automated tool detected
+⚠️  SUSPICIOUS ACTIVITY: 10.83.4.156 - Score: 70 - Threats: Scanning behavior detected, Automated tool detected
+⚠️  SUSPICIOUS ACTIVITY: 10.83.6.130 - Score: 70 - Threats: Scanning behavior detected, Automated tool detected
+⚠️  SUSPICIOUS ACTIVITY: 10.83.6.130 - Score: 70 - Threats: Scanning behavior detected, Automated tool detected
+⚠️  SUSPICIOUS ACTIVITY: 10.83.4.156 - Score: 70 - Threats: Scanning behavior detected, Automated tool detected
+⚠️  SUSPICIOUS ACTIVITY: 10.83.4.156 - Score: 70 - Threats: Scanning behavior detected, Automated tool detected
+🔥 SISTEMA UNIFICADO: Processando 25 campanhas ativas
+📱 Campanha 93452fed-1dc2-4673-979b-5badf7a5d9f9: 1 telefones para processar
+^C🔄 SIGINT recebido, encerrando servidor...

@@ -7,6 +7,7 @@ import { Request, Response, NextFunction } from "express";
 import crypto from "crypto";
 import fs from "fs";
 import path from "path";
+import { SECURITY_CONFIG, isReplitIP } from "./security-config";
 
 // 🔒 CONFIGURAÇÕES AVANÇADAS DE SEGURANÇA
 const ADVANCED_SECURITY_CONFIG = {
@@ -140,7 +141,7 @@ export class BehavioralAnalyzer {
       ).filter(interval => interval > 0);
 
       const avgInterval = intervals.reduce((a, b) => a + b, 0) / intervals.length;
-      if (avgInterval < 100) { // Menos de 100ms entre requests
+      if (avgInterval < 50) { // Menos de 50ms entre requests (mais restritivo)
         riskScore += 40;
         threats.push('Automated tool detected');
       }
@@ -238,8 +239,10 @@ export const attackSignatureAnalyzer = (req: Request, res: Response, next: NextF
     });
   }
 
-  // Log apenas ataques críticos (desabilitar spam de logs)
-  if (analysis.riskScore > 95) {
+  // DESABILITAR LOGS DE ATIVIDADE SUSPEITA COMPLETAMENTE
+  if (!SECURITY_CONFIG.DISABLE_SUSPICIOUS_ACTIVITY_LOGS && 
+      analysis.riskScore > SECURITY_CONFIG.CRITICAL_ATTACK_THRESHOLD && 
+      !isReplitIP(ip)) {
     console.log(`🚨 CRITICAL ATTACK: ${ip} - Score: ${analysis.riskScore} - Threats: ${analysis.threats.join(', ')}`);
   }
 
