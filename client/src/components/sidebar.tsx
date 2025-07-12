@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { NotificationSystem } from "@/components/notification-system";
 import { LanguageSelector } from "@/components/language-selector";
+import { ThemeToggle } from "@/components/theme-toggle";
 import { useLanguage } from "@/hooks/useLanguage";
 import { useSidebar } from "@/hooks/useSidebar";
 
@@ -186,6 +187,13 @@ export function Sidebar() {
       href: "/cloaker",
       icon: <Shield className="w-4 h-4" />,
       active: location === "/cloaker"
+    },
+    {
+      title: "Extensões",
+      href: "/extensoes",
+      icon: <Plug className="w-4 h-4" />,
+      active: location === "/extensoes",
+      badge: "🔧"
     }
   ];
 
@@ -247,6 +255,9 @@ export function Sidebar() {
             {/* Language Selector */}
             <LanguageSelector />
             
+            {/* Theme Toggle */}
+            <ThemeToggle />
+            
             {/* Notification Bell */}
             <NotificationSystem />
           </div>
@@ -256,6 +267,9 @@ export function Sidebar() {
           <div className="flex flex-col items-center space-y-1 mt-3">
             {/* Language Selector - Collapsed */}
             <LanguageSelector collapsed={true} />
+            
+            {/* Theme Toggle - Collapsed */}
+            <ThemeToggle />
             
             {/* Notification Bell - Collapsed */}
             <NotificationSystem />

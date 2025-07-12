@@ -33,6 +33,7 @@ import TesteAbPage from "@/pages/teste-ab";
 import WebhooksPage from "@/pages/webhooks";
 import IntegracoesPage from "@/pages/integracoes";
 import TypebotPage from "@/pages/typebot";
+import ExtensoesPage from "@/pages/extensoes";
 import { useAuth } from "@/hooks/useAuth-jwt";
 import { isUnauthorizedError } from "@/lib/authUtils";
 import { SidebarProvider } from "@/hooks/useSidebar";
@@ -172,6 +173,12 @@ function App() {
         <Route path="/typebot">
           <Layout>
             <TypebotPage />
+          </Layout>
+        </Route>
+
+        <Route path="/extensoes">
+          <Layout>
+            <ExtensoesPage />
           </Layout>
         </Route>
 
