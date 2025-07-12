@@ -19,6 +19,7 @@ import {
   getSecurityStats 
 } from './security';
 import express from 'express';
+import { rateLimiters } from './rate-limiter';
 import path from 'path';
 import fs from 'fs';
 import { fileURLToPath } from 'url';
