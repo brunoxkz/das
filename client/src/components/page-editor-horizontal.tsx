@@ -8954,3 +8954,5 @@ const gameElementCategories = [
     </div>
   );
 }
+
+export default PageEditorHorizontal;
