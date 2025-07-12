@@ -180,25 +180,11 @@ export const createRateLimiters = () => {
       message: 'Muitas consultas ao dashboard'
     }),
 
-    // Quiz creation - 1000 req/min por usuário (ULTRA-ALTO para quizzes com 40 páginas)
+    // Quiz creation - 200 req/min por usuário (4x mais para edição intensiva)
     quizCreation: new HighPerformanceRateLimiter({
       windowMs: 60 * 1000, // 1 minuto
-      maxRequests: 1000, // Aumentado para suportar quizzes complexos
+      maxRequests: 200,
       message: 'Limite de criação/edição de quizzes excedido'
-    }),
-
-    // Quiz complex editing - 2000 req/min para edição de quizzes mega-complexos
-    quizComplexEdit: new HighPerformanceRateLimiter({
-      windowMs: 60 * 1000, // 1 minuto
-      maxRequests: 2000, // ULTRA-ALTO para quizzes com 40+ páginas e múltiplos elementos
-      message: 'Limite de edição de quizzes complexos excedido'
-    }),
-
-    // Quiz public access - 10000 req/min para acesso público a quizzes
-    quizPublic: new HighPerformanceRateLimiter({
-      windowMs: 60 * 1000, // 1 minuto
-      maxRequests: 10000, // MASSIVO para respostas públicas
-      message: 'Limite de acesso público a quizzes excedido'
     })
   };
 };
