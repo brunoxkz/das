@@ -8,11 +8,11 @@ import { setupHybridAuth, verifyJWT } from "./auth-hybrid";
 import { healthCheck, detailedHealth } from "./health-check";
 import { emailService } from "./email-service";
 import { 
-  initAdvancedSecurity
-  // honeypotMiddleware, 
-  // timingAttackProtection, 
-  // attackSignatureAnalyzer, 
-  // blacklistMiddleware 
+  initAdvancedSecurity, 
+  honeypotMiddleware, 
+  timingAttackProtection, 
+  attackSignatureAnalyzer, 
+  blacklistMiddleware 
 } from "./advanced-security";
 import UltraScaleProcessor from "./ultra-scale-processor";
 import { quizCacheOptimizer } from "./quiz-cache-optimizer";
@@ -81,11 +81,11 @@ app.use((req, res, next) => {
   next();
 });
 
-// Apply security middleware que funciona com Express 4.x - DESABILITADO TEMPORARIAMENTE
-// app.use(honeypotMiddleware);
-// app.use(timingAttackProtection);
-// app.use(attackSignatureAnalyzer); // DESABILITADO - CAUSANDO SPAM NOS LOGS
-// app.use(blacklistMiddleware);
+// Apply security middleware que funciona com Express 4.x
+app.use(honeypotMiddleware);
+app.use(timingAttackProtection);
+app.use(attackSignatureAnalyzer);
+app.use(blacklistMiddleware);
 
 // Health check endpoints
 app.get('/health', healthCheck);
@@ -96,16 +96,6 @@ setupHybridAuth(app);
 
 // Register all routes
 registerHybridRoutes(app);
-
-// Error handling middleware para interceptar erros do Vite
-app.use((err: any, req: Request, res: Response, next: NextFunction) => {
-  if (err && err.message && err.message.includes('Unexpected end of input')) {
-    console.warn('Vite compilation error intercepted:', err.message);
-    res.status(500).json({ error: 'Compilation error' });
-    return;
-  }
-  next(err);
-});
 
 // Setup Vite middleware for dev and production
 setupVite(app);

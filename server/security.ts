@@ -26,46 +26,21 @@ interface BlockedIP {
   attempts: number;
 }
 
-// Armazenamento em memória para performance - LIMPO
+// Armazenamento em memória para performance
 const securityLog: SecurityAttempt[] = [];
 const blockedIPs: Map<string, BlockedIP> = new Map();
 const failedAttempts: Map<string, number> = new Map();
 const suspiciousIPs: Map<string, number> = new Map();
 
-// Limpeza automática de logs antigos para evitar spam
-setInterval(() => {
-  const now = Date.now();
-  const fiveMinutesAgo = now - (5 * 60 * 1000);
-  
-  // Limpar logs antigos
-  const oldLogs = securityLog.length;
-  securityLog.splice(0, securityLog.length, ...securityLog.filter(log => log.timestamp > fiveMinutesAgo));
-  
-  // Limpar IPs bloqueados expirados
-  blockedIPs.forEach((blocked, ip) => {
-    if (now > blocked.expiresAt) {
-      blockedIPs.delete(ip);
-    }
-  });
-  
-  // Limpar tentativas antigas
-  failedAttempts.clear();
-  suspiciousIPs.clear();
-  
-  if (securityLog.length !== oldLogs) {
-    console.log(`🧹 Limpeza de segurança: ${oldLogs - securityLog.length} logs antigos removidos`);
-  }
-}, 5 * 60 * 1000); // A cada 5 minutos
-
-// Configurações de segurança - OTIMIZADAS PARA USUÁRIOS REAIS
+// Configurações de segurança
 const SECURITY_CONFIG = {
-  MAX_LOGIN_ATTEMPTS: 10, // Aumentado para permitir mais tentativas
-  BLOCK_DURATION: 5 * 60 * 1000, // Reduzido para 5 minutos
-  SUSPICIOUS_THRESHOLD: 50, // Muito mais tolerante
-  DDOS_THRESHOLD: 500, // Muito mais alto
-  RATE_LIMIT_WINDOW: 1 * 60 * 1000, // 1 minuto (mais curto)
-  RATE_LIMIT_MAX: 500, // 500 requisições por minuto (para quizzes complexos)
-  BRUTE_FORCE_WINDOW: 5 * 60 * 1000, // 5 minutos
+  MAX_LOGIN_ATTEMPTS: 5,
+  BLOCK_DURATION: 15 * 60 * 1000, // 15 minutos
+  SUSPICIOUS_THRESHOLD: 10,
+  DDOS_THRESHOLD: 100,
+  RATE_LIMIT_WINDOW: 15 * 60 * 1000, // 15 minutos
+  RATE_LIMIT_MAX: 100,
+  BRUTE_FORCE_WINDOW: 10 * 60 * 1000, // 10 minutos
 };
 
 /**
@@ -82,38 +57,20 @@ export const antiDdosMiddleware = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   skip: (req) => {
-    // SKIP INTELIGENTE - Prioriza experiência do usuário
-    
-    // 1. Sempre permitir recursos estáticos
-    if (req.path.includes('/assets/') || req.path.includes('.js') || req.path.includes('.css') || 
-        req.path.includes('.png') || req.path.includes('.jpg') || req.path.includes('.svg') ||
-        req.path.includes('.ico') || req.path.includes('.woff') || req.path.includes('.ttf')) return true;
-    
-    // 2. Permitir IPs locais e desenvolvimento
-    const allowedIPs = ['127.0.0.1', '::1', '10.83.4.156', '10.83.6.130'];
-    if (allowedIPs.includes(req.ip)) return true;
-    
-    // 3. Permitir rotas críticas de usuário
-    const userRoutes = [
-      '/api/quizzes',
-      '/api/quiz-builder',
-      '/api/dashboard',
-      '/api/auth',
-      '/api/user',
-      '/quiz/', // Quizzes públicos
-      '/dashboard',
-      '/quiz-builder'
-    ];
-    if (userRoutes.some(route => req.path.includes(route))) return true;
-    
-    // 4. Permitir processos internos
+    // Pular rate limit para IPs permitidos e processos internos
+    const allowedIPs = ['127.0.0.1', '::1'];
     const internalProcesses = [
       '/api/ultra-scale',
-      '/api/auto-detection', 
+      '/api/auto-detection',
       '/api/scheduled-campaigns',
       '/api/background-jobs',
       '/api/internal'
     ];
+    
+    // Permitir IPs locais
+    if (allowedIPs.includes(req.ip)) return true;
+    
+    // Permitir processos internos
     if (internalProcesses.some(path => req.path.includes(path))) return true;
     
     // Permitir user-agent de processos internos
@@ -146,17 +103,18 @@ export const antiInvasionMiddleware = (req: Request, res: Response, next: NextFu
     });
   }
 
-  // Detectar apenas padrões críticos de ataque (não desenvolvimento)
+  // Detectar padrões suspeitos
   if (detectSuspiciousActivity(req)) {
     incrementSuspiciousActivity(clientIP);
-    logSecurityEvent(req, 'suspicious_activity', 'high', 'Critical attack pattern detected');
+    logSecurityEvent(req, 'suspicious_activity', 'medium', 'Suspicious request pattern detected');
     
-    // Bloquear imediatamente apenas para ataques críticos
-    blockIP(clientIP, 'Critical attack detected', SECURITY_CONFIG.BLOCK_DURATION);
-    return res.status(403).json({
-      error: 'Acesso negado. Atividade maliciosa detectada.',
-      code: 'MALICIOUS_ACTIVITY'
-    });
+    if (getSuspiciousCount(clientIP) > SECURITY_CONFIG.SUSPICIOUS_THRESHOLD) {
+      blockIP(clientIP, 'Excessive suspicious activity', SECURITY_CONFIG.BLOCK_DURATION);
+      return res.status(403).json({
+        error: 'Acesso negado. Atividade suspeita detectada.',
+        code: 'SUSPICIOUS_ACTIVITY'
+      });
+    }
   }
 
   // Verificar tentativas de brute force
@@ -205,47 +163,64 @@ export const helmetSecurity = helmet({
 function detectSuspiciousActivity(req: Request): boolean {
   const ip = req.ip || req.connection.remoteAddress || '';
   
-  // WHITELIST COMPLETA - Incluir IPs do Replit e desenvolvimento
-  const allowedIPs = ['127.0.0.1', '::1', '10.83.4.156', '10.83.6.130', 'localhost'];
-  if (allowedIPs.includes(ip)) {
-    return false; // Nunca bloquear IPs permitidos
+  // 🔧 WHITELIST DE IPs DE DESENVOLVIMENTO
+  const developmentIPs = ['127.0.0.1', '::1', '10.83.1.214', 'localhost'];
+  if (developmentIPs.includes(ip)) {
+    return false; // Não considera IPs de desenvolvimento como suspeitos
   }
   
-  // MODO PRODUÇÃO INTELIGENTE - Apenas ataques reais, não desenvolvimento
-  const criticalAttackPatterns = [
-    /\.\.\//,  // Path traversal
-    /union\s+select/i, // SQL injection
-    /\/etc\/passwd/i,  // System file access
-    /cmd\.exe/i,    // Command injection
-    /shell_exec/i,   // Code execution
-    /\/bin\/sh/i,   // Shell access
-    /powershell/i,  // PowerShell injection
-    /base64_decode/i, // Encoded payloads
-    /eval\(/i,      // Code evaluation
-    /system\(/i,    // System calls
+  // 🔧 MODO DESENVOLVIMENTO - Apenas padrões críticos para evitar falsos positivos
+  const suspiciousPatterns = [
+    /\.\.\//,  // Path traversal crítico
+    /union\s+select/i, // SQL injection crítico
+    /\/proc\/self/i, // System file access crítico
+    /\/etc\/passwd/i,  // System file access crítico
+    /cmd\.exe/i,    // Command injection crítico
+    /shell_exec/i,   // Code injection crítico
+    /phpinfo\(/i,  // Information disclosure crítico
+    /\/bin\/sh/i,       // Shell access crítico
+    /powershell/i,      // PowerShell injection crítico
+    /base64_decode/i, // Encoded payloads crítico
   ];
 
   const url = req.url.toLowerCase();
   const userAgent = (req.get('User-Agent') || '').toLowerCase();
   const body = JSON.stringify(req.body || '').toLowerCase();
 
-  // Verificar apenas padrões críticos de ataque
-  for (const pattern of criticalAttackPatterns) {
+  // Verificar padrões suspeitos na URL
+  for (const pattern of suspiciousPatterns) {
     if (pattern.test(url) || pattern.test(userAgent) || pattern.test(body)) {
       return true;
     }
   }
 
-  // Verificar apenas user-agents claramente maliciosos
-  const maliciousUserAgents = [
-    'nikto', 'sqlmap', 'nmap', 'masscan', 'dirb', 'gobuster', 
-    'wpscan', 'burp', 'zap', 'exploit', 'hack'
+  // Verificar user-agents suspeitos
+  const suspiciousUserAgents = [
+    'nikto',
+    'sqlmap',
+    'nmap',
+    'masscan',
+    'dirb',
+    'gobuster',
+    'wpscan',
+    'burp',
+    'zap',
+    'crawler',
+    'bot',
+    'spider',
+    'scraper'
   ];
 
-  for (const agent of maliciousUserAgents) {
+  for (const agent of suspiciousUserAgents) {
     if (userAgent.includes(agent)) {
       return true;
     }
+  }
+
+  // Verificar tamanho excessivo do payload
+  const contentLength = parseInt(req.get('Content-Length') || '0');
+  if (contentLength > 10 * 1024 * 1024) { // 10MB
+    return true;
   }
 
   return false;

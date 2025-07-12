@@ -5,6 +5,15 @@ import { AuthProvider } from "@/hooks/useAuth-jwt";
 import App from "./App";
 import "./index.css";
 
+// Service Worker desabilitado temporariamente para resolver bloqueios
+// if ('serviceWorker' in navigator) {
+//   window.addEventListener('load', () => {
+//     navigator.serviceWorker.register('/sw.js')
+//       .then(() => console.log('🚀 PWA Service Worker registrado'))
+//       .catch(() => console.warn('⚠️ PWA Service Worker falhou'));
+//   });
+// }
+
 createRoot(document.getElementById("root")!).render(
   <QueryClientProvider client={queryClient}>
     <AuthProvider>

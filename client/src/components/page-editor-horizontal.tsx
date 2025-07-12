@@ -337,7 +337,7 @@ if (typeof window !== 'undefined') {
 
 interface Element {
   id: number;
-  type: "multiple_choice" | "text" | "rating" | "email" | "checkbox" | "date" | "phone" | "number" | "textarea" | "image_upload" | "animated_transition" | "heading" | "paragraph" | "image" | "divider" | "video" | "audio" | "birth_date" | "height" | "current_weight" | "target_weight" | "transition_background" | "transition_text" | "transition_counter" | "transition_loader" | "transition_redirect" | "transition_button" | "spacer" | "game_wheel" | "game_scratch" | "game_color_pick" | "game_brick_break" | "game_memory_cards" | "game_slot_machine" | "snake_game" | "continue_button" | "loading_question" | "share_quiz" | "price" | "icon_list" | "testimonials" | "guarantee" | "paypal" | "image_with_text" | "chart" | "metrics" | "before_after" | "pricing_plans" | "stripe_embed" | "hotmart_upsell" | "faq" | "image_carousel" | "pix_payment" | "facial_reading" | "palm_reading" | "notification";
+  type: "multiple_choice" | "text" | "rating" | "email" | "checkbox" | "date" | "phone" | "number" | "textarea" | "image_upload" | "animated_transition" | "heading" | "paragraph" | "image" | "divider" | "video" | "audio" | "birth_date" | "height" | "current_weight" | "target_weight" | "transition_background" | "transition_text" | "transition_counter" | "transition_loader" | "transition_redirect" | "transition_button" | "spacer" | "game_wheel" | "game_scratch" | "game_color_pick" | "game_brick_break" | "game_memory_cards" | "game_slot_machine" | "continue_button" | "loading_question" | "share_quiz" | "price" | "icon_list" | "testimonials" | "guarantee" | "paypal" | "image_with_text" | "chart" | "metrics" | "before_after" | "pricing_plans" | "stripe_embed" | "hotmart_upsell" | "faq" | "image_carousel" | "pix_payment" | "facial_reading" | "palm_reading" | "notification";
   content: string;
   question?: string;
   description?: string;
@@ -1276,11 +1276,6 @@ const gameElementCategories = [
         type: "game_brick_break",
         label: "Quebre o Muro",
         icon: <Hash className="w-4 h-4" />,
-      },
-      {
-        type: "snake_game",
-        label: "Jogo da Cobrinha",
-        icon: <Zap className="w-4 h-4" />,
       },
     ],
   },
@@ -2837,100 +2832,6 @@ const gameElementCategories = [
               
               <div className="text-xs text-blue-600 text-center">
                 {rows}x{columns} blocos • Use as setas ← → para mover
-              </div>
-            </div>
-          </div>
-        );
-
-      case "snake_game":
-        return (
-          <div className="space-y-3 p-4 border-2 border-dashed border-green-200 rounded-lg bg-green-50">
-            <div className="flex items-center gap-2">
-              <Zap className="w-4 h-4 text-green-600" />
-              <span className="font-medium text-green-800">Jogo da Cobrinha</span>
-            </div>
-            
-            <div className="flex flex-col items-center space-y-4">
-              <div className="w-48 h-32 bg-gradient-to-br from-green-400 to-blue-500 border-2 border-green-300 rounded-lg flex items-center justify-center relative overflow-hidden">
-                <div className="text-white font-bold text-lg">🐍 SNAKE</div>
-                <div className="absolute top-2 left-2 w-3 h-3 bg-green-600 rounded-sm"></div>
-                <div className="absolute top-2 left-5 w-3 h-3 bg-green-600 rounded-sm"></div>
-                <div className="absolute top-2 left-8 w-3 h-3 bg-green-600 rounded-sm"></div>
-                <div className="absolute bottom-4 right-4 w-3 h-3 bg-purple-600 rounded-sm"></div>
-              </div>
-              
-              <div className="text-sm text-gray-600 text-center">
-                <p>Use as setas ou WASD para controlar a cobrinha</p>
-                <p>Colete comida e cresça sem bater nas paredes!</p>
-              </div>
-              
-              <div className="w-full space-y-2">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Título do Jogo
-                  </label>
-                  <input
-                    type="text"
-                    value={element.snakeTitle || "SNAKE"}
-                    onChange={(e) => updateElement(element.id, { snakeTitle: e.target.value })}
-                    className="w-full p-2 border border-gray-300 rounded-md"
-                    placeholder="Título do jogo"
-                  />
-                </div>
-                
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Velocidade Inicial
-                  </label>
-                  <select
-                    value={element.snakeSpeed || "normal"}
-                    onChange={(e) => updateElement(element.id, { snakeSpeed: e.target.value })}
-                    className="w-full p-2 border border-gray-300 rounded-md"
-                  >
-                    <option value="slow">Lenta</option>
-                    <option value="normal">Normal</option>
-                    <option value="fast">Rápida</option>
-                  </select>
-                </div>
-                
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Cor da Cobrinha
-                  </label>
-                  <input
-                    type="color"
-                    value={element.snakeColor || "#16a085"}
-                    onChange={(e) => updateElement(element.id, { snakeColor: e.target.value })}
-                    className="w-full p-1 border border-gray-300 rounded-md h-10"
-                  />
-                </div>
-                
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Cor da Comida
-                  </label>
-                  <input
-                    type="color"
-                    value={element.foodColor || "#8e44ad"}
-                    onChange={(e) => updateElement(element.id, { foodColor: e.target.value })}
-                    className="w-full p-1 border border-gray-300 rounded-md h-10"
-                  />
-                </div>
-                
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Tamanho do Tabuleiro
-                  </label>
-                  <select
-                    value={element.snakeBoardSize || "21"}
-                    onChange={(e) => updateElement(element.id, { snakeBoardSize: e.target.value })}
-                    className="w-full p-2 border border-gray-300 rounded-md"
-                  >
-                    <option value="15">Pequeno (15x15)</option>
-                    <option value="21">Médio (21x21)</option>
-                    <option value="25">Grande (25x25)</option>
-                  </select>
-                </div>
               </div>
             </div>
           </div>
