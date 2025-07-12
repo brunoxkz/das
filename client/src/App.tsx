@@ -32,7 +32,7 @@ import AIConversionPage from "@/pages/ai-conversion";
 import TesteAbPage from "@/pages/teste-ab";
 import WebhooksPage from "@/pages/webhooks";
 import IntegracoesPage from "@/pages/integracoes";
-import { useAuth } from "@/hooks/use-auth-hybrid";
+import { useAuth } from "@/hooks/useAuth-jwt";
 import { isUnauthorizedError } from "@/lib/authUtils";
 import { SidebarProvider } from "@/hooks/useSidebar";
 
