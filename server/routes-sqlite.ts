@@ -11,6 +11,13 @@ import { emailService } from "./email-service";
 import { BrevoEmailService } from "./email-brevo";
 import { handleSecureUpload, uploadMiddleware } from "./upload-secure";
 import { sanitizeAllScripts, sanitizeUTMCode, sanitizeCustomScript } from './script-sanitizer-new';
+import { 
+  antiDdosMiddleware, 
+  antiInvasionMiddleware, 
+  helmetSecurity, 
+  loginAttemptMiddleware, 
+  getSecurityStats 
+} from './security';
 import express from 'express';
 import path from 'path';
 import fs from 'fs';
@@ -77,6 +84,12 @@ async function checkPlanExpiration(req: any, res: any, next: any) {
 }
 
 export function registerSQLiteRoutes(app: Express): Server {
+  // 🔒 SISTEMA DE SEGURANÇA - Aplicar middlewares de proteção
+  app.use(helmetSecurity);
+  app.use(antiDdosMiddleware);
+  app.use(antiInvasionMiddleware);
+  app.use(loginAttemptMiddleware);
+  
   // Middleware de debug para todas as rotas POST
   app.use((req, res, next) => {
     if (req.method === 'POST' && req.path.startsWith('/api/')) {
@@ -3915,8 +3928,6 @@ export function registerSQLiteRoutes(app: Express): Server {
       res.status(500).json({ error: 'Erro interno do servidor' });
     }
   });
-
-  const httpServer = createServer(app);
 
 // =============================================
 // WHATSAPP AUTOMATION FILE ROUTES
@@ -8198,6 +8209,25 @@ app.get("/api/whatsapp-extension/pending", verifyJWT, async (req: any, res: Resp
     }
   });
 
+  // 🔒 ENDPOINT DE MONITORAMENTO DE SEGURANÇA
+  app.get("/api/security/stats", verifyJWT, async (req: any, res: Response) => {
+    try {
+      // Verificar se é admin
+      if (req.user.role !== 'admin') {
+        return res.status(403).json({ error: 'Acesso negado - Apenas administradores' });
+      }
+
+      const securityStats = getSecurityStats();
+      res.json(securityStats);
+    } catch (error) {
+      console.error('❌ ERRO ao obter estatísticas de segurança:', error);
+      res.status(500).json({ error: 'Erro interno do servidor' });
+    }
+  });
+
+  const httpServer = createServer(app);
+
   return httpServer;
 }
+
 

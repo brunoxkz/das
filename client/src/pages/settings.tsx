@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useAuth } from "@/hooks/useAuth";
+import { useAuth } from "@/hooks/useAuth-jwt";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -19,11 +19,12 @@ import {
   Phone,
   Globe,
   Eye,
-  EyeOff
+  EyeOff,
+  LogOut
 } from "lucide-react";
 
 export default function Settings() {
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
   const userData = user as any;
   const [notifications, setNotifications] = useState({
     email: true,
@@ -35,6 +36,11 @@ export default function Settings() {
 
   const handleNotificationChange = (key: string, value: boolean) => {
     setNotifications(prev => ({ ...prev, [key]: value }));
+  };
+
+  const handleLogout = () => {
+    logout();
+    window.location.href = '/login';
   };
 
   return (
@@ -234,6 +240,31 @@ export default function Settings() {
             <Button variant="outline" size="sm">
               <Download className="w-4 h-4 mr-2" />
               Documentação
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Session Management */}
+      <Card className="border-l-4 border-l-blue-500">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-blue-600">
+            <Shield className="w-5 h-5" />
+            Sessão e Segurança
+          </CardTitle>
+          <CardDescription>
+            Gerencie sua sessão atual e configurações de segurança
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+            <h4 className="font-semibold text-blue-800 mb-2">Sair da Conta</h4>
+            <p className="text-sm text-blue-700 mb-4">
+              Encerrar sua sessão atual e fazer logout do sistema com segurança.
+            </p>
+            <Button variant="outline" size="sm" onClick={handleLogout} className="text-blue-600 border-blue-600 hover:bg-blue-50">
+              <LogOut className="w-4 h-4 mr-2" />
+              Sair do Sistema
             </Button>
           </div>
         </CardContent>

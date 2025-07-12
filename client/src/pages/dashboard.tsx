@@ -130,7 +130,7 @@ export default function Dashboard() {
   };
   
   const daysLeft = calculateDaysLeft();
-  const showPlanBanner = daysLeft <= 30; // Mostrar quando restam 30 dias ou menos
+  const showPlanBanner = true; // Sempre mostrar banner para demonstração
 
   // Criar mapa de analytics por quiz
   const quizAnalyticsMap = React.useMemo(() => {
@@ -292,6 +292,15 @@ export default function Dashboard() {
                 >
                   <CreditCard className="w-4 h-4 mr-2" />
                   {userPlan === 'trial' || userPlan === 'free' ? 'Assinar Agora' : 'Renovar Plano'}
+                </Button>
+              </Link>
+              <Link href="/credits">
+                <Button 
+                  variant="outline" 
+                  className="bg-white text-blue-600 hover:bg-blue-50 border-white"
+                >
+                  <Coins className="w-4 h-4 mr-2" />
+                  Comprar Créditos
                 </Button>
               </Link>
               <Button

@@ -10,6 +10,9 @@ import { emailService } from "./email-service";
 
 const app = express();
 
+// 🔒 CONFIGURAÇÃO DE PROXY PARA RATE LIMITING
+app.set('trust proxy', 1); // Confia no primeiro proxy (necessário para rate limiting no Replit)
+
 // Configurações de segurança para alta performance
 app.use(helmet({
   contentSecurityPolicy: false, // Desabilita CSP para dev
