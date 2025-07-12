@@ -208,6 +208,12 @@ No additional files or separate projects are maintained in this repository.
 
 ```
 Changelog:
+- July 12, 2025. DASHBOARD BOTÕES RÁPIDOS ATUALIZADOS - Substituição de funcionalidades conforme solicitado:
+  * Botão "I.A. VÍDEOS" substituído por "CRÉDITOS" com ícone Coins e link para /credits
+  * Botão "VSL PLAYER" substituído por "TUTORIAIS" com ícone BookOpen e link para /tutoriais
+  * Mantida estrutura visual e cores dos botões (azul índigo para créditos, vermelho para tutoriais)
+  * Adicionados imports necessários para ícones Coins e BookOpen do Lucide React
+  * Atualizada experiência do usuário com acesso direto a funcionalidades mais relevantes
 - July 12, 2025. SIDEBAR OTIMIZADA COM EMOJIS REMOVIDOS E WHATSAPP ATUALIZADO - Melhoria na aparência e usabilidade da navegação:
   * Removidos todos os emojis coloridos dos badges para design mais limpo e profissional
   * "AUTO WHATSAPP" renomeado para "WHATSAPP" com ícone Bot ao invés de FileText

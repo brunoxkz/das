@@ -19,7 +19,9 @@ import {
   Mail,
   FileText,
   Shield,
-  Palette
+  Palette,
+  Coins,
+  BookOpen
 } from "lucide-react";
 import { Link } from "wouter";
 import { useAuth } from "@/hooks/useAuth-jwt";
@@ -683,16 +685,16 @@ export default function Dashboard() {
           </Card>
         </Link>
 
-        <Link href="/ai-conversion">
+        <Link href="/credits">
           <Card className="bg-white border border-gray-200 hover:border-indigo-300 hover:shadow-md transition-all duration-200 cursor-pointer">
             <CardContent className="p-3">
               <div className="flex items-center gap-2">
                 <div className="w-8 h-8 bg-indigo-100 rounded-lg flex items-center justify-center">
-                  <Video className="w-4 h-4 text-indigo-600" />
+                  <Coins className="w-4 h-4 text-indigo-600" />
                 </div>
                 <div>
-                  <h3 className="font-semibold text-gray-900 text-sm">I.A. Vídeos</h3>
-                  <p className="text-xs text-gray-500">HeyGen</p>
+                  <h3 className="font-semibold text-gray-900 text-sm">Créditos</h3>
+                  <p className="text-xs text-gray-500">Saldo</p>
                 </div>
               </div>
             </CardContent>
@@ -715,16 +717,16 @@ export default function Dashboard() {
           </Card>
         </Link>
 
-        <Link href="/vsl-player">
+        <Link href="/tutoriais">
           <Card className="bg-white border border-gray-200 hover:border-red-300 hover:shadow-md transition-all duration-200 cursor-pointer">
             <CardContent className="p-3">
               <div className="flex items-center gap-2">
                 <div className="w-8 h-8 bg-red-100 rounded-lg flex items-center justify-center">
-                  <Video className="w-4 h-4 text-red-600" />
+                  <BookOpen className="w-4 h-4 text-red-600" />
                 </div>
                 <div>
-                  <h3 className="font-semibold text-gray-900 text-sm">VSL Player</h3>
-                  <p className="text-xs text-gray-500">Vídeo Sales</p>
+                  <h3 className="font-semibold text-gray-900 text-sm">Tutoriais</h3>
+                  <p className="text-xs text-gray-500">Guias</p>
                 </div>
               </div>
             </CardContent>
