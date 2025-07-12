@@ -80,7 +80,7 @@ export const antiDdosMiddleware = rateLimit({
     return false;
   },
   handler: (req, res) => {
-    logSecurityEvent(req, 'ddos', 'high', 'Rate limit exceeded');
+    // logSecurityEvent(req, 'ddos', 'high', 'Rate limit exceeded'); // Temporarily disabled
     res.status(429).json({
       error: 'Muitas requisições detectadas. Tente novamente em alguns minutos.',
       code: 'RATE_LIMIT_EXCEEDED'

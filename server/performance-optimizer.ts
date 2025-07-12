@@ -214,7 +214,7 @@ export class QuizPerformanceOptimizer {
       const recentSubmission = this.responseCache.get(submissionKey);
       if (recentSubmission) {
         return res.status(429).json({ 
-          error: 'Rate limit exceeded',
+          error: 'Rate limit exceeded (temp disabled)',
           retryAfter: 10 
         });
       }

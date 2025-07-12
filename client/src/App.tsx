@@ -21,6 +21,7 @@ import NotFoundPage from "@/pages/not-found";
 import TutoriaisPage from "@/pages/tutoriais";
 import PlanosPage from "@/pages/planos";
 import CreditsPage from "@/pages/credits";
+import TestPage from "@/pages/test-page";
 
 import QuizPublicPage from "@/pages/quiz-public";
 import SMSCreditsPage from "@/pages/sms-credits";
@@ -81,6 +82,7 @@ function App() {
         <Route path="/modern" component={ModernHomePage} />
         <Route path="/login" component={LoginPage} />
         <Route path="/quiz/:id" component={QuizPublicPage} />
+        <Route path="/test" component={TestPage} />
 
         {/* Authenticated routes with sidebar */}
         <Route path="/dashboard">

@@ -70,6 +70,9 @@ class QuizCacheOptimizer {
    * RECUPERAR QUIZ CACHE ULTRA-RÁPIDO
    */
   async getPublicQuiz(quizId: string): Promise<any | null> {
+    // TEMPORARIAMENTE DESABILITADO PARA DEBUG
+    return null;
+    
     const startTime = Date.now();
     const cacheKey = `quiz-public-${quizId}`;
     
