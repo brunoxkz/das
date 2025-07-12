@@ -3083,17 +3083,62 @@ export function registerSQLiteRoutes(app: Express): Server {
             const phoneNumber = phone.telefone || phone.phone || phone;
             if (!phoneNumber) continue;
 
+            // 🎯 PERSONALIZAÇÃO DE SMS COM VARIÁVEIS DINÂMICAS
+            let personalizedMessage = message;
+            
+            // Usar dados do phone object (que já tem as respostas do quiz)
+            if (phone.name) {
+              personalizedMessage = personalizedMessage.replace(/\{nome_completo\}/g, phone.name);
+              personalizedMessage = personalizedMessage.replace(/\{nome\}/g, phone.name);
+            }
+            
+            if (phone.responses && Array.isArray(phone.responses)) {
+              // Processar respostas em formato array
+              phone.responses.forEach(response => {
+                if (response.elementFieldId && response.answer) {
+                  const variable = `{${response.elementFieldId}}`;
+                  personalizedMessage = personalizedMessage.replace(new RegExp(variable, 'g'), response.answer);
+                }
+              });
+            } else if (phone.responses && typeof phone.responses === 'object') {
+              // Processar respostas em formato object (como no banco de dados)
+              Object.keys(phone.responses).forEach(key => {
+                const variable = `{${key}}`;
+                personalizedMessage = personalizedMessage.replace(new RegExp(variable, 'g'), phone.responses[key]);
+              });
+            }
+            
+            // Variáveis adicionais comuns para compatibilidade
+            if (phone.email) {
+              personalizedMessage = personalizedMessage.replace(/\{email_contato\}/g, phone.email);
+              personalizedMessage = personalizedMessage.replace(/\{email\}/g, phone.email);
+            }
+            
+            if (phone.telefone || phone.phone) {
+              const telefone = phone.telefone || phone.phone;
+              personalizedMessage = personalizedMessage.replace(/\{telefone_contato\}/g, telefone);
+              personalizedMessage = personalizedMessage.replace(/\{telefone\}/g, telefone);
+            }
+            
+            // Buscar dados do quiz para variáveis adicionais
+            const quiz = await storage.getQuiz(campaign.quizId);
+            if (quiz) {
+              personalizedMessage = personalizedMessage.replace(/\{quiz_titulo\}/g, quiz.title || 'Quiz');
+            }
+            
+            console.log(`📱 SMS PERSONALIZADO para ${phoneNumber}: ${personalizedMessage.substring(0, 100)}...`);
+
             // Criar log antes de enviar
             const logId = nanoid();
             await storage.createSMSLog({
               id: logId,
               campaignId: campaign.id,
               phone: phoneNumber,
-              message: message,
+              message: personalizedMessage, // Usar mensagem personalizada
               status: 'pending'
             });
 
-            const success = await sendSms(phoneNumber, message);
+            const success = await sendSms(phoneNumber, personalizedMessage);
             
             if (success) {
               successCount++;
