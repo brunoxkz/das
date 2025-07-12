@@ -2724,115 +2724,286 @@ export function QuizPreview({ quiz, initialPageIndex = 0 }: QuizPreviewProps) {
 
           {element.type === "testimonials" && (
             <div className="space-y-4">
-              <div className="bg-white rounded-lg p-6 border-2 border-purple-200">
+              <div 
+                className={`
+                  rounded-lg border-2
+                  ${element.testimonialsPadding === 'small' ? 'p-3' :
+                    element.testimonialsPadding === 'large' ? 'p-8' : 'p-6'
+                  }
+                  ${element.testimonialsShadow === 'none' ? '' :
+                    element.testimonialsShadow === 'small' ? 'shadow-sm' :
+                    element.testimonialsShadow === 'large' ? 'shadow-xl' : 'shadow-md'
+                  }
+                  ${element.testimonialsBorderRadius === 'none' ? 'rounded-none' :
+                    element.testimonialsBorderRadius === 'sm' ? 'rounded-sm' :
+                    element.testimonialsBorderRadius === 'lg' ? 'rounded-lg' :
+                    element.testimonialsBorderRadius === 'xl' ? 'rounded-xl' :
+                    element.testimonialsBorderRadius === 'full' ? 'rounded-full' :
+                    'rounded-md'
+                  }
+                `}
+                style={{ 
+                  backgroundColor: element.testimonialsBackgroundColor || '#ffffff',
+                  borderColor: element.testimonialsBorderColor || '#e5e7eb'
+                }}
+              >
                 {element.testimonialsTitle && (
-                  <h3 className="text-lg font-semibold mb-6 text-center text-purple-900">
+                  <h3 
+                    className="text-lg font-semibold mb-6 text-center"
+                    style={{ color: element.testimonialsNameColor || '#1f2937' }}
+                  >
                     {element.testimonialsTitle}
                   </h3>
                 )}
                 
-                <div className={`grid gap-4 ${
-                  element.testimonialsLayout === 'horizontal' ? 'grid-cols-1 md:grid-cols-2' :
-                  element.testimonialsLayout === 'grid' ? 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3' :
-                  'grid-cols-1'
-                }`}>
-                  {(element.testimonialsData || [
-                    { id: "1", name: "Maria Silva", text: "Produto incrível! Superou minhas expectativas.", rating: 5, position: "Empresária", photo: "" },
-                    { id: "2", name: "João Santos", text: "Excelente qualidade e atendimento.", rating: 5, position: "Consultor", photo: "" }
-                  ]).map((testimonial: any) => (
-                    <div key={testimonial.id} className={`
-                      ${element.testimonialsStyle === 'card' ? 'bg-gray-50 p-4 rounded-lg border' :
-                        element.testimonialsStyle === 'quote' ? 'relative pl-8 border-l-4 border-purple-500' :
-                        element.testimonialsStyle === 'modern' ? 'bg-gradient-to-br from-purple-50 to-pink-50 p-4 rounded-lg' :
-                        'p-4'
-                      }
-                    `}>
-                      {element.testimonialsStyle === 'quote' && (
-                        <div className="absolute left-2 top-2 text-purple-500 text-2xl">"</div>
+                <div className={`
+                  grid gap-4
+                  ${element.testimonialsLayout === 'horizontal' ? 'grid-cols-1 md:grid-cols-2' :
+                    element.testimonialsLayout === 'vertical' ? 'grid-cols-1' :
+                    `grid-cols-1 ${element.testimonialsColumns === 1 ? 'md:grid-cols-1' :
+                      element.testimonialsColumns === 3 ? 'md:grid-cols-3' :
+                      element.testimonialsColumns === 4 ? 'md:grid-cols-4' :
+                      'md:grid-cols-2'
+                    }`
+                  }
+                  ${element.testimonialsAnimation ? `
+                    ${element.testimonialsAnimationType === 'fade' ? 'animate-fade-in' :
+                      element.testimonialsAnimationType === 'slide' ? 'animate-slide-up' :
+                      element.testimonialsAnimationType === 'zoom' ? 'animate-zoom-in' :
+                      element.testimonialsAnimationType === 'flip' ? 'animate-flip' : ''
+                    }
+                  ` : ''}
+                `}
+                style={{ 
+                  animationDuration: element.testimonialsSpeed ? `${element.testimonialsSpeed}ms` : '600ms'
+                }}
+              >
+                {(element.testimonialsData || [
+                  { id: "1", name: "Maria Silva", text: "Produto incrível! Superou minhas expectativas.", rating: 5, position: "Empresária", photo: "", company: "TechCorp", date: "2024-12-01", verified: true },
+                  { id: "2", name: "João Santos", text: "Excelente qualidade e atendimento.", rating: 5, position: "Consultor", photo: "", company: "Innovation Ltd", date: "2024-11-28", verified: true }
+                ]).map((testimonial: any) => (
+                  <div key={testimonial.id} className={`
+                    ${element.testimonialsStyle === 'card' ? 'border' :
+                      element.testimonialsStyle === 'quote' ? 'relative pl-8 border-l-4' :
+                      element.testimonialsStyle === 'modern' ? 'bg-gradient-to-br from-purple-50 to-pink-50' :
+                      element.testimonialsStyle === 'elegant' ? 'bg-gradient-to-br from-blue-50 to-indigo-50' :
+                      'border'
+                    }
+                    ${element.testimonialsPadding === 'small' ? 'p-3' :
+                      element.testimonialsPadding === 'large' ? 'p-6' : 'p-4'
+                    }
+                    ${element.testimonialsBorderRadius === 'none' ? 'rounded-none' :
+                      element.testimonialsBorderRadius === 'sm' ? 'rounded-sm' :
+                      element.testimonialsBorderRadius === 'lg' ? 'rounded-lg' :
+                      element.testimonialsBorderRadius === 'xl' ? 'rounded-xl' :
+                      element.testimonialsBorderRadius === 'full' ? 'rounded-full' :
+                      'rounded-md'
+                    }
+                    relative overflow-hidden
+                  `} style={{ 
+                    backgroundColor: element.testimonialsStyle === 'card' ? (element.testimonialsBackgroundColor || '#f9fafb') : 'transparent',
+                    borderColor: element.testimonialsStyle === 'quote' ? (element.testimonialsAccentColor || '#10b981') : (element.testimonialsBorderColor || '#e5e7eb')
+                  }}>
+                    
+                    {/* Quote Icon */}
+                    {element.testimonialsQuoteIcon !== false && element.testimonialsStyle === 'quote' && (
+                      <div className="absolute top-2 right-2 opacity-20">
+                        <svg className="w-8 h-8" style={{ color: element.testimonialsQuoteColor || '#d1d5db' }} fill="currentColor" viewBox="0 0 24 24">
+                          <path d="M14.017 21v-7.391c0-5.704 3.731-9.57 8.983-10.609l.995 2.151c-2.432.917-3.995 3.638-3.995 5.849h4v10h-9.983zm-14.017 0v-7.391c0-5.704 3.748-9.57 9-10.609l.996 2.151c-2.433.917-3.996 3.638-3.996 5.849h4v10h-10z"/>
+                        </svg>
+                      </div>
+                    )}
+
+                    <div className="flex items-start space-x-3">
+                      {element.testimonialsShowPhotos !== false && (
+                        <div className="flex-shrink-0">
+                          {testimonial.photo ? (
+                            <img 
+                              src={testimonial.photo} 
+                              alt={testimonial.name}
+                              className="w-12 h-12 rounded-full object-cover border-2 border-white shadow-sm"
+                            />
+                          ) : (
+                            <div 
+                              className="w-12 h-12 rounded-full flex items-center justify-center text-white font-semibold text-sm"
+                              style={{ backgroundColor: element.testimonialsAccentColor || '#10b981' }}
+                            >
+                              {testimonial.name?.charAt(0) || "?"}
+                            </div>
+                          )}
+                        </div>
                       )}
                       
-                      <div className="flex items-start space-x-3">
-                        {element.testimonialsShowPhotos !== false && (
-                          <div className="flex-shrink-0">
-                            {testimonial.photo ? (
-                              <img 
-                                src={testimonial.photo} 
-                                alt={testimonial.name}
-                                className="w-12 h-12 rounded-full object-cover"
-                              />
-                            ) : (
-                              <div className="w-12 h-12 bg-purple-500 rounded-full flex items-center justify-center">
-                                <span className="text-white font-semibold text-sm">
-                                  {testimonial.name?.charAt(0) || "?"}
-                                </span>
-                              </div>
-                            )}
+                      <div className="flex-1">
+                        <p 
+                          className="mb-2 text-sm italic"
+                          style={{ color: element.testimonialsTextColor || '#374151' }}
+                        >
+                          "{testimonial.text}"
+                        </p>
+                        
+                        {element.testimonialsShowRatings !== false && (
+                          <div className="flex items-center mb-2">
+                            {Array.from({ length: 5 }, (_, i) => (
+                              <svg
+                                key={i}
+                                className={`w-4 h-4 ${i < testimonial.rating ? 'text-yellow-400' : 'text-gray-300'}`}
+                                fill="currentColor"
+                                viewBox="0 0 20 20"
+                              >
+                                <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                              </svg>
+                            ))}
                           </div>
                         )}
                         
-                        <div className="flex-1">
-                          <p className="text-gray-700 mb-2 text-sm">{testimonial.text}</p>
+                        <div className="text-xs">
+                          <div 
+                            className="font-semibold flex items-center gap-2"
+                            style={{ color: element.testimonialsNameColor || '#1f2937' }}
+                          >
+                            {testimonial.name}
+                            {element.testimonialsShowVerified && testimonial.verified && (
+                              <svg className="w-4 h-4 text-blue-500" fill="currentColor" viewBox="0 0 20 20">
+                                <path fillRule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                              </svg>
+                            )}
+                          </div>
                           
-                          {element.testimonialsShowRatings !== false && (
-                            <div className="flex items-center mb-2">
-                              {Array.from({ length: 5 }, (_, i) => (
-                                <span key={i} className={`text-sm ${i < testimonial.rating ? 'text-yellow-500' : 'text-gray-300'}`}>
-                                  ⭐
+                          {testimonial.position && (
+                            <div style={{ color: element.testimonialsRoleColor || '#6b7280' }}>
+                              {testimonial.position}
+                              {testimonial.company && (
+                                <span style={{ color: element.testimonialsCompanyColor || '#9ca3af' }}>
+                                  {" "}• {testimonial.company}
                                 </span>
-                              ))}
+                              )}
                             </div>
                           )}
                           
-                          <div className="text-xs text-gray-600">
-                            <span className="font-semibold">{testimonial.name}</span>
-                            {testimonial.position && <span className="ml-2">• {testimonial.position}</span>}
-                            {testimonial.company && <span className="ml-2">• {testimonial.company}</span>}
-                          </div>
+                          {element.testimonialsShowDate && testimonial.date && (
+                            <div className="text-gray-500 mt-1">
+                              {new Date(testimonial.date).toLocaleDateString('pt-BR')}
+                            </div>
+                          )}
                         </div>
                       </div>
                     </div>
-                  ))}
-                </div>
+                  </div>
+                ))}
               </div>
+
+              {/* Auto-play Indicator */}
+              {element.testimonialsAutoplay && (
+                <div className="flex justify-center mt-4">
+                  <div className="flex space-x-2">
+                    {Array.from({ length: 3 }, (_, i) => (
+                      <div 
+                        key={i} 
+                        className="w-2 h-2 rounded-full animate-pulse"
+                        style={{ 
+                          animationDelay: `${i * 200}ms`,
+                          backgroundColor: element.testimonialsAccentColor || '#10b981'
+                        }}
+                      />
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           )}
 
           {element.type === "guarantee" && (
             <div className="space-y-4">
               <div className={`
-                ${element.guaranteeStyle === 'card' ? 'bg-white p-6 rounded-lg border-2 border-blue-200' :
-                  element.guaranteeStyle === 'banner' ? 'bg-gradient-to-r from-blue-500 to-green-500 text-white p-6 rounded-lg' :
-                  element.guaranteeStyle === 'seal' ? 'bg-blue-100 p-6 rounded-full border-4 border-blue-500 inline-block' :
-                  'bg-blue-50 p-4 rounded-lg border border-blue-200'
+                ${element.guaranteeStyle === 'card' ? 'bg-white border-2' :
+                  element.guaranteeStyle === 'banner' ? 'bg-gradient-to-r from-blue-500 to-green-500 text-white' :
+                  element.guaranteeStyle === 'seal' ? 'bg-blue-100 rounded-full border-4 border-blue-500 inline-block' :
+                  element.guaranteeStyle === 'modern' ? 'bg-gradient-to-br from-blue-50 to-indigo-100 border' :
+                  element.guaranteeStyle === 'minimal' ? 'bg-transparent border' :
+                  'bg-blue-50 border'
                 }
-                ${element.guaranteePosition === 'center' ? 'text-center' :
-                  element.guaranteePosition === 'left' ? 'text-left' :
-                  element.guaranteePosition === 'right' ? 'text-right' :
+                ${element.guaranteeAlignment === 'left' ? 'text-left' :
+                  element.guaranteeAlignment === 'right' ? 'text-right' :
                   'text-center'
                 }
-              `}>
-                <div className="flex items-center justify-center space-x-3">
+                ${element.guaranteePadding === 'small' ? 'p-3' :
+                  element.guaranteePadding === 'large' ? 'p-8' : 'p-6'
+                }
+                ${element.guaranteeBorderRadius === 'none' ? 'rounded-none' :
+                  element.guaranteeBorderRadius === 'sm' ? 'rounded-sm' :
+                  element.guaranteeBorderRadius === 'lg' ? 'rounded-lg' :
+                  element.guaranteeBorderRadius === 'xl' ? 'rounded-xl' :
+                  element.guaranteeBorderRadius === 'full' ? 'rounded-full' :
+                  'rounded-md'
+                }
+                ${element.guaranteeShadow === 'none' ? '' :
+                  element.guaranteeShadow === 'small' ? 'shadow-sm' :
+                  element.guaranteeShadow === 'large' ? 'shadow-lg' :
+                  element.guaranteeShadow === 'xl' ? 'shadow-xl' :
+                  'shadow-md'
+                }
+                ${element.guaranteeAnimation === 'pulse' ? 'animate-pulse' :
+                  element.guaranteeAnimation === 'bounce' ? 'animate-bounce' :
+                  element.guaranteeAnimation === 'glow' ? 'animate-pulse' :
+                  element.guaranteeAnimation === 'shake' ? 'animate-bounce' : ''
+                }
+                ${element.guaranteeHoverEffect !== false ? 'hover:scale-105 transition-transform duration-200' : ''}
+                relative overflow-hidden
+              `}
+              style={{ 
+                backgroundColor: element.guaranteeBackgroundColor || '#f3f4f6',
+                borderColor: element.guaranteeBorderColor || '#d1d5db',
+                color: element.guaranteeTextColor || '#1f2937'
+              }}>
+                
+                {/* Glow effect for modern style */}
+                {element.guaranteeStyle === 'modern' && (
+                  <div className="absolute inset-0 bg-gradient-to-r from-blue-400/10 to-purple-400/10 pointer-events-none" />
+                )}
+
+                <div className={`
+                  flex items-center space-x-3 relative z-10
+                  ${element.guaranteeIconPosition === 'top' ? 'flex-col space-x-0 space-y-3' :
+                    element.guaranteeIconPosition === 'right' ? 'flex-row-reverse space-x-reverse' :
+                    element.guaranteeIconPosition === 'none' ? 'justify-center' :
+                    'flex-row'
+                  }
+                  ${element.guaranteeAlignment === 'left' ? 'justify-start' :
+                    element.guaranteeAlignment === 'right' ? 'justify-end' :
+                    'justify-center'
+                  }
+                `}>
+                  
+                  {element.guaranteeIconPosition !== 'none' && (
+                    <div className={`
+                      ${element.guaranteeSize === 'small' ? 'w-8 h-8 text-lg' :
+                        element.guaranteeSize === 'large' ? 'w-16 h-16 text-3xl' :
+                        'w-12 h-12 text-2xl'
+                      }
+                      flex items-center justify-center rounded-full flex-shrink-0
+                    `}
+                    style={{ 
+                      backgroundColor: element.guaranteeColor || '#3b82f6',
+                      color: '#ffffff'
+                    }}>
+                      {element.guaranteeType === 'days' ? '📅' :
+                       element.guaranteeType === 'money_back' ? '💰' :
+                       element.guaranteeType === 'satisfaction' ? '😊' :
+                       element.guaranteeType === 'lifetime' ? '♾️' : '🛡️'}
+                    </div>
+                  )}
+                  
                   <div className={`
-                    ${element.guaranteeSize === 'small' ? 'w-8 h-8 text-lg' :
-                      element.guaranteeSize === 'large' ? 'w-16 h-16 text-3xl' :
-                      'w-12 h-12 text-2xl'
-                    }
-                    flex items-center justify-center rounded-full
-                    ${element.guaranteeStyle === 'banner' ? 'bg-white text-blue-500' : 'bg-blue-500 text-white'}
+                    ${element.guaranteeIconPosition === 'top' ? 'text-center' :
+                      element.guaranteeIconPosition === 'none' ? 'text-center' : ''}
                   `}>
-                    {element.guaranteeType === 'days' ? '📅' :
-                     element.guaranteeType === 'money_back' ? '💰' :
-                     element.guaranteeType === 'satisfaction' ? '😊' :
-                     element.guaranteeType === 'lifetime' ? '♾️' :
-                     '🛡️'
-                    }
-                  </div>
-                  <div>
                     <h4 className={`font-bold ${
                       element.guaranteeSize === 'small' ? 'text-sm' :
                       element.guaranteeSize === 'large' ? 'text-xl' :
                       'text-lg'
-                    }`}>
+                    }`}
+                    style={{ color: element.guaranteeTextColor || '#1f2937' }}>
                       {element.guaranteeTitle || 
                        (element.guaranteeType === 'days' ? `Garantia ${element.guaranteeDays || 30} Dias` :
                         element.guaranteeType === 'money_back' ? 'Garantia Dinheiro de Volta' :
@@ -2842,13 +3013,46 @@ export function QuizPreview({ quiz, initialPageIndex = 0 }: QuizPreviewProps) {
                        )
                       }
                     </h4>
+                    
                     <p className={`${
                       element.guaranteeSize === 'small' ? 'text-xs' :
                       element.guaranteeSize === 'large' ? 'text-base' :
                       'text-sm'
-                    } opacity-80`}>
+                    } opacity-80 mt-1`}
+                    style={{ color: element.guaranteeTextColor || '#6b7280' }}>
                       {element.guaranteeDescription || '100% seguro e confiável'}
                     </p>
+
+                    {element.guaranteeSubtitle && (
+                      <p className={`${
+                        element.guaranteeSize === 'small' ? 'text-xs' :
+                        element.guaranteeSize === 'large' ? 'text-sm' :
+                        'text-xs'
+                      } opacity-75 mt-2 font-medium`}
+                      style={{ color: element.guaranteeTextColor || '#9ca3af' }}>
+                        {element.guaranteeSubtitle}
+                      </p>
+                    )}
+
+                    {element.guaranteeButtonText && (
+                      <button 
+                        className={`
+                          mt-3 px-4 py-2 rounded-lg font-semibold text-sm transition-all duration-200
+                          ${element.guaranteeHoverEffect !== false ? 'hover:scale-105' : ''}
+                        `}
+                        style={{ 
+                          backgroundColor: element.guaranteeColor || '#3b82f6',
+                          color: '#ffffff'
+                        }}
+                        onClick={() => {
+                          if (element.guaranteeButtonLink) {
+                            window.open(element.guaranteeButtonLink, '_blank');
+                          }
+                        }}
+                      >
+                        {element.guaranteeButtonText}
+                      </button>
+                    )}
                   </div>
                 </div>
               </div>

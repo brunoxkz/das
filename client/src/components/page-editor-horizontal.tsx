@@ -7960,6 +7960,260 @@ const gameElementCategories = [
                         />
                       </div>
                     </div>
+
+                    {/* NOVAS OPÇÕES AVANÇADAS */}
+                    <div className="mt-4 space-y-4 border-t pt-4">
+                      <h6 className="font-semibold text-sm text-purple-600">🎭 Opções Avançadas</h6>
+                      
+                      {/* Layout Avançado */}
+                      <div className="grid grid-cols-2 gap-3">
+                        <div>
+                          <Label className="text-xs">Colunas (Grid)</Label>
+                          <select 
+                            className="w-full px-2 py-1 border rounded text-xs mt-1"
+                            value={selectedElementData.testimonialsColumns || 2}
+                            onChange={(e) => updateElement(selectedElementData.id, { testimonialsColumns: parseInt(e.target.value) })}
+                          >
+                            <option value={1}>1 Coluna</option>
+                            <option value={2}>2 Colunas</option>
+                            <option value={3}>3 Colunas</option>
+                            <option value={4}>4 Colunas</option>
+                          </select>
+                        </div>
+                        
+                        <div>
+                          <Label className="text-xs">Sombra do Card</Label>
+                          <select 
+                            className="w-full px-2 py-1 border rounded text-xs mt-1"
+                            value={selectedElementData.testimonialsShadow || "medium"}
+                            onChange={(e) => updateElement(selectedElementData.id, { testimonialsShadow: e.target.value })}
+                          >
+                            <option value="none">Sem Sombra</option>
+                            <option value="small">Pequena</option>
+                            <option value="medium">Média</option>
+                            <option value="large">Grande</option>
+                          </select>
+                        </div>
+                      </div>
+
+                      {/* Cores Personalizadas */}
+                      <div className="grid grid-cols-3 gap-2">
+                        <div>
+                          <Label className="text-xs">Cor de Fundo</Label>
+                          <input
+                            type="color"
+                            value={selectedElementData.testimonialsBackgroundColor || "#ffffff"}
+                            onChange={(e) => updateElement(selectedElementData.id, { testimonialsBackgroundColor: e.target.value })}
+                            className="w-full h-8 border rounded"
+                          />
+                        </div>
+                        
+                        <div>
+                          <Label className="text-xs">Cor do Texto</Label>
+                          <input
+                            type="color"
+                            value={selectedElementData.testimonialsTextColor || "#374151"}
+                            onChange={(e) => updateElement(selectedElementData.id, { testimonialsTextColor: e.target.value })}
+                            className="w-full h-8 border rounded"
+                          />
+                        </div>
+                        
+                        <div>
+                          <Label className="text-xs">Cor de Destaque</Label>
+                          <input
+                            type="color"
+                            value={selectedElementData.testimonialsAccentColor || "#10b981"}
+                            onChange={(e) => updateElement(selectedElementData.id, { testimonialsAccentColor: e.target.value })}
+                            className="w-full h-8 border rounded"
+                          />
+                        </div>
+                      </div>
+
+                      {/* Bordas e Espaçamento */}
+                      <div className="grid grid-cols-2 gap-3">
+                        <div>
+                          <Label className="text-xs">Raio da Borda</Label>
+                          <select 
+                            className="w-full px-2 py-1 border rounded text-xs mt-1"
+                            value={selectedElementData.testimonialsBorderRadius || "md"}
+                            onChange={(e) => updateElement(selectedElementData.id, { testimonialsBorderRadius: e.target.value })}
+                          >
+                            <option value="none">Sem Borda</option>
+                            <option value="sm">Pequeno</option>
+                            <option value="md">Médio</option>
+                            <option value="lg">Grande</option>
+                            <option value="xl">Extra Grande</option>
+                            <option value="full">Circular</option>
+                          </select>
+                        </div>
+                        
+                        <div>
+                          <Label className="text-xs">Espaçamento</Label>
+                          <select 
+                            className="w-full px-2 py-1 border rounded text-xs mt-1"
+                            value={selectedElementData.testimonialsPadding || "medium"}
+                            onChange={(e) => updateElement(selectedElementData.id, { testimonialsPadding: e.target.value })}
+                          >
+                            <option value="small">Pequeno</option>
+                            <option value="medium">Médio</option>
+                            <option value="large">Grande</option>
+                          </select>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* ANIMAÇÕES */}
+                    <div className="mt-4 space-y-3 border-t pt-4">
+                      <h6 className="font-semibold text-sm text-green-600">✨ Animações</h6>
+                      
+                      <div className="flex items-center justify-between">
+                        <Label className="text-xs">Ativar Animações</Label>
+                        <input
+                          type="checkbox"
+                          checked={selectedElementData.testimonialsAnimation || false}
+                          onChange={(e) => updateElement(selectedElementData.id, { testimonialsAnimation: e.target.checked })}
+                          className="h-4 w-4"
+                        />
+                      </div>
+
+                      {selectedElementData.testimonialsAnimation && (
+                        <div className="space-y-3 pl-4 border-l-2 border-green-200">
+                          <div className="grid grid-cols-2 gap-3">
+                            <div>
+                              <Label className="text-xs">Tipo de Animação</Label>
+                              <select 
+                                className="w-full px-2 py-1 border rounded text-xs mt-1"
+                                value={selectedElementData.testimonialsAnimationType || "fade"}
+                                onChange={(e) => updateElement(selectedElementData.id, { testimonialsAnimationType: e.target.value })}
+                              >
+                                <option value="fade">Fade In</option>
+                                <option value="slide">Slide Up</option>
+                                <option value="zoom">Zoom In</option>
+                                <option value="flip">Flip</option>
+                              </select>
+                            </div>
+                            
+                            <div>
+                              <Label className="text-xs">Velocidade (ms)</Label>
+                              <Input
+                                type="number"
+                                value={selectedElementData.testimonialsSpeed || 600}
+                                onChange={(e) => updateElement(selectedElementData.id, { testimonialsSpeed: parseInt(e.target.value) })}
+                                min="100"
+                                max="3000"
+                                className="text-xs"
+                              />
+                            </div>
+                          </div>
+
+                          <div className="flex items-center justify-between">
+                            <Label className="text-xs">Auto-play (Carrossel)</Label>
+                            <input
+                              type="checkbox"
+                              checked={selectedElementData.testimonialsAutoplay || false}
+                              onChange={(e) => updateElement(selectedElementData.id, { testimonialsAutoplay: e.target.checked })}
+                              className="h-4 w-4"
+                            />
+                          </div>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* TIPOGRAFIA AVANÇADA */}
+                    <div className="mt-4 space-y-3 border-t pt-4">
+                      <h6 className="font-semibold text-sm text-blue-600">📝 Tipografia</h6>
+                      
+                      <div className="grid grid-cols-2 gap-3">
+                        <div>
+                          <Label className="text-xs">Cor do Nome</Label>
+                          <input
+                            type="color"
+                            value={selectedElementData.testimonialsNameColor || "#1f2937"}
+                            onChange={(e) => updateElement(selectedElementData.id, { testimonialsNameColor: e.target.value })}
+                            className="w-full h-8 border rounded"
+                          />
+                        </div>
+                        
+                        <div>
+                          <Label className="text-xs">Cor do Cargo</Label>
+                          <input
+                            type="color"
+                            value={selectedElementData.testimonialsRoleColor || "#6b7280"}
+                            onChange={(e) => updateElement(selectedElementData.id, { testimonialsRoleColor: e.target.value })}
+                            className="w-full h-8 border rounded"
+                          />
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-3">
+                        <div>
+                          <Label className="text-xs">Cor da Empresa</Label>
+                          <input
+                            type="color"
+                            value={selectedElementData.testimonialsCompanyColor || "#9ca3af"}
+                            onChange={(e) => updateElement(selectedElementData.id, { testimonialsCompanyColor: e.target.value })}
+                            className="w-full h-8 border rounded"
+                          />
+                        </div>
+                        
+                        <div>
+                          <Label className="text-xs">Cor das Aspas</Label>
+                          <input
+                            type="color"
+                            value={selectedElementData.testimonialsQuoteColor || "#d1d5db"}
+                            onChange={(e) => updateElement(selectedElementData.id, { testimonialsQuoteColor: e.target.value })}
+                            className="w-full h-8 border rounded"
+                          />
+                        </div>
+                      </div>
+
+                      <div className="flex items-center justify-between">
+                        <Label className="text-xs">Mostrar Ícone de Aspas</Label>
+                        <input
+                          type="checkbox"
+                          checked={selectedElementData.testimonialsQuoteIcon !== false}
+                          onChange={(e) => updateElement(selectedElementData.id, { testimonialsQuoteIcon: e.target.checked })}
+                          className="h-4 w-4"
+                        />
+                      </div>
+                    </div>
+
+                    {/* FUNCIONALIDADES EXTRAS */}
+                    <div className="mt-4 space-y-3 border-t pt-4">
+                      <h6 className="font-semibold text-sm text-orange-600">🚀 Extras</h6>
+                      
+                      <div className="grid grid-cols-2 gap-3">
+                        <div className="flex items-center justify-between">
+                          <Label className="text-xs">Mostrar Data</Label>
+                          <input
+                            type="checkbox"
+                            checked={selectedElementData.testimonialsShowDate || false}
+                            onChange={(e) => updateElement(selectedElementData.id, { testimonialsShowDate: e.target.checked })}
+                            className="h-4 w-4"
+                          />
+                        </div>
+                        
+                        <div className="flex items-center justify-between">
+                          <Label className="text-xs">Selo Verificado</Label>
+                          <input
+                            type="checkbox"
+                            checked={selectedElementData.testimonialsShowVerified || false}
+                            onChange={(e) => updateElement(selectedElementData.id, { testimonialsShowVerified: e.target.checked })}
+                            className="h-4 w-4"
+                          />
+                        </div>
+                      </div>
+
+                      <div>
+                        <Label className="text-xs">Título da Seção</Label>
+                        <Input
+                          value={selectedElementData.testimonialsTitle || ""}
+                          onChange={(e) => updateElement(selectedElementData.id, { testimonialsTitle: e.target.value })}
+                          placeholder="Ex: O que nossos clientes dizem"
+                          className="text-xs mt-1"
+                        />
+                      </div>
+                    </div>
                   </div>
                 </div>
               )}
@@ -8040,6 +8294,8 @@ const gameElementCategories = [
                           <option value="card">Card</option>
                           <option value="banner">Banner</option>
                           <option value="seal">Selo</option>
+                          <option value="modern">Moderno</option>
+                          <option value="minimal">Minimalista</option>
                         </select>
                       </div>
                       <div>
@@ -8053,6 +8309,202 @@ const gameElementCategories = [
                           <option value="medium">Médio</option>
                           <option value="large">Grande</option>
                         </select>
+                      </div>
+                    </div>
+
+                    {/* CORES PERSONALIZADAS */}
+                    <div className="mt-4 space-y-3 border-t pt-4">
+                      <h6 className="font-semibold text-sm text-blue-600">🎨 Cores</h6>
+                      
+                      <div className="grid grid-cols-2 gap-3">
+                        <div>
+                          <Label className="text-xs">Cor Principal</Label>
+                          <input
+                            type="color"
+                            value={selectedElementData.guaranteeColor || "#3b82f6"}
+                            onChange={(e) => updateElement(selectedElementData.id, { guaranteeColor: e.target.value })}
+                            className="w-full h-8 border rounded"
+                          />
+                        </div>
+                        
+                        <div>
+                          <Label className="text-xs">Cor do Texto</Label>
+                          <input
+                            type="color"
+                            value={selectedElementData.guaranteeTextColor || "#ffffff"}
+                            onChange={(e) => updateElement(selectedElementData.id, { guaranteeTextColor: e.target.value })}
+                            className="w-full h-8 border rounded"
+                          />
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-3">
+                        <div>
+                          <Label className="text-xs">Cor de Fundo</Label>
+                          <input
+                            type="color"
+                            value={selectedElementData.guaranteeBackgroundColor || "#f3f4f6"}
+                            onChange={(e) => updateElement(selectedElementData.id, { guaranteeBackgroundColor: e.target.value })}
+                            className="w-full h-8 border rounded"
+                          />
+                        </div>
+                        
+                        <div>
+                          <Label className="text-xs">Cor da Borda</Label>
+                          <input
+                            type="color"
+                            value={selectedElementData.guaranteeBorderColor || "#d1d5db"}
+                            onChange={(e) => updateElement(selectedElementData.id, { guaranteeBorderColor: e.target.value })}
+                            className="w-full h-8 border rounded"
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* LAYOUT E POSICIONAMENTO */}
+                    <div className="mt-4 space-y-3 border-t pt-4">
+                      <h6 className="font-semibold text-sm text-green-600">📐 Layout</h6>
+                      
+                      <div className="grid grid-cols-2 gap-3">
+                        <div>
+                          <Label className="text-xs">Alinhamento</Label>
+                          <select 
+                            className="w-full px-2 py-1 border rounded text-xs mt-1"
+                            value={selectedElementData.guaranteeAlignment || "center"}
+                            onChange={(e) => updateElement(selectedElementData.id, { guaranteeAlignment: e.target.value })}
+                          >
+                            <option value="left">Esquerda</option>
+                            <option value="center">Centro</option>
+                            <option value="right">Direita</option>
+                          </select>
+                        </div>
+                        
+                        <div>
+                          <Label className="text-xs">Posição do Ícone</Label>
+                          <select 
+                            className="w-full px-2 py-1 border rounded text-xs mt-1"
+                            value={selectedElementData.guaranteeIconPosition || "left"}
+                            onChange={(e) => updateElement(selectedElementData.id, { guaranteeIconPosition: e.target.value })}
+                          >
+                            <option value="left">Esquerda</option>
+                            <option value="top">Topo</option>
+                            <option value="right">Direita</option>
+                            <option value="none">Sem Ícone</option>
+                          </select>
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-3">
+                        <div>
+                          <Label className="text-xs">Espaçamento</Label>
+                          <select 
+                            className="w-full px-2 py-1 border rounded text-xs mt-1"
+                            value={selectedElementData.guaranteePadding || "medium"}
+                            onChange={(e) => updateElement(selectedElementData.id, { guaranteePadding: e.target.value })}
+                          >
+                            <option value="small">Pequeno</option>
+                            <option value="medium">Médio</option>
+                            <option value="large">Grande</option>
+                          </select>
+                        </div>
+                        
+                        <div>
+                          <Label className="text-xs">Raio da Borda</Label>
+                          <select 
+                            className="w-full px-2 py-1 border rounded text-xs mt-1"
+                            value={selectedElementData.guaranteeBorderRadius || "md"}
+                            onChange={(e) => updateElement(selectedElementData.id, { guaranteeBorderRadius: e.target.value })}
+                          >
+                            <option value="none">Sem Borda</option>
+                            <option value="sm">Pequeno</option>
+                            <option value="md">Médio</option>
+                            <option value="lg">Grande</option>
+                            <option value="xl">Extra Grande</option>
+                            <option value="full">Circular</option>
+                          </select>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* EFEITOS VISUAIS */}
+                    <div className="mt-4 space-y-3 border-t pt-4">
+                      <h6 className="font-semibold text-sm text-purple-600">✨ Efeitos</h6>
+                      
+                      <div className="grid grid-cols-2 gap-3">
+                        <div>
+                          <Label className="text-xs">Sombra</Label>
+                          <select 
+                            className="w-full px-2 py-1 border rounded text-xs mt-1"
+                            value={selectedElementData.guaranteeShadow || "medium"}
+                            onChange={(e) => updateElement(selectedElementData.id, { guaranteeShadow: e.target.value })}
+                          >
+                            <option value="none">Sem Sombra</option>
+                            <option value="small">Pequena</option>
+                            <option value="medium">Média</option>
+                            <option value="large">Grande</option>
+                            <option value="xl">Extra Grande</option>
+                          </select>
+                        </div>
+                        
+                        <div>
+                          <Label className="text-xs">Animação</Label>
+                          <select 
+                            className="w-full px-2 py-1 border rounded text-xs mt-1"
+                            value={selectedElementData.guaranteeAnimation || "none"}
+                            onChange={(e) => updateElement(selectedElementData.id, { guaranteeAnimation: e.target.value })}
+                          >
+                            <option value="none">Sem Animação</option>
+                            <option value="pulse">Pulsante</option>
+                            <option value="bounce">Saltitante</option>
+                            <option value="glow">Brilhante</option>
+                            <option value="shake">Tremulante</option>
+                          </select>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center justify-between">
+                        <Label className="text-xs">Efeito Hover</Label>
+                        <input
+                          type="checkbox"
+                          checked={selectedElementData.guaranteeHoverEffect !== false}
+                          onChange={(e) => updateElement(selectedElementData.id, { guaranteeHoverEffect: e.target.checked })}
+                          className="h-4 w-4"
+                        />
+                      </div>
+                    </div>
+
+                    {/* CONTEÚDO ADICIONAL */}
+                    <div className="mt-4 space-y-3 border-t pt-4">
+                      <h6 className="font-semibold text-sm text-orange-600">📝 Conteúdo</h6>
+                      
+                      <div>
+                        <Label className="text-xs">Texto do Botão (Opcional)</Label>
+                        <Input
+                          value={selectedElementData.guaranteeButtonText || ""}
+                          onChange={(e) => updateElement(selectedElementData.id, { guaranteeButtonText: e.target.value })}
+                          placeholder="Ex: Saiba Mais"
+                          className="text-xs mt-1"
+                        />
+                      </div>
+
+                      <div>
+                        <Label className="text-xs">Link do Botão (Opcional)</Label>
+                        <Input
+                          value={selectedElementData.guaranteeButtonLink || ""}
+                          onChange={(e) => updateElement(selectedElementData.id, { guaranteeButtonLink: e.target.value })}
+                          placeholder="Ex: https://exemplo.com/garantia"
+                          className="text-xs mt-1"
+                        />
+                      </div>
+
+                      <div>
+                        <Label className="text-xs">Texto Adicional</Label>
+                        <Input
+                          value={selectedElementData.guaranteeSubtitle || ""}
+                          onChange={(e) => updateElement(selectedElementData.id, { guaranteeSubtitle: e.target.value })}
+                          placeholder="Ex: Sem riscos, total tranquilidade"
+                          className="text-xs mt-1"
+                        />
                       </div>
                     </div>
                   </div>
