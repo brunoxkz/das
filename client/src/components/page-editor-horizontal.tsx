@@ -808,6 +808,14 @@ export function PageEditorHorizontal({
       ]
     },
     {
+      name: "📊 Visualizações",
+      elements: [
+        { type: "chart", label: "Gráfico", icon: <BarChart3 className="w-4 h-4" /> },
+        { type: "metrics", label: "Métricas", icon: <TrendingUp className="w-4 h-4" /> },
+        { type: "before_after", label: "Antes/Depois", icon: <ArrowLeftRight className="w-4 h-4" /> },
+      ]
+    },
+    {
       name: "💰 Vendas",
       elements: [
         { type: "pricing_plans", label: "Planos", icon: <CreditCard className="w-4 h-4" /> },
