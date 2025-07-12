@@ -64,7 +64,7 @@ const SECURITY_CONFIG = {
   SUSPICIOUS_THRESHOLD: 50, // Muito mais tolerante
   DDOS_THRESHOLD: 500, // Muito mais alto
   RATE_LIMIT_WINDOW: 1 * 60 * 1000, // 1 minuto (mais curto)
-  RATE_LIMIT_MAX: 200, // 200 requisições por minuto (muito generoso)
+  RATE_LIMIT_MAX: 500, // 500 requisições por minuto (para quizzes complexos)
   BRUTE_FORCE_WINDOW: 5 * 60 * 1000, // 5 minutos
 };
 

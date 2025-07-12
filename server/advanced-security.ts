@@ -238,9 +238,9 @@ export const attackSignatureAnalyzer = (req: Request, res: Response, next: NextF
     });
   }
 
-  // Log atividade suspeita
-  if (analysis.riskScore > 50) {
-    console.log(`⚠️  SUSPICIOUS ACTIVITY: ${ip} - Score: ${analysis.riskScore} - Threats: ${analysis.threats.join(', ')}`);
+  // Log apenas ataques críticos (desabilitar spam de logs)
+  if (analysis.riskScore > 95) {
+    console.log(`🚨 CRITICAL ATTACK: ${ip} - Score: ${analysis.riskScore} - Threats: ${analysis.threats.join(', ')}`);
   }
 
   next();
