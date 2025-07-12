@@ -73,6 +73,11 @@ export class BehavioralAnalyzer {
     const ip = req.ip || req.connection.remoteAddress || 'unknown';
     const userAgent = req.get('User-Agent') || '';
     const endpoint = req.originalUrl || req.url;
+    
+    // BYPASS CRÍTICO: Permitir localhost sempre
+    if (ip === '127.0.0.1' || ip === '::1' || ip === 'localhost') {
+      return { riskScore: 0, threats: [] };
+    }
     const now = Date.now();
 
     // Inicializar dados do usuário se não existir
@@ -215,6 +220,11 @@ export const attackSignatureAnalyzer = (req: Request, res: Response, next: NextF
   const ip = req.ip || req.connection.remoteAddress || 'unknown';
   const fullRequest = `${req.method} ${req.originalUrl} ${JSON.stringify(req.body)} ${req.get('User-Agent')}`;
   
+  // BYPASS CRÍTICO: Permitir localhost sempre
+  if (ip === '127.0.0.1' || ip === '::1' || ip === 'localhost') {
+    return next();
+  }
+  
   const analyzer = BehavioralAnalyzer.getInstance();
   const analysis = analyzer.analyzeRequest(req);
 
@@ -291,6 +301,11 @@ export const fileIntegrityChecker = {
 // 🛡️ MIDDLEWARE DE VERIFICAÇÃO DE BLACKLIST
 export const blacklistMiddleware = (req: Request, res: Response, next: NextFunction) => {
   const ip = req.ip || req.connection.remoteAddress || 'unknown';
+  
+  // BYPASS CRÍTICO: Permitir localhost sempre
+  if (ip === '127.0.0.1' || ip === '::1' || ip === 'localhost') {
+    return next();
+  }
   
   if (securityCache.blacklistedIPs.has(ip)) {
     console.log(`🚫 BLACKLISTED IP BLOCKED: ${ip}`);
