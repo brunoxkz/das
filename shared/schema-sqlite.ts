@@ -188,6 +188,58 @@ export const smsLogs = sqliteTable("sms_logs", {
   createdAt: integer("createdAt").notNull().$defaultFn(() => Math.floor(Date.now() / 1000)),
 });
 
+// Voice Calling Campaign System
+export const voiceCampaigns = sqliteTable("voice_campaigns", {
+  id: text("id").primaryKey(),
+  name: text("name").notNull(),
+  quizId: text("quizId").notNull().references(() => quizzes.id, { onDelete: "cascade" }),
+  userId: text("userId").notNull().references(() => users.id, { onDelete: "cascade" }),
+  voiceMessage: text("voiceMessage").notNull(), // Mensagem para TTS (Text-to-Speech)
+  voiceFile: text("voiceFile"), // URL do arquivo de áudio (opcional)
+  voiceType: text("voiceType").default("tts"), // "tts" para texto-para-fala, "audio" para arquivo de áudio
+  voiceSettings: text("voiceSettings", { mode: 'json' }).default("{}"), // Configurações de voz (velocidade, tom, etc.)
+  phones: text("phones", { mode: 'json' }).notNull(), // Array of phone numbers stored as JSON
+  status: text("status").default("pending"), // pending, active, paused, completed
+  sent: integer("sent").default(0),
+  answered: integer("answered").default(0),
+  voicemail: integer("voicemail").default(0),
+  busy: integer("busy").default(0),
+  failed: integer("failed").default(0),
+  duration: integer("duration").default(0), // Duração total em segundos
+  scheduledAt: integer("scheduledAt"), // Para campanhas agendadas
+  targetAudience: text("targetAudience").default("all"), // all, completed, abandoned
+  campaignMode: text("campaignMode").default("leads_ja_na_base"), // "modo_ao_vivo" ou "leads_ja_na_base"
+  triggerDelay: integer("triggerDelay").default(10),
+  triggerUnit: text("triggerUnit").default("minutes"),
+  maxRetries: integer("maxRetries").default(3), // Tentativas máximas para cada número
+  retryDelay: integer("retryDelay").default(60), // Delay entre tentativas (minutos)
+  callTimeout: integer("callTimeout").default(30), // Timeout da chamada (segundos)
+  createdAt: integer("createdAt").notNull().$defaultFn(() => Math.floor(Date.now() / 1000)),
+  updatedAt: integer("updatedAt").notNull().$defaultFn(() => Math.floor(Date.now() / 1000)),
+});
+
+export const voiceLogs = sqliteTable("voice_logs", {
+  id: text("id").primaryKey(),
+  campaignId: text("campaignId").notNull().references(() => voiceCampaigns.id, { onDelete: "cascade" }),
+  phone: text("phone").notNull(),
+  voiceMessage: text("voiceMessage").notNull(),
+  voiceFile: text("voiceFile"), // URL do arquivo de áudio usado
+  status: text("status").notNull(), // pending, calling, answered, voicemail, busy, failed, scheduled, completed
+  twilioSid: text("twilioSid"), // ID da chamada no Twilio
+  callDuration: integer("callDuration").default(0), // Duração da chamada em segundos
+  callPrice: text("callPrice"), // Preço da chamada
+  errorMessage: text("errorMessage"),
+  retryCount: integer("retryCount").default(0), // Número de tentativas
+  scheduledAt: integer("scheduledAt"), // Agendamento individual para cada chamada
+  calledAt: integer("calledAt"), // Timestamp da chamada
+  answeredAt: integer("answeredAt"), // Timestamp quando atendeu
+  completedAt: integer("completedAt"), // Timestamp quando terminou
+  country: text("country"), // País detectado do telefone
+  countryCode: text("countryCode"), // Código do país (+55, +1, etc.)
+  recordingUrl: text("recordingUrl"), // URL da gravação da chamada (se habilitada)
+  createdAt: integer("createdAt").notNull().$defaultFn(() => Math.floor(Date.now() / 1000)),
+});
+
 export const emailCampaigns = sqliteTable("email_campaigns", {
   id: text("id").primaryKey(),
   name: text("name").notNull(),
@@ -328,6 +380,18 @@ export const insertEmailSequenceSchema = createInsertSchema(emailSequences).omit
   updatedAt: true,
 });
 
+// Voice Calling Schemas
+export const insertVoiceCampaignSchema = createInsertSchema(voiceCampaigns).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertVoiceLogSchema = createInsertSchema(voiceLogs).omit({
+  id: true,
+  createdAt: true,
+});
+
 // Tipos TypeScript
 export type User = typeof users.$inferSelect;
 export type UpsertUser = z.infer<typeof insertUserSchema>;
@@ -349,6 +413,12 @@ export type InsertEmailAutomation = z.infer<typeof insertEmailAutomationSchema>;
 export type EmailAutomation = typeof emailAutomations.$inferSelect;
 export type InsertEmailSequence = z.infer<typeof insertEmailSequenceSchema>;
 export type EmailSequence = typeof emailSequences.$inferSelect;
+
+// Voice Calling Types
+export type InsertVoiceCampaign = z.infer<typeof insertVoiceCampaignSchema>;
+export type VoiceCampaign = typeof voiceCampaigns.$inferSelect;
+export type InsertVoiceLog = z.infer<typeof insertVoiceLogSchema>;
+export type VoiceLog = typeof voiceLogs.$inferSelect;
 
 // WhatsApp Campaigns Schema
 export const whatsappCampaigns = sqliteTable('whatsapp_campaigns', {

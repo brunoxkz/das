@@ -208,6 +208,15 @@ No additional files or separate projects are maintained in this repository.
 
 ```
 Changelog:
+- July 12, 2025. VOICE CALLING INTEGRADO NA SIDEBAR E TYPEBOT DESATIVADO - Finalização da navegação e limpeza de funcionalidades:
+  * Adicionado Voice Calling na seção Marketing da sidebar com ícone Phone e badge 📞
+  * Sistema TypeBot completamente desativado conforme solicitação do usuário
+  * Todas as rotas TypeBot comentadas em server/routes-sqlite.ts com notas explicativas
+  * Tabelas TypeBot já desativadas anteriormente em server/db-sqlite.ts
+  * Imports e rotas TypeBot comentadas em client/src/App.tsx
+  * Sistema TypeBot permanece no código para futuras reativações se necessário
+  * Voice Calling agora totalmente integrado ao sistema de navegação
+  * Sidebar Marketing completa: SMS, Email, WhatsApp, Voice Calling, Super Afiliados
 - July 12, 2025. SIDEBAR REORGANIZADA POR CATEGORIAS - Melhoria na navegação com organização hierárquica:
   * Reorganizada sidebar com 7 categorias principais: Principal, Criação, Analytics, Marketing, Integrações, Avançado, Recursos
   * Implementados cabeçalhos visuais para cada categoria com ícones específicos

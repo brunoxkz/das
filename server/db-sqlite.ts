@@ -268,6 +268,64 @@ export function runMigrations() {
       );
     `;
 
+    const createVoiceCampaignsTable = `
+      CREATE TABLE IF NOT EXISTS voice_campaigns (
+        id TEXT PRIMARY KEY,
+        name TEXT NOT NULL,
+        quiz_id TEXT NOT NULL,
+        user_id TEXT NOT NULL,
+        voice_message TEXT NOT NULL,
+        voice_file TEXT,
+        voice_type TEXT DEFAULT 'tts',
+        voice_settings TEXT DEFAULT '{}',
+        phones TEXT NOT NULL,
+        status TEXT DEFAULT 'pending',
+        sent INTEGER DEFAULT 0,
+        answered INTEGER DEFAULT 0,
+        voicemail INTEGER DEFAULT 0,
+        busy INTEGER DEFAULT 0,
+        failed INTEGER DEFAULT 0,
+        duration INTEGER DEFAULT 0,
+        scheduled_at INTEGER,
+        target_audience TEXT DEFAULT 'all',
+        campaign_mode TEXT DEFAULT 'leads_ja_na_base',
+        trigger_delay INTEGER DEFAULT 10,
+        trigger_unit TEXT DEFAULT 'minutes',
+        max_retries INTEGER DEFAULT 3,
+        retry_delay INTEGER DEFAULT 60,
+        call_timeout INTEGER DEFAULT 30,
+        created_at INTEGER NOT NULL,
+        updated_at INTEGER NOT NULL,
+        FOREIGN KEY (quiz_id) REFERENCES quizzes(id),
+        FOREIGN KEY (user_id) REFERENCES users(id)
+      );
+    `;
+
+    const createVoiceLogsTable = `
+      CREATE TABLE IF NOT EXISTS voice_logs (
+        id TEXT PRIMARY KEY,
+        campaign_id TEXT NOT NULL,
+        phone TEXT NOT NULL,
+        voice_message TEXT NOT NULL,
+        voice_file TEXT,
+        status TEXT NOT NULL,
+        twilio_sid TEXT,
+        call_duration INTEGER DEFAULT 0,
+        call_price TEXT,
+        error_message TEXT,
+        retry_count INTEGER DEFAULT 0,
+        scheduled_at INTEGER,
+        called_at INTEGER,
+        answered_at INTEGER,
+        completed_at INTEGER,
+        country TEXT,
+        country_code TEXT,
+        recording_url TEXT,
+        created_at INTEGER NOT NULL,
+        FOREIGN KEY (campaign_id) REFERENCES voice_campaigns(id)
+      );
+    `;
+
     const createEmailCampaignsTable = `
       CREATE TABLE IF NOT EXISTS email_campaigns (
         id TEXT PRIMARY KEY,
@@ -581,13 +639,19 @@ export function runMigrations() {
     } catch (e) {} // Ignora se já existe
     
     sqlite.exec(createSmsLogsTable);
+    sqlite.exec(createVoiceCampaignsTable);
+    sqlite.exec(createVoiceLogsTable);
     sqlite.exec(createEmailCampaignsTable);
     sqlite.exec(createEmailTemplatesTable);
 
     // ===============================================
-    // TYPEBOT AUTO-HOSPEDADO - TABELAS COMPLETAS
+    // TYPEBOT AUTO-HOSPEDADO - DESATIVADO TEMPORARIAMENTE
     // ===============================================
     
+    // TYPEBOT DESATIVADO - As tabelas e funcionalidades foram comentadas
+    // para evitar execução desnecessária até nova solicitação do usuário
+    
+    /*
     const createTypebotProjectsTable = `
       CREATE TABLE IF NOT EXISTS typebot_projects (
         id TEXT PRIMARY KEY,
@@ -689,16 +753,18 @@ export function runMigrations() {
       );
     `;
 
-    // Criar todas as tabelas TypeBot
-    sqlite.exec(createTypebotProjectsTable);
-    sqlite.exec(createTypebotConversationsTable);
-    sqlite.exec(createTypebotMessagesTable);
-    sqlite.exec(createTypebotAnalyticsTable);
-    sqlite.exec(createTypebotWebhooksTable);
-    sqlite.exec(createTypebotIntegrationsTable);
+    // TYPEBOT DESATIVADO - Tabelas não serão criadas
+    // sqlite.exec(createTypebotProjectsTable);
+    // sqlite.exec(createTypebotConversationsTable);
+    // sqlite.exec(createTypebotMessagesTable);
+    // sqlite.exec(createTypebotAnalyticsTable);
+    // sqlite.exec(createTypebotWebhooksTable);
+    // sqlite.exec(createTypebotIntegrationsTable);
+    */
 
     console.log('✅ Fresh SQLite database schema created successfully');
-    console.log('🤖 TypeBot tables created: projects, conversations, messages, analytics, webhooks, integrations');
+    console.log('📞 Voice calling system tables created and ready');
+    console.log('🤖 TypeBot system: DESATIVADO (conforme solicitado)');
   }
 }
 

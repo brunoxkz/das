@@ -32,8 +32,9 @@ import AIConversionPage from "@/pages/ai-conversion";
 import TesteAbPage from "@/pages/teste-ab";
 import WebhooksPage from "@/pages/webhooks";
 import IntegracoesPage from "@/pages/integracoes";
-import TypebotPage from "@/pages/typebot";
+// import TypebotPage from "@/pages/typebot"; // TYPEBOT DESATIVADO
 import ExtensoesPage from "@/pages/extensoes";
+import VoiceCallingPage from "@/pages/voice-calling";
 import { useAuth } from "@/hooks/useAuth-jwt";
 import { isUnauthorizedError } from "@/lib/authUtils";
 import { SidebarProvider } from "@/hooks/useSidebar";
@@ -172,15 +173,23 @@ function App() {
           </Layout>
         </Route>
 
+        {/* TYPEBOT DESATIVADO
         <Route path="/typebot">
           <Layout>
             <TypebotPage />
           </Layout>
         </Route>
+        */}
 
         <Route path="/extensoes">
           <Layout>
             <ExtensoesPage />
+          </Layout>
+        </Route>
+
+        <Route path="/voice-calling">
+          <Layout>
+            <VoiceCallingPage />
           </Layout>
         </Route>
 

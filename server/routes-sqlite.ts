@@ -3214,6 +3214,350 @@ export function registerSQLiteRoutes(app: Express): Server {
     }
   });
 
+  // =============================================
+  // VOICE CALLING CAMPAIGNS - SISTEMA COMPLETO
+  // =============================================
+
+  // Get voice campaigns
+  app.get("/api/voice-campaigns", verifyJWT, async (req: any, res: Response) => {
+    try {
+      const userId = req.user.id;
+      const campaigns = await storage.getVoiceCampaigns(userId);
+      res.json(campaigns);
+    } catch (error) {
+      console.error("Error fetching voice campaigns:", error);
+      res.status(500).json({ error: "Error fetching voice campaigns" });
+    }
+  });
+
+  // Create voice campaign
+  app.post("/api/voice-campaigns", verifyJWT, async (req: any, res: Response) => {
+    try {
+      const userId = req.user.id;
+      console.log("📞 VOICE CAMPAIGN CREATE - Body recebido:", JSON.stringify(req.body, null, 2));
+      
+      const { 
+        name, 
+        quizId, 
+        voiceMessage, 
+        voiceFile, 
+        voiceType, 
+        voiceSettings, 
+        triggerType, 
+        scheduledDateTime, 
+        targetAudience, 
+        triggerDelay, 
+        triggerUnit, 
+        fromDate,
+        maxRetries,
+        retryDelay,
+        callTimeout
+      } = req.body;
+
+      console.log("📞 VOICE CAMPAIGN CREATE - Campos extraídos:", {
+        name: name || 'MISSING',
+        quizId: quizId || 'MISSING', 
+        voiceMessage: voiceMessage || 'MISSING',
+        voiceType: voiceType || 'tts',
+        triggerType: triggerType || 'immediate',
+        targetAudience: targetAudience || 'all',
+        fromDate: fromDate || 'NOT_PROVIDED'
+      });
+
+      if (!name || !quizId || !voiceMessage) {
+        console.log("📞 VOICE CAMPAIGN CREATE - ERRO: Dados obrigatórios em falta");
+        return res.status(400).json({ error: "Dados obrigatórios em falta" });
+      }
+
+      // Verificar se o quiz existe e pertence ao usuário
+      const quiz = await storage.getQuiz(quizId);
+      if (!quiz) {
+        console.log("📞 VOICE CAMPAIGN CREATE - ERRO: Quiz não encontrado");
+        return res.status(404).json({ error: "Quiz não encontrado" });
+      }
+      
+      if (quiz.userId !== userId) {
+        console.log("📞 VOICE CAMPAIGN CREATE - ERRO: Quiz não pertence ao usuário");
+        return res.status(403).json({ error: "Acesso negado - Quiz não pertence ao usuário" });
+      }
+
+      // Buscar telefones do quiz seguindo a mesma lógica do SMS
+      console.log("📞 BUSCANDO TELEFONES - Quiz:", quizId, ", User:", userId);
+      const allResponses = await storage.getQuizResponses(quizId);
+      console.log("📞 RESPONSES ENCONTRADAS:", allResponses.length);
+      
+      // Filtrar respostas por data se especificada
+      let responses = allResponses;
+      if (fromDate) {
+        const filterDate = new Date(fromDate);
+        responses = allResponses.filter(response => {
+          const responseDate = new Date(response.submittedAt);
+          return responseDate >= filterDate;
+        });
+        console.log(`📞 FILTRO DE DATA - Original: ${allResponses.length}, Filtrado: ${responses.length}`);
+      }
+      
+      const phoneMap = new Map<string, any>();
+      
+      responses.forEach((response, index) => {
+        const responseData = response.responses;
+        const metadata = response.metadata || {};
+        
+        // Lógica de extração de telefone idêntica ao SMS
+        let phoneNumber = null;
+        
+        if (Array.isArray(responseData)) {
+          for (const item of responseData) {
+            if ((item.elementType === 'phone' || 
+                 (item.elementFieldId && item.elementFieldId.includes('telefone'))) && 
+                item.answer) {
+              phoneNumber = item.answer;
+              break;
+            }
+          }
+        } else if (typeof responseData === 'object' && responseData !== null) {
+          for (const [key, value] of Object.entries(responseData)) {
+            if (key.includes('telefone') && value) {
+              phoneNumber = value;
+              break;
+            }
+          }
+        }
+        
+        if (phoneNumber) {
+          const cleanPhone = phoneNumber.replace(/\D/g, '');
+          
+          if (cleanPhone.length >= 10 && cleanPhone.length <= 15) {
+            const isCompleted = (metadata.isComplete === true || metadata.isComplete === 'true') ||
+                               (metadata.completionPercentage === 100);
+            const status = isCompleted ? 'completed' : 'abandoned';
+            
+            const existingPhone = phoneMap.get(cleanPhone);
+            
+            if (!existingPhone || (status === 'completed' && existingPhone.status === 'abandoned')) {
+              phoneMap.set(cleanPhone, {
+                telefone: cleanPhone,
+                status: status,
+                responseId: response.id,
+                submittedAt: response.submittedAt,
+                completionPercentage: metadata.completionPercentage || 0,
+                leadData: extractLeadDataFromResponses(responseData, {
+                  nome: metadata.nome || 'Não informado',
+                  email: metadata.email || 'Não informado'
+                })
+              });
+            }
+          }
+        }
+      });
+      
+      const phonesArray = Array.from(phoneMap.values());
+      console.log("📞 TELEFONES PROCESSADOS:", phonesArray.length);
+      
+      // Filtrar por audiência
+      let filteredPhones = phonesArray;
+      if (targetAudience === 'completed') {
+        filteredPhones = phonesArray.filter(phone => phone.status === 'completed');
+      } else if (targetAudience === 'abandoned') {
+        filteredPhones = phonesArray.filter(phone => phone.status === 'abandoned');
+      }
+      
+      console.log("📞 TELEFONES FILTRADOS:", filteredPhones.length);
+      
+      if (filteredPhones.length === 0) {
+        return res.status(400).json({ error: "Nenhum telefone encontrado para a audiência selecionada" });
+      }
+
+      // Criar campanha de voz
+      const campaign = await storage.createVoiceCampaign({
+        name,
+        quizId,
+        userId,
+        voiceMessage,
+        voiceFile,
+        voiceType: voiceType || 'tts',
+        voiceSettings: voiceSettings || {},
+        phones: filteredPhones,
+        status: 'active',
+        targetAudience: targetAudience || 'all',
+        triggerDelay: triggerDelay || 10,
+        triggerUnit: triggerUnit || 'minutes',
+        maxRetries: maxRetries || 3,
+        retryDelay: retryDelay || 60,
+        callTimeout: callTimeout || 30
+      });
+
+      // Criar logs individuais para cada telefone
+      for (const phone of filteredPhones) {
+        const logId = `voice_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+        const scheduledAt = Math.floor(Date.now() / 1000) + (triggerDelay || 10) * 60;
+        
+        await storage.createVoiceLog({
+          id: logId,
+          campaignId: campaign.id,
+          phone: phone.telefone,
+          voiceMessage,
+          voiceFile,
+          status: 'scheduled',
+          scheduledAt
+        });
+      }
+
+      console.log("📞 CAMPANHA DE VOZ CRIADA:", campaign.id);
+      res.json({
+        success: true,
+        message: "Campanha de voz criada com sucesso",
+        campaign,
+        totalPhones: filteredPhones.length
+      });
+    } catch (error) {
+      console.error("Error creating voice campaign:", error);
+      res.status(500).json({ error: "Error creating voice campaign" });
+    }
+  });
+
+  // Get voice campaign by ID
+  app.get("/api/voice-campaigns/:id", verifyJWT, async (req: any, res: Response) => {
+    try {
+      const { id } = req.params;
+      const userId = req.user.id;
+      
+      const campaign = await storage.getVoiceCampaign(id);
+      
+      if (!campaign || campaign.userId !== userId) {
+        return res.status(404).json({ error: "Campanha não encontrada" });
+      }
+
+      res.json(campaign);
+    } catch (error) {
+      console.error("Error fetching voice campaign:", error);
+      res.status(500).json({ error: "Error fetching voice campaign" });
+    }
+  });
+
+  // Update voice campaign
+  app.put("/api/voice-campaigns/:id", verifyJWT, async (req: any, res: Response) => {
+    try {
+      const { id } = req.params;
+      const userId = req.user.id;
+      
+      const campaign = await storage.getVoiceCampaign(id);
+      
+      if (!campaign || campaign.userId !== userId) {
+        return res.status(404).json({ error: "Campanha não encontrada" });
+      }
+
+      await storage.updateVoiceCampaign(id, req.body);
+
+      res.json({
+        success: true,
+        message: "Campanha atualizada com sucesso"
+      });
+    } catch (error) {
+      console.error("Error updating voice campaign:", error);
+      res.status(500).json({ error: "Error updating voice campaign" });
+    }
+  });
+
+  // Pause voice campaign
+  app.put("/api/voice-campaigns/:id/pause", verifyJWT, async (req: any, res: Response) => {
+    try {
+      const { id } = req.params;
+      const userId = req.user.id;
+      
+      const campaign = await storage.getVoiceCampaign(id);
+      
+      if (!campaign || campaign.userId !== userId) {
+        return res.status(404).json({ error: "Campanha não encontrada" });
+      }
+
+      await storage.updateVoiceCampaign(id, {
+        status: 'paused',
+        updatedAt: Math.floor(Date.now() / 1000)
+      });
+
+      res.json({
+        success: true,
+        message: "Campanha pausada com sucesso"
+      });
+    } catch (error) {
+      console.error("Error pausing voice campaign:", error);
+      res.status(500).json({ error: "Error pausing voice campaign" });
+    }
+  });
+
+  // Resume voice campaign
+  app.put("/api/voice-campaigns/:id/resume", verifyJWT, async (req: any, res: Response) => {
+    try {
+      const { id } = req.params;
+      const userId = req.user.id;
+      
+      const campaign = await storage.getVoiceCampaign(id);
+      
+      if (!campaign || campaign.userId !== userId) {
+        return res.status(404).json({ error: "Campanha não encontrada" });
+      }
+
+      await storage.updateVoiceCampaign(id, {
+        status: 'active',
+        updatedAt: Math.floor(Date.now() / 1000)
+      });
+
+      res.json({
+        success: true,
+        message: "Campanha retomada com sucesso"
+      });
+    } catch (error) {
+      console.error("Error resuming voice campaign:", error);
+      res.status(500).json({ error: "Error resuming voice campaign" });
+    }
+  });
+
+  // Delete voice campaign
+  app.delete("/api/voice-campaigns/:id", verifyJWT, async (req: any, res: Response) => {
+    try {
+      const { id } = req.params;
+      const userId = req.user.id;
+      
+      const campaign = await storage.getVoiceCampaign(id);
+      
+      if (!campaign || campaign.userId !== userId) {
+        return res.status(404).json({ error: "Campanha não encontrada" });
+      }
+
+      await storage.deleteVoiceCampaign(id);
+
+      res.json({
+        success: true,
+        message: "Campanha deletada com sucesso"
+      });
+    } catch (error) {
+      console.error("Error deleting voice campaign:", error);
+      res.status(500).json({ error: "Error deleting voice campaign" });
+    }
+  });
+
+  // Get voice logs for a campaign
+  app.get("/api/voice-campaigns/:id/logs", verifyJWT, async (req: any, res: Response) => {
+    try {
+      const { id } = req.params;
+      const userId = req.user.id;
+      
+      const campaign = await storage.getVoiceCampaign(id);
+      
+      if (!campaign || campaign.userId !== userId) {
+        return res.status(404).json({ error: "Campanha não encontrada" });
+      }
+
+      const logs = await storage.getVoiceLogs(id);
+      
+      res.json(logs);
+    } catch (error) {
+      console.error("Error fetching voice logs:", error);
+      res.status(500).json({ error: "Error fetching voice logs" });
+    }
+  });
+
   // Função auxiliar para extrair dados de lead das respostas
   function extractLeadDataFromResponses(responses: any, leadData: any = {}): Record<string, any> {
     const extracted: Record<string, any> = { ...leadData };
@@ -7170,9 +7514,13 @@ app.get("/api/whatsapp-extension/pending", verifyJWT, async (req: any, res: Resp
   });
 
   // ===============================================
-  // TYPEBOT AUTO-HOSPEDADO - ENDPOINTS COMPLETOS
+  // TYPEBOT AUTO-HOSPEDADO - DESATIVADO TEMPORARIAMENTE
   // ===============================================
-
+  
+  // TYPEBOT DESATIVADO - Todas as rotas foram comentadas conforme solicitação do usuário
+  // para evitar execução desnecessária até nova solicitação
+  
+  /*
   // Get all TypeBot projects for user
   app.get("/api/typebot/projects", verifyJWT, async (req: any, res) => {
     try {
@@ -7579,6 +7927,9 @@ app.get("/api/whatsapp-extension/pending", verifyJWT, async (req: any, res: Resp
       res.status(500).json({ message: "Erro ao buscar analytics" });
     }
   });
+
+  // TYPEBOT DESATIVADO - Todas as rotas acima foram comentadas
+  // */
 
   return httpServer;
 }

@@ -38,7 +38,8 @@ import {
   Menu,
   X,
   Webhook,
-  Plug
+  Plug,
+  Phone
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -158,6 +159,13 @@ export function Sidebar() {
           icon: <FileText className="w-4 h-4" />,
           active: location === "/campanhas-whatsapp",
           badge: "🤖"
+        },
+        {
+          title: "Voice Calling",
+          href: "/voice-calling",
+          icon: <Phone className="w-4 h-4" />,
+          active: location === "/voice-calling",
+          badge: "📞"
         },
         {
           title: "Super Afiliados",

@@ -22,6 +22,7 @@ sqlite.pragma('temp_store = MEMORY'); // Temp tables em RAM
 sqlite.pragma('mmap_size = 268435456'); // 256MB memory mapping
 import { 
   users, quizzes, quizTemplates, quizResponses, responseVariables, quizAnalytics, emailCampaigns, emailTemplates, emailLogs, emailAutomations, emailSequences, smsTransactions, smsCampaigns, smsLogs,
+  voiceCampaigns, voiceLogs,
   whatsappCampaigns, whatsappLogs, whatsappTemplates,
   aiConversionCampaigns, aiVideoGenerations, notifications,
   superAffiliates, affiliateSales,
@@ -37,6 +38,8 @@ import {
   type InsertEmailLog, type EmailLog,
   type InsertEmailAutomation, type EmailAutomation,
   type InsertEmailSequence, type EmailSequence,
+  type InsertVoiceCampaign, type VoiceCampaign,
+  type InsertVoiceLog, type VoiceLog,
   type InsertAiConversionCampaign, type AiConversionCampaign,
   type InsertAiVideoGeneration, type AiVideoGeneration,
   type InsertNotification, type Notification,
@@ -2175,6 +2178,224 @@ export class SQLiteStorage implements IStorage {
       return 0;
     }
   }
+  // =============================================
+  // VOICE CALLING METHODS
+  // =============================================
+
+  async createVoiceCampaign(campaign: InsertVoiceCampaign): Promise<VoiceCampaign> {
+    try {
+      const campaignId = `voice_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+      const campaignData = {
+        ...campaign,
+        id: campaignId,
+        createdAt: Math.floor(Date.now() / 1000),
+        updatedAt: Math.floor(Date.now() / 1000)
+      };
+
+      const stmt = sqlite.prepare(`
+        INSERT INTO voice_campaigns (
+          id, name, quiz_id, user_id, voice_message, voice_file, voice_type, voice_settings,
+          phones, status, target_audience, campaign_mode, trigger_delay, trigger_unit,
+          max_retries, retry_delay, call_timeout, created_at, updated_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      `);
+
+      stmt.run(
+        campaignData.id,
+        campaignData.name,
+        campaignData.quizId,
+        campaignData.userId,
+        campaignData.voiceMessage,
+        campaignData.voiceFile || null,
+        campaignData.voiceType || 'tts',
+        JSON.stringify(campaignData.voiceSettings || {}),
+        JSON.stringify(campaignData.phones),
+        campaignData.status || 'pending',
+        campaignData.targetAudience || 'all',
+        campaignData.campaignMode || 'leads_ja_na_base',
+        campaignData.triggerDelay || 10,
+        campaignData.triggerUnit || 'minutes',
+        campaignData.maxRetries || 3,
+        campaignData.retryDelay || 60,
+        campaignData.callTimeout || 30,
+        campaignData.createdAt,
+        campaignData.updatedAt
+      );
+
+      return campaignData as VoiceCampaign;
+    } catch (error) {
+      console.error('❌ ERRO ao criar campanha de voz:', error);
+      throw error;
+    }
+  }
+
+  async getVoiceCampaigns(userId: string): Promise<VoiceCampaign[]> {
+    try {
+      const stmt = sqlite.prepare(`
+        SELECT *, 
+               (SELECT COUNT(*) FROM voice_logs WHERE campaign_id = voice_campaigns.id AND status = 'answered') as answered,
+               (SELECT COUNT(*) FROM voice_logs WHERE campaign_id = voice_campaigns.id AND status = 'voicemail') as voicemail,
+               (SELECT COUNT(*) FROM voice_logs WHERE campaign_id = voice_campaigns.id AND status = 'busy') as busy,
+               (SELECT COUNT(*) FROM voice_logs WHERE campaign_id = voice_campaigns.id AND status = 'failed') as failed
+        FROM voice_campaigns 
+        WHERE user_id = ? 
+        ORDER BY created_at DESC
+      `);
+
+      const campaigns = stmt.all(userId);
+      return campaigns.map(campaign => ({
+        ...campaign,
+        phones: JSON.parse(campaign.phones || '[]'),
+        voiceSettings: JSON.parse(campaign.voice_settings || '{}')
+      }));
+    } catch (error) {
+      console.error('❌ ERRO ao buscar campanhas de voz:', error);
+      return [];
+    }
+  }
+
+  async getVoiceCampaign(campaignId: string): Promise<VoiceCampaign | null> {
+    try {
+      const stmt = sqlite.prepare('SELECT * FROM voice_campaigns WHERE id = ?');
+      const campaign = stmt.get(campaignId);
+      
+      if (!campaign) return null;
+
+      return {
+        ...campaign,
+        phones: JSON.parse(campaign.phones || '[]'),
+        voiceSettings: JSON.parse(campaign.voice_settings || '{}')
+      };
+    } catch (error) {
+      console.error('❌ ERRO ao buscar campanha de voz:', error);
+      return null;
+    }
+  }
+
+  async updateVoiceCampaign(campaignId: string, updates: Partial<VoiceCampaign>): Promise<void> {
+    try {
+      const setClause = Object.keys(updates)
+        .filter(key => key !== 'id')
+        .map(key => `${key} = ?`).join(', ');
+      
+      const values = Object.keys(updates)
+        .filter(key => key !== 'id')
+        .map(key => {
+          const value = updates[key as keyof VoiceCampaign];
+          if (key === 'phones' || key === 'voiceSettings') {
+            return JSON.stringify(value);
+          }
+          return value;
+        });
+
+      const stmt = sqlite.prepare(`UPDATE voice_campaigns SET ${setClause}, updated_at = ? WHERE id = ?`);
+      stmt.run(...values, Math.floor(Date.now() / 1000), campaignId);
+    } catch (error) {
+      console.error('❌ ERRO ao atualizar campanha de voz:', error);
+      throw error;
+    }
+  }
+
+  async deleteVoiceCampaign(campaignId: string): Promise<void> {
+    try {
+      // Primeiro deletar todos os logs relacionados
+      const deleteLogsStmt = sqlite.prepare('DELETE FROM voice_logs WHERE campaign_id = ?');
+      deleteLogsStmt.run(campaignId);
+
+      // Depois deletar a campanha
+      const deleteCampaignStmt = sqlite.prepare('DELETE FROM voice_campaigns WHERE id = ?');
+      deleteCampaignStmt.run(campaignId);
+    } catch (error) {
+      console.error('❌ ERRO ao deletar campanha de voz:', error);
+      throw error;
+    }
+  }
+
+  async createVoiceLog(logData: {
+    id: string;
+    campaignId: string;
+    phone: string;
+    voiceMessage: string;
+    voiceFile?: string;
+    status: string;
+    scheduledAt?: number;
+  }): Promise<VoiceLog> {
+    try {
+      const stmt = sqlite.prepare(`
+        INSERT INTO voice_logs (
+          id, campaign_id, phone, voice_message, voice_file, status, scheduled_at, created_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+      `);
+
+      stmt.run(
+        logData.id,
+        logData.campaignId,
+        logData.phone,
+        logData.voiceMessage,
+        logData.voiceFile || null,
+        logData.status,
+        logData.scheduledAt || null,
+        Math.floor(Date.now() / 1000)
+      );
+
+      return logData as VoiceLog;
+    } catch (error) {
+      console.error('❌ ERRO ao criar log de voz:', error);
+      throw error;
+    }
+  }
+
+  async getVoiceLogs(campaignId: string): Promise<VoiceLog[]> {
+    try {
+      const stmt = sqlite.prepare(`
+        SELECT * FROM voice_logs 
+        WHERE campaign_id = ? 
+        ORDER BY created_at DESC
+      `);
+      
+      return stmt.all(campaignId);
+    } catch (error) {
+      console.error('❌ ERRO ao buscar logs de voz:', error);
+      return [];
+    }
+  }
+
+  async updateVoiceLog(logId: string, updates: Partial<VoiceLog>): Promise<void> {
+    try {
+      const setClause = Object.keys(updates)
+        .filter(key => key !== 'id')
+        .map(key => `${key} = ?`).join(', ');
+      
+      const values = Object.keys(updates)
+        .filter(key => key !== 'id')
+        .map(key => updates[key as keyof VoiceLog]);
+
+      const stmt = sqlite.prepare(`UPDATE voice_logs SET ${setClause} WHERE id = ?`);
+      stmt.run(...values, logId);
+    } catch (error) {
+      console.error('❌ ERRO ao atualizar log de voz:', error);
+      throw error;
+    }
+  }
+
+  async getScheduledVoiceLogs(): Promise<VoiceLog[]> {
+    try {
+      const currentTime = Math.floor(Date.now() / 1000);
+      const stmt = sqlite.prepare(`
+        SELECT * FROM voice_logs 
+        WHERE status = 'scheduled' 
+        AND scheduled_at <= ? 
+        ORDER BY scheduled_at ASC 
+        LIMIT 100
+      `);
+      
+      return stmt.all(currentTime);
+    } catch (error) {
+      console.error('❌ ERRO ao buscar logs de voz agendados:', error);
+      return [];
+    }
+  }
+
   // SECURITY METHODS FOR CHROME EXTENSION
 
   // Get scheduled WhatsApp logs by user (SECURITY)
