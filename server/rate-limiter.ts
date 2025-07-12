@@ -21,7 +21,7 @@ export class HighPerformanceRateLimiter {
   constructor(options: RateLimitOptions) {
     this.options = {
       statusCode: 429,
-      message: 'Muitas requisições. Tente novamente em alguns segundos.',
+      message: 'Muitas requisições detectadas. Tente novamente em alguns minutos.',
       ...options
     };
     
@@ -41,7 +41,7 @@ export class HighPerformanceRateLimiter {
   private cleanup(): void {
     const now = Date.now();
     const toDelete: string[] = [];
-    const MAX_CLIENTS = 5000; // LIMITE para prevenir memory leak
+    const MAX_CLIENTS = 50000; // LIMITE aumentado para 100k+ usuários
     
     this.clients.forEach((record, key) => {
       if (record.resetTime <= now) {
@@ -121,41 +121,41 @@ export class HighPerformanceRateLimiter {
   }
 }
 
-// Rate limiters específicos para diferentes endpoints
+// Rate limiters otimizados para 100.000+ usuários simultâneos
 export const createRateLimiters = () => {
   return {
-    // API geral - 1000 req/min por usuário
+    // API geral - 5000 req/min por usuário (5x mais)
     general: new HighPerformanceRateLimiter({
       windowMs: 60 * 1000, // 1 minuto
-      maxRequests: 1000,
+      maxRequests: 5000,
       message: 'Limite de requisições da API excedido'
     }),
 
-    // Login/Auth - 10 req/min por IP
+    // Login/Auth - 50 req/min por IP (5x mais para múltiplos usuários/proxy)
     auth: new HighPerformanceRateLimiter({
       windowMs: 60 * 1000, // 1 minuto  
-      maxRequests: 10,
+      maxRequests: 50,
       message: 'Muitas tentativas de login. Tente novamente em 1 minuto.'
     }),
 
-    // Upload de arquivos - 20 req/min por usuário
+    // Upload de arquivos - 100 req/min por usuário (5x mais)
     upload: new HighPerformanceRateLimiter({
       windowMs: 60 * 1000, // 1 minuto
-      maxRequests: 20,
+      maxRequests: 100,
       message: 'Limite de uploads excedido'
     }),
 
-    // Dashboard - 100 req/min por usuário (cache ajuda)
+    // Dashboard - 500 req/min por usuário (5x mais - cache inteligente)
     dashboard: new HighPerformanceRateLimiter({
       windowMs: 60 * 1000, // 1 minuto
-      maxRequests: 100,
+      maxRequests: 500,
       message: 'Muitas consultas ao dashboard'
     }),
 
-    // Quiz creation - 50 req/min por usuário
+    // Quiz creation - 200 req/min por usuário (4x mais para edição intensiva)
     quizCreation: new HighPerformanceRateLimiter({
       windowMs: 60 * 1000, // 1 minuto
-      maxRequests: 50,
+      maxRequests: 200,
       message: 'Limite de criação/edição de quizzes excedido'
     })
   };

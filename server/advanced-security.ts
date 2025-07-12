@@ -10,10 +10,10 @@ import path from "path";
 
 // 🔒 CONFIGURAÇÕES AVANÇADAS DE SEGURANÇA
 const ADVANCED_SECURITY_CONFIG = {
-  // Rate limiting mais granular
+  // Rate limiting otimizado para 100k+ usuários
   BURST_PROTECTION: {
     windowMs: 1000, // 1 segundo
-    maxRequests: 10, // Máximo 10 requests por segundo
+    maxRequests: 50, // Máximo 50 requests por segundo (5x mais)
     skipSuccessfulRequests: true
   },
   
