@@ -448,3 +448,195 @@ export class TypebotConverter {
     }
   }
 }
+
+/**
+ * CONVERSÃO SIMPLIFICADA - Apenas campos de múltipla escolha
+ * Função principal para conversão rápida
+ */
+export function convertQuizToTypebot(quiz: Quiz): any {
+  const converter = new TypebotConverter();
+  
+  // Extrair apenas campos de múltipla escolha
+  const multipleChoiceElements = extractMultipleChoiceElements(quiz);
+  
+  if (multipleChoiceElements.length === 0) {
+    // Se não há campos de múltipla escolha, retornar estrutura básica
+    return {
+      version: "6.0",
+      name: `Bot - ${quiz.title}`,
+      groups: [{
+        id: nanoid(),
+        title: "Introdução",
+        graphCoordinates: { x: 0, y: 0 },
+        blocks: [{
+          id: nanoid(),
+          type: 'text',
+          content: {
+            richText: [{
+              type: 'p',
+              children: [{
+                text: `Olá! Este é o chatbot baseado no quiz "${quiz.title}". Como não há perguntas de múltipla escolha, você precisará personalizar o conteúdo.`
+              }]
+            }]
+          }
+        }]
+      }],
+      variables: [
+        { id: nanoid(), name: "nome", value: "", type: "text" },
+        { id: nanoid(), name: "email", value: "", type: "email" },
+        { id: nanoid(), name: "telefone", value: "", type: "phone" }
+      ],
+      edges: []
+    };
+  }
+  
+  // Criar estrutura TypeBot simplificada
+  const groups = [];
+  const variables = [
+    { id: nanoid(), name: "nome", value: "", type: "text" },
+    { id: nanoid(), name: "email", value: "", type: "email" },
+    { id: nanoid(), name: "telefone", value: "", type: "phone" }
+  ];
+  const edges = [];
+  
+  // Grupo de boas-vindas
+  const welcomeGroup = {
+    id: nanoid(),
+    title: "Boas-vindas",
+    graphCoordinates: { x: 0, y: 0 },
+    blocks: [{
+      id: nanoid(),
+      type: 'text',
+      content: {
+        richText: [{
+          type: 'p',
+          children: [{
+            text: `Olá! 👋 Bem-vindo ao nosso chatbot baseado no quiz "${quiz.title}". Vamos começar!`
+          }]
+        }]
+      }
+    }]
+  };
+  groups.push(welcomeGroup);
+  
+  // Converter cada pergunta de múltipla escolha
+  multipleChoiceElements.forEach((element, index) => {
+    const questionGroup = {
+      id: nanoid(),
+      title: `Pergunta ${index + 1}`,
+      graphCoordinates: { x: (index + 1) * 300, y: 0 },
+      blocks: [{
+        id: nanoid(),
+        type: 'choice input',
+        content: {
+          question: element.content?.question || element.properties?.label || `Pergunta ${index + 1}`,
+          options: element.content?.options?.map((option: any) => ({
+            id: nanoid(),
+            label: option.text || option.label || `Opção ${index + 1}`
+          })) || []
+        },
+        settings: {
+          isMultipleChoice: false,
+          saveVariableName: element.fieldId || `resposta_${index + 1}`
+        }
+      }]
+    };
+    groups.push(questionGroup);
+    
+    // Adicionar variável
+    variables.push({
+      id: nanoid(),
+      name: element.fieldId || `resposta_${index + 1}`,
+      value: "",
+      type: "text"
+    });
+    
+    // Conectar grupos
+    if (index === 0) {
+      // Conectar boas-vindas à primeira pergunta
+      edges.push({
+        id: nanoid(),
+        from: {
+          groupId: welcomeGroup.id,
+          blockId: welcomeGroup.blocks[0].id
+        },
+        to: {
+          groupId: questionGroup.id
+        }
+      });
+    } else {
+      // Conectar pergunta anterior à atual
+      edges.push({
+        id: nanoid(),
+        from: {
+          groupId: groups[index].id,
+          blockId: groups[index].blocks[0].id
+        },
+        to: {
+          groupId: questionGroup.id
+        }
+      });
+    }
+  });
+  
+  // Grupo de finalização
+  const finishGroup = {
+    id: nanoid(),
+    title: "Finalização",
+    graphCoordinates: { x: (multipleChoiceElements.length + 1) * 300, y: 0 },
+    blocks: [{
+      id: nanoid(),
+      type: 'text',
+      content: {
+        richText: [{
+          type: 'p',
+          children: [{
+            text: "Obrigado por participar! 🎉 Suas respostas foram registradas."
+          }]
+        }]
+      }
+    }]
+  };
+  groups.push(finishGroup);
+  
+  // Conectar última pergunta à finalização
+  if (multipleChoiceElements.length > 0) {
+    edges.push({
+      id: nanoid(),
+      from: {
+        groupId: groups[groups.length - 2].id,
+        blockId: groups[groups.length - 2].blocks[0].id
+      },
+      to: {
+        groupId: finishGroup.id
+      }
+    });
+  }
+  
+  return {
+    version: "6.0",
+    name: `Bot - ${quiz.title}`,
+    groups,
+    variables,
+    edges
+  };
+}
+
+/**
+ * Extrai apenas elementos de múltipla escolha do quiz
+ */
+function extractMultipleChoiceElements(quiz: Quiz): QuizElement[] {
+  const multipleChoiceElements: QuizElement[] = [];
+  
+  if (quiz.structure?.pages) {
+    quiz.structure.pages.forEach(page => {
+      page.elements?.forEach(element => {
+        if (element.type === 'multiple_choice') {
+          multipleChoiceElements.push(element);
+        }
+      });
+    });
+  }
+  
+  return multipleChoiceElements;
+}

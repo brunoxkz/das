@@ -7185,6 +7185,29 @@ app.get("/api/whatsapp-extension/pending", verifyJWT, async (req: any, res: Resp
     }
   });
 
+  // Convert Quiz to TypeBot
+  app.get("/api/quiz-to-typebot/:quizId", verifyJWT, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const { quizId } = req.params;
+      
+      // Buscar o quiz
+      const quiz = await storage.getQuiz(quizId, userId);
+      if (!quiz) {
+        return res.status(404).json({ message: "Quiz não encontrado" });
+      }
+
+      // Converter estrutura do quiz para TypeBot usando o typebot-converter
+      const typebotConverter = require('./typebot-converter');
+      const typebotData = typebotConverter.convertQuizToTypebot(quiz);
+      
+      res.json(typebotData);
+    } catch (error) {
+      console.error("❌ ERRO ao converter quiz:", error);
+      res.status(500).json({ message: "Erro ao converter quiz para TypeBot" });
+    }
+  });
+
   // Get specific TypeBot project
   app.get("/api/typebot/projects/:id", verifyJWT, async (req: any, res) => {
     try {

@@ -601,6 +601,32 @@ export default function TypebotPage() {
     });
   };
 
+  // Converter quiz para TypeBot
+  const convertQuizToTypebot = async (quiz: Quiz) => {
+    try {
+      const response = await fetch(`/api/quiz-to-typebot/${quiz.id}`, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+      });
+      
+      if (!response.ok) throw new Error('Erro ao converter quiz');
+      
+      const convertedData = await response.json();
+      
+      // Criar projeto TypeBot com dados convertidos
+      createProjectMutation.mutate({
+        name: `Bot - ${quiz.title}`,
+        description: `Convertido do quiz: ${quiz.title}`,
+        source_quiz_id: quiz.id,
+        typebot_data: JSON.stringify(convertedData)
+      });
+    } catch (error) {
+      console.error('Erro na conversão:', error);
+      alert('Erro ao converter quiz para TypeBot');
+    }
+  };
+
   const createForm = useForm({
     defaultValues: {
       name: "",
@@ -797,6 +823,56 @@ export default function TypebotPage() {
               </div>
             </CardContent>
           </Card>
+        </div>
+
+        {/* Conversão de Quizzes */}
+        <div className="space-y-4">
+          <h2 className="text-2xl font-bold flex items-center">
+            <Target className="h-6 w-6 mr-3 text-green-500" />
+            Converter Quiz para TypeBot
+          </h2>
+          <p className="text-muted-foreground mb-4">
+            Transforme suas perguntas de múltipla escolha em chatbots interativos de forma automática
+          </p>
+          {quizzesQuery.isLoading ? (
+            <div className="text-center py-8">Carregando quizzes...</div>
+          ) : quizzesQuery.data && quizzesQuery.data.length > 0 ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {quizzesQuery.data.map((quiz: Quiz) => (
+                <Card key={quiz.id} className="hover:shadow-md transition-shadow">
+                  <CardHeader>
+                    <CardTitle className="text-base flex items-center">
+                      <MessageSquare className="h-4 w-4 mr-2 text-blue-500" />
+                      {quiz.title}
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-sm text-muted-foreground mb-4">
+                      {quiz.description || 'Quiz com perguntas de múltipla escolha'}
+                    </p>
+                    <Button 
+                      size="sm" 
+                      className="w-full bg-green-500 hover:bg-green-600 text-white"
+                      onClick={() => convertQuizToTypebot(quiz)}
+                      disabled={createProjectMutation.isPending}
+                    >
+                      <Bot className="h-4 w-4 mr-2" />
+                      {createProjectMutation.isPending ? "Convertendo..." : "Converter para Bot"}
+                    </Button>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          ) : (
+            <Card>
+              <CardContent className="text-center py-8">
+                <MessageSquare className="h-8 w-8 mx-auto mb-3 text-muted-foreground" />
+                <p className="text-muted-foreground">
+                  Nenhum quiz encontrado. Crie um quiz primeiro para converter em TypeBot.
+                </p>
+              </CardContent>
+            </Card>
+          )}
         </div>
 
         {/* Lista de Projetos */}
