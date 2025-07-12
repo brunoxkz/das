@@ -56,7 +56,7 @@ interface QuizPreviewProps {
   currentUser?: any;
 }
 
-export default function QuizPreview({ quiz, onClose, onSave, currentUser }: QuizPreviewProps) {
+export function QuizPreview({ quiz, onClose, onSave, currentUser }: QuizPreviewProps) {
   const [currentStep, setCurrentStep] = useState(0);
   const [answers, setAnswers] = useState<Record<string, any>>({});
   const [leadData, setLeadData] = useState({
@@ -508,3 +508,5 @@ export default function QuizPreview({ quiz, onClose, onSave, currentUser }: Quiz
     </div>
   );
 }
+
+export default QuizPreview;
