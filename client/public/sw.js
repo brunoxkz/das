@@ -8,11 +8,8 @@ const STATIC_CACHE = 'vendzz-static-v1';
 const DYNAMIC_CACHE = 'vendzz-dynamic-v1';
 const QUIZ_CACHE = 'vendzz-quiz-v1';
 
-// Arquivos estáticos para cache
+// Arquivos estáticos para cache (reduzido para evitar bloqueios)
 const STATIC_FILES = [
-  '/',
-  '/manifest.json',
-  '/favicon.ico',
   '/offline.html'
 ];
 
@@ -99,8 +96,8 @@ self.addEventListener('fetch', event => {
     return;
   }
   
-  // Ignore requests para outros domínios (exceto APIs)
-  if (url.origin !== location.origin && !url.pathname.startsWith('/api/')) {
+  // Ignore requests para outros domínios e Replit internos
+  if (url.origin !== location.origin || url.hostname.includes('replit.dev')) {
     return;
   }
   

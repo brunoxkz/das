@@ -22,10 +22,12 @@ const app = express();
 // 🔒 CONFIGURAÇÃO DE PROXY PARA RATE LIMITING
 app.set('trust proxy', 1); // Confia no primeiro proxy (necessário para rate limiting no Replit)
 
-// Configurações de segurança para alta performance
+// Configurações de segurança compatíveis com Replit
 app.use(helmet({
   contentSecurityPolicy: false, // Desabilita CSP para dev
-  crossOriginEmbedderPolicy: false
+  crossOriginEmbedderPolicy: false,
+  crossOriginResourcePolicy: false, // Fix para ERR_BLOCKED_BY_RESPONSE
+  crossOriginOpenerPolicy: false
 }));
 
 // Compressão gzip/deflate para reduzir tamanho das respostas
@@ -50,19 +52,20 @@ app.use(express.json({
 
 // Removemos express.urlencoded() para evitar interceptação das requisições JSON do fetch()
 
-// CORS configurado para extensão Chrome
+// CORS e Headers configurados para Replit
 app.use((req, res, next) => {
-  // CORS para extensão Chrome
+  // CORS para extensão Chrome e Replit
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With');
   res.setHeader('Access-Control-Allow-Credentials', 'true');
   
-  // Headers de performance
+  // Headers compatíveis com Replit
   res.setHeader('X-Powered-By', 'Vendzz');
   res.setHeader('X-Content-Type-Options', 'nosniff');
-  res.setHeader('X-Frame-Options', 'SAMEORIGIN');
-  res.setHeader('X-XSS-Protection', '1; mode=block');
+  res.setHeader('X-Frame-Options', 'ALLOWALL'); // Permite embedding no Replit
+  res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin'); // Fix ERR_BLOCKED_BY_RESPONSE
+  res.setHeader('Cross-Origin-Embedder-Policy', 'unsafe-none');
   
   // Cache para assets estáticos
   if (req.url.match(/\.(css|js|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot)$/)) {
