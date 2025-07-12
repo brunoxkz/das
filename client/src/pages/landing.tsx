@@ -205,12 +205,12 @@ export default function Landing() {
               </nav>
             </div>
             <div className="flex items-center space-x-4">
-              <RouterLink href="/auth/login">
+              <RouterLink href="/login">
                 <Button variant="ghost" className="text-gray-300 hover:text-white">
                   Entrar
                 </Button>
               </RouterLink>
-              <RouterLink href="/auth/register">
+              <RouterLink href="/login">
                 <Button className="bg-green-600 hover:bg-green-700">
                   Começar Grátis
                 </Button>
@@ -238,7 +238,7 @@ export default function Landing() {
               remarketing ultra-personalizado, I.A. para vídeos automáticos e sistema Anti-WebView revolucionário.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <RouterLink href="/auth/register">
+              <RouterLink href="/login">
                 <Button size="lg" className="bg-green-600 hover:bg-green-700 text-lg px-8 py-4">
                   <Play className="w-5 h-5 mr-2" />
                   Teste 3 Dias Grátis
@@ -428,7 +428,7 @@ export default function Landing() {
             Junte-se a milhares de empresas que já estão usando a plataforma mais avançada do Brasil
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <RouterLink href="/auth/register">
+            <RouterLink href="/login">
               <Button size="lg" className="bg-green-600 hover:bg-green-700 text-lg px-8 py-4">
                 <Zap className="w-5 h-5 mr-2" />
                 Começar Agora - 3 Dias Grátis
