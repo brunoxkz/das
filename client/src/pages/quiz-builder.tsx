@@ -1682,6 +1682,38 @@ export default function QuizBuilder() {
                     </div>
                   </div>
 
+                  {/* Botão de Salvar Configurações de Pixels */}
+                  {(trackingPixels.length > 0 || (quizData.customHeadScript && quizData.customHeadScript.length > 0) || (quizData.utmTrackingCode && quizData.utmTrackingCode.length > 0)) && (
+                    <div className="pt-4 border-t">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                          <span className="text-sm font-medium text-green-700">Configurações de Pixels Alteradas</span>
+                        </div>
+                        <Button
+                          onClick={handleSaveQuiz}
+                          disabled={isSaving}
+                          className="bg-green-600 hover:bg-green-700 text-white"
+                        >
+                          {isSaving ? (
+                            <div className="flex items-center gap-2">
+                              <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                              Salvando...
+                            </div>
+                          ) : (
+                            <div className="flex items-center gap-2">
+                              <Save className="w-4 h-4" />
+                              Salvar Pixels
+                            </div>
+                          )}
+                        </Button>
+                      </div>
+                      <p className="text-xs text-gray-600 mt-2">
+                        Clique para salvar as configurações de pixels e scripts personalizados
+                      </p>
+                    </div>
+                  )}
+
                   {/* Informações importantes */}
                   <div className="p-3 bg-blue-50 rounded-lg">
                     <p className="text-sm text-blue-800">
