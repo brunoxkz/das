@@ -66,12 +66,14 @@ import {
   CheckCircle,
   ExternalLink,
   ArrowLeftRight,
-  HelpCircle
+  HelpCircle,
+  QrCode,
+  Hand
 } from "lucide-react";
 
 interface Element {
   id: number;
-  type: "multiple_choice" | "text" | "rating" | "email" | "checkbox" | "date" | "phone" | "number" | "textarea" | "image_upload" | "animated_transition" | "heading" | "paragraph" | "image" | "divider" | "video" | "audio" | "birth_date" | "height" | "current_weight" | "target_weight" | "transition_background" | "transition_text" | "transition_counter" | "transition_loader" | "transition_redirect" | "transition_button" | "spacer" | "game_wheel" | "game_scratch" | "game_color_pick" | "game_brick_break" | "game_memory_cards" | "game_slot_machine" | "continue_button" | "loading_question" | "share_quiz" | "price" | "icon_list" | "testimonials" | "guarantee" | "paypal" | "image_with_text" | "chart" | "metrics" | "before_after" | "pricing_plans" | "stripe_embed" | "hotmart_upsell" | "faq" | "image_carousel";
+  type: "multiple_choice" | "text" | "rating" | "email" | "checkbox" | "date" | "phone" | "number" | "textarea" | "image_upload" | "animated_transition" | "heading" | "paragraph" | "image" | "divider" | "video" | "audio" | "birth_date" | "height" | "current_weight" | "target_weight" | "transition_background" | "transition_text" | "transition_counter" | "transition_loader" | "transition_redirect" | "transition_button" | "spacer" | "game_wheel" | "game_scratch" | "game_color_pick" | "game_brick_break" | "game_memory_cards" | "game_slot_machine" | "continue_button" | "loading_question" | "share_quiz" | "price" | "icon_list" | "testimonials" | "guarantee" | "paypal" | "image_with_text" | "chart" | "metrics" | "before_after" | "pricing_plans" | "stripe_embed" | "hotmart_upsell" | "faq" | "image_carousel" | "pix_payment" | "facial_reading" | "palm_reading";
   content: string;
   question?: string;
   description?: string;
@@ -602,6 +604,40 @@ interface Element {
   hotmartTimerEndDate?: string;
   hotmartStyle?: "card" | "banner" | "popup" | "minimal";
   hotmartAnimation?: boolean;
+
+  // Propriedades específicas para PIX Payment
+  pixKey?: string;
+  pixAmount?: number;
+  pixDescription?: string;
+  pixRecipientName?: string;
+  pixCity?: string;
+  pixButtonText?: string;
+  pixButtonStyle?: "default" | "gradient" | "outline" | "minimal";
+  pixButtonSize?: "small" | "medium" | "large";
+  pixButtonColor?: string;
+  pixTextColor?: string;
+  pixQrSize?: "small" | "medium" | "large";
+  pixQrPosition?: "center" | "left" | "right";
+  pixShowKey?: boolean;
+  pixShowCopy?: boolean;
+  pixShowInstructions?: boolean;
+  pixExpiration?: number;
+  pixAutoClose?: boolean;
+  pixPlaySound?: boolean;
+  
+  // Campos específicos para Leitura Facial
+  facialTitle?: string;
+  facialDescription?: string;
+  facialMessage?: string;
+  facialButtonText?: string;
+  facialButtonColor?: string;
+  
+  // Campos específicos para Leitura de Mãos
+  palmTitle?: string;
+  palmDescription?: string;
+  palmMessage?: string;
+  palmButtonText?: string;
+  palmButtonColor?: string;
 }
 
 interface QuizPage {
@@ -834,6 +870,8 @@ export function PageEditorHorizontal({
         { type: "faq", label: "FAQ", icon: <HelpCircle className="w-4 h-4" /> },
         { type: "image_with_text", label: "Imagem com Texto", icon: <ImageIcon className="w-4 h-4" /> },
         { type: "image_carousel", label: "Carrossel", icon: <ImageIcon className="w-4 h-4" /> },
+        { type: "facial_reading", label: "Leitura Facial", icon: <Eye className="w-4 h-4" /> },
+        { type: "palm_reading", label: "Leitura de Mãos", icon: <Hand className="w-4 h-4" /> },
       ]
     },
     {
@@ -858,6 +896,7 @@ export function PageEditorHorizontal({
         { type: "pricing_plans", label: "Planos", icon: <CreditCard className="w-4 h-4" /> },
         { type: "stripe_embed", label: "Stripe", icon: <Shield className="w-4 h-4" /> },
         { type: "paypal", label: "PayPal", icon: <CreditCard className="w-4 h-4" /> },
+        { type: "pix_payment", label: "PIX Direto", icon: <QrCode className="w-4 h-4" /> },
         { type: "hotmart_upsell", label: "Upsell Hotmart", icon: <Target className="w-4 h-4" /> },
       ]
     }
@@ -1079,7 +1118,7 @@ const gameElementCategories = [
     const baseElement: Element = {
       id: Date.now(),
       type,
-      content: type === "heading" ? "Novo título" : type === "paragraph" ? "Novo parágrafo" : type === "continue_button" ? "Continuar" : "",
+      content: type === "heading" ? "Novo título" : type === "paragraph" ? "Novo parágrafo" : type === "continue_button" ? "Continuar" : type === "facial_reading" ? "Leitura Facial" : type === "palm_reading" ? "Leitura de Mãos" : "",
       question: undefined,
       options: type === "multiple_choice" ? ["Opção 1", "Opção 2"] : undefined,
       required: false,
@@ -1139,6 +1178,20 @@ const gameElementCategories = [
         percentageColor: "#6B7280",
         additionalText: "",
         additionalTextColor: "#9CA3AF"
+      }),
+      ...(type === "facial_reading" && {
+        facialTitle: "Leitura Facial",
+        facialDescription: "Vamos analisar suas características faciais para revelar insights únicos sobre sua personalidade",
+        facialMessage: "Sua análise facial revelou traços de liderança e criatividade únicos!",
+        facialButtonText: "Iniciar Leitura Facial",
+        facialButtonColor: "#3B82F6"
+      }),
+      ...(type === "palm_reading" && {
+        palmTitle: "Leitura de Mãos",
+        palmDescription: "Vamos analisar as linhas da sua mão para revelar seu destino e características únicas",
+        palmMessage: "As linhas da sua mão revelam uma vida longa e próspera com grandes oportunidades!",
+        palmButtonText: "Iniciar Leitura de Mãos",
+        palmButtonColor: "#A855F7"
       })
     };
 
@@ -8504,6 +8557,382 @@ const gameElementCategories = [
                           onChange={(e) => updateElement(selectedElementData.id, { guaranteeSubtitle: e.target.value })}
                           placeholder="Ex: Sem riscos, total tranquilidade"
                           className="text-xs mt-1"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {selectedElementData.type === "pix_payment" && (
+                <div className="space-y-4 max-h-96 overflow-y-auto">
+                  <div className="bg-green-50 p-3 rounded-lg">
+                    <h4 className="text-sm font-semibold text-green-800 mb-2">💳 PIX Direto</h4>
+                    <p className="text-xs text-green-700">
+                      Botão que gera QR Code PIX para pagamento instantâneo
+                    </p>
+                  </div>
+
+                  <div className="border-b pb-4">
+                    <h5 className="font-semibold text-sm mb-3">💰 Configurações PIX</h5>
+                    
+                    <div className="space-y-3">
+                      <div>
+                        <Label>Chave PIX</Label>
+                        <Input
+                          value={selectedElementData.pixKey || ""}
+                          onChange={(e) => updateElement(selectedElementData.id, { pixKey: e.target.value })}
+                          placeholder="Ex: contato@empresa.com ou CPF/CNPJ"
+                          className="mt-1"
+                        />
+                      </div>
+
+                      <div>
+                        <Label>Valor (R$)</Label>
+                        <Input
+                          type="number"
+                          value={selectedElementData.pixAmount || ""}
+                          onChange={(e) => updateElement(selectedElementData.id, { pixAmount: parseFloat(e.target.value) || 0 })}
+                          placeholder="Ex: 29.90"
+                          className="mt-1"
+                          step="0.01"
+                          min="0"
+                        />
+                      </div>
+
+                      <div>
+                        <Label>Descrição do Pagamento</Label>
+                        <Input
+                          value={selectedElementData.pixDescription || ""}
+                          onChange={(e) => updateElement(selectedElementData.id, { pixDescription: e.target.value })}
+                          placeholder="Ex: Compra do produto X"
+                          className="mt-1"
+                        />
+                      </div>
+
+                      <div>
+                        <Label>Nome do Beneficiário</Label>
+                        <Input
+                          value={selectedElementData.pixRecipientName || ""}
+                          onChange={(e) => updateElement(selectedElementData.id, { pixRecipientName: e.target.value })}
+                          placeholder="Ex: João Silva"
+                          className="mt-1"
+                        />
+                      </div>
+
+                      <div>
+                        <Label>Cidade</Label>
+                        <Input
+                          value={selectedElementData.pixCity || ""}
+                          onChange={(e) => updateElement(selectedElementData.id, { pixCity: e.target.value })}
+                          placeholder="Ex: São Paulo"
+                          className="mt-1"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="border-b pb-4">
+                    <h5 className="font-semibold text-sm mb-3">🎨 Aparência</h5>
+                    
+                    <div className="space-y-3">
+                      <div>
+                        <Label>Texto do Botão</Label>
+                        <Input
+                          value={selectedElementData.pixButtonText || "PAGAR NO PIX"}
+                          onChange={(e) => updateElement(selectedElementData.id, { pixButtonText: e.target.value })}
+                          placeholder="Ex: PAGAR NO PIX"
+                          className="mt-1"
+                        />
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-3">
+                        <div>
+                          <Label>Estilo do Botão</Label>
+                          <select 
+                            className="w-full px-2 py-1 border rounded text-xs mt-1"
+                            value={selectedElementData.pixButtonStyle || "default"}
+                            onChange={(e) => updateElement(selectedElementData.id, { pixButtonStyle: e.target.value })}
+                          >
+                            <option value="default">Padrão</option>
+                            <option value="gradient">Gradiente</option>
+                            <option value="outline">Contorno</option>
+                            <option value="minimal">Minimalista</option>
+                          </select>
+                        </div>
+
+                        <div>
+                          <Label>Tamanho</Label>
+                          <select 
+                            className="w-full px-2 py-1 border rounded text-xs mt-1"
+                            value={selectedElementData.pixButtonSize || "medium"}
+                            onChange={(e) => updateElement(selectedElementData.id, { pixButtonSize: e.target.value })}
+                          >
+                            <option value="small">Pequeno</option>
+                            <option value="medium">Médio</option>
+                            <option value="large">Grande</option>
+                          </select>
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-3">
+                        <div>
+                          <Label className="text-xs">Cor do Botão</Label>
+                          <input
+                            type="color"
+                            value={selectedElementData.pixButtonColor || "#00d4aa"}
+                            onChange={(e) => updateElement(selectedElementData.id, { pixButtonColor: e.target.value })}
+                            className="w-full h-8 border rounded"
+                          />
+                        </div>
+                        
+                        <div>
+                          <Label className="text-xs">Cor do Texto</Label>
+                          <input
+                            type="color"
+                            value={selectedElementData.pixTextColor || "#ffffff"}
+                            onChange={(e) => updateElement(selectedElementData.id, { pixTextColor: e.target.value })}
+                            className="w-full h-8 border rounded"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="border-b pb-4">
+                    <h5 className="font-semibold text-sm mb-3">📱 QR Code</h5>
+                    
+                    <div className="space-y-3">
+                      <div className="grid grid-cols-2 gap-3">
+                        <div>
+                          <Label>Tamanho do QR</Label>
+                          <select 
+                            className="w-full px-2 py-1 border rounded text-xs mt-1"
+                            value={selectedElementData.pixQrSize || "medium"}
+                            onChange={(e) => updateElement(selectedElementData.id, { pixQrSize: e.target.value })}
+                          >
+                            <option value="small">Pequeno (150px)</option>
+                            <option value="medium">Médio (200px)</option>
+                            <option value="large">Grande (250px)</option>
+                          </select>
+                        </div>
+
+                        <div>
+                          <Label>Posição do QR</Label>
+                          <select 
+                            className="w-full px-2 py-1 border rounded text-xs mt-1"
+                            value={selectedElementData.pixQrPosition || "center"}
+                            onChange={(e) => updateElement(selectedElementData.id, { pixQrPosition: e.target.value })}
+                          >
+                            <option value="center">Centro</option>
+                            <option value="left">Esquerda</option>
+                            <option value="right">Direita</option>
+                          </select>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center justify-between">
+                        <Label className="text-xs">Mostrar Chave PIX</Label>
+                        <input
+                          type="checkbox"
+                          checked={selectedElementData.pixShowKey !== false}
+                          onChange={(e) => updateElement(selectedElementData.id, { pixShowKey: e.target.checked })}
+                          className="h-4 w-4"
+                        />
+                      </div>
+
+                      <div className="flex items-center justify-between">
+                        <Label className="text-xs">Botão Copiar Chave</Label>
+                        <input
+                          type="checkbox"
+                          checked={selectedElementData.pixShowCopy !== false}
+                          onChange={(e) => updateElement(selectedElementData.id, { pixShowCopy: e.target.checked })}
+                          className="h-4 w-4"
+                        />
+                      </div>
+
+                      <div className="flex items-center justify-between">
+                        <Label className="text-xs">Instruções de Pagamento</Label>
+                        <input
+                          type="checkbox"
+                          checked={selectedElementData.pixShowInstructions !== false}
+                          onChange={(e) => updateElement(selectedElementData.id, { pixShowInstructions: e.target.checked })}
+                          className="h-4 w-4"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div>
+                    <h5 className="font-semibold text-sm mb-3">⚙️ Configurações Avançadas</h5>
+                    
+                    <div className="space-y-3">
+                      <div>
+                        <Label>Tempo de Expiração (minutos)</Label>
+                        <Input
+                          type="number"
+                          value={selectedElementData.pixExpiration || 30}
+                          onChange={(e) => updateElement(selectedElementData.id, { pixExpiration: parseInt(e.target.value) || 30 })}
+                          placeholder="30"
+                          className="mt-1"
+                          min="1"
+                          max="1440"
+                        />
+                      </div>
+
+                      <div className="flex items-center justify-between">
+                        <Label className="text-xs">Fechar Modal Automaticamente</Label>
+                        <input
+                          type="checkbox"
+                          checked={selectedElementData.pixAutoClose !== false}
+                          onChange={(e) => updateElement(selectedElementData.id, { pixAutoClose: e.target.checked })}
+                          className="h-4 w-4"
+                        />
+                      </div>
+
+                      <div className="flex items-center justify-between">
+                        <Label className="text-xs">Som de Confirmação</Label>
+                        <input
+                          type="checkbox"
+                          checked={selectedElementData.pixPlaySound !== false}
+                          onChange={(e) => updateElement(selectedElementData.id, { pixPlaySound: e.target.checked })}
+                          className="h-4 w-4"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Facial Reading Properties */}
+              {selectedElementData.type === "facial_reading" && (
+                <div className="space-y-4 max-h-96 overflow-y-auto">
+                  <div className="bg-blue-50 p-3 rounded-lg">
+                    <h4 className="text-sm font-semibold text-blue-800 mb-2">👁️ Leitura Facial</h4>
+                    <p className="text-xs text-blue-700">
+                      Captura foto da face do usuário para análise personalizada
+                    </p>
+                  </div>
+
+                  <div className="border-b pb-4">
+                    <h5 className="font-semibold text-sm mb-3">📝 Conteúdo</h5>
+                    
+                    <div className="space-y-3">
+                      <div>
+                        <Label>Título</Label>
+                        <Input
+                          value={selectedElementData.facialTitle || ""}
+                          onChange={(e) => updateElement(selectedElementData.id, { facialTitle: e.target.value })}
+                          placeholder="Leitura Facial"
+                          className="mt-1"
+                        />
+                      </div>
+
+                      <div>
+                        <Label>Descrição</Label>
+                        <Input
+                          value={selectedElementData.facialDescription || ""}
+                          onChange={(e) => updateElement(selectedElementData.id, { facialDescription: e.target.value })}
+                          placeholder="Vamos analisar suas características faciais..."
+                          className="mt-1"
+                        />
+                      </div>
+
+                      <div>
+                        <Label>Mensagem do Resultado</Label>
+                        <Input
+                          value={selectedElementData.facialMessage || ""}
+                          onChange={(e) => updateElement(selectedElementData.id, { facialMessage: e.target.value })}
+                          placeholder="Sua análise facial revelou..."
+                          className="mt-1"
+                        />
+                      </div>
+
+                      <div>
+                        <Label>Texto do Botão</Label>
+                        <Input
+                          value={selectedElementData.facialButtonText || ""}
+                          onChange={(e) => updateElement(selectedElementData.id, { facialButtonText: e.target.value })}
+                          placeholder="Iniciar Leitura Facial"
+                          className="mt-1"
+                        />
+                      </div>
+
+                      <div>
+                        <Label>Cor do Botão</Label>
+                        <Input
+                          type="color"
+                          value={selectedElementData.facialButtonColor || "#3B82F6"}
+                          onChange={(e) => updateElement(selectedElementData.id, { facialButtonColor: e.target.value })}
+                          className="mt-1 h-10 w-full"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Palm Reading Properties */}
+              {selectedElementData.type === "palm_reading" && (
+                <div className="space-y-4 max-h-96 overflow-y-auto">
+                  <div className="bg-purple-50 p-3 rounded-lg">
+                    <h4 className="text-sm font-semibold text-purple-800 mb-2">🤚 Leitura de Mãos</h4>
+                    <p className="text-xs text-purple-700">
+                      Captura foto das mãos do usuário para análise de linhas
+                    </p>
+                  </div>
+
+                  <div className="border-b pb-4">
+                    <h5 className="font-semibold text-sm mb-3">📝 Conteúdo</h5>
+                    
+                    <div className="space-y-3">
+                      <div>
+                        <Label>Título</Label>
+                        <Input
+                          value={selectedElementData.palmTitle || ""}
+                          onChange={(e) => updateElement(selectedElementData.id, { palmTitle: e.target.value })}
+                          placeholder="Leitura de Mãos"
+                          className="mt-1"
+                        />
+                      </div>
+
+                      <div>
+                        <Label>Descrição</Label>
+                        <Input
+                          value={selectedElementData.palmDescription || ""}
+                          onChange={(e) => updateElement(selectedElementData.id, { palmDescription: e.target.value })}
+                          placeholder="Vamos analisar as linhas da sua mão..."
+                          className="mt-1"
+                        />
+                      </div>
+
+                      <div>
+                        <Label>Mensagem do Resultado</Label>
+                        <Input
+                          value={selectedElementData.palmMessage || ""}
+                          onChange={(e) => updateElement(selectedElementData.id, { palmMessage: e.target.value })}
+                          placeholder="As linhas da sua mão revelam..."
+                          className="mt-1"
+                        />
+                      </div>
+
+                      <div>
+                        <Label>Texto do Botão</Label>
+                        <Input
+                          value={selectedElementData.palmButtonText || ""}
+                          onChange={(e) => updateElement(selectedElementData.id, { palmButtonText: e.target.value })}
+                          placeholder="Iniciar Leitura de Mãos"
+                          className="mt-1"
+                        />
+                      </div>
+
+                      <div>
+                        <Label>Cor do Botão</Label>
+                        <Input
+                          type="color"
+                          value={selectedElementData.palmButtonColor || "#A855F7"}
+                          onChange={(e) => updateElement(selectedElementData.id, { palmButtonColor: e.target.value })}
+                          className="mt-1 h-10 w-full"
                         />
                       </div>
                     </div>
