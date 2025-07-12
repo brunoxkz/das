@@ -595,10 +595,330 @@ export default function QuizPreview({ quiz, onClose, onSave, currentUser }: Quiz
             )}
           </div>
         );
+
+      case 'snake_game':
+        // Usando useEffect para inicializar o jogo depois que o componente é renderizado
+        useEffect(() => {
+          if (element.id) {
+            initializeSnakeGame(element.id);
+          }
+        }, [element.id]);
+        
+        return (
+          <div className="snake-game-container">
+            <div className="snake-game-header">
+              {element.snakeTitle || "SNAKE"}
+            </div>
+            
+            <div className="snake-table" id={`snake-table-${element.id}`}></div>
+            
+            <div className="snake-modal" id={`snake-modal-${element.id}`}>
+              <div className="snake-modal-content">
+                <div 
+                  className="snake-start-btn" 
+                  id={`snake-start-${element.id}`}
+                  onClick={() => startSnakeGame(element.id)}
+                >
+                  <span>Jogar Snake</span>
+                </div>
+                <div className="snake-controls">
+                  <p>Use as setas do teclado ou WASD</p>
+                  <p>Colete comida roxa e cresça!</p>
+                  <p>Não bata nas paredes ou em você mesmo</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        );
         
       default:
         return null;
     }
+  };
+
+  // Funções do Snake Game
+  const initializeSnakeGame = (elementId: number) => {
+    const gameState = {
+      direction: "right",
+      position: [[6,10], [7,10], [8,10], [9,10], [10,10]],
+      interval: 200,
+      food: 0,
+      score: 0,
+      time: 0,
+      canTurn: 0,
+      rowsCols: 21,
+      foodPos: [0, 0],
+      gameInterval: null as NodeJS.Timeout | null,
+      boxes: [] as HTMLElement[]
+    };
+    
+    // Armazenar estado do jogo
+    (window as any)[`snakeGame_${elementId}`] = gameState;
+    
+    // Criar tabuleiro
+    createSnakeTable(elementId);
+    
+    // Adicionar event listeners
+    setupSnakeControls(elementId);
+  };
+
+  const createSnakeTable = (elementId: number) => {
+    const snakeTable = document.getElementById(`snake-table-${elementId}`);
+    if (!snakeTable) return;
+    
+    const gameState = (window as any)[`snakeGame_${elementId}`];
+    if (!gameState) return;
+    
+    snakeTable.innerHTML = "";
+    
+    // Criar boxes do tabuleiro
+    for (let i = 0; i < gameState.rowsCols * gameState.rowsCols; i++) {
+      const box = document.createElement("div");
+      box.classList.add("snake-box");
+      snakeTable.appendChild(box);
+    }
+    
+    // Criar barra de status
+    const statusBar = document.createElement("div");
+    statusBar.classList.add("snake-status");
+    statusBar.innerHTML = `
+      <span>Score: <span class="snake-score" id="snake-score-${elementId}">0</span></span>
+      <span>Snake Game</span>
+    `;
+    snakeTable.appendChild(statusBar);
+    
+    // Atualizar boxes
+    gameState.boxes = Array.from(snakeTable.getElementsByClassName("snake-box"));
+  };
+
+  const setupSnakeControls = (elementId: number) => {
+    const handleKeyPress = (e: KeyboardEvent) => {
+      const gameState = (window as any)[`snakeGame_${elementId}`];
+      if (!gameState || !gameState.canTurn || gameState.time === 0) return;
+      
+      switch (e.keyCode) {
+        case 37: // left
+        case 65: // A
+          if (gameState.direction === "right") return;
+          gameState.direction = "left";
+          break;
+        case 38: // up  
+        case 87: // W
+          if (gameState.direction === "down") return;
+          gameState.direction = "up";
+          break;
+        case 39: // right
+        case 68: // D
+          if (gameState.direction === "left") return;
+          gameState.direction = "right";
+          break;
+        case 40: // down
+        case 83: // S
+          if (gameState.direction === "up") return;
+          gameState.direction = "down";
+          break;
+        default:
+          return;
+      }
+      gameState.canTurn = 0;
+    };
+    
+    document.addEventListener("keydown", handleKeyPress);
+    
+    // Armazenar função para limpeza posterior
+    (window as any)[`snakeKeyHandler_${elementId}`] = handleKeyPress;
+  };
+
+  const startSnakeGame = (elementId: number) => {
+    const gameState = (window as any)[`snakeGame_${elementId}`];
+    if (!gameState) return;
+    
+    const modal = document.getElementById(`snake-modal-${elementId}`);
+    if (modal) {
+      modal.classList.add("snake-hidden");
+    }
+    
+    // Resetar estado do jogo
+    gameState.direction = "right";
+    gameState.position = [[6,10], [7,10], [8,10], [9,10], [10,10]];
+    gameState.interval = 200;
+    gameState.food = 0;
+    gameState.score = 0;
+    gameState.time = 1;
+    gameState.canTurn = 0;
+    
+    // Iniciar jogo
+    renderSnake(elementId);
+    generateFood(elementId);
+    
+    // Iniciar loop do jogo
+    gameState.gameInterval = setInterval(() => {
+      moveSnake(elementId);
+    }, gameState.interval);
+  };
+
+  const moveSnake = (elementId: number) => {
+    const gameState = (window as any)[`snakeGame_${elementId}`];
+    if (!gameState) return;
+    
+    // Verificar colisões
+    if (checkFoodCollision(elementId)) {
+      gameState.position.unshift(gameState.position[0]);
+      generateFood(elementId);
+      gameState.food++;
+      gameState.score += gameState.food;
+      
+      // Atualizar score
+      const scoreElement = document.getElementById(`snake-score-${elementId}`);
+      if (scoreElement) {
+        scoreElement.textContent = gameState.score.toString();
+      }
+      
+      // Aumentar velocidade
+      clearInterval(gameState.gameInterval);
+      gameState.interval = Math.max(gameState.interval - gameState.interval/40, 50);
+      gameState.gameInterval = setInterval(() => {
+        moveSnake(elementId);
+      }, gameState.interval);
+    }
+    
+    if (checkBorderCollision(elementId) || checkSelfCollision(elementId)) {
+      endSnakeGame(elementId);
+      return;
+    }
+    
+    // Atualizar posições
+    updateSnakePosition(elementId);
+    renderSnake(elementId);
+    gameState.canTurn = 1;
+  };
+
+  const updateSnakePosition = (elementId: number) => {
+    const gameState = (window as any)[`snakeGame_${elementId}`];
+    if (!gameState) return;
+    
+    // Remover cauda
+    const tailIndex = gameState.position[0][0] + gameState.position[0][1] * gameState.rowsCols;
+    if (gameState.boxes[tailIndex]) {
+      gameState.boxes[tailIndex].classList.remove("snake-body");
+    }
+    gameState.position.shift();
+    
+    // Adicionar nova cabeça
+    const head = gameState.position[gameState.position.length - 1];
+    let newHead = [head[0], head[1]];
+    
+    switch (gameState.direction) {
+      case "left":
+        newHead = [head[0] - 1, head[1]];
+        break;
+      case "up":
+        newHead = [head[0], head[1] - 1];
+        break;
+      case "right":
+        newHead = [head[0] + 1, head[1]];
+        break;
+      case "down":
+        newHead = [head[0], head[1] + 1];
+        break;
+    }
+    
+    gameState.position.push(newHead);
+  };
+
+  const checkBorderCollision = (elementId: number) => {
+    const gameState = (window as any)[`snakeGame_${elementId}`];
+    if (!gameState) return false;
+    
+    const head = gameState.position[gameState.position.length - 1];
+    return (
+      ((head[0] === gameState.rowsCols - 1) && (gameState.direction === "right")) ||
+      ((head[0] === 0) && (gameState.direction === "left")) ||
+      ((head[1] === gameState.rowsCols - 1) && (gameState.direction === "down")) ||
+      ((head[1] === 0) && (gameState.direction === "up"))
+    );
+  };
+
+  const checkSelfCollision = (elementId: number) => {
+    const gameState = (window as any)[`snakeGame_${elementId}`];
+    if (!gameState) return false;
+    
+    const head = gameState.position[gameState.position.length - 1];
+    for (let i = 0; i < gameState.position.length - 1; i++) {
+      if (head[0] === gameState.position[i][0] && head[1] === gameState.position[i][1]) {
+        return true;
+      }
+    }
+    return false;
+  };
+
+  const checkFoodCollision = (elementId: number) => {
+    const gameState = (window as any)[`snakeGame_${elementId}`];
+    if (!gameState) return false;
+    
+    const head = gameState.position[gameState.position.length - 1];
+    return (head[0] === gameState.foodPos[0] && head[1] === gameState.foodPos[1]);
+  };
+
+  const generateFood = (elementId: number) => {
+    const gameState = (window as any)[`snakeGame_${elementId}`];
+    if (!gameState) return;
+    
+    let randomX, randomY, randomIndex;
+    
+    do {
+      randomX = Math.floor(Math.random() * gameState.rowsCols);
+      randomY = Math.floor(Math.random() * gameState.rowsCols);
+      randomIndex = randomX + randomY * gameState.rowsCols;
+    } while (gameState.boxes[randomIndex] && gameState.boxes[randomIndex].classList.contains("snake-body"));
+    
+    // Remover comida anterior
+    gameState.boxes.forEach(box => box.classList.remove("snake-food"));
+    
+    // Adicionar nova comida
+    if (gameState.boxes[randomIndex]) {
+      gameState.boxes[randomIndex].classList.add("snake-food");
+      gameState.foodPos = [randomX, randomY];
+    }
+  };
+
+  const renderSnake = (elementId: number) => {
+    const gameState = (window as any)[`snakeGame_${elementId}`];
+    if (!gameState) return;
+    
+    // Limpar snake anterior
+    gameState.boxes.forEach(box => box.classList.remove("snake-body"));
+    
+    // Renderizar snake atual
+    gameState.position.forEach(pos => {
+      const index = pos[0] + pos[1] * gameState.rowsCols;
+      if (gameState.boxes[index]) {
+        gameState.boxes[index].classList.add("snake-body");
+      }
+    });
+  };
+
+  const endSnakeGame = (elementId: number) => {
+    const gameState = (window as any)[`snakeGame_${elementId}`];
+    if (!gameState) return;
+    
+    clearInterval(gameState.gameInterval);
+    
+    const modal = document.getElementById(`snake-modal-${elementId}`);
+    const startBtn = document.getElementById(`snake-start-${elementId}`);
+    
+    if (modal && startBtn) {
+      modal.classList.remove("snake-hidden");
+      startBtn.innerHTML = `<span>${gameState.score} Pontos!</span>`;
+      
+      setTimeout(() => {
+        startBtn.innerHTML = `<span>Jogar Snake</span>`;
+      }, 2000);
+    }
+    
+    // Resetar estado
+    gameState.time = 0;
+    gameState.canTurn = 0;
   };
 
   // Função principal de renderização
