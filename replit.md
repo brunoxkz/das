@@ -215,6 +215,9 @@ Changelog:
   * Hover com fundo verde (hsl(142, 76%, 36%)) implementado para todas as opções de navegação
   * Navegação mais clean sem elementos visuais desnecessários
   * Mantida funcionalidade completa com melhor experiência visual
+  * Corrigido problema de fontes inconsistentes entre DASHBOARD/TUTORIAIS e outros itens
+  * Resolvido bug onde texto da sidebar desaparecia durante hover - texto permanece visível
+  * Fontes padronizadas para todos os itens de navegação com uppercase e letter-spacing
 - July 12, 2025. VOICE CALLING INTEGRADO NA SIDEBAR E TYPEBOT DESATIVADO - Finalização da navegação e limpeza de funcionalidades:
   * Adicionado Voice Calling na seção Marketing da sidebar com ícone Phone e badge 📞
   * Sistema TypeBot completamente desativado conforme solicitação do usuário

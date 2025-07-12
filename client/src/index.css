@@ -53,6 +53,34 @@ body.dark {
   color: white !important;
 }
 
+/* Navigation items hover effect - prevent text disappearing */
+.vendzz-sidebar .nav-item:hover span {
+  color: white !important;
+  opacity: 1 !important;
+}
+
+/* Standardize font style for all navigation items */
+.vendzz-sidebar .nav-item span {
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+/* Category header hover effect - prevent text disappearing */
+.vendzz-sidebar .category-header:hover span {
+  color: white !important;
+  opacity: 1 !important;
+}
+
+/* Standardize font style for category headers */
+.vendzz-sidebar .category-header span {
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
 /* Collapsed sidebar fixes */
 .vendzz-sidebar.collapsed {
   width: 4rem !important;
