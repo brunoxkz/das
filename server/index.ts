@@ -15,6 +15,7 @@ import {
   blacklistMiddleware 
 } from "./advanced-security";
 import UltraScaleProcessor from "./ultra-scale-processor";
+import { quizCacheOptimizer } from "./quiz-cache-optimizer";
 
 const app = express();
 
@@ -314,6 +315,10 @@ async function startServer() {
     // Initialize security system primeiro
     await initAdvancedSecurity();
     console.log('🔒 Sistema de segurança avançado inicializado');
+    
+    // Inicializar cache optimizer para performance ultra-rápida
+    await quizCacheOptimizer.initialize();
+    console.log('⚡ Sistema de cache ultra-rápido inicializado');
     
     // Email service já está disponível
     console.log('📧 Serviço de email disponível');

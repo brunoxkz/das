@@ -1114,46 +1114,106 @@ export function registerSQLiteRoutes(app: Express): Server {
     }
   });
 
-  // Submit final quiz response (public endpoint - finaliza o quiz)
-  app.post("/api/quizzes/:id/submit", async (req, res) => {
-    try {
-      const quiz = await storage.getQuiz(req.params.id);
+  // Submit final quiz response (ULTRA-OTIMIZADO para alto volume)
+  app.post("/api/quizzes/:id/submit", 
+    // Rate limiting inteligente
+    async (req, res, next) => {
+      const startTime = Date.now();
       
-      if (!quiz || !quiz.isPublished) {
-        return res.status(404).json({ message: "Quiz not found or not published" });
-      }
-
-      const responseData = {
-        quizId: req.params.id,
-        responses: req.body.responses,
-        metadata: {
-          ...req.body.metadata,
-          isPartial: false,
-          completedAt: new Date().toISOString(),
-          userAgent: req.headers['user-agent'],
-          ip: req.ip || req.connection.remoteAddress,
-          totalPages: req.body.totalPages || 0,
-          completionPercentage: 100,
-          timeSpent: req.body.timeSpent || 0, // tempo em segundos
-          leadData: req.body.leadData || {} // dados de lead capturados
+      try {
+        // Rate limiting por IP para evitar spam
+        const ip = req.ip || req.connection.remoteAddress;
+        const submissionKey = `submission:${ip}:${req.params.id}`;
+        
+        const recentSubmission = cache.get(submissionKey);
+        if (recentSubmission) {
+          return res.status(429).json({ 
+            error: 'Rate limit exceeded. Try again in 10 seconds.',
+            retryAfter: 10 
+          });
         }
-      };
 
-      const response = await storage.createQuizResponse(responseData);
+        // Marcar submissão recente (10 segundos)
+        cache.set(submissionKey, Date.now(), 10);
 
-      // Invalidar cache de respostas
-      cache.del(`responses-${req.params.id}`);
+        // Validação ultra-rápida do payload
+        if (!req.body || typeof req.body !== 'object') {
+          return res.status(400).json({ error: 'Invalid request body' });
+        }
+
+        if (!req.body.responses || !Array.isArray(req.body.responses)) {
+          return res.status(400).json({ error: 'Invalid responses format' });
+        }
+
+        // Headers de resposta otimizada
+        res.set({
+          'Cache-Control': 'no-cache, no-store, must-revalidate',
+          'X-Response-Time': `${Date.now() - startTime}ms`
+        });
+
+        req.submissionStartTime = startTime;
+        next();
+
+      } catch (error) {
+        console.error('❌ Erro na validação de submissão:', error);
+        res.status(500).json({ error: 'Internal server error' });
+      }
+    },
+    
+    async (req, res) => {
+      const startTime = req.submissionStartTime || Date.now();
       
-      res.status(201).json({ 
-        success: true, 
-        responseId: response.id,
-        message: "Quiz finalizado com sucesso"
-      });
-    } catch (error) {
-      console.error("Submit final response error:", error);
-      res.status(500).json({ message: "Failed to submit final response" });
+      try {
+        const quiz = await storage.getQuiz(req.params.id);
+        
+        if (!quiz || !quiz.isPublished) {
+          return res.status(404).json({ message: "Quiz not found or not published" });
+        }
+
+        const responseData = {
+          quizId: req.params.id,
+          responses: req.body.responses,
+          metadata: {
+            ...req.body.metadata,
+            isPartial: false,
+            completedAt: new Date().toISOString(),
+            userAgent: req.headers['user-agent'],
+            ip: req.ip || req.connection.remoteAddress,
+            totalPages: req.body.totalPages || 0,
+            completionPercentage: 100,
+            timeSpent: req.body.timeSpent || 0,
+            leadData: req.body.leadData || {},
+            isComplete: true // Flag explícita para sistemas de campanha
+          }
+        };
+
+        // Salvar resposta com prioridade (operação crítica)
+        const response = await storage.createQuizResponse(responseData);
+
+        // Invalidar caches relacionados APÓS salvar
+        Promise.resolve().then(() => {
+          cache.del(`responses-${req.params.id}`);
+          cache.del(`quiz-analytics-${req.params.id}`);
+          cache.del(`quiz-leads-${req.params.id}`);
+        });
+
+        // Resposta IMEDIATA ao usuário
+        const responseTime = Date.now() - startTime;
+        res.set('X-Total-Response-Time', `${responseTime}ms`);
+        
+        res.status(201).json({ 
+          success: true, 
+          responseId: response.id,
+          message: "Quiz finalizado com sucesso",
+          processingTime: responseTime
+        });
+
+      } catch (error) {
+        console.error("Submit final response error:", error);
+        res.status(500).json({ message: "Failed to submit final response" });
+      }
     }
-  });
+  );
 
   // Submit quiz response (mantém compatibilidade com endpoint antigo)
   app.post("/api/quizzes/:id/responses", async (req, res) => {
@@ -1701,27 +1761,86 @@ export function registerSQLiteRoutes(app: Express): Server {
     }
   });
 
-  // Get public quiz (for quiz viewing)
-  app.get("/api/quiz/:id/public", async (req, res) => {
-    try {
-      const quiz = await storage.getQuiz(req.params.id);
+  // Get public quiz (ULTRA-OTIMIZADO para carregamento instantâneo)
+  app.get("/api/quiz/:id/public", 
+    // Performance middleware para cache ultra-rápido
+    async (req, res, next) => {
+      const startTime = Date.now();
+      const quizId = req.params.id;
       
-      if (!quiz) {
-        return res.status(404).json({ error: "Quiz não encontrado" });
-      }
+      try {
+        // Headers de performance crítica
+        res.set({
+          'Cache-Control': 'public, max-age=300, stale-while-revalidate=600',
+          'X-Content-Type-Options': 'nosniff',
+          'X-Frame-Options': 'SAMEORIGIN',
+          'X-Powered-By': 'Vendzz-Turbo',
+          'Access-Control-Allow-Origin': '*',
+          'Access-Control-Allow-Methods': 'GET, OPTIONS',
+          'Access-Control-Allow-Headers': 'Content-Type'
+        });
 
-      // Para testes, permitir acesso mesmo quando não está publicado
-      // Verificar isPublished apenas em produção
-      if (!quiz.isPublished && process.env.NODE_ENV === 'production') {
-        return res.status(403).json({ error: "Quiz não publicado" });
-      }
+        // Verificar cache ultra-rápido
+        const cacheKey = `quiz-public-${quizId}`;
+        const cached = cache.get(cacheKey);
+        
+        if (cached) {
+          const responseTime = Date.now() - startTime;
+          res.set({
+            'X-Cache': 'HIT',
+            'X-Response-Time': `${responseTime}ms`
+          });
+          return res.json(cached);
+        }
 
-      res.json(quiz);
-    } catch (error) {
-      console.error("Get public quiz error:", error);
-      res.status(500).json({ error: "Erro ao buscar quiz público" });
+        // Cache miss - marcar tempo e continuar
+        req.cacheStartTime = startTime;
+        req.cacheKey = cacheKey;
+        next();
+
+      } catch (error) {
+        console.error('❌ Erro no middleware quiz:', error);
+        next(error);
+      }
+    },
+    
+    async (req, res) => {
+      const startTime = req.cacheStartTime || Date.now();
+      
+      try {
+        const quiz = await storage.getQuiz(req.params.id);
+        
+        if (!quiz) {
+          return res.status(404).json({ error: "Quiz não encontrado" });
+        }
+
+        // Para testes, permitir acesso mesmo quando não está publicado
+        // Verificar isPublished apenas em produção
+        if (!quiz.isPublished && process.env.NODE_ENV === 'production') {
+          return res.status(403).json({ error: "Quiz não publicado" });
+        }
+
+        // Cache por 5 minutos para próximas requisições
+        if (req.cacheKey) {
+          cache.set(req.cacheKey, quiz, 300); // 5 minutos
+        }
+
+        // Headers de performance
+        const responseTime = Date.now() - startTime;
+        res.set({
+          'X-Cache': 'MISS',
+          'X-Response-Time': `${responseTime}ms`,
+          'ETag': `"quiz-${req.params.id}-${quiz.updatedAt || Date.now()}"`,
+          'Last-Modified': new Date(quiz.updatedAt || Date.now()).toUTCString()
+        });
+
+        res.json(quiz);
+      } catch (error) {
+        console.error("Get public quiz error:", error);
+        res.status(500).json({ error: "Erro ao buscar quiz público" });
+      }
     }
-  });
+  );
 
   // Get quiz stats
   app.get("/api/quizzes/:id/stats", verifyJWT, async (req: any, res) => {

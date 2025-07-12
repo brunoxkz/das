@@ -1,190 +1,355 @@
 /**
- * SISTEMA DE OTIMIZAÇÃO DE PERFORMANCE PARA 100.000+ USUÁRIOS SIMULTÂNEOS
+ * SISTEMA DE OTIMIZAÇÃO ULTRA-RÁPIDA PARA QUIZ PAGES
  * 
- * Este módulo otimiza o sistema de detecção automática de leads
- * mantendo total compatibilidade com todas as funcionalidades existentes
+ * Focado em carregamento instantâneo e zero travamentos
+ * Suporte para milhões de acessos simultâneos
  */
 
-export class PerformanceOptimizer {
-  private static instance: PerformanceOptimizer;
-  private detectionCount = 0;
-  private readonly MAX_DETECTION_CYCLES = 60; // Limite por hora
-  private readonly MAX_CAMPAIGNS_PER_CYCLE = 20; // Máximo 20 campanhas por ciclo
-  private readonly BATCH_SIZE = 3; // Processar 3 campanhas por vez
-  private readonly BATCH_DELAY = 300; // 300ms entre lotes
-  private readonly CYCLE_INTERVAL = 60000; // 1 minuto entre ciclos
+import NodeCache from 'node-cache';
+import { gzipSync, deflateSync } from 'zlib';
 
-  static getInstance(): PerformanceOptimizer {
-    if (!PerformanceOptimizer.instance) {
-      PerformanceOptimizer.instance = new PerformanceOptimizer();
+interface QuizCacheItem {
+  data: any;
+  compressed: Buffer;
+  etag: string;
+  lastModified: number;
+  size: number;
+}
+
+interface PerformanceMetrics {
+  cacheHits: number;
+  cacheMisses: number;
+  avgResponseTime: number;
+  compressionRatio: number;
+  requestsPerSecond: number;
+  errorRate: number;
+}
+
+export class QuizPerformanceOptimizer {
+  private static instance: QuizPerformanceOptimizer;
+  
+  // Cache multi-layer ultra-rápido
+  private quizCache: NodeCache;
+  private responseCache: NodeCache;
+  private compressionCache: Map<string, Buffer> = new Map();
+  
+  // Métricas de performance
+  private metrics: PerformanceMetrics = {
+    cacheHits: 0,
+    cacheMisses: 0,
+    avgResponseTime: 0,
+    compressionRatio: 0,
+    requestsPerSecond: 0,
+    errorRate: 0
+  };
+  
+  // Configurações otimizadas
+  private readonly QUIZ_CACHE_TTL = 300; // 5 minutos
+  private readonly RESPONSE_CACHE_TTL = 10; // 10 segundos
+  private readonly MAX_CACHE_SIZE = 10000; // 10K entradas
+  private readonly COMPRESSION_THRESHOLD = 1024; // 1KB
+
+  static getInstance(): QuizPerformanceOptimizer {
+    if (!QuizPerformanceOptimizer.instance) {
+      QuizPerformanceOptimizer.instance = new QuizPerformanceOptimizer();
     }
-    return PerformanceOptimizer.instance;
+    return QuizPerformanceOptimizer.instance;
+  }
+
+  constructor() {
+    // Cache de quizzes (longa duração)
+    this.quizCache = new NodeCache({
+      stdTTL: this.QUIZ_CACHE_TTL,
+      maxKeys: this.MAX_CACHE_SIZE,
+      useClones: false, // Performance crítica
+      deleteOnExpire: true,
+      checkperiod: 60, // Check a cada minuto
+    });
+
+    // Cache de respostas (curta duração, alta frequência)
+    this.responseCache = new NodeCache({
+      stdTTL: this.RESPONSE_CACHE_TTL,
+      maxKeys: this.MAX_CACHE_SIZE * 2,
+      useClones: false,
+      deleteOnExpire: true,
+      checkperiod: 10, // Check a cada 10 segundos
+    });
+
+    this.initializeOptimizations();
+    this.startMetricsCollection();
   }
 
   /**
-   * Otimiza uma lista de campanhas aplicando limites inteligentes
+   * CACHE ULTRA-RÁPIDO DE QUIZ COM COMPRESSÃO
    */
-  optimizeCampaignList<T>(campaigns: T[], type: string): T[] {
-    if (campaigns.length <= this.MAX_CAMPAIGNS_PER_CYCLE) {
-      return campaigns;
-    }
-
-    // Distribuir campanhas ao longo dos ciclos
-    const cycleIndex = this.detectionCount % Math.ceil(campaigns.length / this.MAX_CAMPAIGNS_PER_CYCLE);
-    const startIndex = cycleIndex * this.MAX_CAMPAIGNS_PER_CYCLE;
-    const endIndex = Math.min(startIndex + this.MAX_CAMPAIGNS_PER_CYCLE, campaigns.length);
+  async getQuizOptimized(quizId: string): Promise<QuizCacheItem | null> {
+    const startTime = Date.now();
     
-    const optimized = campaigns.slice(startIndex, endIndex);
-    console.log(`🔧 OTIMIZAÇÃO ${type}: ${optimized.length}/${campaigns.length} campanhas (ciclo ${cycleIndex + 1})`);
-    
-    return optimized;
-  }
-
-  /**
-   * Processa campanhas em lotes com delay para evitar sobrecarga
-   */
-  async processCampaignsInBatches<T>(
-    campaigns: T[], 
-    processor: (campaign: T) => Promise<void>,
-    type: string
-  ): Promise<void> {
-    for (let i = 0; i < campaigns.length; i += this.BATCH_SIZE) {
-      const batch = campaigns.slice(i, i + this.BATCH_SIZE);
-      const batchNumber = Math.floor(i / this.BATCH_SIZE) + 1;
-      const totalBatches = Math.ceil(campaigns.length / this.BATCH_SIZE);
-      
-      console.log(`⚡ PROCESSANDO LOTE ${type} ${batchNumber}/${totalBatches}: ${batch.length} campanhas`);
-      
-      // Processar lote em paralelo
-      await Promise.all(batch.map(campaign => 
-        processor(campaign).catch(error => {
-          console.error(`❌ ERRO na campanha ${type}:`, error.message);
-        })
-      ));
-      
-      // Delay entre lotes apenas se não for o último
-      if (i + this.BATCH_SIZE < campaigns.length) {
-        await this.delay(this.BATCH_DELAY);
+    try {
+      // Tentar cache primeiro (sub-millisecond)
+      const cached = this.quizCache.get<QuizCacheItem>(quizId);
+      if (cached) {
+        this.metrics.cacheHits++;
+        this.updateResponseTime(Date.now() - startTime);
+        return cached;
       }
+
+      this.metrics.cacheMisses++;
+      return null;
+    } catch (error) {
+      console.error('❌ Erro no cache otimizado:', error);
+      this.metrics.errorRate++;
+      return null;
     }
   }
 
   /**
-   * Verifica se pode executar um novo ciclo de detecção
+   * ARMAZENAR QUIZ COM COMPRESSÃO INTELIGENTE
    */
-  canRunDetectionCycle(): boolean {
-    return this.detectionCount < this.MAX_DETECTION_CYCLES;
+  async setQuizOptimized(quizId: string, quizData: any): Promise<void> {
+    try {
+      const jsonData = JSON.stringify(quizData);
+      const originalSize = Buffer.byteLength(jsonData, 'utf8');
+      
+      let compressed: Buffer;
+      let compressionRatio = 1;
+
+      // Comprimir apenas se valer a pena
+      if (originalSize > this.COMPRESSION_THRESHOLD) {
+        compressed = gzipSync(jsonData);
+        compressionRatio = originalSize / compressed.length;
+      } else {
+        compressed = Buffer.from(jsonData, 'utf8');
+      }
+
+      const cacheItem: QuizCacheItem = {
+        data: quizData,
+        compressed,
+        etag: this.generateETag(jsonData),
+        lastModified: Date.now(),
+        size: originalSize
+      };
+
+      // Armazenar no cache
+      this.quizCache.set(quizId, cacheItem);
+      
+      // Estatísticas
+      this.metrics.compressionRatio = 
+        (this.metrics.compressionRatio + compressionRatio) / 2;
+      
+    } catch (error) {
+      console.error('❌ Erro ao cache quiz:', error);
+      this.metrics.errorRate++;
+    }
   }
 
   /**
-   * Incrementa contador de ciclos
+   * MIDDLEWARE ULTRA-RÁPIDO PARA QUIZ PAGES
    */
-  incrementDetectionCount(): void {
-    this.detectionCount++;
-  }
+  createQuizMiddleware() {
+    return async (req: any, res: any, next: any) => {
+      const startTime = Date.now();
+      const quizId = req.params.id;
+      
+      try {
+        // Headers de performance
+        res.set({
+          'Cache-Control': 'public, max-age=300, stale-while-revalidate=600',
+          'X-Content-Type-Options': 'nosniff',
+          'X-Frame-Options': 'SAMEORIGIN',
+          'X-Powered-By': 'Vendzz-Turbo'
+        });
 
-  /**
-   * Reset contador de ciclos (chamado a cada hora)
-   */
-  resetDetectionCount(): void {
-    console.log(`🔄 RESET CONTADOR DETECÇÃO: ${this.detectionCount}/${this.MAX_DETECTION_CYCLES} ciclos executados na última hora`);
-    this.detectionCount = 0;
-  }
+        // Verificar cache otimizado
+        const cached = await this.getQuizOptimized(quizId);
+        
+        if (cached) {
+          // ETag verification
+          const ifNoneMatch = req.headers['if-none-match'];
+          if (ifNoneMatch === cached.etag) {
+            res.status(304).end();
+            return;
+          }
 
-  /**
-   * Obtém estatísticas de performance
-   */
-  getPerformanceStats(): {
-    currentCycles: number;
-    maxCycles: number;
-    utilizationPercentage: number;
-    cycleInterval: number;
-    maxCampaignsPerCycle: number;
-    batchSize: number;
-  } {
-    return {
-      currentCycles: this.detectionCount,
-      maxCycles: this.MAX_DETECTION_CYCLES,
-      utilizationPercentage: Math.round((this.detectionCount / this.MAX_DETECTION_CYCLES) * 100),
-      cycleInterval: this.CYCLE_INTERVAL,
-      maxCampaignsPerCycle: this.MAX_CAMPAIGNS_PER_CYCLE,
-      batchSize: this.BATCH_SIZE
+          // Resposta ultra-rápida do cache
+          res.set({
+            'ETag': cached.etag,
+            'Last-Modified': new Date(cached.lastModified).toUTCString(),
+            'Content-Encoding': 'gzip',
+            'Content-Length': cached.compressed.length.toString(),
+            'X-Cache': 'HIT',
+            'X-Response-Time': `${Date.now() - startTime}ms`
+          });
+
+          res.type('application/json').send(cached.compressed);
+          this.updateRequestMetrics();
+          return;
+        }
+
+        // Cache miss - continuar para buscar no banco
+        res.set('X-Cache', 'MISS');
+        req.cacheStartTime = startTime;
+        next();
+
+      } catch (error) {
+        console.error('❌ Erro no middleware quiz:', error);
+        this.metrics.errorRate++;
+        next(error);
+      }
     };
   }
 
   /**
-   * Delay auxiliar
+   * OTIMIZAÇÃO DE RESPOSTA DE QUIZ SUBMISSION
    */
-  private delay(ms: number): Promise<void> {
-    return new Promise(resolve => setTimeout(resolve, ms));
+  async optimizeQuizSubmission(req: any, res: any, next: any) {
+    const startTime = Date.now();
+    
+    try {
+      // Rate limiting inteligente
+      const ip = req.ip || req.connection.remoteAddress;
+      const submissionKey = `submission:${ip}:${req.params.id}`;
+      
+      // Verificar se submissão muito recente (possível spam)
+      const recentSubmission = this.responseCache.get(submissionKey);
+      if (recentSubmission) {
+        return res.status(429).json({ 
+          error: 'Rate limit exceeded',
+          retryAfter: 10 
+        });
+      }
+
+      // Marcar submissão para rate limiting
+      this.responseCache.set(submissionKey, Date.now(), 10);
+
+      // Validação ultra-rápida
+      if (!req.body || typeof req.body !== 'object') {
+        return res.status(400).json({ error: 'Invalid request body' });
+      }
+
+      // Headers de resposta otimizada
+      res.set({
+        'Cache-Control': 'no-cache, no-store, must-revalidate',
+        'X-Response-Time': `${Date.now() - startTime}ms`
+      });
+
+      next();
+
+    } catch (error) {
+      console.error('❌ Erro na otimização de submissão:', error);
+      res.status(500).json({ error: 'Internal server error' });
+    }
   }
 
   /**
-   * Validação de performance para grandes volumes
+   * GERAÇÃO DE ETAG OTIMIZADA
    */
-  validatePerformanceConstraints(
-    smsCampaigns: any[], 
-    whatsappCampaigns: any[], 
-    emailCampaigns: any[]
-  ): {
-    isOptimal: boolean;
-    warnings: string[];
-    recommendations: string[];
-  } {
-    const warnings: string[] = [];
-    const recommendations: string[] = [];
-    const totalCampaigns = smsCampaigns.length + whatsappCampaigns.length + emailCampaigns.length;
+  private generateETag(content: string): string {
+    const crypto = require('crypto');
+    return `"${crypto.createHash('sha1').update(content).digest('hex').substring(0, 16)}"`;
+  }
 
-    if (totalCampaigns > 100) {
-      warnings.push(`⚠️ ALTO VOLUME: ${totalCampaigns} campanhas ativas`);
-      recommendations.push('Considere pausar campanhas inativas');
-    }
+  /**
+   * INICIALIZAR OTIMIZAÇÕES DO SISTEMA
+   */
+  private initializeOptimizations(): void {
+    // Event listeners para limpeza automática
+    this.quizCache.on('expired', (key, value) => {
+      console.log(`🗑️ Cache expirado: ${key}`);
+    });
 
-    if (smsCampaigns.length > 50) {
-      warnings.push(`⚠️ SMS: ${smsCampaigns.length} campanhas (limite recomendado: 50)`);
-    }
+    this.quizCache.on('set', (key, value) => {
+      // Auto-cleanup se cache muito grande
+      const stats = this.quizCache.getStats();
+      if (stats.keys > this.MAX_CACHE_SIZE * 0.9) {
+        this.cleanupOldEntries();
+      }
+    });
 
-    if (whatsappCampaigns.length > 30) {
-      warnings.push(`⚠️ WhatsApp: ${whatsappCampaigns.length} campanhas (limite recomendado: 30)`);
-    }
+    console.log('⚡ QuizPerformanceOptimizer inicializado');
+  }
 
-    if (emailCampaigns.length > 40) {
-      warnings.push(`⚠️ Email: ${emailCampaigns.length} campanhas (limite recomendado: 40)`);
-    }
+  /**
+   * LIMPEZA INTELIGENTE DE CACHE
+   */
+  private cleanupOldEntries(): void {
+    const keys = this.quizCache.keys();
+    const toDelete = Math.floor(keys.length * 0.1); // Deletar 10% mais antigos
+    
+    keys.slice(0, toDelete).forEach(key => {
+      this.quizCache.del(key);
+    });
 
-    const isOptimal = warnings.length === 0;
+    console.log(`🧹 Limpeza cache: ${toDelete} entradas removidas`);
+  }
 
-    return { isOptimal, warnings, recommendations };
+  /**
+   * COLETA DE MÉTRICAS EM TEMPO REAL
+   */
+  private startMetricsCollection(): void {
+    setInterval(() => {
+      const quizStats = this.quizCache.getStats();
+      const responseStats = this.responseCache.getStats();
+      
+      console.log(`📊 Performance Metrics:
+        Quiz Cache: ${quizStats.hits}H/${quizStats.misses}M (${((quizStats.hits / (quizStats.hits + quizStats.misses)) * 100).toFixed(1)}% hit rate)
+        Response Cache: ${responseStats.keys} entradas ativas
+        Avg Response: ${this.metrics.avgResponseTime.toFixed(1)}ms
+        Compression: ${this.metrics.compressionRatio.toFixed(2)}x
+        RPS: ${this.metrics.requestsPerSecond.toFixed(1)}
+        Errors: ${this.metrics.errorRate}`);
+      
+      // Reset counters
+      this.resetMetrics();
+      
+    }, 60000); // A cada minuto
+  }
+
+  /**
+   * ATUALIZAR MÉTRICAS DE RESPOSTA
+   */
+  private updateResponseTime(responseTime: number): void {
+    this.metrics.avgResponseTime = 
+      (this.metrics.avgResponseTime + responseTime) / 2;
+  }
+
+  /**
+   * ATUALIZAR MÉTRICAS DE REQUEST
+   */
+  private updateRequestMetrics(): void {
+    this.metrics.requestsPerSecond++;
+  }
+
+  /**
+   * RESET PERIÓDICO DE MÉTRICAS
+   */
+  private resetMetrics(): void {
+    this.metrics.requestsPerSecond = 0;
+    this.metrics.errorRate = 0;
+  }
+
+  /**
+   * OBTER ESTATÍSTICAS DETALHADAS
+   */
+  getDetailedStats() {
+    return {
+      ...this.metrics,
+      quizCache: this.quizCache.getStats(),
+      responseCache: this.responseCache.getStats(),
+      compressionCache: this.compressionCache.size,
+      memoryUsage: process.memoryUsage()
+    };
+  }
+
+  /**
+   * LIMPAR TODOS OS CACHES
+   */
+  clearAllCaches(): void {
+    this.quizCache.flushAll();
+    this.responseCache.flushAll();
+    this.compressionCache.clear();
+    console.log('🧹 Todos os caches limpos');
   }
 }
 
-/**
- * Configurações de otimização para diferentes cenários de carga
- */
-export const PERFORMANCE_CONFIGS = {
-  // Configuração para até 1.000 usuários simultâneos
-  LOW_LOAD: {
-    detectionInterval: 30000, // 30 segundos
-    maxCampaignsPerCycle: 50,
-    batchSize: 5,
-    batchDelay: 100
-  },
-  
-  // Configuração para até 10.000 usuários simultâneos
-  MEDIUM_LOAD: {
-    detectionInterval: 45000, // 45 segundos
-    maxCampaignsPerCycle: 30,
-    batchSize: 4,
-    batchDelay: 200
-  },
-  
-  // Configuração para até 100.000+ usuários simultâneos
-  HIGH_LOAD: {
-    detectionInterval: 60000, // 1 minuto
-    maxCampaignsPerCycle: 20,
-    batchSize: 3,
-    batchDelay: 300
-  }
-};
-
-export default PerformanceOptimizer;
+export const performanceOptimizer = QuizPerformanceOptimizer.getInstance();
