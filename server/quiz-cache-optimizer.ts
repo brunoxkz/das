@@ -137,7 +137,7 @@ class QuizCacheOptimizer {
     try {
       // Implementar lógica para identificar quizzes populares
       // Por enquanto, retornar os 10 mais recentes publicados
-      const allQuizzes = await storage.getQuizzes();
+      const allQuizzes = await storage.getAllQuizzes();
       return allQuizzes
         .filter(quiz => quiz.isPublished)
         .slice(0, 10);

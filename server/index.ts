@@ -22,14 +22,11 @@ const app = express();
 // 🔒 CONFIGURAÇÃO DE PROXY PARA RATE LIMITING
 app.set('trust proxy', 1); // Confia no primeiro proxy (necessário para rate limiting no Replit)
 
-// Helmet desabilitado para desenvolvimento no Replit
-// app.use(helmet({
-//   contentSecurityPolicy: false,
-//   crossOriginEmbedderPolicy: false,
-//   hsts: false,
-//   noSniff: false,
-//   frameguard: false
-// }));
+// Configurações de segurança para alta performance
+app.use(helmet({
+  contentSecurityPolicy: false, // Desabilita CSP para dev
+  crossOriginEmbedderPolicy: false
+}));
 
 // Compressão gzip/deflate para reduzir tamanho das respostas
 app.use(compression({
@@ -53,18 +50,26 @@ app.use(express.json({
 
 // Removemos express.urlencoded() para evitar interceptação das requisições JSON do fetch()
 
-// CORS e Headers minimalistas para Replit
+// CORS configurado para extensão Chrome
 app.use((req, res, next) => {
-  // CORS totalmente liberado
+  // CORS para extensão Chrome
   res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', '*');
-  res.setHeader('Access-Control-Allow-Headers', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With');
   res.setHeader('Access-Control-Allow-Credentials', 'true');
   
-  // Headers minimalistas
+  // Headers de performance
   res.setHeader('X-Powered-By', 'Vendzz');
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('X-Frame-Options', 'SAMEORIGIN');
+  res.setHeader('X-XSS-Protection', '1; mode=block');
   
-  // Preflight sempre aceito
+  // Cache para assets estáticos
+  if (req.url.match(/\.(css|js|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot)$/)) {
+    res.setHeader('Cache-Control', 'public, max-age=31536000'); // 1 ano
+  }
+  
+  // Handle preflight requests
   if (req.method === 'OPTIONS') {
     res.status(200).end();
     return;
@@ -73,11 +78,11 @@ app.use((req, res, next) => {
   next();
 });
 
-// Middlewares de segurança temporariamente desabilitados para desenvolvimento
-// app.use(honeypotMiddleware);
-// app.use(timingAttackProtection);
-// app.use(attackSignatureAnalyzer);
-// app.use(blacklistMiddleware);
+// Apply security middleware que funciona com Express 4.x
+app.use(honeypotMiddleware);
+app.use(timingAttackProtection);
+app.use(attackSignatureAnalyzer);
+app.use(blacklistMiddleware);
 
 // Health check endpoints
 app.get('/health', healthCheck);
@@ -307,8 +312,8 @@ const PORT = Number(process.env.PORT) || 5000;
 
 async function startServer() {
   try {
-    // Temporariamente comentado para desenvolvimento
-    // await initAdvancedSecurity();
+    // Initialize security system primeiro
+    await initAdvancedSecurity();
     console.log('🔒 Sistema de segurança avançado inicializado');
     
     // Inicializar cache optimizer para performance ultra-rápida
@@ -328,9 +333,6 @@ async function startServer() {
       UltraScaleProcessor.getInstance();
       log(`✅ UltraScaleProcessor inicializado`);
     });
-
-    // Setup Vite APÓS server ser criado
-    setupVite(app, server);
 
     server.on('error', (err: any) => {
       if (err.code === 'EADDRINUSE') {

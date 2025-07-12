@@ -678,12 +678,6 @@ export class SQLiteStorage implements IStorage {
       .orderBy(desc(quizzes.updatedAt));
   }
 
-  async getQuizzes(): Promise<Quiz[]> {
-    return await db.select()
-      .from(quizzes)
-      .orderBy(desc(quizzes.updatedAt));
-  }
-
   async getQuiz(id: string): Promise<Quiz | undefined> {
     const [quiz] = await db.select().from(quizzes).where(eq(quizzes.id, id));
     return quiz || undefined;

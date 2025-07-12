@@ -1,210 +1,73 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Vendzz - Offline</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: linear-gradient(135deg, #000000 0%, #1a1a1a 100%);
-            color: #ffffff;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            min-height: 100vh;
-            padding: 20px;
-        }
-        
-        .offline-container {
-            text-align: center;
-            max-width: 500px;
-            width: 100%;
-        }
-        
-        .icon {
-            width: 80px;
-            height: 80px;
-            margin: 0 auto 30px;
-            border-radius: 20px;
-            background: linear-gradient(135deg, #10b981, #059669);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 40px;
-        }
-        
-        h1 {
-            font-size: 2.5rem;
-            margin-bottom: 15px;
-            background: linear-gradient(135deg, #10b981, #34d399);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-        }
-        
-        .subtitle {
-            font-size: 1.1rem;
-            color: #9ca3af;
-            margin-bottom: 30px;
-            line-height: 1.6;
-        }
-        
-        .features {
-            display: grid;
-            gap: 15px;
-            margin-bottom: 30px;
-            text-align: left;
-        }
-        
-        .feature {
-            background: rgba(16, 185, 129, 0.1);
-            border: 1px solid rgba(16, 185, 129, 0.2);
-            border-radius: 12px;
-            padding: 15px;
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
-        
-        .feature-icon {
-            width: 20px;
-            height: 20px;
-            color: #10b981;
-        }
-        
-        .retry-btn {
-            background: linear-gradient(135deg, #10b981, #059669);
-            color: white;
-            border: none;
-            padding: 15px 30px;
-            border-radius: 12px;
-            font-size: 1rem;
-            font-weight: 600;
-            cursor: pointer;
-            transition: transform 0.2s, box-shadow 0.2s;
-            box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);
-        }
-        
-        .retry-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 25px rgba(16, 185, 129, 0.4);
-        }
-        
-        .retry-btn:active {
-            transform: translateY(0);
-        }
-        
-        .connection-status {
-            margin-top: 20px;
-            padding: 10px;
-            border-radius: 8px;
-            font-size: 0.9rem;
-        }
-        
-        .status-offline {
-            background: rgba(239, 68, 68, 0.1);
-            border: 1px solid rgba(239, 68, 68, 0.2);
-            color: #fca5a5;
-        }
-        
-        .status-online {
-            background: rgba(16, 185, 129, 0.1);
-            border: 1px solid rgba(16, 185, 129, 0.2);
-            color: #86efac;
-        }
-        
-        @media (max-width: 640px) {
-            h1 {
-                font-size: 2rem;
-            }
-            
-            .icon {
-                width: 60px;
-                height: 60px;
-                font-size: 30px;
-            }
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Vendzz - Offline</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+      color: white;
+      margin: 0;
+      padding: 0;
+      height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+    }
+    .container {
+      max-width: 400px;
+      padding: 2rem;
+    }
+    .logo {
+      width: 80px;
+      height: 80px;
+      margin: 0 auto 2rem;
+      background: #22c55e;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 2rem;
+      font-weight: bold;
+    }
+    h1 {
+      color: #22c55e;
+      margin-bottom: 1rem;
+    }
+    p {
+      color: #94a3b8;
+      line-height: 1.6;
+      margin-bottom: 2rem;
+    }
+    .retry-btn {
+      background: #22c55e;
+      color: white;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 8px;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .retry-btn:hover {
+      background: #16a34a;
+    }
+  </style>
 </head>
 <body>
-    <div class="offline-container">
-        <div class="icon">📡</div>
-        
-        <h1>Você está offline</h1>
-        
-        <p class="subtitle">
-            Não foi possível conectar com o servidor Vendzz. 
-            Verifique sua conexão com a internet e tente novamente.
-        </p>
-        
-        <div class="features">
-            <div class="feature">
-                <svg class="feature-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4"/>
-                </svg>
-                <span>Seus dados estão salvos localmente</span>
-            </div>
-            
-            <div class="feature">
-                <svg class="feature-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
-                </svg>
-                <span>Sincronização automática quando voltar online</span>
-            </div>
-            
-            <div class="feature">
-                <svg class="feature-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
-                </svg>
-                <span>Cache inteligente para acesso rápido</span>
-            </div>
-        </div>
-        
-        <button class="retry-btn" onclick="window.location.reload()">
-            Tentar Novamente
-        </button>
-        
-        <div id="connection-status" class="connection-status status-offline">
-            🔴 Sem conexão com a internet
-        </div>
-    </div>
-
-    <script>
-        // Monitorar status da conexão
-        function updateConnectionStatus() {
-            const statusElement = document.getElementById('connection-status');
-            
-            if (navigator.onLine) {
-                statusElement.className = 'connection-status status-online';
-                statusElement.innerHTML = '🟢 Conexão restaurada - Clique em "Tentar Novamente"';
-            } else {
-                statusElement.className = 'connection-status status-offline';
-                statusElement.innerHTML = '🔴 Sem conexão com a internet';
-            }
-        }
-        
-        // Listeners para mudanças de conexão
-        window.addEventListener('online', updateConnectionStatus);
-        window.addEventListener('offline', updateConnectionStatus);
-        
-        // Verificar status inicial
-        updateConnectionStatus();
-        
-        // Auto-reload quando voltar online
-        window.addEventListener('online', () => {
-            setTimeout(() => {
-                if (navigator.onLine) {
-                    window.location.reload();
-                }
-            }, 2000); // Delay de 2 segundos para estabilizar
-        });
-    </script>
+  <div class="container">
+    <div class="logo">V</div>
+    <h1>Você está offline</h1>
+    <p>
+      Não foi possível conectar à internet. Verifique sua conexão e tente novamente.
+      Algumas funcionalidades podem estar disponíveis offline.
+    </p>
+    <button class="retry-btn" onclick="window.location.reload()">
+      Tentar Novamente
+    </button>
+  </div>
 </body>
 </html>
