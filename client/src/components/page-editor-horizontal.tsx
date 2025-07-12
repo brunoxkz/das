@@ -7313,6 +7313,345 @@ const gameElementCategories = [
                 </div>
               )}
 
+              {/* NOVOS ELEMENTOS - PAINÉIS DE CONFIGURAÇÃO */}
+              {selectedElementData.type === "chart" && (
+                <div className="space-y-4 max-h-96 overflow-y-auto">
+                  <div className="bg-blue-50 p-3 rounded-lg">
+                    <h4 className="text-sm font-semibold text-blue-800 mb-2">📊 Gráfico</h4>
+                    <p className="text-xs text-blue-700">
+                      Exibe dados visuais em formato de gráfico de barras animado
+                    </p>
+                  </div>
+
+                  <div className="border-b pb-4">
+                    <h5 className="font-semibold text-sm mb-3">📝 Conteúdo</h5>
+                    
+                    <div>
+                      <Label>Título do Gráfico</Label>
+                      <Input
+                        value={selectedElementData.chartTitle || ""}
+                        onChange={(e) => updateElement(selectedElementData.id, { chartTitle: e.target.value })}
+                        placeholder="Gráfico de Dados"
+                        className="mt-1"
+                      />
+                    </div>
+
+                    <div className="mt-3">
+                      <Label>Descrição</Label>
+                      <Input
+                        value={selectedElementData.chartDescription || ""}
+                        onChange={(e) => updateElement(selectedElementData.id, { chartDescription: e.target.value })}
+                        placeholder="Visualização dos dados em tempo real"
+                        className="mt-1"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="border-b pb-4">
+                    <h5 className="font-semibold text-sm mb-3">📊 Dados</h5>
+                    
+                    <div>
+                      <Label>Valores (separados por vírgula)</Label>
+                      <Input
+                        value={(selectedElementData.chartData || [65, 45, 80, 30, 90]).join(", ")}
+                        onChange={(e) => {
+                          const values = e.target.value.split(",").map(v => parseInt(v.trim()) || 0);
+                          updateElement(selectedElementData.id, { chartData: values });
+                        }}
+                        placeholder="65, 45, 80, 30, 90"
+                        className="mt-1"
+                      />
+                    </div>
+
+                    <div className="mt-3">
+                      <Label>Cores (separadas por vírgula)</Label>
+                      <Input
+                        value={(selectedElementData.chartColors || ["#10b981", "#3b82f6", "#f59e0b", "#ef4444", "#8b5cf6"]).join(", ")}
+                        onChange={(e) => {
+                          const colors = e.target.value.split(",").map(c => c.trim());
+                          updateElement(selectedElementData.id, { chartColors: colors });
+                        }}
+                        placeholder="#10b981, #3b82f6, #f59e0b"
+                        className="mt-1"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <h5 className="font-semibold text-sm mb-3">🎨 Estilo</h5>
+                    
+                    <div>
+                      <Label>Cor do Título</Label>
+                      <Input
+                        type="color"
+                        value={selectedElementData.chartTitleColor || "#1f2937"}
+                        onChange={(e) => updateElement(selectedElementData.id, { chartTitleColor: e.target.value })}
+                        className="mt-1 h-10"
+                      />
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {selectedElementData.type === "metrics" && (
+                <div className="space-y-4 max-h-96 overflow-y-auto">
+                  <div className="bg-purple-50 p-3 rounded-lg">
+                    <h4 className="text-sm font-semibold text-purple-800 mb-2">📈 Métricas</h4>
+                    <p className="text-xs text-purple-700">
+                      Exibe métricas de performance com barras de progresso
+                    </p>
+                  </div>
+
+                  <div className="border-b pb-4">
+                    <h5 className="font-semibold text-sm mb-3">📝 Conteúdo</h5>
+                    
+                    <div>
+                      <Label>Título das Métricas</Label>
+                      <Input
+                        value={selectedElementData.metricsTitle || ""}
+                        onChange={(e) => updateElement(selectedElementData.id, { metricsTitle: e.target.value })}
+                        placeholder="Métricas de Performance"
+                        className="mt-1"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <h5 className="font-semibold text-sm mb-3">🎨 Estilo</h5>
+                    
+                    <div>
+                      <Label>Cor do Título</Label>
+                      <Input
+                        type="color"
+                        value={selectedElementData.metricsColor || "#1f2937"}
+                        onChange={(e) => updateElement(selectedElementData.id, { metricsColor: e.target.value })}
+                        className="mt-1 h-10"
+                      />
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {selectedElementData.type === "stripe_embed" && (
+                <div className="space-y-4 max-h-96 overflow-y-auto">
+                  <div className="bg-blue-50 p-3 rounded-lg">
+                    <h4 className="text-sm font-semibold text-blue-800 mb-2">💳 Stripe Checkout</h4>
+                    <p className="text-xs text-blue-700">
+                      Formulário de pagamento seguro via Stripe
+                    </p>
+                  </div>
+
+                  <div className="border-b pb-4">
+                    <h5 className="font-semibold text-sm mb-3">📝 Conteúdo</h5>
+                    
+                    <div>
+                      <Label>Título</Label>
+                      <Input
+                        value={selectedElementData.stripeTitle || ""}
+                        onChange={(e) => updateElement(selectedElementData.id, { stripeTitle: e.target.value })}
+                        placeholder="Checkout Seguro"
+                        className="mt-1"
+                      />
+                    </div>
+
+                    <div className="mt-3">
+                      <Label>Descrição</Label>
+                      <Input
+                        value={selectedElementData.stripeDescription || ""}
+                        onChange={(e) => updateElement(selectedElementData.id, { stripeDescription: e.target.value })}
+                        placeholder="Processamento seguro via Stripe"
+                        className="mt-1"
+                      />
+                    </div>
+
+                    <div className="mt-3">
+                      <Label>Valor</Label>
+                      <Input
+                        value={selectedElementData.stripeAmount || ""}
+                        onChange={(e) => updateElement(selectedElementData.id, { stripeAmount: e.target.value })}
+                        placeholder="R$ 97,00"
+                        className="mt-1"
+                      />
+                    </div>
+
+                    <div className="mt-3">
+                      <Label>Texto do Botão</Label>
+                      <Input
+                        value={selectedElementData.stripeButtonText || ""}
+                        onChange={(e) => updateElement(selectedElementData.id, { stripeButtonText: e.target.value })}
+                        placeholder="Pagar com Stripe"
+                        className="mt-1"
+                      />
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {selectedElementData.type === "paypal" && (
+                <div className="space-y-4 max-h-96 overflow-y-auto">
+                  <div className="bg-yellow-50 p-3 rounded-lg">
+                    <h4 className="text-sm font-semibold text-yellow-800 mb-2">💰 PayPal Checkout</h4>
+                    <p className="text-xs text-yellow-700">
+                      Botão de pagamento rápido e seguro via PayPal
+                    </p>
+                  </div>
+
+                  <div className="border-b pb-4">
+                    <h5 className="font-semibold text-sm mb-3">📝 Conteúdo</h5>
+                    
+                    <div>
+                      <Label>Título</Label>
+                      <Input
+                        value={selectedElementData.paypalTitle || ""}
+                        onChange={(e) => updateElement(selectedElementData.id, { paypalTitle: e.target.value })}
+                        placeholder="PayPal Checkout"
+                        className="mt-1"
+                      />
+                    </div>
+
+                    <div className="mt-3">
+                      <Label>Descrição</Label>
+                      <Input
+                        value={selectedElementData.paypalDescription || ""}
+                        onChange={(e) => updateElement(selectedElementData.id, { paypalDescription: e.target.value })}
+                        placeholder="Pagamento rápido e seguro"
+                        className="mt-1"
+                      />
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-3 mt-3">
+                      <div>
+                        <Label>Valor</Label>
+                        <Input
+                          value={selectedElementData.paypalAmount || ""}
+                          onChange={(e) => updateElement(selectedElementData.id, { paypalAmount: e.target.value })}
+                          placeholder="$ 29.99"
+                          className="mt-1"
+                        />
+                      </div>
+                      <div>
+                        <Label>Moeda</Label>
+                        <select 
+                          className="w-full px-2 py-1 border rounded text-xs mt-1"
+                          value={selectedElementData.paypalCurrency || "USD"}
+                          onChange={(e) => updateElement(selectedElementData.id, { paypalCurrency: e.target.value })}
+                        >
+                          <option value="USD">USD</option>
+                          <option value="BRL">BRL</option>
+                          <option value="EUR">EUR</option>
+                        </select>
+                      </div>
+                    </div>
+
+                    <div className="mt-3">
+                      <Label>Texto do Botão</Label>
+                      <Input
+                        value={selectedElementData.paypalButtonText || ""}
+                        onChange={(e) => updateElement(selectedElementData.id, { paypalButtonText: e.target.value })}
+                        placeholder="Pagar com PayPal"
+                        className="mt-1"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <h5 className="font-semibold text-sm mb-3">🎨 Estilo do Botão</h5>
+                    
+                    <div>
+                      <Label>Estilo</Label>
+                      <select 
+                        className="w-full px-2 py-1 border rounded text-xs mt-1"
+                        value={selectedElementData.paypalButtonStyle || "gold"}
+                        onChange={(e) => updateElement(selectedElementData.id, { paypalButtonStyle: e.target.value })}
+                      >
+                        <option value="gold">Dourado</option>
+                        <option value="blue">Azul</option>
+                        <option value="silver">Prata</option>
+                        <option value="black">Preto</option>
+                      </select>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {selectedElementData.type === "before_after" && (
+                <div className="space-y-4 max-h-96 overflow-y-auto">
+                  <div className="bg-green-50 p-3 rounded-lg">
+                    <h4 className="text-sm font-semibold text-green-800 mb-2">🔄 Antes & Depois</h4>
+                    <p className="text-xs text-green-700">
+                      Comparação visual entre situação anterior e posterior
+                    </p>
+                  </div>
+
+                  <div className="border-b pb-4">
+                    <h5 className="font-semibold text-sm mb-3">📝 Conteúdo</h5>
+                    
+                    <div>
+                      <Label>Título</Label>
+                      <Input
+                        value={selectedElementData.beforeAfterTitle || ""}
+                        onChange={(e) => updateElement(selectedElementData.id, { beforeAfterTitle: e.target.value })}
+                        placeholder="Transformação Incrível"
+                        className="mt-1"
+                      />
+                    </div>
+
+                    <div className="mt-3">
+                      <Label>Itens "Antes" (um por linha)</Label>
+                      <textarea
+                        className="w-full px-2 py-1 border rounded text-xs mt-1"
+                        rows={3}
+                        value={(selectedElementData.beforeItems || ["Problema 1", "Problema 2", "Problema 3"]).join("\n")}
+                        onChange={(e) => {
+                          const items = e.target.value.split("\n").filter(item => item.trim());
+                          updateElement(selectedElementData.id, { beforeItems: items });
+                        }}
+                        placeholder="Problema 1&#10;Problema 2&#10;Problema 3"
+                      />
+                    </div>
+
+                    <div className="mt-3">
+                      <Label>Itens "Depois" (um por linha)</Label>
+                      <textarea
+                        className="w-full px-2 py-1 border rounded text-xs mt-1"
+                        rows={3}
+                        value={(selectedElementData.afterItems || ["Benefício 1", "Benefício 2", "Benefício 3"]).join("\n")}
+                        onChange={(e) => {
+                          const items = e.target.value.split("\n").filter(item => item.trim());
+                          updateElement(selectedElementData.id, { afterItems: items });
+                        }}
+                        placeholder="Benefício 1&#10;Benefício 2&#10;Benefício 3"
+                      />
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {selectedElementData.type === "pricing_plans" && (
+                <div className="space-y-4 max-h-96 overflow-y-auto">
+                  <div className="bg-indigo-50 p-3 rounded-lg">
+                    <h4 className="text-sm font-semibold text-indigo-800 mb-2">💎 Tabela de Preços</h4>
+                    <p className="text-xs text-indigo-700">
+                      Exibe opções de planos com preços e funcionalidades
+                    </p>
+                  </div>
+
+                  <div>
+                    <h5 className="font-semibold text-sm mb-3">📝 Conteúdo</h5>
+                    
+                    <div>
+                      <Label>Título</Label>
+                      <Input
+                        value={selectedElementData.pricingTitle || ""}
+                        onChange={(e) => updateElement(selectedElementData.id, { pricingTitle: e.target.value })}
+                        placeholder="Escolha Seu Plano"
+                        className="mt-1"
+                      />
+                    </div>
+                  </div>
+                </div>
+              )}
+
               {selectedElementData.type === "share_quiz" && (
                 <div className="space-y-4 max-h-96 overflow-y-auto">
                   <div className="bg-green-50 p-3 rounded-lg">

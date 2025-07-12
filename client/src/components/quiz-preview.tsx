@@ -2521,6 +2521,205 @@ export function QuizPreview({ quiz, initialPageIndex = 0 }: QuizPreviewProps) {
               </Button>
             </div>
           )}
+
+          {/* NOVOS ELEMENTOS - Chart, Metrics, Stripe, PayPal, etc. */}
+          {element.type === "chart" && (
+            <div className="space-y-4">
+              <div className="bg-white rounded-lg p-6 border-2 border-gray-200">
+                <h3 className="text-lg font-semibold mb-4" style={{ color: element.chartTitleColor || "#1f2937" }}>
+                  {element.chartTitle || "Gráfico de Dados"}
+                </h3>
+                
+                <div className="h-64 flex items-end justify-center space-x-2">
+                  {(element.chartData || [65, 45, 80, 30, 90]).map((value, index) => (
+                    <div key={index} className="flex flex-col items-center">
+                      <div 
+                        className="w-12 rounded-t-lg transition-all duration-1000 animate-pulse"
+                        style={{ 
+                          height: `${(value / 100) * 200}px`,
+                          backgroundColor: element.chartColors?.[index] || "#10b981"
+                        }}
+                      />
+                      <span className="text-xs mt-2 text-gray-600">{value}%</span>
+                    </div>
+                  ))}
+                </div>
+                
+                <p className="text-sm text-gray-600 mt-4 text-center">
+                  {element.chartDescription || "Visualização dos dados em tempo real"}
+                </p>
+              </div>
+            </div>
+          )}
+
+          {element.type === "metrics" && (
+            <div className="space-y-4">
+              <div className="bg-white rounded-lg p-6 border-2 border-gray-200">
+                <h3 className="text-lg font-semibold mb-6" style={{ color: element.metricsColor || "#1f2937" }}>
+                  {element.metricsTitle || "Métricas de Performance"}
+                </h3>
+                
+                <div className="space-y-4">
+                  {(element.metricsData || [
+                    { label: "Conversão", value: 75, maxValue: 100, color: "#10b981", unit: "%" },
+                    { label: "Engajamento", value: 85, maxValue: 100, color: "#3b82f6", unit: "%" },
+                    { label: "Satisfação", value: 92, maxValue: 100, color: "#f59e0b", unit: "%" }
+                  ]).map((metric, index) => (
+                    <div key={index} className="space-y-2">
+                      <div className="flex justify-between text-sm">
+                        <span className="font-medium">{metric.label}</span>
+                        <span>{metric.value}{metric.unit || ""}</span>
+                      </div>
+                      <div className="h-3 bg-gray-200 rounded-full overflow-hidden">
+                        <div 
+                          className="h-full transition-all duration-1000 rounded-full"
+                          style={{ 
+                            width: `${(metric.value / metric.maxValue) * 100}%`,
+                            backgroundColor: metric.color 
+                          }}
+                        />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {element.type === "stripe_embed" && (
+            <div className="space-y-4">
+              <div className="bg-gradient-to-br from-blue-50 to-indigo-100 rounded-lg p-6 border-2 border-blue-200">
+                <div className="text-center mb-4">
+                  <div className="w-16 h-16 bg-blue-500 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <span className="text-white font-bold text-xl">$</span>
+                  </div>
+                  <h3 className="text-lg font-semibold text-blue-900">
+                    {element.stripeTitle || "Checkout Seguro"}
+                  </h3>
+                  <p className="text-blue-700 mt-2">
+                    {element.stripeDescription || "Processamento seguro via Stripe"}
+                  </p>
+                </div>
+                
+                <div className="bg-white rounded-lg p-4 border">
+                  <div className="space-y-3">
+                    <div className="text-2xl font-bold text-center text-green-600">
+                      {element.stripeAmount || "R$ 97,00"}
+                    </div>
+                    <button className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 px-4 rounded-lg font-semibold transition-colors">
+                      🔒 Pagar com Stripe
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {element.type === "paypal" && (
+            <div className="space-y-4">
+              <div className="bg-gradient-to-br from-yellow-50 to-blue-100 rounded-lg p-6 border-2 border-yellow-200">
+                <div className="text-center mb-4">
+                  <div className="w-16 h-16 bg-blue-600 rounded-lg flex items-center justify-center mx-auto mb-4">
+                    <span className="text-white font-bold">PP</span>
+                  </div>
+                  <h3 className="text-lg font-semibold text-blue-900">
+                    {element.paypalTitle || "PayPal Checkout"}
+                  </h3>
+                  <p className="text-blue-700 mt-2">
+                    {element.paypalDescription || "Pagamento rápido e seguro"}
+                  </p>
+                </div>
+                
+                <div className="bg-white rounded-lg p-4 border">
+                  <div className="space-y-3">
+                    <div className="text-2xl font-bold text-center text-blue-600">
+                      {element.paypalAmount || "$ 29.99"} {element.paypalCurrency || "USD"}
+                    </div>
+                    <button 
+                      className="w-full py-3 px-4 rounded-lg font-semibold transition-colors"
+                      style={{ 
+                        backgroundColor: element.paypalButtonStyle === 'gold' ? '#ffc439' : 
+                                       element.paypalButtonStyle === 'blue' ? '#0070ba' : 
+                                       element.paypalButtonStyle === 'silver' ? '#efefef' : 
+                                       element.paypalButtonStyle === 'black' ? '#2c2e2f' : '#ffc439',
+                        color: element.paypalButtonStyle === 'silver' ? '#2c2e2f' : '#ffffff'
+                      }}
+                    >
+                      {element.paypalButtonText || "💳 Pagar com PayPal"}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {element.type === "before_after" && (
+            <div className="space-y-4">
+              <div className="bg-white rounded-lg p-6 border-2 border-gray-200">
+                <h3 className="text-lg font-semibold mb-6 text-center">
+                  {element.beforeAfterTitle || "Transformação Incrível"}
+                </h3>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="text-center">
+                    <div className="bg-red-50 rounded-lg p-4 mb-3">
+                      <h4 className="font-semibold text-red-800 mb-2">❌ ANTES</h4>
+                      <div className="text-sm text-red-700 space-y-1">
+                        {(element.beforeItems || ["Problema 1", "Problema 2", "Problema 3"]).map((item, index) => (
+                          <div key={index}>• {item}</div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="text-center">
+                    <div className="bg-green-50 rounded-lg p-4 mb-3">
+                      <h4 className="font-semibold text-green-800 mb-2">✅ DEPOIS</h4>
+                      <div className="text-sm text-green-700 space-y-1">
+                        {(element.afterItems || ["Benefício 1", "Benefício 2", "Benefício 3"]).map((item, index) => (
+                          <div key={index}>• {item}</div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {element.type === "pricing_plans" && (
+            <div className="space-y-4">
+              <div className="bg-white rounded-lg p-6 border-2 border-gray-200">
+                <h3 className="text-lg font-semibold mb-6 text-center">
+                  {element.pricingTitle || "Escolha Seu Plano"}
+                </h3>
+                
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  {(element.pricingPlans || [
+                    { name: "Básico", price: "R$ 29", features: ["Feature 1", "Feature 2"] },
+                    { name: "Pro", price: "R$ 59", features: ["Feature 1", "Feature 2", "Feature 3"], popular: true },
+                    { name: "Premium", price: "R$ 99", features: ["Feature 1", "Feature 2", "Feature 3", "Feature 4"] }
+                  ]).map((plan, index) => (
+                    <div key={index} className={`border rounded-lg p-4 text-center ${plan.popular ? 'border-blue-500 bg-blue-50' : 'border-gray-200'}`}>
+                      {plan.popular && (
+                        <div className="bg-blue-500 text-white text-xs px-2 py-1 rounded-full mb-2">POPULAR</div>
+                      )}
+                      <h4 className="font-semibold">{plan.name}</h4>
+                      <div className="text-2xl font-bold text-blue-600 my-2">{plan.price}</div>
+                      <div className="text-sm space-y-1 mb-4">
+                        {plan.features.map((feature, fIndex) => (
+                          <div key={fIndex}>✓ {feature}</div>
+                        ))}
+                      </div>
+                      <button className={`w-full py-2 rounded-lg font-semibold ${plan.popular ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-800'}`}>
+                        Escolher
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     );
