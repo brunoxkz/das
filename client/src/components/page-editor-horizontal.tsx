@@ -168,6 +168,170 @@ if (typeof window !== 'undefined') {
     // Adicionar evento de clique
     canvas.addEventListener('click', spinWheel);
   };
+
+  // Função para Slot Machine Premium
+  (window as any).spinSlotMachine = (containerId: string, symbols: string[], reels: number) => {
+    const container = document.getElementById(containerId);
+    if (!container) return;
+
+    const debugEl = document.getElementById(`debug-${containerId.split('-')[1]}`);
+    const reelElements = container.querySelectorAll('.reel');
+    const iconHeight = 79;
+    const numIcons = symbols.length;
+    const timePerIcon = 100;
+    
+    // Função para rolar um reel
+    const rollReel = (reel: HTMLElement, offset = 0) => {
+      const delta = (offset + 2) * numIcons + Math.round(Math.random() * numIcons);
+      
+      return new Promise((resolve) => {
+        const style = getComputedStyle(reel);
+        const currentPos = parseFloat(style.backgroundPositionY) || 0;
+        const targetPos = currentPos + delta * iconHeight;
+        const normalizedPos = targetPos % (numIcons * iconHeight);
+        
+        setTimeout(() => {
+          reel.style.transition = `background-position-y ${(8 + 1 * delta) * timePerIcon}ms cubic-bezier(.41,-0.01,.63,1.09)`;
+          reel.style.backgroundPositionY = `${targetPos}px`;
+        }, offset * 150);
+        
+        setTimeout(() => {
+          reel.style.transition = 'none';
+          reel.style.backgroundPositionY = `${normalizedPos}px`;
+          resolve(delta % numIcons);
+        }, (8 + 1 * delta) * timePerIcon + offset * 150);
+      });
+    };
+
+    // Rolar todos os reels
+    if (debugEl) debugEl.textContent = 'Girando...';
+    
+    Promise.all(
+      Array.from(reelElements).map((reel, i) => rollReel(reel as HTMLElement, i))
+    ).then((results: any[]) => {
+      const finalSymbols = results.map(r => symbols[r]);
+      
+      if (debugEl) {
+        debugEl.textContent = finalSymbols.join(' - ');
+      }
+      
+      // Verificar vitórias
+      const isWin = finalSymbols[0] === finalSymbols[1] || finalSymbols[1] === finalSymbols[2];
+      const isJackpot = finalSymbols.every(s => s === finalSymbols[0]);
+      
+      if (isJackpot) {
+        container.style.background = 'linear-gradient(45deg, #FFD700, #FFA500)';
+        container.style.boxShadow = '0 0 30px #FFD700';
+        if (debugEl) debugEl.textContent = '🎉 JACKPOT! ' + finalSymbols.join(' - ');
+      } else if (isWin) {
+        container.style.background = 'linear-gradient(45deg, #90EE90, #32CD32)';
+        container.style.boxShadow = '0 0 20px #32CD32';
+        if (debugEl) debugEl.textContent = '✨ Vitória! ' + finalSymbols.join(' - ');
+      }
+      
+      // Reset visual após 2 segundos
+      setTimeout(() => {
+        container.style.background = '';
+        container.style.boxShadow = '';
+        if (debugEl && !isWin) debugEl.textContent = 'Pronto para jogar...';
+      }, 2000);
+    });
+  };
+
+  // Função para Roda da Fortuna Premium
+  (window as any).spinFortuneWheel = (wheelId: string, segments: string[], colors: string[], elementId: string) => {
+    const wheel = document.getElementById(wheelId);
+    const scoreEl = document.getElementById(`score-${elementId}`);
+    const roundEl = document.getElementById(`round-${elementId}`);
+    const pin = document.getElementById(`pin-${elementId}`);
+    
+    if (!wheel || !scoreEl || !roundEl) return;
+    
+    const currentScore = parseInt(scoreEl.textContent || '0');
+    const currentRound = parseInt(roundEl.textContent || '10');
+    
+    if (currentRound <= 0) {
+      // Game over - reset
+      scoreEl.textContent = '0';
+      roundEl.textContent = '10';
+      return;
+    }
+    
+    // Diminuir round
+    roundEl.textContent = (currentRound - 1).toString();
+    
+    // Animação do ponteiro
+    if (pin) {
+      pin.style.animation = 'none';
+      setTimeout(() => {
+        pin.style.animation = 'jolt 250ms ease-out forwards';
+      }, 10);
+    }
+    
+    // Girar a roda
+    const getRotationAngle = (el: HTMLElement) => {
+      const computedStyle = window.getComputedStyle(el);
+      const transform = computedStyle.transform || computedStyle.webkitTransform;
+      if (transform === 'none') return 0;
+      const values = transform.split('(')[1].split(')')[0].split(',');
+      const a = parseFloat(values[0]);
+      const b = parseFloat(values[1]);
+      return Math.round(Math.atan2(b, a) * (180 / Math.PI));
+    };
+    
+    const currentRotation = getRotationAngle(wheel);
+    const minimumRotation = 600;
+    const newRotation = minimumRotation + Math.round(Math.random() * 720);
+    const time = Math.round((1 + newRotation / 180) * 1000);
+    
+    wheel.style.transition = `transform ${time}ms cubic-bezier(0.42, -0.1, 0.58, 1.02)`;
+    wheel.style.transform = `rotate(${newRotation}deg)`;
+    wheel.style.cursor = 'initial';
+    
+    setTimeout(() => {
+      const finalRotation = newRotation % 360;
+      wheel.style.transition = 'none';
+      wheel.style.transform = `rotate(${finalRotation}deg)`;
+      wheel.style.cursor = 'pointer';
+      
+      // Determinar segmento vencedor
+      const segmentAngle = 360 / segments.length;
+      const segmentIndex = finalRotation < 0.5 * segmentAngle
+        ? segments.length - 1
+        : Math.floor((finalRotation - 0.5 * segmentAngle) / segmentAngle);
+      
+      const reward = segments[segmentIndex];
+      let newScore = currentScore;
+      
+      // Calcular novo score
+      if (reward === 'x2') {
+        newScore = Math.min(currentScore * 2, 999999);
+      } else if (reward === ':2') {
+        newScore = Math.floor(currentScore / 2);
+      } else if (reward === '*') {
+        newScore = 0;
+      } else {
+        const points = parseInt(reward);
+        if (!isNaN(points)) {
+          newScore = Math.min(currentScore + points, 999999);
+        }
+      }
+      
+      scoreEl.textContent = newScore.toString();
+      
+      // Efeito visual para o resultado
+      wheel.style.background = `radial-gradient(circle, ${colors[segmentIndex]}, #333)`;
+      wheel.style.boxShadow = `0 0 30px ${colors[segmentIndex]}`;
+      
+      setTimeout(() => {
+        wheel.style.background = 'conic-gradient(from 0deg, ' + colors.map((color, i) => 
+          `${color} ${i * segmentAngle}deg ${(i + 1) * segmentAngle}deg`
+        ).join(', ') + ')';
+        wheel.style.boxShadow = '0 0 20px 4px rgba(0,0,0,0.3)';
+      }, 1500);
+      
+    }, time + 100);
+  };
 }
 
 interface Element {
@@ -2337,81 +2501,107 @@ const gameElementCategories = [
         
       // Elementos de jogos
       case "game_wheel":
-        const wheelSegments = element.wheelSegments || ["Prêmio 1", "Prêmio 2", "Prêmio 3", "Prêmio 4"];
-        const wheelColors = element.wheelColors || ["#8b35bc", "#b163da", "#8b35bc", "#b163da"];
+        const wheelSegments = element.wheelSegments || ["5000", "10", "500", "100", "2500", "50", "250", "x2", "100", ":2", "1000", "50", "250", "20", "*"];
+        const wheelColors = element.wheelColors || ["#FF0000", "#0000FF", "#FFDD00", "#FFA500", "#4B0082", "#00CC00", "#EE82EE", "#FF0000", "#FFA500", "#FFDD00", "#00CC00", "#0000FF", "#4B0082", "#EE82EE", "#222222"];
         const winningSegment = element.wheelWinningSegment || 0;
         
         return (
-          <div className="space-y-3 p-4 border-2 border-dashed border-orange-200 rounded-lg bg-gradient-to-br from-purple-50 to-pink-50 shadow-lg">
+          <div className="space-y-4 p-6 border-2 border-dashed border-yellow-200 rounded-lg bg-gradient-to-br from-gray-800 to-gray-900 shadow-2xl">
             <div className="flex items-center gap-2">
-              <BarChart3 className="w-5 h-5 text-purple-600" />
-              <span className="font-bold text-purple-800">🎡 Roleta da Sorte Premium</span>
+              <BarChart3 className="w-6 h-6 text-yellow-400" />
+              <span className="font-bold text-yellow-300 text-lg">🎡 Roda da Fortuna Premium</span>
             </div>
             
-            <div className="flex flex-col items-center space-y-4">
-              <div className="relative w-52 h-52">
-                {/* Container da roleta com gradiente */}
-                <div className="absolute inset-0 rounded-full bg-gradient-to-br from-purple-100 to-pink-100 shadow-2xl">
-                  <div className="absolute inset-2 rounded-full bg-white shadow-inner">
-                    <canvas 
-                      id={`wheel-canvas-${element.id}`}
-                      width="192" 
-                      height="192"
-                      className="rounded-full"
-                      ref={(canvas) => {
-                        if (canvas && typeof window !== 'undefined' && (window as any).Chart) {
-                          setTimeout(() => {
-                            (window as any).initializeWheelChart(`wheel-canvas-${element.id}`, wheelSegments, wheelColors, winningSegment);
-                          }, 100);
-                        }
-                      }}
-                    />
-                  </div>
-                </div>
-                
-                {/* Ponteiro Premium */}
-                <div className="absolute top-0 left-1/2 transform -translate-x-1/2 -translate-y-1 z-10">
-                  <div className="w-0 h-0 border-l-[15px] border-r-[15px] border-b-[30px] border-l-transparent border-r-transparent border-b-yellow-400 shadow-lg filter drop-shadow-lg">
-                    <div className="absolute top-2 left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-[8px] border-r-[8px] border-b-[16px] border-l-transparent border-r-transparent border-b-yellow-600">
-                    </div>
-                  </div>
-                </div>
-                
-                {/* Botão central */}
-                <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-20">
-                  <div 
-                    className="w-16 h-16 rounded-full bg-gradient-to-br from-yellow-400 to-orange-500 shadow-lg flex items-center justify-center cursor-pointer hover:scale-105 transition-transform border-4 border-white"
-                    onClick={() => {
-                      // Girar a roleta quando clicado
-                      const canvas = document.getElementById(`wheel-canvas-${element.id}`) as HTMLCanvasElement;
-                      if (canvas) {
-                        canvas.click(); // Simular clique no canvas para girar
-                      }
-                    }}
-                  >
-                    <span className="text-orange-800 font-bold text-sm">SPIN</span>
-                  </div>
-                </div>
+            <div className="flex flex-col items-center space-y-6">
+              {/* Scores */}
+              <div className="flex justify-between w-full max-w-md text-white font-mono text-2xl">
+                <div>Score: <span id={`score-${element.id}`} className="text-yellow-400">0</span></div>
+                <div>Round: <span id={`round-${element.id}`} className="text-green-400">10</span></div>
               </div>
               
-              <div className="text-center space-y-2">
-                <div className="text-lg font-bold text-purple-800">
-                  🎯 Resultado: {wheelSegments[winningSegment]}
+              {/* Container da roda da fortuna */}
+              <div className="casing relative">
+                <div 
+                  id={`wheel-fortune-${element.id}`}
+                  className="wheel relative w-96 h-96 border-2 border-gray-400 rounded-full shadow-xl cursor-pointer overflow-hidden"
+                  style={{ 
+                    boxShadow: '0 0 20px 4px rgba(0,0,0,0.3)',
+                    background: 'conic-gradient(from 0deg, ' + wheelColors.map((color, i) => 
+                      `${color} ${i * 360/wheelSegments.length}deg ${(i + 1) * 360/wheelSegments.length}deg`
+                    ).join(', ') + ')'
+                  }}
+                  onClick={() => {
+                    if (typeof window !== 'undefined') {
+                      (window as any).spinFortuneWheel && (window as any).spinFortuneWheel(`wheel-fortune-${element.id}`, wheelSegments, wheelColors, element.id);
+                    }
+                  }}
+                >
+                  {/* Segmentos com texto */}
+                  <div className="center absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
+                    {wheelSegments.map((segment, index) => {
+                      const angle = (360 / wheelSegments.length) * index;
+                      return (
+                        <div
+                          key={index}
+                          className="txt absolute text-white font-bold text-xl"
+                          style={{
+                            transform: `rotate(${angle + 180}deg) translateY(-140px) rotate(180deg)`,
+                            transformOrigin: '50% 140px',
+                            textShadow: '0 0 6px rgba(255,165,0,0.8)',
+                            fontFamily: 'monospace'
+                          }}
+                        >
+                          {segment.toString().split('').join('\n')}
+                        </div>
+                      );
+                    })}
+                    
+                    {/* Divisores */}
+                    {wheelSegments.map((_, index) => (
+                      <div
+                        key={`divider-${index}`}
+                        className="divider absolute w-px h-48 bg-black"
+                        style={{
+                          transform: `rotate(${(360 / wheelSegments.length) * (index + 0.5)}deg)`,
+                          transformOrigin: '50% 0'
+                        }}
+                      >
+                        <div className="absolute bottom-1 left-1/2 transform -translate-x-1/2 w-2 h-2 bg-white rounded-full shadow-md"></div>
+                      </div>
+                    ))}
+                  </div>
+                  
+                  {/* Centro da roda */}
+                  <div className="cap absolute top-1/2 left-1/2 w-20 h-20 bg-black border-4 border-white rounded-full transform -translate-x-1/2 -translate-y-1/2 shadow-lg z-10"></div>
                 </div>
-                <div className="text-sm text-purple-600">
-                  Clique no centro para girar!
+                
+                {/* Ponteiro */}
+                <div 
+                  id={`pin-${element.id}`}
+                  className="pin absolute top-0 left-1/2 transform -translate-x-1/2 -translate-y-4 z-20"
+                  style={{
+                    transformOrigin: '50% 4px',
+                    width: '0px',
+                    height: '0px',
+                    borderStyle: 'solid',
+                    borderWidth: '0 20px 40px 20px',
+                    borderColor: 'transparent transparent #ffffff transparent',
+                    borderRadius: '8px',
+                    filter: 'drop-shadow(0 4px 8px rgba(0,0,0,0.3))'
+                  }}
+                >
                 </div>
               </div>
             </div>
             
-            {/* Informações da roleta */}
-            <div className="bg-white rounded-lg p-3 shadow-sm">
-              <div className="flex flex-wrap gap-2 text-xs">
-                {wheelSegments.map((segment, index) => (
+            {/* Informações dos prêmios */}
+            <div className="bg-black/50 rounded-lg p-4 backdrop-blur-sm">
+              <div className="grid grid-cols-5 gap-2 text-xs">
+                {wheelSegments.slice(0, 10).map((segment, index) => (
                   <span 
                     key={index}
-                    className="px-2 py-1 rounded-full text-white font-medium"
-                    style={{ backgroundColor: wheelColors[index] || "#e2e8f0" }}
+                    className="px-2 py-1 rounded text-white font-bold text-center"
+                    style={{ backgroundColor: wheelColors[index] || "#333" }}
                   >
                     {segment}
                   </span>
@@ -2419,8 +2609,8 @@ const gameElementCategories = [
               </div>
             </div>
             
-            <div className="text-xs text-purple-600 text-center font-medium">
-              ⚡ Animação Chart.js • {wheelSegments.length} Segmentos • Vencedor: {wheelSegments[winningSegment]}
+            <div className="text-xs text-yellow-400 text-center font-medium">
+              ⚡ Roda da Fortuna Realística • {wheelSegments.length} Prêmios • Animação Premium • Clique para girar
             </div>
           </div>
         );
@@ -2575,36 +2765,90 @@ const gameElementCategories = [
         );
 
       case "game_slot_machine":
-        const symbols = element.slotSymbols || ["🍒", "🍋", "🍊", "🔔", "⭐"];
+        const symbols = element.slotSymbols || ["🍌", "7️⃣", "🍒", "🍇", "🍊", "🔔", "❌", "🍋", "🍈"];
         const reels = element.slotReels || 3;
         
         return (
-          <div className="space-y-3 p-4 border-2 border-dashed border-red-200 rounded-lg bg-red-50">
+          <div className="space-y-4 p-6 border-2 border-dashed border-yellow-200 rounded-lg bg-gradient-to-br from-yellow-50 to-orange-50 shadow-lg">
             <div className="flex items-center gap-2">
-              <AlertCircle className="w-4 h-4 text-red-600" />
-              <span className="font-medium text-red-800">Caça-Níquel</span>
+              <AlertCircle className="w-6 h-6 text-yellow-600" />
+              <span className="font-bold text-yellow-800">🎰 Slot Machine Premium</span>
             </div>
             
-            <div className="flex flex-col items-center space-y-4">
-              <div className="bg-gradient-to-b from-yellow-300 to-yellow-500 p-4 rounded-lg border-4 border-yellow-600">
-                <div className="flex gap-2">
+            <div className="flex flex-col items-center space-y-6">
+              {/* Container principal do slot machine */}
+              <div className="relative bg-gradient-to-b from-gray-200 via-gray-300 to-gray-400 p-6 rounded-2xl border-4 border-gray-500 shadow-2xl">
+                <div className="absolute inset-0 bg-gradient-to-br from-yellow-200/20 to-orange-200/20 rounded-2xl"></div>
+                
+                {/* Slots container */}
+                <div className="slots-container flex gap-3 relative z-10" id={`slots-${element.id}`}>
                   {Array.from({ length: reels }, (_, index) => (
-                    <div key={index} className="bg-white w-16 h-20 rounded border-2 border-gray-300 flex items-center justify-center">
-                      <span className="text-2xl">
-                        {symbols[index % symbols.length]}
-                      </span>
+                    <div key={index} className="reel-container relative">
+                      <div 
+                        className="reel w-20 h-24 border-2 border-gray-700 rounded-lg overflow-hidden bg-white shadow-inner"
+                        style={{
+                          backgroundImage: `url(data:image/svg+xml;base64,${btoa(`
+                            <svg width="79" height="${79 * symbols.length}" xmlns="http://www.w3.org/2000/svg">
+                              ${symbols.map((symbol, i) => `
+                                <text x="39.5" y="${i * 79 + 55}" text-anchor="middle" 
+                                      font-size="40" font-family="Arial, sans-serif">${symbol}</text>
+                              `).join('')}
+                            </svg>
+                          `)})`,
+                          backgroundRepeat: 'repeat-y',
+                          backgroundPosition: '0 0'
+                        }}
+                      >
+                        {/* Sobreposição com gradiente para efeito de profundidade */}
+                        <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-black/40 pointer-events-none"></div>
+                        <div className="absolute inset-0 shadow-inner rounded-lg pointer-events-none" style={{
+                          boxShadow: 'inset 0 0 12px 4px rgba(0,0,0,0.3)'
+                        }}></div>
+                      </div>
                     </div>
                   ))}
                 </div>
+                
+                {/* Indicadores de linha de vitória */}
+                <div className="absolute left-0 right-0 top-1/2 transform -translate-y-1/2 h-1 bg-gradient-to-r from-transparent via-red-500 to-transparent opacity-60 z-20"></div>
               </div>
               
-              <button className="px-6 py-2 bg-red-500 text-white rounded-lg font-bold hover:bg-red-600 transition-colors">
-                🎰 JOGAR
-              </button>
-              
-              <div className="text-xs text-red-600 text-center">
-                {reels} rolos • {symbols.length} símbolos • Combinação: {element.slotWinningCombination?.join(" ") || symbols.slice(0, reels).join(" ")}
+              {/* Painel de controle */}
+              <div className="flex flex-col items-center space-y-3">
+                <button 
+                  className="px-8 py-3 bg-gradient-to-r from-red-500 to-red-600 text-white rounded-full font-bold text-lg hover:from-red-600 hover:to-red-700 transition-all transform hover:scale-105 shadow-lg border-2 border-red-400"
+                  onClick={() => {
+                    if (typeof window !== 'undefined') {
+                      (window as any).spinSlotMachine && (window as any).spinSlotMachine(`slots-${element.id}`, symbols, reels);
+                    }
+                  }}
+                >
+                  🎰 SPIN & WIN
+                </button>
+                
+                {/* Debug info */}
+                <div className="bg-black/80 text-yellow-400 px-3 py-1 rounded-full text-xs font-mono">
+                  <span id={`debug-${element.id}`}>Pronto para jogar...</span>
+                </div>
               </div>
+            </div>
+            
+            {/* Informações do jogo */}
+            <div className="bg-white rounded-lg p-3 shadow-sm">
+              <div className="flex flex-wrap gap-2 text-xs justify-center">
+                {symbols.map((symbol, index) => (
+                  <span 
+                    key={index}
+                    className="px-2 py-1 rounded-full bg-gray-100 border border-gray-300"
+                  >
+                    {symbol}
+                  </span>
+                ))}
+              </div>
+            </div>
+            
+            <div className="text-xs text-yellow-700 text-center font-medium">
+              ⚡ Animação Premium • {reels} Rolos • {symbols.length} Símbolos • Combinações Dinâmicas
             </div>
           </div>
         );
