@@ -57,9 +57,27 @@ export const antiDdosMiddleware = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   skip: (req) => {
-    // Pular rate limit para IPs permitidos
+    // Pular rate limit para IPs permitidos e processos internos
     const allowedIPs = ['127.0.0.1', '::1'];
-    return allowedIPs.includes(req.ip);
+    const internalProcesses = [
+      '/api/ultra-scale',
+      '/api/auto-detection',
+      '/api/scheduled-campaigns',
+      '/api/background-jobs',
+      '/api/internal'
+    ];
+    
+    // Permitir IPs locais
+    if (allowedIPs.includes(req.ip)) return true;
+    
+    // Permitir processos internos
+    if (internalProcesses.some(path => req.path.includes(path))) return true;
+    
+    // Permitir user-agent de processos internos
+    const userAgent = req.get('User-Agent') || '';
+    if (userAgent.includes('UltraScale') || userAgent.includes('AutoDetection')) return true;
+    
+    return false;
   },
   handler: (req, res) => {
     logSecurityEvent(req, 'ddos', 'high', 'Rate limit exceeded');

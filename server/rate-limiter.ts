@@ -34,6 +34,24 @@ export class HighPerformanceRateLimiter {
   }
 
   private getClientKey(req: Request): string {
+    // Identificar processos internos com key especial
+    const userAgent = req.get('User-Agent') || '';
+    const internalProcesses = [
+      '/api/ultra-scale',
+      '/api/auto-detection', 
+      '/api/scheduled-campaigns',
+      '/api/background-jobs'
+    ];
+    
+    // Processos internos usam key especial para não serem limitados
+    if (internalProcesses.some(path => req.path.includes(path))) {
+      return `internal-${req.path}`;
+    }
+    
+    if (userAgent.includes('UltraScale') || userAgent.includes('AutoDetection')) {
+      return `internal-${userAgent}`;
+    }
+    
     // Prioriza user ID se autenticado, senão usa IP
     return req.user?.id || req.ip || 'unknown';
   }
@@ -95,7 +113,17 @@ export class HighPerformanceRateLimiter {
       res.setHeader('X-RateLimit-Remaining', Math.max(0, this.options.maxRequests - client.count));
       res.setHeader('X-RateLimit-Reset', Math.ceil(client.resetTime / 1000));
       
-      if (client.count > this.options.maxRequests) {
+      // Não limitar processos internos
+      if (clientKey.startsWith('internal-')) {
+        // Processos internos têm limite muito alto (100x mais)
+        if (client.count > (this.options.maxRequests * 100)) {
+          console.log(`⚠️ [RateLimit] Processo interno ${clientKey} com ${client.count} requests`);
+          return res.status(this.options.statusCode!).json({
+            error: this.options.message,
+            retryAfter: Math.ceil((client.resetTime - now) / 1000)
+          });
+        }
+      } else if (client.count > this.options.maxRequests) {
         return res.status(this.options.statusCode!).json({
           error: this.options.message,
           retryAfter: Math.ceil((client.resetTime - now) / 1000)
