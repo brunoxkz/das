@@ -22,10 +22,13 @@ const app = express();
 // 🔒 CONFIGURAÇÃO DE PROXY PARA RATE LIMITING
 app.set('trust proxy', 1); // Confia no primeiro proxy (necessário para rate limiting no Replit)
 
-// Configurações de segurança para alta performance
+// Configurações de segurança relaxadas para desenvolvimento
 app.use(helmet({
   contentSecurityPolicy: false, // Desabilita CSP para dev
-  crossOriginEmbedderPolicy: false
+  crossOriginEmbedderPolicy: false,
+  hsts: false, // Desabilita HSTS em dev
+  noSniff: false, // Relaxa noSniff
+  frameguard: false // Desabilita X-Frame-Options
 }));
 
 // Compressão gzip/deflate para reduzir tamanho das respostas
@@ -78,11 +81,11 @@ app.use((req, res, next) => {
   next();
 });
 
-// Apply security middleware que funciona com Express 4.x
-app.use(honeypotMiddleware);
-app.use(timingAttackProtection);
-app.use(attackSignatureAnalyzer);
-app.use(blacklistMiddleware);
+// Middlewares de segurança temporariamente desabilitados para desenvolvimento
+// app.use(honeypotMiddleware);
+// app.use(timingAttackProtection);
+// app.use(attackSignatureAnalyzer);
+// app.use(blacklistMiddleware);
 
 // Health check endpoints
 app.get('/health', healthCheck);
