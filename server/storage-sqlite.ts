@@ -1894,12 +1894,13 @@ export class SQLiteStorage implements IStorage {
     phones: string[]; 
     status?: string; 
     scheduledAt?: number | Date;
-
     createdAt?: Date;
     updatedAt?: Date;
     triggerDelay?: number;
     triggerUnit?: string;
     targetAudience?: string;
+    campaignType?: string;
+    conditionalRules?: string;
   }): Promise<any> {
     const now = Math.floor(Date.now() / 1000);
     
@@ -1922,6 +1923,8 @@ export class SQLiteStorage implements IStorage {
       triggerDelay: campaignData.triggerDelay || 10,
       triggerUnit: campaignData.triggerUnit || 'minutes',
       targetAudience: campaignData.targetAudience || 'all',
+      campaignType: campaignData.campaignType || 'standard',
+      conditionalRules: campaignData.conditionalRules || null,
       createdAt: now,
       updatedAt: now
     };

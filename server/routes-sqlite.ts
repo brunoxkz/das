@@ -2700,6 +2700,92 @@ export function registerSQLiteRoutes(app: Express): Server {
     }
   });
 
+  // 🚀 ENDPOINT PARA DETECTAR ELEMENTOS DE ULTRA PERSONALIZAÇÃO
+  app.get("/api/quiz/:quizId/ultra-personalization-elements", verifyJWT, async (req: any, res: Response) => {
+    try {
+      const { quizId } = req.params;
+      const userId = req.user.id;
+      
+      // Verificar se o quiz existe e pertence ao usuário
+      const quiz = await storage.getQuiz(quizId);
+      if (!quiz || quiz.userId !== userId) {
+        return res.status(404).json({ error: "Quiz não encontrado" });
+      }
+      
+      // Detectar elementos de ultra personalização no quiz
+      const detectedElements = [];
+      
+      if (quiz.structure?.pages) {
+        for (const page of quiz.structure.pages) {
+          if (page.elements) {
+            for (const element of page.elements) {
+              if (element.type === 'body_type_classifier') {
+                detectedElements.push({
+                  fieldId: element.fieldId || 'tipo_corpo',
+                  type: 'body_type_classifier',
+                  title: 'Tipo de Corpo',
+                  description: 'Classificação corporal do usuário',
+                  options: [
+                    { value: 'magra', label: 'Magra', description: 'Estratégias para ganho de massa' },
+                    { value: 'com_volume', label: 'Com Volume', description: 'Foco em definição muscular' },
+                    { value: 'tonificar', label: 'Tonificar', description: 'Exercícios para tonificação' },
+                    { value: 'equilibrado', label: 'Equilibrado', description: 'Otimização e manutenção' }
+                  ]
+                });
+              } else if (element.type === 'age_classifier') {
+                detectedElements.push({
+                  fieldId: element.fieldId || 'faixa_etaria',
+                  type: 'age_classifier',
+                  title: 'Faixa Etária',
+                  description: 'Idade do usuário',
+                  options: [
+                    { value: '18-25', label: '18-25 anos', description: 'Jovens adultos' },
+                    { value: '26-35', label: '26-35 anos', description: 'Adultos' },
+                    { value: '36-45', label: '36-45 anos', description: 'Adultos maduros' },
+                    { value: '46+', label: '46+ anos', description: 'Maduros' }
+                  ]
+                });
+              } else if (element.type === 'fitness_goal_classifier') {
+                detectedElements.push({
+                  fieldId: element.fieldId || 'objetivo_fitness',
+                  type: 'fitness_goal_classifier',
+                  title: 'Objetivo Fitness',
+                  description: 'Meta de fitness do usuário',
+                  options: [
+                    { value: 'perder_peso', label: 'Perder Peso', description: 'Foco em emagrecimento' },
+                    { value: 'ganhar_massa', label: 'Ganhar Massa', description: 'Hipertrofia muscular' },
+                    { value: 'tonificar', label: 'Tonificar', description: 'Definição muscular' },
+                    { value: 'manter_forma', label: 'Manter Forma', description: 'Manutenção física' }
+                  ]
+                });
+              } else if (element.type === 'experience_classifier') {
+                detectedElements.push({
+                  fieldId: element.fieldId || 'nivel_experiencia',
+                  type: 'experience_classifier',
+                  title: 'Nível de Experiência',
+                  description: 'Experiência em fitness',
+                  options: [
+                    { value: 'iniciante', label: 'Iniciante', description: 'Começando agora' },
+                    { value: 'intermediario', label: 'Intermediário', description: 'Alguma experiência' },
+                    { value: 'avancado', label: 'Avançado', description: 'Muito experiente' },
+                    { value: 'expert', label: 'Expert', description: 'Profissional' }
+                  ]
+                });
+              }
+            }
+          }
+        }
+      }
+      
+      console.log(`🔍 ULTRA PERSONALIZAÇÃO - Quiz ${quizId}: ${detectedElements.length} elementos detectados`);
+      res.json({ elements: detectedElements });
+      
+    } catch (error) {
+      console.error("Error detecting ultra personalization elements:", error);
+      res.status(500).json({ error: "Error detecting elements" });
+    }
+  });
+
   // SMS Campaign routes
   app.get("/api/sms-campaigns", verifyJWT, async (req: any, res: Response) => {
     try {
@@ -2717,7 +2803,7 @@ export function registerSQLiteRoutes(app: Express): Server {
       const userId = req.user.id;
       console.log("📱 SMS CAMPAIGN CREATE - Body recebido:", JSON.stringify(req.body, null, 2));
       
-      const { name, quizId, message, triggerType, scheduledDateTime, targetAudience, triggerDelay, triggerUnit, fromDate } = req.body;
+      const { name, quizId, message, triggerType, scheduledDateTime, targetAudience, triggerDelay, triggerUnit, fromDate, campaignType, conditionalRules } = req.body;
       console.log("📱 SMS CAMPAIGN CREATE - Campos extraídos:", {
         name: name || 'MISSING',
         quizId: quizId || 'MISSING', 
@@ -2725,12 +2811,20 @@ export function registerSQLiteRoutes(app: Express): Server {
         triggerType: triggerType || 'immediate',
         scheduledDateTime: scheduledDateTime || 'NOT_PROVIDED',
         targetAudience: targetAudience || 'all',
-        fromDate: fromDate || 'NOT_PROVIDED'
+        fromDate: fromDate || 'NOT_PROVIDED',
+        campaignType: campaignType || 'standard',
+        conditionalRules: conditionalRules || 'NONE'
       });
 
-      if (!name || !quizId || !message) {
+      if (!name || !quizId) {
         console.log("📱 SMS CAMPAIGN CREATE - ERRO: Dados obrigatórios em falta");
-        return res.status(400).json({ error: "Dados obrigatórios em falta" });
+        return res.status(400).json({ error: "Nome e quiz são obrigatórios" });
+      }
+      
+      // Para campanhas ultra personalizadas, a mensagem é gerada automaticamente
+      if (campaignType === 'standard' && !message) {
+        console.log("📱 SMS CAMPAIGN CREATE - ERRO: Mensagem obrigatória para campanhas padrão");
+        return res.status(400).json({ error: "Mensagem é obrigatória para campanhas padrão" });
       }
 
       // Verificar se o quiz existe e pertence ao usuário
@@ -2764,6 +2858,38 @@ export function registerSQLiteRoutes(app: Express): Server {
         console.log(`📅 FILTRO DE DATA - Original: ${allResponses.length}, Filtrado: ${responses.length} (a partir de ${fromDate})`);
       } else {
         console.log(`📅 FILTRO DE DATA - Não especificado, processando todas as ${allResponses.length} respostas`);
+      }
+
+      // 🚀 SISTEMA DE CAMPANHAS CONDICIONAIS "SE > ENTÃO"
+      if (campaignType === 'conditional' && conditionalRules) {
+        console.log("🔥 CAMPANHA CONDICIONAL DETECTADA - Aplicando regras SE > ENTÃO");
+        console.log("🔥 Regras recebidas:", JSON.stringify(conditionalRules, null, 2));
+        
+        // Aplicar filtros condicionais baseados nas regras
+        responses = responses.filter(response => {
+          const responseData = response.responses;
+          let matchesAllConditions = true;
+          
+          for (const rule of conditionalRules) {
+            const fieldValue = responseData[rule.fieldId];
+            console.log(`🔍 Verificando condição: ${rule.fieldId} = ${fieldValue} (esperado: ${rule.expectedValue})`);
+            
+            if (fieldValue !== rule.expectedValue) {
+              matchesAllConditions = false;
+              break;
+            }
+          }
+          
+          return matchesAllConditions;
+        });
+        
+        console.log(`🎯 FILTRO CONDICIONAL - Original: ${allResponses.length}, Após condições: ${responses.length}`);
+      }
+
+      // 🚀 SISTEMA DE CAMPANHAS ULTRA PERSONALIZADAS
+      if (campaignType === 'ultra_personalized' && conditionalRules) {
+        console.log("🔥 CAMPANHA ULTRA PERSONALIZADA - Aplicando regras personalizadas");
+        console.log("🔥 Regras recebidas:", JSON.stringify(conditionalRules, null, 2));
       }
       
       const phoneMap = new Map<string, any>(); // Sistema de deduplicação inteligente com prioridade: COMPLETED > ABANDONED
@@ -3014,7 +3140,8 @@ export function registerSQLiteRoutes(app: Express): Server {
         triggerDelay,
         triggerUnit,
         targetAudience,
-
+        campaignType: campaignType || 'standard',
+        conditionalRules: conditionalRules ? JSON.stringify(conditionalRules) : null,
         createdAt: new Date(),
         updatedAt: new Date()
       });
@@ -3039,11 +3166,17 @@ export function registerSQLiteRoutes(app: Express): Server {
           status = 'scheduled';
         }
         
+        // Determinar mensagem personalizada para campanhas ultra personalizadas
+        let finalMessage = message;
+        if (campaignType === 'ultra_personalized' && conditionalRules) {
+          finalMessage = generateUltraPersonalizedMessage(phone, conditionalRules);
+        }
+        
         const logData = {
           id: logId,
           campaignId: campaign.id,
           phone: phoneNumber,
-          message: message,
+          message: finalMessage,
           status: status,
           scheduledAt: scheduledAt
         };
@@ -8413,6 +8546,51 @@ app.get("/api/whatsapp-extension/pending", verifyJWT, async (req: any, res: Resp
   const httpServer = createServer(app);
 
   return httpServer;
+}
+
+// Função para gerar mensagens ultra personalizadas baseadas no perfil do usuário
+function generateUltraPersonalizedMessage(phone: any, conditionalRules: any[]) {
+  if (!conditionalRules || conditionalRules.length === 0) {
+    return "Mensagem personalizada baseada no seu perfil!";
+  }
+
+  // Buscar a resposta do usuário para esta regra específica
+  const userResponses = phone.responses || [];
+  
+  for (const rule of conditionalRules) {
+    if (rule.fieldId && rule.messages) {
+      // Buscar a resposta correspondente ao fieldId
+      let userAnswer = null;
+      
+      if (Array.isArray(userResponses)) {
+        const matchingResponse = userResponses.find(resp => 
+          resp.elementFieldId === rule.fieldId
+        );
+        userAnswer = matchingResponse?.answer;
+      } else {
+        // Formato antigo
+        userAnswer = userResponses[rule.fieldId];
+      }
+      
+      // Encontrar a mensagem correspondente à resposta
+      if (userAnswer && rule.messages[userAnswer]) {
+        const personalizedMessage = rule.messages[userAnswer];
+        
+        // Aplicar variáveis dinâmicas na mensagem
+        let finalMessage = personalizedMessage;
+        if (phone.name) {
+          finalMessage = finalMessage.replace(/\{nome_completo\}/g, phone.name);
+          finalMessage = finalMessage.replace(/\{nome\}/g, phone.name);
+        }
+        
+        console.log(`🎯 MENSAGEM ULTRA PERSONALIZADA - ${rule.fieldId}: ${userAnswer} → ${finalMessage}`);
+        return finalMessage;
+      }
+    }
+  }
+  
+  // Fallback para mensagem genérica
+  return "Mensagem personalizada baseada no seu perfil!";
 }
 
 

@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { MessageSquare, Send, DollarSign, FileText, Plus, Eye, Clock, Users, CheckCircle, XCircle, Phone, Search, AlertCircle, Edit, CreditCard, Pause, Play, Trash2, Clock3 } from "lucide-react";
+import { MessageSquare, Send, DollarSign, FileText, Plus, Eye, Clock, Users, CheckCircle, XCircle, Phone, Search, AlertCircle, Edit, CreditCard, Pause, Play, Trash2, Clock3, Sparkles, Target } from "lucide-react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Progress } from "@/components/ui/progress";
@@ -17,6 +17,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useLocation } from "wouter";
 import { VariableHelperUnified } from "@/components/ui/variable-helper-unified";
+import { UltraPersonalizedCampaignModal } from "@/components/ultra-personalized-campaign-modal";
 
 interface SMSCredits {
   total: number;
@@ -53,6 +54,10 @@ export default function SMSCreditsPage() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [, setLocation] = useLocation();
+  
+  // Estados para campanhas ultra personalizadas
+  const [showUltraPersonalizedModal, setShowUltraPersonalizedModal] = useState(false);
+  const [selectedQuizForUltraPersonalized, setSelectedQuizForUltraPersonalized] = useState<{id: string, title: string} | null>(null);
   const [activeTab, setActiveTab] = useState("overview");
   const [selectedQuiz, setSelectedQuiz] = useState<string>("");
   const [campaignForm, setCampaignForm] = useState<{
@@ -1144,13 +1149,46 @@ export default function SMSCreditsPage() {
                 </p>
               </div>
 
-              <Button 
-                onClick={handleCreateCampaign} 
-                className="w-full"
-                disabled={createCampaignMutation.isPending}
-              >
-                {createCampaignMutation.isPending ? "Ativando..." : "Ativar Sistema Contínuo"}
-              </Button>
+              <div className="space-y-3">
+                <Button 
+                  onClick={handleCreateCampaign} 
+                  className="w-full"
+                  disabled={createCampaignMutation.isPending}
+                >
+                  {createCampaignMutation.isPending ? "Ativando..." : "Ativar Sistema Contínuo"}
+                </Button>
+                
+                {/* Botão de Campanhas Ultra Personalizadas */}
+                <Button 
+                  onClick={() => {
+                    if (!campaignForm.quizId) {
+                      toast({
+                        title: "Selecione um quiz primeiro",
+                        description: "Escolha um quiz para criar campanhas ultra personalizadas",
+                        variant: "destructive"
+                      });
+                      return;
+                    }
+                    const selectedQuiz = quizzes?.find((q: any) => q.id === campaignForm.quizId);
+                    setSelectedQuizForUltraPersonalized({
+                      id: campaignForm.quizId,
+                      title: selectedQuiz?.title || "Quiz Selecionado"
+                    });
+                    setShowUltraPersonalizedModal(true);
+                  }}
+                  className="w-full bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700"
+                  disabled={!campaignForm.quizId}
+                >
+                  <Sparkles className="w-4 h-4 mr-2" />
+                  Campanha Ultra Personalizada
+                </Button>
+                
+                <div className="text-center">
+                  <p className="text-xs text-gray-500">
+                    ⚡ Ultra Personalizada: Mensagens automáticas baseadas no perfil do lead
+                  </p>
+                </div>
+              </div>
 
               {/* Status da Campanha após ativação */}
               {createCampaignMutation.isSuccess && (
@@ -1464,6 +1502,19 @@ export default function SMSCreditsPage() {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Modal para Campanhas Ultra Personalizadas */}
+      {selectedQuizForUltraPersonalized && (
+        <UltraPersonalizedCampaignModal
+          open={showUltraPersonalizedModal}
+          onClose={() => {
+            setShowUltraPersonalizedModal(false);
+            setSelectedQuizForUltraPersonalized(null);
+          }}
+          quizId={selectedQuizForUltraPersonalized.id}
+          quizTitle={selectedQuizForUltraPersonalized.title}
+        />
+      )}
     </div>
   );
 }

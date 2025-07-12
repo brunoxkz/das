@@ -105,6 +105,10 @@ export function runMigrations() {
       addColumnIfNotExists('users', 'whatsappCredits', 'INTEGER DEFAULT 0');
       addColumnIfNotExists('users', 'aiCredits', 'INTEGER DEFAULT 0');
       
+      // Adicionar colunas para campanhas ultra personalizadas
+      addColumnIfNotExists('sms_campaigns', 'campaignType', 'TEXT DEFAULT "standard"');
+      addColumnIfNotExists('sms_campaigns', 'conditionalRules', 'TEXT');
+      
       console.log('✅ Database migration completed safely');
       return;
     }
@@ -243,6 +247,8 @@ export function runMigrations() {
         triggerDelay INTEGER DEFAULT 10,
         triggerUnit TEXT DEFAULT 'minutes',
         targetAudience TEXT DEFAULT 'all',
+        campaignType TEXT DEFAULT 'standard',
+        conditionalRules TEXT,
         fromDate INTEGER,
         createdAt INTEGER NOT NULL,
         updatedAt INTEGER NOT NULL,

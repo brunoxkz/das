@@ -168,6 +168,9 @@ export const smsCampaigns = sqliteTable("sms_campaigns", {
   campaignMode: text("campaignMode").default("leads_ja_na_base"), // "modo_ao_vivo" ou "leads_ja_na_base"
   triggerDelay: integer("triggerDelay").default(10),
   triggerUnit: text("triggerUnit").default("minutes"),
+  // 🚀 CAMPOS PARA CAMPANHAS ULTRA PERSONALIZADAS
+  campaignType: text("campaignType").default("standard"), // "standard" ou "ultra_personalized"
+  conditionalRules: text("conditionalRules", { mode: 'json' }), // JSON com regras SE > ENTÃO
   createdAt: integer("createdAt").notNull().$defaultFn(() => Math.floor(Date.now() / 1000)),
   updatedAt: integer("updatedAt").notNull().$defaultFn(() => Math.floor(Date.now() / 1000)),
 });
