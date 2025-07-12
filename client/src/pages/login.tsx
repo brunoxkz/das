@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
-import { useAuth } from "@/hooks/use-auth-hybrid";
+import { useAuth } from "@/hooks/useAuth-jwt";
 import { Loader2, Mail, Lock, User } from "lucide-react";
 
 export default function LoginPage() {
