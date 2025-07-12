@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
@@ -70,6 +70,105 @@ import {
   QrCode,
   Hand
 } from "lucide-react";
+
+// Função para inicializar Chart.js da roleta
+declare global {
+  interface Window {
+    Chart: any;
+    ChartDataLabels: any;
+    initializeWheelChart: (canvasId: string, segments: string[], colors: string[], winningSegment: number) => void;
+  }
+}
+
+// Função global para inicializar roleta
+if (typeof window !== 'undefined') {
+  (window as any).initializeWheelChart = (canvasId: string, segments: string[], colors: string[], winningSegment: number) => {
+    const canvas = document.getElementById(canvasId) as HTMLCanvasElement;
+    if (!canvas || !window.Chart) return;
+    
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+    
+    // Configuração do rotationValues baseado nos segmentos
+    const rotationValues = segments.map((_, index) => {
+      const angle = 360 / segments.length;
+      return {
+        minDegree: index * angle,
+        maxDegree: (index + 1) * angle,
+        value: index
+      };
+    });
+    
+    // Dados para o Chart.js
+    const data = Array(segments.length).fill(16); // Tamanho igual para cada segmento
+    
+    // Criar o gráfico
+    const wheelChart = new window.Chart(ctx, {
+      plugins: [window.ChartDataLabels],
+      type: 'pie',
+      data: {
+        labels: segments,
+        datasets: [{
+          backgroundColor: colors,
+          data: data,
+          borderWidth: 2,
+          borderColor: '#ffffff'
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        animation: { duration: 0 },
+        plugins: {
+          tooltip: false,
+          legend: { display: false },
+          datalabels: {
+            color: '#ffffff',
+            formatter: (_, context) => context.chart.data.labels[context.dataIndex],
+            font: { size: 12, weight: 'bold' }
+          }
+        }
+      }
+    });
+    
+    // Função para determinar resultado baseado no ângulo
+    const valueGenerator = (angleValue: number) => {
+      for (let i of rotationValues) {
+        if (angleValue >= i.minDegree && angleValue <= i.maxDegree) {
+          return segments[i.value];
+        }
+      }
+      return segments[winningSegment];
+    };
+    
+    // Função de spin
+    const spinWheel = () => {
+      const randomDegree = Math.floor(Math.random() * 360);
+      let count = 0;
+      let resultValue = 101;
+      
+      const rotationInterval = setInterval(() => {
+        wheelChart.options.rotation = (wheelChart.options.rotation || 0) + resultValue;
+        wheelChart.update();
+        
+        if (wheelChart.options.rotation >= 360) {
+          count += 1;
+          resultValue -= 5;
+          wheelChart.options.rotation = 0;
+        } else if (count > 15 && wheelChart.options.rotation >= randomDegree) {
+          const result = valueGenerator(randomDegree);
+          console.log(`Resultado: ${result}`);
+          clearInterval(rotationInterval);
+          count = 0;
+          resultValue = 101;
+        }
+      }, 10);
+    };
+    
+    // Adicionar evento de clique
+    canvas.addEventListener('click', spinWheel);
+  };
+}
 
 interface Element {
   id: number;
@@ -2239,69 +2338,89 @@ const gameElementCategories = [
       // Elementos de jogos
       case "game_wheel":
         const wheelSegments = element.wheelSegments || ["Prêmio 1", "Prêmio 2", "Prêmio 3", "Prêmio 4"];
-        const wheelColors = element.wheelColors || ["#FF6B6B", "#4ECDC4", "#45B7D1", "#96CEB4"];
+        const wheelColors = element.wheelColors || ["#8b35bc", "#b163da", "#8b35bc", "#b163da"];
         const winningSegment = element.wheelWinningSegment || 0;
         
         return (
-          <div className="space-y-3 p-4 border-2 border-dashed border-orange-200 rounded-lg bg-orange-50">
+          <div className="space-y-3 p-4 border-2 border-dashed border-orange-200 rounded-lg bg-gradient-to-br from-purple-50 to-pink-50 shadow-lg">
             <div className="flex items-center gap-2">
-              <BarChart3 className="w-4 h-4 text-orange-600" />
-              <span className="font-medium text-orange-800">Roleta da Sorte</span>
+              <BarChart3 className="w-5 h-5 text-purple-600" />
+              <span className="font-bold text-purple-800">🎡 Roleta da Sorte Premium</span>
             </div>
             
             <div className="flex flex-col items-center space-y-4">
-              <div className="relative w-40 h-40">
-                <svg viewBox="0 0 200 200" className="w-full h-full">
-                  {wheelSegments.map((segment, index) => {
-                    const angle = 360 / wheelSegments.length;
-                    const startAngle = index * angle;
-                    const endAngle = (index + 1) * angle;
-                    const isWinning = index === winningSegment;
-                    
-                    const x1 = 100 + 80 * Math.cos((startAngle * Math.PI) / 180);
-                    const y1 = 100 + 80 * Math.sin((startAngle * Math.PI) / 180);
-                    const x2 = 100 + 80 * Math.cos((endAngle * Math.PI) / 180);
-                    const y2 = 100 + 80 * Math.sin((endAngle * Math.PI) / 180);
-                    
-                    const largeArcFlag = angle > 180 ? 1 : 0;
-                    
-                    return (
-                      <g key={index}>
-                        <path
-                          d={`M 100 100 L ${x1} ${y1} A 80 80 0 ${largeArcFlag} 1 ${x2} ${y2} Z`}
-                          fill={wheelColors[index] || "#e2e8f0"}
-                          stroke={isWinning ? "#fbbf24" : "#ffffff"}
-                          strokeWidth={isWinning ? "3" : "2"}
-                        />
-                        <text
-                          x={100 + 50 * Math.cos(((startAngle + endAngle) / 2 * Math.PI) / 180)}
-                          y={100 + 50 * Math.sin(((startAngle + endAngle) / 2 * Math.PI) / 180)}
-                          textAnchor="middle"
-                          dominantBaseline="middle"
-                          fontSize="10"
-                          fill="white"
-                          fontWeight="bold"
-                        >
-                          {segment.length > 8 ? segment.substring(0, 8) + "..." : segment}
-                        </text>
-                      </g>
-                    );
-                  })}
-                  {/* Ponteiro */}
-                  <polygon
-                    points="100,20 105,35 95,35"
-                    fill={element.wheelPointerColor || "#DC2626"}
-                  />
-                </svg>
+              <div className="relative w-52 h-52">
+                {/* Container da roleta com gradiente */}
+                <div className="absolute inset-0 rounded-full bg-gradient-to-br from-purple-100 to-pink-100 shadow-2xl">
+                  <div className="absolute inset-2 rounded-full bg-white shadow-inner">
+                    <canvas 
+                      id={`wheel-canvas-${element.id}`}
+                      width="192" 
+                      height="192"
+                      className="rounded-full"
+                      ref={(canvas) => {
+                        if (canvas && typeof window !== 'undefined' && (window as any).Chart) {
+                          setTimeout(() => {
+                            (window as any).initializeWheelChart(`wheel-canvas-${element.id}`, wheelSegments, wheelColors, winningSegment);
+                          }, 100);
+                        }
+                      }}
+                    />
+                  </div>
+                </div>
+                
+                {/* Ponteiro Premium */}
+                <div className="absolute top-0 left-1/2 transform -translate-x-1/2 -translate-y-1 z-10">
+                  <div className="w-0 h-0 border-l-[15px] border-r-[15px] border-b-[30px] border-l-transparent border-r-transparent border-b-yellow-400 shadow-lg filter drop-shadow-lg">
+                    <div className="absolute top-2 left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-[8px] border-r-[8px] border-b-[16px] border-l-transparent border-r-transparent border-b-yellow-600">
+                    </div>
+                  </div>
+                </div>
+                
+                {/* Botão central */}
+                <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-20">
+                  <div 
+                    className="w-16 h-16 rounded-full bg-gradient-to-br from-yellow-400 to-orange-500 shadow-lg flex items-center justify-center cursor-pointer hover:scale-105 transition-transform border-4 border-white"
+                    onClick={() => {
+                      // Girar a roleta quando clicado
+                      const canvas = document.getElementById(`wheel-canvas-${element.id}`) as HTMLCanvasElement;
+                      if (canvas) {
+                        canvas.click(); // Simular clique no canvas para girar
+                      }
+                    }}
+                  >
+                    <span className="text-orange-800 font-bold text-sm">SPIN</span>
+                  </div>
+                </div>
               </div>
               
-              <button className="px-4 py-2 bg-orange-500 text-white rounded-lg font-semibold hover:bg-orange-600 transition-colors">
-                🎰 Girar Roleta
-              </button>
+              <div className="text-center space-y-2">
+                <div className="text-lg font-bold text-purple-800">
+                  🎯 Resultado: {wheelSegments[winningSegment]}
+                </div>
+                <div className="text-sm text-purple-600">
+                  Clique no centro para girar!
+                </div>
+              </div>
             </div>
             
-            <div className="text-xs text-orange-600 text-center">
-              Segmentos: {wheelSegments.length} • Vencedor: {wheelSegments[winningSegment]}
+            {/* Informações da roleta */}
+            <div className="bg-white rounded-lg p-3 shadow-sm">
+              <div className="flex flex-wrap gap-2 text-xs">
+                {wheelSegments.map((segment, index) => (
+                  <span 
+                    key={index}
+                    className="px-2 py-1 rounded-full text-white font-medium"
+                    style={{ backgroundColor: wheelColors[index] || "#e2e8f0" }}
+                  >
+                    {segment}
+                  </span>
+                ))}
+              </div>
+            </div>
+            
+            <div className="text-xs text-purple-600 text-center font-medium">
+              ⚡ Animação Chart.js • {wheelSegments.length} Segmentos • Vencedor: {wheelSegments[winningSegment]}
             </div>
           </div>
         );

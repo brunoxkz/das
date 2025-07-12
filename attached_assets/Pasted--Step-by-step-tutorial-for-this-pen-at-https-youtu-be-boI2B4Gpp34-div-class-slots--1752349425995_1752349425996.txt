@@ -1,0 +1,23 @@
+
+<!-- Step-by-step tutorial for this pen at https://youtu.be/boI2B4Gpp34 -->
+
+<div class="slots">
+	<div class="reel"></div>
+	<div class="reel"></div>
+	<div class="reel"></div>
+	<p>Step-by-step tutorial for this pen at <a target="_blank" href="https://youtu.be/boI2B4Gpp34">YouTube</a></p>
+	<p>Want to determine the outcome?<br>Here's <a target="_blank" href="https://codepen.io/josfabre/pen/KKLwxbE">a rigged version!</a></p>
+</div>
+
+<div id="debug" class="debug"></div>
+
+<img style="position:fixed; left: 0; top: 0; height: 100vh; width: auto;"  src="https://assets.codepen.io/439000/slotreel.webp">
+
+<a target="_blank" href="https://codepen.io/josfabre/pens/public" style="position: fixed; left: 8em; top: 1em; font-family: Sans-Serif; color: #333; font-size: 13px; text-decoration: none; text-transform: uppercase; padding: 0.5em 1em; border: 1px solid #333; border-radius: 6px; opacity: 0.9; ">All my pens</a>
+
+<section style="position: fixed; right: 2em; bottom: 2em; font-family: 'Telefon', Sans-Serif; color:white;z-index:9999">
+	<ul style="display:flex;list-style-type:none;margin: 0; padding: 0;">
+		<li style="margin-right: 1em;"><a href="https://codepen.io/josfabre/pen/abReBvP" target="_blank" style="color:white;text-decoration:none;font-size:0.7rem;"><img style="border-radius: 8px;height: 75px; width: auto;box-shadow: 0 0 2px black;" src="https://assets.codepen.io/439000/Screenshot+2023-06-07+at+08.39.48.png"><br>Real Slots Reels - Slot Machine</a></li>
+		<li style="margin-right: 1em;"><a href="https://codepen.io/josfabre/pen/qBzWGoE" target="_blank" style="color:white;text-decoration:none;font-size:0.7rem;"><img style="border-radius: 8px;height: 75px; width: auto;box-shadow: 0 0 2px black;" src="https://assets.codepen.io/439000/Screen+Shot+2024-07-16+at+10.47.00.png"><br>Interactive Wheel of Fortune</a></li>
+		<li style="margin-right: 1em;"><a href="https://codepen.io/josfabre/pen/jOegyyJ" target="_blank" style="color:white;text-decoration:none;font-size:0.7rem;"><img style="border-radius: 8px;height: 75px; width: auto;box-shadow: 0 0 2px black;" src="https://assets.codepen.io/439000/Screenshot+2023-06-07+at+08.56.26.png"><br>Magnifying Glass Newspaper</a></li>
+</section>
