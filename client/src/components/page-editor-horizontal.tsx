@@ -68,7 +68,8 @@ import {
   ArrowLeftRight,
   HelpCircle,
   QrCode,
-  Hand
+  Hand,
+  Bell
 } from "lucide-react";
 
 // Função para inicializar Chart.js da roleta
@@ -336,7 +337,7 @@ if (typeof window !== 'undefined') {
 
 interface Element {
   id: number;
-  type: "multiple_choice" | "text" | "rating" | "email" | "checkbox" | "date" | "phone" | "number" | "textarea" | "image_upload" | "animated_transition" | "heading" | "paragraph" | "image" | "divider" | "video" | "audio" | "birth_date" | "height" | "current_weight" | "target_weight" | "transition_background" | "transition_text" | "transition_counter" | "transition_loader" | "transition_redirect" | "transition_button" | "spacer" | "game_wheel" | "game_scratch" | "game_color_pick" | "game_brick_break" | "game_memory_cards" | "game_slot_machine" | "continue_button" | "loading_question" | "share_quiz" | "price" | "icon_list" | "testimonials" | "guarantee" | "paypal" | "image_with_text" | "chart" | "metrics" | "before_after" | "pricing_plans" | "stripe_embed" | "hotmart_upsell" | "faq" | "image_carousel" | "pix_payment" | "facial_reading" | "palm_reading";
+  type: "multiple_choice" | "text" | "rating" | "email" | "checkbox" | "date" | "phone" | "number" | "textarea" | "image_upload" | "animated_transition" | "heading" | "paragraph" | "image" | "divider" | "video" | "audio" | "birth_date" | "height" | "current_weight" | "target_weight" | "transition_background" | "transition_text" | "transition_counter" | "transition_loader" | "transition_redirect" | "transition_button" | "spacer" | "game_wheel" | "game_scratch" | "game_color_pick" | "game_brick_break" | "game_memory_cards" | "game_slot_machine" | "continue_button" | "loading_question" | "share_quiz" | "price" | "icon_list" | "testimonials" | "guarantee" | "paypal" | "image_with_text" | "chart" | "metrics" | "before_after" | "pricing_plans" | "stripe_embed" | "hotmart_upsell" | "faq" | "image_carousel" | "pix_payment" | "facial_reading" | "palm_reading" | "notification";
   content: string;
   question?: string;
   description?: string;
@@ -398,7 +399,7 @@ interface Element {
   counterEndValue?: number;
   counterDuration?: number;
   counterSuffix?: string;
-  loaderType?: "spinner" | "dots" | "bars" | "pulse" | "ring";
+  loaderType?: "spinner" | "dots" | "bars" | "pulse" | "ring" | "rotating-plane" | "double-bounce" | "wave" | "wandering-cubes" | "spinner-pulse" | "chasing-dots" | "three-bounce" | "circle-bounce" | "cube-grid" | "fading-circle" | "folding-cube";
   loaderColor?: string;
   loaderSize?: "sm" | "md" | "lg";
   redirectUrl?: string;
@@ -901,6 +902,16 @@ interface Element {
   palmMessage?: string;
   palmButtonText?: string;
   palmButtonColor?: string;
+  
+  // Campos específicos para Notificação
+  notificationTitle?: string;
+  notificationMessage?: string;
+  notificationPosition?: "top" | "bottom";
+  notificationInterval?: number; // segundos
+  notificationDuration?: number; // segundos
+  notificationCount?: number; // quantas vezes aparece
+  notificationIcon?: "success" | "info" | "warning" | "error";
+  notificationColor?: string;
 }
 
 interface QuizPage {
@@ -1135,6 +1146,7 @@ export function PageEditorHorizontal({
         { type: "image_carousel", label: "Carrossel", icon: <ImageIcon className="w-4 h-4" /> },
         { type: "facial_reading", label: "Leitura Facial", icon: <Eye className="w-4 h-4" /> },
         { type: "palm_reading", label: "Leitura de Mãos", icon: <Hand className="w-4 h-4" /> },
+        { type: "notification", label: "Notificação", icon: <Bell className="w-4 h-4" /> },
       ]
     },
     {
@@ -1381,7 +1393,7 @@ const gameElementCategories = [
     const baseElement: Element = {
       id: Date.now(),
       type,
-      content: type === "heading" ? "Novo título" : type === "paragraph" ? "Novo parágrafo" : type === "continue_button" ? "Continuar" : type === "facial_reading" ? "Leitura Facial" : type === "palm_reading" ? "Leitura de Mãos" : "",
+      content: type === "heading" ? "Novo título" : type === "paragraph" ? "Novo parágrafo" : type === "continue_button" ? "Continuar" : type === "facial_reading" ? "Leitura Facial" : type === "palm_reading" ? "Leitura de Mãos" : type === "notification" ? "Nova Notificação" : "",
       question: undefined,
       options: type === "multiple_choice" ? ["Opção 1", "Opção 2"] : undefined,
       required: false,
@@ -1455,6 +1467,17 @@ const gameElementCategories = [
         palmMessage: "As linhas da sua mão revelam uma vida longa e próspera com grandes oportunidades!",
         palmButtonText: "Iniciar Leitura de Mãos",
         palmButtonColor: "#A855F7"
+      }),
+      
+      ...(type === "notification" && {
+        notificationTitle: "Sucesso!",
+        notificationMessage: "Suas alterações foram salvas com sucesso",
+        notificationPosition: "top",
+        notificationInterval: 5,
+        notificationDuration: 4,
+        notificationCount: 3,
+        notificationIcon: "success",
+        notificationColor: "#49a87d"
       })
     };
 
@@ -2411,6 +2434,90 @@ const gameElementCategories = [
                 <div className="relative inline-block">
                   <div className={`${loaderSize} border-2 border-current rounded-full animate-ping absolute`} style={{ borderColor: loaderColor }}></div>
                   <div className={`${loaderSize} border-2 border-current rounded-full animate-ping absolute`} style={{ borderColor: loaderColor, animationDelay: "0.5s" }}></div>
+                </div>
+              );
+            case "rotating-plane":
+              return (
+                <div className={`${loaderSize} sk-rotating-plane`} style={{ backgroundColor: loaderColor }}></div>
+              );
+            case "double-bounce":
+              return (
+                <div className={`${loaderSize} sk-double-bounce`}>
+                  <div className="sk-child sk-double-bounce-1" style={{ backgroundColor: loaderColor }}></div>
+                  <div className="sk-child sk-double-bounce-2" style={{ backgroundColor: loaderColor }}></div>
+                </div>
+              );
+            case "wave":
+              return (
+                <div className={`${loaderSize} sk-wave`} style={{ width: "auto" }}>
+                  <div className="sk-rect sk-rect-1" style={{ backgroundColor: loaderColor }}></div>
+                  <div className="sk-rect sk-rect-2" style={{ backgroundColor: loaderColor }}></div>
+                  <div className="sk-rect sk-rect-3" style={{ backgroundColor: loaderColor }}></div>
+                  <div className="sk-rect sk-rect-4" style={{ backgroundColor: loaderColor }}></div>
+                  <div className="sk-rect sk-rect-5" style={{ backgroundColor: loaderColor }}></div>
+                </div>
+              );
+            case "wandering-cubes":
+              return (
+                <div className={`${loaderSize} sk-wandering-cubes`}>
+                  <div className="sk-cube sk-cube-1" style={{ backgroundColor: loaderColor }}></div>
+                  <div className="sk-cube sk-cube-2" style={{ backgroundColor: loaderColor }}></div>
+                </div>
+              );
+            case "spinner-pulse":
+              return (
+                <div className={`${loaderSize} sk-spinner-pulse`} style={{ backgroundColor: loaderColor }}></div>
+              );
+            case "chasing-dots":
+              return (
+                <div className={`${loaderSize} sk-chasing-dots`}>
+                  <div className="sk-child sk-dot-1" style={{ backgroundColor: loaderColor }}></div>
+                  <div className="sk-child sk-dot-2" style={{ backgroundColor: loaderColor }}></div>
+                </div>
+              );
+            case "three-bounce":
+              return (
+                <div className={`${loaderSize} sk-three-bounce`} style={{ width: "auto" }}>
+                  <div className="sk-child sk-bounce-1" style={{ backgroundColor: loaderColor }}></div>
+                  <div className="sk-child sk-bounce-2" style={{ backgroundColor: loaderColor }}></div>
+                  <div className="sk-child sk-bounce-3" style={{ backgroundColor: loaderColor }}></div>
+                </div>
+              );
+            case "circle-bounce":
+              return (
+                <div className={`${loaderSize} sk-circle-bounce`}>
+                  {[...Array(12)].map((_, i) => (
+                    <div key={i} className={`sk-child sk-circle-${i + 1}`}>
+                      <div style={{ backgroundColor: loaderColor }}></div>
+                    </div>
+                  ))}
+                </div>
+              );
+            case "cube-grid":
+              return (
+                <div className={`${loaderSize} sk-cube-grid`}>
+                  {[...Array(9)].map((_, i) => (
+                    <div key={i} className={`sk-cube sk-cube-${i + 1}`} style={{ backgroundColor: loaderColor }}></div>
+                  ))}
+                </div>
+              );
+            case "fading-circle":
+              return (
+                <div className={`${loaderSize} sk-fading-circle`}>
+                  {[...Array(12)].map((_, i) => (
+                    <div key={i} className={`sk-circle sk-circle-${i + 1}`}>
+                      <div style={{ backgroundColor: loaderColor }}></div>
+                    </div>
+                  ))}
+                </div>
+              );
+            case "folding-cube":
+              return (
+                <div className={`${loaderSize} sk-folding-cube`}>
+                  <div className="sk-cube sk-cube-1" style={{ backgroundColor: loaderColor }}></div>
+                  <div className="sk-cube sk-cube-2" style={{ backgroundColor: loaderColor }}></div>
+                  <div className="sk-cube sk-cube-3" style={{ backgroundColor: loaderColor }}></div>
+                  <div className="sk-cube sk-cube-4" style={{ backgroundColor: loaderColor }}></div>
                 </div>
               );
             default:
@@ -3773,6 +3880,42 @@ const gameElementCategories = [
                 </div>
               </div>
             )}
+          </div>
+        );
+
+      case "notification":
+        return (
+          <div className="space-y-2">
+            <div className="bg-white p-3 rounded-lg border border-gray-200 shadow-sm">
+              <div className="flex items-start gap-3">
+                <div 
+                  className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0"
+                  style={{ backgroundColor: element.notificationColor || "#49a87d" }}
+                >
+                  {element.notificationIcon === "success" && <CheckCircle className="w-4 h-4 text-white" />}
+                  {element.notificationIcon === "info" && <AlertCircle className="w-4 h-4 text-white" />}
+                  {element.notificationIcon === "warning" && <AlertCircle className="w-4 h-4 text-white" />}
+                  {element.notificationIcon === "error" && <AlertCircle className="w-4 h-4 text-white" />}
+                  {!element.notificationIcon && <Bell className="w-4 h-4 text-white" />}
+                </div>
+                <div className="flex-1">
+                  <h4 className="font-medium text-gray-900 text-sm">
+                    {element.notificationTitle || "Título da Notificação"}
+                  </h4>
+                  <p className="text-gray-600 text-sm mt-1">
+                    {element.notificationMessage || "Mensagem da notificação"}
+                  </p>
+                </div>
+                <button className="text-gray-400 hover:text-gray-600">
+                  <span className="sr-only">Fechar</span>
+                  ×
+                </button>
+              </div>
+            </div>
+            <div className="text-xs text-gray-500 bg-blue-50 p-2 rounded">
+              📍 Posição: {element.notificationPosition === "top" ? "Topo" : "Base"} | 
+              ⏱️ Aparece a cada {element.notificationInterval || 5}s por {element.notificationDuration || 4}s
+            </div>
           </div>
         );
 
@@ -6220,6 +6363,17 @@ const gameElementCategories = [
                       <option value="pulse">Pulso</option>
                       <option value="ring">Anel</option>
                       <option value="ripple">Ondas</option>
+                      <option value="rotating-plane">Plano Giratório</option>
+                      <option value="double-bounce">Duplo Bounce</option>
+                      <option value="wave">Onda</option>
+                      <option value="wandering-cubes">Cubos Vagantes</option>
+                      <option value="spinner-pulse">Spinner Pulse</option>
+                      <option value="chasing-dots">Pontos Perseguindo</option>
+                      <option value="three-bounce">Triplo Bounce</option>
+                      <option value="circle-bounce">Círculo Bounce</option>
+                      <option value="cube-grid">Grid de Cubos</option>
+                      <option value="fading-circle">Círculo Desvanecer</option>
+                      <option value="folding-cube">Cubo Dobrável</option>
                     </select>
                   </div>
 
@@ -9297,6 +9451,128 @@ const gameElementCategories = [
                           onChange={(e) => updateElement(selectedElementData.id, { palmButtonColor: e.target.value })}
                           className="mt-1 h-10 w-full"
                         />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Notification Properties */}
+              {selectedElementData.type === "notification" && (
+                <div className="space-y-4 max-h-96 overflow-y-auto">
+                  <div className="bg-blue-50 p-3 rounded-lg">
+                    <h4 className="text-sm font-semibold text-blue-800 mb-2">🔔 Notificação</h4>
+                    <p className="text-xs text-blue-700">
+                      Sistema de notificação popover configurável com timing e posicionamento
+                    </p>
+                  </div>
+
+                  <div className="border-b pb-4">
+                    <h5 className="font-semibold text-sm mb-3">📝 Conteúdo</h5>
+                    
+                    <div className="space-y-3">
+                      <div>
+                        <Label>Título</Label>
+                        <Input
+                          value={selectedElementData.notificationTitle || ""}
+                          onChange={(e) => updateElement(selectedElementData.id, { notificationTitle: e.target.value })}
+                          placeholder="Sucesso!"
+                          className="mt-1"
+                        />
+                      </div>
+
+                      <div>
+                        <Label>Mensagem</Label>
+                        <Input
+                          value={selectedElementData.notificationMessage || ""}
+                          onChange={(e) => updateElement(selectedElementData.id, { notificationMessage: e.target.value })}
+                          placeholder="Suas alterações foram salvas com sucesso"
+                          className="mt-1"
+                        />
+                      </div>
+
+                      <div>
+                        <Label>Ícone</Label>
+                        <select
+                          value={selectedElementData.notificationIcon || "success"}
+                          onChange={(e) => updateElement(selectedElementData.id, { notificationIcon: e.target.value })}
+                          className="w-full px-2 py-1 border rounded text-xs mt-1"
+                        >
+                          <option value="success">✅ Sucesso</option>
+                          <option value="info">ℹ️ Informação</option>
+                          <option value="warning">⚠️ Aviso</option>
+                          <option value="error">❌ Erro</option>
+                        </select>
+                      </div>
+
+                      <div>
+                        <Label>Cor do Ícone</Label>
+                        <Input
+                          type="color"
+                          value={selectedElementData.notificationColor || "#49a87d"}
+                          onChange={(e) => updateElement(selectedElementData.id, { notificationColor: e.target.value })}
+                          className="mt-1 h-10 w-full"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="border-b pb-4">
+                    <h5 className="font-semibold text-sm mb-3">⚙️ Comportamento</h5>
+                    
+                    <div className="space-y-3">
+                      <div>
+                        <Label>Posição</Label>
+                        <select
+                          value={selectedElementData.notificationPosition || "top"}
+                          onChange={(e) => updateElement(selectedElementData.id, { notificationPosition: e.target.value })}
+                          className="w-full px-2 py-1 border rounded text-xs mt-1"
+                        >
+                          <option value="top">🔝 Topo</option>
+                          <option value="bottom">⬇️ Base</option>
+                        </select>
+                      </div>
+
+                      <div>
+                        <Label>Intervalo (segundos)</Label>
+                        <Input
+                          type="number"
+                          min="1"
+                          max="60"
+                          value={selectedElementData.notificationInterval || 5}
+                          onChange={(e) => updateElement(selectedElementData.id, { notificationInterval: parseInt(e.target.value) })}
+                          placeholder="5"
+                          className="mt-1"
+                        />
+                        <p className="text-xs text-gray-500 mt-1">A cada quantos segundos aparece</p>
+                      </div>
+
+                      <div>
+                        <Label>Duração (segundos)</Label>
+                        <Input
+                          type="number"
+                          min="1"
+                          max="20"
+                          value={selectedElementData.notificationDuration || 4}
+                          onChange={(e) => updateElement(selectedElementData.id, { notificationDuration: parseInt(e.target.value) })}
+                          placeholder="4"
+                          className="mt-1"
+                        />
+                        <p className="text-xs text-gray-500 mt-1">Por quanto tempo fica visível</p>
+                      </div>
+
+                      <div>
+                        <Label>Repetições</Label>
+                        <Input
+                          type="number"
+                          min="1"
+                          max="10"
+                          value={selectedElementData.notificationCount || 3}
+                          onChange={(e) => updateElement(selectedElementData.id, { notificationCount: parseInt(e.target.value) })}
+                          placeholder="3"
+                          className="mt-1"
+                        />
+                        <p className="text-xs text-gray-500 mt-1">Quantas vezes aparece</p>
                       </div>
                     </div>
                   </div>
