@@ -119,6 +119,9 @@ export default function QuizBuilder() {
   // Estado para delay dos pixels
   const [pixelDelay, setPixelDelay] = useState(false);
   
+  // Estado para controlar o salvamento
+  const [isSaving, setIsSaving] = useState(false);
+  
   // Pixels disponíveis para adicionar - compatível com API
   const availablePixelTypes = [
     { type: 'meta', name: 'Meta/Facebook', placeholder: '123456789012345', description: 'ID do pixel do Facebook/Instagram para rastreamento de conversões', hasApi: true },
@@ -150,24 +153,52 @@ export default function QuizBuilder() {
 
   // Função para adicionar pixel
   const addPixel = (type: string) => {
-    const pixelType = availablePixelTypes.find(p => p.type === type);
-    if (pixelType) {
-      const newPixel = {
-        id: Date.now().toString(),
-        name: pixelType.name,
-        type: pixelType.type,
-        mode: 'normal',
-        value: '',
-        placeholder: pixelType.placeholder,
-        description: pixelType.description
-      };
-      setTrackingPixels(prev => [...prev, newPixel]);
+    try {
+      const pixelType = availablePixelTypes.find(p => p.type === type);
+      if (pixelType) {
+        const newPixel = {
+          id: Date.now().toString(),
+          name: pixelType.name,
+          type: pixelType.type,
+          mode: 'normal',
+          value: '',
+          placeholder: pixelType.placeholder,
+          description: pixelType.description
+        };
+        setTrackingPixels(prev => [...prev, newPixel]);
+        toast({
+          title: "Pixel adicionado",
+          description: `${pixelType.name} foi adicionado com sucesso.`,
+        });
+      } else {
+        throw new Error(`Tipo de pixel não encontrado: ${type}`);
+      }
+    } catch (error) {
+      console.error('Erro ao adicionar pixel:', error);
+      toast({
+        title: "Erro",
+        description: "Erro ao adicionar pixel. Tente novamente.",
+        variant: "destructive",
+      });
     }
   };
 
   // Função para remover pixel
   const removePixel = (id: string) => {
-    setTrackingPixels(prev => prev.filter(pixel => pixel.id !== id));
+    try {
+      setTrackingPixels(prev => prev.filter(pixel => pixel.id !== id));
+      toast({
+        title: "Pixel removido",
+        description: "O pixel foi removido com sucesso.",
+      });
+    } catch (error) {
+      console.error('Erro ao remover pixel:', error);
+      toast({
+        title: "Erro",
+        description: "Erro ao remover pixel. Tente novamente.",
+        variant: "destructive",
+      });
+    }
   };
 
   // Função para carregar pixels via API
@@ -557,10 +588,16 @@ export default function QuizBuilder() {
       safeMode: quizData.safeMode !== false,
       redirectDelay: quizData.redirectDelay || 0,
       debugMode: quizData.debugMode || false,
-      // BackRedirect configuration (legacy compatibility)
+      // BackRedirect configuration
       backRedirectEnabled: quizData.backRedirectEnabled || false,
       backRedirectUrl: quizData.backRedirectUrl || "",
-      backRedirectDelay: quizData.backRedirectDelay || 0
+      backRedirectDelay: quizData.backRedirectDelay || 0,
+      // Cloaker configuration
+      cloakerEnabled: quizData.cloakerEnabled || false,
+      cloakerMode: quizData.cloakerMode || "simple",
+      cloakerFallbackUrl: quizData.cloakerFallbackUrl || "",
+      cloakerWhitelistIps: quizData.cloakerWhitelistIps || "",
+      cloakerBlacklistUserAgents: quizData.cloakerBlacklistUserAgents || ""
     };
 
     const action = isPublishing ? "Publicando" : "Salvando";
@@ -590,6 +627,28 @@ export default function QuizBuilder() {
     setQuizData(prev => ({ ...prev, isPublished: true }));
     // Salva com flag de publicação
     handleSave(true);
+  };
+
+  // Função específica para salvar apenas as configurações de pixels
+  const handleSaveQuiz = async () => {
+    setIsSaving(true);
+    try {
+      // Salva o quiz com as configurações de pixels atuais
+      await handleSave(false);
+      toast({
+        title: "Pixels salvos",
+        description: "Configurações de pixels foram salvas com sucesso.",
+      });
+    } catch (error) {
+      console.error('Erro ao salvar pixels:', error);
+      toast({
+        title: "Erro",
+        description: "Erro ao salvar configurações de pixels. Tente novamente.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const handlePageChange = (pages: any[]) => {
@@ -2032,6 +2091,202 @@ export default function QuizBuilder() {
                             <p>• <strong>Menor custo:</strong> Reduz perda de leads por problemas técnicos</p>
                           </div>
                         </div>
+                      </div>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+
+              {/* Sistema BackRedirect */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <ArrowLeft className="w-5 h-5" />
+                    BackRedirect Universal
+                  </CardTitle>
+                  <p className="text-sm text-gray-600">Sistema de redirecionamento quando usuário tenta voltar pelo navegador</p>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {/* Ativar/Desativar BackRedirect */}
+                  <div className="p-4 bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg border border-blue-200">
+                    <div className="flex items-center space-x-3 mb-3">
+                      <input
+                        type="checkbox"
+                        id="backRedirectEnabled"
+                        checked={quizData.backRedirectEnabled || false}
+                        onChange={(e) => setQuizData(prev => ({ ...prev, backRedirectEnabled: e.target.checked }))}
+                        className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500"
+                      />
+                      <Label htmlFor="backRedirectEnabled" className="text-sm font-medium text-gray-900">
+                        Ativar BackRedirect Universal
+                      </Label>
+                      <Badge variant="secondary" className="bg-blue-100 text-blue-800">Compatibilidade Total</Badge>
+                    </div>
+                    <div className="text-sm text-gray-700 leading-relaxed">
+                      <p className="mb-2">
+                        <strong>🔄 Como funciona:</strong> Quando o usuário tenta voltar pelo navegador (botão "voltar"), 
+                        ao invés de sair do quiz, é redirecionado para uma URL específica que você define.
+                      </p>
+                      <p className="mb-2">
+                        <strong>📱 Compatibilidade:</strong> Funciona em todos os dispositivos móveis (Android/iPhone) 
+                        e dentro de apps sociais (Instagram, Facebook, WhatsApp, etc.)
+                      </p>
+                      <p className="text-purple-700">
+                        <strong>⚠️ Importante:</strong> Este sistema é para manter o usuário engajado no funil, 
+                        não para moderação ou violação de políticas.
+                      </p>
+                    </div>
+                  </div>
+
+                  {quizData.backRedirectEnabled && (
+                    <div className="space-y-4">
+                      {/* URL de Redirecionamento */}
+                      <div>
+                        <Label htmlFor="backRedirectUrl" className="text-sm font-medium">URL de Redirecionamento</Label>
+                        <Input
+                          id="backRedirectUrl"
+                          value={quizData.backRedirectUrl || ""}
+                          onChange={(e) => setQuizData(prev => ({ ...prev, backRedirectUrl: e.target.value }))}
+                          placeholder="https://exemplo.com/obrigado"
+                          className="mt-2"
+                          type="url"
+                        />
+                        <p className="text-xs text-gray-500 mt-1">
+                          URL para onde o usuário será redirecionado quando tentar voltar
+                        </p>
+                      </div>
+
+                      {/* Delay do Redirecionamento */}
+                      <div>
+                        <Label htmlFor="backRedirectDelay" className="text-sm font-medium">Delay do Redirecionamento</Label>
+                        <div className="mt-2 flex items-center space-x-2">
+                          <Input
+                            id="backRedirectDelay"
+                            type="number"
+                            min="0"
+                            max="60"
+                            value={quizData.backRedirectDelay || 0}
+                            onChange={(e) => setQuizData(prev => ({ ...prev, backRedirectDelay: parseInt(e.target.value) || 0 }))}
+                            className="w-20"
+                          />
+                          <span className="text-sm text-gray-600">segundos</span>
+                        </div>
+                        <p className="text-xs text-gray-500 mt-1">
+                          Tempo de espera antes do redirecionamento (0 = imediato)
+                        </p>
+                      </div>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+
+              {/* Sistema Cloaker */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Settings className="w-5 h-5" />
+                    Cloaker Avançado
+                  </CardTitle>
+                  <p className="text-sm text-gray-600">Sistema de ocultação de conteúdo para diferentes visitantes</p>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {/* Ativar/Desativar Cloaker */}
+                  <div className="p-4 bg-gradient-to-r from-purple-50 to-pink-50 rounded-lg border border-purple-200">
+                    <div className="flex items-center space-x-3 mb-3">
+                      <input
+                        type="checkbox"
+                        id="cloakerEnabled"
+                        checked={quizData.cloakerEnabled || false}
+                        onChange={(e) => setQuizData(prev => ({ ...prev, cloakerEnabled: e.target.checked }))}
+                        className="w-4 h-4 text-purple-600 bg-gray-100 border-gray-300 rounded focus:ring-purple-500"
+                      />
+                      <Label htmlFor="cloakerEnabled" className="text-sm font-medium text-gray-900">
+                        Ativar Cloaker Avançado
+                      </Label>
+                      <Badge variant="secondary" className="bg-purple-100 text-purple-800">Proteção Inteligente</Badge>
+                    </div>
+                    <div className="text-sm text-gray-700 leading-relaxed">
+                      <p className="mb-2">
+                        <strong>🛡️ Como funciona:</strong> Mostra conteúdo diferente baseado no visitante. 
+                        Usuários reais veem seu quiz, enquanto outros podem ver conteúdo alternativo.
+                      </p>
+                      <p className="mb-2">
+                        <strong>🎯 Detecção inteligente:</strong> Analisa IP, user-agent, comportamento de navegação 
+                        e outros fatores para determinar se é um visitante real.
+                      </p>
+                      <p className="text-purple-700">
+                        <strong>⚠️ Importante:</strong> Este sistema é para proteger seu conteúdo e melhorar a experiência 
+                        do usuário, não para moderação ou violação de políticas.
+                      </p>
+                    </div>
+                  </div>
+
+                  {quizData.cloakerEnabled && (
+                    <div className="space-y-4">
+                      {/* Modo do Cloaker */}
+                      <div>
+                        <Label htmlFor="cloakerMode" className="text-sm font-medium">Modo do Cloaker</Label>
+                        <select
+                          id="cloakerMode"
+                          value={quizData.cloakerMode || "simple"}
+                          onChange={(e) => setQuizData(prev => ({ ...prev, cloakerMode: e.target.value }))}
+                          className="mt-2 w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-purple-500 focus:border-purple-500"
+                        >
+                          <option value="simple">Simples - Baseado em IP</option>
+                          <option value="advanced">Avançado - IP + User-Agent</option>
+                          <option value="smart">Inteligente - Análise Comportamental</option>
+                        </select>
+                        <p className="text-xs text-gray-500 mt-1">
+                          Nível de detecção: Simples (mais rápido), Avançado (balanceado), Inteligente (mais preciso)
+                        </p>
+                      </div>
+
+                      {/* URL de Fallback */}
+                      <div>
+                        <Label htmlFor="cloakerFallbackUrl" className="text-sm font-medium">URL de Fallback</Label>
+                        <Input
+                          id="cloakerFallbackUrl"
+                          value={quizData.cloakerFallbackUrl || ""}
+                          onChange={(e) => setQuizData(prev => ({ ...prev, cloakerFallbackUrl: e.target.value }))}
+                          placeholder="https://exemplo.com/site-alternativo"
+                          className="mt-2"
+                          type="url"
+                        />
+                        <p className="text-xs text-gray-500 mt-1">
+                          URL para onde visitantes não-reais serão redirecionados
+                        </p>
+                      </div>
+
+                      {/* Whitelist IPs */}
+                      <div>
+                        <Label htmlFor="cloakerWhitelistIps" className="text-sm font-medium">IPs na Whitelist</Label>
+                        <Textarea
+                          id="cloakerWhitelistIps"
+                          value={quizData.cloakerWhitelistIps || ""}
+                          onChange={(e) => setQuizData(prev => ({ ...prev, cloakerWhitelistIps: e.target.value }))}
+                          placeholder="192.168.1.1&#10;203.0.113.0/24&#10;2001:db8::/32"
+                          className="mt-2"
+                          rows={3}
+                        />
+                        <p className="text-xs text-gray-500 mt-1">
+                          IPs que sempre verão o conteúdo real (um por linha, suporta CIDR)
+                        </p>
+                      </div>
+
+                      {/* Blacklist User-Agents */}
+                      <div>
+                        <Label htmlFor="cloakerBlacklistUserAgents" className="text-sm font-medium">User-Agents Bloqueados</Label>
+                        <Textarea
+                          id="cloakerBlacklistUserAgents"
+                          value={quizData.cloakerBlacklistUserAgents || ""}
+                          onChange={(e) => setQuizData(prev => ({ ...prev, cloakerBlacklistUserAgents: e.target.value }))}
+                          placeholder="bot&#10;crawler&#10;spider&#10;monitor"
+                          className="mt-2"
+                          rows={3}
+                        />
+                        <p className="text-xs text-gray-500 mt-1">
+                          User-agents que serão redirecionados (um por linha, busca por substring)
+                        </p>
                       </div>
                     </div>
                   )}

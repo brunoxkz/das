@@ -62,10 +62,6 @@ export const quizzes = sqliteTable("quizzes", {
   pixelDelay: integer("pixelDelay", { mode: 'boolean' }).default(false),
   trackingPixels: text("trackingPixels", { mode: 'json' }),
   enableWhatsappAutomation: integer("enableWhatsappAutomation", { mode: 'boolean' }).default(false),
-  // Sistema BackRedirect para compatibilidade universal móvel
-  backRedirectEnabled: integer("backRedirectEnabled", { mode: 'boolean' }).default(false),
-  backRedirectUrl: text("backRedirectUrl"),
-  backRedirectDelay: integer("backRedirectDelay").default(0), // delay em segundos
   // Sistema Anti-WebView (BlackHat) para redirecionamento inteligente
   antiWebViewEnabled: integer("antiWebViewEnabled", { mode: 'boolean' }).default(false),
   detectInstagram: integer("detectInstagram", { mode: 'boolean' }).default(true),
@@ -78,6 +74,18 @@ export const quizzes = sqliteTable("quizzes", {
   safeMode: integer("safeMode", { mode: 'boolean' }).default(true),
   redirectDelay: integer("redirectDelay").default(0),
   debugMode: integer("debugMode", { mode: 'boolean' }).default(false),
+  
+  // Sistema BackRedirect - Redirecionamento universal
+  backRedirectEnabled: integer("backRedirectEnabled", { mode: 'boolean' }).default(false),
+  backRedirectUrl: text("backRedirectUrl"),
+  backRedirectDelay: integer("backRedirectDelay").default(0),
+  
+  // Sistema Cloaker - Ocultação de conteúdo
+  cloakerEnabled: integer("cloakerEnabled", { mode: 'boolean' }).default(false),
+  cloakerMode: text("cloakerMode").default("simple"), // simple, advanced, smart
+  cloakerFallbackUrl: text("cloakerFallbackUrl"),
+  cloakerWhitelistIps: text("cloakerWhitelistIps"),
+  cloakerBlacklistUserAgents: text("cloakerBlacklistUserAgents"),
   resultTitle: text("resultTitle"),
   resultDescription: text("resultDescription"),
   embedCode: text("embedCode"),
