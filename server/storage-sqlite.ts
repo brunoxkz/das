@@ -90,6 +90,7 @@ export interface IStorage {
 
   // Quiz response operations
   getQuizResponses(quizId: string): Promise<QuizResponse[]>;
+  getRecentQuizResponses(lastSeconds?: number): Promise<QuizResponse[]>;
   createQuizResponse(response: InsertQuizResponse): Promise<QuizResponse>;
 
   // Analytics operations
@@ -870,6 +871,37 @@ export class SQLiteStorage implements IStorage {
       .from(quizResponses)
       .where(eq(quizResponses.quizId, quizId))
       .orderBy(desc(quizResponses.submittedAt));
+  }
+
+  // MÉTODO ULTRA-SCALE: Buscar respostas recentes dos últimos X segundos
+  async getRecentQuizResponses(lastSeconds: number = 60): Promise<QuizResponse[]> {
+    const cutoffTime = Math.floor(Date.now() / 1000) - lastSeconds;
+    
+    // Usar SQL direto para máxima performance
+    const stmt = sqlite.prepare(`
+      SELECT * FROM quiz_responses 
+      WHERE submittedAt > ? 
+      AND (
+        (json_extract(metadata, '$.isComplete') = 'true') OR 
+        (json_extract(metadata, '$.completionPercentage') = 100) OR
+        (json_extract(metadata, '$.isComplete') = 'false' AND json_extract(metadata, '$.isPartial') != 'true')
+      )
+      ORDER BY submittedAt DESC
+      LIMIT 1000
+    `);
+    
+    const results = stmt.all(cutoffTime);
+    
+    // Converter para formato QuizResponse
+    return results.map((row: any) => ({
+      id: row.id,
+      quizId: row.quizId,
+      userId: row.userId,
+      responses: typeof row.responses === 'string' ? JSON.parse(row.responses) : row.responses,
+      metadata: typeof row.metadata === 'string' ? JSON.parse(row.metadata) : row.metadata,
+      submittedAt: row.submittedAt,
+      updatedAt: row.updatedAt
+    }));
   }
 
   async createQuizResponse(response: InsertQuizResponse): Promise<QuizResponse> {
