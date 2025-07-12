@@ -31,7 +31,9 @@ import {
   CheckCircle,
   Loader2,
   Info,
-  Sparkles
+  Sparkles,
+  RefreshCw,
+  Target
 } from "lucide-react";
 
 interface EmailCampaign {
@@ -189,6 +191,9 @@ export default function EmailMarketingPage() {
       case 'ao_vivo_ultra_customizada':
         handleCreateUltraCustomizedCampaign();
         break;
+      case 'ao_vivo_ultra_personalizada':
+        handleCreateUltraPersonalizedCampaign();
+        break;
     }
   };
 
@@ -202,6 +207,11 @@ export default function EmailMarketingPage() {
 
   const handleCreateUltraCustomizedCampaign = () => {
     // Para ultra customizada, abrir modal
+    setShowUltraPersonalizedModal(true);
+  };
+
+  const handleCreateUltraPersonalizedCampaign = () => {
+    // Para ultra personalizada, abrir modal
     setShowUltraPersonalizedModal(true);
   };
 
@@ -321,54 +331,55 @@ export default function EmailMarketingPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold text-gray-900">E-mail Marketing</h1>
-          <p className="text-gray-600 mt-1">Campanhas personalizadas baseadas nas respostas dos quizzes</p>
+          <p className="text-gray-600 mt-1">Crie e gerencie campanhas de email com diferentes estilos</p>
         </div>
       </div>
 
-      {/* Info Section */}
-      <Card className="bg-gradient-to-r from-blue-50 to-purple-50 border-blue-200">
+      {/* Campaign Style Selection Card */}
+      <Card className="bg-gradient-to-r from-purple-50 to-blue-50 border-purple-200">
         <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-blue-800">
+          <CardTitle className="flex items-center gap-2 text-purple-800">
             <Mail className="w-5 h-5" />
-            Sistema de E-mail Marketing Inteligente
+            Criar Nova Campanha de Email
           </CardTitle>
+          <CardDescription>
+            Comece selecionando o estilo de campanha que melhor se adapta ao seu objetivo
+          </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="grid md:grid-cols-3 gap-6">
-            <div className="space-y-3">
-              <h4 className="font-semibold text-gray-900">📧 Personalização</h4>
-              <ul className="space-y-2 text-sm text-gray-700">
-                <li>• Use variáveis das respostas do quiz selecionado</li>
-                <li>• Personalização completa com <code>{"{{nome}}"}</code>, <code>{"{{email}}"}</code>, etc.</li>
-                <li>• Editor visual com inserção automática de variáveis</li>
-                <li>• Templates pré-configurados para diferentes cenários</li>
-              </ul>
+          <div className="text-center">
+            <Button
+              onClick={() => setShowCampaignStyleSelector(true)}
+              size="lg"
+              className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white font-bold py-4 px-8"
+            >
+              <Mail className="w-5 h-5 mr-2" />
+              Selecionar Estilo de Campanha
+            </Button>
+          </div>
+          
+          <div className="grid md:grid-cols-4 gap-4 text-center">
+            <div className="p-3 bg-orange-50 rounded-lg border border-orange-200">
+              <RefreshCw className="w-8 h-8 mx-auto mb-2 text-orange-600" />
+              <h4 className="font-semibold text-orange-800">Remarketing</h4>
+              <p className="text-sm text-orange-600">Leads antigos</p>
             </div>
-            <div className="space-y-3">
-              <h4 className="font-semibold text-gray-900">🎯 Segmentação</h4>
-              <ul className="space-y-2 text-sm text-gray-700">
-                <li>• <strong>Leads Completos:</strong> Quem terminou o quiz</li>
-                <li>• <strong>Leads Abandonados:</strong> Quem não terminou</li>
-                <li>• <strong>Filtro E-mail:</strong> Apenas leads com e-mail válido</li>
-                <li>• <strong>Timing Flexível:</strong> Imediato ou após X tempo</li>
-              </ul>
+            <div className="p-3 bg-green-50 rounded-lg border border-green-200">
+              <Clock className="w-8 h-8 mx-auto mb-2 text-green-600" />
+              <h4 className="font-semibold text-green-800">Ao Vivo Padrão</h4>
+              <p className="text-sm text-green-600">Novos leads</p>
             </div>
-            <div className="space-y-3">
-              <h4 className="font-semibold text-gray-900">📊 Performance</h4>
-              <ul className="space-y-2 text-sm text-gray-700">
-                <li>• <strong>Taxa de Abertura:</strong> Monitoramento em tempo real</li>
-                <li>• <strong>Cliques:</strong> Tracking de engajamento</li>
-                <li>• <strong>Conversões:</strong> ROI das campanhas</li>
-                <li>• <strong>A/B Testing:</strong> Otimização automática</li>
-              </ul>
+            <div className="p-3 bg-purple-50 rounded-lg border border-purple-200">
+              <Settings className="w-8 h-8 mx-auto mb-2 text-purple-600" />
+              <h4 className="font-semibold text-purple-800">Ultra Customizada</h4>
+              <p className="text-sm text-purple-600">Exclusiva</p>
+            </div>
+            <div className="p-3 bg-blue-50 rounded-lg border border-blue-200">
+              <Target className="w-8 h-8 mx-auto mb-2 text-blue-600" />
+              <h4 className="font-semibold text-blue-800">Ultra Personalizada</h4>
+              <p className="text-sm text-blue-600">Filtros avançados</p>
             </div>
           </div>
-          <Alert className="bg-amber-50 border-amber-200">
-            <AlertCircle className="w-4 h-4 text-amber-600" />
-            <AlertDescription className="text-amber-800">
-              <strong>Importante:</strong> Configure seu provedor de e-mail (SendGrid, Mailgun, etc.) nas configurações para ativar o envio.
-            </AlertDescription>
-          </Alert>
         </CardContent>
       </Card>
 

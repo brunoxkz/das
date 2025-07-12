@@ -12,10 +12,11 @@ import {
   Sparkles,
   ArrowRight,
   CheckCircle,
-  Info
+  Info,
+  RefreshCw
 } from 'lucide-react';
 
-export type CampaignStyle = 'remarketing' | 'ao_vivo_padrao' | 'ao_vivo_ultra_customizada';
+export type CampaignStyle = 'remarketing' | 'ao_vivo_padrao' | 'ao_vivo_ultra_customizada' | 'ao_vivo_ultra_personalizada';
 
 interface CampaignStyleSelectorProps {
   open: boolean;
@@ -30,7 +31,7 @@ const campaignStyles = {
     title: 'CAMPANHA REMARKETING',
     subtitle: 'Leads Antigos',
     description: 'Reative leads que já interagiram com seus quizzes anteriormente',
-    icon: Clock,
+    icon: RefreshCw,
     color: 'bg-gradient-to-br from-orange-500 to-red-600',
     features: [
       'Segmentação por data de interação',
@@ -72,6 +73,22 @@ const campaignStyles = {
     ],
     badge: 'PREMIUM',
     badgeColor: 'bg-purple-500'
+  },
+  ao_vivo_ultra_personalizada: {
+    id: 'ao_vivo_ultra_personalizada' as CampaignStyle,
+    title: 'CAMPANHA AO VIVO ULTRA PERSONALIZADA',
+    subtitle: 'Filtros Avançados',
+    description: 'Leads abandonados ou que completaram com filtros de idade e estilo de corpo',
+    icon: Target,
+    color: 'bg-gradient-to-br from-blue-500 to-indigo-600',
+    features: [
+      'Leads abandonados OU que completaram',
+      'Filtros por idade e estilo de corpo',
+      'Segmentação por características físicas',
+      'Mensagens hiperdirigidas por perfil'
+    ],
+    badge: 'AVANÇADO',
+    badgeColor: 'bg-blue-500'
   }
 };
 
@@ -110,7 +127,7 @@ export function CampaignStyleSelector({ open, onClose, onStyleSelect, platform }
           </p>
         </DialogHeader>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-6">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
           {Object.values(campaignStyles).map((style) => {
             const Icon = style.icon;
             const isSelected = selectedStyle === style.id;

@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { MessageSquare, Send, Users, CheckCircle, XCircle, Phone, Search, AlertCircle, Edit, Pause, Play, Trash2, Clock3, Smartphone, Eye, Settings, Plus, RefreshCw, Calendar, Filter, FileText, Download } from "lucide-react";
+import { MessageSquare, Send, Users, CheckCircle, XCircle, Phone, Search, AlertCircle, Edit, Pause, Play, Trash2, Clock3, Smartphone, Eye, Settings, Plus, RefreshCw, Calendar, Filter, FileText, Download, Clock, Target, Crown } from "lucide-react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Progress } from "@/components/ui/progress";
@@ -286,6 +286,9 @@ export default function WhatsAppCampaignsPage() {
       case 'ao_vivo_ultra_customizada':
         handleCreateUltraCustomizedCampaign();
         break;
+      case 'ao_vivo_ultra_personalizada':
+        handleCreateUltraPersonalizedCampaign();
+        break;
     }
   };
 
@@ -299,6 +302,10 @@ export default function WhatsAppCampaignsPage() {
 
   const handleCreateUltraCustomizedCampaign = async () => {
     await createCampaignWithStyle('ao_vivo_ultra_customizada');
+  };
+
+  const handleCreateUltraPersonalizedCampaign = async () => {
+    await createCampaignWithStyle('ao_vivo_ultra_personalizada');
   };
 
   // Função para criar campanha com estilo específico
@@ -381,7 +388,7 @@ export default function WhatsAppCampaignsPage() {
       <div className="flex justify-between items-center">
         <div>
           <h1 className="text-3xl font-bold">Campanhas WhatsApp</h1>
-          <p className="text-gray-600">Remarketing automático via WhatsApp Web</p>
+          <p className="text-gray-600">Crie e gerencie campanhas WhatsApp com diferentes estilos</p>
         </div>
         <div className="flex items-center gap-2">
           <Badge variant={extensionStatus?.connected ? "default" : "destructive"}>
@@ -393,6 +400,54 @@ export default function WhatsAppCampaignsPage() {
           </Button>
         </div>
       </div>
+
+      {/* Campaign Style Selection Card */}
+      <Card className="bg-gradient-to-r from-green-50 to-blue-50 border-green-200">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-green-800">
+            <MessageSquare className="w-5 h-5" />
+            Criar Nova Campanha WhatsApp
+          </CardTitle>
+          <CardDescription>
+            Comece selecionando o estilo de campanha que melhor se adapta ao seu objetivo
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="text-center">
+            <Button
+              onClick={() => setShowCampaignStyleSelector(true)}
+              size="lg"
+              className="bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700 text-white font-bold py-4 px-8"
+            >
+              <MessageSquare className="w-5 h-5 mr-2" />
+              Selecionar Estilo de Campanha
+            </Button>
+          </div>
+          
+          <div className="grid md:grid-cols-4 gap-4 text-center">
+            <div className="p-3 bg-orange-50 rounded-lg border border-orange-200">
+              <RefreshCw className="w-8 h-8 mx-auto mb-2 text-orange-600" />
+              <h4 className="font-semibold text-orange-800">Remarketing</h4>
+              <p className="text-sm text-orange-600">Leads antigos</p>
+            </div>
+            <div className="p-3 bg-green-50 rounded-lg border border-green-200">
+              <Clock className="w-8 h-8 mx-auto mb-2 text-green-600" />
+              <h4 className="font-semibold text-green-800">Ao Vivo Padrão</h4>
+              <p className="text-sm text-green-600">Novos leads</p>
+            </div>
+            <div className="p-3 bg-purple-50 rounded-lg border border-purple-200">
+              <Settings className="w-8 h-8 mx-auto mb-2 text-purple-600" />
+              <h4 className="font-semibold text-purple-800">Ultra Customizada</h4>
+              <p className="text-sm text-purple-600">Exclusiva</p>
+            </div>
+            <div className="p-3 bg-blue-50 rounded-lg border border-blue-200">
+              <Target className="w-8 h-8 mx-auto mb-2 text-blue-600" />
+              <h4 className="font-semibold text-blue-800">Ultra Personalizada</h4>
+              <p className="text-sm text-blue-600">Filtros avançados</p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList className="grid w-full grid-cols-3">

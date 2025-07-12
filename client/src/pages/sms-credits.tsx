@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { MessageSquare, Send, DollarSign, FileText, Plus, Eye, Clock, Users, CheckCircle, XCircle, Phone, Search, AlertCircle, Edit, CreditCard, Pause, Play, Trash2, Clock3, Sparkles, Target } from "lucide-react";
+import { MessageSquare, Send, DollarSign, FileText, Plus, Eye, Clock, Users, CheckCircle, XCircle, Phone, Search, AlertCircle, Edit, CreditCard, Pause, Play, Trash2, Clock3, Sparkles, Target, RefreshCw, Zap, Crown, ShoppingCart } from "lucide-react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Progress } from "@/components/ui/progress";
@@ -396,6 +396,9 @@ export default function SMSCreditsPage() {
       case 'ao_vivo_ultra_customizada':
         handleCreateUltraCustomizedCampaign();
         break;
+      case 'ao_vivo_ultra_personalizada':
+        handleCreateUltraPersonalizedCampaign();
+        break;
     }
   };
 
@@ -444,6 +447,24 @@ export default function SMSCreditsPage() {
       toast({
         title: "Selecione um quiz",
         description: "Primeiro selecione o quiz para personalização.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    const selectedQuiz = quizzes?.find((q: any) => q.id === campaignForm.quizId);
+    setSelectedQuizForUltraPersonalized({
+      id: campaignForm.quizId,
+      title: selectedQuiz?.title || "Quiz Selecionado"
+    });
+    setShowUltraPersonalizedModal(true);
+  };
+
+  const handleCreateUltraPersonalizedCampaign = () => {
+    if (!campaignForm.quizId) {
+      toast({
+        title: "Selecione um quiz",
+        description: "Primeiro selecione o quiz para personalização avançada.",
         variant: "destructive",
       });
       return;
@@ -674,8 +695,8 @@ export default function SMSCreditsPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Remarketing SMS</h1>
-          <p className="text-gray-600">Gerencie seus créditos SMS e campanhas de remarketing</p>
+          <h1 className="text-3xl font-bold text-gray-900">Campanhas SMS</h1>
+          <p className="text-gray-600">Crie e gerencie suas campanhas SMS com diferentes estilos</p>
         </div>
         <div className="flex items-center space-x-4">
           <Card className="bg-green-50 border-green-200">
@@ -691,8 +712,64 @@ export default function SMSCreditsPage() {
               </div>
             </CardContent>
           </Card>
+          <Button
+            onClick={() => window.open('/credits', '_blank')}
+            size="sm"
+            className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
+          >
+            <ShoppingCart className="w-4 h-4 mr-2" />
+            Comprar Créditos
+          </Button>
         </div>
       </div>
+
+      {/* Campaign Style Selection Card */}
+      <Card className="bg-gradient-to-r from-blue-50 to-purple-50 border-blue-200">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-blue-800">
+            <Target className="w-5 h-5" />
+            Criar Nova Campanha SMS
+          </CardTitle>
+          <CardDescription>
+            Comece selecionando o estilo de campanha que melhor se adapta ao seu objetivo
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="text-center">
+            <Button
+              onClick={() => setShowCampaignStyleSelector(true)}
+              size="lg"
+              className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-bold py-4 px-8"
+            >
+              <Target className="w-5 h-5 mr-2" />
+              Selecionar Estilo de Campanha
+            </Button>
+          </div>
+          
+          <div className="grid md:grid-cols-4 gap-4 text-center">
+            <div className="p-3 bg-orange-50 rounded-lg border border-orange-200">
+              <RefreshCw className="w-8 h-8 mx-auto mb-2 text-orange-600" />
+              <h4 className="font-semibold text-orange-800">Remarketing</h4>
+              <p className="text-sm text-orange-600">Leads antigos</p>
+            </div>
+            <div className="p-3 bg-green-50 rounded-lg border border-green-200">
+              <Zap className="w-8 h-8 mx-auto mb-2 text-green-600" />
+              <h4 className="font-semibold text-green-800">Ao Vivo Padrão</h4>
+              <p className="text-sm text-green-600">Novos leads</p>
+            </div>
+            <div className="p-3 bg-purple-50 rounded-lg border border-purple-200">
+              <Crown className="w-8 h-8 mx-auto mb-2 text-purple-600" />
+              <h4 className="font-semibold text-purple-800">Ultra Customizada</h4>
+              <p className="text-sm text-purple-600">Exclusiva</p>
+            </div>
+            <div className="p-3 bg-blue-50 rounded-lg border border-blue-200">
+              <Target className="w-8 h-8 mx-auto mb-2 text-blue-600" />
+              <h4 className="font-semibold text-blue-800">Ultra Personalizada</h4>
+              <p className="text-sm text-blue-600">Filtros avançados</p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Info Section */}
       <Card className="bg-gradient-to-r from-green-50 to-blue-50 border-green-200">
