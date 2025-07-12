@@ -18,6 +18,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useLocation } from "wouter";
 import { apiRequest } from "@/lib/queryClient";
+import { CampaignStyleSelector, CampaignStyle } from "@/components/campaign-style-selector";
 
 interface WhatsAppCampaign {
   id: string;
@@ -70,6 +71,10 @@ export default function WhatsAppCampaignsPage() {
   const [selectedAudience, setSelectedAudience] = useState<'all' | 'completed' | 'abandoned'>('all');
   const [dateFilter, setDateFilter] = useState<string>("");
   const [fromDate, setFromDate] = useState<string>("");
+  
+  // Estados para seletor de estilo de campanha
+  const [showCampaignStyleSelector, setShowCampaignStyleSelector] = useState(false);
+  const [selectedCampaignStyle, setSelectedCampaignStyle] = useState<CampaignStyle | null>(null);
 
   const [rotatingMessages, setRotatingMessages] = useState<string[]>([""]);
   const [autoRefresh, setAutoRefresh] = useState(true);
@@ -267,8 +272,37 @@ export default function WhatsAppCampaignsPage() {
     setRotatingMessages(newMessages);
   };
 
-  // Função para criar campanha
-  const createCampaign = async () => {
+  const handleCampaignStyleSelect = (style: CampaignStyle) => {
+    setSelectedCampaignStyle(style);
+    
+    // Baseado no estilo selecionado, redirecionar para o fluxo apropriado
+    switch (style) {
+      case 'remarketing':
+        handleCreateRemarketingCampaign();
+        break;
+      case 'ao_vivo_padrao':
+        handleCreateStandardCampaign();
+        break;
+      case 'ao_vivo_ultra_customizada':
+        handleCreateUltraCustomizedCampaign();
+        break;
+    }
+  };
+
+  const handleCreateRemarketingCampaign = async () => {
+    await createCampaignWithStyle('remarketing');
+  };
+
+  const handleCreateStandardCampaign = async () => {
+    await createCampaignWithStyle('ao_vivo_padrao');
+  };
+
+  const handleCreateUltraCustomizedCampaign = async () => {
+    await createCampaignWithStyle('ao_vivo_ultra_customizada');
+  };
+
+  // Função para criar campanha com estilo específico
+  const createCampaignWithStyle = async (campaignType: string) => {
     if (!selectedQuiz || !campaignName || rotatingMessages.filter(m => m.trim()).length === 0) {
       toast({
         title: "Erro",
@@ -283,8 +317,12 @@ export default function WhatsAppCampaignsPage() {
       const selectedQuizData = quizzes.find(q => q.id === selectedQuiz);
       const validMessages = rotatingMessages.filter(m => m.trim());
       
+      const stylePrefix = campaignType === 'remarketing' ? '[REMARKETING]' : 
+                         campaignType === 'ao_vivo_padrao' ? '[AO VIVO PADRÃO]' : 
+                         '[AO VIVO ULTRA CUSTOMIZADA]';
+      
       await apiRequest("POST", "/api/whatsapp-campaigns", {
-        name: campaignName,
+        name: `${stylePrefix} ${campaignName}`,
         quizId: selectedQuiz,
         quizTitle: selectedQuizData?.title || "Quiz",
         messages: validMessages,
@@ -292,6 +330,7 @@ export default function WhatsAppCampaignsPage() {
         dateFilter,
         leadDelay,
         distributionDelay,
+        campaignType,
         extensionSettings: {
           delay: 5,
           maxRetries: 3,
@@ -301,7 +340,7 @@ export default function WhatsAppCampaignsPage() {
       
       toast({
         title: "Sucesso",
-        description: "Campanha WhatsApp criada com sucesso!",
+        description: `Campanha ${stylePrefix} criada com sucesso!`,
       });
       
       // Limpar formulário
@@ -310,6 +349,7 @@ export default function WhatsAppCampaignsPage() {
       setSelectedQuiz("");
       setSelectedAudience('all');
       setDateFilter("");
+      setSelectedCampaignStyle(null);
       
       // Atualizar lista de campanhas
       refetchCampaigns();
@@ -679,16 +719,16 @@ export default function WhatsAppCampaignsPage() {
               {/* Botão Criar Campanha */}
               <div className="pt-4">
                 <Button 
-                  onClick={createCampaign}
+                  onClick={() => setShowCampaignStyleSelector(true)}
                   disabled={!selectedQuiz || !campaignName.trim() || isCreating || rotatingMessages.filter(m => m.trim()).length === 0}
-                  className="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-3"
+                  className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold py-3"
                 >
                   {isCreating ? (
                     <RefreshCw className="h-5 w-5 mr-2 animate-spin" />
                   ) : (
                     <MessageSquare className="h-5 w-5 mr-2" />
                   )}
-                  {isCreating ? "Criando Campanha..." : `Criar Campanha WhatsApp (${filteredPhones.length} leads)`}
+                  {isCreating ? "Criando Campanha..." : `Selecionar Estilo de Campanha (${filteredPhones.length} leads)`}
                 </Button>
               </div>
             </CardContent>
@@ -832,6 +872,14 @@ export default function WhatsAppCampaignsPage() {
           </Card>
         </TabsContent>
       </Tabs>
+
+      {/* Campaign Style Selector Modal */}
+      <CampaignStyleSelector
+        open={showCampaignStyleSelector}
+        onClose={() => setShowCampaignStyleSelector(false)}
+        onStyleSelect={handleCampaignStyleSelect}
+        platform="whatsapp"
+      />
     </div>
   );
 }

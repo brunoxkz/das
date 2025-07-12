@@ -18,6 +18,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useLocation } from "wouter";
 import { VariableHelperUnified } from "@/components/ui/variable-helper-unified";
 import { UltraPersonalizedCampaignModal } from "@/components/ultra-personalized-campaign-modal";
+import { CampaignStyleSelector, CampaignStyle } from "@/components/campaign-style-selector";
 
 interface SMSCredits {
   total: number;
@@ -58,6 +59,10 @@ export default function SMSCreditsPage() {
   // Estados para campanhas ultra personalizadas
   const [showUltraPersonalizedModal, setShowUltraPersonalizedModal] = useState(false);
   const [selectedQuizForUltraPersonalized, setSelectedQuizForUltraPersonalized] = useState<{id: string, title: string} | null>(null);
+  
+  // Estados para seletor de estilo de campanha
+  const [showCampaignStyleSelector, setShowCampaignStyleSelector] = useState(false);
+  const [selectedCampaignStyle, setSelectedCampaignStyle] = useState<CampaignStyle | null>(null);
   const [activeTab, setActiveTab] = useState("overview");
   const [selectedQuiz, setSelectedQuiz] = useState<string>("");
   const [campaignForm, setCampaignForm] = useState<{
@@ -377,20 +382,24 @@ export default function SMSCreditsPage() {
     }
   });
 
-  const handleCreateCampaign = () => {
-    console.log("🔍 VALORES DO FORMULÁRIO:", {
-      message: campaignForm.message,
-      quizId: campaignForm.quizId,
-      targetAudience: campaignForm.targetAudience,
-      triggerType: campaignForm.triggerType,
-      scheduledDateTime: campaignForm.scheduledDateTime,
-      messageLength: campaignForm.message?.length,
-      messageEmpty: !campaignForm.message,
-      quizIdEmpty: !campaignForm.quizId,
-      targetAudienceEmpty: !campaignForm.targetAudience
-    });
+  const handleCampaignStyleSelect = (style: CampaignStyle) => {
+    setSelectedCampaignStyle(style);
     
-    // Validações obrigatórias
+    // Baseado no estilo selecionado, redirecionar para o fluxo apropriado
+    switch (style) {
+      case 'remarketing':
+        handleCreateRemarketingCampaign();
+        break;
+      case 'ao_vivo_padrao':
+        handleCreateStandardCampaign();
+        break;
+      case 'ao_vivo_ultra_customizada':
+        handleCreateUltraCustomizedCampaign();
+        break;
+    }
+  };
+
+  const handleCreateRemarketingCampaign = () => {
     if (!campaignForm.message || !campaignForm.quizId || !campaignForm.targetAudience) {
       toast({
         title: "Erro",
@@ -400,14 +409,52 @@ export default function SMSCreditsPage() {
       return;
     }
 
-    // Gerar o nome automaticamente baseado no quiz selecionado
     const selectedQuiz = quizzes?.find((q: any) => q.id === campaignForm.quizId);
-    const campaignName = `Sistema Contínuo - ${selectedQuiz?.title || 'Quiz'}`;
+    const campaignName = `[REMARKETING] ${selectedQuiz?.title || 'Quiz'}`;
 
     createCampaignMutation.mutate({
       ...campaignForm,
-      name: campaignName
+      name: campaignName,
+      campaignType: 'remarketing'
     });
+  };
+
+  const handleCreateStandardCampaign = () => {
+    if (!campaignForm.message || !campaignForm.quizId || !campaignForm.targetAudience) {
+      toast({
+        title: "Erro",
+        description: "Preencha todos os campos obrigatórios",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    const selectedQuiz = quizzes?.find((q: any) => q.id === campaignForm.quizId);
+    const campaignName = `[AO VIVO PADRÃO] ${selectedQuiz?.title || 'Quiz'}`;
+
+    createCampaignMutation.mutate({
+      ...campaignForm,
+      name: campaignName,
+      campaignType: 'ao_vivo_padrao'
+    });
+  };
+
+  const handleCreateUltraCustomizedCampaign = () => {
+    if (!campaignForm.quizId) {
+      toast({
+        title: "Selecione um quiz",
+        description: "Primeiro selecione o quiz para personalização.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    const selectedQuiz = quizzes?.find((q: any) => q.id === campaignForm.quizId);
+    setSelectedQuizForUltraPersonalized({
+      id: campaignForm.quizId,
+      title: selectedQuiz?.title || "Quiz Selecionado"
+    });
+    setShowUltraPersonalizedModal(true);
   };
 
   const handleSendCampaign = (campaignId: string) => {
@@ -1151,11 +1198,16 @@ export default function SMSCreditsPage() {
 
               <div className="space-y-3">
                 <Button 
-                  onClick={handleCreateCampaign} 
-                  className="w-full"
+                  onClick={() => setShowCampaignStyleSelector(true)}
+                  className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
                   disabled={createCampaignMutation.isPending}
                 >
-                  {createCampaignMutation.isPending ? "Ativando..." : "Ativar Sistema Contínuo"}
+                  {createCampaignMutation.isPending ? "Ativando..." : (
+                    <>
+                      <Target className="w-4 h-4 mr-2" />
+                      Selecionar Estilo de Campanha
+                    </>
+                  )}
                 </Button>
                 
                 {/* Botão de Campanhas Ultra Personalizadas */}
@@ -1515,6 +1567,14 @@ export default function SMSCreditsPage() {
           quizTitle={selectedQuizForUltraPersonalized.title}
         />
       )}
+
+      {/* Campaign Style Selector Modal */}
+      <CampaignStyleSelector
+        open={showCampaignStyleSelector}
+        onClose={() => setShowCampaignStyleSelector(false)}
+        onStyleSelect={handleCampaignStyleSelect}
+        platform="sms"
+      />
     </div>
   );
 }

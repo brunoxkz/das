@@ -8593,4 +8593,49 @@ function generateUltraPersonalizedMessage(phone: any, conditionalRules: any[]) {
   return "Mensagem personalizada baseada no seu perfil!";
 }
 
+// Função para gerar emails ultra personalizados baseados no perfil do usuário
+function generateUltraPersonalizedEmail(leadData: any, conditionalRules: any[], baseContent: string) {
+  if (!conditionalRules || conditionalRules.length === 0) {
+    return baseContent;
+  }
+
+  // Buscar a resposta do usuário para esta regra específica
+  const userResponses = leadData.responses || [];
+  
+  for (const rule of conditionalRules) {
+    if (rule.fieldId && rule.messages) {
+      // Buscar a resposta correspondente ao fieldId
+      let userAnswer = null;
+      
+      if (Array.isArray(userResponses)) {
+        const matchingResponse = userResponses.find(resp => 
+          resp.elementFieldId === rule.fieldId
+        );
+        userAnswer = matchingResponse?.answer;
+      } else {
+        // Formato antigo
+        userAnswer = userResponses[rule.fieldId];
+      }
+      
+      // Encontrar a mensagem correspondente à resposta
+      if (userAnswer && rule.messages[userAnswer]) {
+        const personalizedMessage = rule.messages[userAnswer];
+        
+        // Aplicar variáveis dinâmicas na mensagem
+        let finalMessage = personalizedMessage;
+        if (leadData.name) {
+          finalMessage = finalMessage.replace(/\{nome_completo\}/g, leadData.name);
+          finalMessage = finalMessage.replace(/\{nome\}/g, leadData.name);
+        }
+        
+        console.log(`📧 EMAIL ULTRA PERSONALIZADO - ${rule.fieldId}: ${userAnswer} → ${finalMessage}`);
+        return finalMessage;
+      }
+    }
+  }
+  
+  // Fallback para conteúdo base
+  return baseContent;
+}
+
 

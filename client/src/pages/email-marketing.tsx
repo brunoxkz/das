@@ -11,6 +11,8 @@ import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
+import { UltraPersonalizedEmailModal } from "@/components/ultra-personalized-email-modal";
+import { CampaignStyleSelector, CampaignStyle } from "@/components/campaign-style-selector";
 import { 
   Mail, 
   Clock, 
@@ -28,7 +30,8 @@ import {
   TestTube,
   CheckCircle,
   Loader2,
-  Info
+  Info,
+  Sparkles
 } from "lucide-react";
 
 interface EmailCampaign {
@@ -102,6 +105,11 @@ export default function EmailMarketingPage() {
 
   const [testingBrevo, setTestingBrevo] = useState(false);
   const [sendingCampaign, setSendingCampaign] = useState(false);
+  const [showUltraPersonalizedModal, setShowUltraPersonalizedModal] = useState(false);
+  
+  // Estados para seletor de estilo de campanha
+  const [showCampaignStyleSelector, setShowCampaignStyleSelector] = useState(false);
+  const [selectedCampaignStyle, setSelectedCampaignStyle] = useState<CampaignStyle | null>(null);
 
   // Queries
   const { data: quizzes } = useQuery({
@@ -167,7 +175,37 @@ export default function EmailMarketingPage() {
     }
   });
 
-  const handleCreateCampaign = () => {
+  const handleCampaignStyleSelect = (style: CampaignStyle) => {
+    setSelectedCampaignStyle(style);
+    
+    // Baseado no estilo selecionado, redirecionar para o fluxo apropriado
+    switch (style) {
+      case 'remarketing':
+        handleCreateRemarketingCampaign();
+        break;
+      case 'ao_vivo_padrao':
+        handleCreateStandardCampaign();
+        break;
+      case 'ao_vivo_ultra_customizada':
+        handleCreateUltraCustomizedCampaign();
+        break;
+    }
+  };
+
+  const handleCreateRemarketingCampaign = () => {
+    handleCreateCampaignWithStyle('remarketing');
+  };
+
+  const handleCreateStandardCampaign = () => {
+    handleCreateCampaignWithStyle('ao_vivo_padrao');
+  };
+
+  const handleCreateUltraCustomizedCampaign = () => {
+    // Para ultra customizada, abrir modal
+    setShowUltraPersonalizedModal(true);
+  };
+
+  const handleCreateCampaignWithStyle = (campaignType: string) => {
     if (!campaignForm.name || !campaignForm.subject || !campaignForm.content || !campaignForm.quizId) {
       toast({
         title: "Campos obrigatórios",
@@ -177,7 +215,15 @@ export default function EmailMarketingPage() {
       return;
     }
 
-    createCampaignMutation.mutate(campaignForm);
+    const stylePrefix = campaignType === 'remarketing' ? '[REMARKETING]' : '[AO VIVO PADRÃO]';
+    
+    const campaignData = {
+      ...campaignForm,
+      name: `${stylePrefix} ${campaignForm.name}`,
+      campaignType
+    };
+
+    createCampaignMutation.mutate(campaignData);
   };
 
   const handleCreateTemplate = () => {
@@ -533,13 +579,23 @@ export default function EmailMarketingPage() {
                   )}
                 </div>
 
-                <Button 
-                  onClick={handleCreateCampaign} 
-                  className="w-full"
-                  disabled={createCampaignMutation.isPending}
-                >
-                  {createCampaignMutation.isPending ? "Criando..." : "Criar Campanha"}
-                </Button>
+                <div className="flex gap-2">
+                  <Button 
+                    onClick={() => setShowCampaignStyleSelector(true)}
+                    className="flex-1 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
+                    disabled={createCampaignMutation.isPending}
+                  >
+                    {createCampaignMutation.isPending ? "Criando..." : "Selecionar Estilo de Campanha"}
+                  </Button>
+                  <Button
+                    onClick={() => setShowUltraPersonalizedModal(true)}
+                    disabled={!selectedQuiz}
+                    className="flex-1 bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 text-white"
+                  >
+                    <Sparkles className="w-4 h-4 mr-2" />
+                    Ultra Personalizada
+                  </Button>
+                </div>
               </CardContent>
             </Card>
 
@@ -904,6 +960,22 @@ export default function EmailMarketingPage() {
           </Card>
         </TabsContent>
       </Tabs>
+
+      {/* Modal de Campanha Ultra Personalizada */}
+      <UltraPersonalizedEmailModal
+        open={showUltraPersonalizedModal}
+        onClose={() => setShowUltraPersonalizedModal(false)}
+        quizId={selectedQuiz}
+        quizTitle={quizzes?.find(q => q.id === selectedQuiz)?.title || ""}
+      />
+
+      {/* Campaign Style Selector Modal */}
+      <CampaignStyleSelector
+        open={showCampaignStyleSelector}
+        onClose={() => setShowCampaignStyleSelector(false)}
+        onStyleSelect={handleCampaignStyleSelect}
+        platform="email"
+      />
     </div>
   );
 }

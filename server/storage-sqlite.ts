@@ -1203,6 +1203,8 @@ export class SQLiteStorage implements IStorage {
     const newCampaign = {
       id: nanoid(),
       ...campaign,
+      campaignType: campaign.campaignType || 'standard',
+      conditionalRules: campaign.conditionalRules || null,
       createdAt: campaign.createdAt || now,
       updatedAt: campaign.updatedAt || now,
     };
