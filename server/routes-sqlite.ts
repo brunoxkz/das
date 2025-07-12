@@ -11,6 +11,7 @@ import { emailService } from "./email-service";
 import { BrevoEmailService } from "./email-brevo";
 import { handleSecureUpload, uploadMiddleware } from "./upload-secure";
 import { sanitizeAllScripts, sanitizeUTMCode, sanitizeCustomScript } from './script-sanitizer-new';
+import { intelligentRateLimiter } from './intelligent-rate-limiter';
 import { 
   antiDdosMiddleware, 
   antiInvasionMiddleware, 
@@ -89,6 +90,9 @@ export function registerSQLiteRoutes(app: Express): Server {
   app.use(antiDdosMiddleware);
   app.use(antiInvasionMiddleware);
   app.use(loginAttemptMiddleware);
+  
+  // 🧠 RATE LIMITING INTELIGENTE - Diferencia usuários legítimos de invasores
+  app.use(intelligentRateLimiter.middleware());
   
   // Middleware de debug para todas as rotas POST
   app.use((req, res, next) => {
@@ -8387,6 +8391,22 @@ app.get("/api/whatsapp-extension/pending", verifyJWT, async (req: any, res: Resp
     } catch (error) {
       console.error('❌ ERRO ao obter estatísticas de segurança:', error);
       res.status(500).json({ error: 'Erro interno do servidor' });
+    }
+  });
+
+  // 🧠 RATE LIMITER STATS - Monitoramento do sistema inteligente
+  app.get("/api/rate-limiter/stats", verifyJWT, async (req: any, res: Response) => {
+    try {
+      const stats = intelligentRateLimiter.getStats();
+      res.json({
+        message: "Estatísticas do Rate Limiter Inteligente",
+        stats,
+        timestamp: new Date().toISOString(),
+        description: "Sistema que diferencia usuários legítimos criando quizzes complexos de possíveis invasores"
+      });
+    } catch (error) {
+      console.error("Erro ao buscar stats do rate limiter:", error);
+      res.status(500).json({ error: "Erro interno do servidor" });
     }
   });
 

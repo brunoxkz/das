@@ -208,6 +208,17 @@ No additional files or separate projects are maintained in this repository.
 
 ```
 Changelog:
+- July 12, 2025. SISTEMA DE RATE LIMITING INTELIGENTE IMPLEMENTADO - Proteção avançada que diferencia usuários legítimos de invasores:
+  * Criado intelligent-rate-limiter.ts com machine learning básico para análise comportamental
+  * Implementado sistema de score de legitimidade baseado em tempo gasto, complexidade de quiz e padrões humanos
+  * Rate limiting dinâmico: usuários legítimos criando quizzes complexos (50+ elementos) recebem limites aumentados
+  * Multiplicadores automáticos: quizzes com 30+ elementos = 1.5x limite, 50+ elementos = 2.0x limite
+  * Detecção de bots: penaliza comportamento muito rápido (<5s) com muitas requisições (>50)
+  * Configuração flexível em rate-limiter-config.ts com limites por tipo de usuário e endpoint
+  * Whitelist para IPs confiáveis e usuários com acesso ilimitado
+  * Endpoint /api/rate-limiter/stats para monitoramento em tempo real das estatísticas
+  * Sistema permite usuários Premium/Enterprise criarem quizzes extremamente complexos sem bloqueios
+  * Proteção contra invasores mantida: usuários suspeitos têm limites reduzidos em 50%
 - July 12, 2025. SISTEMA DE TESTES COMPLETO IMPLEMENTADO E VALIDADO - Infraestrutura abrangente de 5 estratégias de teste simultaneamente:
   * Implementado sistema completo de testes automatizados: Regressão, Carga, Fluxo Completo, Recuperação de Falhas
   * Corrigidos erros críticos identificados: getAllQuizzes(), cache optimizer, JWT tokens fresh
