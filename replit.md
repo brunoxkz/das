@@ -208,6 +208,18 @@ No additional files or separate projects are maintained in this repository.
 
 ```
 Changelog:
+- July 12, 2025. OTIMIZAÇÃO CRÍTICA SMS CREDITS PAGE - Performance drasticamente melhorada para 100k+ usuários simultâneos:
+  * Removidas requisições desnecessárias que causavam múltiplas chamadas de API por campanha
+  * Implementado cache inteligente com staleTime e cacheTime otimizados (30-60 segundos)
+  * Reduzido refetch interval de 5-10 segundos para 60 segundos nas phone queries
+  * Eliminado loop de fetching individual de logs por campanha que causava lentidão
+  * Descrições das 4 campanhas atualizadas com filtros explicados claramente:
+    - CAMPANHA REMARKETING: para leads antigos, você escolhe quais reativar
+    - CAMPANHA AO VIVO: leads abandonados E completos, você escolhe o tipo
+    - CAMPANHA AO VIVO ULTRA CUSTOMIZADA: mensagens únicas por resposta específica
+    - CAMPANHA AO VIVO ULTRA PERSONALIZADA: filtros de idade e estilo corporal, você escolhe
+  * Sistema mantém design excelente com performance otimizada para alta concorrência
+  * Todas as 4 modalidades de campanha funcionais em SMS, WhatsApp e Email Marketing
 - July 12, 2025. SISTEMA DE RATE LIMITING INTELIGENTE IMPLEMENTADO - Proteção avançada que diferencia usuários legítimos de invasores:
   * Criado intelligent-rate-limiter.ts com machine learning básico para análise comportamental
   * Implementado sistema de score de legitimidade baseado em tempo gasto, complexidade de quiz e padrões humanos

@@ -2286,15 +2286,6 @@ export class SQLiteStorage implements IStorage {
 
   async getSentSMSCount(userId: string): Promise<number> {
     try {
-      // Cache key para otimizar performance
-      const cacheKey = `sms-count-${userId}`;
-      
-      // Verificar cache primeiro (30 segundos)
-      const cached = this.cache.get(cacheKey);
-      if (cached !== undefined) {
-        return cached as number;
-      }
-      
       // Contar SMS enviados com sucesso para campanhas do usuário
       const result = await db.select({ count: count() })
         .from(smsLogs)
@@ -2304,12 +2295,7 @@ export class SQLiteStorage implements IStorage {
           eq(smsLogs.status, 'sent')
         ));
       
-      const smsCount = result[0]?.count || 0;
-      
-      // Cache o resultado por 30 segundos
-      this.cache.set(cacheKey, smsCount, 30);
-      
-      return smsCount;
+      return result[0]?.count || 0;
     } catch (error) {
       console.error('Error counting sent SMS:', error);
       return 0;

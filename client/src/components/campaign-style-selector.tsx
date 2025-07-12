@@ -30,30 +30,30 @@ const campaignStyles = {
     id: 'remarketing' as CampaignStyle,
     title: 'CAMPANHA REMARKETING',
     subtitle: 'Leads Antigos',
-    description: 'Reative leads que já interagiram com seus quizzes anteriormente',
+    description: 'Para leads antigos - você escolhe quais leads reativar baseado no histórico de interações',
     icon: RefreshCw,
     color: 'bg-gradient-to-br from-orange-500 to-red-600',
     features: [
-      'Segmentação por data de interação',
-      'Mensagens de reativação',
-      'Ofertas especiais para retorno',
-      'Personalização baseada em histórico'
+      'Filtros por data de interação anterior',
+      'Mensagens de reativação personalizadas',
+      'Segmentação por período de inatividade',
+      'Você escolhe quais leads reaproveitar'
     ],
     badge: 'REATIVAÇÃO',
     badgeColor: 'bg-orange-500'
   },
   ao_vivo_padrao: {
     id: 'ao_vivo_padrao' as CampaignStyle,
-    title: 'CAMPANHA AO VIVO PADRÃO',
-    subtitle: 'Novos Leads',
-    description: 'Capture e converta leads que acabaram de completar seus quizzes',
+    title: 'CAMPANHA AO VIVO',
+    subtitle: 'Leads Abandonados e Completaram Quiz',
+    description: 'Para leads abandonados E que completaram quiz - você escolhe entre abandonados ou completos',
     icon: Zap,
     color: 'bg-gradient-to-br from-green-500 to-blue-600',
     features: [
-      'Envio automático para novos leads',
-      'Mensagens padronizadas otimizadas',
+      'Filtros: você escolhe abandonados OU completos',
+      'Mensagens específicas para cada tipo',
       'Segmentação por completude do quiz',
-      'Timing inteligente de envio'
+      'Timing otimizado para cada situação'
     ],
     badge: 'AUTOMÁTICO',
     badgeColor: 'bg-green-500'
@@ -61,14 +61,14 @@ const campaignStyles = {
   ao_vivo_ultra_customizada: {
     id: 'ao_vivo_ultra_customizada' as CampaignStyle,
     title: 'CAMPANHA AO VIVO ULTRA CUSTOMIZADA',
-    subtitle: 'Exclusividade',
-    description: 'Máxima personalização com mensagens únicas baseadas em respostas específicas',
+    subtitle: 'Exclusividade Total',
+    description: 'Máxima personalização com mensagens únicas baseadas em respostas específicas do quiz',
     icon: Crown,
     color: 'bg-gradient-to-br from-purple-500 to-pink-600',
     features: [
-      'Mensagens únicas por resposta',
+      'Mensagens únicas por resposta específica',
       'Regras condicionais "SE > ENTÃO"',
-      'Personalização extrema',
+      'Personalização extrema por quiz',
       'Máxima taxa de conversão'
     ],
     badge: 'PREMIUM',
@@ -77,15 +77,15 @@ const campaignStyles = {
   ao_vivo_ultra_personalizada: {
     id: 'ao_vivo_ultra_personalizada' as CampaignStyle,
     title: 'CAMPANHA AO VIVO ULTRA PERSONALIZADA',
-    subtitle: 'Filtros Avançados',
-    description: 'Leads abandonados ou que completaram com filtros de idade e estilo de corpo',
+    subtitle: 'Filtros Avançados por Perfil',
+    description: 'Leads abandonados ou que completaram com filtros de idade e estilo de corpo - você escolhe os filtros específicos',
     icon: Target,
     color: 'bg-gradient-to-br from-blue-500 to-indigo-600',
     features: [
-      'Leads abandonados OU que completaram',
-      'Filtros por idade e estilo de corpo',
-      'Segmentação por características físicas',
-      'Mensagens hiperdirigidas por perfil'
+      'Você escolhe: abandonados OU completos',
+      'Filtros por idade específica',
+      'Filtros por estilo de corpo',
+      'Mensagens hiperdirigidas por perfil físico'
     ],
     badge: 'AVANÇADO',
     badgeColor: 'bg-blue-500'
@@ -196,15 +196,18 @@ export function CampaignStyleSelector({ open, onClose, onStyleSelect, platform }
             <Info className="w-5 h-5 text-gray-600" />
             <h3 className="font-semibold text-gray-800">Como funciona?</h3>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm text-gray-600">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-gray-600">
             <div>
-              <span className="font-medium text-orange-600">Remarketing:</span> Ideal para reativar leads que já interagiram mas não converteram
+              <span className="font-medium text-orange-600">Remarketing:</span> Para leads antigos - você escolhe quais reativar
             </div>
             <div>
-              <span className="font-medium text-green-600">Ao Vivo Padrão:</span> Perfeito para capturar novos leads automaticamente
+              <span className="font-medium text-green-600">Ao Vivo:</span> Leads abandonados E completos - você escolhe o tipo
             </div>
             <div>
-              <span className="font-medium text-purple-600">Ultra Customizada:</span> Máxima personalização para campanhas exclusivas
+              <span className="font-medium text-purple-600">Ultra Customizada:</span> Mensagens únicas por resposta específica
+            </div>
+            <div>
+              <span className="font-medium text-blue-600">Ultra Personalizada:</span> Filtros de idade e estilo corporal - você escolhe
             </div>
           </div>
         </div>
