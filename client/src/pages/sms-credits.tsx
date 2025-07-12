@@ -90,7 +90,7 @@ export default function SMSCreditsPage() {
   const [phoneSearch, setPhoneSearch] = useState("");
   const [selectedCampaignLogs, setSelectedCampaignLogs] = useState<string | null>(null);
 
-  // Fetch user's SMS credits with real usage calculation
+  // Fetch user's SMS credits - otimizado para uma única requisição
   const { data: smsCredits, isLoading: creditsLoading } = useQuery<SMSCredits>({
     queryKey: ["/api/sms-credits"],
     queryFn: async () => {
@@ -102,42 +102,11 @@ export default function SMSCreditsPage() {
         },
       });
       if (!response.ok) throw new Error("Failed to fetch SMS credits");
-      const credits = await response.json();
-      
-      // Calculate real usage from all campaigns
-      const campaignsResponse = await fetch("/api/sms-campaigns", {
-        headers: { "Authorization": `Bearer ${token}` }
-      });
-      if (campaignsResponse.ok) {
-        const campaigns = await campaignsResponse.json();
-        let totalUsed = 0;
-        
-        for (const campaign of campaigns) {
-          try {
-            const logsResponse = await fetch(`/api/sms-campaigns/${campaign.id}/logs`, {
-              headers: { "Authorization": `Bearer ${token}` }
-            });
-            if (logsResponse.ok) {
-              const logs = await logsResponse.json();
-              totalUsed += logs.filter((log: any) => log.status === 'sent').length;
-            }
-          } catch (error) {
-            // Continue if logs fetch fails
-          }
-        }
-        
-        return {
-          total: credits.total,
-          used: totalUsed,
-          remaining: credits.total - totalUsed
-        };
-      }
-      
-      return credits;
+      return response.json();
     },
-    staleTime: 0, // Force fresh data sempre
-    cacheTime: 0, // No cache para créditos
-    refetchInterval: 5000 // Atualizar a cada 5 segundos
+    staleTime: 30000, // Cache por 30 segundos
+    cacheTime: 60000, // Cache por 1 minuto
+    refetchInterval: 30000 // Atualizar a cada 30 segundos
   });
 
   // Fetch user's quizzes for funnel selection
@@ -174,30 +143,11 @@ export default function SMSCreditsPage() {
       if (!response.ok) throw new Error("Failed to fetch SMS campaigns");
       const campaigns = await response.json();
       
-      // Fetch real stats from logs for each campaign
-      const campaignsWithStats = await Promise.all(
-        campaigns.map(async (campaign: SMSCampaign) => {
-          try {
-            const logsResponse = await fetch(`/api/sms-campaigns/${campaign.id}/logs`, {
-              headers: { "Authorization": `Bearer ${token}` }
-            });
-            if (!logsResponse.ok) {
-              return { ...campaign, sent: 0, delivered: 0 };
-            }
-            const logs = await logsResponse.json();
-            const sent = logs.filter((log: any) => log.status === 'sent').length;
-            const delivered = 0; // Removido conforme solicitado
-            return { ...campaign, sent, delivered };
-          } catch (error) {
-            return { ...campaign, sent: 0, delivered: 0 };
-          }
-        })
-      );
-      
-      return campaignsWithStats;
+      // Retornar campanhas sem stats individuais para melhor performance
+      return campaigns;
     },
-    staleTime: 0, // Force fresh data
-    cacheTime: 0  // No cache
+    staleTime: 30000, // Cache por 30 segundos
+    cacheTime: 60000  // Cache por 1 minuto
   });
 
   // Fetch SMS templates
@@ -232,7 +182,9 @@ export default function SMSCreditsPage() {
       return response.json();
     },
     enabled: !!campaignForm.quizId,
-    refetchInterval: 10000 // Atualizar a cada 10 segundos para detectar novos leads
+    staleTime: 30000, // Cache por 30 segundos
+    cacheTime: 60000, // Cache por 1 minuto
+    refetchInterval: 60000 // Atualizar a cada 1 minuto para detectar novos leads
   });
 
   // Calcular contadores dinâmicos de leads por público-alvo
