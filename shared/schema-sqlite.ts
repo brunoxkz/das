@@ -631,8 +631,8 @@ export const abTests = sqliteTable('ab_tests', {
   subdomains: text('subdomains', { mode: 'json' }).default('[]').$type<string[]>(),
   isActive: integer('is_active', { mode: 'boolean' }).default(true),
   totalViews: integer('total_views').default(0),
-  createdAt: integer('created_at', { mode: 'timestamp' }).notNull().default(sql`(unixepoch())`),
-  updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull().default(sql`(unixepoch())`)
+  createdAt: integer('created_at').notNull(),
+  updatedAt: integer('updated_at').notNull()
 });
 
 // A/B Test Views Schema

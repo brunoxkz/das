@@ -3736,17 +3736,29 @@ export class SQLiteStorage implements IStorage {
       const now = Math.floor(Date.now() / 1000);
       const id = nanoid();
       
+      const testData = {
+        id,
+        userId: test.userId,
+        name: test.name,
+        description: test.description || '',
+        quizIds: JSON.stringify(test.quizIds),
+        subdomains: JSON.stringify(test.subdomains || []),
+        isActive: test.isActive !== undefined ? test.isActive : true,
+        totalViews: test.totalViews || 0,
+        createdAt: now,
+        updatedAt: now
+      };
+
       const result = await db.insert(abTests)
-        .values({
-          id,
-          ...test,
-          createdAt: now,
-          updatedAt: now
-        })
+        .values(testData)
         .returning();
 
       console.log('✅ Teste A/B criado:', result[0]);
-      return result[0];
+      return {
+        ...result[0],
+        quizIds: JSON.parse(result[0].quizIds),
+        subdomains: JSON.parse(result[0].subdomains || '[]')
+      };
     } catch (error) {
       console.error('❌ ERRO ao criar teste A/B:', error);
       throw error;
@@ -3760,7 +3772,11 @@ export class SQLiteStorage implements IStorage {
         .where(eq(abTests.userId, userId))
         .orderBy(desc(abTests.createdAt));
 
-      return tests;
+      return tests.map(test => ({
+        ...test,
+        quizIds: JSON.parse(test.quizIds),
+        subdomains: JSON.parse(test.subdomains || '[]')
+      }));
     } catch (error) {
       console.error('❌ ERRO ao buscar testes A/B do usuário:', error);
       throw error;

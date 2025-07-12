@@ -7196,7 +7196,7 @@ app.get("/api/whatsapp-extension/pending", verifyJWT, async (req: any, res: Resp
   app.post("/api/ab-tests", verifyJWT, async (req: any, res) => {
     try {
       const userId = req.user.id;
-      const { name, description, quizIds } = req.body;
+      const { name, description, quizIds, subdomains } = req.body;
 
       if (!name || !quizIds || quizIds.length < 2 || quizIds.length > 3) {
         return res.status(400).json({ 
@@ -7209,6 +7209,7 @@ app.get("/api/whatsapp-extension/pending", verifyJWT, async (req: any, res: Resp
         name,
         description,
         quizIds,
+        subdomains: subdomains || [],
         isActive: true,
         totalViews: 0
       });
