@@ -718,26 +718,26 @@ export default function SMSCreditsPage() {
             </Button>
           </div>
           
-          <div className="grid md:grid-cols-4 gap-4 text-center">
+          <div className="grid md:grid-cols-2 gap-4 text-left">
             <div className="p-3 bg-orange-50 rounded-lg border border-orange-200">
-              <RefreshCw className="w-8 h-8 mx-auto mb-2 text-orange-600" />
+              <RefreshCw className="w-6 h-6 mb-2 text-orange-600" />
               <h4 className="font-semibold text-orange-800">Remarketing</h4>
-              <p className="text-sm text-orange-600">💰 Custo R$ 0,00</p>
-            </div>
-            <div className="p-3 bg-green-50 rounded-lg border border-green-200">
-              <Zap className="w-8 h-8 mx-auto mb-2 text-green-600" />
-              <h4 className="font-semibold text-green-800">Ao Vivo</h4>
-              <p className="text-sm text-green-600">⚡ Imediato</p>
+              <p className="text-sm text-orange-600">Selecione entre leads antigos que abandonaram ou completaram o quiz e datas</p>
             </div>
             <div className="p-3 bg-purple-50 rounded-lg border border-purple-200">
-              <Crown className="w-8 h-8 mx-auto mb-2 text-purple-600" />
-              <h4 className="font-semibold text-purple-800">Ultra Customizada</h4>
-              <p className="text-sm text-purple-600">🚀 Top Vendas</p>
+              <Crown className="w-6 h-6 mb-2 text-purple-600" />
+              <h4 className="font-semibold text-purple-800">Remarketing Ultra Customizado</h4>
+              <p className="text-sm text-purple-600">Selecione entre leads antigos que abandonaram ou completaram o quiz e datas, mas que também dispare funis diferentes para cada faixa de idade, peso, altura, ou como preferir, isso aumenta muito a conversão!</p>
+            </div>
+            <div className="p-3 bg-green-50 rounded-lg border border-green-200">
+              <Zap className="w-6 h-6 mb-2 text-green-600" />
+              <h4 className="font-semibold text-green-800">Ao Vivo (Tempo Real)</h4>
+              <p className="text-sm text-green-600">Mensagens personalizadas para pessoas que abandonaram ou completaram o quiz, escolha quanto tempo após a ação vai disparar a mensagem personalizada desejada</p>
             </div>
             <div className="p-3 bg-blue-50 rounded-lg border border-blue-200">
-              <Target className="w-8 h-8 mx-auto mb-2 text-blue-600" />
-              <h4 className="font-semibold text-blue-800">Ultra Personalizada</h4>
-              <p className="text-sm text-blue-600">💎 Expert</p>
+              <Target className="w-6 h-6 mb-2 text-blue-600" />
+              <h4 className="font-semibold text-blue-800">Ao Vivo Ultra Customizada</h4>
+              <p className="text-sm text-blue-600">Mensagens personalizadas para pessoas que abandonaram ou completaram o quiz, escolha quanto tempo após a ação vai disparar a mensagem personalizada desejada mas que também dispare funis diferentes para cada faixa de idade, peso, altura, ou como preferir, isso aumenta muito a conversão!</p>
             </div>
           </div>
         </CardContent>

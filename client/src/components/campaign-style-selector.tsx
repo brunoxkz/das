@@ -30,7 +30,7 @@ const campaignStyles = {
     id: 'remarketing' as CampaignStyle,
     title: 'REMARKETING',
     subtitle: 'Leads "mortos" viram VENDAS!',
-    description: 'selecione entre leads antigos que abandonaram ou completaram o quiz e datas',
+    description: 'Selecione entre leads antigos que abandonaram ou completaram o quiz e datas',
     icon: RefreshCw,
     color: 'bg-gradient-to-br from-orange-500 to-red-600',
     features: [
@@ -46,7 +46,7 @@ const campaignStyles = {
     id: 'remarketing_ultra_customizado' as CampaignStyle,
     title: 'REMARKETING ULTRA CUSTOMIZADO',
     subtitle: 'Segredo dos TOP AFILIADOS!',
-    description: 'selecione entre leads antigos que abandonaram ou completaram o quiz e datas, mas que também dispare funis diferentes para cada faixa de idade, peso, altura, ou como preferir, isso aumenta muito a conversão!',
+    description: 'Selecione entre leads antigos que abandonaram ou completaram o quiz e datas, mas que também dispare funis diferentes para cada faixa de idade, peso, altura, ou como preferir, isso aumenta muito a conversão!',
     icon: Crown,
     color: 'bg-gradient-to-br from-purple-500 to-pink-600',
     features: [
@@ -62,7 +62,7 @@ const campaignStyles = {
     id: 'ao_vivo_tempo_real' as CampaignStyle,
     title: 'AO VIVO (TEMPO REAL)',
     subtitle: 'Pegue o lead no momento QUENTE!',
-    description: 'mensagens personalizadas para pessoas que abandonaram ou completaram o quiz, escolha quanto tempo após a ação vai disparar a mensagem personalizada desejada',
+    description: 'Mensagens personalizadas para pessoas que abandonaram ou completaram o quiz, escolha quanto tempo após a ação vai disparar a mensagem personalizada desejada',
     icon: Zap,
     color: 'bg-gradient-to-br from-green-500 to-blue-600',
     features: [
@@ -78,7 +78,7 @@ const campaignStyles = {
     id: 'ao_vivo_ultra_customizada' as CampaignStyle,
     title: 'AO VIVO ULTRA CUSTOMIZADA',
     subtitle: 'NÍVEL SUPREMO de conversão!',
-    description: 'mensagens personalizadas para pessoas que abandonaram ou completaram o quiz, escolha quanto tempo após a ação vai disparar a mensagem personalizada desejada mas que também dispare funis diferentes para cada faixa de idade, peso, altura, ou como preferir, isso aumenta muito a conversão!',
+    description: 'Mensagens personalizadas para pessoas que abandonaram ou completaram o quiz, escolha quanto tempo após a ação vai disparar a mensagem personalizada desejada mas que também dispare funis diferentes para cada faixa de idade, peso, altura, ou como preferir, isso aumenta muito a conversão!',
     icon: Target,
     color: 'bg-gradient-to-br from-blue-500 to-indigo-600',
     features: [

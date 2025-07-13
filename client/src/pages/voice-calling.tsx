@@ -486,26 +486,26 @@ export default function VoiceCalling() {
           <h3 className="font-semibold text-purple-800 mb-3">💰 Voice Calling Premium - Faturamento R$ 520 - R$ 120.000/mês</h3>
           <p className="text-sm text-purple-700 mb-4">Sistema de remarketing por voz com TTS e áudio personalizado. Ideal para vendas de alto ticket, consultorias e produtos premium.</p>
           
-          <div className="grid md:grid-cols-4 gap-4 text-center">
+          <div className="grid md:grid-cols-2 gap-4 text-left">
             <div className="p-3 bg-orange-50 rounded-lg border border-orange-200">
-              <Phone className="w-8 h-8 mx-auto mb-2 text-orange-600" />
+              <Phone className="w-6 h-6 mb-2 text-orange-600" />
               <h4 className="font-semibold text-orange-800">Remarketing</h4>
-              <p className="text-sm text-orange-600">💰 Custo R$ 0,00</p>
-            </div>
-            <div className="p-3 bg-green-50 rounded-lg border border-green-200">
-              <Mic className="w-8 h-8 mx-auto mb-2 text-green-600" />
-              <h4 className="font-semibold text-green-800">Ao Vivo</h4>
-              <p className="text-sm text-green-600">⚡ Imediato</p>
+              <p className="text-sm text-orange-600">Selecione entre leads antigos que abandonaram ou completaram o quiz e datas</p>
             </div>
             <div className="p-3 bg-purple-50 rounded-lg border border-purple-200">
-              <FileAudio className="w-8 h-8 mx-auto mb-2 text-purple-600" />
-              <h4 className="font-semibold text-purple-800">Ultra Customizada</h4>
-              <p className="text-sm text-purple-600">🚀 Top Vendas</p>
+              <FileAudio className="w-6 h-6 mb-2 text-purple-600" />
+              <h4 className="font-semibold text-purple-800">Remarketing Ultra Customizado</h4>
+              <p className="text-sm text-purple-600">Selecione entre leads antigos que abandonaram ou completaram o quiz e datas, mas que também dispare funis diferentes para cada faixa de idade, peso, altura, ou como preferir, isso aumenta muito a conversão!</p>
+            </div>
+            <div className="p-3 bg-green-50 rounded-lg border border-green-200">
+              <Mic className="w-6 h-6 mb-2 text-green-600" />
+              <h4 className="font-semibold text-green-800">Ao Vivo (Tempo Real)</h4>
+              <p className="text-sm text-green-600">Mensagens personalizadas para pessoas que abandonaram ou completaram o quiz, escolha quanto tempo após a ação vai disparar a mensagem personalizada desejada</p>
             </div>
             <div className="p-3 bg-blue-50 rounded-lg border border-blue-200">
-              <Volume2 className="w-8 h-8 mx-auto mb-2 text-blue-600" />
-              <h4 className="font-semibold text-blue-800">Ultra Personalizada</h4>
-              <p className="text-sm text-blue-600">💎 Expert</p>
+              <Volume2 className="w-6 h-6 mb-2 text-blue-600" />
+              <h4 className="font-semibold text-blue-800">Ao Vivo Ultra Customizada</h4>
+              <p className="text-sm text-blue-600">Mensagens personalizadas para pessoas que abandonaram ou completaram o quiz, escolha quanto tempo após a ação vai disparar a mensagem personalizada desejada mas que também dispare funis diferentes para cada faixa de idade, peso, altura, ou como preferir, isso aumenta muito a conversão!</p>
             </div>
           </div>
         </CardContent>

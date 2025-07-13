@@ -476,7 +476,7 @@ export default function WhatsAppCampaignsPage() {
                     </h3>
                     <p className="text-sm text-green-600 font-medium mt-2">📱 Transforme WhatsApp "mortos" em VENDAS!</p>
                     <p className="text-sm text-gray-700 mt-1">
-                      <strong>Reative leads antigos automaticamente!</strong> Selecione quizzes com telefones e dispare mensagens para quem abandonou ou completou - é como ter uma máquina de vendas trabalhando 24h no WhatsApp!
+                      <strong>Selecione entre leads antigos que abandonaram ou completaram o quiz e datas</strong>
                     </p>
                     <div className="mt-3 space-y-2">
                       <div className="text-xs text-gray-600">
@@ -494,7 +494,7 @@ export default function WhatsAppCampaignsPage() {
                     </h3>
                     <p className="text-sm text-purple-600 font-medium mt-2">💎 O segredo dos REIS do WhatsApp!</p>
                     <p className="text-sm text-gray-700 mt-1">
-                      <strong>Mensagens diferentes para CADA perfil!</strong> Jovens de 18-25 recebem linguagem descontraída, pessoas de 40+ recebem abordagem respeitosa. É como ter um especialista em vendas para cada cliente!
+                      <strong>Selecione entre leads antigos que abandonaram ou completaram o quiz e datas, mas que também dispare funis diferentes para cada faixa de idade, peso, altura, ou como preferir, isso aumenta muito a conversão!</strong>
                     </p>
                     <div className="mt-3 space-y-2">
                       <div className="text-xs text-gray-600">
@@ -514,7 +514,7 @@ export default function WhatsAppCampaignsPage() {
                     </h3>
                     <p className="text-sm text-orange-600 font-medium mt-2">🔥 Pegue o lead no WhatsApp QUENTE!</p>
                     <p className="text-sm text-gray-700 mt-1">
-                      <strong>Automático e IMEDIATO!</strong> Alguém abandona o quiz? Em 5 minutos recebe mensagem! Completou? Parabéns na hora! É como ter um vendedor que NUNCA dorme no WhatsApp!
+                      <strong>Mensagens personalizadas para pessoas que abandonaram ou completaram o quiz, escolha quanto tempo após a ação vai disparar a mensagem personalizada desejada</strong>
                     </p>
                     <div className="mt-3 space-y-2">
                       <div className="text-xs text-gray-600">
@@ -532,7 +532,7 @@ export default function WhatsAppCampaignsPage() {
                     </h3>
                     <p className="text-sm text-red-600 font-medium mt-2">👑 O NIVEL SUPREMO do WhatsApp!</p>
                     <p className="text-sm text-gray-700 mt-1">
-                      <strong>AUTOMÁTICO + PERSONALIZADO!</strong> Atleta que completa recebe "Nutrição de alta performance!" Sedentário recebe "Vamos começar devagar!" - CADA pessoa recebe a mensagem PERFEITA no momento certo!
+                      <strong>Mensagens personalizadas para pessoas que abandonaram ou completaram o quiz, escolha quanto tempo após a ação vai disparar a mensagem personalizada desejada mas que também dispare funis diferentes para cada faixa de idade, peso, altura, ou como preferir, isso aumenta muito a conversão!</strong>
                     </p>
                     <div className="mt-3 space-y-2">
                       <div className="text-xs text-gray-600">

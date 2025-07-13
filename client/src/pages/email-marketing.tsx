@@ -460,7 +460,7 @@ export default function EmailMarketingPage() {
                     </h3>
                     <p className="text-sm text-green-600 font-medium mt-2">📧 Transforme emails "mortos" em VENDAS!</p>
                     <p className="text-sm text-gray-700 mt-1">
-                      <strong>Reative leads antigos automaticamente!</strong> Selecione quizzes com emails e dispare campanhas para quem abandonou ou completou - é como ter uma máquina de vendas trabalhando 24h na sua caixa de entrada!
+                      <strong>Selecione entre leads antigos que abandonaram ou completaram o quiz e datas</strong>
                     </p>
                     <div className="mt-3 space-y-2">
                       <div className="text-xs text-gray-600">
@@ -478,7 +478,7 @@ export default function EmailMarketingPage() {
                     </h3>
                     <p className="text-sm text-purple-600 font-medium mt-2">💎 O segredo dos GURUS do EMAIL!</p>
                     <p className="text-sm text-gray-700 mt-1">
-                      <strong>Emails diferentes para CADA perfil!</strong> Jovens de 18-25 recebem design moderno, pessoas de 40+ recebem abordagem clássica. É como ter um especialista em email para cada cliente!
+                      <strong>Selecione entre leads antigos que abandonaram ou completaram o quiz e datas, mas que também dispare funis diferentes para cada faixa de idade, peso, altura, ou como preferir, isso aumenta muito a conversão!</strong>
                     </p>
                     <div className="mt-3 space-y-2">
                       <div className="text-xs text-gray-600">
@@ -498,7 +498,7 @@ export default function EmailMarketingPage() {
                     </h3>
                     <p className="text-sm text-orange-600 font-medium mt-2">🔥 Pegue o lead na caixa de entrada QUENTE!</p>
                     <p className="text-sm text-gray-700 mt-1">
-                      <strong>Automático e IMEDIATO!</strong> Alguém abandona o quiz? Em 5 minutos recebe email! Completou? Parabéns na hora! É como ter um vendedor que NUNCA dorme enviando emails perfeitos!
+                      <strong>Mensagens personalizadas para pessoas que abandonaram ou completaram o quiz, escolha quanto tempo após a ação vai disparar a mensagem personalizada desejada</strong>
                     </p>
                     <div className="mt-3 space-y-2">
                       <div className="text-xs text-gray-600">
@@ -516,7 +516,7 @@ export default function EmailMarketingPage() {
                     </h3>
                     <p className="text-sm text-red-600 font-medium mt-2">👑 O NIVEL MÁXIMO do EMAIL MARKETING!</p>
                     <p className="text-sm text-gray-700 mt-1">
-                      <strong>AUTOMÁTICO + PERSONALIZADO!</strong> Atleta que completa recebe email "Nutrição de alta performance!" Sedentário recebe "Vamos começar devagar!" - CADA pessoa recebe o email PERFEITO na hora certa!
+                      <strong>Mensagens personalizadas para pessoas que abandonaram ou completaram o quiz, escolha quanto tempo após a ação vai disparar a mensagem personalizada desejada mas que também dispare funis diferentes para cada faixa de idade, peso, altura, ou como preferir, isso aumenta muito a conversão!</strong>
                     </p>
                     <div className="mt-3 space-y-2">
                       <div className="text-xs text-gray-600">
