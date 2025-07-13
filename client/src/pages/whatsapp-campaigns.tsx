@@ -430,22 +430,22 @@ export default function WhatsAppCampaignsPage() {
             <div className="p-3 bg-orange-50 rounded-lg border border-orange-200">
               <RefreshCw className="w-8 h-8 mx-auto mb-2 text-orange-600" />
               <h4 className="font-semibold text-orange-800">Remarketing</h4>
-              <p className="text-sm text-orange-600">Leads antigos</p>
+              <p className="text-sm text-orange-600">💰 Custo R$ 0,00</p>
             </div>
             <div className="p-3 bg-green-50 rounded-lg border border-green-200">
               <Clock className="w-8 h-8 mx-auto mb-2 text-green-600" />
-              <h4 className="font-semibold text-green-800">Ao Vivo Padrão</h4>
-              <p className="text-sm text-green-600">Novos leads</p>
+              <h4 className="font-semibold text-green-800">Ao Vivo</h4>
+              <p className="text-sm text-green-600">⚡ Imediato</p>
             </div>
             <div className="p-3 bg-purple-50 rounded-lg border border-purple-200">
               <Settings className="w-8 h-8 mx-auto mb-2 text-purple-600" />
               <h4 className="font-semibold text-purple-800">Ultra Customizada</h4>
-              <p className="text-sm text-purple-600">Exclusiva</p>
+              <p className="text-sm text-purple-600">🚀 Top Vendas</p>
             </div>
             <div className="p-3 bg-blue-50 rounded-lg border border-blue-200">
               <Target className="w-8 h-8 mx-auto mb-2 text-blue-600" />
               <h4 className="font-semibold text-blue-800">Ultra Personalizada</h4>
-              <p className="text-sm text-blue-600">Filtros avançados</p>
+              <p className="text-sm text-blue-600">💎 Expert</p>
             </div>
           </div>
         </CardContent>

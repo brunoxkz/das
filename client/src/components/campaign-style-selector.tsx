@@ -29,65 +29,65 @@ const campaignStyles = {
   remarketing: {
     id: 'remarketing' as CampaignStyle,
     title: 'REMARKETING',
-    subtitle: 'Leads Antigos',
-    description: 'Selecione entre leads antigos que abandonaram ou completaram o quiz e datas',
+    subtitle: 'Leads "mortos" viram VENDAS!',
+    description: 'selecione entre leads antigos que abandonaram ou completaram o quiz e datas',
     icon: RefreshCw,
     color: 'bg-gradient-to-br from-orange-500 to-red-600',
     features: [
-      'Selecione leads antigos por data',
-      'Escolha entre abandonados ou completos',
-      'Filtros por período de interação',
-      'Reativação dirigida por histórico'
+      'Reative leads antigos automaticamente',
+      'Escolha abandonados ou completos',
+      'Custo R$ 0,00 - leads gratuitos',
+      'Máquina de vendas 24h automática'
     ],
-    badge: 'REATIVAÇÃO',
+    badge: 'GRATUITO',
     badgeColor: 'bg-orange-500'
   },
   remarketing_ultra_customizado: {
     id: 'remarketing_ultra_customizado' as CampaignStyle,
     title: 'REMARKETING ULTRA CUSTOMIZADO',
-    subtitle: 'Leads Antigos + Funis Segmentados',
-    description: 'Selecione entre leads antigos que abandonaram ou completaram o quiz e datas, mas que também dispare funis diferentes para cada faixa de idade, peso, altura, ou como preferir, isso aumenta muito a conversão!',
+    subtitle: 'Segredo dos TOP AFILIADOS!',
+    description: 'selecione entre leads antigos que abandonaram ou completaram o quiz e datas, mas que também dispare funis diferentes para cada faixa de idade, peso, altura, ou como preferir, isso aumenta muito a conversão!',
     icon: Crown,
     color: 'bg-gradient-to-br from-purple-500 to-pink-600',
     features: [
-      'Selecione leads antigos por data',
-      'Funis diferentes por faixa etária',
-      'Segmentação por peso e altura',
-      'Conversão maximizada por perfil'
+      'Mensagens diferentes para CADA perfil',
+      'Jovens 18-25 vs pessoas 40+',
+      'Funis únicos por idade/peso/altura',
+      '+40% conversão garantida'
     ],
-    badge: 'PREMIUM',
+    badge: 'TOP VENDAS',
     badgeColor: 'bg-purple-500'
   },
   ao_vivo_tempo_real: {
     id: 'ao_vivo_tempo_real' as CampaignStyle,
     title: 'AO VIVO (TEMPO REAL)',
-    subtitle: 'Mensagens Personalizadas',
-    description: 'Mensagens personalizadas para pessoas que abandonaram ou completaram o quiz, escolha quanto tempo após a ação vai disparar a mensagem personalizada desejada',
+    subtitle: 'Pegue o lead no momento QUENTE!',
+    description: 'mensagens personalizadas para pessoas que abandonaram ou completaram o quiz, escolha quanto tempo após a ação vai disparar a mensagem personalizada desejada',
     icon: Zap,
     color: 'bg-gradient-to-br from-green-500 to-blue-600',
     features: [
-      'Mensagens para abandonados ou completos',
-      'Você escolhe o tempo de disparo',
-      'Personalização por ação do usuário',
-      'Timing otimizado para conversão'
+      'Automático e IMEDIATO!',
+      'Abandona = SMS em 5 minutos',
+      'Vendedor que NUNCA dorme',
+      '+85% taxa de resposta'
     ],
-    badge: 'AUTOMÁTICO',
+    badge: 'IMEDIATO',
     badgeColor: 'bg-green-500'
   },
   ao_vivo_ultra_customizada: {
     id: 'ao_vivo_ultra_customizada' as CampaignStyle,
     title: 'AO VIVO ULTRA CUSTOMIZADA',
-    subtitle: 'Mensagens + Funis Segmentados',
-    description: 'Mensagens personalizadas para pessoas que abandonaram ou completaram o quiz, escolha quanto tempo após a ação vai disparar a mensagem personalizada desejada mas que também dispare funis diferentes para cada faixa de idade, peso, altura, ou como preferir, isso aumenta muito a conversão!',
+    subtitle: 'NÍVEL SUPREMO de conversão!',
+    description: 'mensagens personalizadas para pessoas que abandonaram ou completaram o quiz, escolha quanto tempo após a ação vai disparar a mensagem personalizada desejada mas que também dispare funis diferentes para cada faixa de idade, peso, altura, ou como preferir, isso aumenta muito a conversão!',
     icon: Target,
     color: 'bg-gradient-to-br from-blue-500 to-indigo-600',
     features: [
-      'Mensagens para abandonados ou completos',
-      'Você escolhe o tempo de disparo',
-      'Funis diferentes por faixa etária',
-      'Segmentação por peso e altura'
+      'AUTOMÁTICO + PERSONALIZADO!',
+      'Atleta = mensagem fitness',
+      'Sedentário = abordagem gentil',
+      '+150% taxa de conversão'
     ],
-    badge: 'AVANÇADO',
+    badge: 'EXPERT',
     badgeColor: 'bg-blue-500'
   }
 };
