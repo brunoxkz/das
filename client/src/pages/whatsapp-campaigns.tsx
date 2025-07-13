@@ -280,14 +280,14 @@ export default function WhatsAppCampaignsPage() {
       case 'remarketing':
         handleCreateRemarketingCampaign();
         break;
-      case 'ao_vivo_padrao':
+      case 'remarketing_ultra_customizado':
+        handleCreateRemarketingUltraCustomizedCampaign();
+        break;
+      case 'ao_vivo_tempo_real':
         handleCreateStandardCampaign();
         break;
       case 'ao_vivo_ultra_customizada':
         handleCreateUltraCustomizedCampaign();
-        break;
-      case 'ao_vivo_ultra_personalizada':
-        handleCreateUltraPersonalizedCampaign();
         break;
     }
   };
@@ -296,16 +296,16 @@ export default function WhatsAppCampaignsPage() {
     await createCampaignWithStyle('remarketing');
   };
 
+  const handleCreateRemarketingUltraCustomizedCampaign = async () => {
+    await createCampaignWithStyle('remarketing_ultra_customizado');
+  };
+
   const handleCreateStandardCampaign = async () => {
-    await createCampaignWithStyle('ao_vivo_padrao');
+    await createCampaignWithStyle('ao_vivo_tempo_real');
   };
 
   const handleCreateUltraCustomizedCampaign = async () => {
     await createCampaignWithStyle('ao_vivo_ultra_customizada');
-  };
-
-  const handleCreateUltraPersonalizedCampaign = async () => {
-    await createCampaignWithStyle('ao_vivo_ultra_personalizada');
   };
 
   // Função para criar campanha com estilo específico
@@ -324,9 +324,11 @@ export default function WhatsAppCampaignsPage() {
       const selectedQuizData = quizzes.find(q => q.id === selectedQuiz);
       const validMessages = rotatingMessages.filter(m => m.trim());
       
-      const stylePrefix = campaignType === 'remarketing' ? '[REMARKETING]' : 
-                         campaignType === 'ao_vivo_padrao' ? '[AO VIVO PADRÃO]' : 
-                         '[AO VIVO ULTRA CUSTOMIZADA]';
+      const stylePrefix = 
+        campaignType === 'remarketing' ? '[REMARKETING]' : 
+        campaignType === 'remarketing_ultra_customizado' ? '[REMARKETING ULTRA CUSTOMIZADO]' :
+        campaignType === 'ao_vivo_tempo_real' ? '[AO VIVO TEMPO REAL]' : 
+        '[AO VIVO ULTRA CUSTOMIZADA]';
       
       await apiRequest("POST", "/api/whatsapp-campaigns", {
         name: `${stylePrefix} ${campaignName}`,
@@ -457,14 +459,132 @@ export default function WhatsAppCampaignsPage() {
         </TabsList>
 
         <TabsContent value="remarketing" className="space-y-6">
+          {/* Explicação dos Tipos de Campanha */}
+          <Card className="border-blue-200 bg-blue-50">
+            <CardHeader>
+              <CardTitle className="text-blue-900">📚 Tipos de Campanha WhatsApp - Guia Completo</CardTitle>
+              <CardDescription className="text-blue-700">
+                Comece selecionando o estilo de campanha que melhor se adapta ao seu objetivo
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="grid md:grid-cols-2 gap-6">
+                <div className="space-y-4">
+                  <div className="border-l-4 border-green-500 pl-4 bg-white p-4 rounded-lg shadow-lg">
+                    <h3 className="font-bold text-green-700 flex items-center gap-2">
+                      <span className="bg-green-100 text-green-800 px-2 py-1 rounded text-sm">💰 REMARKETING</span>
+                    </h3>
+                    <p className="text-sm text-green-600 font-medium mt-2">📱 Transforme WhatsApp "mortos" em VENDAS!</p>
+                    <p className="text-sm text-gray-700 mt-1">
+                      <strong>Reative leads antigos automaticamente!</strong> Selecione quizzes com telefones e dispare mensagens para quem abandonou ou completou - é como ter uma máquina de vendas trabalhando 24h no WhatsApp!
+                    </p>
+                    <div className="mt-3 space-y-2">
+                      <div className="text-xs text-gray-600">
+                        🎯 <strong>Vantagens:</strong> Leads gratuitos • Segmentação automática • Timing inteligente
+                      </div>
+                      <div className="text-xs text-green-600 font-bold">
+                        💸 <strong>LUCRO REAL:</strong> +42% taxa resposta • R$ 420 a mais para cada R$ 1.000 investido!
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="border-l-4 border-purple-500 pl-4 bg-white p-4 rounded-lg shadow-lg">
+                    <h3 className="font-bold text-purple-700 flex items-center gap-2">
+                      <span className="bg-purple-100 text-purple-800 px-2 py-1 rounded text-sm">🚀 REMARKETING ULTRA CUSTOMIZADO</span>
+                    </h3>
+                    <p className="text-sm text-purple-600 font-medium mt-2">💎 O segredo dos REIS do WhatsApp!</p>
+                    <p className="text-sm text-gray-700 mt-1">
+                      <strong>Mensagens diferentes para CADA perfil!</strong> Jovens de 18-25 recebem linguagem descontraída, pessoas de 40+ recebem abordagem respeitosa. É como ter um especialista em vendas para cada cliente!
+                    </p>
+                    <div className="mt-3 space-y-2">
+                      <div className="text-xs text-gray-600">
+                        🎯 <strong>Vantagens:</strong> Mensagens por idade/peso/altura • Funis únicos • Personalização máxima
+                      </div>
+                      <div className="text-xs text-purple-600 font-bold">
+                        💰 <strong>LUCRO EXPLOSIVO:</strong> +65% conversão • R$ 6.500 a mais para cada R$ 10.000!
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="space-y-4">
+                  <div className="border-l-4 border-orange-500 pl-4 bg-white p-4 rounded-lg shadow-lg">
+                    <h3 className="font-bold text-orange-700 flex items-center gap-2">
+                      <span className="bg-orange-100 text-orange-800 px-2 py-1 rounded text-sm">⚡ AO VIVO TEMPO REAL</span>
+                    </h3>
+                    <p className="text-sm text-orange-600 font-medium mt-2">🔥 Pegue o lead no WhatsApp QUENTE!</p>
+                    <p className="text-sm text-gray-700 mt-1">
+                      <strong>Automático e IMEDIATO!</strong> Alguém abandona o quiz? Em 5 minutos recebe mensagem! Completou? Parabéns na hora! É como ter um vendedor que NUNCA dorme no WhatsApp!
+                    </p>
+                    <div className="mt-3 space-y-2">
+                      <div className="text-xs text-gray-600">
+                        🎯 <strong>Vantagens:</strong> Automático 24h • Timing perfeito • Sem perder leads
+                      </div>
+                      <div className="text-xs text-orange-600 font-bold">
+                        🔥 <strong>CONVERSÃO INSANA:</strong> +95% taxa resposta • Lead quente no WhatsApp = venda garantida!
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="border-l-4 border-red-500 pl-4 bg-white p-4 rounded-lg shadow-lg">
+                    <h3 className="font-bold text-red-700 flex items-center gap-2">
+                      <span className="bg-red-100 text-red-800 px-2 py-1 rounded text-sm">💎 AO VIVO ULTRA CUSTOMIZADA</span>
+                    </h3>
+                    <p className="text-sm text-red-600 font-medium mt-2">👑 O NIVEL SUPREMO do WhatsApp!</p>
+                    <p className="text-sm text-gray-700 mt-1">
+                      <strong>AUTOMÁTICO + PERSONALIZADO!</strong> Atleta que completa recebe "Nutrição de alta performance!" Sedentário recebe "Vamos começar devagar!" - CADA pessoa recebe a mensagem PERFEITA no momento certo!
+                    </p>
+                    <div className="mt-3 space-y-2">
+                      <div className="text-xs text-gray-600">
+                        🎯 <strong>Vantagens:</strong> Tempo real + personalização • Funis únicos • Máxima conversão
+                      </div>
+                      <div className="text-xs text-red-600 font-bold">
+                        💰 <strong>LUCRO ESTRATOSFÉRICO:</strong> +200% conversão • R$ 20.000 a mais para cada R$ 10.000!
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-gradient-to-r from-yellow-50 to-orange-50 border border-yellow-300 rounded-lg p-4 shadow-lg">
+                <div className="flex items-start space-x-3">
+                  <div className="text-yellow-600 mt-1">💰</div>
+                  <div>
+                    <h4 className="font-semibold text-yellow-800">ESTRATÉGIA MILIONÁRIA</h4>
+                    <p className="text-sm text-yellow-700 mt-1">
+                      <strong>COMBINE TUDO:</strong> Use <strong>Remarketing</strong> nos leads antigos (custo R$ 0,00), <strong>Ao Vivo</strong> nos frescos (resposta 95%+). 
+                      As versões <strong>Ultra Customizadas</strong> são o segredo dos especialistas que faturam R$ 300k+/mês com WhatsApp!
+                    </p>
+                    <p className="text-xs text-yellow-600 mt-2 font-bold">
+                      ⚡ RESULTADO: Até R$ 100.000 extras por mês só com WhatsApp automático!
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                <div className="flex items-start space-x-3">
+                  <div className="text-red-600 mt-1">⚠️</div>
+                  <div>
+                    <h4 className="font-semibold text-red-800">Importante - Proteção contra Ban</h4>
+                    <p className="text-sm text-red-700 mt-1">
+                      <strong>WhatsApp é mais restritivo:</strong> Use mensagens rotativas, evite spam, respeite intervalos de tempo. 
+                      Nossa extensão Chrome protege automaticamente contra banimentos.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <MessageSquare className="h-5 w-5" />
-                Configurar Remarketing WhatsApp
+                Criar Nova Campanha WhatsApp
               </CardTitle>
               <CardDescription>
-                Selecione um quiz e configure mensagens rotativas para evitar ban
+                Selecione o estilo de campanha que melhor se adapta ao seu objetivo
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">

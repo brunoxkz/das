@@ -342,14 +342,14 @@ export default function SMSCreditsPage() {
       case 'remarketing':
         handleCreateRemarketingCampaign();
         break;
-      case 'ao_vivo_padrao':
+      case 'remarketing_ultra_customizado':
+        handleCreateRemarketingUltraCustomizedCampaign();
+        break;
+      case 'ao_vivo_tempo_real':
         handleCreateStandardCampaign();
         break;
       case 'ao_vivo_ultra_customizada':
         handleCreateUltraCustomizedCampaign();
-        break;
-      case 'ao_vivo_ultra_personalizada':
-        handleCreateUltraPersonalizedCampaign();
         break;
     }
   };
@@ -374,6 +374,26 @@ export default function SMSCreditsPage() {
     });
   };
 
+  const handleCreateRemarketingUltraCustomizedCampaign = () => {
+    if (!campaignForm.message || !campaignForm.quizId || !campaignForm.targetAudience) {
+      toast({
+        title: "Erro",
+        description: "Preencha todos os campos obrigatórios",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    const selectedQuiz = quizzes?.find((q: any) => q.id === campaignForm.quizId);
+    const campaignName = `[REMARKETING ULTRA CUSTOMIZADO] ${selectedQuiz?.title || 'Quiz'}`;
+
+    createCampaignMutation.mutate({
+      ...campaignForm,
+      name: campaignName,
+      campaignType: 'remarketing_ultra_customizado'
+    });
+  };
+
   const handleCreateStandardCampaign = () => {
     if (!campaignForm.message || !campaignForm.quizId || !campaignForm.targetAudience) {
       toast({
@@ -385,12 +405,12 @@ export default function SMSCreditsPage() {
     }
 
     const selectedQuiz = quizzes?.find((q: any) => q.id === campaignForm.quizId);
-    const campaignName = `[AO VIVO PADRÃO] ${selectedQuiz?.title || 'Quiz'}`;
+    const campaignName = `[AO VIVO TEMPO REAL] ${selectedQuiz?.title || 'Quiz'}`;
 
     createCampaignMutation.mutate({
       ...campaignForm,
       name: campaignName,
-      campaignType: 'ao_vivo_padrao'
+      campaignType: 'ao_vivo_tempo_real'
     });
   };
 
@@ -988,14 +1008,126 @@ export default function SMSCreditsPage() {
             </Card>
           )}
 
+          {/* Explicação dos Tipos de Campanha */}
+          <Card className="border-blue-200 bg-blue-50">
+            <CardHeader>
+              <CardTitle className="text-blue-900">📚 Tipos de Campanha SMS - Guia Completo</CardTitle>
+              <CardDescription className="text-blue-700">
+                Comece selecionando o estilo de campanha que melhor se adapta ao seu objetivo
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="grid md:grid-cols-2 gap-6">
+                <div className="space-y-4">
+                  <div className="border-l-4 border-green-500 pl-4 bg-white p-4 rounded-lg shadow-lg">
+                    <h3 className="font-bold text-green-700 flex items-center gap-2">
+                      <span className="bg-green-100 text-green-800 px-2 py-1 rounded text-sm">💰 REMARKETING</span>
+                    </h3>
+                    <p className="text-sm text-green-600 font-medium mt-2">🎯 Transforme leads "mortos" em VENDAS!</p>
+                    <p className="text-sm text-gray-700 mt-1">
+                      <strong>Reative leads antigos automaticamente!</strong> Selecione quizzes com telefones e dispare mensagens para quem abandonou ou completou - é como ter uma máquina de vendas trabalhando 24h
+                    </p>
+                    <div className="mt-3 space-y-2">
+                      <div className="text-xs text-gray-600">
+                        🎯 <strong>Vantagens:</strong> Leads gratuitos • Segmentação automática • Timing inteligente
+                      </div>
+                      <div className="text-xs text-green-600 font-bold">
+                        💸 <strong>LUCRO REAL:</strong> +28% ROI • R$ 280 a mais para cada R$ 1.000 investido!
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="border-l-4 border-purple-500 pl-4 bg-white p-4 rounded-lg shadow-lg">
+                    <h3 className="font-bold text-purple-700 flex items-center gap-2">
+                      <span className="bg-purple-100 text-purple-800 px-2 py-1 rounded text-sm">🚀 REMARKETING ULTRA CUSTOMIZADO</span>
+                    </h3>
+                    <p className="text-sm text-purple-600 font-medium mt-2">💎 O segredo dos TOP AFILIADOS!</p>
+                    <p className="text-sm text-gray-700 mt-1">
+                      <strong>Mensagens diferentes para CADA perfil!</strong> Jovens de 18-25 recebem uma mensagem, pessoas de 40+ recebem outra. É como ter um vendedor especialista para cada cliente!
+                    </p>
+                    <div className="mt-3 space-y-2">
+                      <div className="text-xs text-gray-600">
+                        🎯 <strong>Vantagens:</strong> Mensagens por idade/peso/altura • Funis únicos • Personalização máxima
+                      </div>
+                      <div className="text-xs text-purple-600 font-bold">
+                        💰 <strong>LUCRO EXPLOSIVO:</strong> +40% conversão • R$ 4.000 a mais para cada R$ 10.000!
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="space-y-4">
+                  <div className="border-l-4 border-orange-500 pl-4 bg-white p-4 rounded-lg shadow-lg">
+                    <h3 className="font-bold text-orange-700 flex items-center gap-2">
+                      <span className="bg-orange-100 text-orange-800 px-2 py-1 rounded text-sm">⚡ AO VIVO TEMPO REAL</span>
+                    </h3>
+                    <p className="text-sm text-orange-600 font-medium mt-2">🔥 Pegue o lead no momento QUENTE!</p>
+                    <p className="text-sm text-gray-700 mt-1">
+                      <strong>Automático e IMEDIATO!</strong> Alguém abandona o quiz? Em 5 minutos recebe SMS! Completou? Parabéns na hora! É como ter um vendedor que NUNCA dorme!
+                    </p>
+                    <div className="mt-3 space-y-2">
+                      <div className="text-xs text-gray-600">
+                        🎯 <strong>Vantagens:</strong> Automático 24h • Timing perfeito • Sem perder leads
+                      </div>
+                      <div className="text-xs text-orange-600 font-bold">
+                        🔥 <strong>CONVERSÃO INSANA:</strong> +85% resposta • Lead quente = venda garantida!
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="border-l-4 border-red-500 pl-4 bg-white p-4 rounded-lg shadow-lg">
+                    <h3 className="font-bold text-red-700 flex items-center gap-2">
+                      <span className="bg-red-100 text-red-800 px-2 py-1 rounded text-sm">💎 AO VIVO ULTRA CUSTOMIZADA</span>
+                    </h3>
+                    <p className="text-sm text-red-600 font-medium mt-2">👑 O NIVEL MÁXIMO DE VENDAS!</p>
+                    <p className="text-sm text-gray-700 mt-1">
+                      <strong>AUTOMÁTICO + PERSONALIZADO!</strong> Atleta que completa recebe "Nutrição de alta performance!" Sedentário recebe "Vamos começar devagar!" - CADA pessoa recebe a mensagem PERFEITA!
+                    </p>
+                    <div className="mt-3 space-y-2">
+                      <div className="text-xs text-gray-600">
+                        🎯 <strong>Vantagens:</strong> Tempo real + personalização • Funis únicos • Máxima conversão
+                      </div>
+                      <div className="text-xs text-red-600 font-bold">
+                        💰 <strong>LUCRO ESTRATOSFÉRICO:</strong> +120% conversão • R$ 12.000 a mais para cada R$ 10.000!
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-gradient-to-r from-yellow-50 to-orange-50 border border-yellow-300 rounded-lg p-4 shadow-lg">
+                <div className="flex items-start space-x-3">
+                  <div className="text-yellow-600 mt-1">💰</div>
+                  <div>
+                    <h4 className="font-semibold text-yellow-800">ESTRATÉGIA MILIONÁRIA</h4>
+                    <p className="text-sm text-yellow-700 mt-1">
+                      <strong>COMBINE TUDO:</strong> Use <strong>Remarketing</strong> nos leads antigos (custo R$ 0,00), <strong>Ao Vivo</strong> nos frescos (conversão 85%+). 
+                      As versões <strong>Ultra Customizadas</strong> são o segredo dos afiliados que faturam R$ 100k+/mês!
+                    </p>
+                    <p className="text-xs text-yellow-600 mt-2 font-bold">
+                      ⚡ RESULTADO: Até R$ 50.000 extras por mês só com SMS automático!
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <Alert className="bg-yellow-50 border-yellow-200">
+                <AlertCircle className="w-4 h-4 text-yellow-600" />
+                <AlertDescription className="text-yellow-800">
+                  <strong>Importante:</strong> É necessário comprar créditos SMS para usar esta funcionalidade. Cada SMS enviado consome 1 crédito.
+                </AlertDescription>
+              </Alert>
+            </CardContent>
+          </Card>
+
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Send className="w-5 h-5" />
-                Sistema de Envio Contínuo
+                Criar Nova Campanha SMS
               </CardTitle>
               <CardDescription>
-                Configure um sistema que envia SMS automaticamente quando novos leads chegam
+                Selecione o estilo de campanha que melhor se adapta ao seu objetivo
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">

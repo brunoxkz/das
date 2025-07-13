@@ -16,7 +16,7 @@ import {
   RefreshCw
 } from 'lucide-react';
 
-export type CampaignStyle = 'remarketing' | 'ao_vivo_padrao' | 'ao_vivo_ultra_customizada' | 'ao_vivo_ultra_personalizada';
+export type CampaignStyle = 'remarketing' | 'remarketing_ultra_customizado' | 'ao_vivo_tempo_real' | 'ao_vivo_ultra_customizada';
 
 interface CampaignStyleSelectorProps {
   open: boolean;
@@ -28,64 +28,64 @@ interface CampaignStyleSelectorProps {
 const campaignStyles = {
   remarketing: {
     id: 'remarketing' as CampaignStyle,
-    title: 'CAMPANHA REMARKETING',
+    title: 'REMARKETING',
     subtitle: 'Leads Antigos',
-    description: 'Para leads antigos - você escolhe quais leads reativar baseado no histórico de interações',
+    description: 'Selecione entre leads antigos que abandonaram ou completaram o quiz e datas',
     icon: RefreshCw,
     color: 'bg-gradient-to-br from-orange-500 to-red-600',
     features: [
-      'Filtros por data de interação anterior',
-      'Mensagens de reativação personalizadas',
-      'Segmentação por período de inatividade',
-      'Você escolhe quais leads reaproveitar'
+      'Selecione leads antigos por data',
+      'Escolha entre abandonados ou completos',
+      'Filtros por período de interação',
+      'Reativação dirigida por histórico'
     ],
     badge: 'REATIVAÇÃO',
     badgeColor: 'bg-orange-500'
   },
-  ao_vivo_padrao: {
-    id: 'ao_vivo_padrao' as CampaignStyle,
-    title: 'CAMPANHA AO VIVO',
-    subtitle: 'Leads Abandonados e Completaram Quiz',
-    description: 'Para leads abandonados E que completaram quiz - você escolhe entre abandonados ou completos',
+  remarketing_ultra_customizado: {
+    id: 'remarketing_ultra_customizado' as CampaignStyle,
+    title: 'REMARKETING ULTRA CUSTOMIZADO',
+    subtitle: 'Leads Antigos + Funis Segmentados',
+    description: 'Selecione entre leads antigos que abandonaram ou completaram o quiz e datas, mas que também dispare funis diferentes para cada faixa de idade, peso, altura, ou como preferir, isso aumenta muito a conversão!',
+    icon: Crown,
+    color: 'bg-gradient-to-br from-purple-500 to-pink-600',
+    features: [
+      'Selecione leads antigos por data',
+      'Funis diferentes por faixa etária',
+      'Segmentação por peso e altura',
+      'Conversão maximizada por perfil'
+    ],
+    badge: 'PREMIUM',
+    badgeColor: 'bg-purple-500'
+  },
+  ao_vivo_tempo_real: {
+    id: 'ao_vivo_tempo_real' as CampaignStyle,
+    title: 'AO VIVO (TEMPO REAL)',
+    subtitle: 'Mensagens Personalizadas',
+    description: 'Mensagens personalizadas para pessoas que abandonaram ou completaram o quiz, escolha quanto tempo após a ação vai disparar a mensagem personalizada desejada',
     icon: Zap,
     color: 'bg-gradient-to-br from-green-500 to-blue-600',
     features: [
-      'Filtros: você escolhe abandonados OU completos',
-      'Mensagens específicas para cada tipo',
-      'Segmentação por completude do quiz',
-      'Timing otimizado para cada situação'
+      'Mensagens para abandonados ou completos',
+      'Você escolhe o tempo de disparo',
+      'Personalização por ação do usuário',
+      'Timing otimizado para conversão'
     ],
     badge: 'AUTOMÁTICO',
     badgeColor: 'bg-green-500'
   },
   ao_vivo_ultra_customizada: {
     id: 'ao_vivo_ultra_customizada' as CampaignStyle,
-    title: 'CAMPANHA AO VIVO ULTRA CUSTOMIZADA',
-    subtitle: 'Exclusividade Total',
-    description: 'Máxima personalização com mensagens únicas baseadas em respostas específicas do quiz',
-    icon: Crown,
-    color: 'bg-gradient-to-br from-purple-500 to-pink-600',
-    features: [
-      'Mensagens únicas por resposta específica',
-      'Regras condicionais "SE > ENTÃO"',
-      'Personalização extrema por quiz',
-      'Máxima taxa de conversão'
-    ],
-    badge: 'PREMIUM',
-    badgeColor: 'bg-purple-500'
-  },
-  ao_vivo_ultra_personalizada: {
-    id: 'ao_vivo_ultra_personalizada' as CampaignStyle,
-    title: 'CAMPANHA AO VIVO ULTRA PERSONALIZADA',
-    subtitle: 'Filtros Avançados por Perfil',
-    description: 'Leads abandonados ou que completaram com filtros de idade e estilo de corpo - você escolhe os filtros específicos',
+    title: 'AO VIVO ULTRA CUSTOMIZADA',
+    subtitle: 'Mensagens + Funis Segmentados',
+    description: 'Mensagens personalizadas para pessoas que abandonaram ou completaram o quiz, escolha quanto tempo após a ação vai disparar a mensagem personalizada desejada mas que também dispare funis diferentes para cada faixa de idade, peso, altura, ou como preferir, isso aumenta muito a conversão!',
     icon: Target,
     color: 'bg-gradient-to-br from-blue-500 to-indigo-600',
     features: [
-      'Você escolhe: abandonados OU completos',
-      'Filtros por idade específica',
-      'Filtros por estilo de corpo',
-      'Mensagens hiperdirigidas por perfil físico'
+      'Mensagens para abandonados ou completos',
+      'Você escolhe o tempo de disparo',
+      'Funis diferentes por faixa etária',
+      'Segmentação por peso e altura'
     ],
     badge: 'AVANÇADO',
     badgeColor: 'bg-blue-500'
@@ -198,16 +198,16 @@ export function CampaignStyleSelector({ open, onClose, onStyleSelect, platform }
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-gray-600">
             <div>
-              <span className="font-medium text-orange-600">Remarketing:</span> Para leads antigos - você escolhe quais reativar
+              <span className="font-medium text-orange-600">Remarketing:</span> Selecione leads antigos que abandonaram ou completaram o quiz e datas
             </div>
             <div>
-              <span className="font-medium text-green-600">Ao Vivo:</span> Leads abandonados E completos - você escolhe o tipo
+              <span className="font-medium text-purple-600">Remarketing Ultra Customizado:</span> Leads antigos + funis diferentes por faixa etária, peso, altura
             </div>
             <div>
-              <span className="font-medium text-purple-600">Ultra Customizada:</span> Mensagens únicas por resposta específica
+              <span className="font-medium text-green-600">Ao Vivo (Tempo Real):</span> Mensagens personalizadas, você escolhe o tempo de disparo
             </div>
             <div>
-              <span className="font-medium text-blue-600">Ultra Personalizada:</span> Filtros de idade e estilo corporal - você escolhe
+              <span className="font-medium text-blue-600">Ao Vivo Ultra Customizada:</span> Mensagens + funis segmentados por perfil físico
             </div>
           </div>
         </div>

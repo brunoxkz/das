@@ -185,14 +185,14 @@ export default function EmailMarketingPage() {
       case 'remarketing':
         handleCreateRemarketingCampaign();
         break;
-      case 'ao_vivo_padrao':
+      case 'remarketing_ultra_customizado':
+        handleCreateRemarketingUltraCustomizedCampaign();
+        break;
+      case 'ao_vivo_tempo_real':
         handleCreateStandardCampaign();
         break;
       case 'ao_vivo_ultra_customizada':
         handleCreateUltraCustomizedCampaign();
-        break;
-      case 'ao_vivo_ultra_personalizada':
-        handleCreateUltraPersonalizedCampaign();
         break;
     }
   };
@@ -201,8 +201,12 @@ export default function EmailMarketingPage() {
     handleCreateCampaignWithStyle('remarketing');
   };
 
+  const handleCreateRemarketingUltraCustomizedCampaign = () => {
+    handleCreateCampaignWithStyle('remarketing_ultra_customizado');
+  };
+
   const handleCreateStandardCampaign = () => {
-    handleCreateCampaignWithStyle('ao_vivo_padrao');
+    handleCreateCampaignWithStyle('ao_vivo_tempo_real');
   };
 
   const handleCreateUltraCustomizedCampaign = () => {
@@ -225,7 +229,10 @@ export default function EmailMarketingPage() {
       return;
     }
 
-    const stylePrefix = campaignType === 'remarketing' ? '[REMARKETING]' : '[AO VIVO PADRÃO]';
+    const stylePrefix = 
+      campaignType === 'remarketing' ? '[REMARKETING]' :
+      campaignType === 'remarketing_ultra_customizado' ? '[REMARKETING ULTRA CUSTOMIZADO]' :
+      '[AO VIVO TEMPO REAL]';
     
     const campaignData = {
       ...campaignForm,
@@ -436,6 +443,111 @@ export default function EmailMarketingPage() {
         </TabsContent>
 
         <TabsContent value="campaigns" className="space-y-6">
+          {/* Explicação dos Tipos de Campanha */}
+          <Card className="border-blue-200 bg-blue-50">
+            <CardHeader>
+              <CardTitle className="text-blue-900">📚 Tipos de Campanha Email - Guia Completo</CardTitle>
+              <CardDescription className="text-blue-700">
+                Comece selecionando o estilo de campanha que melhor se adapta ao seu objetivo
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="grid md:grid-cols-2 gap-6">
+                <div className="space-y-4">
+                  <div className="border-l-4 border-green-500 pl-4 bg-white p-4 rounded-lg shadow-lg">
+                    <h3 className="font-bold text-green-700 flex items-center gap-2">
+                      <span className="bg-green-100 text-green-800 px-2 py-1 rounded text-sm">💰 REMARKETING</span>
+                    </h3>
+                    <p className="text-sm text-green-600 font-medium mt-2">📧 Transforme emails "mortos" em VENDAS!</p>
+                    <p className="text-sm text-gray-700 mt-1">
+                      <strong>Reative leads antigos automaticamente!</strong> Selecione quizzes com emails e dispare campanhas para quem abandonou ou completou - é como ter uma máquina de vendas trabalhando 24h na sua caixa de entrada!
+                    </p>
+                    <div className="mt-3 space-y-2">
+                      <div className="text-xs text-gray-600">
+                        🎯 <strong>Vantagens:</strong> Leads gratuitos • Segmentação automática • Timing inteligente
+                      </div>
+                      <div className="text-xs text-green-600 font-bold">
+                        💸 <strong>LUCRO REAL:</strong> +35% taxa abertura • R$ 350 a mais para cada R$ 1.000 investido!
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="border-l-4 border-purple-500 pl-4 bg-white p-4 rounded-lg shadow-lg">
+                    <h3 className="font-bold text-purple-700 flex items-center gap-2">
+                      <span className="bg-purple-100 text-purple-800 px-2 py-1 rounded text-sm">🚀 REMARKETING ULTRA CUSTOMIZADO</span>
+                    </h3>
+                    <p className="text-sm text-purple-600 font-medium mt-2">💎 O segredo dos GURUS do EMAIL!</p>
+                    <p className="text-sm text-gray-700 mt-1">
+                      <strong>Emails diferentes para CADA perfil!</strong> Jovens de 18-25 recebem design moderno, pessoas de 40+ recebem abordagem clássica. É como ter um especialista em email para cada cliente!
+                    </p>
+                    <div className="mt-3 space-y-2">
+                      <div className="text-xs text-gray-600">
+                        🎯 <strong>Vantagens:</strong> Emails por idade/peso/altura • Funis únicos • Personalização máxima
+                      </div>
+                      <div className="text-xs text-purple-600 font-bold">
+                        💰 <strong>LUCRO EXPLOSIVO:</strong> +50% conversão • R$ 5.000 a mais para cada R$ 10.000!
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="space-y-4">
+                  <div className="border-l-4 border-orange-500 pl-4 bg-white p-4 rounded-lg shadow-lg">
+                    <h3 className="font-bold text-orange-700 flex items-center gap-2">
+                      <span className="bg-orange-100 text-orange-800 px-2 py-1 rounded text-sm">⚡ AO VIVO TEMPO REAL</span>
+                    </h3>
+                    <p className="text-sm text-orange-600 font-medium mt-2">🔥 Pegue o lead na caixa de entrada QUENTE!</p>
+                    <p className="text-sm text-gray-700 mt-1">
+                      <strong>Automático e IMEDIATO!</strong> Alguém abandona o quiz? Em 5 minutos recebe email! Completou? Parabéns na hora! É como ter um vendedor que NUNCA dorme enviando emails perfeitos!
+                    </p>
+                    <div className="mt-3 space-y-2">
+                      <div className="text-xs text-gray-600">
+                        🎯 <strong>Vantagens:</strong> Automático 24h • Timing perfeito • Sem perder leads
+                      </div>
+                      <div className="text-xs text-orange-600 font-bold">
+                        🔥 <strong>CONVERSÃO INSANA:</strong> +92% taxa abertura • Lead quente = venda garantida!
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="border-l-4 border-red-500 pl-4 bg-white p-4 rounded-lg shadow-lg">
+                    <h3 className="font-bold text-red-700 flex items-center gap-2">
+                      <span className="bg-red-100 text-red-800 px-2 py-1 rounded text-sm">💎 AO VIVO ULTRA CUSTOMIZADA</span>
+                    </h3>
+                    <p className="text-sm text-red-600 font-medium mt-2">👑 O NIVEL MÁXIMO do EMAIL MARKETING!</p>
+                    <p className="text-sm text-gray-700 mt-1">
+                      <strong>AUTOMÁTICO + PERSONALIZADO!</strong> Atleta que completa recebe email "Nutrição de alta performance!" Sedentário recebe "Vamos começar devagar!" - CADA pessoa recebe o email PERFEITO na hora certa!
+                    </p>
+                    <div className="mt-3 space-y-2">
+                      <div className="text-xs text-gray-600">
+                        🎯 <strong>Vantagens:</strong> Tempo real + personalização • Funis únicos • Máxima conversão
+                      </div>
+                      <div className="text-xs text-red-600 font-bold">
+                        💰 <strong>LUCRO ESTRATOSFÉRICO:</strong> +150% conversão • R$ 15.000 a mais para cada R$ 10.000!
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-gradient-to-r from-yellow-50 to-orange-50 border border-yellow-300 rounded-lg p-4 shadow-lg">
+                <div className="flex items-start space-x-3">
+                  <div className="text-yellow-600 mt-1">💰</div>
+                  <div>
+                    <h4 className="font-semibold text-yellow-800">ESTRATÉGIA MILIONÁRIA</h4>
+                    <p className="text-sm text-yellow-700 mt-1">
+                      <strong>COMBINE TUDO:</strong> Use <strong>Remarketing</strong> nos leads antigos (custo R$ 0,00), <strong>Ao Vivo</strong> nos frescos (abertura 92%+). 
+                      As versões <strong>Ultra Customizadas</strong> são o segredo dos especialistas que faturam R$ 200k+/mês com email!
+                    </p>
+                    <p className="text-xs text-yellow-600 mt-2 font-bold">
+                      ⚡ RESULTADO: Até R$ 80.000 extras por mês só com email automático!
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
           <div className="grid lg:grid-cols-2 gap-6">
             {/* Campaign Creation */}
             <Card>
@@ -445,7 +557,7 @@ export default function EmailMarketingPage() {
                   Nova Campanha E-mail
                 </CardTitle>
                 <CardDescription>
-                  Crie campanhas personalizadas baseadas nas respostas dos quizzes
+                  Selecione o estilo de campanha que melhor se adapta ao seu objetivo
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
