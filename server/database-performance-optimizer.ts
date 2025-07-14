@@ -30,8 +30,8 @@ export class DatabasePerformanceOptimizer {
       const result = stmt.all(params);
       const time = performance.now() - start;
       
-      // Critério mais rigoroso para queries lentas
-      if (time > 50) {
+      // Critério mais rigoroso para queries lentas - 25ms threshold
+      if (time > 25) {
         console.log(`⚠️ Query lenta detectada (${time.toFixed(2)}ms): ${query}`);
         // Só executar EXPLAIN se query tiver parâmetros preenchidos
         if (params.length === 0) {

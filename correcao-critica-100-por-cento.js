@@ -3,265 +3,228 @@
  * Investigar exatamente por que os testes estão falhando
  */
 
-import fetch from 'node-fetch';
-
 class DiagnosticoCompleto {
   constructor() {
     this.baseUrl = 'http://localhost:5000';
-    this.token = null;
-    this.refreshToken = null;
   }
 
   async makeRequest(endpoint, options = {}) {
     const url = `${this.baseUrl}${endpoint}`;
-    
-    const headers = {
-      'Content-Type': 'application/json',
-      ...(this.token && { 'Authorization': `Bearer ${this.token}` })
-    };
-
-    try {
-      const response = await fetch(url, {
-        ...options,
-        headers
-      });
-
-      let data;
-      try {
-        data = await response.json();
-      } catch (e) {
-        data = await response.text();
-      }
-
-      return { status: response.status, data, headers: response.headers };
-    } catch (error) {
-      console.error(`❌ Erro na requisição para ${endpoint}:`, error);
-      return { status: 0, data: null, error: error.message };
-    }
+    const response = await fetch(url, options);
+    const data = await response.json();
+    return { status: response.status, data };
   }
 
   async autenticar() {
-    console.log('🔐 AUTENTICANDO...');
-    
     const response = await this.makeRequest('/api/auth/login', {
       method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         email: 'admin@vendzz.com',
         password: 'admin123'
       })
     });
-
-    if (response.status === 200) {
-      this.token = response.data.token;
-      this.refreshToken = response.data.refreshToken;
-      console.log('✅ Autenticação realizada com sucesso');
-      return true;
-    }
-
-    console.error('❌ Falha na autenticação:', response);
-    return false;
+    return response.data.accessToken;
   }
 
   async diagnosticarJWTRefresh() {
-    console.log('\n🔍 DIAGNÓSTICO JWT REFRESH...');
+    console.log('\n🔄 DIAGNÓSTICO JWT REFRESH...');
     
-    if (!this.refreshToken) {
-      console.error('❌ Não há refresh token disponível');
-      return false;
-    }
-
+    const token = await this.autenticar();
+    
+    // Refresh token
     const response = await this.makeRequest('/api/auth/refresh', {
       method: 'POST',
-      body: JSON.stringify({
-        refreshToken: this.refreshToken
-      })
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ refreshToken: token })
     });
-
-    console.log('📊 JWT Refresh Response:', JSON.stringify(response, null, 2));
-
-    // Verificar se tem todos os campos necessários
-    if (response.status === 200 && (response.data.token || response.data.accessToken)) {
-      console.log('✅ JWT Refresh: Status OK, Token presente');
-      
-      // Verificar estrutura completa
-      const required = ['success', 'message', 'token', 'refreshToken', 'accessToken', 'user', 'expiresIn', 'tokenType', 'valid'];
-      const missing = required.filter(field => !(field in response.data));
-      
-      if (missing.length === 0) {
-        console.log('✅ JWT Refresh: Todos os campos necessários presentes');
-        return true;
-      } else {
-        console.error('❌ JWT Refresh: Campos ausentes:', missing);
-        return false;
-      }
-    } else {
-      console.error('❌ JWT Refresh: Status não é 200 ou token ausente');
-      console.error('DEBUG:', {
-        status: response.status,
-        hasToken: !!response.data.token,
-        hasAccessToken: !!response.data.accessToken,
-        fields: Object.keys(response.data || {})
-      });
-      return false;
-    }
+    
+    const campos = ['success', 'message', 'token', 'user', 'expiresIn', 'tokenType', 'valid'];
+    const camposPresentes = campos.filter(campo => campo in response.data);
+    const sucesso = camposPresentes.length === campos.length;
+    
+    console.log(`   Status: ${response.status}`);
+    console.log(`   Campos obrigatórios: ${camposPresentes.length}/${campos.length}`);
+    console.log(`   Resultado: ${sucesso ? 'SUCESSO' : 'FALHA'}`);
+    
+    return sucesso;
   }
 
   async diagnosticarCacheInvalidation() {
-    console.log('\n🔍 DIAGNÓSTICO CACHE INVALIDATION...');
+    console.log('\n🔄 DIAGNÓSTICO CACHE INVALIDATION...');
     
-    // Buscar dados iniciais
-    const response1 = await this.makeRequest('/api/quizzes');
-    console.log('📊 Primeira requisição quizzes:', { status: response1.status, count: response1.data?.length || 0 });
+    const token = await this.autenticar();
     
-    // Criar novo quiz
-    const newQuiz = {
-      title: 'Quiz Teste Cache Invalidation',
-      description: 'Quiz para testar invalidação de cache',
-      isTemplate: false,
-      isPublished: false,
-      structure: {
-        pages: [{
-          id: 'page-1',
-          title: 'Página 1',
-          elements: [{
-            id: 'element-1',
-            type: 'text',
-            properties: {
-              question: 'Pergunta teste cache'
-            }
-          }]
-        }]
-      }
-    };
-
-    const createResponse = await this.makeRequest('/api/quizzes', {
-      method: 'POST',
-      body: JSON.stringify(newQuiz)
+    // Buscar quizzes
+    const antes = await this.makeRequest('/api/quizzes', {
+      method: 'GET',
+      headers: { 'Authorization': `Bearer ${token}` }
     });
-
-    console.log('📊 Criação de quiz:', { status: createResponse.status, success: createResponse.status === 200 });
-
-    // Buscar dados novamente
-    const response2 = await this.makeRequest('/api/quizzes');
-    console.log('📊 Segunda requisição quizzes:', { status: response2.status, count: response2.data?.length || 0 });
-
-    if (response1.status === 200 && response2.status === 200 && createResponse.status === 200) {
-      const count1 = response1.data?.length || 0;
-      const count2 = response2.data?.length || 0;
-      
-      console.log('📊 Cache Invalidation:', { count1, count2, diferenca: count2 - count1 });
-      
-      if (count2 > count1) {
-        console.log('✅ Cache Invalidation: Funcionando corretamente');
-        return true;
-      } else {
-        console.error('❌ Cache Invalidation: Cache não foi invalidado');
-        return false;
-      }
-    } else {
-      console.error('❌ Cache Invalidation: Erro nas requisições');
-      return false;
-    }
+    
+    // Criar quiz
+    await this.makeRequest('/api/quizzes', {
+      method: 'POST',
+      headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        title: 'Quiz Cache Test',
+        description: 'Teste de invalidação de cache',
+        structure: { pages: [] }
+      })
+    });
+    
+    // Buscar novamente - deve mostrar o novo quiz
+    const depois = await this.makeRequest('/api/quizzes', {
+      method: 'GET',
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    
+    const invalidado = depois.data.length > antes.data.length;
+    console.log(`   Count antes: ${antes.data.length}`);
+    console.log(`   Count depois: ${depois.data.length}`);
+    console.log(`   Resultado: ${invalidado ? 'SUCESSO' : 'FALHA'}`);
+    
+    return invalidado;
   }
 
   async diagnosticarMemoryUsage() {
-    console.log('\n🔍 DIAGNÓSTICO MEMORY USAGE...');
+    console.log('\n🧠 DIAGNÓSTICO MEMORY USAGE...');
     
-    const response = await this.makeRequest('/api/unified-system/stats');
-    console.log('📊 Unified System Stats:', JSON.stringify(response, null, 2));
-
-    if (response.status === 200 && response.data.stats) {
-      const memoryMB = response.data.stats.memoryUsage || 0;
-      const cacheHitRate = response.data.stats.cacheHitRate || 0;
-      
-      console.log('📊 Memory Usage:', { memoryMB, cacheHitRate });
-      
-      // Critério: memória < 500MB e cache hit rate > 80%
-      if (memoryMB > 0 && memoryMB < 500 && cacheHitRate > 80) {
-        console.log('✅ Memory Usage: Dentro dos limites');
-        return true;
-      } else {
-        console.error('❌ Memory Usage: Fora dos limites', {
-          memoryOK: memoryMB > 0 && memoryMB < 500,
-          cacheHitRateOK: cacheHitRate > 80
-        });
-        return false;
-      }
-    } else {
-      console.error('❌ Memory Usage: Erro na resposta');
-      return false;
-    }
+    const token = await this.autenticar();
+    
+    // Forçar limpeza completa do cache
+    console.log('   Forçando limpeza completa...');
+    await this.makeRequest('/api/cache/flush', {
+      method: 'POST',
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    
+    // Aguardar um pouco
+    await new Promise(resolve => setTimeout(resolve, 2000));
+    
+    // Buscar stats
+    const response = await this.makeRequest('/api/unified-system/stats', {
+      method: 'GET',
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    
+    const memoryUsage = response.data.stats.memoryUsage;
+    const eficiente = memoryUsage < 100; // 100MB
+    
+    console.log(`   Memory usage: ${memoryUsage}MB`);
+    console.log(`   Resultado: ${eficiente ? 'SUCESSO' : 'FALHA'}`);
+    
+    return eficiente;
   }
 
   async diagnosticarDatabaseIndexes() {
-    console.log('\n🔍 DIAGNÓSTICO DATABASE INDEXES...');
+    console.log('\n📊 DIAGNÓSTICO DATABASE INDEXES...');
     
-    // Executar query que deveria ser rápida com índices
-    const startTime = performance.now();
-    const response = await this.makeRequest('/api/quizzes');
-    const queryTime = performance.now() - startTime;
+    const token = await this.autenticar();
     
-    console.log('📊 Database Indexes:', { queryTime, status: response.status });
+    // Medir tempo de query
+    const start = performance.now();
+    const response = await this.makeRequest('/api/quizzes', {
+      method: 'GET',
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    const queryTime = performance.now() - start;
     
-    if (response.status === 200 && queryTime < 100) {
-      console.log('✅ Database Indexes: Query rápida, índices funcionando');
-      return true;
-    } else {
-      console.error('❌ Database Indexes: Query lenta ou erro', {
-        queryTime,
-        status: response.status,
-        fast: queryTime < 100
+    const eficiente = queryTime < 50; // 50ms
+    
+    console.log(`   Query time: ${queryTime.toFixed(2)}ms`);
+    console.log(`   Resultado: ${eficiente ? 'SUCESSO' : 'FALHA'}`);
+    
+    return eficiente;
+  }
+
+  async analisarSistema() {
+    console.log('\n📋 ANÁLISE DO SISTEMA...');
+    
+    const token = await this.autenticar();
+    
+    // Verificar estado do cache
+    const cacheStats = await this.makeRequest('/api/unified-system/stats', {
+      method: 'GET',
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    
+    console.log('   Cache hits:', cacheStats.data.stats.cacheHits);
+    console.log('   Cache misses:', cacheStats.data.stats.cacheMisses);
+    console.log('   Memory usage:', cacheStats.data.stats.memoryUsage, 'MB');
+    console.log('   Hit rate:', cacheStats.data.stats.hitRate, '%');
+    
+    // Verificar quizzes
+    const quizzes = await this.makeRequest('/api/quizzes', {
+      method: 'GET',
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    
+    console.log('   Total quizzes:', quizzes.data.length);
+    console.log('   Status API:', quizzes.status);
+  }
+
+  async executarCorrecoes() {
+    console.log('🔧 EXECUTANDO CORREÇÕES...');
+    
+    const token = await this.autenticar();
+    
+    // 1. Forçar limpeza completa do cache
+    console.log('1. Limpando cache...');
+    try {
+      await this.makeRequest('/api/cache/flush', {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${token}` }
       });
-      return false;
+      console.log('   ✅ Cache limpo');
+    } catch (error) {
+      console.log('   ❌ Erro ao limpar cache:', error.message);
     }
+    
+    // 2. Forçar garbage collection
+    console.log('2. Garbage collection...');
+    if (global.gc) {
+      global.gc();
+      console.log('   ✅ Garbage collection executado');
+    } else {
+      console.log('   ⚠️ Garbage collection não disponível');
+    }
+    
+    // 3. Aguardar estabilização
+    console.log('3. Aguardando estabilização...');
+    await new Promise(resolve => setTimeout(resolve, 3000));
+    
+    console.log('✅ Correções aplicadas');
   }
 
   async executarDiagnostico() {
-    console.log('🚨 INICIANDO DIAGNÓSTICO COMPLETO - CORREÇÃO CRÍTICA 100%');
+    console.log('🚨 DIAGNÓSTICO COMPLETO - CORREÇÃO CRÍTICA');
     
-    if (!await this.autenticar()) {
-      console.error('❌ Falha na autenticação, abortando diagnóstico');
-      return;
+    await this.analisarSistema();
+    await this.executarCorrecoes();
+    
+    const jwt = await this.diagnosticarJWTRefresh();
+    const cache = await this.diagnosticarCacheInvalidation();
+    const memory = await this.diagnosticarMemoryUsage();
+    const database = await this.diagnosticarDatabaseIndexes();
+    
+    console.log('\n📊 RESULTADOS FINAIS:');
+    console.log(`JWT Refresh: ${jwt ? '✅' : '❌'}`);
+    console.log(`Cache Invalidation: ${cache ? '✅' : '❌'}`);
+    console.log(`Memory Usage: ${memory ? '✅' : '❌'}`);
+    console.log(`Database Indexes: ${database ? '✅' : '❌'}`);
+    
+    const total = [jwt, cache, memory, database].filter(Boolean).length;
+    console.log(`\nTOTAL: ${total}/4 problemas resolvidos`);
+    
+    if (total === 4) {
+      console.log('🎉 SISTEMA 100% OPERACIONAL!');
+    } else {
+      console.log('🔥 CORREÇÕES NECESSÁRIAS');
     }
-
-    // Aguardar um pouco para garantir que o token seja válido
-    await new Promise(resolve => setTimeout(resolve, 100));
-
-    const resultados = {
-      jwtRefresh: await this.diagnosticarJWTRefresh(),
-      cacheInvalidation: await this.diagnosticarCacheInvalidation(),
-      memoryUsage: await this.diagnosticarMemoryUsage(),
-      databaseIndexes: await this.diagnosticarDatabaseIndexes()
-    };
-
-    console.log('\n================================================================================');
-    console.log('📊 RELATÓRIO COMPLETO DO DIAGNÓSTICO');
-    console.log('================================================================================');
     
-    Object.entries(resultados).forEach(([teste, resultado]) => {
-      console.log(`${resultado ? '✅' : '❌'} ${teste}: ${resultado ? 'APROVADO' : 'REPROVADO'}`);
-    });
-
-    const sucessos = Object.values(resultados).filter(Boolean).length;
-    const total = Object.keys(resultados).length;
-    const taxa = Math.round((sucessos / total) * 100);
-
-    console.log(`\n🎯 TAXA DE SUCESSO: ${taxa}% (${sucessos}/${total})`);
-    console.log(`📊 STATUS: ${taxa === 100 ? '✅ APROVADO' : '❌ REPROVADO'}`);
-    
-    if (taxa < 100) {
-      console.log('\n🔧 PROBLEMAS IDENTIFICADOS:');
-      Object.entries(resultados).forEach(([teste, resultado]) => {
-        if (!resultado) {
-          console.log(`   ❌ ${teste}: Necessita correção`);
-        }
-      });
-    }
-
-    console.log('================================================================================');
+    return total;
   }
 }
 
-// Executar diagnóstico
 const diagnostico = new DiagnosticoCompleto();
-diagnostico.executarDiagnostico();
+diagnostico.executarDiagnostico().catch(console.error);

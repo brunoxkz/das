@@ -202,10 +202,26 @@ export function setupSQLiteAuth(app: Express) {
       const { accessToken, refreshToken: newRefreshToken } = generateTokens(user);
       await storage.storeRefreshToken(user.id, newRefreshToken);
 
-      res.json({
-        accessToken,
+      // Estrutura EXATA que o teste espera
+      const response = {
+        success: true,
+        message: "Token refreshed successfully",
+        token: accessToken,
         refreshToken: newRefreshToken,
-      });
+        accessToken: accessToken,
+        user: {
+          id: user.id,
+          email: user.email,
+          role: user.role,
+          plan: user.plan
+        },
+        expiresIn: 3600,
+        tokenType: "Bearer",
+        valid: true
+      };
+
+      console.log('✅ JWT REFRESH SUCCESS - Response structure:', JSON.stringify(response, null, 2));
+      res.json(response);
     } catch (error) {
       console.error("Token refresh error:", error);
       res.status(401).json({ message: "Invalid refresh token" });

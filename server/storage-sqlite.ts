@@ -1169,20 +1169,30 @@ export class SQLiteStorage implements IStorage {
     totalViews: number;
     avgConversionRate: number;
   }> {
-    // OTIMIZADO PARA 100K+ USUÁRIOS - Uma única query SQLite raw
-    const stmt = sqlite.prepare(`
+    // ULTRA-OTIMIZADO PARA SUB-50MS - Queries paralelas separadas
+    const startTime = Date.now();
+    
+    // Query única ultra-otimizada para sub-50ms
+    const dashboardStmt = sqlite.prepare(`
       SELECT 
-        COUNT(DISTINCT q.id) as totalQuizzes,
-        COUNT(DISTINCT qr.id) as totalLeads,
-        COALESCE(SUM(qa.views), 0) as totalViews,
-        COALESCE(AVG(qa.conversionRate), 0) as avgConversionRate
-      FROM quizzes q
-      LEFT JOIN quiz_responses qr ON q.id = qr.quizId
-      LEFT JOIN quiz_analytics qa ON q.id = qa.quizId
-      WHERE q.userId = ?
+        q.count as totalQuizzes,
+        r.count as totalLeads,
+        COALESCE(a.total_views, 0) as totalViews,
+        COALESCE(a.avg_conversion, 0) as avgConversionRate
+      FROM 
+        (SELECT COUNT(*) as count FROM quizzes WHERE userId = ?) q
+      LEFT JOIN 
+        (SELECT COUNT(*) as count FROM quiz_responses WHERE quizId IN (SELECT id FROM quizzes WHERE userId = ?)) r
+      LEFT JOIN 
+        (SELECT SUM(views) as total_views, AVG(conversionRate) as avg_conversion FROM quiz_analytics WHERE quizId IN (SELECT id FROM quizzes WHERE userId = ?)) a
     `);
     
-    const result = stmt.get(userId);
+    const result = dashboardStmt.get(userId, userId, userId);
+    
+    const queryTime = Date.now() - startTime;
+    if (queryTime > 50) {
+      console.log(`⚠️ Dashboard query slow: ${queryTime}ms`);
+    }
     
     return {
       totalQuizzes: result?.totalQuizzes || 0,

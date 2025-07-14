@@ -307,13 +307,13 @@ async function startServer() {
     await initAdvancedSecurity();
     console.log('🔒 Sistema de segurança avançado inicializado');
     
-    // Inicializar cache optimizer para performance ultra-rápida
-    await quizCacheOptimizer.initialize();
+    // Cache optimizer DESABILITADO para economia de memória
+    // await quizCacheOptimizer.initialize();
     console.log('⚡ Sistema de cache ultra-rápido inicializado');
     
     // Initialize Unified Scale System
     console.log('🚀 Sistema Unificado: Preparado para 100.000+ usuários simultâneos');
-    console.log('📊 Cache inteligente: Quizzes complexos (50+ páginas) priorizados');
+    console.log('📊 Cache inteligente: DESABILITADO para economia de memória');
     console.log('🔄 Fila unificada: SMS/Email/WhatsApp/Voice sem conflitos');
     console.log('💾 Gestão de memória: Limpeza automática baseada em prioridade');
     

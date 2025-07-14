@@ -152,6 +152,19 @@ export function runMigrations() {
     createIndexIfNotExists('idx_quizzes_updatedAt', 'quizzes', 'updatedAt');
     createIndexIfNotExists('idx_quiz_responses_userId_quiz', 'quiz_responses', 'userId, quizId');
     
+    // Índices para performance de cache e memória
+    createIndexIfNotExists('idx_quiz_responses_metadata', 'quiz_responses', 'metadata');
+    createIndexIfNotExists('idx_quiz_analytics_views', 'quiz_analytics', 'views');
+    createIndexIfNotExists('idx_quiz_analytics_completions', 'quiz_analytics', 'completions');
+    createIndexIfNotExists('idx_users_refreshToken', 'users', 'refreshToken');
+    
+    // Índices ultra-específicos para Dashboard Performance (<=50ms)
+    createIndexIfNotExists('idx_dashboard_stats_1', 'quizzes', 'userId, id');
+    createIndexIfNotExists('idx_dashboard_stats_2', 'quiz_responses', 'quizId, id');
+    createIndexIfNotExists('idx_dashboard_stats_3', 'quiz_analytics', 'quizId, views, conversionRate');
+    createIndexIfNotExists('idx_dashboard_stats_4', 'quiz_analytics', 'quizId, views');
+    createIndexIfNotExists('idx_dashboard_stats_5', 'quiz_analytics', 'quizId, conversionRate');
+    
     // Executar ANALYZE para otimizar estatísticas do query planner
     console.log('🔍 Executando ANALYZE para otimizar query planner...');
     sqlite.exec('ANALYZE');

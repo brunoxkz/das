@@ -1,3 +1,8 @@
+/**
+ * CACHE SIMPLIFICADO - Solução temporária para resolver ECACHEFULL
+ * Cache em memória simples com TTL manual
+ */
+
 interface CacheItem {
   value: any;
   expiry: number;
@@ -19,30 +24,46 @@ export class HighPerformanceCache {
       totalRequests: 0
     };
     
-    // Limpeza automática a cada 5 segundos
-    setInterval(() => this.cleanup(), 5000);
+    // Limpeza automática a cada 30 segundos
+    setInterval(() => this.cleanup(), 30000);
   }
 
   private cleanup() {
-    // Limpar tudo para economia extrema de memória
-    this.cache.clear();
+    const now = Date.now();
+    for (const [key, item] of this.cache.entries()) {
+      if (now > item.expiry) {
+        this.cache.delete(key);
+      }
+    }
     
-    // Forçar garbage collection
-    if (global.gc) {
-      global.gc();
+    // Limitar a 10 chaves para economia extrema de memória
+    if (this.cache.size > 10) {
+      const keys = Array.from(this.cache.keys());
+      const keysToDelete = keys.slice(0, this.cache.size - 10);
+      keysToDelete.forEach(key => this.cache.delete(key));
     }
   }
 
   get<T>(key: string): T | undefined {
     this.stats.totalRequests++;
-    this.stats.misses++;
     
-    // Cache DESABILITADO completamente para economia de memória
+    const item = this.cache.get(key);
+    if (item && Date.now() <= item.expiry) {
+      this.stats.hits++;
+      return item.value;
+    }
+    
+    if (item) {
+      this.cache.delete(key);
+    }
+    
+    this.stats.misses++;
     return undefined;
   }
 
   set<T>(key: string, value: T, ttl?: number): boolean {
-    // Cache DESABILITADO completamente para economia de memória
+    const expiry = Date.now() + (ttl ? ttl * 1000 : 30000);
+    this.cache.set(key, { value, expiry });
     return true;
   }
 
@@ -95,7 +116,7 @@ export class HighPerformanceCache {
   }
 
   setQuizzes(userId: string, quizzes: any[]) {
-    return this.set(`quizzes:${userId}`, quizzes, 5); // TTL muito baixo
+    return this.set(`quizzes:${userId}`, quizzes, 5);
   }
 
   getResponses(quizId: string) {
@@ -103,7 +124,7 @@ export class HighPerformanceCache {
   }
 
   setResponses(quizId: string, responses: any[]) {
-    return this.set(`responses:${quizId}`, responses, 5); // TTL muito baixo
+    return this.set(`responses:${quizId}`, responses, 5);
   }
 
   getUser(userId: string) {
@@ -111,7 +132,7 @@ export class HighPerformanceCache {
   }
 
   setUser(userId: string, user: any) {
-    return this.set(`user:${userId}`, user, 30); // TTL muito baixo
+    return this.set(`user:${userId}`, user, 10);
   }
 
   invalidateUserCaches(userId: string) {
