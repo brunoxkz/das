@@ -26,6 +26,7 @@ import { fileURLToPath } from 'url';
 import jwt from 'jsonwebtoken';
 import speakeasy from 'speakeasy';
 import QRCode from 'qrcode';
+import { generateTokens } from './auth-sqlite';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -118,6 +119,50 @@ export function registerSQLiteRoutes(app: Express): Server {
   // Auth system detection endpoint
   app.get("/api/auth/system", (req, res) => {
     res.json({ system: "sqlite" });
+  });
+
+  // JWT REFRESH ENDPOINT - CORREÇÃO CRÍTICA
+  app.post('/api/auth/refresh', async (req, res) => {
+    try {
+      const { refreshToken } = req.body;
+
+      if (!refreshToken) {
+        return res.status(401).json({ message: "Refresh token required" });
+      }
+
+      const decoded: any = jwt.verify(refreshToken, process.env.JWT_REFRESH_SECRET || 'vendzz-jwt-refresh-secret-2024');
+      
+      const isValid = await storage.isValidRefreshToken(decoded.id, refreshToken);
+      if (!isValid) {
+        return res.status(401).json({ message: "Invalid refresh token" });
+      }
+
+      const user = await storage.getUser(decoded.id);
+      if (!user) {
+        return res.status(401).json({ message: "User not found" });
+      }
+
+      // Wait 1ms to ensure different timestamp for new tokens
+      await new Promise(resolve => setTimeout(resolve, 1));
+      
+      const { accessToken, refreshToken: newRefreshToken } = generateTokens(user);
+      await storage.storeRefreshToken(user.id, newRefreshToken);
+
+      res.json({
+        token: accessToken,
+        refreshToken: newRefreshToken,
+        accessToken: accessToken,
+        user: {
+          id: user.id,
+          email: user.email,
+          role: user.role,
+          plan: user.plan
+        }
+      });
+    } catch (error) {
+      console.error("Token refresh error:", error);
+      res.status(401).json({ message: "Invalid refresh token" });
+    }
   });
 
   // 2FA Endpoints
@@ -635,8 +680,13 @@ export function registerSQLiteRoutes(app: Express): Server {
         elementsCount: quiz.structure?.pages?.reduce((sum, p) => sum + (p.elements?.length || 0), 0) || 0
       });
 
-      // Invalidar caches relevantes
+      // Invalidar caches relevantes - CORREÇÃO CRÍTICA
       cache.invalidateUserCaches(userId);
+      
+      // Forçar invalidação completa do cache para resolver problema de cache stale
+      cache.del(`dashboard:${userId}`);
+      cache.del(`quizzes:${userId}`);
+      cache.del(`quiz:${quiz.id}`);
       
       res.status(201).json(quiz);
     } catch (error) {

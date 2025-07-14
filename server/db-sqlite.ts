@@ -110,6 +110,37 @@ export function runMigrations() {
       addColumnIfNotExists('sms_campaigns', 'conditionalRules', 'TEXT');
       
       console.log('✅ Database migration completed safely');
+    
+    // Adicionar índices para melhorar performance - CORREÇÃO CRÍTICA
+    const createIndexIfNotExists = (indexName: string, table: string, columns: string) => {
+      try {
+        sqlite.exec(`CREATE INDEX IF NOT EXISTS ${indexName} ON ${table} (${columns})`);
+        console.log(`✅ Created index ${indexName} on ${table}`);
+      } catch (e) {
+        console.log(`Index ${indexName} already exists or error: ${e}`);
+      }
+    };
+    
+    // Índices críticos para performance
+    createIndexIfNotExists('idx_quizzes_userId', 'quizzes', 'userId');
+    createIndexIfNotExists('idx_quizzes_isPublished', 'quizzes', 'isPublished');
+    createIndexIfNotExists('idx_quiz_responses_quizId', 'quiz_responses', 'quizId');
+    createIndexIfNotExists('idx_quiz_responses_submittedAt', 'quiz_responses', 'submittedAt');
+    createIndexIfNotExists('idx_quiz_analytics_quizId', 'quiz_analytics', 'quizId');
+    createIndexIfNotExists('idx_quiz_analytics_date', 'quiz_analytics', 'date');
+    createIndexIfNotExists('idx_sms_campaigns_userId', 'sms_campaigns', 'userId');
+    createIndexIfNotExists('idx_sms_campaigns_quizId', 'sms_campaigns', 'quizId');
+    createIndexIfNotExists('idx_sms_campaigns_status', 'sms_campaigns', 'status');
+    createIndexIfNotExists('idx_sms_logs_campaignId', 'sms_logs', 'campaignId');
+    createIndexIfNotExists('idx_sms_logs_userId', 'sms_logs', 'userId');
+    createIndexIfNotExists('idx_sms_transactions_userId', 'sms_transactions', 'userId');
+    createIndexIfNotExists('idx_response_variables_responseId', 'response_variables', 'responseId');
+    createIndexIfNotExists('idx_response_variables_quizId', 'response_variables', 'quizId');
+    createIndexIfNotExists('idx_users_email', 'users', 'email');
+    createIndexIfNotExists('idx_users_plan', 'users', 'plan');
+    createIndexIfNotExists('idx_users_role', 'users', 'role');
+    
+    console.log('✅ Database indexes created successfully');
       return;
     }
     

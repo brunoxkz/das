@@ -102,12 +102,13 @@ export class HighPerformanceCache {
     return this.set(`user:${userId}`, user, 300); // 5 minutos
   }
 
-  // Invalida caches relacionados
+  // Invalida caches relacionados - CORREÇÃO CRÍTICA
   invalidateUserCaches(userId: string) {
     console.log("🔄 CACHE INVALIDATION - Invalidating user caches for:", userId);
     const deletedUser = this.del(`user:${userId}`);
     const deletedQuizzes = this.del(`quizzes:${userId}`);
     const deletedDashboard = this.del(`dashboard:${userId}`);
+    
     console.log("🔄 CACHE INVALIDATION - Deleted:", { user: deletedUser, quizzes: deletedQuizzes, dashboard: deletedDashboard });
   }
 
@@ -116,6 +117,7 @@ export class HighPerformanceCache {
     const deletedResponses = this.del(`responses:${quizId}`);
     const deletedQuizzes = this.del(`quizzes:${userId}`);
     const deletedDashboard = this.del(`dashboard:${userId}`);
+    
     console.log("🔄 CACHE INVALIDATION - Deleted:", { responses: deletedResponses, quizzes: deletedQuizzes, dashboard: deletedDashboard });
   }
 }
