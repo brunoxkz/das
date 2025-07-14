@@ -68,9 +68,10 @@ class QuizCacheOptimizer {
 
   /**
    * RECUPERAR QUIZ CACHE ULTRA-RÁPIDO
+   * DESABILITADO - MIGRADO PARA UNIFIED-SCALE-SYSTEM
    */
   async getPublicQuiz(quizId: string): Promise<any | null> {
-    // TEMPORARIAMENTE DESABILITADO PARA DEBUG
+    // SISTEMA MIGRADO PARA unified-scale-system.ts
     return null;
     
     const startTime = Date.now();

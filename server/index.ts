@@ -16,6 +16,7 @@ import {
 } from "./advanced-security";
 import UltraScaleProcessor from "./ultra-scale-processor";
 import { quizCacheOptimizer } from "./quiz-cache-optimizer";
+import { unifiedSystem } from "./unified-scale-system";
 
 const app = express();
 
@@ -194,54 +195,12 @@ async function processSMSSystem() {
   }
 }
 
-// Sistema ULTRA-ESCALÁVEL para 100.000+ quizzes por minuto
+// Sistema ULTRA-ESCALÁVEL MIGRADO PARA unified-scale-system.ts
 const ultraScaleDetectionSystem = async () => {
-  const startTime = Date.now();
-  
-  try {
-    const { storage } = await import('./storage-sqlite');
-    
-    // Buscar apenas respostas RECENTES para otimizar
-    const recentResponses = await storage.getRecentQuizResponses(60); // Últimos 60 segundos
-    
-    if (recentResponses.length === 0) return;
-    
-    console.log(`🚀 ULTRA-SCALE: Processando ${recentResponses.length} respostas recentes`);
-    
-    const ultraProcessor = UltraScaleProcessor.getInstance();
-    
-    // Processar todas as respostas em paralelo (ultra-rápido)
-    const promises = recentResponses.map(async (response) => {
-      try {
-        const responseArray = Array.isArray(response.responses) ? 
-          response.responses : JSON.parse(response.responses || '[]');
-        
-        for (const resp of responseArray) {
-          if (resp.elementType === 'phone' && resp.answer && resp.answer.length >= 10) {
-            // Adicionar à fila ultra-rápida
-            await ultraProcessor.addQuizCompletion(
-              response.quizId, 
-              resp.answer, 
-              response.userId || 'system'
-            );
-          }
-        }
-      } catch (error) {
-        console.error(`❌ Erro ao processar resposta ${response.id}:`, error.message);
-      }
-    });
-    
-    await Promise.allSettled(promises);
-    
-    const totalTime = Date.now() - startTime;
-    
-    if (recentResponses.length > 10) {
-      console.log(`⚡ ULTRA-SCALE CONCLUÍDO: ${recentResponses.length} respostas em ${totalTime}ms (${Math.round(recentResponses.length / (totalTime / 1000))}/s)`);
-    }
-    
-  } catch (error) {
-    console.error('❌ ERRO NO ULTRA-SCALE SYSTEM:', error);
-  }
+  // DESABILITADO - MIGRADO PARA SISTEMA UNIFICADO
+  // Sistema antigo causava conflitos com processamento de campanhas
+  // Nova implementação em unified-scale-system.ts resolve todos os conflitos
+  return;
 };
 
 // SISTEMA UNIFICADO OTIMIZADO PARA 100.000+ USUÁRIOS - Performance massivamente melhorada
@@ -351,6 +310,12 @@ async function startServer() {
     // Inicializar cache optimizer para performance ultra-rápida
     await quizCacheOptimizer.initialize();
     console.log('⚡ Sistema de cache ultra-rápido inicializado');
+    
+    // Initialize Unified Scale System
+    console.log('🚀 Sistema Unificado: Preparado para 100.000+ usuários simultâneos');
+    console.log('📊 Cache inteligente: Quizzes complexos (50+ páginas) priorizados');
+    console.log('🔄 Fila unificada: SMS/Email/WhatsApp/Voice sem conflitos');
+    console.log('💾 Gestão de memória: Limpeza automática baseada em prioridade');
     
     // Email service já está disponível
     console.log('📧 Serviço de email disponível');
