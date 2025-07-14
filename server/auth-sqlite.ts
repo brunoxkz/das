@@ -86,11 +86,24 @@ export function setupSQLiteAuth(app: Express) {
     try {
       const { email, password } = req.body;
 
+      // Validação básica dos campos obrigatórios
       if (!email || !password) {
         return res.status(400).json({ message: "Email and password are required" });
       }
 
-      const user = await storage.getUserByEmail(email);
+      // Validação do formato do email - DEVE SER FEITA PRIMEIRO
+      const cleanEmail = email.trim();
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(cleanEmail)) {
+        return res.status(400).json({ message: "Invalid email format" });
+      }
+
+      // Validação do comprimento da senha - DEVE SER FEITA PRIMEIRO
+      if (password.length < 6) {
+        return res.status(400).json({ message: "Password must be at least 6 characters long" });
+      }
+
+      const user = await storage.getUserByEmail(cleanEmail);
       if (!user || !user.password) {
         return res.status(401).json({ message: "Invalid credentials" });
       }
@@ -132,19 +145,37 @@ export function setupSQLiteAuth(app: Express) {
     try {
       const { email, password, firstName, lastName } = req.body;
 
+      // Validação básica dos campos obrigatórios
       if (!email || !password || !firstName || !lastName) {
         return res.status(400).json({ 
           message: "All fields are required" 
         });
       }
 
-      const existingUser = await storage.getUserByEmail(email);
+      // Validação do formato do email
+      const cleanEmail = email.trim();
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(cleanEmail)) {
+        return res.status(400).json({ message: "Invalid email format" });
+      }
+
+      // Validação do comprimento da senha
+      if (password.length < 6) {
+        return res.status(400).json({ message: "Password must be at least 6 characters long" });
+      }
+
+      // Validação do nome e sobrenome
+      if (firstName.length < 2 || lastName.length < 2) {
+        return res.status(400).json({ message: "First name and last name must be at least 2 characters long" });
+      }
+
+      const existingUser = await storage.getUserByEmail(cleanEmail);
       if (existingUser) {
         return res.status(409).json({ message: "User already exists" });
       }
 
       const user = await storage.createUserWithPassword({
-        email,
+        email: cleanEmail,
         password,
         firstName,
         lastName,

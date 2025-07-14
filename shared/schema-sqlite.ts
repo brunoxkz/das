@@ -335,7 +335,53 @@ export const insertQuizSchema = createInsertSchema(quizzes).omit({
   id: true,
   createdAt: true,
   updatedAt: true,
-});
+}).extend({
+  // Validação adicional da estrutura do quiz
+  structure: z.object({
+    pages: z.array(z.object({
+      id: z.union([z.string(), z.number()]),
+      title: z.string().optional(),
+      elements: z.array(z.object({
+        type: z.string().min(1, "Tipo do elemento é obrigatório"),
+        content: z.string().optional(),
+        fieldId: z.string().optional(),
+        required: z.boolean().optional(),
+        options: z.array(z.string()).optional(),
+        placeholder: z.string().optional(),
+        minValue: z.number().optional(),
+        maxValue: z.number().optional()
+      }).passthrough()) // Permitir propriedades adicionais
+    })).min(0, "Quiz deve ter pelo menos 0 páginas"),
+    globalStyles: z.object({
+      backgroundColor: z.string().optional(),
+      fontFamily: z.string().optional(),
+      primaryColor: z.string().optional()
+    }).optional()
+  }).optional() // Estrutura é opcional durante criação
+}).refine(
+  (data) => {
+    // Validação customizada para estrutura malformada
+    if (data.structure) {
+      if (typeof data.structure !== 'object' || data.structure === null) {
+        return false;
+      }
+      
+      if (Array.isArray(data.structure.pages)) {
+        return data.structure.pages.every(page => 
+          page && typeof page === 'object' && 
+          Array.isArray(page.elements)
+        );
+      }
+      
+      return false;
+    }
+    return true;
+  },
+  {
+    message: "Estrutura do quiz é inválida",
+    path: ["structure"]
+  }
+);
 
 export const insertQuizTemplateSchema = createInsertSchema(quizTemplates).omit({
   id: true,
