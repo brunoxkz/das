@@ -2,9 +2,9 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Theme Variables */
+/* Theme Variables - Light Theme (Default) */
 :root {
-  /* Light theme colors */
+  /* Light theme colors (sempre o padrão) */
   --background: 0 0% 100%;
   --foreground: 222.2 84% 4.9%;
   --card: 0 0% 100%;
@@ -25,18 +25,28 @@
   --input: 214.3 31.8% 91.4%;
   --ring: 222.2 84% 4.9%;
   --radius: 0.5rem;
+  
+  /* Sidebar colors for light theme */
+  --sidebar-background: 0 0% 100%;
+  --sidebar-foreground: 222.2 84% 4.9%;
+  --sidebar-primary: 222.2 47.4% 11.2%;
+  --sidebar-primary-foreground: 210 40% 98%;
+  --sidebar-accent: 210 40% 96%;
+  --sidebar-accent-foreground: 222.2 47.4% 11.2%;
+  --sidebar-border: 214.3 31.8% 91.4%;
+  --sidebar-ring: 222.2 84% 4.9%;
 }
 
-/* Dark theme colors */
-.dark-theme {
+/* Dark Theme - Opcional, não afeta o tema padrão */
+.dark {
   --background: 222.2 84% 4.9%;
   --foreground: 210 40% 98%;
-  --card: 222.2 84% 4.9%;
+  --card: 217.2 32.6% 17.5%;
   --card-foreground: 210 40% 98%;
   --popover: 222.2 84% 4.9%;
   --popover-foreground: 210 40% 98%;
-  --primary: 210 40% 98%;
-  --primary-foreground: 222.2 47.4% 11.2%;
+  --primary: 22 100% 50%;
+  --primary-foreground: 210 40% 98%;
   --secondary: 217.2 32.6% 17.5%;
   --secondary-foreground: 210 40% 98%;
   --muted: 217.2 32.6% 17.5%;
@@ -48,29 +58,39 @@
   --border: 217.2 32.6% 17.5%;
   --input: 217.2 32.6% 17.5%;
   --ring: 212.7 26.8% 83.9%;
+  
+  /* Sidebar colors for dark theme */
+  --sidebar-background: 217.2 32.6% 17.5%;
+  --sidebar-foreground: 210 40% 98%;
+  --sidebar-primary: 22 100% 50%;
+  --sidebar-primary-foreground: 210 40% 98%;
+  --sidebar-accent: 217.2 32.6% 17.5%;
+  --sidebar-accent-foreground: 210 40% 98%;
+  --sidebar-border: 217.2 32.6% 17.5%;
+  --sidebar-ring: 212.7 26.8% 83.9%;
 }
 
 /* Dark theme dashboard specific styles */
-.dark-theme .dashboard-background {
+.dark .dashboard-background {
   background: linear-gradient(135deg, rgb(17, 24, 39) 0%, rgb(0, 0, 0) 100%);
 }
 
-.dark-theme .dashboard-card {
+.dark .dashboard-card {
   background: rgba(31, 41, 55, 0.8);
   border: 1px solid rgba(75, 85, 99, 0.3);
   backdrop-filter: blur(10px);
 }
 
-.dark-theme .dashboard-card:hover {
+.dark .dashboard-card:hover {
   background: rgba(31, 41, 55, 0.9);
   border-color: rgba(34, 197, 94, 0.3);
 }
 
-.dark-theme .dashboard-text-primary {
+.dark .dashboard-text-primary {
   color: rgb(255, 255, 255);
 }
 
-.dark-theme .dashboard-text-secondary {
+.dark .dashboard-text-secondary {
   color: rgb(209, 213, 219);
 }
 
@@ -353,13 +373,292 @@
 }
 
 /* Global dark mode styles */
+/* Body styling - responsivo ao tema */
 body {
+  background-color: hsl(var(--background));
+  color: hsl(var(--foreground));
   transition: background-color 0.3s ease-in-out, color 0.3s ease-in-out;
 }
 
-body.dark {
+/* Global aplicação do tema dark quando ativo */
+.dark body {
   background-color: hsl(var(--background));
   color: hsl(var(--foreground));
+}
+
+/* Aplicar tema dark em todos os elementos shadcn */
+.dark .bg-background {
+  background-color: hsl(var(--background));
+}
+
+.dark .text-foreground {
+  color: hsl(var(--foreground));
+}
+
+.dark .bg-card {
+  background-color: hsl(var(--card));
+}
+
+.dark .text-card-foreground {
+  color: hsl(var(--card-foreground));
+}
+
+.dark .bg-popover {
+  background-color: hsl(var(--popover));
+}
+
+.dark .text-popover-foreground {
+  color: hsl(var(--popover-foreground));
+}
+
+.dark .bg-primary {
+  background-color: hsl(var(--primary));
+}
+
+.dark .text-primary-foreground {
+  color: hsl(var(--primary-foreground));
+}
+
+.dark .bg-secondary {
+  background-color: hsl(var(--secondary));
+}
+
+.dark .text-secondary-foreground {
+  color: hsl(var(--secondary-foreground));
+}
+
+.dark .bg-muted {
+  background-color: hsl(var(--muted));
+}
+
+.dark .text-muted-foreground {
+  color: hsl(var(--muted-foreground));
+}
+
+.dark .border {
+  border-color: hsl(var(--border));
+}
+
+/* Garantir que todos os componentes base sejam dark */
+.dark * {
+  border-color: hsl(var(--border));
+}
+
+/* Elementos específicos que costumam ficar brancos */
+.dark .bg-white {
+  background-color: hsl(var(--background)) !important;
+}
+
+.dark .text-black {
+  color: hsl(var(--foreground)) !important;
+}
+
+.dark .bg-gray-50 {
+  background-color: hsl(var(--muted)) !important;
+}
+
+.dark .bg-gray-100 {
+  background-color: hsl(var(--muted)) !important;
+}
+
+.dark .bg-gray-200 {
+  background-color: hsl(var(--muted)) !important;
+}
+
+.dark .text-gray-900 {
+  color: hsl(var(--foreground)) !important;
+}
+
+.dark .text-gray-800 {
+  color: hsl(var(--foreground)) !important;
+}
+
+.dark .text-gray-700 {
+  color: hsl(var(--muted-foreground)) !important;
+}
+
+/* Inputs e formulários */
+.dark input {
+  background-color: hsl(var(--input)) !important;
+  color: hsl(var(--foreground)) !important;
+  border-color: hsl(var(--border)) !important;
+}
+
+.dark textarea {
+  background-color: hsl(var(--input)) !important;
+  color: hsl(var(--foreground)) !important;
+  border-color: hsl(var(--border)) !important;
+}
+
+.dark select {
+  background-color: hsl(var(--input)) !important;
+  color: hsl(var(--foreground)) !important;
+  border-color: hsl(var(--border)) !important;
+}
+
+/* Modais e popups */
+.dark .modal {
+  background-color: hsl(var(--popover)) !important;
+  color: hsl(var(--popover-foreground)) !important;
+}
+
+.dark .dropdown-menu {
+  background-color: hsl(var(--popover)) !important;
+  border-color: hsl(var(--border)) !important;
+}
+
+/* Tabelas */
+.dark table {
+  background-color: hsl(var(--card)) !important;
+  color: hsl(var(--card-foreground)) !important;
+}
+
+.dark th {
+  background-color: hsl(var(--muted)) !important;
+  color: hsl(var(--muted-foreground)) !important;
+}
+
+.dark td {
+  border-color: hsl(var(--border)) !important;
+}
+
+/* Scrollbars */
+.dark ::-webkit-scrollbar {
+  background-color: hsl(var(--muted));
+}
+
+.dark ::-webkit-scrollbar-thumb {
+  background-color: hsl(var(--muted-foreground));
+}
+
+.dark ::-webkit-scrollbar-thumb:hover {
+  background-color: hsl(var(--accent));
+}
+
+/* Pages específicas - garantir que todas funcionem no dark mode */
+.dark .min-h-screen {
+  background-color: hsl(var(--background));
+  color: hsl(var(--foreground));
+}
+
+.dark .container {
+  background-color: hsl(var(--background));
+  color: hsl(var(--foreground));
+}
+
+/* Sidebar dark mode */
+.dark .sidebar {
+  background-color: hsl(var(--sidebar-background));
+  color: hsl(var(--sidebar-foreground));
+  border-color: hsl(var(--sidebar-border));
+}
+
+.dark .sidebar-item {
+  color: hsl(var(--sidebar-foreground));
+}
+
+.dark .sidebar-item:hover {
+  background-color: hsl(var(--sidebar-accent));
+  color: hsl(var(--sidebar-accent-foreground));
+}
+
+/* Layout específico */
+.dark .layout-content {
+  background-color: hsl(var(--background));
+  color: hsl(var(--foreground));
+}
+
+/* Garantir que todas as páginas tenham fundo dark */
+.dark .page-container {
+  background-color: hsl(var(--background)) !important;
+  color: hsl(var(--foreground)) !important;
+}
+
+/* Elementos específicos do quiz builder */
+.dark .quiz-builder {
+  background-color: hsl(var(--background));
+  color: hsl(var(--foreground));
+}
+
+.dark .quiz-element {
+  background-color: hsl(var(--card));
+  color: hsl(var(--card-foreground));
+  border-color: hsl(var(--border));
+}
+
+/* Dashboard específico */
+.dark .dashboard-stat-card {
+  background-color: hsl(var(--card));
+  color: hsl(var(--card-foreground));
+  border-color: hsl(var(--border));
+}
+
+.dark .dashboard-quiz-card {
+  background-color: hsl(var(--card));
+  color: hsl(var(--card-foreground));
+  border-color: hsl(var(--border));
+}
+
+.dark .dashboard-header {
+  background-color: hsl(var(--background));
+  color: hsl(var(--foreground));
+}
+
+/* Botões e interações */
+.dark .btn {
+  background-color: hsl(var(--primary));
+  color: hsl(var(--primary-foreground));
+  border-color: hsl(var(--border));
+}
+
+.dark .btn:hover {
+  background-color: hsl(var(--primary)) !important;
+  opacity: 0.8;
+}
+
+.dark .btn-secondary {
+  background-color: hsl(var(--secondary));
+  color: hsl(var(--secondary-foreground));
+}
+
+/* Garantir que todos os textos sejam visíveis */
+.dark p {
+  color: hsl(var(--foreground));
+}
+
+.dark h1, .dark h2, .dark h3, .dark h4, .dark h5, .dark h6 {
+  color: hsl(var(--foreground));
+}
+
+.dark span {
+  color: hsl(var(--foreground));
+}
+
+.dark label {
+  color: hsl(var(--foreground));
+}
+
+/* Correção para elementos que ficam invisíveis */
+.dark * {
+  color: inherit;
+}
+
+/* Força todos os elementos a respeitarem o tema */
+.dark *, .dark *::before, .dark *::after {
+  border-color: hsl(var(--border));
+}
+
+/* Override para elementos teimosos */
+.dark .bg-white,
+.dark .bg-gray-50,
+.dark .bg-gray-100 {
+  background-color: hsl(var(--background)) !important;
+}
+
+.dark .text-black,
+.dark .text-gray-900,
+.dark .text-gray-800 {
+  color: hsl(var(--foreground)) !important;
 }
 
 /* Sidebar Responsive Styles - Synchronized Scrolling */

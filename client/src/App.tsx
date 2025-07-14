@@ -75,7 +75,8 @@ function App() {
 
   return (
     <SidebarProvider>
-      <Switch>
+      <div className={theme === 'dark' ? 'dark' : ''}>
+        <Switch>
         {/* Public routes without sidebar */}
         <Route path="/" component={LandingPage} />
         <Route path="/dark" component={DarkLandingPage} />
@@ -230,8 +231,9 @@ function App() {
         </Route>
 
         <Route component={NotFoundPage} />
-      </Switch>
-      <Toaster />
+        </Switch>
+        <Toaster />
+      </div>
     </SidebarProvider>
   );
 }

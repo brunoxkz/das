@@ -273,7 +273,7 @@ export default function Dashboard() {
   }
 
   return (
-    <div className="min-h-screen dashboard-background light-theme">
+    <div className="min-h-screen bg-background dashboard-background">
       {/* Faixa de Plano - Verde Vendzz */}
       {showPlanBanner && showTrialBanner && (
         <div className="bg-gradient-to-r from-green-600 to-emerald-600 text-white p-4 shadow-lg">
