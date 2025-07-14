@@ -152,6 +152,21 @@ export function runMigrations() {
     createIndexIfNotExists('idx_quizzes_updatedAt', 'quizzes', 'updatedAt');
     createIndexIfNotExists('idx_quiz_responses_userId_quiz', 'quiz_responses', 'userId, quizId');
     
+    // Executar ANALYZE para otimizar estatísticas do query planner
+    console.log('🔍 Executando ANALYZE para otimizar query planner...');
+    sqlite.exec('ANALYZE');
+    console.log('✅ ANALYZE executado com sucesso');
+    
+    // Configurações adicionais para performance máxima
+    sqlite.exec('PRAGMA optimize');
+    console.log('✅ PRAGMA optimize executado');
+    
+    // Inicializar otimizador de performance
+    import('./database-performance-optimizer').then(({ initializeOptimizer }) => {
+      initializeOptimizer(sqlite);
+      console.log('🚀 Database Performance Optimizer inicializado');
+    });
+    
     console.log('✅ Database indexes created successfully');
       return;
     }

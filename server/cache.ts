@@ -89,11 +89,22 @@ export class HighPerformanceCache {
     const keys = this.cache.keys();
     const totalKeys = keys.length;
     
-    // Limitar a 1000 chaves máximo
-    if (totalKeys > 1000) {
-      const keysToDelete = keys.slice(0, totalKeys - 1000);
+    // Limitar a 100 chaves máximo para uso ultra-eficiente de memória
+    if (totalKeys > 100) {
+      const keysToDelete = keys.slice(0, totalKeys - 100);
       keysToDelete.forEach(key => this.cache.del(key));
       console.log(`🧹 CACHE - Removidas ${keysToDelete.length} chaves antigas`);
+    }
+    
+    // Forçar limpeza completa se ainda há muitas chaves
+    if (this.cache.keys().length > 200) {
+      this.forceClearCache();
+    }
+    
+    // Garbage collection forçado
+    if (global.gc) {
+      global.gc();
+      console.log('🧹 CACHE - Garbage collection executado');
     }
   }
 
@@ -135,7 +146,20 @@ export class HighPerformanceCache {
     this.del(`analytics:${userId}`);
     this.del(`responses:${userId}`);
     
+    // Força limpeza de cache se necessário
+    this.optimizeMemory();
+    
     console.log("🔄 CACHE INVALIDATION - Deleted:", { user: deletedUser, quizzes: deletedQuizzes, dashboard: deletedDashboard });
+    
+    // Verificar se invalidação foi bem-sucedida
+    const userStillCached = this.get(`user:${userId}`);
+    const quizzesStillCached = this.get(`quizzes:${userId}`);
+    const dashboardStillCached = this.get(`dashboard:${userId}`);
+    
+    if (userStillCached || quizzesStillCached || dashboardStillCached) {
+      console.log("⚠️ CACHE INVALIDATION - Some caches still exist, forcing cleanup");
+      this.forceClearCache();
+    }
   }
 
   invalidateQuizCaches(quizId: string, userId: string) {
@@ -149,7 +173,20 @@ export class HighPerformanceCache {
     this.del(`analytics:${quizId}`);
     this.del(`variables:${quizId}`);
     
+    // Força limpeza de cache se necessário
+    this.optimizeMemory();
+    
     console.log("🔄 CACHE INVALIDATION - Deleted:", { responses: deletedResponses, quizzes: deletedQuizzes, dashboard: deletedDashboard });
+    
+    // Verificar se invalidação foi bem-sucedida
+    const responsesStillCached = this.get(`responses:${quizId}`);
+    const quizzesStillCached = this.get(`quizzes:${userId}`);
+    const dashboardStillCached = this.get(`dashboard:${userId}`);
+    
+    if (responsesStillCached || quizzesStillCached || dashboardStillCached) {
+      console.log("⚠️ CACHE INVALIDATION - Some caches still exist, forcing cleanup");
+      this.forceClearCache();
+    }
   }
 }
 
