@@ -5,7 +5,7 @@ import crypto from "crypto";
 import { registerHybridRoutes } from "./routes-hybrid";
 import { setupVite, serveStatic, log } from "./vite";
 import { setupHybridAuth, verifyJWT } from "./auth-hybrid";
-import { healthCheck, detailedHealth } from "./health-check";
+// Health check removed - now integrated in routes-sqlite.ts
 import { emailService } from "./email-service";
 import { 
   initAdvancedSecurity, 
@@ -88,9 +88,7 @@ app.use(timingAttackProtection);
 app.use(attackSignatureAnalyzer);
 app.use(blacklistMiddleware);
 
-// Health check endpoints
-app.get('/health', healthCheck);
-app.get('/health/detailed', detailedHealth);
+// Health check endpoints now integrated in routes-sqlite.ts
 
 // Initialize auth ANTES das rotas
 setupHybridAuth(app);

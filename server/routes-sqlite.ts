@@ -27,6 +27,7 @@ import jwt from 'jsonwebtoken';
 import speakeasy from 'speakeasy';
 import QRCode from 'qrcode';
 import { generateTokens } from './auth-sqlite';
+import HealthCheckSystem from './health-check-system.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -8641,6 +8642,10 @@ app.get("/api/whatsapp-extension/pending", verifyJWT, async (req: any, res: Resp
       res.status(500).json({ error: "Erro interno do servidor" });
     }
   });
+
+  // 🏥 HEALTH CHECK SYSTEM - Sistema de monitoramento de saúde
+  const healthCheckSystem = new HealthCheckSystem();
+  healthCheckSystem.registerRoutes(app);
 
   const httpServer = createServer(app);
 

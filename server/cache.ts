@@ -35,14 +35,33 @@ export class HighPerformanceCache {
 
   get<T>(key: string): T | undefined {
     this.stats.totalRequests++;
-    this.stats.misses++;
+    
+    const item = this.cache.get(key);
+    if (!item) {
+      this.stats.misses++;
+      return undefined;
+    }
     
     // Cache DESABILITADO completamente para economia de memória
-    return undefined;
+    if (Date.now() > item.expiry) {
+      this.cache.delete(key);
+      this.stats.misses++;
+      return undefined;
+    }
+    
+    this.stats.hits++;
+    return item.value;
   }
 
   set<T>(key: string, value: T, ttl?: number): boolean {
-    // Cache DESABILITADO completamente para economia de memória
+    const expiry = Date.now() + (ttl || 60000); // 1 minuto padrão
+    this.cache.set(key, { value, expiry });
+    
+    // Cache DESABILITADO completamente para economia de memória - limpar após 5 segundos
+    setTimeout(() => {
+      this.cache.delete(key);
+    }, 5000);
+    
     return true;
   }
 
