@@ -546,20 +546,107 @@ body {
   color: hsl(var(--foreground));
 }
 
-/* Sidebar dark mode */
+/* Sidebar dark mode - força todos os elementos */
+.dark aside {
+  background-color: hsl(var(--background)) !important;
+  color: hsl(var(--foreground)) !important;
+  border-color: hsl(var(--border)) !important;
+}
+
 .dark .sidebar {
-  background-color: hsl(var(--sidebar-background));
-  color: hsl(var(--sidebar-foreground));
-  border-color: hsl(var(--sidebar-border));
+  background-color: hsl(var(--background)) !important;
+  color: hsl(var(--foreground)) !important;
+  border-color: hsl(var(--border)) !important;
 }
 
 .dark .sidebar-item {
-  color: hsl(var(--sidebar-foreground));
+  color: hsl(var(--foreground)) !important;
 }
 
 .dark .sidebar-item:hover {
-  background-color: hsl(var(--sidebar-accent));
-  color: hsl(var(--sidebar-accent-foreground));
+  background-color: hsl(var(--accent)) !important;
+  color: hsl(var(--accent-foreground)) !important;
+}
+
+/* Força todos os elementos da sidebar */
+.dark aside * {
+  color: hsl(var(--foreground)) !important;
+  border-color: hsl(var(--border)) !important;
+}
+
+.dark aside .border-gray-200 {
+  border-color: hsl(var(--border)) !important;
+}
+
+.dark aside .bg-gray-50 {
+  background-color: hsl(var(--muted)) !important;
+}
+
+.dark aside .text-gray-900 {
+  color: hsl(var(--foreground)) !important;
+}
+
+.dark aside .text-gray-600 {
+  color: hsl(var(--muted-foreground)) !important;
+}
+
+.dark aside .text-gray-500 {
+  color: hsl(var(--muted-foreground)) !important;
+}
+
+.dark aside .bg-gray-200 {
+  background-color: hsl(var(--muted)) !important;
+}
+
+.dark aside .bg-gray-100 {
+  background-color: hsl(var(--muted)) !important;
+}
+
+.dark aside .hover\\:bg-gray-100:hover {
+  background-color: hsl(var(--accent)) !important;
+}
+
+/* Botões na sidebar */
+.dark aside button {
+  color: hsl(var(--foreground)) !important;
+  background-color: transparent !important;
+}
+
+.dark aside button:hover {
+  background-color: hsl(var(--accent)) !important;
+  color: hsl(var(--accent-foreground)) !important;
+}
+
+/* Links na sidebar */
+.dark aside a {
+  color: hsl(var(--foreground)) !important;
+}
+
+.dark aside a:hover {
+  color: hsl(var(--accent-foreground)) !important;
+}
+
+/* Spans e textos na sidebar */
+.dark aside span {
+  color: hsl(var(--foreground)) !important;
+}
+
+.dark aside .nav-item {
+  color: hsl(var(--foreground)) !important;
+}
+
+.dark aside .nav-item:hover {
+  background-color: hsl(var(--accent)) !important;
+  color: hsl(var(--accent-foreground)) !important;
+}
+
+.dark aside .category-header {
+  color: hsl(var(--foreground)) !important;
+}
+
+.dark aside .category-header:hover {
+  background-color: hsl(var(--accent)) !important;
+  color: hsl(var(--accent-foreground)) !important;
 }
 
 /* Layout específico */
@@ -651,14 +738,73 @@ body {
 /* Override para elementos teimosos */
 .dark .bg-white,
 .dark .bg-gray-50,
-.dark .bg-gray-100 {
+.dark .bg-gray-100,
+.dark .bg-gray-200 {
   background-color: hsl(var(--background)) !important;
 }
 
 .dark .text-black,
 .dark .text-gray-900,
-.dark .text-gray-800 {
+.dark .text-gray-800,
+.dark .text-gray-700,
+.dark .text-gray-600,
+.dark .text-gray-500 {
   color: hsl(var(--foreground)) !important;
+}
+
+/* Bordas específicas */
+.dark .border-gray-200,
+.dark .border-gray-300,
+.dark .border-gray-400 {
+  border-color: hsl(var(--border)) !important;
+}
+
+/* Forçar todos os elementos a respeitarem o tema */
+.dark * {
+  border-color: hsl(var(--border)) !important;
+}
+
+/* Botões específicos */
+.dark .btn,
+.dark button {
+  background-color: transparent !important;
+  color: hsl(var(--foreground)) !important;
+  border-color: hsl(var(--border)) !important;
+}
+
+.dark .btn:hover,
+.dark button:hover {
+  background-color: hsl(var(--accent)) !important;
+  color: hsl(var(--accent-foreground)) !important;
+}
+
+/* Cards específicos */
+.dark .card {
+  background-color: hsl(var(--card)) !important;
+  color: hsl(var(--card-foreground)) !important;
+  border-color: hsl(var(--border)) !important;
+}
+
+/* Inputs específicos */
+.dark input,
+.dark textarea,
+.dark select {
+  background-color: hsl(var(--background)) !important;
+  color: hsl(var(--foreground)) !important;
+  border-color: hsl(var(--border)) !important;
+}
+
+/* Badges específicos */
+.dark .badge {
+  background-color: hsl(var(--secondary)) !important;
+  color: hsl(var(--secondary-foreground)) !important;
+}
+
+/* Dropdowns específicos */
+.dark .dropdown-content {
+  background-color: hsl(var(--popover)) !important;
+  color: hsl(var(--popover-foreground)) !important;
+  border-color: hsl(var(--border)) !important;
 }
 
 /* Sidebar Responsive Styles - Synchronized Scrolling */

@@ -243,11 +243,11 @@ export function Sidebar() {
 
   return (
     <aside className={cn(
-      "vendzz-sidebar flex flex-col",
+      "vendzz-sidebar flex flex-col bg-background text-foreground border-r border-border",
       isCollapsed ? "collapsed" : "expanded"
     )}>
       {/* Logo and Notifications */}
-      <div className="p-4 border-b border-gray-200">
+      <div className="p-4 border-b border-border dark:border-border">
         <div className="flex items-center justify-between">
           <div className="flex items-center">
             {!isCollapsed && (
@@ -271,7 +271,7 @@ export function Sidebar() {
             variant="ghost"
             size="sm"
             onClick={toggleSidebar}
-            className="h-8 w-8 p-0 hover:bg-gray-100"
+            className="h-8 w-8 p-0 hover:bg-accent dark:hover:bg-accent"
           >
             {isCollapsed ? <Menu className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
           </Button>
@@ -306,7 +306,7 @@ export function Sidebar() {
       </div>
 
       {/* Create Button */}
-      <div className="p-4 border-b border-gray-200">
+      <div className="p-4 border-b border-border dark:border-border">
         <Link href="/quizzes/new">
           <Button className={cn(
             "w-full",
@@ -451,7 +451,7 @@ export function Sidebar() {
       </nav>
 
       {/* Bottom Items */}
-      <div className="p-4 border-t border-gray-200">
+      <div className="p-4 border-t border-border dark:border-border">
         <div className="space-y-1">
           {bottomItems.map((item) => (
             <Link key={item.href} href={item.href}>
@@ -477,23 +477,23 @@ export function Sidebar() {
 
         {/* User Plan Info */}
         {!isCollapsed && userData && (
-          <div className="mt-4 p-3 bg-gray-50 rounded-lg">
+          <div className="mt-4 p-3 bg-muted dark:bg-muted rounded-lg">
             <div className="flex items-center justify-between mb-2">
-              <span className="text-sm font-medium text-gray-900">{t("current_plan")}</span>
+              <span className="text-sm font-medium text-foreground dark:text-foreground">{t("current_plan")}</span>
               <Badge variant="outline" className="text-xs capitalize">
                 {userData.plan === 'enterprise' ? 'Enterprise' : userData.plan === 'premium' ? 'Premium' : 'Free'}
               </Badge>
             </div>
             {userData.plan === 'enterprise' ? (
-              <div className="text-xs text-gray-600">
+              <div className="text-xs text-muted-foreground dark:text-muted-foreground">
                 {totalQuizzes} {t("quizzes_created")} ({t("unlimited")})
               </div>
             ) : (
               <>
-                <div className="text-xs text-gray-600 mb-2">
+                <div className="text-xs text-muted-foreground dark:text-muted-foreground mb-2">
                   {totalQuizzes} de {userData.plan === 'premium' ? '25' : '3'} {t("quizzes_used")}
                 </div>
-                <div className="w-full bg-gray-200 rounded-full h-1.5">
+                <div className="w-full bg-muted dark:bg-muted rounded-full h-1.5">
                   <div className="bg-primary h-1.5 rounded-full" style={{ 
                     width: `${Math.min((totalQuizzes / (userData.plan === 'premium' ? 25 : 3)) * 100, 100)}%` 
                   }}></div>
