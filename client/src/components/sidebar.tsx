@@ -277,14 +277,14 @@ export function Sidebar() {
           </Button>
         </div>
 
-        {/* Language, Theme and Notification Icons (moved below) */}
+        {/* Language and Notification Icons (moved below) */}
         {!isCollapsed && (
           <div className="flex items-center justify-center space-x-2 mt-3">
             {/* Language Selector */}
             <LanguageSelector />
             
-            {/* Theme Toggle */}
-            <ThemeToggle />
+            {/* Theme Toggle - DESATIVADO TEMPORARIAMENTE */}
+            {/* <ThemeToggle /> */}
             
             {/* Notification Bell */}
             <NotificationSystem />
@@ -296,8 +296,8 @@ export function Sidebar() {
             {/* Language Selector - Collapsed */}
             <LanguageSelector collapsed={true} />
             
-            {/* Theme Toggle - Collapsed */}
-            <ThemeToggle />
+            {/* Theme Toggle - DESATIVADO TEMPORARIAMENTE */}
+            {/* <ThemeToggle /> */}
             
             {/* Notification Bell - Collapsed */}
             <NotificationSystem />
