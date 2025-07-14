@@ -243,11 +243,11 @@ export function Sidebar() {
 
   return (
     <aside className={cn(
-      "vendzz-sidebar flex flex-col bg-background text-foreground border-r border-border",
+      "vendzz-sidebar flex flex-col bg-background dark:bg-gray-900 text-foreground dark:text-white border-r border-border dark:border-gray-700",
       isCollapsed ? "collapsed" : "expanded"
     )}>
       {/* Logo and Notifications */}
-      <div className="p-4 border-b border-border dark:border-border">
+      <div className="p-4 border-b border-border dark:border-gray-700">
         <div className="flex items-center justify-between">
           <div className="flex items-center">
             {!isCollapsed && (
@@ -306,7 +306,7 @@ export function Sidebar() {
       </div>
 
       {/* Create Button */}
-      <div className="p-4 border-b border-border dark:border-border">
+      <div className="p-4 border-b border-border dark:border-gray-700">
         <Link href="/quizzes/new">
           <Button className={cn(
             "w-full",
@@ -451,7 +451,7 @@ export function Sidebar() {
       </nav>
 
       {/* Bottom Items */}
-      <div className="p-4 border-t border-border dark:border-border">
+      <div className="p-4 border-t border-border dark:border-gray-700">
         <div className="space-y-1">
           {bottomItems.map((item) => (
             <Link key={item.href} href={item.href}>

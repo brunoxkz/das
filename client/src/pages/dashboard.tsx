@@ -364,12 +364,12 @@ export default function Dashboard() {
           {/* Stats Grid */}
           <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
             {dashboardStats.map((stat, index) => (
-              <Card key={index} className="dashboard-stat-card shadow-lg">
+              <Card key={index} className="dashboard-stat-card shadow-lg bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700">
                 <CardContent className="p-6">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-sm dashboard-text-muted mb-1">{stat.title}</p>
-                      <p className="text-2xl font-bold dashboard-text-primary">{stat.value}</p>
+                      <p className="text-sm dashboard-text-muted mb-1 text-gray-600 dark:text-gray-300">{stat.title}</p>
+                      <p className="text-2xl font-bold dashboard-text-primary text-gray-900 dark:text-white">{stat.value}</p>
                     </div>
                     <div className={`w-12 h-12 rounded-lg ${stat.color} flex items-center justify-center text-white`}>
                       {stat.icon}
@@ -382,12 +382,12 @@ export default function Dashboard() {
 
           {/* Campanhas Row */}
           <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-            <Card className="dashboard-stat-card shadow-lg">
+            <Card className="dashboard-stat-card shadow-lg bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700">
               <CardContent className="p-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm dashboard-text-muted mb-1">SMS Enviados</p>
-                    <p className="text-2xl font-bold dashboard-text-primary">{smsCount?.count || 0}</p>
+                    <p className="text-sm dashboard-text-muted mb-1 text-gray-600 dark:text-gray-300">SMS Enviados</p>
+                    <p className="text-2xl font-bold dashboard-text-primary text-gray-900 dark:text-white">{smsCount?.count || 0}</p>
                   </div>
                   <div className="w-12 h-12 rounded-lg bg-cyan-500 flex items-center justify-center text-white">
                     <MessageSquare className="w-5 h-5" />
@@ -396,12 +396,12 @@ export default function Dashboard() {
               </CardContent>
             </Card>
 
-            <Card className="dashboard-stat-card shadow-lg">
+            <Card className="dashboard-stat-card shadow-lg bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700">
               <CardContent className="p-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm dashboard-text-muted mb-1">WhatsApp</p>
-                    <p className="text-2xl font-bold dashboard-text-primary">{whatsappCount?.count || 0}</p>
+                    <p className="text-sm dashboard-text-muted mb-1 text-gray-600 dark:text-gray-300">WhatsApp</p>
+                    <p className="text-2xl font-bold dashboard-text-primary text-gray-900 dark:text-white">{whatsappCount?.count || 0}</p>
                   </div>
                   <div className="w-12 h-12 rounded-lg bg-green-500 flex items-center justify-center text-white">
                     <MessageCircle className="w-5 h-5" />
@@ -410,12 +410,12 @@ export default function Dashboard() {
               </CardContent>
             </Card>
 
-            <Card className="dashboard-stat-card shadow-lg">
+            <Card className="dashboard-stat-card shadow-lg bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700">
               <CardContent className="p-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm dashboard-text-muted mb-1">Emails</p>
-                    <p className="text-2xl font-bold dashboard-text-primary">{emailCount?.count || 0}</p>
+                    <p className="text-sm dashboard-text-muted mb-1 text-gray-600 dark:text-gray-300">Emails</p>
+                    <p className="text-2xl font-bold dashboard-text-primary text-gray-900 dark:text-white">{emailCount?.count || 0}</p>
                   </div>
                   <div className="w-12 h-12 rounded-lg bg-blue-500 flex items-center justify-center text-white">
                     <Mail className="w-5 h-5" />
@@ -424,12 +424,12 @@ export default function Dashboard() {
               </CardContent>
             </Card>
 
-            <Card className="dashboard-stat-card shadow-lg">
+            <Card className="dashboard-stat-card shadow-lg bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700">
               <CardContent className="p-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm dashboard-text-muted mb-1">Créditos</p>
-                    <p className="text-2xl font-bold dashboard-text-primary">{userCredits?.total || 0}</p>
+                    <p className="text-sm dashboard-text-muted mb-1 text-gray-600 dark:text-gray-300">Créditos</p>
+                    <p className="text-2xl font-bold dashboard-text-primary text-gray-900 dark:text-white">{userCredits?.total || 0}</p>
                   </div>
                   <div className="w-12 h-12 rounded-lg bg-purple-500 flex items-center justify-center text-white">
                     <Coins className="w-5 h-5" />

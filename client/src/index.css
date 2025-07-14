@@ -546,94 +546,91 @@ body {
   color: hsl(var(--foreground));
 }
 
-/* Sidebar dark mode - força ABSOLUTA dos elementos */
+/* SIDEBAR DARK MODE - FORÇA ABSOLUTA */
 .dark .vendzz-sidebar {
-  background-color: hsl(222.2 84% 4.9%) !important;
-  color: hsl(210 40% 98%) !important;
-  border-color: hsl(217.2 32.6% 17.5%) !important;
+  background-color: #111827 !important; /* gray-900 */
+  color: #f9fafb !important; /* gray-50 */
+  border-color: #374151 !important; /* gray-700 */
 }
 
 .dark .vendzz-sidebar * {
-  color: hsl(210 40% 98%) !important;
-  border-color: hsl(217.2 32.6% 17.5%) !important;
+  color: #f9fafb !important; /* gray-50 */
+  border-color: #374151 !important; /* gray-700 */
 }
 
-.dark .vendzz-sidebar .border-gray-200,
-.dark .vendzz-sidebar .border-border {
-  border-color: hsl(217.2 32.6% 17.5%) !important;
+/* Força todos os textos */
+.dark .vendzz-sidebar span,
+.dark .vendzz-sidebar p,
+.dark .vendzz-sidebar a,
+.dark .vendzz-sidebar div {
+  color: #f9fafb !important; /* gray-50 */
 }
 
-.dark .vendzz-sidebar .bg-gray-50,
-.dark .vendzz-sidebar .bg-gray-100,
-.dark .vendzz-sidebar .bg-gray-200,
-.dark .vendzz-sidebar .bg-muted {
-  background-color: hsl(217.2 32.6% 17.5%) !important;
-}
-
-.dark .vendzz-sidebar .text-gray-900,
-.dark .vendzz-sidebar .text-gray-800,
-.dark .vendzz-sidebar .text-gray-700,
-.dark .vendzz-sidebar .text-gray-600,
+/* Força elementos específicos */
+.dark .vendzz-sidebar .text-muted-foreground,
+.dark .vendzz-sidebar .text-gray-300,
+.dark .vendzz-sidebar .text-gray-400,
 .dark .vendzz-sidebar .text-gray-500,
-.dark .vendzz-sidebar .text-foreground {
-  color: hsl(210 40% 98%) !important;
+.dark .vendzz-sidebar .text-gray-600 {
+  color: #d1d5db !important; /* gray-300 */
 }
 
-.dark .vendzz-sidebar .text-muted-foreground {
-  color: hsl(215.4 16.3% 46.9%) !important;
-}
-
+/* Força todos os buttons */
 .dark .vendzz-sidebar button {
-  color: hsl(210 40% 98%) !important;
+  color: #f9fafb !important; /* gray-50 */
   background-color: transparent !important;
 }
 
 .dark .vendzz-sidebar button:hover {
-  background-color: hsl(217.2 32.6% 17.5%) !important;
-  color: hsl(210 40% 98%) !important;
+  background-color: #374151 !important; /* gray-700 */
+  color: #f9fafb !important; /* gray-50 */
 }
 
+/* Força todos os links */
 .dark .vendzz-sidebar a {
-  color: hsl(210 40% 98%) !important;
+  color: #f9fafb !important; /* gray-50 */
 }
 
 .dark .vendzz-sidebar a:hover {
-  color: hsl(210 40% 98%) !important;
+  color: #f9fafb !important; /* gray-50 */
 }
 
-.dark .vendzz-sidebar .nav-item {
-  color: hsl(210 40% 98%) !important;
-}
-
-.dark .vendzz-sidebar .nav-item:hover {
-  background-color: hsl(217.2 32.6% 17.5%) !important;
-  color: hsl(210 40% 98%) !important;
-}
-
-.dark .vendzz-sidebar .category-header {
-  color: hsl(210 40% 98%) !important;
-}
-
-.dark .vendzz-sidebar .category-header:hover {
-  background-color: hsl(217.2 32.6% 17.5%) !important;
-  color: hsl(210 40% 98%) !important;
-}
-
-/* Força override em elementos específicos */
-.dark .vendzz-sidebar .hover\\:bg-gray-100:hover,
-.dark .vendzz-sidebar .hover\\:bg-accent:hover {
-  background-color: hsl(217.2 32.6% 17.5%) !important;
-}
-
+/* Força todos os SVGs */
 .dark .vendzz-sidebar svg {
-  color: hsl(210 40% 98%) !important;
+  color: #f9fafb !important; /* gray-50 */
 }
 
-/* Força cores específicas para badges */
+/* Força todas as bordas */
+.dark .vendzz-sidebar .border-border,
+.dark .vendzz-sidebar .border-gray-200,
+.dark .vendzz-sidebar .border-gray-700 {
+  border-color: #374151 !important; /* gray-700 */
+}
+
+/* Força todos os backgrounds */
+.dark .vendzz-sidebar .bg-muted,
+.dark .vendzz-sidebar .bg-gray-50,
+.dark .vendzz-sidebar .bg-gray-100,
+.dark .vendzz-sidebar .bg-gray-200 {
+  background-color: #1f2937 !important; /* gray-800 */
+}
+
+/* Força badges */
 .dark .vendzz-sidebar .badge {
-  background-color: hsl(217.2 32.6% 17.5%) !important;
-  color: hsl(210 40% 98%) !important;
-  border-color: hsl(217.2 32.6% 17.5%) !important;
+  background-color: #374151 !important; /* gray-700 */
+  color: #f9fafb !important; /* gray-50 */
+  border-color: #374151 !important; /* gray-700 */
+}
+
+/* Força user plan info */
+.dark .vendzz-sidebar .bg-muted {
+  background-color: #1f2937 !important; /* gray-800 */
+}
+
+/* Força todos os hovers */
+.dark .vendzz-sidebar .hover\\:bg-accent:hover,
+.dark .vendzz-sidebar .hover\\:bg-gray-100:hover {
+  background-color: #374151 !important; /* gray-700 */
 }
 
 /* Layout específico */
@@ -754,8 +751,40 @@ body {
 /* Força extra para sidebar */
 .dark aside,
 .dark .vendzz-sidebar {
-  background-color: hsl(222.2 84% 4.9%) !important;
-  color: hsl(210 40% 98%) !important;
+  background-color: #111827 !important; /* gray-900 */
+  color: #f9fafb !important; /* gray-50 */
+}
+
+/* Força dashboard stats cards no dark mode */
+.dark .dashboard-stat-card {
+  background-color: #1f2937 !important; /* gray-800 */
+  border-color: #374151 !important; /* gray-700 */
+}
+
+.dark .dashboard-stat-card * {
+  color: #f9fafb !important; /* gray-50 */
+}
+
+.dark .dashboard-stat-card .text-muted-foreground {
+  color: #d1d5db !important; /* gray-300 */
+}
+
+/* Força sidebar position */
+.vendzz-sidebar {
+  position: fixed !important;
+  left: 0 !important;
+  top: 0 !important;
+  height: 100vh !important;
+  z-index: 50 !important;
+  transition: width 0.3s ease !important;
+}
+
+.vendzz-sidebar.collapsed {
+  width: 4rem !important; /* 64px */
+}
+
+.vendzz-sidebar.expanded {
+  width: 16rem !important; /* 256px */
 }
 
 /* Botões específicos */
