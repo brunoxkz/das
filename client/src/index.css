@@ -546,107 +546,94 @@ body {
   color: hsl(var(--foreground));
 }
 
-/* Sidebar dark mode - força todos os elementos */
-.dark aside {
-  background-color: hsl(var(--background)) !important;
-  color: hsl(var(--foreground)) !important;
-  border-color: hsl(var(--border)) !important;
+/* Sidebar dark mode - força ABSOLUTA dos elementos */
+.dark .vendzz-sidebar {
+  background-color: hsl(222.2 84% 4.9%) !important;
+  color: hsl(210 40% 98%) !important;
+  border-color: hsl(217.2 32.6% 17.5%) !important;
 }
 
-.dark .sidebar {
-  background-color: hsl(var(--background)) !important;
-  color: hsl(var(--foreground)) !important;
-  border-color: hsl(var(--border)) !important;
+.dark .vendzz-sidebar * {
+  color: hsl(210 40% 98%) !important;
+  border-color: hsl(217.2 32.6% 17.5%) !important;
 }
 
-.dark .sidebar-item {
-  color: hsl(var(--foreground)) !important;
+.dark .vendzz-sidebar .border-gray-200,
+.dark .vendzz-sidebar .border-border {
+  border-color: hsl(217.2 32.6% 17.5%) !important;
 }
 
-.dark .sidebar-item:hover {
-  background-color: hsl(var(--accent)) !important;
-  color: hsl(var(--accent-foreground)) !important;
+.dark .vendzz-sidebar .bg-gray-50,
+.dark .vendzz-sidebar .bg-gray-100,
+.dark .vendzz-sidebar .bg-gray-200,
+.dark .vendzz-sidebar .bg-muted {
+  background-color: hsl(217.2 32.6% 17.5%) !important;
 }
 
-/* Força todos os elementos da sidebar */
-.dark aside * {
-  color: hsl(var(--foreground)) !important;
-  border-color: hsl(var(--border)) !important;
+.dark .vendzz-sidebar .text-gray-900,
+.dark .vendzz-sidebar .text-gray-800,
+.dark .vendzz-sidebar .text-gray-700,
+.dark .vendzz-sidebar .text-gray-600,
+.dark .vendzz-sidebar .text-gray-500,
+.dark .vendzz-sidebar .text-foreground {
+  color: hsl(210 40% 98%) !important;
 }
 
-.dark aside .border-gray-200 {
-  border-color: hsl(var(--border)) !important;
+.dark .vendzz-sidebar .text-muted-foreground {
+  color: hsl(215.4 16.3% 46.9%) !important;
 }
 
-.dark aside .bg-gray-50 {
-  background-color: hsl(var(--muted)) !important;
-}
-
-.dark aside .text-gray-900 {
-  color: hsl(var(--foreground)) !important;
-}
-
-.dark aside .text-gray-600 {
-  color: hsl(var(--muted-foreground)) !important;
-}
-
-.dark aside .text-gray-500 {
-  color: hsl(var(--muted-foreground)) !important;
-}
-
-.dark aside .bg-gray-200 {
-  background-color: hsl(var(--muted)) !important;
-}
-
-.dark aside .bg-gray-100 {
-  background-color: hsl(var(--muted)) !important;
-}
-
-.dark aside .hover\\:bg-gray-100:hover {
-  background-color: hsl(var(--accent)) !important;
-}
-
-/* Botões na sidebar */
-.dark aside button {
-  color: hsl(var(--foreground)) !important;
+.dark .vendzz-sidebar button {
+  color: hsl(210 40% 98%) !important;
   background-color: transparent !important;
 }
 
-.dark aside button:hover {
-  background-color: hsl(var(--accent)) !important;
-  color: hsl(var(--accent-foreground)) !important;
+.dark .vendzz-sidebar button:hover {
+  background-color: hsl(217.2 32.6% 17.5%) !important;
+  color: hsl(210 40% 98%) !important;
 }
 
-/* Links na sidebar */
-.dark aside a {
-  color: hsl(var(--foreground)) !important;
+.dark .vendzz-sidebar a {
+  color: hsl(210 40% 98%) !important;
 }
 
-.dark aside a:hover {
-  color: hsl(var(--accent-foreground)) !important;
+.dark .vendzz-sidebar a:hover {
+  color: hsl(210 40% 98%) !important;
 }
 
-/* Spans e textos na sidebar */
-.dark aside span {
-  color: hsl(var(--foreground)) !important;
+.dark .vendzz-sidebar .nav-item {
+  color: hsl(210 40% 98%) !important;
 }
 
-.dark aside .nav-item {
-  color: hsl(var(--foreground)) !important;
+.dark .vendzz-sidebar .nav-item:hover {
+  background-color: hsl(217.2 32.6% 17.5%) !important;
+  color: hsl(210 40% 98%) !important;
 }
 
-.dark aside .nav-item:hover {
-  background-color: hsl(var(--accent)) !important;
-  color: hsl(var(--accent-foreground)) !important;
+.dark .vendzz-sidebar .category-header {
+  color: hsl(210 40% 98%) !important;
 }
 
-.dark aside .category-header {
-  color: hsl(var(--foreground)) !important;
+.dark .vendzz-sidebar .category-header:hover {
+  background-color: hsl(217.2 32.6% 17.5%) !important;
+  color: hsl(210 40% 98%) !important;
 }
 
-.dark aside .category-header:hover {
-  background-color: hsl(var(--accent)) !important;
-  color: hsl(var(--accent-foreground)) !important;
+/* Força override em elementos específicos */
+.dark .vendzz-sidebar .hover\\:bg-gray-100:hover,
+.dark .vendzz-sidebar .hover\\:bg-accent:hover {
+  background-color: hsl(217.2 32.6% 17.5%) !important;
+}
+
+.dark .vendzz-sidebar svg {
+  color: hsl(210 40% 98%) !important;
+}
+
+/* Força cores específicas para badges */
+.dark .vendzz-sidebar .badge {
+  background-color: hsl(217.2 32.6% 17.5%) !important;
+  color: hsl(210 40% 98%) !important;
+  border-color: hsl(217.2 32.6% 17.5%) !important;
 }
 
 /* Layout específico */
@@ -762,6 +749,13 @@ body {
 /* Forçar todos os elementos a respeitarem o tema */
 .dark * {
   border-color: hsl(var(--border)) !important;
+}
+
+/* Força extra para sidebar */
+.dark aside,
+.dark .vendzz-sidebar {
+  background-color: hsl(222.2 84% 4.9%) !important;
+  color: hsl(210 40% 98%) !important;
 }
 
 /* Botões específicos */

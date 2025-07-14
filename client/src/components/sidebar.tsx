@@ -326,14 +326,14 @@ export function Sidebar() {
             <Button
               variant="ghost"
               className={cn(
-                "nav-item w-full justify-start",
+                "nav-item w-full justify-start text-foreground hover:bg-accent hover:text-accent-foreground",
                 isCollapsed ? "px-0" : "px-3",
-                dashboardItem.active && "active"
+                dashboardItem.active && "bg-accent text-accent-foreground"
               )}
             >
               {dashboardItem.icon}
               {!isCollapsed && (
-                <span className="ml-2 flex-1 text-left">{dashboardItem.title}</span>
+                <span className="ml-2 flex-1 text-left text-foreground">{dashboardItem.title}</span>
               )}
             </Button>
           </Link>
@@ -346,7 +346,7 @@ export function Sidebar() {
                 variant="ghost"
                 onClick={() => !isCollapsed && toggleCategory(category.title)}
                 className={cn(
-                  "category-header w-full justify-start",
+                  "category-header w-full justify-start text-foreground hover:bg-accent hover:text-accent-foreground",
                   isCollapsed ? "px-0" : "px-3 py-2",
                   !isCollapsed && "cursor-pointer"
                 )}
@@ -354,11 +354,11 @@ export function Sidebar() {
                 {category.icon}
                 {!isCollapsed && (
                   <>
-                    <span className="ml-2 flex-1 text-left">{category.title}</span>
+                    <span className="ml-2 flex-1 text-left text-foreground">{category.title}</span>
                     {expandedCategories.includes(category.title) ? (
-                      <ChevronDown className="w-3 h-3 ml-auto" />
+                      <ChevronDown className="w-3 h-3 ml-auto text-foreground" />
                     ) : (
-                      <ChevronUp className="w-3 h-3 ml-auto" />
+                      <ChevronUp className="w-3 h-3 ml-auto text-foreground" />
                     )}
                   </>
                 )}
@@ -372,16 +372,16 @@ export function Sidebar() {
                       <Button
                         variant="ghost"
                         className={cn(
-                          "nav-item w-full justify-start",
+                          "nav-item w-full justify-start text-foreground hover:bg-accent hover:text-accent-foreground",
                           isCollapsed ? "px-0" : "px-3",
                           item.className,
-                          item.active && "active"
+                          item.active && "bg-accent text-accent-foreground"
                         )}
                       >
                         {item.icon}
                         {!isCollapsed && (
                           <>
-                            <span className="ml-2 flex-1 text-left">{item.title}</span>
+                            <span className="ml-2 flex-1 text-left text-foreground">{item.title}</span>
                             {item.badge && (
                               <Badge variant="secondary" className="ml-auto">
                                 {item.badge}
@@ -402,14 +402,14 @@ export function Sidebar() {
             <Button
               variant="ghost"
               className={cn(
-                "nav-item w-full justify-start",
+                "nav-item w-full justify-start text-foreground hover:bg-accent hover:text-accent-foreground",
                 isCollapsed ? "px-0" : "px-3",
-                tutorialsItem.active && "active"
+                tutorialsItem.active && "bg-accent text-accent-foreground"
               )}
             >
               {tutorialsItem.icon}
               {!isCollapsed && (
-                <span className="ml-2 flex-1 text-left">{tutorialsItem.title}</span>
+                <span className="ml-2 flex-1 text-left text-foreground">{tutorialsItem.title}</span>
               )}
             </Button>
           </Link>
@@ -419,14 +419,14 @@ export function Sidebar() {
             <Button
               variant="ghost"
               className={cn(
-                "nav-item w-full justify-start",
+                "nav-item w-full justify-start text-foreground hover:bg-accent hover:text-accent-foreground",
                 isCollapsed ? "px-0" : "px-3",
-                planosItem.active && "active"
+                planosItem.active && "bg-accent text-accent-foreground"
               )}
             >
               {planosItem.icon}
               {!isCollapsed && (
-                <span className="ml-2 flex-1 text-left">{planosItem.title}</span>
+                <span className="ml-2 flex-1 text-left text-foreground">{planosItem.title}</span>
               )}
             </Button>
           </Link>
@@ -436,14 +436,14 @@ export function Sidebar() {
             <Button
               variant="ghost"
               className={cn(
-                "nav-item w-full justify-start",
+                "nav-item w-full justify-start text-foreground hover:bg-accent hover:text-accent-foreground",
                 isCollapsed ? "px-0" : "px-3",
-                creditosItem.active && "active"
+                creditosItem.active && "bg-accent text-accent-foreground"
               )}
             >
               {creditosItem.icon}
               {!isCollapsed && (
-                <span className="ml-2 flex-1 text-left">{creditosItem.title}</span>
+                <span className="ml-2 flex-1 text-left text-foreground">{creditosItem.title}</span>
               )}
             </Button>
           </Link>
@@ -458,15 +458,15 @@ export function Sidebar() {
               <Button
                 variant={item.active ? "secondary" : "ghost"}
                 className={cn(
-                  "w-full justify-start",
+                  "w-full justify-start text-foreground hover:bg-accent hover:text-accent-foreground",
                   isCollapsed ? "px-0" : "px-3",
                   item.className,
-                  item.active && !item.className && "bg-primary/10 text-primary"
+                  item.active && !item.className && "bg-accent text-accent-foreground"
                 )}
               >
                 {item.icon}
                 {!isCollapsed && (
-                  <span className="ml-2">{item.title}</span>
+                  <span className="ml-2 text-foreground">{item.title}</span>
                 )}
               </Button>
             </Link>
