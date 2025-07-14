@@ -15,7 +15,7 @@ import {
   blacklistMiddleware 
 } from "./advanced-security";
 import UltraScaleProcessor from "./ultra-scale-processor";
-import { quizCacheOptimizer } from "./quiz-cache-optimizer";
+// import { quizCacheOptimizer } from "./quiz-cache-optimizer"; // DESABILITADO
 import { unifiedSystem } from "./unified-scale-system";
 
 const app = express();

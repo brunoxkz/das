@@ -156,27 +156,8 @@ class QuizCacheOptimizer {
    */
   async cleanupCache(): Promise<void> {
     try {
-      const stats = cache.getStats();
-      let cleaned = 0;
-      
-      // Usar método correto para obter chaves do NodeCache
-      const keys = cache.cache ? cache.cache.keys() : [];
-      
-      // Limpar entradas expiradas manualmente
-      keys.forEach(key => {
-        if (key.startsWith('quiz-') && Math.random() < 0.1) {
-          // 10% chance de verificar se deve limpar
-          const data = cache.get(key);
-          if (!data) {
-            cache.del(key);
-            cleaned++;
-          }
-        }
-      });
-
-      if (cleaned > 0) {
-        console.log(`🧹 Cache cleanup: ${cleaned} entradas removidas`);
-      }
+      // Cache desabilitado - não há necessidade de limpeza
+      return;
     } catch (error) {
       console.error('❌ Erro na limpeza de cache:', error);
     }

@@ -174,11 +174,11 @@ export function runMigrations() {
     sqlite.exec('PRAGMA optimize');
     console.log('✅ PRAGMA optimize executado');
     
-    // Inicializar otimizador de performance
-    import('./database-performance-optimizer').then(({ initializeOptimizer }) => {
-      initializeOptimizer(sqlite);
-      console.log('🚀 Database Performance Optimizer inicializado');
-    });
+    // Otimizador desabilitado para economia de recursos
+    // import('./database-performance-optimizer').then(({ initializeOptimizer }) => {
+    //   initializeOptimizer(sqlite);
+    //   console.log('🚀 Database Performance Optimizer inicializado');
+    // });
     
     console.log('✅ Database indexes created successfully');
       return;
