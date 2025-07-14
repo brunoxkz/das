@@ -696,38 +696,43 @@ export class SQLiteStorage implements IStorage {
   }
 
   async createQuiz(quiz: InsertQuiz): Promise<Quiz> {
-    const quizId = nanoid();
-    const now = Math.floor(Date.now() / 1000);
-    
-    // Garantir estrutura básica se não fornecida
-    const defaultStructure = {
-      pages: [
-        {
-          id: "page_1",
-          name: "Página Inicial",
-          type: "normal",
-          elements: []
+    try {
+      const quizId = nanoid();
+      const now = Math.floor(Date.now() / 1000);
+      
+      // Garantir estrutura básica se não fornecida
+      const defaultStructure = {
+        pages: [
+          {
+            id: "page_1",
+            name: "Página Inicial",
+            type: "normal",
+            elements: []
+          }
+        ],
+        settings: {
+          theme: "blue",
+          showProgressBar: true,
+          collectEmail: true,
+          collectName: true,
+          collectPhone: false
         }
-      ],
-      settings: {
-        theme: "blue",
-        showProgressBar: true,
-        collectEmail: true,
-        collectName: true,
-        collectPhone: false
-      }
-    };
-    
-    const [newQuiz] = await db.insert(quizzes)
-      .values({
-        id: quizId,
-        ...quiz,
-        structure: quiz.structure || defaultStructure,
-        createdAt: now,
-        updatedAt: now
-      })
-      .returning();
-    return newQuiz;
+      };
+      
+      const [newQuiz] = await db.insert(quizzes)
+        .values({
+          id: quizId,
+          ...quiz,
+          structure: quiz.structure || defaultStructure,
+          createdAt: now,
+          updatedAt: now
+        })
+        .returning();
+      return newQuiz;
+    } catch (error) {
+      console.error('❌ ERRO AO CRIAR QUIZ:', error);
+      throw new Error(`Failed to create quiz: ${error.message}`);
+    }
   }
 
   async updateQuiz(id: string, updates: Partial<InsertQuiz>): Promise<Quiz> {

@@ -149,6 +149,8 @@ export function registerSQLiteRoutes(app: Express): Server {
       await storage.storeRefreshToken(user.id, newRefreshToken);
 
       res.json({
+        success: true,
+        message: "Token refreshed successfully",
         token: accessToken,
         refreshToken: newRefreshToken,
         accessToken: accessToken,
@@ -157,7 +159,9 @@ export function registerSQLiteRoutes(app: Express): Server {
           email: user.email,
           role: user.role,
           plan: user.plan
-        }
+        },
+        expiresIn: 3600,
+        tokenType: "Bearer"
       });
     } catch (error) {
       console.error("Token refresh error:", error);

@@ -140,6 +140,18 @@ export function runMigrations() {
     createIndexIfNotExists('idx_users_plan', 'users', 'plan');
     createIndexIfNotExists('idx_users_role', 'users', 'role');
     
+    // Índices compostos para performance avançada
+    createIndexIfNotExists('idx_quizzes_userId_published', 'quizzes', 'userId, isPublished');
+    createIndexIfNotExists('idx_quiz_responses_quiz_submitted', 'quiz_responses', 'quizId, submittedAt');
+    createIndexIfNotExists('idx_sms_campaigns_user_status', 'sms_campaigns', 'userId, status');
+    createIndexIfNotExists('idx_sms_logs_campaign_status', 'sms_logs', 'campaignId, status');
+    createIndexIfNotExists('idx_response_variables_quiz_name', 'response_variables', 'quizId, variableName');
+    
+    // Índices adicionais para otimização de queries lentas
+    createIndexIfNotExists('idx_quizzes_createdAt', 'quizzes', 'createdAt');
+    createIndexIfNotExists('idx_quizzes_updatedAt', 'quizzes', 'updatedAt');
+    createIndexIfNotExists('idx_quiz_responses_userId_quiz', 'quiz_responses', 'userId, quizId');
+    
     console.log('✅ Database indexes created successfully');
       return;
     }

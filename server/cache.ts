@@ -75,6 +75,28 @@ export class HighPerformanceCache {
     return this.set(`dashboard:${userId}`, data, 60); // 1 minuto
   }
 
+  // Método para limpeza forçada de cache
+  forceClearCache() {
+    console.log("🧹 CACHE - Limpeza forçada iniciada");
+    this.cache.keys().forEach(key => {
+      this.cache.del(key);
+    });
+    console.log("✅ CACHE - Limpeza forçada concluída");
+  }
+
+  // Método para optimizar uso de memória
+  optimizeMemory() {
+    const keys = this.cache.keys();
+    const totalKeys = keys.length;
+    
+    // Limitar a 1000 chaves máximo
+    if (totalKeys > 1000) {
+      const keysToDelete = keys.slice(0, totalKeys - 1000);
+      keysToDelete.forEach(key => this.cache.del(key));
+      console.log(`🧹 CACHE - Removidas ${keysToDelete.length} chaves antigas`);
+    }
+  }
+
   // Cache específico para quizzes (cache médio)
   getQuizzes(userId: string) {
     return this.get<any[]>(`quizzes:${userId}`);
@@ -109,6 +131,10 @@ export class HighPerformanceCache {
     const deletedQuizzes = this.del(`quizzes:${userId}`);
     const deletedDashboard = this.del(`dashboard:${userId}`);
     
+    // Invalidar também caches relacionados
+    this.del(`analytics:${userId}`);
+    this.del(`responses:${userId}`);
+    
     console.log("🔄 CACHE INVALIDATION - Deleted:", { user: deletedUser, quizzes: deletedQuizzes, dashboard: deletedDashboard });
   }
 
@@ -117,6 +143,11 @@ export class HighPerformanceCache {
     const deletedResponses = this.del(`responses:${quizId}`);
     const deletedQuizzes = this.del(`quizzes:${userId}`);
     const deletedDashboard = this.del(`dashboard:${userId}`);
+    
+    // Invalidar também caches específicos do quiz
+    this.del(`quiz:${quizId}`);
+    this.del(`analytics:${quizId}`);
+    this.del(`variables:${quizId}`);
     
     console.log("🔄 CACHE INVALIDATION - Deleted:", { responses: deletedResponses, quizzes: deletedQuizzes, dashboard: deletedDashboard });
   }
