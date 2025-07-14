@@ -32,14 +32,22 @@ const blockedIPs: Map<string, BlockedIP> = new Map();
 const failedAttempts: Map<string, number> = new Map();
 const suspiciousIPs: Map<string, number> = new Map();
 
+// Limpar listas de bloqueio a cada 5 minutos
+setInterval(() => {
+  blockedIPs.clear();
+  failedAttempts.clear();
+  suspiciousIPs.clear();
+  console.log('🔄 Sistema de segurança: Listas de bloqueio limpas');
+}, 5 * 60 * 1000);
+
 // Configurações de segurança
 const SECURITY_CONFIG = {
-  MAX_LOGIN_ATTEMPTS: 5,
-  BLOCK_DURATION: 15 * 60 * 1000, // 15 minutos
-  SUSPICIOUS_THRESHOLD: 10,
-  DDOS_THRESHOLD: 100,
+  MAX_LOGIN_ATTEMPTS: 15, // Aumentado para desenvolvimento
+  BLOCK_DURATION: 5 * 60 * 1000, // 5 minutos (reduzido)
+  SUSPICIOUS_THRESHOLD: 50, // Aumentado para desenvolvimento
+  DDOS_THRESHOLD: 500, // Aumentado para desenvolvimento
   RATE_LIMIT_WINDOW: 15 * 60 * 1000, // 15 minutos
-  RATE_LIMIT_MAX: 100,
+  RATE_LIMIT_MAX: 500, // Aumentado para desenvolvimento
   BRUTE_FORCE_WINDOW: 10 * 60 * 1000, // 10 minutos
 };
 

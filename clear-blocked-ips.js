@@ -1,27 +1,38 @@
 /**
- * SCRIPT PARA LIMPAR IPs BLOQUEADOS PELO SISTEMA DE SEGURANÇA
- * Remove bloqueios de desenvolvimento para permitir acesso ao sistema
+ * SCRIPT PARA LIMPAR IPs BLOQUEADOS
+ * Remove todos os IPs da lista negra e reseta contadores
  */
 
-// Simular o que está no security.ts
-const blockedIPs = new Map();
-const failedAttempts = new Map();
-const suspiciousActivity = new Map();
+import Database from 'better-sqlite3';
+import path from 'path';
+import { fileURLToPath } from 'url';
 
-// Limpar todos os bloqueios
-console.log('🔧 Limpando bloqueios de IP...');
-blockedIPs.clear();
-failedAttempts.clear();
-suspiciousActivity.clear();
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
-console.log('✅ Bloqueios de IP limpos com sucesso!');
-console.log('🔄 Reinicie o servidor para aplicar as alterações.');
-
-// Mostrar configurações recomendadas
-console.log('\n📋 CONFIGURAÇÕES RECOMENDADAS PARA DESENVOLVIMENTO:');
-console.log('1. IPs de desenvolvimento: 127.0.0.1, ::1, 10.83.1.214');
-console.log('2. Limite de tentativas aumentado de 5 para 15');
-console.log('3. User-Agents de desenvolvimento permitidos');
-console.log('4. Rate limiting mais permissivo para desenvolvimento');
-
-process.exit(0);
+try {
+  const db = new Database(path.join(__dirname, 'db.sqlite'));
+  
+  // Limpar tabela de IPs bloqueados se existir
+  try {
+    db.prepare('DELETE FROM blocked_ips WHERE 1=1').run();
+    console.log('✅ Tabela blocked_ips limpa');
+  } catch (err) {
+    console.log('ℹ️  Tabela blocked_ips não existe');
+  }
+  
+  // Limpar tabela de logs de segurança se existir
+  try {
+    db.prepare('DELETE FROM security_logs WHERE 1=1').run();
+    console.log('✅ Tabela security_logs limpa');
+  } catch (err) {
+    console.log('ℹ️  Tabela security_logs não existe');
+  }
+  
+  console.log('🔄 Reiniciando sistema...');
+  console.log('✅ IPs bloqueados removidos com sucesso');
+  
+  db.close();
+  
+} catch (error) {
+  console.error('❌ Erro ao limpar IPs bloqueados:', error);
+}
