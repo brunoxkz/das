@@ -227,7 +227,7 @@ export default function Landing() {
             <div className="flex items-center space-x-8">
               <div className="flex items-center space-x-3">
                 <img 
-                  src="/logo-vendzz.svg" 
+                  src="/logo-vendzz.png" 
                   alt="Vendzz" 
                   className="h-10 w-auto"
                 />
