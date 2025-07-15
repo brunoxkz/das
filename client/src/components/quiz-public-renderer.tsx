@@ -165,6 +165,27 @@ export function QuizPublicRenderer({ quiz }: QuizPublicRendererProps) {
       styles.textAlign = properties.textAlign;
     }
     
+    // Estilo da fonte
+    if (properties?.textStyle) {
+      styles.fontStyle = properties.textStyle;
+    }
+    
+    // Decoração do texto (sublinhado)
+    if (properties?.textDecoration) {
+      styles.textDecoration = properties.textDecoration;
+    }
+    
+    // Cor de fundo
+    if (properties?.backgroundColor) {
+      styles.backgroundColor = properties.backgroundColor;
+    }
+    
+    // Padding para cor de fundo
+    if (properties?.backgroundColor) {
+      styles.padding = '8px 12px';
+      styles.borderRadius = '4px';
+    }
+    
     return styles;
   };
 
@@ -221,6 +242,16 @@ export function QuizPublicRenderer({ quiz }: QuizPublicRendererProps) {
           classes += ' text-right';
           break;
       }
+    }
+    
+    // Estilo da fonte
+    if (properties?.textStyle === 'italic') {
+      classes += ' italic';
+    }
+    
+    // Decoração do texto
+    if (properties?.textDecoration === 'underline') {
+      classes += ' underline';
     }
     
     return classes;
@@ -429,7 +460,12 @@ export function QuizPublicRenderer({ quiz }: QuizPublicRendererProps) {
       case 'text':
         return (
           <div key={id} className="space-y-4">
-            <h3 className="text-lg font-semibold">{properties?.question || 'Texto'}</h3>
+            <h3 
+              className={`text-lg font-semibold${getElementClasses(properties)}`}
+              style={getElementStyles(properties)}
+            >
+              {properties?.question || 'Texto'}
+            </h3>
             <Input
               type="text"
               placeholder={properties?.placeholder || 'Digite aqui'}
@@ -443,7 +479,12 @@ export function QuizPublicRenderer({ quiz }: QuizPublicRendererProps) {
       case 'email':
         return (
           <div key={id} className="space-y-4">
-            <h3 className="text-lg font-semibold">{properties?.question || 'E-mail'}</h3>
+            <h3 
+              className={`text-lg font-semibold${getElementClasses(properties)}`}
+              style={getElementStyles(properties)}
+            >
+              {properties?.question || 'E-mail'}
+            </h3>
             <Input
               type="email"
               placeholder={properties?.placeholder || 'Digite seu email'}
@@ -458,7 +499,12 @@ export function QuizPublicRenderer({ quiz }: QuizPublicRendererProps) {
         return (
           <div key={id} className="space-y-4">
             {(properties?.question || properties?.label) && (
-              <h3 className="text-lg font-semibold">{properties?.question || properties?.label || 'Telefone'}</h3>
+              <h3 
+                className={`text-lg font-semibold${getElementClasses(properties)}`}
+                style={getElementStyles(properties)}
+              >
+                {properties?.question || properties?.label || 'Telefone'}
+              </h3>
             )}
             <Input
               type="tel"
@@ -474,7 +520,12 @@ export function QuizPublicRenderer({ quiz }: QuizPublicRendererProps) {
         return (
           <div key={id} className="space-y-4">
             {(properties?.question || properties?.label) && (
-              <h3 className="text-lg font-semibold">{properties?.question || properties?.label || 'Número'}</h3>
+              <h3 
+                className={`text-lg font-semibold${getElementClasses(properties)}`}
+                style={getElementStyles(properties)}
+              >
+                {properties?.question || properties?.label || 'Número'}
+              </h3>
             )}
             <Input
               type="number"
@@ -492,7 +543,12 @@ export function QuizPublicRenderer({ quiz }: QuizPublicRendererProps) {
         return (
           <div key={id} className="space-y-4">
             {(properties?.question || properties?.label) && (
-              <h3 className="text-lg font-semibold">{properties?.question || properties?.label || 'Texto'}</h3>
+              <h3 
+                className={`text-lg font-semibold${getElementClasses(properties)}`}
+                style={getElementStyles(properties)}
+              >
+                {properties?.question || properties?.label || 'Texto'}
+              </h3>
             )}
             <Textarea
               placeholder={properties?.placeholder || 'Digite seu texto aqui...'}
@@ -509,7 +565,12 @@ export function QuizPublicRenderer({ quiz }: QuizPublicRendererProps) {
         return (
           <div key={id} className="space-y-4">
             {(element.content || properties?.question || properties?.label) && (
-              <h3 className="text-lg font-semibold">{element.content || properties?.question || properties?.label || 'Opções'}</h3>
+              <h3 
+                className={`text-lg font-semibold${getElementClasses(properties)}`}
+                style={getElementStyles(properties)}
+              >
+                {element.content || properties?.question || properties?.label || 'Opções'}
+              </h3>
             )}
             <div className="space-y-2">
               {Array.isArray(checkboxOptions) && checkboxOptions.length > 0 ? (
@@ -586,15 +647,46 @@ export function QuizPublicRenderer({ quiz }: QuizPublicRendererProps) {
                 {properties?.question || element.content || 'Altura'}
               </h3>
             </div>
-            <Input
-              type="number"
-              placeholder={properties?.placeholder || '170'}
-              value={answer || ''}
-              onChange={(e) => handleElementAnswer(id, type, Number(e.target.value), properties?.fieldId || 'altura')}
-              required={properties?.required}
-              min={properties?.min || 100}
-              max={properties?.max || 250}
-            />
+            <div className="space-y-2">
+              {properties?.unitSystem === 'imperial' ? (
+                <div className="flex space-x-2">
+                  <div className="flex-1">
+                    <Input
+                      type="number"
+                      placeholder="5"
+                      value={answer?.feet || ''}
+                      onChange={(e) => handleElementAnswer(id, type, { ...answer, feet: e.target.value }, properties?.fieldId || 'altura')}
+                      required={properties?.required}
+                      min={3}
+                      max={8}
+                    />
+                    <label className="text-sm text-gray-600 mt-1 block">Pés</label>
+                  </div>
+                  <div className="flex-1">
+                    <Input
+                      type="number"
+                      placeholder="10"
+                      value={answer?.inches || ''}
+                      onChange={(e) => handleElementAnswer(id, type, { ...answer, inches: e.target.value }, properties?.fieldId || 'altura')}
+                      required={properties?.required}
+                      min={0}
+                      max={11}
+                    />
+                    <label className="text-sm text-gray-600 mt-1 block">Polegadas</label>
+                  </div>
+                </div>
+              ) : (
+                <Input
+                  type="number"
+                  placeholder={properties?.placeholder || '170'}
+                  value={answer || ''}
+                  onChange={(e) => handleElementAnswer(id, type, Number(e.target.value), properties?.fieldId || 'altura')}
+                  required={properties?.required}
+                  min={properties?.min || 100}
+                  max={properties?.max || 250}
+                />
+              )}
+            </div>
           </div>
         );
 

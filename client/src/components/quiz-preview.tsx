@@ -946,7 +946,10 @@ export default function QuizPreview({ quiz, onClose, onSave }: QuizPreviewProps)
         return (
           <div className="mb-6">
             {element.question && (
-              <h3 className="text-lg font-medium text-gray-900 mb-4">
+              <h3 
+                className={`text-lg font-medium text-gray-900 mb-4${getElementClasses(element)}`}
+                style={getElementStyles(element)}
+              >
                 {processVariables(element.question)}
                 {element.required && <span className="text-red-500 ml-1">*</span>}
               </h3>
@@ -971,7 +974,10 @@ export default function QuizPreview({ quiz, onClose, onSave }: QuizPreviewProps)
         return (
           <div className="mb-6">
             {element.question && (
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label 
+                className={`block text-sm font-medium text-gray-700 mb-2${getElementClasses(element)}`}
+                style={getElementStyles(element)}
+              >
                 {processVariables(element.question)}
                 {element.required && <span className="text-red-500 ml-1">*</span>}
               </label>
@@ -989,7 +995,10 @@ export default function QuizPreview({ quiz, onClose, onSave }: QuizPreviewProps)
         return (
           <div className="mb-6">
             {element.question && (
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label 
+                className={`block text-sm font-medium text-gray-700 mb-2${getElementClasses(element)}`}
+                style={getElementStyles(element)}
+              >
                 {processVariables(element.question)}
                 {element.required && <span className="text-red-500 ml-1">*</span>}
               </label>
@@ -1008,7 +1017,10 @@ export default function QuizPreview({ quiz, onClose, onSave }: QuizPreviewProps)
         return (
           <div className="mb-6">
             {element.question && (
-              <h3 className="text-lg font-medium text-gray-900 mb-4">
+              <h3 
+                className={`text-lg font-medium text-gray-900 mb-4${getElementClasses(element)}`}
+                style={getElementStyles(element)}
+              >
                 {processVariables(element.question)}
                 {element.required && <span className="text-red-500 ml-1">*</span>}
               </h3>
