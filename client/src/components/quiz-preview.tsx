@@ -510,8 +510,14 @@ export default function QuizPreview({ quiz, onClose, onSave }: QuizPreviewProps)
   };
 
   // Função para aplicar estilos visuais baseados nas propriedades
-  const getElementStyles = (properties: any) => {
+  const getElementStyles = (element: any) => {
     const styles: any = {};
+    const properties = element?.properties || element;
+    
+    // Debug: log das propriedades
+    if (properties?.textSize || properties?.textColor || properties?.fontWeight) {
+      console.log('Element with visual properties:', properties);
+    }
     
     // Tamanho do texto
     if (properties?.textSize) {
@@ -546,12 +552,34 @@ export default function QuizPreview({ quiz, onClose, onSave }: QuizPreviewProps)
       styles.textAlign = properties.textAlign;
     }
     
+    // Estilo da fonte
+    if (properties?.textStyle) {
+      styles.fontStyle = properties.textStyle;
+    }
+    
+    // Decoração do texto (sublinhado)
+    if (properties?.textDecoration) {
+      styles.textDecoration = properties.textDecoration;
+    }
+    
+    // Cor de fundo
+    if (properties?.backgroundColor) {
+      styles.backgroundColor = properties.backgroundColor;
+    }
+    
+    // Padding para cor de fundo
+    if (properties?.backgroundColor) {
+      styles.padding = '8px 12px';
+      styles.borderRadius = '4px';
+    }
+    
     return styles;
   };
 
   // Função para obter classes CSS baseadas nas propriedades
-  const getElementClasses = (properties: any) => {
+  const getElementClasses = (element: any) => {
     let classes = '';
+    const properties = element?.properties || element;
     
     // Tamanho do texto
     if (properties?.textSize) {
@@ -601,6 +629,20 @@ export default function QuizPreview({ quiz, onClose, onSave }: QuizPreviewProps)
         case 'right':
           classes += ' text-right';
           break;
+      }
+    }
+    
+    // Estilo da fonte
+    if (properties?.textStyle) {
+      if (properties.textStyle === 'italic') {
+        classes += ' italic';
+      }
+    }
+    
+    // Decoração do texto (sublinhado)
+    if (properties?.textDecoration) {
+      if (properties.textDecoration === 'underline') {
+        classes += ' underline';
       }
     }
     

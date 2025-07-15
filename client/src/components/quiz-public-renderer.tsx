@@ -129,8 +129,14 @@ export function QuizPublicRenderer({ quiz }: QuizPublicRendererProps) {
   };
 
   // Função para aplicar estilos visuais baseados nas propriedades
-  const getElementStyles = (properties: any) => {
+  const getElementStyles = (element: any) => {
     const styles: any = {};
+    const properties = element?.properties || element;
+    
+    // Debug: log das propriedades
+    if (properties?.textSize || properties?.textColor || properties?.fontWeight) {
+      console.log('Element with visual properties:', properties);
+    }
     
     // Tamanho do texto
     if (properties?.textSize) {
@@ -190,8 +196,9 @@ export function QuizPublicRenderer({ quiz }: QuizPublicRendererProps) {
   };
 
   // Função para obter classes CSS baseadas nas propriedades
-  const getElementClasses = (properties: any) => {
+  const getElementClasses = (element: any) => {
     let classes = '';
+    const properties = element?.properties || element;
     
     // Tamanho do texto
     if (properties?.textSize) {
@@ -427,8 +434,8 @@ export function QuizPublicRenderer({ quiz }: QuizPublicRendererProps) {
         return (
           <div key={id} className="space-y-4">
             <h3 
-              className={`text-lg font-semibold${getElementClasses(properties)}`}
-              style={getElementStyles(properties)}
+              className={`text-lg font-semibold${getElementClasses(element)}`}
+              style={getElementStyles(element)}
             >
               {element.content || properties?.question || properties?.content || 'Pergunta'}
             </h3>
@@ -461,8 +468,8 @@ export function QuizPublicRenderer({ quiz }: QuizPublicRendererProps) {
         return (
           <div key={id} className="space-y-4">
             <h3 
-              className={`text-lg font-semibold${getElementClasses(properties)}`}
-              style={getElementStyles(properties)}
+              className={`text-lg font-semibold${getElementClasses(element)}`}
+              style={getElementStyles(element)}
             >
               {properties?.question || 'Texto'}
             </h3>
@@ -480,8 +487,8 @@ export function QuizPublicRenderer({ quiz }: QuizPublicRendererProps) {
         return (
           <div key={id} className="space-y-4">
             <h3 
-              className={`text-lg font-semibold${getElementClasses(properties)}`}
-              style={getElementStyles(properties)}
+              className={`text-lg font-semibold${getElementClasses(element)}`}
+              style={getElementStyles(element)}
             >
               {properties?.question || 'E-mail'}
             </h3>
