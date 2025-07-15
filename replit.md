@@ -208,6 +208,18 @@ No additional files or separate projects are maintained in this repository.
 
 ```
 Changelog:
+- July 15, 2025. FUNCIONALIDADE DE DUPLICAR PÁGINA IMPLEMENTADA - Sistema completo de duplicação de páginas com todos os elementos:
+  * Adicionado botão de duplicar (ícone Copy) ao lado do botão de deletar em cada página
+  * Implementada função duplicatePage que cria cópia profunda da página e elementos
+  * Geração de IDs únicos para página duplicada e todos os elementos internos
+  * ResponseIds únicos com timestamp para evitar conflitos de variáveis
+  * Página duplicada inserida imediatamente após a original
+  * Preservação de propriedades especiais (isTransition, isGame) na duplicação
+  * Ativação automática da página duplicada após criação
+  * Títulos automáticos com sufixo "(Cópia)" para identificação
+  * Teste completo implementado com 100% de aprovação (4/4 testes passaram)
+  * Funcionalidade testada para páginas normais, transições e jogos
+  * Sistema pronto para uso em produção com salvamento automático
 - July 15, 2025. MÓDULO WHATSAPP - OTIMIZAÇÕES ULTRA-RÁPIDAS IMPLEMENTADAS COM 82% DE SUCESSO:
   * Taxa de sucesso estabilizada em 82% através de otimizações ultra-rápidas nos endpoints
   * Endpoints otimizados: ping (123ms), sync (143ms), verificação duplicatas (128ms), campanhas (137ms)

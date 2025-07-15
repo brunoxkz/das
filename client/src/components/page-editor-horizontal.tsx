@@ -67,7 +67,8 @@ import {
   ExternalLink,
   ArrowLeftRight,
   HelpCircle,
-  Brain
+  Brain,
+  Copy
 } from "lucide-react";
 
 interface Element {
@@ -1042,6 +1043,33 @@ const gameElementCategories = [
         handleActivePageChange(newPages.length - 1);
       }
     }
+  };
+
+  const duplicatePage = (index: number) => {
+    const originalPage = pages[index];
+    const timestamp = Date.now();
+    
+    // Criar uma cópia profunda da página
+    const duplicatedPage: QuizPage = {
+      id: timestamp,
+      title: `${originalPage.title} (Cópia)`,
+      elements: originalPage.elements.map((element, elementIndex) => ({
+        ...element,
+        id: timestamp + elementIndex + 1, // ID único sequencial para cada elemento
+        responseId: element.responseId ? `${element.responseId}_copy_${timestamp}` : undefined
+      })),
+      isTransition: originalPage.isTransition,
+      isGame: originalPage.isGame
+    };
+    
+    // Inserir a página duplicada logo após a original
+    const newPages = [...pages];
+    newPages.splice(index + 1, 0, duplicatedPage);
+    
+    onPagesChange(newPages);
+    
+    // Ativar a página duplicada
+    handleActivePageChange(index + 1);
   };
 
   const reorderPages = (fromIndex: number, toIndex: number) => {
@@ -4668,6 +4696,18 @@ const gameElementCategories = [
                     <p className="text-xs text-gray-500">{page.elements.length} elementos</p>
                   </div>
                   <div className="flex gap-1">
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="h-6 w-6 p-0 text-blue-500 hover:text-blue-700"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        duplicatePage(index);
+                      }}
+                      title="Duplicar página"
+                    >
+                      <Copy className="w-3 h-3" />
+                    </Button>
                     {pages.length > 1 && (
                       <Button
                         size="sm"
@@ -4677,6 +4717,7 @@ const gameElementCategories = [
                           e.stopPropagation();
                           deletePage(index);
                         }}
+                        title="Deletar página"
                       >
                         <Trash2 className="w-3 h-3" />
                       </Button>
