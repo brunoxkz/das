@@ -415,6 +415,33 @@ const elementosQuiz = {
         { shareShowIcons: true, shareIconSize: 'md', shareStyle: 'modern' },
         { shareTitle: 'Quiz Incrível', shareDescription: 'Teste seus conhecimentos!' }
       ]
+    },
+    
+    chart: {
+      propriedades: [
+        'chartTitle', 'chartType', 'chartData', 'chartColors', 'chartWidth',
+        'chartHeight', 'chartShowLegend', 'timePeriod', 'beforeAfterData',
+        'timeData', 'chartTitleColor'
+      ],
+      testeCasos: [
+        { chartType: 'bar', chartTitle: 'Resultados Semanais', chartShowLegend: true },
+        { chartType: 'line', timePeriod: 'weeks', chartWidth: '100%' },
+        { chartType: 'before_after', beforeAfterData: { before: { value: 25 }, after: { value: 85 } } }
+      ]
+    },
+    
+    metrics: {
+      propriedades: [
+        'metricsTitle', 'metricsData', 'metricsShowValue', 'metricsShowPercentage',
+        'metricsColor', 'timePeriod', 'weeklyData', 'metric1Name', 'metric1Value',
+        'metric1Max', 'metric2Name', 'metric2Value', 'metric2Max', 'metric3Name',
+        'metric3Value', 'metric3Max'
+      ],
+      testeCasos: [
+        { metricsTitle: 'Performance em Tempo Real', metricsShowValue: true },
+        { metric1Name: 'Conversões', metric1Value: 85, metric1Max: 100 },
+        { weeklyData: [45, 52, 48, 67, 73, 85, 62], timePeriod: 'Últimas 7 dias' }
+      ]
     }
   }
 };

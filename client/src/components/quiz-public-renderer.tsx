@@ -701,6 +701,153 @@ export function QuizPublicRenderer({ quiz }: QuizPublicRendererProps) {
           </div>
         );
 
+      case 'chart':
+        return (
+          <div key={id} className="mb-6">
+            <Card className="p-6">
+              <CardHeader>
+                <CardTitle style={{ color: properties.chartTitleColor || '#1F2937' }}>
+                  {properties.chartTitle || 'Gráfico de Resultados'}
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="w-full h-64 bg-gradient-to-br from-blue-50 to-purple-50 rounded-lg flex items-center justify-center">
+                  {properties.chartType === 'bar' && (
+                    <div className="flex items-end space-x-3 h-32">
+                      <div className="w-8 bg-blue-500 rounded-t" style={{ height: '60%' }}></div>
+                      <div className="w-8 bg-green-500 rounded-t" style={{ height: '80%' }}></div>
+                      <div className="w-8 bg-purple-500 rounded-t" style={{ height: '40%' }}></div>
+                      <div className="w-8 bg-orange-500 rounded-t" style={{ height: '95%' }}></div>
+                    </div>
+                  )}
+                  {properties.chartType === 'line' && (
+                    <div className="relative w-48 h-32">
+                      <svg className="w-full h-full" viewBox="0 0 200 120">
+                        <polyline
+                          points="20,80 60,40 100,60 140,20 180,30"
+                          fill="none"
+                          stroke="#3B82F6"
+                          strokeWidth="3"
+                        />
+                        <circle cx="20" cy="80" r="4" fill="#3B82F6" />
+                        <circle cx="60" cy="40" r="4" fill="#3B82F6" />
+                        <circle cx="100" cy="60" r="4" fill="#3B82F6" />
+                        <circle cx="140" cy="20" r="4" fill="#3B82F6" />
+                        <circle cx="180" cy="30" r="4" fill="#3B82F6" />
+                      </svg>
+                    </div>
+                  )}
+                  {properties.chartType === 'pie' && (
+                    <div className="w-32 h-32 rounded-full bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 flex items-center justify-center">
+                      <div className="w-12 h-12 bg-white rounded-full"></div>
+                    </div>
+                  )}
+                  {properties.chartType === 'before_after' && (
+                    <div className="flex items-end space-x-8">
+                      <div className="text-center">
+                        <div className="w-16 h-16 bg-red-400 rounded-full flex items-center justify-center text-white font-bold text-lg mb-2">
+                          {properties.beforeAfterData?.before?.value || 25}
+                        </div>
+                        <span className="text-sm text-gray-600">Antes</span>
+                      </div>
+                      <div className="text-center">
+                        <div className="w-16 h-16 bg-green-500 rounded-full flex items-center justify-center text-white font-bold text-lg mb-2">
+                          {properties.beforeAfterData?.after?.value || 85}
+                        </div>
+                        <span className="text-sm text-gray-600">Depois</span>
+                      </div>
+                    </div>
+                  )}
+                </div>
+                {properties.chartShowLegend && (
+                  <div className="mt-4 flex justify-center space-x-4">
+                    <div className="flex items-center space-x-2">
+                      <div className="w-3 h-3 bg-blue-500 rounded"></div>
+                      <span className="text-sm text-gray-600">Dados 1</span>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <div className="w-3 h-3 bg-green-500 rounded"></div>
+                      <span className="text-sm text-gray-600">Dados 2</span>
+                    </div>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+        );
+
+      case 'metrics':
+        return (
+          <div key={id} className="mb-6">
+            <Card className="p-6">
+              <CardHeader>
+                <CardTitle>
+                  {properties.metricsTitle || 'Métricas de Performance'}
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  {properties.metric1Name && (
+                    <div className="text-center p-4 bg-blue-50 rounded-lg">
+                      <div className="text-2xl font-bold text-blue-600 mb-1">
+                        {properties.metricsShowValue ? properties.metric1Value || 0 : '—'}
+                        {properties.metricsShowPercentage && '%'}
+                      </div>
+                      <div className="text-sm text-gray-600">{properties.metric1Name}</div>
+                      <Progress 
+                        value={((properties.metric1Value || 0) / (properties.metric1Max || 100)) * 100} 
+                        className="mt-2"
+                      />
+                    </div>
+                  )}
+                  {properties.metric2Name && (
+                    <div className="text-center p-4 bg-green-50 rounded-lg">
+                      <div className="text-2xl font-bold text-green-600 mb-1">
+                        {properties.metricsShowValue ? properties.metric2Value || 0 : '—'}
+                        {properties.metricsShowPercentage && '%'}
+                      </div>
+                      <div className="text-sm text-gray-600">{properties.metric2Name}</div>
+                      <Progress 
+                        value={((properties.metric2Value || 0) / (properties.metric2Max || 100)) * 100} 
+                        className="mt-2"
+                      />
+                    </div>
+                  )}
+                  {properties.metric3Name && (
+                    <div className="text-center p-4 bg-purple-50 rounded-lg">
+                      <div className="text-2xl font-bold text-purple-600 mb-1">
+                        {properties.metricsShowValue ? properties.metric3Value || 0 : '—'}
+                        {properties.metricsShowPercentage && '%'}
+                      </div>
+                      <div className="text-sm text-gray-600">{properties.metric3Name}</div>
+                      <Progress 
+                        value={((properties.metric3Value || 0) / (properties.metric3Max || 100)) * 100} 
+                        className="mt-2"
+                      />
+                    </div>
+                  )}
+                </div>
+                {properties.weeklyData && (
+                  <div className="mt-6">
+                    <div className="text-sm text-gray-600 mb-3">
+                      {properties.timePeriod || 'Últimos 7 dias'}
+                    </div>
+                    <div className="flex items-end space-x-2 h-16">
+                      {properties.weeklyData.map((value: number, index: number) => (
+                        <div
+                          key={index}
+                          className="flex-1 bg-gradient-to-t from-blue-500 to-blue-300 rounded-t opacity-80"
+                          style={{ height: `${(value / Math.max(...properties.weeklyData)) * 100}%` }}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+        );
+
       default:
         return (
           <div key={id} className="p-4 bg-gray-100 rounded-md">
