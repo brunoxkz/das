@@ -902,175 +902,117 @@ export function QuizPublicRenderer({ quiz }: QuizPublicRendererProps) {
       }}
     >
       <div className="max-w-4xl mx-auto">
-        {/* Barra de Progresso */}
-        {(quiz.design?.showProgressBar !== false) && (
-          <div className="mb-6">
-            {/* Renderizar contador baseado na posição */}
-            {(() => {
-              const progressBarType = quiz.design?.progressBarType || "percentage";
-              const progressBarPosition = quiz.design?.progressBarPosition || "center";
-              const progress = calculateProgress();
-              
-              const getCounterText = () => {
-                if (progressBarType === "percentage") {
-                  return `${Math.round(progress)}%`;
-                } else if (progressBarType === "steps") {
-                  return `${currentPageIndex + 1}/${pages.length}`;
-                }
-                return "";
-              };
-
-              const counterElement = progressBarType !== "none" ? (
-                <span className="text-sm font-medium" style={{ color: textColor }}>
-                  {getCounterText()}
-                </span>
-              ) : null;
-
-              return (
-                <div className="space-y-2">
-                  {/* Contador acima da barra */}
-                  {progressBarPosition === "above" && counterElement && (
-                    <div className="text-center">
-                      {counterElement}
-                    </div>
-                  )}
-
-                  {/* Contador na mesma linha da barra */}
-                  {(progressBarPosition === "left" || progressBarPosition === "center" || progressBarPosition === "right") && counterElement && (
-                    <div className={`flex items-center mb-2 ${
-                      progressBarPosition === "left" ? "justify-start" :
-                      progressBarPosition === "center" ? "justify-center" :
-                      "justify-end"
-                    }`}>
-                      {counterElement}
-                    </div>
-                  )}
-
-                  {/* Barra de progresso */}
-                  <div 
-                    className={`w-full overflow-hidden ${
-                      quiz.design?.progressBarStyle === 'square' ? 'rounded-none' :
-                      quiz.design?.progressBarStyle === 'thin' ? 'rounded-sm' :
-                      quiz.design?.progressBarStyle === 'thick' ? 'rounded-lg' :
-                      'rounded-full'
-                    }`}
-                    style={{ 
-                      height: `${quiz.design?.progressBarHeight || 8}px`,
-                      backgroundColor: isDarkMode ? '#4b5563' : '#e5e7eb'
-                    }}
-                  >
-                    <div
-                      className={`h-full transition-all duration-300 ${
-                        quiz.design?.progressBarStyle === 'square' ? 'rounded-none' :
-                        quiz.design?.progressBarStyle === 'thin' ? 'rounded-sm' :
-                        quiz.design?.progressBarStyle === 'thick' ? 'rounded-lg' :
-                        'rounded-full'
-                      }`}
-                      style={{ 
-                        width: `${progress}%`,
-                        backgroundColor: quiz.design?.progressBarColor || '#10b981'
-                      }}
-                    />
-                  </div>
-
-                  {/* Contador abaixo da barra */}
-                  {progressBarPosition === "below" && counterElement && (
-                    <div className="text-center">
-                      {counterElement}
-                    </div>
-                  )}
-                </div>
-              );
-            })()}
+        {/* Logo apenas se existir */}
+        {quiz.design?.logoUrl && (
+          <div className={`mb-6 flex ${
+            quiz.design.logoPosition === 'left' ? 'justify-start' :
+            quiz.design.logoPosition === 'right' ? 'justify-end' :
+            'justify-center'
+          }`}>
+            <img
+              src={quiz.design.logoUrl}
+              alt="Logo"
+              className={`max-w-[200px] object-contain ${
+                quiz.design.logoSize === 'small' ? 'h-8' :
+                quiz.design.logoSize === 'large' ? 'h-16' :
+                'h-10'
+              }`}
+              onError={(e) => {
+                e.currentTarget.style.display = 'none';
+              }}
+            />
           </div>
         )}
 
-        {/* Header com Logo */}
-        <div className="text-center mb-8">
-          {/* Logo */}
-          {quiz.design?.logoUrl && (
-            <div className={`mb-6 flex ${
-              quiz.design.logoPosition === 'left' ? 'justify-start' :
-              quiz.design.logoPosition === 'right' ? 'justify-end' :
-              'justify-center'
-            }`}>
-              <img
-                src={quiz.design.logoUrl}
-                alt="Logo"
-                className={`max-w-[200px] object-contain ${
-                  quiz.design.logoSize === 'small' ? 'h-8' :
-                  quiz.design.logoSize === 'large' ? 'h-16' :
-                  'h-10'
-                }`}
-                onError={(e) => {
-                  e.currentTarget.style.display = 'none';
-                }}
-              />
-            </div>
-          )}
-          
-          {/* Título e descrição do quiz */}
-          {quiz.title && (
-            <h1 className="text-3xl font-bold mb-4" style={{ color: textColor }}>
-              {quiz.title}
-            </h1>
-          )}
-          
-          {quiz.description && (
-            <p className="text-lg mb-6" style={{ color: isDarkMode ? '#d1d5db' : '#6b7280' }}>
-              {quiz.description}
-            </p>
-          )}
-        </div>
-
         {/* Conteúdo da Página */}
         <Card style={{ backgroundColor: cardBgColor, border: `1px solid ${borderColor}` }}>
-          <CardHeader>
-            <CardTitle className="text-center" style={{ color: textColor }}>{currentPage.title}</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-6">
+          <CardContent className="space-y-6 p-6">
+            {/* Barra de Progresso dentro do card */}
+            {(quiz.design?.showProgressBar !== false) && (
+              <div className="mb-6">
+                {/* Renderizar contador baseado na posição */}
+                {(() => {
+                  const progressBarType = quiz.design?.progressBarType || "percentage";
+                  const progressBarPosition = quiz.design?.progressBarPosition || "center";
+                  const progress = calculateProgress();
+                  
+                  const getCounterText = () => {
+                    if (progressBarType === "percentage") {
+                      return `${Math.round(progress)}%`;
+                    } else if (progressBarType === "steps") {
+                      return `${currentPageIndex + 1}/${pages.length}`;
+                    }
+                    return "";
+                  };
+
+                  const counterElement = progressBarType !== "none" ? (
+                    <span className="text-sm font-medium" style={{ color: textColor }}>
+                      {getCounterText()}
+                    </span>
+                  ) : null;
+
+                  return (
+                    <div className="space-y-2">
+                      {/* Contador acima da barra */}
+                      {progressBarPosition === "above" && counterElement && (
+                        <div className="text-center">
+                          {counterElement}
+                        </div>
+                      )}
+
+                      {/* Contador na mesma linha da barra */}
+                      {(progressBarPosition === "left" || progressBarPosition === "center" || progressBarPosition === "right") && counterElement && (
+                        <div className={`flex items-center mb-2 ${
+                          progressBarPosition === "left" ? "justify-start" :
+                          progressBarPosition === "center" ? "justify-center" :
+                          "justify-end"
+                        }`}>
+                          {counterElement}
+                        </div>
+                      )}
+
+                      {/* Barra de progresso */}
+                      <div 
+                        className={`w-full overflow-hidden ${
+                          quiz.design?.progressBarStyle === 'square' ? 'rounded-none' :
+                          quiz.design?.progressBarStyle === 'thin' ? 'rounded-sm' :
+                          quiz.design?.progressBarStyle === 'thick' ? 'rounded-lg' :
+                          'rounded-full'
+                        }`}
+                        style={{ 
+                          height: `${quiz.design?.progressBarHeight || 8}px`,
+                          backgroundColor: isDarkMode ? '#4b5563' : '#e5e7eb'
+                        }}
+                      >
+                        <div
+                          className={`h-full transition-all duration-300 ${
+                            quiz.design?.progressBarStyle === 'square' ? 'rounded-none' :
+                            quiz.design?.progressBarStyle === 'thin' ? 'rounded-sm' :
+                            quiz.design?.progressBarStyle === 'thick' ? 'rounded-lg' :
+                            'rounded-full'
+                          }`}
+                          style={{ 
+                            width: `${progress}%`,
+                            backgroundColor: quiz.design?.progressBarColor || '#10b981'
+                          }}
+                        />
+                      </div>
+
+                      {/* Contador abaixo da barra */}
+                      {progressBarPosition === "below" && counterElement && (
+                        <div className="text-center">
+                          {counterElement}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })()}
+              </div>
+            )}
+            
             {currentPage.elements.map(renderElement)}
           </CardContent>
         </Card>
-
-        {/* Navegação */}
-        <div className="flex justify-between items-center mt-6">
-          <Button 
-            variant="outline" 
-            onClick={handlePrevPage}
-            disabled={currentPageIndex === 0}
-            style={{ 
-              backgroundColor: isDarkMode ? '#374151' : '#ffffff',
-              color: isDarkMode ? '#f9fafb' : '#1f2937',
-              borderColor: isDarkMode ? '#4b5563' : '#e5e7eb'
-            }}
-          >
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Anterior
-          </Button>
-
-          <div className="text-sm" style={{ color: isDarkMode ? '#9ca3af' : '#6b7280' }}>
-            Respostas salvas: {quizResponses.length}
-          </div>
-
-          <Button 
-            onClick={handleNextPage}
-            disabled={isSubmitting}
-            className="bg-green-500 hover:bg-green-600 text-white"
-          >
-            {isSubmitting ? (
-              <>
-                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                Enviando...
-              </>
-            ) : (
-              <>
-                {isLastPage ? 'Finalizar' : 'Próxima'}
-                <ArrowRight className="w-4 h-4 ml-2" />
-              </>
-            )}
-          </Button>
-        </div>
       </div>
     </div>
   );
