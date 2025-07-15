@@ -3580,10 +3580,13 @@ const gameElementCategories = [
                         </span>
                       </div>
                       {element.metricsShowValue !== false && (
-                        <span className="text-sm font-bold px-2 py-1 rounded-md" style={{ 
-                          color: metric.color, 
-                          backgroundColor: metric.color + "20" 
-                        }}>
+                        <span 
+                          className="text-sm font-bold px-2 py-1 rounded-md" 
+                          style={{ 
+                            color: metric.color, 
+                            backgroundColor: `${metric.color}20` 
+                          }}
+                        >
                           {metric.value}{metric.unit}
                         </span>
                       )}
@@ -8525,11 +8528,11 @@ const gameElementCategories = [
                       <Input
                         value={selectedElementData.responseId || ""}
                         onChange={(e) => updateElement(selectedElementData.id, { responseId: e.target.value })}
-                        placeholder="pergunta_continuacao"
+                        placeholder="questao_sim_nao"
                         className="mt-1"
                       />
                       <div className="text-xs text-gray-500 mt-1">
-                        Use {`{${selectedElementData.responseId || 'pergunta_continuacao'}}`} em outros elementos para referenciar a resposta (sim/não)
+                        Use {`{${selectedElementData.responseId || 'questao_sim_nao'}}`} em outros elementos para referenciar a resposta (sim/não)
                       </div>
                     </div>
                   </div>
