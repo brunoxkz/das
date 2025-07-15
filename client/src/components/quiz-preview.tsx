@@ -1293,87 +1293,27 @@ export default function QuizPreview({ quiz, onClose, onSave }: QuizPreviewProps)
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-      <div className="bg-white rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] overflow-hidden">
-        {/* Header */}
-        <div className="bg-gradient-to-r from-green-600 to-green-700 text-white p-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-2xl font-bold">{quiz.title || 'Quiz Preview'}</h1>
-              {quiz.description && (
-                <p className="text-green-100 mt-1">{quiz.description}</p>
-              )}
-            </div>
-            <Button
-              onClick={onClose}
-              variant="ghost"
-              size="sm"
-              className="text-white hover:bg-green-600"
-            >
-              <X className="w-5 h-5" />
-            </Button>
+    <div className="w-full h-full bg-white">
+      {/* Progress Bar */}
+      {showProgress && !showLeadCapture && (
+        <div className="mb-6">
+          <div className="flex items-center justify-between text-sm text-gray-600 mb-2">
+            <span>Pergunta {currentStep + 1} de {totalSteps}</span>
+            <span>{Math.round(((currentStep + 1) / totalSteps) * 100)}%</span>
           </div>
-          
-          {/* Progress Bar */}
-          {showProgress && !showLeadCapture && (
-            <div className="mt-4">
-              <div className="flex items-center justify-between text-sm text-green-100 mb-2">
-                <span>Pergunta {currentStep + 1} de {totalSteps}</span>
-                <span>{Math.round(((currentStep + 1) / totalSteps) * 100)}%</span>
-              </div>
-              <Progress 
-                value={((currentStep + 1) / totalSteps) * 100} 
-                className="h-2 bg-green-500"
-              />
-            </div>
-          )}
+          <Progress 
+            value={((currentStep + 1) / totalSteps) * 100} 
+            className="h-2"
+          />
         </div>
+      )}
 
-        {/* Content */}
-        <div className="p-6 overflow-y-auto" style={{ maxHeight: 'calc(90vh - 200px)' }}>
-          {renderPage()}
-        </div>
-
-        {/* Footer */}
-        <div className="border-t bg-gray-50 p-4 flex items-center justify-between">
-          <div className="flex items-center space-x-4">
-            {!isOnline && (
-              <Badge variant="destructive" className="text-xs">
-                Offline
-              </Badge>
-            )}
-            {lastSaved && (
-              <span className="text-xs text-gray-500">
-                Salvo em {lastSaved.toLocaleTimeString()}
-              </span>
-            )}
-          </div>
-          
-          <div className="flex items-center space-x-2">
-            {currentStep > 0 && allowBack && !isTransitionPage && !isGamePage && (
-              <Button
-                onClick={handlePrevious}
-                variant="outline"
-                size="sm"
-              >
-                <ChevronLeft className="w-4 h-4 mr-1" />
-                Anterior
-              </Button>
-            )}
-            
-            {!showLeadCapture && (
-              <Button
-                onClick={handleNext}
-                size="sm"
-                className="bg-green-600 hover:bg-green-700"
-              >
-                {isLastStep ? 'Finalizar' : 'Próxima'}
-                {!isLastStep && <ChevronRight className="w-4 h-4 ml-1" />}
-              </Button>
-            )}
-          </div>
-        </div>
+      {/* Content */}
+      <div className="overflow-y-auto" style={{ minHeight: '400px' }}>
+        {renderPage()}
       </div>
+
+
     </div>
   );
 }
