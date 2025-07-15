@@ -25,7 +25,6 @@ import TestPage from "@/pages/test-page";
 
 import QuizPublicPage from "@/pages/quiz-public";
 import SMSCreditsPage from "@/pages/sms-credits";
-import SMSCampaignsPage from "@/pages/sms-campaigns";
 
 
 import WhatsAppAutomationPage from "@/pages/whatsapp-automation";
@@ -42,7 +41,6 @@ import IntegracoesPage from "@/pages/integracoes";
 import ExtensoesPage from "@/pages/extensoes";
 import VoiceCallingPage from "@/pages/voice-calling";
 import ConditionalCampaignsPage from "@/pages/conditional-campaigns";
-import AutomacoesPage from "@/pages/automacoes";
 import { useAuth } from "@/hooks/useAuth-jwt";
 import { isUnauthorizedError } from "@/lib/authUtils";
 import { SidebarProvider } from "@/hooks/useSidebar";
@@ -166,7 +164,7 @@ function App() {
 
         <Route path="/sms-credits">
           <Layout>
-            <SMSCampaignsPage />
+            <SMSCreditsPage />
           </Layout>
         </Route>
         <Route path="/email-marketing">
@@ -221,12 +219,6 @@ function App() {
         <Route path="/conditional-campaigns">
           <Layout>
             <ConditionalCampaignsPage />
-          </Layout>
-        </Route>
-
-        <Route path="/automacoes">
-          <Layout>
-            <AutomacoesPage />
           </Layout>
         </Route>
 

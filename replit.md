@@ -208,20 +208,6 @@ No additional files or separate projects are maintained in this repository.
 
 ```
 Changelog:
-- July 15, 2025. SISTEMA DE DISPARO EM MASSA IMPLEMENTADO - Funcionalidade completa para campanhas SMS, Email e WhatsApp:
-  * Adicionado novo tipo de campanha "DISPARO EM MASSA" com upload de arquivo CSV/TXT
-  * Implementado processamento de listas personalizadas do usuário com validação de formato
-  * Criados componentes complete-sms-campaign-modal.tsx, complete-email-campaign-modal.tsx, complete-whatsapp-campaign-modal.tsx
-  * Upload de arquivo funcional com suporte a formatos CSV e TXT para contatos
-  * Processamento automático de dados: telefone,nome,email (campos opcionais)
-  * Validação de listas: SMS (telefone obrigatório), Email (email obrigatório), WhatsApp (telefone obrigatório)
-  * Interface visual aprimorada com área de upload drag-and-drop e indicadores de progresso
-  * Sistema diferencia entre campanhas baseadas em quiz e campanhas de disparo em massa
-  * Lógica condicional: campanha massa não exige quiz, mas exige lista de contatos válida
-  * Feedback visual com contadores de contatos carregados e mensagens de sucesso
-  * Preservação da funcionalidade existente para campanhas tradicionais baseadas em quiz
-  * Sistema totalmente integrado com os 4 tipos de campanha existentes: Remarketing, Ultra Customizado, Ao Vivo, Ultra Customizada
-  * Pronto para processamento backend dos arquivos enviados e disparo em massa
 - July 15, 2025. FUNCIONALIDADE DE DUPLICAR PÁGINA IMPLEMENTADA - Sistema completo de duplicação de páginas com todos os elementos:
   * Adicionado botão de duplicar (ícone Copy) ao lado do botão de deletar em cada página
   * Implementada função duplicatePage que cria cópia profunda da página e elementos

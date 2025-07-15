@@ -19,7 +19,6 @@ import { useLocation } from "wouter";
 import { VariableHelperUnified } from "@/components/ui/variable-helper-unified";
 import { UltraPersonalizedCampaignModal } from "@/components/ultra-personalized-campaign-modal";
 import { CampaignStyleSelector, CampaignStyle } from "@/components/campaign-style-selector";
-import { SimpleSMSCampaignModal } from "@/components/simple-sms-campaign-modal";
 
 interface SMSCredits {
   total: number;
@@ -64,9 +63,6 @@ export default function SMSCreditsPage() {
   // Estados para seletor de estilo de campanha
   const [showCampaignStyleSelector, setShowCampaignStyleSelector] = useState(false);
   const [selectedCampaignStyle, setSelectedCampaignStyle] = useState<CampaignStyle | null>(null);
-  
-  // Estado para modal completo de campanha SMS
-  const [showCompleteCampaignModal, setShowCompleteCampaignModal] = useState(false);
   const [activeTab, setActiveTab] = useState("overview");
   const [selectedQuiz, setSelectedQuiz] = useState<string>("");
   const [campaignForm, setCampaignForm] = useState<{
@@ -340,10 +336,22 @@ export default function SMSCreditsPage() {
 
   const handleCampaignStyleSelect = (style: CampaignStyle) => {
     setSelectedCampaignStyle(style);
-    setShowCampaignStyleSelector(false);
     
-    // Abrir o modal completo para seleção de quiz e configuração da campanha
-    setShowCompleteCampaignModal(true);
+    // Baseado no estilo selecionado, redirecionar para o fluxo apropriado
+    switch (style) {
+      case 'remarketing':
+        handleCreateRemarketingCampaign();
+        break;
+      case 'remarketing_ultra_customizado':
+        handleCreateRemarketingUltraCustomizedCampaign();
+        break;
+      case 'ao_vivo_tempo_real':
+        handleCreateStandardCampaign();
+        break;
+      case 'ao_vivo_ultra_customizada':
+        handleCreateUltraCustomizedCampaign();
+        break;
+    }
   };
 
   const handleCreateRemarketingCampaign = () => {
@@ -645,24 +653,6 @@ export default function SMSCreditsPage() {
       variables: ["link", "nome"]
     }
   ];
-
-  const handleCreateCompleteCampaign = async (campaignData: any) => {
-    try {
-      await createCampaignMutation.mutateAsync(campaignData);
-      setShowCompleteCampaignModal(false);
-      toast({
-        title: "Campanha criada com sucesso!",
-        description: "Sua campanha SMS foi criada e está ativa.",
-      });
-    } catch (error) {
-      console.error('Erro ao criar campanha:', error);
-      toast({
-        title: "Erro ao criar campanha",
-        description: "Ocorreu um erro ao criar a campanha. Tente novamente.",
-        variant: "destructive",
-      });
-    }
-  };
 
   if (creditsLoading || quizzesLoading) {
     return (
@@ -1127,16 +1117,6 @@ export default function SMSCreditsPage() {
                   <strong>Importante:</strong> É necessário comprar créditos SMS para usar esta funcionalidade. Cada SMS enviado consome 1 crédito.
                 </AlertDescription>
               </Alert>
-
-              <div className="flex justify-center pt-6">
-                <Button 
-                  onClick={() => setShowCompleteCampaignModal(true)}
-                  className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-8 py-3 text-lg font-semibold shadow-lg"
-                >
-                  <MessageSquare className="w-5 h-5 mr-2" />
-                  Criar Campanha SMS Completa
-                </Button>
-              </div>
             </CardContent>
           </Card>
 
@@ -1755,19 +1735,6 @@ export default function SMSCreditsPage() {
         onClose={() => setShowCampaignStyleSelector(false)}
         onStyleSelect={handleCampaignStyleSelect}
         platform="sms"
-      />
-
-      {/* Modal Simples de Campanha SMS */}
-      <SimpleSMSCampaignModal
-        open={showCompleteCampaignModal}
-        onClose={() => {
-          setShowCompleteCampaignModal(false);
-          setSelectedCampaignStyle(null);
-        }}
-        onCreateCampaign={handleCreateCompleteCampaign}
-        quizzes={quizzes || []}
-        isCreating={createCampaignMutation.isPending}
-        selectedStyle={selectedCampaignStyle}
       />
     </div>
   );
