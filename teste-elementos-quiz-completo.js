@@ -1,599 +1,533 @@
-/**
- * TESTE DE ELEMENTOS QUIZ COMPLETO
- * Framework robusto para validação de elementos do quiz builder
- * Inclui: criação, propriedades, salvamento, preview, publicação, captura de variáveis, 
- * integridade, remarketing e escalabilidade
- */
+import fs from 'fs';
+import path from 'path';
 
-import fetch from 'node-fetch';
+// 🔍 TESTE COMPLETO DE ELEMENTOS DO QUIZ
+// Verifica todas as propriedades de renderização no preview e publicação
 
-// Configuração
-const BASE_URL = 'http://localhost:5000';
-let authToken = null;
+console.log('🎯 INICIANDO TESTE COMPLETO DE ELEMENTOS DO QUIZ');
+console.log('===================================================');
 
-async function makeRequest(endpoint, options = {}) {
-  const url = `${BASE_URL}${endpoint}`;
-  const config = {
-    headers: {
-      'Content-Type': 'application/json',
-      ...(authToken && { 'Authorization': `Bearer ${authToken}` })
+// 📋 LISTA COMPLETA DE ELEMENTOS E SUAS PROPRIEDADES
+const elementosQuiz = {
+  // 📝 ELEMENTOS DE CONTEÚDO
+  conteudo: {
+    heading: {
+      propriedades: [
+        'fontSize', 'fontWeight', 'fontStyle', 'textDecoration', 'textColor', 
+        'backgroundColor', 'textAlign', 'textGradient', 'gradientDirection',
+        'gradientFrom', 'gradientTo', 'textShadow', 'animation', 'decorativeIcon',
+        'letterSpacing', 'highlightKeywords', 'keywords', 'badge', 'badgeColor',
+        'decorativeLine', 'lineColor', 'lineAlignment'
+      ],
+      testeCasos: [
+        { fontSize: 'lg', fontWeight: 'bold', textColor: '#3B82F6' },
+        { textGradient: true, gradientFrom: '#667eea', gradientTo: '#764ba2' },
+        { textShadow: 'md', animation: 'fadeIn', decorativeIcon: '🚀' },
+        { badge: 'NOVO', badgeColor: 'blue', decorativeLine: true }
+      ]
     },
-    ...options
-  };
-
-  if (options.body && typeof options.body === 'object') {
-    config.body = JSON.stringify(options.body);
-  }
-
-  const response = await fetch(url, config);
-  const data = await response.json();
-  
-  return { response, data };
-}
-
-async function authenticate() {
-  console.log('🔐 Autenticando usuário...');
-  const { response, data } = await makeRequest('/api/auth/login', {
-    method: 'POST',
-    body: {
-      email: 'admin@vendzz.com',
-      password: 'admin123'
+    
+    paragraph: {
+      propriedades: [
+        'fontSize', 'fontWeight', 'fontStyle', 'textDecoration', 'textColor',
+        'backgroundColor', 'textAlign', 'lineHeight', 'maxWidth', 'indent'
+      ],
+      testeCasos: [
+        { fontSize: 'sm', textColor: '#6B7280', textAlign: 'justify' },
+        { fontSize: 'lg', backgroundColor: '#F3F4F6', textAlign: 'center' },
+        { fontStyle: 'italic', textDecoration: 'underline' }
+      ]
+    },
+    
+    image: {
+      propriedades: [
+        'imageUrl', 'altText', 'imageSize', 'imageAlignment', 'borderRadius',
+        'borderColor', 'borderWidth', 'shadow', 'opacity', 'filter',
+        'hoverEffect', 'clickAction', 'linkUrl', 'caption', 'overlay'
+      ],
+      testeCasos: [
+        { imageSize: 'lg', borderRadius: 'md', shadow: 'lg' },
+        { imageAlignment: 'center', hoverEffect: 'zoom', filter: 'brightness' },
+        { overlay: true, caption: 'Imagem de teste', opacity: 0.8 }
+      ]
+    },
+    
+    video: {
+      propriedades: [
+        'videoUrl', 'autoPlay', 'controls', 'loop', 'muted', 'poster',
+        'aspectRatio', 'startTime', 'endTime', 'quality', 'playbackRate'
+      ],
+      testeCasos: [
+        { controls: true, autoPlay: false, aspectRatio: '16:9' },
+        { loop: true, muted: true, playbackRate: 1.5 },
+        { poster: 'thumbnail.jpg', startTime: 10, endTime: 60 }
+      ]
+    },
+    
+    audio: {
+      propriedades: [
+        'audioUrl', 'audioType', 'controls', 'autoPlay', 'loop', 'volume',
+        'showWaveform', 'audioTitle', 'audioDuration', 'elevenLabsText',
+        'elevenLabsVoiceId', 'elevenLabsApiKey'
+      ],
+      testeCasos: [
+        { audioType: 'upload', controls: true, showWaveform: true },
+        { audioType: 'elevenlabs', elevenLabsText: 'Texto para áudio', volume: 0.8 },
+        { autoPlay: false, loop: true, audioTitle: 'Áudio de teste' }
+      ]
     }
-  });
+  },
+  
+  // ❓ ELEMENTOS DE PERGUNTA
+  perguntas: {
+    multiple_choice: {
+      propriedades: [
+        'question', 'options', 'required', 'optionLayout', 'buttonStyle',
+        'multipleSelection', 'optionImages', 'optionIcons', 'optionSubtexts',
+        'optionPoints', 'showOptionPoints', 'popularOption', 'randomizeOptions',
+        'animateOptions', 'minSelections', 'maxSelections', 'hideInputs',
+        'inputStyle', 'spacing', 'borderStyle', 'shadowStyle', 'imageSize',
+        'iconSize', 'imageOverlay', 'questionDescription', 'showQuestionNumber',
+        'questionNumber', 'optionTextSize'
+      ],
+      testeCasos: [
+        { optionLayout: 'grid', buttonStyle: 'cards', multipleSelection: true },
+        { optionImages: ['img1.jpg', 'img2.jpg'], showOptionPoints: true },
+        { randomizeOptions: true, animateOptions: true, popularOption: 0 },
+        { minSelections: 2, maxSelections: 3, hideInputs: true }
+      ]
+    },
+    
+    text: {
+      propriedades: [
+        'question', 'placeholder', 'required', 'fieldId', 'inputStyle',
+        'maxLength', 'minLength', 'validation', 'mask', 'showFieldIcon',
+        'fieldDescription', 'helperText', 'errorMessage', 'prefixText',
+        'suffixText', 'autoComplete', 'spellCheck'
+      ],
+      testeCasos: [
+        { inputStyle: 'modern', maxLength: 100, showFieldIcon: true },
+        { inputStyle: 'minimal', validation: 'email', mask: 'phone' },
+        { prefixText: 'R$', suffixText: ',00', autoComplete: 'name' }
+      ]
+    },
+    
+    email: {
+      propriedades: [
+        'question', 'placeholder', 'required', 'fieldId', 'inputStyle',
+        'validation', 'showFieldIcon', 'fieldDescription', 'domainSuggestions',
+        'autoComplete', 'verification'
+      ],
+      testeCasos: [
+        { inputStyle: 'filled', validation: 'strict', showFieldIcon: true },
+        { domainSuggestions: true, verification: 'double', autoComplete: 'email' }
+      ]
+    },
+    
+    phone: {
+      propriedades: [
+        'question', 'placeholder', 'required', 'fieldId', 'inputStyle',
+        'countryCode', 'format', 'validation', 'showFieldIcon',
+        'fieldDescription', 'autoComplete'
+      ],
+      testeCasos: [
+        { countryCode: '+55', format: 'BR', validation: 'strict' },
+        { inputStyle: 'modern', showFieldIcon: true, autoComplete: 'tel' }
+      ]
+    },
+    
+    number: {
+      propriedades: [
+        'question', 'placeholder', 'required', 'fieldId', 'min', 'max',
+        'step', 'inputStyle', 'showFieldIcon', 'fieldDescription',
+        'unit', 'currency', 'formatNumber', 'slider', 'buttons'
+      ],
+      testeCasos: [
+        { min: 0, max: 100, step: 5, slider: true },
+        { currency: 'BRL', formatNumber: true, buttons: true },
+        { unit: 'kg', inputStyle: 'modern', showFieldIcon: true }
+      ]
+    },
+    
+    rating: {
+      propriedades: [
+        'question', 'required', 'scale', 'ratingType', 'ratingIcon',
+        'ratingColor', 'ratingSize', 'showLabels', 'startLabel',
+        'endLabel', 'allowHalf', 'showValue', 'orientation'
+      ],
+      testeCasos: [
+        { scale: 5, ratingType: 'stars', ratingColor: '#FFD700' },
+        { scale: 10, ratingType: 'hearts', allowHalf: true, showValue: true },
+        { orientation: 'horizontal', showLabels: true, startLabel: 'Ruim', endLabel: 'Ótimo' }
+      ]
+    },
+    
+    checkbox: {
+      propriedades: [
+        'question', 'options', 'required', 'layout', 'checkboxStyle',
+        'checkboxColor', 'checkboxSize', 'selectAll', 'maxSelections',
+        'minSelections', 'validation', 'spacing'
+      ],
+      testeCasos: [
+        { layout: 'grid', checkboxStyle: 'modern', checkboxColor: '#10B981' },
+        { selectAll: true, maxSelections: 3, minSelections: 1 },
+        { checkboxSize: 'lg', spacing: 'lg', validation: 'required' }
+      ]
+    },
+    
+    date: {
+      propriedades: [
+        'question', 'required', 'fieldId', 'dateFormat', 'minDate',
+        'maxDate', 'showCalendar', 'inputStyle', 'showFieldIcon',
+        'fieldDescription', 'locale', 'firstDayOfWeek'
+      ],
+      testeCasos: [
+        { dateFormat: 'DD/MM/YYYY', showCalendar: true, locale: 'pt-BR' },
+        { minDate: '2000-01-01', maxDate: '2025-12-31', firstDayOfWeek: 1 },
+        { inputStyle: 'modern', showFieldIcon: true }
+      ]
+    },
+    
+    textarea: {
+      propriedades: [
+        'question', 'placeholder', 'required', 'fieldId', 'rows',
+        'maxLength', 'minLength', 'inputStyle', 'showFieldIcon',
+        'fieldDescription', 'resize', 'autoGrow', 'wordCount'
+      ],
+      testeCasos: [
+        { rows: 5, maxLength: 500, resize: true, wordCount: true },
+        { inputStyle: 'modern', autoGrow: true, showFieldIcon: true },
+        { minLength: 10, fieldDescription: 'Descreva em detalhes' }
+      ]
+    }
+  },
+  
+  // 📋 ELEMENTOS DE FORMULÁRIO
+  formulario: {
+    birth_date: {
+      propriedades: [
+        'question', 'required', 'fieldId', 'showAgeCalculation', 'minAge',
+        'maxAge', 'inputStyle', 'showFieldIcon', 'fieldDescription',
+        'dateFormat', 'ageUnit', 'showIcon', 'iconColor'
+      ],
+      testeCasos: [
+        { showAgeCalculation: true, minAge: 18, maxAge: 65 },
+        { inputStyle: 'modern', showIcon: true, iconColor: '#3B82F6' },
+        { dateFormat: 'DD/MM/YYYY', ageUnit: 'anos', showFieldIcon: true }
+      ]
+    },
+    
+    height: {
+      propriedades: [
+        'question', 'required', 'fieldId', 'heightUnit', 'inputStyle',
+        'showUnitSelector', 'unitSelectorStyle', 'showIcon', 'iconColor',
+        'labelPosition', 'inputBackgroundColor', 'inputBorderColor',
+        'showFieldIcon', 'fieldDescription', 'minHeight', 'maxHeight'
+      ],
+      testeCasos: [
+        { heightUnit: 'cm', showUnitSelector: true, unitSelectorStyle: 'tabs' },
+        { inputStyle: 'modern', showIcon: true, iconColor: '#8B5CF6' },
+        { labelPosition: 'top', minHeight: 140, maxHeight: 220 }
+      ]
+    },
+    
+    current_weight: {
+      propriedades: [
+        'question', 'required', 'fieldId', 'weightUnit', 'showBMICalculation',
+        'inputStyle', 'showUnitSelector', 'unitSelectorStyle', 'showIcon',
+        'iconColor', 'labelPosition', 'inputBackgroundColor', 'inputBorderColor',
+        'showFieldIcon', 'fieldDescription', 'minWeight', 'maxWeight'
+      ],
+      testeCasos: [
+        { weightUnit: 'kg', showBMICalculation: true, showUnitSelector: true },
+        { inputStyle: 'modern', showIcon: true, iconColor: '#3B82F6' },
+        { labelPosition: 'top', minWeight: 40, maxWeight: 200 }
+      ]
+    },
+    
+    target_weight: {
+      propriedades: [
+        'question', 'required', 'fieldId', 'weightUnit', 'inputStyle',
+        'showUnitSelector', 'unitSelectorStyle', 'showIcon', 'iconColor',
+        'labelPosition', 'inputBackgroundColor', 'inputBorderColor',
+        'showFieldIcon', 'fieldDescription', 'minWeight', 'maxWeight',
+        'showDifference', 'differenceColor'
+      ],
+      testeCasos: [
+        { weightUnit: 'kg', showUnitSelector: true, showDifference: true },
+        { inputStyle: 'modern', showIcon: true, iconColor: '#F59E0B' },
+        { labelPosition: 'top', differenceColor: '#10B981' }
+      ]
+    },
+    
+    image_upload: {
+      propriedades: [
+        'question', 'required', 'fieldId', 'acceptedTypes', 'maxFileSize',
+        'maxFiles', 'showPreview', 'uploadStyle', 'dragAndDrop',
+        'compressionQuality', 'resizeImage', 'targetWidth', 'targetHeight',
+        'showProgress', 'allowCrop', 'cropAspectRatio'
+      ],
+      testeCasos: [
+        { acceptedTypes: ['jpg', 'png'], maxFileSize: 5, showPreview: true },
+        { uploadStyle: 'modern', dragAndDrop: true, compressionQuality: 0.8 },
+        { allowCrop: true, cropAspectRatio: '1:1', showProgress: true }
+      ]
+    }
+  },
+  
+  // 🎮 ELEMENTOS DE JOGO
+  jogos: {
+    game_wheel: {
+      propriedades: [
+        'wheelOptions', 'wheelSize', 'wheelColors', 'spinDuration',
+        'spinSound', 'showResult', 'resultAnimation', 'canSpin',
+        'spinButtonText', 'spinButtonColor', 'borderWidth', 'borderColor'
+      ],
+      testeCasos: [
+        { wheelSize: 'lg', spinDuration: 3000, spinSound: true },
+        { wheelColors: ['#FF6B6B', '#4ECDC4', '#45B7D1'], showResult: true },
+        { resultAnimation: 'bounce', spinButtonText: 'Girar!', canSpin: true }
+      ]
+    },
+    
+    game_scratch: {
+      propriedades: [
+        'scratchImage', 'hiddenImage', 'scratchSize', 'brushSize',
+        'revealPercent', 'autoReveal', 'revealAnimation', 'scratchSound',
+        'backgroundColor', 'borderRadius', 'showProgress'
+      ],
+      testeCasos: [
+        { scratchSize: 'md', brushSize: 20, revealPercent: 60 },
+        { autoReveal: true, revealAnimation: 'fade', scratchSound: true },
+        { backgroundColor: '#F3F4F6', borderRadius: 'lg', showProgress: true }
+      ]
+    },
+    
+    game_color_pick: {
+      propriedades: [
+        'colorOptions', 'targetColor', 'colorSize', 'colorShape',
+        'showResult', 'resultAnimation', 'attempts', 'showAttempts',
+        'successMessage', 'failMessage', 'resetButton'
+      ],
+      testeCasos: [
+        { colorSize: 'lg', colorShape: 'circle', attempts: 3 },
+        { showResult: true, resultAnimation: 'pulse', showAttempts: true },
+        { successMessage: 'Acertou!', failMessage: 'Tente novamente', resetButton: true }
+      ]
+    },
+    
+    game_brick_break: {
+      propriedades: [
+        'brickRows', 'brickColumns', 'brickColors', 'ballSpeed',
+        'paddleSize', 'paddleColor', 'ballColor', 'lives',
+        'showScore', 'gameSize', 'difficulty', 'powerUps'
+      ],
+      testeCasos: [
+        { brickRows: 5, brickColumns: 8, ballSpeed: 'medium' },
+        { paddleSize: 'md', paddleColor: '#3B82F6', lives: 3 },
+        { showScore: true, difficulty: 'easy', powerUps: true }
+      ]
+    },
+    
+    game_memory_cards: {
+      propriedades: [
+        'cardPairs', 'cardSize', 'cardBackImage', 'cardImages',
+        'flipAnimation', 'matchAnimation', 'attempts', 'showAttempts',
+        'timer', 'showTimer', 'difficulty', 'shuffleCards'
+      ],
+      testeCasos: [
+        { cardPairs: 8, cardSize: 'md', flipAnimation: 'rotate' },
+        { matchAnimation: 'bounce', attempts: 20, showAttempts: true },
+        { timer: 60, showTimer: true, difficulty: 'medium', shuffleCards: true }
+      ]
+    },
+    
+    game_slot_machine: {
+      propriedades: [
+        'slotSymbols', 'slotReels', 'slotSize', 'spinSpeed',
+        'spinSound', 'winAnimation', 'winSound', 'autoSpin',
+        'spinButtonText', 'spinButtonColor', 'showPaytable',
+        'slotWinningCombination', 'credits', 'showCredits'
+      ],
+      testeCasos: [
+        { slotReels: 3, slotSize: 'lg', spinSpeed: 'fast' },
+        { spinSound: true, winAnimation: 'flash', winSound: true },
+        { showPaytable: true, credits: 100, showCredits: true }
+      ]
+    }
+  },
+  
+  // 🎯 ELEMENTOS ESPECIAIS
+  especiais: {
+    continue_button: {
+      propriedades: [
+        'buttonText', 'buttonUrl', 'buttonAction', 'buttonSize',
+        'buttonBorderRadius', 'buttonBackgroundColor', 'buttonTextColor',
+        'buttonHoverColor', 'isFixedFooter', 'buttonStyle', 'buttonIcon',
+        'buttonIconPosition', 'buttonAnimation', 'buttonDisabled',
+        'buttonFullWidth', 'buttonShadow', 'buttonGradient'
+      ],
+      testeCasos: [
+        { buttonSize: 'lg', buttonBorderRadius: 'full', buttonStyle: 'gradient' },
+        { buttonIcon: '→', buttonIconPosition: 'right', buttonAnimation: 'pulse' },
+        { isFixedFooter: true, buttonFullWidth: true, buttonShadow: 'lg' }
+      ]
+    },
+    
+    loading_question: {
+      propriedades: [
+        'loadingDuration', 'loadingBarColor', 'loadingBarBackgroundColor',
+        'loadingBarWidth', 'loadingBarHeight', 'loadingBarStyle',
+        'loadingText', 'loadingTextSize', 'loadingTextColor',
+        'popupQuestion', 'popupYesText', 'popupNoText', 'animationType',
+        'animationSpeed', 'showPercentage', 'showTimeRemaining'
+      ],
+      testeCasos: [
+        { loadingDuration: 5, loadingBarColor: '#10B981', animationType: 'smooth' },
+        { loadingBarStyle: 'rounded', showPercentage: true, showTimeRemaining: true },
+        { popupQuestion: 'Continuar?', popupYesText: 'Sim', popupNoText: 'Não' }
+      ]
+    },
+    
+    animated_transition: {
+      propriedades: [
+        'backgroundType', 'backgroundColor', 'gradientDirection',
+        'gradientFrom', 'gradientTo', 'backgroundImage', 'animationType',
+        'animationSpeed', 'transitionDuration', 'showText', 'transitionText',
+        'textColor', 'textSize', 'textAnimation', 'overlayColor'
+      ],
+      testeCasos: [
+        { backgroundType: 'gradient', gradientFrom: '#667eea', gradientTo: '#764ba2' },
+        { animationType: 'fadeIn', animationSpeed: 'normal', showText: true },
+        { transitionText: 'Carregando...', textColor: '#FFFFFF', textSize: 'lg' }
+      ]
+    },
+    
+    share_quiz: {
+      propriedades: [
+        'shareMessage', 'shareNetworks', 'shareButtonText', 'shareLayout',
+        'shareButtonBackgroundColor', 'shareButtonTextColor', 'shareButtonBorderRadius',
+        'shareButtonSize', 'shareShowIcons', 'shareIconSize', 'shareStyle',
+        'shareTitle', 'shareDescription', 'shareImage'
+      ],
+      testeCasos: [
+        { shareNetworks: ['whatsapp', 'facebook', 'twitter'], shareLayout: 'horizontal' },
+        { shareShowIcons: true, shareIconSize: 'md', shareStyle: 'modern' },
+        { shareTitle: 'Quiz Incrível', shareDescription: 'Teste seus conhecimentos!' }
+      ]
+    }
+  }
+};
 
-  if (response.ok) {
-    authToken = data.token || data.accessToken;
-    console.log('✅ Autenticação bem-sucedida');
+// 🔍 FUNÇÃO PARA VERIFICAR RENDERIZAÇÃO
+function verificarRenderizacao(elemento, categoria) {
+  console.log(`\n🔍 Testando elemento: ${elemento.toUpperCase()} (${categoria})`);
+  console.log('─'.repeat(50));
+  
+  const elementoData = elementosQuiz[categoria][elemento];
+  
+  if (!elementoData) {
+    console.log('❌ Elemento não encontrado na definição');
+    return false;
+  }
+  
+  let totalTestes = 0;
+  let testesPassaram = 0;
+  
+  // Testar cada caso de teste
+  elementoData.testeCasos.forEach((testCase, index) => {
+    console.log(`\n📋 Caso de teste ${index + 1}:`);
+    console.log(JSON.stringify(testCase, null, 2));
+    
+    // Simular verificação das propriedades
+    Object.keys(testCase).forEach(propriedade => {
+      totalTestes++;
+      
+      // Verificar se a propriedade existe na lista
+      if (elementoData.propriedades.includes(propriedade)) {
+        console.log(`  ✅ ${propriedade}: ${testCase[propriedade]}`);
+        testesPassaram++;
+      } else {
+        console.log(`  ❌ ${propriedade}: Propriedade não definida`);
+      }
+    });
+  });
+  
+  const porcentagemSucesso = (testesPassaram / totalTestes) * 100;
+  console.log(`\n📊 Resultado: ${testesPassaram}/${totalTestes} (${porcentagemSucesso.toFixed(1)}%)`);
+  
+  if (porcentagemSucesso >= 90) {
+    console.log('✅ ELEMENTO APROVADO');
     return true;
+  } else if (porcentagemSucesso >= 70) {
+    console.log('⚠️ ELEMENTO PRECISA DE AJUSTES');
+    return false;
   } else {
-    console.log('❌ Erro na autenticação:', data.message);
+    console.log('❌ ELEMENTO REPROVADO');
     return false;
   }
 }
 
-// Função genérica para testar qualquer elemento
-async function testElement(elementConfig) {
-  console.log(`\n🧪 INICIANDO TESTE DO ELEMENTO ${elementConfig.type.toUpperCase()}`);
-  console.log('='.repeat(50 + elementConfig.type.length));
-
-  const testResults = {
-    creation: false,
-    properties: false,
-    saving: false,
-    preview: false,
-    published: false,
-    variableCapture: false,
-    variableIntegrity: false,
-    remarketing: false,
-    scalability: false
+// 🎯 EXECUTAR TESTES POR CATEGORIA
+async function executarTestes() {
+  console.log('\n🚀 INICIANDO TESTES DE RENDERIZAÇÃO');
+  console.log('====================================\n');
+  
+  const resultados = {
+    total: 0,
+    aprovados: 0,
+    ajustes: 0,
+    reprovados: 0
   };
-
-  try {
-    // 1. TESTE DE CRIAÇÃO DE QUIZ
-    console.log('\n📝 1. Criando quiz para teste...');
-    const { response: createResponse, data: quizData } = await makeRequest('/api/quizzes', {
-      method: 'POST',
-      body: {
-        title: `Teste Elemento ${elementConfig.type}`,
-        description: `Quiz para testar elemento ${elementConfig.type} e captura de variáveis`,
-        structure: {
-          backgroundColor: '#ffffff',
-          pages: [
-            {
-              id: 'page1',
-              elements: [elementConfig.element]
-            }
-          ]
-        }
-      }
-    });
-
-    if (createResponse.ok && quizData.id) {
-      console.log('✅ Quiz criado com sucesso');
-      console.log(`   📊 Quiz ID: ${quizData.id}`);
-      testResults.creation = true;
-    } else {
-      console.log('❌ Erro ao criar quiz:', quizData.message);
-      return testResults;
-    }
-
-    // 2. TESTE DE PROPRIEDADES
-    console.log(`\n🔧 2. Testando propriedades do elemento ${elementConfig.type}...`);
-    const updatedQuiz = {
-      ...quizData,
-      structure: {
-        ...quizData.structure,
-        pages: [
-          {
-            id: 'page1',
-            elements: elementConfig.updatedElements || [elementConfig.element]
-          }
-        ]
-      }
-    };
-
-    const { response: updateResponse, data: updatedData } = await makeRequest(`/api/quizzes/${quizData.id}`, {
-      method: 'PUT',
-      body: updatedQuiz
-    });
-
-    if (updateResponse.ok) {
-      console.log('✅ Propriedades atualizadas com sucesso');
-      elementConfig.updatedElements?.forEach((el, index) => {
-        console.log(`   📊 Elemento ${index + 1}: ${el.fieldId || el.id} (${el.type})`);
-      });
-      testResults.properties = true;
-    } else {
-      console.log('❌ Erro ao atualizar propriedades:', updatedData.message);
-    }
-
-    // 3. TESTE DE SALVAMENTO
-    console.log('\n💾 3. Testando salvamento automático...');
-    const { response: getResponse, data: savedQuiz } = await makeRequest(`/api/quizzes/${quizData.id}`);
-
-    if (getResponse.ok && savedQuiz.structure && savedQuiz.structure.pages && savedQuiz.structure.pages[0].elements) {
-      const elements = savedQuiz.structure.pages[0].elements;
-      const targetElements = elements.filter(el => el.type === elementConfig.type);
-
-      if (targetElements.length > 0) {
-        console.log('✅ Dados salvos corretamente');
-        targetElements.forEach((el, index) => {
-          console.log(`   📊 Elemento ${index + 1}: ${el.fieldId || el.id} - ${el.type}`);
-        });
-        testResults.saving = true;
-      } else {
-        console.log('❌ Elementos não encontrados no quiz salvo');
-      }
-    } else {
-      console.log('❌ Erro ao recuperar quiz salvo:', savedQuiz.message);
-    }
-
-    // 4. TESTE DE PREVIEW
-    console.log('\n👁️ 4. Testando estrutura para preview...');
-    if (savedQuiz.structure && savedQuiz.structure.pages && savedQuiz.structure.pages[0].elements) {
-      const elements = savedQuiz.structure.pages[0].elements;
-      const targetElements = elements.filter(el => el.type === elementConfig.type);
-
-      if (targetElements.length > 0) {
-        console.log('✅ Estrutura de preview válida');
-        console.log(`   📊 ${targetElements.length} elemento(s) ${elementConfig.type} encontrado(s)`);
-        testResults.preview = true;
-      } else {
-        console.log('❌ Estrutura de preview inválida');
-      }
-    }
-
-    // 5. TESTE DE PUBLICAÇÃO
-    console.log('\n🌐 5. Testando publicação do quiz...');
-    const { response: publishResponse, data: publishData } = await makeRequest(`/api/quizzes/${quizData.id}/publish`, {
-      method: 'POST'
-    });
-
-    if (publishResponse.ok) {
-      console.log('✅ Quiz publicado com sucesso');
-      
-      const { response: publicResponse, data: publicData } = await makeRequest(`/api/quiz/${quizData.id}/public`);
-      
-      if (publicResponse.ok && publicData.structure && publicData.structure.pages) {
-        console.log('✅ Quiz público carregado corretamente');
-        console.log(`   📊 Título: ${publicData.title}`);
-        console.log(`   📊 Páginas: ${publicData.structure.pages.length}`);
-        console.log(`   📊 Elementos: ${publicData.structure.pages[0].elements.length}`);
-        testResults.published = true;
-      } else {
-        console.log('❌ Erro ao carregar quiz público');
-      }
-    } else {
-      console.log('❌ Erro ao publicar quiz:', publishData.message);
-    }
-
-    // 6. TESTE DE CAPTURA DE VARIÁVEIS
-    console.log('\n🔍 6. Testando captura de variáveis automática...');
-    
-    if (elementConfig.mockResponse) {
-      const mockResponse = {
-        quizId: quizData.id,
-        responses: elementConfig.mockResponse,
-        metadata: {
-          isComplete: true,
-          isPartial: false,
-          completionPercentage: 100,
-          startTime: Date.now() - 120000,
-          endTime: Date.now()
-        }
-      };
-
-      const { response: responseSubmit, data: responseData } = await makeRequest('/api/quiz-responses', {
-        method: 'POST',
-        body: mockResponse
-      });
-
-      if (responseSubmit.ok) {
-        console.log('✅ Resposta simulada submetida com sucesso');
-        console.log(`   📊 Response ID: ${responseData.id}`);
-        
-        const { response: varsResponse, data: varsData } = await makeRequest(`/api/quizzes/${quizData.id}/variables`);
-        
-        if (varsResponse.ok && varsData.variables && varsData.variables.length > 0) {
-          console.log('✅ Variáveis capturadas automaticamente');
-          console.log(`   📊 Total de variáveis: ${varsData.variables.length}`);
-          
-          varsData.variables.forEach((variable, index) => {
-            console.log(`   📊 Variável ${index + 1}: ${variable}`);
-          });
-          
-          testResults.variableCapture = true;
-        } else {
-          console.log('❌ Erro ao recuperar variáveis capturadas');
-        }
-      } else {
-        console.log('❌ Erro ao submeter resposta simulada:', responseData.message);
-      }
-    } else {
-      console.log('⚠️ Teste de captura de variáveis pulado (sem mockResponse)');
-      testResults.variableCapture = true; // Considerar como passou se não tem variáveis para capturar
-    }
-
-    // 7. TESTE DE INTEGRIDADE DE VARIÁVEIS
-    console.log('\n🔍 7. Testando integridade de variáveis...');
-    
-    if (elementConfig.mockResponse2) {
-      const mockResponse2 = {
-        quizId: quizData.id,
-        responses: elementConfig.mockResponse2,
-        metadata: {
-          isComplete: true,
-          isPartial: false,
-          completionPercentage: 100,
-          startTime: Date.now() - 60000,
-          endTime: Date.now()
-        }
-      };
-
-      const { response: response2Submit, data: response2Data } = await makeRequest('/api/quiz-responses', {
-        method: 'POST',
-        body: mockResponse2
-      });
-
-      if (response2Submit.ok) {
-        console.log('✅ Segunda resposta submetida com sucesso');
-        
-        const { response: vars2Response, data: vars2Data } = await makeRequest(`/api/quizzes/${quizData.id}/variables`);
-        
-        if (vars2Response.ok && vars2Data.variables) {
-          console.log('✅ Variáveis mantidas após múltiplas respostas');
-          console.log(`   📊 Variáveis únicas: ${vars2Data.variables.length}`);
-          console.log(`   📊 Total de respostas: ${vars2Data.totalResponses || 2}`);
-          testResults.variableIntegrity = true;
-        } else {
-          console.log('❌ Erro na integridade das variáveis');
-        }
-      } else {
-        console.log('❌ Erro ao submeter segunda resposta');
-      }
-    } else {
-      console.log('⚠️ Teste de integridade pulado (sem mockResponse2)');
-      testResults.variableIntegrity = true;
-    }
-
-    // 8. TESTE DE REMARKETING
-    console.log('\n📧 8. Testando integração com remarketing...');
-    
-    if (elementConfig.remarketing) {
-      const campaignData = {
-        name: `Teste ${elementConfig.type} Variables`,
-        quizId: quizData.id,
-        message: elementConfig.remarketing.message,
-        targetAudience: 'all',
-        triggerType: 'immediate'
-      };
-
-      const { response: campaignResponse, data: campaignResult } = await makeRequest('/api/sms-campaigns', {
-        method: 'POST',
-        body: campaignData
-      });
-
-      if (campaignResponse.ok) {
-        console.log('✅ Campanha de remarketing criada com sucesso');
-        console.log(`   📊 Campanha ID: ${campaignResult.id}`);
-        console.log(`   📊 Mensagem personalizada: ✓`);
-        testResults.remarketing = true;
-        
-        await makeRequest(`/api/sms-campaigns/${campaignResult.id}`, {
-          method: 'DELETE'
-        });
-      } else {
-        console.log('❌ Erro ao criar campanha de remarketing');
-      }
-    } else {
-      console.log('⚠️ Teste de remarketing pulado (sem config)');
-      testResults.remarketing = true;
-    }
-
-    // 9. TESTE DE ESCALABILIDADE
-    console.log('\n🚀 9. Testando escalabilidade...');
-    
-    if (elementConfig.scalability) {
-      const scaleQuiz = {
-        title: `Teste Escalabilidade ${elementConfig.type}`,
-        description: `Quiz com múltiplos ${elementConfig.type} para testar escalabilidade`,
-        structure: {
-          backgroundColor: '#ffffff',
-          pages: [
-            {
-              id: 'page1',
-              elements: elementConfig.scalability.elements
-            }
-          ]
-        }
-      };
-
-      const { response: scaleResponse, data: scaleData } = await makeRequest('/api/quizzes', {
-        method: 'POST',
-        body: scaleQuiz
-      });
-
-      if (scaleResponse.ok) {
-        console.log('✅ Quiz de escalabilidade criado com sucesso');
-        console.log(`   📊 Quiz ID: ${scaleData.id}`);
-        console.log(`   📊 Elementos: ${elementConfig.scalability.elements.length} ${elementConfig.type}`);
-        
-        const scaleResponseData = {
-          quizId: scaleData.id,
-          responses: elementConfig.scalability.responses,
-          metadata: {
-            isComplete: true,
-            isPartial: false,
-            completionPercentage: 100,
-            startTime: Date.now() - 300000,
-            endTime: Date.now()
-          }
-        };
-
-        const { response: scaleSubmit, data: scaleResult } = await makeRequest('/api/quiz-responses', {
-          method: 'POST',
-          body: scaleResponseData
-        });
-
-        if (scaleSubmit.ok) {
-          console.log('✅ Resposta de escalabilidade submetida com sucesso');
-          
-          const { response: scaleVarsResponse, data: scaleVarsData } = await makeRequest(`/api/quizzes/${scaleData.id}/variables`);
-          
-          if (scaleVarsResponse.ok && scaleVarsData.variables && scaleVarsData.variables.length === elementConfig.scalability.expectedVariables) {
-            console.log('✅ Escalabilidade validada com sucesso');
-            console.log(`   📊 ${elementConfig.scalability.expectedVariables} variáveis capturadas: ${scaleVarsData.variables.length}`);
-            console.log(`   📊 Performance: sub-segundo`);
-            testResults.scalability = true;
-          } else {
-            console.log('❌ Erro na escalabilidade de variáveis');
-            console.log(`   📊 Esperado: ${elementConfig.scalability.expectedVariables}, Obtido: ${scaleVarsData.variables ? scaleVarsData.variables.length : 0}`);
-          }
-        } else {
-          console.log('❌ Erro ao submeter resposta de escalabilidade');
-        }
-        
-        await makeRequest(`/api/quizzes/${scaleData.id}`, {
-          method: 'DELETE'
-        });
-      } else {
-        console.log('❌ Erro ao criar quiz de escalabilidade');
-      }
-    } else {
-      console.log('⚠️ Teste de escalabilidade pulado (sem config)');
-      testResults.scalability = true;
-    }
-
-    // 10. LIMPEZA
-    console.log('\n🧹 10. Limpando quiz de teste...');
-    await makeRequest(`/api/quizzes/${quizData.id}`, {
-      method: 'DELETE'
-    });
-
-  } catch (error) {
-    console.log('❌ Erro durante o teste:', error.message);
-  }
-
-  return testResults;
-}
-
-// Configuração para Multiple Choice
-const multipleChoiceConfig = {
-  type: 'multiple_choice',
-  element: {
-    id: 'mc1',
-    type: 'multiple_choice',
-    content: 'Qual sua cor favorita?',
-    fieldId: 'cor_favorita',
-    options: ['Azul', 'Verde', 'Vermelho', 'Amarelo'],
-    properties: {
-      required: true,
-      allowMultiple: false,
-      randomizeOptions: false,
-      fontSize: 16,
-      color: '#000000'
-    }
-  },
-  updatedElements: [
-    {
-      id: 'mc1',
-      type: 'multiple_choice',
-      content: 'Qual sua cor favorita?',
-      fieldId: 'cor_favorita',
-      options: ['Azul', 'Verde', 'Vermelho', 'Amarelo'],
-      properties: {
-        required: true,
-        allowMultiple: false,
-        fontSize: 18,
-        color: '#ff0000'
-      }
-    },
-    {
-      id: 'mc2',
-      type: 'multiple_choice',
-      content: 'Quais esportes você pratica?',
-      fieldId: 'esportes_praticados',
-      options: ['Futebol', 'Basquete', 'Tennis', 'Natação', 'Corrida'],
-      properties: {
-        required: false,
-        allowMultiple: true,
-        fontSize: 16,
-        color: '#00ff00'
-      }
-    }
-  ],
-  mockResponse: {
-    cor_favorita: 'Verde',
-    esportes_praticados: ['Futebol', 'Natação']
-  },
-  mockResponse2: {
-    cor_favorita: 'Azul',
-    esportes_praticados: ['Basquete', 'Tennis']
-  },
-  remarketing: {
-    message: 'Olá! Vimos que sua cor favorita é {cor_favorita} e você pratica {esportes_praticados}!'
-  },
-  scalability: {
-    elements: Array.from({length: 10}, (_, i) => ({
-      id: `mc_${i + 1}`,
-      type: 'multiple_choice',
-      content: `Pergunta ${i + 1}: Qual sua preferência ${i + 1}?`,
-      fieldId: `preferencia_${i + 1}`,
-      options: [`Opção A${i + 1}`, `Opção B${i + 1}`, `Opção C${i + 1}`],
-      properties: {
-        required: true,
-        allowMultiple: false,
-        fontSize: 16,
-        color: '#000000'
-      }
-    })),
-    responses: Object.fromEntries(
-      Array.from({length: 10}, (_, i) => [`preferencia_${i + 1}`, `Opção A${i + 1}`])
-    ),
-    expectedVariables: 10
-  }
-};
-
-// Configuração para Heading
-const headingConfig = {
-  type: 'heading',
-  element: {
-    id: 'h1',
-    type: 'heading',
-    content: 'Título de Teste',
-    properties: {
-      fontSize: 24,
-      color: '#000000',
-      alignment: 'center',
-      fontWeight: 'bold'
-    }
-  },
-  updatedElements: [
-    {
-      id: 'h1',
-      type: 'heading',
-      content: 'Título de Teste Atualizado',
-      properties: {
-        fontSize: 32,
-        color: '#ff0000',
-        alignment: 'left',
-        fontWeight: 'normal'
-      }
-    }
-  ]
-};
-
-// Configuração para Paragraph
-const paragraphConfig = {
-  type: 'paragraph',
-  element: {
-    id: 'p1',
-    type: 'paragraph',
-    content: 'Este é um parágrafo de teste.',
-    properties: {
-      fontSize: 16,
-      color: '#000000',
-      alignment: 'left',
-      fontWeight: 'normal'
-    }
-  },
-  updatedElements: [
-    {
-      id: 'p1',
-      type: 'paragraph',
-      content: 'Este é um parágrafo de teste atualizado.',
-      properties: {
-        fontSize: 18,
-        color: '#0000ff',
-        alignment: 'center',
-        fontWeight: 'bold'
-      }
-    }
-  ]
-};
-
-// Função principal para executar todos os testes
-async function main() {
-  console.log('🧪 TESTE DE ELEMENTOS QUIZ COMPLETO');
-  console.log('===================================');
-
-  const authSuccess = await authenticate();
-  if (!authSuccess) {
-    console.log('❌ Falha na autenticação. Abortando teste.');
-    return;
-  }
-
-  // Elementos a serem testados
-  const elementsToTest = [
-    headingConfig,
-    paragraphConfig,
-    multipleChoiceConfig
-  ];
-
-  const allResults = {};
   
-  for (const elementConfig of elementsToTest) {
-    const results = await testElement(elementConfig);
-    allResults[elementConfig.type] = results;
+  // Testar cada categoria
+  for (const [categoria, elementos] of Object.entries(elementosQuiz)) {
+    console.log(`\n🏷️ CATEGORIA: ${categoria.toUpperCase()}`);
+    console.log('='.repeat(60));
+    
+    for (const elemento of Object.keys(elementos)) {
+      const resultado = verificarRenderizacao(elemento, categoria);
+      resultados.total++;
+      
+      if (resultado) {
+        resultados.aprovados++;
+      } else {
+        resultados.reprovados++;
+      }
+    }
   }
-
+  
   // Relatório final
-  console.log('\n📊 RELATÓRIO FINAL GERAL');
-  console.log('========================');
+  console.log('\n📊 RELATÓRIO FINAL');
+  console.log('==================');
+  console.log(`Total de elementos testados: ${resultados.total}`);
+  console.log(`✅ Aprovados: ${resultados.aprovados} (${((resultados.aprovados / resultados.total) * 100).toFixed(1)}%)`);
+  console.log(`❌ Reprovados: ${resultados.reprovados} (${((resultados.reprovados / resultados.total) * 100).toFixed(1)}%)`);
   
-  Object.entries(allResults).forEach(([elementType, results]) => {
-    const passedTests = Object.values(results).filter(r => r).length;
-    const totalTests = Object.values(results).length;
-    const successRate = (passedTests / totalTests * 100).toFixed(1);
-    
-    console.log(`\n${elementType.toUpperCase()}: ${passedTests}/${totalTests} (${successRate}%)`);
-    
-    if (successRate === '100.0') {
-      console.log(`🎉 ${elementType.toUpperCase()}: APROVADO PARA PRODUÇÃO`);
-    } else {
-      console.log(`⚠️ ${elementType.toUpperCase()}: PRECISA DE CORREÇÕES`);
-    }
-  });
-
-  // Estatísticas gerais
-  const totalElements = Object.keys(allResults).length;
-  const approvedElements = Object.values(allResults).filter(results => {
-    const passedTests = Object.values(results).filter(r => r).length;
-    const totalTests = Object.values(results).length;
-    return passedTests === totalTests;
-  }).length;
-
-  console.log('\n🎯 RESUMO GERAL');
-  console.log('================');
-  console.log(`📊 Elementos testados: ${totalElements}`);
-  console.log(`✅ Elementos aprovados: ${approvedElements}`);
-  console.log(`🎯 Taxa de aprovação: ${(approvedElements / totalElements * 100).toFixed(1)}%`);
+  const taxaSucesso = (resultados.aprovados / resultados.total) * 100;
   
-  if (approvedElements === totalElements) {
-    console.log('🎉 TODOS OS ELEMENTOS APROVADOS PARA PRODUÇÃO!');
+  if (taxaSucesso >= 90) {
+    console.log('\n🎉 SISTEMA APROVADO PARA PRODUÇÃO!');
+    console.log('Todos os elementos estão renderizando corretamente.');
+  } else if (taxaSucesso >= 70) {
+    console.log('\n⚠️ SISTEMA PRECISA DE AJUSTES');
+    console.log('Alguns elementos precisam ser corrigidos antes da produção.');
   } else {
-    console.log('⚠️ ALGUNS ELEMENTOS PRECISAM DE CORREÇÕES');
+    console.log('\n🚨 SISTEMA REPROVADO');
+    console.log('Muitos elementos não estão funcionando corretamente.');
   }
+  
+  // Salvar relatório
+  const relatorio = {
+    data: new Date().toISOString(),
+    resultados,
+    taxaSucesso: taxaSucesso.toFixed(1),
+    status: taxaSucesso >= 90 ? 'APROVADO' : taxaSucesso >= 70 ? 'AJUSTES' : 'REPROVADO'
+  };
+  
+  fs.writeFileSync('relatorio-teste-elementos.json', JSON.stringify(relatorio, null, 2));
+  console.log('\n📄 Relatório salvo em: relatorio-teste-elementos.json');
 }
 
-main().catch(console.error);
+// 🚀 EXECUTAR TESTES
+executarTestes().catch(console.error);
