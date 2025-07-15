@@ -452,11 +452,11 @@ export default function QuizPreview({ quiz, onClose, onSave }: QuizPreviewProps)
   
   const { toast } = useToast();
 
-  const allPages = quiz?.pages || [];
+  const allPages = quiz?.structure?.pages || quiz?.pages || [];
   const totalSteps = allPages.length;
   const currentPage = allPages[currentStep];
-  const isTransitionPage = currentPage?.type === 'transition';
-  const isGamePage = currentPage?.type === 'game';
+  const isTransitionPage = currentPage?.isTransition || currentPage?.type === 'transition';
+  const isGamePage = currentPage?.isGame || currentPage?.type === 'game';
   const isLastStep = currentStep === totalSteps - 1;
   const settings = quiz?.settings || {};
   const theme = quiz?.theme || 'default';
@@ -1056,6 +1056,44 @@ export default function QuizPreview({ quiz, onClose, onSave }: QuizPreviewProps)
           </div>
         );
 
+      case 'loader':
+        return (
+          <div className="mb-6 text-center">
+            <div className="flex items-center justify-center space-x-2">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+              <span className="text-lg font-medium">
+                {element.content || 'Carregando...'}
+              </span>
+            </div>
+          </div>
+        );
+
+      case 'counter':
+        return (
+          <div className="mb-6 text-center">
+            <div className="text-3xl font-bold text-blue-600 mb-2">
+              {element.content || '10'}
+            </div>
+            <div className="text-sm text-gray-600">
+              {element.description || 'Aguarde...'}
+            </div>
+          </div>
+        );
+
+      case 'redirect':
+        return (
+          <div className="mb-6 text-center">
+            <div className="p-6 bg-blue-50 rounded-lg">
+              <div className="text-lg font-medium mb-2">
+                {element.content || 'Redirecionando...'}
+              </div>
+              <div className="text-sm text-gray-600">
+                {element.description || 'Você será redirecionado em breve.'}
+              </div>
+            </div>
+          </div>
+        );
+
       default:
         return (
           <div className="mb-4 p-4 border border-orange-200 bg-orange-50 rounded-lg">
@@ -1158,6 +1196,54 @@ export default function QuizPreview({ quiz, onClose, onSave }: QuizPreviewProps)
     );
   };
 
+  const renderTransitionPage = () => {
+    return (
+      <div className="space-y-6 text-center">
+        {currentPage.elements?.map((element: any, index: number) => (
+          <div key={index}>
+            {renderContentElement(element)}
+          </div>
+        ))}
+        
+        {/* Auto-avançar para próxima página se não houver elemento redirect */}
+        {currentPage.elements?.length > 0 && !currentPage.elements.some((el: any) => el.type === 'redirect' || el.type === 'transition_redirect') && (
+          <div className="mt-8">
+            <Button
+              onClick={handleNext}
+              className="bg-green-600 hover:bg-green-700"
+              size="lg"
+            >
+              Continuar
+            </Button>
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  const renderGamePage = () => {
+    return (
+      <div className="space-y-6 text-center">
+        {currentPage.elements?.map((element: any, index: number) => (
+          <div key={index}>
+            {renderContentElement(element)}
+          </div>
+        ))}
+        
+        {/* Botão para continuar após completar o jogo */}
+        <div className="mt-8">
+          <Button
+            onClick={handleNext}
+            className="bg-green-600 hover:bg-green-700"
+            size="lg"
+          >
+            Continuar
+          </Button>
+        </div>
+      </div>
+    );
+  };
+
   const renderPage = () => {
     if (showLeadCapture) {
       return renderLeadCapture();
@@ -1172,6 +1258,29 @@ export default function QuizPreview({ quiz, onClose, onSave }: QuizPreviewProps)
       );
     }
 
+    // Verificar se é página de transição
+    const isTransitionPage = currentPage.isTransition || currentPage.type === 'transition' || 
+      currentPage.elements?.some((el: any) => 
+        ['transition_background', 'transition_text', 'transition_counter', 'transition_loader', 'transition_redirect', 'loader', 'counter', 'redirect'].includes(el.type)
+      );
+
+    // Verificar se é página de jogo
+    const isGamePage = currentPage.isGame || currentPage.type === 'game' || 
+      currentPage.elements?.some((el: any) => 
+        ['game_wheel', 'game_scratch', 'game_color_pick', 'game_brick_break', 'game_memory_cards', 'game_slot_machine'].includes(el.type)
+      );
+
+    // Se é página de transição, renderizar com lógica específica
+    if (isTransitionPage) {
+      return renderTransitionPage();
+    }
+
+    // Se é página de jogo, renderizar com lógica específica
+    if (isGamePage) {
+      return renderGamePage();
+    }
+
+    // Renderizar página normal
     return (
       <div className="space-y-6">
         {currentPage.elements?.map((element: any, index: number) => (
@@ -1241,7 +1350,7 @@ export default function QuizPreview({ quiz, onClose, onSave }: QuizPreviewProps)
           </div>
           
           <div className="flex items-center space-x-2">
-            {currentStep > 0 && allowBack && (
+            {currentStep > 0 && allowBack && !isTransitionPage && !isGamePage && (
               <Button
                 onClick={handlePrevious}
                 variant="outline"
