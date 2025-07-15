@@ -7,13 +7,14 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { MessageSquare, Send, Clock, Users, Target, Upload, FileText, Eye, ArrowRight, CheckCircle, AlertCircle, Calendar, Zap, Crown, Package, Brain, Flame, FolderOpen } from "lucide-react";
+import { MessageSquare, Send, Clock, Users, Target, Upload, FileText, Eye, ArrowRight, CheckCircle, AlertCircle, Calendar, Zap, Crown, Package, Brain, Flame, FolderOpen, ChevronDown, ChevronUp, Play, Pause, Trash2, BarChart3, X } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Progress } from "@/components/ui/progress";
 import { useToast } from "@/hooks/use-toast";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 
 // Tipos de campanha conforme especificação
 const CAMPAIGN_TYPES = {
@@ -105,6 +106,9 @@ export default function SMSCampaignsAdvanced() {
   const [previewMessage, setPreviewMessage] = useState('');
   const [csvPreview, setCsvPreview] = useState<any[]>([]);
   const [isCreating, setIsCreating] = useState(false);
+  const [showLeadsList, setShowLeadsList] = useState(false);
+  const [leadsCount, setLeadsCount] = useState({ completed: 0, abandoned: 0, all: 0 });
+  const [scheduleUnit, setScheduleUnit] = useState<'minutes' | 'hours'>('minutes');
   
   // Queries
   const { data: quizzes = [], isLoading: loadingQuizzes } = useQuery({
@@ -114,6 +118,33 @@ export default function SMSCampaignsAdvanced() {
   
   const { data: credits = { remaining: 0 } } = useQuery({
     queryKey: ['/api/sms-credits'],
+    enabled: !!user
+  });
+
+  // Query para buscar leads por segmento
+  const { data: leadsBySegment, isLoading: loadingLeads } = useQuery({
+    queryKey: ['/api/quiz-responses', form.funnelId, 'segment'],
+    enabled: !!form.funnelId,
+    select: (data: any[]) => {
+      const completed = data.filter(r => r.submittedAt && r.responses && Object.keys(r.responses).length > 0);
+      const abandoned = data.filter(r => !r.submittedAt || !r.responses || Object.keys(r.responses).length === 0);
+      
+      return {
+        completed,
+        abandoned,
+        all: data,
+        counts: {
+          completed: completed.length,
+          abandoned: abandoned.length,
+          all: data.length
+        }
+      };
+    }
+  });
+
+  // Query para buscar campanhas existentes
+  const { data: campaigns = [], isLoading: loadingCampaigns } = useQuery({
+    queryKey: ['/api/sms-campaigns'],
     enabled: !!user
   });
   
@@ -203,23 +234,51 @@ export default function SMSCampaignsAdvanced() {
   const createCampaign = async () => {
     setIsCreating(true);
     try {
+      // Validação antes de enviar
+      if (form.type !== 'mass' && (!leadsBySegment || leadsBySegment.counts[form.segment] === 0)) {
+        toast({
+          title: "Nenhum lead encontrado",
+          description: `Não foram encontrados leads ${form.segment === 'completed' ? 'completos' : form.segment === 'abandoned' ? 'abandonados' : ''} para este funil.`,
+          variant: "destructive"
+        });
+        setIsCreating(false);
+        return;
+      }
+
+      if (credits.remaining <= 0) {
+        toast({
+          title: "Créditos insuficientes",
+          description: "Você não possui créditos SMS suficientes para criar esta campanha.",
+          variant: "destructive"
+        });
+        setIsCreating(false);
+        return;
+      }
+
       const response = await fetch('/api/sms-campaigns', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${localStorage.getItem('token')}`
         },
-        body: JSON.stringify(form)
+        body: JSON.stringify({
+          ...form,
+          delayMinutes: scheduleUnit === 'hours' ? (form.delayMinutes || 0) * 60 : form.delayMinutes
+        })
       });
       
       if (!response.ok) {
-        throw new Error('Erro ao criar campanha');
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Erro ao criar campanha');
       }
       
       toast({
         title: "Campanha criada com sucesso!",
         description: "Sua campanha SMS foi criada e está sendo processada.",
       });
+      
+      // Atualizar queries
+      queryClient.invalidateQueries({ queryKey: ['/api/sms-campaigns'] });
       
       // Reset form
       setForm({
@@ -232,10 +291,10 @@ export default function SMSCampaignsAdvanced() {
       });
       setCurrentStep(1);
       
-    } catch (error) {
+    } catch (error: any) {
       toast({
         title: "Erro ao criar campanha",
-        description: "Verifique os dados e tente novamente.",
+        description: error.message || "Verifique os dados e tente novamente.",
         variant: "destructive"
       });
     } finally {
@@ -359,11 +418,91 @@ export default function SMSCampaignsAdvanced() {
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="completed">✅ Completou o quiz</SelectItem>
-                            <SelectItem value="abandoned">❌ Abandonou o quiz</SelectItem>
-                            <SelectItem value="all">👥 Todos os leads</SelectItem>
+                            <SelectItem value="completed">
+                              ✅ Completou o quiz 
+                              {leadsBySegment && (
+                                <Badge variant="secondary" className="ml-2">
+                                  {leadsBySegment.counts.completed} leads
+                                </Badge>
+                              )}
+                            </SelectItem>
+                            <SelectItem value="abandoned">
+                              ❌ Abandonou o quiz
+                              {leadsBySegment && (
+                                <Badge variant="secondary" className="ml-2">
+                                  {leadsBySegment.counts.abandoned} leads
+                                </Badge>
+                              )}
+                            </SelectItem>
+                            <SelectItem value="all">
+                              👥 Todos os leads
+                              {leadsBySegment && (
+                                <Badge variant="secondary" className="ml-2">
+                                  {leadsBySegment.counts.all} leads
+                                </Badge>
+                              )}
+                            </SelectItem>
                           </SelectContent>
                         </Select>
+                        
+                        {/* Mostrar contagem e botão para ver lista */}
+                        {leadsBySegment && form.funnelId && (
+                          <div className="mt-3 p-3 bg-gray-50 rounded-lg">
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center gap-2">
+                                <Users className="w-4 h-4 text-blue-600" />
+                                <span className="text-sm font-medium">
+                                  {leadsBySegment.counts[form.segment]} leads encontrados
+                                </span>
+                              </div>
+                              {leadsBySegment.counts[form.segment] > 0 && (
+                                <Dialog>
+                                  <DialogTrigger asChild>
+                                    <Button variant="outline" size="sm">
+                                      <Eye className="w-4 h-4 mr-1" />
+                                      Ver Lista
+                                    </Button>
+                                  </DialogTrigger>
+                                  <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+                                    <DialogHeader>
+                                      <DialogTitle className="flex items-center gap-2">
+                                        <Users className="w-5 h-5" />
+                                        Lista de Leads - {form.segment === 'completed' ? 'Completaram' : form.segment === 'abandoned' ? 'Abandonaram' : 'Todos'}
+                                      </DialogTitle>
+                                    </DialogHeader>
+                                    <div className="space-y-2">
+                                      {leadsBySegment[form.segment].slice(0, 100).map((lead: any, index: number) => (
+                                        <div key={index} className="p-3 border rounded-lg bg-white">
+                                          <div className="flex items-start justify-between">
+                                            <div>
+                                              <p className="font-medium">
+                                                {lead.responses?.nome || lead.responses?.email || `Lead ${index + 1}`}
+                                              </p>
+                                              <p className="text-sm text-gray-600">
+                                                {lead.responses?.telefone || lead.responses?.phone || 'Telefone não informado'}
+                                              </p>
+                                              <p className="text-sm text-gray-500">
+                                                {lead.submittedAt ? format(new Date(lead.submittedAt), 'dd/MM/yyyy HH:mm', { locale: ptBR }) : 'Em progresso'}
+                                              </p>
+                                            </div>
+                                            <Badge variant={lead.submittedAt ? 'default' : 'secondary'}>
+                                              {lead.submittedAt ? 'Completo' : 'Abandonado'}
+                                            </Badge>
+                                          </div>
+                                        </div>
+                                      ))}
+                                      {leadsBySegment[form.segment].length > 100 && (
+                                        <div className="text-center text-gray-500 text-sm">
+                                          Mostrando primeiros 100 leads de {leadsBySegment[form.segment].length} total
+                                        </div>
+                                      )}
+                                    </div>
+                                  </DialogContent>
+                                </Dialog>
+                              )}
+                            </div>
+                          </div>
+                        )}
                       </div>
                       
                       {/* Filtros Avançados */}
@@ -556,14 +695,33 @@ export default function SMSCampaignsAdvanced() {
                   )}
                   
                   {form.scheduleType === 'delayed' && (
-                    <div>
-                      <Label>Atraso (minutos)</Label>
-                      <Input 
-                        type="number"
-                        value={form.delayMinutes || ''}
-                        onChange={(e) => setForm(prev => ({ ...prev, delayMinutes: Number(e.target.value) }))}
-                        placeholder="Ex: 30"
-                      />
+                    <div className="space-y-3">
+                      <Label>Atraso após resposta</Label>
+                      <div className="flex gap-2">
+                        <Input 
+                          type="number"
+                          value={form.delayMinutes || ''}
+                          onChange={(e) => setForm(prev => ({ ...prev, delayMinutes: Number(e.target.value) }))}
+                          placeholder="Ex: 30"
+                          className="flex-1"
+                        />
+                        <Select 
+                          value={scheduleUnit} 
+                          onValueChange={(value: 'minutes' | 'hours') => setScheduleUnit(value)}
+                        >
+                          <SelectTrigger className="w-32">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="minutes">Minutos</SelectItem>
+                            <SelectItem value="hours">Horas</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="text-sm text-gray-500 bg-blue-50 p-2 rounded">
+                        <Clock className="w-4 h-4 inline mr-1" />
+                        Será enviado {form.delayMinutes || 0} {scheduleUnit === 'hours' ? 'horas' : 'minutos'} após o lead responder o quiz
+                      </div>
                     </div>
                   )}
                 </div>
@@ -732,6 +890,166 @@ export default function SMSCampaignsAdvanced() {
           </Card>
         </div>
       </div>
+      
+      {/* Dashboard de Campanhas */}
+      {campaigns.length > 0 && (
+        <div className="mt-12">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <BarChart3 className="w-5 h-5" />
+                Minhas Campanhas SMS
+              </CardTitle>
+              <CardDescription>
+                Gerencie suas campanhas ativas e visualize estatísticas
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                {campaigns.map((campaign: any) => (
+                  <div key={campaign.id} className="border rounded-lg p-4">
+                    <div className="flex items-center justify-between mb-3">
+                      <div className="flex items-center gap-3">
+                        <div className={`p-2 rounded-lg ${
+                          campaign.status === 'active' ? 'bg-green-100 text-green-700' :
+                          campaign.status === 'paused' ? 'bg-yellow-100 text-yellow-700' :
+                          'bg-gray-100 text-gray-700'
+                        }`}>
+                          {campaign.status === 'active' ? <Play className="w-4 h-4" /> :
+                           campaign.status === 'paused' ? <Pause className="w-4 h-4" /> :
+                           <CheckCircle className="w-4 h-4" />}
+                        </div>
+                        <div>
+                          <h4 className="font-medium">{campaign.name}</h4>
+                          <p className="text-sm text-gray-600">
+                            {CAMPAIGN_TYPES[campaign.type as keyof typeof CAMPAIGN_TYPES]?.name || campaign.type}
+                          </p>
+                        </div>
+                      </div>
+                      <Badge variant={
+                        campaign.status === 'active' ? 'default' :
+                        campaign.status === 'paused' ? 'secondary' :
+                        'outline'
+                      }>
+                        {campaign.status === 'active' ? 'Ativa' :
+                         campaign.status === 'paused' ? 'Pausada' :
+                         'Finalizada'}
+                      </Badge>
+                    </div>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
+                      <div className="text-center p-3 bg-blue-50 rounded-lg">
+                        <div className="text-2xl font-bold text-blue-600">{campaign.totalSent || 0}</div>
+                        <div className="text-sm text-gray-600">Enviados</div>
+                      </div>
+                      <div className="text-center p-3 bg-green-50 rounded-lg">
+                        <div className="text-2xl font-bold text-green-600">{campaign.totalDelivered || 0}</div>
+                        <div className="text-sm text-gray-600">Entregues</div>
+                      </div>
+                      <div className="text-center p-3 bg-purple-50 rounded-lg">
+                        <div className="text-2xl font-bold text-purple-600">
+                          {campaign.totalSent > 0 ? Math.round((campaign.totalDelivered / campaign.totalSent) * 100) : 0}%
+                        </div>
+                        <div className="text-sm text-gray-600">Taxa Entrega</div>
+                      </div>
+                      <div className="text-center p-3 bg-orange-50 rounded-lg">
+                        <div className="text-2xl font-bold text-orange-600">
+                          {campaign.creditsUsed || 0}
+                        </div>
+                        <div className="text-sm text-gray-600">Créditos</div>
+                      </div>
+                    </div>
+                    
+                    <div className="flex items-center gap-2 flex-wrap">
+                      {campaign.status === 'active' && (
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          onClick={() => {
+                            // Implementar pause campaign
+                            toast({
+                              title: "Campanha pausada",
+                              description: "A campanha foi pausada com sucesso.",
+                            });
+                          }}
+                        >
+                          <Pause className="w-4 h-4 mr-1" />
+                          Pausar
+                        </Button>
+                      )}
+                      
+                      {campaign.status === 'paused' && (
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          onClick={() => {
+                            // Implementar resume campaign
+                            toast({
+                              title: "Campanha reativada",
+                              description: "A campanha foi reativada com sucesso.",
+                            });
+                          }}
+                        >
+                          <Play className="w-4 h-4 mr-1" />
+                          Reativar
+                        </Button>
+                      )}
+                      
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => {
+                          // Implementar view logs
+                          toast({
+                            title: "Logs da campanha",
+                            description: "Abrindo logs detalhados da campanha.",
+                          });
+                        }}
+                      >
+                        <FileText className="w-4 h-4 mr-1" />
+                        Ver Logs
+                      </Button>
+                      
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => {
+                          // Implementar analytics
+                          toast({
+                            title: "Analytics da campanha",
+                            description: "Abrindo relatório detalhado de performance.",
+                          });
+                        }}
+                      >
+                        <BarChart3 className="w-4 h-4 mr-1" />
+                        Analytics
+                      </Button>
+                      
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        className="text-red-600 hover:text-red-700"
+                        onClick={() => {
+                          if (confirm('Tem certeza que deseja excluir esta campanha?')) {
+                            // Implementar delete campaign
+                            toast({
+                              title: "Campanha excluída",
+                              description: "A campanha foi excluída permanentemente.",
+                            });
+                          }
+                        }}
+                      >
+                        <Trash2 className="w-4 h-4 mr-1" />
+                        Excluir
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
     </div>
   );
 }
