@@ -70,84 +70,8 @@ export class BehavioralAnalyzer {
   }
 
   analyzeRequest(req: Request): { riskScore: number; threats: string[] } {
-    const ip = req.ip || req.connection.remoteAddress || 'unknown';
-    const userAgent = req.get('User-Agent') || '';
-    const endpoint = req.originalUrl || req.url;
-    
-    // BYPASS CRÍTICO: Permitir localhost sempre
-    if (ip === '127.0.0.1' || ip === '::1' || ip === 'localhost') {
-      return { riskScore: 0, threats: [] };
-    }
-    const now = Date.now();
-
-    // Inicializar dados do usuário se não existir
-    if (!this.userBehavior.has(ip)) {
-      this.userBehavior.set(ip, {
-        requestTimes: [],
-        endpoints: [],
-        userAgents: [],
-        patterns: [],
-        riskScore: 0
-      });
-    }
-
-    const userData = this.userBehavior.get(ip)!;
-    const threats: string[] = [];
-    let riskScore = 0;
-
-    // 1. Análise de frequência de requests
-    userData.requestTimes.push(now);
-    userData.requestTimes = userData.requestTimes.filter(time => now - time < 60000); // Últimos 60 segundos
-
-    if (userData.requestTimes.length > 100) {
-      riskScore += 50;
-      threats.push('Excessive request frequency');
-    }
-
-    // 2. Análise de padrões de endpoints
-    userData.endpoints.push(endpoint);
-    userData.endpoints = userData.endpoints.slice(-50); // Manter últimos 50 endpoints
-
-    const uniqueEndpoints = new Set(userData.endpoints);
-    if (uniqueEndpoints.size > 20) {
-      riskScore += 30;
-      threats.push('Scanning behavior detected');
-    }
-
-    // 3. Análise de User-Agent
-    if (!userData.userAgents.includes(userAgent)) {
-      userData.userAgents.push(userAgent);
-      userData.userAgents = userData.userAgents.slice(-5); // Manter últimos 5 user agents
-    }
-
-    if (userData.userAgents.length > 3) {
-      riskScore += 25;
-      threats.push('Multiple user agents detected');
-    }
-
-    // 4. Detecção de padrões de ataque
-    for (const signature of ADVANCED_SECURITY_CONFIG.ATTACK_SIGNATURES) {
-      if (signature.pattern.test(endpoint) || signature.pattern.test(JSON.stringify(req.body))) {
-        riskScore += signature.severity === 'critical' ? 100 : 50;
-        threats.push(`Attack pattern detected: ${signature.type}`);
-      }
-    }
-
-    // 5. Análise de timing
-    if (userData.requestTimes.length > 10) {
-      const intervals = userData.requestTimes.slice(-10).map((time, i, arr) => 
-        i > 0 ? time - arr[i-1] : 0
-      ).filter(interval => interval > 0);
-
-      const avgInterval = intervals.reduce((a, b) => a + b, 0) / intervals.length;
-      if (avgInterval < 100) { // Menos de 100ms entre requests
-        riskScore += 40;
-        threats.push('Automated tool detected');
-      }
-    }
-
-    userData.riskScore = riskScore;
-    return { riskScore, threats };
+    // Behavioral analysis disabled
+    return { riskScore: 0, threats: [] };
   }
 
   isHighRisk(ip: string): boolean {

@@ -104,39 +104,13 @@ export const antiInvasionMiddleware = (req: Request, res: Response, next: NextFu
   const userAgent = req.get('User-Agent') || 'unknown';
   
   // Verificar se IP está bloqueado
-  if (isIPBlocked(clientIP)) {
-    return res.status(403).json({
-      error: 'Acesso negado. IP bloqueado por atividade suspeita.',
-      code: 'IP_BLOCKED'
-    });
-  }
+  // IP blocking disabled
 
-  // Detectar padrões suspeitos
-  if (detectSuspiciousActivity(req)) {
-    incrementSuspiciousActivity(clientIP);
-    logSecurityEvent(req, 'suspicious_activity', 'medium', 'Suspicious request pattern detected');
-    
-    if (getSuspiciousCount(clientIP) > SECURITY_CONFIG.SUSPICIOUS_THRESHOLD) {
-      blockIP(clientIP, 'Excessive suspicious activity', SECURITY_CONFIG.BLOCK_DURATION);
-      return res.status(403).json({
-        error: 'Acesso negado. Atividade suspeita detectada.',
-        code: 'SUSPICIOUS_ACTIVITY'
-      });
-    }
-  }
+  // Detectar padrões suspeitos - DESATIVADO
+  // Detection disabled for development
 
-  // Verificar tentativas de brute force
-  if (req.path.includes('/login') && req.method === 'POST') {
-    const attempts = getFailedAttempts(clientIP);
-    if (attempts >= SECURITY_CONFIG.MAX_LOGIN_ATTEMPTS) {
-      blockIP(clientIP, 'Brute force attack detected', SECURITY_CONFIG.BLOCK_DURATION);
-      logSecurityEvent(req, 'brute_force', 'critical', `Too many login attempts: ${attempts}`);
-      return res.status(403).json({
-        error: 'Muitas tentativas de login. Tente novamente em 15 minutos.',
-        code: 'BRUTE_FORCE_DETECTED'
-      });
-    }
-  }
+  // Verificar tentativas de brute force - DESATIVADO
+  // Brute force detection disabled for development
 
   next();
 };

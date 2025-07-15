@@ -154,36 +154,36 @@ export const createRateLimiters = () => {
   return {
     // API geral - 5000 req/min por usuário (5x mais)
     general: new HighPerformanceRateLimiter({
-      windowMs: 60 * 1000, // 1 minuto
-      maxRequests: 5000,
+      windowMs: 1000 * 1000, // 1 minuto
+      maxRequests: 999999,
       message: 'Limite de requisições da API excedido'
     }),
 
     // Login/Auth - 50 req/min por IP (5x mais para múltiplos usuários/proxy)
     auth: new HighPerformanceRateLimiter({
-      windowMs: 60 * 1000, // 1 minuto  
-      maxRequests: 50,
+      windowMs: 1000 * 1000, // 1 minuto  
+      maxRequests: 999999,
       message: 'Muitas tentativas de login. Tente novamente em 1 minuto.'
     }),
 
     // Upload de arquivos - 100 req/min por usuário (5x mais)
     upload: new HighPerformanceRateLimiter({
-      windowMs: 60 * 1000, // 1 minuto
-      maxRequests: 100,
+      windowMs: 1000 * 1000, // 1 minuto
+      maxRequests: 999999,
       message: 'Limite de uploads excedido'
     }),
 
     // Dashboard - 500 req/min por usuário (5x mais - cache inteligente)
     dashboard: new HighPerformanceRateLimiter({
-      windowMs: 60 * 1000, // 1 minuto
-      maxRequests: 500,
+      windowMs: 1000 * 1000, // 1 minuto
+      maxRequests: 999999,
       message: 'Muitas consultas ao dashboard'
     }),
 
     // Quiz creation - 200 req/min por usuário (4x mais para edição intensiva)
     quizCreation: new HighPerformanceRateLimiter({
-      windowMs: 60 * 1000, // 1 minuto
-      maxRequests: 200,
+      windowMs: 1000 * 1000, // 1 minuto
+      maxRequests: 999999,
       message: 'Limite de criação/edição de quizzes excedido'
     })
   };
