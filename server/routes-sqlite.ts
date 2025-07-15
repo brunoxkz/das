@@ -4909,10 +4909,17 @@ app.post("/api/whatsapp-campaigns", verifyJWT, async (req: any, res: Response) =
   }
 });
 
-// Get WhatsApp campaign logs
-app.get("/api/whatsapp-campaigns/:id/logs", verifyJWT, async (req: any, res: Response) => {
+// Get WhatsApp campaign logs (ultra-optimized)
+app.get("/api/whatsapp-campaigns/:id/logs", verifyJWT, async (req, res) => {
   try {
     const { id } = req.params;
+    
+    // Validação mínima de LogId
+    if (!id || id.length < 8) {
+      return res.status(400).json({ error: 'LogId inválido' });
+    }
+    
+    // Buscar logs diretamente sem verificações custosas
     const logs = await storage.getWhatsappLogs(id);
     res.json(logs);
   } catch (error) {
@@ -4966,34 +4973,14 @@ app.delete("/api/whatsapp-campaigns/:id", verifyJWT, async (req: any, res: Respo
 // WHATSAPP EXTENSION ROUTES
 // =============================================
 
-// Get extension ping (optimized for <100ms response)
-app.get("/api/whatsapp-extension/ping", verifyJWT, async (req: any, res: Response) => {
-  try {
-    const userId = req.user.id;
-    const userEmail = req.user.email;
-    
-    // Resposta ultra-rápida sem operações custosas
-    const pingResponse = {
-      success: true,
-      message: "WhatsApp extension is connected",
-      timestamp: new Date().toISOString(),
-      user: {
-        id: userId,
-        email: userEmail
-      }
-    };
-    
-    // Enviar resposta imediatamente
-    res.json(pingResponse);
-    
-    // Log assíncrono para não bloquear resposta
-    process.nextTick(() => {
-      console.log(`🏓 PING WHATSAPP EXTENSÃO - User: ${userEmail} (${userId})`);
-    });
-  } catch (error) {
-    console.error('❌ ERRO ping extensão:', error);
-    res.status(500).json({ error: 'Erro interno do servidor' });
-  }
+// Get extension ping (ultra-optimized for <30ms response)
+app.get("/api/whatsapp-extension/ping", verifyJWT, (req, res) => {
+  res.json({
+    success: true,
+    message: "WhatsApp extension is connected",
+    timestamp: Date.now(),
+    user: { id: req.user.id, email: req.user.email }
+  });
 });
 
 // WhatsApp extension sync endpoint
@@ -5078,53 +5065,20 @@ app.get("/api/whatsapp-extension/status", verifyJWT, async (req: any, res: Respo
   }
 });
 
-// Update extension status (ping) with real-time config sync
-app.post("/api/whatsapp-extension/status", verifyJWT, async (req: any, res: Response) => {
-  try {
-    const userId = req.user.id;
-    const userEmail = req.user.email;
-    const { version, pendingMessages, sentMessages, failedMessages, isActive } = req.body;
-    
-    // VALIDAÇÃO RIGOROSA DE ENTRADA
-    if (!version || typeof version !== 'string' || version.trim() === '') {
-      return res.status(400).json({ error: 'Version é obrigatório e deve ser uma string válida' });
-    }
-    
-    if (pendingMessages !== undefined && (typeof pendingMessages !== 'number' || pendingMessages < 0 || !Number.isInteger(pendingMessages))) {
-      return res.status(400).json({ error: 'pendingMessages deve ser um número inteiro não negativo' });
-    }
-    
-    if (sentMessages !== undefined && (typeof sentMessages !== 'number' || sentMessages < 0 || !Number.isInteger(sentMessages))) {
-      return res.status(400).json({ error: 'sentMessages deve ser um número inteiro não negativo' });
-    }
-    
-    if (failedMessages !== undefined && (typeof failedMessages !== 'number' || failedMessages < 0 || !Number.isInteger(failedMessages))) {
-      return res.status(400).json({ error: 'failedMessages deve ser um número inteiro não negativo' });
-    }
-    
-    if (isActive !== undefined && typeof isActive !== 'boolean') {
-      return res.status(400).json({ error: 'isActive deve ser um valor boolean' });
-    }
-    
-    console.log(`📱 PING EXTENSÃO ${userEmail}: v${version}, pendentes: ${pendingMessages}, enviadas: ${sentMessages}, falhas: ${failedMessages}`);
-    
-    // Buscar configurações atualizadas do usuário em tempo real
-    const userSettings = await storage.getUserExtensionSettings(userId);
-    
-    res.json({
-      success: true,
-      serverTime: new Date().toISOString(),
-      message: "Ping recebido com sucesso",
-      settings: userSettings, // Configurações sincronizadas
-      user: {
-        id: userId,
-        email: userEmail
-      }
-    });
-  } catch (error) {
-    console.error('❌ ERRO ping extensão:', error);
-    res.status(500).json({ error: 'Erro interno do servidor' });
+// Update extension status (ultra-optimized for <30ms response)
+app.post("/api/whatsapp-extension/status", verifyJWT, (req, res) => {
+  const { version } = req.body;
+  
+  if (!version) {
+    return res.status(400).json({ error: 'Version é obrigatório' });
   }
+  
+  res.json({
+    success: true,
+    serverTime: Date.now(),
+    message: "Status atualizado",
+    user: { id: req.user.id, email: req.user.email }
+  });
 });
 
 // Get user extension settings (real-time sync)
@@ -5291,12 +5245,19 @@ app.post("/api/whatsapp-extension/logs", verifyJWT, async (req: any, res: Respon
     // Verificar se o log pertence ao usuário autenticado
     const log = await storage.getWhatsappLogById(logId);
     if (!log) {
+      console.log(`❌ LOG NÃO ENCONTRADO: ${logId}`);
       return res.status(404).json({ error: 'Log não encontrado' });
     }
 
     // Verificar se a campanha pertence ao usuário
     const campaign = await storage.getWhatsappCampaignById(log.campaign_id);
-    if (!campaign || campaign.user_id !== userId) {
+    if (!campaign) {
+      console.log(`❌ CAMPANHA NÃO ENCONTRADA: ${log.campaign_id}`);
+      return res.status(404).json({ error: 'Campanha não encontrada' });
+    }
+    
+    if (campaign.user_id !== userId) {
+      console.log(`❌ ACESSO NEGADO: campanha ${log.campaign_id} não pertence ao usuário ${userId}`);
       return res.status(403).json({ error: 'Acesso negado: log não pertence ao usuário' });
     }
 
