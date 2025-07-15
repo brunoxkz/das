@@ -131,10 +131,9 @@ export function CompleteSMSCampaignModal({
   isCreating,
   selectedStyle: initialSelectedStyle
 }: CompleteSMSCampaignModalProps) {
-  const [currentStep, setCurrentStep] = useState<'style' | 'config'>(initialSelectedStyle ? 'config' : 'style');
   const [selectedStyle, setSelectedStyle] = useState<CampaignStyle | null>(initialSelectedStyle || null);
   const [campaignForm, setCampaignForm] = useState({
-    name: initialSelectedStyle ? `[${campaignStyles[initialSelectedStyle].title}] ` : '',
+    name: '',
     message: '',
     quizId: '',
     targetAudience: 'completed' as 'completed' | 'abandoned' | 'all',

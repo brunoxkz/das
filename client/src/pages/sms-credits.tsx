@@ -19,7 +19,7 @@ import { useLocation } from "wouter";
 import { VariableHelperUnified } from "@/components/ui/variable-helper-unified";
 import { UltraPersonalizedCampaignModal } from "@/components/ultra-personalized-campaign-modal";
 import { CampaignStyleSelector, CampaignStyle } from "@/components/campaign-style-selector";
-import { CompleteSMSCampaignModal } from "@/components/complete-sms-campaign-modal";
+import { SimpleSMSCampaignModal } from "@/components/simple-sms-campaign-modal";
 
 interface SMSCredits {
   total: number;
@@ -1757,8 +1757,8 @@ export default function SMSCreditsPage() {
         platform="sms"
       />
 
-      {/* Modal Completo de Campanha SMS */}
-      <CompleteSMSCampaignModal
+      {/* Modal Simples de Campanha SMS */}
+      <SimpleSMSCampaignModal
         open={showCompleteCampaignModal}
         onClose={() => {
           setShowCompleteCampaignModal(false);
