@@ -512,63 +512,67 @@ export default function QuizPreview({ quiz, onClose, onSave }: QuizPreviewProps)
   // Função para aplicar estilos visuais baseados nas propriedades
   const getElementStyles = (element: any) => {
     const styles: any = {};
-    const properties = element?.properties || element;
     
     // Debug: log das propriedades
-    if (properties?.textSize || properties?.textColor || properties?.fontWeight) {
-      console.log('Element with visual properties:', properties);
+    if (element?.fontSize || element?.textColor || element?.fontWeight || element?.textAlign) {
+      console.log('Element with visual properties:', element);
     }
     
-    // Tamanho do texto
-    if (properties?.textSize) {
-      switch (properties.textSize) {
-        case 'small':
+    // Tamanho do texto - usar element.fontSize
+    if (element?.fontSize) {
+      switch (element.fontSize) {
+        case 'sm':
           styles.fontSize = '14px';
           break;
-        case 'medium':
+        case 'base':
           styles.fontSize = '16px';
           break;
-        case 'large':
+        case 'lg':
+          styles.fontSize = '18px';
+          break;
+        case 'xl':
           styles.fontSize = '20px';
           break;
-        case 'extra-large':
+        case '2xl':
           styles.fontSize = '24px';
           break;
+        default:
+          styles.fontSize = '16px';
       }
     }
     
     // Cor do texto
-    if (properties?.textColor) {
-      styles.color = properties.textColor;
+    if (element?.textColor) {
+      styles.color = element.textColor;
     }
     
     // Peso da fonte
-    if (properties?.fontWeight) {
-      styles.fontWeight = properties.fontWeight;
+    if (element?.fontWeight) {
+      styles.fontWeight = element.fontWeight;
     }
     
     // Alinhamento
-    if (properties?.textAlign) {
-      styles.textAlign = properties.textAlign;
+    if (element?.textAlign) {
+      styles.textAlign = element.textAlign;
     }
     
     // Estilo da fonte
-    if (properties?.textStyle) {
-      styles.fontStyle = properties.textStyle;
+    if (element?.fontStyle) {
+      styles.fontStyle = element.fontStyle;
     }
     
     // Decoração do texto (sublinhado)
-    if (properties?.textDecoration) {
-      styles.textDecoration = properties.textDecoration;
+    if (element?.textDecoration) {
+      styles.textDecoration = element.textDecoration;
     }
     
     // Cor de fundo
-    if (properties?.backgroundColor) {
-      styles.backgroundColor = properties.backgroundColor;
+    if (element?.backgroundColor) {
+      styles.backgroundColor = element.backgroundColor;
     }
     
     // Padding para cor de fundo
-    if (properties?.backgroundColor) {
+    if (element?.backgroundColor) {
       styles.padding = '8px 12px';
       styles.borderRadius = '4px';
     }
@@ -579,29 +583,31 @@ export default function QuizPreview({ quiz, onClose, onSave }: QuizPreviewProps)
   // Função para obter classes CSS baseadas nas propriedades
   const getElementClasses = (element: any) => {
     let classes = '';
-    const properties = element?.properties || element;
     
     // Tamanho do texto
-    if (properties?.textSize) {
-      switch (properties.textSize) {
-        case 'small':
+    if (element?.fontSize) {
+      switch (element.fontSize) {
+        case 'sm':
           classes += ' text-sm';
           break;
-        case 'medium':
+        case 'base':
           classes += ' text-base';
           break;
-        case 'large':
+        case 'lg':
           classes += ' text-lg';
           break;
-        case 'extra-large':
+        case 'xl':
           classes += ' text-xl';
+          break;
+        case '2xl':
+          classes += ' text-2xl';
           break;
       }
     }
     
     // Peso da fonte
-    if (properties?.fontWeight) {
-      switch (properties.fontWeight) {
+    if (element?.fontWeight) {
+      switch (element.fontWeight) {
         case 'light':
           classes += ' font-light';
           break;
@@ -618,8 +624,8 @@ export default function QuizPreview({ quiz, onClose, onSave }: QuizPreviewProps)
     }
     
     // Alinhamento
-    if (properties?.textAlign) {
-      switch (properties.textAlign) {
+    if (element?.textAlign) {
+      switch (element.textAlign) {
         case 'left':
           classes += ' text-left';
           break;
@@ -633,15 +639,15 @@ export default function QuizPreview({ quiz, onClose, onSave }: QuizPreviewProps)
     }
     
     // Estilo da fonte
-    if (properties?.textStyle) {
-      if (properties.textStyle === 'italic') {
+    if (element?.fontStyle) {
+      if (element.fontStyle === 'italic') {
         classes += ' italic';
       }
     }
     
     // Decoração do texto (sublinhado)
-    if (properties?.textDecoration) {
-      if (properties.textDecoration === 'underline') {
+    if (element?.textDecoration) {
+      if (element.textDecoration === 'underline') {
         classes += ' underline';
       }
     }
