@@ -1317,7 +1317,7 @@ export default function QuizPreview({ quiz, onClose, onSave }: QuizPreviewProps)
       <Card className="shadow-lg border-gray-200">
         <CardHeader className="text-center">
           <CardTitle className="text-lg font-semibold text-gray-800">
-            {currentPage?.title || `Página ${currentPageIndex + 1}`}
+            {currentPage?.title || `Página ${currentStep + 1}`}
           </CardTitle>
         </CardHeader>
         <CardContent className="p-6">
@@ -1332,7 +1332,7 @@ export default function QuizPreview({ quiz, onClose, onSave }: QuizPreviewProps)
         <Button
           variant="outline"
           onClick={handlePrevious}
-          disabled={currentPageIndex === 0}
+          disabled={currentStep === 0}
           className="flex items-center gap-2"
         >
           <ChevronLeft className="w-4 h-4" />
