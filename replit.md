@@ -208,6 +208,23 @@ No additional files or separate projects are maintained in this repository.
 
 ```
 Changelog:
+- July 15, 2025. ELEMENTOS DE PESO COMPLETAMENTE APRIMORADOS - Melhorias visuais abrangentes para elementos de peso atual e peso meta:
+  * Adicionadas opções de largura de campo: pequeno, médio, grande, largura total
+  * Implementado sistema de alinhamento: esquerda, centro, direita para campos de peso
+  * Incluídos estilos de campo: padrão, arredondado, quadrado com preview em tempo real
+  * Configurações de fonte: tamanho (xs, sm, base, lg, xl) e peso (light, normal, medium, semibold, bold)
+  * Opção de alinhamento de texto: esquerda, centro, direita para títulos e labels
+  * Adicionados IDs de resposta personalizados para uso como variáveis em campanhas
+  * Implementadas validações de min/max com feedback visual
+  * Seletor de unidade: quilogramas (kg) ou libras (lb)
+  * Barras de progresso opcionais para visualização do peso atual
+  * Indicadores de progresso da meta para peso objetivo
+  * Cards visuais temáticos: azul para peso atual, laranja para peso meta
+  * Descrições adicionais suportadas para contexto extra
+  * Validação de campos obrigatórios com indicadores visuais
+  * Integração total com sistema de campanhas SMS/Email/WhatsApp
+  * Aplicadas melhorias em page-editor-horizontal.tsx, quiz-public-renderer.tsx e quiz-preview.tsx
+  * Mantida consistência visual com outros elementos de formulário
 - July 15, 2025. SISTEMA DE DETECÇÃO DE PAÍSES 100% FUNCIONAL - Correção crítica da lógica de detecção para cobertura global:
   * Corrigida lógica de detecção de países: ordem correta de validação implementada
   * Validação de DDDs brasileiros específicos (11, 12, 13... 99) ao invés de padrões genéricos

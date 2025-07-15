@@ -706,38 +706,125 @@ export function QuizPublicRenderer({ quiz }: QuizPublicRendererProps) {
       case 'current_weight':
         return (
           <div key={id} className="space-y-4">
-            <div className="flex items-center space-x-2">
-              <Scale className="w-5 h-5 text-blue-500" />
-              <h3 className="text-lg font-semibold">{properties?.question || 'Peso Atual'}</h3>
+            <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+              <div className="flex items-center space-x-2 mb-2">
+                <Scale className="w-5 h-5 text-blue-600" />
+                <h3 className={`${properties?.fontSize || 'text-lg'} ${properties?.fontWeight || 'font-semibold'} ${properties?.textAlign || 'text-left'} text-blue-800`}>{properties?.question || 'Peso Atual'}</h3>
+              </div>
+              {properties?.description && (
+                <p className="text-sm text-blue-700 mb-3">{properties.description}</p>
+              )}
+              <div className={`${
+                properties?.fieldWidth === 'small' ? 'max-w-xs' :
+                properties?.fieldWidth === 'medium' ? 'max-w-sm' :
+                properties?.fieldWidth === 'large' ? 'max-w-md' :
+                'max-w-full'
+              } ${
+                properties?.fieldAlign === 'left' ? 'mr-auto' :
+                properties?.fieldAlign === 'right' ? 'ml-auto' :
+                'mx-auto'
+              }`}>
+                <Input
+                  type="number"
+                  placeholder={properties?.placeholder || '70'}
+                  value={answer || ''}
+                  onChange={(e) => handleElementAnswer(id, type, Number(e.target.value), properties?.fieldId || 'peso_atual')}
+                  required={properties?.required}
+                  min={properties?.min || 30}
+                  max={properties?.max || 300}
+                  className={`${
+                    properties?.fieldStyle === 'rounded' ? 'rounded-full' :
+                    properties?.fieldStyle === 'square' ? 'rounded-none' :
+                    'rounded-md'
+                  }`}
+                />
+                <div className="flex justify-between items-center mt-2">
+                  <span className="text-xs text-blue-600">{properties?.unit || 'kg'}</span>
+                  {properties?.showWeightRange && (
+                    <span className="text-xs text-blue-600">
+                      {properties?.min || 30} - {properties?.max || 300} {properties?.unit || 'kg'}
+                    </span>
+                  )}
+                </div>
+              </div>
+              {properties?.showWeightRange && answer && (
+                <div className="mt-3">
+                  <div className="w-full bg-blue-200 rounded-full h-2">
+                    <div 
+                      className="bg-blue-600 h-2 rounded-full transition-all duration-300"
+                      style={{ 
+                        width: `${((answer - (properties?.min || 30)) / ((properties?.max || 300) - (properties?.min || 30))) * 100}%` 
+                      }}
+                    />
+                  </div>
+                </div>
+              )}
             </div>
-            <Input
-              type="number"
-              placeholder={properties?.placeholder || '70'}
-              value={answer || ''}
-              onChange={(e) => handleElementAnswer(id, type, Number(e.target.value), properties?.fieldId || 'peso_atual')}
-              required={properties?.required}
-              min={properties?.min || 30}
-              max={properties?.max || 300}
-            />
           </div>
         );
 
       case 'target_weight':
         return (
           <div key={id} className="space-y-4">
-            <div className="flex items-center space-x-2">
-              <Target className="w-5 h-5 text-orange-500" />
-              <h3 className="text-lg font-semibold">{properties?.question || 'Peso Meta'}</h3>
+            <div className="p-4 bg-orange-50 border border-orange-200 rounded-lg">
+              <div className="flex items-center space-x-2 mb-2">
+                <Target className="w-5 h-5 text-orange-600" />
+                <h3 className={`${properties?.fontSize || 'text-lg'} ${properties?.fontWeight || 'font-semibold'} ${properties?.textAlign || 'text-left'} text-orange-800`}>{properties?.question || 'Peso Meta'}</h3>
+              </div>
+              {properties?.description && (
+                <p className="text-sm text-orange-700 mb-3">{properties.description}</p>
+              )}
+              <div className={`${
+                properties?.fieldWidth === 'small' ? 'max-w-xs' :
+                properties?.fieldWidth === 'medium' ? 'max-w-sm' :
+                properties?.fieldWidth === 'large' ? 'max-w-md' :
+                'max-w-full'
+              } ${
+                properties?.fieldAlign === 'left' ? 'mr-auto' :
+                properties?.fieldAlign === 'right' ? 'ml-auto' :
+                'mx-auto'
+              }`}>
+                <Input
+                  type="number"
+                  placeholder={properties?.placeholder || '65'}
+                  value={answer || ''}
+                  onChange={(e) => handleElementAnswer(id, type, Number(e.target.value), properties?.fieldId || 'peso_meta')}
+                  required={properties?.required}
+                  min={properties?.min || 30}
+                  max={properties?.max || 300}
+                  className={`${
+                    properties?.fieldStyle === 'rounded' ? 'rounded-full' :
+                    properties?.fieldStyle === 'square' ? 'rounded-none' :
+                    'rounded-md'
+                  }`}
+                />
+                <div className="flex justify-between items-center mt-2">
+                  <span className="text-xs text-orange-600">{properties?.unit || 'kg'}</span>
+                  {properties?.showTargetProgress && (
+                    <span className="text-xs text-orange-600">
+                      Meta: {properties?.min || 30} - {properties?.max || 300} {properties?.unit || 'kg'}
+                    </span>
+                  )}
+                </div>
+              </div>
+              {properties?.showTargetProgress && answer && (
+                <div className="mt-3">
+                  <div className="w-full bg-orange-200 rounded-full h-2">
+                    <div 
+                      className="bg-gradient-to-r from-orange-500 to-orange-600 h-2 rounded-full transition-all duration-300"
+                      style={{ 
+                        width: `${((answer - (properties?.min || 30)) / ((properties?.max || 300) - (properties?.min || 30))) * 100}%` 
+                      }}
+                    />
+                  </div>
+                  <div className="text-center mt-2">
+                    <span className="text-xs text-orange-600 font-medium">
+                      Meta: {answer}{properties?.unit || 'kg'}
+                    </span>
+                  </div>
+                </div>
+              )}
             </div>
-            <Input
-              type="number"
-              placeholder={properties?.placeholder || '65'}
-              value={answer || ''}
-              onChange={(e) => handleElementAnswer(id, type, Number(e.target.value), properties?.fieldId || 'peso_meta')}
-              required={properties?.required}
-              min={properties?.min || 30}
-              max={properties?.max || 300}
-            />
           </div>
         );
 

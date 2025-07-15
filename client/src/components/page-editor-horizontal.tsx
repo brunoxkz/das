@@ -6215,6 +6215,169 @@ const gameElementCategories = [
                       Identificador único para capturar esse dado na geração de leads
                     </div>
                   </div>
+
+                  <div>
+                    <Label htmlFor="weight-response-id">ID da Resposta (para usar como variável)</Label>
+                    <Input
+                      id="weight-response-id"
+                      value={selectedElementData.responseId || ""}
+                      onChange={(e) => updateElement(selectedElementData.id, { responseId: e.target.value })}
+                      className="mt-1"
+                      placeholder="peso_atual_resposta"
+                    />
+                    <div className="text-xs text-gray-500 mt-1">
+                      Use {`{peso_atual_resposta}`} em campanhas SMS/Email/WhatsApp
+                    </div>
+                  </div>
+
+                  <div>
+                    <Label htmlFor="weight-placeholder">Placeholder</Label>
+                    <Input
+                      id="weight-placeholder"
+                      value={selectedElementData.placeholder || ""}
+                      onChange={(e) => updateElement(selectedElementData.id, { placeholder: e.target.value })}
+                      className="mt-1"
+                      placeholder="Ex: 70"
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="weight-min">Peso Mínimo</Label>
+                      <Input
+                        id="weight-min"
+                        type="number"
+                        value={selectedElementData.min || ""}
+                        onChange={(e) => updateElement(selectedElementData.id, { min: Number(e.target.value) })}
+                        className="mt-1"
+                        placeholder="30"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="weight-max">Peso Máximo</Label>
+                      <Input
+                        id="weight-max"
+                        type="number"
+                        value={selectedElementData.max || ""}
+                        onChange={(e) => updateElement(selectedElementData.id, { max: Number(e.target.value) })}
+                        className="mt-1"
+                        placeholder="200"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <Label htmlFor="weight-unit">Unidade</Label>
+                    <select
+                      id="weight-unit"
+                      value={selectedElementData.unit || "kg"}
+                      onChange={(e) => updateElement(selectedElementData.id, { unit: e.target.value })}
+                      className="w-full mt-1 p-2 border border-gray-300 rounded-md"
+                    >
+                      <option value="kg">Quilogramas (kg)</option>
+                      <option value="lb">Libras (lb)</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <Label htmlFor="weight-field-width">Largura do Campo</Label>
+                    <select
+                      id="weight-field-width"
+                      value={selectedElementData.fieldWidth || "medium"}
+                      onChange={(e) => updateElement(selectedElementData.id, { fieldWidth: e.target.value })}
+                      className="w-full mt-1 p-2 border border-gray-300 rounded-md"
+                    >
+                      <option value="small">Pequeno</option>
+                      <option value="medium">Médio</option>
+                      <option value="large">Grande</option>
+                      <option value="full">Largura Total</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <Label htmlFor="weight-field-align">Alinhamento</Label>
+                    <select
+                      id="weight-field-align"
+                      value={selectedElementData.fieldAlign || "center"}
+                      onChange={(e) => updateElement(selectedElementData.id, { fieldAlign: e.target.value })}
+                      className="w-full mt-1 p-2 border border-gray-300 rounded-md"
+                    >
+                      <option value="left">Esquerda</option>
+                      <option value="center">Centro</option>
+                      <option value="right">Direita</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <Label htmlFor="weight-field-style">Estilo do Campo</Label>
+                    <select
+                      id="weight-field-style"
+                      value={selectedElementData.fieldStyle || "default"}
+                      onChange={(e) => updateElement(selectedElementData.id, { fieldStyle: e.target.value })}
+                      className="w-full mt-1 p-2 border border-gray-300 rounded-md"
+                    >
+                      <option value="default">Padrão</option>
+                      <option value="rounded">Arredondado</option>
+                      <option value="square">Quadrado</option>
+                    </select>
+                  </div>
+
+                  <div className="flex items-center space-x-2">
+                    <input
+                      type="checkbox"
+                      id="weight-show-range"
+                      checked={selectedElementData.showWeightRange || false}
+                      onChange={(e) => updateElement(selectedElementData.id, { showWeightRange: e.target.checked })}
+                    />
+                    <Label htmlFor="weight-show-range">Mostrar barra de progresso</Label>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="weight-font-size">Tamanho da Fonte</Label>
+                      <select
+                        id="weight-font-size"
+                        value={selectedElementData.fontSize || "text-base"}
+                        onChange={(e) => updateElement(selectedElementData.id, { fontSize: e.target.value })}
+                        className="w-full mt-1 p-2 border border-gray-300 rounded-md"
+                      >
+                        <option value="text-xs">Muito Pequeno</option>
+                        <option value="text-sm">Pequeno</option>
+                        <option value="text-base">Médio</option>
+                        <option value="text-lg">Grande</option>
+                        <option value="text-xl">Muito Grande</option>
+                      </select>
+                    </div>
+                    <div>
+                      <Label htmlFor="weight-font-weight">Peso da Fonte</Label>
+                      <select
+                        id="weight-font-weight"
+                        value={selectedElementData.fontWeight || "font-normal"}
+                        onChange={(e) => updateElement(selectedElementData.id, { fontWeight: e.target.value })}
+                        className="w-full mt-1 p-2 border border-gray-300 rounded-md"
+                      >
+                        <option value="font-light">Leve</option>
+                        <option value="font-normal">Normal</option>
+                        <option value="font-medium">Médio</option>
+                        <option value="font-semibold">Semi-Bold</option>
+                        <option value="font-bold">Bold</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div>
+                    <Label htmlFor="weight-text-align">Alinhamento do Texto</Label>
+                    <select
+                      id="weight-text-align"
+                      value={selectedElementData.textAlign || "text-left"}
+                      onChange={(e) => updateElement(selectedElementData.id, { textAlign: e.target.value })}
+                      className="w-full mt-1 p-2 border border-gray-300 rounded-md"
+                    >
+                      <option value="text-left">Esquerda</option>
+                      <option value="text-center">Centro</option>
+                      <option value="text-right">Direita</option>
+                    </select>
+                  </div>
                 </div>
               )}
 
@@ -6288,6 +6451,169 @@ const gameElementCategories = [
                     <div className="text-xs text-gray-500 mt-1">
                       Identificador único para capturar esse dado na geração de leads
                     </div>
+                  </div>
+
+                  <div>
+                    <Label htmlFor="target-response-id">ID da Resposta (para usar como variável)</Label>
+                    <Input
+                      id="target-response-id"
+                      value={selectedElementData.responseId || ""}
+                      onChange={(e) => updateElement(selectedElementData.id, { responseId: e.target.value })}
+                      className="mt-1"
+                      placeholder="peso_objetivo_resposta"
+                    />
+                    <div className="text-xs text-gray-500 mt-1">
+                      Use {`{peso_objetivo_resposta}`} em campanhas SMS/Email/WhatsApp
+                    </div>
+                  </div>
+
+                  <div>
+                    <Label htmlFor="target-placeholder">Placeholder</Label>
+                    <Input
+                      id="target-placeholder"
+                      value={selectedElementData.placeholder || ""}
+                      onChange={(e) => updateElement(selectedElementData.id, { placeholder: e.target.value })}
+                      className="mt-1"
+                      placeholder="Ex: 65"
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="target-min">Peso Mínimo</Label>
+                      <Input
+                        id="target-min"
+                        type="number"
+                        value={selectedElementData.min || ""}
+                        onChange={(e) => updateElement(selectedElementData.id, { min: Number(e.target.value) })}
+                        className="mt-1"
+                        placeholder="30"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="target-max">Peso Máximo</Label>
+                      <Input
+                        id="target-max"
+                        type="number"
+                        value={selectedElementData.max || ""}
+                        onChange={(e) => updateElement(selectedElementData.id, { max: Number(e.target.value) })}
+                        className="mt-1"
+                        placeholder="200"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <Label htmlFor="target-unit">Unidade</Label>
+                    <select
+                      id="target-unit"
+                      value={selectedElementData.unit || "kg"}
+                      onChange={(e) => updateElement(selectedElementData.id, { unit: e.target.value })}
+                      className="w-full mt-1 p-2 border border-gray-300 rounded-md"
+                    >
+                      <option value="kg">Quilogramas (kg)</option>
+                      <option value="lb">Libras (lb)</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <Label htmlFor="target-field-width">Largura do Campo</Label>
+                    <select
+                      id="target-field-width"
+                      value={selectedElementData.fieldWidth || "medium"}
+                      onChange={(e) => updateElement(selectedElementData.id, { fieldWidth: e.target.value })}
+                      className="w-full mt-1 p-2 border border-gray-300 rounded-md"
+                    >
+                      <option value="small">Pequeno</option>
+                      <option value="medium">Médio</option>
+                      <option value="large">Grande</option>
+                      <option value="full">Largura Total</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <Label htmlFor="target-field-align">Alinhamento</Label>
+                    <select
+                      id="target-field-align"
+                      value={selectedElementData.fieldAlign || "center"}
+                      onChange={(e) => updateElement(selectedElementData.id, { fieldAlign: e.target.value })}
+                      className="w-full mt-1 p-2 border border-gray-300 rounded-md"
+                    >
+                      <option value="left">Esquerda</option>
+                      <option value="center">Centro</option>
+                      <option value="right">Direita</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <Label htmlFor="target-field-style">Estilo do Campo</Label>
+                    <select
+                      id="target-field-style"
+                      value={selectedElementData.fieldStyle || "default"}
+                      onChange={(e) => updateElement(selectedElementData.id, { fieldStyle: e.target.value })}
+                      className="w-full mt-1 p-2 border border-gray-300 rounded-md"
+                    >
+                      <option value="default">Padrão</option>
+                      <option value="rounded">Arredondado</option>
+                      <option value="square">Quadrado</option>
+                    </select>
+                  </div>
+
+                  <div className="flex items-center space-x-2">
+                    <input
+                      type="checkbox"
+                      id="target-show-progress"
+                      checked={selectedElementData.showTargetProgress || false}
+                      onChange={(e) => updateElement(selectedElementData.id, { showTargetProgress: e.target.checked })}
+                    />
+                    <Label htmlFor="target-show-progress">Mostrar progresso da meta</Label>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="target-font-size">Tamanho da Fonte</Label>
+                      <select
+                        id="target-font-size"
+                        value={selectedElementData.fontSize || "text-base"}
+                        onChange={(e) => updateElement(selectedElementData.id, { fontSize: e.target.value })}
+                        className="w-full mt-1 p-2 border border-gray-300 rounded-md"
+                      >
+                        <option value="text-xs">Muito Pequeno</option>
+                        <option value="text-sm">Pequeno</option>
+                        <option value="text-base">Médio</option>
+                        <option value="text-lg">Grande</option>
+                        <option value="text-xl">Muito Grande</option>
+                      </select>
+                    </div>
+                    <div>
+                      <Label htmlFor="target-font-weight">Peso da Fonte</Label>
+                      <select
+                        id="target-font-weight"
+                        value={selectedElementData.fontWeight || "font-normal"}
+                        onChange={(e) => updateElement(selectedElementData.id, { fontWeight: e.target.value })}
+                        className="w-full mt-1 p-2 border border-gray-300 rounded-md"
+                      >
+                        <option value="font-light">Leve</option>
+                        <option value="font-normal">Normal</option>
+                        <option value="font-medium">Médio</option>
+                        <option value="font-semibold">Semi-Bold</option>
+                        <option value="font-bold">Bold</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div>
+                    <Label htmlFor="target-text-align">Alinhamento do Texto</Label>
+                    <select
+                      id="target-text-align"
+                      value={selectedElementData.textAlign || "text-left"}
+                      onChange={(e) => updateElement(selectedElementData.id, { textAlign: e.target.value })}
+                      className="w-full mt-1 p-2 border border-gray-300 rounded-md"
+                    >
+                      <option value="text-left">Esquerda</option>
+                      <option value="text-center">Centro</option>
+                      <option value="text-right">Direita</option>
+                    </select>
                   </div>
                 </div>
               )}

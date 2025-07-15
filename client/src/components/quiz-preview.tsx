@@ -906,15 +906,34 @@ export default function QuizPreview({ quiz, onClose, onSave }: QuizPreviewProps)
                 {element.required && <span className="text-red-500 ml-1">*</span>}
               </label>
             )}
-            <div className="relative">
-              <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-              <Input
-                type="email"
-                placeholder={element.placeholder || "seu@email.com"}
-                value={responses[element.id] || ''}
-                onChange={(e) => handleAnswer(element.id, e.target.value, element)}
-                className="pl-10"
-              />
+            <div className={`${
+              element.fieldWidth === 'small' ? 'max-w-xs' :
+              element.fieldWidth === 'medium' ? 'max-w-sm' :
+              element.fieldWidth === 'large' ? 'max-w-md' :
+              'max-w-full'
+            } ${
+              element.fieldAlign === 'left' ? 'mr-auto' :
+              element.fieldAlign === 'right' ? 'ml-auto' :
+              'mx-auto'
+            }`}>
+              <div className="relative">
+                <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-blue-400 w-4 h-4" />
+                <Input
+                  type="email"
+                  placeholder={element.placeholder || "seu@email.com"}
+                  value={responses[element.id] || ''}
+                  onChange={(e) => handleAnswer(element.id, e.target.value, element)}
+                  className={`pl-10 ${
+                    element.fieldStyle === 'rounded' ? 'rounded-full' :
+                    element.fieldStyle === 'square' ? 'rounded-none' :
+                    'rounded-md'
+                  } ${
+                    element.textAlign === 'center' ? 'text-center' :
+                    element.textAlign === 'right' ? 'text-right' :
+                    'text-left'
+                  }`}
+                />
+              </div>
             </div>
           </div>
         );
@@ -928,15 +947,34 @@ export default function QuizPreview({ quiz, onClose, onSave }: QuizPreviewProps)
                 {element.required && <span className="text-red-500 ml-1">*</span>}
               </label>
             )}
-            <div className="relative">
-              <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-              <Input
-                type="tel"
-                placeholder={element.placeholder || "(11) 99999-9999"}
-                value={responses[element.id] || ''}
-                onChange={(e) => handleAnswer(element.id, e.target.value, element)}
-                className="pl-10"
-              />
+            <div className={`${
+              element.fieldWidth === 'small' ? 'max-w-xs' :
+              element.fieldWidth === 'medium' ? 'max-w-sm' :
+              element.fieldWidth === 'large' ? 'max-w-md' :
+              'max-w-full'
+            } ${
+              element.fieldAlign === 'left' ? 'mr-auto' :
+              element.fieldAlign === 'right' ? 'ml-auto' :
+              'mx-auto'
+            }`}>
+              <div className="relative">
+                <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 text-green-400 w-4 h-4" />
+                <Input
+                  type="tel"
+                  placeholder={element.placeholder || "(11) 99999-9999"}
+                  value={responses[element.id] || ''}
+                  onChange={(e) => handleAnswer(element.id, e.target.value, element)}
+                  className={`pl-10 ${
+                    element.fieldStyle === 'rounded' ? 'rounded-full' :
+                    element.fieldStyle === 'square' ? 'rounded-none' :
+                    'rounded-md'
+                  } ${
+                    element.textAlign === 'center' ? 'text-center' :
+                    element.textAlign === 'right' ? 'text-right' :
+                    'text-left'
+                  }`}
+                />
+              </div>
             </div>
           </div>
         );
@@ -945,26 +983,73 @@ export default function QuizPreview({ quiz, onClose, onSave }: QuizPreviewProps)
       case 'altura':
         return (
           <div className="mb-6">
-            <div className="flex items-center space-x-2 mb-2">
-              <ArrowUpDown className="w-5 h-5 text-purple-500" />
-              <h3 
-                className={`text-lg font-semibold text-gray-900 ${getElementClasses(element)}`}
-                style={getElementStyles(element)}
-              >
-                {element.question || element.content || 'Altura'}
-                {element.required && <span className="text-red-500 ml-1">*</span>}
-              </h3>
+            <div className="p-4 bg-gradient-to-r from-purple-50 to-indigo-50 rounded-lg border border-purple-200">
+              <div className="flex items-center space-x-2 mb-3">
+                <ArrowUpDown className="w-6 h-6 text-purple-600" />
+                <h3 
+                  className={`text-lg font-semibold text-purple-800 ${getElementClasses(element)}`}
+                  style={getElementStyles(element)}
+                >
+                  {element.question || element.content || 'Qual é a sua altura?'}
+                  {element.required && <span className="text-red-500 ml-1">*</span>}
+                </h3>
+              </div>
+              
+              <div className={`${
+                element.fieldWidth === 'small' ? 'max-w-xs' :
+                element.fieldWidth === 'medium' ? 'max-w-sm' :
+                element.fieldWidth === 'large' ? 'max-w-md' :
+                'max-w-full'
+              } ${
+                element.fieldAlign === 'left' ? 'mr-auto' :
+                element.fieldAlign === 'right' ? 'ml-auto' :
+                'mx-auto'
+              }`}>
+                <div className="relative">
+                  <Input
+                    type="number"
+                    placeholder={element.placeholder || '170'}
+                    value={responses[element.id] || ''}
+                    onChange={(e) => handleAnswer(element.id, Number(e.target.value), element)}
+                    className={`pr-12 text-center text-lg font-medium ${
+                      element.fieldStyle === 'rounded' ? 'rounded-full' :
+                      element.fieldStyle === 'square' ? 'rounded-none' :
+                      'rounded-md'
+                    }`}
+                    min={element.min || 100}
+                    max={element.max || 250}
+                    required={element.required}
+                  />
+                  <div className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 font-medium">
+                    {element.unit || 'cm'}
+                  </div>
+                </div>
+              </div>
+              
+              {element.showBMICalculation && (
+                <div className="text-xs text-purple-700 bg-purple-100 p-3 rounded mt-3 flex items-center gap-2">
+                  <CheckCircle className="w-4 h-4" />
+                  <span>IMC será calculado automaticamente quando peso for informado</span>
+                </div>
+              )}
+              
+              {element.showHeightRange && (
+                <div className="mt-3 text-sm text-gray-600">
+                  <div className="flex justify-between">
+                    <span>Mínimo: {element.min || 100}cm</span>
+                    <span>Máximo: {element.max || 250}cm</span>
+                  </div>
+                  <div className="w-full bg-gray-200 rounded-full h-2 mt-1">
+                    <div 
+                      className="bg-purple-600 h-2 rounded-full transition-all duration-300"
+                      style={{ 
+                        width: `${((responses[element.id] || 0) - (element.min || 100)) / ((element.max || 250) - (element.min || 100)) * 100}%` 
+                      }}
+                    />
+                  </div>
+                </div>
+              )}
             </div>
-            <Input
-              type="number"
-              placeholder={element.placeholder || '170'}
-              value={responses[element.id] || ''}
-              onChange={(e) => handleAnswer(element.id, Number(e.target.value), element)}
-              className="w-full"
-              min={element.min || 100}
-              max={element.max || 250}
-              required={element.required}
-            />
           </div>
         );
 
