@@ -42,6 +42,7 @@ import IntegracoesPage from "@/pages/integracoes";
 import ExtensoesPage from "@/pages/extensoes";
 import VoiceCallingPage from "@/pages/voice-calling";
 import ConditionalCampaignsPage from "@/pages/conditional-campaigns";
+import AutomacoesPage from "@/pages/automacoes";
 import { useAuth } from "@/hooks/useAuth-jwt";
 import { isUnauthorizedError } from "@/lib/authUtils";
 import { SidebarProvider } from "@/hooks/useSidebar";
@@ -220,6 +221,12 @@ function App() {
         <Route path="/conditional-campaigns">
           <Layout>
             <ConditionalCampaignsPage />
+          </Layout>
+        </Route>
+
+        <Route path="/automacoes">
+          <Layout>
+            <AutomacoesPage />
           </Layout>
         </Route>
 

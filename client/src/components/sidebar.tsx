@@ -192,6 +192,13 @@ export function Sidebar() {
           active: location === "/conditional-campaigns",
           badge: <span className="text-xs text-orange-500 font-medium">SE → ENTÃO</span>
         },
+        {
+          title: "AUTOMAÇÕES",
+          href: "/automacoes",
+          icon: <Zap className="w-4 h-4" />,
+          active: location === "/automacoes",
+          badge: <span className="text-xs text-blue-500 font-medium">UNIFICADO</span>
+        },
       ]
     },
     {
