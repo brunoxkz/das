@@ -192,6 +192,15 @@ export default function WhatsAppAutomationPage() {
         </div>
       </div>
 
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+        <TabsList className="grid w-full grid-cols-3">
+          <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
+          <TabsTrigger value="method">Configurar Método</TabsTrigger>
+          <TabsTrigger value="campaigns">Campanhas</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="dashboard" className="space-y-6 mt-6">
+
       {/* Formulário de Geração */}
       <Card>
         <CardHeader>
@@ -467,6 +476,31 @@ export default function WhatsAppAutomationPage() {
           </Alert>
         </CardContent>
       </Card>
+        </TabsContent>
+
+        <TabsContent value="method" className="space-y-6 mt-6">
+          <WhatsAppMethodSelector />
+        </TabsContent>
+
+        <TabsContent value="campaigns" className="space-y-6 mt-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Campanhas WhatsApp</CardTitle>
+              <CardDescription>
+                Gerencie suas campanhas de WhatsApp aqui. Esta seção será expandida em futuras atualizações.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Alert>
+                <AlertCircle className="h-4 w-4" />
+                <AlertDescription>
+                  🚧 Esta funcionalidade está em desenvolvimento. Use a aba Dashboard para gerenciar automações.
+                </AlertDescription>
+              </Alert>
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }

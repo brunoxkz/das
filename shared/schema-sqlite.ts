@@ -10,6 +10,7 @@ export const users = sqliteTable("users", {
   password: text("password"),
   firstName: text("firstName"),
   lastName: text("lastName"),
+  whatsapp: text("whatsapp"),
   profileImageUrl: text("profileImageUrl"),
   stripeCustomerId: text("stripeCustomerId"),
   stripeSubscriptionId: text("stripeSubscriptionId"),

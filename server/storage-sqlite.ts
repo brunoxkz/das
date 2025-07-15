@@ -168,6 +168,7 @@ export interface IStorage {
     password: string;
     firstName: string;
     lastName: string;
+    whatsapp?: string;
   }): Promise<User>;
   storeRefreshToken(userId: string, refreshToken: string): Promise<void>;
   isValidRefreshToken(userId: string, refreshToken: string): Promise<boolean>;
@@ -374,6 +375,7 @@ export class SQLiteStorage implements IStorage {
     password: string;
     firstName: string;
     lastName: string;
+    whatsapp?: string;
   }): Promise<User> {
     const hashedPassword = await bcrypt.hash(userData.password, 10);
     const userId = nanoid();
@@ -386,6 +388,7 @@ export class SQLiteStorage implements IStorage {
         password: hashedPassword,
         firstName: userData.firstName,
         lastName: userData.lastName,
+        whatsapp: userData.whatsapp,
         plan: 'free',
         role: 'user',
       })
