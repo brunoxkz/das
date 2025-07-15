@@ -4099,112 +4099,122 @@ export function registerSQLiteRoutes(app: Express): Server {
   // FUNÇÕES AUXILIARES PARA DETECÇÃO DE PAÍS
   // =============================================
 
-  // Detectar país baseado no número de telefone
+  // Detectar país baseado no número de telefone - SISTEMA GLOBAL
   function detectCountryFromPhone(phone: string): { country: string; code: string; currency: string; language: string } {
     const cleanPhone = phone.replace(/\D/g, '');
     
-    // Estados Unidos (+1) - 11 dígitos começando com 1
-    if (cleanPhone.length === 11 && cleanPhone.startsWith('1')) {
-      return {
-        country: 'Estados Unidos',
-        code: '+1',
-        currency: 'USD',
-        language: 'en-US'
-      };
+    // Base de dados completa de códigos de país
+    const countryDatabase = [
+      // América do Norte
+      { code: '+1', prefixes: ['1'], minLength: 11, maxLength: 11, country: 'Estados Unidos', currency: 'USD', language: 'en-US' },
+      { code: '+1', prefixes: ['1'], minLength: 11, maxLength: 11, country: 'Canadá', currency: 'CAD', language: 'en-CA' },
+      
+      // América Latina
+      { code: '+54', prefixes: ['54'], minLength: 12, maxLength: 13, country: 'Argentina', currency: 'ARS', language: 'es-AR' },
+      { code: '+55', prefixes: ['55'], minLength: 13, maxLength: 13, country: 'Brasil', currency: 'BRL', language: 'pt-BR' },
+      { code: '+56', prefixes: ['56'], minLength: 11, maxLength: 12, country: 'Chile', currency: 'CLP', language: 'es-CL' },
+      { code: '+57', prefixes: ['57'], minLength: 12, maxLength: 13, country: 'Colômbia', currency: 'COP', language: 'es-CO' },
+      { code: '+58', prefixes: ['58'], minLength: 12, maxLength: 13, country: 'Venezuela', currency: 'VES', language: 'es-VE' },
+      { code: '+51', prefixes: ['51'], minLength: 11, maxLength: 12, country: 'Peru', currency: 'PEN', language: 'es-PE' },
+      { code: '+52', prefixes: ['52'], minLength: 12, maxLength: 13, country: 'México', currency: 'MXN', language: 'es-MX' },
+      { code: '+53', prefixes: ['53'], minLength: 10, maxLength: 11, country: 'Cuba', currency: 'CUP', language: 'es-CU' },
+      { code: '+595', prefixes: ['595'], minLength: 12, maxLength: 13, country: 'Paraguai', currency: 'PYG', language: 'es-PY' },
+      { code: '+598', prefixes: ['598'], minLength: 11, maxLength: 12, country: 'Uruguai', currency: 'UYU', language: 'es-UY' },
+      { code: '+591', prefixes: ['591'], minLength: 11, maxLength: 12, country: 'Bolívia', currency: 'BOB', language: 'es-BO' },
+      { code: '+593', prefixes: ['593'], minLength: 11, maxLength: 12, country: 'Equador', currency: 'USD', language: 'es-EC' },
+      
+      // Europa
+      { code: '+44', prefixes: ['44'], minLength: 12, maxLength: 13, country: 'Reino Unido', currency: 'GBP', language: 'en-GB' },
+      { code: '+49', prefixes: ['49'], minLength: 12, maxLength: 13, country: 'Alemanha', currency: 'EUR', language: 'de-DE' },
+      { code: '+33', prefixes: ['33'], minLength: 11, maxLength: 12, country: 'França', currency: 'EUR', language: 'fr-FR' },
+      { code: '+39', prefixes: ['39'], minLength: 11, maxLength: 12, country: 'Itália', currency: 'EUR', language: 'it-IT' },
+      { code: '+34', prefixes: ['34'], minLength: 11, maxLength: 12, country: 'Espanha', currency: 'EUR', language: 'es-ES' },
+      { code: '+351', prefixes: ['351'], minLength: 12, maxLength: 12, country: 'Portugal', currency: 'EUR', language: 'pt-PT' },
+      { code: '+31', prefixes: ['31'], minLength: 11, maxLength: 12, country: 'Holanda', currency: 'EUR', language: 'nl-NL' },
+      { code: '+32', prefixes: ['32'], minLength: 11, maxLength: 12, country: 'Bélgica', currency: 'EUR', language: 'fr-BE' },
+      { code: '+41', prefixes: ['41'], minLength: 11, maxLength: 12, country: 'Suíça', currency: 'CHF', language: 'de-CH' },
+      { code: '+43', prefixes: ['43'], minLength: 12, maxLength: 13, country: 'Áustria', currency: 'EUR', language: 'de-AT' },
+      { code: '+45', prefixes: ['45'], minLength: 10, maxLength: 11, country: 'Dinamarca', currency: 'DKK', language: 'da-DK' },
+      { code: '+46', prefixes: ['46'], minLength: 11, maxLength: 12, country: 'Suécia', currency: 'SEK', language: 'sv-SE' },
+      { code: '+47', prefixes: ['47'], minLength: 10, maxLength: 11, country: 'Noruega', currency: 'NOK', language: 'nb-NO' },
+      { code: '+48', prefixes: ['48'], minLength: 11, maxLength: 12, country: 'Polônia', currency: 'PLN', language: 'pl-PL' },
+      { code: '+7', prefixes: ['7'], minLength: 11, maxLength: 12, country: 'Rússia', currency: 'RUB', language: 'ru-RU' },
+      
+      // Ásia
+      { code: '+86', prefixes: ['86'], minLength: 13, maxLength: 14, country: 'China', currency: 'CNY', language: 'zh-CN' },
+      { code: '+81', prefixes: ['81'], minLength: 12, maxLength: 13, country: 'Japão', currency: 'JPY', language: 'ja-JP' },
+      { code: '+82', prefixes: ['82'], minLength: 12, maxLength: 13, country: 'Coreia do Sul', currency: 'KRW', language: 'ko-KR' },
+      { code: '+91', prefixes: ['91'], minLength: 12, maxLength: 13, country: 'Índia', currency: 'INR', language: 'hi-IN' },
+      { code: '+65', prefixes: ['65'], minLength: 10, maxLength: 11, country: 'Singapura', currency: 'SGD', language: 'en-SG' },
+      { code: '+60', prefixes: ['60'], minLength: 11, maxLength: 12, country: 'Malásia', currency: 'MYR', language: 'ms-MY' },
+      { code: '+66', prefixes: ['66'], minLength: 11, maxLength: 12, country: 'Tailândia', currency: 'THB', language: 'th-TH' },
+      { code: '+84', prefixes: ['84'], minLength: 11, maxLength: 12, country: 'Vietnã', currency: 'VND', language: 'vi-VN' },
+      { code: '+62', prefixes: ['62'], minLength: 11, maxLength: 13, country: 'Indonésia', currency: 'IDR', language: 'id-ID' },
+      { code: '+63', prefixes: ['63'], minLength: 12, maxLength: 13, country: 'Filipinas', currency: 'PHP', language: 'tl-PH' },
+      { code: '+92', prefixes: ['92'], minLength: 12, maxLength: 13, country: 'Paquistão', currency: 'PKR', language: 'ur-PK' },
+      { code: '+880', prefixes: ['880'], minLength: 13, maxLength: 14, country: 'Bangladesh', currency: 'BDT', language: 'bn-BD' },
+      
+      // Oceania
+      { code: '+61', prefixes: ['61'], minLength: 11, maxLength: 12, country: 'Austrália', currency: 'AUD', language: 'en-AU' },
+      { code: '+64', prefixes: ['64'], minLength: 11, maxLength: 12, country: 'Nova Zelândia', currency: 'NZD', language: 'en-NZ' },
+      
+      // África
+      { code: '+27', prefixes: ['27'], minLength: 11, maxLength: 12, country: 'África do Sul', currency: 'ZAR', language: 'en-ZA' },
+      { code: '+234', prefixes: ['234'], minLength: 13, maxLength: 14, country: 'Nigéria', currency: 'NGN', language: 'en-NG' },
+      { code: '+254', prefixes: ['254'], minLength: 12, maxLength: 13, country: 'Quênia', currency: 'KES', language: 'sw-KE' },
+      { code: '+20', prefixes: ['20'], minLength: 12, maxLength: 13, country: 'Egito', currency: 'EGP', language: 'ar-EG' },
+      { code: '+212', prefixes: ['212'], minLength: 12, maxLength: 13, country: 'Marrocos', currency: 'MAD', language: 'ar-MA' },
+      
+      // Oriente Médio
+      { code: '+971', prefixes: ['971'], minLength: 12, maxLength: 13, country: 'Emirados Árabes Unidos', currency: 'AED', language: 'ar-AE' },
+      { code: '+966', prefixes: ['966'], minLength: 12, maxLength: 13, country: 'Arábia Saudita', currency: 'SAR', language: 'ar-SA' },
+      { code: '+972', prefixes: ['972'], minLength: 12, maxLength: 13, country: 'Israel', currency: 'ILS', language: 'he-IL' },
+      { code: '+90', prefixes: ['90'], minLength: 12, maxLength: 13, country: 'Turquia', currency: 'TRY', language: 'tr-TR' },
+      { code: '+98', prefixes: ['98'], minLength: 12, maxLength: 13, country: 'Irã', currency: 'IRR', language: 'fa-IR' },
+    ];
+    
+    // Primeiro, caso especial para números brasileiros sem código de país
+    // Apenas números que começam com DDD brasileiro válido (11, 12, 13, 14, 15, 16, 17, 18, 19, 21, 22, 24, 27, 28, 31, 32, 33, 34, 35, 37, 38, 41, 42, 43, 44, 45, 46, 47, 48, 49, 51, 53, 54, 55, 61, 62, 63, 64, 65, 66, 67, 68, 69, 71, 73, 74, 75, 77, 79, 81, 82, 83, 84, 85, 86, 87, 88, 89, 91, 92, 93, 94, 95, 96, 97, 98, 99)
+    if (cleanPhone.length === 11) {
+      const ddd = cleanPhone.substring(0, 2);
+      const validDDDs = ['11', '12', '13', '14', '15', '16', '17', '18', '19', '21', '22', '24', '27', '28', '31', '32', '33', '34', '35', '37', '38', '41', '42', '43', '44', '45', '46', '47', '48', '49', '51', '53', '54', '55', '61', '62', '63', '64', '65', '66', '67', '68', '69', '71', '73', '74', '75', '77', '79', '81', '82', '83', '84', '85', '86', '87', '88', '89', '91', '92', '93', '94', '95', '96', '97', '98', '99'];
+      
+      if (validDDDs.includes(ddd)) {
+        console.log(`🇧🇷 Número brasileiro detectado (sem código): ${cleanPhone} - DDD: ${ddd}`);
+        return {
+          country: 'Brasil',
+          code: '+55',
+          currency: 'BRL',
+          language: 'pt-BR'
+        };
+      }
     }
     
-    // Argentina (+54) - números com 12-13 dígitos começando com 54
-    if (cleanPhone.startsWith('54') && cleanPhone.length >= 12) {
-      return {
-        country: 'Argentina',
-        code: '+54',
-        currency: 'ARS',
-        language: 'es-AR'
-      };
-    }
+    // Tentar detectar país por prefixo, começando pelos mais longos
+    const sortedCountries = countryDatabase.sort((a, b) => b.prefixes[0].length - a.prefixes[0].length);
     
-    // México (+52) - números com 12-13 dígitos começando com 52
-    if (cleanPhone.startsWith('52') && cleanPhone.length >= 12) {
-      return {
-        country: 'México',
-        code: '+52',
-        currency: 'MXN',
-        language: 'es-MX'
-      };
-    }
+    console.log(`🔍 Detectando país para número: ${cleanPhone} (${cleanPhone.length} dígitos)`);
     
-    // Portugal (+351) - números com 12 dígitos começando com 351
-    if (cleanPhone.startsWith('351') && cleanPhone.length === 12) {
-      return {
-        country: 'Portugal',
-        code: '+351',
-        currency: 'EUR',
-        language: 'pt-PT'
-      };
-    }
-    
-    // Espanha (+34) - números com 11 dígitos começando com 34
-    if (cleanPhone.startsWith('34') && cleanPhone.length === 11) {
-      return {
-        country: 'Espanha',
-        code: '+34',
-        currency: 'EUR',
-        language: 'es-ES'
-      };
-    }
-    
-    // França (+33) - números com 11 dígitos começando com 33
-    if (cleanPhone.startsWith('33') && cleanPhone.length === 11) {
-      return {
-        country: 'França',
-        code: '+33',
-        currency: 'EUR',
-        language: 'fr-FR'
-      };
-    }
-    
-    // Itália (+39) - números com 11-12 dígitos começando com 39
-    if (cleanPhone.startsWith('39') && cleanPhone.length >= 11 && cleanPhone.length <= 12) {
-      return {
-        country: 'Itália',
-        code: '+39',
-        currency: 'EUR',
-        language: 'it-IT'
-      };
-    }
-    
-    // Reino Unido (+44) - números com 12 dígitos começando com 44
-    if (cleanPhone.startsWith('44') && cleanPhone.length === 12) {
-      return {
-        country: 'Reino Unido',
-        code: '+44',
-        currency: 'GBP',
-        language: 'en-GB'
-      };
-    }
-    
-    // Alemanha (+49) - números com 12-13 dígitos começando com 49
-    if (cleanPhone.startsWith('49') && cleanPhone.length >= 12 && cleanPhone.length <= 13) {
-      return {
-        country: 'Alemanha',
-        code: '+49',
-        currency: 'EUR',
-        language: 'de-DE'
-      };
-    }
-    
-    // Brasil (+55) - números com 13 dígitos começando com 55 OU 11 dígitos de celular
-    if ((cleanPhone.startsWith('55') && cleanPhone.length === 13) || 
-        (cleanPhone.length === 11 && (cleanPhone.startsWith('1') || cleanPhone.startsWith('2') || cleanPhone.startsWith('8') || cleanPhone.startsWith('9')))) {
-      return {
-        country: 'Brasil',
-        code: '+55',
-        currency: 'BRL',
-        language: 'pt-BR'
-      };
+    for (const country of sortedCountries) {
+      for (const prefix of country.prefixes) {
+        if (cleanPhone.startsWith(prefix)) {
+          const phoneLength = cleanPhone.length;
+          console.log(`🔍 Testando ${country.country} (${country.code}): prefixo ${prefix}, comprimento ${phoneLength}, range ${country.minLength}-${country.maxLength}`);
+          if (phoneLength >= country.minLength && phoneLength <= country.maxLength) {
+            console.log(`✅ País detectado: ${country.country} (${country.code}) - Comprimento: ${phoneLength}`);
+            return {
+              country: country.country,
+              code: country.code,
+              currency: country.currency,
+              language: country.language
+            };
+          }
+        }
+      }
     }
     
     // Padrão: Brasil
+    console.log(`⚠️  Número não reconhecido, assumindo Brasil: ${cleanPhone}`);
     return {
       country: 'Brasil',
       code: '+55',
@@ -4213,9 +4223,10 @@ export function registerSQLiteRoutes(app: Express): Server {
     };
   }
 
-  // Adaptar mensagem baseado no país
+  // Adaptar mensagem baseado no país - SISTEMA GLOBAL
   function adaptMessageToCountry(message: string, country: string): string {
     const adaptations: Record<string, any> = {
+      // América do Norte
       'Estados Unidos': {
         currency: '$',
         greeting: 'Hi',
@@ -4223,8 +4234,52 @@ export function registerSQLiteRoutes(app: Express): Server {
         urgency: 'Limited time offer!',
         cta: 'Get it now!'
       },
+      'Canadá': {
+        currency: 'CAD$',
+        greeting: 'Hello',
+        discount: 'OFF',
+        urgency: 'Limited time offer!',
+        cta: 'Get it now!'
+      },
+      
+      // América Latina
       'Argentina': {
         currency: 'ARS$',
+        greeting: 'Hola',
+        discount: 'DESCUENTO',
+        urgency: '¡Oferta limitada!',
+        cta: '¡Consíguelo ahora!'
+      },
+      'Brasil': {
+        currency: 'R$',
+        greeting: 'Olá',
+        discount: 'DESCONTO',
+        urgency: 'Oferta limitada!',
+        cta: 'Aproveite agora!'
+      },
+      'Chile': {
+        currency: 'CLP$',
+        greeting: 'Hola',
+        discount: 'DESCUENTO',
+        urgency: '¡Oferta limitada!',
+        cta: '¡Consíguelo ahora!'
+      },
+      'Colômbia': {
+        currency: 'COP$',
+        greeting: 'Hola',
+        discount: 'DESCUENTO',
+        urgency: '¡Oferta limitada!',
+        cta: '¡Consíguelo ahora!'
+      },
+      'Venezuela': {
+        currency: 'VES$',
+        greeting: 'Hola',
+        discount: 'DESCUENTO',
+        urgency: '¡Oferta limitada!',
+        cta: '¡Consíguelo ahora!'
+      },
+      'Peru': {
+        currency: 'PEN$',
         greeting: 'Hola',
         discount: 'DESCUENTO',
         urgency: '¡Oferta limitada!',
@@ -4237,19 +4292,56 @@ export function registerSQLiteRoutes(app: Express): Server {
         urgency: '¡Oferta limitada!',
         cta: '¡Consíguelo ahora!'
       },
-      'Portugal': {
-        currency: '€',
-        greeting: 'Olá',
-        discount: 'DESCONTO',
-        urgency: 'Oferta limitada!',
-        cta: 'Obtenha agora!'
-      },
-      'Espanha': {
-        currency: '€',
+      'Cuba': {
+        currency: 'CUP$',
         greeting: 'Hola',
         discount: 'DESCUENTO',
         urgency: '¡Oferta limitada!',
         cta: '¡Consíguelo ahora!'
+      },
+      'Paraguai': {
+        currency: 'PYG$',
+        greeting: 'Hola',
+        discount: 'DESCUENTO',
+        urgency: '¡Oferta limitada!',
+        cta: '¡Consíguelo ahora!'
+      },
+      'Uruguai': {
+        currency: 'UYU$',
+        greeting: 'Hola',
+        discount: 'DESCUENTO',
+        urgency: '¡Oferta limitada!',
+        cta: '¡Consíguelo ahora!'
+      },
+      'Bolívia': {
+        currency: 'BOB$',
+        greeting: 'Hola',
+        discount: 'DESCUENTO',
+        urgency: '¡Oferta limitada!',
+        cta: '¡Consíguelo ahora!'
+      },
+      'Equador': {
+        currency: '$',
+        greeting: 'Hola',
+        discount: 'DESCUENTO',
+        urgency: '¡Oferta limitada!',
+        cta: '¡Consíguelo ahora!'
+      },
+      
+      // Europa
+      'Reino Unido': {
+        currency: '£',
+        greeting: 'Hello',
+        discount: 'OFF',
+        urgency: 'Limited time offer!',
+        cta: 'Get it now!'
+      },
+      'Alemanha': {
+        currency: '€',
+        greeting: 'Hallo',
+        discount: 'RABATT',
+        urgency: 'Begrenztes Angebot!',
+        cta: 'Jetzt holen!'
       },
       'França': {
         currency: '€',
@@ -4265,19 +4357,258 @@ export function registerSQLiteRoutes(app: Express): Server {
         urgency: 'Offerta limitata!',
         cta: 'Ottienilo ora!'
       },
-      'Reino Unido': {
-        currency: '£',
-        greeting: 'Hello',
-        discount: 'OFF',
-        urgency: 'Limited time offer!',
-        cta: 'Get it now!'
+      'Espanha': {
+        currency: '€',
+        greeting: 'Hola',
+        discount: 'DESCUENTO',
+        urgency: '¡Oferta limitada!',
+        cta: '¡Consíguelo ahora!'
       },
-      'Alemanha': {
+      'Portugal': {
+        currency: '€',
+        greeting: 'Olá',
+        discount: 'DESCONTO',
+        urgency: 'Oferta limitada!',
+        cta: 'Obtenha agora!'
+      },
+      'Holanda': {
+        currency: '€',
+        greeting: 'Hallo',
+        discount: 'KORTING',
+        urgency: 'Beperkte tijd!',
+        cta: 'Krijg het nu!'
+      },
+      'Bélgica': {
+        currency: '€',
+        greeting: 'Salut',
+        discount: 'REMISE',
+        urgency: 'Offre limitée!',
+        cta: 'Obtenez-le maintenant!'
+      },
+      'Suíça': {
+        currency: 'CHF',
+        greeting: 'Hallo',
+        discount: 'RABATT',
+        urgency: 'Begrenztes Angebot!',
+        cta: 'Jetzt holen!'
+      },
+      'Áustria': {
         currency: '€',
         greeting: 'Hallo',
         discount: 'RABATT',
         urgency: 'Begrenztes Angebot!',
         cta: 'Jetzt holen!'
+      },
+      'Dinamarca': {
+        currency: 'DKK',
+        greeting: 'Hej',
+        discount: 'RABAT',
+        urgency: 'Begrænset tilbud!',
+        cta: 'Få det nu!'
+      },
+      'Suécia': {
+        currency: 'SEK',
+        greeting: 'Hej',
+        discount: 'RABATT',
+        urgency: 'Begränsat erbjudande!',
+        cta: 'Få det nu!'
+      },
+      'Noruega': {
+        currency: 'NOK',
+        greeting: 'Hei',
+        discount: 'RABATT',
+        urgency: 'Begrenset tilbud!',
+        cta: 'Få det nå!'
+      },
+      'Polônia': {
+        currency: 'PLN',
+        greeting: 'Cześć',
+        discount: 'ZNIŻKA',
+        urgency: 'Oferta ograniczona!',
+        cta: 'Zdobądź to teraz!'
+      },
+      'Rússia': {
+        currency: '₽',
+        greeting: 'Привет',
+        discount: 'СКИДКА',
+        urgency: 'Ограниченное предложение!',
+        cta: 'Получить сейчас!'
+      },
+      
+      // Ásia
+      'China': {
+        currency: '¥',
+        greeting: '你好',
+        discount: '折扣',
+        urgency: '限时优惠！',
+        cta: '立即获取！'
+      },
+      'Japão': {
+        currency: '¥',
+        greeting: 'こんにちは',
+        discount: '割引',
+        urgency: '期間限定！',
+        cta: '今すぐ入手！'
+      },
+      'Coreia do Sul': {
+        currency: '₩',
+        greeting: '안녕하세요',
+        discount: '할인',
+        urgency: '한정 시간 제공!',
+        cta: '지금 받으세요!'
+      },
+      'Índia': {
+        currency: '₹',
+        greeting: 'नमस्ते',
+        discount: 'छूट',
+        urgency: 'सीमित समय का प्रस्ताव!',
+        cta: 'अभी प्राप्त करें!'
+      },
+      'Singapura': {
+        currency: 'SGD$',
+        greeting: 'Hello',
+        discount: 'OFF',
+        urgency: 'Limited time offer!',
+        cta: 'Get it now!'
+      },
+      'Malásia': {
+        currency: 'MYR',
+        greeting: 'Hello',
+        discount: 'DISKAUN',
+        urgency: 'Tawaran terhad!',
+        cta: 'Dapatkan sekarang!'
+      },
+      'Tailândia': {
+        currency: '฿',
+        greeting: 'สวัสดี',
+        discount: 'ส่วนลด',
+        urgency: 'ข้อเสนอจำกัดเวลา!',
+        cta: 'รับเดี๋ยวนี้!'
+      },
+      'Vietnã': {
+        currency: '₫',
+        greeting: 'Xin chào',
+        discount: 'GIẢM GIÁ',
+        urgency: 'Ưu đãi có thời hạn!',
+        cta: 'Nhận ngay!'
+      },
+      'Indonésia': {
+        currency: 'IDR',
+        greeting: 'Halo',
+        discount: 'DISKON',
+        urgency: 'Penawaran terbatas!',
+        cta: 'Dapatkan sekarang!'
+      },
+      'Filipinas': {
+        currency: '₱',
+        greeting: 'Kumusta',
+        discount: 'DISKWENTO',
+        urgency: 'Limitadong alok!',
+        cta: 'Kunin ngayon!'
+      },
+      'Paquistão': {
+        currency: '₨',
+        greeting: 'سلام',
+        discount: 'رعایت',
+        urgency: 'محدود وقت کی پیشکش!',
+        cta: 'اب حاصل کریں!'
+      },
+      'Bangladesh': {
+        currency: '৳',
+        greeting: 'নমস্কার',
+        discount: 'ছাড়',
+        urgency: 'সীমিত সময়ের অফার!',
+        cta: 'এখনই পান!'
+      },
+      
+      // Oceania
+      'Austrália': {
+        currency: 'AUD$',
+        greeting: 'G\'day',
+        discount: 'OFF',
+        urgency: 'Limited time offer!',
+        cta: 'Get it now!'
+      },
+      'Nova Zelândia': {
+        currency: 'NZD$',
+        greeting: 'Kia ora',
+        discount: 'OFF',
+        urgency: 'Limited time offer!',
+        cta: 'Get it now!'
+      },
+      
+      // África
+      'África do Sul': {
+        currency: 'ZAR',
+        greeting: 'Hello',
+        discount: 'OFF',
+        urgency: 'Limited time offer!',
+        cta: 'Get it now!'
+      },
+      'Nigéria': {
+        currency: '₦',
+        greeting: 'Hello',
+        discount: 'OFF',
+        urgency: 'Limited time offer!',
+        cta: 'Get it now!'
+      },
+      'Quênia': {
+        currency: 'KSh',
+        greeting: 'Jambo',
+        discount: 'PUNGUZO',
+        urgency: 'Toleo la muda mfupi!',
+        cta: 'Pata sasa!'
+      },
+      'Egito': {
+        currency: 'EGP',
+        greeting: 'مرحبا',
+        discount: 'خصم',
+        urgency: 'عرض لفترة محدودة!',
+        cta: 'احصل عليه الآن!'
+      },
+      'Marrocos': {
+        currency: 'MAD',
+        greeting: 'مرحبا',
+        discount: 'خصم',
+        urgency: 'عرض لفترة محدودة!',
+        cta: 'احصل عليه الآن!'
+      },
+      
+      // Oriente Médio
+      'Emirados Árabes Unidos': {
+        currency: 'AED',
+        greeting: 'مرحبا',
+        discount: 'خصم',
+        urgency: 'عرض لفترة محدودة!',
+        cta: 'احصل عليه الآن!'
+      },
+      'Arábia Saudita': {
+        currency: 'SAR',
+        greeting: 'مرحبا',
+        discount: 'خصم',
+        urgency: 'عرض لفترة محدودة!',
+        cta: 'احصل عليه الآن!'
+      },
+      'Israel': {
+        currency: '₪',
+        greeting: 'שלום',
+        discount: 'הנחה',
+        urgency: 'הצעה מוגבלת בזמן!',
+        cta: 'קבל עכשיו!'
+      },
+      'Turquia': {
+        currency: '₺',
+        greeting: 'Merhaba',
+        discount: 'İNDİRİM',
+        urgency: 'Sınırlı süreli teklif!',
+        cta: 'Şimdi al!'
+      },
+      'Irã': {
+        currency: '﷼',
+        greeting: 'سلام',
+        discount: 'تخفیف',
+        urgency: 'پیشنهاد محدود!',
+        cta: 'الان بگیر!'
       }
     };
 
@@ -4331,6 +4662,7 @@ export function registerSQLiteRoutes(app: Express): Server {
       }
 
       // Detectar país baseado no número
+      console.log(`🔍 Iniciando detecção para número: ${phone}`);
       const countryInfo = detectCountryFromPhone(phone);
       console.log(`🌍 País detectado: ${countryInfo.country} (${countryInfo.code})`);
       

@@ -129,6 +129,146 @@ export function formatPhoneNumber(phone: string): string {
     console.log(`📱 Número Alemanha: ${formatted}`);
     return formatted;
   }
+
+  // China (+86) - números começando com 86
+  if (cleaned.startsWith('86') && cleaned.length >= 13) {
+    const formatted = `+${cleaned}`;
+    console.log(`📱 Número China: ${formatted}`);
+    return formatted;
+  }
+
+  // Japão (+81) - números começando com 81
+  if (cleaned.startsWith('81') && cleaned.length >= 11) {
+    const formatted = `+${cleaned}`;
+    console.log(`📱 Número Japão: ${formatted}`);
+    return formatted;
+  }
+
+  // Índia (+91) - números começando com 91
+  if (cleaned.startsWith('91') && cleaned.length >= 12) {
+    const formatted = `+${cleaned}`;
+    console.log(`📱 Número Índia: ${formatted}`);
+    return formatted;
+  }
+
+  // Rússia (+7) - números começando com 7
+  if (cleaned.startsWith('7') && cleaned.length >= 11) {
+    const formatted = `+${cleaned}`;
+    console.log(`📱 Número Rússia: ${formatted}`);
+    return formatted;
+  }
+
+  // Austrália (+61) - números começando com 61
+  if (cleaned.startsWith('61') && cleaned.length >= 11) {
+    const formatted = `+${cleaned}`;
+    console.log(`📱 Número Austrália: ${formatted}`);
+    return formatted;
+  }
+
+  // Coreia do Sul (+82) - números começando com 82
+  if (cleaned.startsWith('82') && cleaned.length >= 11) {
+    const formatted = `+${cleaned}`;
+    console.log(`📱 Número Coreia do Sul: ${formatted}`);
+    return formatted;
+  }
+
+  // Singapura (+65) - números começando com 65
+  if (cleaned.startsWith('65') && cleaned.length >= 10) {
+    const formatted = `+${cleaned}`;
+    console.log(`📱 Número Singapura: ${formatted}`);
+    return formatted;
+  }
+
+  // Tailândia (+66) - números começando com 66
+  if (cleaned.startsWith('66') && cleaned.length >= 11) {
+    const formatted = `+${cleaned}`;
+    console.log(`📱 Número Tailândia: ${formatted}`);
+    return formatted;
+  }
+
+  // Vietnã (+84) - números começando com 84
+  if (cleaned.startsWith('84') && cleaned.length >= 11) {
+    const formatted = `+${cleaned}`;
+    console.log(`📱 Número Vietnã: ${formatted}`);
+    return formatted;
+  }
+
+  // Malásia (+60) - números começando com 60
+  if (cleaned.startsWith('60') && cleaned.length >= 11) {
+    const formatted = `+${cleaned}`;
+    console.log(`📱 Número Malásia: ${formatted}`);
+    return formatted;
+  }
+
+  // Filipinas (+63) - números começando com 63
+  if (cleaned.startsWith('63') && cleaned.length >= 11) {
+    const formatted = `+${cleaned}`;
+    console.log(`📱 Número Filipinas: ${formatted}`);
+    return formatted;
+  }
+
+  // Indonésia (+62) - números começando com 62
+  if (cleaned.startsWith('62') && cleaned.length >= 11) {
+    const formatted = `+${cleaned}`;
+    console.log(`📱 Número Indonésia: ${formatted}`);
+    return formatted;
+  }
+
+  // Turquia (+90) - números começando com 90
+  if (cleaned.startsWith('90') && cleaned.length >= 12) {
+    const formatted = `+${cleaned}`;
+    console.log(`📱 Número Turquia: ${formatted}`);
+    return formatted;
+  }
+
+  // Irã (+98) - números começando com 98
+  if (cleaned.startsWith('98') && cleaned.length >= 12) {
+    const formatted = `+${cleaned}`;
+    console.log(`📱 Número Irã: ${formatted}`);
+    return formatted;
+  }
+
+  // África do Sul (+27) - números começando com 27
+  if (cleaned.startsWith('27') && cleaned.length >= 11) {
+    const formatted = `+${cleaned}`;
+    console.log(`📱 Número África do Sul: ${formatted}`);
+    return formatted;
+  }
+
+  // Egito (+20) - números começando com 20
+  if (cleaned.startsWith('20') && cleaned.length >= 11) {
+    const formatted = `+${cleaned}`;
+    console.log(`📱 Número Egito: ${formatted}`);
+    return formatted;
+  }
+
+  // Nigéria (+234) - números começando com 234
+  if (cleaned.startsWith('234') && cleaned.length >= 13) {
+    const formatted = `+${cleaned}`;
+    console.log(`📱 Número Nigéria: ${formatted}`);
+    return formatted;
+  }
+
+  // Quênia (+254) - números começando com 254
+  if (cleaned.startsWith('254') && cleaned.length >= 12) {
+    const formatted = `+${cleaned}`;
+    console.log(`📱 Número Quênia: ${formatted}`);
+    return formatted;
+  }
+
+  // Marrocos (+212) - números começando com 212
+  if (cleaned.startsWith('212') && cleaned.length >= 12) {
+    const formatted = `+${cleaned}`;
+    console.log(`📱 Número Marrocos: ${formatted}`);
+    return formatted;
+  }
+
+  // Israel (+972) - números começando com 972
+  if (cleaned.startsWith('972') && cleaned.length >= 12) {
+    const formatted = `+${cleaned}`;
+    console.log(`📱 Número Israel: ${formatted}`);
+    return formatted;
+  }
   
   // Já tem código do país Brasil (+5511995133932)
   if (cleaned.length === 13 && cleaned.startsWith('55')) {
@@ -138,10 +278,18 @@ export function formatPhoneNumber(phone: string): string {
   }
   
   // Número brasileiro com 11 dígitos (ex: 11995133932)
-  if (cleaned.length === 11 && (cleaned.startsWith('1') || cleaned.startsWith('2') || cleaned.startsWith('8') || cleaned.startsWith('9'))) {
-    const formatted = `+55${cleaned}`;
-    console.log(`📱 Número brasileiro 11 dígitos: ${formatted}`);
-    return formatted;
+  // Verificar se é realmente brasileiro usando DDDs válidos
+  if (cleaned.length === 11) {
+    const ddd = cleaned.substring(0, 2);
+    const validDDDs = ['11', '12', '13', '14', '15', '16', '17', '18', '19', '21', '22', '24', '27', '28', '31', '32', '33', '34', '35', '37', '38', '41', '42', '43', '44', '45', '46', '47', '48', '49', '51', '53', '54', '55', '61', '62', '63', '64', '65', '66', '67', '68', '69', '71', '73', '74', '75', '77', '79', '81', '82', '83', '84', '85', '86', '87', '88', '89', '91', '92', '93', '94', '95', '96', '97', '98', '99'];
+    
+    if (validDDDs.includes(ddd)) {
+      const formatted = `+55${cleaned}`;
+      console.log(`📱 Número brasileiro 11 dígitos - DDD válido ${ddd}: ${formatted}`);
+      return formatted;
+    } else {
+      console.log(`📱 Número 11 dígitos com DDD inválido: ${ddd}, passando para detecção internacional`);
+    }
   }
   
   // Número brasileiro com 10 dígitos (ex: 1195133932) - adiciona 9
