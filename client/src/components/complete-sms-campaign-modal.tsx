@@ -33,6 +33,7 @@ interface CompleteSMSCampaignModalProps {
   onCreateCampaign: (campaignData: any) => void;
   quizzes: any[];
   isCreating: boolean;
+  selectedStyle?: CampaignStyle;
 }
 
 const campaignStyles = {
@@ -107,12 +108,13 @@ export function CompleteSMSCampaignModal({
   onClose,
   onCreateCampaign,
   quizzes,
-  isCreating
+  isCreating,
+  selectedStyle: initialSelectedStyle
 }: CompleteSMSCampaignModalProps) {
-  const [currentStep, setCurrentStep] = useState<'style' | 'config'>('style');
-  const [selectedStyle, setSelectedStyle] = useState<CampaignStyle | null>(null);
+  const [currentStep, setCurrentStep] = useState<'style' | 'config'>(initialSelectedStyle ? 'config' : 'style');
+  const [selectedStyle, setSelectedStyle] = useState<CampaignStyle | null>(initialSelectedStyle || null);
   const [campaignForm, setCampaignForm] = useState({
-    name: '',
+    name: initialSelectedStyle ? `[${campaignStyles[initialSelectedStyle].title}] ` : '',
     message: '',
     quizId: '',
     targetAudience: 'completed' as 'completed' | 'abandoned' | 'all',

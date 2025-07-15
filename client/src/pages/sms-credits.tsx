@@ -340,22 +340,10 @@ export default function SMSCreditsPage() {
 
   const handleCampaignStyleSelect = (style: CampaignStyle) => {
     setSelectedCampaignStyle(style);
+    setShowCampaignStyleSelector(false);
     
-    // Baseado no estilo selecionado, redirecionar para o fluxo apropriado
-    switch (style) {
-      case 'remarketing':
-        handleCreateRemarketingCampaign();
-        break;
-      case 'remarketing_ultra_customizado':
-        handleCreateRemarketingUltraCustomizedCampaign();
-        break;
-      case 'ao_vivo_tempo_real':
-        handleCreateStandardCampaign();
-        break;
-      case 'ao_vivo_ultra_customizada':
-        handleCreateUltraCustomizedCampaign();
-        break;
-    }
+    // Abrir o modal completo para seleção de quiz e configuração da campanha
+    setShowCompleteCampaignModal(true);
   };
 
   const handleCreateRemarketingCampaign = () => {
@@ -1772,10 +1760,14 @@ export default function SMSCreditsPage() {
       {/* Modal Completo de Campanha SMS */}
       <CompleteSMSCampaignModal
         open={showCompleteCampaignModal}
-        onClose={() => setShowCompleteCampaignModal(false)}
+        onClose={() => {
+          setShowCompleteCampaignModal(false);
+          setSelectedCampaignStyle(null);
+        }}
         onCreateCampaign={handleCreateCompleteCampaign}
         quizzes={quizzes || []}
         isCreating={createCampaignMutation.isPending}
+        selectedStyle={selectedCampaignStyle}
       />
     </div>
   );
