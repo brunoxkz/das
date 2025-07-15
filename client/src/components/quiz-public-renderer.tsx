@@ -116,6 +116,18 @@ export function QuizPublicRenderer({ quiz }: QuizPublicRendererProps) {
   const currentPage = pages[currentPageIndex];
   const isLastPage = currentPageIndex === pages.length - 1;
 
+  // Função para avançar para próxima página
+  const goToNextPage = () => {
+    if (currentPageIndex < pages.length - 1) {
+      setCurrentPageIndex(currentPageIndex + 1);
+      // Limpar respostas da página atual quando avançar
+      setAnswers({});
+    } else {
+      // Finalizar quiz
+      setShowResults(true);
+    }
+  };
+
   // Configurar BackRedirect quando o quiz carrega
   useEffect(() => {
     if (quiz.backRedirectEnabled && quiz.backRedirectUrl) {
@@ -699,6 +711,23 @@ export function QuizPublicRenderer({ quiz }: QuizPublicRendererProps) {
               </div>
               <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white to-transparent opacity-10 animate-pulse rounded-lg"></div>
             </div>
+          </div>
+        );
+
+      case 'continue_button':
+        return (
+          <div key={id} className="flex justify-center mb-6">
+            <Button
+              onClick={() => goToNextPage()}
+              className="px-8 py-3 text-white rounded-lg font-medium transition-all duration-200 hover:scale-105"
+              style={{ 
+                backgroundColor: quiz.design?.buttonColor || '#3B82F6',
+                borderRadius: quiz.design?.buttonCorners === 'square' ? '0px' :
+                           quiz.design?.buttonCorners === 'rounded' ? '12px' : '8px'
+              }}
+            >
+              {properties?.buttonText || element.content || 'Continuar'}
+            </Button>
           </div>
         );
 

@@ -904,9 +904,14 @@ export default function QuizPreview({ quiz, onClose, onSave }: QuizPreviewProps)
           <div className="flex justify-center mb-6">
             <Button
               onClick={handleNext}
-              className="px-8 py-3 bg-green-600 hover:bg-green-700 text-white rounded-lg font-medium"
+              className="px-8 py-3 text-white rounded-lg font-medium transition-all duration-200 hover:scale-105"
+              style={{ 
+                backgroundColor: quiz.design?.buttonColor || '#3B82F6',
+                borderRadius: quiz.design?.buttonCorners === 'square' ? '0px' :
+                           quiz.design?.buttonCorners === 'rounded' ? '12px' : '8px'
+              }}
             >
-              {element.buttonText || 'Continuar'}
+              {element.buttonText || element.content || 'Continuar'}
             </Button>
           </div>
         );
@@ -1306,10 +1311,31 @@ export default function QuizPreview({ quiz, onClose, onSave }: QuizPreviewProps)
                 <span>Pergunta {currentStep + 1} de {totalSteps}</span>
                 <span>{Math.round(((currentStep + 1) / totalSteps) * 100)}%</span>
               </div>
-              <Progress 
-                value={((currentStep + 1) / totalSteps) * 100} 
-                className="h-2"
-              />
+              <div 
+                className={`w-full overflow-hidden ${
+                  quiz.design?.progressBarStyle === 'square' ? 'rounded-none' :
+                  quiz.design?.progressBarStyle === 'thin' ? 'rounded-sm' :
+                  quiz.design?.progressBarStyle === 'thick' ? 'rounded-lg' :
+                  'rounded-full'
+                }`}
+                style={{ 
+                  height: `${quiz.design?.progressBarHeight || 8}px`,
+                  backgroundColor: '#e5e7eb'
+                }}
+              >
+                <div
+                  className={`h-full transition-all duration-300 ${
+                    quiz.design?.progressBarStyle === 'square' ? 'rounded-none' :
+                    quiz.design?.progressBarStyle === 'thin' ? 'rounded-sm' :
+                    quiz.design?.progressBarStyle === 'thick' ? 'rounded-lg' :
+                    'rounded-full'
+                  }`}
+                  style={{ 
+                    width: `${((currentStep + 1) / totalSteps) * 100}%`,
+                    backgroundColor: quiz.design?.progressBarColor || '#3B82F6'
+                  }}
+                />
+              </div>
             </div>
           )}
           
