@@ -232,7 +232,7 @@ export default function Landing() {
                   className="h-10 w-auto"
                 />
                 <Badge variant="secondary" className="bg-green-500/20 text-green-400 border-green-500/30 font-bold">
-                  MONEY MACHINE
+                  ROI BOOSTER
                 </Badge>
               </div>
               <nav className="hidden md:flex space-x-8">
