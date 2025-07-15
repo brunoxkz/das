@@ -1,40 +1,151 @@
-import { useState } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import React, { useState, useEffect } from 'react';
+import { useAuth } from "@/hooks/useAuth-jwt";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Badge } from "@/components/ui/badge";
+import { Mail, Send, Clock, Users, Target, Upload, FileText, Eye, ArrowRight, CheckCircle, AlertCircle, Calendar, Zap, Crown, Package, Brain, Flame, FolderOpen, ChevronDown, ChevronUp, Play, Pause, Trash2, BarChart3, X, TrendingUp, Edit3, Plus, Settings, Sparkles, RefreshCw, TestTube, Wand2, Code, Info, Loader2 } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Progress } from "@/components/ui/progress";
 import { useToast } from "@/hooks/use-toast";
-import { apiRequest } from "@/lib/queryClient";
-import { UltraPersonalizedEmailModal } from "@/components/ultra-personalized-email-modal";
-import { CampaignStyleSelector, CampaignStyle } from "@/components/campaign-style-selector";
-import { 
-  Mail, 
-  Clock, 
-  AlertCircle, 
-  Users, 
-  TrendingUp, 
-  Send, 
-  Edit3,
-  Eye,
-  Trash2,
-  Plus,
-  Code,
-  Wand2,
-  Settings,
-  TestTube,
-  CheckCircle,
-  Loader2,
-  Info,
-  Sparkles,
-  RefreshCw,
-  Target
-} from "lucide-react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { format } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+
+// Componente para exibir logs da campanha
+const EmailCampaignLogs = ({ campaignId }: { campaignId: string }) => {
+  const { data: logs, isLoading } = useQuery({
+    queryKey: ['/api/email-campaigns', campaignId, 'logs'],
+    queryFn: async () => {
+      const response = await fetch(`/api/email-campaigns/${campaignId}/logs`, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+      });
+      if (!response.ok) throw new Error('Erro ao carregar logs');
+      return response.json();
+    }
+  });
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center p-8">
+        <div className="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-4">
+      {logs && logs.length > 0 ? (
+        logs.map((log: any, index: number) => (
+          <div key={index} className="border rounded-lg p-4 bg-gray-50">
+            <div className="flex items-start justify-between">
+              <div className="flex-1">
+                <div className="flex items-center gap-2 mb-2">
+                  <Badge variant={log.status === 'sent' ? 'default' : log.status === 'delivered' ? 'secondary' : 'destructive'}>
+                    {log.status === 'sent' ? 'Enviado' : log.status === 'delivered' ? 'Entregue' : 'Erro'}
+                  </Badge>
+                  <span className="text-sm text-gray-600">{log.email}</span>
+                </div>
+                <p className="text-sm text-gray-700 mb-2">{log.subject}</p>
+                <div className="text-xs text-gray-500">
+                  {format(new Date(log.createdAt), 'dd/MM/yyyy HH:mm:ss', { locale: ptBR })}
+                </div>
+              </div>
+            </div>
+          </div>
+        ))
+      ) : (
+        <div className="text-center py-8 text-gray-500">
+          Nenhum log encontrado para esta campanha.
+        </div>
+      )}
+    </div>
+  );
+};
+
+// Componente para exibir analytics da campanha
+const EmailCampaignAnalytics = ({ campaignId }: { campaignId: string }) => {
+  const { data: analytics, isLoading } = useQuery({
+    queryKey: ['/api/email-campaigns', campaignId, 'analytics'],
+    queryFn: async () => {
+      const response = await fetch(`/api/email-campaigns/${campaignId}/analytics`, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+      });
+      if (!response.ok) throw new Error('Erro ao carregar analytics');
+      return response.json();
+    }
+  });
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center p-8">
+        <div className="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+      </div>
+    );
+  }
+
+  const stats = analytics || {
+    totalSent: 0,
+    delivered: 0,
+    opened: 0,
+    clicked: 0,
+    bounced: 0,
+    unsubscribed: 0,
+    deliveryRate: 0,
+    openRate: 0,
+    clickRate: 0,
+    unsubscribeRate: 0
+  };
+
+  return (
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <Card>
+        <CardHeader className="pb-2">
+          <CardTitle className="text-sm font-medium">Emails Enviados</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="text-2xl font-bold text-blue-600">{stats.totalSent}</div>
+        </CardContent>
+      </Card>
+      
+      <Card>
+        <CardHeader className="pb-2">
+          <CardTitle className="text-sm font-medium">Taxa de Entrega</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="text-2xl font-bold text-green-600">{stats.deliveryRate.toFixed(1)}%</div>
+        </CardContent>
+      </Card>
+      
+      <Card>
+        <CardHeader className="pb-2">
+          <CardTitle className="text-sm font-medium">Taxa de Abertura</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="text-2xl font-bold text-purple-600">{stats.openRate.toFixed(1)}%</div>
+        </CardContent>
+      </Card>
+      
+      <Card>
+        <CardHeader className="pb-2">
+          <CardTitle className="text-sm font-medium">Taxa de Cliques</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="text-2xl font-bold text-orange-600">{stats.clickRate.toFixed(1)}%</div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+};
 
 interface EmailCampaign {
   id: string;
@@ -48,6 +159,8 @@ interface EmailCampaign {
   triggerDelay?: number;
   triggerUnit?: 'minutes' | 'hours' | 'days';
   targetAudience: 'all' | 'completed' | 'abandoned';
+  campaignType: 'standard' | 'ultra_personalized' | 'remarketing';
+  campaignMode: 'leads_ja_na_base' | 'modo_ao_vivo';
   variables: string[];
   sent: number;
   delivered: number;
@@ -56,89 +169,90 @@ interface EmailCampaign {
   createdAt: string;
 }
 
-interface EmailTemplate {
-  id: string;
-  name: string;
-  subject: string;
-  content: string;
-  category: 'welcome' | 'follow_up' | 'promotion' | 'abandoned_cart';
-  variables: string[];
-}
-
-export default function EmailMarketingPage() {
+export default function EmailMarketingAdvanced() {
+  const { user } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState("overview");
   const [selectedQuiz, setSelectedQuiz] = useState<string>("");
-  const [campaignForm, setCampaignForm] = useState<{
-    name: string;
-    subject: string;
-    content: string;
-    quizId: string;
-    targetAudience: "completed" | "abandoned" | "all";
-    triggerType: "immediate" | "delayed";
-    triggerDelay: number;
-    triggerUnit: "hours" | "minutes" | "days";
-    variables: string[];
-  }>({
+  const [selectedCampaign, setSelectedCampaign] = useState<EmailCampaign | null>(null);
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [showLogsModal, setShowLogsModal] = useState(false);
+  const [showAnalyticsModal, setShowAnalyticsModal] = useState(false);
+  const [expandedCard, setExpandedCard] = useState<string | null>(null);
+
+  const [campaignForm, setCampaignForm] = useState({
     name: "",
     subject: "",
     content: "",
     quizId: "",
-    targetAudience: "completed",
-    triggerType: "immediate",
-    triggerDelay: 1,
-    triggerUnit: "hours",
-    variables: []
+    targetAudience: "completed" as const,
+    triggerType: "immediate" as const,
+    triggerDelay: 10,
+    triggerUnit: "minutes" as const,
+    campaignType: "standard" as const,
+    campaignMode: "leads_ja_na_base" as const,
+    variables: [] as string[]
   });
-
-  const [templateForm, setTemplateForm] = useState({
-    name: "",
-    subject: "",
-    content: "",
-    category: "welcome" as const
-  });
-
-  const [brevoConfig, setBrevoConfig] = useState({
-    apiKey: "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",
-    fromEmail: "contato@vendzz.com.br",
-    isConfigured: true
-  });
-
-  const [testingBrevo, setTestingBrevo] = useState(false);
-  const [sendingCampaign, setSendingCampaign] = useState(false);
-  const [showUltraPersonalizedModal, setShowUltraPersonalizedModal] = useState(false);
-  
-  // Estados para seletor de estilo de campanha
-  const [showCampaignStyleSelector, setShowCampaignStyleSelector] = useState(false);
-  const [selectedCampaignStyle, setSelectedCampaignStyle] = useState<CampaignStyle | null>(null);
 
   // Queries
-  const { data: quizzes } = useQuery({
-    queryKey: ["/api/quizzes"],
+  const { data: quizzes, isLoading: isLoadingQuizzes } = useQuery({
+    queryKey: ['/api/quizzes'],
+    queryFn: async () => {
+      const response = await fetch('/api/quizzes', {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+      });
+      if (!response.ok) throw new Error('Erro ao carregar quizzes');
+      return response.json();
+    }
   });
 
-  const { data: campaigns } = useQuery({
-    queryKey: ["/api/email-campaigns"],
+  const { data: campaigns = [], isLoading: isLoadingCampaigns } = useQuery({
+    queryKey: ['/api/email-campaigns'],
+    queryFn: async () => {
+      const response = await fetch('/api/email-campaigns', {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+      });
+      if (!response.ok) throw new Error('Erro ao carregar campanhas');
+      return response.json();
+    }
   });
 
-  const { data: templates } = useQuery({
-    queryKey: ["/api/email-templates"],
-  });
-
-  const { data: quizVariables } = useQuery({
-    queryKey: ["/api/quiz-variables", selectedQuiz],
-    enabled: !!selectedQuiz,
+  const { data: quizResponses = [], isLoading: isLoadingResponses } = useQuery({
+    queryKey: ['/api/quiz-responses', selectedQuiz],
+    queryFn: async () => {
+      if (!selectedQuiz) return [];
+      const response = await fetch(`/api/quizzes/${selectedQuiz}/responses`, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+      });
+      if (!response.ok) throw new Error('Erro ao carregar respostas');
+      return response.json();
+    },
+    enabled: !!selectedQuiz
   });
 
   // Mutations
   const createCampaignMutation = useMutation({
-    mutationFn: (data: any) => apiRequest("/api/email-campaigns", {
-      method: "POST",
-      body: JSON.stringify(data),
-    }),
+    mutationFn: async (data: any) => {
+      const response = await fetch('/api/email-campaigns', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        },
+        body: JSON.stringify(data)
+      });
+      if (!response.ok) throw new Error('Erro ao criar campanha');
+      return response.json();
+    },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/email-campaigns"] });
+      queryClient.invalidateQueries({ queryKey: ['/api/email-campaigns'] });
       setCampaignForm({
         name: "",
         subject: "",
@@ -146,33 +260,56 @@ export default function EmailMarketingPage() {
         quizId: "",
         targetAudience: "completed",
         triggerType: "immediate",
-        triggerDelay: 1,
-        triggerUnit: "hours",
+        triggerDelay: 10,
+        triggerUnit: "minutes",
+        campaignType: "standard",
+        campaignMode: "leads_ja_na_base",
         variables: []
       });
+      setShowCreateModal(false);
       toast({
-        title: "Campanha E-mail Criada",
+        title: "Campanha de Email Criada",
         description: "Sua campanha foi criada com sucesso!"
       });
     }
   });
 
-  const createTemplateMutation = useMutation({
-    mutationFn: (data: any) => apiRequest("/api/email-templates", {
-      method: "POST",
-      body: JSON.stringify(data),
-    }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/email-templates"] });
-      setTemplateForm({
-        name: "",
-        subject: "",
-        content: "",
-        category: "welcome"
+  const deleteCampaignMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const response = await fetch(`/api/email-campaigns/${id}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
       });
+      if (!response.ok) throw new Error('Erro ao deletar campanha');
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/email-campaigns'] });
       toast({
-        title: "Template Criado",
-        description: "Seu template foi salvo com sucesso!"
+        title: "Campanha Deletada",
+        description: "Campanha removida com sucesso!"
+      });
+    }
+  });
+
+  const toggleCampaignMutation = useMutation({
+    mutationFn: async ({ id, action }: { id: string; action: 'pause' | 'resume' }) => {
+      const response = await fetch(`/api/email-campaigns/${id}/${action}`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+      });
+      if (!response.ok) throw new Error(`Erro ao ${action} campanha`);
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/email-campaigns'] });
+      toast({
+        title: "Status Atualizado",
+        description: "Status da campanha foi atualizado com sucesso!"
       });
     }
   });
@@ -217,6 +354,57 @@ export default function EmailMarketingPage() {
   const handleCreateUltraPersonalizedCampaign = () => {
     // Para ultra personalizada, abrir modal
     setShowUltraPersonalizedModal(true);
+  };
+
+  // Função para contar leads baseado no tipo de audiência
+  const getLeadsCount = (type: string) => {
+    if (!quizResponses.length) return 0;
+    
+    switch (type) {
+      case 'completed':
+        return quizResponses.filter((r: any) => r.metadata?.isComplete || r.completionPercentage === 100).length;
+      case 'abandoned':
+        return quizResponses.filter((r: any) => !r.metadata?.isComplete && r.completionPercentage !== 100).length;
+      case 'all':
+        return quizResponses.length;
+      default:
+        return 0;
+    }
+  };
+
+  // Função para extrair emails das respostas
+  const extractEmailsFromResponses = (responses: any[]) => {
+    return responses
+      .map(response => {
+        if (response.answers && typeof response.answers === 'object') {
+          // Procurar por campos de email
+          const emailFields = Object.keys(response.answers).filter(key => 
+            key.toLowerCase().includes('email') || 
+            key.toLowerCase().includes('e-mail') ||
+            key.toLowerCase().includes('mail')
+          );
+          
+          if (emailFields.length > 0) {
+            return response.answers[emailFields[0]];
+          }
+        }
+        return null;
+      })
+      .filter(email => email && email.includes('@'));
+  };
+
+  // Função para criar campanha
+  const handleCreateCampaign = () => {
+    if (!campaignForm.name || !campaignForm.subject || !campaignForm.content || !campaignForm.quizId) {
+      toast({
+        title: "Campos obrigatórios",
+        description: "Preencha todos os campos obrigatórios",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    createCampaignMutation.mutate(campaignForm);
   };
 
   const handleCreateCampaignWithStyle = (campaignType: string) => {
@@ -354,7 +542,15 @@ export default function EmailMarketingPage() {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="text-center">
+          <div className="text-center flex gap-4 justify-center">
+            <Button
+              onClick={() => setShowCreateModal(true)}
+              size="lg"
+              className="bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700 text-white font-bold py-4 px-8"
+            >
+              <Plus className="w-5 h-5 mr-2" />
+              Criar Campanha Simples
+            </Button>
             <Button
               onClick={() => setShowCampaignStyleSelector(true)}
               size="lg"
@@ -1084,21 +1280,166 @@ export default function EmailMarketingPage() {
         </TabsContent>
       </Tabs>
 
-      {/* Modal de Campanha Ultra Personalizada */}
-      <UltraPersonalizedEmailModal
-        open={showUltraPersonalizedModal}
-        onClose={() => setShowUltraPersonalizedModal(false)}
-        quizId={selectedQuiz}
-        quizTitle={quizzes?.find(q => q.id === selectedQuiz)?.title || ""}
-      />
+      {/* Modal para Logs da Campanha */}
+      <Dialog open={showLogsModal} onOpenChange={setShowLogsModal}>
+        <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Logs da Campanha: {selectedCampaign?.name}</DialogTitle>
+          </DialogHeader>
+          {selectedCampaign && (
+            <EmailCampaignLogs campaignId={selectedCampaign.id} />
+          )}
+        </DialogContent>
+      </Dialog>
 
-      {/* Campaign Style Selector Modal */}
-      <CampaignStyleSelector
-        open={showCampaignStyleSelector}
-        onClose={() => setShowCampaignStyleSelector(false)}
-        onStyleSelect={handleCampaignStyleSelect}
-        platform="email"
-      />
+      {/* Modal para Analytics da Campanha */}
+      <Dialog open={showAnalyticsModal} onOpenChange={setShowAnalyticsModal}>
+        <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Analytics da Campanha: {selectedCampaign?.name}</DialogTitle>
+          </DialogHeader>
+          {selectedCampaign && (
+            <EmailCampaignAnalytics campaignId={selectedCampaign.id} />
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Modal para Criar Campanha */}
+      <Dialog open={showCreateModal} onOpenChange={setShowCreateModal}>
+        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Criar Nova Campanha de Email</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="campaignName">Nome da Campanha</Label>
+              <Input
+                id="campaignName"
+                value={campaignForm.name}
+                onChange={(e) => setCampaignForm({...campaignForm, name: e.target.value})}
+                placeholder="Ex: Campanha de Boas-vindas"
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="campaignQuiz">Quiz</Label>
+              <Select 
+                value={campaignForm.quizId} 
+                onValueChange={(value) => {
+                  setCampaignForm({...campaignForm, quizId: value});
+                  setSelectedQuiz(value);
+                }}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione um quiz" />
+                </SelectTrigger>
+                <SelectContent>
+                  {quizzes?.map((quiz: any) => (
+                    <SelectItem key={quiz.id} value={quiz.id}>
+                      {quiz.title}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div>
+              <Label htmlFor="campaignSubject">Assunto do Email</Label>
+              <Input
+                id="campaignSubject"
+                value={campaignForm.subject}
+                onChange={(e) => setCampaignForm({...campaignForm, subject: e.target.value})}
+                placeholder="Ex: Obrigado por participar do nosso quiz!"
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="campaignContent">Conteúdo do Email</Label>
+              <Textarea
+                id="campaignContent"
+                value={campaignForm.content}
+                onChange={(e) => setCampaignForm({...campaignForm, content: e.target.value})}
+                placeholder="Olá {nome_completo}, obrigado por participar do nosso quiz..."
+                className="min-h-32"
+              />
+            </div>
+
+            <div>
+              <Label>Audiência</Label>
+              <Select 
+                value={campaignForm.targetAudience} 
+                onValueChange={(value) => setCampaignForm({...campaignForm, targetAudience: value as any})}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="completed">Leads que completaram o quiz</SelectItem>
+                  <SelectItem value="abandoned">Leads que abandonaram o quiz</SelectItem>
+                  <SelectItem value="all">Todos os leads</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div>
+              <Label>Tipo de Campanha</Label>
+              <Select 
+                value={campaignForm.campaignType} 
+                onValueChange={(value) => setCampaignForm({...campaignForm, campaignType: value as any})}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="standard">Padrão</SelectItem>
+                  <SelectItem value="remarketing">Remarketing</SelectItem>
+                  <SelectItem value="ultra_personalized">Ultra Personalizada</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div>
+              <Label>Modo da Campanha</Label>
+              <Select 
+                value={campaignForm.campaignMode} 
+                onValueChange={(value) => setCampaignForm({...campaignForm, campaignMode: value as any})}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="leads_ja_na_base">Leads já na base</SelectItem>
+                  <SelectItem value="modo_ao_vivo">Modo ao vivo</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="flex gap-2">
+              <Button 
+                onClick={handleCreateCampaign}
+                disabled={createCampaignMutation.isPending}
+                className="flex-1"
+              >
+                {createCampaignMutation.isPending ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Criando...
+                  </>
+                ) : (
+                  'Criar Campanha'
+                )}
+              </Button>
+              <Button 
+                variant="outline" 
+                onClick={() => setShowCreateModal(false)}
+                className="flex-1"
+              >
+                Cancelar
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
