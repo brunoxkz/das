@@ -128,6 +128,104 @@ export function QuizPublicRenderer({ quiz }: QuizPublicRendererProps) {
     }
   };
 
+  // Função para aplicar estilos visuais baseados nas propriedades
+  const getElementStyles = (properties: any) => {
+    const styles: any = {};
+    
+    // Tamanho do texto
+    if (properties?.textSize) {
+      switch (properties.textSize) {
+        case 'small':
+          styles.fontSize = '14px';
+          break;
+        case 'medium':
+          styles.fontSize = '16px';
+          break;
+        case 'large':
+          styles.fontSize = '20px';
+          break;
+        case 'extra-large':
+          styles.fontSize = '24px';
+          break;
+      }
+    }
+    
+    // Cor do texto
+    if (properties?.textColor) {
+      styles.color = properties.textColor;
+    }
+    
+    // Peso da fonte
+    if (properties?.fontWeight) {
+      styles.fontWeight = properties.fontWeight;
+    }
+    
+    // Alinhamento
+    if (properties?.textAlign) {
+      styles.textAlign = properties.textAlign;
+    }
+    
+    return styles;
+  };
+
+  // Função para obter classes CSS baseadas nas propriedades
+  const getElementClasses = (properties: any) => {
+    let classes = '';
+    
+    // Tamanho do texto
+    if (properties?.textSize) {
+      switch (properties.textSize) {
+        case 'small':
+          classes += ' text-sm';
+          break;
+        case 'medium':
+          classes += ' text-base';
+          break;
+        case 'large':
+          classes += ' text-lg';
+          break;
+        case 'extra-large':
+          classes += ' text-xl';
+          break;
+      }
+    }
+    
+    // Peso da fonte
+    if (properties?.fontWeight) {
+      switch (properties.fontWeight) {
+        case 'light':
+          classes += ' font-light';
+          break;
+        case 'normal':
+          classes += ' font-normal';
+          break;
+        case 'medium':
+          classes += ' font-medium';
+          break;
+        case 'bold':
+          classes += ' font-bold';
+          break;
+      }
+    }
+    
+    // Alinhamento
+    if (properties?.textAlign) {
+      switch (properties.textAlign) {
+        case 'left':
+          classes += ' text-left';
+          break;
+        case 'center':
+          classes += ' text-center';
+          break;
+        case 'right':
+          classes += ' text-right';
+          break;
+      }
+    }
+    
+    return classes;
+  };
+
   // Configurar BackRedirect quando o quiz carrega
   useEffect(() => {
     if (quiz.backRedirectEnabled && quiz.backRedirectUrl) {
@@ -297,7 +395,12 @@ export function QuizPublicRenderer({ quiz }: QuizPublicRendererProps) {
         const multipleChoiceOptions = element.options || properties?.options || [];
         return (
           <div key={id} className="space-y-4">
-            <h3 className="text-lg font-semibold">{element.content || properties?.question || properties?.content || 'Pergunta'}</h3>
+            <h3 
+              className={`text-lg font-semibold${getElementClasses(properties)}`}
+              style={getElementStyles(properties)}
+            >
+              {element.content || properties?.question || properties?.content || 'Pergunta'}
+            </h3>
             <RadioGroup 
               value={answer} 
               onValueChange={(value) => handleElementAnswer(id, type, value, element.fieldId || properties?.fieldId)}
@@ -471,11 +574,17 @@ export function QuizPublicRenderer({ quiz }: QuizPublicRendererProps) {
         );
 
       case 'height':
+      case 'altura':
         return (
           <div key={id} className="space-y-4">
             <div className="flex items-center space-x-2">
               <ArrowUpDown className="w-5 h-5 text-purple-500" />
-              <h3 className="text-lg font-semibold">{properties?.question || 'Altura'}</h3>
+              <h3 
+                className={`text-lg font-semibold${getElementClasses(properties)}`}
+                style={getElementStyles(properties)}
+              >
+                {properties?.question || element.content || 'Altura'}
+              </h3>
             </div>
             <Input
               type="number"
@@ -550,14 +659,24 @@ export function QuizPublicRenderer({ quiz }: QuizPublicRendererProps) {
       case 'heading':
         return (
           <div key={id} className="space-y-2">
-            <h2 className="text-2xl font-bold">{properties.text || 'Título'}</h2>
+            <h2 
+              className={`text-2xl font-bold${getElementClasses(properties)}`}
+              style={getElementStyles(properties)}
+            >
+              {properties.text || properties.content || element.content || 'Título'}
+            </h2>
           </div>
         );
 
       case 'paragraph':
         return (
           <div key={id} className="space-y-2">
-            <p className="text-gray-700">{properties.text || 'Parágrafo'}</p>
+            <p 
+              className={`text-gray-700${getElementClasses(properties)}`}
+              style={getElementStyles(properties)}
+            >
+              {properties.text || properties.content || element.content || 'Parágrafo'}
+            </p>
           </div>
         );
 
@@ -714,22 +833,7 @@ export function QuizPublicRenderer({ quiz }: QuizPublicRendererProps) {
           </div>
         );
 
-      case 'continue_button':
-        return (
-          <div key={id} className="flex justify-center mb-6">
-            <Button
-              onClick={() => goToNextPage()}
-              className="px-8 py-3 text-white rounded-lg font-medium transition-all duration-200 hover:scale-105"
-              style={{ 
-                backgroundColor: quiz.design?.buttonColor || '#3B82F6',
-                borderRadius: quiz.design?.buttonCorners === 'square' ? '0px' :
-                           quiz.design?.buttonCorners === 'rounded' ? '12px' : '8px'
-              }}
-            >
-              {properties?.buttonText || element.content || 'Continuar'}
-            </Button>
-          </div>
-        );
+
 
       case 'chart':
         return (

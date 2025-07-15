@@ -509,6 +509,104 @@ export default function QuizPreview({ quiz, onClose, onSave }: QuizPreviewProps)
     }
   };
 
+  // Função para aplicar estilos visuais baseados nas propriedades
+  const getElementStyles = (properties: any) => {
+    const styles: any = {};
+    
+    // Tamanho do texto
+    if (properties?.textSize) {
+      switch (properties.textSize) {
+        case 'small':
+          styles.fontSize = '14px';
+          break;
+        case 'medium':
+          styles.fontSize = '16px';
+          break;
+        case 'large':
+          styles.fontSize = '20px';
+          break;
+        case 'extra-large':
+          styles.fontSize = '24px';
+          break;
+      }
+    }
+    
+    // Cor do texto
+    if (properties?.textColor) {
+      styles.color = properties.textColor;
+    }
+    
+    // Peso da fonte
+    if (properties?.fontWeight) {
+      styles.fontWeight = properties.fontWeight;
+    }
+    
+    // Alinhamento
+    if (properties?.textAlign) {
+      styles.textAlign = properties.textAlign;
+    }
+    
+    return styles;
+  };
+
+  // Função para obter classes CSS baseadas nas propriedades
+  const getElementClasses = (properties: any) => {
+    let classes = '';
+    
+    // Tamanho do texto
+    if (properties?.textSize) {
+      switch (properties.textSize) {
+        case 'small':
+          classes += ' text-sm';
+          break;
+        case 'medium':
+          classes += ' text-base';
+          break;
+        case 'large':
+          classes += ' text-lg';
+          break;
+        case 'extra-large':
+          classes += ' text-xl';
+          break;
+      }
+    }
+    
+    // Peso da fonte
+    if (properties?.fontWeight) {
+      switch (properties.fontWeight) {
+        case 'light':
+          classes += ' font-light';
+          break;
+        case 'normal':
+          classes += ' font-normal';
+          break;
+        case 'medium':
+          classes += ' font-medium';
+          break;
+        case 'bold':
+          classes += ' font-bold';
+          break;
+      }
+    }
+    
+    // Alinhamento
+    if (properties?.textAlign) {
+      switch (properties.textAlign) {
+        case 'left':
+          classes += ' text-left';
+          break;
+        case 'center':
+          classes += ' text-center';
+          break;
+        case 'right':
+          classes += ' text-right';
+          break;
+      }
+    }
+    
+    return classes;
+  };
+
   const handlePrevious = () => {
     if (currentStep > 0) {
       setCurrentStep(currentStep - 1);
@@ -612,7 +710,10 @@ export default function QuizPreview({ quiz, onClose, onSave }: QuizPreviewProps)
       case 'heading':
         return (
           <div className="mb-4">
-            <h1 className="text-2xl font-bold text-gray-900">
+            <h1 
+              className={`text-2xl font-bold text-gray-900${getElementClasses(element)}`}
+              style={getElementStyles(element)}
+            >
               {processVariables(element.content || 'Título')}
             </h1>
           </div>
@@ -621,7 +722,10 @@ export default function QuizPreview({ quiz, onClose, onSave }: QuizPreviewProps)
       case 'paragraph':
         return (
           <div className="mb-4">
-            <p className="text-gray-700">
+            <p 
+              className={`text-gray-700${getElementClasses(element)}`}
+              style={getElementStyles(element)}
+            >
               {processVariables(element.content || 'Parágrafo de texto')}
             </p>
           </div>
@@ -685,7 +789,10 @@ export default function QuizPreview({ quiz, onClose, onSave }: QuizPreviewProps)
         return (
           <div className="mb-6">
             {element.question && (
-              <h3 className="text-lg font-medium text-gray-900 mb-4">
+              <h3 
+                className={`text-lg font-medium text-gray-900 mb-4${getElementClasses(element)}`}
+                style={getElementStyles(element)}
+              >
                 {processVariables(element.question)}
                 {element.required && <span className="text-red-500 ml-1">*</span>}
               </h3>
@@ -721,7 +828,10 @@ export default function QuizPreview({ quiz, onClose, onSave }: QuizPreviewProps)
         return (
           <div className="mb-6">
             {element.question && (
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label 
+                className={`block text-sm font-medium text-gray-700 mb-2${getElementClasses(element)}`}
+                style={getElementStyles(element)}
+              >
                 {processVariables(element.question)}
                 {element.required && <span className="text-red-500 ml-1">*</span>}
               </label>
@@ -740,7 +850,10 @@ export default function QuizPreview({ quiz, onClose, onSave }: QuizPreviewProps)
         return (
           <div className="mb-6">
             {element.question && (
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label 
+                className={`block text-sm font-medium text-gray-700 mb-2${getElementClasses(element)}`}
+                style={getElementStyles(element)}
+              >
                 {processVariables(element.question)}
                 {element.required && <span className="text-red-500 ml-1">*</span>}
               </label>
@@ -777,6 +890,33 @@ export default function QuizPreview({ quiz, onClose, onSave }: QuizPreviewProps)
                 className="pl-10"
               />
             </div>
+          </div>
+        );
+
+      case 'height':
+      case 'altura':
+        return (
+          <div className="mb-6">
+            <div className="flex items-center space-x-2 mb-2">
+              <ArrowUpDown className="w-5 h-5 text-purple-500" />
+              <h3 
+                className={`text-lg font-semibold text-gray-900${getElementClasses(element)}`}
+                style={getElementStyles(element)}
+              >
+                {element.question || element.content || 'Altura'}
+                {element.required && <span className="text-red-500 ml-1">*</span>}
+              </h3>
+            </div>
+            <Input
+              type="number"
+              placeholder={element.placeholder || '170'}
+              value={responses[element.id] || ''}
+              onChange={(e) => handleAnswer(element.id, Number(e.target.value), element)}
+              className="w-full"
+              min={element.min || 100}
+              max={element.max || 250}
+              required={element.required}
+            />
           </div>
         );
 
