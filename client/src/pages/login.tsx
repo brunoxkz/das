@@ -120,7 +120,7 @@ export default function LoginPage() {
         <CardHeader className="text-center">
           <CardTitle className="text-2xl font-bold bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">
             <img 
-              src="https://vendzz.com.br/wp-content/uploads/2024/12/logo-vendzz.png" 
+              src="/logo-vendzz-white-green.png" 
               alt="Vendzz" 
               className="h-10 object-contain"
             />
