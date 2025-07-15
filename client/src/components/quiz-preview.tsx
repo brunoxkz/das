@@ -1293,7 +1293,7 @@ export default function QuizPreview({ quiz, onClose, onSave }: QuizPreviewProps)
   };
 
   return (
-    <div className="w-full h-full bg-white">
+    <div className="w-full max-w-4xl mx-auto">
       {/* Progress Bar */}
       {showProgress && !showLeadCapture && (
         <div className="mb-6">
@@ -1308,12 +1308,51 @@ export default function QuizPreview({ quiz, onClose, onSave }: QuizPreviewProps)
         </div>
       )}
 
-      {/* Content */}
-      <div className="overflow-y-auto" style={{ minHeight: '400px' }}>
-        {renderPage()}
+      {/* Quiz Title */}
+      <div className="text-center mb-6">
+        <h1 className="text-2xl font-bold text-gray-900">{quiz.title}</h1>
       </div>
 
+      {/* Quiz Card */}
+      <Card className="shadow-lg border-gray-200">
+        <CardHeader className="text-center">
+          <CardTitle className="text-lg font-semibold text-gray-800">
+            {currentPage?.title || `Página ${currentPageIndex + 1}`}
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="p-6">
+          <div className="overflow-y-auto" style={{ minHeight: '300px' }}>
+            {renderPage()}
+          </div>
+        </CardContent>
+      </Card>
 
+      {/* Navigation */}
+      <div className="mt-6 flex items-center justify-between">
+        <Button
+          variant="outline"
+          onClick={handlePrevious}
+          disabled={currentPageIndex === 0}
+          className="flex items-center gap-2"
+        >
+          <ChevronLeft className="w-4 h-4" />
+          Anterior
+        </Button>
+        
+        <div className="text-center">
+          <span className="text-sm text-gray-500">
+            Respostas salvas: {Object.keys(responses).length}
+          </span>
+        </div>
+        
+        <Button
+          onClick={handleNext}
+          className="bg-green-600 hover:bg-green-700 flex items-center gap-2"
+        >
+          Finalizar
+          <ChevronRight className="w-4 h-4" />
+        </Button>
+      </div>
     </div>
   );
 }

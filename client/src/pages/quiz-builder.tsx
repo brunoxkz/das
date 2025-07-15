@@ -864,8 +864,8 @@ export default function QuizBuilder() {
         )}
 
         {activeTab === "preview" && (
-          <div className="h-full overflow-y-auto bg-gray-50 flex items-center justify-center">
-            <div className="w-full max-w-md mx-auto">
+          <div className="h-full overflow-y-auto bg-gray-50 p-6">
+            <div className="max-w-2xl mx-auto">
               <QuizPreview quiz={quizData} initialPageIndex={currentPageIndex} />
             </div>
           </div>
