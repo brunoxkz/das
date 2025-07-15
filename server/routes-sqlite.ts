@@ -28,6 +28,7 @@ import speakeasy from 'speakeasy';
 import QRCode from 'qrcode';
 import { generateTokens } from './auth-sqlite';
 import HealthCheckSystem from './health-check-system.js';
+import WhatsAppBusinessAPI from './whatsapp-business-api';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -4966,6 +4967,193 @@ app.delete("/api/whatsapp-campaigns/:id", verifyJWT, async (req: any, res: Respo
   } catch (error) {
     console.error('❌ ERRO ao deletar campanha WhatsApp:', error);
     res.status(500).json({ error: 'Erro interno do servidor' });
+  }
+});
+
+// =============================================
+// WHATSAPP BUSINESS API ROUTES
+// =============================================
+
+// Salvar configurações da API do WhatsApp
+app.post("/api/whatsapp-api/config", verifyJWT, async (req: any, res: Response) => {
+  try {
+    const userId = req.user.id;
+    const { apiConfig } = req.body;
+    
+    // Validar configurações básicas
+    if (!apiConfig.accessToken || !apiConfig.phoneNumberId || !apiConfig.businessAccountId) {
+      return res.status(400).json({ 
+        error: 'Access Token, Phone Number ID e Business Account ID são obrigatórios' 
+      });
+    }
+    
+    // Testar conexão com a API
+    const whatsappAPI = new WhatsAppBusinessAPI(apiConfig);
+    const isConnected = await whatsappAPI.testConnection();
+    
+    if (!isConnected) {
+      return res.status(400).json({ 
+        error: 'Não foi possível conectar com a API do WhatsApp. Verifique as credenciais.' 
+      });
+    }
+    
+    // Salvar configurações
+    const currentSettings = await storage.getUserExtensionSettings(userId);
+    await storage.updateUserExtensionSettings(userId, {
+      ...currentSettings,
+      method: 'api',
+      apiConfig
+    });
+    
+    res.json({ 
+      success: true, 
+      message: 'Configurações da API do WhatsApp salvas com sucesso',
+      connected: true
+    });
+  } catch (error) {
+    console.error('❌ Erro ao salvar configurações da API:', error);
+    res.status(500).json({ error: 'Erro interno do servidor' });
+  }
+});
+
+// Testar conexão com a API do WhatsApp
+app.post("/api/whatsapp-api/test", verifyJWT, async (req: any, res: Response) => {
+  try {
+    const { apiConfig } = req.body;
+    
+    const whatsappAPI = new WhatsAppBusinessAPI(apiConfig);
+    const isConnected = await whatsappAPI.testConnection();
+    
+    if (isConnected) {
+      const [businessInfo, phoneInfo] = await Promise.all([
+        whatsappAPI.getBusinessInfo(),
+        whatsappAPI.getPhoneNumberInfo()
+      ]);
+      
+      res.json({
+        success: true,
+        connected: true,
+        businessInfo,
+        phoneInfo
+      });
+    } else {
+      res.status(400).json({
+        success: false,
+        connected: false,
+        error: 'Não foi possível conectar com a API'
+      });
+    }
+  } catch (error) {
+    console.error('❌ Erro ao testar API:', error);
+    res.status(500).json({ 
+      success: false, 
+      error: error.message || 'Erro interno do servidor' 
+    });
+  }
+});
+
+// Enviar mensagem via API do WhatsApp
+app.post("/api/whatsapp-api/send", verifyJWT, async (req: any, res: Response) => {
+  try {
+    const userId = req.user.id;
+    const { to, message, campaignId } = req.body;
+    
+    // Buscar configurações do usuário
+    const userSettings = await storage.getUserExtensionSettings(userId);
+    
+    if (userSettings.method !== 'api' || !userSettings.apiConfig.accessToken) {
+      return res.status(400).json({ 
+        error: 'API do WhatsApp não configurada para este usuário' 
+      });
+    }
+    
+    // Inicializar API do WhatsApp
+    const whatsappAPI = new WhatsAppBusinessAPI(userSettings.apiConfig);
+    
+    // Enviar mensagem
+    const result = await whatsappAPI.sendTextMessage(to, message);
+    
+    // Salvar log da mensagem
+    await storage.createWhatsappLog({
+      campaignId,
+      phone: to,
+      message,
+      status: 'sent',
+      sentAt: Math.floor(Date.now() / 1000),
+      extensionStatus: JSON.stringify(result)
+    });
+    
+    res.json({
+      success: true,
+      messageId: result.messages[0].id,
+      status: 'sent'
+    });
+  } catch (error) {
+    console.error('❌ Erro ao enviar mensagem via API:', error);
+    res.status(500).json({ error: error.message || 'Erro interno do servidor' });
+  }
+});
+
+// Webhook para receber atualizações da API do WhatsApp
+app.get("/api/whatsapp-api/webhook", (req: Request, res: Response) => {
+  const mode = req.query['hub.mode'];
+  const token = req.query['hub.verify_token'];
+  const challenge = req.query['hub.challenge'];
+  
+  // Verificar token (deve ser configurado pelo usuário)
+  if (mode === 'subscribe' && token === process.env.WHATSAPP_WEBHOOK_TOKEN) {
+    res.status(200).send(challenge);
+  } else {
+    res.status(403).send('Forbidden');
+  }
+});
+
+app.post("/api/whatsapp-api/webhook", async (req: Request, res: Response) => {
+  try {
+    const body = req.body;
+    
+    // Processar atualizações de status das mensagens
+    if (body.entry && body.entry.length > 0) {
+      for (const entry of body.entry) {
+        if (entry.changes && entry.changes.length > 0) {
+          for (const change of entry.changes) {
+            if (change.field === 'messages' && change.value.statuses) {
+              for (const status of change.value.statuses) {
+                // Atualizar status da mensagem no banco
+                await storage.updateWhatsappLogStatus(status.id, status.status);
+              }
+            }
+          }
+        }
+      }
+    }
+    
+    res.status(200).send('OK');
+  } catch (error) {
+    console.error('❌ Erro ao processar webhook:', error);
+    res.status(500).send('Error');
+  }
+});
+
+// Obter templates disponíveis
+app.get("/api/whatsapp-api/templates", verifyJWT, async (req: any, res: Response) => {
+  try {
+    const userId = req.user.id;
+    const userSettings = await storage.getUserExtensionSettings(userId);
+    
+    if (userSettings.method !== 'api' || !userSettings.apiConfig.accessToken) {
+      return res.status(400).json({ 
+        error: 'API do WhatsApp não configurada para este usuário' 
+      });
+    }
+    
+    const whatsappAPI = new WhatsAppBusinessAPI(userSettings.apiConfig);
+    const templates = await whatsappAPI.getMessageTemplates();
+    
+    res.json({ templates });
+  } catch (error) {
+    console.error('❌ Erro ao buscar templates:', error);
+    res.status(500).json({ error: error.message || 'Erro interno do servidor' });
   }
 });
 

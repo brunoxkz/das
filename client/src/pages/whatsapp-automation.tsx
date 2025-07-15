@@ -7,8 +7,10 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
+import WhatsAppMethodSelector from "@/components/whatsapp-method-selector";
 import { 
   Phone, 
   Download, 
@@ -18,7 +20,9 @@ import {
   Clock,
   Users,
   Key,
-  RefreshCw
+  RefreshCw,
+  Settings,
+  BarChart3
 } from "lucide-react";
 
 export default function WhatsAppAutomationPage() {
@@ -29,6 +33,7 @@ export default function WhatsAppAutomationPage() {
   const [lastGeneratedFile, setLastGeneratedFile] = useState<any>(null);
   const [generatingToken, setGeneratingToken] = useState(false);
   const [generatedToken, setGeneratedToken] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState("dashboard");
   const { toast } = useToast();
 
   // Buscar quizzes

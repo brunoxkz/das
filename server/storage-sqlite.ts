@@ -1694,6 +1694,21 @@ export class SQLiteStorage implements IStorage {
     return result.changes > 0;
   }
 
+  async updateWhatsappLogStatus(messageId: string, status: string): Promise<void> {
+    try {
+      const stmt = sqlite.prepare(`
+        UPDATE whatsapp_logs 
+        SET status = ?, updated_at = ?
+        WHERE id = ? OR extension_status LIKE ?
+      `);
+      
+      const now = Math.floor(Date.now() / 1000);
+      stmt.run(status, now, messageId, `%"id":"${messageId}"%`);
+    } catch (error) {
+      console.error('❌ Erro ao atualizar status do log:', error);
+    }
+  }
+
   async createWhatsappLog(data: any): Promise<any> {
     const id = nanoid();
     const now = Math.floor(Date.now() / 1000);
@@ -2769,6 +2784,8 @@ export class SQLiteStorage implements IStorage {
             autoSend: result.auto_accept_messages === 1,
             messageDelay: result.delay_between_messages * 1000,
             maxMessagesPerDay: result.max_messages_per_minute * 60,
+            method: result.method || 'extension',
+            apiConfig: result.api_config ? JSON.parse(result.api_config) : {},
             workingHours: {
               enabled: false,
               start: "09:00",
@@ -2792,6 +2809,15 @@ export class SQLiteStorage implements IStorage {
         autoSend: true,
         messageDelay: 3000, // 3 segundos entre mensagens
         maxMessagesPerDay: 100,
+        method: 'extension',
+        apiConfig: {
+          accessToken: '',
+          phoneNumberId: '',
+          businessAccountId: '',
+          version: '18.0',
+          webhookVerifyToken: '',
+          webhookUrl: ''
+        },
         workingHours: {
           enabled: false,
           start: "09:00",
@@ -2809,6 +2835,58 @@ export class SQLiteStorage implements IStorage {
     } catch (error) {
       console.error('❌ ERRO ao buscar configurações da extensão:', error);
       return {};
+    }
+  }
+
+  async updateUserExtensionSettings(userId: string, settings: any): Promise<void> {
+    try {
+      // Criar/atualizar tabela com as novas colunas
+      await sqlite.exec(`
+        CREATE TABLE IF NOT EXISTS extension_settings (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          user_id TEXT NOT NULL UNIQUE,
+          auto_accept_messages INTEGER DEFAULT 1,
+          delay_between_messages INTEGER DEFAULT 3,
+          max_messages_per_minute INTEGER DEFAULT 10,
+          method TEXT DEFAULT 'extension',
+          api_config TEXT DEFAULT '{}',
+          created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+          updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        )
+      `);
+
+      // Verificar se as colunas method e api_config existem
+      try {
+        await sqlite.exec(`ALTER TABLE extension_settings ADD COLUMN method TEXT DEFAULT 'extension'`);
+      } catch (e) {
+        // Coluna já existe
+      }
+      
+      try {
+        await sqlite.exec(`ALTER TABLE extension_settings ADD COLUMN api_config TEXT DEFAULT '{}'`);
+      } catch (e) {
+        // Coluna já existe
+      }
+
+      // Atualizar ou inserir configurações
+      const apiConfigJson = JSON.stringify(settings.apiConfig || {});
+      const stmt = sqlite.prepare(`
+        INSERT OR REPLACE INTO extension_settings 
+        (user_id, auto_accept_messages, delay_between_messages, max_messages_per_minute, method, api_config, updated_at)
+        VALUES (?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+      `);
+      
+      stmt.run(
+        userId,
+        settings.autoSend ? 1 : 0,
+        Math.floor((settings.messageDelay || 3000) / 1000),
+        Math.floor((settings.maxMessagesPerDay || 100) / 60),
+        settings.method || 'extension',
+        apiConfigJson
+      );
+    } catch (error) {
+      console.error('❌ Erro ao atualizar configurações da extensão:', error);
+      throw error;
     }
   }
 

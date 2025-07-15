@@ -174,6 +174,13 @@ export function Sidebar() {
           badge: <span className="text-xs text-green-500 font-medium">grátis</span>
         },
         {
+          title: "WHATSAPP DUAL",
+          href: "/whatsapp-dual",
+          icon: <MessageSquare className="w-4 h-4" />,
+          active: location === "/whatsapp-dual",
+          badge: <span className="text-xs text-blue-500 font-medium">extensão + api</span>
+        },
+        {
           title: "VOZ",
           href: "/voice-calling",
           icon: <Phone className="w-4 h-4" />,

@@ -28,6 +28,7 @@ import SMSCreditsPage from "@/pages/sms-credits";
 
 
 import WhatsAppAutomationPage from "@/pages/whatsapp-automation";
+import WhatsAppDualSystem from "@/pages/whatsapp-dual-system";
 import CloakerPage from "@/pages/cloaker";
 import TesteSMSPage from "@/pages/teste-sms";
 
@@ -224,6 +225,12 @@ function App() {
         <Route path="/campanhas-whatsapp">
           <Layout>
             <WhatsAppAutomationPage />
+          </Layout>
+        </Route>
+        
+        <Route path="/whatsapp-dual">
+          <Layout>
+            <WhatsAppDualSystem />
           </Layout>
         </Route>
         <Route path="/cloaker">
