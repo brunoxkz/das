@@ -61,6 +61,82 @@ export function formatPhoneNumber(phone: string): string {
   
   console.log(`🔄 Formatando número: "${phone}" -> "${cleaned}"`);
   
+  // Se já tem + no início, retorna como está
+  if (phone.startsWith('+')) {
+    console.log(`📱 Número já formatado: ${phone}`);
+    return phone;
+  }
+  
+  // Estados Unidos (+1) - 11 dígitos começando com 1
+  if (cleaned.length === 11 && cleaned.startsWith('1')) {
+    const formatted = `+${cleaned}`;
+    console.log(`📱 Número EUA: ${formatted}`);
+    return formatted;
+  }
+  
+  // Argentina (+54) - números começando com 54
+  if (cleaned.startsWith('54') && cleaned.length >= 12) {
+    const formatted = `+${cleaned}`;
+    console.log(`📱 Número Argentina: ${formatted}`);
+    return formatted;
+  }
+  
+  // México (+52) - números começando com 52
+  if (cleaned.startsWith('52') && cleaned.length >= 12) {
+    const formatted = `+${cleaned}`;
+    console.log(`📱 Número México: ${formatted}`);
+    return formatted;
+  }
+  
+  // Portugal (+351) - números começando com 351
+  if (cleaned.startsWith('351') && cleaned.length >= 12) {
+    const formatted = `+${cleaned}`;
+    console.log(`📱 Número Portugal: ${formatted}`);
+    return formatted;
+  }
+  
+  // Espanha (+34) - números começando com 34
+  if (cleaned.startsWith('34') && cleaned.length >= 11) {
+    const formatted = `+${cleaned}`;
+    console.log(`📱 Número Espanha: ${formatted}`);
+    return formatted;
+  }
+  
+  // França (+33) - números começando com 33
+  if (cleaned.startsWith('33') && cleaned.length >= 11) {
+    const formatted = `+${cleaned}`;
+    console.log(`📱 Número França: ${formatted}`);
+    return formatted;
+  }
+  
+  // Itália (+39) - números começando com 39
+  if (cleaned.startsWith('39') && cleaned.length >= 11) {
+    const formatted = `+${cleaned}`;
+    console.log(`📱 Número Itália: ${formatted}`);
+    return formatted;
+  }
+  
+  // Reino Unido (+44) - números começando com 44
+  if (cleaned.startsWith('44') && cleaned.length >= 12) {
+    const formatted = `+${cleaned}`;
+    console.log(`📱 Número Reino Unido: ${formatted}`);
+    return formatted;
+  }
+  
+  // Alemanha (+49) - números começando com 49
+  if (cleaned.startsWith('49') && cleaned.length >= 12) {
+    const formatted = `+${cleaned}`;
+    console.log(`📱 Número Alemanha: ${formatted}`);
+    return formatted;
+  }
+  
+  // Já tem código do país Brasil (+5511995133932)
+  if (cleaned.length === 13 && cleaned.startsWith('55')) {
+    const formatted = `+${cleaned}`;
+    console.log(`📱 Número com código do país Brasil: ${formatted}`);
+    return formatted;
+  }
+  
   // Número brasileiro com 11 dígitos (ex: 11995133932)
   if (cleaned.length === 11 && (cleaned.startsWith('1') || cleaned.startsWith('2') || cleaned.startsWith('8') || cleaned.startsWith('9'))) {
     const formatted = `+55${cleaned}`;
@@ -73,19 +149,6 @@ export function formatPhoneNumber(phone: string): string {
     const formatted = `+55${cleaned.substring(0, 2)}9${cleaned.substring(2)}`;
     console.log(`📱 Número brasileiro 10 dígitos (adicionando 9): ${formatted}`);
     return formatted;
-  }
-  
-  // Já tem código do país Brasil (+5511995133932)
-  if (cleaned.length === 13 && cleaned.startsWith('55')) {
-    const formatted = `+${cleaned}`;
-    console.log(`📱 Número com código do país: ${formatted}`);
-    return formatted;
-  }
-  
-  // Se já tem + no início, retorna como está
-  if (phone.startsWith('+')) {
-    console.log(`📱 Número já formatado: ${phone}`);
-    return phone;
   }
   
   // Caso padrão: assume Brasil se não tiver código

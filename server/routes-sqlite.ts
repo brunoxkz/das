@@ -4096,6 +4096,278 @@ export function registerSQLiteRoutes(app: Express): Server {
   }
 
   // =============================================
+  // FUNÇÕES AUXILIARES PARA DETECÇÃO DE PAÍS
+  // =============================================
+
+  // Detectar país baseado no número de telefone
+  function detectCountryFromPhone(phone: string): { country: string; code: string; currency: string; language: string } {
+    const cleanPhone = phone.replace(/\D/g, '');
+    
+    // Estados Unidos (+1) - 11 dígitos começando com 1
+    if (cleanPhone.length === 11 && cleanPhone.startsWith('1')) {
+      return {
+        country: 'Estados Unidos',
+        code: '+1',
+        currency: 'USD',
+        language: 'en-US'
+      };
+    }
+    
+    // Argentina (+54) - números com 12-13 dígitos começando com 54
+    if (cleanPhone.startsWith('54') && cleanPhone.length >= 12) {
+      return {
+        country: 'Argentina',
+        code: '+54',
+        currency: 'ARS',
+        language: 'es-AR'
+      };
+    }
+    
+    // México (+52) - números com 12-13 dígitos começando com 52
+    if (cleanPhone.startsWith('52') && cleanPhone.length >= 12) {
+      return {
+        country: 'México',
+        code: '+52',
+        currency: 'MXN',
+        language: 'es-MX'
+      };
+    }
+    
+    // Portugal (+351) - números com 12 dígitos começando com 351
+    if (cleanPhone.startsWith('351') && cleanPhone.length === 12) {
+      return {
+        country: 'Portugal',
+        code: '+351',
+        currency: 'EUR',
+        language: 'pt-PT'
+      };
+    }
+    
+    // Espanha (+34) - números com 11 dígitos começando com 34
+    if (cleanPhone.startsWith('34') && cleanPhone.length === 11) {
+      return {
+        country: 'Espanha',
+        code: '+34',
+        currency: 'EUR',
+        language: 'es-ES'
+      };
+    }
+    
+    // França (+33) - números com 11 dígitos começando com 33
+    if (cleanPhone.startsWith('33') && cleanPhone.length === 11) {
+      return {
+        country: 'França',
+        code: '+33',
+        currency: 'EUR',
+        language: 'fr-FR'
+      };
+    }
+    
+    // Itália (+39) - números com 11-12 dígitos começando com 39
+    if (cleanPhone.startsWith('39') && cleanPhone.length >= 11 && cleanPhone.length <= 12) {
+      return {
+        country: 'Itália',
+        code: '+39',
+        currency: 'EUR',
+        language: 'it-IT'
+      };
+    }
+    
+    // Reino Unido (+44) - números com 12 dígitos começando com 44
+    if (cleanPhone.startsWith('44') && cleanPhone.length === 12) {
+      return {
+        country: 'Reino Unido',
+        code: '+44',
+        currency: 'GBP',
+        language: 'en-GB'
+      };
+    }
+    
+    // Alemanha (+49) - números com 12-13 dígitos começando com 49
+    if (cleanPhone.startsWith('49') && cleanPhone.length >= 12 && cleanPhone.length <= 13) {
+      return {
+        country: 'Alemanha',
+        code: '+49',
+        currency: 'EUR',
+        language: 'de-DE'
+      };
+    }
+    
+    // Brasil (+55) - números com 13 dígitos começando com 55 OU 11 dígitos de celular
+    if ((cleanPhone.startsWith('55') && cleanPhone.length === 13) || 
+        (cleanPhone.length === 11 && (cleanPhone.startsWith('1') || cleanPhone.startsWith('2') || cleanPhone.startsWith('8') || cleanPhone.startsWith('9')))) {
+      return {
+        country: 'Brasil',
+        code: '+55',
+        currency: 'BRL',
+        language: 'pt-BR'
+      };
+    }
+    
+    // Padrão: Brasil
+    return {
+      country: 'Brasil',
+      code: '+55',
+      currency: 'BRL',
+      language: 'pt-BR'
+    };
+  }
+
+  // Adaptar mensagem baseado no país
+  function adaptMessageToCountry(message: string, country: string): string {
+    const adaptations: Record<string, any> = {
+      'Estados Unidos': {
+        currency: '$',
+        greeting: 'Hi',
+        discount: 'OFF',
+        urgency: 'Limited time offer!',
+        cta: 'Get it now!'
+      },
+      'Argentina': {
+        currency: 'ARS$',
+        greeting: 'Hola',
+        discount: 'DESCUENTO',
+        urgency: '¡Oferta limitada!',
+        cta: '¡Consíguelo ahora!'
+      },
+      'México': {
+        currency: 'MXN$',
+        greeting: 'Hola',
+        discount: 'DESCUENTO',
+        urgency: '¡Oferta limitada!',
+        cta: '¡Consíguelo ahora!'
+      },
+      'Portugal': {
+        currency: '€',
+        greeting: 'Olá',
+        discount: 'DESCONTO',
+        urgency: 'Oferta limitada!',
+        cta: 'Obtenha agora!'
+      },
+      'Espanha': {
+        currency: '€',
+        greeting: 'Hola',
+        discount: 'DESCUENTO',
+        urgency: '¡Oferta limitada!',
+        cta: '¡Consíguelo ahora!'
+      },
+      'França': {
+        currency: '€',
+        greeting: 'Salut',
+        discount: 'REMISE',
+        urgency: 'Offre limitée!',
+        cta: 'Obtenez-le maintenant!'
+      },
+      'Itália': {
+        currency: '€',
+        greeting: 'Ciao',
+        discount: 'SCONTO',
+        urgency: 'Offerta limitata!',
+        cta: 'Ottienilo ora!'
+      },
+      'Reino Unido': {
+        currency: '£',
+        greeting: 'Hello',
+        discount: 'OFF',
+        urgency: 'Limited time offer!',
+        cta: 'Get it now!'
+      },
+      'Alemanha': {
+        currency: '€',
+        greeting: 'Hallo',
+        discount: 'RABATT',
+        urgency: 'Begrenztes Angebot!',
+        cta: 'Jetzt holen!'
+      }
+    };
+
+    const adaptation = adaptations[country];
+    if (!adaptation) {
+      console.log(`⚠️  País não encontrado nas adaptações: ${country}`);
+      return message; // Retorna mensagem original se país não tem adaptação
+    }
+
+    let adaptedMessage = message;
+    console.log(`📝 Adaptando mensagem para ${country}:`, adaptation);
+    
+    // Substituir moeda (R$ → currency)
+    adaptedMessage = adaptedMessage.replace(/R\$/g, adaptation.currency);
+    console.log(`💱 Após substituição de moeda: ${adaptedMessage}`);
+    
+    // Substituir saudações (Olá → greeting)
+    adaptedMessage = adaptedMessage.replace(/Olá/g, adaptation.greeting);
+    console.log(`👋 Após substituição de saudação: ${adaptedMessage}`);
+    
+    // Substituir OFF → discount
+    adaptedMessage = adaptedMessage.replace(/OFF/g, adaptation.discount);
+    console.log(`🎯 Após substituição de desconto: ${adaptedMessage}`);
+    
+    // Adicionar urgência se não existe
+    if (!adaptedMessage.includes('!') && adaptation.urgency) {
+      adaptedMessage += ` ${adaptation.urgency}`;
+      console.log(`⚡ Após adicionar urgência: ${adaptedMessage}`);
+    }
+    
+    return adaptedMessage;
+  }
+
+  // =============================================
+  // TESTE SMS DIRETO (PARA TESTES)
+  // =============================================
+
+  // Endpoint para teste SMS direto - usado pelos scripts de teste
+  app.post("/api/sms/direct", async (req: any, res: Response) => {
+    try {
+      const { phone, message } = req.body;
+      
+      console.log('🔍 MIDDLEWARE DEBUG - POST /api/sms/direct');
+      console.log('📝 Headers:', req.headers);
+      console.log('📝 Body type:', typeof req.body);
+      console.log('📝 Body keys:', Object.keys(req.body));
+      console.log('📝 Body content:', JSON.stringify(req.body, null, 2));
+      
+      if (!phone || !message) {
+        return res.status(400).json({ error: "Phone and message are required" });
+      }
+
+      // Detectar país baseado no número
+      const countryInfo = detectCountryFromPhone(phone);
+      console.log(`🌍 País detectado: ${countryInfo.country} (${countryInfo.code})`);
+      
+      // Adaptar quiz baseado no país (se necessário)
+      const adaptedMessage = adaptMessageToCountry(message, countryInfo.country);
+      console.log(`📝 Mensagem adaptada: ${adaptedMessage}`);
+      
+      // Importar função sendSms do twilio
+      const { sendSms } = await import("./twilio");
+      
+      // Tentar enviar SMS
+      const success = await sendSms(phone, adaptedMessage);
+      
+      if (success) {
+        console.log(`✅ SMS enviado com sucesso para ${phone}`);
+        res.json({ 
+          success: true, 
+          message: "SMS enviado com sucesso",
+          country: countryInfo.country,
+          countryCode: countryInfo.code,
+          adaptedMessage: adaptedMessage
+        });
+      } else {
+        console.log(`❌ Falha ao enviar SMS para ${phone}`);
+        res.status(500).json({ 
+          error: "Falha ao enviar SMS",
+          country: countryInfo.country,
+          countryCode: countryInfo.code 
+        });
+      }
+    } catch (error) {
+      console.error("Erro no endpoint SMS direto:", error);
+      res.status(500).json({ error: "Erro interno do servidor" });
+    }
+  });
+
+  // =============================================
   // UPLOAD SEGURO PARA DESIGN (LOGO/FAVICON)
   // =============================================
 

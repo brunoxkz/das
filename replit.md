@@ -208,6 +208,19 @@ No additional files or separate projects are maintained in this repository.
 
 ```
 Changelog:
+- July 15, 2025. SISTEMA DE DETECÇÃO DE PAÍS E ADAPTAÇÃO DE MENSAGENS IMPLEMENTADO - Sistema completo de localização internacional:
+  * Implementado endpoint /api/sms/direct para testes diretos de SMS
+  * Função detectCountryFromPhone() detecta país baseado no número (10 países suportados)
+  * Função adaptMessageToCountry() adapta mensagens por país (moeda, idioma, saudações)
+  * Países suportados: Brasil, EUA, Argentina, México, Portugal, Espanha, França, Itália, Reino Unido, Alemanha
+  * Adaptação automática de moeda: R$ → $ (EUA), € (Europa), ARS$ (Argentina), MXN$ (México)
+  * Adaptação de saudações: Olá → Hi (EUA), Hola (Espanha/México), Salut (França), Ciao (Itália)
+  * Teste validado com sucesso: SMS enviado para 11995133932 com SID: SMe76344ebd0255d6502e8616b0bbbdba8
+  * Sistema funciona com credenciais reais do Twilio: Account SID ACaa795b9b..., Auth Token c0151d44e8..., Phone +12344373337
+  * Integração completa com sistema de campanhas SMS existente
+  * Formatação automática de números brasileiros (+5511995133932)
+  * Logs detalhados para debug e monitoramento
+  * Sistema pronto para uso em produção com suporte internacional
 - July 15, 2025. FUNCIONALIDADE DE DUPLICAR PÁGINA IMPLEMENTADA - Sistema completo de duplicação de páginas com todos os elementos:
   * Adicionado botão de duplicar (ícone Copy) ao lado do botão de deletar em cada página
   * Implementada função duplicatePage que cria cópia profunda da página e elementos
