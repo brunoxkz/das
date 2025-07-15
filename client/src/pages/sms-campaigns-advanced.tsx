@@ -16,6 +16,136 @@ import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 
+// Componente para exibir logs da campanha
+const CampaignLogs = ({ campaignId }: { campaignId: string }) => {
+  const { data: logs, isLoading } = useQuery({
+    queryKey: ['/api/sms-campaigns', campaignId, 'logs'],
+    queryFn: async () => {
+      const response = await fetch(`/api/sms-campaigns/${campaignId}/logs`, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+      });
+      if (!response.ok) throw new Error('Erro ao carregar logs');
+      return response.json();
+    }
+  });
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center p-8">
+        <div className="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-4">
+      {logs && logs.length > 0 ? (
+        logs.map((log: any, index: number) => (
+          <div key={index} className="border rounded-lg p-4 bg-gray-50">
+            <div className="flex items-start justify-between">
+              <div className="flex-1">
+                <div className="flex items-center gap-2 mb-2">
+                  <Badge variant={log.status === 'sent' ? 'default' : log.status === 'delivered' ? 'secondary' : 'destructive'}>
+                    {log.status === 'sent' ? 'Enviado' : log.status === 'delivered' ? 'Entregue' : 'Erro'}
+                  </Badge>
+                  <span className="text-sm text-gray-600">{log.phone}</span>
+                </div>
+                <p className="text-sm text-gray-700 mb-2">{log.message}</p>
+                <div className="text-xs text-gray-500">
+                  {format(new Date(log.createdAt), 'dd/MM/yyyy HH:mm:ss', { locale: ptBR })}
+                </div>
+              </div>
+            </div>
+          </div>
+        ))
+      ) : (
+        <div className="text-center py-8 text-gray-500">
+          Nenhum log encontrado para esta campanha.
+        </div>
+      )}
+    </div>
+  );
+};
+
+// Componente para exibir analytics da campanha
+const CampaignAnalytics = ({ campaignId }: { campaignId: string }) => {
+  const { data: analytics, isLoading } = useQuery({
+    queryKey: ['/api/sms-campaigns', campaignId, 'analytics'],
+    queryFn: async () => {
+      const response = await fetch(`/api/sms-campaigns/${campaignId}/analytics`, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+      });
+      if (!response.ok) throw new Error('Erro ao carregar analytics');
+      return response.json();
+    }
+  });
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center p-8">
+        <div className="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-6">
+      {analytics ? (
+        <>
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div className="text-center p-4 bg-blue-50 rounded-lg border">
+              <div className="text-3xl font-bold text-blue-600">{analytics.totalSent || 0}</div>
+              <div className="text-sm text-gray-600">Total Enviados</div>
+            </div>
+            <div className="text-center p-4 bg-green-50 rounded-lg border">
+              <div className="text-3xl font-bold text-green-600">{analytics.totalDelivered || 0}</div>
+              <div className="text-sm text-gray-600">Total Entregues</div>
+            </div>
+            <div className="text-center p-4 bg-red-50 rounded-lg border">
+              <div className="text-3xl font-bold text-red-600">{analytics.totalFailed || 0}</div>
+              <div className="text-sm text-gray-600">Total Falhas</div>
+            </div>
+            <div className="text-center p-4 bg-purple-50 rounded-lg border">
+              <div className="text-3xl font-bold text-purple-600">
+                {analytics.totalSent > 0 ? Math.round((analytics.totalDelivered / analytics.totalSent) * 100) : 0}%
+              </div>
+              <div className="text-sm text-gray-600">Taxa de Entrega</div>
+            </div>
+          </div>
+          
+          <div className="border rounded-lg p-4">
+            <h3 className="font-medium mb-3">Detalhes da Campanha</h3>
+            <div className="space-y-2 text-sm">
+              <div className="flex justify-between">
+                <span>Criada em:</span>
+                <span>{analytics.createdAt ? format(new Date(analytics.createdAt), 'dd/MM/yyyy HH:mm', { locale: ptBR }) : 'N/A'}</span>
+              </div>
+              <div className="flex justify-between">
+                <span>Status:</span>
+                <Badge variant={analytics.status === 'active' ? 'default' : 'secondary'}>
+                  {analytics.status === 'active' ? 'Ativa' : 'Pausada'}
+                </Badge>
+              </div>
+              <div className="flex justify-between">
+                <span>Créditos utilizados:</span>
+                <span>{analytics.creditsUsed || 0}</span>
+              </div>
+            </div>
+          </div>
+        </>
+      ) : (
+        <div className="text-center py-8 text-gray-500">
+          Nenhum dado de analytics disponível para esta campanha.
+        </div>
+      )}
+    </div>
+  );
+};
+
 // Tipos de campanha conforme especificação
 const CAMPAIGN_TYPES = {
   remarketing: {
@@ -965,12 +1095,31 @@ export default function SMSCampaignsAdvanced() {
                         <Button 
                           variant="outline" 
                           size="sm"
-                          onClick={() => {
-                            // Implementar pause campaign
-                            toast({
-                              title: "Campanha pausada",
-                              description: "A campanha foi pausada com sucesso.",
-                            });
+                          onClick={async () => {
+                            try {
+                              const response = await fetch(`/api/sms-campaigns/${campaign.id}/pause`, {
+                                method: 'PUT',
+                                headers: {
+                                  'Authorization': `Bearer ${localStorage.getItem('token')}`
+                                }
+                              });
+                              
+                              if (response.ok) {
+                                toast({
+                                  title: "Campanha pausada",
+                                  description: "A campanha foi pausada com sucesso.",
+                                });
+                                queryClient.invalidateQueries({ queryKey: ['/api/sms-campaigns'] });
+                              } else {
+                                throw new Error('Erro ao pausar campanha');
+                              }
+                            } catch (error) {
+                              toast({
+                                title: "Erro ao pausar campanha",
+                                description: "Tente novamente em alguns instantes.",
+                                variant: "destructive"
+                              });
+                            }
                           }}
                         >
                           <Pause className="w-4 h-4 mr-1" />
@@ -982,12 +1131,31 @@ export default function SMSCampaignsAdvanced() {
                         <Button 
                           variant="outline" 
                           size="sm"
-                          onClick={() => {
-                            // Implementar resume campaign
-                            toast({
-                              title: "Campanha reativada",
-                              description: "A campanha foi reativada com sucesso.",
-                            });
+                          onClick={async () => {
+                            try {
+                              const response = await fetch(`/api/sms-campaigns/${campaign.id}/resume`, {
+                                method: 'PUT',
+                                headers: {
+                                  'Authorization': `Bearer ${localStorage.getItem('token')}`
+                                }
+                              });
+                              
+                              if (response.ok) {
+                                toast({
+                                  title: "Campanha reativada",
+                                  description: "A campanha foi reativada com sucesso.",
+                                });
+                                queryClient.invalidateQueries({ queryKey: ['/api/sms-campaigns'] });
+                              } else {
+                                throw new Error('Erro ao reativar campanha');
+                              }
+                            } catch (error) {
+                              toast({
+                                title: "Erro ao reativar campanha",
+                                description: "Tente novamente em alguns instantes.",
+                                variant: "destructive"
+                              });
+                            }
                           }}
                         >
                           <Play className="w-4 h-4 mr-1" />
@@ -995,35 +1163,35 @@ export default function SMSCampaignsAdvanced() {
                         </Button>
                       )}
                       
-                      <Button 
-                        variant="outline" 
-                        size="sm"
-                        onClick={() => {
-                          // Implementar view logs
-                          toast({
-                            title: "Logs da campanha",
-                            description: "Abrindo logs detalhados da campanha.",
-                          });
-                        }}
-                      >
-                        <FileText className="w-4 h-4 mr-1" />
-                        Ver Logs
-                      </Button>
+                      <Dialog>
+                        <DialogTrigger asChild>
+                          <Button variant="outline" size="sm">
+                            <FileText className="w-4 h-4 mr-1" />
+                            Ver Logs
+                          </Button>
+                        </DialogTrigger>
+                        <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+                          <DialogHeader>
+                            <DialogTitle>Logs da Campanha - {campaign.name}</DialogTitle>
+                          </DialogHeader>
+                          <CampaignLogs campaignId={campaign.id} />
+                        </DialogContent>
+                      </Dialog>
                       
-                      <Button 
-                        variant="outline" 
-                        size="sm"
-                        onClick={() => {
-                          // Implementar analytics
-                          toast({
-                            title: "Analytics da campanha",
-                            description: "Abrindo relatório detalhado de performance.",
-                          });
-                        }}
-                      >
-                        <BarChart3 className="w-4 h-4 mr-1" />
-                        Analytics
-                      </Button>
+                      <Dialog>
+                        <DialogTrigger asChild>
+                          <Button variant="outline" size="sm">
+                            <BarChart3 className="w-4 h-4 mr-1" />
+                            Analytics
+                          </Button>
+                        </DialogTrigger>
+                        <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+                          <DialogHeader>
+                            <DialogTitle>Analytics da Campanha - {campaign.name}</DialogTitle>
+                          </DialogHeader>
+                          <CampaignAnalytics campaignId={campaign.id} />
+                        </DialogContent>
+                      </Dialog>
                       
                       <Button 
                         variant="outline" 

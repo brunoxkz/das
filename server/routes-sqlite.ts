@@ -3629,6 +3629,57 @@ export function registerSQLiteRoutes(app: Express): Server {
     }
   });
 
+  // Get SMS analytics for a campaign
+  app.get("/api/sms-campaigns/:id/analytics", verifyJWT, async (req: any, res: Response) => {
+    try {
+      const { id } = req.params;
+      const userId = req.user.id;
+      
+      const campaign = await storage.getSMSCampaignById(id);
+      
+      if (!campaign || campaign.userId !== userId) {
+        return res.status(404).json({ error: "Campanha não encontrada" });
+      }
+
+      const logs = await storage.getSMSLogsByCampaign(id);
+      
+      // Calcular estatísticas da campanha
+      const totalSent = logs.filter(log => log.status === 'sent').length;
+      const totalFailed = logs.filter(log => log.status === 'failed').length;
+      const totalPending = logs.filter(log => log.status === 'pending').length;
+      const totalDelivered = logs.filter(log => log.status === 'delivered').length;
+      
+      const analytics = {
+        campaignId: id,
+        campaignName: campaign.name,
+        createdAt: campaign.createdAt,
+        status: campaign.status,
+        totalContacts: logs.length,
+        totalSent,
+        totalFailed,
+        totalPending,
+        totalDelivered,
+        successRate: logs.length > 0 ? (totalSent / logs.length * 100).toFixed(1) : 0,
+        deliveryRate: logs.length > 0 ? (totalDelivered / logs.length * 100).toFixed(1) : 0,
+        failureRate: logs.length > 0 ? (totalFailed / logs.length * 100).toFixed(1) : 0,
+        logs: logs.map(log => ({
+          id: log.id,
+          phone: log.phone,
+          status: log.status,
+          message: log.message,
+          createdAt: log.createdAt,
+          sentAt: log.sentAt,
+          errorMessage: log.errorMessage
+        }))
+      };
+      
+      res.json(analytics);
+    } catch (error) {
+      console.error("Error fetching SMS analytics:", error);
+      res.status(500).json({ error: "Error fetching SMS analytics" });
+    }
+  });
+
   // =============================================
   // VOICE CALLING CAMPAIGNS - SISTEMA COMPLETO
   // =============================================
