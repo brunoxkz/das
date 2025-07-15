@@ -19,6 +19,7 @@ import { useLocation } from "wouter";
 import { VariableHelperUnified } from "@/components/ui/variable-helper-unified";
 import { UltraPersonalizedCampaignModal } from "@/components/ultra-personalized-campaign-modal";
 import { CampaignStyleSelector, CampaignStyle } from "@/components/campaign-style-selector";
+import { CompleteSMSCampaignModal } from "@/components/complete-sms-campaign-modal";
 
 interface SMSCredits {
   total: number;
@@ -63,6 +64,9 @@ export default function SMSCreditsPage() {
   // Estados para seletor de estilo de campanha
   const [showCampaignStyleSelector, setShowCampaignStyleSelector] = useState(false);
   const [selectedCampaignStyle, setSelectedCampaignStyle] = useState<CampaignStyle | null>(null);
+  
+  // Estado para modal completo de campanha SMS
+  const [showCompleteCampaignModal, setShowCompleteCampaignModal] = useState(false);
   const [activeTab, setActiveTab] = useState("overview");
   const [selectedQuiz, setSelectedQuiz] = useState<string>("");
   const [campaignForm, setCampaignForm] = useState<{
@@ -654,6 +658,24 @@ export default function SMSCreditsPage() {
     }
   ];
 
+  const handleCreateCompleteCampaign = async (campaignData: any) => {
+    try {
+      await createCampaignMutation.mutateAsync(campaignData);
+      setShowCompleteCampaignModal(false);
+      toast({
+        title: "Campanha criada com sucesso!",
+        description: "Sua campanha SMS foi criada e está ativa.",
+      });
+    } catch (error) {
+      console.error('Erro ao criar campanha:', error);
+      toast({
+        title: "Erro ao criar campanha",
+        description: "Ocorreu um erro ao criar a campanha. Tente novamente.",
+        variant: "destructive",
+      });
+    }
+  };
+
   if (creditsLoading || quizzesLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -1117,6 +1139,16 @@ export default function SMSCreditsPage() {
                   <strong>Importante:</strong> É necessário comprar créditos SMS para usar esta funcionalidade. Cada SMS enviado consome 1 crédito.
                 </AlertDescription>
               </Alert>
+
+              <div className="flex justify-center pt-6">
+                <Button 
+                  onClick={() => setShowCompleteCampaignModal(true)}
+                  className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-8 py-3 text-lg font-semibold shadow-lg"
+                >
+                  <MessageSquare className="w-5 h-5 mr-2" />
+                  Criar Campanha SMS Completa
+                </Button>
+              </div>
             </CardContent>
           </Card>
 
@@ -1735,6 +1767,15 @@ export default function SMSCreditsPage() {
         onClose={() => setShowCampaignStyleSelector(false)}
         onStyleSelect={handleCampaignStyleSelect}
         platform="sms"
+      />
+
+      {/* Modal Completo de Campanha SMS */}
+      <CompleteSMSCampaignModal
+        open={showCompleteCampaignModal}
+        onClose={() => setShowCompleteCampaignModal(false)}
+        onCreateCampaign={handleCreateCompleteCampaign}
+        quizzes={quizzes || []}
+        isCreating={createCampaignMutation.isPending}
       />
     </div>
   );

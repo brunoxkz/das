@@ -337,6 +337,8 @@ export const insertQuizSchema = createInsertSchema(quizzes).omit({
   createdAt: true,
   updatedAt: true,
 }).extend({
+  // Validação do título com limite de 50 caracteres
+  title: z.string().min(1, "Título é obrigatório").max(50, "Título deve ter no máximo 50 caracteres"),
   // Validação adicional da estrutura do quiz
   structure: z.object({
     pages: z.array(z.object({
