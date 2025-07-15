@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { DragDropItem, DragDropContainer } from "@/components/ui/drag-drop";
 import { ModernButton } from "@/components/ui/modern-button";
 import { ModernCard, ModernCardContent, ModernCardHeader, ModernCardTitle } from "@/components/ui/modern-card";
@@ -1544,7 +1545,7 @@ const gameElementCategories = [
               </span>
             )}
             
-            <h2 style={headingStyle} className={`relative ${element.letterSpacing === "wide" ? "tracking-wide" : element.letterSpacing === "wider" ? "tracking-wider" : ""}`}>
+            <h2 style={{headingStyle}} className={`relative ${element.letterSpacing === "wide" ? "tracking-wide" : element.letterSpacing === "wider" ? "tracking-wider" : ""}`}>
               {/* 🔥 NOVA FUNCIONALIDADE: Destaque de palavras-chave */}
               {element.highlightKeywords ? 
                 element.content?.split(' ').map((word, index) => {
@@ -1594,7 +1595,7 @@ const gameElementCategories = [
           borderRadius: element.backgroundColor !== "transparent" ? "6px" : "0"
         };
         return (
-          <p style={paragraphStyle}>
+          <p style={{paragraphStyle}}>
             {element.content}
           </p>
         );
@@ -1636,7 +1637,7 @@ const gameElementCategories = [
 
         return (
           <div className="space-y-3">
-            <label className="block text-sm font-medium" style={questionStyle}>
+            <label className="block text-sm font-medium" style={{questionStyle}}>
               {element.question || "Pergunta"}
               {element.required && <span className="text-red-500 ml-1">*</span>}
               {element.showQuestionNumber && <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded ml-2">#{element.questionNumber || 1}</span>}
@@ -1871,7 +1872,7 @@ const gameElementCategories = [
             {element.imageUrl ? (
               <div 
                 className="w-full"
-                style={{ textAlign: element.textAlign || "center" }}
+                style={{textAlign: element.textAlign || "center"}}
               >
                 <img 
                   src={element.imageUrl} 
@@ -1907,7 +1908,7 @@ const gameElementCategories = [
             {element.imageUrl ? (
               <div 
                 className="w-full"
-                style={{ textAlign: element.textAlign || "center" }}
+                style={{textAlign: element.textAlign || "center"}}
               >
                 <img 
                   src={element.imageUrl} 
@@ -1992,21 +1993,19 @@ const gameElementCategories = [
         return (
           <div 
             className="space-y-3 p-4 border-2 border-dashed rounded-lg"
-            style={{ 
-              backgroundColor: element.inputBackgroundColor || "#faf5ff",
-              borderColor: element.inputBorderColor || "#e5e7eb"
-            }}
+            style={{backgroundColor: element.inputBackgroundColor || "#faf5ff",
+              borderColor: element.inputBorderColor || "#e5e7eb"}}
           >
             <div className={`flex ${labelPosition === "left" ? "flex-row items-center space-x-3" : "flex-col"} gap-2`}>
               {showIcon && (
                 <div className="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center">
-                  <ArrowUpDown className="w-5 h-5" style={{ color: element.iconColor || "#9333ea" }} />
+                  <ArrowUpDown className="w-5 h-5" style={{color: element.iconColor || "#9333ea"}} />
                 </div>
               )}
               <div>
                 <h3 
                   className="font-semibold text-purple-800"
-                  style={{ color: element.labelColor || "#6b21a8" }}
+                  style={{color: element.labelColor || "#6b21a8"}}
                 >
                   {element.question || "Altura"}
                 </h3>
@@ -2023,11 +2022,9 @@ const gameElementCategories = [
                     type="number"
                     placeholder={heightUnit === "cm" ? "Ex: 175" : "Ex: 5.9"}
                     className={inputClasses[heightInputStyle]}
-                    style={{ 
-                      backgroundColor: element.inputBackgroundColor || (heightInputStyle === "filled" ? "#faf5ff" : "white"),
+                    style={{backgroundColor: element.inputBackgroundColor || (heightInputStyle === "filled" ? "#faf5ff" : "white"),
                       borderColor: element.inputBorderColor || "#e5e7eb",
-                      fontSize: '18px'
-                    }}
+                      fontSize: '18px'}}
                     min={element.min || (heightUnit === "cm" ? 120 : 3)}
                     max={element.max || (heightUnit === "cm" ? 250 : 8)}
                     step={heightUnit === "cm" ? 1 : 0.1}
@@ -2107,21 +2104,19 @@ const gameElementCategories = [
         return (
           <div 
             className="space-y-3 p-4 border-2 border-dashed rounded-lg"
-            style={{ 
-              backgroundColor: element.inputBackgroundColor || "#eff6ff",
-              borderColor: element.inputBorderColor || "#e5e7eb"
-            }}
+            style={{backgroundColor: element.inputBackgroundColor || "#eff6ff",
+              borderColor: element.inputBorderColor || "#e5e7eb"}}
           >
             <div className={`flex ${weightLabelPosition === "left" ? "flex-row items-center space-x-3" : "flex-col"} gap-2`}>
               {showWeightIcon && (
                 <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
-                  <Scale className="w-5 h-5" style={{ color: element.iconColor || "#3b82f6" }} />
+                  <Scale className="w-5 h-5" style={{color: element.iconColor || "#3b82f6"}} />
                 </div>
               )}
               <div>
                 <h3 
                   className="font-semibold text-blue-800"
-                  style={{ color: element.labelColor || "#1e40af" }}
+                  style={{color: element.labelColor || "#1e40af"}}
                 >
                   {element.question || "Peso Atual"}
                 </h3>
@@ -2138,11 +2133,9 @@ const gameElementCategories = [
                     type="number"
                     placeholder={currentWeightUnit === "kg" ? "Ex: 70.5" : "Ex: 155"}
                     className={weightInputClasses[weightInputStyle]}
-                    style={{ 
-                      backgroundColor: element.inputBackgroundColor || (weightInputStyle === "filled" ? "#eff6ff" : "white"),
+                    style={{backgroundColor: element.inputBackgroundColor || (weightInputStyle === "filled" ? "#eff6ff" : "white"),
                       borderColor: element.inputBorderColor || "#e5e7eb",
-                      fontSize: '18px'
-                    }}
+                      fontSize: '18px'}}
                     min={element.min || (currentWeightUnit === "kg" ? 30 : 66)}
                     max={element.max || (currentWeightUnit === "kg" ? 300 : 660)}
                     step={currentWeightUnit === "kg" ? 0.1 : 0.1}
@@ -2227,7 +2220,7 @@ const gameElementCategories = [
                     max="300"
                     className="w-full px-4 py-3 text-lg border border-gray-300 rounded-lg text-center font-semibold"
                     placeholder="65.0"
-                    style={{ fontSize: '18px' }}
+                    style={{fontSize: '18px'}}
                   />
                   <span className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 font-medium">
                     kg
@@ -2366,10 +2359,8 @@ const gameElementCategories = [
             
             <div className={`flex justify-center ${isFixedFooter ? 'p-4 bg-gray-100 border-t' : ''}`}>
               <button
-                style={{
-                  backgroundColor: buttonBgColor,
-                  color: buttonTextColor,
-                }}
+                style={{backgroundColor: buttonBgColor,
+                  color: buttonTextColor,}}
                 className={`
                   ${sizeClasses[buttonSize]} 
                   ${radiusClasses[buttonBorderRadius]}
@@ -2428,10 +2419,8 @@ const gameElementCategories = [
             
             <div className="flex justify-center">
               <button
-                style={{
-                  backgroundColor: transitionButtonBgColor,
-                  color: transitionButtonTextColor,
-                }}
+                style={{backgroundColor: transitionButtonBgColor,
+                  color: transitionButtonTextColor,}}
                 className={`
                   ${transitionSizeClasses[transitionButtonSize]} 
                   ${transitionRadiusClasses[transitionButtonBorderRadius]}
@@ -2474,7 +2463,7 @@ const gameElementCategories = [
         return (
           <div 
             className="space-y-3 p-4 border-2 border-dashed border-purple-200 rounded-lg min-h-[120px] flex flex-col justify-center"
-            style={backgroundStyle}
+            style={{backgroundStyle}}
           >
             <div className="flex items-center gap-2 bg-white/90 rounded px-2 py-1">
               <Palette className="w-4 h-4 text-purple-600" />
@@ -2508,7 +2497,7 @@ const gameElementCategories = [
             </div>
             <div 
               className="p-4 bg-white rounded border"
-              style={textStyle}
+              style={{textStyle}}
             >
               {element.content || "Preparando sua experiência..."}
             </div>
@@ -2536,7 +2525,7 @@ const gameElementCategories = [
               {isChronometer ? (
                 <div 
                   className={`${counterSize} font-bold`}
-                  style={{ color: counterColor }}
+                  style={{color: counterColor}}
                 >
                   {String((element as any).chronometerHours || 0).padStart(2, '0')}:
                   {String((element as any).chronometerMinutes || 15).padStart(2, '0')}:
@@ -2545,7 +2534,7 @@ const gameElementCategories = [
               ) : (
                 <div 
                   className={`${counterSize} font-bold`}
-                  style={{ color: counterColor }}
+                  style={{color: counterColor}}
                 >
                   {element.counterStartValue || 10}s
                 </div>
@@ -2566,37 +2555,37 @@ const gameElementCategories = [
             case "dots":
               return (
                 <div className="flex space-x-1">
-                  <div className={`${loaderSize} bg-current rounded-full animate-bounce`} style={{ color: loaderColor }}></div>
-                  <div className={`${loaderSize} bg-current rounded-full animate-bounce`} style={{ color: loaderColor, animationDelay: "0.1s" }}></div>
-                  <div className={`${loaderSize} bg-current rounded-full animate-bounce`} style={{ color: loaderColor, animationDelay: "0.2s" }}></div>
+                  <div className={`${loaderSize} bg-current rounded-full animate-bounce`} style={{color: loaderColor}}></div>
+                  <div className={`${loaderSize} bg-current rounded-full animate-bounce`} style={{color: loaderColor, animationDelay: "0.1s"}}></div>
+                  <div className={`${loaderSize} bg-current rounded-full animate-bounce`} style={{color: loaderColor, animationDelay: "0.2s"}}></div>
                 </div>
               );
             case "bars":
               return (
                 <div className="flex space-x-1">
-                  <div className={`w-1 ${loaderSize} bg-current animate-pulse`} style={{ color: loaderColor }}></div>
-                  <div className={`w-1 ${loaderSize} bg-current animate-pulse`} style={{ color: loaderColor, animationDelay: "0.1s" }}></div>
-                  <div className={`w-1 ${loaderSize} bg-current animate-pulse`} style={{ color: loaderColor, animationDelay: "0.2s" }}></div>
+                  <div className={`w-1 ${loaderSize} bg-current animate-pulse`} style={{color: loaderColor}}></div>
+                  <div className={`w-1 ${loaderSize} bg-current animate-pulse`} style={{color: loaderColor, animationDelay: "0.1s"}}></div>
+                  <div className={`w-1 ${loaderSize} bg-current animate-pulse`} style={{color: loaderColor, animationDelay: "0.2s"}}></div>
                 </div>
               );
             case "pulse":
               return (
-                <div className={`${loaderSize} bg-current rounded-full animate-ping`} style={{ color: loaderColor }}></div>
+                <div className={`${loaderSize} bg-current rounded-full animate-ping`} style={{color: loaderColor}}></div>
               );
             case "ring":
               return (
-                <div className={`${loaderSize} border-4 border-gray-200 border-t-current rounded-full animate-spin`} style={{ borderTopColor: loaderColor }}></div>
+                <div className={`${loaderSize} border-4 border-gray-200 border-t-current rounded-full animate-spin`} style={{borderTopColor: loaderColor}}></div>
               );
             case "ripple":
               return (
                 <div className="relative inline-block">
-                  <div className={`${loaderSize} border-2 border-current rounded-full animate-ping absolute`} style={{ borderColor: loaderColor }}></div>
-                  <div className={`${loaderSize} border-2 border-current rounded-full animate-ping absolute`} style={{ borderColor: loaderColor, animationDelay: "0.5s" }}></div>
+                  <div className={`${loaderSize} border-2 border-current rounded-full animate-ping absolute`} style={{borderColor: loaderColor}}></div>
+                  <div className={`${loaderSize} border-2 border-current rounded-full animate-ping absolute`} style={{borderColor: loaderColor, animationDelay: "0.5s"}}></div>
                 </div>
               );
             default:
               return (
-                <div className={`${loaderSize} border-2 border-gray-200 border-t-current rounded-full animate-spin`} style={{ borderTopColor: loaderColor }}></div>
+                <div className={`${loaderSize} border-2 border-gray-200 border-t-current rounded-full animate-spin`} style={{borderTopColor: loaderColor}}></div>
               );
           }
         };
@@ -2616,7 +2605,7 @@ const gameElementCategories = [
               {renderSpinner()}
               
               {element.content && (
-                <div className={`${textSize} font-medium`} style={{ color: textColor }}>
+                <div className={`${textSize} font-medium`} style={{color: textColor}}>
                   {element.content}
                 </div>
               )}
@@ -2624,12 +2613,12 @@ const gameElementCategories = [
               {((element as any).alternatingText1 || (element as any).alternatingText2) && (
                 <div className="text-center space-y-1">
                   {(element as any).alternatingText1 && (
-                    <div className={`${textSize} animate-pulse`} style={{ color: textColor }}>
+                    <div className={`${textSize} animate-pulse`} style={{color: textColor}}>
                       {(element as any).alternatingText1} ({(element as any).alternatingDuration1 || 2}s)
                     </div>
                   )}
                   {(element as any).alternatingText2 && (
-                    <div className={`${textSize} animate-pulse`} style={{ color: textColor, animationDelay: "1s" }}>
+                    <div className={`${textSize} animate-pulse`} style={{color: textColor, animationDelay: "1s"}}>
                       {(element as any).alternatingText2} ({(element as any).alternatingDuration2 || 2}s)
                     </div>
                   )}
@@ -2654,7 +2643,7 @@ const gameElementCategories = [
             </div>
             
             <div className="text-center p-4 bg-white rounded border">
-              <div className="text-lg font-medium mb-2" style={{ color: redirectTextColor }}>
+              <div className="text-lg font-medium mb-2" style={{color: redirectTextColor}}>
                 {redirectText}
               </div>
               
@@ -2771,7 +2760,7 @@ const gameElementCategories = [
                     <div key={index} className="flex items-center gap-2 p-2 bg-white rounded-lg border shadow-sm">
                       <div 
                         className="w-4 h-4 rounded-full border-2 border-white shadow-sm" 
-                        style={{ backgroundColor: wheelColors[index] || "#e2e8f0" }}
+                        style={{backgroundColor: wheelColors[index] || "#e2e8f0"}}
                       ></div>
                       <span className="text-xs font-medium text-gray-700 truncate">{segment}</span>
                       {index === winningSegment && (
@@ -2920,7 +2909,7 @@ const gameElementCategories = [
                     className={`w-16 h-16 rounded-full border-4 transition-all ${
                       color === correctColor ? 'border-yellow-400 ring-2 ring-yellow-300' : 'border-gray-300'
                     }`}
-                    style={{ backgroundColor: color }}
+                    style={{backgroundColor: color}}
                   />
                 ))}
               </div>
@@ -2944,17 +2933,15 @@ const gameElementCategories = [
             </div>
             
             <div className="flex flex-col items-center space-y-4">
-              <div className="bg-black p-4 rounded-lg" style={{ width: '200px', height: '160px' }}>
+              <div className="bg-black p-4 rounded-lg" style={{width: '200px', height: '160px'}}>
                 {/* Blocos */}
                 <div className="grid gap-1" style={{ gridTemplateColumns: `repeat(${columns}, 1fr)` }}>
                   {Array.from({ length: rows * columns }, (_, index) => (
                     <div
                       key={index}
                       className="h-4 rounded-sm"
-                      style={{ 
-                        backgroundColor: element.brickColors?.[index % (element.brickColors?.length || 3)] || 
-                        (index % 3 === 0 ? '#FF6B6B' : index % 3 === 1 ? '#4ECDC4' : '#45B7D1')
-                      }}
+                      style={{backgroundColor: element.brickColors?.[index % (element.brickColors?.length || 3)] || 
+                        (index % 3 === 0 ? '#FF6B6B' : index % 3 === 1 ? '#4ECDC4' : '#45B7D1')}}
                     />
                   ))}
                 </div>
@@ -2962,13 +2949,13 @@ const gameElementCategories = [
                 {/* Barra */}
                 <div 
                   className="mx-auto mt-4 h-2 w-12 rounded-full"
-                  style={{ backgroundColor: element.paddleColor || '#FFFFFF' }}
+                  style={{backgroundColor: element.paddleColor || '#FFFFFF'}}
                 />
                 
                 {/* Bola */}
                 <div 
                   className="w-2 h-2 rounded-full mx-auto mt-2"
-                  style={{ backgroundColor: element.ballColor || '#FECA57' }}
+                  style={{backgroundColor: element.ballColor || '#FECA57'}}
                 />
               </div>
               
@@ -3088,7 +3075,7 @@ const gameElementCategories = [
                 {networks.map((network) => (
                   <button
                     key={network}
-                    style={shareButtonStyle}
+                    style={{shareButtonStyle}}
                     className="flex items-center gap-2 transition-all hover:opacity-80"
                   >
                     {element.shareShowIcons !== false && (
@@ -3248,7 +3235,7 @@ const gameElementCategories = [
                   <div className="w-8 h-2 bg-gray-200 rounded-full overflow-hidden">
                     <div 
                       className="h-full bg-gradient-to-r from-green-400 to-blue-500 rounded-full animate-pulse"
-                      style={{ width: '100%' }}
+                      style={{width: '100%'}}
                     ></div>
                   </div>
                 </div>
@@ -3367,10 +3354,8 @@ const gameElementCategories = [
               </h3>
             )}
             
-            <div className="relative bg-white rounded-lg p-4 shadow-sm border" style={{ 
-              width: element.chartWidth || "100%", 
-              height: element.chartHeight || "280px" 
-            }}>
+            <div className="relative bg-white rounded-lg p-4 shadow-sm border" style={{width: element.chartWidth || "100%",
+              height: element.chartHeight || "280px"}}>
               
               {/* GRÁFICO DE BARRAS */}
               {chartType === "bar" && (
@@ -3500,7 +3485,7 @@ const gameElementCategories = [
                   <div key={index} className="flex items-center space-x-2">
                     <div 
                       className="w-3 h-3 rounded-full"
-                      style={{ backgroundColor: item.color || "#10b981" }}
+                      style={{backgroundColor: item.color || "#10b981"}}
                     />
                     <span className="text-xs text-gray-600 font-medium">{item.label}</span>
                   </div>
@@ -3786,10 +3771,8 @@ const gameElementCategories = [
       case "before_after":
         return (
           <div className="space-y-4 p-4 border border-gray-200 rounded-lg bg-white">
-            <div className="relative overflow-hidden rounded-lg" style={{ 
-              width: element.beforeAfterWidth || "100%", 
-              height: element.beforeAfterHeight || "400px" 
-            }}>
+            <div className="relative overflow-hidden rounded-lg" style={{width: element.beforeAfterWidth || "100%", 
+              height: element.beforeAfterHeight || "400px"}}>
               <div className="absolute inset-0 flex">
                 <div className="w-1/2 bg-gradient-to-r from-red-400 to-red-600 flex items-center justify-center">
                   <div className="text-white text-center">
@@ -4091,12 +4074,12 @@ const gameElementCategories = [
               <div 
                 key={item.id}
                 className={`flex ${element.iconListIconPosition === "top" ? "flex-col" : "flex-row"} items-center gap-3 p-3 rounded-lg border hover:shadow-md transition-all duration-200`}
-                style={{ backgroundColor: element.iconListBackgroundColor || "#f8fafc" }}
+                style={{backgroundColor: element.iconListBackgroundColor || "#f8fafc"}}
               >
                 <div className="flex-shrink-0">
                   <div 
                     className="w-8 h-8 rounded-full flex items-center justify-center"
-                    style={{ backgroundColor: item.iconColor || "#10b981" }}
+                    style={{backgroundColor: item.iconColor || "#10b981"}}
                   >
                     <CheckCircle className="w-4 h-4 text-white" />
                   </div>
@@ -4257,16 +4240,12 @@ const gameElementCategories = [
                     textPosition === "overlay-top" ? "items-start" : 
                     textPosition === "overlay-bottom" ? "items-end" : "items-center"
                   }`}
-                  style={{ 
-                    backgroundColor: element.imageWithTextTextBackground || "rgba(0,0,0,0.5)"
-                  }}
+                  style={{backgroundColor: element.imageWithTextTextBackground || "rgba(0,0,0,0.5)"}}
                 >
                   <div 
                     className="font-medium"
-                    style={{ 
-                      color: element.imageWithTextTextColor || "#ffffff",
-                      fontSize: element.imageWithTextTextSize === "large" ? "1.25rem" : "1rem"
-                    }}
+                    style={{color: element.imageWithTextTextColor || "#ffffff",
+                      fontSize: element.imageWithTextTextSize === "large" ? "1.25rem" : "1rem"}}
                   >
                     {imageText}
                   </div>
@@ -4277,16 +4256,12 @@ const gameElementCategories = [
             {!textPosition.includes("overlay") && (
               <div 
                 className={`p-3 text-center ${textPosition === "top" ? "order-first" : ""}`}
-                style={{ 
-                  backgroundColor: element.imageWithTextTextBackground || "transparent",
-                  color: element.imageWithTextTextColor || "#374151"
-                }}
+                style={{backgroundColor: element.imageWithTextTextBackground || "transparent",
+                  color: element.imageWithTextTextColor || "#374151"}}
               >
                 <div 
                   className="font-medium"
-                  style={{ 
-                    fontSize: element.imageWithTextTextSize === "large" ? "1.25rem" : "1rem"
-                  }}
+                  style={{fontSize: element.imageWithTextTextSize === "large" ? "1.25rem" : "1rem"}}
                 >
                   {imageText}
                 </div>
@@ -4355,14 +4330,14 @@ const gameElementCategories = [
               <div className="flex justify-between items-center">
                 <span className="text-sm font-medium text-gray-700">Progresso da Análise</span>
                 {element.showPercentage && (
-                  <span className="text-sm font-bold" style={{ color: element.percentageColor || "#6B7280" }}>
+                  <span className="text-sm font-bold" style={{color: element.percentageColor || "#6B7280"}}>
                     85%
                   </span>
                 )}
               </div>
               <div 
                 className={`w-full bg-gray-200 ${progressStyle} ${progressWidth} relative overflow-hidden`}
-                style={{ backgroundColor: element.loadingBarBackgroundColor || "#E5E7EB" }}
+                style={{backgroundColor: element.loadingBarBackgroundColor || "#E5E7EB"}}
               >
                 <div 
                   className={`${progressWidth} ${progressStyle} transition-all duration-2000 ease-out relative`}
@@ -4384,7 +4359,7 @@ const gameElementCategories = [
               <div className="grid grid-cols-2 gap-4">
                 {loadingMetrics.map((metric, index) => (
                   <div key={index} className="text-center p-3 bg-gray-50 rounded-lg border">
-                    <div className="text-lg font-black" style={{ color: metric.color }}>{metric.value}</div>
+                    <div className="text-lg font-black" style={{color: metric.color}}>{metric.value}</div>
                     <div className="text-xs text-gray-600 mt-1 mb-2">{metric.label}</div>
                     <div className="w-full bg-gray-200 rounded-full h-2">
                       <div 
@@ -4413,9 +4388,9 @@ const gameElementCategories = [
                   </div>
                   <span className="text-xs text-gray-700 flex-1">{step}</span>
                   <div className="flex space-x-1">
-                    <div className="w-1 h-1 bg-indigo-600 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
-                    <div className="w-1 h-1 bg-indigo-600 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
-                    <div className="w-1 h-1 bg-indigo-600 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
+                    <div className="w-1 h-1 bg-indigo-600 rounded-full animate-bounce" style={{animationDelay: '0ms'}}></div>
+                    <div className="w-1 h-1 bg-indigo-600 rounded-full animate-bounce" style={{animationDelay: '150ms'}}></div>
+                    <div className="w-1 h-1 bg-indigo-600 rounded-full animate-bounce" style={{animationDelay: '300ms'}}></div>
                   </div>
                 </div>
               ))}
@@ -4509,7 +4484,7 @@ const gameElementCategories = [
                       {/* 🔥 TÍTULO DA OPÇÃO */}
                       <h4 
                         className="text-lg font-bold mb-2"
-                        style={{ color: option.color || "#374151" }}
+                        style={{color: option.color || "#374151"}}
                       >
                         {option.label}
                       </h4>
@@ -4573,10 +4548,8 @@ const gameElementCategories = [
                   <div className="mt-4">
                     <button 
                       className="w-full py-3 px-4 rounded-lg font-medium transition-all duration-200 flex items-center justify-center gap-2"
-                      style={{ 
-                        backgroundColor: option.color || "#8b5cf6",
-                        color: "white"
-                      }}
+                      style={{backgroundColor: option.color || "#8b5cf6",
+                        color: "white"}}
                     >
                       <CheckCircle className="w-4 h-4" />
                       Selecionar {option.label}
@@ -4832,7 +4805,7 @@ const gameElementCategories = [
               >
                 <div 
                   className="w-full h-6 border rounded mb-2"
-                  style={{ backgroundColor: customBackgroundColor }}
+                  style={{backgroundColor: customBackgroundColor}}
                 ></div>
                 <div className="text-xs font-medium">Custom</div>
                 <div className="text-xs text-gray-500">Personalizado</div>
@@ -4873,7 +4846,7 @@ const gameElementCategories = [
             Aplicado a todas as páginas automaticamente
           </p>
         </div>
-        <div className="flex-1 overflow-y-auto min-h-0" style={{ maxHeight: 'calc(100vh - 73px)' }}>
+        <div className="flex-1 overflow-y-auto min-h-0" style={{maxHeight: 'calc(100vh - 73px)'}}>
           <div className="p-4">
             <div className="space-y-4 pb-4">
               {(currentPage?.isTransition ? transitionElementCategories : 
@@ -4928,10 +4901,8 @@ const gameElementCategories = [
                 "space-y-4 border border-gray-200 rounded-xl p-6 min-h-[500px] bg-white shadow-soft",
                 animations.slideInUp
               )}
-              style={{ 
-                backgroundColor: getBackgroundColor(),
-                color: getTextColor()
-              }}
+              style={{backgroundColor: getBackgroundColor(),
+                color: getTextColor()}}
             >
               {currentPage.elements.length === 0 ? (
                 <div className="text-center text-gray-500 py-16">
@@ -5015,7 +4986,7 @@ const gameElementCategories = [
             {selectedElementData ? getElementTypeName(selectedElementData.type) : 'Propriedades'}
           </h3>
         </div>
-        <div className="flex-1 overflow-y-auto p-4" style={{ maxHeight: 'calc(100vh - 73px)' }}>
+        <div className="flex-1 overflow-y-auto p-4" style={{maxHeight: 'calc(100vh - 73px)'}}>
           {selectedElementData ? (
             <div className={cn("space-y-4", animations.slideInUp)}>
               {/* Propriedades básicas */}
