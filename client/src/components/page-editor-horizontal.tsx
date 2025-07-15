@@ -5245,10 +5245,10 @@ const gameElementCategories = [
                       value={selectedElementData.responseId || ""}
                       onChange={(e) => updateElement(selectedElementData.id, { responseId: e.target.value })}
                       className="mt-1"
-                      placeholder="var_comentario"
+                      placeholder="comentario"
                     />
                     <p className="text-xs text-gray-500 mt-1">
-                      Use esse ID para referenciar a resposta em outros elementos. Ex: {{var_comentario}}
+                      Use esse ID para referenciar a resposta em outros elementos. Ex: &#123;comentario&#125;
                     </p>
                   </div>
                 </div>
@@ -5388,10 +5388,10 @@ const gameElementCategories = [
                           value={selectedElementData.responseId || ""}
                           onChange={(e) => updateElement(selectedElementData.id, { responseId: e.target.value })}
                           className="text-xs mt-1"
-                          placeholder="var_escolha"
+                          placeholder="escolha"
                         />
                         <p className="text-xs text-gray-500 mt-1">
-                          Use {`{{var_escolha}}`} para referenciar a resposta selecionada em outros elementos
+                          Use &#123;escolha&#125; para referenciar a resposta selecionada em outros elementos
                         </p>
                       </div>
                     </div>
@@ -8488,7 +8488,7 @@ const gameElementCategories = [
                         className="mt-1"
                       />
                       <div className="text-xs text-gray-500 mt-1">
-                        Use {"{{"}{selectedElementData.responseId || 'pergunta_continuacao'}{"}}"} em outros elementos para referenciar a resposta (sim/não)
+                        Use {`{${selectedElementData.responseId || 'pergunta_continuacao'}}`} em outros elementos para referenciar a resposta (sim/não)
                       </div>
                     </div>
                   </div>
