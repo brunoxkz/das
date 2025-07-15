@@ -759,7 +759,7 @@ export default function QuizPreview({ quiz, onClose, onSave }: QuizPreviewProps)
         return (
           <div className="mb-4">
             <h1 
-              className={`text-2xl font-bold text-gray-900${getElementClasses(element)}`}
+              className={`text-2xl font-bold text-gray-900 ${getElementClasses(element)}`}
               style={getElementStyles(element)}
             >
               {processVariables(element.content || 'Título')}
@@ -771,7 +771,7 @@ export default function QuizPreview({ quiz, onClose, onSave }: QuizPreviewProps)
         return (
           <div className="mb-4">
             <p 
-              className={`text-gray-700${getElementClasses(element)}`}
+              className={`text-gray-700 ${getElementClasses(element)}`}
               style={getElementStyles(element)}
             >
               {processVariables(element.content || 'Parágrafo de texto')}
@@ -838,7 +838,7 @@ export default function QuizPreview({ quiz, onClose, onSave }: QuizPreviewProps)
           <div className="mb-6">
             {element.question && (
               <h3 
-                className={`text-lg font-medium text-gray-900 mb-4${getElementClasses(element)}`}
+                className={`text-lg font-medium text-gray-900 mb-4 ${getElementClasses(element)}`}
                 style={getElementStyles(element)}
               >
                 {processVariables(element.question)}
@@ -852,7 +852,7 @@ export default function QuizPreview({ quiz, onClose, onSave }: QuizPreviewProps)
                   className={`p-3 border rounded-lg cursor-pointer transition-colors ${
                     responses[element.id] === option.text
                       ? 'border-blue-500 bg-blue-50'
-                      : 'border-gray-200 hover:border-gray-300'
+                      : 'border-gray-200 hover:border-gray-300 bg-transparent'
                   }`}
                   onClick={() => handleAnswer(element.id, option.text, element)}
                 >
@@ -877,7 +877,7 @@ export default function QuizPreview({ quiz, onClose, onSave }: QuizPreviewProps)
           <div className="mb-6">
             {element.question && (
               <label 
-                className={`block text-sm font-medium text-gray-700 mb-2${getElementClasses(element)}`}
+                className={`block text-sm font-medium text-gray-700 mb-2 ${getElementClasses(element)}`}
                 style={getElementStyles(element)}
               >
                 {processVariables(element.question)}
@@ -899,7 +899,7 @@ export default function QuizPreview({ quiz, onClose, onSave }: QuizPreviewProps)
           <div className="mb-6">
             {element.question && (
               <label 
-                className={`block text-sm font-medium text-gray-700 mb-2${getElementClasses(element)}`}
+                className={`block text-sm font-medium text-gray-700 mb-2 ${getElementClasses(element)}`}
                 style={getElementStyles(element)}
               >
                 {processVariables(element.question)}
@@ -948,7 +948,7 @@ export default function QuizPreview({ quiz, onClose, onSave }: QuizPreviewProps)
             <div className="flex items-center space-x-2 mb-2">
               <ArrowUpDown className="w-5 h-5 text-purple-500" />
               <h3 
-                className={`text-lg font-semibold text-gray-900${getElementClasses(element)}`}
+                className={`text-lg font-semibold text-gray-900 ${getElementClasses(element)}`}
                 style={getElementStyles(element)}
               >
                 {element.question || element.content || 'Altura'}
@@ -1023,7 +1023,7 @@ export default function QuizPreview({ quiz, onClose, onSave }: QuizPreviewProps)
           <div className="mb-6">
             {element.question && (
               <label 
-                className={`block text-sm font-medium text-gray-700 mb-2${getElementClasses(element)}`}
+                className={`block text-sm font-medium text-gray-700 mb-2 ${getElementClasses(element)}`}
                 style={getElementStyles(element)}
               >
                 {processVariables(element.question)}
@@ -1044,7 +1044,7 @@ export default function QuizPreview({ quiz, onClose, onSave }: QuizPreviewProps)
           <div className="mb-6">
             {element.question && (
               <label 
-                className={`block text-sm font-medium text-gray-700 mb-2${getElementClasses(element)}`}
+                className={`block text-sm font-medium text-gray-700 mb-2 ${getElementClasses(element)}`}
                 style={getElementStyles(element)}
               >
                 {processVariables(element.question)}
@@ -1113,6 +1113,154 @@ export default function QuizPreview({ quiz, onClose, onSave }: QuizPreviewProps)
             >
               {element.buttonText || element.content || 'Continuar'}
             </Button>
+          </div>
+        );
+
+      case 'select':
+        return (
+          <div className="mb-6">
+            {element.question && (
+              <label 
+                className={`block text-sm font-medium text-gray-700 mb-2 ${getElementClasses(element)}`}
+                style={getElementStyles(element)}
+              >
+                {processVariables(element.question)}
+                {element.required && <span className="text-red-500 ml-1">*</span>}
+              </label>
+            )}
+            <select
+              value={responses[element.id] || ''}
+              onChange={(e) => handleAnswer(element.id, e.target.value, element)}
+              className="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              required={element.required}
+            >
+              <option value="">{element.placeholder || 'Selecione uma opção'}</option>
+              {element.options?.map((option: any, index: number) => (
+                <option key={index} value={option.text || option}>
+                  {option.text || option}
+                </option>
+              ))}
+            </select>
+          </div>
+        );
+
+      case 'birth_date':
+        return (
+          <div className="mb-6">
+            <div className="flex items-center space-x-2 mb-2">
+              <Calendar className="w-5 h-5 text-blue-500" />
+              <h3 
+                className={`text-lg font-semibold text-gray-900 ${getElementClasses(element)}`}
+                style={getElementStyles(element)}
+              >
+                {element.question || element.content || 'Data de Nascimento'}
+                {element.required && <span className="text-red-500 ml-1">*</span>}
+              </h3>
+            </div>
+            <input
+              type="date"
+              value={responses[element.id] || ''}
+              onChange={(e) => handleAnswer(element.id, e.target.value, element)}
+              className="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              required={element.required}
+            />
+            {element.showAgeCalculation && (
+              <div className="text-xs text-gray-500 bg-blue-50 p-2 rounded mt-2">
+                💡 Idade será calculada automaticamente
+              </div>
+            )}
+          </div>
+        );
+
+      case 'loading_question':
+        return (
+          <div className="mb-6 text-center">
+            <div className="p-6 border border-gray-200 rounded-lg bg-white">
+              <div className="animate-spin w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full mx-auto mb-4"></div>
+              <p 
+                className={`text-gray-600 ${getElementClasses(element)}`}
+                style={getElementStyles(element)}
+              >
+                {element.loadingText || element.content || '🧠 Analisando suas respostas...'}
+              </p>
+            </div>
+          </div>
+        );
+
+      case 'guarantee':
+        return (
+          <div className="mb-6">
+            <div className="p-6 bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg border border-green-200">
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
+                  <Shield className="w-6 h-6 text-green-600" />
+                </div>
+                <div className="flex-1">
+                  <h3 
+                    className={`text-lg font-semibold text-green-800 ${getElementClasses(element)}`}
+                    style={getElementStyles(element)}
+                  >
+                    {element.guaranteeTitle || element.content || 'Garantia de 30 dias'}
+                  </h3>
+                  <p className="text-green-700 mt-1">
+                    {element.guaranteeDescription || 'Se você não ficar satisfeito, devolvemos seu dinheiro'}
+                  </p>
+                  {element.guaranteeFeatures && (
+                    <ul className="mt-3 space-y-1">
+                      {element.guaranteeFeatures.map((feature: string, index: number) => (
+                        <li key={index} className="flex items-center gap-2 text-sm text-green-700">
+                          <CheckCircle className="w-3 h-3 text-green-600" />
+                          {feature}
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+        );
+
+      case 'faq':
+        const faqData = element.faqData || [
+          {
+            id: "faq-1",
+            question: "Como funciona o sistema?",
+            answer: "O sistema é muito simples de usar. Você cria seus quizzes, compartilha com sua audiência e acompanha os resultados em tempo real através do dashboard."
+          },
+          {
+            id: "faq-2", 
+            question: "Posso cancelar a qualquer momento?",
+            answer: "Sim, você pode cancelar sua assinatura a qualquer momento. Não há taxas de cancelamento ou multas."
+          },
+          {
+            id: "faq-3",
+            question: "Há limite de respostas?",
+            answer: "Depende do seu plano. O plano básico tem 1000 respostas/mês, o profissional tem 10000 e o enterprise é ilimitado."
+          }
+        ];
+        
+        return (
+          <div className="mb-6">
+            <div className="space-y-4 p-4 border border-gray-200 rounded-lg bg-white">
+              <div className="space-y-3">
+                {faqData.map((faq: any, index: number) => (
+                  <div key={faq.id} className="border border-gray-200 rounded-lg">
+                    <button 
+                      className={`w-full px-4 py-3 text-left flex items-center justify-between hover:bg-gray-50 ${getElementClasses(element)}`}
+                      style={getElementStyles(element)}
+                    >
+                      <span className="font-medium text-gray-800">{faq.question}</span>
+                      <ChevronDown className="w-4 h-4 text-gray-500" />
+                    </button>
+                    
+                    <div className="px-4 pb-3 text-sm text-gray-600 border-t border-gray-100">
+                      {faq.answer}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
         );
 

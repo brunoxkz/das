@@ -1178,14 +1178,50 @@ const gameElementCategories = [
   };
 
   const addElement = (type: Element["type"]) => {
+    const timestamp = Date.now();
+    
+    // Função para gerar IDs únicos para fieldId e responseId
+    const generateUniqueId = (baseId: string, existingIds: Set<string>): string => {
+      if (!existingIds.has(baseId)) {
+        return baseId;
+      }
+      
+      let counter = 1;
+      let newId = `${baseId}_${counter}`;
+      while (existingIds.has(newId)) {
+        counter++;
+        newId = `${baseId}_${counter}`;
+      }
+      return newId;
+    };
+    
+    // Coletar todos os fieldIds e responseIds existentes no quiz
+    const existingFieldIds = new Set<string>();
+    const existingResponseIds = new Set<string>();
+    
+    pages.forEach(page => {
+      page.elements.forEach(element => {
+        if (element.fieldId) existingFieldIds.add(element.fieldId);
+        if (element.responseId) existingResponseIds.add(element.responseId);
+      });
+    });
+    
+    // Gerar IDs únicos para o novo elemento
+    const baseFieldId = type === "phone" ? `telefone_${timestamp}` : `campo_${timestamp}`;
+    const baseResponseId = `resposta_${timestamp}`;
+    
+    const uniqueFieldId = generateUniqueId(baseFieldId, existingFieldIds);
+    const uniqueResponseId = generateUniqueId(baseResponseId, existingResponseIds);
+    
     const baseElement: Element = {
-      id: Date.now(),
+      id: timestamp,
       type,
       content: type === "heading" ? "Novo título" : type === "paragraph" ? "Novo parágrafo" : type === "continue_button" ? "Continuar" : "",
       question: undefined,
       options: type === "multiple_choice" ? ["Opção 1", "Opção 2"] : undefined,
       required: false,
-      fieldId: type === "phone" ? `telefone_${Date.now()}` : `campo_${Date.now()}`,
+      fieldId: uniqueFieldId,
+      responseId: uniqueResponseId,
       placeholder: "",
       fontSize: "base",
       textAlign: "left"
