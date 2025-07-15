@@ -38,7 +38,7 @@ import {
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest } from '@/lib/queryClient';
-import { useAuth } from '@/hooks/use-auth-hybrid';
+import { useAuth } from '@/hooks/useAuth-jwt';
 
 // Tipos para o formulário
 interface CampaignData {
