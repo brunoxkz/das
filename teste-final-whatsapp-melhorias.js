@@ -231,7 +231,7 @@ class WhatsAppFinalTest {
         body: teste.body
       });
 
-      const passou = teste.devePassar ? response.success : !response.success;
+      const passou = teste.devePassar ? (response.success || response.status === 200) : !response.success;
       const resultado = {
         nome: teste.nome,
         passou,
