@@ -2615,11 +2615,26 @@ export class SQLiteStorage implements IStorage {
   // Get user extension settings
   async getUserExtensionSettings(userId: string): Promise<any> {
     try {
-      const stmt = sqlite.prepare('SELECT extension_settings FROM users WHERE id = ?');
+      const stmt = sqlite.prepare('SELECT * FROM extension_settings WHERE user_id = ?');
       const result = stmt.get(userId);
       
-      if (result && result.extension_settings) {
-        return JSON.parse(result.extension_settings);
+      if (result) {
+        return {
+          autoSend: result.auto_accept_messages === 1,
+          messageDelay: result.delay_between_messages * 1000,
+          maxMessagesPerDay: result.max_messages_per_minute * 60,
+          workingHours: {
+            enabled: false,
+            start: "09:00",
+            end: "18:00"
+          },
+          antiSpam: {
+            enabled: true,
+            minDelay: result.delay_between_messages * 1000,
+            maxDelay: result.delay_between_messages * 1000 + 2000,
+            randomization: true
+          }
+        };
       }
       
       // Configurações padrão se não existir

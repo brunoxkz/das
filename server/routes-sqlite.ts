@@ -4966,6 +4966,77 @@ app.delete("/api/whatsapp-campaigns/:id", verifyJWT, async (req: any, res: Respo
 // WHATSAPP EXTENSION ROUTES
 // =============================================
 
+// Get extension ping (simple connectivity check)
+app.get("/api/whatsapp-extension/ping", verifyJWT, async (req: any, res: Response) => {
+  try {
+    const userId = req.user.id;
+    const userEmail = req.user.email;
+    
+    // Resposta simples para verificar conectividade
+    res.json({
+      success: true,
+      message: "WhatsApp extension is connected",
+      timestamp: new Date().toISOString(),
+      user: {
+        id: userId,
+        email: userEmail
+      }
+    });
+  } catch (error) {
+    console.error('❌ ERRO ping extensão:', error);
+    res.status(500).json({ error: 'Erro interno do servidor' });
+  }
+});
+
+// WhatsApp extension sync endpoint
+app.post("/api/whatsapp-extension/sync", verifyJWT, async (req: any, res: Response) => {
+  try {
+    const userId = req.user.id;
+    const userEmail = req.user.email;
+    const { userId: bodyUserId } = req.body;
+    
+    // Verificar se o userId da requisição corresponde ao usuário autenticado
+    if (bodyUserId && bodyUserId.toString() !== userId.toString()) {
+      return res.status(403).json({ error: 'Acesso negado: userId não corresponde ao usuário autenticado' });
+    }
+    
+    // Buscar configurações atualizadas e mensagens pendentes
+    const currentTime = Math.floor(Date.now() / 1000);
+    const [userSettings, pendingMessages] = await Promise.all([
+      storage.getUserExtensionSettings(userId),
+      storage.getScheduledWhatsappLogsByUser(userId, currentTime)
+    ]);
+    
+    // Formatar mensagens pendentes para a extensão
+    const formattedMessages = pendingMessages.map(log => ({
+      logId: log.id,
+      phone: log.phone,
+      message: log.message,
+      campaignId: log.campaign_id,
+      scheduledAt: log.scheduled_at,
+      createdAt: log.created_at,
+      userId: userId
+    }));
+    
+    console.log(`🔄 SYNC EXTENSÃO ${userEmail}: ${formattedMessages.length} mensagens pendentes`);
+    
+    res.json({
+      success: true,
+      message: "Sync realizado com sucesso",
+      timestamp: new Date().toISOString(),
+      settings: userSettings,
+      pendingMessages: formattedMessages,
+      user: {
+        id: userId,
+        email: userEmail
+      }
+    });
+  } catch (error) {
+    console.error('❌ ERRO sync extensão:', error);
+    res.status(500).json({ error: 'Erro interno do servidor' });
+  }
+});
+
 // Get extension status (with user authentication)
 app.get("/api/whatsapp-extension/status", verifyJWT, async (req: any, res: Response) => {
   try {
@@ -5189,10 +5260,26 @@ app.post("/api/whatsapp-extension/logs", verifyJWT, async (req: any, res: Respon
     const userEmail = req.user.email;
     const { logId, status, phone, error: errorMsg, timestamp } = req.body;
     
-    if (!logId || !status) {
-      return res.status(400).json({ error: 'LogId e status são obrigatórios' });
+    // Validação rigorosa de entrada
+    if (!logId || typeof logId !== 'string' || logId.trim() === '') {
+      return res.status(400).json({ error: 'LogId é obrigatório e deve ser uma string válida' });
     }
-
+    
+    if (!status || typeof status !== 'string' || status.trim() === '') {
+      return res.status(400).json({ error: 'Status é obrigatório e deve ser uma string válida' });
+    }
+    
+    // Validar status permitidos
+    const validStatuses = ['sent', 'delivered', 'failed', 'pending', 'opened', 'replied', 'clicked'];
+    if (!validStatuses.includes(status)) {
+      return res.status(400).json({ error: `Status deve ser um dos seguintes: ${validStatuses.join(', ')}` });
+    }
+    
+    // Validar telefone se fornecido
+    if (phone && (typeof phone !== 'string' || !/^\d{10,15}$/.test(phone))) {
+      return res.status(400).json({ error: 'Telefone deve conter apenas números e ter entre 10 e 15 dígitos' });
+    }
+    
     // Verificar se o log pertence ao usuário autenticado
     const log = await storage.getWhatsappLogById(logId);
     if (!log) {
@@ -5209,7 +5296,7 @@ app.post("/api/whatsapp-extension/logs", verifyJWT, async (req: any, res: Respon
     if (status === 'sent' || status === 'delivered') {
       const debitResult = await storage.debitCredits(userId, 'whatsapp', 1);
       if (debitResult.success) {
-        console.log(`💳 CRÉDITO WHATSAPP DEBITADO - Novo saldo: ${debitResult.newBalance} créditos`);
+        console.log(`💳 CRÉDITO WHATSAPP DEBITADO - User: ${userEmail}, Novo saldo: ${debitResult.newBalance} créditos`);
         
         // Se créditos acabaram, pausar campanhas
         if (debitResult.newBalance <= 0) {
@@ -5221,18 +5308,23 @@ app.post("/api/whatsapp-extension/logs", verifyJWT, async (req: any, res: Respon
       }
     }
     
-    // Atualizar status do log no banco
-    await storage.updateWhatsappLogStatus(logId, status, 'extension', errorMsg);
+    // Atualizar status do log no banco com timestamp
+    await storage.updateWhatsappLogStatus(logId, status, 'extension', errorMsg, timestamp);
     
-    console.log(`📊 LOG EXTENSÃO ${userEmail}: ${phone} - ${status} ${errorMsg ? `(${errorMsg})` : ''}`);
+    const logTimestamp = new Date().toISOString();
+    console.log(`📞 [${logTimestamp}] LOG WHATSAPP ATUALIZADO - User: ${userEmail}, LogId: ${logId}, Status: ${status}, Phone: ${phone || 'N/A'}`);
     
     res.json({
       success: true,
       message: 'Log recebido com sucesso',
+      timestamp: logTimestamp,
+      logId: logId,
+      status: status,
+      phone: phone,
       userId: userId
     });
   } catch (error) {
-    console.error('❌ ERRO log extensão:', error);
+    console.error(`❌ [${new Date().toISOString()}] ERRO log extensão:`, error);
     res.status(500).json({ error: 'Erro interno do servidor' });
   }
 });
