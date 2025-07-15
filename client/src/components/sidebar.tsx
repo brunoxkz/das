@@ -156,9 +156,9 @@ export function Sidebar() {
       items: [
         {
           title: "SMS",
-          href: "/sms-credits",
+          href: "/sms-campaigns-advanced",
           icon: <MessageSquare className="w-4 h-4" />,
-          active: location === "/sms-credits"
+          active: location === "/sms-campaigns-advanced" || location === "/sms-credits"
         },
         {
           title: "E-MAIL",

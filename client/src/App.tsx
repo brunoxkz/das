@@ -25,6 +25,7 @@ import TestPage from "@/pages/test-page";
 
 import QuizPublicPage from "@/pages/quiz-public";
 import SMSCreditsPage from "@/pages/sms-credits";
+import SMSCampaignsAdvanced from "@/pages/sms-campaigns-advanced";
 
 
 import WhatsAppAutomationPage from "@/pages/whatsapp-automation";
@@ -165,6 +166,11 @@ function App() {
         <Route path="/sms-credits">
           <Layout>
             <SMSCreditsPage />
+          </Layout>
+        </Route>
+        <Route path="/sms-campaigns-advanced">
+          <Layout>
+            <SMSCampaignsAdvanced />
           </Layout>
         </Route>
         <Route path="/email-marketing">

@@ -1,0 +1,112 @@
+ página exclusiva para criação de campanhas de SMS.
+O usuário poderá enviar mensagens personalizadas para leads capturados por funis de quiz dinâmicos, com segmentações simples ou avançadas, escolha de tempo de disparo e preview.
+
+⚙️ Tecnologias obrigatórias:
+React (JSX)
+
+Tailwind CSS
+
+Node.js (já em uso no backend)
+
+Sem uso de ShadCN ou bibliotecas externas complexas
+
+Permitido: headlessui, heroicons, dayjs, date-fns, etc.
+
+📱 Layout da Página (Responsiva e Mobile-First)
+✅ Fluxo geral da interface
+Seleção do tipo de campanha
+
+Segmentação dos leads
+
+Criação da mensagem SMS com variáveis
+
+Agendamento (ou envio em tempo real)
+
+Resumo da campanha e botão de criação
+
+🧩 Tipos de Campanha Suportados (com nomes e funções)
+Tipo de Campanha	ID interno	Explicação para o usuário
+📦 Remarketing	remarketing	Envie SMS para quem já respondeu ou abandonou o quiz
+🧠 Remarketing Avançado	remarketing_custom	Envie SMS ultra segmentado (idade, gênero, respostas)
+⚡ Ao Vivo	live	Envie automaticamente após novos leads responderem o quiz
+🔥 Ao Vivo Avançado	live_custom	Envie para novos leads com segmentação por resposta do quiz
+📁 Disparo em Massa	mass	Suba um CSV e envie SMS em lote com variáveis simples
+
+🧱 Blocos da Página
+1. Selecione o tipo de campanha
+Dropdown ou cards com ícones para selecionar:
+
+Remarketing
+
+Remarketing Avançado
+
+Ao Vivo
+
+Ao Vivo Avançado
+
+Disparo em Massa
+
+2. Segmentação de Leads (para campanhas do funil)
+Campos:
+
+funnelId: dropdown de quizzes disponíveis
+
+segment:
+
+ Completou o quiz
+
+ Abandonou o quiz
+
+ Todos os leads
+
+Se remarketing_custom ou live_custom, ativar:
+
+Filtro por idade (mínima e máxima)
+
+Filtro por gênero (masculino/feminino)
+
+Filtro por respostas do quiz (selecionar campo e valor)
+
+3. Criação da Mensagem SMS
+Campos:
+
+Textarea com limite de 160 caracteres
+
+Mostrar contador de caracteres restante
+
+Suporte às variáveis:
+
+{{nome}}
+
+{{telefone}}
+
+{{email}}
+
+{{resposta_dor}} (ou qualquer campo salvo no quiz)
+
+Exemplo:
+
+"Olá {{nome}}, vimos que você respondeu '{{resposta_dor}}'. Temos algo especial pra você."
+
+Mostrar preview dinâmico da mensagem com valores de exemplo.
+
+4. Agendamento e Tempo de Envio
+Opções:
+
+Enviar agora
+
+Agendar para data/hora (campo Date + Time)
+
+(Se for campanha ao vivo) enviar X minutos após o lead completar o quiz
+
+5. Disparo em Massa (opcional)
+Se o tipo da campanha for mass, exibir:
+
+Upload de CSV com colunas: nome, telefone, email
+
+Validação e preview de até 3 linhas
+
+Mapeamento automático das colunas
+
+Permitir agendar envio
+
