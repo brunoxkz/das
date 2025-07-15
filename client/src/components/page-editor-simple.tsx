@@ -111,14 +111,58 @@ export function PageEditor({ pages, onPagesChange }: PageEditorProps) {
 
   const duplicatePage = (pageIndex: number) => {
     const pageToDuplicate = pages[pageIndex];
-    const duplicatedPage: QuizPage = {
-      id: Date.now(),
-      title: `${pageToDuplicate.title} (Cópia)`,
-      elements: pageToDuplicate.elements.map(el => ({
-        ...el,
-        id: Date.now() + Math.random()
-      }))
+    const timestamp = Date.now();
+    
+    // Função para gerar IDs únicos para fieldId e responseId
+    const generateUniqueId = (baseId: string, existingIds: Set<string>): string => {
+      if (!existingIds.has(baseId)) {
+        return baseId;
+      }
+      
+      let counter = 1;
+      let newId = `${baseId}${counter}`;
+      while (existingIds.has(newId)) {
+        counter++;
+        newId = `${baseId}${counter}`;
+      }
+      return newId;
     };
+    
+    // Coletar todos os fieldIds e responseIds existentes no quiz
+    const existingFieldIds = new Set<string>();
+    const existingResponseIds = new Set<string>();
+    
+    pages.forEach(page => {
+      page.elements.forEach(element => {
+        if (element.fieldId) existingFieldIds.add(element.fieldId);
+        if (element.responseId) existingResponseIds.add(element.responseId);
+      });
+    });
+    
+    const duplicatedPage: QuizPage = {
+      id: timestamp,
+      title: `${pageToDuplicate.title} (Cópia)`,
+      elements: pageToDuplicate.elements.map((element, elementIndex) => {
+        const newElement = {
+          ...element,
+          id: timestamp + elementIndex + 1
+        };
+        
+        // Gerar IDs únicos para fieldId e responseId
+        if (element.fieldId) {
+          newElement.fieldId = generateUniqueId(element.fieldId, existingFieldIds);
+          existingFieldIds.add(newElement.fieldId);
+        }
+        
+        if (element.responseId) {
+          newElement.responseId = generateUniqueId(element.responseId, existingResponseIds);
+          existingResponseIds.add(newElement.responseId);
+        }
+        
+        return newElement;
+      })
+    };
+    
     const newPages = [...pages];
     newPages.splice(pageIndex + 1, 0, duplicatedPage);
     onPagesChange(newPages);
@@ -280,7 +324,7 @@ export function PageEditor({ pages, onPagesChange }: PageEditorProps) {
             </label>
             <div className={`${containerClass} ${spacingClass}`}>
               {(element.options || ["Opção 1", "Opção 2"]).map((option, index) => (
-                <div key={index} className={`flex items-center space-x-2 p-3 border border-gray-200 hover:border-vendzz-primary hover:bg-vendzz-primary/5 cursor-pointer ${optionClass} ${element.borderStyle === "thick" ? "border-2" : ""} ${element.shadowStyle === "sm" ? "shadow-sm" : element.shadowStyle === "md" ? "shadow-md" : ""} transition-all`}>
+                <div key={index} className={`flex items-center space-x-2 p-3 border border-gray-200 hover:border-gray-300 cursor-pointer ${optionClass} ${element.borderStyle === "thick" ? "border-2" : ""} ${element.shadowStyle === "sm" ? "shadow-sm" : element.shadowStyle === "md" ? "shadow-md" : ""} transition-all`}>
                   {!element.hideInputs && (
                     <input 
                       type={element.multipleSelection ? "checkbox" : "radio"} 
@@ -289,7 +333,12 @@ export function PageEditor({ pages, onPagesChange }: PageEditorProps) {
                       disabled
                     />
                   )}
-                  <span className="text-sm flex-1 font-medium">{option}</span>
+                  <span className="text-sm flex-1 font-medium" style={{
+                    color: element.optionTextColor || "#374151",
+                    fontSize: element.optionFontSize === "sm" ? "12px" : element.optionFontSize === "lg" ? "18px" : "14px"
+                  }}>
+                    {typeof option === 'string' ? option : option?.text || `Opção ${index + 1}`}
+                  </span>
                 </div>
               ))}
             </div>

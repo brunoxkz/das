@@ -696,7 +696,7 @@ export default function QuizPreview({ quiz, onClose, onSave }: QuizPreviewProps)
                   key={index}
                   className={`p-3 border rounded-lg cursor-pointer transition-colors ${
                     responses[element.id] === option.text
-                      ? 'border-green-500 bg-green-50'
+                      ? 'border-blue-500 bg-blue-50'
                       : 'border-gray-200 hover:border-gray-300'
                   }`}
                   onClick={() => handleAnswer(element.id, option.text, element)}
@@ -704,10 +704,12 @@ export default function QuizPreview({ quiz, onClose, onSave }: QuizPreviewProps)
                   <div className="flex items-center space-x-3">
                     <div className={`w-4 h-4 rounded-full border-2 ${
                       responses[element.id] === option.text
-                        ? 'border-green-500 bg-green-500'
+                        ? 'border-blue-500 bg-blue-500'
                         : 'border-gray-300'
                     }`} />
-                    <span className="text-gray-700">{option.text}</span>
+                    <span className="text-gray-700">
+                      {typeof option === 'string' ? option : option?.text || `Opção ${index + 1}`}
+                    </span>
                   </div>
                 </div>
               ))}

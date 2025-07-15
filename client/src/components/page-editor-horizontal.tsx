@@ -1050,15 +1050,55 @@ const gameElementCategories = [
     const originalPage = pages[index];
     const timestamp = Date.now();
     
+    // Função para gerar IDs únicos para fieldId e responseId
+    const generateUniqueId = (baseId: string, existingIds: Set<string>): string => {
+      if (!existingIds.has(baseId)) {
+        return baseId;
+      }
+      
+      let counter = 1;
+      let newId = `${baseId}${counter}`;
+      while (existingIds.has(newId)) {
+        counter++;
+        newId = `${baseId}${counter}`;
+      }
+      return newId;
+    };
+    
+    // Coletar todos os fieldIds e responseIds existentes no quiz
+    const existingFieldIds = new Set<string>();
+    const existingResponseIds = new Set<string>();
+    
+    pages.forEach(page => {
+      page.elements.forEach(element => {
+        if (element.fieldId) existingFieldIds.add(element.fieldId);
+        if (element.responseId) existingResponseIds.add(element.responseId);
+      });
+    });
+    
     // Criar uma cópia profunda da página
     const duplicatedPage: QuizPage = {
       id: timestamp,
       title: `${originalPage.title} (Cópia)`,
-      elements: originalPage.elements.map((element, elementIndex) => ({
-        ...element,
-        id: timestamp + elementIndex + 1, // ID único sequencial para cada elemento
-        responseId: element.responseId ? `${element.responseId}_copy_${timestamp}` : undefined
-      })),
+      elements: originalPage.elements.map((element, elementIndex) => {
+        const newElement = {
+          ...element,
+          id: timestamp + elementIndex + 1, // ID único sequencial para cada elemento
+        };
+        
+        // Gerar IDs únicos para fieldId e responseId
+        if (element.fieldId) {
+          newElement.fieldId = generateUniqueId(element.fieldId, existingFieldIds);
+          existingFieldIds.add(newElement.fieldId);
+        }
+        
+        if (element.responseId) {
+          newElement.responseId = generateUniqueId(element.responseId, existingResponseIds);
+          existingResponseIds.add(newElement.responseId);
+        }
+        
+        return newElement;
+      }),
       isTransition: originalPage.isTransition,
       isGame: originalPage.isGame
     };
@@ -1595,7 +1635,7 @@ const gameElementCategories = [
           borderRadius: element.backgroundColor !== "transparent" ? "6px" : "0"
         };
         return (
-          <p style={{paragraphStyle}}>
+          <p style={paragraphStyle}>
             {element.content}
           </p>
         );
@@ -1637,7 +1677,7 @@ const gameElementCategories = [
 
         return (
           <div className="space-y-3">
-            <label className="block text-sm font-medium" style={{questionStyle}}>
+            <label className="block text-sm font-medium" style={questionStyle}>
               {element.question || "Pergunta"}
               {element.required && <span className="text-red-500 ml-1">*</span>}
               {element.showQuestionNumber && <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded ml-2">#{element.questionNumber || 1}</span>}
@@ -1682,8 +1722,11 @@ const gameElementCategories = [
                   )}
                   
                   <div className="flex-1">
-                    <span className={`text-sm font-medium ${element.optionTextSize === "sm" ? "text-xs" : element.optionTextSize === "lg" ? "text-base" : "text-sm"}`}>
-                      {option}
+                    <span className={`font-medium ${element.optionTextSize === "sm" ? "text-xs" : element.optionTextSize === "lg" ? "text-base" : "text-sm"}`} style={{
+                      color: element.optionTextColor || "#374151",
+                      fontSize: element.optionFontSize === "sm" ? "12px" : element.optionFontSize === "lg" ? "18px" : "14px"
+                    }}>
+                      {typeof option === 'string' ? option : option?.text || `Opção ${index + 1}`}
                     </span>
                     
                     {/* 🔥 NOVA FUNCIONALIDADE: Subtexto nas opções */}

@@ -289,15 +289,16 @@ export function QuizPublicRenderer({ quiz }: QuizPublicRendererProps) {
             <RadioGroup 
               value={answer} 
               onValueChange={(value) => handleElementAnswer(id, type, value, element.fieldId || properties?.fieldId)}
+              className="space-y-2"
             >
               {Array.isArray(multipleChoiceOptions) && multipleChoiceOptions.length > 0 ? (
                 multipleChoiceOptions.map((option: any, index: number) => {
                   // Suporte para opções em string simples ou objeto {text: "..."}
                   const optionValue = typeof option === 'string' ? option : (option?.text || `Opção ${index + 1}`);
                   return (
-                    <div key={index} className="flex items-center space-x-2">
+                    <div key={index} className="flex items-center space-x-2 p-3 border border-gray-200 hover:border-blue-500 rounded-lg cursor-pointer transition-all">
                       <RadioGroupItem value={optionValue} id={`${id}-${index}`} />
-                      <Label htmlFor={`${id}-${index}`}>{optionValue}</Label>
+                      <Label htmlFor={`${id}-${index}`} className="flex-1 cursor-pointer">{optionValue}</Label>
                     </div>
                   );
                 })
