@@ -22,10 +22,14 @@ import {
   RefreshCw,
   MessageSquare,
   Send,
-  Settings
+  Settings,
+  FileQuestion,
+  Eye,
+  Upload,
+  FileText
 } from 'lucide-react';
 
-export type CampaignStyle = 'remarketing' | 'remarketing_ultra_customizado' | 'ao_vivo_tempo_real' | 'ao_vivo_ultra_customizada';
+export type CampaignStyle = 'remarketing' | 'remarketing_ultra_customizado' | 'ao_vivo_tempo_real' | 'ao_vivo_ultra_customizada' | 'disparo_massa';
 
 interface CompleteSMSCampaignModalProps {
   open: boolean;
@@ -100,6 +104,22 @@ const campaignStyles = {
     ],
     badge: 'MÁXIMO',
     badgeColor: 'bg-red-500'
+  },
+  disparo_massa: {
+    id: 'disparo_massa' as CampaignStyle,
+    title: 'DISPARO EM MASSA',
+    subtitle: 'Sua própria lista de contatos!',
+    description: 'Importe sua lista de telefones/emails e dispare mensagens personalizadas em massa',
+    icon: Upload,
+    color: 'bg-gradient-to-br from-indigo-500 to-purple-600',
+    features: [
+      'Importe arquivo CSV/TXT com contatos',
+      'Disparo simultâneo para milhares',
+      'Personalização por nome/dados',
+      'Controle total da sua lista'
+    ],
+    badge: 'MASSA',
+    badgeColor: 'bg-indigo-500'
   }
 };
 
@@ -120,7 +140,9 @@ export function CompleteSMSCampaignModal({
     targetAudience: 'completed' as 'completed' | 'abandoned' | 'all',
     triggerType: 'immediate' as 'immediate' | 'delayed' | 'scheduled',
     triggerDelay: 1,
-    triggerUnit: 'hours' as 'hours' | 'minutes'
+    triggerUnit: 'hours' as 'hours' | 'minutes',
+    contactsFile: null as File | null,
+    contactsList: [] as Array<{phone?: string, email?: string, name?: string}>
   });
 
   const handleStyleSelect = (style: CampaignStyle) => {
@@ -140,11 +162,44 @@ export function CompleteSMSCampaignModal({
     setSelectedStyle(null);
   };
 
+  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    setCampaignForm(prev => ({ ...prev, contactsFile: file }));
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const text = e.target?.result as string;
+      const lines = text.split('\n').filter(line => line.trim());
+      
+      const contacts = lines.map(line => {
+        const parts = line.split(',').map(part => part.trim());
+        return {
+          phone: parts[0] || '',
+          name: parts[1] || '',
+          email: parts[2] || ''
+        };
+      }).filter(contact => contact.phone);
+
+      setCampaignForm(prev => ({ ...prev, contactsList: contacts }));
+    };
+    reader.readAsText(file);
+  };
+
   const handleCreateCampaign = () => {
-    if (!selectedStyle || !campaignForm.quizId) return;
+    if (!selectedStyle || !campaignForm.message) return;
+    
+    // Para disparo em massa, não precisa de quiz, mas precisa de lista de contatos
+    if (selectedStyle === 'disparo_massa') {
+      if (campaignForm.contactsList.length === 0) return;
+    } else {
+      // Para outros tipos, precisa de quiz
+      if (!campaignForm.quizId) return;
+    }
 
     const selectedQuiz = quizzes.find(q => q.id === campaignForm.quizId);
-    const finalName = campaignForm.name || `[${campaignStyles[selectedStyle].title}] ${selectedQuiz?.title || 'Quiz'}`;
+    const finalName = campaignForm.name || `[${campaignStyles[selectedStyle].title}] ${selectedQuiz?.title || 'Campanha'}`;
 
     onCreateCampaign({
       ...campaignForm,
@@ -250,21 +305,93 @@ export function CompleteSMSCampaignModal({
               />
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="quiz-select">Selecionar Quiz</Label>
-              <Select value={campaignForm.quizId} onValueChange={(value) => setCampaignForm(prev => ({ ...prev, quizId: value }))}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Escolha um quiz" />
-                </SelectTrigger>
-                <SelectContent>
-                  {quizzes.map((quiz) => (
-                    <SelectItem key={quiz.id} value={quiz.id}>
-                      {quiz.title}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+            {/* Seleção de Quiz - Oculta para disparo em massa */}
+            {selectedStyle !== 'disparo_massa' && (
+              <div className="space-y-3">
+                <Label>Selecionar Funil/Quiz</Label>
+                <div className="grid gap-3 max-h-60 overflow-y-auto">
+                  {quizzes.length === 0 ? (
+                    <div className="text-center py-8 text-gray-500">
+                      <div className="w-12 h-12 mx-auto mb-3 bg-gray-100 rounded-full flex items-center justify-center">
+                        <FileQuestion className="w-6 h-6" />
+                      </div>
+                      <p>Nenhum quiz encontrado</p>
+                      <p className="text-sm">Crie um quiz primeiro para usar campanhas SMS</p>
+                    </div>
+                  ) : (
+                    quizzes.map((quiz) => (
+                      <div
+                        key={quiz.id}
+                        className={`p-4 border rounded-lg cursor-pointer transition-all ${
+                          campaignForm.quizId === quiz.id
+                            ? 'border-blue-500 bg-blue-50'
+                            : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
+                        }`}
+                        onClick={() => setCampaignForm(prev => ({ ...prev, quizId: quiz.id }))}
+                      >
+                        <div className="flex items-start justify-between">
+                          <div className="flex-1">
+                            <h4 className="font-medium text-gray-900 mb-1">{quiz.title}</h4>
+                            <p className="text-sm text-gray-600 mb-2 line-clamp-2">{quiz.description || 'Sem descrição'}</p>
+                            <div className="flex items-center space-x-4 text-xs text-gray-500">
+                              <span className="flex items-center">
+                                <Eye className="w-3 h-3 mr-1" />
+                                {quiz.views || 0} views
+                              </span>
+                              <span className="flex items-center">
+                                <Users className="w-3 h-3 mr-1" />
+                                {quiz.responses || 0} respostas
+                              </span>
+                              <span className={`px-2 py-1 rounded-full text-xs ${
+                                quiz.published ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
+                              }`}>
+                                {quiz.published ? 'Publicado' : 'Rascunho'}
+                              </span>
+                            </div>
+                          </div>
+                          <div className="flex items-center ml-3">
+                            {campaignForm.quizId === quiz.id && (
+                              <CheckCircle className="w-5 h-5 text-blue-500" />
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Upload de Lista para Disparo em Massa */}
+            {selectedStyle === 'disparo_massa' && (
+              <div className="space-y-3">
+                <Label>Upload de Lista de Contatos</Label>
+                <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
+                  <Upload className="w-8 h-8 mx-auto mb-3 text-gray-400" />
+                  <div className="space-y-2">
+                    <Input
+                      type="file"
+                      accept=".csv,.txt"
+                      onChange={handleFileUpload}
+                      className="w-full"
+                    />
+                    <p className="text-sm text-gray-500">
+                      Formatos aceitos: CSV, TXT
+                    </p>
+                    <p className="text-xs text-gray-400">
+                      Formato CSV: telefone,nome,email (opcional)
+                    </p>
+                  </div>
+                </div>
+                {campaignForm.contactsList.length > 0 && (
+                  <div className="bg-green-50 border border-green-200 rounded-lg p-3">
+                    <p className="text-sm text-green-800">
+                      ✅ {campaignForm.contactsList.length} contatos carregados
+                    </p>
+                  </div>
+                )}
+              </div>
+            )}
 
             <div className="space-y-2">
               <Label htmlFor="message">Mensagem SMS</Label>
@@ -355,7 +482,11 @@ export function CompleteSMSCampaignModal({
           </Button>
           <Button 
             onClick={handleCreateCampaign}
-            disabled={!campaignForm.quizId || !campaignForm.message || isCreating}
+            disabled={
+              !campaignForm.message || 
+              isCreating ||
+              (selectedStyle === 'disparo_massa' ? campaignForm.contactsList.length === 0 : !campaignForm.quizId)
+            }
             className="bg-blue-600 hover:bg-blue-700"
           >
             {isCreating ? (
