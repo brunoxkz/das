@@ -4966,14 +4966,14 @@ app.delete("/api/whatsapp-campaigns/:id", verifyJWT, async (req: any, res: Respo
 // WHATSAPP EXTENSION ROUTES
 // =============================================
 
-// Get extension ping (simple connectivity check)
+// Get extension ping (optimized for <100ms response)
 app.get("/api/whatsapp-extension/ping", verifyJWT, async (req: any, res: Response) => {
   try {
     const userId = req.user.id;
     const userEmail = req.user.email;
     
-    // Resposta simples para verificar conectividade
-    res.json({
+    // Resposta ultra-rápida sem operações custosas
+    const pingResponse = {
       success: true,
       message: "WhatsApp extension is connected",
       timestamp: new Date().toISOString(),
@@ -4981,6 +4981,14 @@ app.get("/api/whatsapp-extension/ping", verifyJWT, async (req: any, res: Respons
         id: userId,
         email: userEmail
       }
+    };
+    
+    // Enviar resposta imediatamente
+    res.json(pingResponse);
+    
+    // Log assíncrono para não bloquear resposta
+    process.nextTick(() => {
+      console.log(`🏓 PING WHATSAPP EXTENSÃO - User: ${userEmail} (${userId})`);
     });
   } catch (error) {
     console.error('❌ ERRO ping extensão:', error);
@@ -5288,7 +5296,7 @@ app.post("/api/whatsapp-extension/logs", verifyJWT, async (req: any, res: Respon
 
     // Verificar se a campanha pertence ao usuário
     const campaign = await storage.getWhatsappCampaignById(log.campaign_id);
-    if (!campaign || campaign.userId !== userId) {
+    if (!campaign || campaign.user_id !== userId) {
       return res.status(403).json({ error: 'Acesso negado: log não pertence ao usuário' });
     }
 
@@ -8740,6 +8748,95 @@ app.get("/api/whatsapp-extension/pending", verifyJWT, async (req: any, res: Resp
   healthCheckSystem.registerRoutes(app);
 
   const httpServer = createServer(app);
+
+  // =============================================
+  // CONDITIONAL CAMPAIGNS ROUTES (SE > ENTÃO)
+  // =============================================
+
+  // Get all conditional campaigns
+  app.get("/api/conditional-campaigns", verifyJWT, async (req: any, res: Response) => {
+    try {
+      const userId = req.user.id;
+      const campaigns = await storage.getConditionalCampaigns(userId);
+      res.json(campaigns);
+    } catch (error) {
+      console.error('❌ ERRO ao buscar campanhas condicionais:', error);
+      res.status(500).json({ error: 'Erro interno do servidor' });
+    }
+  });
+
+  // Create conditional campaign
+  app.post("/api/conditional-campaigns", verifyJWT, async (req: any, res: Response) => {
+    try {
+      const userId = req.user.id;
+      const campaignData = { ...req.body, userId };
+      const campaign = await storage.createConditionalCampaign(campaignData);
+      res.json(campaign);
+    } catch (error) {
+      console.error('❌ ERRO ao criar campanha condicional:', error);
+      res.status(500).json({ error: 'Erro interno do servidor' });
+    }
+  });
+
+  // Update conditional campaign
+  app.put("/api/conditional-campaigns/:id", verifyJWT, async (req: any, res: Response) => {
+    try {
+      const userId = req.user.id;
+      const { id } = req.params;
+      const campaignData = { ...req.body, userId };
+      const campaign = await storage.updateConditionalCampaign(id, campaignData);
+      res.json(campaign);
+    } catch (error) {
+      console.error('❌ ERRO ao atualizar campanha condicional:', error);
+      res.status(500).json({ error: 'Erro interno do servidor' });
+    }
+  });
+
+  // Delete conditional campaign
+  app.delete("/api/conditional-campaigns/:id", verifyJWT, async (req: any, res: Response) => {
+    try {
+      const userId = req.user.id;
+      const { id } = req.params;
+      const deleted = await storage.deleteConditionalCampaign(id, userId);
+      
+      if (deleted) {
+        res.json({ success: true, message: 'Campanha condicional deletada com sucesso' });
+      } else {
+        res.status(404).json({ error: 'Campanha condicional não encontrada' });
+      }
+    } catch (error) {
+      console.error('❌ ERRO ao deletar campanha condicional:', error);
+      res.status(500).json({ error: 'Erro interno do servidor' });
+    }
+  });
+
+  // Activate/Deactivate conditional campaign
+  app.patch("/api/conditional-campaigns/:id/toggle", verifyJWT, async (req: any, res: Response) => {
+    try {
+      const userId = req.user.id;
+      const { id } = req.params;
+      const { status } = req.body;
+      
+      const campaign = await storage.toggleConditionalCampaign(id, status, userId);
+      res.json(campaign);
+    } catch (error) {
+      console.error('❌ ERRO ao alterar status da campanha condicional:', error);
+      res.status(500).json({ error: 'Erro interno do servidor' });
+    }
+  });
+
+  // Get conditional campaign analytics
+  app.get("/api/conditional-campaigns/:id/analytics", verifyJWT, async (req: any, res: Response) => {
+    try {
+      const userId = req.user.id;
+      const { id } = req.params;
+      const analytics = await storage.getConditionalCampaignAnalytics(id, userId);
+      res.json(analytics);
+    } catch (error) {
+      console.error('❌ ERRO ao buscar analytics da campanha condicional:', error);
+      res.status(500).json({ error: 'Erro interno do servidor' });
+    }
+  });
 
   return httpServer;
 }

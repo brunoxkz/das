@@ -2610,31 +2610,181 @@ export class SQLiteStorage implements IStorage {
     }
   }
 
+  // CONDITIONAL CAMPAIGNS METHODS (SE > ENTÃO)
+
+  // Get all conditional campaigns for a user
+  async getConditionalCampaigns(userId: string): Promise<any[]> {
+    try {
+      const stmt = sqlite.prepare(`
+        SELECT * FROM conditional_campaigns 
+        WHERE user_id = ? 
+        ORDER BY created_at DESC
+      `);
+      const campaigns = stmt.all(userId);
+      
+      return campaigns.map(campaign => ({
+        ...campaign,
+        rules: JSON.parse(campaign.rules || '[]')
+      }));
+    } catch (error) {
+      console.error('❌ ERRO ao buscar campanhas condicionais:', error);
+      return [];
+    }
+  }
+
+  // Create conditional campaign
+  async createConditionalCampaign(campaignData: any): Promise<any> {
+    try {
+      const id = nanoid();
+      const stmt = sqlite.prepare(`
+        INSERT INTO conditional_campaigns (
+          id, user_id, name, description, quiz_id, type, rules, status, created_at, updated_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      `);
+      
+      const now = new Date().toISOString();
+      const result = stmt.run(
+        id,
+        campaignData.userId,
+        campaignData.name,
+        campaignData.description,
+        campaignData.quizId,
+        campaignData.type,
+        JSON.stringify(campaignData.rules || []),
+        'draft',
+        now,
+        now
+      );
+
+      return {
+        id,
+        ...campaignData,
+        status: 'draft',
+        created_at: now,
+        updated_at: now
+      };
+    } catch (error) {
+      console.error('❌ ERRO ao criar campanha condicional:', error);
+      throw new Error('Erro ao criar campanha condicional');
+    }
+  }
+
+  // Update conditional campaign
+  async updateConditionalCampaign(id: string, campaignData: any): Promise<any> {
+    try {
+      const stmt = sqlite.prepare(`
+        UPDATE conditional_campaigns 
+        SET name = ?, description = ?, quiz_id = ?, type = ?, rules = ?, updated_at = ?
+        WHERE id = ? AND user_id = ?
+      `);
+      
+      const now = new Date().toISOString();
+      const result = stmt.run(
+        campaignData.name,
+        campaignData.description,
+        campaignData.quizId,
+        campaignData.type,
+        JSON.stringify(campaignData.rules || []),
+        now,
+        id,
+        campaignData.userId
+      );
+
+      if (result.changes === 0) {
+        throw new Error('Campanha não encontrada ou sem permissão');
+      }
+
+      return { id, ...campaignData, updated_at: now };
+    } catch (error) {
+      console.error('❌ ERRO ao atualizar campanha condicional:', error);
+      throw new Error('Erro ao atualizar campanha condicional');
+    }
+  }
+
+  // Delete conditional campaign
+  async deleteConditionalCampaign(id: string, userId: string): Promise<boolean> {
+    try {
+      const stmt = sqlite.prepare('DELETE FROM conditional_campaigns WHERE id = ? AND user_id = ?');
+      const result = stmt.run(id, userId);
+      return result.changes > 0;
+    } catch (error) {
+      console.error('❌ ERRO ao deletar campanha condicional:', error);
+      return false;
+    }
+  }
+
+  // Toggle conditional campaign status
+  async toggleConditionalCampaign(id: string, status: string, userId: string): Promise<any> {
+    try {
+      const stmt = sqlite.prepare(`
+        UPDATE conditional_campaigns 
+        SET status = ?, updated_at = ? 
+        WHERE id = ? AND user_id = ?
+      `);
+      
+      const now = new Date().toISOString();
+      const result = stmt.run(status, now, id, userId);
+
+      if (result.changes === 0) {
+        throw new Error('Campanha não encontrada');
+      }
+
+      return { id, status, updated_at: now };
+    } catch (error) {
+      console.error('❌ ERRO ao alterar status da campanha condicional:', error);
+      throw new Error('Erro ao alterar status da campanha');
+    }
+  }
+
+  // Get conditional campaign analytics
+  async getConditionalCampaignAnalytics(id: string, userId: string): Promise<any> {
+    try {
+      // Implementar analytics específicas para campanhas condicionais
+      return {
+        id,
+        totalTriggers: 0,
+        successfulActions: 0,
+        failedActions: 0,
+        conversionRate: 0,
+        lastActivity: new Date().toISOString()
+      };
+    } catch (error) {
+      console.error('❌ ERRO ao buscar analytics da campanha condicional:', error);
+      return null;
+    }
+  }
+
   // EXTENSION SETTINGS SYNC METHODS
 
   // Get user extension settings
   async getUserExtensionSettings(userId: string): Promise<any> {
     try {
-      const stmt = sqlite.prepare('SELECT * FROM extension_settings WHERE user_id = ?');
-      const result = stmt.get(userId);
-      
-      if (result) {
-        return {
-          autoSend: result.auto_accept_messages === 1,
-          messageDelay: result.delay_between_messages * 1000,
-          maxMessagesPerDay: result.max_messages_per_minute * 60,
-          workingHours: {
-            enabled: false,
-            start: "09:00",
-            end: "18:00"
-          },
-          antiSpam: {
-            enabled: true,
-            minDelay: result.delay_between_messages * 1000,
-            maxDelay: result.delay_between_messages * 1000 + 2000,
-            randomization: true
-          }
-        };
+      // Tentar buscar configurações da tabela se ela existir
+      try {
+        const stmt = sqlite.prepare('SELECT * FROM extension_settings WHERE user_id = ?');
+        const result = stmt.get(userId);
+        
+        if (result) {
+          return {
+            autoSend: result.auto_accept_messages === 1,
+            messageDelay: result.delay_between_messages * 1000,
+            maxMessagesPerDay: result.max_messages_per_minute * 60,
+            workingHours: {
+              enabled: false,
+              start: "09:00",
+              end: "18:00"
+            },
+            antiSpam: {
+              enabled: true,
+              minDelay: result.delay_between_messages * 1000,
+              maxDelay: result.delay_between_messages * 1000 + 2000,
+              randomization: true
+            }
+          };
+        }
+      } catch (error) {
+        // Se a tabela não existir, usar configurações padrão
+        console.log('ℹ️ Tabela extension_settings não encontrada, usando configurações padrão');
       }
       
       // Configurações padrão se não existir

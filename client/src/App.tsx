@@ -39,6 +39,7 @@ import IntegracoesPage from "@/pages/integracoes";
 // import TypebotPage from "@/pages/typebot"; // TYPEBOT DESATIVADO
 import ExtensoesPage from "@/pages/extensoes";
 import VoiceCallingPage from "@/pages/voice-calling";
+import ConditionalCampaignsPage from "@/pages/conditional-campaigns";
 import { useAuth } from "@/hooks/useAuth-jwt";
 import { isUnauthorizedError } from "@/lib/authUtils";
 import { SidebarProvider } from "@/hooks/useSidebar";
@@ -211,6 +212,12 @@ function App() {
         <Route path="/voice-calling">
           <Layout>
             <VoiceCallingPage />
+          </Layout>
+        </Route>
+
+        <Route path="/conditional-campaigns">
+          <Layout>
+            <ConditionalCampaignsPage />
           </Layout>
         </Route>
 

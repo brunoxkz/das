@@ -227,12 +227,12 @@ export default function Landing() {
             <div className="flex items-center space-x-8">
               <div className="flex items-center space-x-3">
                 <img 
-                  src="https://vendzz.com.br/wp-content/uploads/2024/12/logo-vendzz.png" 
+                  src="@assets/logo-vendzz-white-green_1752549206595.png" 
                   alt="Vendzz" 
-                  className="h-8 w-auto"
+                  className="h-10 w-auto"
                 />
-                <Badge variant="secondary" className="bg-green-500/20 text-green-400 border-green-500/30">
-                  Beta
+                <Badge variant="secondary" className="bg-green-500/20 text-green-400 border-green-500/30 font-bold">
+                  MONEY MACHINE
                 </Badge>
               </div>
               <nav className="hidden md:flex space-x-8">

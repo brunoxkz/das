@@ -185,6 +185,13 @@ export function Sidebar() {
           icon: <Crown className="w-4 h-4" />,
           active: location === "/super-afiliados"
         },
+        {
+          title: "CAMPANHAS CONDICIONAIS",
+          href: "/conditional-campaigns",
+          icon: <Target className="w-4 h-4" />,
+          active: location === "/conditional-campaigns",
+          badge: <span className="text-xs text-orange-500 font-medium">SE → ENTÃO</span>
+        },
       ]
     },
     {
