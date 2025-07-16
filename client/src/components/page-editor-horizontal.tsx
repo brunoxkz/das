@@ -896,7 +896,7 @@ export function PageEditorHorizontal({
         { type: "continue_button", label: "Botão", icon: <ArrowRight className="w-4 h-4" /> },
         { type: "share_quiz", label: "Compartilhar", icon: <Share2 className="w-4 h-4" /> },
         { type: "animated_transition", label: "Transição", icon: <Sparkles className="w-4 h-4" /> },
-        { type: "progress_bar", label: "Barra de Progresso", icon: <Progress className="w-4 h-4" /> },
+        { type: "progress_bar", label: "Barra de Progresso", icon: <BarChart3 className="w-4 h-4" /> },
         { type: "loading_with_question", label: "Carregamento + Pergunta", icon: <Timer className="w-4 h-4" /> },
       ]
     },
