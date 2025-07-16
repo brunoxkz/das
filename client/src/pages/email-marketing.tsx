@@ -327,6 +327,19 @@ export default function EmailMarketingAdvanced() {
     enabled: !!selectedQuiz
   });
 
+  const { data: templates = [], isLoading: isLoadingTemplates } = useQuery({
+    queryKey: ['/api/email-templates'],
+    queryFn: async () => {
+      const response = await fetch('/api/email-templates', {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+      });
+      if (!response.ok) throw new Error('Erro ao carregar templates');
+      return response.json();
+    }
+  });
+
   // Mutations
   const createCampaignMutation = useMutation({
     mutationFn: async (data: any) => {

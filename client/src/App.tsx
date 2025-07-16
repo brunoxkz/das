@@ -50,6 +50,7 @@ import ConditionalCampaignsPage from "@/pages/conditional-campaigns";
 import FacelessVideosPage from "@/pages/faceless-videos";
 import CheckoutSystemPage from "@/pages/checkout-system";
 import CheckoutAdminPage from "@/pages/checkout-admin";
+import CheckoutPage from "@/pages/checkout";
 import { useAuth } from "@/hooks/useAuth-jwt";
 import { isUnauthorizedError } from "@/lib/authUtils";
 import { SidebarProvider } from "@/hooks/useSidebar";
@@ -250,6 +251,12 @@ function App() {
         <Route path="/faceless-videos">
           <Layout>
             <FacelessVideosPage />
+          </Layout>
+        </Route>
+        
+        <Route path="/checkout">
+          <Layout>
+            <CheckoutPage />
           </Layout>
         </Route>
 

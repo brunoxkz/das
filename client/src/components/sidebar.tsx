@@ -45,7 +45,8 @@ import {
   Phone,
   Bot,
   Coins,
-  Video
+  Video,
+  ShoppingCart
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -111,6 +112,13 @@ export function Sidebar() {
     href: "/credits",
     icon: <Coins className="w-4 h-4" />,
     active: location === "/credits"
+  };
+
+  const checkoutItem = {
+    title: "CHECKOUT",
+    href: "/checkout",
+    icon: <ShoppingCart className="w-4 h-4" />,
+    active: location === "/checkout"
   };
 
   const navCategories = [
@@ -466,6 +474,23 @@ export function Sidebar() {
               {creditosItem.icon}
               {!isCollapsed && (
                 <span className="ml-2 flex-1 text-left text-foreground">{creditosItem.title}</span>
+              )}
+            </Button>
+          </Link>
+
+          {/* Checkout - Standalone */}
+          <Link href={checkoutItem.href}>
+            <Button
+              variant="ghost"
+              className={cn(
+                "nav-item w-full justify-start text-foreground hover:bg-accent hover:text-accent-foreground",
+                isCollapsed ? "px-0" : "px-3",
+                checkoutItem.active && "bg-accent text-accent-foreground"
+              )}
+            >
+              {checkoutItem.icon}
+              {!isCollapsed && (
+                <span className="ml-2 flex-1 text-left text-foreground">{checkoutItem.title}</span>
               )}
             </Button>
           </Link>

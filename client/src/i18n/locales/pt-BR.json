@@ -55,7 +55,8 @@
       "leads": "Leads",
       "published": "Publicado",
       "draft": "Rascunho"
-    }
+    },
+    "currentPlan": "Plano atual"
   },
   "common": {
     "loading": "Carregando...",
@@ -355,5 +356,7 @@
   "emailMarketing": {
     "title": "Email Marketing",
     "description": "Gerencie campanhas de email para seus leads"
-  }
+  },
+  "welcome_back": "Bem-vindo de volta",
+  "create_quiz_btn": "Criar Quiz"
 }
