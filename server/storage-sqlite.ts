@@ -7208,7 +7208,7 @@ Hoje você vai aprender ${project.title} - método revolucionário que já ajudo
         productData.price || 0,
         productData.currency || 'BRL',
         productData.category || '',
-        productData.features || '',
+        Array.isArray(productData.features) ? productData.features.join(', ') : (productData.features || ''),
         productData.payment_mode || productData.paymentMode || 'one_time',
         productData.recurring_interval || productData.recurringInterval || null,
         productData.trial_period || productData.trialPeriod || null,
