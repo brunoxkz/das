@@ -31,6 +31,7 @@ export function useAuth() {
     if (token) {
       // Verify token with server
       fetch("/api/auth/verify", {
+        method: "POST",
         headers: {
           Authorization: `Bearer ${token}`
         }

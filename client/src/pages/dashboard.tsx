@@ -28,7 +28,7 @@ import {
   X
 } from "lucide-react";
 import { Link } from "wouter";
-import { useAuth } from "@/hooks/useAuth-jwt";
+import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { useEffect, useState } from "react";
 import React from "react";
@@ -263,6 +263,20 @@ export default function Dashboard() {
       color: "bg-orange-500"
     }
   ];
+
+  // Verificação de autenticação
+  if (!isAuthenticated) {
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <div className="text-center">
+          <h2 className="text-xl font-semibold mb-4">Você precisa estar logado para acessar esta página</h2>
+          <Link href="/login">
+            <Button>Fazer Login</Button>
+          </Link>
+        </div>
+      </div>
+    );
+  }
 
   if (dashboardLoading) {
     return (
