@@ -19,6 +19,7 @@ import { useLocation } from "wouter";
 import { VariableHelperUnified } from "@/components/ui/variable-helper-unified";
 import { UltraPersonalizedCampaignModal } from "@/components/ultra-personalized-campaign-modal";
 import { CampaignStyleSelector, CampaignStyle } from "@/components/campaign-style-selector";
+import { useLanguage } from "@/hooks/useLanguage";
 
 interface SMSCredits {
   total: number;
@@ -55,6 +56,7 @@ export default function SMSCreditsPage() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [, setLocation] = useLocation();
+  const { t } = useLanguage();
   
   // Estados para campanhas ultra personalizadas
   const [showUltraPersonalizedModal, setShowUltraPersonalizedModal] = useState(false);
@@ -667,8 +669,8 @@ export default function SMSCreditsPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Campanhas SMS</h1>
-          <p className="text-gray-600">Crie e gerencie suas campanhas SMS com diferentes estilos</p>
+          <h1 className="text-3xl font-bold text-gray-900">{t('sms.campaigns')}</h1>
+          <p className="text-gray-600">{t('sms.createCampaign')}</p>
         </div>
         <div className="flex items-center space-x-4">
           <Card className="bg-green-50 border-green-200">
@@ -690,7 +692,7 @@ export default function SMSCreditsPage() {
             className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
           >
             <ShoppingCart className="w-4 h-4 mr-2" />
-            Comprar Créditos
+            {t('sms.buyCredits')}
           </Button>
         </div>
       </div>
@@ -700,10 +702,10 @@ export default function SMSCreditsPage() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-blue-800">
             <Target className="w-5 h-5" />
-            Criar Nova Campanha SMS
+            {t('sms.createNewCampaign')}
           </CardTitle>
           <CardDescription>
-            Comece selecionando o estilo de campanha que melhor se adapta ao seu objetivo
+            {t('sms.campaignDescription') || 'Comece selecionando o estilo de campanha que melhor se adapta ao seu objetivo'}
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -714,30 +716,30 @@ export default function SMSCreditsPage() {
               className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-bold py-4 px-8"
             >
               <Target className="w-5 h-5 mr-2" />
-              Selecionar Estilo de Campanha
+              {t('sms.selectCampaignStyle')}
             </Button>
           </div>
           
           <div className="grid md:grid-cols-2 gap-4 text-left">
             <div className="p-3 bg-orange-50 rounded-lg border border-orange-200">
               <RefreshCw className="w-6 h-6 mb-2 text-orange-600" />
-              <h4 className="font-semibold text-orange-800">Remarketing</h4>
-              <p className="text-sm text-orange-600">Selecione entre leads antigos que abandonaram ou completaram o quiz e datas</p>
+              <h4 className="font-semibold text-orange-800">{t('sms.remarketing')}</h4>
+              <p className="text-sm text-orange-600">{t('sms.remarketingDescription')}</p>
             </div>
             <div className="p-3 bg-purple-50 rounded-lg border border-purple-200">
               <Crown className="w-6 h-6 mb-2 text-purple-600" />
-              <h4 className="font-semibold text-purple-800">Remarketing Ultra Customizado</h4>
-              <p className="text-sm text-purple-600">Selecione entre leads antigos que abandonaram ou completaram o quiz e datas, mas que também dispare funis diferentes para cada faixa de idade, peso, altura, ou como preferir, isso aumenta muito a conversão!</p>
+              <h4 className="font-semibold text-purple-800">{t('sms.remarketingUltraCustom')}</h4>
+              <p className="text-sm text-purple-600">{t('sms.remarketingUltraDescription')}</p>
             </div>
             <div className="p-3 bg-green-50 rounded-lg border border-green-200">
               <Zap className="w-6 h-6 mb-2 text-green-600" />
-              <h4 className="font-semibold text-green-800">Ao Vivo (Tempo Real)</h4>
-              <p className="text-sm text-green-600">Mensagens personalizadas para pessoas que abandonaram ou completaram o quiz, escolha quanto tempo após a ação vai disparar a mensagem personalizada desejada</p>
+              <h4 className="font-semibold text-green-800">{t('sms.liveRealTime')}</h4>
+              <p className="text-sm text-green-600">{t('sms.liveDescription')}</p>
             </div>
             <div className="p-3 bg-blue-50 rounded-lg border border-blue-200">
               <Target className="w-6 h-6 mb-2 text-blue-600" />
-              <h4 className="font-semibold text-blue-800">Ao Vivo Ultra Customizada</h4>
-              <p className="text-sm text-blue-600">Mensagens personalizadas para pessoas que abandonaram ou completaram o quiz, escolha quanto tempo após a ação vai disparar a mensagem personalizada desejada mas que também dispare funis diferentes para cada faixa de idade, peso, altura, ou como preferir, isso aumenta muito a conversão!</p>
+              <h4 className="font-semibold text-blue-800">{t('sms.liveUltraCustom')}</h4>
+              <p className="text-sm text-blue-600">{t('sms.liveUltraDescription')}</p>
             </div>
           </div>
         </CardContent>

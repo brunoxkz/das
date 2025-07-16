@@ -20,11 +20,13 @@ import { useToast } from "@/hooks/use-toast";
 import { useEffect } from "react";
 import React from "react";
 import { Link, useLocation } from "wouter";
+import { useLanguage } from "@/hooks/useLanguage";
 
 export default function Analytics() {
   const { toast } = useToast();
   const { isAuthenticated, isLoading: authLoading } = useAuth();
   const [location, navigate] = useLocation();
+  const { t } = useLanguage();
 
   // Get quiz data from URL params  
   const params = new URLSearchParams(window.location.search);
