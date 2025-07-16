@@ -6074,8 +6074,8 @@ Hoje você vai aprender ${project.title} - método revolucionário que já ajudo
   async getAllCheckouts(): Promise<any[]> {
     try {
       const result = sqlite.prepare(`
-        SELECT * FROM checkouts 
-        ORDER BY created_at DESC
+        SELECT * FROM checkout_products 
+        ORDER BY createdAt DESC
       `).all();
       
       return result.map(row => ({
@@ -6097,7 +6097,7 @@ Hoje você vai aprender ${project.title} - método revolucionário que já ajudo
   async getCheckoutById(id: string): Promise<any | undefined> {
     try {
       const row = sqlite.prepare(`
-        SELECT * FROM checkouts WHERE id = ?
+        SELECT * FROM checkout_products WHERE id = ?
       `).get(id);
       
       if (!row) return undefined;
@@ -6119,11 +6119,11 @@ Hoje você vai aprender ${project.title} - método revolucionário que já ajudo
   async createCheckout(checkout: any): Promise<any> {
     try {
       const stmt = sqlite.prepare(`
-        INSERT INTO checkouts (
-          id, user_id, name, description, price, original_price, 
-          currency, billing_type, subscription_interval, features, 
-          order_bumps, upsells, design, active, created_at, updated_at
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        INSERT INTO checkout_products (
+          id, userId, name, description, price, category, 
+          features, paymentMode, status, customization, 
+          createdAt, updatedAt
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       `);
       
       stmt.run(
@@ -6132,17 +6132,13 @@ Hoje você vai aprender ${project.title} - método revolucionário que já ajudo
         checkout.name,
         checkout.description,
         checkout.price,
-        checkout.originalPrice || null,
-        checkout.currency,
-        checkout.billingType,
-        checkout.subscriptionInterval || null,
-        JSON.stringify(checkout.features || []),
-        JSON.stringify(checkout.orderBumps || []),
-        JSON.stringify(checkout.upsells || []),
-        JSON.stringify(checkout.design || {}),
-        checkout.active ? 1 : 0,
-        checkout.createdAt,
-        checkout.updatedAt
+        checkout.category || 'digital',
+        checkout.features || 'Funcionalidades padrão',
+        checkout.paymentMode || 'one_time',
+        checkout.status || 'active',
+        JSON.stringify(checkout.customization || {}),
+        Date.now(),
+        Date.now()
       );
       
       return await this.getCheckoutById(checkout.id);
@@ -6212,7 +6208,7 @@ Hoje você vai aprender ${project.title} - método revolucionário que já ajudo
       values.push(id);
       
       const stmt = sqlite.prepare(`
-        UPDATE checkouts 
+        UPDATE checkout_products 
         SET ${setClause.join(', ')} 
         WHERE id = ?
       `);

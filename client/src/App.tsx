@@ -55,6 +55,7 @@ import CheckoutPublic from "@/pages/checkout-public";
 import CheckoutSuccess from "@/pages/checkout-success";
 import CheckoutSubscriptionWrapper from "@/pages/checkout-subscription-wrapper";
 import CheckoutUnified from "@/pages/checkout-unified";
+import CheckoutDashboard from "@/pages/checkout-dashboard";
 import ProductBuilder from "@/pages/product-builder";
 import SubscriptionsManager from "@/pages/subscriptions-manager";
 import { useAuth } from "@/hooks/useAuth-jwt";
@@ -334,6 +335,12 @@ function App() {
         <Route path="/checkout-unificado">
           <Layout>
             <CheckoutUnified />
+          </Layout>
+        </Route>
+        
+        <Route path="/checkout-dashboard">
+          <Layout>
+            <CheckoutDashboard />
           </Layout>
         </Route>
 

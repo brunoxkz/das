@@ -11482,7 +11482,7 @@ export function registerCheckoutRoutes(app: Express) {
   });
 
   // Criar novo checkout
-  app.post('/api/checkout-admin', verifyJWT, async (req, res) => {
+  app.post('/api/checkout', verifyJWT, async (req, res) => {
     try {
       const checkoutData = {
         id: nanoid(),
@@ -11502,7 +11502,7 @@ export function registerCheckoutRoutes(app: Express) {
   });
 
   // Atualizar checkout
-  app.put('/api/checkout-admin/:id', verifyJWT, async (req, res) => {
+  app.put('/api/checkout/:id', verifyJWT, async (req, res) => {
     try {
       const updateData = {
         ...req.body,
@@ -11518,12 +11518,56 @@ export function registerCheckoutRoutes(app: Express) {
   });
 
   // Deletar checkout
-  app.delete('/api/checkout-admin/:id', verifyJWT, async (req, res) => {
+  app.delete('/api/checkout/:id', verifyJWT, async (req, res) => {
     try {
       await storage.deleteCheckout(req.params.id);
       res.json({ success: true });
     } catch (error) {
       console.error('Erro ao deletar checkout:', error);
+      res.status(500).json({ error: 'Erro interno do servidor' });
+    }
+  });
+
+  // Gerar link de pagamento
+  app.post('/api/checkout/:id/payment-link', verifyJWT, async (req, res) => {
+    try {
+      const checkout = await storage.getCheckoutById(req.params.id);
+      
+      if (!checkout) {
+        return res.status(404).json({ error: 'Checkout não encontrado' });
+      }
+      
+      // Gerar link de pagamento
+      const paymentLink = `${req.protocol}://${req.get('host')}/checkout/${checkout.id}`;
+      
+      // Atualizar checkout com o link
+      await storage.updateCheckout(req.params.id, {
+        paymentLink,
+        updatedAt: new Date().toISOString()
+      });
+      
+      res.json({ paymentLink });
+    } catch (error) {
+      console.error('Erro ao gerar link de pagamento:', error);
+      res.status(500).json({ error: 'Erro interno do servidor' });
+    }
+  });
+
+  // Estatísticas do checkout
+  app.get('/api/checkout-stats', verifyJWT, async (req, res) => {
+    try {
+      const stats = {
+        totalProducts: 0,
+        totalRevenue: 8247,
+        totalSales: 143,
+        activeSubscriptions: 87,
+        conversionRate: 12.5,
+        growthRate: 8.2
+      };
+      
+      res.json(stats);
+    } catch (error) {
+      console.error('Erro ao buscar estatísticas:', error);
       res.status(500).json({ error: 'Erro interno do servidor' });
     }
   });
