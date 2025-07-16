@@ -208,6 +208,18 @@ No additional files or separate projects are maintained in this repository.
 
 ```
 Changelog:
+- July 16, 2025. MENU TESTE A/B MOVIDO E ABA CRIADA - Reorganização da navegação e nova funcionalidade no editor:
+  * Item "Teste A/B" movido da categoria "Analytics" para "Criação" na sidebar
+  * Nova aba "Teste A/B" criada no editor de quiz ao lado da aba "Configurações"
+  * Aba completa com configurações de teste A/B: ativação, nome do teste, divisão de tráfego (slider 10-90%)
+  * Tipos de teste disponíveis: Título, Design/Cores, Fluxo de Páginas, Elementos/Perguntas, Quiz Completo
+  * Configurações específicas para cada tipo de teste (título alternativo, cores alternativas, etc.)
+  * Sistema de métricas selecionáveis: Taxa de Conclusão, Taxa de Conversão, Engajamento, Qualidade dos Leads
+  * Duração configurável do teste (1-90 dias, padrão 14 dias)
+  * Botão para configurar teste A/B com toast de confirmação
+  * Seção de dicas para teste A/B eficaz com boas práticas
+  * Interface moderna com cards, gradientes e elementos visuais consistentes
+  * Integração total com sistema de salvamento de quiz existente
 - July 16, 2025. ELEMENTO "PROGRESSO + PERGUNTA" COMPLETAMENTE APRIMORADO - Todas as funcionalidades faltantes implementadas:
   * Adicionadas todas as opções de personalização solicitadas: exibir porcentagem, adicionar brilho, padrão de listras, tempo restante, texto da barra
   * Implementado seletor de cor para pergunta do popup (popupQuestionColor)

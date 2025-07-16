@@ -130,6 +130,12 @@ export function Sidebar() {
           icon: <Palette className="w-4 h-4" />,
           active: location === "/templates"
         },
+        {
+          title: "TESTE A/B",
+          href: "/teste-ab",
+          icon: <BarChart className="w-4 h-4" />,
+          active: location === "/teste-ab"
+        },
       ]
     },
     {
@@ -141,12 +147,6 @@ export function Sidebar() {
           href: "/analytics",
           icon: <TrendingUp className="w-4 h-4" />,
           active: location === "/analytics"
-        },
-        {
-          title: "TESTE A/B",
-          href: "/teste-ab",
-          icon: <BarChart className="w-4 h-4" />,
-          active: location === "/teste-ab"
         },
       ]
     },

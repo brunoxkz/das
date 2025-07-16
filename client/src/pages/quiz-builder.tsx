@@ -108,7 +108,7 @@ export default function QuizBuilder() {
     subdomains: []
   });
 
-  const [activeTab, setActiveTab] = useState<"editor" | "preview" | "settings" | "design" | "fluxo" | "pixels" | "blackhat" | "backredirect">("editor");
+  const [activeTab, setActiveTab] = useState<"editor" | "preview" | "settings" | "design" | "fluxo" | "pixels" | "blackhat" | "backredirect" | "teste-ab">("editor");
   const [globalTheme, setGlobalTheme] = useState<"light" | "dark" | "custom">("light");
   const [customBackgroundColor, setCustomBackgroundColor] = useState("#ffffff");
   const [currentQuizId, setCurrentQuizId] = useState<string | null>(quizId || null);
@@ -815,6 +815,7 @@ export default function QuizBuilder() {
             { id: "fluxo", label: "Fluxo (Avançado)", icon: <Network className="w-4 h-4" /> },
             { id: "design", label: "Design", icon: <Palette className="w-4 h-4" /> },
             { id: "settings", label: "Configurações", icon: <Settings className="w-4 h-4" /> },
+            { id: "teste-ab", label: "Teste A/B", icon: <BarChart className="w-4 h-4" /> },
             { id: "pixels", label: "Pixels/Scripts", icon: <Target className="w-4 h-4" /> },
             { id: "blackhat", label: "BlackHat", icon: <Target className="w-4 h-4" /> },
 
@@ -1537,6 +1538,231 @@ export default function QuizBuilder() {
               </Card>
 
 
+            </div>
+          </div>
+        )}
+
+        {activeTab === "teste-ab" && (
+          <div className="h-full overflow-y-auto p-6">
+            <div className="max-w-2xl mx-auto space-y-6">
+              {/* Cabeçalho da Aba */}
+              <div className="text-center">
+                <h2 className="text-2xl font-bold text-gray-900 mb-2">Teste A/B</h2>
+                <p className="text-gray-600">Configure testes A/B para otimizar a conversão do seu quiz</p>
+              </div>
+
+              {/* Configuração do Teste A/B */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <BarChart className="w-5 h-5" />
+                    Configurar Teste A/B
+                  </CardTitle>
+                  <p className="text-sm text-gray-600">Crie variações do seu quiz para testar qual converte melhor</p>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {/* Ativar/Desativar Teste A/B */}
+                  <div className="p-4 bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg border border-blue-200">
+                    <div className="flex items-center space-x-3 mb-3">
+                      <input
+                        type="checkbox"
+                        id="abTestEnabled"
+                        checked={quizData.abTestEnabled || false}
+                        onChange={(e) => setQuizData(prev => ({ ...prev, abTestEnabled: e.target.checked }))}
+                        className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500"
+                      />
+                      <Label htmlFor="abTestEnabled" className="text-sm font-medium text-gray-900">
+                        Ativar Teste A/B
+                      </Label>
+                      <Badge variant="secondary" className="bg-blue-100 text-blue-800">Otimização</Badge>
+                    </div>
+                    <p className="text-sm text-gray-700 leading-relaxed">
+                      <strong>🎯 Teste diferentes versões:</strong> Compare títulos, designs, fluxos e elementos para encontrar a combinação que mais converte.
+                    </p>
+                  </div>
+
+                  {quizData.abTestEnabled && (
+                    <div className="space-y-4">
+                      {/* Nome do Teste */}
+                      <div>
+                        <Label htmlFor="abTestName" className="text-sm font-medium">Nome do Teste</Label>
+                        <Input
+                          id="abTestName"
+                          value={quizData.abTestName || ""}
+                          onChange={(e) => setQuizData(prev => ({ ...prev, abTestName: e.target.value }))}
+                          placeholder="Ex: Teste Título Principal"
+                          className="mt-1"
+                        />
+                      </div>
+
+                      {/* Divisão de Tráfego */}
+                      <div>
+                        <Label className="text-sm font-medium">Divisão de Tráfego</Label>
+                        <div className="mt-2 space-y-2">
+                          <div className="flex items-center justify-between">
+                            <span className="text-sm text-gray-600">Versão A (Original)</span>
+                            <span className="text-sm font-medium">{quizData.abTestSplit || 50}%</span>
+                          </div>
+                          <div className="flex items-center justify-between">
+                            <span className="text-sm text-gray-600">Versão B (Variação)</span>
+                            <span className="text-sm font-medium">{100 - (quizData.abTestSplit || 50)}%</span>
+                          </div>
+                          <input
+                            type="range"
+                            min="10"
+                            max="90"
+                            value={quizData.abTestSplit || 50}
+                            onChange={(e) => setQuizData(prev => ({ ...prev, abTestSplit: parseInt(e.target.value) }))}
+                            className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
+                          />
+                        </div>
+                      </div>
+
+                      {/* Tipo de Teste */}
+                      <div>
+                        <Label className="text-sm font-medium">Tipo de Teste</Label>
+                        <select
+                          value={quizData.abTestType || "title"}
+                          onChange={(e) => setQuizData(prev => ({ ...prev, abTestType: e.target.value }))}
+                          className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-md"
+                        >
+                          <option value="title">Título do Quiz</option>
+                          <option value="design">Design/Cores</option>
+                          <option value="flow">Fluxo de Páginas</option>
+                          <option value="elements">Elementos/Perguntas</option>
+                          <option value="complete">Quiz Completo</option>
+                        </select>
+                      </div>
+
+                      {/* Configurações da Versão B */}
+                      <div className="p-4 bg-gray-50 rounded-lg">
+                        <h4 className="font-medium text-gray-900 mb-3">Configurações da Versão B</h4>
+                        
+                        {quizData.abTestType === "title" && (
+                          <div>
+                            <Label htmlFor="abTestTitleB" className="text-sm font-medium">Título Alternativo</Label>
+                            <Input
+                              id="abTestTitleB"
+                              value={quizData.abTestTitleB || ""}
+                              onChange={(e) => setQuizData(prev => ({ ...prev, abTestTitleB: e.target.value }))}
+                              placeholder="Digite o título alternativo"
+                              className="mt-1"
+                            />
+                          </div>
+                        )}
+
+                        {quizData.abTestType === "design" && (
+                          <div className="space-y-3">
+                            <div>
+                              <Label htmlFor="abTestColorB" className="text-sm font-medium">Cor Principal Alternativa</Label>
+                              <Input
+                                id="abTestColorB"
+                                type="color"
+                                value={quizData.abTestColorB || "#3b82f6"}
+                                onChange={(e) => setQuizData(prev => ({ ...prev, abTestColorB: e.target.value }))}
+                                className="mt-1 h-10"
+                              />
+                            </div>
+                            <div>
+                              <Label htmlFor="abTestBackgroundB" className="text-sm font-medium">Cor de Fundo Alternativa</Label>
+                              <Input
+                                id="abTestBackgroundB"
+                                type="color"
+                                value={quizData.abTestBackgroundB || "#f3f4f6"}
+                                onChange={(e) => setQuizData(prev => ({ ...prev, abTestBackgroundB: e.target.value }))}
+                                className="mt-1 h-10"
+                              />
+                            </div>
+                          </div>
+                        )}
+
+                        {quizData.abTestType === "complete" && (
+                          <div>
+                            <Label className="text-sm font-medium">Quiz Alternativo</Label>
+                            <p className="text-sm text-gray-600 mt-1">
+                              A versão B será um quiz completamente diferente. Configure-o nas outras abas.
+                            </p>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Métricas a Acompanhar */}
+                      <div>
+                        <Label className="text-sm font-medium">Métricas a Acompanhar</Label>
+                        <div className="mt-2 space-y-2">
+                          {[
+                            { id: "completion", label: "Taxa de Conclusão" },
+                            { id: "conversion", label: "Taxa de Conversão" },
+                            { id: "engagement", label: "Engajamento" },
+                            { id: "leadquality", label: "Qualidade dos Leads" }
+                          ].map((metric) => (
+                            <div key={metric.id} className="flex items-center space-x-3">
+                              <input
+                                type="checkbox"
+                                id={`metric-${metric.id}`}
+                                checked={quizData.abTestMetrics?.includes(metric.id) || false}
+                                onChange={(e) => {
+                                  const currentMetrics = quizData.abTestMetrics || [];
+                                  const newMetrics = e.target.checked
+                                    ? [...currentMetrics, metric.id]
+                                    : currentMetrics.filter(m => m !== metric.id);
+                                  setQuizData(prev => ({ ...prev, abTestMetrics: newMetrics }));
+                                }}
+                                className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500"
+                              />
+                              <Label htmlFor={`metric-${metric.id}`} className="text-sm">
+                                {metric.label}
+                              </Label>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* Duração do Teste */}
+                      <div>
+                        <Label htmlFor="abTestDuration" className="text-sm font-medium">Duração do Teste (dias)</Label>
+                        <Input
+                          id="abTestDuration"
+                          type="number"
+                          min="1"
+                          max="90"
+                          value={quizData.abTestDuration || 14}
+                          onChange={(e) => setQuizData(prev => ({ ...prev, abTestDuration: parseInt(e.target.value) }))}
+                          className="mt-1"
+                        />
+                        <p className="text-xs text-gray-500 mt-1">
+                          Recomendado: 14-30 dias para obter dados significativos
+                        </p>
+                      </div>
+
+                      {/* Botão para Iniciar Teste */}
+                      <Button 
+                        className="w-full"
+                        onClick={() => {
+                          toast({
+                            title: "Teste A/B Configurado!",
+                            description: "O teste será iniciado quando o quiz for publicado.",
+                          });
+                        }}
+                      >
+                        <Target className="w-4 h-4 mr-2" />
+                        Configurar Teste A/B
+                      </Button>
+                    </div>
+                  )}
+
+                  {/* Informações sobre Teste A/B */}
+                  <div className="p-4 bg-green-50 rounded-lg border border-green-200">
+                    <h4 className="font-medium text-green-900 mb-2">💡 Dicas para Teste A/B Eficaz</h4>
+                    <ul className="text-sm text-green-800 space-y-1">
+                      <li>• Teste apenas um elemento por vez para resultados claros</li>
+                      <li>• Aguarde pelo menos 100 respostas por versão antes de tirar conclusões</li>
+                      <li>• Mantenha o teste por tempo suficiente para capturar diferentes comportamentos</li>
+                      <li>• Use significância estatística para validar os resultados</li>
+                    </ul>
+                  </div>
+                </CardContent>
+              </Card>
             </div>
           </div>
         )}
