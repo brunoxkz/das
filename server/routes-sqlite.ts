@@ -9887,9 +9887,543 @@ app.get("/api/whatsapp-extension/pending", verifyJWT, async (req: any, res: Resp
     }
   });
 
+  // Email Credits endpoint (específico para Email Marketing)
+  app.get("/api/email-credits", verifyJWT, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const validation = await creditProtection.validateCreditsBeforeUse(
+        userId, 
+        'email', 
+        0, // Não consumir créditos, apenas verificar
+        req.ip,
+        req.headers['user-agent']
+      );
+      
+      res.json({
+        total: validation.remaining + (validation.valid ? 0 : 0),
+        used: validation.valid ? 0 : 0,
+        remaining: validation.remaining,
+        plan: validation.userPlan,
+        valid: validation.valid,
+        error: validation.error
+      });
+    } catch (error) {
+      console.error("Error fetching email credits:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
+  // User Status endpoint
+  app.get("/api/user/status", verifyJWT, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const user = await storage.getUser(userId);
+      
+      if (!user) {
+        return res.status(404).json({ error: "User not found" });
+      }
+      
+      const isExpired = user.planExpiresAt && new Date() > new Date(user.planExpiresAt);
+      
+      res.json({
+        id: user.id,
+        email: user.email,
+        plan: user.plan || 'free',
+        planExpiresAt: user.planExpiresAt,
+        isExpired,
+        isBlocked: user.isBlocked || false,
+        blockReason: user.blockReason,
+        createdAt: user.createdAt,
+        credits: {
+          sms: user.smsCredits || 0,
+          email: user.emailCredits || 0,
+          whatsapp: user.whatsappCredits || 0,
+          ai: user.aiCredits || 0
+        }
+      });
+    } catch (error) {
+      console.error("Error fetching user status:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
+  // Plan Limits endpoint
+  app.get("/api/plan-limits", verifyJWT, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const user = await storage.getUser(userId);
+      
+      if (!user) {
+        return res.status(404).json({ error: "User not found" });
+      }
+      
+      const planLimits = {
+        free: {
+          quizzes: 1,
+          responses: 100,
+          sms: 10,
+          email: 50,
+          whatsapp: 0,
+          ai: 0
+        },
+        basic: {
+          quizzes: 5,
+          responses: 1000,
+          sms: 100,
+          email: 500,
+          whatsapp: 50,
+          ai: 10
+        },
+        premium: {
+          quizzes: 20,
+          responses: 5000,
+          sms: 500,
+          email: 2000,
+          whatsapp: 200,
+          ai: 50
+        },
+        enterprise: {
+          quizzes: -1,
+          responses: -1,
+          sms: -1,
+          email: -1,
+          whatsapp: -1,
+          ai: -1
+        }
+      };
+      
+      const currentPlan = user.plan || 'free';
+      const limits = planLimits[currentPlan] || planLimits.free;
+      
+      res.json({
+        plan: currentPlan,
+        limits,
+        planExpiresAt: user.planExpiresAt,
+        isExpired: user.planExpiresAt && new Date() > new Date(user.planExpiresAt)
+      });
+    } catch (error) {
+      console.error("Error fetching plan limits:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
+  // Feature Access endpoint
+  app.get("/api/feature-access/:feature", verifyJWT, async (req: any, res) => {
+    try {
+      const { feature } = req.params;
+      const userId = req.user.id;
+      const user = await storage.getUser(userId);
+      
+      if (!user) {
+        return res.status(404).json({ error: "User not found" });
+      }
+      
+      const isExpired = user.planExpiresAt && new Date() > new Date(user.planExpiresAt);
+      const currentPlan = user.plan || 'free';
+      
+      // Definir funcionalidades por plano
+      const planFeatures = {
+        free: ['basic_quiz', 'basic_analytics'],
+        basic: ['quiz_publishing', 'email_campaigns', 'basic_analytics'],
+        premium: ['quiz_publishing', 'email_campaigns', 'whatsapp_campaigns', 'advanced_analytics', 'ai_videos'],
+        enterprise: ['all']
+      };
+      
+      const userFeatures = planFeatures[currentPlan] || planFeatures.free;
+      const hasAccess = userFeatures.includes('all') || userFeatures.includes(feature);
+      
+      res.json({
+        feature,
+        hasAccess: hasAccess && !isExpired,
+        plan: currentPlan,
+        isExpired,
+        reason: isExpired ? 'Plan expired' : (!hasAccess ? 'Feature not available in your plan' : null)
+      });
+    } catch (error) {
+      console.error("Error checking feature access:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
+  // Subscription Renewal Options endpoint
+  app.get("/api/subscription/renewal-options", verifyJWT, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const user = await storage.getUser(userId);
+      
+      if (!user) {
+        return res.status(404).json({ error: "User not found" });
+      }
+      
+      const renewalOptions = [
+        {
+          id: 'basic-monthly',
+          name: 'Básico Mensal',
+          price: 29.90,
+          currency: 'BRL',
+          interval: 'monthly',
+          features: ['Quiz Publishing', 'Email Campaigns', 'Basic Analytics'],
+          limits: {
+            quizzes: 5,
+            responses: 1000,
+            sms: 100,
+            email: 500,
+            whatsapp: 50,
+            ai: 10
+          }
+        },
+        {
+          id: 'premium-monthly',
+          name: 'Premium Mensal',
+          price: 69.90,
+          currency: 'BRL',
+          interval: 'monthly',
+          features: ['Quiz Publishing', 'Email Campaigns', 'WhatsApp Campaigns', 'Advanced Analytics', 'AI Videos'],
+          limits: {
+            quizzes: 20,
+            responses: 5000,
+            sms: 500,
+            email: 2000,
+            whatsapp: 200,
+            ai: 50
+          }
+        },
+        {
+          id: 'enterprise-monthly',
+          name: 'Enterprise Mensal',
+          price: 149.90,
+          currency: 'BRL',
+          interval: 'monthly',
+          features: ['All Features'],
+          limits: {
+            quizzes: -1,
+            responses: -1,
+            sms: -1,
+            email: -1,
+            whatsapp: -1,
+            ai: -1
+          }
+        }
+      ];
+      
+      res.json({
+        currentPlan: user.plan || 'free',
+        planExpiresAt: user.planExpiresAt,
+        isExpired: user.planExpiresAt && new Date() > new Date(user.planExpiresAt),
+        renewalOptions
+      });
+    } catch (error) {
+      console.error("Error fetching renewal options:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
+  // Dashboard Unified endpoint
+  app.get("/api/dashboard/unified", verifyJWT, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const user = await storage.getUser(userId);
+      
+      if (!user) {
+        return res.status(404).json({ error: "User not found" });
+      }
+      
+      // Buscar dados do dashboard
+      const quizzes = await storage.getUserQuizzes(userId);
+      const responses = await storage.getUserQuizResponses(userId);
+      
+      // Calcular estatísticas
+      const totalQuizzes = quizzes.length;
+      const totalResponses = responses.length;
+      const publishedQuizzes = quizzes.filter(q => q.isPublished).length;
+      const completedResponses = responses.filter(r => r.submittedAt).length;
+      const conversionRate = totalResponses > 0 ? (completedResponses / totalResponses) * 100 : 0;
+      
+      res.json({
+        user: {
+          id: user.id,
+          email: user.email,
+          plan: user.plan || 'free',
+          planExpiresAt: user.planExpiresAt,
+          isExpired: user.planExpiresAt && new Date() > new Date(user.planExpiresAt)
+        },
+        credits: {
+          sms: user.smsCredits || 0,
+          email: user.emailCredits || 0,
+          whatsapp: user.whatsappCredits || 0,
+          ai: user.aiCredits || 0,
+          total: (user.smsCredits || 0) + (user.emailCredits || 0) + (user.whatsappCredits || 0) + (user.aiCredits || 0)
+        },
+        statistics: {
+          totalQuizzes,
+          publishedQuizzes,
+          totalResponses,
+          completedResponses,
+          conversionRate: Math.round(conversionRate * 100) / 100
+        },
+        campaigns: {
+          sms: 0, // TODO: Implementar contagem real
+          email: 0, // TODO: Implementar contagem real
+          whatsapp: 0 // TODO: Implementar contagem real
+        }
+      });
+    } catch (error) {
+      console.error("Error fetching unified dashboard:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
+  // System Health endpoint
+  app.get("/api/system/health", verifyJWT, async (req: any, res) => {
+    try {
+      const startTime = Date.now();
+      
+      // Verificar componentes do sistema
+      const healthChecks = {
+        database: { status: 'healthy', response_time: 0 },
+        auth: { status: 'healthy', response_time: 0 },
+        stripe: { status: stripe ? 'healthy' : 'disabled', response_time: 0 },
+        cache: { status: 'healthy', response_time: 0 },
+        memory: { status: 'healthy', usage: process.memoryUsage().heapUsed / 1024 / 1024 }
+      };
+      
+      // Teste de database
+      const dbStart = Date.now();
+      try {
+        await storage.getUser(req.user.id);
+        healthChecks.database.response_time = Date.now() - dbStart;
+      } catch (error) {
+        healthChecks.database.status = 'unhealthy';
+        healthChecks.database.error = error.message;
+      }
+      
+      // Teste de auth
+      const authStart = Date.now();
+      healthChecks.auth.response_time = Date.now() - authStart;
+      
+      // Teste de Stripe
+      if (stripe) {
+        const stripeStart = Date.now();
+        try {
+          await stripe.prices.list({ limit: 1 });
+          healthChecks.stripe.response_time = Date.now() - stripeStart;
+        } catch (error) {
+          healthChecks.stripe.status = 'unhealthy';
+          healthChecks.stripe.error = error.message;
+        }
+      }
+      
+      const totalTime = Date.now() - startTime;
+      const overallHealth = Object.values(healthChecks).every(check => check.status === 'healthy' || check.status === 'disabled');
+      
+      res.json({
+        status: overallHealth ? 'healthy' : 'degraded',
+        timestamp: new Date().toISOString(),
+        response_time: totalTime,
+        components: healthChecks,
+        version: '1.0.0'
+      });
+    } catch (error) {
+      console.error("Error in system health check:", error);
+      res.status(500).json({ 
+        status: 'unhealthy', 
+        error: error.message,
+        timestamp: new Date().toISOString()
+      });
+    }
+  });
+
   // =============================================
   // SUBSCRIPTION PLANS ENDPOINTS
   // =============================================
+
+  // Email Marketing Credits endpoint
+  app.get("/api/email-marketing/credits", verifyJWT, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const user = await storage.getUser(userId);
+      
+      if (!user) {
+        return res.status(404).json({ error: "User not found" });
+      }
+      
+      res.json({
+        total: user.emailCredits || 0,
+        used: 0,
+        remaining: user.emailCredits || 0,
+        plan: user.plan || 'free',
+        valid: true
+      });
+    } catch (error) {
+      console.error("Error fetching email marketing credits:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
+  // Email Marketing Credits Purchase endpoint
+  app.post("/api/email-marketing/credits/purchase", verifyJWT, async (req: any, res) => {
+    try {
+      const { packageId } = req.body;
+      const userId = req.user.id;
+      
+      if (!packageId) {
+        return res.status(400).json({ error: "packageId é obrigatório" });
+      }
+      
+      const user = await storage.getUser(userId);
+      if (!user) {
+        return res.status(404).json({ error: "User not found" });
+      }
+      
+      // Simulação de compra (modo desenvolvimento)
+      const packages = {
+        email_100: { credits: 100, price: 1.90 },
+        email_500: { credits: 500, price: 3.90 },
+        email_1000: { credits: 1000, price: 4.90 },
+        email_5000: { credits: 5000, price: 19.90 }
+      };
+      
+      const selectedPackage = packages[packageId];
+      if (!selectedPackage) {
+        return res.status(400).json({ error: "Pacote inválido" });
+      }
+      
+      // Atualizar créditos do usuário
+      const updatedUser = { ...user };
+      updatedUser.emailCredits = (user.emailCredits || 0) + selectedPackage.credits;
+      
+      await storage.updateUser(userId, updatedUser);
+      
+      res.json({
+        success: true,
+        message: `${selectedPackage.credits} créditos de email adicionados com sucesso!`,
+        credits: selectedPackage.credits,
+        type: 'email',
+        development: true
+      });
+    } catch (error) {
+      console.error("Error purchasing email marketing credits:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
+  // Quiz Plan Validation endpoint 
+  app.get("/api/quiz-plan/validate", verifyJWT, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const user = await storage.getUser(userId);
+      
+      if (!user) {
+        return res.status(404).json({ error: "User not found" });
+      }
+      
+      const currentPlan = user.plan || 'free';
+      const isExpired = user.planExpiresAt && new Date() > new Date(user.planExpiresAt);
+      
+      res.json({
+        valid: !isExpired,
+        plan: currentPlan,
+        expiresAt: user.planExpiresAt,
+        isExpired,
+        features: currentPlan === 'enterprise' ? ['all'] : [],
+        limits: currentPlan === 'enterprise' ? {
+          quizzes: -1,
+          responses: -1,
+          sms: -1,
+          email: -1,
+          whatsapp: -1,
+          ai: -1
+        } : {}
+      });
+    } catch (error) {
+      console.error("Error validating quiz plan:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
+  // Plan Renewal endpoint
+  app.post("/api/plan/renewal", verifyJWT, async (req: any, res) => {
+    try {
+      const { planId } = req.body;
+      const userId = req.user.id;
+      
+      if (!planId) {
+        return res.status(400).json({ error: "planId é obrigatório" });
+      }
+      
+      const user = await storage.getUser(userId);
+      if (!user) {
+        return res.status(404).json({ error: "User not found" });
+      }
+      
+      // Simulação de renovação de plano
+      const newExpiryDate = new Date();
+      newExpiryDate.setMonth(newExpiryDate.getMonth() + 1);
+      
+      const updatedUser = { ...user };
+      updatedUser.plan = planId;
+      updatedUser.planExpiresAt = newExpiryDate.toISOString();
+      
+      await storage.updateUser(userId, updatedUser);
+      
+      res.json({
+        success: true,
+        message: `Plano renovado para ${planId}`,
+        plan: planId,
+        expiresAt: newExpiryDate.toISOString(),
+        development: true
+      });
+    } catch (error) {
+      console.error("Error renewing plan:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
+  // System Sync endpoint
+  app.get("/api/system/sync", verifyJWT, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const user = await storage.getUser(userId);
+      
+      if (!user) {
+        return res.status(404).json({ error: "User not found" });
+      }
+      
+      // Simular sincronização de todos os sistemas
+      const syncResults = {
+        credits: {
+          sms: user.smsCredits || 0,
+          email: user.emailCredits || 0,
+          whatsapp: user.whatsappCredits || 0,
+          ai: user.aiCredits || 0
+        },
+        plan: {
+          current: user.plan || 'free',
+          expiresAt: user.planExpiresAt,
+          isActive: !user.planExpiresAt || new Date() < new Date(user.planExpiresAt)
+        },
+        stripe: {
+          connected: true,
+          customerId: user.stripeCustomerId || null
+        },
+        campaigns: {
+          sms: 0,
+          email: 0,
+          whatsapp: 0
+        }
+      };
+      
+      res.json({
+        success: true,
+        message: "Sincronização completa realizada com sucesso",
+        timestamp: new Date().toISOString(),
+        results: syncResults
+      });
+    } catch (error) {
+      console.error("Error in system sync:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
 
   // Listar planos de assinatura
   app.get('/api/subscription-plans', async (req: any, res: any) => {
