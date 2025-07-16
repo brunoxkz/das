@@ -29,6 +29,7 @@ import QRCode from 'qrcode';
 import { generateTokens } from './auth-sqlite';
 import HealthCheckSystem from './health-check-system.js';
 import WhatsAppBusinessAPI from './whatsapp-business-api';
+import { registerFacelessVideoRoutes } from './faceless-video-routes';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -10330,6 +10331,9 @@ app.get("/api/whatsapp-extension/pending", verifyJWT, async (req: any, res: Resp
       res.status(500).json({ error: "Internal server error" });
     }
   });
+
+  // Registrar rotas de Faceless Videos
+  registerFacelessVideoRoutes(app);
 
   return httpServer;
 }
