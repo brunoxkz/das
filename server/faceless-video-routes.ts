@@ -30,11 +30,16 @@ export function registerFacelessVideoRoutes(app: Express) {
    */
   app.post('/api/faceless-videos/generate', verifyJWT, async (req: any, res) => {
     try {
-      const { topic, niche, duration, style, voiceGender, language, platforms } = req.body;
+      const { title, topic, duration, style, voice } = req.body;
       const userId = req.user?.id;
 
       if (!userId) {
         return res.status(401).json({ error: 'Usuário não autenticado' });
+      }
+
+      // Validar entrada
+      if (!title || !topic) {
+        return res.status(400).json({ error: 'Título e tópico são obrigatórios' });
       }
 
       // Verificar créditos
@@ -43,78 +48,70 @@ export function registerFacelessVideoRoutes(app: Express) {
         return res.status(403).json({ error: 'Créditos insuficientes' });
       }
 
-      // Gerar vídeo
-      const videoResult = await videoGenerator.generateViralVideo({
+      // Criar projeto de vídeo
+      const project = await storage.createVideoProject({
+        userId,
+        title,
         topic,
-        niche,
-        duration,
-        style,
-        voiceGender,
-        language,
-        platforms,
-        userId
+        duration: duration || 30,
+        style: style || 'viral',
+        voice: voice || 'masculina',
+        status: 'generating',
+        progress: 0,
+        videoUrl: null,
+        thumbnailUrl: null
       });
 
-      // Salvar projeto no banco
-      const videoProject = {
-        id: nanoid(),
-        userId,
-        title: topic,
-        videoUrl: videoResult.videoUrl,
-        thumbnailUrl: videoResult.thumbnailUrl,
-        script: videoResult.script,
-        hashtags: JSON.stringify(videoResult.hashtags),
-        caption: videoResult.caption,
-        duration: videoResult.duration,
-        platforms: JSON.stringify(videoResult.platforms),
-        status: 'ready',
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
-      };
+      // Débito do crédito
+      await storage.updateUser(userId, {
+        videoCredits: (user.videoCredits || 0) - 1
+      });
 
-      await storage.createVideoProject(videoProject);
+      // Simulação de processamento assíncrono
+      setTimeout(async () => {
+        try {
+          // Simular geração de vídeo
+          await storage.updateVideoProject(project.id, {
+            status: 'completed',
+            progress: 100,
+            videoUrl: `/uploads/videos/sample_${project.id}.mp4`,
+            thumbnailUrl: `/uploads/thumbnails/thumb_${project.id}.jpg`
+          });
+        } catch (error) {
+          console.error('❌ Erro no processamento:', error);
+          await storage.updateVideoProject(project.id, {
+            status: 'failed',
+            progress: 0
+          });
+        }
+      }, 30000); // 30 segundos para conclusão
 
-      // Debitar crédito
-      await storage.updateUserCredits(userId, { videoCredits: -1 });
-
-      console.log(`✅ Vídeo gerado para usuário ${userId}: ${videoProject.id}`);
       res.json({
         success: true,
-        videoId: videoProject.id,
-        ...videoResult
+        project,
+        message: 'Vídeo sendo processado'
       });
 
     } catch (error) {
       console.error('❌ Erro ao gerar vídeo:', error);
-      res.status(500).json({ 
-        error: 'Falha na geração do vídeo',
-        details: error.message 
-      });
+      res.status(500).json({ error: 'Falha ao gerar vídeo' });
     }
   });
 
   /**
    * LISTAR PROJETOS DE VÍDEO
    */
-  app.get('/api/faceless-videos/projects/:userId', verifyJWT, async (req: any, res) => {
+  app.get('/api/faceless-videos/projects', verifyJWT, async (req: any, res) => {
     try {
-      const { userId } = req.params;
+      const userId = req.user?.id;
       
-      if (req.user?.id !== userId) {
-        return res.status(403).json({ error: 'Acesso negado' });
+      if (!userId) {
+        return res.status(401).json({ error: 'Usuário não autenticado' });
       }
 
       const projects = await storage.getVideoProjects(userId);
       
-      // Parsear campos JSON
-      const formattedProjects = projects.map(project => ({
-        ...project,
-        hashtags: JSON.parse(project.hashtags || '[]'),
-        platforms: JSON.parse(project.platforms || '[]'),
-        viralMetrics: project.viralMetrics ? JSON.parse(project.viralMetrics) : null
-      }));
-
-      res.json(formattedProjects);
+      res.json(projects);
 
     } catch (error) {
       console.error('❌ Erro ao listar projetos:', error);
@@ -252,6 +249,60 @@ export function registerFacelessVideoRoutes(app: Express) {
     } catch (error) {
       console.error('❌ Erro ao obter créditos:', error);
       res.status(500).json({ error: 'Falha ao obter créditos' });
+    }
+  });
+
+  /**
+   * OBTER CRÉDITOS COMPLETOS PARA FACELESS VIDEOS
+   */
+  app.get('/api/faceless-videos/credits', verifyJWT, async (req: any, res) => {
+    try {
+      const userId = req.user?.id;
+      
+      if (!userId) {
+        return res.status(401).json({ error: 'Usuário não autenticado' });
+      }
+
+      const user = await storage.getUserById(userId);
+      if (!user) {
+        return res.status(404).json({ error: 'Usuário não encontrado' });
+      }
+
+      const videoCredits = user.videoCredits || 0;
+      const aiCredits = user.aiCredits || 0;
+      const totalCredits = videoCredits + aiCredits + (user.smsCredits || 0) + (user.emailCredits || 0) + (user.whatsappCredits || 0);
+
+      res.json({
+        videoCredits,
+        aiCredits,
+        totalCredits,
+        plan: user.plan || 'free'
+      });
+
+    } catch (error) {
+      console.error('❌ Erro ao obter créditos:', error);
+      res.status(500).json({ error: 'Falha ao obter créditos' });
+    }
+  });
+
+  /**
+   * LISTAR PROJETOS DE VÍDEO
+   */
+  app.get('/api/faceless-videos/projects', verifyJWT, async (req: any, res) => {
+    try {
+      const userId = req.user?.id;
+      
+      if (!userId) {
+        return res.status(401).json({ error: 'Usuário não autenticado' });
+      }
+
+      const projects = await storage.getVideoProjects(userId);
+      
+      res.json(projects);
+
+    } catch (error) {
+      console.error('❌ Erro ao listar projetos:', error);
+      res.status(500).json({ error: 'Falha ao listar projetos' });
     }
   });
 
