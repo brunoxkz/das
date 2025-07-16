@@ -1012,3 +1012,135 @@ export type InsertTypebotWebhook = z.infer<typeof insertTypebotWebhookSchema>;
 export type TypebotWebhook = typeof typebotWebhooks.$inferSelect;
 export type InsertTypebotIntegration = z.infer<typeof insertTypebotIntegrationSchema>;
 export type TypebotIntegration = typeof typebotIntegrations.$inferSelect;
+
+// ===== SISTEMA DE BILLING E CONTROLE DE ACESSO =====
+
+// Tabela de Assinaturas
+export const subscriptions = sqliteTable("subscriptions", {
+  id: text("id").primaryKey(),
+  userId: text("userId").notNull().references(() => users.id),
+  stripeSubscriptionId: text("stripeSubscriptionId").unique(),
+  stripeCustomerId: text("stripeCustomerId"),
+  plan: text("plan").notNull(), // free, pro, enterprise
+  status: text("status").notNull(), // active, canceled, paused, expired
+  currentPeriodStart: integer("currentPeriodStart", { mode: 'timestamp' }),
+  currentPeriodEnd: integer("currentPeriodEnd", { mode: 'timestamp' }),
+  cancelAtPeriodEnd: integer("cancelAtPeriodEnd", { mode: 'boolean' }).default(false),
+  createdAt: integer("createdAt", { mode: 'timestamp' }).notNull().$defaultFn(() => new Date()),
+  updatedAt: integer("updatedAt", { mode: 'timestamp' }).notNull().$defaultFn(() => new Date()),
+});
+
+// Tabela de Transações de Crédito
+export const creditTransactions = sqliteTable("credit_transactions", {
+  id: text("id").primaryKey(),
+  userId: text("userId").notNull().references(() => users.id),
+  type: text("type").notNull(), // purchase, usage, refund, bonus, monthly_reset
+  category: text("category").notNull(), // sms, email, whatsapp, ai, voice
+  amount: integer("amount").notNull(), // Positivo para compra, negativo para uso
+  balanceBefore: integer("balanceBefore").notNull(),
+  balanceAfter: integer("balanceAfter").notNull(),
+  reason: text("reason"), // Motivo da transação
+  referenceId: text("referenceId"), // ID da campanha/ação que gerou a transação
+  metadata: text("metadata", { mode: 'json' }),
+  createdAt: integer("createdAt", { mode: 'timestamp' }).notNull().$defaultFn(() => new Date()),
+});
+
+// Tabela de Logs de Acesso
+export const accessLogs = sqliteTable("access_logs", {
+  id: text("id").primaryKey(),
+  userId: text("userId").references(() => users.id),
+  action: text("action").notNull(), // quiz_publish, campaign_create, campaign_send, etc
+  resource: text("resource").notNull(), // ID do recurso acessado
+  status: text("status").notNull(), // allowed, denied, blocked
+  reason: text("reason"), // Motivo do bloqueio/permissão
+  metadata: text("metadata", { mode: 'json' }),
+  ipAddress: text("ipAddress"),
+  userAgent: text("userAgent"),
+  createdAt: integer("createdAt", { mode: 'timestamp' }).notNull().$defaultFn(() => new Date()),
+});
+
+// Tabela de Limites por Plano
+export const planLimits = sqliteTable("plan_limits", {
+  id: text("id").primaryKey(),
+  plan: text("plan").notNull().unique(), // free, pro, enterprise
+  maxQuizzes: integer("maxQuizzes").default(-1), // -1 = ilimitado
+  maxCampaigns: integer("maxCampaigns").default(-1),
+  maxQuizResponses: integer("maxQuizResponses").default(-1),
+  allowCustomDomains: integer("allowCustomDomains", { mode: 'boolean' }).default(false),
+  allowAPIAccess: integer("allowAPIAccess", { mode: 'boolean' }).default(false),
+  allowAdvancedAnalytics: integer("allowAdvancedAnalytics", { mode: 'boolean' }).default(false),
+  allowWhatsappAutomation: integer("allowWhatsappAutomation", { mode: 'boolean' }).default(false),
+  allowAIFeatures: integer("allowAIFeatures", { mode: 'boolean' }).default(false),
+  monthlySMSCredits: integer("monthlySMSCredits").default(0),
+  monthlyEmailCredits: integer("monthlyEmailCredits").default(0),
+  monthlyWhatsappCredits: integer("monthlyWhatsappCredits").default(0),
+  monthlyAICredits: integer("monthlyAICredits").default(0),
+  monthlyVoiceCredits: integer("monthlyVoiceCredits").default(0),
+  createdAt: integer("createdAt", { mode: 'timestamp' }).notNull().$defaultFn(() => new Date()),
+  updatedAt: integer("updatedAt", { mode: 'timestamp' }).notNull().$defaultFn(() => new Date()),
+});
+
+// Tabela de Estatísticas de Uso
+export const userUsageStats = sqliteTable("user_usage_stats", {
+  id: text("id").primaryKey(),
+  userId: text("userId").notNull().references(() => users.id),
+  month: text("month").notNull(), // YYYY-MM
+  quizzesCreated: integer("quizzesCreated").default(0),
+  campaignsCreated: integer("campaignsCreated").default(0),
+  quizResponsesReceived: integer("quizResponsesReceived").default(0),
+  smsCreditsUsed: integer("smsCreditsUsed").default(0),
+  emailCreditsUsed: integer("emailCreditsUsed").default(0),
+  whatsappCreditsUsed: integer("whatsappCreditsUsed").default(0),
+  aiCreditsUsed: integer("aiCreditsUsed").default(0),
+  voiceCreditsUsed: integer("voiceCreditsUsed").default(0),
+  createdAt: integer("createdAt", { mode: 'timestamp' }).notNull().$defaultFn(() => new Date()),
+  updatedAt: integer("updatedAt", { mode: 'timestamp' }).notNull().$defaultFn(() => new Date()),
+});
+
+// Tabela de Usuários Bloqueados
+export const blockedUsers = sqliteTable("blocked_users", {
+  id: text("id").primaryKey(),
+  userId: text("userId").notNull().references(() => users.id),
+  reason: text("reason").notNull(),
+  blockedBy: text("blockedBy").notNull().references(() => users.id),
+  automaticUnblock: integer("automaticUnblock", { mode: 'boolean' }).default(false),
+  unblockAt: integer("unblockAt", { mode: 'timestamp' }),
+  metadata: text("metadata", { mode: 'json' }),
+  createdAt: integer("createdAt", { mode: 'timestamp' }).notNull().$defaultFn(() => new Date()),
+});
+
+// Tabela de Configurações da Extensão
+export const extensionSettings = sqliteTable("extension_settings", {
+  id: text("id").primaryKey(),
+  userId: text("userId").notNull().references(() => users.id),
+  connected: integer("connected", { mode: 'boolean' }).default(false),
+  lastPing: integer("lastPing", { mode: 'timestamp' }),
+  version: text("version"),
+  createdAt: integer("createdAt", { mode: 'timestamp' }).notNull().$defaultFn(() => new Date()),
+  updatedAt: integer("updatedAt", { mode: 'timestamp' }).notNull().$defaultFn(() => new Date()),
+});
+
+// Schemas Zod para Billing
+export const insertSubscriptionSchema = createInsertSchema(subscriptions);
+export const insertCreditTransactionSchema = createInsertSchema(creditTransactions);
+export const insertAccessLogSchema = createInsertSchema(accessLogs);
+export const insertPlanLimitSchema = createInsertSchema(planLimits);
+export const insertUserUsageStatsSchema = createInsertSchema(userUsageStats);
+export const insertBlockedUserSchema = createInsertSchema(blockedUsers);
+export const insertExtensionSettingsSchema = createInsertSchema(extensionSettings);
+
+// Types para Billing
+export type InsertSubscription = z.infer<typeof insertSubscriptionSchema>;
+export type Subscription = typeof subscriptions.$inferSelect;
+export type InsertCreditTransaction = z.infer<typeof insertCreditTransactionSchema>;
+export type CreditTransaction = typeof creditTransactions.$inferSelect;
+export type InsertAccessLog = z.infer<typeof insertAccessLogSchema>;
+export type AccessLog = typeof accessLogs.$inferSelect;
+export type InsertPlanLimit = z.infer<typeof insertPlanLimitSchema>;
+export type PlanLimit = typeof planLimits.$inferSelect;
+export type InsertUserUsageStats = z.infer<typeof insertUserUsageStatsSchema>;
+export type UserUsageStats = typeof userUsageStats.$inferSelect;
+export type InsertBlockedUser = z.infer<typeof insertBlockedUserSchema>;
+export type BlockedUser = typeof blockedUsers.$inferSelect;
+export type InsertExtensionSettings = z.infer<typeof insertExtensionSettingsSchema>;
+export type ExtensionSettings = typeof extensionSettings.$inferSelect;

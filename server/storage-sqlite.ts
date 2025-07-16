@@ -28,6 +28,8 @@ import {
   superAffiliates, affiliateSales,
   abTests, abTestViews, webhooks, webhookLogs, integrations,
   typebotProjects, typebotConversations, typebotMessages, typebotAnalytics, typebotWebhooks, typebotIntegrations,
+  // Billing tables
+  subscriptions, creditTransactions, accessLogs, planLimits, userUsageStats, blockedUsers, extensionSettings,
   type User, type UpsertUser, type InsertQuiz, type Quiz,
   type InsertQuizTemplate, type QuizTemplate,
   type InsertQuizResponse, type QuizResponse,
@@ -55,7 +57,15 @@ import {
   type InsertTypebotMessage, type TypebotMessage,
   type InsertTypebotAnalytics, type TypebotAnalytics,
   type InsertTypebotWebhook, type TypebotWebhook,
-  type InsertTypebotIntegration, type TypebotIntegration
+  type InsertTypebotIntegration, type TypebotIntegration,
+  // Billing types
+  type Subscription, type InsertSubscription,
+  type CreditTransaction, type InsertCreditTransaction,
+  type AccessLog, type InsertAccessLog,
+  type PlanLimit, type InsertPlanLimit,
+  type UserUsageStats, type InsertUserUsageStats,
+  type BlockedUser, type InsertBlockedUser,
+  type ExtensionSettings, type InsertExtensionSettings
 } from "../shared/schema-sqlite";
 import { eq, desc, and, gte, lte, count, asc, or, inArray } from "drizzle-orm";
 import { nanoid } from "nanoid";
@@ -73,6 +83,37 @@ export interface IStorage {
   // Admin operations
   getAllUsers(): Promise<User[]>;
   updateUserRole(userId: string, role: string): Promise<User>;
+  
+  // === BILLING E CONTROLE DE ACESSO ===
+  
+  // Subscription operations
+  createSubscription(subscription: InsertSubscription): Promise<Subscription>;
+  getSubscription(userId: string): Promise<Subscription | undefined>;
+  updateSubscription(id: string, updates: Partial<Subscription>): Promise<Subscription>;
+  
+  // Credit operations
+  getCreditBalance(userId: string): Promise<{sms: number, email: number, whatsapp: number, ai: number, voice: number}>;
+  debitCredits(userId: string, category: string, amount: number, reason: string, referenceId?: string): Promise<boolean>;
+  addCredits(userId: string, category: string, amount: number, reason: string, referenceId?: string): Promise<boolean>;
+  getCreditTransactions(userId: string, limit?: number): Promise<CreditTransaction[]>;
+  
+  // Access control
+  checkAccess(userId: string, action: string, resource?: string): Promise<{allowed: boolean, reason?: string}>;
+  logAccess(userId: string, action: string, resource: string, status: string, reason?: string): Promise<void>;
+  
+  // Plan limits
+  getPlanLimits(plan: string): Promise<PlanLimit | undefined>;
+  createPlanLimit(planLimit: InsertPlanLimit): Promise<PlanLimit>;
+  updatePlanLimit(plan: string, updates: Partial<PlanLimit>): Promise<PlanLimit>;
+  
+  // Usage stats
+  getUserUsageStats(userId: string, month: string): Promise<UserUsageStats | undefined>;
+  updateUsageStats(userId: string, month: string, updates: Partial<UserUsageStats>): Promise<UserUsageStats>;
+  
+  // Blocked users
+  blockUser(userId: string, reason: string, blockedBy: string): Promise<void>;
+  unblockUser(userId: string): Promise<void>;
+  isUserBlocked(userId: string): Promise<boolean>;
   deleteUser(userId: string): Promise<void>;
 
   // Quiz operations
@@ -3974,6 +4015,330 @@ export class SQLiteStorage implements IStorage {
       console.error('❌ ERRO ao marcar todas as notificações como lidas:', error);
       throw error;
     }
+  }
+
+  // ===== BILLING E CONTROLE DE ACESSO =====
+
+  // Subscription operations
+  async createSubscription(subscription: InsertSubscription): Promise<Subscription> {
+    const [newSubscription] = await db.insert(subscriptions)
+      .values({
+        ...subscription,
+        id: nanoid(),
+        createdAt: new Date(),
+        updatedAt: new Date()
+      })
+      .returning();
+    return newSubscription;
+  }
+
+  async getSubscription(userId: string): Promise<Subscription | undefined> {
+    const [subscription] = await db.select()
+      .from(subscriptions)
+      .where(eq(subscriptions.userId, userId))
+      .orderBy(desc(subscriptions.createdAt))
+      .limit(1);
+    return subscription;
+  }
+
+  async updateSubscription(id: string, updates: Partial<Subscription>): Promise<Subscription> {
+    const [updatedSubscription] = await db.update(subscriptions)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(subscriptions.id, id))
+      .returning();
+    return updatedSubscription;
+  }
+
+  // Credit operations
+  async getCreditBalance(userId: string): Promise<{sms: number, email: number, whatsapp: number, ai: number, voice: number}> {
+    const [user] = await db.select()
+      .from(users)
+      .where(eq(users.id, userId))
+      .limit(1);
+    
+    if (!user) {
+      return {sms: 0, email: 0, whatsapp: 0, ai: 0, voice: 0};
+    }
+
+    return {
+      sms: user.smsCredits || 0,
+      email: user.emailCredits || 0,
+      whatsapp: user.whatsappCredits || 0,
+      ai: user.aiCredits || 0,
+      voice: 0 // Não implementado ainda
+    };
+  }
+
+  async debitCredits(userId: string, category: string, amount: number, reason: string, referenceId?: string): Promise<boolean> {
+    const [user] = await db.select()
+      .from(users)
+      .where(eq(users.id, userId))
+      .limit(1);
+    
+    if (!user) return false;
+
+    const columnMap = {
+      sms: 'smsCredits',
+      email: 'emailCredits',
+      whatsapp: 'whatsappCredits',
+      ai: 'aiCredits',
+      voice: 'voiceCredits'
+    };
+
+    const column = columnMap[category];
+    if (!column) return false;
+
+    const currentBalance = user[column] || 0;
+    if (currentBalance < amount) return false;
+
+    const newBalance = currentBalance - amount;
+    
+    // Atualizar saldo do usuário
+    await db.update(users)
+      .set({ [column]: newBalance })
+      .where(eq(users.id, userId));
+
+    // Registrar transação
+    await db.insert(creditTransactions)
+      .values({
+        id: nanoid(),
+        userId,
+        type: 'usage',
+        category,
+        amount: -amount,
+        balanceBefore: currentBalance,
+        balanceAfter: newBalance,
+        reason,
+        referenceId,
+        createdAt: new Date()
+      });
+
+    return true;
+  }
+
+  async addCredits(userId: string, category: string, amount: number, reason: string, referenceId?: string): Promise<boolean> {
+    const [user] = await db.select()
+      .from(users)
+      .where(eq(users.id, userId))
+      .limit(1);
+    
+    if (!user) return false;
+
+    const columnMap = {
+      sms: 'smsCredits',
+      email: 'emailCredits',
+      whatsapp: 'whatsappCredits',
+      ai: 'aiCredits',
+      voice: 'voiceCredits'
+    };
+
+    const column = columnMap[category];
+    if (!column) return false;
+
+    const currentBalance = user[column] || 0;
+    const newBalance = currentBalance + amount;
+    
+    // Atualizar saldo do usuário
+    await db.update(users)
+      .set({ [column]: newBalance })
+      .where(eq(users.id, userId));
+
+    // Registrar transação
+    await db.insert(creditTransactions)
+      .values({
+        id: nanoid(),
+        userId,
+        type: 'purchase',
+        category,
+        amount,
+        balanceBefore: currentBalance,
+        balanceAfter: newBalance,
+        reason,
+        referenceId,
+        createdAt: new Date()
+      });
+
+    return true;
+  }
+
+  async getCreditTransactions(userId: string, limit = 50): Promise<CreditTransaction[]> {
+    const transactions = await db.select()
+      .from(creditTransactions)
+      .where(eq(creditTransactions.userId, userId))
+      .orderBy(desc(creditTransactions.createdAt))
+      .limit(limit);
+    
+    return transactions;
+  }
+
+  // Access control
+  async checkAccess(userId: string, action: string, resource?: string): Promise<{allowed: boolean, reason?: string}> {
+    // Verificar se usuário está bloqueado
+    const blocked = await this.isUserBlocked(userId);
+    if (blocked) {
+      return { allowed: false, reason: 'User is blocked' };
+    }
+
+    // Verificar plano do usuário
+    const [user] = await db.select()
+      .from(users)
+      .where(eq(users.id, userId))
+      .limit(1);
+    
+    if (!user) {
+      return { allowed: false, reason: 'User not found' };
+    }
+
+    // Verificar limites do plano
+    const planLimits = await this.getPlanLimits(user.plan || 'free');
+    if (!planLimits) {
+      return { allowed: false, reason: 'Plan limits not found' };
+    }
+
+    // Verificar ações específicas
+    switch (action) {
+      case 'quiz_publish':
+        if (user.plan === 'free' && planLimits.maxQuizzes > 0) {
+          const quizCount = await db.select({ count: count() })
+            .from(quizzes)
+            .where(eq(quizzes.userId, userId));
+          if (quizCount[0].count >= planLimits.maxQuizzes) {
+            return { allowed: false, reason: 'Quiz limit reached for your plan' };
+          }
+        }
+        break;
+      
+      case 'campaign_create':
+        if (user.plan === 'free' && planLimits.maxCampaigns > 0) {
+          const campaignCount = await db.select({ count: count() })
+            .from(smsCampaigns)
+            .where(eq(smsCampaigns.userId, userId));
+          if (campaignCount[0].count >= planLimits.maxCampaigns) {
+            return { allowed: false, reason: 'Campaign limit reached for your plan' };
+          }
+        }
+        break;
+      
+      case 'whatsapp_automation':
+        if (!planLimits.allowWhatsappAutomation) {
+          return { allowed: false, reason: 'WhatsApp automation not allowed for your plan' };
+        }
+        break;
+      
+      case 'ai_features':
+        if (!planLimits.allowAIFeatures) {
+          return { allowed: false, reason: 'AI features not allowed for your plan' };
+        }
+        break;
+    }
+
+    return { allowed: true };
+  }
+
+  async logAccess(userId: string, action: string, resource: string, status: string, reason?: string): Promise<void> {
+    await db.insert(accessLogs)
+      .values({
+        id: nanoid(),
+        userId,
+        action,
+        resource,
+        status,
+        reason,
+        createdAt: new Date()
+      });
+  }
+
+  // Plan limits
+  async getPlanLimits(plan: string): Promise<PlanLimit | undefined> {
+    const [limit] = await db.select()
+      .from(planLimits)
+      .where(eq(planLimits.plan, plan))
+      .limit(1);
+    return limit;
+  }
+
+  async createPlanLimit(planLimit: InsertPlanLimit): Promise<PlanLimit> {
+    const [newLimit] = await db.insert(planLimits)
+      .values({
+        ...planLimit,
+        id: nanoid(),
+        createdAt: new Date(),
+        updatedAt: new Date()
+      })
+      .returning();
+    return newLimit;
+  }
+
+  async updatePlanLimit(plan: string, updates: Partial<PlanLimit>): Promise<PlanLimit> {
+    const [updatedLimit] = await db.update(planLimits)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(planLimits.plan, plan))
+      .returning();
+    return updatedLimit;
+  }
+
+  // Usage stats
+  async getUserUsageStats(userId: string, month: string): Promise<UserUsageStats | undefined> {
+    const [stats] = await db.select()
+      .from(userUsageStats)
+      .where(and(
+        eq(userUsageStats.userId, userId),
+        eq(userUsageStats.month, month)
+      ))
+      .limit(1);
+    return stats;
+  }
+
+  async updateUsageStats(userId: string, month: string, updates: Partial<UserUsageStats>): Promise<UserUsageStats> {
+    const existingStats = await this.getUserUsageStats(userId, month);
+    
+    if (existingStats) {
+      const [updatedStats] = await db.update(userUsageStats)
+        .set({ ...updates, updatedAt: new Date() })
+        .where(and(
+          eq(userUsageStats.userId, userId),
+          eq(userUsageStats.month, month)
+        ))
+        .returning();
+      return updatedStats;
+    } else {
+      const [newStats] = await db.insert(userUsageStats)
+        .values({
+          id: nanoid(),
+          userId,
+          month,
+          ...updates,
+          createdAt: new Date(),
+          updatedAt: new Date()
+        })
+        .returning();
+      return newStats;
+    }
+  }
+
+  // Blocked users
+  async blockUser(userId: string, reason: string, blockedBy: string): Promise<void> {
+    await db.insert(blockedUsers)
+      .values({
+        id: nanoid(),
+        userId,
+        reason,
+        blockedBy,
+        createdAt: new Date()
+      });
+  }
+
+  async unblockUser(userId: string): Promise<void> {
+    await db.delete(blockedUsers)
+      .where(eq(blockedUsers.userId, userId));
+  }
+
+  async isUserBlocked(userId: string): Promise<boolean> {
+    const [blocked] = await db.select()
+      .from(blockedUsers)
+      .where(eq(blockedUsers.userId, userId))
+      .limit(1);
+    return !!blocked;
   }
 
   // ===== SUPER AFFILIATES METHODS =====

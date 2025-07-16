@@ -29,6 +29,13 @@ import QRCode from 'qrcode';
 import { generateTokens } from './auth-sqlite';
 import HealthCheckSystem from './health-check-system.js';
 import WhatsAppBusinessAPI from './whatsapp-business-api';
+import { 
+  checkCredits, 
+  checkPlanAccess, 
+  debitCreditsAfterSuccess, 
+  checkUserBlocked, 
+  updateUsageStats 
+} from './billing-middleware';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -678,7 +685,9 @@ export function registerSQLiteRoutes(app: Express): Server {
   });
 
   // Create quiz
-  app.post("/api/quizzes", verifyJWT, async (req: any, res) => {
+  app.post("/api/quizzes", verifyJWT, checkUserBlocked, (req: any, res: any, next: any) => {
+    checkPlanAccess('quiz_publish')(req, res, next);
+  }, async (req: any, res) => {
     try {
       const userId = req.user.id;
       console.log(`🔄 CRIANDO NOVO QUIZ - User: ${userId}`);
@@ -2899,7 +2908,9 @@ export function registerSQLiteRoutes(app: Express): Server {
     }
   });
 
-  app.post("/api/sms-campaigns", verifyJWT, async (req: any, res: Response) => {
+  app.post("/api/sms-campaigns", verifyJWT, checkUserBlocked, (req: any, res: any, next: any) => {
+    checkPlanAccess('campaign_create')(req, res, next);
+  }, async (req: any, res: Response) => {
     try {
       const userId = req.user.id;
       console.log("📱 SMS CAMPAIGN CREATE - Body recebido:", JSON.stringify(req.body, null, 2));
@@ -5431,7 +5442,9 @@ app.get("/api/whatsapp-campaigns", verifyJWT, async (req: any, res: Response) =>
 });
 
 // Create WhatsApp campaign
-app.post("/api/whatsapp-campaigns", verifyJWT, async (req: any, res: Response) => {
+app.post("/api/whatsapp-campaigns", verifyJWT, checkUserBlocked, (req: any, res: any, next: any) => {
+    checkPlanAccess('whatsapp_automation')(req, res, next);
+  }, async (req: any, res: Response) => {
   try {
     const userId = req.user.id;
     const { name, quizId, quizTitle, messages, targetAudience = 'all', dateFilter, triggerType = 'delayed', triggerDelay = 10, triggerUnit = 'minutes', scheduledDateTime, extensionSettings } = req.body;
@@ -6492,7 +6505,9 @@ app.get("/api/whatsapp-extension/pending", verifyJWT, async (req: any, res: Resp
   });
 
   // Criar campanha de email
-  app.post("/api/email-campaigns", verifyJWT, async (req: any, res) => {
+  app.post("/api/email-campaigns", verifyJWT, checkUserBlocked, (req: any, res: any, next: any) => {
+    checkPlanAccess('campaign_create')(req, res, next);
+  }, async (req: any, res) => {
     try {
       const { 
         name, 
@@ -8413,6 +8428,217 @@ app.get("/api/whatsapp-extension/pending", verifyJWT, async (req: any, res: Resp
   });
 
   console.log('✅ I.A. CONVERSION + ENDPOINTS REGISTRADOS');
+
+  // =============================================
+  // BILLING & CREDITS ENDPOINTS
+  // =============================================
+
+  // Get user credits
+  app.get("/api/user/credits", verifyJWT, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const credits = await storage.getUserCredits(userId);
+      res.json(credits);
+    } catch (error) {
+      console.error("Error getting user credits:", error);
+      res.status(500).json({ error: "Erro ao buscar créditos do usuário" });
+    }
+  });
+
+  // Get user subscription
+  app.get("/api/user/subscription", verifyJWT, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const subscription = await storage.getUserSubscription(userId);
+      res.json(subscription || { plan: 'FREE' });
+    } catch (error) {
+      console.error("Error getting user subscription:", error);
+      res.status(500).json({ error: "Erro ao buscar assinatura do usuário" });
+    }
+  });
+
+  // Get user plan limits
+  app.get("/api/user/plan-limits", verifyJWT, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const subscription = await storage.getUserSubscription(userId);
+      const planType = subscription?.plan || 'FREE';
+      const limits = await storage.getPlanLimits(planType);
+      res.json(limits);
+    } catch (error) {
+      console.error("Error getting plan limits:", error);
+      res.status(500).json({ error: "Erro ao buscar limites do plano" });
+    }
+  });
+
+  // Get user usage stats
+  app.get("/api/user/usage-stats", verifyJWT, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const stats = await storage.getUserUsageStats(userId);
+      res.json(stats);
+    } catch (error) {
+      console.error("Error getting usage stats:", error);
+      res.status(500).json({ error: "Erro ao buscar estatísticas de uso" });
+    }
+  });
+
+  // Add credits to user
+  app.post("/api/user/credits", verifyJWT, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const { type, amount, description } = req.body;
+      
+      if (!type || !amount || amount <= 0) {
+        return res.status(400).json({ error: "Tipo e quantidade de créditos são obrigatórios" });
+      }
+
+      const transaction = await storage.addCredits(userId, type, amount, description || `Créditos ${type} adicionados`);
+      res.json(transaction);
+    } catch (error) {
+      console.error("Error adding credits:", error);
+      res.status(500).json({ error: "Erro ao adicionar créditos" });
+    }
+  });
+
+  // Get credit transaction history
+  app.get("/api/user/credit-history", verifyJWT, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const { page = 1, limit = 20, type } = req.query;
+      
+      const history = await storage.getCreditHistory(userId, {
+        page: parseInt(page as string),
+        limit: parseInt(limit as string),
+        type: type as string
+      });
+      
+      res.json(history);
+    } catch (error) {
+      console.error("Error getting credit history:", error);
+      res.status(500).json({ error: "Erro ao buscar histórico de créditos" });
+    }
+  });
+
+  // Check if user is blocked
+  app.get("/api/user/blocked-status", verifyJWT, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const blockedUser = await storage.getBlockedUser(userId);
+      res.json({ 
+        isBlocked: !!blockedUser,
+        reason: blockedUser?.reason || null,
+        blockedAt: blockedUser?.blockedAt || null,
+        blockedUntil: blockedUser?.blockedUntil || null
+      });
+    } catch (error) {
+      console.error("Error checking blocked status:", error);
+      res.status(500).json({ error: "Erro ao verificar status de bloqueio" });
+    }
+  });
+
+  // Upgrade user plan (admin only)
+  app.post("/api/admin/upgrade-plan", verifyJWT, async (req: any, res) => {
+    try {
+      const { userId, plan, months = 1 } = req.body;
+      
+      if (!userId || !plan) {
+        return res.status(400).json({ error: "ID do usuário e plano são obrigatórios" });
+      }
+
+      const subscription = await storage.upgradeUserPlan(userId, plan, months);
+      res.json(subscription);
+    } catch (error) {
+      console.error("Error upgrading plan:", error);
+      res.status(500).json({ error: "Erro ao atualizar plano" });
+    }
+  });
+
+  console.log('✅ BILLING & CREDITS ENDPOINTS REGISTRADOS');
+
+  // =============================================
+  // ADMIN BILLING ENDPOINTS
+  // =============================================
+
+  // Get billing statistics (admin only)
+  app.get("/api/admin/billing-stats", verifyJWT, async (req: any, res) => {
+    try {
+      // TODO: Add admin verification middleware
+      const stats = await storage.getBillingStats();
+      res.json(stats);
+    } catch (error) {
+      console.error("Error getting billing stats:", error);
+      res.status(500).json({ error: "Erro ao buscar estatísticas de billing" });
+    }
+  });
+
+  // Get all users with billing info (admin only)
+  app.get("/api/admin/users", verifyJWT, async (req: any, res) => {
+    try {
+      // TODO: Add admin verification middleware
+      const users = await storage.getAllUsersWithBilling();
+      res.json(users);
+    } catch (error) {
+      console.error("Error getting users:", error);
+      res.status(500).json({ error: "Erro ao buscar usuários" });
+    }
+  });
+
+  // Add credits to user (admin only)
+  app.post("/api/admin/add-credits", verifyJWT, async (req: any, res) => {
+    try {
+      // TODO: Add admin verification middleware
+      const { userId, type, amount, description } = req.body;
+      
+      if (!userId || !type || !amount || amount <= 0) {
+        return res.status(400).json({ error: "Dados inválidos" });
+      }
+
+      const transaction = await storage.addCredits(userId, type, amount, description || `Créditos ${type} adicionados pelo admin`);
+      res.json(transaction);
+    } catch (error) {
+      console.error("Error adding credits:", error);
+      res.status(500).json({ error: "Erro ao adicionar créditos" });
+    }
+  });
+
+  // Block user (admin only)
+  app.post("/api/admin/block-user", verifyJWT, async (req: any, res) => {
+    try {
+      // TODO: Add admin verification middleware
+      const { userId, reason } = req.body;
+      
+      if (!userId) {
+        return res.status(400).json({ error: "ID do usuário é obrigatório" });
+      }
+
+      const blockedUser = await storage.blockUser(userId, reason || "Bloqueado pelo administrador");
+      res.json(blockedUser);
+    } catch (error) {
+      console.error("Error blocking user:", error);
+      res.status(500).json({ error: "Erro ao bloquear usuário" });
+    }
+  });
+
+  // Unblock user (admin only)
+  app.post("/api/admin/unblock-user", verifyJWT, async (req: any, res) => {
+    try {
+      // TODO: Add admin verification middleware
+      const { userId } = req.body;
+      
+      if (!userId) {
+        return res.status(400).json({ error: "ID do usuário é obrigatório" });
+      }
+
+      await storage.unblockUser(userId);
+      res.json({ message: "Usuário desbloqueado com sucesso" });
+    } catch (error) {
+      console.error("Error unblocking user:", error);
+      res.status(500).json({ error: "Erro ao desbloquear usuário" });
+    }
+  });
+
+  console.log('✅ ADMIN BILLING ENDPOINTS REGISTRADOS');
 
   // =============================================
   // CAMPAIGN COUNT ENDPOINTS FOR DASHBOARD
