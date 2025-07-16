@@ -9,6 +9,7 @@ import { ModernButton } from "@/components/ui/modern-button";
 import { ModernCard, ModernCardContent, ModernCardHeader, ModernCardTitle } from "@/components/ui/modern-card";
 import { animations, microInteractions } from "@/lib/animations";
 import { cn } from "@/lib/utils";
+import { useTranslation } from "react-i18next";
 import { 
   FileText, 
   Plus, 
@@ -683,6 +684,7 @@ export function PageEditorHorizontal({
   onThemeChange,
   onActivePageChange 
 }: PageEditorProps) {
+  const { t } = useTranslation();
   const [activePage, setActivePage] = useState(0);
 
   // Notificar mudança de página ativa
@@ -736,44 +738,77 @@ export function PageEditorHorizontal({
   };
 
 
-  // Função para traduzir os tipos de elementos
+  // Função para traduzir os tipos de elementos usando i18n
   const getElementTypeName = (type: string) => {
-    const typeNames: Record<string, string> = {
-      heading: "Título",
-      paragraph: "Parágrafo", 
-      image: "Imagem",
-      video: "Vídeo",
-      divider: "Divisória",
-      multiple_choice: "Múltipla Escolha",
-      text: "Campo de Texto",
-      email: "Campo de Email",
-      phone: "Campo de Telefone",
-      number: "Campo Numérico",
-      rating: "Avaliação",
-      animated_transition: "Transição Animada",
-      checkbox: "Checkbox",
-      date: "Data",
-      birth_date: "Data de Nascimento",
-      height: "Altura",
-      current_weight: "Peso Atual",
-      target_weight: "Peso Desejado",
-      textarea: "Área de Texto",
-      image_upload: "Upload de Imagem",
-      spacer: "Espaço",
-      game_wheel: "Roleta",
-      game_scratch: "Raspadinha",
-      game_color_pick: "Escolha de Cor",
-      game_brick_break: "Quebre o Muro",
-      game_memory_cards: "Jogo da Memória",
-      game_slot_machine: "Caça-Níquel",
-      continue_button: "Botão Continuar",
-      loading_question: "Carregamento + Pergunta",
-      body_type_classifier: "Tipos de Corpo",
-      age_classifier: "Classificador de Idade", 
-      fitness_goal_classifier: "Objetivos Fitness",
-      experience_classifier: "Nível de Experiência"
+    // Mapear tipos para chaves de tradução
+    const typeKeyMap: Record<string, string> = {
+      heading: "heading",
+      paragraph: "paragraph", 
+      image: "image",
+      video: "video",
+      divider: "divider",
+      multiple_choice: "multipleChoice",
+      text: "text",
+      email: "email",
+      phone: "phone",
+      number: "number",
+      rating: "rating",
+      animated_transition: "animatedTransition",
+      checkbox: "checkbox",
+      date: "date",
+      birth_date: "birthDate",
+      height: "height",
+      current_weight: "currentWeight",
+      target_weight: "targetWeight",
+      textarea: "textarea",
+      image_upload: "imageUpload",
+      spacer: "spacer",
+      game_wheel: "gameWheel",
+      game_scratch: "gameScratch",
+      game_color_pick: "gameColorPick",
+      game_brick_break: "gameBrickBreak",
+      game_memory_cards: "gameMemoryCards",
+      game_slot_machine: "gameSlotMachine",
+      continue_button: "continueButton",
+      loading_question: "loadingQuestion",
+      body_type_classifier: "bodyTypeClassifier",
+      age_classifier: "ageClassifier", 
+      fitness_goal_classifier: "fitnessGoalClassifier",
+      experience_classifier: "experienceClassifier",
+      share_quiz: "shareQuiz",
+      social_proof: "socialProof",
+      urgency_timer: "urgencyTimer",
+      testimonials: "testimonials",
+      guarantee: "guarantee",
+      icon_list: "iconList",
+      faq: "faq",
+      image_with_text: "imageWithText",
+      image_carousel: "imageCarousel",
+      cta_button: "ctaButton",
+      price_comparison: "priceComparison",
+      metrics: "metrics",
+      plans: "plans",
+      before_after: "beforeAfter",
+      stripe_embed: "stripeEmbed",
+      calculator: "calculator",
+      countdown: "countdown",
+      audio: "audio",
+      progress_bar: "progressBar",
+      chart: "chart",
+      pricing_plans: "pricingPlans",
+      paypal: "paypal",
+      hotmart_upsell: "hotmartUpsell",
+      transition_background: "transitionBackground",
+      transition_text: "transitionText",
+      transition_counter: "transitionCounter",
+      transition_loader: "transitionLoader",
+      transition_button: "transitionButton",
+      transition_redirect: "transitionRedirect",
+      netflix_intro: "netflixIntro"
     };
-    return typeNames[type] || type;
+    
+    const translationKey = typeKeyMap[type];
+    return translationKey ? t(`quiz.elements.${translationKey}`) : type;
   };
 
   // Função para converter imagem para WebP
@@ -842,91 +877,91 @@ export function PageEditorHorizontal({
 
   const elementCategories = [
     {
-      name: "📝 Conteúdo",
+      name: t('quiz.elementCategories.content'),
       elements: [
-        { type: "heading", label: "Título", icon: <Type className="w-4 h-4" /> },
-        { type: "paragraph", label: "Texto", icon: <AlignLeft className="w-4 h-4" /> },
-        { type: "divider", label: "Linha", icon: <Minus className="w-4 h-4" /> },
-        { type: "spacer", label: "Espaço", icon: <ArrowUpDown className="w-4 h-4" /> },
+        { type: "heading", label: getElementTypeName("heading"), icon: <Type className="w-4 h-4" /> },
+        { type: "paragraph", label: getElementTypeName("paragraph"), icon: <AlignLeft className="w-4 h-4" /> },
+        { type: "divider", label: getElementTypeName("divider"), icon: <Minus className="w-4 h-4" /> },
+        { type: "spacer", label: getElementTypeName("spacer"), icon: <ArrowUpDown className="w-4 h-4" /> },
       ]
     },
     {
-      name: "❓ Perguntas",
+      name: t('quiz.elementCategories.questions'),
       elements: [
-        { type: "multiple_choice", label: "Múltipla", icon: <CheckSquare className="w-4 h-4" /> },
-        { type: "text", label: "Campo", icon: <FileText className="w-4 h-4" /> },
-        { type: "email", label: "Email", icon: <Mail className="w-4 h-4" /> },
-        { type: "phone", label: "Telefone", icon: <Phone className="w-4 h-4" /> },
-        { type: "number", label: "Número", icon: <Hash className="w-4 h-4" /> },
-        { type: "rating", label: "Estrelas", icon: <Star className="w-4 h-4" /> },
-        { type: "date", label: "Data", icon: <Calendar className="w-4 h-4" /> },
-        { type: "textarea", label: "Área", icon: <TextArea className="w-4 h-4" /> },
+        { type: "multiple_choice", label: getElementTypeName("multiple_choice"), icon: <CheckSquare className="w-4 h-4" /> },
+        { type: "text", label: getElementTypeName("text"), icon: <FileText className="w-4 h-4" /> },
+        { type: "email", label: getElementTypeName("email"), icon: <Mail className="w-4 h-4" /> },
+        { type: "phone", label: getElementTypeName("phone"), icon: <Phone className="w-4 h-4" /> },
+        { type: "number", label: getElementTypeName("number"), icon: <Hash className="w-4 h-4" /> },
+        { type: "rating", label: getElementTypeName("rating"), icon: <Star className="w-4 h-4" /> },
+        { type: "date", label: getElementTypeName("date"), icon: <Calendar className="w-4 h-4" /> },
+        { type: "textarea", label: getElementTypeName("textarea"), icon: <TextArea className="w-4 h-4" /> },
 
-        { type: "loading_question", label: "Progresso + Pergunta", icon: <Loader className="w-4 h-4" /> },
+        { type: "loading_question", label: getElementTypeName("loading_question"), icon: <Loader className="w-4 h-4" /> },
       ]
     },
     {
-      name: "📋 Formulário",
+      name: t('quiz.elementCategories.form'),
       elements: [
-        { type: "birth_date", label: "Nascimento", icon: <Calendar className="w-4 h-4" /> },
-        { type: "height", label: "Altura", icon: <ArrowUpDown className="w-4 h-4" /> },
-        { type: "current_weight", label: "Peso Atual", icon: <Scale className="w-4 h-4" /> },
-        { type: "target_weight", label: "Peso Meta", icon: <Target className="w-4 h-4" /> },
+        { type: "birth_date", label: getElementTypeName("birth_date"), icon: <Calendar className="w-4 h-4" /> },
+        { type: "height", label: getElementTypeName("height"), icon: <ArrowUpDown className="w-4 h-4" /> },
+        { type: "current_weight", label: getElementTypeName("current_weight"), icon: <Scale className="w-4 h-4" /> },
+        { type: "target_weight", label: getElementTypeName("target_weight"), icon: <Target className="w-4 h-4" /> },
       ]
     },
     {
-      name: "🎨 Mídia",
+      name: t('quiz.elementCategories.media'),
       elements: [
-        { type: "image", label: "Imagem", icon: <ImageIcon className="w-4 h-4" /> },
-        { type: "image_upload", label: "Upload", icon: <Upload className="w-4 h-4" /> },
-        { type: "video", label: "Vídeo", icon: <Video className="w-4 h-4" /> },
-        { type: "audio", label: "Áudio", icon: <Volume2 className="w-4 h-4" /> },
+        { type: "image", label: getElementTypeName("image"), icon: <ImageIcon className="w-4 h-4" /> },
+        { type: "image_upload", label: getElementTypeName("image_upload"), icon: <Upload className="w-4 h-4" /> },
+        { type: "video", label: getElementTypeName("video"), icon: <Video className="w-4 h-4" /> },
+        { type: "audio", label: getElementTypeName("audio"), icon: <Volume2 className="w-4 h-4" /> },
       ]
     },
     {
-      name: "📄 Conteúdo Avançado",
+      name: t('quiz.elementCategories.advancedContent'),
       elements: [
-        { type: "testimonials", label: "Depoimentos", icon: <MessageSquare className="w-4 h-4" /> },
-        { type: "guarantee", label: "Garantia", icon: <Shield className="w-4 h-4" /> },
-        { type: "icon_list", label: "Lista de Ícones", icon: <Star className="w-4 h-4" /> },
-        { type: "faq", label: "FAQ", icon: <HelpCircle className="w-4 h-4" /> },
-        { type: "image_with_text", label: "Imagem com Texto", icon: <ImageIcon className="w-4 h-4" /> },
-        { type: "image_carousel", label: "Carrossel", icon: <ImageIcon className="w-4 h-4" /> },
+        { type: "testimonials", label: getElementTypeName("testimonials"), icon: <MessageSquare className="w-4 h-4" /> },
+        { type: "guarantee", label: getElementTypeName("guarantee"), icon: <Shield className="w-4 h-4" /> },
+        { type: "icon_list", label: getElementTypeName("icon_list"), icon: <Star className="w-4 h-4" /> },
+        { type: "faq", label: getElementTypeName("faq"), icon: <HelpCircle className="w-4 h-4" /> },
+        { type: "image_with_text", label: getElementTypeName("image_with_text"), icon: <ImageIcon className="w-4 h-4" /> },
+        { type: "image_carousel", label: getElementTypeName("image_carousel"), icon: <ImageIcon className="w-4 h-4" /> },
       ]
     },
     {
-      name: "🔄 Navegação",
+      name: t('quiz.elementCategories.navigation'),
       elements: [
-        { type: "continue_button", label: "Botão", icon: <ArrowRight className="w-4 h-4" /> },
-        { type: "share_quiz", label: "Compartilhar", icon: <Share2 className="w-4 h-4" /> },
-        { type: "animated_transition", label: "Transição", icon: <Sparkles className="w-4 h-4" /> },
-        { type: "progress_bar", label: "Barra de Progresso", icon: <BarChart3 className="w-4 h-4" /> },
+        { type: "continue_button", label: getElementTypeName("continue_button"), icon: <ArrowRight className="w-4 h-4" /> },
+        { type: "share_quiz", label: getElementTypeName("share_quiz"), icon: <Share2 className="w-4 h-4" /> },
+        { type: "animated_transition", label: getElementTypeName("animated_transition"), icon: <Sparkles className="w-4 h-4" /> },
+        { type: "progress_bar", label: getElementTypeName("progress_bar"), icon: <BarChart3 className="w-4 h-4" /> },
       ]
     },
     {
-      name: "📊 Visualizações",
+      name: t('quiz.elementCategories.visualizations'),
       elements: [
-        { type: "chart", label: "Gráfico", icon: <BarChart3 className="w-4 h-4" /> },
-        { type: "metrics", label: "Métricas", icon: <TrendingUp className="w-4 h-4" /> },
-        { type: "before_after", label: "Antes/Depois", icon: <ArrowLeftRight className="w-4 h-4" /> },
+        { type: "chart", label: getElementTypeName("chart"), icon: <BarChart3 className="w-4 h-4" /> },
+        { type: "metrics", label: getElementTypeName("metrics"), icon: <TrendingUp className="w-4 h-4" /> },
+        { type: "before_after", label: getElementTypeName("before_after"), icon: <ArrowLeftRight className="w-4 h-4" /> },
       ]
     },
     {
-      name: "💰 Vendas",
+      name: t('quiz.elementCategories.sales'),
       elements: [
-        { type: "pricing_plans", label: "Planos", icon: <CreditCard className="w-4 h-4" /> },
-        { type: "stripe_embed", label: "Stripe", icon: <Shield className="w-4 h-4" /> },
-        { type: "paypal", label: "PayPal", icon: <CreditCard className="w-4 h-4" /> },
-        { type: "hotmart_upsell", label: "Upsell Hotmart", icon: <Target className="w-4 h-4" /> },
+        { type: "pricing_plans", label: getElementTypeName("pricing_plans"), icon: <CreditCard className="w-4 h-4" /> },
+        { type: "stripe_embed", label: getElementTypeName("stripe_embed"), icon: <Shield className="w-4 h-4" /> },
+        { type: "paypal", label: getElementTypeName("paypal"), icon: <CreditCard className="w-4 h-4" /> },
+        { type: "hotmart_upsell", label: getElementTypeName("hotmart_upsell"), icon: <Target className="w-4 h-4" /> },
       ]
     },
     {
-      name: "🚀 ULTRA PERSONALIZAÇÃO",
+      name: t('quiz.elementCategories.ultraPersonalization'),
       elements: [
-        { type: "body_type_classifier", label: "Tipos de Corpo", icon: <Users className="w-4 h-4" /> },
-        { type: "age_classifier", label: "Faixa Etária", icon: <Calendar className="w-4 h-4" /> },
-        { type: "fitness_goal_classifier", label: "Objetivos Fitness", icon: <Target className="w-4 h-4" /> },
-        { type: "experience_classifier", label: "Experiência", icon: <Award className="w-4 h-4" /> },
+        { type: "body_type_classifier", label: getElementTypeName("body_type_classifier"), icon: <Users className="w-4 h-4" /> },
+        { type: "age_classifier", label: getElementTypeName("age_classifier"), icon: <Calendar className="w-4 h-4" /> },
+        { type: "fitness_goal_classifier", label: getElementTypeName("fitness_goal_classifier"), icon: <Target className="w-4 h-4" /> },
+        { type: "experience_classifier", label: getElementTypeName("experience_classifier"), icon: <Award className="w-4 h-4" /> },
       ]
     }
   ];
@@ -934,61 +969,61 @@ export function PageEditorHorizontal({
 // Elementos específicos para páginas de transição
 const transitionElementCategories = [
   {
-    name: "🎨 Fundo",
+    name: t('quiz.elementCategories.background'),
     elements: [
       {
         type: "transition_background",
-        label: "Cor de Fundo",
+        label: getElementTypeName("transition_background"),
         icon: <Palette className="w-4 h-4" />,
       },
     ],
   },
   {
-    name: "📝 Conteúdo",
+    name: t('quiz.elementCategories.content'),
     elements: [
       {
         type: "transition_text",
-        label: "Texto",
+        label: getElementTypeName("transition_text"),
         icon: <Type className="w-4 h-4" />,
       },
       {
         type: "transition_counter",
-        label: "Contador",
+        label: getElementTypeName("transition_counter"),
         icon: <Hash className="w-4 h-4" />,
       },
     ],
   },
   {
-    name: "⚡ Elementos Visuais",
+    name: t('quiz.elementCategories.visualElements'),
     elements: [
       {
         type: "transition_loader",
-        label: "Carregamento",
+        label: getElementTypeName("transition_loader"),
         icon: <Loader className="w-4 h-4" />,
       },
       {
         type: "animated_transition",
-        label: "Transição Animada",
+        label: getElementTypeName("animated_transition"),
         icon: <Sparkles className="w-4 h-4" />,
       },
       {
         type: "netflix_intro",
-        label: "Netflix Intro",
+        label: getElementTypeName("netflix_intro"),
         icon: <Sparkles className="w-4 h-4" />,
       },
     ],
   },
   {
-    name: "🔄 Navegação",
+    name: t('quiz.elementCategories.navigation'),
     elements: [
       {
         type: "transition_button",
-        label: "Botão Continuar",
+        label: getElementTypeName("transition_button"),
         icon: <ArrowRight className="w-4 h-4" />,
       },
       {
         type: "transition_redirect",
-        label: "Redirecionamento",
+        label: getElementTypeName("transition_redirect"),
         icon: <ArrowRight className="w-4 h-4" />,
       },
     ],
@@ -999,41 +1034,41 @@ const transitionElementCategories = [
 // Elementos específicos para páginas de jogos
 const gameElementCategories = [
   {
-    name: "🎰 Jogos de Sorte",
+    name: t('quiz.elementCategories.games') + " 🎰",
     elements: [
       {
         type: "game_wheel",
-        label: "Roleta",
+        label: getElementTypeName("game_wheel"),
         icon: <BarChart3 className="w-4 h-4" />,
       },
       {
         type: "game_scratch",
-        label: "Raspadinha",
+        label: getElementTypeName("game_scratch"),
         icon: <Volume2 className="w-4 h-4" />,
       },
       {
         type: "game_slot_machine",
-        label: "Caça-Níquel",
+        label: getElementTypeName("game_slot_machine"),
         icon: <AlertCircle className="w-4 h-4" />,
       },
     ],
   },
   {
-    name: "🎯 Jogos de Habilidade",
+    name: t('quiz.elementCategories.games') + " 🎯",
     elements: [
       {
         type: "game_color_pick",
-        label: "Escolha de Cor",
+        label: getElementTypeName("game_color_pick"),
         icon: <Palette className="w-4 h-4" />,
       },
       {
         type: "game_memory_cards",
-        label: "Jogo da Memória",
+        label: getElementTypeName("game_memory_cards"),
         icon: <Star className="w-4 h-4" />,
       },
       {
         type: "game_brick_break",
-        label: "Quebre o Muro",
+        label: getElementTypeName("game_brick_break"),
         icon: <Hash className="w-4 h-4" />,
       },
     ],
@@ -1048,7 +1083,7 @@ const gameElementCategories = [
   const addPage = () => {
     const newPage: QuizPage = {
       id: Date.now(),
-      title: `Página ${pages.length + 1}`,
+      title: `${t('quiz.page')} ${pages.length + 1}`,
       elements: []
     };
     onPagesChange([...pages, newPage]);
@@ -1057,7 +1092,7 @@ const gameElementCategories = [
   const addTransitionPage = () => {
     const newPage: QuizPage = {
       id: Date.now(),
-      title: `Transição ${pages.filter(p => p.isTransition).length + 1}`,
+      title: `${t('quiz.transition')} ${pages.filter(p => p.isTransition).length + 1}`,
       elements: [],
       isTransition: true
     };
@@ -1067,7 +1102,7 @@ const gameElementCategories = [
   const addGamePage = () => {
     const newPage: QuizPage = {
       id: Date.now(),
-      title: `Jogo ${pages.filter(p => p.isGame).length + 1}`,
+      title: `${t('quiz.game')} ${pages.filter(p => p.isGame).length + 1}`,
       elements: [],
       isGame: true
     };
@@ -1117,7 +1152,7 @@ const gameElementCategories = [
     // Criar uma cópia profunda da página
     const duplicatedPage: QuizPage = {
       id: timestamp,
-      title: `${originalPage.title} (Cópia)`,
+      title: `${originalPage.title} (${t('quiz.copy')})`,
       elements: originalPage.elements.map((element, elementIndex) => {
         const newElement = {
           ...element,
@@ -4821,7 +4856,7 @@ const gameElementCategories = [
               className="w-full"
               leftIcon={<Plus className="w-4 h-4" />}
             >
-              Nova Página
+              {t('quiz.newPage')}
             </ModernButton>
             <ModernButton
               onClick={addTransitionPage}
@@ -4839,7 +4874,7 @@ const gameElementCategories = [
               className="w-full justify-center bg-gradient-to-r from-orange-50 to-red-50 border-orange-200 hover:border-orange-300"
             >
               <BarChart3 className="w-4 h-4 mr-2" />
-              Página de Jogos
+              {t('quiz.gamePages')}
             </Button>
           </div>
         </div>
@@ -4853,14 +4888,14 @@ const gameElementCategories = [
             animations.fadeIn
           )}>
             <Plus className="w-4 h-4" />
-            Elementos
+            {t('quiz.elements')}
           </h3>
         </div>
         
         {/* Seletor Global de Cor de Fundo */}
         <div className="p-4 border-b bg-gray-50">
           <Label className="text-xs font-semibold text-gray-600 mb-2 block">
-            🎨 Cor de Fundo Global
+            🎨 {t('quiz.globalBackground')}
           </Label>
           <div className="space-y-3">
             <div className="flex gap-2">
@@ -4918,13 +4953,13 @@ const gameElementCategories = [
                   style={{backgroundColor: customBackgroundColor}}
                 ></div>
                 <div className="text-xs font-medium">Custom</div>
-                <div className="text-xs text-gray-500">Personalizado</div>
+                <div className="text-xs text-gray-500">{t('quiz.personalizedCustom')}</div>
               </button>
             </div>
             
             {globalTheme === "custom" && (
               <div className="mt-3">
-                <Label className="text-xs font-medium mb-2 block">Cor personalizada</Label>
+                <Label className="text-xs font-medium mb-2 block">{t('quiz.customColor')}</Label>
                 <div className="flex items-center gap-2">
                   <input
                     type="color"
@@ -4947,7 +4982,7 @@ const gameElementCategories = [
                   />
                 </div>
                 <div className="text-xs text-gray-500 mt-2">
-                  Contraste automático aplicado ao texto
+                  {t('quiz.autoContrast')}
                 </div>
               </div>
             )}
@@ -4998,7 +5033,7 @@ const gameElementCategories = [
             animations.fadeIn
           )}>
             <Eye className="w-4 h-4" />
-            Preview
+            {t('quiz.preview')}
             {currentPage && (
               <Badge variant="secondary" className="ml-2 bg-white/20">{currentPage.title}</Badge>
             )}
@@ -5093,7 +5128,7 @@ const gameElementCategories = [
             animations.fadeIn
           )}>
             <Settings className="w-4 h-4" />
-            {selectedElementData ? getElementTypeName(selectedElementData.type) : 'Propriedades'}
+            {selectedElementData ? getElementTypeName(selectedElementData.type) : t('quiz.properties')}
           </h3>
         </div>
         <div className="flex-1 overflow-y-auto p-4" style={{maxHeight: 'calc(100vh - 73px)'}}>
