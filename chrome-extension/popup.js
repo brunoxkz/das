@@ -1,5 +1,5 @@
-// Vendzz WhatsApp Extension - Popup Script
-console.log('🎛️ Popup carregado');
+// Vendzz WhatsApp Extension - Popup Script V2.0
+console.log('🎛️ Popup V2.0 carregado - Suporte Campanhas SMS Avançadas');
 
 // Elementos DOM
 const elements = {
@@ -14,6 +14,30 @@ const elements = {
   testConnectionBtn: document.getElementById('test-connection'),
   openWhatsappBtn: document.getElementById('open-whatsapp'),
   logs: document.getElementById('logs')
+};
+
+// Estado da extensão
+let extensionState = {
+  version: '2.0.0',
+  supportedCampaignTypes: [
+    'CAMPANHA_REMARKETING',
+    'CAMPANHA_AO_VIVO',
+    'CAMPANHA_ULTRA_CUSTOMIZADA',
+    'CAMPANHA_ULTRA_PERSONALIZADA',
+    'CAMPANHA_AB_TEST'
+  ],
+  features: {
+    messagePersonalization: true,
+    countryDetection: true,
+    smartRetry: true,
+    antiWebView: true
+  },
+  stats: {
+    campaignsProcessed: 0,
+    messagesPersonalized: 0,
+    countriesDetected: 0,
+    retriesSuccessful: 0
+  }
 };
 
 // Estado atual

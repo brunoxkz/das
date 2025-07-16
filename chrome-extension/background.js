@@ -1,15 +1,29 @@
-// Vendzz WhatsApp Extension - Background Service Worker
-console.log('🚀 Vendzz WhatsApp Extension iniciada');
+// Vendzz WhatsApp Extension - Background Service Worker V2.0
+console.log('🚀 Vendzz WhatsApp Extension V2.0 iniciada - Suporte Campanhas SMS Avançadas');
 
 // Configuração da extensão
 let config = {
-  serverUrl: 'http://localhost:5000',
-  token: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IktqY3ROQ09sTTVqY2FmZ0FfZHJWUSIsImVtYWlsIjoiYWRtaW5AdmVuZHp6LmNvbSIsInJvbGUiOiJhZG1pbiIsInBsYW4iOiJlbnRlcnByaXNlIiwiaWF0IjoxNzUxOTQ0MzUzLCJleHAiOjE3NTE5NDUyNTN9.bvzAQQakbeAwPY8UdAZcfDC58Q4aJeVPWC9yjVqtG84', // Token válido após reinício
-  userId: 'KjctNCOlM5jcafgA_drVQ', // ID do usuário admin
-  userEmail: 'admin@vendzz.com', // Email para logs de segurança
+  serverUrl: 'https://51f74588-7b5b-4e89-adab-b70610c96e0b-00-zr6ug9hu0yss.janeway.replit.dev',
+  token: null, // Token será obtido automaticamente
+  userId: null, // ID do usuário obtido após login
+  userEmail: null, // Email para logs de segurança
   isConnected: false,
   lastPing: null,
-  version: '1.0.0'
+  version: '2.0.0',
+  // Configurações avançadas para novos tipos de campanha
+  supportedCampaignTypes: [
+    'CAMPANHA_REMARKETING',
+    'CAMPANHA_AO_VIVO',
+    'CAMPANHA_ULTRA_CUSTOMIZADA',
+    'CAMPANHA_ULTRA_PERSONALIZADA',
+    'CAMPANHA_AB_TEST'
+  ],
+  messagePersonalization: true,
+  countryDetection: true,
+  antiWebViewDetection: true,
+  smartRetry: true,
+  maxRetryAttempts: 3,
+  retryDelay: 2000
 };
 
 // Estado da extensão
@@ -107,6 +121,156 @@ async function connectToServer() {
     config.isConnected = false;
     console.error('❌ Falha ao conectar:', error);
     return false;
+  }
+}
+
+// Sincronizar configurações do servidor
+async function syncSettingsFromServer() {
+  try {
+    const settings = await apiRequest('/api/whatsapp-extension/settings');
+    
+    if (settings.success) {
+      config.messagePersonalization = settings.messagePersonalization || true;
+      config.countryDetection = settings.countryDetection || true;
+      config.antiWebViewDetection = settings.antiWebViewDetection || true;
+      config.smartRetry = settings.smartRetry || true;
+      config.maxRetryAttempts = settings.maxRetryAttempts || 3;
+      config.retryDelay = settings.retryDelay || 2000;
+      
+      console.log('⚙️ Configurações sincronizadas do servidor');
+    }
+  } catch (error) {
+    console.log('⚠️ Usando configurações padrão:', error.message);
+  }
+}
+
+// Função para detectar país do número de telefone
+function detectCountryFromPhone(phone) {
+  const cleanPhone = phone.replace(/\D/g, '');
+  
+  // Detecção de países baseada em DDI
+  const countryMap = {
+    '55': { country: 'BR', currency: 'R$', greeting: 'Olá' },
+    '1': { country: 'US', currency: '$', greeting: 'Hi' },
+    '54': { country: 'AR', currency: 'ARS$', greeting: 'Hola' },
+    '52': { country: 'MX', currency: 'MXN$', greeting: 'Hola' },
+    '351': { country: 'PT', currency: '€', greeting: 'Olá' },
+    '34': { country: 'ES', currency: '€', greeting: 'Hola' },
+    '33': { country: 'FR', currency: '€', greeting: 'Salut' },
+    '39': { country: 'IT', currency: '€', greeting: 'Ciao' },
+    '44': { country: 'GB', currency: '£', greeting: 'Hello' },
+    '49': { country: 'DE', currency: '€', greeting: 'Hallo' },
+    '86': { country: 'CN', currency: '¥', greeting: '你好' },
+    '972': { country: 'IL', currency: '₪', greeting: 'שלום' },
+    '90': { country: 'TR', currency: '₺', greeting: 'Merhaba' }
+  };
+  
+  // Verificar correspondências por tamanho decrescente de DDI
+  const sortedKeys = Object.keys(countryMap).sort((a, b) => b.length - a.length);
+  
+  for (const ddi of sortedKeys) {
+    if (cleanPhone.startsWith(ddi)) {
+      return countryMap[ddi];
+    }
+  }
+  
+  // Padrão: Brasil
+  return { country: 'BR', currency: 'R$', greeting: 'Olá' };
+}
+
+// Função para personalizar mensagem com variáveis dinâmicas
+function personalizeMessage(message, variables = {}, phoneNumber = null) {
+  try {
+    let personalizedMessage = message;
+    
+    // Aplicar detecção de país se habilitada
+    if (config.countryDetection && phoneNumber) {
+      const countryInfo = detectCountryFromPhone(phoneNumber);
+      variables.greeting = countryInfo.greeting;
+      variables.currency = countryInfo.currency;
+      variables.country = countryInfo.country;
+    }
+    
+    // Substituir variáveis na mensagem
+    Object.keys(variables).forEach(key => {
+      const value = variables[key];
+      if (value !== null && value !== undefined) {
+        const regex = new RegExp(`{${key}}`, 'g');
+        personalizedMessage = personalizedMessage.replace(regex, value);
+      }
+    });
+    
+    // Remover variáveis não encontradas
+    personalizedMessage = personalizedMessage.replace(/{[^}]+}/g, '');
+    
+    return personalizedMessage;
+  } catch (error) {
+    console.error('❌ Erro ao personalizar mensagem:', error);
+    return message;
+  }
+}
+
+// Função para processar diferentes tipos de campanhas
+function processCampaignType(campaign) {
+  const { type, settings } = campaign;
+  
+  switch (type) {
+    case 'CAMPANHA_REMARKETING':
+      return {
+        priority: 'high',
+        delay: 1000,
+        retryAttempts: 3,
+        personalization: true,
+        filter: 'leads_antigos'
+      };
+      
+    case 'CAMPANHA_AO_VIVO':
+      return {
+        priority: 'medium',
+        delay: 500,
+        retryAttempts: 2,
+        personalization: true,
+        filter: settings?.leadType || 'todos'
+      };
+      
+    case 'CAMPANHA_ULTRA_CUSTOMIZADA':
+      return {
+        priority: 'high',
+        delay: 2000,
+        retryAttempts: 3,
+        personalization: true,
+        customMessages: true,
+        filter: 'resposta_especifica'
+      };
+      
+    case 'CAMPANHA_ULTRA_PERSONALIZADA':
+      return {
+        priority: 'highest',
+        delay: 3000,
+        retryAttempts: 5,
+        personalization: true,
+        advancedFilters: true,
+        filter: 'perfil_detalhado'
+      };
+      
+    case 'CAMPANHA_AB_TEST':
+      return {
+        priority: 'medium',
+        delay: 1000,
+        retryAttempts: 2,
+        personalization: true,
+        abTest: true,
+        filter: 'teste_ab'
+      };
+      
+    default:
+      return {
+        priority: 'medium',
+        delay: 1000,
+        retryAttempts: 2,
+        personalization: false,
+        filter: 'padrao'
+      };
   }
 }
 
