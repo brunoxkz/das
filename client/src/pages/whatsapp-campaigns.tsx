@@ -187,7 +187,7 @@ export default function WhatsAppCampaignsPage() {
     <div className="container mx-auto p-6 space-y-6">
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold">WhatsApp Campaigns</h1>
+          <h1 className="text-3xl font-bold">WhatsApp Campaigns V2.0</h1>
           <p className="text-gray-600">Automatize seus envios e multiplique suas conversões</p>
         </div>
       </div>
