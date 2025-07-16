@@ -193,10 +193,12 @@ export default function WhatsAppAutomationPage() {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-3">
+        <TabsList className="grid w-full grid-cols-5">
           <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
           <TabsTrigger value="method">Configurar Método</TabsTrigger>
           <TabsTrigger value="campaigns">Campanhas</TabsTrigger>
+          <TabsTrigger value="api">API</TabsTrigger>
+          <TabsTrigger value="settings">Configurações</TabsTrigger>
         </TabsList>
 
         <TabsContent value="dashboard" className="space-y-6 mt-6">
@@ -495,6 +497,50 @@ export default function WhatsAppAutomationPage() {
                 <AlertCircle className="h-4 w-4" />
                 <AlertDescription>
                   🚧 Esta funcionalidade está em desenvolvimento. Use a aba Dashboard para gerenciar automações.
+                </AlertDescription>
+              </Alert>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="api" className="space-y-6 mt-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Key className="h-5 w-5" />
+                API WhatsApp
+              </CardTitle>
+              <CardDescription>
+                Configure as credenciais da API do WhatsApp Business
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Alert>
+                <AlertCircle className="h-4 w-4" />
+                <AlertDescription>
+                  🚧 Configuração da API WhatsApp Business em desenvolvimento. Use a extensão por enquanto.
+                </AlertDescription>
+              </Alert>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="settings" className="space-y-6 mt-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Settings className="h-5 w-5" />
+                Configurações
+              </CardTitle>
+              <CardDescription>
+                Configurações gerais da automação WhatsApp
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Alert>
+                <AlertCircle className="h-4 w-4" />
+                <AlertDescription>
+                  🚧 Configurações avançadas em desenvolvimento. Use a aba Dashboard para funcionalidades básicas.
                 </AlertDescription>
               </Alert>
             </CardContent>
