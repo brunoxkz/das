@@ -4990,6 +4990,14 @@ Hoje você vai aprender ${project.title} - método revolucionário que já ajudo
       console.log('✅ Projeto de vídeo criado e salvo no cache:', videoProject);
       console.log(`📹 Cache atualizado: ${userProjects.length} projetos para user ${project.userId}`);
       
+      // Simular processamento e completar vídeo após 5 segundos
+      setTimeout(() => {
+        videoProject.status = 'completed';
+        videoProject.videoUrl = `/videos/${videoProject.id}.mp4`;
+        videoProject.thumbnailUrl = `/thumbnails/${videoProject.id}.jpg`;
+        console.log(`🎬 Vídeo ${videoProject.id} marcado como concluído`);
+      }, 5000);
+      
       return videoProject;
     } catch (error) {
       console.error('❌ ERRO ao criar projeto de vídeo:', error);

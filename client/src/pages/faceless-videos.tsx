@@ -79,16 +79,59 @@ export default function FacelessVideosPage() {
   const [generationProgress, setGenerationProgress] = useState(0);
   const [currentProject, setCurrentProject] = useState<VideoProject | null>(null);
 
+  // Função para download de vídeo
+  const downloadVideo = async (videoId: string, title: string) => {
+    try {
+      const response = await fetch(`/api/faceless-videos/download/${videoId}`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+        },
+      });
+      
+      if (!response.ok) {
+        throw new Error('Erro no download');
+      }
+      
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `${title}-viral-video.mp4`;
+      link.style.display = 'none';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+      
+      toast({
+        title: "Download iniciado!",
+        description: "O vídeo está sendo baixado.",
+      });
+    } catch (error) {
+      console.error('Erro no download:', error);
+      toast({
+        title: "Erro no download",
+        description: "Não foi possível baixar o vídeo.",
+        variant: "destructive",
+      });
+    }
+  };
+
   // Buscar projetos de vídeo
   const { data: projects = [], isLoading } = useQuery({
     queryKey: ["/api/faceless-videos/projects"],
-    refetchInterval: 2000, // Atualiza a cada 2 segundos
+    refetchInterval: 30000, // Atualiza a cada 30 segundos (reduzido loop)
+    retry: 1,
+    retryDelay: 1000,
   });
 
   // Buscar créditos do usuário
   const { data: credits } = useQuery<UserCredits>({
     queryKey: ["/api/faceless-videos/credits"],
-    refetchInterval: 5000, // Atualiza a cada 5 segundos
+    refetchInterval: 60000, // Atualiza a cada 60 segundos
+    retry: 1,
+    retryDelay: 1000,
   });
 
   // Mutação para criar vídeo
@@ -100,8 +143,13 @@ export default function FacelessVideosPage() {
       style: string;
       voice: string;
     }) => {
-      const response = await apiRequest("POST", "/api/faceless-videos/generate", videoData);
-      return response;
+      try {
+        const response = await apiRequest("POST", "/api/faceless-videos/generate", videoData);
+        return response;
+      } catch (error) {
+        console.error('Erro na mutação:', error);
+        throw error;
+      }
     },
     onSuccess: (data) => {
       toast({
@@ -124,9 +172,10 @@ export default function FacelessVideosPage() {
       queryClient.invalidateQueries({ queryKey: ["/api/faceless-videos/projects"] });
     },
     onError: (error: any) => {
+      console.error('Erro na criação do vídeo:', error);
       toast({
         title: "Erro ao gerar vídeo",
-        description: error.message || "Ocorreu um erro ao processar seu vídeo",
+        description: error?.message || "Ocorreu um erro ao processar seu vídeo",
         variant: "destructive",
       });
     },
@@ -185,26 +234,7 @@ export default function FacelessVideosPage() {
     });
   };
 
-  const downloadVideo = async (videoUrl: string, title: string) => {
-    try {
-      const response = await fetch(videoUrl);
-      const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `${title}.mp4`;
-      document.body.appendChild(a);
-      a.click();
-      window.URL.revokeObjectURL(url);
-      document.body.removeChild(a);
-    } catch (error) {
-      toast({
-        title: "Erro no download",
-        description: "Não foi possível baixar o vídeo",
-        variant: "destructive",
-      });
-    }
-  };
+
 
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
@@ -505,11 +535,11 @@ export default function FacelessVideosPage() {
                       )}
 
                       <div className="flex gap-2">
-                        {project.status === 'completed' && project.videoUrl && (
+                        {project.status === 'completed' && (
                           <Button 
                             size="sm" 
                             className="flex-1 bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600"
-                            onClick={() => downloadVideo(project.videoUrl!, project.title)}
+                            onClick={() => downloadVideo(project.id, project.title)}
                           >
                             <Download className="w-4 h-4 mr-1" />
                             Baixar
