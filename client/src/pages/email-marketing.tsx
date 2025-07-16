@@ -12,6 +12,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Progress } from "@/components/ui/progress";
 import { useToast } from "@/hooks/use-toast";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { apiRequest } from "@/lib/queryClient";
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -265,6 +266,25 @@ export default function EmailMarketingAdvanced() {
     variables: [] as string[]
   });
 
+  const [templateForm, setTemplateForm] = useState({
+    name: "",
+    subject: "",
+    content: "",
+    category: "welcome" as const
+  });
+
+  const [brevoConfig, setBrevoConfig] = useState({
+    apiKey: "",
+    fromEmail: "",
+    isConfigured: false
+  });
+
+  const [testingBrevo, setTestingBrevo] = useState(false);
+
+  type CampaignStyle = 'remarketing' | 'remarketing_ultra_customizado' | 'ao_vivo_tempo_real' | 'ao_vivo_ultra_customizada';
+  const [selectedCampaignStyle, setSelectedCampaignStyle] = useState<CampaignStyle | null>(null);
+  const [showCampaignStyleSelector, setShowCampaignStyleSelector] = useState(false);
+
   // Queries
   const { data: quizzes, isLoading: isLoadingQuizzes } = useQuery({
     queryKey: ['/api/quizzes'],
@@ -380,6 +400,34 @@ export default function EmailMarketingAdvanced() {
       toast({
         title: "Status Atualizado",
         description: "Status da campanha foi atualizado com sucesso!"
+      });
+    }
+  });
+
+  const createTemplateMutation = useMutation({
+    mutationFn: async (data: any) => {
+      const response = await fetch('/api/email-templates', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        },
+        body: JSON.stringify(data)
+      });
+      if (!response.ok) throw new Error('Erro ao criar template');
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/email-templates'] });
+      setTemplateForm({
+        name: "",
+        subject: "",
+        content: "",
+        category: "welcome"
+      });
+      toast({
+        title: "Template Criado",
+        description: "Template de email criado com sucesso!"
       });
     }
   });

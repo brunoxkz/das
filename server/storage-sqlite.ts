@@ -706,12 +706,12 @@ export class SQLiteStorage implements IStorage {
               eq(emailCampaigns.status, 'active')
             ));
         case 'whatsapp':
-          return await db.select()
-            .from(whatsappCampaigns)
-            .where(and(
-              eq(whatsappCampaigns.userId, userId),
-              eq(whatsappCampaigns.status, 'active')
-            ));
+          // Usar SQLite direto para evitar problema do ORM
+          const stmt = sqlite.prepare(`
+            SELECT * FROM whatsapp_campaigns 
+            WHERE user_id = ? AND status = 'active'
+          `);
+          return stmt.all(userId);
         default:
           return [];
       }
@@ -739,12 +739,12 @@ export class SQLiteStorage implements IStorage {
               eq(emailCampaigns.status, 'paused')
             ));
         case 'whatsapp':
-          return await db.select()
-            .from(whatsappCampaigns)
-            .where(and(
-              eq(whatsappCampaigns.userId, userId),
-              eq(whatsappCampaigns.status, 'paused')
-            ));
+          // Usar SQLite direto para evitar problema do ORM
+          const stmt = sqlite.prepare(`
+            SELECT * FROM whatsapp_campaigns 
+            WHERE user_id = ? AND status = 'paused'
+          `);
+          return stmt.all(userId);
         default:
           return [];
       }
@@ -776,9 +776,18 @@ export class SQLiteStorage implements IStorage {
 
   async updateWhatsappCampaign(campaignId: string, updates: any): Promise<void> {
     try {
-      await db.update(whatsappCampaigns)
-        .set(updates)
-        .where(eq(whatsappCampaigns.id, campaignId));
+      // Usar SQLite direto para evitar problema do ORM
+      const setClauses = Object.keys(updates).map(key => `${key} = ?`).join(', ');
+      const values = Object.values(updates);
+      values.push(campaignId);
+      
+      const stmt = sqlite.prepare(`
+        UPDATE whatsapp_campaigns 
+        SET ${setClauses}, updated_at = ? 
+        WHERE id = ?
+      `);
+      
+      stmt.run(...values, Math.floor(Date.now() / 1000));
     } catch (error) {
       console.error(`❌ Erro ao atualizar campanha WhatsApp ${campaignId}:`, error);
     }
@@ -837,20 +846,19 @@ export class SQLiteStorage implements IStorage {
 
       // Pausar campanhas WhatsApp se créditos insuficientes
       if ((user.whatsappCredits || 0) <= 0) {
-        const whatsappCampaigns = await db.select()
-          .from(whatsappCampaigns)
-          .where(and(
-            eq(whatsappCampaigns.userId, userId),
-            eq(whatsappCampaigns.status, 'active')
-          ));
+        const stmt = sqlite.prepare(`
+          SELECT * FROM whatsapp_campaigns 
+          WHERE user_id = ? AND status = 'active'
+        `);
+        const whatsappCampaigns = stmt.all(userId);
 
         for (const campaign of whatsappCampaigns) {
-          await db.update(whatsappCampaigns)
-            .set({ 
-              status: 'paused',
-              pausedReason: 'Créditos WhatsApp insuficientes'
-            })
-            .where(eq(whatsappCampaigns.id, campaign.id));
+          const updateStmt = sqlite.prepare(`
+            UPDATE whatsapp_campaigns 
+            SET status = 'paused', updated_at = ? 
+            WHERE id = ?
+          `);
+          updateStmt.run(Math.floor(Date.now() / 1000), campaign.id);
           pausedCounts.whatsapp++;
         }
       }
@@ -1756,7 +1764,7 @@ export class SQLiteStorage implements IStorage {
 
     const stmt = sqlite.prepare(`
       INSERT INTO whatsapp_campaigns 
-      (id, name, quiz_id, message, user_id, phones, status, scheduled_at, trigger_delay, trigger_unit, target_audience, extension_settings, created_at, updated_at)
+      (id, name, quiz_id, messages, user_id, phones, status, scheduled_at, trigger_delay, trigger_unit, target_audience, extension_settings, created_at, updated_at)
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `);
     
