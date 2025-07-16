@@ -619,8 +619,32 @@ export function QuizPublicRenderer({ quiz }: QuizPublicRendererProps) {
                   const optionValue = typeof option === 'string' ? option : (option?.text || `Opção ${index + 1}`);
                   return (
                     <div key={index} className="flex items-center space-x-2 p-3 border border-gray-200 hover:border-blue-500 rounded-lg cursor-pointer transition-all">
-                      <RadioGroupItem value={optionValue} id={`${id}-${index}`} />
-                      <Label htmlFor={`${id}-${index}`} className="flex-1 cursor-pointer">{optionValue}</Label>
+                      <RadioGroupItem 
+                        value={optionValue} 
+                        id={`${id}-${index}`}
+                        style={{
+                          backgroundColor: 'transparent',
+                          borderColor: element.checkboxColor || properties?.checkboxColor || "#374151",
+                          accentColor: element.checkboxColor || properties?.checkboxColor || "#374151"
+                        }}
+                      />
+                      <Label 
+                        htmlFor={`${id}-${index}`} 
+                        className="flex-1 cursor-pointer"
+                        style={{
+                          color: element.optionTextColor || properties?.optionTextColor || "#374151",
+                          fontSize: element.optionFontSize === 'xs' ? '0.75rem' :
+                                  element.optionFontSize === 'sm' ? '0.875rem' :
+                                  element.optionFontSize === 'lg' ? '1.125rem' :
+                                  element.optionFontSize === 'xl' ? '1.25rem' : '1rem',
+                          fontWeight: element.optionFontWeight === 'light' ? '300' :
+                                     element.optionFontWeight === 'medium' ? '500' :
+                                     element.optionFontWeight === 'semibold' ? '600' :
+                                     element.optionFontWeight === 'bold' ? '700' : '400'
+                        }}
+                      >
+                        {optionValue}
+                      </Label>
                     </div>
                   );
                 })

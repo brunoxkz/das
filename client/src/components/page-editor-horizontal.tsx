@@ -91,6 +91,10 @@ interface Element {
   textDecoration?: string;
   textColor?: string;
   backgroundColor?: string;
+  optionFontSize?: string;
+  optionFontWeight?: string;
+  optionTextColor?: string;
+  checkboxColor?: string;
   min?: number;
   max?: number;
   color?: string;
@@ -1783,14 +1787,25 @@ const gameElementCategories = [
                     <input 
                       type={element.multipleSelection ? "checkbox" : "radio"} 
                       name={`preview-${element.id}`} 
-                      className={`${element.inputStyle === "modern" ? "w-5 h-5 text-vendzz-primary border-2 border-gray-300 rounded-md focus:ring-vendzz-primary focus:ring-2" : "rounded"}`}
+                      className={`${element.inputStyle === "modern" ? "w-5 h-5 bg-transparent border-2 rounded-md focus:ring-2" : "w-4 h-4 bg-transparent border-2 rounded"}`}
+                      style={{
+                        borderColor: element.checkboxColor || "#374151",
+                        accentColor: element.checkboxColor || "#374151"
+                      }}
                     />
                   )}
                   
                   <div className="flex-1">
                     <span className={`font-medium ${element.optionTextSize === "sm" ? "text-xs" : element.optionTextSize === "lg" ? "text-base" : "text-sm"}`} style={{
                       color: element.optionTextColor || "#374151",
-                      fontSize: element.optionFontSize === "sm" ? "12px" : element.optionFontSize === "lg" ? "18px" : "14px"
+                      fontSize: element.optionFontSize === "xs" ? "12px" : 
+                               element.optionFontSize === "sm" ? "14px" : 
+                               element.optionFontSize === "lg" ? "18px" : 
+                               element.optionFontSize === "xl" ? "20px" : "16px",
+                      fontWeight: element.optionFontWeight === "light" ? "300" :
+                                 element.optionFontWeight === "medium" ? "500" :
+                                 element.optionFontWeight === "semibold" ? "600" :
+                                 element.optionFontWeight === "bold" ? "700" : "400"
                     }}>
                       {typeof option === 'string' ? option : option?.text || `Opção ${index + 1}`}
                     </span>
@@ -5452,6 +5467,67 @@ const gameElementCategories = [
                           : "✅ Usuário será redirecionado automaticamente ao clicar na opção."
                         }
                       </p>
+                    </div>
+                  </div>
+
+                  {/* Formatação das Respostas */}
+                  <div className="border rounded-lg p-4 bg-green-50">
+                    <h4 className="font-semibold text-sm mb-3">🎨 Formatação das Respostas</h4>
+                    
+                    <div className="grid grid-cols-2 gap-3">
+                      {/* Tamanho da fonte das opções */}
+                      <div>
+                        <Label className="text-xs">Tamanho das Opções</Label>
+                        <select 
+                          className="w-full px-2 py-1 border rounded text-xs"
+                          value={selectedElementData.optionFontSize || "base"}
+                          onChange={(e) => updateElement(selectedElementData.id, { optionFontSize: e.target.value })}
+                        >
+                          <option value="xs">Extra Pequeno</option>
+                          <option value="sm">Pequeno</option>
+                          <option value="base">Normal</option>
+                          <option value="lg">Grande</option>
+                          <option value="xl">Muito Grande</option>
+                        </select>
+                      </div>
+
+                      {/* Peso da fonte das opções */}
+                      <div>
+                        <Label className="text-xs">Peso das Opções</Label>
+                        <select 
+                          className="w-full px-2 py-1 border rounded text-xs"
+                          value={selectedElementData.optionFontWeight || "normal"}
+                          onChange={(e) => updateElement(selectedElementData.id, { optionFontWeight: e.target.value })}
+                        >
+                          <option value="light">Leve</option>
+                          <option value="normal">Normal</option>
+                          <option value="medium">Médio</option>
+                          <option value="semibold">Semi-negrito</option>
+                          <option value="bold">Negrito</option>
+                        </select>
+                      </div>
+
+                      {/* Cor das opções */}
+                      <div>
+                        <Label className="text-xs">Cor das Opções</Label>
+                        <input
+                          type="color"
+                          value={selectedElementData.optionTextColor || "#374151"}
+                          onChange={(e) => updateElement(selectedElementData.id, { optionTextColor: e.target.value })}
+                          className="w-full h-8 border rounded"
+                        />
+                      </div>
+
+                      {/* Cor das checkboxes */}
+                      <div>
+                        <Label className="text-xs">Cor de Seleção</Label>
+                        <input
+                          type="color"
+                          value={selectedElementData.checkboxColor || "#374151"}
+                          onChange={(e) => updateElement(selectedElementData.id, { checkboxColor: e.target.value })}
+                          className="w-full h-8 border rounded"
+                        />
+                      </div>
                     </div>
                   </div>
 

@@ -1038,25 +1038,25 @@ export default function QuizPreview({ quiz, onClose, onSave }: QuizPreviewProps)
                       }`}
                       style={{
                         borderColor: responses[element.id] === option.text 
-                          ? (element.textColor || '#6B7280') 
+                          ? (element.checkboxColor || '#6B7280') 
                           : 'rgba(156, 163, 175, 0.5)',
                         backgroundColor: responses[element.id] === option.text 
-                          ? (element.textColor || '#6B7280') 
+                          ? (element.checkboxColor || '#6B7280') 
                           : 'transparent'
                       }}
                     />
                     <span 
                       className="text-gray-700"
                       style={{ 
-                        color: element.textColor || '#374151',
-                        fontSize: element.fontSize === 'xs' ? '0.75rem' :
-                                element.fontSize === 'sm' ? '0.875rem' :
-                                element.fontSize === 'lg' ? '1.125rem' :
-                                element.fontSize === 'xl' ? '1.25rem' : '1rem',
-                        fontWeight: element.fontWeight === 'light' ? '300' :
-                                   element.fontWeight === 'medium' ? '500' :
-                                   element.fontWeight === 'semibold' ? '600' :
-                                   element.fontWeight === 'bold' ? '700' : '400'
+                        color: element.optionTextColor || '#374151',
+                        fontSize: element.optionFontSize === 'xs' ? '0.75rem' :
+                                element.optionFontSize === 'sm' ? '0.875rem' :
+                                element.optionFontSize === 'lg' ? '1.125rem' :
+                                element.optionFontSize === 'xl' ? '1.25rem' : '1rem',
+                        fontWeight: element.optionFontWeight === 'light' ? '300' :
+                                   element.optionFontWeight === 'medium' ? '500' :
+                                   element.optionFontWeight === 'semibold' ? '600' :
+                                   element.optionFontWeight === 'bold' ? '700' : '400'
                       }}
                     >
                       {typeof option === 'string' ? option : option?.text || `Opção ${index + 1}`}

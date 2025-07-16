@@ -208,6 +208,23 @@ No additional files or separate projects are maintained in this repository.
 
 ```
 Changelog:
+- July 16, 2025. FORMATAÇÃO AVANÇADA DE MÚLTIPLA ESCOLHA IMPLEMENTADA - Sistema completo de customização independente para opções de resposta:
+  * Adicionada seção "🎨 Formatação das Respostas" no painel de propriedades com destaque visual em verde
+  * Implementado controle independente de tamanho de fonte para opções (xs, sm, base, lg, xl)
+  * Adicionado peso de fonte customizável para respostas (light, normal, medium, semibold, bold)
+  * Incluído seletor de cor específico para texto das opções (optionTextColor)
+  * Implementado seletor de cor para elementos de seleção (checkboxColor)
+  * Removido fundo cinza padrão das checkboxes - agora completamente transparentes
+  * Aplicada formatação consistente em todos os componentes de renderização:
+    - page-editor-horizontal.tsx: editor com preview em tempo real
+    - quiz-preview.tsx: visualização no builder
+    - quiz-public-renderer.tsx: quiz público final
+  * Propriedades adicionadas ao tipo Element: optionFontSize, optionFontWeight, optionTextColor, checkboxColor
+  * Separação completa entre formatação de pergunta e formatação de respostas
+  * Checkboxes agora usam accentColor e borderColor customizáveis
+  * Sistema permite controle total sobre aparência visual das opções de múltipla escolha
+  * Mantida compatibilidade com elementos existentes através de valores padrão
+  * Interface moderna com grid responsivo e seletores de cor visuais
 - July 15, 2025. ELEMENTOS DE PESO COMPLETAMENTE APRIMORADOS - Melhorias visuais abrangentes para elementos de peso atual e peso meta:
   * Adicionadas opções de largura de campo: pequeno, médio, grande, largura total
   * Implementado sistema de alinhamento: esquerda, centro, direita para campos de peso
