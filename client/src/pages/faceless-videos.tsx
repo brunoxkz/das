@@ -101,7 +101,7 @@ export default function FacelessVideosPage() {
       voice: string;
     }) => {
       const response = await apiRequest("POST", "/api/faceless-videos/generate", videoData);
-      return response.json();
+      return response;
     },
     onSuccess: (data) => {
       toast({
