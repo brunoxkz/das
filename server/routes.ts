@@ -31,8 +31,16 @@ import { z } from "zod";
 
 // Types are now handled in ./types.ts
 
+// Debug: Verificar se variáveis estão carregadas
+console.log('🔍 Verificando Stripe ENV:', {
+  hasStripeSecret: !!process.env.STRIPE_SECRET_KEY,
+  stripeKey: process.env.STRIPE_SECRET_KEY ? process.env.STRIPE_SECRET_KEY.substring(0, 10) + '...' : 'undefined'
+});
+
 if (!process.env.STRIPE_SECRET_KEY) {
-  console.warn('STRIPE_SECRET_KEY not found - Stripe functionality will be disabled');
+  console.warn('⚠️  STRIPE_SECRET_KEY não encontrada - funcionalidade Stripe desabilitada');
+} else {
+  console.log('✅ STRIPE_SECRET_KEY encontrada - funcionalidade Stripe habilitada');
 }
 
 const stripe = process.env.STRIPE_SECRET_KEY ? new Stripe(process.env.STRIPE_SECRET_KEY) : null;
