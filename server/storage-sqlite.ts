@@ -6093,6 +6093,40 @@ Hoje você vai aprender ${project.title} - método revolucionário que já ajudo
     }
   }
 
+  // Método para atualizar checkout
+  async updateCheckout(checkoutId: string, data: any): Promise<void> {
+    try {
+      const { stripePriceId, stripeProductId, ...updateData } = data;
+      
+      let query = `UPDATE checkout_products SET updatedAt = ? `;
+      const params = [new Date().toISOString()];
+      
+      if (stripePriceId) {
+        query += `, stripe_price_id = ? `;
+        params.push(stripePriceId);
+      }
+      
+      if (stripeProductId) {
+        query += `, stripe_product_id = ? `;
+        params.push(stripeProductId);
+      }
+      
+      // Adicionar outros campos se necessário
+      Object.keys(updateData).forEach(key => {
+        query += `, ${key} = ? `;
+        params.push(updateData[key]);
+      });
+      
+      query += ` WHERE id = ?`;
+      params.push(checkoutId);
+      
+      sqlite.prepare(query).run(...params);
+    } catch (error) {
+      console.error('Erro ao atualizar checkout:', error);
+      throw error;
+    }
+  }
+
   // Buscar checkout por ID
   async getCheckoutById(id: string): Promise<any | undefined> {
     try {

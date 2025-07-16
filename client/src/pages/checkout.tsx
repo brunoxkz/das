@@ -55,19 +55,19 @@ export default function CheckoutPage() {
     select: (data) => data.filter((p: CheckoutProduct) => p.status === 'active')
   });
 
-  // Mutation para criar pagamento
+  // Mutation para criar sessão de checkout Stripe
   const createPaymentMutation = useMutation({
     mutationFn: async (data: any) => {
-      const response = await apiRequest('POST', '/api/create-subscription', data);
+      const response = await apiRequest('POST', '/api/create-checkout-session', data);
       return response;
     },
     onSuccess: (data) => {
       toast({
-        title: "Pagamento processado!",
-        description: "Redirecionando para pagamento...",
+        title: "Sessão de pagamento criada!",
+        description: "Redirecionando para checkout seguro...",
       });
       
-      // Redirecionar para Stripe Checkout ou processar pagamento
+      // Redirecionar para Stripe Checkout
       if (data.url) {
         window.location.href = data.url;
       }
@@ -91,18 +91,34 @@ export default function CheckoutPage() {
     
     if (!selectedProduct) return;
 
+    // Validar dados do cliente
+    if (!customerData.name || !customerData.email) {
+      toast({
+        title: "Dados incompletos",
+        description: "Por favor, preencha pelo menos nome e email",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setIsProcessing(true);
     
     try {
       await createPaymentMutation.mutateAsync({
         productId: selectedProduct.id,
-        customer: customerData,
-        paymentMethod,
-        returnUrl: window.location.origin + '/success',
-        cancelUrl: window.location.origin + '/checkout'
+        customerEmail: customerData.email,
+        customerName: customerData.name,
+        customerPhone: customerData.phone,
+        returnUrl: window.location.origin + '/payment-success',
+        cancelUrl: window.location.origin + '/checkout-public'
       });
     } catch (error) {
       console.error('Erro ao processar pagamento:', error);
+      toast({
+        title: "Erro no pagamento",
+        description: "Tente novamente em alguns instantes",
+        variant: "destructive",
+      });
     } finally {
       setIsProcessing(false);
     }

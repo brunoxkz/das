@@ -115,13 +115,13 @@ export function registerSQLiteRoutes(app: Express): Server {
     }
   });
 
-  // Criar assinatura com trial (público)
-  app.post('/api/create-subscription', async (req, res) => {
+  // Criar sessão de checkout Stripe (público)
+  app.post('/api/create-checkout-session', async (req, res) => {
     try {
-      const { productId, customer, paymentMethod, returnUrl, cancelUrl } = req.body;
+      const { productId, customerEmail, returnUrl, cancelUrl } = req.body;
       
       // Validação dos dados
-      if (!productId || !customer || !paymentMethod) {
+      if (!productId || !customerEmail) {
         return res.status(400).json({ error: 'Dados obrigatórios faltando' });
       }
 
@@ -133,38 +133,182 @@ export function registerSQLiteRoutes(app: Express): Server {
         return res.status(404).json({ error: 'Produto não encontrado' });
       }
 
-      // Simular criação de assinatura (aqui você integraria com Stripe/Pagar.me)
-      const subscriptionData = {
-        id: `sub_${Date.now()}`,
-        productId,
-        customerId: `cus_${Date.now()}`,
-        customer,
-        paymentMethod,
-        trialEnd: product.trialPeriod ? new Date(Date.now() + (product.trialPeriod * 24 * 60 * 60 * 1000)).toISOString() : null,
-        trialPrice: product.trialPrice || 0,
-        recurringPrice: product.price,
-        recurringInterval: product.recurringInterval || 'monthly',
-        status: 'trialing',
-        createdAt: new Date().toISOString()
-      };
+      // Verificar se Stripe está disponível
+      if (!process.env.STRIPE_SECRET_KEY) {
+        return res.status(500).json({ 
+          error: 'Stripe não configurado. Configure STRIPE_SECRET_KEY.' 
+        });
+      }
 
-      // Para demo, vamos simular uma URL de checkout
-      const checkoutUrl = `${process.env.BASE_URL || `http://localhost:${process.env.PORT || 5000}`}/payment-success?session_id=${subscriptionData.id}`;
+      // Importar StripeService
+      const { StripeService } = await import('./stripe-integration');
+      const stripeService = new StripeService();
+
+      // Criar ou obter cliente Stripe
+      let customer;
+      try {
+        customer = await stripeService.createCustomer({
+          email: customerEmail,
+          metadata: {
+            productId: productId,
+            source: 'vendzz_checkout'
+          }
+        });
+      } catch (error) {
+        console.error('Erro ao criar cliente:', error);
+        return res.status(500).json({ error: 'Erro ao criar cliente' });
+      }
+
+      // Configurar URLs
+      const baseUrl = process.env.BASE_URL || `http://localhost:${process.env.PORT || 5000}`;
+      const successUrl = returnUrl || `${baseUrl}/payment-success?session_id={CHECKOUT_SESSION_ID}`;
+      const cancelUrlFinal = cancelUrl || `${baseUrl}/checkout-public`;
+
+      // Criar produto e preço no Stripe se não existir
+      let priceId = product.stripePriceId;
+      if (!priceId) {
+        try {
+          const stripeProduct = await stripeService.createProduct({
+            name: product.name,
+            description: product.description || '',
+            price: product.recurringPrice || product.price,
+            currency: product.currency || 'BRL',
+            paymentMode: 'recurring',
+            recurringInterval: product.recurringInterval || 'month',
+            trialPeriodDays: product.trialPeriod || 3
+          });
+          priceId = stripeProduct.price.id;
+          
+          // Atualizar produto com o price ID
+          await storage.updateCheckout(productId, {
+            stripePriceId: priceId,
+            stripeProductId: stripeProduct.product.id
+          });
+        } catch (error) {
+          console.error('Erro ao criar produto no Stripe:', error);
+          return res.status(500).json({ error: 'Erro ao criar produto no Stripe' });
+        }
+      }
+
+      // Criar sessão de checkout
+      const session = await stripeService.createCheckoutSession({
+        priceId: priceId,
+        customerId: customer.id,
+        trialPeriodDays: product.trialPeriod || 3,
+        successUrl: successUrl,
+        cancelUrl: cancelUrlFinal,
+        metadata: {
+          productId: productId,
+          customerId: customer.id,
+          source: 'vendzz_checkout'
+        }
+      });
 
       res.json({
         success: true,
-        subscriptionId: subscriptionData.id,
-        url: checkoutUrl,
-        subscription: subscriptionData
+        sessionId: session.id,
+        url: session.url,
+        customerId: customer.id
       });
 
     } catch (error) {
-      console.error('Erro ao criar assinatura:', error);
-      res.status(500).json({ error: 'Erro ao processar assinatura' });
+      console.error('Erro ao criar sessão de checkout:', error);
+      res.status(500).json({ error: 'Erro ao processar checkout' });
     }
   });
 
   // Webhook de pagamento (público)
+  // Webhook do Stripe para processar pagamentos (público)
+  app.post('/api/webhook/stripe', express.raw({ type: 'application/json' }), async (req, res) => {
+    try {
+      const sig = req.headers['stripe-signature'];
+      
+      if (!sig) {
+        return res.status(400).json({ error: 'Stripe signature não encontrada' });
+      }
+
+      // Verificar se Stripe está disponível
+      if (!process.env.STRIPE_SECRET_KEY) {
+        return res.status(500).json({ error: 'Stripe não configurado' });
+      }
+
+      // Importar StripeService
+      const { StripeService } = await import('./stripe-integration');
+      const stripeService = new StripeService();
+
+      // Verificar webhook
+      let event;
+      try {
+        event = stripeService.verifyWebhook(req.body, sig);
+      } catch (error) {
+        console.error('Erro na verificação do webhook:', error);
+        return res.status(400).json({ error: 'Webhook inválido' });
+      }
+
+      console.log('Evento Stripe recebido:', event.type);
+
+      // Processar diferentes tipos de eventos
+      switch (event.type) {
+        case 'checkout.session.completed':
+          const session = event.data.object as any;
+          console.log('Checkout session completed:', session.id);
+          
+          // Aqui você pode salvar os dados da sessão no banco
+          // Atualizar status do pedido, criar usuário, etc.
+          break;
+
+        case 'customer.subscription.created':
+          const subscription = event.data.object as any;
+          console.log('Assinatura criada:', subscription.id);
+          
+          // Salvar dados da assinatura no banco
+          // Ativar acesso do usuário, etc.
+          break;
+
+        case 'customer.subscription.trial_will_end':
+          const trialEndingSub = event.data.object as any;
+          console.log('Trial terminando em 3 dias:', trialEndingSub.id);
+          
+          // Enviar email de lembrete do fim do trial
+          // Verificar se há método de pagamento, etc.
+          break;
+
+        case 'invoice.payment_succeeded':
+          const invoice = event.data.object as any;
+          console.log('Pagamento realizado com sucesso:', invoice.id);
+          
+          // Confirmar pagamento recorrente
+          // Renovar acesso do usuário, etc.
+          break;
+
+        case 'invoice.payment_failed':
+          const failedInvoice = event.data.object as any;
+          console.log('Pagamento falhou:', failedInvoice.id);
+          
+          // Lidar com falha no pagamento
+          // Pausar acesso, enviar email, etc.
+          break;
+
+        case 'customer.subscription.deleted':
+          const cancelledSub = event.data.object as any;
+          console.log('Assinatura cancelada:', cancelledSub.id);
+          
+          // Desativar acesso do usuário
+          // Enviar email de cancelamento, etc.
+          break;
+
+        default:
+          console.log('Evento não tratado:', event.type);
+      }
+
+      res.json({ received: true });
+    } catch (error) {
+      console.error('Erro no webhook do Stripe:', error);
+      res.status(500).json({ error: 'Erro ao processar webhook' });
+    }
+  });
+
+  // Webhook genérico para outros provedores (público)
   app.post('/api/webhook/payment', async (req, res) => {
     try {
       const { type, data } = req.body;

@@ -33,7 +33,145 @@ export class StripeService {
     if (!process.env.STRIPE_SECRET_KEY) {
       throw new Error('STRIPE_SECRET_KEY is required');
     }
-    this.stripe = stripe;
+    this.stripe = stripe!;
+  }
+
+  // Criar cliente Stripe
+  async createCustomer(customerData: {
+    email: string;
+    name?: string;
+    phone?: string;
+    metadata?: Record<string, string>;
+  }): Promise<Stripe.Customer> {
+    try {
+      const customer = await this.stripe.customers.create({
+        email: customerData.email,
+        name: customerData.name,
+        phone: customerData.phone,
+        metadata: customerData.metadata || {}
+      });
+      return customer;
+    } catch (error) {
+      console.error('Erro ao criar cliente Stripe:', error);
+      throw new Error('Falha ao criar cliente no Stripe');
+    }
+  }
+
+  // Criar checkout session com trial
+  async createCheckoutSession(params: {
+    priceId: string;
+    customerId?: string;
+    customerEmail?: string;
+    trialPeriodDays?: number;
+    successUrl: string;
+    cancelUrl: string;
+    metadata?: Record<string, string>;
+  }): Promise<Stripe.Checkout.Session> {
+    try {
+      const sessionData: Stripe.Checkout.SessionCreateParams = {
+        payment_method_types: ['card'],
+        mode: 'subscription',
+        line_items: [{
+          price: params.priceId,
+          quantity: 1,
+        }],
+        success_url: params.successUrl,
+        cancel_url: params.cancelUrl,
+        metadata: params.metadata || {}
+      };
+
+      // Adicionar cliente se fornecido
+      if (params.customerId) {
+        sessionData.customer = params.customerId;
+      } else if (params.customerEmail) {
+        sessionData.customer_email = params.customerEmail;
+      }
+
+      // Configurar período de trial
+      if (params.trialPeriodDays && params.trialPeriodDays > 0) {
+        sessionData.subscription_data = {
+          trial_period_days: params.trialPeriodDays,
+          metadata: params.metadata || {}
+        };
+      }
+
+      const session = await this.stripe.checkout.sessions.create(sessionData);
+      return session;
+    } catch (error) {
+      console.error('Erro ao criar checkout session:', error);
+      throw new Error('Falha ao criar sessão de checkout');
+    }
+  }
+
+  // Criar assinatura direta
+  async createSubscription(params: {
+    customerId: string;
+    priceId: string;
+    trialPeriodDays?: number;
+    paymentMethodId?: string;
+    metadata?: Record<string, string>;
+  }): Promise<Stripe.Subscription> {
+    try {
+      const subscriptionData: Stripe.SubscriptionCreateParams = {
+        customer: params.customerId,
+        items: [{ price: params.priceId }],
+        metadata: params.metadata || {}
+      };
+
+      // Adicionar período de trial
+      if (params.trialPeriodDays && params.trialPeriodDays > 0) {
+        subscriptionData.trial_period_days = params.trialPeriodDays;
+      }
+
+      // Adicionar método de pagamento se fornecido
+      if (params.paymentMethodId) {
+        subscriptionData.default_payment_method = params.paymentMethodId;
+      }
+
+      const subscription = await this.stripe.subscriptions.create(subscriptionData);
+      return subscription;
+    } catch (error) {
+      console.error('Erro ao criar assinatura:', error);
+      throw new Error('Falha ao criar assinatura');
+    }
+  }
+
+  // Obter assinatura
+  async getSubscription(subscriptionId: string): Promise<Stripe.Subscription> {
+    try {
+      const subscription = await this.stripe.subscriptions.retrieve(subscriptionId);
+      return subscription;
+    } catch (error) {
+      console.error('Erro ao obter assinatura:', error);
+      throw new Error('Falha ao obter assinatura');
+    }
+  }
+
+  // Cancelar assinatura
+  async cancelSubscription(subscriptionId: string): Promise<Stripe.Subscription> {
+    try {
+      const subscription = await this.stripe.subscriptions.cancel(subscriptionId);
+      return subscription;
+    } catch (error) {
+      console.error('Erro ao cancelar assinatura:', error);
+      throw new Error('Falha ao cancelar assinatura');
+    }
+  }
+
+  // Verificar webhook
+  verifyWebhook(payload: string, signature: string): Stripe.Event {
+    try {
+      const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET;
+      if (!endpointSecret) {
+        throw new Error('STRIPE_WEBHOOK_SECRET não configurado');
+      }
+
+      const event = this.stripe.webhooks.constructEvent(payload, signature, endpointSecret);
+      return event;
+    } catch (error) {
+      console.error('Erro ao verificar webhook:', error);
+      throw new Error('Falha na verificação do webhook');
+    }
   }
 
   // Criar produto no Stripe
