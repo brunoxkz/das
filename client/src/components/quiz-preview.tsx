@@ -1018,18 +1018,47 @@ export default function QuizPreview({ quiz, onClose, onSave }: QuizPreviewProps)
                   key={index}
                   className={`p-3 border rounded-lg cursor-pointer transition-colors ${
                     responses[element.id] === option.text
-                      ? 'border-blue-500 bg-blue-50'
-                      : 'border-gray-200 hover:border-gray-300 bg-transparent'
+                      ? 'border-gray-400 bg-white'
+                      : 'border-gray-200 hover:border-gray-300 bg-white'
                   }`}
+                  style={{
+                    borderColor: responses[element.id] === option.text 
+                      ? (element.textColor || '#6B7280') 
+                      : 'rgba(156, 163, 175, 0.5)',
+                    backgroundColor: 'white'
+                  }}
                   onClick={() => handleAnswer(element.id, option.text, element)}
                 >
                   <div className="flex items-center space-x-3">
-                    <div className={`w-4 h-4 rounded-full border-2 ${
-                      responses[element.id] === option.text
-                        ? 'border-blue-500 bg-blue-500'
-                        : 'border-gray-300'
-                    }`} />
-                    <span className="text-gray-700">
+                    <div 
+                      className={`w-4 h-4 rounded-full border-2 ${
+                        responses[element.id] === option.text
+                          ? ''
+                          : 'border-gray-300'
+                      }`}
+                      style={{
+                        borderColor: responses[element.id] === option.text 
+                          ? (element.textColor || '#6B7280') 
+                          : 'rgba(156, 163, 175, 0.5)',
+                        backgroundColor: responses[element.id] === option.text 
+                          ? (element.textColor || '#6B7280') 
+                          : 'transparent'
+                      }}
+                    />
+                    <span 
+                      className="text-gray-700"
+                      style={{ 
+                        color: element.textColor || '#374151',
+                        fontSize: element.fontSize === 'xs' ? '0.75rem' :
+                                element.fontSize === 'sm' ? '0.875rem' :
+                                element.fontSize === 'lg' ? '1.125rem' :
+                                element.fontSize === 'xl' ? '1.25rem' : '1rem',
+                        fontWeight: element.fontWeight === 'light' ? '300' :
+                                   element.fontWeight === 'medium' ? '500' :
+                                   element.fontWeight === 'semibold' ? '600' :
+                                   element.fontWeight === 'bold' ? '700' : '400'
+                      }}
+                    >
                       {typeof option === 'string' ? option : option?.text || `Opção ${index + 1}`}
                     </span>
                   </div>
