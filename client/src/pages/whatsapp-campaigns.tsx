@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { MessageSquare, Send, Users, CheckCircle, XCircle, Phone, Search, AlertCircle, Edit, Pause, Play, Trash2, Clock3, Smartphone, Eye, Settings, Plus, RefreshCw, Calendar, Filter, FileText, Download, Clock, Target, Crown } from "lucide-react";
+import { MessageSquare, Send, Users, CheckCircle, XCircle, Phone, Search, AlertCircle, Edit, Pause, Play, Trash2, Clock3, Smartphone, Eye, Settings, Plus, RefreshCw, Calendar, Filter, FileText, Download, Clock, Target, Crown, Book, Mail } from "lucide-react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Progress } from "@/components/ui/progress";
@@ -60,7 +60,7 @@ interface ExtensionStatus {
 }
 
 export default function WhatsAppCampaignsPage() {
-  const [activeTab, setActiveTab] = useState("remarketing");
+  const [activeTab, setActiveTab] = useState("extension");
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [editingCampaign, setEditingCampaign] = useState<WhatsAppCampaign | null>(null);
   const [selectedCampaign, setSelectedCampaign] = useState<WhatsAppCampaign | null>(null);
@@ -403,6 +403,75 @@ export default function WhatsAppCampaignsPage() {
         </div>
       </div>
 
+      {/* Extensão WhatsApp V2.0 Promotion Card */}
+      <Card className="bg-gradient-to-r from-green-500 to-emerald-600 text-white border-none shadow-xl">
+        <CardHeader className="pb-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-white/20 rounded-full">
+                <MessageSquare className="w-6 h-6" />
+              </div>
+              <div>
+                <CardTitle className="text-2xl font-bold text-white">
+                  🚀 Extensão WhatsApp V2.0 - GRATUITA E ILIMITADA
+                </CardTitle>
+                <CardDescription className="text-green-100">
+                  Automatize completamente seus envios e AUMENTE SUA CONVERSÃO em até 300%
+                </CardDescription>
+              </div>
+            </div>
+            <Badge className="bg-yellow-400 text-black font-bold text-sm px-3 py-1">
+              100% GRÁTIS
+            </Badge>
+          </div>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid md:grid-cols-3 gap-4">
+            <div className="flex items-center gap-2 text-green-100">
+              <div className="w-2 h-2 bg-yellow-400 rounded-full"></div>
+              <span className="font-semibold">Envios Ilimitados</span>
+            </div>
+            <div className="flex items-center gap-2 text-green-100">
+              <div className="w-2 h-2 bg-yellow-400 rounded-full"></div>
+              <span className="font-semibold">Automação Total</span>
+            </div>
+            <div className="flex items-center gap-2 text-green-100">
+              <div className="w-2 h-2 bg-yellow-400 rounded-full"></div>
+              <span className="font-semibold">+300% Conversão</span>
+            </div>
+          </div>
+          
+          <div className="bg-white/10 rounded-lg p-4 backdrop-blur-sm">
+            <h4 className="font-bold text-white mb-2">⚡ Como Funciona:</h4>
+            <p className="text-green-100 text-sm leading-relaxed">
+              Nossa extensão Chrome V2.0 conecta automaticamente ao seu WhatsApp Web e envia mensagens personalizadas 
+              para todos os leads dos seus quizzes. Sistema 100% automatizado que funciona 24/7 sem limites de envio.
+            </p>
+          </div>
+          
+          <div className="flex flex-col sm:flex-row gap-3 pt-2">
+            <a 
+              href="/chrome-extension-v2/vendzz-whatsapp-v2.zip" 
+              download
+              className="flex-1"
+            >
+              <Button className="w-full bg-white text-green-600 hover:bg-green-50 font-bold py-3 px-6 text-lg">
+                <Download className="w-5 h-5 mr-2" />
+                BAIXAR EXTENSÃO V2.0
+              </Button>
+            </a>
+            <Button 
+              variant="outline" 
+              className="border-white text-white hover:bg-white/10 font-semibold"
+              onClick={() => window.open('/chrome-extension-v2/INSTALACAO.md', '_blank')}
+            >
+              <Book className="w-4 h-4 mr-2" />
+              Tutorial de Instalação
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+
       {/* Campaign Style Selection Card */}
       <Card className="bg-gradient-to-r from-green-50 to-blue-50 border-green-200">
         <CardHeader>
@@ -452,13 +521,18 @@ export default function WhatsAppCampaignsPage() {
       </Card>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger value="remarketing">Remarketing</TabsTrigger>
-          <TabsTrigger value="campaigns">Campanhas</TabsTrigger>
-          <TabsTrigger value="extension">Extensão</TabsTrigger>
+        <TabsList className="grid w-full grid-cols-2">
+          <TabsTrigger value="extension" className="text-sm">
+            <Crown className="w-4 h-4 mr-2" />
+            🆓 GRÁTIS (EXTENSÃO CHROME/OPERA)
+          </TabsTrigger>
+          <TabsTrigger value="business-api" className="text-sm">
+            <Settings className="w-4 h-4 mr-2" />
+            💼 BUSINESS API
+          </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="remarketing" className="space-y-6">
+        <TabsContent value="extension" className="space-y-6">
           {/* Explicação dos Tipos de Campanha */}
           <Card className="border-blue-200 bg-blue-50">
             <CardHeader>
@@ -910,6 +984,124 @@ export default function WhatsAppCampaignsPage() {
           </Card>
         </TabsContent>
 
+        <TabsContent value="business-api" className="space-y-6">
+          <Card className="bg-gradient-to-r from-purple-500 to-indigo-600 text-white border-none shadow-xl">
+            <CardHeader>
+              <CardTitle className="text-2xl font-bold text-white flex items-center gap-2">
+                <Settings className="w-6 h-6" />
+                💼 WhatsApp Business API - Solução Empresarial
+              </CardTitle>
+              <CardDescription className="text-purple-100">
+                Integração profissional com WhatsApp Business API para empresas que precisam de maior volume e confiabilidade
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="bg-white/10 rounded-lg p-4 backdrop-blur-sm">
+                <h4 className="font-bold text-white mb-2">🚀 Recursos Empresariais:</h4>
+                <ul className="space-y-2 text-purple-100">
+                  <li className="flex items-center gap-2">
+                    <div className="w-2 h-2 bg-yellow-400 rounded-full"></div>
+                    <span>Envio de até 1.000.000 mensagens por dia</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <div className="w-2 h-2 bg-yellow-400 rounded-full"></div>
+                    <span>Templates aprovados pelo WhatsApp</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <div className="w-2 h-2 bg-yellow-400 rounded-full"></div>
+                    <span>Relatórios detalhados e analytics avançados</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <div className="w-2 h-2 bg-yellow-400 rounded-full"></div>
+                    <span>Suporte 24/7 e gerente de conta dedicado</span>
+                  </li>
+                </ul>
+              </div>
+              
+              <div className="bg-white/10 rounded-lg p-4 backdrop-blur-sm">
+                <h4 className="font-bold text-white mb-2">💰 Planos Disponíveis:</h4>
+                <div className="grid md:grid-cols-3 gap-4 mt-3">
+                  <div className="bg-white/20 rounded-lg p-3">
+                    <h5 className="font-semibold text-white">Starter</h5>
+                    <p className="text-2xl font-bold text-yellow-400">R$ 497/mês</p>
+                    <p className="text-sm text-purple-100">Até 10.000 mensagens</p>
+                  </div>
+                  <div className="bg-white/20 rounded-lg p-3">
+                    <h5 className="font-semibold text-white">Professional</h5>
+                    <p className="text-2xl font-bold text-yellow-400">R$ 997/mês</p>
+                    <p className="text-sm text-purple-100">Até 100.000 mensagens</p>
+                  </div>
+                  <div className="bg-white/20 rounded-lg p-3">
+                    <h5 className="font-semibold text-white">Enterprise</h5>
+                    <p className="text-2xl font-bold text-yellow-400">R$ 2.497/mês</p>
+                    <p className="text-sm text-purple-100">Até 1.000.000 mensagens</p>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="flex flex-col sm:flex-row gap-3 pt-2">
+                <Button 
+                  className="flex-1 bg-white text-purple-600 hover:bg-purple-50 font-bold py-3 px-6 text-lg"
+                  onClick={() => window.open('https://wa.me/5511999887766?text=Olá! Gostaria de saber mais sobre o WhatsApp Business API', '_blank')}
+                >
+                  <MessageSquare className="w-5 h-5 mr-2" />
+                  FALAR COM CONSULTOR
+                </Button>
+                <Button 
+                  variant="outline" 
+                  className="border-white text-white hover:bg-white/10 font-semibold"
+                  onClick={() => window.open('mailto:contato@vendzz.com?subject=Interesse WhatsApp Business API', '_blank')}
+                >
+                  <Mail className="w-4 h-4 mr-2" />
+                  Email Comercial
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+          
+          <Card>
+            <CardHeader>
+              <CardTitle>📋 Processo de Implementação</CardTitle>
+              <CardDescription>
+                Como funciona a integração com WhatsApp Business API
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <div className="flex items-start gap-3">
+                  <div className="w-8 h-8 bg-blue-500 text-white rounded-full flex items-center justify-center font-bold">1</div>
+                  <div>
+                    <h4 className="font-semibold">Análise de Necessidades</h4>
+                    <p className="text-sm text-gray-600">Nosso time analisa seu volume e necessidades específicas</p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3">
+                  <div className="w-8 h-8 bg-blue-500 text-white rounded-full flex items-center justify-center font-bold">2</div>
+                  <div>
+                    <h4 className="font-semibold">Configuração Técnica</h4>
+                    <p className="text-sm text-gray-600">Configuramos a integração com WhatsApp Business API</p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3">
+                  <div className="w-8 h-8 bg-blue-500 text-white rounded-full flex items-center justify-center font-bold">3</div>
+                  <div>
+                    <h4 className="font-semibold">Testes e Validação</h4>
+                    <p className="text-sm text-gray-600">Realizamos testes completos antes do go-live</p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3">
+                  <div className="w-8 h-8 bg-green-500 text-white rounded-full flex items-center justify-center font-bold">4</div>
+                  <div>
+                    <h4 className="font-semibold">Lançamento e Suporte</h4>
+                    <p className="text-sm text-gray-600">Acompanhamento contínuo e suporte dedicado</p>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Aba de Extensão com todas as campanhas */}
         <TabsContent value="campaigns" className="space-y-6">
           <Card>
             <CardHeader>
