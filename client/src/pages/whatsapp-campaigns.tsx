@@ -26,7 +26,7 @@ interface WhatsAppCampaign {
   quizId: string;
   quizTitle: string;
   status: 'active' | 'paused' | 'completed';
-  messages: string[]; // Array de mensagens rotativas
+  messages: string[];
   scheduledDate?: string;
   targetAudience: 'all' | 'completed' | 'abandoned';
   sent: number;
@@ -60,19 +60,17 @@ interface ExtensionStatus {
 }
 
 export default function WhatsAppCampaignsPage() {
-  const [activeTab, setActiveTab] = useState("campanhas");
+  const [activeTab, setActiveTab] = useState("extensao");
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [editingCampaign, setEditingCampaign] = useState<WhatsAppCampaign | null>(null);
   const [selectedCampaign, setSelectedCampaign] = useState<WhatsAppCampaign | null>(null);
   const [showLogs, setShowLogs] = useState(false);
   
-  // Estados para seleção de quiz e filtros
   const [selectedQuiz, setSelectedQuiz] = useState<string>("");
   const [selectedAudience, setSelectedAudience] = useState<'all' | 'completed' | 'abandoned'>('all');
   const [dateFilter, setDateFilter] = useState<string>("");
   const [fromDate, setFromDate] = useState<string>("");
   
-  // Estados para seletor de estilo de campanha
   const [showCampaignStyleSelector, setShowCampaignStyleSelector] = useState(false);
   const [selectedCampaignStyle, setSelectedCampaignStyle] = useState<CampaignStyle | null>(null);
 
@@ -80,15 +78,14 @@ export default function WhatsAppCampaignsPage() {
   const [autoRefresh, setAutoRefresh] = useState(true);
   const [campaignName, setCampaignName] = useState("");
   const [isCreating, setIsCreating] = useState(false);
-  const [leadDelay, setLeadDelay] = useState(10); // minutos
-  const [distributionDelay, setDistributionDelay] = useState(180); // segundos
+  const [leadDelay, setLeadDelay] = useState(10);
+  const [distributionDelay, setDistributionDelay] = useState(180);
   const [generatingFile, setGeneratingFile] = useState(false);
   
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
-  // Buscar quizzes usando o mesmo padrão do SMS que funciona
-  const { data: quizzes = [], isLoading: quizzesLoading, error: quizzesError } = useQuery({
+  const { data: quizzes = [] } = useQuery({
     queryKey: ["/api/quizzes"],
     queryFn: async () => {
       const token = localStorage.getItem("accessToken");
@@ -103,217 +100,40 @@ export default function WhatsAppCampaignsPage() {
     }
   });
 
-  // Log dos quizzes para debug
-  console.log('🔍 Estado dos quizzes WhatsApp:', {
-    loading: quizzesLoading,
-    error: quizzesError,
-    data: quizzes,
-    length: quizzes?.length
-  });
-  
-  // Hook de autenticação
-  const { user } = useAuth();
-
-  // Função para gerar arquivo de automação
-  const generateAutomationFile = async () => {
-    if (!selectedQuiz) return;
-    
-    setGeneratingFile(true);
-    try {
-      const response = await apiRequest('POST', '/api/whatsapp-automation-file', {
-        quizId: selectedQuiz,
-        targetAudience: selectedAudience,
-        dateFilter: dateFilter
-      });
-      
-      toast({
-        title: "Arquivo gerado com sucesso!",
-        description: `Arquivo criado para o quiz. A extensão pode acessá-lo agora.`,
-      });
-      
-    } catch (error) {
-      console.error('Erro ao gerar arquivo:', error);
-      toast({
-        title: "Erro ao gerar arquivo",
-        description: "Tente novamente em alguns instantes.",
-        variant: "destructive",
-      });
-    } finally {
-      setGeneratingFile(false);
-    }
-  };
-  
-  // Sistema funcionando corretamente - logs removidos
-  
-
-
-
-
-  // Buscar telefones do quiz selecionado usando apiRequest
-  const { data: quizPhones = {}, refetch: refetchPhones, isLoading: phonesLoading } = useQuery({
-    queryKey: ['/api/quiz-phones', selectedQuiz],
-    enabled: !!selectedQuiz,
-    queryFn: async () => {
-      if (!selectedQuiz) return {};
-      try {
-        return await apiRequest('GET', `/api/quiz-phones/${selectedQuiz}`);
-      } catch (error) {
-        console.error('Erro ao buscar telefones:', error);
-        return { phones: [], totalPhones: 0 };
-      }
-    },
-    refetchInterval: autoRefresh ? 10000 : false,
-  });
-
-  // Buscar campanhas WhatsApp usando fetch com token
-  const { data: campaigns = [], refetch: refetchCampaigns, isLoading: campaignsLoading } = useQuery({
-    queryKey: ['/api/whatsapp-campaigns'],
-    queryFn: async () => {
-      const token = localStorage.getItem("accessToken");
-      const response = await fetch("/api/whatsapp-campaigns", {
-        headers: {
-          "Authorization": `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-      });
-      if (!response.ok) throw new Error("Failed to fetch campaigns");
-      return response.json();
-    },
+  const { data: campaigns = [] } = useQuery({
+    queryKey: ["/api/whatsapp/campaigns"],
+    enabled: activeTab === "campanhas",
     refetchInterval: autoRefresh ? 30000 : false,
   });
 
-  // Status da extensão
   const { data: extensionStatus } = useQuery({
-    queryKey: ['/api/whatsapp-extension/status'],
-    refetchInterval: 5000,
+    queryKey: ["/api/whatsapp/extension/status"],
+    refetchInterval: 10000,
   });
 
-  // Buscar logs de WhatsApp para verificar telefones já enviados
-  const { data: whatsappLogs = [] } = useQuery({
-    queryKey: ['/api/whatsapp-campaigns', selectedQuiz, 'logs'],
-    enabled: !!selectedQuiz,
-    refetchInterval: autoRefresh ? 10000 : false,
-  });
+  const { user } = useAuth();
 
-
-
-  // Calcular listas filtradas e contadores dinamicamente
-  const getFilteredPhones = () => {
-    if (!selectedQuiz || !quizPhones?.phones || !quizPhones.phones.length) return [];
-    
-    let filteredPhones = quizPhones.phones;
-    
-    // Aplicar filtro de data (se não selecionado, inclui todos)
-    if (dateFilter) {
-      const filterDate = new Date(dateFilter);
-      filteredPhones = filteredPhones.filter(phone => 
-        new Date(phone.submittedAt) >= filterDate
-      );
-    }
-    
-    // Aplicar filtro de audiência
-    if (selectedAudience !== 'all') {
-      filteredPhones = filteredPhones.filter(phone => {
-        const isCompleted = phone.status === 'completed' || phone.isComplete === true;
-        return selectedAudience === 'completed' ? isCompleted : !isCompleted;
-      });
-    }
-    
-    return filteredPhones;
-  };
-
-  const getAudienceCounts = () => {
-    if (!selectedQuiz || !quizPhones.phones || !quizPhones.phones.length) return { completed: 0, abandoned: 0, all: 0 };
-    
-    let basePhones = quizPhones.phones;
-    
-    // Aplicar filtro de data se especificado (se não selecionado, inclui todos)
-    if (dateFilter) {
-      const filterDate = new Date(dateFilter);
-      basePhones = basePhones.filter(phone => 
-        new Date(phone.submittedAt) >= filterDate
-      );
-    }
-    
-    const completed = basePhones.filter(p => p.status === 'completed' || p.isComplete === true).length;
-    const abandoned = basePhones.filter(p => p.status !== 'completed' && p.isComplete !== true).length;
-    
-    return {
-      completed,
-      abandoned,
-      all: basePhones.length
-    };
-  };
-
-  const filteredPhones = getFilteredPhones();
-  const audienceCounts = getAudienceCounts();
-
-  // Função para verificar se telefone já foi enviado
-  const isPhoneSent = (phone: string) => {
-    return whatsappLogs.some(log => log.phone === phone && (log.status === 'sent' || log.status === 'delivered'));
-  };
-
-  // Função para adicionar nova mensagem rotativa
-  const addRotatingMessage = () => {
-    setRotatingMessages([...rotatingMessages, ""]);
-  };
-
-  // Função para remover mensagem rotativa
-  const removeRotatingMessage = (index: number) => {
-    if (rotatingMessages.length > 1) {
-      setRotatingMessages(rotatingMessages.filter((_, i) => i !== index));
-    }
-  };
-
-  // Função para atualizar mensagem rotativa
-  const updateRotatingMessage = (index: number, message: string) => {
-    const newMessages = [...rotatingMessages];
-    newMessages[index] = message;
-    setRotatingMessages(newMessages);
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString('pt-BR', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
   };
 
   const handleCampaignStyleSelect = (style: CampaignStyle) => {
     setSelectedCampaignStyle(style);
-    
-    // Baseado no estilo selecionado, redirecionar para o fluxo apropriado
-    switch (style) {
-      case 'remarketing':
-        handleCreateRemarketingCampaign();
-        break;
-      case 'remarketing_ultra_customizado':
-        handleCreateRemarketingUltraCustomizedCampaign();
-        break;
-      case 'ao_vivo_tempo_real':
-        handleCreateStandardCampaign();
-        break;
-      case 'ao_vivo_ultra_customizada':
-        handleCreateUltraCustomizedCampaign();
-        break;
-    }
+    setShowCampaignStyleSelector(false);
+    setShowCreateForm(true);
   };
 
-  const handleCreateRemarketingCampaign = async () => {
-    await createCampaignWithStyle('remarketing');
-  };
-
-  const handleCreateRemarketingUltraCustomizedCampaign = async () => {
-    await createCampaignWithStyle('remarketing_ultra_customizado');
-  };
-
-  const handleCreateStandardCampaign = async () => {
-    await createCampaignWithStyle('ao_vivo_tempo_real');
-  };
-
-  const handleCreateUltraCustomizedCampaign = async () => {
-    await createCampaignWithStyle('ao_vivo_ultra_customizada');
-  };
-
-  // Função para criar campanha com estilo específico
-  const createCampaignWithStyle = async (campaignType: string) => {
-    if (!selectedQuiz || !campaignName || rotatingMessages.filter(m => m.trim()).length === 0) {
+  const createCampaign = async () => {
+    if (!selectedQuiz || !campaignName || rotatingMessages.filter(msg => msg.trim()).length === 0) {
       toast({
         title: "Erro",
-        description: "Selecione um quiz, digite um nome e adicione pelo menos uma mensagem",
+        description: "Preencha todos os campos obrigatórios",
         variant: "destructive",
       });
       return;
@@ -321,52 +141,41 @@ export default function WhatsAppCampaignsPage() {
 
     setIsCreating(true);
     try {
-      const selectedQuizData = quizzes.find(q => q.id === selectedQuiz);
-      const validMessages = rotatingMessages.filter(m => m.trim());
+      const validMessages = rotatingMessages.filter(msg => msg.trim());
       
-      const stylePrefix = 
-        campaignType === 'remarketing' ? '[REMARKETING]' : 
-        campaignType === 'remarketing_ultra_customizado' ? '[REMARKETING ULTRA CUSTOMIZADO]' :
-        campaignType === 'ao_vivo_tempo_real' ? '[AO VIVO TEMPO REAL]' : 
-        '[AO VIVO ULTRA CUSTOMIZADA]';
-      
-      await apiRequest("POST", "/api/whatsapp-campaigns", {
-        name: `${stylePrefix} ${campaignName}`,
+      await apiRequest("POST", "/api/whatsapp/campaigns", {
+        name: campaignName,
         quizId: selectedQuiz,
-        quizTitle: selectedQuizData?.title || "Quiz",
         messages: validMessages,
         targetAudience: selectedAudience,
-        dateFilter,
-        leadDelay,
-        distributionDelay,
-        campaignType,
+        leadDelay: leadDelay,
+        distributionDelay: distributionDelay,
         extensionSettings: {
-          delay: 5,
+          delay: distributionDelay,
           maxRetries: 3,
           enabled: true
         }
       });
-      
+
       toast({
         title: "Sucesso",
-        description: `Campanha ${stylePrefix} criada com sucesso!`,
+        description: "Campanha criada com sucesso!",
       });
-      
-      // Limpar formulário
+
+      setShowCreateForm(false);
       setCampaignName("");
       setRotatingMessages([""]);
       setSelectedQuiz("");
       setSelectedAudience('all');
-      setDateFilter("");
+      setLeadDelay(10);
+      setDistributionDelay(180);
       setSelectedCampaignStyle(null);
       
-      // Atualizar lista de campanhas
-      refetchCampaigns();
-      
+      queryClient.invalidateQueries({ queryKey: ["/api/whatsapp/campaigns"] });
     } catch (error) {
       toast({
         title: "Erro",
-        description: "Erro ao criar campanha WhatsApp",
+        description: "Falha ao criar campanha",
         variant: "destructive",
       });
     } finally {
@@ -374,134 +183,16 @@ export default function WhatsAppCampaignsPage() {
     }
   };
 
-  // Função para formatar data
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('pt-BR', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
-  };
-
   return (
     <div className="container mx-auto p-6 space-y-6">
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold">Campanhas WhatsApp</h1>
-          <p className="text-gray-600">Crie e gerencie campanhas WhatsApp com diferentes estilos</p>
-        </div>
-        <div className="flex items-center gap-2">
-          <Badge variant={extensionStatus?.connected ? "default" : "destructive"}>
-            {extensionStatus?.connected ? "Extensão Conectada" : "Extensão Desconectada"}
-          </Badge>
-          <Button onClick={() => setAutoRefresh(!autoRefresh)} variant="outline" size="sm">
-            <RefreshCw className={`h-4 w-4 mr-2 ${autoRefresh ? 'animate-spin' : ''}`} />
-            Auto-Refresh: {autoRefresh ? "ON" : "OFF"}
-          </Button>
+          <h1 className="text-3xl font-bold">WhatsApp Campaigns</h1>
+          <p className="text-gray-600">Automatize seus envios e multiplique suas conversões</p>
         </div>
       </div>
 
-      {/* Seção de Estatísticas do Topo */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-        <Card className="bg-gradient-to-r from-green-500 to-emerald-600 text-white border-none">
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-green-100 text-sm font-medium">Campanhas Ativas</p>
-                <p className="text-2xl font-bold">{campaigns?.filter(c => c.status === 'active').length || 0}</p>
-              </div>
-              <MessageSquare className="h-8 w-8 text-green-200" />
-            </div>
-          </CardContent>
-        </Card>
-        
-        <Card className="bg-gradient-to-r from-blue-500 to-indigo-600 text-white border-none">
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-blue-100 text-sm font-medium">Mensagens Enviadas</p>
-                <p className="text-2xl font-bold">{campaigns?.reduce((sum, c) => sum + c.sent, 0) || 0}</p>
-              </div>
-              <Send className="h-8 w-8 text-blue-200" />
-            </div>
-          </CardContent>
-        </Card>
-        
-        <Card className="bg-gradient-to-r from-purple-500 to-pink-600 text-white border-none">
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-purple-100 text-sm font-medium">Taxa de Entrega</p>
-                <p className="text-2xl font-bold">
-                  {campaigns?.reduce((sum, c) => sum + c.sent, 0) > 0 
-                    ? `${Math.round((campaigns?.reduce((sum, c) => sum + c.delivered, 0) / campaigns?.reduce((sum, c) => sum + c.sent, 0)) * 100)}%`
-                    : "0%"
-                  }
-                </p>
-              </div>
-              <CheckCircle className="h-8 w-8 text-purple-200" />
-            </div>
-          </CardContent>
-        </Card>
-        
-        <Card className="bg-gradient-to-r from-orange-500 to-red-600 text-white border-none">
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-orange-100 text-sm font-medium">Respostas Recebidas</p>
-                <p className="text-2xl font-bold">{campaigns?.reduce((sum, c) => sum + c.replies, 0) || 0}</p>
-              </div>
-              <Phone className="h-8 w-8 text-orange-200" />
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Seção de Status da Extensão */}
-      <Card className="bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-900 border-2 border-dashed">
-        <CardContent className="p-6">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <div className={`p-3 rounded-full ${extensionStatus?.connected ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'}`}>
-                <Smartphone className="h-6 w-6" />
-              </div>
-              <div>
-                <h3 className="font-semibold text-lg">
-                  Status da Extensão WhatsApp V2.0
-                </h3>
-                <p className="text-sm text-gray-600">
-                  {extensionStatus?.connected 
-                    ? `✅ Conectada (v${extensionStatus.version}) - Última comunicação: ${extensionStatus.lastPing ? new Date(extensionStatus.lastPing).toLocaleString() : 'N/A'}`
-                    : '❌ Desconectada - Instale e ative a extensão Chrome'
-                  }
-                </p>
-              </div>
-            </div>
-            <div className="flex items-center gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => window.open('https://chrome.google.com/webstore', '_blank')}
-              >
-                <Download className="h-4 w-4 mr-2" />
-                Instalar Extensão
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => window.location.reload()}
-              >
-                <RefreshCw className="h-4 w-4 mr-2" />
-                Atualizar Status
-              </Button>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Extensão WhatsApp V2.0 Promotion Card */}
+      {/* Link de Download da Extensão em Destaque */}
       <Card className="bg-gradient-to-r from-green-500 to-emerald-600 text-white border-none shadow-xl">
         <CardHeader className="pb-4">
           <div className="flex items-center justify-between">
@@ -570,632 +261,203 @@ export default function WhatsAppCampaignsPage() {
         </CardContent>
       </Card>
 
-      {/* Campaign Style Selection Card */}
-      <Card className="bg-gradient-to-r from-green-50 to-blue-50 border-green-200">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-green-800">
-            <MessageSquare className="w-5 h-5" />
-            Criar Nova Campanha WhatsApp
-          </CardTitle>
-          <CardDescription>
-            Comece selecionando o estilo de campanha que melhor se adapta ao seu objetivo
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="text-center">
-            <Button
-              onClick={() => setShowCampaignStyleSelector(true)}
-              size="lg"
-              className="bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700 text-white font-bold py-4 px-8"
-            >
-              <MessageSquare className="w-5 h-5 mr-2" />
-              Selecionar Estilo de Campanha
-            </Button>
-          </div>
-          
-          <div className="grid md:grid-cols-4 gap-4 text-center">
-            <div className="p-3 bg-orange-50 rounded-lg border border-orange-200">
-              <RefreshCw className="w-8 h-8 mx-auto mb-2 text-orange-600" />
-              <h4 className="font-semibold text-orange-800">Remarketing</h4>
-              <p className="text-sm text-orange-600">💰 Custo R$ 0,00</p>
-            </div>
-            <div className="p-3 bg-green-50 rounded-lg border border-green-200">
-              <Clock className="w-8 h-8 mx-auto mb-2 text-green-600" />
-              <h4 className="font-semibold text-green-800">Ao Vivo</h4>
-              <p className="text-sm text-green-600">⚡ Imediato</p>
-            </div>
-            <div className="p-3 bg-purple-50 rounded-lg border border-purple-200">
-              <Settings className="w-8 h-8 mx-auto mb-2 text-purple-600" />
-              <h4 className="font-semibold text-purple-800">Ultra Customizada</h4>
-              <p className="text-sm text-purple-600">🚀 Top Vendas</p>
-            </div>
-            <div className="p-3 bg-blue-50 rounded-lg border border-blue-200">
-              <Target className="w-8 h-8 mx-auto mb-2 text-blue-600" />
-              <h4 className="font-semibold text-blue-800">Ultra Personalizada</h4>
-              <p className="text-sm text-blue-600">💎 Expert</p>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+      {/* Tabs Navigation */}
+      <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger value="campanhas" className="text-sm">
-            <MessageSquare className="w-4 h-4 mr-2" />
-            📱 CAMPANHAS
-          </TabsTrigger>
-          <TabsTrigger value="extensao" className="text-sm">
-            <Crown className="w-4 h-4 mr-2" />
-            🆓 EXTENSÃO
-          </TabsTrigger>
-          <TabsTrigger value="configuracoes" className="text-sm">
-            <Settings className="w-4 h-4 mr-2" />
-            ⚙️ CONFIGURAÇÕES
-          </TabsTrigger>
+          <TabsTrigger value="extensao">Extensão</TabsTrigger>
+          <TabsTrigger value="api">API</TabsTrigger>
+          <TabsTrigger value="campanhas">Campanhas</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="campanhas" className="space-y-6">
-          {/* Explicação dos Tipos de Campanha */}
-          <Card className="border-blue-200 bg-blue-50">
-            <CardHeader>
-              <CardTitle className="text-blue-900">📚 Tipos de Campanha WhatsApp - Guia Completo</CardTitle>
-              <CardDescription className="text-blue-700">
-                Comece selecionando o estilo de campanha que melhor se adapta ao seu objetivo
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="grid md:grid-cols-2 gap-6">
-                <div className="space-y-4">
-                  <div className="border-l-4 border-green-500 pl-4 bg-white p-4 rounded-lg shadow-lg">
-                    <h3 className="font-bold text-green-700 flex items-center gap-2">
-                      <span className="bg-green-100 text-green-800 px-2 py-1 rounded text-sm">💰 REMARKETING</span>
-                    </h3>
-                    <p className="text-sm text-green-600 font-medium mt-2">📱 Transforme WhatsApp "mortos" em VENDAS!</p>
-                    <p className="text-sm text-gray-700 mt-1">
-                      <strong>Selecione entre leads antigos que abandonaram ou completaram o quiz e datas</strong>
-                    </p>
-                    <div className="mt-3 space-y-2">
-                      <div className="text-xs text-gray-600">
-                        🎯 <strong>Vantagens:</strong> Leads gratuitos • Segmentação automática • Timing inteligente
-                      </div>
-                      <div className="text-xs text-green-600 font-bold">
-                        💸 <strong>LUCRO REAL:</strong> +42% taxa resposta • R$ 420 a mais para cada R$ 1.000 investido!
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="border-l-4 border-purple-500 pl-4 bg-white p-4 rounded-lg shadow-lg">
-                    <h3 className="font-bold text-purple-700 flex items-center gap-2">
-                      <span className="bg-purple-100 text-purple-800 px-2 py-1 rounded text-sm">🚀 REMARKETING ULTRA CUSTOMIZADO</span>
-                    </h3>
-                    <p className="text-sm text-purple-600 font-medium mt-2">💎 O segredo dos REIS do WhatsApp!</p>
-                    <p className="text-sm text-gray-700 mt-1">
-                      <strong>Selecione entre leads antigos que abandonaram ou completaram o quiz e datas, mas que também dispare funis diferentes para cada faixa de idade, peso, altura, ou como preferir, isso aumenta muito a conversão!</strong>
-                    </p>
-                    <div className="mt-3 space-y-2">
-                      <div className="text-xs text-gray-600">
-                        🎯 <strong>Vantagens:</strong> Mensagens por idade/peso/altura • Funis únicos • Personalização máxima
-                      </div>
-                      <div className="text-xs text-purple-600 font-bold">
-                        💰 <strong>LUCRO EXPLOSIVO:</strong> +65% conversão • R$ 6.500 a mais para cada R$ 10.000!
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="space-y-4">
-                  <div className="border-l-4 border-orange-500 pl-4 bg-white p-4 rounded-lg shadow-lg">
-                    <h3 className="font-bold text-orange-700 flex items-center gap-2">
-                      <span className="bg-orange-100 text-orange-800 px-2 py-1 rounded text-sm">⚡ AO VIVO TEMPO REAL</span>
-                    </h3>
-                    <p className="text-sm text-orange-600 font-medium mt-2">🔥 Pegue o lead no WhatsApp QUENTE!</p>
-                    <p className="text-sm text-gray-700 mt-1">
-                      <strong>Mensagens personalizadas para pessoas que abandonaram ou completaram o quiz, escolha quanto tempo após a ação vai disparar a mensagem personalizada desejada</strong>
-                    </p>
-                    <div className="mt-3 space-y-2">
-                      <div className="text-xs text-gray-600">
-                        🎯 <strong>Vantagens:</strong> Automático 24h • Timing perfeito • Sem perder leads
-                      </div>
-                      <div className="text-xs text-orange-600 font-bold">
-                        🔥 <strong>CONVERSÃO INSANA:</strong> +95% taxa resposta • Lead quente no WhatsApp = venda garantida!
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="border-l-4 border-red-500 pl-4 bg-white p-4 rounded-lg shadow-lg">
-                    <h3 className="font-bold text-red-700 flex items-center gap-2">
-                      <span className="bg-red-100 text-red-800 px-2 py-1 rounded text-sm">💎 AO VIVO ULTRA CUSTOMIZADA</span>
-                    </h3>
-                    <p className="text-sm text-red-600 font-medium mt-2">👑 O NIVEL SUPREMO do WhatsApp!</p>
-                    <p className="text-sm text-gray-700 mt-1">
-                      <strong>Mensagens personalizadas para pessoas que abandonaram ou completaram o quiz, escolha quanto tempo após a ação vai disparar a mensagem personalizada desejada mas que também dispare funis diferentes para cada faixa de idade, peso, altura, ou como preferir, isso aumenta muito a conversão!</strong>
-                    </p>
-                    <div className="mt-3 space-y-2">
-                      <div className="text-xs text-gray-600">
-                        🎯 <strong>Vantagens:</strong> Tempo real + personalização • Funis únicos • Máxima conversão
-                      </div>
-                      <div className="text-xs text-red-600 font-bold">
-                        💰 <strong>LUCRO ESTRATOSFÉRICO:</strong> +200% conversão • R$ 20.000 a mais para cada R$ 10.000!
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <div className="bg-gradient-to-r from-yellow-50 to-orange-50 border border-yellow-300 rounded-lg p-4 shadow-lg">
-                <div className="flex items-start space-x-3">
-                  <div className="text-yellow-600 mt-1">💰</div>
-                  <div>
-                    <h4 className="font-semibold text-yellow-800">ESTRATÉGIA MILIONÁRIA</h4>
-                    <p className="text-sm text-yellow-700 mt-1">
-                      <strong>COMBINE TUDO:</strong> Use <strong>Remarketing</strong> nos leads antigos (custo R$ 0,00), <strong>Ao Vivo</strong> nos frescos (resposta 95%+). 
-                      As versões <strong>Ultra Customizadas</strong> são o segredo dos especialistas que faturam R$ 300k+/mês com WhatsApp!
-                    </p>
-                    <p className="text-xs text-yellow-600 mt-2 font-bold">
-                      ⚡ RESULTADO: Até R$ 100.000 extras por mês só com WhatsApp automático!
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-                <div className="flex items-start space-x-3">
-                  <div className="text-red-600 mt-1">⚠️</div>
-                  <div>
-                    <h4 className="font-semibold text-red-800">Importante - Proteção contra Ban</h4>
-                    <p className="text-sm text-red-700 mt-1">
-                      <strong>WhatsApp é mais restritivo:</strong> Use mensagens rotativas, evite spam, respeite intervalos de tempo. 
-                      Nossa extensão Chrome protege automaticamente contra banimentos.
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
+        {/* Aba Extensão */}
+        <TabsContent value="extensao" className="space-y-6">
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <MessageSquare className="h-5 w-5" />
-                Criar Nova Campanha WhatsApp
+                <Smartphone className="h-5 w-5" />
+                Status da Extensão Chrome
               </CardTitle>
               <CardDescription>
-                Selecione o estilo de campanha que melhor se adapta ao seu objetivo
+                Monitore o status da sua extensão WhatsApp
               </CardDescription>
             </CardHeader>
-            <CardContent className="space-y-4">
-              {/* Seleção do Quiz */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="quiz-select">Selecionar Quiz</Label>
-                  <div className="space-y-2">
-                    <Select value={selectedQuiz} onValueChange={setSelectedQuiz}>
-                      <SelectTrigger>
-                        <SelectValue placeholder={quizzesLoading ? "🔄 Carregando..." : quizzes.length === 0 ? "❌ Nenhum quiz encontrado" : "✅ Escolha um quiz"} />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {quizzes && quizzes.length > 0 ? (
-                          quizzes.map((quiz: any) => (
-                            <SelectItem key={quiz.id} value={quiz.id}>
-                              {quiz.title}
-                            </SelectItem>
-                          ))
-                        ) : (
-                          <SelectItem value="no-quiz" disabled>
-                            {quizzesLoading ? "Carregando..." : "Nenhum quiz encontrado"}
-                          </SelectItem>
-                        )}
-                    </SelectContent>
-                  </Select>
-                  
-                  {quizzesError && (
-                    <div className="text-red-600 text-sm p-2 bg-red-50 rounded border">
-                      ❌ <strong>Erro:</strong> {String(quizzesError.message || quizzesError)}
-                    </div>
-                  )}
-                  
-                  <div className="text-sm text-gray-600">
-                    {quizzesLoading ? (
-                      "🔄 Buscando quizzes..."
-                    ) : quizzes.length === 0 ? (
-                      "📋 Nenhum quiz encontrado - crie um primeiro"
-                    ) : (
-                      `📊 ${quizzes.length} quiz(es) disponível(eis)`
-                    )}
-                  </div>
-
-                  {/* Gerador de Arquivo para Extensão */}
-                  {selectedQuiz && (
-                    <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-                      <div className="flex items-center gap-2 mb-2">
-                        <FileText className="h-5 w-5 text-blue-600" />
-                        <h3 className="font-medium text-blue-900">Arquivo para Extensão WhatsApp</h3>
-                      </div>
-                      <p className="text-sm text-blue-700 mb-3">
-                        Gere um arquivo interno com todos os telefones deste quiz. A extensão Chrome acessará automaticamente este arquivo.
-                      </p>
-                      <Button 
-                        onClick={generateAutomationFile}
-                        disabled={generatingFile}
-                        className="bg-blue-600 hover:bg-blue-700 text-white"
-                      >
-                        {generatingFile ? (
-                          <>
-                            <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
-                            Gerando Arquivo...
-                          </>
-                        ) : (
-                          <>
-                            <Download className="h-4 w-4 mr-2" />
-                            Gerar Arquivo de Automação
-                          </>
-                        )}
-                      </Button>
-                    </div>
-                  )}
-                </div>
-                </div>
-                
-                <div>
-                  <Label htmlFor="campaign-name">Nome da Campanha</Label>
-                  <Input
-                    id="campaign-name"
-                    placeholder="Ex: Recuperação Carrinho Janeiro"
-                    value={campaignName}
-                    onChange={(e) => setCampaignName(e.target.value)}
-                  />
-                </div>
-              </div>
-
-              {/* Seleção de Público-Alvo */}
-              {selectedQuiz && (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <CardContent>
+              <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                <div className="flex items-center gap-3">
+                  <div className={`w-3 h-3 rounded-full ${extensionStatus?.connected ? 'bg-green-500' : 'bg-red-500'}`}></div>
                   <div>
-                    <Label htmlFor="target-audience">Público-Alvo</Label>
-                    <Select value={selectedAudience} onValueChange={(value: 'all' | 'completed' | 'abandoned') => setSelectedAudience(value)}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Selecione o público" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="completed">
-                          <div className="flex items-center gap-2">
-                            <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                            Quiz Completo - Leads Qualificados ({audienceCounts.completed})
-                          </div>
-                        </SelectItem>
-                        <SelectItem value="abandoned">
-                          <div className="flex items-center gap-2">
-                            <div className="w-2 h-2 bg-orange-500 rounded-full"></div>
-                            Quiz Abandonado - Recuperação ({audienceCounts.abandoned})
-                          </div>
-                        </SelectItem>
-                        <SelectItem value="all">
-                          <div className="flex items-center gap-2">
-                            <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-                            Todos os Leads ({audienceCounts.all})
-                          </div>
-                        </SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <div>
-                  <Label htmlFor="date-filter">Filtrar Leads por Data de Chegada</Label>
-                  <Input
-                    id="date-filter"
-                    type="date"
-                    value={dateFilter}
-                    onChange={(e) => setDateFilter(e.target.value)}
-                    placeholder="Selecione a data mínima"
-                  />
-                  <p className="text-sm text-gray-500 mt-1">
-                    {dateFilter ? (
-                      <>📅 Incluir apenas leads que responderam ao quiz <strong>a partir de {new Date(dateFilter).toLocaleDateString('pt-BR')}</strong> ({audienceCounts.all} leads filtrados)</>
-                    ) : (
-                      <>📋 Incluir todos os leads - sem filtro de data ({audienceCounts.all} leads total)</>
-                    )}
-                  </p>
-                </div>
-                </div>
-              )}
-
-              {/* Lista de Telefones */}
-              {selectedQuiz && (
-                <div className="space-y-2">
-                  <div className="flex items-center gap-2">
-                    <Phone className="h-4 w-4" />
-                    <Label>Lista Oficial para Envio ({filteredPhones.length})</Label>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => refetchPhones()}
-                    >
-                      <RefreshCw className="h-4 w-4" />
-                    </Button>
-                  </div>
-                  
-                  <Alert>
-                    <AlertCircle className="h-4 w-4" />
-                    <AlertDescription>
-                      🔄 <strong>Auto-detecção ativa:</strong> Novos números que responderem ao quiz serão automaticamente adicionados à campanha ativa em até 30 segundos.
-                    </AlertDescription>
-                  </Alert>
-                  
-                  <div className="max-h-48 overflow-y-auto border rounded-md p-2">
-                    {filteredPhones.length > 0 ? (
-                      <div className="space-y-2">
-                        {filteredPhones.slice(0, 50).map((contact, index) => {
-                          const alreadySent = isPhoneSent(contact.phone);
-                          return (
-                            <div key={index} className="flex items-center justify-between text-sm">
-                              <span className="font-mono">{contact.phone}</span>
-                              <div className="flex items-center gap-2">
-                                <Badge variant={contact.status === 'completed' ? "default" : "secondary"}>
-                                  {contact.status === 'completed' ? (
-                                    <CheckCircle className="h-3 w-3 mr-1" />
-                                  ) : (
-                                    <Clock3 className="h-3 w-3 mr-1" />
-                                  )}
-                                  {contact.status === 'completed' ? 'Completo' : 'Abandonado'}
-                                </Badge>
-                                {alreadySent && (
-                                  <Badge variant="outline" className="text-green-600 border-green-600">
-                                    <Send className="h-3 w-3 mr-1" />
-                                    WhatsApp Enviado
-                                  </Badge>
-                                )}
-                                <span className="text-xs text-gray-500">
-                                  {formatDate(contact.submittedAt)}
-                                </span>
-                              </div>
-                            </div>
-                          );
-                        })}
-                        {filteredPhones.length > 50 && (
-                          <div className="text-xs text-gray-500 text-center">
-                            ... e mais {filteredPhones.length - 50} telefones
-                          </div>
-                        )}
-                      </div>
-                    ) : (
-                      <div className="text-center text-gray-500 py-4">
-                        Nenhum telefone encontrado para os filtros selecionados
-                      </div>
-                    )}
-                  </div>
-                </div>
-              )}
-
-              {/* Configurações de Timing */}
-              <div className="space-y-4 border rounded-lg p-4 bg-gray-50">
-                <h3 className="font-semibold text-gray-800">⏱️ Configurações de Timing</h3>
-                
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <Label htmlFor="leadDelay">Aguardar depois que o Lead chega (minutos)</Label>
-                    <Input
-                      id="leadDelay"
-                      type="number"
-                      value={leadDelay}
-                      onChange={(e) => setLeadDelay(parseInt(e.target.value) || 10)}
-                      min="1"
-                      max="1440"
-                      placeholder="10"
-                      className="mt-1"
-                    />
-                    <p className="text-sm text-gray-600 mt-1">
-                      Tempo que o sistema aguarda após capturar o telefone do quiz antes de agendar o envio
+                    <p className="font-medium">
+                      {extensionStatus?.connected ? '✅ Extensão Conectada' : '❌ Extensão Desconectada'}
                     </p>
-                  </div>
-                  
-                  <div>
-                    <Label htmlFor="distributionDelay">Distribuição entre mensagens (segundos)</Label>
-                    <Input
-                      id="distributionDelay"
-                      type="number"
-                      value={distributionDelay}
-                      onChange={(e) => setDistributionDelay(parseInt(e.target.value) || 180)}
-                      min="30"
-                      max="600"
-                      placeholder="180"
-                      className="mt-1"
-                    />
-                    <p className="text-sm text-gray-600 mt-1">
-                      <span className="font-medium">Recomendado: 120-300 segundos</span> para evitar bloqueios do WhatsApp
+                    <p className="text-sm text-gray-600">
+                      {extensionStatus?.connected 
+                        ? `Versão ${extensionStatus.version} - Última comunicação: ${extensionStatus.lastPing ? new Date(extensionStatus.lastPing).toLocaleString() : 'N/A'}`
+                        : 'Instale e ative a extensão Chrome'
+                      }
                     </p>
                   </div>
                 </div>
-                
-                <Alert>
-                  <AlertCircle className="h-4 w-4" />
-                  <AlertDescription>
-                    <strong>💡 Dica:</strong> O sistema aplica distribuição aleatória automática baseada no valor configurado para garantir envios seguros e evitar detecção de spam.
-                  </AlertDescription>
-                </Alert>
-              </div>
-
-              {/* Mensagens Rotativas */}
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <Label>Mensagens Rotativas (Anti-Ban)</Label>
+                <div className="flex items-center gap-2">
                   <Button
-                    onClick={addRotatingMessage}
-                    className="bg-blue-600 hover:bg-blue-700 text-white font-semibold"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => window.open('https://chrome.google.com/webstore', '_blank')}
                   >
-                    <Plus className="h-5 w-5 mr-2" />
-                    Adicionar Mensagem
+                    <Download className="h-4 w-4 mr-2" />
+                    Instalar Extensão
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => window.location.reload()}
+                  >
+                    <RefreshCw className="h-4 w-4 mr-2" />
+                    Atualizar Status
                   </Button>
                 </div>
-                
-                {rotatingMessages.map((message, index) => (
-                  <div key={index} className="flex gap-2">
-                    <div className="flex-1">
-                      <Textarea
-                        placeholder={`Mensagem ${index + 1} - Use {nome}, {email}, {telefone} como variáveis`}
-                        value={message}
-                        onChange={(e) => updateRotatingMessage(index, e.target.value)}
-                        className="min-h-20"
-                      />
-                    </div>
-                    {rotatingMessages.length > 1 && (
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => removeRotatingMessage(index)}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    )}
-                  </div>
-                ))}
-                
-                <Alert>
-                  <AlertCircle className="h-4 w-4" />
-                  <AlertDescription>
-                    <strong>⚠️ Recomendação Anti-Spam:</strong> Use no mínimo 4-5 mensagens diferentes com variações de texto, emojis e estrutura. Isso evita detecção de spam pelo WhatsApp e melhora a entregabilidade.
-                  </AlertDescription>
-                </Alert>
-              </div>
-
-              {/* Status das Mensagens */}
-              <div className="flex items-center gap-2">
-                <Badge variant={rotatingMessages.filter(m => m.trim()).length >= 4 ? "default" : "secondary"}>
-                  {rotatingMessages.filter(m => m.trim()).length >= 4 ? "✅ Anti-Spam OK" : "⚠️ Mais mensagens recomendadas"}
-                </Badge>
-                <span className="text-sm text-gray-500">
-                  {rotatingMessages.filter(m => m.trim()).length} de 4+ mensagens configuradas
-                </span>
-              </div>
-
-              {/* Botão Criar Campanha */}
-              <div className="pt-4">
-                <Button 
-                  onClick={() => setShowCampaignStyleSelector(true)}
-                  disabled={!selectedQuiz || !campaignName.trim() || isCreating || rotatingMessages.filter(m => m.trim()).length === 0}
-                  className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold py-3"
-                >
-                  {isCreating ? (
-                    <RefreshCw className="h-5 w-5 mr-2 animate-spin" />
-                  ) : (
-                    <MessageSquare className="h-5 w-5 mr-2" />
-                  )}
-                  {isCreating ? "Criando Campanha..." : `Selecionar Estilo de Campanha (${filteredPhones.length} leads)`}
-                </Button>
               </div>
             </CardContent>
           </Card>
-        </TabsContent>
 
-        <TabsContent value="business-api" className="space-y-6">
-          <Card className="bg-gradient-to-r from-purple-500 to-indigo-600 text-white border-none shadow-xl">
+          {/* Sincronização com Token */}
+          <Card>
             <CardHeader>
-              <CardTitle className="text-2xl font-bold text-white flex items-center gap-2">
-                <Settings className="w-6 h-6" />
-                💼 WhatsApp Business API - Solução Empresarial
+              <CardTitle className="flex items-center gap-2">
+                <Settings className="h-5 w-5" />
+                Sincronização e Configurações
               </CardTitle>
-              <CardDescription className="text-purple-100">
-                Integração profissional com WhatsApp Business API para empresas que precisam de maior volume e confiabilidade
+              <CardDescription>
+                Configure a sincronização automática com seus dados
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="bg-white/10 rounded-lg p-4 backdrop-blur-sm">
-                <h4 className="font-bold text-white mb-2">🚀 Recursos Empresariais:</h4>
-                <ul className="space-y-2 text-purple-100">
-                  <li className="flex items-center gap-2">
-                    <div className="w-2 h-2 bg-yellow-400 rounded-full"></div>
-                    <span>Envio de até 1.000.000 mensagens por dia</span>
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <div className="w-2 h-2 bg-yellow-400 rounded-full"></div>
-                    <span>Templates aprovados pelo WhatsApp</span>
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <div className="w-2 h-2 bg-yellow-400 rounded-full"></div>
-                    <span>Relatórios detalhados e analytics avançados</span>
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <div className="w-2 h-2 bg-yellow-400 rounded-full"></div>
-                    <span>Suporte 24/7 e gerente de conta dedicado</span>
-                  </li>
-                </ul>
-              </div>
-              
-              <div className="bg-white/10 rounded-lg p-4 backdrop-blur-sm">
-                <h4 className="font-bold text-white mb-2">💰 Planos Disponíveis:</h4>
-                <div className="grid md:grid-cols-3 gap-4 mt-3">
-                  <div className="bg-white/20 rounded-lg p-3">
-                    <h5 className="font-semibold text-white">Starter</h5>
-                    <p className="text-2xl font-bold text-yellow-400">R$ 497/mês</p>
-                    <p className="text-sm text-purple-100">Até 10.000 mensagens</p>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="bg-blue-50 p-4 rounded-lg">
+                  <h4 className="font-medium text-blue-900 mb-2">🔄 Auto-Sincronização</h4>
+                  <p className="text-sm text-blue-700 mb-3">
+                    Sincronização automática ativada com token JWT seguro
+                  </p>
+                  <div className="flex items-center gap-2">
+                    <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div>
+                    <span className="text-xs text-blue-600">Sincronizando a cada 30 segundos</span>
                   </div>
-                  <div className="bg-white/20 rounded-lg p-3">
-                    <h5 className="font-semibold text-white">Professional</h5>
-                    <p className="text-2xl font-bold text-yellow-400">R$ 997/mês</p>
-                    <p className="text-sm text-purple-100">Até 100.000 mensagens</p>
-                  </div>
-                  <div className="bg-white/20 rounded-lg p-3">
-                    <h5 className="font-semibold text-white">Enterprise</h5>
-                    <p className="text-2xl font-bold text-yellow-400">R$ 2.497/mês</p>
-                    <p className="text-sm text-purple-100">Até 1.000.000 mensagens</p>
+                </div>
+                
+                <div className="bg-green-50 p-4 rounded-lg">
+                  <h4 className="font-medium text-green-900 mb-2">📡 Auto-Detecção</h4>
+                  <p className="text-sm text-green-700 mb-3">
+                    Detecção automática de novos leads e telefones
+                  </p>
+                  <div className="flex items-center gap-2">
+                    <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                    <span className="text-xs text-green-600">Detectando leads em tempo real</span>
                   </div>
                 </div>
               </div>
-              
-              <div className="flex flex-col sm:flex-row gap-3 pt-2">
-                <Button 
-                  className="flex-1 bg-white text-purple-600 hover:bg-purple-50 font-bold py-3 px-6 text-lg"
-                  onClick={() => window.open('https://wa.me/5511999887766?text=Olá! Gostaria de saber mais sobre o WhatsApp Business API', '_blank')}
-                >
-                  <MessageSquare className="w-5 h-5 mr-2" />
-                  FALAR COM CONSULTOR
-                </Button>
-                <Button 
-                  variant="outline" 
-                  className="border-white text-white hover:bg-white/10 font-semibold"
-                  onClick={() => window.open('mailto:contato@vendzz.com?subject=Interesse WhatsApp Business API', '_blank')}
-                >
-                  <Mail className="w-4 h-4 mr-2" />
-                  Email Comercial
-                </Button>
+
+              <div className="bg-gray-50 p-4 rounded-lg">
+                <h4 className="font-medium text-gray-900 mb-2">🔐 Segurança</h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
+                  <div className="flex items-center gap-2">
+                    <CheckCircle className="h-4 w-4 text-green-500" />
+                    <span>Token JWT autenticado</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <CheckCircle className="h-4 w-4 text-green-500" />
+                    <span>Conexão HTTPS segura</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <CheckCircle className="h-4 w-4 text-green-500" />
+                    <span>Dados criptografados</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <CheckCircle className="h-4 w-4 text-green-500" />
+                    <span>Backup automático</span>
+                  </div>
+                </div>
               </div>
             </CardContent>
           </Card>
-          
+
+          {/* Estatísticas da Extensão */}
           <Card>
             <CardHeader>
-              <CardTitle>📋 Processo de Implementação</CardTitle>
+              <CardTitle className="flex items-center gap-2">
+                <Users className="h-5 w-5" />
+                Estatísticas da Extensão
+              </CardTitle>
               <CardDescription>
-                Como funciona a integração com WhatsApp Business API
+                Métricas de performance e uso da extensão
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div className="bg-blue-50 p-4 rounded-lg text-center">
+                  <div className="text-2xl font-bold text-blue-600">
+                    {extensionStatus?.pendingMessages || 0}
+                  </div>
+                  <div className="text-sm text-blue-700">Mensagens Pendentes</div>
+                </div>
+                <div className="bg-green-50 p-4 rounded-lg text-center">
+                  <div className="text-2xl font-bold text-green-600">24/7</div>
+                  <div className="text-sm text-green-700">Funcionamento</div>
+                </div>
+                <div className="bg-purple-50 p-4 rounded-lg text-center">
+                  <div className="text-2xl font-bold text-purple-600">∞</div>
+                  <div className="text-sm text-purple-700">Envios Ilimitados</div>
+                </div>
+                <div className="bg-orange-50 p-4 rounded-lg text-center">
+                  <div className="text-2xl font-bold text-orange-600">300%</div>
+                  <div className="text-sm text-orange-700">+ Conversão</div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Tutorial de Instalação */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Tutorial de Instalação</CardTitle>
+              <CardDescription>
+                Siga estes passos para instalar e configurar a extensão
               </CardDescription>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
                 <div className="flex items-start gap-3">
-                  <div className="w-8 h-8 bg-blue-500 text-white rounded-full flex items-center justify-center font-bold">1</div>
+                  <div className="bg-green-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm font-bold">
+                    1
+                  </div>
                   <div>
-                    <h4 className="font-semibold">Análise de Necessidades</h4>
-                    <p className="text-sm text-gray-600">Nosso time analisa seu volume e necessidades específicas</p>
+                    <h3 className="font-medium">Baixe a extensão</h3>
+                    <p className="text-sm text-gray-600">Clique no botão "BAIXAR EXTENSÃO V2.0" acima</p>
                   </div>
                 </div>
                 <div className="flex items-start gap-3">
-                  <div className="w-8 h-8 bg-blue-500 text-white rounded-full flex items-center justify-center font-bold">2</div>
+                  <div className="bg-green-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm font-bold">
+                    2
+                  </div>
                   <div>
-                    <h4 className="font-semibold">Configuração Técnica</h4>
-                    <p className="text-sm text-gray-600">Configuramos a integração com WhatsApp Business API</p>
+                    <h3 className="font-medium">Instale no Chrome</h3>
+                    <p className="text-sm text-gray-600">Vá em chrome://extensions/ e ative "Modo do desenvolvedor"</p>
                   </div>
                 </div>
                 <div className="flex items-start gap-3">
-                  <div className="w-8 h-8 bg-blue-500 text-white rounded-full flex items-center justify-center font-bold">3</div>
+                  <div className="bg-green-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm font-bold">
+                    3
+                  </div>
                   <div>
-                    <h4 className="font-semibold">Testes e Validação</h4>
-                    <p className="text-sm text-gray-600">Realizamos testes completos antes do go-live</p>
+                    <h3 className="font-medium">Configure</h3>
+                    <p className="text-sm text-gray-600">Clique em "Carregar sem compactação" e selecione a pasta extraída</p>
                   </div>
                 </div>
                 <div className="flex items-start gap-3">
-                  <div className="w-8 h-8 bg-green-500 text-white rounded-full flex items-center justify-center font-bold">4</div>
+                  <div className="bg-green-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm font-bold">
+                    4
+                  </div>
                   <div>
-                    <h4 className="font-semibold">Lançamento e Suporte</h4>
-                    <p className="text-sm text-gray-600">Acompanhamento contínuo e suporte dedicado</p>
+                    <h3 className="font-medium">Sincronize</h3>
+                    <p className="text-sm text-gray-600">A extensão se conectará automaticamente usando seu token de autenticação</p>
                   </div>
                 </div>
               </div>
@@ -1203,65 +465,106 @@ export default function WhatsAppCampaignsPage() {
           </Card>
         </TabsContent>
 
-        {/* Aba de Extensão com todas as campanhas */}
-        <TabsContent value="campaigns" className="space-y-6">
+        {/* Aba API */}
+        <TabsContent value="api" className="space-y-6">
           <Card>
             <CardHeader>
-              <CardTitle>Campanhas Ativas</CardTitle>
+              <CardTitle>WhatsApp Business API</CardTitle>
               <CardDescription>
-                Gerencie suas campanhas de remarketing WhatsApp
+                Integração com WhatsApp Business para volumes maiores
               </CardDescription>
             </CardHeader>
             <CardContent>
-              {campaignsLoading ? (
-                <div className="text-center py-8">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
-                  <p className="mt-2 text-sm text-gray-600">Carregando campanhas...</p>
+              <Alert>
+                <AlertCircle className="h-4 w-4" />
+                <AlertDescription>
+                  Funcionalidade em desenvolvimento. Use a extensão Chrome para envios por enquanto.
+                </AlertDescription>
+              </Alert>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Aba Campanhas */}
+        <TabsContent value="campanhas" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <MessageSquare className="h-5 w-5" />
+                Campanhas WhatsApp
+              </CardTitle>
+              <CardDescription>
+                Visualize e gerencie suas campanhas do WhatsApp
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="flex justify-between items-center mb-4">
+                <div className="flex items-center gap-2">
+                  <Button 
+                    onClick={() => setShowCampaignStyleSelector(true)}
+                    className="bg-green-600 hover:bg-green-700"
+                  >
+                    <Plus className="h-4 w-4 mr-2" />
+                    Nova Campanha
+                  </Button>
                 </div>
-              ) : campaigns.length > 0 ? (
+                <div className="flex items-center gap-2">
+                  <Switch 
+                    checked={autoRefresh}
+                    onCheckedChange={setAutoRefresh}
+                  />
+                  <span className="text-sm">Auto-atualizar</span>
+                </div>
+              </div>
+
+              {campaigns && campaigns.length > 0 ? (
                 <div className="space-y-4">
-                  {campaigns.map((campaign) => (
-                    <div key={campaign.id} className="border rounded-lg p-4">
-                      <div className="flex items-center justify-between mb-2">
-                        <div className="flex items-center gap-2">
+                  {campaigns.map((campaign: WhatsAppCampaign) => (
+                    <div
+                      key={campaign.id}
+                      className="border rounded-lg p-4 space-y-3"
+                    >
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1">
                           <h3 className="font-semibold">{campaign.name}</h3>
-                          <Badge variant={campaign.status === 'active' ? "default" : "secondary"}>
+                          <p className="text-sm text-gray-600">
+                            Quiz: {campaign.quizTitle}
+                          </p>
+                          <p className="text-sm text-gray-500">
+                            Criado em: {formatDate(campaign.createdAt)}
+                          </p>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Badge variant={campaign.status === 'active' ? 'default' : 'secondary'}>
                             {campaign.status === 'active' ? 'Ativa' : 'Pausada'}
                           </Badge>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <Button variant="ghost" size="sm">
-                            <Edit className="h-4 w-4" />
-                          </Button>
-                          <Button variant="ghost" size="sm">
-                            {campaign.status === 'active' ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
-                          </Button>
-                          <Button variant="ghost" size="sm">
-                            <Trash2 className="h-4 w-4" />
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => setSelectedCampaign(campaign)}
+                          >
+                            <Eye className="h-4 w-4 mr-2" />
+                            Ver Detalhes
                           </Button>
                         </div>
                       </div>
                       
-                      <div className="text-sm text-gray-600 mb-2">
-                        Quiz: {campaign.quizTitle || campaign.quiz_title || 'Quiz não encontrado'} | Público: {campaign.targetAudience === 'completed' ? 'Completos' : campaign.targetAudience === 'abandoned' ? 'Abandonados' : 'Todos'} | Status: {campaign.status}
-                      </div>
-                      
-                      <div className="grid grid-cols-4 gap-4 text-sm">
-                        <div className="text-center">
-                          <div className="font-semibold text-blue-600">{campaign.sent}</div>
-                          <div className="text-gray-500">Enviadas</div>
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                        <div>
+                          <div className="font-medium">Enviadas</div>
+                          <div className="text-gray-600">{campaign.sent}</div>
                         </div>
-                        <div className="text-center">
-                          <div className="font-semibold text-green-600">{campaign.delivered}</div>
-                          <div className="text-gray-500">Entregues</div>
+                        <div>
+                          <div className="font-medium">Entregues</div>
+                          <div className="text-gray-600">{campaign.delivered}</div>
                         </div>
-                        <div className="text-center">
-                          <div className="font-semibold text-orange-600">{campaign.opened}</div>
-                          <div className="text-gray-500">Abertas</div>
+                        <div>
+                          <div className="font-medium">Abertas</div>
+                          <div className="text-gray-600">{campaign.opened}</div>
                         </div>
-                        <div className="text-center">
-                          <div className="font-semibold text-purple-600">{campaign.replies}</div>
-                          <div className="text-gray-500">Respostas</div>
+                        <div>
+                          <div className="font-medium">Respostas</div>
+                          <div className="text-gray-600">{campaign.replies}</div>
                         </div>
                       </div>
                       
@@ -1290,124 +593,127 @@ export default function WhatsAppCampaignsPage() {
             </CardContent>
           </Card>
         </TabsContent>
-
-        <TabsContent value="extensao" className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Status da Extensão Chrome</CardTitle>
-              <CardDescription>
-                Monitoramento da extensão WhatsApp Web
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <span>Status da Conexão</span>
-                    <Badge variant={extensionStatus?.connected ? "default" : "destructive"}>
-                      {extensionStatus?.connected ? "Conectada" : "Desconectada"}
-                    </Badge>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span>Versão</span>
-                    <span className="font-mono">{extensionStatus?.version || "N/A"}</span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span>Último Ping</span>
-                    <span className="text-sm text-gray-500">
-                      {extensionStatus?.lastPing ? formatDate(extensionStatus.lastPing) : "N/A"}
-                    </span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span>Mensagens Pendentes</span>
-                    <Badge variant="outline">{extensionStatus?.pendingMessages || 0}</Badge>
-                  </div>
-                </div>
-                
-                <div className="space-y-2">
-                  <Alert>
-                    <AlertCircle className="h-4 w-4" />
-                    <AlertDescription>
-                      Para usar o remarketing WhatsApp, instale a extensão Chrome e mantenha o WhatsApp Web aberto.
-                    </AlertDescription>
-                  </Alert>
-                  <Button className="w-full" disabled>
-                    <Settings className="h-4 w-4 mr-2" />
-                    Baixar Extensão Chrome
-                  </Button>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="configuracoes" className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Configurações Avançadas</CardTitle>
-              <CardDescription>
-                Personalize o comportamento das campanhas WhatsApp
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="space-y-4">
-                <div>
-                  <Label>Intervalo entre mensagens (segundos)</Label>
-                  <Input
-                    type="number"
-                    value={distributionDelay}
-                    onChange={(e) => setDistributionDelay(Number(e.target.value))}
-                    min="30"
-                    max="300"
-                  />
-                  <p className="text-sm text-gray-500 mt-1">
-                    Recomendado: 180 segundos (3 minutos) para evitar banimento
-                  </p>
-                </div>
-                
-                <div>
-                  <Label>Delay para novos leads (minutos)</Label>
-                  <Input
-                    type="number"
-                    value={leadDelay}
-                    onChange={(e) => setLeadDelay(Number(e.target.value))}
-                    min="1"
-                    max="60"
-                  />
-                  <p className="text-sm text-gray-500 mt-1">
-                    Tempo para aguardar antes de enviar mensagem para novos leads
-                  </p>
-                </div>
-                
-                <div className="flex items-center space-x-2">
-                  <Switch
-                    id="auto-refresh"
-                    checked={autoRefresh}
-                    onCheckedChange={setAutoRefresh}
-                  />
-                  <Label htmlFor="auto-refresh">Auto-refresh das campanhas</Label>
-                </div>
-              </div>
-              
-              <Alert>
-                <AlertCircle className="h-4 w-4" />
-                <AlertDescription>
-                  <strong>Dica:</strong> Mantenha intervalos longos entre mensagens para evitar que o WhatsApp bloqueie sua conta. 
-                  Use mensagens rotativas para parecer mais natural.
-                </AlertDescription>
-              </Alert>
-            </CardContent>
-          </Card>
-        </TabsContent>
       </Tabs>
 
-      {/* Campaign Style Selector Modal */}
-      <CampaignStyleSelector
-        open={showCampaignStyleSelector}
-        onClose={() => setShowCampaignStyleSelector(false)}
-        onStyleSelect={handleCampaignStyleSelect}
-        platform="whatsapp"
-      />
+      {/* Campaign Style Selector Dialog */}
+      <Dialog open={showCampaignStyleSelector} onOpenChange={setShowCampaignStyleSelector}>
+        <DialogContent className="max-w-4xl">
+          <DialogHeader>
+            <DialogTitle>Selecione o Estilo da Campanha</DialogTitle>
+            <DialogDescription>
+              Escolha o tipo de campanha que melhor se adapta ao seu objetivo
+            </DialogDescription>
+          </DialogHeader>
+          <CampaignStyleSelector onSelectStyle={handleCampaignStyleSelect} />
+        </DialogContent>
+      </Dialog>
+
+      {/* Create Campaign Dialog */}
+      <Dialog open={showCreateForm} onOpenChange={setShowCreateForm}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Nova Campanha WhatsApp</DialogTitle>
+            <DialogDescription>
+              {selectedCampaignStyle ? `Criando campanha: ${selectedCampaignStyle.name}` : 'Configure sua campanha'}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="campaignName">Nome da Campanha</Label>
+              <Input
+                id="campaignName"
+                value={campaignName}
+                onChange={(e) => setCampaignName(e.target.value)}
+                placeholder="Digite o nome da campanha"
+              />
+            </div>
+            
+            <div>
+              <Label htmlFor="quiz">Quiz</Label>
+              <Select value={selectedQuiz} onValueChange={setSelectedQuiz}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione um quiz" />
+                </SelectTrigger>
+                <SelectContent>
+                  {quizzes.map((quiz: any) => (
+                    <SelectItem key={quiz.id} value={quiz.id}>
+                      {quiz.title}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div>
+              <Label htmlFor="audience">Público Alvo</Label>
+              <Select value={selectedAudience} onValueChange={setSelectedAudience}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todos os leads</SelectItem>
+                  <SelectItem value="completed">Apenas leads completos</SelectItem>
+                  <SelectItem value="abandoned">Apenas leads abandonados</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div>
+              <Label>Mensagens (uma por linha)</Label>
+              {rotatingMessages.map((message, index) => (
+                <div key={index} className="flex gap-2 mb-2">
+                  <Textarea
+                    value={message}
+                    onChange={(e) => {
+                      const newMessages = [...rotatingMessages];
+                      newMessages[index] = e.target.value;
+                      setRotatingMessages(newMessages);
+                    }}
+                    placeholder={`Mensagem ${index + 1}`}
+                    rows={3}
+                  />
+                  {rotatingMessages.length > 1 && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        const newMessages = rotatingMessages.filter((_, i) => i !== index);
+                        setRotatingMessages(newMessages);
+                      }}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  )}
+                </div>
+              ))}
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setRotatingMessages([...rotatingMessages, ""])}
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                Adicionar Mensagem
+              </Button>
+            </div>
+
+            <div className="flex gap-4">
+              <Button
+                onClick={createCampaign}
+                disabled={isCreating}
+                className="flex-1"
+              >
+                {isCreating ? "Criando..." : "Criar Campanha"}
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() => setShowCreateForm(false)}
+              >
+                Cancelar
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
