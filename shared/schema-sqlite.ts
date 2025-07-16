@@ -32,6 +32,7 @@ export const users = sqliteTable("users", {
   emailCredits: integer("emailCredits").default(0),
   whatsappCredits: integer("whatsappCredits").default(0),
   aiCredits: integer("aiCredits").default(0),
+  videoCredits: integer("videoCredits").default(0),
   // Telegram Bot Integration
   telegramBotToken: text("telegramBotToken"),
   telegramChatId: text("telegramChatId"),
@@ -596,17 +597,22 @@ export const aiConversionCampaigns = sqliteTable('ai_conversion_campaigns', {
 // AI Video Generations Schema
 export const aiVideoGenerations = sqliteTable('ai_video_generations', {
   id: text('id').primaryKey().notNull(),
-  campaignId: text('campaign_id').notNull().references(() => aiConversionCampaigns.id, { onDelete: 'cascade' }),
-  responseId: text('response_id').notNull().references(() => quizResponses.id, { onDelete: 'cascade' }),
-  personalizedScript: text('personalized_script').notNull(),
-  heygenVideoId: text('heygen_video_id'),
-  heygenVideoUrl: text('heygen_video_url'),
+  userId: text('user_id').notNull().references(() => users.id),
+  title: text('title').notNull(),
+  topic: text('topic').notNull(),
+  script: text('script'),
+  duration: integer('duration').default(60),
+  style: text('style').default('viral'),
+  voice: text('voice').default('masculina'),
+  videoUrl: text('video_url'),
+  thumbnailUrl: text('thumbnail_url'),
   status: text('status').notNull().default('pending'), // pending, generating, completed, failed
   views: integer('views').default(0),
-  conversions: integer('conversions').default(0),
+  likes: integer('likes').default(0),
+  shares: integer('shares').default(0),
   error: text('error'),
-  createdAt: integer('created_at', { mode: 'timestamp' }).notNull().default(sql`(unixepoch())`),
-  updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull().default(sql`(unixepoch())`)
+  createdAt: integer('created_at').notNull(),
+  updatedAt: integer('updated_at').notNull()
 });
 
 // AI Conversion Zod Schemas
