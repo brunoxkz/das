@@ -4213,6 +4213,12 @@ const gameElementCategories = [
       case "loading_question":
         const loadingMessage = element.loadingText || "Processando...";
         const loadingDuration = element.loadingDuration || 3;
+        const showProgressPercentage = element.showPercentage !== false;
+        const enableShineEffect = element.enableShine || false;
+        const enableStripesEffect = element.enableStripes || false;
+        const showRemainingTimeText = element.showRemainingTime || false;
+        const progressBarText = element.progressText || "Carregando...";
+        const popupQuestionColor = element.popupQuestionColor || "#1F2937";
         
         return (
           <div className="space-y-4 py-6 px-4 bg-white rounded-lg border border-gray-200 shadow-sm">
@@ -4221,23 +4227,43 @@ const gameElementCategories = [
               <p className="text-sm text-gray-600">Tempo: {loadingDuration}s</p>
             </div>
             
-            {/* Barra de progresso horizontal simples */}
+            {/* Barra de progresso aprimorada */}
             <div className="space-y-2">
-              <div className="w-full bg-gray-200 rounded-full h-3">
+              <div className="text-center text-sm text-gray-600 mb-2">
+                {progressBarText}
+              </div>
+              <div 
+                className="w-full rounded-full h-3 relative overflow-hidden"
+                style={{ backgroundColor: element.loadingBarBackgroundColor || "#E5E7EB" }}
+              >
                 <div 
-                  className="h-3 rounded-full transition-all duration-500"
+                  className={`h-3 rounded-full transition-all duration-500 relative ${
+                    enableShineEffect ? 'animate-pulse' : ''
+                  }`}
                   style={{ 
                     width: "75%", 
-                    backgroundColor: element.loadingBarColor || "#10B981"
+                    backgroundColor: element.loadingBarColor || "#10B981",
+                    backgroundImage: enableStripesEffect ? 'repeating-linear-gradient(45deg, transparent, transparent 10px, rgba(255,255,255,0.1) 10px, rgba(255,255,255,0.1) 20px)' : 'none'
                   }}
-                />
+                >
+                  {enableShineEffect && (
+                    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent animate-pulse"></div>
+                  )}
+                </div>
               </div>
-              <div className="text-center text-sm text-gray-600">75%</div>
+              
+              <div className="flex justify-between text-xs text-gray-500">
+                {showProgressPercentage && <span>75%</span>}
+                {showRemainingTimeText && <span>Tempo restante: {loadingDuration - 2}s</span>}
+              </div>
             </div>
             
-            {/* Popup de pergunta simples */}
+            {/* Popup de pergunta com cor customizada */}
             <div className="mt-6 p-4 bg-gray-50 rounded-lg border">
-              <h4 className="text-base font-medium text-gray-800 mb-3 text-center">
+              <h4 
+                className="text-base font-medium mb-3 text-center"
+                style={{ color: popupQuestionColor }}
+              >
                 {element.popupQuestion || "Você gostaria de continuar?"}
               </h4>
               <div className="flex gap-3 justify-center">
@@ -8155,6 +8181,86 @@ const gameElementCategories = [
                     <p className="text-xs text-gray-500 mt-1">
                       Use {'{'}resposta{'}'} para referenciar a resposta (Sim/Não) em outras campanhas
                     </p>
+                  </div>
+
+                  <div>
+                    <Label>Exibir Porcentagem</Label>
+                    <div className="flex items-center space-x-2 mt-1">
+                      <input
+                        type="checkbox"
+                        checked={selectedElementData.showPercentage || false}
+                        onChange={(e) => updateElement(selectedElementData.id, { showPercentage: e.target.checked })}
+                        className="w-4 h-4 text-blue-600"
+                      />
+                      <span className="text-sm text-gray-700">Mostrar porcentagem na barra</span>
+                    </div>
+                  </div>
+
+                  <div>
+                    <Label>Adicionar Brilho</Label>
+                    <div className="flex items-center space-x-2 mt-1">
+                      <input
+                        type="checkbox"
+                        checked={selectedElementData.enableShine || false}
+                        onChange={(e) => updateElement(selectedElementData.id, { enableShine: e.target.checked })}
+                        className="w-4 h-4 text-blue-600"
+                      />
+                      <span className="text-sm text-gray-700">Adicionar efeito de brilho</span>
+                    </div>
+                  </div>
+
+                  <div>
+                    <Label>Padrão de Listras</Label>
+                    <div className="flex items-center space-x-2 mt-1">
+                      <input
+                        type="checkbox"
+                        checked={selectedElementData.enableStripes || false}
+                        onChange={(e) => updateElement(selectedElementData.id, { enableStripes: e.target.checked })}
+                        className="w-4 h-4 text-blue-600"
+                      />
+                      <span className="text-sm text-gray-700">Adicionar listras animadas</span>
+                    </div>
+                  </div>
+
+                  <div>
+                    <Label>Exibir Tempo Restante</Label>
+                    <div className="flex items-center space-x-2 mt-1">
+                      <input
+                        type="checkbox"
+                        checked={selectedElementData.showRemainingTime || false}
+                        onChange={(e) => updateElement(selectedElementData.id, { showRemainingTime: e.target.checked })}
+                        className="w-4 h-4 text-blue-600"
+                      />
+                      <span className="text-sm text-gray-700">Mostrar tempo restante</span>
+                    </div>
+                  </div>
+
+                  <div>
+                    <Label>Texto da Barra</Label>
+                    <Input
+                      value={selectedElementData.progressText || "Carregando..."}
+                      onChange={(e) => updateElement(selectedElementData.id, { progressText: e.target.value })}
+                      placeholder="Carregando..."
+                      className="mt-1"
+                    />
+                  </div>
+
+                  <div>
+                    <Label>Cor da Pergunta no Popup</Label>
+                    <div className="flex gap-2 mt-1">
+                      <Input
+                        type="color"
+                        value={selectedElementData.popupQuestionColor || "#1F2937"}
+                        onChange={(e) => updateElement(selectedElementData.id, { popupQuestionColor: e.target.value })}
+                        className="w-16 h-10 p-1"
+                      />
+                      <Input
+                        value={selectedElementData.popupQuestionColor || "#1F2937"}
+                        onChange={(e) => updateElement(selectedElementData.id, { popupQuestionColor: e.target.value })}
+                        placeholder="#1F2937"
+                        className="flex-1"
+                      />
+                    </div>
                   </div>
                 </div>
               )}

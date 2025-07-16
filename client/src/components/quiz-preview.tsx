@@ -347,49 +347,79 @@ const LoadingQuestionElementPreview = ({ element }: { element: any }) => {
     setShowPopup(false);
   };
   
+  const showProgressPercentage = element.showPercentage !== false;
+  const enableShineEffect = element.enableShine || false;
+  const enableStripesEffect = element.enableStripes || false;
+  const showRemainingTimeText = element.showRemainingTime || false;
+  const progressBarText = element.progressText || "Carregando...";
+  const popupQuestionColor = element.popupQuestionColor || "#1F2937";
+  const remainingTime = Math.max(0, ((element.loadingDuration || 4) * (100 - progress)) / 100);
+  
   return (
     <>
-      {/* Barra de carregamento */}
+      {/* Barra de carregamento aprimorada */}
       <div className="w-full space-y-4 p-4 border border-gray-200 rounded-lg bg-white">
         <div className="space-y-3">
           <div className="flex items-center justify-between">
             <h4 className="font-semibold text-gray-800">
-              {properties.loadingText || "Processando..."}
+              {element.loadingText || "Processando..."}
             </h4>
-            <span className="text-sm font-mono text-gray-600">{progress}%</span>
+            {showProgressPercentage && (
+              <span className="text-sm font-mono text-gray-600">{progress}%</span>
+            )}
+          </div>
+          
+          <div className="text-center text-sm text-gray-600 mb-2">
+            {progressBarText}
           </div>
           
           <div 
-            className="w-full rounded-full" 
+            className="w-full rounded-full relative overflow-hidden" 
             style={{ 
-              height: properties.loadingBarHeight || 8,
-              backgroundColor: properties.loadingBarBackgroundColor || "#E5E7EB"
+              height: element.loadingBarHeight || 8,
+              backgroundColor: element.loadingBarBackgroundColor || "#E5E7EB"
             }}
           >
             <div 
-              className="h-full rounded-full transition-all duration-100"
+              className={`h-full rounded-full transition-all duration-100 relative ${
+                enableShineEffect ? 'animate-pulse' : ''
+              }`}
               style={{ 
                 width: `${progress}%`,
-                backgroundColor: properties.loadingBarColor || "#b62ac0"
+                backgroundColor: element.loadingBarColor || "#10B981",
+                backgroundImage: enableStripesEffect ? 'repeating-linear-gradient(45deg, transparent, transparent 10px, rgba(255,255,255,0.1) 10px, rgba(255,255,255,0.1) 20px)' : 'none'
               }}
-            />
+            >
+              {enableShineEffect && (
+                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent animate-pulse"></div>
+              )}
+            </div>
           </div>
+          
+          {showRemainingTimeText && (
+            <div className="text-center text-xs text-gray-500">
+              Tempo restante: {remainingTime.toFixed(1)}s
+            </div>
+          )}
         </div>
         
         {answer && (
           <div className="text-center text-gray-600 text-sm mt-2">
-            Resposta registrada: {answer === 'yes' ? (properties.popupYesText || 'Sim') : (properties.popupNoText || 'Não')}
+            Resposta registrada: {answer === 'yes' ? (element.popupYesText || 'Sim') : (element.popupNoText || 'Não')}
           </div>
         )}
       </div>
       
-      {/* Popup Modal */}
+      {/* Popup Modal com cor customizada */}
       {showPopup && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4 shadow-lg">
             <div className="text-center">
-              <h3 className="text-lg font-bold text-gray-800 mb-4">
-                {properties.popupQuestion || "Você gostaria de continuar?"}
+              <h3 
+                className="text-lg font-bold mb-4"
+                style={{ color: popupQuestionColor }}
+              >
+                {element.popupQuestion || "Você gostaria de continuar?"}
               </h3>
               
               <div className="flex gap-3 justify-center">
@@ -397,13 +427,13 @@ const LoadingQuestionElementPreview = ({ element }: { element: any }) => {
                   className="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
                   onClick={() => handleQuestionAnswer('yes')}
                 >
-                  {properties.popupYesText || "Sim"}
+                  {element.popupYesText || "Sim"}
                 </button>
                 <button 
                   className="px-6 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
                   onClick={() => handleQuestionAnswer('no')}
                 >
-                  {properties.popupNoText || "Não"}
+                  {element.popupNoText || "Não"}
                 </button>
               </div>
             </div>
@@ -418,10 +448,11 @@ interface QuizPreviewProps {
   quiz: any;
   onClose: () => void;
   onSave?: (responses: any) => void;
+  initialPage?: number;
 }
 
-export default function QuizPreview({ quiz, onClose, onSave }: QuizPreviewProps) {
-  const [currentStep, setCurrentStep] = useState(0);
+export default function QuizPreview({ quiz, onClose, onSave, initialPage = 0 }: QuizPreviewProps) {
+  const [currentStep, setCurrentStep] = useState(initialPage);
   const [responses, setResponses] = useState<any>({});
   const [leadData, setLeadData] = useState({
     name: '',

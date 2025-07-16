@@ -208,6 +208,20 @@ No additional files or separate projects are maintained in this repository.
 
 ```
 Changelog:
+- July 16, 2025. ELEMENTO "PROGRESSO + PERGUNTA" COMPLETAMENTE APRIMORADO - Todas as funcionalidades faltantes implementadas:
+  * Adicionadas todas as opções de personalização solicitadas: exibir porcentagem, adicionar brilho, padrão de listras, tempo restante, texto da barra
+  * Implementado seletor de cor para pergunta do popup (popupQuestionColor)
+  * Funcionamento das checkboxes para alternar recursos visuais: showPercentage, enableShine, enableStripes, showRemainingTime
+  * Adicionado campo de texto da barra de progresso (progressText) para personalização da mensagem
+  * Aplicadas melhorias visuais em todos os renderizadores:
+    - page-editor-horizontal.tsx: preview com efeitos de brilho e listras
+    - quiz-preview.tsx: funcionalidade completa com cálculo de tempo restante
+    - quiz-public-renderer.tsx: versão pública com todas as funcionalidades
+  * Corrigido bug de navegação no preview passando initialPage correto no quiz-builder
+  * Removida duplicação de "Pergunta do Popup" no painel de propriedades
+  * Sistema agora oferece controle completo sobre aparência e comportamento da barra de progresso
+  * Integração com sistema de variáveis mantida através de responseId personalizados
+  * Elemento totalmente funcional para uso em campanhas de marketing
 - July 16, 2025. PAINÉIS DE PROPRIEDADES COMPLETOS IMPLEMENTADOS - Customização total para elementos "Progresso + Pergunta" e "Barra de Progresso":
   * Adicionado painel completo de propriedades para elemento "loading_question" (renomeado para "Progresso + Pergunta")
   * Implementadas configurações: texto de carregamento, duração, cores da barra, pergunta do popup, textos dos botões Sim/Não
