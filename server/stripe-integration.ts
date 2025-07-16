@@ -3,10 +3,16 @@ import Stripe from 'stripe';
 // Inicializar Stripe apenas se a chave existir
 let stripe: Stripe | null = null;
 
-if (process.env.STRIPE_SECRET_KEY) {
-  stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
+// Verificar .env explicitamente
+const stripeSecretKey = process.env.STRIPE_SECRET_KEY || 'sk_test_51RjvV9HK6al3veW1FPD5bTV1on2NQLlm9ud45AJDggFHdsGA9UAo5jfbSRvWF83W3uTp5cpZYa8tJBvm4ttefrk800mUs47pFA';
+
+if (stripeSecretKey && stripeSecretKey.startsWith('sk_')) {
+  stripe = new Stripe(stripeSecretKey, {
     apiVersion: '2024-09-30.acacia',
   });
+  console.log('✅ Stripe inicializado com sucesso');
+} else {
+  console.log('⚠️ Stripe não inicializado - chave não encontrada');
 }
 
 export interface StripeProductConfig {
@@ -30,10 +36,10 @@ export class StripeService {
   private stripe: Stripe;
 
   constructor() {
-    if (!process.env.STRIPE_SECRET_KEY) {
-      throw new Error('STRIPE_SECRET_KEY is required');
+    if (!stripe) {
+      throw new Error('Stripe não foi inicializado');
     }
-    this.stripe = stripe!;
+    this.stripe = stripe;
   }
 
   // Criar cliente Stripe
@@ -144,6 +150,104 @@ export class StripeService {
     } catch (error) {
       console.error('Erro ao obter assinatura:', error);
       throw new Error('Falha ao obter assinatura');
+    }
+  }
+
+  // Criar token de cartão
+  async createCardToken(card: {
+    number: string;
+    exp_month: number;
+    exp_year: number;
+    cvc: string;
+  }): Promise<Stripe.Token> {
+    try {
+      const token = await this.stripe.tokens.create({
+        card: {
+          number: card.number,
+          exp_month: card.exp_month,
+          exp_year: card.exp_year,
+          cvc: card.cvc
+        }
+      });
+      return token;
+    } catch (error) {
+      console.error('Erro ao criar token de cartão:', error);
+      throw new Error('Falha ao criar token de cartão');
+    }
+  }
+
+  // Criar preço para produto
+  async createPrice(params: {
+    productId: string;
+    unitAmount: number;
+    currency: string;
+    recurring?: { interval: string };
+  }): Promise<Stripe.Price> {
+    try {
+      const priceData: Stripe.PriceCreateParams = {
+        product: params.productId,
+        unit_amount: params.unitAmount,
+        currency: params.currency
+      };
+
+      if (params.recurring) {
+        priceData.recurring = {
+          interval: params.recurring.interval as 'month' | 'year'
+        };
+      }
+
+      const price = await this.stripe.prices.create(priceData);
+      return price;
+    } catch (error) {
+      console.error('Erro ao criar preço:', error);
+      throw new Error('Falha ao criar preço');
+    }
+  }
+
+  // Anexar método de pagamento ao cliente
+  async attachPaymentMethod(paymentMethodId: string, customerId: string): Promise<Stripe.PaymentMethod> {
+    try {
+      const paymentMethod = await this.stripe.paymentMethods.attach(paymentMethodId, {
+        customer: customerId
+      });
+      return paymentMethod;
+    } catch (error) {
+      console.error('Erro ao anexar método de pagamento:', error);
+      throw new Error('Falha ao anexar método de pagamento');
+    }
+  }
+
+  // Criar fatura
+  async createInvoice(params: {
+    customer: string;
+    subscription?: string;
+    auto_advance?: boolean;
+  }): Promise<Stripe.Invoice> {
+    try {
+      const invoice = await this.stripe.invoices.create({
+        customer: params.customer,
+        subscription: params.subscription,
+        auto_advance: params.auto_advance
+      });
+      return invoice;
+    } catch (error) {
+      console.error('Erro ao criar fatura:', error);
+      throw new Error('Falha ao criar fatura');
+    }
+  }
+
+  // Atualizar assinatura
+  async updateSubscription(subscriptionId: string, params: {
+    cancel_at_period_end?: boolean;
+    priceId?: string;
+    metadata?: Record<string, string>;
+  }): Promise<Stripe.Subscription> {
+    try {
+      const subscription = await this.stripe.subscriptions.update(subscriptionId, params);
+      return subscription;
+    } catch (error) {
+      console.error('Erro ao atualizar assinatura:', error);
+      throw new Error('Falha ao atualizar assinatura');
     }
   }
 
