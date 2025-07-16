@@ -116,7 +116,7 @@ export function registerSQLiteRoutes(app: Express): Server {
   });
 
   // Criar produto de checkout (autenticado)
-  app.post('/api/checkout-products', checkPlanExpiration, async (req, res) => {
+  app.post('/api/checkout-products', verifyJWT, async (req, res) => {
     try {
       const user = req.user;
       if (!user) {
@@ -139,7 +139,7 @@ export function registerSQLiteRoutes(app: Express): Server {
   });
 
   // Atualizar produto de checkout (autenticado)
-  app.put('/api/checkout-products/:id', checkPlanExpiration, async (req, res) => {
+  app.put('/api/checkout-products/:id', verifyJWT, async (req, res) => {
     try {
       const user = req.user;
       if (!user) {
@@ -161,7 +161,7 @@ export function registerSQLiteRoutes(app: Express): Server {
   });
 
   // Deletar produto de checkout (autenticado)
-  app.delete('/api/checkout-products/:id', checkPlanExpiration, async (req, res) => {
+  app.delete('/api/checkout-products/:id', verifyJWT, async (req, res) => {
     try {
       const user = req.user;
       if (!user) {
@@ -178,7 +178,7 @@ export function registerSQLiteRoutes(app: Express): Server {
   });
 
   // Buscar transações de checkout (autenticado)
-  app.get('/api/checkout-transactions', checkPlanExpiration, async (req, res) => {
+  app.get('/api/checkout-transactions', verifyJWT, async (req, res) => {
     try {
       const user = req.user;
       if (!user) {
@@ -194,23 +194,44 @@ export function registerSQLiteRoutes(app: Express): Server {
   });
 
   // Buscar analytics de checkout (autenticado)
-  app.get('/api/checkout-analytics', checkPlanExpiration, async (req, res) => {
+  app.get('/api/checkout-analytics', verifyJWT, async (req, res) => {
     try {
       const user = req.user;
       if (!user) {
         return res.status(401).json({ error: 'Usuário não autenticado' });
       }
 
-      // Buscar todos os checkouts do usuário e calcular analytics
-      const checkouts = await storage.getCheckoutsByUserId(user.id);
-      const analytics = checkouts.map(checkout => ({
-        id: checkout.id,
-        title: checkout.title,
-        views: checkout.views || 0,
-        conversions: checkout.conversions || 0,
-        revenue: checkout.revenue || 0,
-        conversionRate: checkout.views > 0 ? ((checkout.conversions || 0) / checkout.views * 100).toFixed(2) : '0.00'
-      }));
+      // Buscar todos os checkouts do usuário
+      const checkouts = await storage.getCheckoutPagesByUserId(user.id);
+      
+      // Para cada checkout, buscar analytics separadamente
+      const analytics = await Promise.all(
+        checkouts.map(async (checkout) => {
+          try {
+            const analyticsData = await storage.getCheckoutAnalyticsById(checkout.id);
+            return {
+              id: checkout.id,
+              title: checkout.title,
+              views: analyticsData?.views || 0,
+              conversions: analyticsData?.conversions || 0,
+              revenue: analyticsData?.revenue || 0,
+              conversionRate: (analyticsData?.views > 0) ? 
+                ((analyticsData.conversions || 0) / analyticsData.views * 100).toFixed(2) : 
+                '0.00'
+            };
+          } catch (error) {
+            console.error('Erro ao buscar analytics para checkout:', checkout.id, error);
+            return {
+              id: checkout.id,
+              title: checkout.title,
+              views: 0,
+              conversions: 0,
+              revenue: 0,
+              conversionRate: '0.00'
+            };
+          }
+        })
+      );
       
       res.json(analytics);
     } catch (error) {

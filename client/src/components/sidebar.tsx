@@ -428,7 +428,6 @@ export function Sidebar() {
                         className={cn(
                           "nav-item w-full justify-start text-foreground hover:bg-accent hover:text-accent-foreground",
                           isCollapsed ? "px-0" : "px-3",
-                          item.className,
                           item.active && "bg-accent text-accent-foreground"
                         )}
                       >
@@ -520,18 +519,18 @@ export function Sidebar() {
           </Link>
 
           {/* Checkout Unificado - Standalone */}
-          <Link href={checkoutUnificadoItem.href}>
+          <Link href="/checkout-unificado">
             <Button
               variant="ghost"
               className={cn(
                 "nav-item w-full justify-start text-foreground hover:bg-accent hover:text-accent-foreground",
                 isCollapsed ? "px-0" : "px-3",
-                checkoutUnificadoItem.active && "bg-accent text-accent-foreground"
+                location === "/checkout-unificado" && "bg-accent text-accent-foreground"
               )}
             >
-              {checkoutUnificadoItem.icon}
+              <ShoppingCart className="w-4 h-4" />
               {!isCollapsed && (
-                <span className="ml-2 flex-1 text-left text-foreground">{checkoutUnificadoItem.title}</span>
+                <span className="ml-2 flex-1 text-left text-foreground">CHECKOUT UNIFICADO</span>
               )}
             </Button>
           </Link>
@@ -548,8 +547,7 @@ export function Sidebar() {
                 className={cn(
                   "w-full justify-start text-foreground hover:bg-accent hover:text-accent-foreground",
                   isCollapsed ? "px-0" : "px-3",
-                  item.className,
-                  item.active && !item.className && "bg-accent text-accent-foreground"
+                  item.active && "bg-accent text-accent-foreground"
                 )}
               >
                 {item.icon}

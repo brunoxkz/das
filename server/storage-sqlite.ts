@@ -6717,16 +6717,34 @@ Hoje você vai aprender ${project.title} - método revolucionário que já ajudo
   }
 
   // Método para buscar analytics de checkout específico
-  async getCheckoutAnalyticsById(checkoutId: string): Promise<any | null> {
+  async getCheckoutAnalyticsById(checkoutId: string): Promise<any> {
     try {
       const result = sqlite.prepare(`
         SELECT * FROM checkout_analytics 
         WHERE checkoutId = ?
       `).get(checkoutId);
       
-      return result || null;
+      if (result) {
+        // Retorna dados reais encontrados
+        return {
+          id: result.id,
+          checkoutId: result.checkoutId,
+          userId: result.userId,
+          productId: result.productId,
+          views: result.views || 0,
+          conversions: result.conversions || 0,
+          revenue: result.revenue || 0,
+          conversionRate: result.conversionRate || 0,
+          createdAt: result.createdAt,
+          updatedAt: result.updatedAt
+        };
+      } else {
+        // Retorna null quando não encontra dados ao invés de objeto vazio
+        return null;
+      }
     } catch (error) {
       console.error('Erro ao buscar analytics por ID:', error);
+      // Retorna null em caso de erro também
       return null;
     }
   }
