@@ -60,7 +60,7 @@ interface ExtensionStatus {
 }
 
 export default function WhatsAppCampaignsPage() {
-  const [activeTab, setActiveTab] = useState("extension");
+  const [activeTab, setActiveTab] = useState("campanhas");
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [editingCampaign, setEditingCampaign] = useState<WhatsAppCampaign | null>(null);
   const [selectedCampaign, setSelectedCampaign] = useState<WhatsAppCampaign | null>(null);
@@ -403,6 +403,104 @@ export default function WhatsAppCampaignsPage() {
         </div>
       </div>
 
+      {/* Seção de Estatísticas do Topo */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+        <Card className="bg-gradient-to-r from-green-500 to-emerald-600 text-white border-none">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-green-100 text-sm font-medium">Campanhas Ativas</p>
+                <p className="text-2xl font-bold">{campaigns?.filter(c => c.status === 'active').length || 0}</p>
+              </div>
+              <MessageSquare className="h-8 w-8 text-green-200" />
+            </div>
+          </CardContent>
+        </Card>
+        
+        <Card className="bg-gradient-to-r from-blue-500 to-indigo-600 text-white border-none">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-blue-100 text-sm font-medium">Mensagens Enviadas</p>
+                <p className="text-2xl font-bold">{campaigns?.reduce((sum, c) => sum + c.sent, 0) || 0}</p>
+              </div>
+              <Send className="h-8 w-8 text-blue-200" />
+            </div>
+          </CardContent>
+        </Card>
+        
+        <Card className="bg-gradient-to-r from-purple-500 to-pink-600 text-white border-none">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-purple-100 text-sm font-medium">Taxa de Entrega</p>
+                <p className="text-2xl font-bold">
+                  {campaigns?.reduce((sum, c) => sum + c.sent, 0) > 0 
+                    ? `${Math.round((campaigns?.reduce((sum, c) => sum + c.delivered, 0) / campaigns?.reduce((sum, c) => sum + c.sent, 0)) * 100)}%`
+                    : "0%"
+                  }
+                </p>
+              </div>
+              <CheckCircle className="h-8 w-8 text-purple-200" />
+            </div>
+          </CardContent>
+        </Card>
+        
+        <Card className="bg-gradient-to-r from-orange-500 to-red-600 text-white border-none">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-orange-100 text-sm font-medium">Respostas Recebidas</p>
+                <p className="text-2xl font-bold">{campaigns?.reduce((sum, c) => sum + c.replies, 0) || 0}</p>
+              </div>
+              <Phone className="h-8 w-8 text-orange-200" />
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Seção de Status da Extensão */}
+      <Card className="bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-900 border-2 border-dashed">
+        <CardContent className="p-6">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <div className={`p-3 rounded-full ${extensionStatus?.connected ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'}`}>
+                <Smartphone className="h-6 w-6" />
+              </div>
+              <div>
+                <h3 className="font-semibold text-lg">
+                  Status da Extensão WhatsApp V2.0
+                </h3>
+                <p className="text-sm text-gray-600">
+                  {extensionStatus?.connected 
+                    ? `✅ Conectada (v${extensionStatus.version}) - Última comunicação: ${extensionStatus.lastPing ? new Date(extensionStatus.lastPing).toLocaleString() : 'N/A'}`
+                    : '❌ Desconectada - Instale e ative a extensão Chrome'
+                  }
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => window.open('https://chrome.google.com/webstore', '_blank')}
+              >
+                <Download className="h-4 w-4 mr-2" />
+                Instalar Extensão
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => window.location.reload()}
+              >
+                <RefreshCw className="h-4 w-4 mr-2" />
+                Atualizar Status
+              </Button>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
       {/* Extensão WhatsApp V2.0 Promotion Card */}
       <Card className="bg-gradient-to-r from-green-500 to-emerald-600 text-white border-none shadow-xl">
         <CardHeader className="pb-4">
@@ -521,18 +619,22 @@ export default function WhatsAppCampaignsPage() {
       </Card>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="extension" className="text-sm">
-            <Crown className="w-4 h-4 mr-2" />
-            🆓 GRÁTIS (EXTENSÃO CHROME/OPERA)
+        <TabsList className="grid w-full grid-cols-3">
+          <TabsTrigger value="campanhas" className="text-sm">
+            <MessageSquare className="w-4 h-4 mr-2" />
+            📱 CAMPANHAS
           </TabsTrigger>
-          <TabsTrigger value="business-api" className="text-sm">
+          <TabsTrigger value="extensao" className="text-sm">
+            <Crown className="w-4 h-4 mr-2" />
+            🆓 EXTENSÃO
+          </TabsTrigger>
+          <TabsTrigger value="configuracoes" className="text-sm">
             <Settings className="w-4 h-4 mr-2" />
-            💼 BUSINESS API
+            ⚙️ CONFIGURAÇÕES
           </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="extension" className="space-y-6">
+        <TabsContent value="campanhas" className="space-y-6">
           {/* Explicação dos Tipos de Campanha */}
           <Card className="border-blue-200 bg-blue-50">
             <CardHeader>
@@ -1189,7 +1291,7 @@ export default function WhatsAppCampaignsPage() {
           </Card>
         </TabsContent>
 
-        <TabsContent value="extension" className="space-y-6">
+        <TabsContent value="extensao" className="space-y-6">
           <Card>
             <CardHeader>
               <CardTitle>Status da Extensão Chrome</CardTitle>
@@ -1235,6 +1337,65 @@ export default function WhatsAppCampaignsPage() {
                   </Button>
                 </div>
               </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="configuracoes" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Configurações Avançadas</CardTitle>
+              <CardDescription>
+                Personalize o comportamento das campanhas WhatsApp
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="space-y-4">
+                <div>
+                  <Label>Intervalo entre mensagens (segundos)</Label>
+                  <Input
+                    type="number"
+                    value={distributionDelay}
+                    onChange={(e) => setDistributionDelay(Number(e.target.value))}
+                    min="30"
+                    max="300"
+                  />
+                  <p className="text-sm text-gray-500 mt-1">
+                    Recomendado: 180 segundos (3 minutos) para evitar banimento
+                  </p>
+                </div>
+                
+                <div>
+                  <Label>Delay para novos leads (minutos)</Label>
+                  <Input
+                    type="number"
+                    value={leadDelay}
+                    onChange={(e) => setLeadDelay(Number(e.target.value))}
+                    min="1"
+                    max="60"
+                  />
+                  <p className="text-sm text-gray-500 mt-1">
+                    Tempo para aguardar antes de enviar mensagem para novos leads
+                  </p>
+                </div>
+                
+                <div className="flex items-center space-x-2">
+                  <Switch
+                    id="auto-refresh"
+                    checked={autoRefresh}
+                    onCheckedChange={setAutoRefresh}
+                  />
+                  <Label htmlFor="auto-refresh">Auto-refresh das campanhas</Label>
+                </div>
+              </div>
+              
+              <Alert>
+                <AlertCircle className="h-4 w-4" />
+                <AlertDescription>
+                  <strong>Dica:</strong> Mantenha intervalos longos entre mensagens para evitar que o WhatsApp bloqueie sua conta. 
+                  Use mensagens rotativas para parecer mais natural.
+                </AlertDescription>
+              </Alert>
             </CardContent>
           </Card>
         </TabsContent>
