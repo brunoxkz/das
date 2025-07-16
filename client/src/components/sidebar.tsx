@@ -245,6 +245,13 @@ export function Sidebar() {
       href: "/settings",
       icon: <Settings className="w-4 h-4" />,
       active: location === "/settings"
+    },
+    {
+      title: "ADMIN",
+      href: "/admin",
+      icon: <Shield className="w-4 h-4" />,
+      active: location === "/admin",
+      className: "text-red-600 border-red-500/20 bg-red-500/5 hover:bg-red-500/10"
     }
   ];
 

@@ -349,11 +349,18 @@ const LoadingQuestionElementPreview = ({ element }: { element: any }) => {
   
   const showProgressPercentage = element.showPercentage !== false;
   const enableShineEffect = element.enableShine || false;
-  const enableStripesEffect = element.enableStripes || false;
   const showRemainingTimeText = element.showRemainingTime || false;
   const progressBarText = element.progressText || "Carregando...";
   const popupQuestionColor = element.popupQuestionColor || "#1F2937";
   const remainingTime = Math.max(0, ((element.loadingDuration || 4) * (100 - progress)) / 100);
+  
+  // Configurações de altura da barra
+  const barHeightMap = {
+    small: 8,
+    medium: 16,
+    large: 24
+  };
+  const barHeight = barHeightMap[element.barHeight as keyof typeof barHeightMap] || 16;
   
   return (
     <>
@@ -376,7 +383,7 @@ const LoadingQuestionElementPreview = ({ element }: { element: any }) => {
           <div 
             className="w-full rounded-full relative overflow-hidden" 
             style={{ 
-              height: element.loadingBarHeight || 8,
+              height: barHeight,
               backgroundColor: element.loadingBarBackgroundColor || "#E5E7EB"
             }}
           >
@@ -386,8 +393,7 @@ const LoadingQuestionElementPreview = ({ element }: { element: any }) => {
               }`}
               style={{ 
                 width: `${progress}%`,
-                backgroundColor: element.loadingBarColor || "#10B981",
-                backgroundImage: enableStripesEffect ? 'repeating-linear-gradient(45deg, transparent, transparent 10px, rgba(255,255,255,0.1) 10px, rgba(255,255,255,0.1) 20px)' : 'none'
+                backgroundColor: element.loadingBarColor || "#10B981"
               }}
             >
               {enableShineEffect && (
@@ -424,13 +430,23 @@ const LoadingQuestionElementPreview = ({ element }: { element: any }) => {
               
               <div className="flex gap-3 justify-center">
                 <button 
-                  className="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+                  className="px-6 py-2 rounded-lg transition-colors"
+                  style={{
+                    backgroundColor: element.popupYesButtonColor || "transparent",
+                    color: element.popupYesButtonTextColor || "#000000",
+                    border: `1px solid ${element.popupYesButtonColor || "#E5E7EB"}`
+                  }}
                   onClick={() => handleQuestionAnswer('yes')}
                 >
                   {element.popupYesText || "Sim"}
                 </button>
                 <button 
-                  className="px-6 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+                  className="px-6 py-2 rounded-lg transition-colors"
+                  style={{
+                    backgroundColor: element.popupNoButtonColor || "transparent",
+                    color: element.popupNoButtonTextColor || "#000000",
+                    border: `1px solid ${element.popupNoButtonColor || "#E5E7EB"}`
+                  }}
                   onClick={() => handleQuestionAnswer('no')}
                 >
                   {element.popupNoText || "Não"}
