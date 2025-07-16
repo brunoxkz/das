@@ -264,6 +264,12 @@ function App() {
             <CheckoutBuilder />
           </Layout>
         </Route>
+        
+        <Route path="/checkout-builder">
+          <Layout>
+            <CheckoutBuilder />
+          </Layout>
+        </Route>
 
         <Route path="/campanhas-whatsapp">
           <Layout>
