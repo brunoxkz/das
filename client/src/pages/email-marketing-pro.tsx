@@ -10,6 +10,7 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
+import { useLanguage } from '@/hooks/useLanguage';
 import { 
   Mail, 
   Send, 
@@ -399,6 +400,7 @@ function VariableHelper({ selectedQuiz }: { selectedQuiz: string }) {
 export default function EmailMarketingPro() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { t } = useLanguage();
   
   const [selectedTab, setSelectedTab] = useState('campaigns');
   const [showCreateCampaign, setShowCreateCampaign] = useState(false);
@@ -778,10 +780,10 @@ export default function EmailMarketingPro() {
           </div>
           <div>
             <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-              Email Marketing
+              {t('emailMarketing.title')}
             </h1>
             <p className="text-sm text-gray-600 dark:text-gray-300">
-              Gerencie campanhas de email para seus leads
+              {t('emailMarketing.description')}
             </p>
           </div>
         </div>

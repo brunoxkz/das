@@ -239,25 +239,25 @@ export default function Dashboard() {
 
   const dashboardStats = [
     {
-      title: t("total_quizzes"),
+      title: t("dashboard.totalQuizzes"),
       value: totalQuizzes,
       icon: <BarChart3 className="w-5 h-5" />,
       color: "bg-blue-500"
     },
     {
-      title: t("responses"),
+      title: t("dashboard.totalLeads"),
       value: totalLeads,
       icon: <Users className="w-5 h-5" />,
       color: "bg-purple-500"
     },
     {
-      title: t("views"),
+      title: t("dashboard.totalViews"),
       value: totalViews,
       icon: <Eye className="w-5 h-5" />,
       color: "bg-green-500"
     },
     {
-      title: t("conversion_rate"),
+      title: t("dashboard.conversionRate"),
       value: `${avgConversionRate}%`,
       icon: <TrendingUp className="w-5 h-5" />,
       color: "bg-orange-500"
@@ -282,7 +282,7 @@ export default function Dashboard() {
               <Clock className="w-5 h-5" />
               <div>
                 <span className="font-semibold">
-                  Plano {userPlan.charAt(0).toUpperCase() + userPlan.slice(1)}: {daysLeft} {daysLeft === 1 ? 'dia restante' : 'dias restantes'}
+                  {t('dashboard.currentPlan')} {userPlan.charAt(0).toUpperCase() + userPlan.slice(1)}: {daysLeft} {daysLeft === 1 ? 'dia restante' : 'dias restantes'}
                 </span>
                 <p className="text-sm text-green-100">
                   {userPlan === 'trial' ? 'Teste grátis por tempo limitado! Upgrade para continuar.' : 
@@ -298,7 +298,7 @@ export default function Dashboard() {
                   className="bg-white text-green-600 hover:bg-green-50 border-white"
                 >
                   <CreditCard className="w-4 h-4 mr-2" />
-                  {userPlan === 'trial' || userPlan === 'free' ? 'Assinar Agora' : 'Renovar Plano'}
+                  {userPlan === 'trial' || userPlan === 'free' ? t('dashboard.upgradeAccount') : t('dashboard.upgradeAccount')}
                 </Button>
               </Link>
               <Link href="/credits">
@@ -386,7 +386,7 @@ export default function Dashboard() {
               <CardContent className="p-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm dashboard-text-muted mb-1 text-gray-600 dark:text-gray-300">SMS Enviados</p>
+                    <p className="text-sm dashboard-text-muted mb-1 text-gray-600 dark:text-gray-300">{t('dashboard.smsCampaigns')}</p>
                     <p className="text-2xl font-bold dashboard-text-primary text-gray-900 dark:text-white">{smsCount?.count || 0}</p>
                   </div>
                   <div className="w-12 h-12 rounded-lg bg-cyan-500 flex items-center justify-center text-white">
@@ -400,7 +400,7 @@ export default function Dashboard() {
               <CardContent className="p-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm dashboard-text-muted mb-1 text-gray-600 dark:text-gray-300">WhatsApp</p>
+                    <p className="text-sm dashboard-text-muted mb-1 text-gray-600 dark:text-gray-300">{t('dashboard.whatsappCampaigns')}</p>
                     <p className="text-2xl font-bold dashboard-text-primary text-gray-900 dark:text-white">{whatsappCount?.count || 0}</p>
                   </div>
                   <div className="w-12 h-12 rounded-lg bg-green-500 flex items-center justify-center text-white">
@@ -414,7 +414,7 @@ export default function Dashboard() {
               <CardContent className="p-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm dashboard-text-muted mb-1 text-gray-600 dark:text-gray-300">Emails</p>
+                    <p className="text-sm dashboard-text-muted mb-1 text-gray-600 dark:text-gray-300">{t('dashboard.emailCampaigns')}</p>
                     <p className="text-2xl font-bold dashboard-text-primary text-gray-900 dark:text-white">{emailCount?.count || 0}</p>
                   </div>
                   <div className="w-12 h-12 rounded-lg bg-blue-500 flex items-center justify-center text-white">
@@ -428,7 +428,7 @@ export default function Dashboard() {
               <CardContent className="p-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm dashboard-text-muted mb-1 text-gray-600 dark:text-gray-300">Créditos</p>
+                    <p className="text-sm dashboard-text-muted mb-1 text-gray-600 dark:text-gray-300">{t('sms.availableCredits')}</p>
                     <p className="text-2xl font-bold dashboard-text-primary text-gray-900 dark:text-white">{userCredits?.total || 0}</p>
                   </div>
                   <div className="w-12 h-12 rounded-lg bg-purple-500 flex items-center justify-center text-white">
@@ -443,12 +443,12 @@ export default function Dashboard() {
           <Card className="dashboard-card shadow-xl mb-8">
             <CardHeader className="dashboard-header border-b">
               <div className="flex items-center justify-between">
-                <CardTitle className="text-xl dashboard-text-primary">Seus Quizzes</CardTitle>
+                <CardTitle className="text-xl dashboard-text-primary">{t('dashboard.yourQuizzes')}</CardTitle>
                 {userQuizzes && userQuizzes.length > 6 && (
                   <Link href="/quizzes">
                     <Button variant="outline" size="sm" className="dashboard-button">
                       <Eye className="w-4 h-4 mr-2" />
-                      Ver Todos ({userQuizzes.length})
+                      {t('dashboard.viewAll')} ({userQuizzes.length})
                     </Button>
                   </Link>
                 )}
@@ -465,20 +465,20 @@ export default function Dashboard() {
                           <div className="flex items-center justify-between">
                             <h3 className="font-semibold dashboard-text-primary truncate">{quiz.title}</h3>
                             <Badge variant={quiz.isPublished ? "default" : "secondary"} className="dashboard-badge">
-                              {quiz.isPublished ? "Publicado" : "Rascunho"}
+                              {quiz.isPublished ? t('dashboard.published') : t('dashboard.draft')}
                             </Badge>
                           </div>
                         </CardHeader>
                         <CardContent className="pt-0">
                           <div className="flex justify-between text-sm dashboard-text-muted mb-3">
-                            <span>{analytics.views} views</span>
+                            <span>{analytics.views} {t('dashboard.views')}</span>
                             <span>{analytics.leads} leads</span>
                           </div>
                           <div className="flex gap-2">
                             <Link href={`/quizzes/${quiz.id}/edit`}>
                               <Button size="sm" variant="outline" className="dashboard-button">
                                 <Edit className="w-3 h-3 mr-1" />
-                                Editar
+                                {t('dashboard.edit')}
                               </Button>
                             </Link>
                             <Button 
@@ -488,7 +488,7 @@ export default function Dashboard() {
                               onClick={() => handlePreviewQuiz(quiz)}
                             >
                               <ExternalLink className="w-3 h-3 mr-1" />
-                              Preview
+                              {t('dashboard.preview')}
                             </Button>
                           </div>
                         </CardContent>
@@ -498,11 +498,11 @@ export default function Dashboard() {
                 </div>
               ) : (
                 <div className="text-center py-8">
-                  <p className="dashboard-text-muted mb-4">Você ainda não criou nenhum quiz.</p>
+                  <p className="dashboard-text-muted mb-4">{t('dashboard.noQuizzes')}</p>
                   <Link href="/quizzes/new">
                     <Button>
                       <Plus className="w-4 h-4 mr-2" />
-                      Criar Primeiro Quiz
+                      {t('dashboard.createFirstQuiz')}
                     </Button>
                   </Link>
                 </div>
@@ -518,7 +518,7 @@ export default function Dashboard() {
                   <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center mx-auto mb-3">
                     <TrendingUp className="w-6 h-6 text-purple-600" />
                   </div>
-                  <h3 className="font-semibold dashboard-text-primary">Analytics</h3>
+                  <h3 className="font-semibold dashboard-text-primary">{t('dashboard.viewAnalytics')}</h3>
                   <p className="text-sm dashboard-text-muted">Relatórios</p>
                 </CardContent>
               </Card>

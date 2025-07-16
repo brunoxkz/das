@@ -208,6 +208,17 @@ No additional files or separate projects are maintained in this repository.
 
 ```
 Changelog:
+- July 16, 2025. TRADUÇÕES DO DASHBOARD IMPLEMENTADAS - Sistema de internacionalização expandido para a página principal:
+  * Implementadas traduções completas para o dashboard principal com t('dashboard.') namespace
+  * Estatísticas traduzidas: totalQuizzes, totalLeads, totalViews, conversionRate
+  * Seção de campanhas traduzida: smsCampaigns, emailCampaigns, whatsappCampaigns, availableCredits
+  * Seção de quizzes traduzida: yourQuizzes, published, draft, edit, preview, viewAll, noQuizzes, createFirstQuiz
+  * Textos de status traduzidos: currentPlan, upgradeAccount, viewAnalytics, settings
+  * Expansão dos arquivos de tradução pt-BR.json e en-US.json com 30+ novos termos
+  * Manutenção da funcionalidade existente enquanto substitui textos hardcoded
+  * Sistema de tradução agora cobrindo: Quiz Editor, SMS Campaigns, Dashboard
+  * Próximas implementações: Analytics, Email Marketing, WhatsApp Automation
+  * Infraestrutura robusta para suporte multilíngue completo da plataforma
 - July 16, 2025. SISTEMA DE PLANOS E ASSINATURAS 100% FUNCIONAL - Infraestrutura completa de billing implementada e testada:
   * Tabelas de banco de dados criadas e validadas: subscription_plans, subscription_transactions, credit_transactions
   * Sistema de planos implementado: Gratuito (R$ 0), Básico (R$ 29,90), Premium (R$ 69,90), Enterprise (R$ 149,90)

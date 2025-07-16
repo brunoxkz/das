@@ -763,7 +763,16 @@
     "funnels": "Funnels",
     "cohorts": "Cohorts",
     "retention": "Retention",
-    "segments": "Segments"
+    "segments": "Segments",
+    "performance": "Real-time performance optimized for 100k+ simultaneous users",
+    "filters": "Filters",
+    "refresh": "Refresh",
+    "totalQuizzes": "Total Quizzes",
+    "totalLeads": "Total Leads"
+  },
+  "emailMarketing": {
+    "title": "Email Marketing",
+    "description": "Manage email campaigns for your leads"
   },
   "dashboard": {
     "title": "Dashboard",
@@ -790,6 +799,31 @@
     "users": "Users",
     "activeUsers": "Active Users",
     "newUsers": "New Users",
-    "returningUsers": "Returning Users"
+    "returningUsers": "Returning Users",
+    "systemOnlineDescription": "All services running normally",
+    "leadsGenerated": "Leads Generated",
+    "activeCampaigns": "Active Campaigns",
+    "campaignsSummary": "Campaigns Summary",
+    "smsCampaigns": "SMS",
+    "emailCampaigns": "Email",
+    "whatsappCampaigns": "WhatsApp",
+    "voiceCampaigns": "Voice",
+    "startTutorial": "Start Tutorial",
+    "help": "Help",
+    "edit": "Edit",
+    "duplicate": "Duplicate",
+    "delete": "Delete",
+    "preview": "Preview",
+    "responses": "responses",
+    "views": "views",
+    "conversion": "conversion",
+    "created": "Created",
+    "updated": "Updated",
+    "published": "Published",
+    "draft": "Draft",
+    "trialNotice": "Trial Period - Enjoy all features for free!",
+    "dismissNotice": "Dismiss",
+    "noQuizzes": "No quizzes found",
+    "createFirstQuiz": "Create First Quiz"
   }
 }

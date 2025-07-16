@@ -184,22 +184,22 @@ export default function Analytics() {
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-8">
           <div className="space-y-1">
             <h1 className="text-3xl font-bold bg-gradient-to-r from-gray-900 to-gray-600 bg-clip-text text-transparent">
-              Analytics
+              {t('analytics.title')}
             </h1>
-            <p className="text-gray-600">Performance em tempo real otimizada para 100k+ usuários simultâneos</p>
+            <p className="text-gray-600">{t('analytics.performance')}</p>
           </div>
           <div className="flex items-center gap-3">
             <Button variant="outline" className="bg-white shadow-sm hover:shadow-md transition-shadow">
               <Download className="w-4 h-4 mr-2" />
-              Exportar
+              {t('analytics.export')}
             </Button>
             <Button variant="outline" className="bg-white shadow-sm hover:shadow-md transition-shadow">
               <Filter className="w-4 h-4 mr-2" />
-              Filtros
+              {t('analytics.filters')}
             </Button>
             <Button className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 shadow-lg">
               <RefreshCw className="w-4 h-4 mr-2" />
-              Atualizar
+              {t('analytics.refresh')}
             </Button>
           </div>
         </div>
@@ -210,7 +210,7 @@ export default function Analytics() {
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-blue-100 text-sm font-medium">Total de Quizzes</p>
+                  <p className="text-blue-100 text-sm font-medium">{t('analytics.totalQuizzes')}</p>
                   <p className="text-3xl font-bold">{dashboardStats?.quizzes?.length || 0}</p>
                   <p className="text-blue-100 text-xs">quizzes criados</p>
                 </div>
@@ -223,7 +223,7 @@ export default function Analytics() {
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-green-100 text-sm font-medium">Total de Leads</p>
+                  <p className="text-green-100 text-sm font-medium">{t('analytics.totalLeads')}</p>
                   <p className="text-3xl font-bold">{allAnalytics ? allAnalytics.reduce((sum: number, a: any) => sum + (a.leadsWithContact || 0), 0) : 0}</p>
                   <p className="text-green-100 text-xs">com contato capturado</p>
                 </div>
@@ -236,7 +236,7 @@ export default function Analytics() {
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-purple-100 text-sm font-medium">Visualizações</p>
+                  <p className="text-purple-100 text-sm font-medium">{t('analytics.pageViews')}</p>
                   <p className="text-3xl font-bold">{allAnalytics ? allAnalytics.reduce((sum: number, a: any) => sum + (a.totalViews || 0), 0) : 0}</p>
                   <p className="text-purple-100 text-xs">acessos únicos</p>
                 </div>
@@ -249,7 +249,7 @@ export default function Analytics() {
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-orange-100 text-sm font-medium">Taxa de Conversão</p>
+                  <p className="text-orange-100 text-sm font-medium">{t('analytics.conversion')}</p>
                   <p className="text-3xl font-bold">{allAnalytics && allAnalytics.length > 0 ? Math.round(allAnalytics.reduce((sum: number, a: any) => sum + (a.conversionRate || 0), 0) / allAnalytics.length) : 0}%</p>
                   <p className="text-orange-100 text-xs">média geral</p>
                 </div>

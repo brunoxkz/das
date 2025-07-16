@@ -293,7 +293,12 @@
     "funnels": "Funis",
     "cohorts": "Coortes",
     "retention": "Retenção",
-    "segments": "Segmentos"
+    "segments": "Segmentos",
+    "performance": "Performance em tempo real otimizada para 100k+ usuários simultâneos",
+    "filters": "Filtros",
+    "refresh": "Atualizar",
+    "totalQuizzes": "Total de Quizzes",
+    "totalLeads": "Total de Leads"
   },
   "dashboard": {
     "title": "Dashboard",
@@ -320,6 +325,35 @@
     "users": "Usuários",
     "activeUsers": "Usuários Ativos",
     "newUsers": "Novos Usuários",
-    "returningUsers": "Usuários Recorrentes"
+    "returningUsers": "Usuários Recorrentes",
+    "systemOnlineDescription": "Todos os serviços funcionando normalmente",
+    "leadsGenerated": "Leads Gerados",
+    "activeCampaigns": "Campanhas Ativas",
+    "campaignsSummary": "Resumo das Campanhas",
+    "smsCampaigns": "SMS",
+    "emailCampaigns": "Email",
+    "whatsappCampaigns": "WhatsApp",
+    "voiceCampaigns": "Voz",
+    "startTutorial": "Iniciar Tutorial",
+    "help": "Ajuda",
+    "edit": "Editar",
+    "duplicate": "Duplicar",
+    "delete": "Deletar",
+    "preview": "Visualizar",
+    "responses": "respostas",
+    "views": "visualizações",
+    "conversion": "conversão",
+    "created": "Criado",
+    "updated": "Atualizado",
+    "published": "Publicado",
+    "draft": "Rascunho",
+    "trialNotice": "Período de Teste - Aproveite todas as funcionalidades gratuitamente!",
+    "dismissNotice": "Dispensar",
+    "noQuizzes": "Nenhum quiz encontrado",
+    "createFirstQuiz": "Criar Primeiro Quiz"
+  },
+  "emailMarketing": {
+    "title": "Email Marketing",
+    "description": "Gerencie campanhas de email para seus leads"
   }
 }
