@@ -1,177 +1,195 @@
-const Database = require('better-sqlite3');
+/**
+ * SCRIPT PARA CRIAR TABELAS DO SISTEMA DE ASSINATURAS CUSTOMIZÁVEIS
+ * Cria todas as tabelas necessárias para produtos, assinaturas, clientes e transações
+ */
+
+const sqlite3 = require('sqlite3').verbose();
 const path = require('path');
 
-// Conectar com o banco de dados
-const db = new Database(path.join(__dirname, 'vendzz-database.db'));
+const dbPath = path.join(__dirname, 'server', 'database.sqlite');
 
-console.log('🔧 Criando tabelas de planos e transações...');
+async function createSubscriptionTables() {
+  return new Promise((resolve, reject) => {
+    const db = new sqlite3.Database(dbPath, (err) => {
+      if (err) {
+        console.error('❌ Erro ao conectar com o banco:', err);
+        reject(err);
+        return;
+      }
+      console.log('📊 Conectado ao banco SQLite');
+    });
 
-try {
-  // Criar tabela subscription_plans
-  db.exec(`
-    CREATE TABLE IF NOT EXISTS subscription_plans (
-      id TEXT PRIMARY KEY,
-      name TEXT NOT NULL,
-      description TEXT,
-      price REAL NOT NULL,
-      currency TEXT NOT NULL DEFAULT 'BRL',
-      billingInterval TEXT NOT NULL,
-      features TEXT,
-      maxQuizzes INTEGER NOT NULL DEFAULT -1,
-      maxResponses INTEGER NOT NULL DEFAULT -1,
-      maxSMS INTEGER NOT NULL DEFAULT -1,
-      maxEmail INTEGER NOT NULL DEFAULT -1,
-      maxWhatsApp INTEGER NOT NULL DEFAULT -1,
-      maxAI INTEGER NOT NULL DEFAULT -1,
-      isActive INTEGER NOT NULL DEFAULT 1,
-      createdAt INTEGER NOT NULL,
-      updatedAt INTEGER NOT NULL
-    )
-  `);
-  console.log('✅ Tabela subscription_plans criada');
+    // Criar tabelas em sequência
+    db.serialize(() => {
+      // Tabela de produtos customizáveis
+      db.run(`
+        CREATE TABLE IF NOT EXISTS custom_products (
+          id TEXT PRIMARY KEY,
+          user_id TEXT NOT NULL,
+          name TEXT NOT NULL,
+          description TEXT,
+          price INTEGER NOT NULL, -- Em centavos
+          currency TEXT NOT NULL DEFAULT 'BRL',
+          type TEXT NOT NULL CHECK (type IN ('one_time', 'recurring')),
+          recurrence TEXT CHECK (recurrence IN ('daily', 'weekly', 'monthly', 'yearly')),
+          trial_days INTEGER DEFAULT 0,
+          setup_fee INTEGER DEFAULT 0, -- Em centavos
+          features TEXT, -- JSON
+          metadata TEXT, -- JSON
+          gateway_id TEXT NOT NULL,
+          active BOOLEAN DEFAULT 1,
+          created_at TEXT NOT NULL,
+          updated_at TEXT NOT NULL
+        )
+      `, (err) => {
+        if (err) {
+          console.error('❌ Erro ao criar tabela custom_products:', err);
+        } else {
+          console.log('✅ Tabela custom_products criada');
+        }
+      });
 
-  // Criar tabela subscription_transactions
-  db.exec(`
-    CREATE TABLE IF NOT EXISTS subscription_transactions (
-      id TEXT PRIMARY KEY,
-      userId TEXT NOT NULL,
-      planId TEXT NOT NULL,
-      amount REAL NOT NULL,
-      currency TEXT NOT NULL DEFAULT 'BRL',
-      status TEXT NOT NULL,
-      paymentMethod TEXT,
-      paymentId TEXT,
-      stripePaymentIntentId TEXT,
-      startDate INTEGER,
-      endDate INTEGER,
-      createdAt INTEGER NOT NULL,
-      updatedAt INTEGER NOT NULL
-    )
-  `);
-  console.log('✅ Tabela subscription_transactions criada');
+      // Tabela de clientes das assinaturas
+      db.run(`
+        CREATE TABLE IF NOT EXISTS subscription_customers (
+          id TEXT PRIMARY KEY,
+          user_id TEXT NOT NULL,
+          name TEXT NOT NULL,
+          email TEXT NOT NULL,
+          phone TEXT,
+          document TEXT,
+          address TEXT, -- JSON
+          payment_method TEXT, -- JSON
+          gateway_id TEXT NOT NULL,
+          created_at TEXT NOT NULL
+        )
+      `, (err) => {
+        if (err) {
+          console.error('❌ Erro ao criar tabela subscription_customers:', err);
+        } else {
+          console.log('✅ Tabela subscription_customers criada');
+        }
+      });
 
-  // Criar tabela credit_transactions
-  db.exec(`
-    CREATE TABLE IF NOT EXISTS credit_transactions (
-      id TEXT PRIMARY KEY,
-      userId TEXT NOT NULL,
-      type TEXT NOT NULL,
-      amount INTEGER NOT NULL,
-      operation TEXT NOT NULL,
-      reason TEXT,
-      createdAt INTEGER NOT NULL
-    )
-  `);
-  console.log('✅ Tabela credit_transactions criada');
+      // Tabela de assinaturas customizáveis
+      db.run(`
+        CREATE TABLE IF NOT EXISTS custom_subscriptions (
+          id TEXT PRIMARY KEY,
+          user_id TEXT NOT NULL,
+          product_id TEXT NOT NULL,
+          customer_id TEXT NOT NULL,
+          status TEXT NOT NULL CHECK (status IN ('active', 'trialing', 'cancelled', 'past_due', 'unpaid')),
+          trial_start TEXT,
+          trial_end TEXT,
+          next_billing_date TEXT,
+          last_billing_date TEXT,
+          billing_cycle TEXT NOT NULL,
+          amount INTEGER NOT NULL, -- Em centavos
+          setup_fee INTEGER DEFAULT 0,
+          currency TEXT NOT NULL DEFAULT 'BRL',
+          gateway_id TEXT NOT NULL,
+          cancelled_at TEXT,
+          cancellation_reason TEXT,
+          metadata TEXT, -- JSON
+          created_at TEXT NOT NULL,
+          updated_at TEXT NOT NULL,
+          FOREIGN KEY (product_id) REFERENCES custom_products(id),
+          FOREIGN KEY (customer_id) REFERENCES subscription_customers(id)
+        )
+      `, (err) => {
+        if (err) {
+          console.error('❌ Erro ao criar tabela custom_subscriptions:', err);
+        } else {
+          console.log('✅ Tabela custom_subscriptions criada');
+        }
+      });
 
-  // Inserir planos padrão
-  const plans = [
-    {
-      id: 'free',
-      name: 'Gratuito',
-      description: 'Plano gratuito básico',
-      price: 0,
-      currency: 'BRL',
-      billingInterval: 'monthly',
-      features: JSON.stringify(['basic_quiz', 'basic_analytics']),
-      maxQuizzes: 1,
-      maxResponses: 100,
-      maxSMS: 10,
-      maxEmail: 50,
-      maxWhatsApp: 0,
-      maxAI: 0,
-      isActive: 1,
-      createdAt: Date.now(),
-      updatedAt: Date.now()
-    },
-    {
-      id: 'basic-monthly',
-      name: 'Básico Mensal',
-      description: 'Plano básico mensal',
-      price: 29.90,
-      currency: 'BRL',
-      billingInterval: 'monthly',
-      features: JSON.stringify(['quiz_publishing', 'email_campaigns', 'basic_analytics']),
-      maxQuizzes: 5,
-      maxResponses: 1000,
-      maxSMS: 100,
-      maxEmail: 500,
-      maxWhatsApp: 50,
-      maxAI: 10,
-      isActive: 1,
-      createdAt: Date.now(),
-      updatedAt: Date.now()
-    },
-    {
-      id: 'premium-monthly',
-      name: 'Premium Mensal',
-      description: 'Plano premium mensal',
-      price: 69.90,
-      currency: 'BRL',
-      billingInterval: 'monthly',
-      features: JSON.stringify(['quiz_publishing', 'email_campaigns', 'whatsapp_campaigns', 'advanced_analytics', 'ai_videos']),
-      maxQuizzes: 20,
-      maxResponses: 5000,
-      maxSMS: 500,
-      maxEmail: 2000,
-      maxWhatsApp: 200,
-      maxAI: 50,
-      isActive: 1,
-      createdAt: Date.now(),
-      updatedAt: Date.now()
-    },
-    {
-      id: 'enterprise-monthly',
-      name: 'Enterprise Mensal',
-      description: 'Plano enterprise mensal',
-      price: 149.90,
-      currency: 'BRL',
-      billingInterval: 'monthly',
-      features: JSON.stringify(['all']),
-      maxQuizzes: -1,
-      maxResponses: -1,
-      maxSMS: -1,
-      maxEmail: -1,
-      maxWhatsApp: -1,
-      maxAI: -1,
-      isActive: 1,
-      createdAt: Date.now(),
-      updatedAt: Date.now()
-    }
-  ];
+      // Tabela de transações de cobrança
+      db.run(`
+        CREATE TABLE IF NOT EXISTS billing_transactions (
+          id TEXT PRIMARY KEY,
+          subscription_id TEXT NOT NULL,
+          customer_id TEXT NOT NULL,
+          amount INTEGER NOT NULL, -- Em centavos
+          currency TEXT NOT NULL DEFAULT 'BRL',
+          type TEXT NOT NULL CHECK (type IN ('setup_fee', 'recurring', 'refund')),
+          status TEXT NOT NULL CHECK (status IN ('pending', 'completed', 'failed', 'cancelled')),
+          gateway_id TEXT NOT NULL,
+          gateway_transaction_id TEXT,
+          description TEXT,
+          error_message TEXT,
+          metadata TEXT, -- JSON
+          created_at TEXT NOT NULL,
+          updated_at TEXT,
+          FOREIGN KEY (subscription_id) REFERENCES custom_subscriptions(id),
+          FOREIGN KEY (customer_id) REFERENCES subscription_customers(id)
+        )
+      `, (err) => {
+        if (err) {
+          console.error('❌ Erro ao criar tabela billing_transactions:', err);
+        } else {
+          console.log('✅ Tabela billing_transactions criada');
+        }
+      });
 
-  const insertPlan = db.prepare(`
-    INSERT OR REPLACE INTO subscription_plans 
-    (id, name, description, price, currency, billingInterval, features, maxQuizzes, maxResponses, maxSMS, maxEmail, maxWhatsApp, maxAI, isActive, createdAt, updatedAt)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-  `);
+      // Criar índices para performance
+      db.run(`CREATE INDEX IF NOT EXISTS idx_custom_products_user_id ON custom_products(user_id)`);
+      db.run(`CREATE INDEX IF NOT EXISTS idx_custom_subscriptions_user_id ON custom_subscriptions(user_id)`);
+      db.run(`CREATE INDEX IF NOT EXISTS idx_custom_subscriptions_status ON custom_subscriptions(status)`);
+      db.run(`CREATE INDEX IF NOT EXISTS idx_custom_subscriptions_next_billing ON custom_subscriptions(next_billing_date)`);
+      db.run(`CREATE INDEX IF NOT EXISTS idx_billing_transactions_subscription ON billing_transactions(subscription_id)`);
+      db.run(`CREATE INDEX IF NOT EXISTS idx_billing_transactions_status ON billing_transactions(status)`);
 
-  for (const plan of plans) {
-    insertPlan.run(
-      plan.id,
-      plan.name,
-      plan.description,
-      plan.price,
-      plan.currency,
-      plan.billingInterval,
-      plan.features,
-      plan.maxQuizzes,
-      plan.maxResponses,
-      plan.maxSMS,
-      plan.maxEmail,
-      plan.maxWhatsApp,
-      plan.maxAI,
-      plan.isActive,
-      plan.createdAt,
-      plan.updatedAt
-    );
-  }
+      console.log('✅ Índices criados');
+    });
 
-  console.log('✅ Planos padrão inseridos');
-  console.log('🎯 Tabelas de planos e transações criadas com sucesso!');
-
-} catch (error) {
-  console.error('❌ Erro ao criar tabelas:', error);
-} finally {
-  db.close();
+    db.close((err) => {
+      if (err) {
+        console.error('❌ Erro ao fechar banco:', err);
+        reject(err);
+      } else {
+        console.log('📊 Banco fechado');
+        resolve();
+      }
+    });
+  });
 }
+
+// Executar criação das tabelas
+createSubscriptionTables()
+  .then(() => {
+    console.log('🎉 SISTEMA DE ASSINATURAS CUSTOMIZÁVEIS CRIADO COM SUCESSO!');
+    console.log('');
+    console.log('📋 Tabelas criadas:');
+    console.log('  - custom_products: Produtos customizáveis');
+    console.log('  - subscription_customers: Clientes das assinaturas');
+    console.log('  - custom_subscriptions: Assinaturas ativas');
+    console.log('  - billing_transactions: Transações de cobrança');
+    console.log('');
+    console.log('🔧 Funcionalidades disponíveis:');
+    console.log('  - Produtos one-time ou recorrentes');
+    console.log('  - Recorrência: diária, semanal, mensal, anual');
+    console.log('  - Trial periods configuráveis');
+    console.log('  - Setup fees opcionais');
+    console.log('  - Múltiplos gateways (Stripe + Pagar.me)');
+    console.log('  - Sistema de cron para cobrança automática');
+    console.log('  - Transações e estatísticas completas');
+    console.log('');
+    console.log('⚡ Endpoints disponíveis:');
+    console.log('  - POST /api/products - Criar produto');
+    console.log('  - GET /api/products - Listar produtos');
+    console.log('  - PUT /api/products/:id - Atualizar produto');
+    console.log('  - DELETE /api/products/:id - Deletar produto');
+    console.log('  - POST /api/subscriptions - Criar assinatura');
+    console.log('  - GET /api/subscriptions - Listar assinaturas');
+    console.log('  - POST /api/subscriptions/:id/cancel - Cancelar assinatura');
+    console.log('  - POST /api/billing/process-pending - Processar cobranças (cron)');
+    console.log('  - GET /api/billing/stats - Estatísticas de cobrança');
+    console.log('');
+    console.log('🎯 SISTEMA PRONTO PARA USO!');
+    process.exit(0);
+  })
+  .catch((error) => {
+    console.error('❌ Erro na criação das tabelas:', error);
+    process.exit(1);
+  });

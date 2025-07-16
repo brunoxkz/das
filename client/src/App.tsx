@@ -55,6 +55,8 @@ import CheckoutPublic from "@/pages/checkout-public";
 import CheckoutSuccess from "@/pages/checkout-success";
 import CheckoutSubscriptionWrapper from "@/pages/checkout-subscription-wrapper";
 import CheckoutUnified from "@/pages/checkout-unified";
+import ProductBuilder from "@/pages/product-builder";
+import SubscriptionsManager from "@/pages/subscriptions-manager";
 import { useAuth } from "@/hooks/useAuth-jwt";
 import { isUnauthorizedError } from "@/lib/authUtils";
 import { SidebarProvider } from "@/hooks/useSidebar";
@@ -270,6 +272,18 @@ function App() {
         <Route path="/checkout-builder">
           <Layout>
             <CheckoutBuilder />
+          </Layout>
+        </Route>
+        
+        <Route path="/product-builder">
+          <Layout>
+            <ProductBuilder />
+          </Layout>
+        </Route>
+        
+        <Route path="/subscriptions-manager">
+          <Layout>
+            <SubscriptionsManager />
           </Layout>
         </Route>
 

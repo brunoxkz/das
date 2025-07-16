@@ -116,9 +116,16 @@ export function Sidebar() {
 
   const checkoutItem = {
     title: "CHECKOUT",
-    href: "/checkout",
+    href: "/checkout-system",
     icon: <ShoppingCart className="w-4 h-4" />,
-    active: location === "/checkout"
+    active: location === "/checkout-system"
+  };
+
+  const checkoutUnificadoItem = {
+    title: "CHECKOUT UNIFICADO",
+    href: "/checkout-unificado",
+    icon: <ShoppingCart className="w-4 h-4" />,
+    active: location === "/checkout-unificado"
   };
 
   const navCategories = [
@@ -144,6 +151,18 @@ export function Sidebar() {
           href: "/teste-ab",
           icon: <BarChart className="w-4 h-4" />,
           active: location === "/teste-ab"
+        },
+        {
+          title: "PRODUCT BUILDER",
+          href: "/product-builder",
+          icon: <Package className="w-4 h-4" />,
+          active: location === "/product-builder"
+        },
+        {
+          title: "GERENCIAR ASSINATURAS",
+          href: "/subscriptions-manager",
+          icon: <Crown className="w-4 h-4" />,
+          active: location === "/subscriptions-manager"
         },
       ]
     },
@@ -491,6 +510,23 @@ export function Sidebar() {
               {checkoutItem.icon}
               {!isCollapsed && (
                 <span className="ml-2 flex-1 text-left text-foreground">{checkoutItem.title}</span>
+              )}
+            </Button>
+          </Link>
+
+          {/* Checkout Unificado - Standalone */}
+          <Link href={checkoutUnificadoItem.href}>
+            <Button
+              variant="ghost"
+              className={cn(
+                "nav-item w-full justify-start text-foreground hover:bg-accent hover:text-accent-foreground",
+                isCollapsed ? "px-0" : "px-3",
+                checkoutUnificadoItem.active && "bg-accent text-accent-foreground"
+              )}
+            >
+              {checkoutUnificadoItem.icon}
+              {!isCollapsed && (
+                <span className="ml-2 flex-1 text-left text-foreground">{checkoutUnificadoItem.title}</span>
               )}
             </Button>
           </Link>

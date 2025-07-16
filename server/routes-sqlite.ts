@@ -12474,47 +12474,709 @@ export function registerCheckoutRoutes(app: Express) {
       const gateways = [];
       
       // Verificar se Stripe está configurado
-      if (stripeService) {
+      if (process.env.STRIPE_SECRET_KEY && process.env.VITE_STRIPE_PUBLIC_KEY) {
         gateways.push({
-          id: 'stripe',
-          name: 'Stripe',
-          description: 'Gateway internacional com suporte a múltiplas moedas',
+          id: "stripe",
+          name: "Stripe",
           enabled: true,
-          countries: ['US', 'CA', 'EU', 'BR', 'MX'],
-          features: ['credit_card', 'subscriptions', 'webhooks', 'trial_periods'],
+          countries: ["US", "CA", "GB", "EU", "BR", "MX", "AU"],
+          features: ["credit_card", "subscriptions", "webhooks", "multi_currency"],
+          currencies: ["USD", "EUR", "BRL", "GBP", "CAD", "AUD", "MXN"],
           pricing: {
-            setup_fee: 100, // R$1.00 em centavos
-            monthly_fee: 2990, // R$29.90 em centavos
-            trial_days: 7
-          }
+            setup_fee: 100, // R$ 1,00 em centavos
+            monthly_fee: 2990, // R$ 29,90 em centavos
+            trial_days: 7,
+            currency: "BRL"
+          },
+          description: "Gateway internacional com suporte a múltiplas moedas e países"
         });
+      }
+      
+      // Verificar se Pagar.me está configurado
+      if (process.env.PAGARME_API_KEY && process.env.PAGARME_PUBLIC_KEY) {
+        gateways.push({
+          id: "pagarme",
+          name: "Pagar.me",
+          enabled: true,
+          countries: ["BR"],
+          features: ["credit_card", "debit_card", "boleto", "pix", "subscriptions", "webhooks"],
+          currencies: ["BRL"],
+          pricing: {
+            setup_fee: 100, // R$ 1,00 em centavos
+            monthly_fee: 2990, // R$ 29,90 em centavos
+            trial_days: 7,
+            currency: "BRL"
+          },
+          description: "Gateway brasileiro com suporte a PIX, boleto e cartões nacionais"
+        });
+      }
+      
+      // Determinar gateway padrão
+      let defaultGateway = null;
+      if (gateways.length > 0) {
+        // Priorizar Pagar.me se estiver configurado (mercado brasileiro)
+        const pagarme = gateways.find(g => g.id === "pagarme");
+        defaultGateway = pagarme ? "pagarme" : gateways[0].id;
       }
 
-      // Verificar se Pagar.me está configurado
-      if (pagarmeIntegration) {
-        gateways.push({
-          id: 'pagarme',
-          name: 'Pagar.me',
-          description: 'Gateway brasileiro com suporte a Pix, boleto e cartão',
-          enabled: true,
-          countries: ['BR'],
-          features: ['credit_card', 'boleto', 'pix', 'subscriptions', 'webhooks'],
-          pricing: {
-            setup_fee: 100, // R$1.00 em centavos
-            monthly_fee: 2990, // R$29.90 em centavos
-            trial_days: 7
-          }
-        });
-      }
+      console.log(`🎯 Gateways configurados: ${gateways.length}`);
+      console.log(`🚀 Gateway padrão: ${defaultGateway}`);
 
       res.json({
         success: true,
         gateways,
-        default: gateways.length > 0 ? gateways[0].id : null
+        default: defaultGateway,
+        stats: {
+          total: gateways.length,
+          stripe_enabled: !!process.env.STRIPE_SECRET_KEY,
+          pagarme_enabled: !!process.env.PAGARME_API_KEY
+        }
       });
     } catch (error) {
       console.error('❌ Erro ao listar gateways:', error);
-      res.status(500).json({ error: "Erro ao listar gateways de pagamento" });
+      res.status(500).json({
+        success: false,
+        error: "Erro ao carregar gateways de pagamento",
+        details: error.message
+      });
+    }
+  });
+
+  // 🛍️ SISTEMA DE PRODUTOS CUSTOMIZÁVEIS
+  
+  // Criar produto personalizado
+  app.post("/api/products", verifyJWT, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const {
+        name,
+        description,
+        price,
+        currency,
+        type, // 'one_time' ou 'recurring'
+        recurrence, // 'daily', 'weekly', 'monthly', 'yearly'
+        trial_days,
+        setup_fee,
+        features,
+        metadata,
+        gateway_id,
+        active
+      } = req.body;
+
+      // Validações
+      if (!name || !price || !currency || !type || !gateway_id) {
+        return res.status(400).json({
+          error: "Campos obrigatórios: name, price, currency, type, gateway_id"
+        });
+      }
+
+      if (type === 'recurring' && !recurrence) {
+        return res.status(400).json({
+          error: "Recorrência obrigatória para produtos recorrentes"
+        });
+      }
+
+      const productId = `prod_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+      
+      const product = {
+        id: productId,
+        userId,
+        name,
+        description: description || '',
+        price: Math.round(price * 100), // Converter para centavos
+        currency: currency.toUpperCase(),
+        type,
+        recurrence: recurrence || null,
+        trial_days: trial_days || 0,
+        setup_fee: setup_fee ? Math.round(setup_fee * 100) : 0,
+        features: JSON.stringify(features || []),
+        metadata: JSON.stringify(metadata || {}),
+        gateway_id,
+        active: active !== false,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      };
+
+      // Salvar no banco
+      const db = await getDb();
+      await db.run(`
+        INSERT INTO custom_products (
+          id, user_id, name, description, price, currency, 
+          type, recurrence, trial_days, setup_fee, features, 
+          metadata, gateway_id, active, created_at, updated_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      `, [
+        product.id, product.userId, product.name, product.description,
+        product.price, product.currency, product.type, product.recurrence,
+        product.trial_days, product.setup_fee, product.features,
+        product.metadata, product.gateway_id, product.active,
+        product.created_at, product.updated_at
+      ]);
+
+      console.log(`✅ Produto criado: ${productId} - ${name}`);
+      
+      res.json({
+        success: true,
+        product: {
+          ...product,
+          features: JSON.parse(product.features),
+          metadata: JSON.parse(product.metadata)
+        }
+      });
+    } catch (error) {
+      console.error('❌ Erro ao criar produto:', error);
+      res.status(500).json({ error: "Erro ao criar produto" });
+    }
+  });
+
+  // Listar produtos do usuário
+  app.get("/api/products", verifyJWT, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const db = await getDb();
+      
+      const products = await db.all(`
+        SELECT * FROM custom_products 
+        WHERE user_id = ? 
+        ORDER BY created_at DESC
+      `, [userId]);
+
+      const processedProducts = products.map(product => ({
+        ...product,
+        features: JSON.parse(product.features),
+        metadata: JSON.parse(product.metadata)
+      }));
+
+      res.json({
+        success: true,
+        products: processedProducts
+      });
+    } catch (error) {
+      console.error('❌ Erro ao listar produtos:', error);
+      res.status(500).json({ error: "Erro ao listar produtos" });
+    }
+  });
+
+  // Atualizar produto
+  app.put("/api/products/:id", verifyJWT, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const productId = req.params.id;
+      const updateData = req.body;
+      
+      const db = await getDb();
+      
+      // Verificar se o produto existe e pertence ao usuário
+      const existingProduct = await db.get(`
+        SELECT * FROM custom_products 
+        WHERE id = ? AND user_id = ?
+      `, [productId, userId]);
+      
+      if (!existingProduct) {
+        return res.status(404).json({ error: "Produto não encontrado" });
+      }
+
+      // Preparar dados de atualização
+      const allowedFields = [
+        'name', 'description', 'price', 'currency', 'type', 
+        'recurrence', 'trial_days', 'setup_fee', 'features', 
+        'metadata', 'gateway_id', 'active'
+      ];
+      
+      const updates = [];
+      const values = [];
+      
+      for (const field of allowedFields) {
+        if (updateData[field] !== undefined) {
+          updates.push(`${field} = ?`);
+          
+          if (field === 'price' || field === 'setup_fee') {
+            values.push(Math.round(updateData[field] * 100));
+          } else if (field === 'features' || field === 'metadata') {
+            values.push(JSON.stringify(updateData[field]));
+          } else {
+            values.push(updateData[field]);
+          }
+        }
+      }
+      
+      if (updates.length === 0) {
+        return res.status(400).json({ error: "Nenhum campo para atualizar" });
+      }
+      
+      updates.push('updated_at = ?');
+      values.push(new Date().toISOString());
+      values.push(productId);
+      values.push(userId);
+      
+      await db.run(`
+        UPDATE custom_products 
+        SET ${updates.join(', ')} 
+        WHERE id = ? AND user_id = ?
+      `, values);
+
+      // Buscar produto atualizado
+      const updatedProduct = await db.get(`
+        SELECT * FROM custom_products 
+        WHERE id = ? AND user_id = ?
+      `, [productId, userId]);
+
+      res.json({
+        success: true,
+        product: {
+          ...updatedProduct,
+          features: JSON.parse(updatedProduct.features),
+          metadata: JSON.parse(updatedProduct.metadata)
+        }
+      });
+    } catch (error) {
+      console.error('❌ Erro ao atualizar produto:', error);
+      res.status(500).json({ error: "Erro ao atualizar produto" });
+    }
+  });
+
+  // Deletar produto
+  app.delete("/api/products/:id", verifyJWT, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const productId = req.params.id;
+      const db = await getDb();
+      
+      const result = await db.run(`
+        DELETE FROM custom_products 
+        WHERE id = ? AND user_id = ?
+      `, [productId, userId]);
+      
+      if (result.changes === 0) {
+        return res.status(404).json({ error: "Produto não encontrado" });
+      }
+
+      res.json({ success: true, message: "Produto deletado com sucesso" });
+    } catch (error) {
+      console.error('❌ Erro ao deletar produto:', error);
+      res.status(500).json({ error: "Erro ao deletar produto" });
+    }
+  });
+
+  // 📋 SISTEMA DE ASSINATURAS CUSTOMIZÁVEIS
+  
+  // Criar assinatura baseada em produto
+  app.post("/api/subscriptions", verifyJWT, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const { product_id, customer_data, payment_method } = req.body;
+      
+      if (!product_id || !customer_data || !payment_method) {
+        return res.status(400).json({
+          error: "Campos obrigatórios: product_id, customer_data, payment_method"
+        });
+      }
+
+      const db = await getDb();
+      
+      // Buscar produto
+      const product = await db.get(`
+        SELECT * FROM custom_products 
+        WHERE id = ? AND user_id = ? AND active = 1
+      `, [product_id, userId]);
+      
+      if (!product) {
+        return res.status(404).json({ error: "Produto não encontrado ou inativo" });
+      }
+
+      const subscriptionId = `sub_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+      const customerId = `cust_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+      
+      // Calcular datas
+      const now = new Date();
+      const trialEnd = product.trial_days > 0 ? 
+        new Date(now.getTime() + (product.trial_days * 24 * 60 * 60 * 1000)) : 
+        now;
+      
+      // Calcular próxima cobrança baseada na recorrência
+      let nextBillingDate = new Date(trialEnd);
+      switch (product.recurrence) {
+        case 'daily':
+          nextBillingDate.setDate(nextBillingDate.getDate() + 1);
+          break;
+        case 'weekly':
+          nextBillingDate.setDate(nextBillingDate.getDate() + 7);
+          break;
+        case 'monthly':
+          nextBillingDate.setMonth(nextBillingDate.getMonth() + 1);
+          break;
+        case 'yearly':
+          nextBillingDate.setFullYear(nextBillingDate.getFullYear() + 1);
+          break;
+      }
+
+      // Criar cliente
+      await db.run(`
+        INSERT OR REPLACE INTO subscription_customers (
+          id, user_id, name, email, phone, document, 
+          address, payment_method, gateway_id, created_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      `, [
+        customerId, userId, customer_data.name, customer_data.email,
+        customer_data.phone, customer_data.document, 
+        JSON.stringify(customer_data.address || {}),
+        JSON.stringify(payment_method), product.gateway_id,
+        now.toISOString()
+      ]);
+
+      // Criar assinatura
+      const subscription = {
+        id: subscriptionId,
+        user_id: userId,
+        product_id: product_id,
+        customer_id: customerId,
+        status: product.trial_days > 0 ? 'trialing' : 'active',
+        trial_start: now.toISOString(),
+        trial_end: trialEnd.toISOString(),
+        next_billing_date: nextBillingDate.toISOString(),
+        billing_cycle: product.recurrence,
+        amount: product.price,
+        setup_fee: product.setup_fee,
+        currency: product.currency,
+        gateway_id: product.gateway_id,
+        metadata: JSON.stringify({
+          created_by: 'custom_checkout',
+          product_name: product.name,
+          customer_name: customer_data.name
+        }),
+        created_at: now.toISOString(),
+        updated_at: now.toISOString()
+      };
+
+      await db.run(`
+        INSERT INTO custom_subscriptions (
+          id, user_id, product_id, customer_id, status, trial_start, trial_end,
+          next_billing_date, billing_cycle, amount, setup_fee, currency,
+          gateway_id, metadata, created_at, updated_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      `, [
+        subscription.id, subscription.user_id, subscription.product_id,
+        subscription.customer_id, subscription.status, subscription.trial_start,
+        subscription.trial_end, subscription.next_billing_date, 
+        subscription.billing_cycle, subscription.amount, subscription.setup_fee,
+        subscription.currency, subscription.gateway_id, subscription.metadata,
+        subscription.created_at, subscription.updated_at
+      ]);
+
+      // Cobrar setup fee se existir
+      if (product.setup_fee > 0) {
+        await db.run(`
+          INSERT INTO billing_transactions (
+            id, subscription_id, customer_id, amount, currency, type, status,
+            gateway_id, gateway_transaction_id, description, metadata, created_at
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        `, [
+          `txn_${Date.now()}_setup`,
+          subscriptionId,
+          customerId,
+          product.setup_fee,
+          product.currency,
+          'setup_fee',
+          'completed',
+          product.gateway_id,
+          null,
+          `Taxa de ativação - ${product.name}`,
+          JSON.stringify({ product_name: product.name }),
+          now.toISOString()
+        ]);
+      }
+
+      console.log(`✅ Assinatura criada: ${subscriptionId} - ${product.name}`);
+      
+      res.json({
+        success: true,
+        subscription: {
+          ...subscription,
+          metadata: JSON.parse(subscription.metadata)
+        },
+        setup_fee_charged: product.setup_fee > 0
+      });
+    } catch (error) {
+      console.error('❌ Erro ao criar assinatura:', error);
+      res.status(500).json({ error: "Erro ao criar assinatura" });
+    }
+  });
+
+  // Listar assinaturas
+  app.get("/api/subscriptions", verifyJWT, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const db = await getDb();
+      
+      const subscriptions = await db.all(`
+        SELECT s.*, p.name as product_name, c.name as customer_name, c.email as customer_email
+        FROM custom_subscriptions s
+        LEFT JOIN custom_products p ON s.product_id = p.id
+        LEFT JOIN subscription_customers c ON s.customer_id = c.id
+        WHERE s.user_id = ?
+        ORDER BY s.created_at DESC
+      `, [userId]);
+
+      const processedSubscriptions = subscriptions.map(sub => ({
+        ...sub,
+        metadata: JSON.parse(sub.metadata)
+      }));
+
+      res.json({
+        success: true,
+        subscriptions: processedSubscriptions
+      });
+    } catch (error) {
+      console.error('❌ Erro ao listar assinaturas:', error);
+      res.status(500).json({ error: "Erro ao listar assinaturas" });
+    }
+  });
+
+  // Cancelar assinatura
+  app.post("/api/subscriptions/:id/cancel", verifyJWT, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const subscriptionId = req.params.id;
+      const { reason } = req.body;
+      
+      const db = await getDb();
+      
+      const subscription = await db.get(`
+        SELECT * FROM custom_subscriptions 
+        WHERE id = ? AND user_id = ?
+      `, [subscriptionId, userId]);
+      
+      if (!subscription) {
+        return res.status(404).json({ error: "Assinatura não encontrada" });
+      }
+
+      await db.run(`
+        UPDATE custom_subscriptions 
+        SET status = 'cancelled', 
+            cancelled_at = ?, 
+            cancellation_reason = ?,
+            updated_at = ?
+        WHERE id = ? AND user_id = ?
+      `, [
+        new Date().toISOString(),
+        reason || 'Cancelamento solicitado pelo usuário',
+        new Date().toISOString(),
+        subscriptionId,
+        userId
+      ]);
+
+      res.json({ success: true, message: "Assinatura cancelada com sucesso" });
+    } catch (error) {
+      console.error('❌ Erro ao cancelar assinatura:', error);
+      res.status(500).json({ error: "Erro ao cancelar assinatura" });
+    }
+  });
+
+  // ⏰ SISTEMA DE CRON PARA COBRANÇA AUTOMÁTICA
+  
+  // Endpoint para processar cobranças pendentes (chamado por cron)
+  app.post("/api/billing/process-pending", async (req, res) => {
+    try {
+      const { cron_secret } = req.body;
+      
+      // Verificar secret do cron (segurança)
+      if (cron_secret !== process.env.CRON_SECRET) {
+        return res.status(401).json({ error: "Acesso negado" });
+      }
+
+      const db = await getDb();
+      const now = new Date();
+      
+      // Buscar assinaturas que precisam ser cobradas
+      const pendingSubscriptions = await db.all(`
+        SELECT s.*, p.name as product_name, c.name as customer_name, c.email as customer_email, c.payment_method
+        FROM custom_subscriptions s
+        LEFT JOIN custom_products p ON s.product_id = p.id
+        LEFT JOIN subscription_customers c ON s.customer_id = c.id
+        WHERE s.status IN ('active', 'trialing') 
+          AND s.next_billing_date <= ?
+          AND p.active = 1
+        ORDER BY s.next_billing_date ASC
+      `, [now.toISOString()]);
+
+      console.log(`🔄 Processando ${pendingSubscriptions.length} cobranças pendentes`);
+
+      let processedCount = 0;
+      let successCount = 0;
+      let failureCount = 0;
+
+      for (const subscription of pendingSubscriptions) {
+        try {
+          processedCount++;
+          
+          // Determinar próxima data de cobrança
+          const nextBillingDate = new Date(subscription.next_billing_date);
+          let newNextBillingDate = new Date(nextBillingDate);
+          
+          switch (subscription.billing_cycle) {
+            case 'daily':
+              newNextBillingDate.setDate(newNextBillingDate.getDate() + 1);
+              break;
+            case 'weekly':
+              newNextBillingDate.setDate(newNextBillingDate.getDate() + 7);
+              break;
+            case 'monthly':
+              newNextBillingDate.setMonth(newNextBillingDate.getMonth() + 1);
+              break;
+            case 'yearly':
+              newNextBillingDate.setFullYear(newNextBillingDate.getFullYear() + 1);
+              break;
+          }
+
+          // Criar transação de cobrança
+          const transactionId = `txn_${Date.now()}_${subscription.id}`;
+          
+          await db.run(`
+            INSERT INTO billing_transactions (
+              id, subscription_id, customer_id, amount, currency, type, status,
+              gateway_id, gateway_transaction_id, description, metadata, created_at
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+          `, [
+            transactionId,
+            subscription.id,
+            subscription.customer_id,
+            subscription.amount,
+            subscription.currency,
+            'recurring',
+            'pending',
+            subscription.gateway_id,
+            null,
+            `Cobrança recorrente - ${subscription.product_name}`,
+            JSON.stringify({
+              billing_cycle: subscription.billing_cycle,
+              product_name: subscription.product_name,
+              customer_name: subscription.customer_name
+            }),
+            now.toISOString()
+          ]);
+
+          // Atualizar próxima data de cobrança
+          await db.run(`
+            UPDATE custom_subscriptions 
+            SET next_billing_date = ?, 
+                last_billing_date = ?,
+                updated_at = ?
+            WHERE id = ?
+          `, [
+            newNextBillingDate.toISOString(),
+            now.toISOString(),
+            now.toISOString(),
+            subscription.id
+          ]);
+
+          // Atualizar status se estava em trial
+          if (subscription.status === 'trialing') {
+            await db.run(`
+              UPDATE custom_subscriptions 
+              SET status = 'active', updated_at = ?
+              WHERE id = ?
+            `, [now.toISOString(), subscription.id]);
+          }
+
+          console.log(`✅ Cobrança processada: ${subscription.id} - ${subscription.product_name}`);
+          successCount++;
+
+        } catch (error) {
+          console.error(`❌ Erro ao processar cobrança ${subscription.id}:`, error);
+          failureCount++;
+          
+          // Marcar transação como falha
+          await db.run(`
+            UPDATE billing_transactions 
+            SET status = 'failed', 
+                error_message = ?,
+                updated_at = ?
+            WHERE subscription_id = ? AND status = 'pending'
+          `, [
+            error.message,
+            now.toISOString(),
+            subscription.id
+          ]);
+        }
+      }
+
+      console.log(`📊 Processamento concluído: ${processedCount} total, ${successCount} sucesso, ${failureCount} falhas`);
+
+      res.json({
+        success: true,
+        processed: processedCount,
+        successful: successCount,
+        failed: failureCount,
+        timestamp: now.toISOString()
+      });
+
+    } catch (error) {
+      console.error('❌ Erro no processamento de cobranças:', error);
+      res.status(500).json({ error: "Erro no processamento de cobranças" });
+    }
+  });
+
+  // Endpoint para estatísticas de cobrança
+  app.get("/api/billing/stats", verifyJWT, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const db = await getDb();
+      
+      // Estatísticas gerais
+      const stats = await db.get(`
+        SELECT 
+          COUNT(*) as total_subscriptions,
+          SUM(CASE WHEN status = 'active' THEN 1 ELSE 0 END) as active_subscriptions,
+          SUM(CASE WHEN status = 'trialing' THEN 1 ELSE 0 END) as trial_subscriptions,
+          SUM(CASE WHEN status = 'cancelled' THEN 1 ELSE 0 END) as cancelled_subscriptions,
+          SUM(amount) as total_monthly_revenue
+        FROM custom_subscriptions 
+        WHERE user_id = ?
+      `, [userId]);
+
+      // Transações do mês atual
+      const thisMonth = new Date();
+      thisMonth.setDate(1);
+      const nextMonth = new Date(thisMonth);
+      nextMonth.setMonth(nextMonth.getMonth() + 1);
+
+      const monthlyTransactions = await db.all(`
+        SELECT 
+          type,
+          status,
+          COUNT(*) as count,
+          SUM(amount) as total_amount
+        FROM billing_transactions bt
+        JOIN custom_subscriptions s ON bt.subscription_id = s.id
+        WHERE s.user_id = ? 
+          AND bt.created_at >= ? 
+          AND bt.created_at < ?
+        GROUP BY type, status
+      `, [userId, thisMonth.toISOString(), nextMonth.toISOString()]);
+
+      // Próximas cobranças
+      const upcomingCharges = await db.all(`
+        SELECT s.*, p.name as product_name, c.name as customer_name
+        FROM custom_subscriptions s
+        LEFT JOIN custom_products p ON s.product_id = p.id
+        LEFT JOIN subscription_customers c ON s.customer_id = c.id
+        WHERE s.user_id = ? 
+          AND s.status IN ('active', 'trialing')
+          AND s.next_billing_date > ?
+        ORDER BY s.next_billing_date ASC
+        LIMIT 10
+      `, [userId, new Date().toISOString()]);
+
+      res.json({
+        success: true,
+        stats,
+        monthly_transactions: monthlyTransactions,
+        upcoming_charges: upcomingCharges
+      });
+
+    } catch (error) {
+      console.error('❌ Erro ao buscar estatísticas:', error);
+      res.status(500).json({ error: "Erro ao buscar estatísticas" });
     }
   });
 
@@ -12678,6 +13340,165 @@ export function registerCheckoutRoutes(app: Express) {
     } catch (error) {
       console.error('❌ Erro no webhook Pagar.me:', error);
       res.status(500).json({ error: "Erro ao processar webhook" });
+    }
+  });
+
+  // ==================== SISTEMA DE PRODUTOS E ASSINATURAS ====================
+
+  // 📦 LISTAR PRODUTOS
+  app.get("/api/custom-products", verifyJWT, async (req: any, res) => {
+    try {
+      const products = await storage.getCustomProducts();
+      res.json({ success: true, products });
+    } catch (error) {
+      console.error('❌ Erro ao listar produtos:', error);
+      res.status(500).json({ error: "Erro ao listar produtos" });
+    }
+  });
+
+  // 📦 CRIAR PRODUTO
+  app.post("/api/custom-products", verifyJWT, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const productData = {
+        ...req.body,
+        user_id: userId,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      };
+
+      const product = await storage.createCustomProduct(productData);
+      res.json({ success: true, product });
+    } catch (error) {
+      console.error('❌ Erro ao criar produto:', error);
+      res.status(500).json({ error: "Erro ao criar produto" });
+    }
+  });
+
+  // 📦 ATUALIZAR PRODUTO
+  app.put("/api/custom-products/:id", verifyJWT, async (req: any, res) => {
+    try {
+      const { id } = req.params;
+      const userId = req.user.id;
+      const updateData = {
+        ...req.body,
+        updated_at: new Date().toISOString()
+      };
+
+      const product = await storage.updateCustomProduct(id, updateData, userId);
+      res.json({ success: true, product });
+    } catch (error) {
+      console.error('❌ Erro ao atualizar produto:', error);
+      res.status(500).json({ error: "Erro ao atualizar produto" });
+    }
+  });
+
+  // 📦 DELETAR PRODUTO
+  app.delete("/api/custom-products/:id", verifyJWT, async (req: any, res) => {
+    try {
+      const { id } = req.params;
+      const userId = req.user.id;
+
+      await storage.deleteCustomProduct(id, userId);
+      res.json({ success: true, message: "Produto deletado com sucesso" });
+    } catch (error) {
+      console.error('❌ Erro ao deletar produto:', error);
+      res.status(500).json({ error: "Erro ao deletar produto" });
+    }
+  });
+
+  // 📋 LISTAR ASSINATURAS
+  app.get("/api/subscriptions", verifyJWT, async (req: any, res) => {
+    try {
+      const subscriptions = await storage.getCustomSubscriptions();
+      res.json({ success: true, subscriptions });
+    } catch (error) {
+      console.error('❌ Erro ao listar assinaturas:', error);
+      res.status(500).json({ error: "Erro ao listar assinaturas" });
+    }
+  });
+
+  // 📋 CRIAR ASSINATURA
+  app.post("/api/subscriptions", verifyJWT, async (req: any, res) => {
+    try {
+      const subscriptionData = {
+        ...req.body,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      };
+
+      const subscription = await storage.createCustomSubscription(subscriptionData);
+      res.json({ success: true, subscription });
+    } catch (error) {
+      console.error('❌ Erro ao criar assinatura:', error);
+      res.status(500).json({ error: "Erro ao criar assinatura" });
+    }
+  });
+
+  // 📋 CANCELAR ASSINATURA
+  app.post("/api/subscriptions/:id/cancel", verifyJWT, async (req: any, res) => {
+    try {
+      const { id } = req.params;
+      const { reason } = req.body;
+
+      const subscription = await storage.cancelCustomSubscription(id, reason || 'Cancelamento solicitado');
+      res.json({ success: true, subscription });
+    } catch (error) {
+      console.error('❌ Erro ao cancelar assinatura:', error);
+      res.status(500).json({ error: "Erro ao cancelar assinatura" });
+    }
+  });
+
+  // 📊 ESTATÍSTICAS DE COBRANÇA
+  app.get("/api/billing/stats", verifyJWT, async (req: any, res) => {
+    try {
+      const stats = await storage.getBillingStats();
+      res.json({ success: true, stats });
+    } catch (error) {
+      console.error('❌ Erro ao obter estatísticas:', error);
+      res.status(500).json({ error: "Erro ao obter estatísticas de cobrança" });
+    }
+  });
+
+  // 💳 TRANSAÇÕES DE COBRANÇA
+  app.get("/api/billing/transactions", verifyJWT, async (req: any, res) => {
+    try {
+      const transactions = await storage.getBillingTransactions();
+      res.json({ success: true, transactions });
+    } catch (error) {
+      console.error('❌ Erro ao listar transações:', error);
+      res.status(500).json({ error: "Erro ao listar transações" });
+    }
+  });
+
+  // 🔄 PROCESSAR COBRANÇA MANUAL
+  app.post("/api/billing/process", verifyJWT, async (req: any, res) => {
+    try {
+      const { subscription_id, amount, description } = req.body;
+      
+      const transaction = await storage.processBillingTransaction({
+        subscription_id,
+        amount,
+        description,
+        status: 'pending',
+        created_at: new Date().toISOString()
+      });
+
+      res.json({ success: true, transaction });
+    } catch (error) {
+      console.error('❌ Erro ao processar cobrança:', error);
+      res.status(500).json({ error: "Erro ao processar cobrança" });
+    }
+  });
+
+  // 🏪 GATEWAYS DE PAGAMENTO
+  app.get("/api/payment-gateways", verifyJWT, async (req: any, res) => {
+    try {
+      const gateways = await storage.getPaymentGateways();
+      res.json({ success: true, gateways });
+    } catch (error) {
+      console.error('❌ Erro ao listar gateways:', error);
+      res.status(500).json({ error: "Erro ao listar gateways" });
     }
   });
 

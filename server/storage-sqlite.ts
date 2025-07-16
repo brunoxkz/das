@@ -6682,6 +6682,301 @@ Hoje você vai aprender ${project.title} - método revolucionário que já ajudo
     }
   }
 
+  // ==================== MÉTODOS DE PRODUTOS E ASSINATURAS ====================
+
+  async getCustomProducts(): Promise<any[]> {
+    try {
+      const result = sqlite.prepare("SELECT * FROM custom_products ORDER BY created_at DESC").all();
+      return result;
+    } catch (error) {
+      console.error('Erro ao buscar produtos customizados:', error);
+      return [];
+    }
+  }
+
+  async createCustomProduct(productData: any): Promise<any> {
+    try {
+      const id = nanoid();
+      const product = {
+        id,
+        ...productData,
+        features: JSON.stringify(productData.features || []),
+        metadata: JSON.stringify(productData.metadata || {}),
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      };
+
+      const stmt = sqlite.prepare(`
+        INSERT INTO custom_products (
+          id, user_id, name, description, price, currency, type, recurrence, 
+          trial_days, setup_fee, features, metadata, gateway_id, active, 
+          created_at, updated_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      `);
+
+      stmt.run(
+        product.id, product.user_id, product.name, product.description,
+        product.price, product.currency, product.type, product.recurrence,
+        product.trial_days, product.setup_fee, product.features, product.metadata,
+        product.gateway_id, product.active ? 1 : 0, product.created_at, product.updated_at
+      );
+
+      return product;
+    } catch (error) {
+      console.error('Erro ao criar produto customizado:', error);
+      throw error;
+    }
+  }
+
+  async updateCustomProduct(id: string, updateData: any, userId: string): Promise<any> {
+    try {
+      const product = {
+        ...updateData,
+        features: JSON.stringify(updateData.features || []),
+        metadata: JSON.stringify(updateData.metadata || {}),
+        updated_at: new Date().toISOString()
+      };
+
+      const stmt = sqlite.prepare(`
+        UPDATE custom_products 
+        SET name = ?, description = ?, price = ?, currency = ?, type = ?, 
+            recurrence = ?, trial_days = ?, setup_fee = ?, features = ?, 
+            metadata = ?, gateway_id = ?, active = ?, updated_at = ?
+        WHERE id = ? AND user_id = ?
+      `);
+
+      stmt.run(
+        product.name, product.description, product.price, product.currency,
+        product.type, product.recurrence, product.trial_days, product.setup_fee,
+        product.features, product.metadata, product.gateway_id, 
+        product.active ? 1 : 0, product.updated_at, id, userId
+      );
+
+      return { id, ...product };
+    } catch (error) {
+      console.error('Erro ao atualizar produto customizado:', error);
+      throw error;
+    }
+  }
+
+  async deleteCustomProduct(id: string, userId: string): Promise<void> {
+    try {
+      const stmt = sqlite.prepare("DELETE FROM custom_products WHERE id = ? AND user_id = ?");
+      stmt.run(id, userId);
+    } catch (error) {
+      console.error('Erro ao deletar produto customizado:', error);
+      throw error;
+    }
+  }
+
+  async getCustomSubscriptions(): Promise<any[]> {
+    try {
+      const result = sqlite.prepare(`
+        SELECT 
+          s.*,
+          p.name as product_name,
+          c.name as customer_name,
+          c.email as customer_email
+        FROM custom_subscriptions s
+        LEFT JOIN custom_products p ON s.product_id = p.id
+        LEFT JOIN subscription_customers c ON s.customer_id = c.id
+        ORDER BY s.created_at DESC
+      `).all();
+      
+      return result.map(sub => ({
+        ...sub,
+        metadata: sub.metadata ? JSON.parse(sub.metadata) : {}
+      }));
+    } catch (error) {
+      console.error('Erro ao buscar assinaturas customizadas:', error);
+      return [];
+    }
+  }
+
+  async createCustomSubscription(subscriptionData: any): Promise<any> {
+    try {
+      const id = nanoid();
+      const subscription = {
+        id,
+        ...subscriptionData,
+        metadata: JSON.stringify(subscriptionData.metadata || {}),
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      };
+
+      const stmt = sqlite.prepare(`
+        INSERT INTO custom_subscriptions (
+          id, user_id, product_id, customer_id, status, trial_start, trial_end,
+          next_billing_date, last_billing_date, billing_cycle, amount, setup_fee,
+          currency, gateway_id, metadata, created_at, updated_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      `);
+
+      stmt.run(
+        subscription.id, subscription.user_id, subscription.product_id,
+        subscription.customer_id, subscription.status, subscription.trial_start,
+        subscription.trial_end, subscription.next_billing_date,
+        subscription.last_billing_date, subscription.billing_cycle,
+        subscription.amount, subscription.setup_fee, subscription.currency,
+        subscription.gateway_id, subscription.metadata, subscription.created_at,
+        subscription.updated_at
+      );
+
+      return subscription;
+    } catch (error) {
+      console.error('Erro ao criar assinatura customizada:', error);
+      throw error;
+    }
+  }
+
+  async cancelCustomSubscription(id: string, reason: string): Promise<any> {
+    try {
+      const stmt = sqlite.prepare(`
+        UPDATE custom_subscriptions 
+        SET status = 'cancelled', cancelled_at = ?, cancellation_reason = ?, updated_at = ?
+        WHERE id = ?
+      `);
+
+      const now = new Date().toISOString();
+      stmt.run(now, reason, now, id);
+
+      const result = sqlite.prepare("SELECT * FROM custom_subscriptions WHERE id = ?").get(id);
+      return result;
+    } catch (error) {
+      console.error('Erro ao cancelar assinatura customizada:', error);
+      throw error;
+    }
+  }
+
+  async getBillingStats(): Promise<any> {
+    try {
+      const totalSubs = sqlite.prepare("SELECT COUNT(*) as count FROM custom_subscriptions").get().count;
+      const activeSubs = sqlite.prepare("SELECT COUNT(*) as count FROM custom_subscriptions WHERE status = 'active'").get().count;
+      const trialSubs = sqlite.prepare("SELECT COUNT(*) as count FROM custom_subscriptions WHERE status = 'trialing'").get().count;
+      const cancelledSubs = sqlite.prepare("SELECT COUNT(*) as count FROM custom_subscriptions WHERE status = 'cancelled'").get().count;
+      
+      const monthlyRevenue = sqlite.prepare(`
+        SELECT COALESCE(SUM(amount), 0) as total 
+        FROM custom_subscriptions 
+        WHERE status = 'active' AND billing_cycle = 'monthly'
+      `).get().total;
+
+      const upcomingCharges = sqlite.prepare(`
+        SELECT 
+          s.id, s.amount, s.next_billing_date,
+          p.name as product_name,
+          c.name as customer_name
+        FROM custom_subscriptions s
+        LEFT JOIN custom_products p ON s.product_id = p.id
+        LEFT JOIN subscription_customers c ON s.customer_id = c.id
+        WHERE s.status = 'active' AND s.next_billing_date > ?
+        ORDER BY s.next_billing_date ASC
+        LIMIT 10
+      `).all(new Date().toISOString());
+
+      return {
+        stats: {
+          total_subscriptions: totalSubs,
+          active_subscriptions: activeSubs,
+          trial_subscriptions: trialSubs,
+          cancelled_subscriptions: cancelledSubs,
+          total_monthly_revenue: monthlyRevenue
+        },
+        upcoming_charges: upcomingCharges
+      };
+    } catch (error) {
+      console.error('Erro ao buscar estatísticas de cobrança:', error);
+      return { stats: {}, upcoming_charges: [] };
+    }
+  }
+
+  async getBillingTransactions(): Promise<any[]> {
+    try {
+      const result = sqlite.prepare(`
+        SELECT 
+          bt.*,
+          s.id as subscription_id,
+          p.name as product_name,
+          c.name as customer_name,
+          c.email as customer_email
+        FROM billing_transactions bt
+        LEFT JOIN custom_subscriptions s ON bt.subscription_id = s.id
+        LEFT JOIN custom_products p ON s.product_id = p.id
+        LEFT JOIN subscription_customers c ON s.customer_id = c.id
+        ORDER BY bt.created_at DESC
+        LIMIT 100
+      `).all();
+
+      return result.map(transaction => ({
+        ...transaction,
+        metadata: transaction.metadata ? JSON.parse(transaction.metadata) : {}
+      }));
+    } catch (error) {
+      console.error('Erro ao buscar transações de cobrança:', error);
+      return [];
+    }
+  }
+
+  async processBillingTransaction(transactionData: any): Promise<any> {
+    try {
+      const id = nanoid();
+      const transaction = {
+        id,
+        ...transactionData,
+        metadata: JSON.stringify(transactionData.metadata || {}),
+        created_at: new Date().toISOString()
+      };
+
+      const stmt = sqlite.prepare(`
+        INSERT INTO billing_transactions (
+          id, subscription_id, amount, currency, status, description, 
+          gateway_transaction_id, metadata, created_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+      `);
+
+      stmt.run(
+        transaction.id, transaction.subscription_id, transaction.amount,
+        transaction.currency, transaction.status, transaction.description,
+        transaction.gateway_transaction_id, transaction.metadata, transaction.created_at
+      );
+
+      return transaction;
+    } catch (error) {
+      console.error('Erro ao processar transação de cobrança:', error);
+      throw error;
+    }
+  }
+
+  async getPaymentGateways(): Promise<any[]> {
+    try {
+      const gateways = [
+        {
+          id: 'stripe',
+          name: 'Stripe',
+          description: 'Gateway internacional com suporte a múltiplas moedas',
+          enabled: !!process.env.STRIPE_SECRET_KEY,
+          countries: ['US', 'CA', 'UK', 'EU'],
+          currencies: ['USD', 'EUR', 'GBP', 'CAD'],
+          methods: ['card', 'bank_transfer', 'wallet']
+        },
+        {
+          id: 'pagarme',
+          name: 'Pagar.me',
+          description: 'Gateway brasileiro com suporte a PIX, boleto e cartão',
+          enabled: !!process.env.PAGARME_API_KEY,
+          countries: ['BR'],
+          currencies: ['BRL'],
+          methods: ['credit_card', 'debit_card', 'pix', 'boleto']
+        }
+      ];
+
+      return gateways;
+    } catch (error) {
+      console.error('Erro ao buscar gateways de pagamento:', error);
+      return [];
+    }
+  }
+
 }
 
 export const storage = new SQLiteStorage();
