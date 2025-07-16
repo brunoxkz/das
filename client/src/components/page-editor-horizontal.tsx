@@ -3400,27 +3400,12 @@ const gameElementCategories = [
           { label: "Semana 4", value: 92, color: "#3b82f6" }
         ];
         
-        const timeData = element.timeData || [
-          { time: "Seg", value: 30 },
-          { time: "Ter", value: 45 },
-          { time: "Qua", value: 38 },
-          { time: "Qui", value: 55 },
-          { time: "Sex", value: 70 },
-          { time: "Sab", value: 85 },
-          { time: "Dom", value: 60 }
-        ];
-        
-        const beforeAfterData = element.beforeAfterData || {
-          before: { value: 25, label: "Antes" },
-          after: { value: 85, label: "Depois" }
-        };
-        
         return (
-          <div className="space-y-4 p-4 border-2 border-dashed border-blue-200 rounded-lg bg-gradient-to-br from-blue-50 to-purple-50 animate-slide-up">
+          <div className="space-y-4 p-4 border-2 border-dashed border-blue-200 rounded-lg bg-gradient-to-br from-blue-50 to-purple-50">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <BarChart3 className="w-5 h-5 text-blue-600" />
-                <span className="font-bold text-blue-800">📊 Gráfico Avançado</span>
+                <span className="font-bold text-blue-800">📊 Gráfico</span>
               </div>
               <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full font-medium">
                 {chartType.toUpperCase()}
@@ -3433,193 +3418,38 @@ const gameElementCategories = [
               </h3>
             )}
             
-            <div className="relative bg-white rounded-lg p-4 shadow-sm border" style={{width: element.chartWidth || "100%",
-              height: element.chartHeight || "280px"}}>
-              
-              {/* GRÁFICO DE BARRAS */}
-              {chartType === "bar" && (
-                <div className="w-full h-full flex items-end justify-center space-x-3 bg-gray-50 rounded-lg border p-4">
-                  {chartData.map((item, index) => (
-                    <div key={index} className="flex flex-col items-center">
-                      <div className="text-xs font-medium text-gray-600 mb-1">{item.value}%</div>
-                      <div 
-                        className="w-12 rounded-t-lg transition-all duration-1000 ease-out shadow-lg hover:shadow-xl cursor-pointer relative"
-                        style={{ 
-                          height: `${(item.value / 100) * 150}px`, 
-                          backgroundColor: item.color || "#10b981",
-                          animation: `growUp 1s ease-out ${index * 0.2}s both`
-                        }}
-                      >
-                        <div className="absolute -top-1 left-1/2 transform -translate-x-1/2 w-2 h-2 bg-white rounded-full shadow-md"></div>
-                      </div>
-                      <span className="text-xs mt-2 text-gray-700 font-medium">{item.label}</span>
-                    </div>
-                  ))}
+            <div className="bg-white rounded-lg p-4 shadow-sm border" style={{ height: "280px" }}>
+              <div className="w-full h-full flex items-center justify-center text-center">
+                <div className="text-gray-500">
+                  <BarChart3 className="w-16 h-16 mx-auto mb-4 text-blue-400" />
+                  <p className="text-sm font-medium">Gráfico {chartType.toUpperCase()}</p>
+                  <p className="text-xs text-gray-400 mt-1">Visualização no quiz público</p>
                 </div>
-              )}
-              
-              {/* GRÁFICO LINEAR */}
-              {chartType === "line" && (
-                <div className="w-full h-full relative bg-gray-50 rounded-lg border p-4">
-                  <svg viewBox="0 0 400 200" className="w-full h-full">
-                    {/* Grid */}
-                    <defs>
-                      <pattern id="grid" width="40" height="20" patternUnits="userSpaceOnUse">
-                        <path d="M 40 0 L 0 0 0 20" fill="none" stroke="#e5e7eb" strokeWidth="1"/>
-                      </pattern>
-                    </defs>
-                    <rect width="400" height="200" fill="url(#grid)" />
-                    
-                    {/* Linha */}
-                    <polyline
-                      fill="none"
-                      stroke="#3b82f6"
-                      strokeWidth="3"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      points={timeData.map((point, index) => 
-                        `${(index * 60) + 20},${200 - (point.value * 1.5)}`
-                      ).join(' ')}
-                    />
-                    
-                    {/* Pontos */}
-                    {timeData.map((point, index) => (
-                      <circle
-                        key={index}
-                        cx={(index * 60) + 20}
-                        cy={200 - (point.value * 1.5)}
-                        r="5"
-                        fill="#3b82f6"
-                        stroke="#ffffff"
-                        strokeWidth="2"
-                        className="cursor-pointer hover:r-7 transition-all"
-                      />
-                    ))}
-                    
-                    {/* Labels */}
-                    {timeData.map((point, index) => (
-                      <text
-                        key={index}
-                        x={(index * 60) + 20}
-                        y="190"
-                        textAnchor="middle"
-                        className="text-xs fill-gray-600"
-                      >
-                        {point.time}
-                      </text>
-                    ))}
-                  </svg>
-                </div>
-              )}
-              
-              {/* ANTES E DEPOIS */}
-              {chartType === "before_after" && (
-                <div className="w-full h-full flex items-center justify-center space-x-8 bg-gradient-to-r from-red-50 via-yellow-50 to-green-50 rounded-lg border p-4">
-                  <div className="flex flex-col items-center">
-                    <div className="text-lg font-bold text-red-600 mb-2">ANTES</div>
-                    <div className="w-24 h-24 rounded-full bg-red-100 flex items-center justify-center border-4 border-red-300 relative">
-                      <div className="text-2xl font-bold text-red-600">{beforeAfterData.before.value}%</div>
-                      <div className="absolute -bottom-2 left-1/2 transform -translate-x-1/2 text-xs text-red-500 font-medium">
-                        Resultado
-                      </div>
-                    </div>
-                  </div>
-                  
-                  <div className="flex flex-col items-center">
-                    <div className="text-4xl animate-pulse">→</div>
-                    <div className="text-xs text-gray-500 mt-2">Evolução</div>
-                  </div>
-                  
-                  <div className="flex flex-col items-center">
-                    <div className="text-lg font-bold text-green-600 mb-2">DEPOIS</div>
-                    <div className="w-24 h-24 rounded-full bg-green-100 flex items-center justify-center border-4 border-green-300 relative">
-                      <div className="text-2xl font-bold text-green-600">{beforeAfterData.after.value}%</div>
-                      <div className="absolute -bottom-2 left-1/2 transform -translate-x-1/2 text-xs text-green-500 font-medium">
-                        Resultado
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              )}
-              
-              {/* GRÁFICO DE PIZZA */}
-              {chartType === "pie" && (
-                <div className="w-full h-full flex items-center justify-center">
-                  <svg viewBox="0 0 200 200" className="w-48 h-48">
-                    <circle cx="100" cy="100" r="80" fill="#ef4444" />
-                    <path d="M 100 100 L 100 20 A 80 80 0 0 1 180 100 Z" fill="#f59e0b" />
-                    <path d="M 100 100 L 180 100 A 80 80 0 0 1 100 180 Z" fill="#10b981" />
-                    <text x="100" y="105" textAnchor="middle" className="text-sm font-medium" fill="white">
-                      Dados
-                    </text>
-                  </svg>
-                </div>
-              )}
+              </div>
             </div>
             
-            {/* LEGENDA */}
-            {element.chartShowLegend && (
-              <div className="flex justify-center space-x-4 bg-white p-3 rounded-lg border">
-                {chartData.map((item, index) => (
-                  <div key={index} className="flex items-center space-x-2">
-                    <div 
-                      className="w-3 h-3 rounded-full"
-                      style={{backgroundColor: item.color || "#10b981"}}
-                    />
-                    <span className="text-xs text-gray-600 font-medium">{item.label}</span>
-                  </div>
-                ))}
-              </div>
+            {element.chartDescription && (
+              <p className="text-sm text-gray-600 text-center bg-white p-3 rounded-lg border">
+                {element.chartDescription}
+              </p>
             )}
-            
-            {/* CONTROLES */}
-            <div className="flex justify-between items-center bg-white p-3 rounded-lg border">
-              <div className="flex gap-2">
-                <button className="px-3 py-1 bg-blue-100 text-blue-800 rounded-md text-xs font-medium hover:bg-blue-200 transition-colors">
-                  📊 Barras
-                </button>
-                <button className="px-3 py-1 bg-purple-100 text-purple-800 rounded-md text-xs font-medium hover:bg-purple-200 transition-colors">
-                  📈 Linha
-                </button>
-                <button className="px-3 py-1 bg-green-100 text-green-800 rounded-md text-xs font-medium hover:bg-green-200 transition-colors">
-                  ⚖️ Antes/Depois
-                </button>
-              </div>
-              <div className="text-xs text-gray-500">
-                Período: {element.timePeriod || "Últimas 4 semanas"}
-              </div>
-            </div>
-            
-            <div className="text-xs text-blue-600 text-center bg-blue-100 p-2 rounded-lg">
-              📊 <strong>Gráfico Dinâmico:</strong> {chartType === "bar" ? "Barras Animadas" : chartType === "line" ? "Linha com Pontos" : chartType === "before_after" ? "Comparação Visual" : "Pizza Interativa"} • <strong>Dados:</strong> {chartData.length} pontos • <strong>Animação:</strong> Habilitada
-            </div>
           </div>
         );
 
       case "metrics":
         const metricsData = element.metricsData || [
-          { label: "Conversões", value: 85, maxValue: 100, color: "#10b981", unit: "%", icon: "🎯" },
-          { label: "Engajamento", value: 72, maxValue: 100, color: "#3b82f6", unit: "%", icon: "💡" },
-          { label: "Retenção", value: 94, maxValue: 100, color: "#8b5cf6", unit: "%", icon: "🔄" },
-          { label: "Vendas", value: 158, maxValue: 200, color: "#f59e0b", unit: "un", icon: "💰" }
-        ];
-        
-        const weeklyData = element.weeklyData || [
-          { day: "Seg", value: 45 },
-          { day: "Ter", value: 52 },
-          { day: "Qua", value: 48 },
-          { day: "Qui", value: 67 },
-          { day: "Sex", value: 73 },
-          { day: "Sab", value: 85 },
-          { day: "Dom", value: 62 }
+          { label: "Conversões", value: 85, color: "#10b981", icon: "🎯" },
+          { label: "Engajamento", value: 72, color: "#3b82f6", icon: "💡" },
+          { label: "Retenção", value: 94, color: "#8b5cf6", icon: "🔄" },
+          { label: "Vendas", value: 158, color: "#f59e0b", icon: "💰" }
         ];
         
         return (
-          <div className="space-y-4 p-4 border-2 border-dashed border-purple-200 rounded-lg bg-gradient-to-br from-purple-50 to-pink-50 animate-slide-up">
+          <div className="space-y-4 p-4 border-2 border-dashed border-purple-200 rounded-lg bg-gradient-to-br from-purple-50 to-pink-50">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <TrendingUp className="w-5 h-5 text-purple-600" />
-                <span className="font-bold text-purple-800">📈 Métricas Avançadas</span>
+                <span className="font-bold text-purple-800">📈 Métricas</span>
               </div>
               <span className="text-xs bg-purple-100 text-purple-800 px-2 py-1 rounded-full font-medium">
                 TEMPO REAL
@@ -3632,101 +3462,21 @@ const gameElementCategories = [
               </h3>
             )}
             
-            <div className="bg-white rounded-lg p-4 shadow-sm border">
-              <div className="space-y-4">
-                {metricsData.map((metric, index) => (
-                  <div key={index} className="space-y-2">
-                    <div className="flex justify-between items-center">
-                      <div className="flex items-center gap-2">
-                        <span className="text-lg">{metric.icon}</span>
-                        <span className="text-sm font-medium text-gray-700">
-                          {metric.label}
-                        </span>
-                      </div>
-                      {element.metricsShowValue !== false && (
-                        <span 
-                          className="text-sm font-bold px-2 py-1 rounded-md" 
-                          style={{ 
-                            color: metric.color, 
-                            backgroundColor: `${metric.color}20` 
-                          }}
-                        >
-                          {metric.value}{metric.unit}
-                        </span>
-                      )}
-                    </div>
-                    
-                    <div className="relative">
-                      <div className="w-full bg-gray-200 rounded-full h-3 shadow-inner">
-                        <div 
-                          className="h-3 rounded-full transition-all duration-1000 ease-out relative shadow-sm"
-                          style={{ 
-                            width: `${(metric.value / metric.maxValue) * 100}%`,
-                            backgroundColor: metric.color,
-                            animation: `growWidth 1.5s ease-out ${index * 0.3}s both`
-                          }}
-                        >
-                          <div className="absolute right-0 top-0 w-2 h-3 bg-white rounded-full shadow-md transform translate-x-1"></div>
-                        </div>
-                      </div>
-                      
-                      {element.metricsShowPercentage !== false && (
-                        <div className="text-xs text-gray-500 text-right mt-1">
-                          {Math.round((metric.value / metric.maxValue) * 100)}% do objetivo ({metric.maxValue}{metric.unit})
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-            
-            {/* GRÁFICO SEMANAL */}
-            <div className="bg-white rounded-lg p-4 shadow-sm border">
-              <h4 className="text-sm font-bold text-gray-700 mb-3 flex items-center gap-2">
-                <span>📅</span>
-                Evolução Semanal
-              </h4>
-              
-              <div className="flex items-end justify-between space-x-2 h-20">
-                {weeklyData.map((day, index) => (
-                  <div key={index} className="flex flex-col items-center space-y-1">
-                    <div className="text-xs text-gray-500">{day.value}%</div>
-                    <div 
-                      className="w-6 bg-gradient-to-t from-purple-500 to-purple-300 rounded-t-sm transition-all duration-500"
-                      style={{ 
-                        height: `${day.value}px`,
-                        animation: `growUp 1s ease-out ${index * 0.1}s both`
-                      }}
-                    />
-                    <div className="text-xs text-gray-600 font-medium">{day.day}</div>
-                  </div>
-                ))}
-              </div>
-            </div>
-            
-            {/* RESUMO */}
-            <div className="grid grid-cols-2 gap-3">
-              <div className="bg-green-50 p-3 rounded-lg border border-green-200">
-                <div className="text-xs text-green-600 font-medium">Melhor Métrica</div>
-                <div className="text-lg font-bold text-green-800">
-                  {metricsData.reduce((prev, current) => 
-                    (prev.value / prev.maxValue) > (current.value / current.maxValue) ? prev : current
-                  ).label}
-                </div>
-              </div>
-              
-              <div className="bg-blue-50 p-3 rounded-lg border border-blue-200">
-                <div className="text-xs text-blue-600 font-medium">Média Geral</div>
-                <div className="text-lg font-bold text-blue-800">
-                  {Math.round(metricsData.reduce((acc, curr) => acc + (curr.value / curr.maxValue), 0) / metricsData.length * 100)}%
+            <div className="bg-white rounded-lg p-4 shadow-sm border" style={{ height: "280px" }}>
+              <div className="w-full h-full flex items-center justify-center text-center">
+                <div className="text-gray-500">
+                  <TrendingUp className="w-16 h-16 mx-auto mb-4 text-purple-400" />
+                  <p className="text-sm font-medium">Métricas em Tempo Real</p>
+                  <p className="text-xs text-gray-400 mt-1">Visualização no quiz público</p>
                 </div>
               </div>
             </div>
             
-            <div className="text-xs text-purple-600 text-center bg-purple-100 p-2 rounded-lg">
-              📊 <strong>Métricas Dinâmicas:</strong> {metricsData.length} indicadores • <strong>Período:</strong> {element.timePeriod || "Últimas 7 dias"} • <strong>Atualização:</strong> Tempo real
-            </div>
+            {element.metricsDescription && (
+              <p className="text-sm text-gray-600 text-center bg-white p-3 rounded-lg border">
+                {element.metricsDescription}
+              </p>
+            )}
           </div>
         );
 

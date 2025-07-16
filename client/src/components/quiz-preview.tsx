@@ -53,6 +53,7 @@ import {
   Play as PlayIcon,
   Pause as PauseIcon,
   RotateCcw as RotateIcon,
+  BarChart3,
   Volume2,
   VolumeX,
   Maximize,
@@ -313,6 +314,7 @@ import {
   Black,
   White
 } from 'lucide-react';
+import Chart from './Chart';
 
 interface QuizPreviewProps {
   quiz: any;
@@ -1350,6 +1352,13 @@ export default function QuizPreview({ quiz, onClose, onSave }: QuizPreviewProps)
         );
 
       case 'chart':
+        const chartData = element.chartData || [
+          { label: "Semana 1", value: 45, color: "#ef4444" },
+          { label: "Semana 2", value: 65, color: "#f59e0b" },
+          { label: "Semana 3", value: 85, color: "#10b981" },
+          { label: "Semana 4", value: 92, color: "#3b82f6" }
+        ];
+        
         return (
           <div className="mb-6">
             <Card className="p-6">
@@ -1359,65 +1368,21 @@ export default function QuizPreview({ quiz, onClose, onSave }: QuizPreviewProps)
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="w-full h-64 bg-gradient-to-br from-blue-50 to-purple-50 rounded-lg flex items-center justify-center">
-                  {element.chartType === 'bar' && (
-                    <div className="flex items-end space-x-3 h-32">
-                      <div className="w-8 bg-blue-500 rounded-t" style={{ height: '60%' }}></div>
-                      <div className="w-8 bg-green-500 rounded-t" style={{ height: '80%' }}></div>
-                      <div className="w-8 bg-purple-500 rounded-t" style={{ height: '40%' }}></div>
-                      <div className="w-8 bg-orange-500 rounded-t" style={{ height: '95%' }}></div>
-                    </div>
-                  )}
-                  {element.chartType === 'line' && (
-                    <div className="relative w-48 h-32">
-                      <svg className="w-full h-full" viewBox="0 0 200 120">
-                        <polyline
-                          points="20,80 60,40 100,60 140,20 180,30"
-                          fill="none"
-                          stroke="#3B82F6"
-                          strokeWidth="3"
-                        />
-                        <circle cx="20" cy="80" r="4" fill="#3B82F6" />
-                        <circle cx="60" cy="40" r="4" fill="#3B82F6" />
-                        <circle cx="100" cy="60" r="4" fill="#3B82F6" />
-                        <circle cx="140" cy="20" r="4" fill="#3B82F6" />
-                        <circle cx="180" cy="30" r="4" fill="#3B82F6" />
-                      </svg>
-                    </div>
-                  )}
-                  {element.chartType === 'pie' && (
-                    <div className="w-32 h-32 rounded-full bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 flex items-center justify-center">
-                      <div className="w-12 h-12 bg-white rounded-full"></div>
-                    </div>
-                  )}
-                  {element.chartType === 'before_after' && (
-                    <div className="flex items-end space-x-8">
-                      <div className="text-center">
-                        <div className="w-16 h-16 bg-red-400 rounded-full flex items-center justify-center text-white font-bold text-lg mb-2">
-                          {element.beforeAfterData?.before?.value || 25}
-                        </div>
-                        <span className="text-sm text-gray-600">Antes</span>
-                      </div>
-                      <div className="text-center">
-                        <div className="w-16 h-16 bg-green-500 rounded-full flex items-center justify-center text-white font-bold text-lg mb-2">
-                          {element.beforeAfterData?.after?.value || 85}
-                        </div>
-                        <span className="text-sm text-gray-600">Depois</span>
-                      </div>
-                    </div>
-                  )}
+                <div className="w-full h-64">
+                  <Chart
+                    type={element.chartType || 'bar'}
+                    data={chartData}
+                    title={element.chartTitle}
+                    showLegend={element.chartShowLegend !== false}
+                    backgroundColor={element.chartBackgroundColor || '#3b82f6'}
+                    borderColor={element.chartBorderColor || '#1d4ed8'}
+                    height={250}
+                  />
                 </div>
-                {element.chartShowLegend && (
-                  <div className="mt-4 flex justify-center space-x-4">
-                    <div className="flex items-center space-x-2">
-                      <div className="w-3 h-3 bg-blue-500 rounded"></div>
-                      <span className="text-sm text-gray-600">Dados 1</span>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <div className="w-3 h-3 bg-green-500 rounded"></div>
-                      <span className="text-sm text-gray-600">Dados 2</span>
-                    </div>
-                  </div>
+                {element.chartDescription && (
+                  <p className="mt-4 text-sm text-gray-600 text-center">
+                    {element.chartDescription}
+                  </p>
                 )}
               </CardContent>
             </Card>
@@ -1425,6 +1390,12 @@ export default function QuizPreview({ quiz, onClose, onSave }: QuizPreviewProps)
         );
 
       case 'metrics':
+        const metricsData = element.metricsData || [
+          { label: element.metric1Name || "Visualizações", value: element.metric1Value || 1250, color: "#3b82f6" },
+          { label: element.metric2Name || "Conversões", value: element.metric2Value || 89, color: "#10b981" },
+          { label: element.metric3Name || "Taxa", value: element.metric3Value || 7.1, color: "#f59e0b" }
+        ];
+
         return (
           <div className="mb-6">
             <Card className="p-6">
@@ -1434,61 +1405,33 @@ export default function QuizPreview({ quiz, onClose, onSave }: QuizPreviewProps)
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  {element.metric1Name && (
-                    <div className="text-center p-4 bg-blue-50 rounded-lg">
-                      <div className="text-2xl font-bold text-blue-600 mb-1">
-                        {element.metricsShowValue ? element.metric1Value || 0 : '—'}
-                        {element.metricsShowPercentage && '%'}
-                      </div>
-                      <div className="text-sm text-gray-600">{element.metric1Name}</div>
-                      <Progress 
-                        value={((element.metric1Value || 0) / (element.metric1Max || 100)) * 100} 
-                        className="mt-2"
-                      />
-                    </div>
-                  )}
-                  {element.metric2Name && (
-                    <div className="text-center p-4 bg-green-50 rounded-lg">
-                      <div className="text-2xl font-bold text-green-600 mb-1">
-                        {element.metricsShowValue ? element.metric2Value || 0 : '—'}
-                        {element.metricsShowPercentage && '%'}
-                      </div>
-                      <div className="text-sm text-gray-600">{element.metric2Name}</div>
-                      <Progress 
-                        value={((element.metric2Value || 0) / (element.metric2Max || 100)) * 100} 
-                        className="mt-2"
-                      />
-                    </div>
-                  )}
-                  {element.metric3Name && (
-                    <div className="text-center p-4 bg-purple-50 rounded-lg">
-                      <div className="text-2xl font-bold text-purple-600 mb-1">
-                        {element.metricsShowValue ? element.metric3Value || 0 : '—'}
-                        {element.metricsShowPercentage && '%'}
-                      </div>
-                      <div className="text-sm text-gray-600">{element.metric3Name}</div>
-                      <Progress 
-                        value={((element.metric3Value || 0) / (element.metric3Max || 100)) * 100} 
-                        className="mt-2"
-                      />
-                    </div>
-                  )}
+                <div className="w-full h-64">
+                  <Chart
+                    type={element.metricsChartType || 'bar'}
+                    data={metricsData}
+                    title={element.metricsTitle}
+                    showLegend={element.metricsShowLegend !== false}
+                    backgroundColor={element.metricsBackgroundColor || '#3b82f6'}
+                    borderColor={element.metricsBorderColor || '#1d4ed8'}
+                    height={250}
+                  />
                 </div>
-                {element.weeklyData && (
-                  <div className="mt-6">
-                    <div className="text-sm text-gray-600 mb-3">
-                      {element.timePeriod || 'Últimos 7 dias'}
-                    </div>
-                    <div className="flex items-end space-x-2 h-16">
-                      {element.weeklyData.map((value: number, index: number) => (
-                        <div
-                          key={index}
-                          className="flex-1 bg-gradient-to-t from-blue-500 to-blue-300 rounded-t opacity-80"
-                          style={{ height: `${(value / Math.max(...element.weeklyData)) * 100}%` }}
-                        />
-                      ))}
-                    </div>
+                {element.metricsDescription && (
+                  <p className="mt-4 text-sm text-gray-600 text-center">
+                    {element.metricsDescription}
+                  </p>
+                )}
+                {element.metricsShowValues && (
+                  <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-4">
+                    {metricsData.map((metric, index) => (
+                      <div key={index} className="text-center p-3 bg-gray-50 rounded-lg">
+                        <div className="text-lg font-bold" style={{ color: metric.color }}>
+                          {metric.value}
+                          {element.metricsShowPercentage && '%'}
+                        </div>
+                        <div className="text-sm text-gray-600">{metric.label}</div>
+                      </div>
+                    ))}
                   </div>
                 )}
               </CardContent>
