@@ -7236,8 +7236,26 @@ Hoje você vai aprender ${project.title} - método revolucionário que já ajudo
   async updateCheckout(id: string, updates: any) {
     try {
       const now = new Date().toISOString();
-      const fields = Object.keys(updates).map(key => `${key} = ?`).join(', ');
-      const values = Object.values(updates);
+      
+      // Mapear campos para corresponder ao schema da tabela
+      const fieldMapping = {
+        paymentMode: 'payment_mode',
+        recurringInterval: 'recurring_interval',
+        trialPeriod: 'trial_period',
+        trialPrice: 'trial_price',
+        userId: 'user_id',
+        createdAt: 'created_at',
+        updatedAt: 'updated_at'
+      };
+      
+      const mappedUpdates = {};
+      for (const [key, value] of Object.entries(updates)) {
+        const dbKey = fieldMapping[key] || key;
+        mappedUpdates[dbKey] = value;
+      }
+      
+      const fields = Object.keys(mappedUpdates).map(key => `${key} = ?`).join(', ');
+      const values = Object.values(mappedUpdates);
     
       const stmt = sqlite.prepare(`
         UPDATE checkout_products 
@@ -7249,6 +7267,8 @@ Hoje você vai aprender ${project.title} - método revolucionário que já ajudo
       return sqlite.prepare("SELECT * FROM checkout_products WHERE id = ?").get(id);
     } catch (error) {
       console.error('Erro ao atualizar produto de checkout:', error);
+      console.error('Fields:', fields);
+      console.error('Values:', values);
       throw error;
     }
   }

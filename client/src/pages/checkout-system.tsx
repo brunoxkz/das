@@ -32,7 +32,7 @@ import {
 import { Link } from "wouter";
 import { useAuth } from "@/hooks/useAuth-jwt";
 import { useToast } from "@/hooks/use-toast";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -216,8 +216,8 @@ export default function CheckoutSystem() {
                           <span className="text-2xl font-bold text-green-600">
                             R$ {product.price}
                           </span>
-                          <Badge variant={product.active ? "default" : "secondary"}>
-                            {product.active ? "Ativo" : "Inativo"}
+                          <Badge variant={product.status === 'active' ? "default" : "secondary"}>
+                            {product.status === 'active' ? "Ativo" : "Inativo"}
                           </Badge>
                         </div>
                         
@@ -460,9 +460,27 @@ function ProductForm({ product, onSubmit, onCancel, loading }: {
     paymentMode: product?.paymentMode || 'one_time',
     recurringInterval: product?.recurringInterval || 'monthly',
     trialPeriod: product?.trialPeriod || '',
-    features: product?.features ? product.features.join('\n') : '',
-    active: product?.active !== undefined ? product.active : true,
+    features: product?.features ? (Array.isArray(product.features) ? product.features.join('\n') : product.features) : '',
+    status: product?.status || 'active',
   });
+
+  // Atualizar formulário quando produto muda
+  useEffect(() => {
+    if (product) {
+      setFormData({
+        name: product.name || '',
+        description: product.description || '',
+        category: product.category || 'digital',
+        price: product.price || '',
+        originalPrice: product.originalPrice || '',
+        paymentMode: product.paymentMode || 'one_time',
+        recurringInterval: product.recurringInterval || 'monthly',
+        trialPeriod: product.trialPeriod || '',
+        features: product.features ? (Array.isArray(product.features) ? product.features.join('\n') : product.features) : '',
+        status: product.status || 'active',
+      });
+    }
+  }, [product]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -573,13 +591,18 @@ function ProductForm({ product, onSubmit, onCancel, loading }: {
         />
       </div>
 
-      <div className="flex items-center space-x-2">
-        <Switch
-          id="active"
-          checked={formData.active}
-          onCheckedChange={(checked) => setFormData({...formData, active: checked})}
-        />
-        <Label htmlFor="active">Produto ativo</Label>
+      <div>
+        <Label htmlFor="status">Status do Produto</Label>
+        <Select value={formData.status} onValueChange={(value) => setFormData({...formData, status: value})}>
+          <SelectTrigger>
+            <SelectValue placeholder="Selecione o status" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="active">Ativo</SelectItem>
+            <SelectItem value="inactive">Inativo</SelectItem>
+            <SelectItem value="draft">Rascunho</SelectItem>
+          </SelectContent>
+        </Select>
       </div>
 
       <div className="flex space-x-3 pt-4">
