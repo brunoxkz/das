@@ -103,6 +103,10 @@ import {
   Ship,
   Rocket,
   Satellite,
+  Monitor,
+  Smartphone,
+  Tablet,
+  Laptop,
   Gamepad2,
   Dice1,
   Dice2,
@@ -591,7 +595,92 @@ export default function QuizPreview({ quiz, onClose, onSave, initialPage = 0 }: 
   const [showCustom, setShowCustom] = useState(false);
   const [customData, setCustomData] = useState<any>({});
   
+  // Estados para controle de responsividade
+  const [viewportType, setViewportType] = useState<'desktop' | 'laptop' | 'tablet' | 'mobile'>('desktop');
+  
   const { toast } = useToast();
+
+  // Configurações de viewport para diferentes dispositivos
+  const viewportConfig = {
+    desktop: {
+      width: '1200px',
+      height: '800px',
+      label: 'Desktop',
+      icon: Monitor,
+      description: '1200x800'
+    },
+    laptop: {
+      width: '1024px',
+      height: '768px',
+      label: 'Laptop',
+      icon: Laptop,
+      description: '1024x768'
+    },
+    tablet: {
+      width: '768px',
+      height: '1024px',
+      label: 'Tablet',
+      icon: Tablet,
+      description: '768x1024'
+    },
+    mobile: {
+      width: '375px',
+      height: '667px',
+      label: 'Mobile',
+      icon: Smartphone,
+      description: '375x667'
+    }
+  };
+
+  // Função para obter estilos do viewport
+  const getViewportStyles = () => {
+    const config = viewportConfig[viewportType];
+    return {
+      width: config.width,
+      height: config.height,
+      maxWidth: config.width,
+      maxHeight: config.height,
+      overflow: 'auto',
+      border: '1px solid #e5e7eb',
+      borderRadius: '12px',
+      backgroundColor: '#ffffff',
+      boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
+      margin: '0 auto',
+      transition: 'all 0.3s ease'
+    };
+  };
+
+  // Componente de controle de responsividade
+  const ResponsiveControls = () => (
+    <div className="mb-4 p-4 bg-gray-50 rounded-lg border border-gray-200">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center space-x-2">
+          <Eye className="w-5 h-5 text-gray-600" />
+          <span className="text-sm font-medium text-gray-700">Visualização:</span>
+        </div>
+        <div className="flex items-center space-x-2">
+          {Object.entries(viewportConfig).map(([key, config]) => {
+            const IconComponent = config.icon;
+            return (
+              <Button
+                key={key}
+                variant={viewportType === key ? "default" : "outline"}
+                size="sm"
+                onClick={() => setViewportType(key as any)}
+                className="flex items-center space-x-2 text-xs"
+              >
+                <IconComponent className="w-4 h-4" />
+                <span className="hidden sm:inline">{config.label}</span>
+              </Button>
+            );
+          })}
+        </div>
+      </div>
+      <div className="mt-2 text-xs text-gray-500 text-center">
+        {viewportConfig[viewportType].description}
+      </div>
+    </div>
+  );
 
   const allPages = quiz?.structure?.pages || quiz?.pages || [];
   const totalSteps = allPages.length;
@@ -2174,50 +2263,58 @@ export default function QuizPreview({ quiz, onClose, onSave, initialPage = 0 }: 
   };
 
   return (
-    <div className="w-full max-w-4xl mx-auto">
-      {/* Quiz Card */}
-      <Card className="shadow-lg border-gray-200">
-        <CardContent className="p-6">
-          {/* Progress Bar inside card */}
-          {showProgress && !showLeadCapture && (
-            <div className="mb-6">
-              <div className="flex items-center justify-between text-sm text-gray-600 mb-2">
-                <span>Pergunta {currentStep + 1} de {totalSteps}</span>
-                <span>{Math.round(((currentStep + 1) / totalSteps) * 100)}%</span>
+    <div className="w-full max-w-6xl mx-auto">
+      {/* Controles de responsividade */}
+      <ResponsiveControls />
+      
+      {/* Container com viewport responsivo */}
+      <div className="flex justify-center bg-gray-100 p-8 rounded-lg">
+        <div style={getViewportStyles()}>
+          {/* Quiz Card */}
+          <Card className="shadow-lg border-gray-200 h-full">
+            <CardContent className="p-6 h-full flex flex-col">
+              {/* Progress Bar inside card */}
+              {showProgress && !showLeadCapture && (
+                <div className="mb-6">
+                  <div className="flex items-center justify-between text-sm text-gray-600 mb-2">
+                    <span>Pergunta {currentStep + 1} de {totalSteps}</span>
+                    <span>{Math.round(((currentStep + 1) / totalSteps) * 100)}%</span>
+                  </div>
+                  <div 
+                    className={`w-full overflow-hidden ${
+                      quiz.design?.progressBarStyle === 'square' ? 'rounded-none' :
+                      quiz.design?.progressBarStyle === 'thin' ? 'rounded-sm' :
+                      quiz.design?.progressBarStyle === 'thick' ? 'rounded-lg' :
+                      'rounded-full'
+                    }`}
+                    style={{ 
+                      height: `${quiz.design?.progressBarHeight || 8}px`,
+                      backgroundColor: '#e5e7eb'
+                    }}
+                  >
+                    <div
+                      className={`h-full transition-all duration-300 ${
+                        quiz.design?.progressBarStyle === 'square' ? 'rounded-none' :
+                        quiz.design?.progressBarStyle === 'thin' ? 'rounded-sm' :
+                        quiz.design?.progressBarStyle === 'thick' ? 'rounded-lg' :
+                        'rounded-full'
+                      }`}
+                      style={{ 
+                        width: `${((currentStep + 1) / totalSteps) * 100}%`,
+                        backgroundColor: quiz.design?.progressBarColor || '#3B82F6'
+                      }}
+                    />
+                  </div>
+                </div>
+              )}
+              
+              <div className="flex-1 overflow-y-auto" style={{ minHeight: '300px' }}>
+                {renderPage()}
               </div>
-              <div 
-                className={`w-full overflow-hidden ${
-                  quiz.design?.progressBarStyle === 'square' ? 'rounded-none' :
-                  quiz.design?.progressBarStyle === 'thin' ? 'rounded-sm' :
-                  quiz.design?.progressBarStyle === 'thick' ? 'rounded-lg' :
-                  'rounded-full'
-                }`}
-                style={{ 
-                  height: `${quiz.design?.progressBarHeight || 8}px`,
-                  backgroundColor: '#e5e7eb'
-                }}
-              >
-                <div
-                  className={`h-full transition-all duration-300 ${
-                    quiz.design?.progressBarStyle === 'square' ? 'rounded-none' :
-                    quiz.design?.progressBarStyle === 'thin' ? 'rounded-sm' :
-                    quiz.design?.progressBarStyle === 'thick' ? 'rounded-lg' :
-                    'rounded-full'
-                  }`}
-                  style={{ 
-                    width: `${((currentStep + 1) / totalSteps) * 100}%`,
-                    backgroundColor: quiz.design?.progressBarColor || '#3B82F6'
-                  }}
-                />
-              </div>
-            </div>
-          )}
-          
-          <div className="overflow-y-auto" style={{ minHeight: '300px' }}>
-            {renderPage()}
-          </div>
-        </CardContent>
-      </Card>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
     </div>
   );
 }
