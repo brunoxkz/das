@@ -6107,16 +6107,10 @@ Hoje você vai aprender ${project.title} - método revolucionário que já ajudo
     try {
       const result = sqlite.prepare(`
         SELECT * FROM checkout_products 
-        ORDER BY createdAt DESC
+        ORDER BY created_at DESC
       `).all();
       
-      return result.map(row => ({
-        ...row,
-        design: JSON.parse(row.design || '{}'),
-        features: JSON.parse(row.features || '[]'),
-        orderBumps: JSON.parse(row.order_bumps || '[]'),
-        upsells: JSON.parse(row.upsells || '[]')
-      }));
+      return result;
     } catch (error) {
       console.error('Erro ao buscar checkouts:', error);
       // Criar tabela se não existir
@@ -7175,43 +7169,67 @@ Hoje você vai aprender ${project.title} - método revolucionário que já ajudo
   // Buscar todos os produtos de checkout
   async getCheckoutProducts() {
     try {
-      return sqlite.prepare("SELECT * FROM checkout_products ORDER BY created_at DESC").all();
+      const result = sqlite.prepare("SELECT * FROM checkout_products ORDER BY created_at DESC").all();
+      return result;
     } catch (error) {
-      console.error('Erro ao buscar produtos de checkout:', error);
+      console.error('❌ Erro ao buscar produtos de checkout:', error);
       return [];
+    }
+  }
+
+  // Buscar produto específico por ID
+  async getCheckoutProduct(id: string) {
+    try {
+      const result = sqlite.prepare("SELECT * FROM checkout_products WHERE id = ?").get(id);
+      return result;
+    } catch (error) {
+      console.error('❌ Erro ao buscar produto específico:', error);
+      return null;
     }
   }
 
   // Criar produto de checkout
   async createCheckout(productData: any) {
-    const now = new Date().toISOString();
-    const stmt = sqlite.prepare(`
-      INSERT INTO checkout_products (
-        id, user_id, name, description, price, currency, 
-        category, features, payment_mode, recurring_interval, 
-        trial_period, trial_price, status, created_at, updated_at
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    `);
-    
-    stmt.run(
-      productData.id,
-      productData.user_id || productData.userId,
-      productData.name,
-      productData.description || '',
-      productData.price,
-      productData.currency || 'BRL',
-      productData.category || '',
-      productData.features || '',
-      productData.payment_mode || productData.paymentMode || 'one_time',
-      productData.recurring_interval || productData.recurringInterval || null,
-      productData.trial_period || productData.trialPeriod || null,
-      productData.trial_price || productData.trialPrice || null,
-      productData.status || 'active',
-      now,
-      now
-    );
-    
-    return sqlite.prepare("SELECT * FROM checkout_products WHERE id = ?").get(productData.id);
+    try {
+      const now = new Date().toISOString();
+      const stmt = sqlite.prepare(`
+        INSERT INTO checkout_products (
+          id, user_id, name, description, price, currency, 
+          category, features, payment_mode, recurring_interval, 
+          trial_period, trial_price, status, created_at, updated_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      `);
+      
+      const params = [
+        productData.id,
+        productData.user_id || productData.userId,
+        productData.name || '',
+        productData.description || '',
+        productData.price || 0,
+        productData.currency || 'BRL',
+        productData.category || '',
+        productData.features || '',
+        productData.payment_mode || productData.paymentMode || 'one_time',
+        productData.recurring_interval || productData.recurringInterval || null,
+        productData.trial_period || productData.trialPeriod || null,
+        productData.trial_price || productData.trialPrice || null,
+        productData.status || 'active',
+        now,
+        now
+      ];
+      
+      if (!productData.id) {
+        throw new Error('ID do produto não pode ser null ou undefined');
+      }
+      
+      stmt.run(...params);
+      
+      return sqlite.prepare("SELECT * FROM checkout_products WHERE id = ?").get(productData.id);
+    } catch (error) {
+      console.error('❌ Erro detalhado ao criar produto:', error);
+      console.error('📋 Dados recebidos:', productData);
+      throw error;
+    }
   }
 
   // Atualizar produto de checkout

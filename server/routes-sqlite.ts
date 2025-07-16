@@ -107,10 +107,27 @@ export function registerSQLiteRoutes(app: Express): Server {
   // Buscar produtos de checkout (público)
   app.get('/api/checkout-products', async (req, res) => {
     try {
-      const products = await storage.getAllCheckouts();
+      const products = await storage.getCheckoutProducts();
       res.json(products);
     } catch (error) {
       console.error('Erro ao buscar produtos:', error);
+      res.status(500).json({ error: 'Erro interno do servidor' });
+    }
+  });
+
+  // Buscar produto específico por ID
+  app.get('/api/checkout-products/:id', async (req, res) => {
+    try {
+      const { id } = req.params;
+      const product = await storage.getCheckoutProduct(id);
+      
+      if (!product) {
+        return res.status(404).json({ error: 'Produto não encontrado' });
+      }
+      
+      res.json(product);
+    } catch (error) {
+      console.error('Erro ao buscar produto:', error);
       res.status(500).json({ error: 'Erro interno do servidor' });
     }
   });
@@ -123,11 +140,36 @@ export function registerSQLiteRoutes(app: Express): Server {
         return res.status(401).json({ error: 'Usuário não autenticado' });
       }
 
+      // Validação básica
+      if (!req.body.name || req.body.name.trim() === '') {
+        return res.status(400).json({ error: 'Nome do produto é obrigatório' });
+      }
+      
+      if (!req.body.price || req.body.price <= 0) {
+        return res.status(400).json({ error: 'Preço deve ser maior que zero' });
+      }
+      
+      if (req.body.name.length > 100) {
+        return res.status(400).json({ error: 'Nome do produto muito longo (máximo 100 caracteres)' });
+      }
+
+      const productId = nanoid();
       const productData = {
-        ...req.body,
-        userId: user.id,
-        createdAt: Math.floor(Date.now() / 1000),
-        updatedAt: Math.floor(Date.now() / 1000)
+        id: productId,
+        user_id: user.id,
+        name: req.body.name || '',
+        description: req.body.description || '',
+        price: req.body.price || 0,
+        currency: req.body.currency || 'BRL',
+        category: req.body.category || '',
+        features: req.body.features || '',
+        payment_mode: req.body.payment_mode || 'one_time',
+        recurring_interval: req.body.recurring_interval || null,
+        trial_period: req.body.trial_period || null,
+        trial_price: req.body.trial_price || null,
+        status: req.body.status || 'active',
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
       };
 
       const product = await storage.createCheckout(productData);
