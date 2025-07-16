@@ -971,6 +971,11 @@ const transitionElementCategories = [
         label: "Transição Animada",
         icon: <Sparkles className="w-4 h-4" />,
       },
+      {
+        type: "netflix_intro",
+        label: "Netflix Intro",
+        icon: <Sparkles className="w-4 h-4" />,
+      },
     ],
   },
   {
@@ -1545,6 +1550,16 @@ const gameElementCategories = [
         showPercentage: true,
         animationDuration: 6,
         progressTitle: "Progresso"
+      }),
+
+      ...(type === "netflix_intro" && {
+        netflixTitle: "NETFLIX",
+        netflixDuration: 4,
+        netflixShowTitle: true,
+        netflixAutoAdvance: true,
+        netflixFullscreen: true,
+        netflixLetters: "N-E-T-F-L-I-X",
+        netflixAnimationSpeed: "normal"
       })
     };
 
@@ -4539,6 +4554,82 @@ const gameElementCategories = [
               <span className="text-purple-700">
                 <strong>Carregamento + Pergunta:</strong> Barra animada → Pergunta Sim/Não
               </span>
+            </div>
+          </div>
+        );
+
+      case "netflix_intro":
+        return (
+          <div className="space-y-4 p-4 border-2 border-dashed border-red-200 rounded-lg bg-gradient-to-br from-red-50 to-black animate-slide-up">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Sparkles className="w-5 h-5 text-red-600" />
+                <span className="font-bold text-red-800">🎬 Netflix Intro</span>
+              </div>
+              <span className="text-xs bg-black text-red-500 px-2 py-1 rounded-full font-medium">
+                ⚡ Transição
+              </span>
+            </div>
+            
+            <div className="flex justify-center">
+              <div className="relative">
+                {/* Preview da animação Netflix */}
+                <div className="w-64 h-40 bg-black rounded-lg flex items-center justify-center relative overflow-hidden">
+                  
+                  {/* Simulação do logo Netflix */}
+                  <div className="text-center">
+                    <div className="text-4xl font-black text-red-600 tracking-wider mb-2">
+                      {element.netflixLetters?.split('-').join('') || 'NETFLIX'}
+                    </div>
+                    <div className="text-xs text-gray-400">
+                      Animação: {element.netflixAnimationSpeed || 'normal'}
+                    </div>
+                  </div>
+                  
+                  {/* Efeitos visuais simulados */}
+                  <div className="absolute inset-0">
+                    <div className="absolute top-0 left-0 w-full h-full opacity-20">
+                      {/* Simulação das luzes coloridas */}
+                      <div className="absolute top-1/4 left-1/4 w-2 h-8 bg-red-500 opacity-60"></div>
+                      <div className="absolute top-1/3 left-1/2 w-2 h-6 bg-yellow-500 opacity-60"></div>
+                      <div className="absolute top-1/2 left-3/4 w-2 h-4 bg-blue-500 opacity-60"></div>
+                      <div className="absolute bottom-1/4 left-1/3 w-2 h-5 bg-green-500 opacity-60"></div>
+                    </div>
+                  </div>
+                  
+                  {/* Brilho central */}
+                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-red-500 to-transparent opacity-10 transform skew-x-12 animate-pulse"></div>
+                </div>
+              </div>
+            </div>
+            
+            <div className="space-y-3">
+              <div className="bg-black p-3 rounded-xl border border-red-800 text-red-400">
+                <div className="text-xs font-bold mb-2 text-center">🎭 CONFIGURAÇÕES DA ANIMAÇÃO</div>
+                <div className="grid grid-cols-2 gap-2 text-xs">
+                  <div>• <strong>Duração:</strong> {element.netflixDuration || 4}s</div>
+                  <div>• <strong>Tela cheia:</strong> {element.netflixFullscreen ? 'Sim' : 'Não'}</div>
+                  <div>• <strong>Título:</strong> {element.netflixShowTitle ? 'Visível' : 'Oculto'}</div>
+                  <div>• <strong>Avanço:</strong> {element.netflixAutoAdvance ? 'Auto' : 'Manual'}</div>
+                </div>
+              </div>
+              
+              <div className="bg-gradient-to-r from-red-900 to-black p-3 rounded-xl border border-red-700">
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="text-red-400">🎬</span>
+                  <span className="text-sm font-bold text-red-300">Netflix Intro Autêntico</span>
+                </div>
+                <div className="text-xs text-red-200 space-y-1">
+                  <div>• <strong>Animação:</strong> Zoom + Brush Effects + Luzes coloridas</div>
+                  <div>• <strong>Letras:</strong> {element.netflixLetters || 'N-E-T-F-L-I-X'}</div>
+                  <div>• <strong>Qualidade:</strong> Fidelidade total ao original</div>
+                  <div>• <strong>Uso:</strong> Ideal para transições impactantes</div>
+                </div>
+              </div>
+            </div>
+            
+            <div className="text-xs text-red-700 text-center bg-red-100 p-2 rounded-lg">
+              🎥 <strong>Status:</strong> Animação Netflix completa • <strong>Duração:</strong> {element.netflixDuration || 4}s • <strong>Modo:</strong> Transição cinematográfica
             </div>
           </div>
         );
@@ -8191,6 +8282,104 @@ const gameElementCategories = [
                       onChange={(e) => updateElement(selectedElementData.id, { showPercentage: e.target.checked })}
                     />
                     <Label htmlFor="show-percentage" className="text-sm">Mostrar porcentagem</Label>
+                  </div>
+                </div>
+              )}
+
+              {/* Propriedades para Netflix Intro */}
+              {selectedElementData.type === "netflix_intro" && (
+                <div className="space-y-4">
+                  <div>
+                    <Label>Título Netflix</Label>
+                    <Input
+                      value={selectedElementData.netflixTitle || "NETFLIX"}
+                      onChange={(e) => updateElement(selectedElementData.id, { netflixTitle: e.target.value })}
+                      placeholder="NETFLIX"
+                      className="mt-1"
+                    />
+                  </div>
+
+                  <div>
+                    <Label>Letras da Animação</Label>
+                    <Input
+                      value={selectedElementData.netflixLetters || "N-E-T-F-L-I-X"}
+                      onChange={(e) => updateElement(selectedElementData.id, { netflixLetters: e.target.value })}
+                      placeholder="N-E-T-F-L-I-X"
+                      className="mt-1"
+                    />
+                    <p className="text-xs text-gray-500 mt-1">
+                      Separe as letras com "-" para animação individual
+                    </p>
+                  </div>
+
+                  <div>
+                    <Label>Duração (segundos)</Label>
+                    <Input
+                      type="number"
+                      min="1"
+                      max="10"
+                      value={selectedElementData.netflixDuration || 4}
+                      onChange={(e) => updateElement(selectedElementData.id, { netflixDuration: parseInt(e.target.value) })}
+                      placeholder="4"
+                      className="mt-1"
+                    />
+                  </div>
+
+                  <div>
+                    <Label>Velocidade da Animação</Label>
+                    <select 
+                      className="w-full px-3 py-2 border rounded-md mt-1"
+                      value={selectedElementData.netflixAnimationSpeed || "normal"}
+                      onChange={(e) => updateElement(selectedElementData.id, { netflixAnimationSpeed: e.target.value })}
+                    >
+                      <option value="slow">Lenta</option>
+                      <option value="normal">Normal</option>
+                      <option value="fast">Rápida</option>
+                    </select>
+                  </div>
+
+                  <div className="space-y-3">
+                    <div className="flex items-center space-x-2">
+                      <input
+                        type="checkbox"
+                        id="netflix-show-title"
+                        checked={selectedElementData.netflixShowTitle !== false}
+                        onChange={(e) => updateElement(selectedElementData.id, { netflixShowTitle: e.target.checked })}
+                      />
+                      <Label htmlFor="netflix-show-title" className="text-sm">Mostrar título</Label>
+                    </div>
+
+                    <div className="flex items-center space-x-2">
+                      <input
+                        type="checkbox"
+                        id="netflix-fullscreen"
+                        checked={selectedElementData.netflixFullscreen !== false}
+                        onChange={(e) => updateElement(selectedElementData.id, { netflixFullscreen: e.target.checked })}
+                      />
+                      <Label htmlFor="netflix-fullscreen" className="text-sm">Tela cheia</Label>
+                    </div>
+
+                    <div className="flex items-center space-x-2">
+                      <input
+                        type="checkbox"
+                        id="netflix-auto-advance"
+                        checked={selectedElementData.netflixAutoAdvance !== false}
+                        onChange={(e) => updateElement(selectedElementData.id, { netflixAutoAdvance: e.target.checked })}
+                      />
+                      <Label htmlFor="netflix-auto-advance" className="text-sm">Avançar automaticamente</Label>
+                    </div>
+                  </div>
+
+                  <div className="bg-red-50 p-3 rounded-lg border border-red-200">
+                    <div className="flex items-center gap-2 mb-2">
+                      <span className="text-red-600">🎬</span>
+                      <span className="text-sm font-bold text-red-800">Netflix Intro Autêntico</span>
+                    </div>
+                    <div className="text-xs text-red-700">
+                      Animação completa com zoom, brush effects e luzes coloridas, 
+                      idêntica à intro original do Netflix. Ideal para criar transições 
+                      cinematográficas impactantes.
+                    </div>
                   </div>
                 </div>
               )}
