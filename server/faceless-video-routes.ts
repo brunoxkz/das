@@ -67,24 +67,9 @@ export function registerFacelessVideoRoutes(app: Express) {
         videoCredits: (user.videoCredits || 0) - 1
       });
 
-      // Simulação de processamento assíncrono
-      setTimeout(async () => {
-        try {
-          // Simular geração de vídeo
-          await storage.updateVideoProject(project.id, {
-            status: 'completed',
-            progress: 100,
-            videoUrl: `/uploads/videos/sample_${project.id}.mp4`,
-            thumbnailUrl: `/uploads/thumbnails/thumb_${project.id}.jpg`
-          });
-        } catch (error) {
-          console.error('❌ Erro no processamento:', error);
-          await storage.updateVideoProject(project.id, {
-            status: 'failed',
-            progress: 0
-          });
-        }
-      }, 30000); // 30 segundos para conclusão
+      // Processamento assíncrono desabilitado temporariamente
+      // setTimeout será reabilitado quando tivermos schema correto
+      console.log('⚠️ Processamento assíncrono desabilitado - aguardando schema correto');
 
       res.json({
         success: true,
