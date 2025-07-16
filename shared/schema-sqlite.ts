@@ -14,13 +14,14 @@ export const users = sqliteTable("users", {
   profileImageUrl: text("profileImageUrl"),
   stripeCustomerId: text("stripeCustomerId"),
   stripeSubscriptionId: text("stripeSubscriptionId"),
-  plan: text("plan").default("free"),
+  plan: text("plan").default("trial"), // trial, basic, premium, enterprise
   role: text("role").default("user"),
   refreshToken: text("refreshToken"),
-  subscriptionStatus: text("subscriptionStatus"),
+  subscriptionStatus: text("subscriptionStatus").default("active"), // active, canceled, expired, pending
   // Campos para expiração de plano
   planExpiresAt: integer("planExpiresAt", { mode: 'timestamp' }),
   planRenewalRequired: integer("planRenewalRequired", { mode: 'boolean' }).default(false),
+  trialExpiresAt: integer("trialExpiresAt", { mode: 'timestamp' }),
   isBlocked: integer("isBlocked", { mode: 'boolean' }).default(false),
   blockReason: text("blockReason"),
   // Campos para 2FA
@@ -1012,3 +1013,59 @@ export type InsertTypebotWebhook = z.infer<typeof insertTypebotWebhookSchema>;
 export type TypebotWebhook = typeof typebotWebhooks.$inferSelect;
 export type InsertTypebotIntegration = z.infer<typeof insertTypebotIntegrationSchema>;
 export type TypebotIntegration = typeof typebotIntegrations.$inferSelect;
+
+// Subscription Plans Schema
+export const subscriptionPlans = sqliteTable("subscription_plans", {
+  id: text("id").primaryKey(),
+  name: text("name").notNull(),
+  price: real("price").notNull(),
+  currency: text("currency").default("BRL"),
+  billingInterval: text("billingInterval").notNull(), // monthly, yearly
+  features: text("features", { mode: 'json' }).notNull(),
+  limits: text("limits", { mode: 'json' }).notNull(),
+  stripePriceId: text("stripePriceId"),
+  isActive: integer("isActive", { mode: 'boolean' }).default(true),
+  createdAt: integer("createdAt", { mode: 'timestamp' }).notNull().$defaultFn(() => new Date()),
+  updatedAt: integer("updatedAt", { mode: 'timestamp' }).notNull().$defaultFn(() => new Date()),
+});
+
+// Subscription Transactions Schema
+export const subscriptionTransactions = sqliteTable("subscription_transactions", {
+  id: text("id").primaryKey(),
+  userId: text("userId").notNull().references(() => users.id),
+  planId: text("planId").notNull().references(() => subscriptionPlans.id),
+  stripePaymentIntentId: text("stripePaymentIntentId"),
+  stripeSubscriptionId: text("stripeSubscriptionId"),
+  amount: real("amount").notNull(),
+  currency: text("currency").default("BRL"),
+  status: text("status").notNull(), // pending, completed, failed, refunded
+  paymentMethod: text("paymentMethod").default("stripe"),
+  metadata: text("metadata", { mode: 'json' }),
+  createdAt: integer("createdAt", { mode: 'timestamp' }).notNull().$defaultFn(() => new Date()),
+  updatedAt: integer("updatedAt", { mode: 'timestamp' }).notNull().$defaultFn(() => new Date()),
+});
+
+// Credit Transactions Schema
+export const creditTransactions = sqliteTable("credit_transactions", {
+  id: text("id").primaryKey(),
+  userId: text("userId").notNull().references(() => users.id),
+  type: text("type").notNull(), // sms, email, whatsapp, ai
+  amount: integer("amount").notNull(),
+  operation: text("operation").notNull(), // add, subtract
+  reason: text("reason").notNull(),
+  metadata: text("metadata", { mode: 'json' }),
+  createdAt: integer("createdAt", { mode: 'timestamp' }).notNull().$defaultFn(() => new Date()),
+});
+
+// Subscription Plans Zod Schemas
+export const insertSubscriptionPlanSchema = createInsertSchema(subscriptionPlans);
+export const insertSubscriptionTransactionSchema = createInsertSchema(subscriptionTransactions);
+export const insertCreditTransactionSchema = createInsertSchema(creditTransactions);
+
+// Subscription Plans Types
+export type InsertSubscriptionPlan = z.infer<typeof insertSubscriptionPlanSchema>;
+export type SubscriptionPlan = typeof subscriptionPlans.$inferSelect;
+export type InsertSubscriptionTransaction = z.infer<typeof insertSubscriptionTransactionSchema>;
+export type SubscriptionTransaction = typeof subscriptionTransactions.$inferSelect;
+export type InsertCreditTransaction = z.infer<typeof insertCreditTransactionSchema>;
+export type CreditTransaction = typeof creditTransactions.$inferSelect;

@@ -9618,6 +9618,229 @@ app.get("/api/whatsapp-extension/pending", verifyJWT, async (req: any, res: Resp
     }
   });
 
+  // =============================================
+  // SUBSCRIPTION PLANS ENDPOINTS
+  // =============================================
+
+  // Listar planos de assinatura
+  app.get('/api/subscription-plans', async (req: any, res: any) => {
+    try {
+      const plans = await storage.getSubscriptionPlans();
+      res.json(plans);
+    } catch (error) {
+      console.error('❌ Erro ao buscar planos:', error);
+      res.status(500).json({ error: 'Erro ao buscar planos' });
+    }
+  });
+
+  // Obter plano específico
+  app.get('/api/subscription-plans/:id', async (req: any, res: any) => {
+    try {
+      const plan = await storage.getSubscriptionPlan(req.params.id);
+      if (!plan) {
+        return res.status(404).json({ error: 'Plano não encontrado' });
+      }
+      res.json(plan);
+    } catch (error) {
+      console.error('❌ Erro ao buscar plano:', error);
+      res.status(500).json({ error: 'Erro ao buscar plano' });
+    }
+  });
+
+  // Criar plano (apenas admin)
+  app.post('/api/subscription-plans', verifyJWT, async (req: any, res: any) => {
+    try {
+      if (req.user.role !== 'admin') {
+        return res.status(403).json({ error: 'Acesso negado' });
+      }
+      
+      const plan = await storage.createSubscriptionPlan(req.body);
+      res.json(plan);
+    } catch (error) {
+      console.error('❌ Erro ao criar plano:', error);
+      res.status(500).json({ error: 'Erro ao criar plano' });
+    }
+  });
+
+  // Atualizar plano (apenas admin)
+  app.put('/api/subscription-plans/:id', verifyJWT, async (req: any, res: any) => {
+    try {
+      if (req.user.role !== 'admin') {
+        return res.status(403).json({ error: 'Acesso negado' });
+      }
+      
+      const plan = await storage.updateSubscriptionPlan(req.params.id, req.body);
+      res.json(plan);
+    } catch (error) {
+      console.error('❌ Erro ao atualizar plano:', error);
+      res.status(500).json({ error: 'Erro ao atualizar plano' });
+    }
+  });
+
+  // =============================================
+  // SUBSCRIPTION TRANSACTIONS ENDPOINTS
+  // =============================================
+
+  // Obter transações do usuário
+  app.get('/api/subscription-transactions', verifyJWT, async (req: any, res: any) => {
+    try {
+      const transactions = await storage.getSubscriptionTransactionsByUser(req.user.id);
+      res.json(transactions);
+    } catch (error) {
+      console.error('❌ Erro ao buscar transações:', error);
+      res.status(500).json({ error: 'Erro ao buscar transações' });
+    }
+  });
+
+  // Criar transação de assinatura
+  app.post('/api/subscription-transactions', verifyJWT, async (req: any, res: any) => {
+    try {
+      const transactionData = {
+        ...req.body,
+        userId: req.user.id
+      };
+      
+      const transaction = await storage.createSubscriptionTransaction(transactionData);
+      res.json(transaction);
+    } catch (error) {
+      console.error('❌ Erro ao criar transação:', error);
+      res.status(500).json({ error: 'Erro ao criar transação' });
+    }
+  });
+
+  // Atualizar transação de assinatura
+  app.put('/api/subscription-transactions/:id', verifyJWT, async (req: any, res: any) => {
+    try {
+      const transaction = await storage.updateSubscriptionTransaction(req.params.id, req.body);
+      res.json(transaction);
+    } catch (error) {
+      console.error('❌ Erro ao atualizar transação:', error);
+      res.status(500).json({ error: 'Erro ao atualizar transação' });
+    }
+  });
+
+  // =============================================
+  // CREDIT TRANSACTIONS ENDPOINTS
+  // =============================================
+
+  // Obter transações de crédito do usuário
+  app.get('/api/credit-transactions', verifyJWT, async (req: any, res: any) => {
+    try {
+      const transactions = await storage.getCreditTransactionsByUser(req.user.id);
+      res.json(transactions);
+    } catch (error) {
+      console.error('❌ Erro ao buscar transações de crédito:', error);
+      res.status(500).json({ error: 'Erro ao buscar transações de crédito' });
+    }
+  });
+
+  // Criar transação de crédito
+  app.post('/api/credit-transactions', verifyJWT, async (req: any, res: any) => {
+    try {
+      const transactionData = {
+        ...req.body,
+        userId: req.user.id
+      };
+      
+      const transaction = await storage.createCreditTransaction(transactionData);
+      res.json(transaction);
+    } catch (error) {
+      console.error('❌ Erro ao criar transação de crédito:', error);
+      res.status(500).json({ error: 'Erro ao criar transação de crédito' });
+    }
+  });
+
+  // Atualizar créditos do usuário
+  app.post('/api/user-credits', verifyJWT, async (req: any, res: any) => {
+    try {
+      const { type, amount, operation, reason } = req.body;
+      const user = await storage.updateUserCredits(req.user.id, type, amount, operation, reason);
+      res.json(user);
+    } catch (error) {
+      console.error('❌ Erro ao atualizar créditos:', error);
+      res.status(500).json({ error: error.message || 'Erro ao atualizar créditos' });
+    }
+  });
+
+  // =============================================
+  // PLAN MANAGEMENT ENDPOINTS
+  // =============================================
+
+  // Verificar acesso a funcionalidade
+  app.get('/api/plan-access/:feature', verifyJWT, async (req: any, res: any) => {
+    try {
+      const hasAccess = await storage.checkUserPlanAccess(req.user.id, req.params.feature);
+      res.json({ hasAccess });
+    } catch (error) {
+      console.error('❌ Erro ao verificar acesso:', error);
+      res.status(500).json({ error: 'Erro ao verificar acesso' });
+    }
+  });
+
+  // Obter limites do plano
+  app.get('/api/plan-limits', verifyJWT, async (req: any, res: any) => {
+    try {
+      const limits = await storage.getUserPlanLimits(req.user.id);
+      res.json(limits);
+    } catch (error) {
+      console.error('❌ Erro ao buscar limites:', error);
+      res.status(500).json({ error: 'Erro ao buscar limites' });
+    }
+  });
+
+  // Verificar expiração do plano
+  app.get('/api/plan-expiration', verifyJWT, async (req: any, res: any) => {
+    try {
+      const expired = await storage.checkPlanExpiration(req.user.id);
+      res.json({ expired });
+    } catch (error) {
+      console.error('❌ Erro ao verificar expiração:', error);
+      res.status(500).json({ error: 'Erro ao verificar expiração' });
+    }
+  });
+
+  // Renovar plano do usuário
+  app.post('/api/plan-renewal', verifyJWT, async (req: any, res: any) => {
+    try {
+      const { planId } = req.body;
+      const user = await storage.renewUserPlan(req.user.id, planId);
+      res.json(user);
+    } catch (error) {
+      console.error('❌ Erro ao renovar plano:', error);
+      res.status(500).json({ error: error.message || 'Erro ao renovar plano' });
+    }
+  });
+
+  // Inicializar planos padrão (apenas admin)
+  app.post('/api/init-default-plans', verifyJWT, async (req: any, res: any) => {
+    try {
+      if (req.user.role !== 'admin') {
+        return res.status(403).json({ error: 'Acesso negado' });
+      }
+      
+      await storage.initializeDefaultPlans();
+      res.json({ success: true });
+    } catch (error) {
+      console.error('❌ Erro ao inicializar planos:', error);
+      res.status(500).json({ error: 'Erro ao inicializar planos' });
+    }
+  });
+
+  // Configurar trial para usuário (apenas admin)
+  app.post('/api/setup-trial/:userId', verifyJWT, async (req: any, res: any) => {
+    try {
+      if (req.user.role !== 'admin') {
+        return res.status(403).json({ error: 'Acesso negado' });
+      }
+      
+      await storage.setupUserTrial(req.params.userId);
+      res.json({ success: true });
+    } catch (error) {
+      console.error('❌ Erro ao configurar trial:', error);
+      res.status(500).json({ error: 'Erro ao configurar trial' });
+    }
+  });
+
   // Get conditional campaign analytics
   app.get("/api/conditional-campaigns/:id/analytics", verifyJWT, async (req: any, res: Response) => {
     try {

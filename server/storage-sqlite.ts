@@ -28,6 +28,7 @@ import {
   superAffiliates, affiliateSales,
   abTests, abTestViews, webhooks, webhookLogs, integrations,
   typebotProjects, typebotConversations, typebotMessages, typebotAnalytics, typebotWebhooks, typebotIntegrations,
+  subscriptionPlans, subscriptionTransactions, creditTransactions,
   type User, type UpsertUser, type InsertQuiz, type Quiz,
   type InsertQuizTemplate, type QuizTemplate,
   type InsertQuizResponse, type QuizResponse,
@@ -55,7 +56,10 @@ import {
   type InsertTypebotMessage, type TypebotMessage,
   type InsertTypebotAnalytics, type TypebotAnalytics,
   type InsertTypebotWebhook, type TypebotWebhook,
-  type InsertTypebotIntegration, type TypebotIntegration
+  type InsertTypebotIntegration, type TypebotIntegration,
+  type InsertSubscriptionPlan, type SubscriptionPlan,
+  type InsertSubscriptionTransaction, type SubscriptionTransaction,
+  type InsertCreditTransaction, type CreditTransaction
 } from "../shared/schema-sqlite";
 import { eq, desc, and, gte, lte, count, asc, or, inArray } from "drizzle-orm";
 import { nanoid } from "nanoid";
@@ -73,6 +77,28 @@ export interface IStorage {
   // Admin operations
   getAllUsers(): Promise<User[]>;
   updateUserRole(userId: string, role: string): Promise<User>;
+
+  // Subscription Plans operations
+  getSubscriptionPlans(): Promise<SubscriptionPlan[]>;
+  getSubscriptionPlan(id: string): Promise<SubscriptionPlan | undefined>;
+  createSubscriptionPlan(plan: InsertSubscriptionPlan): Promise<SubscriptionPlan>;
+  updateSubscriptionPlan(id: string, updates: Partial<InsertSubscriptionPlan>): Promise<SubscriptionPlan>;
+  
+  // Subscription Transactions operations
+  createSubscriptionTransaction(transaction: InsertSubscriptionTransaction): Promise<SubscriptionTransaction>;
+  getSubscriptionTransactionsByUser(userId: string): Promise<SubscriptionTransaction[]>;
+  updateSubscriptionTransaction(id: string, updates: Partial<InsertSubscriptionTransaction>): Promise<SubscriptionTransaction>;
+  
+  // Credit Transactions operations
+  createCreditTransaction(transaction: InsertCreditTransaction): Promise<CreditTransaction>;
+  getCreditTransactionsByUser(userId: string): Promise<CreditTransaction[]>;
+  updateUserCredits(userId: string, type: string, amount: number, operation: string, reason: string): Promise<User>;
+  
+  // Plan management
+  checkUserPlanAccess(userId: string, feature: string): Promise<boolean>;
+  getUserPlanLimits(userId: string): Promise<any>;
+  checkPlanExpiration(userId: string): Promise<boolean>;
+  renewUserPlan(userId: string, planId: string): Promise<User>;
   deleteUser(userId: string): Promise<void>;
 
   // Quiz operations
@@ -5089,6 +5115,527 @@ export class SQLiteStorage implements IStorage {
       throw error;
     }
   }
+  // =============================================
+  // SUBSCRIPTION PLANS METHODS
+  // =============================================
+
+  async getSubscriptionPlans(): Promise<SubscriptionPlan[]> {
+    try {
+      const plans = sqlite.prepare(`
+        SELECT * FROM subscription_plans WHERE isActive = 1
+      `).all() as SubscriptionPlan[];
+      
+      return plans.map(plan => {
+        try {
+          return {
+            ...plan,
+            features: typeof plan.features === 'string' ? JSON.parse(plan.features) : plan.features,
+            limits: typeof plan.limits === 'string' ? JSON.parse(plan.limits) : plan.limits
+          };
+        } catch (parseError) {
+          console.error('❌ ERRO ao fazer parse do plano:', plan.id, parseError);
+          return {
+            ...plan,
+            features: [],
+            limits: {}
+          };
+        }
+      });
+    } catch (error) {
+      console.error('❌ ERRO ao buscar planos de assinatura:', error);
+      return [];
+    }
+  }
+
+  async getSubscriptionPlan(id: string): Promise<SubscriptionPlan | undefined> {
+    try {
+      const plan = await db.select().from(subscriptionPlans).where(eq(subscriptionPlans.id, id)).get();
+      if (!plan) return undefined;
+      
+      return {
+        ...plan,
+        features: typeof plan.features === 'string' ? JSON.parse(plan.features) : plan.features,
+        limits: typeof plan.limits === 'string' ? JSON.parse(plan.limits) : plan.limits
+      };
+    } catch (error) {
+      console.error('❌ ERRO ao buscar plano de assinatura:', error);
+      return undefined;
+    }
+  }
+
+  async createSubscriptionPlan(plan: InsertSubscriptionPlan): Promise<SubscriptionPlan> {
+    try {
+      const newPlan = {
+        id: crypto.randomUUID(),
+        ...plan,
+        features: JSON.stringify(plan.features),
+        limits: JSON.stringify(plan.limits),
+        createdAt: new Date(),
+        updatedAt: new Date()
+      };
+      
+      await db.insert(subscriptionPlans).values(newPlan);
+      
+      return {
+        ...newPlan,
+        features: plan.features,
+        limits: plan.limits
+      };
+    } catch (error) {
+      console.error('❌ ERRO ao criar plano de assinatura:', error);
+      throw error;
+    }
+  }
+
+  async updateSubscriptionPlan(id: string, updates: Partial<InsertSubscriptionPlan>): Promise<SubscriptionPlan> {
+    try {
+      const updateData: any = { ...updates, updatedAt: new Date() };
+      
+      if (updates.features) {
+        updateData.features = JSON.stringify(updates.features);
+      }
+      
+      if (updates.limits) {
+        updateData.limits = JSON.stringify(updates.limits);
+      }
+      
+      await db.update(subscriptionPlans)
+        .set(updateData)
+        .where(eq(subscriptionPlans.id, id));
+      
+      const updatedPlan = await db.select()
+        .from(subscriptionPlans)
+        .where(eq(subscriptionPlans.id, id))
+        .get();
+      
+      return {
+        ...updatedPlan,
+        features: updatedPlan.features ? JSON.parse(updatedPlan.features) : [],
+        limits: updatedPlan.limits ? JSON.parse(updatedPlan.limits) : {}
+      };
+    } catch (error) {
+      console.error('❌ ERRO ao atualizar plano de assinatura:', error);
+      throw error;
+    }
+  }
+
+  // =============================================
+  // SUBSCRIPTION TRANSACTIONS METHODS
+  // =============================================
+
+  async createSubscriptionTransaction(transaction: InsertSubscriptionTransaction): Promise<SubscriptionTransaction> {
+    try {
+      const newTransaction = {
+        id: crypto.randomUUID(),
+        ...transaction,
+        metadata: transaction.metadata ? JSON.stringify(transaction.metadata) : null,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      };
+      
+      await db.insert(subscriptionTransactions).values(newTransaction);
+      
+      return {
+        ...newTransaction,
+        metadata: transaction.metadata || null
+      };
+    } catch (error) {
+      console.error('❌ ERRO ao criar transação de assinatura:', error);
+      throw error;
+    }
+  }
+
+  async getSubscriptionTransactionsByUser(userId: string): Promise<SubscriptionTransaction[]> {
+    try {
+      const transactions = await db.select()
+        .from(subscriptionTransactions)
+        .where(eq(subscriptionTransactions.userId, userId))
+        .orderBy(desc(subscriptionTransactions.createdAt));
+      
+      return transactions.map(transaction => ({
+        ...transaction,
+        metadata: transaction.metadata ? JSON.parse(transaction.metadata) : null
+      }));
+    } catch (error) {
+      console.error('❌ ERRO ao buscar transações de assinatura:', error);
+      return [];
+    }
+  }
+
+  async updateSubscriptionTransaction(id: string, updates: Partial<InsertSubscriptionTransaction>): Promise<SubscriptionTransaction> {
+    try {
+      const updateData: any = { ...updates, updatedAt: new Date() };
+      
+      if (updates.metadata) {
+        updateData.metadata = JSON.stringify(updates.metadata);
+      }
+      
+      await db.update(subscriptionTransactions)
+        .set(updateData)
+        .where(eq(subscriptionTransactions.id, id));
+      
+      const updatedTransaction = await db.select()
+        .from(subscriptionTransactions)
+        .where(eq(subscriptionTransactions.id, id))
+        .get();
+      
+      return {
+        ...updatedTransaction,
+        metadata: updatedTransaction.metadata ? JSON.parse(updatedTransaction.metadata) : null
+      };
+    } catch (error) {
+      console.error('❌ ERRO ao atualizar transação de assinatura:', error);
+      throw error;
+    }
+  }
+
+  // =============================================
+  // CREDIT TRANSACTIONS METHODS
+  // =============================================
+
+  async createCreditTransaction(transaction: InsertCreditTransaction): Promise<CreditTransaction> {
+    try {
+      const newTransaction = {
+        id: crypto.randomUUID(),
+        ...transaction,
+        metadata: transaction.metadata ? JSON.stringify(transaction.metadata) : null,
+        createdAt: new Date()
+      };
+      
+      await db.insert(creditTransactions).values(newTransaction);
+      
+      return {
+        ...newTransaction,
+        metadata: transaction.metadata || null
+      };
+    } catch (error) {
+      console.error('❌ ERRO ao criar transação de crédito:', error);
+      throw error;
+    }
+  }
+
+  async getCreditTransactionsByUser(userId: string): Promise<CreditTransaction[]> {
+    try {
+      const transactions = await db.select()
+        .from(creditTransactions)
+        .where(eq(creditTransactions.userId, userId))
+        .orderBy(desc(creditTransactions.createdAt));
+      
+      return transactions.map(transaction => ({
+        ...transaction,
+        metadata: transaction.metadata ? JSON.parse(transaction.metadata) : null
+      }));
+    } catch (error) {
+      console.error('❌ ERRO ao buscar transações de crédito:', error);
+      return [];
+    }
+  }
+
+  async updateUserCredits(userId: string, type: string, amount: number, operation: string, reason: string): Promise<User> {
+    try {
+      // Primeiro, buscar o usuário atual
+      const user = await db.select().from(users).where(eq(users.id, userId)).get();
+      if (!user) {
+        throw new Error('Usuário não encontrado');
+      }
+      
+      // Calcular os novos créditos
+      const creditField = `${type}Credits` as keyof User;
+      const currentCredits = user[creditField] as number || 0;
+      const newCredits = operation === 'add' ? currentCredits + amount : currentCredits - amount;
+      
+      // Garantir que os créditos não fiquem negativos
+      if (newCredits < 0) {
+        throw new Error('Créditos insuficientes');
+      }
+      
+      // Atualizar os créditos do usuário
+      const updateData: any = { updatedAt: new Date() };
+      updateData[creditField] = newCredits;
+      
+      await db.update(users)
+        .set(updateData)
+        .where(eq(users.id, userId));
+      
+      // Registrar a transação de crédito
+      await this.createCreditTransaction({
+        userId,
+        type,
+        amount,
+        operation,
+        reason,
+        metadata: null
+      });
+      
+      // Retornar o usuário atualizado
+      const updatedUser = await db.select().from(users).where(eq(users.id, userId)).get();
+      return updatedUser;
+    } catch (error) {
+      console.error('❌ ERRO ao atualizar créditos do usuário:', error);
+      throw error;
+    }
+  }
+
+  // =============================================
+  // PLAN MANAGEMENT METHODS
+  // =============================================
+
+  async checkUserPlanAccess(userId: string, feature: string): Promise<boolean> {
+    try {
+      const user = await db.select().from(users).where(eq(users.id, userId)).get();
+      if (!user) return false;
+      
+      // Verificar se o plano expirou
+      const planExpired = await this.checkPlanExpiration(userId);
+      if (planExpired) {
+        return false;
+      }
+      
+      // Buscar as configurações do plano
+      const planLimits = await this.getUserPlanLimits(userId);
+      
+      // Verificar se o recurso está disponível no plano
+      if (planLimits.features && planLimits.features.includes(feature)) {
+        return true;
+      }
+      
+      // Verificar para planos específicos
+      if (user.plan === 'basic' && ['quiz_publishing', 'email_campaigns'].includes(feature)) {
+        return true;
+      }
+      
+      if (user.plan === 'premium' && ['quiz_publishing', 'email_campaigns', 'whatsapp_campaigns', 'ai_videos'].includes(feature)) {
+        return true;
+      }
+      
+      if (user.plan === 'enterprise') {
+        return true; // Acesso completo
+      }
+      
+      return false;
+    } catch (error) {
+      console.error('❌ ERRO ao verificar acesso ao plano:', error);
+      return false;
+    }
+  }
+
+  async getUserPlanLimits(userId: string): Promise<any> {
+    try {
+      const user = await db.select().from(users).where(eq(users.id, userId)).get();
+      if (!user) return {};
+      
+      // Limites padrão por plano
+      const planLimits = {
+        trial: {
+          quizzes: 3,
+          responses: 100,
+          sms: 50,
+          email: 100,
+          whatsapp: 25,
+          ai: 5,
+          features: ['quiz_creation', 'basic_analytics']
+        },
+        basic: {
+          quizzes: 10,
+          responses: 1000,
+          sms: 500,
+          email: 1000,
+          whatsapp: 250,
+          ai: 25,
+          features: ['quiz_creation', 'quiz_publishing', 'basic_analytics', 'email_campaigns']
+        },
+        premium: {
+          quizzes: 50,
+          responses: 10000,
+          sms: 2500,
+          email: 5000,
+          whatsapp: 1250,
+          ai: 100,
+          features: ['quiz_creation', 'quiz_publishing', 'advanced_analytics', 'email_campaigns', 'whatsapp_campaigns', 'ai_videos']
+        },
+        enterprise: {
+          quizzes: -1, // Ilimitado
+          responses: -1,
+          sms: -1,
+          email: -1,
+          whatsapp: -1,
+          ai: -1,
+          features: ['all']
+        }
+      };
+      
+      return planLimits[user.plan] || planLimits.trial;
+    } catch (error) {
+      console.error('❌ ERRO ao buscar limites do plano:', error);
+      return {};
+    }
+  }
+
+  async checkPlanExpiration(userId: string): Promise<boolean> {
+    try {
+      const user = await db.select().from(users).where(eq(users.id, userId)).get();
+      if (!user) return true;
+      
+      // Verificar se o plano tem data de expiração
+      if (user.planExpiresAt) {
+        const now = new Date();
+        const expirationDate = new Date(user.planExpiresAt);
+        
+        if (now > expirationDate) {
+          // Plano expirado - atualizar para trial
+          await db.update(users)
+            .set({
+              plan: 'trial',
+              subscriptionStatus: 'expired',
+              planRenewalRequired: true,
+              updatedAt: new Date()
+            })
+            .where(eq(users.id, userId));
+          
+          return true;
+        }
+      }
+      
+      // Verificar se o trial expirou
+      if (user.plan === 'trial' && user.trialExpiresAt) {
+        const now = new Date();
+        const trialExpiration = new Date(user.trialExpiresAt);
+        
+        if (now > trialExpiration) {
+          // Trial expirado - bloquear criação de quizzes
+          await db.update(users)
+            .set({
+              planRenewalRequired: true,
+              updatedAt: new Date()
+            })
+            .where(eq(users.id, userId));
+          
+          return true;
+        }
+      }
+      
+      return false;
+    } catch (error) {
+      console.error('❌ ERRO ao verificar expiração do plano:', error);
+      return true;
+    }
+  }
+
+  async renewUserPlan(userId: string, planId: string): Promise<User> {
+    try {
+      const plan = await this.getSubscriptionPlan(planId);
+      if (!plan) {
+        throw new Error('Plano não encontrado');
+      }
+      
+      // Calcular nova data de expiração
+      const now = new Date();
+      const expirationDate = new Date(now);
+      
+      if (plan.billingInterval === 'monthly') {
+        expirationDate.setMonth(expirationDate.getMonth() + 1);
+      } else if (plan.billingInterval === 'yearly') {
+        expirationDate.setFullYear(expirationDate.getFullYear() + 1);
+      }
+      
+      // Atualizar o plano do usuário
+      await db.update(users)
+        .set({
+          plan: plan.name.toLowerCase(),
+          planExpiresAt: expirationDate,
+          subscriptionStatus: 'active',
+          planRenewalRequired: false,
+          updatedAt: new Date()
+        })
+        .where(eq(users.id, userId));
+      
+      // Retornar o usuário atualizado
+      const updatedUser = await db.select().from(users).where(eq(users.id, userId)).get();
+      return updatedUser;
+    } catch (error) {
+      console.error('❌ ERRO ao renovar plano do usuário:', error);
+      throw error;
+    }
+  }
+
+  // Método para inicializar planos padrão
+  async initializeDefaultPlans(): Promise<void> {
+    try {
+      // Verificar se já existem planos
+      const existingPlans = await db.select().from(subscriptionPlans).limit(1);
+      if (existingPlans.length > 0) {
+        return; // Planos já existem
+      }
+      
+      // Criar planos padrão
+      const defaultPlans = [
+        {
+          id: 'basic-monthly',
+          name: 'basic',
+          price: 29.90,
+          currency: 'BRL',
+          billingInterval: 'monthly',
+          features: ['quiz_publishing', 'email_campaigns', 'basic_analytics'],
+          limits: { quizzes: 10, responses: 1000, sms: 500, email: 1000 },
+          stripePriceId: null,
+          isActive: true
+        },
+        {
+          id: 'premium-monthly',
+          name: 'premium',
+          price: 79.90,
+          currency: 'BRL',
+          billingInterval: 'monthly',
+          features: ['quiz_publishing', 'email_campaigns', 'whatsapp_campaigns', 'ai_videos', 'advanced_analytics'],
+          limits: { quizzes: 50, responses: 10000, sms: 2500, email: 5000, whatsapp: 1250, ai: 100 },
+          stripePriceId: null,
+          isActive: true
+        },
+        {
+          id: 'enterprise-monthly',
+          name: 'enterprise',
+          price: 199.90,
+          currency: 'BRL',
+          billingInterval: 'monthly',
+          features: ['all'],
+          limits: { quizzes: -1, responses: -1, sms: -1, email: -1, whatsapp: -1, ai: -1 },
+          stripePriceId: null,
+          isActive: true
+        }
+      ];
+      
+      for (const plan of defaultPlans) {
+        await this.createSubscriptionPlan(plan);
+      }
+      
+      console.log('✅ Planos padrão criados com sucesso');
+    } catch (error) {
+      console.error('❌ ERRO ao inicializar planos padrão:', error);
+    }
+  }
+
+  // Método para configurar trial de 7 dias para novos usuários
+  async setupUserTrial(userId: string): Promise<void> {
+    try {
+      const trialExpiresAt = new Date();
+      trialExpiresAt.setDate(trialExpiresAt.getDate() + 7); // 7 dias de trial
+      
+      await db.update(users)
+        .set({
+          plan: 'trial',
+          trialExpiresAt: trialExpiresAt,
+          subscriptionStatus: 'active',
+          planRenewalRequired: false,
+          updatedAt: new Date()
+        })
+        .where(eq(users.id, userId));
+      
+      console.log(`✅ Trial de 7 dias configurado para usuário ${userId}`);
+    } catch (error) {
+      console.error('❌ ERRO ao configurar trial do usuário:', error);
+    }
+  }
+
 }
 
 export const storage = new SQLiteStorage();
