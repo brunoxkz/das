@@ -1749,7 +1749,7 @@ const gameElementCategories = [
           <div className="space-y-3">
             <label className="block text-sm font-medium" style={questionStyle}>
               {element.question || "Pergunta"}
-              {element.required && <span className="text-red-500 ml-1">*</span>}
+              
               {element.showQuestionNumber && <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded ml-2">#{element.questionNumber || 1}</span>}
             </label>
             
@@ -1866,7 +1866,7 @@ const gameElementCategories = [
           <div className="space-y-2">
             <label className="block text-sm font-medium text-gray-700">
               {element.question || "Campo"}
-              {element.required && <span className="text-red-500 ml-1">*</span>}
+              
               {element.showFieldIcon && <span className="ml-2">{iconMap[element.type as keyof typeof iconMap]}</span>}
             </label>
             
@@ -1940,7 +1940,7 @@ const gameElementCategories = [
           <div className="space-y-2">
             <label className="block text-sm font-medium text-gray-700">
               {element.question || "Área de Texto"}
-              {element.required && <span className="text-red-500 ml-1">*</span>}
+              
             </label>
             <textarea
               placeholder={element.placeholder || "Digite sua resposta aqui..."}
@@ -1955,7 +1955,7 @@ const gameElementCategories = [
             {element.question && (
               <label className="block text-sm font-medium text-gray-700">
                 {element.question}
-                {element.required && <span className="text-red-500 ml-1">*</span>}
+                
               </label>
             )}
             <input
@@ -1971,7 +1971,7 @@ const gameElementCategories = [
               <input type="checkbox" className="rounded" />
               <label className="text-sm font-medium text-gray-700">
                 {element.question || "Checkbox"}
-                {element.required && <span className="text-red-500 ml-1">*</span>}
+                
               </label>
             </div>
           </div>
@@ -1981,7 +1981,7 @@ const gameElementCategories = [
           <div className="space-y-2">
             <label className="block text-sm font-medium text-gray-700">
               {element.question || "Avaliação"}
-              {element.required && <span className="text-red-500 ml-1">*</span>}
+              
             </label>
             <div className="flex space-x-1">
               {[1, 2, 3, 4, 5].map((rating) => (
@@ -2027,7 +2027,7 @@ const gameElementCategories = [
           <div className="space-y-2">
             <label className="block text-sm font-medium text-gray-700">
               {element.question || "Upload de Imagem"}
-              {element.required && <span className="text-red-500 ml-1">*</span>}
+              
             </label>
             {element.imageUrl ? (
               <div 
@@ -2085,7 +2085,7 @@ const gameElementCategories = [
           <div className="space-y-2">
             <label className="block text-sm font-medium text-gray-700">
               {element.question || "Data de Nascimento"}
-              {element.required && <span className="text-red-500 ml-1">*</span>}
+              
             </label>
             <input
               type="date"
@@ -2332,7 +2332,7 @@ const gameElementCategories = [
             <div className="bg-white rounded-lg p-4 shadow-sm">
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 {element.question || "Qual é seu peso objetivo?"}
-                {element.required && <span className="text-red-500 ml-1">*</span>}
+                
               </label>
               
               <div className="flex items-center gap-3">

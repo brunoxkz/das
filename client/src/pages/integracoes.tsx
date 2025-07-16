@@ -333,7 +333,7 @@ export default function IntegracoesPage() {
                 <div key={field.key} className="space-y-2">
                   <Label htmlFor={field.key}>
                     {field.label}
-                    {field.required && <span className="text-red-500 ml-1">*</span>}
+                    
                   </Label>
                   <Input
                     id={field.key}

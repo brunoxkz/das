@@ -208,6 +208,17 @@ No additional files or separate projects are maintained in this repository.
 
 ```
 Changelog:
+- July 16, 2025. REMOÇÃO DE ASTERISCOS OBRIGATÓRIOS IMPLEMENTADA - Limpeza visual completa da interface:
+  * Removidos todos os asteriscos (*) vermelhos que apareciam ao marcar "resposta obrigatória"
+  * Limpeza aplicada em todos os componentes de renderização:
+    - page-editor-horizontal.tsx: editor principal
+    - page-editor-simple.tsx: editor simplificado
+    - quiz-preview.tsx: preview no builder
+    - quiz-public-renderer.tsx: quiz público
+    - integracoes.tsx: página de integrações
+  * Funcionalidade de "obrigatório" mantida - apenas indicador visual removido
+  * Interface mais limpa sem poluição visual desnecessária
+  * Experiência do usuário melhorada sem elementos visuais redundantes
 - July 16, 2025. FORMATAÇÃO AVANÇADA DE MÚLTIPLA ESCOLHA IMPLEMENTADA - Sistema completo de customização independente para opções de resposta:
   * Adicionada seção "🎨 Formatação das Respostas" no painel de propriedades com destaque visual em verde
   * Implementado controle independente de tamanho de fonte para opções (xs, sm, base, lg, xl)

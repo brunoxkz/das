@@ -320,7 +320,7 @@ export function PageEditor({ pages, onPagesChange }: PageEditorProps) {
           <div className="space-y-3">
             <label className="block text-sm font-medium text-gray-700">
               {element.question || "Pergunta"}
-              {element.required && <span className="text-red-500 ml-1">*</span>}
+              
             </label>
             <div className={`${containerClass} ${spacingClass}`}>
               {(element.options || ["Opção 1", "Opção 2"]).map((option, index) => (

@@ -1009,7 +1009,7 @@ export default function QuizPreview({ quiz, onClose, onSave }: QuizPreviewProps)
                 style={getElementStyles(element)}
               >
                 {processVariables(element.question)}
-                {element.required && <span className="text-red-500 ml-1">*</span>}
+                
               </h3>
             )}
             <div className="space-y-3">
@@ -1077,7 +1077,7 @@ export default function QuizPreview({ quiz, onClose, onSave }: QuizPreviewProps)
                 style={getElementStyles(element)}
               >
                 {processVariables(element.question)}
-                {element.required && <span className="text-red-500 ml-1">*</span>}
+                
               </label>
             )}
             <Input
@@ -1099,7 +1099,7 @@ export default function QuizPreview({ quiz, onClose, onSave }: QuizPreviewProps)
                 style={getElementStyles(element)}
               >
                 {processVariables(element.question)}
-                {element.required && <span className="text-red-500 ml-1">*</span>}
+                
               </label>
             )}
             <div className={`${
@@ -1140,7 +1140,7 @@ export default function QuizPreview({ quiz, onClose, onSave }: QuizPreviewProps)
             {element.question && (
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 {processVariables(element.question)}
-                {element.required && <span className="text-red-500 ml-1">*</span>}
+                
               </label>
             )}
             <div className={`${
@@ -1187,7 +1187,7 @@ export default function QuizPreview({ quiz, onClose, onSave }: QuizPreviewProps)
                   style={getElementStyles(element)}
                 >
                   {element.question || element.content || 'Qual é a sua altura?'}
-                  {element.required && <span className="text-red-500 ml-1">*</span>}
+                  
                 </h3>
               </div>
               
@@ -1255,7 +1255,7 @@ export default function QuizPreview({ quiz, onClose, onSave }: QuizPreviewProps)
             {element.question && (
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 {processVariables(element.question)}
-                {element.required && <span className="text-red-500 ml-1">*</span>}
+                
               </label>
             )}
             <Input
@@ -1280,7 +1280,7 @@ export default function QuizPreview({ quiz, onClose, onSave }: QuizPreviewProps)
                 style={getElementStyles(element)}
               >
                 {processVariables(element.question)}
-                {element.required && <span className="text-red-500 ml-1">*</span>}
+                
               </h3>
             )}
             <div className="flex space-x-1">
@@ -1308,7 +1308,7 @@ export default function QuizPreview({ quiz, onClose, onSave }: QuizPreviewProps)
                 style={getElementStyles(element)}
               >
                 {processVariables(element.question)}
-                {element.required && <span className="text-red-500 ml-1">*</span>}
+                
               </label>
             )}
             <Input
@@ -1329,7 +1329,7 @@ export default function QuizPreview({ quiz, onClose, onSave }: QuizPreviewProps)
                 style={getElementStyles(element)}
               >
                 {processVariables(element.question)}
-                {element.required && <span className="text-red-500 ml-1">*</span>}
+                
               </label>
             )}
             <Textarea
@@ -1351,7 +1351,7 @@ export default function QuizPreview({ quiz, onClose, onSave }: QuizPreviewProps)
                 style={getElementStyles(element)}
               >
                 {processVariables(element.question)}
-                {element.required && <span className="text-red-500 ml-1">*</span>}
+                
               </h3>
             )}
             <div className="space-y-3">
@@ -1406,7 +1406,7 @@ export default function QuizPreview({ quiz, onClose, onSave }: QuizPreviewProps)
                 style={getElementStyles(element)}
               >
                 {processVariables(element.question)}
-                {element.required && <span className="text-red-500 ml-1">*</span>}
+                
               </label>
             )}
             <select
@@ -1435,7 +1435,7 @@ export default function QuizPreview({ quiz, onClose, onSave }: QuizPreviewProps)
                 style={getElementStyles(element)}
               >
                 {element.question || element.content || 'Data de Nascimento'}
-                {element.required && <span className="text-red-500 ml-1">*</span>}
+                
               </h3>
             </div>
             <input
