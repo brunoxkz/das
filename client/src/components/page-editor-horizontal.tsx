@@ -3598,42 +3598,96 @@ const gameElementCategories = [
         );
 
       case "before_after":
+        // Dados para gráfico antes/depois
+        const beforeAfterData = element.beforeAfterData || [
+          { label: "Antes", value: element.beforeValue || 25, color: element.beforeColor || "#ef4444" },
+          { label: "Depois", value: element.afterValue || 85, color: element.afterColor || "#10b981" }
+        ];
+
         return (
           <div className="space-y-4 p-4 border border-gray-200 rounded-lg bg-white">
-            <div className="relative overflow-hidden rounded-lg" style={{width: element.beforeAfterWidth || "100%", 
-              height: element.beforeAfterHeight || "400px"}}>
-              <div className="absolute inset-0 flex">
-                <div className="w-1/2 bg-gradient-to-r from-red-400 to-red-600 flex items-center justify-center">
-                  <div className="text-white text-center">
-                    <div className="text-6xl mb-2">😔</div>
-                    <h3 className="text-xl font-bold">
-                      {element.beforeAfterLabels?.before || "ANTES"}
-                    </h3>
-                    <p className="text-sm opacity-90">Situação anterior</p>
+            {element.beforeAfterTitle && (
+              <h3 className="text-lg font-bold text-center mb-4" style={{ color: element.titleColor || '#1f2937' }}>
+                {element.beforeAfterTitle}
+              </h3>
+            )}
+            
+            {element.beforeAfterDisplayType === 'chart' ? (
+              <div className="w-full h-64">
+                <Chart
+                  type={element.beforeAfterChartType || 'bar'}
+                  data={beforeAfterData}
+                  title={element.beforeAfterTitle}
+                  showLegend={element.beforeAfterShowLegend !== false}
+                  backgroundColor={element.beforeAfterChartBg || '#3b82f6'}
+                  borderColor={element.beforeAfterChartBorder || '#1d4ed8'}
+                  height={250}
+                />
+              </div>
+            ) : element.beforeAfterDisplayType === 'metrics' ? (
+              <div className="grid grid-cols-2 gap-4">
+                <div className="text-center p-6 rounded-lg" style={{ backgroundColor: element.beforeColor || '#fef2f2' }}>
+                  <div className="text-4xl font-bold mb-2" style={{ color: element.beforeColor || '#dc2626' }}>
+                    {element.beforeValue || 25}
+                    {element.beforeAfterShowPercent && '%'}
+                  </div>
+                  <h4 className="text-lg font-semibold mb-1" style={{ color: element.beforeColor || '#dc2626' }}>
+                    {element.beforeAfterLabels?.before || "ANTES"}
+                  </h4>
+                  <p className="text-sm opacity-80">{element.beforeDescription || "Situação anterior"}</p>
+                </div>
+                
+                <div className="text-center p-6 rounded-lg" style={{ backgroundColor: element.afterColor || '#f0fdf4' }}>
+                  <div className="text-4xl font-bold mb-2" style={{ color: element.afterColor || '#16a34a' }}>
+                    {element.afterValue || 85}
+                    {element.beforeAfterShowPercent && '%'}
+                  </div>
+                  <h4 className="text-lg font-semibold mb-1" style={{ color: element.afterColor || '#16a34a' }}>
+                    {element.beforeAfterLabels?.after || "DEPOIS"}
+                  </h4>
+                  <p className="text-sm opacity-80">{element.afterDescription || "Resultado alcançado"}</p>
+                </div>
+              </div>
+            ) : (
+              <div className="relative overflow-hidden rounded-lg" style={{
+                width: element.beforeAfterWidth || "100%", 
+                height: element.beforeAfterHeight || "400px"
+              }}>
+                <div className="absolute inset-0 flex">
+                  <div className="w-1/2 bg-gradient-to-r from-red-400 to-red-600 flex items-center justify-center">
+                    <div className="text-white text-center">
+                      <div className="text-6xl mb-2">😔</div>
+                      <h3 className="text-xl font-bold">
+                        {element.beforeAfterLabels?.before || "ANTES"}
+                      </h3>
+                      <p className="text-sm opacity-90">{element.beforeDescription || "Situação anterior"}</p>
+                    </div>
+                  </div>
+                  
+                  <div className="w-1/2 bg-gradient-to-r from-green-400 to-green-600 flex items-center justify-center">
+                    <div className="text-white text-center">
+                      <div className="text-6xl mb-2">😊</div>
+                      <h3 className="text-xl font-bold">
+                        {element.beforeAfterLabels?.after || "DEPOIS"}
+                      </h3>
+                      <p className="text-sm opacity-90">{element.afterDescription || "Resultado alcançado"}</p>
+                    </div>
                   </div>
                 </div>
                 
-                <div className="w-1/2 bg-gradient-to-r from-green-400 to-green-600 flex items-center justify-center">
-                  <div className="text-white text-center">
-                    <div className="text-6xl mb-2">😊</div>
-                    <h3 className="text-xl font-bold">
-                      {element.beforeAfterLabels?.after || "DEPOIS"}
-                    </h3>
-                    <p className="text-sm opacity-90">Resultado alcançado</p>
+                <div className="absolute inset-y-0 left-1/2 transform -translate-x-1/2 w-1 bg-white shadow-lg">
+                  <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-8 h-8 bg-white rounded-full shadow-lg flex items-center justify-center border-2 border-gray-300">
+                    <ArrowLeftRight className="w-4 h-4 text-gray-600" />
                   </div>
                 </div>
               </div>
-              
-              <div className="absolute inset-y-0 left-1/2 transform -translate-x-1/2 w-1 bg-white shadow-lg">
-                <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-8 h-8 bg-white rounded-full shadow-lg flex items-center justify-center border-2 border-gray-300">
-                  <ArrowLeftRight className="w-4 h-4 text-gray-600" />
-                </div>
-              </div>
-            </div>
+            )}
             
-            <div className="text-center text-sm text-gray-600">
-              Arraste o controle para comparar
-            </div>
+            {element.beforeAfterDisplayType !== 'visual' && (
+              <div className="text-center text-sm text-gray-600">
+                {element.beforeAfterDescription || "Comparação entre antes e depois"}
+              </div>
+            )}
           </div>
         );
 
@@ -9190,8 +9244,36 @@ const gameElementCategories = [
                   <div className="bg-green-50 p-3 rounded-lg">
                     <h4 className="text-sm font-semibold text-green-800 mb-2">🔄 Antes & Depois</h4>
                     <p className="text-xs text-green-700">
-                      Comparação visual entre situação anterior e posterior
+                      Comparação visual, gráfica ou métrica entre situação anterior e posterior
                     </p>
+                  </div>
+
+                  <div className="border-b pb-4">
+                    <h5 className="font-semibold text-sm mb-3">📊 Tipo de Exibição</h5>
+                    
+                    <div className="flex space-x-2">
+                      <Button
+                        size="sm"
+                        variant={selectedElementData.beforeAfterDisplayType === "visual" ? "default" : "outline"}
+                        onClick={() => updateElement(selectedElementData.id, { beforeAfterDisplayType: "visual" })}
+                      >
+                        Visual
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant={selectedElementData.beforeAfterDisplayType === "chart" ? "default" : "outline"}
+                        onClick={() => updateElement(selectedElementData.id, { beforeAfterDisplayType: "chart" })}
+                      >
+                        Gráfico
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant={selectedElementData.beforeAfterDisplayType === "metrics" ? "default" : "outline"}
+                        onClick={() => updateElement(selectedElementData.id, { beforeAfterDisplayType: "metrics" })}
+                      >
+                        Métricas
+                      </Button>
+                    </div>
                   </div>
 
                   <div className="border-b pb-4">
@@ -9208,31 +9290,177 @@ const gameElementCategories = [
                     </div>
 
                     <div className="mt-3">
-                      <Label>Itens "Antes" (um por linha)</Label>
-                      <textarea
-                        className="w-full px-2 py-1 border rounded text-xs mt-1"
-                        rows={3}
-                        value={(selectedElementData.beforeItems || ["Problema 1", "Problema 2", "Problema 3"]).join("\n")}
-                        onChange={(e) => {
-                          const items = e.target.value.split("\n").filter(item => item.trim());
-                          updateElement(selectedElementData.id, { beforeItems: items });
-                        }}
-                        placeholder="Problema 1&#10;Problema 2&#10;Problema 3"
+                      <Label>Descrição</Label>
+                      <Input
+                        value={selectedElementData.beforeAfterDescription || ""}
+                        onChange={(e) => updateElement(selectedElementData.id, { beforeAfterDescription: e.target.value })}
+                        placeholder="Veja a diferença incrível"
+                        className="mt-1"
                       />
+                    </div>
+                  </div>
+
+                  {(selectedElementData.beforeAfterDisplayType === "chart" || selectedElementData.beforeAfterDisplayType === "metrics") && (
+                    <div className="border-b pb-4">
+                      <h5 className="font-semibold text-sm mb-3">🔢 Valores</h5>
+                      
+                      <div className="grid grid-cols-2 gap-3">
+                        <div>
+                          <Label>Valor "Antes"</Label>
+                          <Input
+                            type="number"
+                            value={selectedElementData.beforeValue || 25}
+                            onChange={(e) => updateElement(selectedElementData.id, { beforeValue: parseFloat(e.target.value) || 0 })}
+                            placeholder="25"
+                            className="mt-1"
+                          />
+                        </div>
+                        <div>
+                          <Label>Valor "Depois"</Label>
+                          <Input
+                            type="number"
+                            value={selectedElementData.afterValue || 85}
+                            onChange={(e) => updateElement(selectedElementData.id, { afterValue: parseFloat(e.target.value) || 0 })}
+                            placeholder="85"
+                            className="mt-1"
+                          />
+                        </div>
+                      </div>
+
+                      <div className="mt-3">
+                        <Label className="flex items-center space-x-2">
+                          <input
+                            type="checkbox"
+                            checked={selectedElementData.beforeAfterShowPercent || false}
+                            onChange={(e) => updateElement(selectedElementData.id, { beforeAfterShowPercent: e.target.checked })}
+                            className="w-4 h-4"
+                          />
+                          <span>Exibir como porcentagem (%)</span>
+                        </Label>
+                      </div>
+                    </div>
+                  )}
+
+                  {selectedElementData.beforeAfterDisplayType === "chart" && (
+                    <div className="border-b pb-4">
+                      <h5 className="font-semibold text-sm mb-3">📊 Configurações do Gráfico</h5>
+                      
+                      <div>
+                        <Label>Tipo de Gráfico</Label>
+                        <select 
+                          className="w-full px-2 py-1 border rounded text-xs mt-1"
+                          value={selectedElementData.beforeAfterChartType || "bar"}
+                          onChange={(e) => updateElement(selectedElementData.id, { beforeAfterChartType: e.target.value })}
+                        >
+                          <option value="bar">Barras</option>
+                          <option value="line">Linha</option>
+                          <option value="pie">Pizza</option>
+                          <option value="doughnut">Rosca</option>
+                        </select>
+                      </div>
+
+                      <div className="mt-3">
+                        <Label className="flex items-center space-x-2">
+                          <input
+                            type="checkbox"
+                            checked={selectedElementData.beforeAfterShowLegend !== false}
+                            onChange={(e) => updateElement(selectedElementData.id, { beforeAfterShowLegend: e.target.checked })}
+                            className="w-4 h-4"
+                          />
+                          <span>Exibir legenda</span>
+                        </Label>
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="border-b pb-4">
+                    <h5 className="font-semibold text-sm mb-3">🎨 Cores e Estilo</h5>
+                    
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <Label>Cor "Antes"</Label>
+                        <Input
+                          type="color"
+                          value={selectedElementData.beforeColor || "#ef4444"}
+                          onChange={(e) => updateElement(selectedElementData.id, { beforeColor: e.target.value })}
+                          className="mt-1 h-8"
+                        />
+                      </div>
+                      <div>
+                        <Label>Cor "Depois"</Label>
+                        <Input
+                          type="color"
+                          value={selectedElementData.afterColor || "#10b981"}
+                          onChange={(e) => updateElement(selectedElementData.id, { afterColor: e.target.value })}
+                          className="mt-1 h-8"
+                        />
+                      </div>
                     </div>
 
                     <div className="mt-3">
-                      <Label>Itens "Depois" (um por linha)</Label>
-                      <textarea
-                        className="w-full px-2 py-1 border rounded text-xs mt-1"
-                        rows={3}
-                        value={(selectedElementData.afterItems || ["Benefício 1", "Benefício 2", "Benefício 3"]).join("\n")}
-                        onChange={(e) => {
-                          const items = e.target.value.split("\n").filter(item => item.trim());
-                          updateElement(selectedElementData.id, { afterItems: items });
-                        }}
-                        placeholder="Benefício 1&#10;Benefício 2&#10;Benefício 3"
+                      <Label>Cor do Título</Label>
+                      <Input
+                        type="color"
+                        value={selectedElementData.titleColor || "#1f2937"}
+                        onChange={(e) => updateElement(selectedElementData.id, { titleColor: e.target.value })}
+                        className="mt-1 h-8"
                       />
+                    </div>
+                  </div>
+
+                  <div>
+                    <h5 className="font-semibold text-sm mb-3">📝 Rótulos e Descrições</h5>
+                    
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <Label>Rótulo "Antes"</Label>
+                        <Input
+                          value={selectedElementData.beforeAfterLabels?.before || "ANTES"}
+                          onChange={(e) => updateElement(selectedElementData.id, { 
+                            beforeAfterLabels: { 
+                              ...selectedElementData.beforeAfterLabels, 
+                              before: e.target.value 
+                            } 
+                          })}
+                          placeholder="ANTES"
+                          className="mt-1"
+                        />
+                      </div>
+                      <div>
+                        <Label>Rótulo "Depois"</Label>
+                        <Input
+                          value={selectedElementData.beforeAfterLabels?.after || "DEPOIS"}
+                          onChange={(e) => updateElement(selectedElementData.id, { 
+                            beforeAfterLabels: { 
+                              ...selectedElementData.beforeAfterLabels, 
+                              after: e.target.value 
+                            } 
+                          })}
+                          placeholder="DEPOIS"
+                          className="mt-1"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-3 mt-3">
+                      <div>
+                        <Label>Descrição "Antes"</Label>
+                        <Input
+                          value={selectedElementData.beforeDescription || ""}
+                          onChange={(e) => updateElement(selectedElementData.id, { beforeDescription: e.target.value })}
+                          placeholder="Situação anterior"
+                          className="mt-1"
+                        />
+                      </div>
+                      <div>
+                        <Label>Descrição "Depois"</Label>
+                        <Input
+                          value={selectedElementData.afterDescription || ""}
+                          onChange={(e) => updateElement(selectedElementData.id, { afterDescription: e.target.value })}
+                          placeholder="Resultado alcançado"
+                          className="mt-1"
+                        />
+                      </div>
                     </div>
                   </div>
                 </div>

@@ -1104,6 +1104,100 @@ export function QuizPublicRenderer({ quiz }: QuizPublicRendererProps) {
           </div>
         );
 
+      case 'before_after':
+        // Dados para gráfico antes/depois
+        const beforeAfterData = properties.beforeAfterData || [
+          { label: "Antes", value: properties.beforeValue || 25, color: properties.beforeColor || "#ef4444" },
+          { label: "Depois", value: properties.afterValue || 85, color: properties.afterColor || "#10b981" }
+        ];
+
+        return (
+          <div key={id} className="space-y-4 p-4 border border-gray-200 rounded-lg bg-white">
+            {properties.beforeAfterTitle && (
+              <h3 className="text-lg font-bold text-center mb-4" style={{ color: properties.titleColor || '#1f2937' }}>
+                {properties.beforeAfterTitle}
+              </h3>
+            )}
+            
+            {properties.beforeAfterDisplayType === 'chart' ? (
+              <div className="w-full h-64">
+                <Chart
+                  type={properties.beforeAfterChartType || 'bar'}
+                  data={beforeAfterData}
+                  title={properties.beforeAfterTitle}
+                  showLegend={properties.beforeAfterShowLegend !== false}
+                  backgroundColor={properties.beforeAfterChartBg || '#3b82f6'}
+                  borderColor={properties.beforeAfterChartBorder || '#1d4ed8'}
+                  height={250}
+                />
+              </div>
+            ) : properties.beforeAfterDisplayType === 'metrics' ? (
+              <div className="grid grid-cols-2 gap-4">
+                <div className="text-center p-6 rounded-lg" style={{ backgroundColor: properties.beforeColor || '#fef2f2' }}>
+                  <div className="text-4xl font-bold mb-2" style={{ color: properties.beforeColor || '#dc2626' }}>
+                    {properties.beforeValue || 25}
+                    {properties.beforeAfterShowPercent && '%'}
+                  </div>
+                  <h4 className="text-lg font-semibold mb-1" style={{ color: properties.beforeColor || '#dc2626' }}>
+                    {properties.beforeAfterLabels?.before || "ANTES"}
+                  </h4>
+                  <p className="text-sm opacity-80">{properties.beforeDescription || "Situação anterior"}</p>
+                </div>
+                
+                <div className="text-center p-6 rounded-lg" style={{ backgroundColor: properties.afterColor || '#f0fdf4' }}>
+                  <div className="text-4xl font-bold mb-2" style={{ color: properties.afterColor || '#16a34a' }}>
+                    {properties.afterValue || 85}
+                    {properties.beforeAfterShowPercent && '%'}
+                  </div>
+                  <h4 className="text-lg font-semibold mb-1" style={{ color: properties.afterColor || '#16a34a' }}>
+                    {properties.beforeAfterLabels?.after || "DEPOIS"}
+                  </h4>
+                  <p className="text-sm opacity-80">{properties.afterDescription || "Resultado alcançado"}</p>
+                </div>
+              </div>
+            ) : (
+              <div className="relative overflow-hidden rounded-lg" style={{
+                width: properties.beforeAfterWidth || "100%", 
+                height: properties.beforeAfterHeight || "400px"
+              }}>
+                <div className="absolute inset-0 flex">
+                  <div className="w-1/2 bg-gradient-to-r from-red-400 to-red-600 flex items-center justify-center">
+                    <div className="text-white text-center">
+                      <div className="text-6xl mb-2">😔</div>
+                      <h3 className="text-xl font-bold">
+                        {properties.beforeAfterLabels?.before || "ANTES"}
+                      </h3>
+                      <p className="text-sm opacity-90">{properties.beforeDescription || "Situação anterior"}</p>
+                    </div>
+                  </div>
+                  
+                  <div className="w-1/2 bg-gradient-to-r from-green-400 to-green-600 flex items-center justify-center">
+                    <div className="text-white text-center">
+                      <div className="text-6xl mb-2">😊</div>
+                      <h3 className="text-xl font-bold">
+                        {properties.beforeAfterLabels?.after || "DEPOIS"}
+                      </h3>
+                      <p className="text-sm opacity-90">{properties.afterDescription || "Resultado alcançado"}</p>
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="absolute inset-y-0 left-1/2 transform -translate-x-1/2 w-1 bg-white shadow-lg">
+                  <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-8 h-8 bg-white rounded-full shadow-lg flex items-center justify-center border-2 border-gray-300">
+                    <ArrowUpDown className="w-4 h-4 text-gray-600" />
+                  </div>
+                </div>
+              </div>
+            )}
+            
+            {properties.beforeAfterDisplayType !== 'visual' && (
+              <div className="text-center text-sm text-gray-600">
+                {properties.beforeAfterDescription || "Comparação entre antes e depois"}
+              </div>
+            )}
+          </div>
+        );
+
       default:
         return (
           <div key={id} className="p-4 bg-gray-100 rounded-md">

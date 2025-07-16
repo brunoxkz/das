@@ -9,6 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { useToast } from '@/hooks/use-toast';
+import Chart from './Chart';
 import { 
   ChevronLeft, 
   ChevronRight, 
@@ -314,7 +315,6 @@ import {
   Black,
   White
 } from 'lucide-react';
-import Chart from './Chart';
 
 interface QuizPreviewProps {
   quiz: any;
@@ -1474,6 +1474,100 @@ export default function QuizPreview({ quiz, onClose, onSave }: QuizPreviewProps)
                 {element.description || 'Você será redirecionado em breve.'}
               </div>
             </div>
+          </div>
+        );
+
+      case 'before_after':
+        // Dados para gráfico antes/depois
+        const beforeAfterData = element.beforeAfterData || [
+          { label: "Antes", value: element.beforeValue || 25, color: element.beforeColor || "#ef4444" },
+          { label: "Depois", value: element.afterValue || 85, color: element.afterColor || "#10b981" }
+        ];
+
+        return (
+          <div className="mb-4 space-y-4 p-4 border border-gray-200 rounded-lg bg-white">
+            {element.beforeAfterTitle && (
+              <h3 className="text-lg font-bold text-center mb-4" style={{ color: element.titleColor || '#1f2937' }}>
+                {element.beforeAfterTitle}
+              </h3>
+            )}
+            
+            {element.beforeAfterDisplayType === 'chart' ? (
+              <div className="w-full h-64">
+                <Chart
+                  type={element.beforeAfterChartType || 'bar'}
+                  data={beforeAfterData}
+                  title={element.beforeAfterTitle}
+                  showLegend={element.beforeAfterShowLegend !== false}
+                  backgroundColor={element.beforeAfterChartBg || '#3b82f6'}
+                  borderColor={element.beforeAfterChartBorder || '#1d4ed8'}
+                  height={250}
+                />
+              </div>
+            ) : element.beforeAfterDisplayType === 'metrics' ? (
+              <div className="grid grid-cols-2 gap-4">
+                <div className="text-center p-6 rounded-lg" style={{ backgroundColor: element.beforeColor || '#fef2f2' }}>
+                  <div className="text-4xl font-bold mb-2" style={{ color: element.beforeColor || '#dc2626' }}>
+                    {element.beforeValue || 25}
+                    {element.beforeAfterShowPercent && '%'}
+                  </div>
+                  <h4 className="text-lg font-semibold mb-1" style={{ color: element.beforeColor || '#dc2626' }}>
+                    {element.beforeAfterLabels?.before || "ANTES"}
+                  </h4>
+                  <p className="text-sm opacity-80">{element.beforeDescription || "Situação anterior"}</p>
+                </div>
+                
+                <div className="text-center p-6 rounded-lg" style={{ backgroundColor: element.afterColor || '#f0fdf4' }}>
+                  <div className="text-4xl font-bold mb-2" style={{ color: element.afterColor || '#16a34a' }}>
+                    {element.afterValue || 85}
+                    {element.beforeAfterShowPercent && '%'}
+                  </div>
+                  <h4 className="text-lg font-semibold mb-1" style={{ color: element.afterColor || '#16a34a' }}>
+                    {element.beforeAfterLabels?.after || "DEPOIS"}
+                  </h4>
+                  <p className="text-sm opacity-80">{element.afterDescription || "Resultado alcançado"}</p>
+                </div>
+              </div>
+            ) : (
+              <div className="relative overflow-hidden rounded-lg" style={{
+                width: element.beforeAfterWidth || "100%", 
+                height: element.beforeAfterHeight || "400px"
+              }}>
+                <div className="absolute inset-0 flex">
+                  <div className="w-1/2 bg-gradient-to-r from-red-400 to-red-600 flex items-center justify-center">
+                    <div className="text-white text-center">
+                      <div className="text-6xl mb-2">😔</div>
+                      <h3 className="text-xl font-bold">
+                        {element.beforeAfterLabels?.before || "ANTES"}
+                      </h3>
+                      <p className="text-sm opacity-90">{element.beforeDescription || "Situação anterior"}</p>
+                    </div>
+                  </div>
+                  
+                  <div className="w-1/2 bg-gradient-to-r from-green-400 to-green-600 flex items-center justify-center">
+                    <div className="text-white text-center">
+                      <div className="text-6xl mb-2">😊</div>
+                      <h3 className="text-xl font-bold">
+                        {element.beforeAfterLabels?.after || "DEPOIS"}
+                      </h3>
+                      <p className="text-sm opacity-90">{element.afterDescription || "Resultado alcançado"}</p>
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="absolute inset-y-0 left-1/2 transform -translate-x-1/2 w-1 bg-white shadow-lg">
+                  <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-8 h-8 bg-white rounded-full shadow-lg flex items-center justify-center border-2 border-gray-300">
+                    <ArrowUpDown className="w-4 h-4 text-gray-600" />
+                  </div>
+                </div>
+              </div>
+            )}
+            
+            {element.beforeAfterDisplayType !== 'visual' && (
+              <div className="text-center text-sm text-gray-600">
+                {element.beforeAfterDescription || "Comparação entre antes e depois"}
+              </div>
+            )}
           </div>
         );
 
