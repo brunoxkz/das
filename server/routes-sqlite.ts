@@ -11534,6 +11534,460 @@ export function registerCheckoutRoutes(app: Express) {
       res.status(500).json({ error: 'Erro interno do servidor' });
     }
   });
+
+  // =============================================
+  // CHECKOUT BUILDER ROUTES
+  // =============================================
+
+  // Listar produtos do usuário
+  app.get('/api/products', verifyJWT, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const products = await storage.getProductsByUserId(userId);
+      res.json(products);
+    } catch (error) {
+      console.error('Erro ao buscar produtos:', error);
+      res.status(500).json({ error: 'Erro interno do servidor' });
+    }
+  });
+
+  // Criar produto
+  app.post('/api/products', verifyJWT, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const productData = {
+        ...req.body,
+        id: nanoid(),
+        userId,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      };
+
+      const product = await storage.createProduct(productData);
+      res.status(201).json(product);
+    } catch (error) {
+      console.error('Erro ao criar produto:', error);
+      res.status(500).json({ error: 'Erro interno do servidor' });
+    }
+  });
+
+  // Atualizar produto
+  app.put('/api/products/:id', verifyJWT, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const productId = req.params.id;
+      
+      // Verificar se o produto pertence ao usuário
+      const existingProduct = await storage.getProductById(productId);
+      if (!existingProduct || existingProduct.userId !== userId) {
+        return res.status(404).json({ error: 'Produto não encontrado' });
+      }
+
+      const productData = {
+        ...req.body,
+        id: productId,
+        userId,
+        updatedAt: new Date()
+      };
+
+      const product = await storage.updateProduct(productId, productData);
+      res.json(product);
+    } catch (error) {
+      console.error('Erro ao atualizar produto:', error);
+      res.status(500).json({ error: 'Erro interno do servidor' });
+    }
+  });
+
+  // Deletar produto
+  app.delete('/api/products/:id', verifyJWT, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const productId = req.params.id;
+      
+      // Verificar se o produto pertence ao usuário
+      const existingProduct = await storage.getProductById(productId);
+      if (!existingProduct || existingProduct.userId !== userId) {
+        return res.status(404).json({ error: 'Produto não encontrado' });
+      }
+
+      await storage.deleteProduct(productId);
+      res.status(204).send();
+    } catch (error) {
+      console.error('Erro ao deletar produto:', error);
+      res.status(500).json({ error: 'Erro interno do servidor' });
+    }
+  });
+
+  // Gerar link de pagamento
+  app.post('/api/products/:id/generate-link', verifyJWT, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const productId = req.params.id;
+      
+      // Verificar se o produto pertence ao usuário
+      const existingProduct = await storage.getProductById(productId);
+      if (!existingProduct || existingProduct.userId !== userId) {
+        return res.status(404).json({ error: 'Produto não encontrado' });
+      }
+
+      // Gerar link único
+      const linkId = nanoid();
+      const paymentLink = `${req.protocol}://${req.hostname}/checkout/${linkId}`;
+      
+      // Atualizar produto com o link
+      await storage.updateProduct(productId, {
+        paymentLink,
+        updatedAt: new Date()
+      });
+
+      res.json({ paymentLink });
+    } catch (error) {
+      console.error('Erro ao gerar link de pagamento:', error);
+      res.status(500).json({ error: 'Erro interno do servidor' });
+    }
+  });
+
+  // Listar páginas de checkout
+  app.get('/api/checkout-pages', verifyJWT, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const pages = await storage.getCheckoutPagesByUserId(userId);
+      res.json(pages);
+    } catch (error) {
+      console.error('Erro ao buscar páginas de checkout:', error);
+      res.status(500).json({ error: 'Erro interno do servidor' });
+    }
+  });
+
+  // Criar página de checkout
+  app.post('/api/checkout-pages', verifyJWT, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const pageData = {
+        ...req.body,
+        id: nanoid(),
+        userId,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      };
+
+      const page = await storage.createCheckoutPage(pageData);
+      res.status(201).json(page);
+    } catch (error) {
+      console.error('Erro ao criar página de checkout:', error);
+      res.status(500).json({ error: 'Erro interno do servidor' });
+    }
+  });
+
+  // Listar transações de checkout
+  app.get('/api/checkout-transactions', verifyJWT, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const transactions = await storage.getCheckoutTransactionsByUserId(userId);
+      res.json(transactions);
+    } catch (error) {
+      console.error('Erro ao buscar transações:', error);
+      res.status(500).json({ error: 'Erro interno do servidor' });
+    }
+  });
+
+  // Analytics de checkout
+  app.get('/api/checkout-analytics', verifyJWT, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const { startDate, endDate, productId } = req.query;
+      
+      const analytics = await storage.getCheckoutAnalytics(userId, {
+        startDate: startDate as string,
+        endDate: endDate as string,
+        productId: productId as string
+      });
+      
+      res.json(analytics);
+    } catch (error) {
+      console.error('Erro ao buscar analytics:', error);
+      res.status(500).json({ error: 'Erro interno do servidor' });
+    }
+  });
+
+  // Checkout público (processar pagamento)
+  app.post('/api/checkout/process', async (req, res) => {
+    try {
+      const { productId, customerData, paymentMethod } = req.body;
+      
+      // Verificar se o produto existe
+      const product = await storage.getProductById(productId);
+      if (!product) {
+        return res.status(404).json({ error: 'Produto não encontrado' });
+      }
+
+      // Criar transação
+      const transactionData = {
+        id: nanoid(),
+        userId: product.userId,
+        productId: productId,
+        customerEmail: customerData.email,
+        customerName: customerData.name,
+        customerPhone: customerData.phone,
+        customerAddress: customerData.address,
+        amount: product.price,
+        currency: 'BRL',
+        status: 'pending',
+        paymentMethod: paymentMethod,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      };
+
+      const transaction = await storage.createCheckoutTransaction(transactionData);
+      
+      // Aqui seria integrado com Stripe ou outro gateway
+      // Por enquanto, marcar como completed para teste
+      await storage.updateCheckoutTransaction(transaction.id, {
+        status: 'completed',
+        updatedAt: new Date()
+      });
+
+      res.json({ 
+        success: true, 
+        transactionId: transaction.id,
+        status: 'completed'
+      });
+    } catch (error) {
+      console.error('Erro ao processar checkout:', error);
+      res.status(500).json({ error: 'Erro interno do servidor' });
+    }
+  });
+
+  // =============================================
+  // ROTAS DO SISTEMA DE PRODUTOS E CHECKOUT
+  // =============================================
+
+  // Listar produtos do usuário
+  app.get("/api/products", verifyJWT, async (req: any, res: Response) => {
+    try {
+      const userId = req.user.id;
+      const products = await storage.getUserProducts(userId);
+      res.json(products);
+    } catch (error) {
+      console.error('Erro ao listar produtos:', error);
+      res.status(500).json({ error: 'Erro interno do servidor' });
+    }
+  });
+
+  // Buscar produto por ID
+  app.get("/api/products/:id", verifyJWT, async (req: any, res: Response) => {
+    try {
+      const productId = req.params.id;
+      const userId = req.user.id;
+      
+      const product = await storage.getProduct(productId);
+      
+      if (!product) {
+        return res.status(404).json({ error: 'Produto não encontrado' });
+      }
+      
+      if (product.userId !== userId) {
+        return res.status(403).json({ error: 'Acesso negado' });
+      }
+      
+      res.json(product);
+    } catch (error) {
+      console.error('Erro ao buscar produto:', error);
+      res.status(500).json({ error: 'Erro interno do servidor' });
+    }
+  });
+
+  // Criar produto
+  app.post("/api/products", verifyJWT, async (req: any, res: Response) => {
+    try {
+      const userId = req.user.id;
+      const { nanoid } = await import('nanoid');
+      
+      const productData = {
+        ...req.body,
+        userId,
+        paymentLink: nanoid(12)
+      };
+      
+      const product = await storage.createProduct(productData);
+      res.status(201).json(product);
+    } catch (error) {
+      console.error('Erro ao criar produto:', error);
+      res.status(500).json({ error: 'Erro interno do servidor' });
+    }
+  });
+
+  // Atualizar produto
+  app.put("/api/products/:id", verifyJWT, async (req: any, res: Response) => {
+    try {
+      const productId = req.params.id;
+      const userId = req.user.id;
+      
+      const product = await storage.getProduct(productId);
+      
+      if (!product) {
+        return res.status(404).json({ error: 'Produto não encontrado' });
+      }
+      
+      if (product.userId !== userId) {
+        return res.status(403).json({ error: 'Acesso negado' });
+      }
+      
+      const updatedProduct = await storage.updateProduct(productId, req.body);
+      res.json(updatedProduct);
+    } catch (error) {
+      console.error('Erro ao atualizar produto:', error);
+      res.status(500).json({ error: 'Erro interno do servidor' });
+    }
+  });
+
+  // Deletar produto
+  app.delete("/api/products/:id", verifyJWT, async (req: any, res: Response) => {
+    try {
+      const productId = req.params.id;
+      const userId = req.user.id;
+      
+      const product = await storage.getProduct(productId);
+      
+      if (!product) {
+        return res.status(404).json({ error: 'Produto não encontrado' });
+      }
+      
+      if (product.userId !== userId) {
+        return res.status(403).json({ error: 'Acesso negado' });
+      }
+      
+      await storage.deleteProduct(productId);
+      res.json({ success: true });
+    } catch (error) {
+      console.error('Erro ao deletar produto:', error);
+      res.status(500).json({ error: 'Erro interno do servidor' });
+    }
+  });
+
+  // Gerar novo link de pagamento
+  app.post("/api/products/:id/generate-link", verifyJWT, async (req: any, res: Response) => {
+    try {
+      const productId = req.params.id;
+      const userId = req.user.id;
+      const { nanoid } = await import('nanoid');
+      
+      const product = await storage.getProduct(productId);
+      
+      if (!product) {
+        return res.status(404).json({ error: 'Produto não encontrado' });
+      }
+      
+      if (product.userId !== userId) {
+        return res.status(403).json({ error: 'Acesso negado' });
+      }
+      
+      const newPaymentLink = nanoid(12);
+      const updatedProduct = await storage.updateProduct(productId, { paymentLink: newPaymentLink });
+      
+      res.json({ 
+        success: true, 
+        paymentLink: newPaymentLink,
+        fullUrl: `${req.protocol}://${req.get('host')}/checkout/${newPaymentLink}`
+      });
+    } catch (error) {
+      console.error('Erro ao gerar novo link:', error);
+      res.status(500).json({ error: 'Erro interno do servidor' });
+    }
+  });
+
+  // Buscar produto por link de pagamento (público)
+  app.get("/api/checkout/:paymentLink", async (req: Request, res: Response) => {
+    try {
+      const paymentLink = req.params.paymentLink;
+      
+      const product = await storage.getProductByPaymentLink(paymentLink);
+      
+      if (!product) {
+        return res.status(404).json({ error: 'Produto não encontrado' });
+      }
+      
+      if (!product.isActive) {
+        return res.status(403).json({ error: 'Produto inativo' });
+      }
+      
+      // Remover dados sensíveis do usuário
+      const { userId, ...productData } = product;
+      
+      res.json(productData);
+    } catch (error) {
+      console.error('Erro ao buscar produto por link:', error);
+      res.status(500).json({ error: 'Erro interno do servidor' });
+    }
+  });
+
+  // Processar pagamento (público)
+  app.post("/api/checkout/:paymentLink/process", async (req: Request, res: Response) => {
+    try {
+      const paymentLink = req.params.paymentLink;
+      const { customerInfo, paymentMethod } = req.body;
+      
+      const product = await storage.getProductByPaymentLink(paymentLink);
+      
+      if (!product) {
+        return res.status(404).json({ error: 'Produto não encontrado' });
+      }
+      
+      if (!product.isActive) {
+        return res.status(403).json({ error: 'Produto inativo' });
+      }
+      
+      // Criar transação de checkout
+      const transaction = await storage.createCheckoutTransaction({
+        productId: product.id,
+        customerInfo,
+        paymentMethod,
+        amount: product.price,
+        status: 'pending'
+      });
+      
+      // Simular processamento de pagamento
+      // Em produção, aqui seria feita a integração com Stripe
+      setTimeout(async () => {
+        await storage.updateCheckoutTransaction(transaction.id, {
+          status: 'completed',
+          updatedAt: new Date()
+        });
+      }, 2000);
+      
+      res.json({ 
+        success: true, 
+        transactionId: transaction.id,
+        status: 'processing'
+      });
+    } catch (error) {
+      console.error('Erro ao processar checkout:', error);
+      res.status(500).json({ error: 'Erro interno do servidor' });
+    }
+  });
+
+  // Verificar status do pagamento
+  app.get("/api/checkout/transaction/:transactionId", async (req: Request, res: Response) => {
+    try {
+      const transactionId = req.params.transactionId;
+      
+      const transaction = await storage.getCheckoutTransaction(transactionId);
+      
+      if (!transaction) {
+        return res.status(404).json({ error: 'Transação não encontrada' });
+      }
+      
+      res.json({ 
+        transactionId: transaction.id,
+        status: transaction.status,
+        amount: transaction.amount,
+        createdAt: transaction.createdAt
+      });
+    } catch (error) {
+      console.error('Erro ao verificar status:', error);
+      res.status(500).json({ error: 'Erro interno do servidor' });
+    }
+  });
 }
 
 

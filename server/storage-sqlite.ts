@@ -30,6 +30,7 @@ import {
   abTests, abTestViews, webhooks, webhookLogs, integrations,
   typebotProjects, typebotConversations, typebotMessages, typebotAnalytics, typebotWebhooks, typebotIntegrations,
   subscriptionPlans, subscriptionTransactions, creditTransactions,
+  checkoutProducts, checkoutPages, checkoutTransactions, checkoutAnalytics,
   type User, type UpsertUser, type InsertQuiz, type Quiz,
   type InsertQuizTemplate, type QuizTemplate,
   type InsertQuizResponse, type QuizResponse,
@@ -60,7 +61,11 @@ import {
   type InsertTypebotIntegration, type TypebotIntegration,
   type InsertSubscriptionPlan, type SubscriptionPlan,
   type InsertSubscriptionTransaction, type SubscriptionTransaction,
-  type InsertCreditTransaction, type CreditTransaction
+  type InsertCreditTransaction, type CreditTransaction,
+  type InsertCheckoutProduct, type CheckoutProduct,
+  type InsertCheckoutPage, type CheckoutPage,
+  type InsertCheckoutTransaction, type CheckoutTransaction,
+  type InsertCheckoutAnalytics, type CheckoutAnalytics
 } from "../shared/schema-sqlite";
 import { eq, desc, and, gte, lte, count, asc, or, inArray } from "drizzle-orm";
 import { nanoid } from "nanoid";
@@ -271,6 +276,31 @@ export interface IStorage {
   deleteAbTest(id: string): Promise<void>;
   createAbTestView(view: Omit<InsertAbTestView, 'id' | 'createdAt'>): Promise<AbTestView>;
   updateAbTestViews(testId: string): Promise<void>;
+
+  // Checkout Builder operations
+  getProductsByUserId(userId: string): Promise<CheckoutProduct[]>;
+  getProductById(id: string): Promise<CheckoutProduct | undefined>;
+  createProduct(product: InsertCheckoutProduct): Promise<CheckoutProduct>;
+  updateProduct(id: string, updates: Partial<InsertCheckoutProduct>): Promise<CheckoutProduct>;
+  deleteProduct(id: string): Promise<void>;
+  
+  // Checkout Pages operations
+  getCheckoutPagesByUserId(userId: string): Promise<CheckoutPage[]>;
+  getCheckoutPageById(id: string): Promise<CheckoutPage | undefined>;
+  createCheckoutPage(page: InsertCheckoutPage): Promise<CheckoutPage>;
+  updateCheckoutPage(id: string, updates: Partial<InsertCheckoutPage>): Promise<CheckoutPage>;
+  deleteCheckoutPage(id: string): Promise<void>;
+  
+  // Checkout Transactions operations
+  getCheckoutTransactionsByUserId(userId: string): Promise<CheckoutTransaction[]>;
+  getCheckoutTransactionById(id: string): Promise<CheckoutTransaction | undefined>;
+  createCheckoutTransaction(transaction: InsertCheckoutTransaction): Promise<CheckoutTransaction>;
+  updateCheckoutTransaction(id: string, updates: Partial<InsertCheckoutTransaction>): Promise<CheckoutTransaction>;
+  deleteCheckoutTransaction(id: string): Promise<void>;
+  
+  // Checkout Analytics operations
+  getCheckoutAnalytics(userId: string, filters?: { startDate?: string; endDate?: string; productId?: string }): Promise<any>;
+  createCheckoutAnalytics(analytics: InsertCheckoutAnalytics): Promise<CheckoutAnalytics>;
 }
 
 export class SQLiteStorage implements IStorage {
@@ -6396,6 +6426,200 @@ Hoje você vai aprender ${project.title} - método revolucionário que já ajudo
       console.log('✅ Tabelas do sistema de checkout criadas com sucesso');
     } catch (error) {
       console.error('❌ Erro ao criar tabelas do checkout:', error);
+      throw error;
+    }
+  }
+
+  // =============================================
+  // CHECKOUT BUILDER METHODS
+  // =============================================
+
+  async getProductsByUserId(userId: string): Promise<CheckoutProduct[]> {
+    try {
+      const products = await db.select().from(checkoutProducts).where(eq(checkoutProducts.userId, userId));
+      return products;
+    } catch (error) {
+      console.error('Erro ao buscar produtos:', error);
+      throw error;
+    }
+  }
+
+  async getProductById(id: string): Promise<CheckoutProduct | undefined> {
+    try {
+      const [product] = await db.select().from(checkoutProducts).where(eq(checkoutProducts.id, id));
+      return product;
+    } catch (error) {
+      console.error('Erro ao buscar produto:', error);
+      throw error;
+    }
+  }
+
+  async createProduct(product: InsertCheckoutProduct): Promise<CheckoutProduct> {
+    try {
+      const [newProduct] = await db.insert(checkoutProducts).values(product).returning();
+      return newProduct;
+    } catch (error) {
+      console.error('Erro ao criar produto:', error);
+      throw error;
+    }
+  }
+
+  async updateProduct(id: string, updates: Partial<InsertCheckoutProduct>): Promise<CheckoutProduct> {
+    try {
+      const [updatedProduct] = await db.update(checkoutProducts)
+        .set(updates)
+        .where(eq(checkoutProducts.id, id))
+        .returning();
+      return updatedProduct;
+    } catch (error) {
+      console.error('Erro ao atualizar produto:', error);
+      throw error;
+    }
+  }
+
+  async deleteProduct(id: string): Promise<void> {
+    try {
+      await db.delete(checkoutProducts).where(eq(checkoutProducts.id, id));
+    } catch (error) {
+      console.error('Erro ao deletar produto:', error);
+      throw error;
+    }
+  }
+
+  async getCheckoutPagesByUserId(userId: string): Promise<CheckoutPage[]> {
+    try {
+      const pages = await db.select().from(checkoutPages).where(eq(checkoutPages.userId, userId));
+      return pages;
+    } catch (error) {
+      console.error('Erro ao buscar páginas de checkout:', error);
+      throw error;
+    }
+  }
+
+  async getCheckoutPageById(id: string): Promise<CheckoutPage | undefined> {
+    try {
+      const [page] = await db.select().from(checkoutPages).where(eq(checkoutPages.id, id));
+      return page;
+    } catch (error) {
+      console.error('Erro ao buscar página de checkout:', error);
+      throw error;
+    }
+  }
+
+  async createCheckoutPage(page: InsertCheckoutPage): Promise<CheckoutPage> {
+    try {
+      const [newPage] = await db.insert(checkoutPages).values(page).returning();
+      return newPage;
+    } catch (error) {
+      console.error('Erro ao criar página de checkout:', error);
+      throw error;
+    }
+  }
+
+  async updateCheckoutPage(id: string, updates: Partial<InsertCheckoutPage>): Promise<CheckoutPage> {
+    try {
+      const [updatedPage] = await db.update(checkoutPages)
+        .set(updates)
+        .where(eq(checkoutPages.id, id))
+        .returning();
+      return updatedPage;
+    } catch (error) {
+      console.error('Erro ao atualizar página de checkout:', error);
+      throw error;
+    }
+  }
+
+  async deleteCheckoutPage(id: string): Promise<void> {
+    try {
+      await db.delete(checkoutPages).where(eq(checkoutPages.id, id));
+    } catch (error) {
+      console.error('Erro ao deletar página de checkout:', error);
+      throw error;
+    }
+  }
+
+  async getCheckoutTransactionsByUserId(userId: string): Promise<CheckoutTransaction[]> {
+    try {
+      const transactions = await db.select().from(checkoutTransactions).where(eq(checkoutTransactions.userId, userId));
+      return transactions;
+    } catch (error) {
+      console.error('Erro ao buscar transações de checkout:', error);
+      throw error;
+    }
+  }
+
+  async getCheckoutTransactionById(id: string): Promise<CheckoutTransaction | undefined> {
+    try {
+      const [transaction] = await db.select().from(checkoutTransactions).where(eq(checkoutTransactions.id, id));
+      return transaction;
+    } catch (error) {
+      console.error('Erro ao buscar transação de checkout:', error);
+      throw error;
+    }
+  }
+
+  async createCheckoutTransaction(transaction: InsertCheckoutTransaction): Promise<CheckoutTransaction> {
+    try {
+      const [newTransaction] = await db.insert(checkoutTransactions).values(transaction).returning();
+      return newTransaction;
+    } catch (error) {
+      console.error('Erro ao criar transação de checkout:', error);
+      throw error;
+    }
+  }
+
+  async updateCheckoutTransaction(id: string, updates: Partial<InsertCheckoutTransaction>): Promise<CheckoutTransaction> {
+    try {
+      const [updatedTransaction] = await db.update(checkoutTransactions)
+        .set(updates)
+        .where(eq(checkoutTransactions.id, id))
+        .returning();
+      return updatedTransaction;
+    } catch (error) {
+      console.error('Erro ao atualizar transação de checkout:', error);
+      throw error;
+    }
+  }
+
+  async deleteCheckoutTransaction(id: string): Promise<void> {
+    try {
+      await db.delete(checkoutTransactions).where(eq(checkoutTransactions.id, id));
+    } catch (error) {
+      console.error('Erro ao deletar transação de checkout:', error);
+      throw error;
+    }
+  }
+
+  async getCheckoutAnalytics(userId: string, filters?: { startDate?: string; endDate?: string; productId?: string }): Promise<any> {
+    try {
+      let query = db.select().from(checkoutAnalytics).where(eq(checkoutAnalytics.userId, userId));
+      
+      if (filters?.startDate) {
+        query = query.where(gte(checkoutAnalytics.createdAt, new Date(filters.startDate)));
+      }
+      
+      if (filters?.endDate) {
+        query = query.where(lte(checkoutAnalytics.createdAt, new Date(filters.endDate)));
+      }
+      
+      if (filters?.productId) {
+        query = query.where(eq(checkoutAnalytics.productId, filters.productId));
+      }
+      
+      const analytics = await query;
+      return analytics;
+    } catch (error) {
+      console.error('Erro ao buscar analytics de checkout:', error);
+      throw error;
+    }
+  }
+
+  async createCheckoutAnalytics(analytics: InsertCheckoutAnalytics): Promise<CheckoutAnalytics> {
+    try {
+      const [newAnalytics] = await db.insert(checkoutAnalytics).values(analytics).returning();
+      return newAnalytics;
+    } catch (error) {
+      console.error('Erro ao criar analytics de checkout:', error);
       throw error;
     }
   }

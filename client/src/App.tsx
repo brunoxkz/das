@@ -50,7 +50,9 @@ import ConditionalCampaignsPage from "@/pages/conditional-campaigns";
 import FacelessVideosPage from "@/pages/faceless-videos";
 import CheckoutSystemPage from "@/pages/checkout-system";
 import CheckoutAdminPage from "@/pages/checkout-admin";
-import CheckoutPage from "@/pages/checkout";
+import CheckoutBuilder from "@/pages/checkout-builder";
+import CheckoutPublic from "@/pages/checkout-public";
+import CheckoutSuccess from "@/pages/checkout-success";
 import { useAuth } from "@/hooks/useAuth-jwt";
 import { isUnauthorizedError } from "@/lib/authUtils";
 import { SidebarProvider } from "@/hooks/useSidebar";
@@ -73,7 +75,8 @@ function App() {
   // Public routes that don't require authentication
   const publicRoutes = ["/", "/dark", "/modern", "/login"];
   const isQuizRoute = location.startsWith("/quiz/");
-  const isPublicRoute = publicRoutes.includes(location) || isQuizRoute;
+  const isCheckoutRoute = location.startsWith("/checkout/");
+  const isPublicRoute = publicRoutes.includes(location) || isQuizRoute || isCheckoutRoute;
 
   // Redirect to dashboard if authenticated and on login page
   if (isAuthenticated && location === "/login") {
@@ -95,6 +98,8 @@ function App() {
         <Route path="/modern" component={ModernHomePage} />
         <Route path="/login" component={LoginPage} />
         <Route path="/quiz/:id" component={QuizPublicPage} />
+        <Route path="/checkout/:linkId" component={CheckoutPublic} />
+        <Route path="/checkout/success/:transactionId" component={CheckoutSuccess} />
         <Route path="/test" component={TestPage} />
 
         {/* Authenticated routes with sidebar */}
@@ -256,7 +261,7 @@ function App() {
         
         <Route path="/checkout">
           <Layout>
-            <CheckoutPage />
+            <CheckoutBuilder />
           </Layout>
         </Route>
 

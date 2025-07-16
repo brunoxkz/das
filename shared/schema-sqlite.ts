@@ -1024,6 +1024,105 @@ export type TypebotWebhook = typeof typebotWebhooks.$inferSelect;
 export type InsertTypebotIntegration = z.infer<typeof insertTypebotIntegrationSchema>;
 export type TypebotIntegration = typeof typebotIntegrations.$inferSelect;
 
+// =============================================
+// CHECKOUT BUILDER SYSTEM TABLES
+// =============================================
+
+// Produtos do Checkout Builder
+export const checkoutProducts = sqliteTable("checkout_products", {
+  id: text("id").primaryKey(),
+  userId: text("userId").notNull().references(() => users.id),
+  name: text("name").notNull(),
+  description: text("description").notNull(),
+  price: real("price").notNull(),
+  image: text("image"),
+  category: text("category").notNull(), // digital, physical, service, course, software
+  features: text("features", { mode: 'json' }).notNull(), // Array de strings
+  paymentMode: text("paymentMode").notNull(), // one_time, recurring
+  recurringInterval: text("recurringInterval"), // monthly, yearly
+  trialPeriod: integer("trialPeriod"), // days
+  status: text("status").notNull().default("active"), // active, inactive
+  customization: text("customization", { mode: 'json' }).notNull(), // theme, colors, etc
+  stripeProductId: text("stripeProductId"),
+  stripePriceId: text("stripePriceId"),
+  paymentLink: text("paymentLink"),
+  createdAt: integer("createdAt", { mode: 'timestamp' }).notNull().$defaultFn(() => new Date()),
+  updatedAt: integer("updatedAt", { mode: 'timestamp' }).notNull().$defaultFn(() => new Date()),
+});
+
+// Páginas de Checkout customizadas
+export const checkoutPages = sqliteTable("checkout_pages", {
+  id: text("id").primaryKey(),
+  userId: text("userId").notNull().references(() => users.id),
+  productId: text("productId").notNull().references(() => checkoutProducts.id),
+  title: text("title").notNull(),
+  subtitle: text("subtitle"),
+  testimonials: text("testimonials", { mode: 'json' }), // Array de testimonials
+  guarantees: text("guarantees", { mode: 'json' }), // Array de garantias
+  urgency: text("urgency", { mode: 'json' }), // Configurações de urgência
+  orderBumps: text("orderBumps", { mode: 'json' }), // Array de order bumps
+  paymentMethods: text("paymentMethods", { mode: 'json' }), // Métodos de pagamento aceitos
+  customCss: text("customCss"),
+  customJs: text("customJs"),
+  isActive: integer("isActive", { mode: 'boolean' }).default(true),
+  createdAt: integer("createdAt", { mode: 'timestamp' }).notNull().$defaultFn(() => new Date()),
+  updatedAt: integer("updatedAt", { mode: 'timestamp' }).notNull().$defaultFn(() => new Date()),
+});
+
+// Transações de Checkout
+export const checkoutTransactions = sqliteTable("checkout_transactions", {
+  id: text("id").primaryKey(),
+  userId: text("userId").notNull().references(() => users.id),
+  productId: text("productId").notNull().references(() => checkoutProducts.id),
+  checkoutPageId: text("checkoutPageId").references(() => checkoutPages.id),
+  customerEmail: text("customerEmail").notNull(),
+  customerName: text("customerName").notNull(),
+  customerPhone: text("customerPhone"),
+  customerAddress: text("customerAddress", { mode: 'json' }),
+  amount: real("amount").notNull(),
+  currency: text("currency").notNull().default("BRL"),
+  status: text("status").notNull(), // pending, completed, failed, refunded
+  paymentMethod: text("paymentMethod").notNull(), // credit_card, pix, boleto
+  stripePaymentIntentId: text("stripePaymentIntentId"),
+  stripeSubscriptionId: text("stripeSubscriptionId"),
+  orderBumps: text("orderBumps", { mode: 'json' }), // Order bumps selecionados
+  metadata: text("metadata", { mode: 'json' }),
+  createdAt: integer("createdAt", { mode: 'timestamp' }).notNull().$defaultFn(() => new Date()),
+  updatedAt: integer("updatedAt", { mode: 'timestamp' }).notNull().$defaultFn(() => new Date()),
+});
+
+// Analytics de Checkout
+export const checkoutAnalytics = sqliteTable("checkout_analytics", {
+  id: text("id").primaryKey(),
+  userId: text("userId").notNull().references(() => users.id),
+  productId: text("productId").notNull().references(() => checkoutProducts.id),
+  checkoutPageId: text("checkoutPageId").references(() => checkoutPages.id),
+  date: text("date").notNull(), // YYYY-MM-DD
+  views: integer("views").notNull().default(0),
+  conversions: integer("conversions").notNull().default(0),
+  revenue: real("revenue").notNull().default(0),
+  avgOrderValue: real("avgOrderValue").notNull().default(0),
+  bounceRate: real("bounceRate").notNull().default(0),
+  createdAt: integer("createdAt", { mode: 'timestamp' }).notNull().$defaultFn(() => new Date()),
+  updatedAt: integer("updatedAt", { mode: 'timestamp' }).notNull().$defaultFn(() => new Date()),
+});
+
+// Checkout Builder Zod Schemas
+export const insertCheckoutProductSchema = createInsertSchema(checkoutProducts);
+export const insertCheckoutPageSchema = createInsertSchema(checkoutPages);
+export const insertCheckoutTransactionSchema = createInsertSchema(checkoutTransactions);
+export const insertCheckoutAnalyticsSchema = createInsertSchema(checkoutAnalytics);
+
+// Checkout Builder Types
+export type InsertCheckoutProduct = z.infer<typeof insertCheckoutProductSchema>;
+export type CheckoutProduct = typeof checkoutProducts.$inferSelect;
+export type InsertCheckoutPage = z.infer<typeof insertCheckoutPageSchema>;
+export type CheckoutPage = typeof checkoutPages.$inferSelect;
+export type InsertCheckoutTransaction = z.infer<typeof insertCheckoutTransactionSchema>;
+export type CheckoutTransaction = typeof checkoutTransactions.$inferSelect;
+export type InsertCheckoutAnalytics = z.infer<typeof insertCheckoutAnalyticsSchema>;
+export type CheckoutAnalytics = typeof checkoutAnalytics.$inferSelect;
+
 // Subscription Plans Schema
 export const subscriptionPlans = sqliteTable("subscription_plans", {
   id: text("id").primaryKey(),
