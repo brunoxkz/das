@@ -37,6 +37,7 @@ import TesteSMSPage from "@/pages/teste-sms";
 
 import EmailMarketingPro from "@/pages/email-marketing-pro";
 import EmailMarketingSimplified from "@/pages/email-marketing-simplified";
+import EmailMarketingAdvanced from "@/pages/email-marketing";
 import AIConversionPage from "@/pages/ai-conversion";
 import TesteAbPage from "@/pages/teste-ab";
 import ABTestingPage from "@/pages/ab-testing";
@@ -47,6 +48,8 @@ import ExtensoesPage from "@/pages/extensoes";
 import VoiceCallingPage from "@/pages/voice-calling";
 import ConditionalCampaignsPage from "@/pages/conditional-campaigns";
 import FacelessVideosPage from "@/pages/faceless-videos";
+import CheckoutSystemPage from "@/pages/checkout-system";
+import CheckoutAdminPage from "@/pages/checkout-admin";
 import { useAuth } from "@/hooks/useAuth-jwt";
 import { isUnauthorizedError } from "@/lib/authUtils";
 import { SidebarProvider } from "@/hooks/useSidebar";
@@ -180,7 +183,7 @@ function App() {
         </Route>
         <Route path="/email-marketing">
           <Layout>
-            <EmailMarketingSimplified />
+            <EmailMarketingAdvanced />
           </Layout>
         </Route>
         <Route path="/email-marketing-pro">
@@ -275,6 +278,16 @@ function App() {
         <Route path="/teste-sms">
           <Layout>
             <TesteSMSPage />
+          </Layout>
+        </Route>
+        <Route path="/checkout-system">
+          <Layout>
+            <CheckoutSystemPage />
+          </Layout>
+        </Route>
+        <Route path="/checkout-admin">
+          <Layout>
+            <CheckoutAdminPage />
           </Layout>
         </Route>
 

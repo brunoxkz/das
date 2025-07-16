@@ -32,6 +32,7 @@ import { generateTokens } from './auth-sqlite';
 import HealthCheckSystem from './health-check-system.js';
 import WhatsAppBusinessAPI from './whatsapp-business-api';
 import { registerFacelessVideoRoutes } from './faceless-video-routes';
+import Stripe from 'stripe';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -99,6 +100,9 @@ export function registerSQLiteRoutes(app: Express): Server {
   
   // 🧠 RATE LIMITING INTELIGENTE - Diferencia usuários legítimos de invasores
   // app.use(intelligentRateLimiter.middleware()); // TEMPORARIAMENTE DESATIVADO
+  
+  // 🛒 SISTEMA DE CHECKOUT - Registrar rotas de checkout
+  registerCheckoutRoutes(app);
   
   // Middleware de debug para todas as rotas POST
   app.use((req, res, next) => {
@@ -11265,6 +11269,271 @@ function generateUltraPersonalizedEmail(leadData: any, conditionalRules: any[], 
   
   // Fallback para conteúdo base
   return baseContent;
+}
+
+// ==================== CHECKOUT SYSTEM ROUTES ====================
+// Inicializar Stripe apenas se a chave estiver disponível
+const stripe = process.env.STRIPE_SECRET_KEY ? new Stripe(process.env.STRIPE_SECRET_KEY, {
+  apiVersion: '2024-06-20'
+}) : null;
+
+// Função para registrar rotas de checkout
+export function registerCheckoutRoutes(app: Express) {
+  
+  // Buscar todos os checkouts (admin)
+  app.get('/api/checkout-admin', verifyJWT, async (req, res) => {
+    try {
+      const checkouts = await storage.getAllCheckouts();
+      
+      // Buscar estatísticas para cada checkout
+      const checkoutsWithStats = await Promise.all(
+        checkouts.map(async (checkout) => {
+          const stats = await storage.getCheckoutStats(checkout.id);
+          return {
+            ...checkout,
+            stats: stats || {
+              views: 0,
+              conversions: 0,
+              conversionRate: 0,
+              revenue: 0
+            }
+          };
+        })
+      );
+      
+      res.json(checkoutsWithStats);
+    } catch (error) {
+      console.error('Erro ao buscar checkouts:', error);
+      res.status(500).json({ error: 'Erro interno do servidor' });
+    }
+  });
+
+  // Buscar checkout específico por ID
+  app.get('/api/checkout/:id', async (req, res) => {
+    try {
+      const checkout = await storage.getCheckoutById(req.params.id);
+      
+      if (!checkout) {
+        return res.status(404).json({ error: 'Checkout não encontrado' });
+      }
+      
+      if (!checkout.active) {
+        return res.status(403).json({ error: 'Checkout inativo' });
+      }
+      
+      // Incrementar visualizações
+      await storage.incrementCheckoutViews(req.params.id);
+      
+      res.json(checkout);
+    } catch (error) {
+      console.error('Erro ao buscar checkout:', error);
+      res.status(500).json({ error: 'Erro interno do servidor' });
+    }
+  });
+
+  // Criar novo checkout
+  app.post('/api/checkout-admin', verifyJWT, async (req, res) => {
+    try {
+      const checkoutData = {
+        id: nanoid(),
+        userId: req.user.id,
+        active: true,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        ...req.body
+      };
+      
+      const checkout = await storage.createCheckout(checkoutData);
+      res.json(checkout);
+    } catch (error) {
+      console.error('Erro ao criar checkout:', error);
+      res.status(500).json({ error: 'Erro interno do servidor' });
+    }
+  });
+
+  // Atualizar checkout
+  app.put('/api/checkout-admin/:id', verifyJWT, async (req, res) => {
+    try {
+      const updateData = {
+        ...req.body,
+        updatedAt: new Date().toISOString()
+      };
+      
+      const checkout = await storage.updateCheckout(req.params.id, updateData);
+      res.json(checkout);
+    } catch (error) {
+      console.error('Erro ao atualizar checkout:', error);
+      res.status(500).json({ error: 'Erro interno do servidor' });
+    }
+  });
+
+  // Deletar checkout
+  app.delete('/api/checkout-admin/:id', verifyJWT, async (req, res) => {
+    try {
+      await storage.deleteCheckout(req.params.id);
+      res.json({ success: true });
+    } catch (error) {
+      console.error('Erro ao deletar checkout:', error);
+      res.status(500).json({ error: 'Erro interno do servidor' });
+    }
+  });
+
+  // Duplicar checkout
+  app.post('/api/checkout-admin/:id/duplicate', verifyJWT, async (req, res) => {
+    try {
+      const originalCheckout = await storage.getCheckoutById(req.params.id);
+      
+      if (!originalCheckout) {
+        return res.status(404).json({ error: 'Checkout não encontrado' });
+      }
+      
+      const duplicatedCheckout = {
+        ...originalCheckout,
+        id: nanoid(),
+        name: `${originalCheckout.name} (Cópia)`,
+        active: false,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      };
+      
+      const checkout = await storage.createCheckout(duplicatedCheckout);
+      res.json(checkout);
+    } catch (error) {
+      console.error('Erro ao duplicar checkout:', error);
+      res.status(500).json({ error: 'Erro interno do servidor' });
+    }
+  });
+
+  // Processar pagamento
+  app.post('/api/checkout/process-payment', async (req, res) => {
+    try {
+      if (!stripe) {
+        return res.status(500).json({ error: 'Stripe não configurado' });
+      }
+      
+      const { checkoutId, formData } = req.body;
+      
+      // Buscar configuração do checkout
+      const checkout = await storage.getCheckoutById(checkoutId);
+      if (!checkout) {
+        return res.status(404).json({ error: 'Checkout não encontrado' });
+      }
+      
+      // Calcular valor total
+      let totalAmount = checkout.price * 100; // Converter para centavos
+      
+      // Adicionar order bumps
+      if (formData.orderBumps && formData.orderBumps.length > 0) {
+        for (const bumpId of formData.orderBumps) {
+          const bump = checkout.orderBumps.find((b: any) => b.id === bumpId);
+          if (bump) {
+            totalAmount += bump.price * 100;
+          }
+        }
+      }
+      
+      // Adicionar upsells aceitos
+      if (formData.acceptedUpsells && formData.acceptedUpsells.length > 0) {
+        for (const upsellId of formData.acceptedUpsells) {
+          const upsell = checkout.upsells.find((u: any) => u.id === upsellId);
+          if (upsell) {
+            totalAmount += upsell.price * 100;
+          }
+        }
+      }
+      
+      // Criar intenção de pagamento no Stripe
+      const paymentIntent = await stripe.paymentIntents.create({
+        amount: totalAmount,
+        currency: checkout.currency.toLowerCase(),
+        metadata: {
+          checkoutId,
+          customerEmail: formData.email,
+          customerName: formData.fullName
+        }
+      });
+      
+      // Salvar ordem no banco
+      const order = {
+        id: nanoid(),
+        checkoutId,
+        stripePaymentIntentId: paymentIntent.id,
+        customerData: formData,
+        totalAmount: totalAmount / 100,
+        currency: checkout.currency,
+        status: 'pending',
+        orderBumps: formData.orderBumps || [],
+        acceptedUpsells: formData.acceptedUpsells || [],
+        createdAt: new Date().toISOString()
+      };
+      
+      await storage.createOrder(order);
+      
+      res.json({
+        clientSecret: paymentIntent.client_secret,
+        orderId: order.id
+      });
+    } catch (error) {
+      console.error('Erro ao processar pagamento:', error);
+      res.status(500).json({ error: 'Erro interno do servidor' });
+    }
+  });
+
+  // Webhook do Stripe para confirmar pagamentos
+  app.post('/api/checkout/webhook', express.raw({ type: 'application/json' }), async (req, res) => {
+    if (!stripe) {
+      return res.status(500).json({ error: 'Stripe não configurado' });
+    }
+    
+    const sig = req.headers['stripe-signature'];
+    let event;
+    
+    try {
+      event = stripe.webhooks.constructEvent(req.body, sig, process.env.STRIPE_WEBHOOK_SECRET || '');
+    } catch (err) {
+      console.log('Webhook signature verification failed:', err);
+      return res.status(400).send(`Webhook Error: ${err}`);
+    }
+    
+    try {
+      if (event.type === 'payment_intent.succeeded') {
+        const paymentIntent = event.data.object;
+        
+        // Atualizar ordem no banco
+        await storage.updateOrderByStripePaymentIntentId(paymentIntent.id, {
+          status: 'completed',
+          paidAt: new Date().toISOString()
+        });
+        
+        // Incrementar conversões do checkout
+        if (paymentIntent.metadata.checkoutId) {
+          await storage.incrementCheckoutConversions(paymentIntent.metadata.checkoutId);
+        }
+        
+        console.log('Pagamento confirmado:', paymentIntent.id);
+      }
+    } catch (error) {
+      console.error('Erro ao processar webhook:', error);
+    }
+    
+    res.json({ received: true });
+  });
+
+  // Página de sucesso
+  app.get('/api/checkout/success/:orderId', async (req, res) => {
+    try {
+      const order = await storage.getOrderById(req.params.orderId);
+      
+      if (!order) {
+        return res.status(404).json({ error: 'Pedido não encontrado' });
+      }
+      
+      res.json(order);
+    } catch (error) {
+      console.error('Erro ao buscar pedido:', error);
+      res.status(500).json({ error: 'Erro interno do servidor' });
+    }
+  });
 }
 
 

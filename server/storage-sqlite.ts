@@ -112,6 +112,21 @@ export interface IStorage {
   renewUserPlan(userId: string, planId: string): Promise<User>;
   deleteUser(userId: string): Promise<void>;
 
+  // Checkout System operations
+  getAllCheckouts(): Promise<any[]>;
+  getCheckoutById(id: string): Promise<any | undefined>;
+  createCheckout(checkout: any): Promise<any>;
+  updateCheckout(id: string, updates: any): Promise<any>;
+  deleteCheckout(id: string): Promise<void>;
+  getCheckoutStats(checkoutId: string): Promise<any>;
+  incrementCheckoutViews(checkoutId: string): Promise<void>;
+  incrementCheckoutConversions(checkoutId: string): Promise<void>;
+  
+  // Order operations
+  createOrder(order: any): Promise<any>;
+  getOrderById(id: string): Promise<any | undefined>;
+  updateOrderByStripePaymentIntentId(paymentIntentId: string, updates: any): Promise<any>;
+
   // Quiz operations
   getUserQuizzes(userId: string): Promise<Quiz[]>;
   getAllQuizzes(): Promise<Quiz[]>;
@@ -662,7 +677,7 @@ export class SQLiteStorage implements IStorage {
         ) OR EXISTS (
           SELECT 1 FROM email_campaigns WHERE userId = ${users.id} AND status = 'active'
         ) OR EXISTS (
-          SELECT 1 FROM whatsapp_campaigns WHERE userId = ${users.id} AND status = 'active'
+          SELECT 1 FROM whatsapp_campaigns WHERE user_id = ${users.id} AND status = 'active'
         )
       `);
 
@@ -5954,6 +5969,426 @@ Hoje você vai aprender ${project.title} - método revolucionário que já ajudo
       console.log(`✅ Trial de 7 dias configurado para usuário ${userId}`);
     } catch (error) {
       console.error('❌ ERRO ao configurar trial do usuário:', error);
+    }
+  }
+
+  // ==================== CHECKOUT SYSTEM METHODS ====================
+
+  // Buscar todos os checkouts
+  async getAllCheckouts(): Promise<any[]> {
+    try {
+      const result = sqlite.prepare(`
+        SELECT * FROM checkouts 
+        ORDER BY created_at DESC
+      `).all();
+      
+      return result.map(row => ({
+        ...row,
+        design: JSON.parse(row.design || '{}'),
+        features: JSON.parse(row.features || '[]'),
+        orderBumps: JSON.parse(row.order_bumps || '[]'),
+        upsells: JSON.parse(row.upsells || '[]')
+      }));
+    } catch (error) {
+      console.error('Erro ao buscar checkouts:', error);
+      // Criar tabela se não existir
+      await this.createCheckoutTables();
+      return [];
+    }
+  }
+
+  // Buscar checkout por ID
+  async getCheckoutById(id: string): Promise<any | undefined> {
+    try {
+      const row = sqlite.prepare(`
+        SELECT * FROM checkouts WHERE id = ?
+      `).get(id);
+      
+      if (!row) return undefined;
+      
+      return {
+        ...row,
+        design: JSON.parse(row.design || '{}'),
+        features: JSON.parse(row.features || '[]'),
+        orderBumps: JSON.parse(row.order_bumps || '[]'),
+        upsells: JSON.parse(row.upsells || '[]')
+      };
+    } catch (error) {
+      console.error('Erro ao buscar checkout:', error);
+      return undefined;
+    }
+  }
+
+  // Criar checkout
+  async createCheckout(checkout: any): Promise<any> {
+    try {
+      const stmt = sqlite.prepare(`
+        INSERT INTO checkouts (
+          id, user_id, name, description, price, original_price, 
+          currency, billing_type, subscription_interval, features, 
+          order_bumps, upsells, design, active, created_at, updated_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      `);
+      
+      stmt.run(
+        checkout.id,
+        checkout.userId,
+        checkout.name,
+        checkout.description,
+        checkout.price,
+        checkout.originalPrice || null,
+        checkout.currency,
+        checkout.billingType,
+        checkout.subscriptionInterval || null,
+        JSON.stringify(checkout.features || []),
+        JSON.stringify(checkout.orderBumps || []),
+        JSON.stringify(checkout.upsells || []),
+        JSON.stringify(checkout.design || {}),
+        checkout.active ? 1 : 0,
+        checkout.createdAt,
+        checkout.updatedAt
+      );
+      
+      return await this.getCheckoutById(checkout.id);
+    } catch (error) {
+      console.error('Erro ao criar checkout:', error);
+      throw error;
+    }
+  }
+
+  // Atualizar checkout
+  async updateCheckout(id: string, updates: any): Promise<any> {
+    try {
+      const setClause = [];
+      const values = [];
+      
+      if (updates.name !== undefined) {
+        setClause.push('name = ?');
+        values.push(updates.name);
+      }
+      if (updates.description !== undefined) {
+        setClause.push('description = ?');
+        values.push(updates.description);
+      }
+      if (updates.price !== undefined) {
+        setClause.push('price = ?');
+        values.push(updates.price);
+      }
+      if (updates.originalPrice !== undefined) {
+        setClause.push('original_price = ?');
+        values.push(updates.originalPrice);
+      }
+      if (updates.currency !== undefined) {
+        setClause.push('currency = ?');
+        values.push(updates.currency);
+      }
+      if (updates.billingType !== undefined) {
+        setClause.push('billing_type = ?');
+        values.push(updates.billingType);
+      }
+      if (updates.subscriptionInterval !== undefined) {
+        setClause.push('subscription_interval = ?');
+        values.push(updates.subscriptionInterval);
+      }
+      if (updates.features !== undefined) {
+        setClause.push('features = ?');
+        values.push(JSON.stringify(updates.features));
+      }
+      if (updates.orderBumps !== undefined) {
+        setClause.push('order_bumps = ?');
+        values.push(JSON.stringify(updates.orderBumps));
+      }
+      if (updates.upsells !== undefined) {
+        setClause.push('upsells = ?');
+        values.push(JSON.stringify(updates.upsells));
+      }
+      if (updates.design !== undefined) {
+        setClause.push('design = ?');
+        values.push(JSON.stringify(updates.design));
+      }
+      if (updates.active !== undefined) {
+        setClause.push('active = ?');
+        values.push(updates.active ? 1 : 0);
+      }
+      
+      setClause.push('updated_at = ?');
+      values.push(updates.updatedAt);
+      values.push(id);
+      
+      const stmt = sqlite.prepare(`
+        UPDATE checkouts 
+        SET ${setClause.join(', ')} 
+        WHERE id = ?
+      `);
+      
+      stmt.run(...values);
+      
+      return await this.getCheckoutById(id);
+    } catch (error) {
+      console.error('Erro ao atualizar checkout:', error);
+      throw error;
+    }
+  }
+
+  // Deletar checkout
+  async deleteCheckout(id: string): Promise<void> {
+    try {
+      const stmt = sqlite.prepare('DELETE FROM checkouts WHERE id = ?');
+      stmt.run(id);
+    } catch (error) {
+      console.error('Erro ao deletar checkout:', error);
+      throw error;
+    }
+  }
+
+  // Buscar estatísticas do checkout
+  async getCheckoutStats(checkoutId: string): Promise<any> {
+    try {
+      const statsRow = sqlite.prepare(`
+        SELECT 
+          COALESCE(views, 0) as views,
+          COALESCE(conversions, 0) as conversions,
+          COALESCE(revenue, 0) as revenue
+        FROM checkout_stats 
+        WHERE checkout_id = ?
+      `).get(checkoutId);
+      
+      if (!statsRow) {
+        return {
+          views: 0,
+          conversions: 0,
+          conversionRate: 0,
+          revenue: 0
+        };
+      }
+      
+      const conversionRate = statsRow.views > 0 ? (statsRow.conversions / statsRow.views) : 0;
+      
+      return {
+        views: statsRow.views,
+        conversions: statsRow.conversions,
+        conversionRate,
+        revenue: statsRow.revenue
+      };
+    } catch (error) {
+      console.error('Erro ao buscar estatísticas:', error);
+      return {
+        views: 0,
+        conversions: 0,
+        conversionRate: 0,
+        revenue: 0
+      };
+    }
+  }
+
+  // Incrementar visualizações
+  async incrementCheckoutViews(checkoutId: string): Promise<void> {
+    try {
+      const stmt = sqlite.prepare(`
+        INSERT INTO checkout_stats (checkout_id, views, conversions, revenue)
+        VALUES (?, 1, 0, 0)
+        ON CONFLICT(checkout_id) DO UPDATE SET
+          views = views + 1
+      `);
+      
+      stmt.run(checkoutId);
+    } catch (error) {
+      console.error('Erro ao incrementar visualizações:', error);
+    }
+  }
+
+  // Incrementar conversões
+  async incrementCheckoutConversions(checkoutId: string): Promise<void> {
+    try {
+      const stmt = sqlite.prepare(`
+        INSERT INTO checkout_stats (checkout_id, views, conversions, revenue)
+        VALUES (?, 0, 1, 0)
+        ON CONFLICT(checkout_id) DO UPDATE SET
+          conversions = conversions + 1
+      `);
+      
+      stmt.run(checkoutId);
+    } catch (error) {
+      console.error('Erro ao incrementar conversões:', error);
+    }
+  }
+
+  // Criar pedido
+  async createOrder(order: any): Promise<any> {
+    try {
+      const stmt = sqlite.prepare(`
+        INSERT INTO orders (
+          id, checkout_id, stripe_payment_intent_id, customer_data, 
+          total_amount, currency, status, order_bumps, accepted_upsells, 
+          created_at, paid_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      `);
+      
+      stmt.run(
+        order.id,
+        order.checkoutId,
+        order.stripePaymentIntentId,
+        JSON.stringify(order.customerData),
+        order.totalAmount,
+        order.currency,
+        order.status,
+        JSON.stringify(order.orderBumps || []),
+        JSON.stringify(order.acceptedUpsells || []),
+        order.createdAt,
+        order.paidAt || null
+      );
+      
+      return await this.getOrderById(order.id);
+    } catch (error) {
+      console.error('Erro ao criar pedido:', error);
+      throw error;
+    }
+  }
+
+  // Buscar pedido por ID
+  async getOrderById(id: string): Promise<any | undefined> {
+    try {
+      const row = sqlite.prepare(`
+        SELECT * FROM orders WHERE id = ?
+      `).get(id);
+      
+      if (!row) return undefined;
+      
+      return {
+        ...row,
+        customerData: JSON.parse(row.customer_data || '{}'),
+        orderBumps: JSON.parse(row.order_bumps || '[]'),
+        acceptedUpsells: JSON.parse(row.accepted_upsells || '[]')
+      };
+    } catch (error) {
+      console.error('Erro ao buscar pedido:', error);
+      return undefined;
+    }
+  }
+
+  // Atualizar pedido por Stripe Payment Intent ID
+  async updateOrderByStripePaymentIntentId(paymentIntentId: string, updates: any): Promise<any> {
+    try {
+      const setClause = [];
+      const values = [];
+      
+      if (updates.status !== undefined) {
+        setClause.push('status = ?');
+        values.push(updates.status);
+      }
+      if (updates.paidAt !== undefined) {
+        setClause.push('paid_at = ?');
+        values.push(updates.paidAt);
+      }
+      
+      values.push(paymentIntentId);
+      
+      const stmt = sqlite.prepare(`
+        UPDATE orders 
+        SET ${setClause.join(', ')} 
+        WHERE stripe_payment_intent_id = ?
+      `);
+      
+      stmt.run(...values);
+      
+      // Buscar e retornar o pedido atualizado
+      const orderRow = sqlite.prepare(`
+        SELECT * FROM orders WHERE stripe_payment_intent_id = ?
+      `).get(paymentIntentId);
+      
+      if (orderRow) {
+        // Atualizar estatísticas de receita se for completado
+        if (updates.status === 'completed') {
+          sqlite.prepare(`
+            UPDATE checkout_stats 
+            SET revenue = revenue + ?
+            WHERE checkout_id = ?
+          `).run(orderRow.total_amount, orderRow.checkout_id);
+        }
+        
+        return {
+          ...orderRow,
+          customerData: JSON.parse(orderRow.customer_data || '{}'),
+          orderBumps: JSON.parse(orderRow.order_bumps || '[]'),
+          acceptedUpsells: JSON.parse(orderRow.accepted_upsells || '[]')
+        };
+      }
+      
+      return undefined;
+    } catch (error) {
+      console.error('Erro ao atualizar pedido:', error);
+      throw error;
+    }
+  }
+
+  // Criar tabelas do sistema de checkout
+  private async createCheckoutTables(): Promise<void> {
+    try {
+      // Tabela de checkouts
+      sqlite.exec(`
+        CREATE TABLE IF NOT EXISTS checkouts (
+          id TEXT PRIMARY KEY,
+          user_id TEXT NOT NULL,
+          name TEXT NOT NULL,
+          description TEXT,
+          price REAL NOT NULL,
+          original_price REAL,
+          currency TEXT NOT NULL DEFAULT 'BRL',
+          billing_type TEXT NOT NULL DEFAULT 'one_time',
+          subscription_interval TEXT,
+          features TEXT NOT NULL DEFAULT '[]',
+          order_bumps TEXT NOT NULL DEFAULT '[]',
+          upsells TEXT NOT NULL DEFAULT '[]',
+          design TEXT NOT NULL DEFAULT '{}',
+          active INTEGER NOT NULL DEFAULT 1,
+          created_at TEXT NOT NULL,
+          updated_at TEXT NOT NULL,
+          FOREIGN KEY (user_id) REFERENCES users(id)
+        )
+      `);
+      
+      // Tabela de estatísticas de checkout
+      sqlite.exec(`
+        CREATE TABLE IF NOT EXISTS checkout_stats (
+          checkout_id TEXT PRIMARY KEY,
+          views INTEGER NOT NULL DEFAULT 0,
+          conversions INTEGER NOT NULL DEFAULT 0,
+          revenue REAL NOT NULL DEFAULT 0,
+          FOREIGN KEY (checkout_id) REFERENCES checkouts(id)
+        )
+      `);
+      
+      // Tabela de pedidos
+      sqlite.exec(`
+        CREATE TABLE IF NOT EXISTS orders (
+          id TEXT PRIMARY KEY,
+          checkout_id TEXT NOT NULL,
+          stripe_payment_intent_id TEXT NOT NULL,
+          customer_data TEXT NOT NULL,
+          total_amount REAL NOT NULL,
+          currency TEXT NOT NULL,
+          status TEXT NOT NULL DEFAULT 'pending',
+          order_bumps TEXT NOT NULL DEFAULT '[]',
+          accepted_upsells TEXT NOT NULL DEFAULT '[]',
+          created_at TEXT NOT NULL,
+          paid_at TEXT,
+          FOREIGN KEY (checkout_id) REFERENCES checkouts(id)
+        )
+      `);
+      
+      // Índices para performance
+      sqlite.exec(`
+        CREATE INDEX IF NOT EXISTS idx_checkouts_user_id ON checkouts(user_id);
+        CREATE INDEX IF NOT EXISTS idx_checkouts_active ON checkouts(active);
+        CREATE INDEX IF NOT EXISTS idx_orders_checkout_id ON orders(checkout_id);
+        CREATE INDEX IF NOT EXISTS idx_orders_stripe_payment_intent_id ON orders(stripe_payment_intent_id);
+        CREATE INDEX IF NOT EXISTS idx_orders_status ON orders(status);
+      `);
+      
+      console.log('✅ Tabelas do sistema de checkout criadas com sucesso');
+    } catch (error) {
+      console.error('❌ Erro ao criar tabelas do checkout:', error);
+      throw error;
     }
   }
 
