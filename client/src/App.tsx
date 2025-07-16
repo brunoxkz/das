@@ -53,6 +53,7 @@ import CheckoutAdminPage from "@/pages/checkout-admin";
 import CheckoutBuilder from "@/pages/checkout-builder";
 import CheckoutPublic from "@/pages/checkout-public";
 import CheckoutSuccess from "@/pages/checkout-success";
+import CheckoutSubscriptionWrapper from "@/pages/checkout-subscription-wrapper";
 import { useAuth } from "@/hooks/useAuth-jwt";
 import { isUnauthorizedError } from "@/lib/authUtils";
 import { SidebarProvider } from "@/hooks/useSidebar";
@@ -306,6 +307,12 @@ function App() {
         <Route path="/checkout-admin">
           <Layout>
             <CheckoutAdminPage />
+          </Layout>
+        </Route>
+        
+        <Route path="/assinatura">
+          <Layout>
+            <CheckoutSubscriptionWrapper />
           </Layout>
         </Route>
 

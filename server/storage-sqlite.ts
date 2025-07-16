@@ -5594,6 +5594,64 @@ Hoje você vai aprender ${project.title} - método revolucionário que já ajudo
   }
 
   // =============================================
+  // SUBSCRIPTION METHODS
+  // =============================================
+
+  async createSubscription(subscription: {
+    id: string;
+    userId: string;
+    customerId: string;
+    status: string;
+    trialEnd: string;
+    currentPeriodStart: string;
+    currentPeriodEnd: string;
+    createdAt: string;
+  }): Promise<void> {
+    try {
+      // Criar tabela se não existir
+      sqlite.exec(`
+        CREATE TABLE IF NOT EXISTS user_subscriptions (
+          id TEXT PRIMARY KEY,
+          user_id TEXT NOT NULL,
+          customer_id TEXT NOT NULL,
+          status TEXT NOT NULL,
+          trial_end TEXT,
+          current_period_start TEXT,
+          current_period_end TEXT,
+          created_at TEXT NOT NULL,
+          updated_at TEXT NOT NULL
+        )
+      `);
+      
+      const stmt = sqlite.prepare(`
+        INSERT OR REPLACE INTO user_subscriptions (
+          id, user_id, customer_id, status, trial_end, 
+          current_period_start, current_period_end, created_at, updated_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+      `);
+      
+      const now = new Date().toISOString();
+      
+      stmt.run(
+        subscription.id,
+        subscription.userId,
+        subscription.customerId,
+        subscription.status,
+        subscription.trialEnd,
+        subscription.currentPeriodStart,
+        subscription.currentPeriodEnd,
+        subscription.createdAt,
+        now
+      );
+      
+      console.log('✅ Assinatura salva no banco local:', subscription.id);
+    } catch (error) {
+      console.error('❌ ERRO ao salvar assinatura no banco local:', error);
+      throw error;
+    }
+  }
+
+  // =============================================
   // SUBSCRIPTION TRANSACTIONS METHODS
   // =============================================
 

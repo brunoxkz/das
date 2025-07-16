@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -15,6 +15,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { cn } from '@/lib/utils';
+import { STRIPE_CURRENCIES, STRIPE_INTERVALS, getCurrencySymbol, formatPrice } from '@/lib/stripe-currencies';
+import StripeIntegration from '@/components/stripe-integration';
 import {
   CreditCard,
   ShoppingCart,
@@ -58,12 +60,15 @@ interface Product {
   name: string;
   description: string;
   price: number;
+  currency: string;
   image?: string;
   category: string;
   features: string[];
   paymentMode: 'one_time' | 'recurring';
-  recurringInterval?: 'monthly' | 'yearly';
+  recurringInterval?: 'daily' | 'weekly' | 'monthly' | 'yearly';
+  recurringIntervalCount?: number;
   trialPeriod?: number;
+  trialType?: 'none' | 'days' | 'usage';
   status: 'active' | 'inactive';
   paymentLink?: string;
   customization: {
@@ -75,6 +80,14 @@ interface Product {
   };
   stripeProductId?: string;
   stripePriceId?: string;
+  stripeConfig?: {
+    billingScheme: 'per_unit' | 'tiered';
+    usageType: 'licensed' | 'metered';
+    aggregateUsage?: string;
+    taxRates: boolean;
+    coupons: boolean;
+    collectionMethod: 'automatic' | 'manual';
+  };
 }
 
 interface CheckoutPage {
@@ -117,14 +130,17 @@ export default function CheckoutBuilder() {
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [previewMode, setPreviewMode] = useState(false);
 
-  // Product Form State
+  // Product Form State - Usando useCallback para evitar re-renders
   const [productForm, setProductForm] = useState<Partial<Product>>({
     name: "",
     description: "",
     price: 0,
+    currency: "BRL",
     category: "digital",
     features: [],
     paymentMode: "one_time",
+    recurringInterval: "monthly",
+    trialPeriod: 0,
     status: "active",
     customization: {
       theme: "light",
@@ -359,7 +375,7 @@ export default function CheckoutBuilder() {
         <div className="space-y-3">
           <div className="flex items-center justify-between">
             <span className="text-2xl font-bold text-primary">
-              R$ {product.price.toFixed(2)}
+              {formatPrice(product.price, product.currency || 'BRL')}
             </span>
             <Badge variant="outline">
               {product.paymentMode === 'one_time' ? 'Pagamento Único' : 'Recorrente'}
@@ -435,28 +451,64 @@ export default function CheckoutBuilder() {
               <Label htmlFor="name">Nome do Produto *</Label>
               <Input
                 id="name"
-                value={currentProduct.name}
+                value={currentProduct.name || ''}
                 onChange={(e) => {
+                  const value = e.target.value;
                   if (isEditing) {
-                    setEditingProduct({ ...editingProduct!, name: e.target.value });
+                    setEditingProduct(prev => ({ ...prev!, name: value }));
                   } else {
-                    setProductForm({ ...productForm, name: e.target.value });
+                    setProductForm(prev => ({ ...prev, name: value }));
                   }
                 }}
                 placeholder="Ex: Curso de Marketing Digital"
               />
             </div>
+            
             <div>
-              <Label htmlFor="price">Preço (R$) *</Label>
+              <Label htmlFor="currency">Moeda *</Label>
+              <Select 
+                value={currentProduct.currency || 'BRL'} 
+                onValueChange={(value) => {
+                  if (isEditing) {
+                    setEditingProduct(prev => ({ ...prev!, currency: value }));
+                  } else {
+                    setProductForm(prev => ({ ...prev, currency: value }));
+                  }
+                }}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione a moeda" />
+                </SelectTrigger>
+                <SelectContent className="max-h-[300px] overflow-y-auto">
+                  {STRIPE_CURRENCIES.map((currency) => (
+                    <SelectItem key={currency.code} value={currency.code}>
+                      <div className="flex items-center gap-2">
+                        <span className="font-mono text-sm">{currency.symbol}</span>
+                        <span className="font-medium">{currency.code}</span>
+                        <span className="text-sm text-muted-foreground">
+                          {currency.name}
+                        </span>
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            
+            <div>
+              <Label htmlFor="price">Preço ({getCurrencySymbol(currentProduct.currency || 'BRL')}) *</Label>
               <Input
                 id="price"
                 type="number"
-                value={currentProduct.price}
+                step="0.01"
+                min="0"
+                value={currentProduct.price || ''}
                 onChange={(e) => {
+                  const value = parseFloat(e.target.value) || 0;
                   if (isEditing) {
-                    setEditingProduct({ ...editingProduct!, price: parseFloat(e.target.value) });
+                    setEditingProduct(prev => ({ ...prev!, price: value }));
                   } else {
-                    setProductForm({ ...productForm, price: parseFloat(e.target.value) });
+                    setProductForm(prev => ({ ...prev, price: value }));
                   }
                 }}
                 placeholder="0.00"
@@ -468,12 +520,13 @@ export default function CheckoutBuilder() {
             <Label htmlFor="description">Descrição *</Label>
             <Textarea
               id="description"
-              value={currentProduct.description}
+              value={currentProduct.description || ''}
               onChange={(e) => {
+                const value = e.target.value;
                 if (isEditing) {
-                  setEditingProduct({ ...editingProduct!, description: e.target.value });
+                  setEditingProduct(prev => ({ ...prev!, description: value }));
                 } else {
-                  setProductForm({ ...productForm, description: e.target.value });
+                  setProductForm(prev => ({ ...prev, description: value }));
                 }
               }}
               placeholder="Descreva seu produto..."
@@ -509,12 +562,12 @@ export default function CheckoutBuilder() {
             <div>
               <Label htmlFor="paymentMode">Modalidade de Pagamento</Label>
               <Select
-                value={currentProduct.paymentMode}
+                value={currentProduct.paymentMode || 'one_time'}
                 onValueChange={(value: 'one_time' | 'recurring') => {
                   if (isEditing) {
-                    setEditingProduct({ ...editingProduct!, paymentMode: value });
+                    setEditingProduct(prev => ({ ...prev!, paymentMode: value }));
                   } else {
-                    setProductForm({ ...productForm, paymentMode: value });
+                    setProductForm(prev => ({ ...prev, paymentMode: value }));
                   }
                 }}
               >
@@ -522,8 +575,18 @@ export default function CheckoutBuilder() {
                   <SelectValue placeholder="Selecione a modalidade" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="one_time">Pagamento Único</SelectItem>
-                  <SelectItem value="recurring">Recorrente</SelectItem>
+                  <SelectItem value="one_time">
+                    <div className="flex items-center gap-2">
+                      <DollarSign className="h-4 w-4" />
+                      <span>Pagamento Único</span>
+                    </div>
+                  </SelectItem>
+                  <SelectItem value="recurring">
+                    <div className="flex items-center gap-2">
+                      <Repeat className="h-4 w-4" />
+                      <span>Recorrente</span>
+                    </div>
+                  </SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -534,12 +597,12 @@ export default function CheckoutBuilder() {
               <div>
                 <Label htmlFor="recurringInterval">Intervalo de Cobrança</Label>
                 <Select
-                  value={currentProduct.recurringInterval}
-                  onValueChange={(value: 'monthly' | 'yearly') => {
+                  value={currentProduct.recurringInterval || 'monthly'}
+                  onValueChange={(value: 'daily' | 'weekly' | 'monthly' | 'yearly') => {
                     if (isEditing) {
-                      setEditingProduct({ ...editingProduct!, recurringInterval: value });
+                      setEditingProduct(prev => ({ ...prev!, recurringInterval: value }));
                     } else {
-                      setProductForm({ ...productForm, recurringInterval: value });
+                      setProductForm(prev => ({ ...prev, recurringInterval: value }));
                     }
                   }}
                 >
@@ -547,8 +610,14 @@ export default function CheckoutBuilder() {
                     <SelectValue placeholder="Selecione o intervalo" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="monthly">Mensal</SelectItem>
-                    <SelectItem value="yearly">Anual</SelectItem>
+                    {STRIPE_INTERVALS.map((interval) => (
+                      <SelectItem key={interval.value} value={interval.value}>
+                        <div className="flex items-center gap-2">
+                          <Calendar className="h-4 w-4" />
+                          <span>{interval.label}</span>
+                        </div>
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>
@@ -635,13 +704,22 @@ export default function CheckoutBuilder() {
             Crie produtos, configure pagamentos e gere links únicos de checkout
           </p>
         </div>
-        <Button
-          variant="outline"
-          onClick={() => setPreviewMode(!previewMode)}
-        >
-          <Eye className="h-4 w-4 mr-2" />
-          {previewMode ? 'Sair do Preview' : 'Preview'}
-        </Button>
+        <div className="flex gap-2">
+          <Button
+            variant="outline"
+            onClick={() => window.open('/assinatura', '_blank')}
+          >
+            <CreditCard className="h-4 w-4 mr-2" />
+            Testar Assinatura
+          </Button>
+          <Button
+            variant="outline"
+            onClick={() => setPreviewMode(!previewMode)}
+          >
+            <Eye className="h-4 w-4 mr-2" />
+            {previewMode ? 'Sair do Preview' : 'Preview'}
+          </Button>
+        </div>
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>

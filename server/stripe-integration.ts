@@ -1,476 +1,281 @@
-/**
- * INTEGRAÇÃO STRIPE - SISTEMA DE PAGAMENTOS
- * Implementação completa do Stripe com webhooks e assinaturas
- */
-
 import Stripe from 'stripe';
-import { storage } from './storage-sqlite';
-import { creditProtection } from './credit-protection';
-import { nanoid } from 'nanoid';
 
-// Configuração do Stripe - Verificar se a chave está disponível
-const STRIPE_SECRET_KEY = process.env.STRIPE_SECRET_KEY;
+// Inicializar Stripe apenas se a chave existir
 let stripe: Stripe | null = null;
 
-if (STRIPE_SECRET_KEY) {
-  stripe = new Stripe(STRIPE_SECRET_KEY, {
-    apiVersion: '2023-10-16',
+if (process.env.STRIPE_SECRET_KEY) {
+  stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
+    apiVersion: '2024-09-30.acacia',
   });
-  console.log('✅ Stripe inicializado com sucesso');
-} else {
-  console.log('⚠️  STRIPE_SECRET_KEY não encontrada - funcionalidade Stripe desabilitada');
 }
 
-export interface StripeSubscriptionPlan {
-  id: string;
+export interface StripeProductConfig {
   name: string;
-  price: number;
+  description: string;
   currency: string;
-  interval: 'month' | 'year';
-  stripePriceId: string;
-  features: string[];
-  credits: {
-    sms: number;
-    email: number;
-    whatsapp: number;
-    ai: number;
-    video: number;
-  };
+  price: number;
+  paymentMode: 'one_time' | 'recurring';
+  recurringInterval?: 'day' | 'week' | 'month' | 'year';
+  recurringIntervalCount?: number;
+  trialPeriodDays?: number;
+  billingScheme?: 'per_unit' | 'tiered';
+  usageType?: 'licensed' | 'metered';
+  aggregateUsage?: 'sum' | 'last_during_period' | 'last_ever' | 'max';
+  taxRates?: boolean;
+  coupons?: boolean;
+  collectionMethod?: 'automatic' | 'manual';
 }
 
-export interface StripePaymentResult {
-  success: boolean;
-  paymentIntentId?: string;
-  clientSecret?: string;
-  subscriptionId?: string;
-  error?: string;
-}
+export class StripeService {
+  private stripe: Stripe;
 
-export class StripeIntegration {
-  private static instance: StripeIntegration;
-  
-  static getInstance(): StripeIntegration {
-    if (!StripeIntegration.instance) {
-      StripeIntegration.instance = new StripeIntegration();
+  constructor() {
+    if (!process.env.STRIPE_SECRET_KEY) {
+      throw new Error('STRIPE_SECRET_KEY is required');
     }
-    return StripeIntegration.instance;
+    this.stripe = stripe;
   }
 
-  /**
-   * CRIAR CLIENTE STRIPE
-   */
-  async createStripeCustomer(userId: string, email: string, name?: string): Promise<string> {
+  // Criar produto no Stripe
+  async createProduct(config: StripeProductConfig): Promise<{ product: Stripe.Product; price: Stripe.Price }> {
     try {
-      if (!stripe) {
-        throw new Error('Stripe não está configurado - STRIPE_SECRET_KEY não encontrada');
-      }
-
-      const customer = await stripe.customers.create({
-        email,
-        name: name || email,
-        metadata: { userId }
-      });
-
-      // Salvar customer ID no banco
-      await storage.updateUser(userId, { stripeCustomerId: customer.id });
-
-      console.log(`✅ Cliente Stripe criado: ${customer.id} para usuário ${userId}`);
-      return customer.id;
-
-    } catch (error) {
-      console.error('❌ Erro ao criar cliente Stripe:', error);
-      throw error;
-    }
-  }
-
-  /**
-   * CRIAR ASSINATURA
-   */
-  async createSubscription(
-    userId: string, 
-    planId: string, 
-    paymentMethodId: string
-  ): Promise<StripePaymentResult> {
-    try {
-      if (!stripe) {
-        return { success: false, error: 'Stripe não está configurado - STRIPE_SECRET_KEY não encontrada' };
-      }
-
-      const user = await storage.getUser(userId);
-      if (!user) {
-        return { success: false, error: 'Usuário não encontrado' };
-      }
-
-      // Buscar plano
-      const plan = await storage.getSubscriptionPlan(planId);
-      if (!plan) {
-        return { success: false, error: 'Plano não encontrado' };
-      }
-
-      let customerId = user.stripeCustomerId;
-      
-      // Criar cliente se não existir
-      if (!customerId) {
-        customerId = await this.createStripeCustomer(userId, user.email, user.firstName);
-      }
-
-      // Anexar método de pagamento
-      await stripe.paymentMethods.attach(paymentMethodId, {
-        customer: customerId,
-      });
-
-      // Definir como método padrão
-      await stripe.customers.update(customerId, {
-        invoice_settings: {
-          default_payment_method: paymentMethodId,
-        },
-      });
-
-      // Criar assinatura
-      const subscription = await stripe.subscriptions.create({
-        customer: customerId,
-        items: [{ price: plan.stripePriceId }],
-        payment_behavior: 'default_incomplete',
-        expand: ['latest_invoice.payment_intent'],
-      });
-
-      // Salvar subscription ID
-      await storage.updateUser(userId, { 
-        stripeSubscriptionId: subscription.id,
-        plan: planId,
-        subscriptionStatus: 'active',
-        planExpiresAt: new Date(subscription.current_period_end * 1000)
-      });
-
-      // Adicionar créditos do plano
-      const planData = JSON.parse(plan.limits);
-      await creditProtection.addCreditsSecurely(
-        userId,
-        'sms',
-        planData.sms,
-        'Créditos inclusos no plano',
-        'stripe_subscription',
-        subscription.id
-      );
-
-      await creditProtection.addCreditsSecurely(
-        userId,
-        'email',
-        planData.email,
-        'Créditos inclusos no plano',
-        'stripe_subscription',
-        subscription.id
-      );
-
-      await creditProtection.addCreditsSecurely(
-        userId,
-        'whatsapp',
-        planData.whatsapp,
-        'Créditos inclusos no plano',
-        'stripe_subscription',
-        subscription.id
-      );
-
-      await creditProtection.addCreditsSecurely(
-        userId,
-        'ai',
-        planData.ai,
-        'Créditos inclusos no plano',
-        'stripe_subscription',
-        subscription.id
-      );
-
-      // Registrar transação
-      await storage.createSubscriptionTransaction({
-        id: nanoid(),
-        userId,
-        planId,
-        stripeSubscriptionId: subscription.id,
-        amount: plan.price,
-        currency: 'BRL',
-        status: 'pending',
-        paymentMethod: 'stripe'
-      });
-
-      const paymentIntent = subscription.latest_invoice?.payment_intent as any;
-
-      return {
-        success: true,
-        subscriptionId: subscription.id,
-        paymentIntentId: paymentIntent?.id,
-        clientSecret: paymentIntent?.client_secret
-      };
-
-    } catch (error) {
-      console.error('❌ Erro ao criar assinatura:', error);
-      return { success: false, error: error.message };
-    }
-  }
-
-  /**
-   * CANCELAR ASSINATURA
-   */
-  async cancelSubscription(userId: string): Promise<boolean> {
-    try {
-      if (!stripe) {
-        console.error('❌ Stripe não configurado');
-        return false;
-      }
-
-      const user = await storage.getUser(userId);
-      if (!user?.stripeSubscriptionId) {
-        return false;
-      }
-
-      await stripe.subscriptions.cancel(user.stripeSubscriptionId);
-
-      // Atualizar status no banco
-      await storage.updateUser(userId, { 
-        subscriptionStatus: 'cancelled',
-        plan: 'free'
-      });
-
-      console.log(`✅ Assinatura cancelada para usuário ${userId}`);
-      return true;
-
-    } catch (error) {
-      console.error('❌ Erro ao cancelar assinatura:', error);
-      return false;
-    }
-  }
-
-  /**
-   * COMPRAR CRÉDITOS AVULSOS
-   */
-  async purchaseCredits(
-    userId: string,
-    type: 'sms' | 'email' | 'whatsapp' | 'ai' | 'video',
-    packageId: string,
-    paymentMethodId: string
-  ): Promise<StripePaymentResult> {
-    try {
-      if (!stripe) {
-        return { success: false, error: 'Stripe não está configurado - STRIPE_SECRET_KEY não encontrada' };
-      }
-
-      const user = await storage.getUser(userId);
-      if (!user) {
-        return { success: false, error: 'Usuário não encontrado' };
-      }
-
-      // Pacotes de créditos
-      const packages = {
-        sms: [
-          { id: 'sms_100', credits: 100, price: 990 }, // R$ 9,90
-          { id: 'sms_500', credits: 500, price: 3990 }, // R$ 39,90
-          { id: 'sms_1000', credits: 1000, price: 6990 }, // R$ 69,90
-        ],
-        email: [
-          { id: 'email_1000', credits: 1000, price: 490 }, // R$ 4,90
-          { id: 'email_5000', credits: 5000, price: 1990 }, // R$ 19,90
-          { id: 'email_10000', credits: 10000, price: 3490 }, // R$ 34,90
-        ],
-        whatsapp: [
-          { id: 'whatsapp_100', credits: 100, price: 1990 }, // R$ 19,90
-          { id: 'whatsapp_500', credits: 500, price: 8990 }, // R$ 89,90
-          { id: 'whatsapp_1000', credits: 1000, price: 15990 }, // R$ 159,90
-        ],
-        ai: [
-          { id: 'ai_50', credits: 50, price: 2990 }, // R$ 29,90
-          { id: 'ai_200', credits: 200, price: 9990 }, // R$ 99,90
-          { id: 'ai_500', credits: 500, price: 19990 }, // R$ 199,90
-        ],
-        video: [
-          { id: 'video_10', credits: 10, price: 4990 }, // R$ 49,90
-          { id: 'video_50', credits: 50, price: 19990 }, // R$ 199,90
-          { id: 'video_100', credits: 100, price: 34990 }, // R$ 349,90
-        ]
-      };
-
-      const selectedPackage = packages[type]?.find(pkg => pkg.id === packageId);
-      if (!selectedPackage) {
-        return { success: false, error: 'Pacote não encontrado' };
-      }
-
-      let customerId = user.stripeCustomerId;
-      
-      // Criar cliente se não existir
-      if (!customerId) {
-        customerId = await this.createStripeCustomer(userId, user.email, user.firstName);
-      }
-
-      // Criar payment intent
-      const paymentIntent = await stripe.paymentIntents.create({
-        amount: selectedPackage.price,
-        currency: 'brl',
-        customer: customerId,
-        payment_method: paymentMethodId,
-        confirmation_method: 'manual',
-        confirm: true,
+      // Criar produto
+      const product = await this.stripe.products.create({
+        name: config.name,
+        description: config.description,
         metadata: {
-          userId,
-          type,
-          packageId,
-          credits: selectedPackage.credits.toString()
+          created_by: 'vendzz_checkout_builder',
+          payment_mode: config.paymentMode,
+          currency: config.currency
         }
       });
 
-      if (paymentIntent.status === 'succeeded') {
-        // Adicionar créditos
-        await creditProtection.addCreditsSecurely(
-          userId,
-          type,
-          selectedPackage.credits,
-          'Compra de créditos',
-          undefined,
-          paymentIntent.id
-        );
-
-        console.log(`✅ Créditos adicionados: ${selectedPackage.credits} ${type} para usuário ${userId}`);
-      }
-
-      return {
-        success: paymentIntent.status === 'succeeded',
-        paymentIntentId: paymentIntent.id,
-        clientSecret: paymentIntent.client_secret
+      // Configurar preço
+      const priceData: Stripe.PriceCreateParams = {
+        product: product.id,
+        unit_amount: Math.round(config.price * 100), // Converter para centavos
+        currency: config.currency.toLowerCase(),
+        billing_scheme: config.billingScheme || 'per_unit'
       };
 
+      // Configurações de recorrência
+      if (config.paymentMode === 'recurring') {
+        priceData.recurring = {
+          interval: config.recurringInterval || 'month',
+          interval_count: config.recurringIntervalCount || 1,
+          usage_type: config.usageType || 'licensed'
+        };
+
+        if (config.usageType === 'metered' && config.aggregateUsage) {
+          priceData.recurring.aggregate_usage = config.aggregateUsage;
+        }
+      }
+
+      // Criar preço
+      const price = await this.stripe.prices.create(priceData);
+
+      return { product, price };
     } catch (error) {
-      console.error('❌ Erro ao comprar créditos:', error);
-      return { success: false, error: error.message };
+      console.error('Erro ao criar produto no Stripe:', error);
+      throw new Error('Falha ao criar produto no Stripe');
     }
   }
 
-  /**
-   * WEBHOOK HANDLER
-   */
-  async handleWebhook(body: any, signature: string): Promise<void> {
+  // Atualizar produto
+  async updateProduct(productId: string, config: Partial<StripeProductConfig>): Promise<Stripe.Product> {
     try {
-      if (!stripe) {
-        throw new Error('Stripe não está configurado - STRIPE_SECRET_KEY não encontrada');
-      }
+      const updateData: Stripe.ProductUpdateParams = {};
+      
+      if (config.name) updateData.name = config.name;
+      if (config.description) updateData.description = config.description;
+      
+      updateData.metadata = {
+        updated_by: 'vendzz_checkout_builder',
+        last_updated: new Date().toISOString()
+      };
 
-      const event = stripe.webhooks.constructEvent(
-        body,
-        signature,
-        process.env.STRIPE_WEBHOOK_SECRET || ''
-      );
-
-      console.log(`🔔 Webhook recebido: ${event.type}`);
-
-      switch (event.type) {
-        case 'payment_intent.succeeded':
-          await this.handlePaymentSucceeded(event.data.object);
-          break;
-
-        case 'invoice.payment_succeeded':
-          await this.handleSubscriptionPayment(event.data.object);
-          break;
-
-        case 'customer.subscription.deleted':
-          await this.handleSubscriptionCancelled(event.data.object);
-          break;
-
-        case 'customer.subscription.updated':
-          await this.handleSubscriptionUpdated(event.data.object);
-          break;
-
-        default:
-          console.log(`⚠️ Evento não tratado: ${event.type}`);
-      }
-
+      return await this.stripe.products.update(productId, updateData);
     } catch (error) {
-      console.error('❌ Erro no webhook:', error);
-      throw error;
+      console.error('Erro ao atualizar produto no Stripe:', error);
+      throw new Error('Falha ao atualizar produto no Stripe');
     }
   }
 
-  /**
-   * HANDLERS PRIVADOS
-   */
-  private async handlePaymentSucceeded(paymentIntent: any): Promise<void> {
-    const userId = paymentIntent.metadata?.userId;
-    if (!userId) return;
+  // Criar sessão de checkout
+  async createCheckoutSession(
+    priceId: string,
+    options: {
+      successUrl: string;
+      cancelUrl: string;
+      customerId?: string;
+      trialPeriodDays?: number;
+      allowPromotionCodes?: boolean;
+      collectTaxes?: boolean;
+      mode?: 'payment' | 'subscription' | 'setup';
+    }
+  ): Promise<Stripe.Checkout.Session> {
+    try {
+      const sessionData: Stripe.Checkout.SessionCreateParams = {
+        mode: options.mode || 'payment',
+        line_items: [
+          {
+            price: priceId,
+            quantity: 1,
+          },
+        ],
+        success_url: options.successUrl,
+        cancel_url: options.cancelUrl,
+        automatic_tax: {
+          enabled: options.collectTaxes || false,
+        },
+        allow_promotion_codes: options.allowPromotionCodes || false,
+      };
 
-    const { type, credits } = paymentIntent.metadata;
-
-    if (type && credits) {
-      // Pagamento de créditos avulsos
-      await creditProtection.addCreditsSecurely(
-        userId,
-        type,
-        parseInt(credits),
-        'Compra de créditos via Stripe',
-        undefined,
-        paymentIntent.id
-      );
-
-      // 🔄 INTEGRAÇÃO COM SISTEMA DE REATIVAÇÃO AUTOMÁTICA
-      try {
-        const { campaignAutoPauseSystem } = await import('./campaign-auto-pause-system');
-        await campaignAutoPauseSystem.checkCampaignsAfterCreditAddition(userId, type);
-        console.log(`▶️ Sistema de reativação automática executado para ${type} créditos (via Stripe)`);
-      } catch (error) {
-        console.error('⚠️ Erro no sistema de reativação automática:', error);
-        // Não bloquear o webhook se o sistema de reativação falhar
+      if (options.customerId) {
+        sessionData.customer = options.customerId;
       }
+
+      if (options.mode === 'subscription' && options.trialPeriodDays) {
+        sessionData.subscription_data = {
+          trial_period_days: options.trialPeriodDays,
+        };
+      }
+
+      return await this.stripe.checkout.sessions.create(sessionData);
+    } catch (error) {
+      console.error('Erro ao criar sessão de checkout:', error);
+      throw new Error('Falha ao criar sessão de checkout');
     }
   }
 
-  private async handleSubscriptionPayment(invoice: any): Promise<void> {
-    const customerId = invoice.customer;
-    const subscriptionId = invoice.subscription;
-
-    // Buscar usuário pelo customer ID
-    const user = await storage.getUserByStripeCustomerId(customerId);
-    if (!user) return;
-
-    // Atualizar status da assinatura
-    await storage.updateUser(user.id, {
-      subscriptionStatus: 'active',
-      planExpiresAt: new Date(invoice.period_end * 1000)
-    });
-
-    // Reativar conta se estiver bloqueada
-    if (user.isBlocked) {
-      await storage.updateUser(user.id, {
-        isBlocked: false,
-        planRenewalRequired: false,
-        blockReason: null
+  // Listar produtos
+  async listProducts(limit = 100): Promise<Stripe.Product[]> {
+    try {
+      const products = await this.stripe.products.list({
+        limit,
+        active: true,
       });
+      return products.data;
+    } catch (error) {
+      console.error('Erro ao listar produtos:', error);
+      throw new Error('Falha ao listar produtos');
     }
-
-    console.log(`✅ Pagamento de assinatura processado para usuário ${user.id}`);
   }
 
-  private async handleSubscriptionCancelled(subscription: any): Promise<void> {
-    const customerId = subscription.customer;
-    
-    const user = await storage.getUserByStripeCustomerId(customerId);
-    if (!user) return;
-
-    await storage.updateUser(user.id, {
-      subscriptionStatus: 'cancelled',
-      plan: 'free'
-    });
-
-    console.log(`✅ Assinatura cancelada para usuário ${user.id}`);
+  // Listar preços de um produto
+  async listPrices(productId: string): Promise<Stripe.Price[]> {
+    try {
+      const prices = await this.stripe.prices.list({
+        product: productId,
+        active: true,
+      });
+      return prices.data;
+    } catch (error) {
+      console.error('Erro ao listar preços:', error);
+      throw new Error('Falha ao listar preços');
+    }
   }
 
-  private async handleSubscriptionUpdated(subscription: any): Promise<void> {
-    const customerId = subscription.customer;
-    
-    const user = await storage.getUserByStripeCustomerId(customerId);
-    if (!user) return;
+  // Criar cliente
+  async createCustomer(email: string, name?: string): Promise<Stripe.Customer> {
+    try {
+      return await this.stripe.customers.create({
+        email,
+        name,
+        metadata: {
+          created_by: 'vendzz_checkout_builder',
+        },
+      });
+    } catch (error) {
+      console.error('Erro ao criar cliente:', error);
+      throw new Error('Falha ao criar cliente');
+    }
+  }
 
-    await storage.updateUser(user.id, {
-      subscriptionStatus: subscription.status,
-      planExpiresAt: new Date(subscription.current_period_end * 1000)
-    });
+  // Buscar cliente por email
+  async findCustomerByEmail(email: string): Promise<Stripe.Customer | null> {
+    try {
+      const customers = await this.stripe.customers.list({
+        email,
+        limit: 1,
+      });
+      return customers.data.length > 0 ? customers.data[0] : null;
+    } catch (error) {
+      console.error('Erro ao buscar cliente:', error);
+      return null;
+    }
+  }
 
-    console.log(`✅ Assinatura atualizada para usuário ${user.id}`);
+  // Criar portal de cobrança
+  async createBillingPortalSession(customerId: string, returnUrl: string): Promise<Stripe.BillingPortal.Session> {
+    try {
+      return await this.stripe.billingPortal.sessions.create({
+        customer: customerId,
+        return_url: returnUrl,
+      });
+    } catch (error) {
+      console.error('Erro ao criar portal de cobrança:', error);
+      throw new Error('Falha ao criar portal de cobrança');
+    }
+  }
+
+  // Webhook para processar eventos
+  async processWebhook(body: string, signature: string, endpointSecret: string): Promise<Stripe.Event> {
+    try {
+      return this.stripe.webhooks.constructEvent(body, signature, endpointSecret);
+    } catch (error) {
+      console.error('Erro ao processar webhook:', error);
+      throw new Error('Falha ao processar webhook');
+    }
+  }
+
+  // Verificar status de assinatura
+  async getSubscriptionStatus(subscriptionId: string): Promise<{
+    status: string;
+    currentPeriodEnd: number;
+    cancelAtPeriodEnd: boolean;
+  }> {
+    try {
+      const subscription = await this.stripe.subscriptions.retrieve(subscriptionId);
+      return {
+        status: subscription.status,
+        currentPeriodEnd: subscription.current_period_end,
+        cancelAtPeriodEnd: subscription.cancel_at_period_end,
+      };
+    } catch (error) {
+      console.error('Erro ao verificar status da assinatura:', error);
+      throw new Error('Falha ao verificar status da assinatura');
+    }
+  }
+
+  // Cancelar assinatura
+  async cancelSubscription(subscriptionId: string, atPeriodEnd = true): Promise<Stripe.Subscription> {
+    try {
+      if (atPeriodEnd) {
+        return await this.stripe.subscriptions.update(subscriptionId, {
+          cancel_at_period_end: true,
+        });
+      } else {
+        return await this.stripe.subscriptions.cancel(subscriptionId);
+      }
+    } catch (error) {
+      console.error('Erro ao cancelar assinatura:', error);
+      throw new Error('Falha ao cancelar assinatura');
+    }
+  }
+
+  // Obter todas as moedas suportadas
+  async getSupportedCurrencies(): Promise<string[]> {
+    // Lista baseada na documentação do Stripe
+    return [
+      'usd', 'eur', 'gbp', 'brl', 'cad', 'aud', 'jpy', 'cny', 'inr', 'krw',
+      'mxn', 'ars', 'clp', 'cop', 'pen', 'uyu', 'chf', 'nok', 'sek', 'dkk',
+      'pln', 'czk', 'huf', 'rub', 'try', 'zar', 'sgd', 'hkd', 'nzd', 'thb',
+      'myr', 'idr', 'php', 'vnd', 'egp', 'mad', 'ngn', 'kes', 'ghs', 'xof',
+      'xaf', 'ils', 'sar', 'aed', 'qar', 'kwd', 'bhd', 'omr', 'jod', 'lbp'
+    ];
   }
 }
 
-// Instância singleton
-export const stripeIntegration = StripeIntegration.getInstance();
+// Exportar apenas se a chave do Stripe existir
+export const stripeService = process.env.STRIPE_SECRET_KEY ? new StripeService() : null;

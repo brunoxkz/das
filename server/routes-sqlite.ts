@@ -7,7 +7,7 @@ import { insertQuizSchema, insertQuizResponseSchema } from "../shared/schema-sql
 import { z } from "zod";
 import { verifyJWT } from "./auth-sqlite";
 import { creditProtection } from "./credit-protection";
-import { stripeIntegration } from "./stripe-integration";
+import { stripeService } from "./stripe-integration";
 import { sendSms } from "./twilio";
 import { emailService } from "./email-service";
 import { BrevoEmailService } from "./email-brevo";
@@ -2727,6 +2727,155 @@ export function registerSQLiteRoutes(app: Express): Server {
     } catch (error) {
       console.error("Error creating subscription:", error);
       res.status(500).json({ error: "Failed to create subscription" });
+    }
+  });
+
+  // Rota para assinatura paga com cobrança combinada (R$1.00 + R$29.90/mês)
+  app.post("/api/assinatura-paga", verifyJWT, async (req: any, res) => {
+    try {
+      const { paymentMethodId } = req.body;
+      const userId = req.user.id;
+
+      if (!paymentMethodId) {
+        return res.status(400).json({ error: "paymentMethodId é obrigatório" });
+      }
+
+      console.log('🔧 Processando assinatura paga para usuário:', userId);
+
+      if (!stripeService) {
+        return res.status(500).json({ error: "Stripe não configurado" });
+      }
+
+      // Buscar dados do usuário
+      const user = await storage.getUser(userId);
+      if (!user) {
+        return res.status(404).json({ error: "Usuário não encontrado" });
+      }
+
+      // Criar ou buscar customer no Stripe
+      let customer;
+      try {
+        const customers = await stripeService.stripe.customers.list({
+          email: user.email,
+          limit: 1
+        });
+
+        if (customers.data.length > 0) {
+          customer = customers.data[0];
+        } else {
+          customer = await stripeService.stripe.customers.create({
+            email: user.email,
+            name: user.name || user.email,
+            metadata: {
+              userId: userId,
+              createdBy: 'vendzz_subscription'
+            }
+          });
+        }
+      } catch (error) {
+        console.error('❌ Erro ao criar/buscar customer:', error);
+        return res.status(500).json({ error: "Erro ao processar dados do cliente" });
+      }
+
+      // Anexar método de pagamento ao customer
+      try {
+        await stripeService.stripe.paymentMethods.attach(paymentMethodId, {
+          customer: customer.id
+        });
+
+        // Definir como método padrão
+        await stripeService.stripe.customers.update(customer.id, {
+          invoice_settings: {
+            default_payment_method: paymentMethodId
+          }
+        });
+      } catch (error) {
+        console.error('❌ Erro ao anexar método de pagamento:', error);
+        return res.status(500).json({ error: "Erro ao processar método de pagamento" });
+      }
+
+      // 1. Cobrança imediata de R$1.00
+      try {
+        const immediateCharge = await stripeService.stripe.paymentIntents.create({
+          amount: 100, // R$1.00 em centavos
+          currency: 'brl',
+          customer: customer.id,
+          payment_method: paymentMethodId,
+          confirm: true,
+          description: 'Taxa de ativação - Vendzz Premium',
+          metadata: {
+            userId: userId,
+            type: 'activation_fee'
+          }
+        });
+
+        console.log('✅ Cobrança imediata processada:', immediateCharge.id);
+      } catch (error) {
+        console.error('❌ Erro na cobrança imediata:', error);
+        return res.status(400).json({ error: "Falha na cobrança de ativação" });
+      }
+
+      // 2. Criar assinatura com trial de 7 dias
+      try {
+        const subscription = await stripeService.stripe.subscriptions.create({
+          customer: customer.id,
+          items: [{
+            price: 'price_1RlbGzHK6al3veW14KUssvQv' // Price ID real criado
+          }],
+          payment_behavior: 'default_incomplete',
+          payment_settings: {
+            payment_method_options: {
+              card: {
+                request_three_d_secure: 'if_required'
+              }
+            },
+            save_default_payment_method: 'on_subscription'
+          },
+          expand: ['latest_invoice.payment_intent'],
+          trial_period_days: 7,
+          metadata: {
+            userId: userId,
+            activationFee: 'paid',
+            plan: 'premium'
+          }
+        });
+
+        console.log('✅ Assinatura criada:', subscription.id);
+
+        // Salvar no banco local
+        await storage.createSubscription({
+          id: subscription.id,
+          userId: userId,
+          customerId: customer.id,
+          status: subscription.status,
+          trialEnd: subscription.trial_end ? new Date(subscription.trial_end * 1000).toISOString() : '',
+          currentPeriodStart: new Date(subscription.current_period_start * 1000).toISOString(),
+          currentPeriodEnd: new Date(subscription.current_period_end * 1000).toISOString(),
+          createdAt: new Date().toISOString()
+        });
+
+        res.json({
+          success: true,
+          subscription: {
+            id: subscription.id,
+            status: subscription.status,
+            clientSecret: subscription.latest_invoice?.payment_intent?.client_secret
+          },
+          customer: {
+            id: customer.id,
+            email: customer.email
+          },
+          message: 'Assinatura criada com sucesso! Taxa de ativação cobrada.'
+        });
+
+      } catch (error) {
+        console.error('❌ Erro ao criar assinatura:', error);
+        return res.status(500).json({ error: "Erro ao criar assinatura mensal" });
+      }
+
+    } catch (error) {
+      console.error('❌ Erro geral na assinatura paga:', error);
+      res.status(500).json({ error: "Erro interno do servidor" });
     }
   });
 
@@ -11986,6 +12135,335 @@ export function registerCheckoutRoutes(app: Express) {
     } catch (error) {
       console.error('Erro ao verificar status:', error);
       res.status(500).json({ error: 'Erro interno do servidor' });
+    }
+  });
+
+  // Rotas Stripe
+  app.post("/api/stripe/products", verifyJWT, async (req: any, res: Response) => {
+    try {
+      const config = req.body;
+      
+      // Validar configuração
+      if (!config.name || !config.description || !config.price || !config.currency) {
+        return res.status(400).json({ error: "Nome, descrição, preço e moeda são obrigatórios" });
+      }
+      
+      if (!process.env.STRIPE_SECRET_KEY) {
+        return res.status(500).json({ error: "Stripe não configurado" });
+      }
+      
+      // Criar produto no Stripe
+      const stripeResult = await stripeService.createProduct(config);
+      
+      // Salvar produto no banco local
+      const product = await storage.createProduct({
+        userId: req.user.id,
+        name: config.name,
+        description: config.description,
+        price: config.price,
+        currency: config.currency,
+        category: config.category || 'digital',
+        paymentMode: config.paymentMode || 'one_time',
+        recurringInterval: config.recurringInterval,
+        recurringIntervalCount: config.recurringIntervalCount,
+        trialPeriod: config.trialPeriodDays,
+        status: 'active',
+        stripeProductId: stripeResult.product.id,
+        stripePriceId: stripeResult.price.id,
+        stripeConfig: {
+          billingScheme: config.billingScheme || 'per_unit',
+          usageType: config.usageType || 'licensed',
+          aggregateUsage: config.aggregateUsage,
+          taxRates: config.taxRates || false,
+          coupons: config.coupons || false,
+          collectionMethod: config.collectionMethod || 'automatic'
+        }
+      });
+      
+      res.json({ product, stripeProduct: stripeResult.product, stripePrice: stripeResult.price });
+    } catch (error) {
+      console.error("Erro ao criar produto Stripe:", error);
+      res.status(500).json({ error: "Erro ao criar produto no Stripe" });
+    }
+  });
+
+  app.post("/api/stripe/checkout-session", verifyJWT, async (req: any, res: Response) => {
+    try {
+      const { productId, successUrl, cancelUrl } = req.body;
+      
+      if (!process.env.STRIPE_SECRET_KEY) {
+        return res.status(500).json({ error: "Stripe não configurado" });
+      }
+      
+      // Buscar produto
+      const product = await storage.getProduct(productId);
+      if (!product || !product.stripePriceId) {
+        return res.status(404).json({ error: "Produto não encontrado ou sem configuração Stripe" });
+      }
+      
+      // Criar sessão de checkout
+      const session = await stripeService.createCheckoutSession(product.stripePriceId, {
+        successUrl: successUrl || `${req.protocol}://${req.get('host')}/checkout/success`,
+        cancelUrl: cancelUrl || `${req.protocol}://${req.get('host')}/checkout/cancel`,
+        mode: product.paymentMode === 'recurring' ? 'subscription' : 'payment',
+        trialPeriodDays: product.trialPeriod,
+        allowPromotionCodes: product.stripeConfig?.coupons || false,
+        collectTaxes: product.stripeConfig?.taxRates || false
+      });
+      
+      res.json({ sessionId: session.id, checkoutUrl: session.url });
+    } catch (error) {
+      console.error("Erro ao criar sessão de checkout:", error);
+      res.status(500).json({ error: "Erro ao criar sessão de checkout" });
+    }
+  });
+
+  app.get("/api/stripe/products", verifyJWT, async (req: any, res: Response) => {
+    try {
+      if (!process.env.STRIPE_SECRET_KEY) {
+        return res.status(500).json({ error: "Stripe não configurado" });
+      }
+      
+      const products = await stripeService.listProducts();
+      res.json(products);
+    } catch (error) {
+      console.error("Erro ao listar produtos Stripe:", error);
+      res.status(500).json({ error: "Erro ao listar produtos" });
+    }
+  });
+
+  app.get("/api/stripe/currencies", async (req: Request, res: Response) => {
+    try {
+      if (!process.env.STRIPE_SECRET_KEY) {
+        return res.status(500).json({ error: "Stripe não configurado" });
+      }
+      
+      const currencies = await stripeService.getSupportedCurrencies();
+      res.json(currencies);
+    } catch (error) {
+      console.error("Erro ao buscar moedas:", error);
+      res.status(500).json({ error: "Erro ao buscar moedas suportadas" });
+    }
+  });
+
+  app.post("/api/stripe/webhook", express.raw({ type: 'application/json' }), async (req: Request, res: Response) => {
+    try {
+      const sig = req.headers['stripe-signature'];
+      const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET;
+      
+      if (!sig || !endpointSecret) {
+        return res.status(400).json({ error: "Webhook não configurado" });
+      }
+      
+      const event = await stripeService.processWebhook(req.body, sig as string, endpointSecret);
+      
+      // Processar evento
+      switch (event.type) {
+        case 'checkout.session.completed':
+          const session = event.data.object as any;
+          console.log('Checkout session completed:', session.id);
+          // Atualizar status do produto/transação
+          break;
+        case 'customer.subscription.created':
+          const subscription = event.data.object as any;
+          console.log('Subscription created:', subscription.id);
+          break;
+        case 'customer.subscription.updated':
+          const updatedSub = event.data.object as any;
+          console.log('Subscription updated:', updatedSub.id);
+          break;
+        case 'customer.subscription.deleted':
+          const deletedSub = event.data.object as any;
+          console.log('Subscription deleted:', deletedSub.id);
+          break;
+        default:
+          console.log('Unhandled event type:', event.type);
+      }
+      
+      res.json({ received: true });
+    } catch (error) {
+      console.error("Erro no webhook Stripe:", error);
+      res.status(400).json({ error: "Erro no webhook" });
+    }
+  });
+
+  // Rota para assinatura paga com cobrança combinada
+  app.post("/api/assinatura-paga", verifyJWT, async (req: any, res: Response) => {
+    try {
+      const { payment_method_id, customer_email, customer_name } = req.body;
+      
+      // Validar dados obrigatórios
+      if (!payment_method_id || !customer_email) {
+        return res.status(400).json({ 
+          error: "payment_method_id e customer_email são obrigatórios" 
+        });
+      }
+      
+      if (!process.env.STRIPE_SECRET_KEY) {
+        return res.status(500).json({ error: "Stripe não configurado" });
+      }
+      
+      const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+      
+      console.log('🔄 Iniciando processo de assinatura paga');
+      console.log('📧 Email do cliente:', customer_email);
+      console.log('💳 Payment Method ID:', payment_method_id);
+      
+      // PASSO 1: Criar ou buscar customer no Stripe
+      let customer;
+      try {
+        // Buscar customer existente por email
+        const existingCustomers = await stripe.customers.list({
+          email: customer_email,
+          limit: 1
+        });
+        
+        if (existingCustomers.data.length > 0) {
+          customer = existingCustomers.data[0];
+          console.log('👤 Customer existente encontrado:', customer.id);
+        } else {
+          // Criar novo customer
+          customer = await stripe.customers.create({
+            email: customer_email,
+            name: customer_name || customer_email,
+            metadata: {
+              userId: req.user.id,
+              source: 'checkout-builder'
+            }
+          });
+          console.log('👤 Novo customer criado:', customer.id);
+        }
+      } catch (error) {
+        console.error('❌ Erro ao criar/buscar customer:', error);
+        return res.status(500).json({ 
+          error: "Erro ao processar dados do cliente",
+          details: error.message 
+        });
+      }
+      
+      // PASSO 2: Associar payment method ao customer
+      try {
+        await stripe.paymentMethods.attach(payment_method_id, {
+          customer: customer.id
+        });
+        
+        // Definir como método padrão
+        await stripe.customers.update(customer.id, {
+          invoice_settings: {
+            default_payment_method: payment_method_id
+          }
+        });
+        
+        console.log('💳 Payment method associado e definido como padrão');
+      } catch (error) {
+        console.error('❌ Erro ao associar payment method:', error);
+        return res.status(500).json({ 
+          error: "Erro ao processar método de pagamento",
+          details: error.message 
+        });
+      }
+      
+      // PASSO 3: Criar invoice item de R$1,00 e cobrar imediatamente
+      try {
+        // Criar invoice item
+        await stripe.invoiceItems.create({
+          customer: customer.id,
+          amount: 100, // R$1,00 em centavos
+          currency: 'brl',
+          description: 'Taxa de ativação da assinatura'
+        });
+        
+        // Criar invoice e cobrar
+        const invoice = await stripe.invoices.create({
+          customer: customer.id,
+          auto_advance: true, // Finalizar automaticamente
+          collection_method: 'charge_automatically'
+        });
+        
+        // Finalizar e cobrar o invoice
+        const finalizedInvoice = await stripe.invoices.finalizeInvoice(invoice.id);
+        const paidInvoice = await stripe.invoices.pay(finalizedInvoice.id);
+        
+        console.log('💰 Invoice de R$1,00 criado e cobrado:', paidInvoice.id);
+        
+        if (paidInvoice.status !== 'paid') {
+          throw new Error('Falha na cobrança da taxa de ativação');
+        }
+      } catch (error) {
+        console.error('❌ Erro ao cobrar taxa de ativação:', error);
+        return res.status(500).json({ 
+          error: "Erro ao processar taxa de ativação",
+          details: error.message 
+        });
+      }
+      
+      // PASSO 4: Criar assinatura com trial de 7 dias
+      try {
+        // Price ID fixo para R$29,90/mês (deve ser configurado no Stripe Dashboard)
+        const PRICE_ID = 'price_1234567890abcdef'; // ⚠️ ALTERE ESTE VALOR NO STRIPE DASHBOARD
+        
+        const subscription = await stripe.subscriptions.create({
+          customer: customer.id,
+          items: [{
+            price: PRICE_ID
+          }],
+          trial_period_days: 7,
+          default_payment_method: payment_method_id,
+          collection_method: 'charge_automatically',
+          billing_cycle_anchor: 'unchanged',
+          proration_behavior: 'none',
+          metadata: {
+            userId: req.user.id,
+            source: 'checkout-builder',
+            activation_fee_paid: 'true'
+          }
+        });
+        
+        console.log('📋 Assinatura criada com sucesso:', subscription.id);
+        console.log('🗓️ Status da assinatura:', subscription.status);
+        console.log('🔔 Trial até:', new Date(subscription.trial_end * 1000).toLocaleDateString());
+        
+        // Salvar dados da assinatura no banco local (opcional)
+        try {
+          await storage.createSubscription({
+            id: subscription.id,
+            userId: req.user.id,
+            customerId: customer.id,
+            status: subscription.status,
+            trialEnd: new Date(subscription.trial_end * 1000).toISOString(),
+            currentPeriodStart: new Date(subscription.current_period_start * 1000).toISOString(),
+            currentPeriodEnd: new Date(subscription.current_period_end * 1000).toISOString(),
+            createdAt: new Date().toISOString()
+          });
+        } catch (dbError) {
+          console.error('⚠️ Erro ao salvar no banco local (não crítico):', dbError);
+        }
+        
+        // Resposta de sucesso
+        res.json({
+          success: true,
+          subscriptionId: subscription.id,
+          customerId: customer.id,
+          status: subscription.status,
+          trialEnd: subscription.trial_end,
+          activationFeeCharged: true,
+          message: 'Assinatura criada com sucesso! Taxa de ativação de R$1,00 cobrada. Trial de 7 dias iniciado.'
+        });
+        
+      } catch (error) {
+        console.error('❌ Erro ao criar assinatura:', error);
+        return res.status(500).json({ 
+          error: "Erro ao criar assinatura",
+          details: error.message 
+        });
+      }
+      
+    } catch (error) {
+      console.error('❌ Erro geral na rota assinatura-paga:', error);
+      res.status(500).json({ 
+        error: "Erro interno no processamento da assinatura",
+        details: error.message 
+      });
     }
   });
 }
