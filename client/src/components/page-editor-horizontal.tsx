@@ -808,7 +808,12 @@ export function PageEditorHorizontal({
     };
     
     const translationKey = typeKeyMap[type];
-    return translationKey ? t(`quiz.elements.${translationKey}`) : type;
+    try {
+      return translationKey ? t(`quiz.elements.${translationKey}`) : type;
+    } catch (error) {
+      console.warn(`Translation not found for element type: ${type}`);
+      return type;
+    }
   };
 
   // Função para converter imagem para WebP
@@ -5112,8 +5117,8 @@ const gameElementCategories = [
             <div className="flex items-center justify-center h-full text-gray-500">
               <div className="text-center">
                 <FileText className="w-16 h-16 mx-auto mb-4 opacity-50" />
-                <h3 className="text-lg font-semibold mb-2">Nenhuma página selecionada</h3>
-                <p className="text-sm">Selecione uma página para começar a editar.</p>
+                <h3 className="text-lg font-semibold mb-2">{t('quiz.noPageSelected')}</h3>
+                <p className="text-sm">{t('quiz.selectPageToEdit')}</p>
               </div>
             </div>
           )}
@@ -5138,7 +5143,7 @@ const gameElementCategories = [
               {selectedElementData.type === "heading" && (
                 <div className="space-y-4">
                   <div>
-                    <Label htmlFor="heading-content">Texto do Título</Label>
+                    <Label htmlFor="heading-content">{t('quiz.titleText')}</Label>
                     <Input
                       id="heading-content"
                       value={selectedElementData.content}
@@ -5149,7 +5154,7 @@ const gameElementCategories = [
                   
                   {/* Formatação completa */}
                   <div className="border rounded-lg p-4 bg-gray-50">
-                    <h4 className="font-semibold text-sm mb-3">Formatação</h4>
+                    <h4 className="font-semibold text-sm mb-3">{t('quiz.formatting')}</h4>
                     <div className="grid grid-cols-2 gap-3">
                       <div>
                         <Label className="text-xs">Tamanho</Label>
@@ -5260,7 +5265,7 @@ const gameElementCategories = [
                   
                   {/* Formatação do parágrafo */}
                   <div className="border rounded-lg p-4 bg-gray-50">
-                    <h4 className="font-semibold text-sm mb-3">Formatação</h4>
+                    <h4 className="font-semibold text-sm mb-3">{t('quiz.formatting')}</h4>
                     <div className="grid grid-cols-2 gap-3">
                       <div>
                         <Label className="text-xs">Tamanho</Label>

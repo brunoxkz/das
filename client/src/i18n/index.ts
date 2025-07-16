@@ -46,6 +46,16 @@ i18n
     
     react: {
       useSuspense: false // evita problemas de loading
+    },
+    
+    // fallback para chaves não encontradas
+    returnNull: false,
+    returnEmptyString: false,
+    
+    // configurações para evitar erros
+    missingKeyHandler: (lng, ns, key) => {
+      console.warn(`Missing translation key: ${key} for language: ${lng}`);
+      return key;
     }
   });
 
