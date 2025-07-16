@@ -314,6 +314,37 @@ export class StripeService {
     }
   }
 
+  // Criar Payment Intent
+  async createPaymentIntent(params: {
+    amount: number;
+    currency: string;
+    customerId?: string;
+    paymentMethodId?: string;
+    metadata?: Record<string, string>;
+  }): Promise<Stripe.PaymentIntent> {
+    try {
+      const paymentIntentData: Stripe.PaymentIntentCreateParams = {
+        amount: params.amount,
+        currency: params.currency,
+        metadata: params.metadata || {}
+      };
+
+      if (params.customerId) {
+        paymentIntentData.customer = params.customerId;
+      }
+
+      if (params.paymentMethodId) {
+        paymentIntentData.payment_method = params.paymentMethodId;
+        paymentIntentData.confirm = true;
+      }
+
+      return await this.stripe.paymentIntents.create(paymentIntentData);
+    } catch (error) {
+      console.error('Erro ao criar Payment Intent:', error);
+      throw new Error('Falha ao criar Payment Intent');
+    }
+  }
+
   // Criar cliente
   async createCustomer(email: string, name?: string): Promise<Stripe.Customer> {
     try {

@@ -3163,11 +3163,11 @@ export function registerSQLiteRoutes(app: Express): Server {
         return res.status(404).json({ error: "User not found" });
       }
 
-      const customerId = await stripeIntegration.createStripeCustomer(
-        userId,
-        user.email,
-        `${user.firstName} ${user.lastName}`
-      );
+      const customerId = await stripeService?.createCustomer({
+        email: user.email,
+        name: `${user.firstName} ${user.lastName}`,
+        metadata: { userId }
+      });
 
       res.json({ customerId, success: true });
     } catch (error) {
@@ -3186,11 +3186,36 @@ export function registerSQLiteRoutes(app: Express): Server {
         return res.status(400).json({ error: "planId e paymentMethodId são obrigatórios" });
       }
 
-      const result = await stripeIntegration.createSubscription(
-        userId,
-        planId,
-        paymentMethodId
-      );
+      if (!stripeService) {
+        return res.status(500).json({ error: "Stripe não configurado" });
+      }
+
+      // Buscar dados do usuário
+      const user = await storage.getUser(userId);
+      if (!user) {
+        return res.status(404).json({ error: "Usuário não encontrado" });
+      }
+
+      // Criar ou buscar customer no Stripe
+      let customer;
+      try {
+        customer = await stripeService.createCustomer({
+          email: user.email,
+          name: `${user.firstName} ${user.lastName}`,
+          metadata: { userId }
+        });
+      } catch (error) {
+        console.error("Erro ao criar customer:", error);
+        return res.status(500).json({ error: "Erro ao criar customer no Stripe" });
+      }
+
+      // Criar assinatura
+      const result = await stripeService.createSubscription({
+        customerId: customer.id,
+        priceId: planId,
+        paymentMethodId,
+        metadata: { userId }
+      });
 
       res.json(result);
     } catch (error) {
@@ -3352,7 +3377,19 @@ export function registerSQLiteRoutes(app: Express): Server {
   app.post("/api/stripe/subscription/cancel", verifyJWT, async (req: any, res) => {
     try {
       const userId = req.user.id;
-      const success = await stripeIntegration.cancelSubscription(userId);
+      if (!stripeService) {
+        return res.status(500).json({ error: "Stripe não configurado" });
+      }
+
+      // Buscar assinatura ativa do usuário
+      const subscription = await storage.getUserSubscription(userId);
+      if (!subscription) {
+        return res.status(404).json({ error: "Assinatura não encontrada" });
+      }
+
+      // Cancelar assinatura no Stripe
+      const result = await stripeService.cancelSubscription(subscription.id);
+      const success = result.status === 'canceled' || result.cancel_at_period_end;
 
       res.json({ success });
     } catch (error) {
@@ -3371,12 +3408,72 @@ export function registerSQLiteRoutes(app: Express): Server {
         return res.status(400).json({ error: "type, packageId e paymentMethodId são obrigatórios" });
       }
 
-      const result = await stripeIntegration.purchaseCredits(
-        userId,
-        type,
-        packageId,
-        paymentMethodId
-      );
+      if (!stripeService) {
+        return res.status(500).json({ error: "Stripe não configurado" });
+      }
+
+      // Buscar dados do usuário
+      const user = await storage.getUser(userId);
+      if (!user) {
+        return res.status(404).json({ error: "Usuário não encontrado" });
+      }
+
+      // Definir preços dos pacotes de créditos
+      const creditPackages = {
+        sms: {
+          small: { credits: 100, price: 10.00 },
+          medium: { credits: 500, price: 40.00 },
+          large: { credits: 1000, price: 70.00 }
+        },
+        email: {
+          small: { credits: 1000, price: 15.00 },
+          medium: { credits: 5000, price: 60.00 },
+          large: { credits: 10000, price: 100.00 }
+        },
+        whatsapp: {
+          small: { credits: 50, price: 20.00 },
+          medium: { credits: 250, price: 80.00 },
+          large: { credits: 500, price: 140.00 }
+        }
+      };
+
+      const packageInfo = creditPackages[type as keyof typeof creditPackages]?.[packageId as keyof typeof creditPackages.sms];
+      if (!packageInfo) {
+        return res.status(400).json({ error: "Pacote de créditos inválido" });
+      }
+
+      // Criar ou buscar customer no Stripe
+      let customer;
+      try {
+        customer = await stripeService.createCustomer({
+          email: user.email,
+          name: `${user.firstName} ${user.lastName}`,
+          metadata: { userId }
+        });
+      } catch (error) {
+        console.error("Erro ao criar customer:", error);
+        return res.status(500).json({ error: "Erro ao criar customer no Stripe" });
+      }
+
+      // Criar payment intent para compra de créditos
+      const paymentIntent = await stripeService.createPaymentIntent({
+        amount: Math.round(packageInfo.price * 100), // Converter para centavos
+        currency: 'brl',
+        customerId: customer.id,
+        paymentMethodId,
+        metadata: {
+          userId,
+          type,
+          packageId,
+          credits: packageInfo.credits.toString()
+        }
+      });
+
+      const result = {
+        paymentIntentId: paymentIntent.id,
+        clientSecret: paymentIntent.client_secret,
+        package: packageInfo
+      };
 
       res.json(result);
     } catch (error) {
@@ -3394,7 +3491,36 @@ export function registerSQLiteRoutes(app: Express): Server {
         return res.status(400).json({ error: "Missing Stripe signature" });
       }
 
-      await stripeIntegration.handleWebhook(req.body, signature);
+      if (!stripeService) {
+        return res.status(500).json({ error: "Stripe não configurado" });
+      }
+
+      // Verificar webhook
+      const event = stripeService.verifyWebhook(req.body, signature);
+      
+      // Processar evento do webhook
+      console.log('Webhook recebido:', event.type);
+      
+      // Aqui você pode adicionar lógica específica para diferentes tipos de eventos
+      switch (event.type) {
+        case 'payment_intent.succeeded':
+          // Processar pagamento bem-sucedido
+          break;
+        case 'invoice.payment_succeeded':
+          // Processar fatura paga
+          break;
+        case 'customer.subscription.created':
+          // Processar nova assinatura
+          break;
+        case 'customer.subscription.updated':
+          // Processar assinatura atualizada
+          break;
+        case 'customer.subscription.deleted':
+          // Processar assinatura cancelada
+          break;
+        default:
+          console.log('Evento não tratado:', event.type);
+      }
       
       res.json({ received: true });
     } catch (error) {
@@ -3504,15 +3630,20 @@ export function registerSQLiteRoutes(app: Express): Server {
       // Testar Stripe Integration
       try {
         const user = await storage.getUser(userId);
-        if (user) {
-          const stripeTest = await stripeIntegration.createStripeCustomer(
-            userId,
-            user.email,
-            `${user.firstName} ${user.lastName}`
-          );
+        if (user && stripeService) {
+          const stripeTest = await stripeService.createCustomer({
+            email: user.email,
+            name: `${user.firstName} ${user.lastName}`,
+            metadata: { userId }
+          });
           testResults.results.stripe = {
             status: stripeTest ? 'PASS' : 'FAIL',
-            customerId: stripeTest
+            customerId: stripeTest.id
+          };
+        } else {
+          testResults.results.stripe = {
+            status: 'SKIP',
+            reason: 'Stripe não configurado'
           };
         }
       } catch (stripeError) {

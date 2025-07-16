@@ -1075,17 +1075,22 @@ export const checkoutTransactions = sqliteTable("checkout_transactions", {
   userId: text("userId").notNull().references(() => users.id),
   productId: text("productId").notNull().references(() => checkoutProducts.id),
   checkoutPageId: text("checkoutPageId").references(() => checkoutPages.id),
+  checkoutId: text("checkoutId"), // ID do checkout específico
   customerEmail: text("customerEmail").notNull(),
   customerName: text("customerName").notNull(),
   customerPhone: text("customerPhone"),
   customerAddress: text("customerAddress", { mode: 'json' }),
+  customerData: text("customerData", { mode: 'json' }),
   amount: real("amount").notNull(),
+  totalAmount: real("totalAmount").notNull(),
   currency: text("currency").notNull().default("BRL"),
   status: text("status").notNull(), // pending, completed, failed, refunded
   paymentMethod: text("paymentMethod").notNull(), // credit_card, pix, boleto
   stripePaymentIntentId: text("stripePaymentIntentId"),
   stripeSubscriptionId: text("stripeSubscriptionId"),
   orderBumps: text("orderBumps", { mode: 'json' }), // Order bumps selecionados
+  acceptedUpsells: text("acceptedUpsells", { mode: 'json' }), // Upsells aceitos
+  paidAt: integer("paidAt"), // Timestamp quando foi pago
   metadata: text("metadata", { mode: 'json' }),
   createdAt: integer("createdAt", { mode: 'timestamp' }).notNull().$defaultFn(() => new Date()),
   updatedAt: integer("updatedAt", { mode: 'timestamp' }).notNull().$defaultFn(() => new Date()),

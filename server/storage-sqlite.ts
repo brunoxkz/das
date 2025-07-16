@@ -5651,6 +5651,38 @@ Hoje você vai aprender ${project.title} - método revolucionário que já ajudo
     }
   }
 
+  async getUserSubscription(userId: string): Promise<any> {
+    try {
+      const stmt = sqlite.prepare(`
+        SELECT * FROM user_subscriptions 
+        WHERE user_id = ? AND status IN ('active', 'trialing', 'past_due')
+        ORDER BY created_at DESC
+        LIMIT 1
+      `);
+      
+      const subscription = stmt.get(userId);
+      
+      if (!subscription) {
+        return null;
+      }
+      
+      return {
+        id: subscription.id,
+        userId: subscription.user_id,
+        customerId: subscription.customer_id,
+        status: subscription.status,
+        trialEnd: subscription.trial_end,
+        currentPeriodStart: subscription.current_period_start,
+        currentPeriodEnd: subscription.current_period_end,
+        createdAt: subscription.created_at,
+        updatedAt: subscription.updated_at
+      };
+    } catch (error) {
+      console.error('❌ ERRO ao buscar assinatura do usuário:', error);
+      return null;
+    }
+  }
+
   // =============================================
   // SUBSCRIPTION TRANSACTIONS METHODS
   // =============================================
