@@ -25,6 +25,7 @@ import {
   Globe,
   Palette,
   BarChart3,
+  BarChart,
   TrendingUp,
   Users,
   Clock,
