@@ -90,6 +90,7 @@
     "node-fetch": "^3.3.2",
     "openai": "^5.9.2",
     "openid-client": "^6.6.2",
+    "pagarme": "^4.35.2",
     "passport": "^0.7.0",
     "passport-local": "^1.0.0",
     "qrcode": "^1.5.4",

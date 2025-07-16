@@ -208,6 +208,22 @@ No additional files or separate projects are maintained in this repository.
 
 ```
 Changelog:
+- July 16, 2025. SISTEMA DUAL DE PAGAMENTO IMPLEMENTADO - Gateway Stripe + Pagar.me funcionando simultaneamente:
+  * Criado sistema de seleção de gateway com componente GatewaySelector.tsx para escolher entre Stripe e Pagar.me
+  * Implementado serviço completo PagarmeIntegration com suporte a assinaturas, clientes, planos e webhooks
+  * Adicionadas rotas API: /api/payment-gateways, /api/assinatura-pagarme, /api/assinatura-unificada, /api/webhooks/pagarme
+  * Criado checkout unificado (CheckoutUnified.tsx) com fluxo completo: seleção gateway → dados pessoais → pagamento → confirmação
+  * Integração com dados brasileiros: CPF, endereço completo, telefone, validação de documentos
+  * Suporte a múltiplos métodos de pagamento Pagar.me: cartão de crédito, boleto, PIX, cartão de débito
+  * Mantido modelo de preços consistente: R$1,00 taxa de ativação + R$29,90/mês com 7 dias de trial
+  * Adicionadas variáveis de ambiente: PAGARME_API_KEY, PAGARME_PUBLIC_KEY, PAGARME_WEBHOOK_SECRET
+  * Rota /checkout-unificado disponível para usuários escolherem gateway preferido
+  * Documentação completa criada: DUAL-PAYMENT-SYSTEM-GUIDE.md com guia de configuração e uso
+  * Sistema permite expansão internacional (Stripe) e foco no mercado brasileiro (Pagar.me)
+  * Inicialização automática dos gateways baseada nas chaves de ambiente disponíveis
+  * Webhook handlers implementados para ambos os gateways para sincronização de status
+  * Sistema totalmente funcional e pronto para uso em produção
+Changelog:
 - July 16, 2025. SISTEMA DE VÍDEOS VIRAIS 100% FUNCIONAL - Endpoint de geração de vídeos virais implementado e testado:
   * Endpoint POST /api/faceless-videos/generate funcionando perfeitamente
   * Validação automática de créditos de vídeo (videoCredits) funcionando

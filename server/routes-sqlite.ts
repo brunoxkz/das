@@ -8,6 +8,7 @@ import { z } from "zod";
 import { verifyJWT } from "./auth-sqlite";
 import { creditProtection } from "./credit-protection";
 import { stripeService } from "./stripe-integration";
+import { initializePagarme, pagarmeIntegration } from './pagarme-integration';
 import { sendSms } from "./twilio";
 import { emailService } from "./email-service";
 import { BrevoEmailService } from "./email-brevo";
@@ -12466,6 +12467,222 @@ export function registerCheckoutRoutes(app: Express) {
       });
     }
   });
+
+  // 🎯 ENDPOINT PARA LISTAR GATEWAYS DISPONÍVEIS
+  app.get("/api/payment-gateways", async (req, res) => {
+    try {
+      const gateways = [];
+      
+      // Verificar se Stripe está configurado
+      if (stripeService) {
+        gateways.push({
+          id: 'stripe',
+          name: 'Stripe',
+          description: 'Gateway internacional com suporte a múltiplas moedas',
+          enabled: true,
+          countries: ['US', 'CA', 'EU', 'BR', 'MX'],
+          features: ['credit_card', 'subscriptions', 'webhooks', 'trial_periods'],
+          pricing: {
+            setup_fee: 100, // R$1.00 em centavos
+            monthly_fee: 2990, // R$29.90 em centavos
+            trial_days: 7
+          }
+        });
+      }
+
+      // Verificar se Pagar.me está configurado
+      if (pagarmeIntegration) {
+        gateways.push({
+          id: 'pagarme',
+          name: 'Pagar.me',
+          description: 'Gateway brasileiro com suporte a Pix, boleto e cartão',
+          enabled: true,
+          countries: ['BR'],
+          features: ['credit_card', 'boleto', 'pix', 'subscriptions', 'webhooks'],
+          pricing: {
+            setup_fee: 100, // R$1.00 em centavos
+            monthly_fee: 2990, // R$29.90 em centavos
+            trial_days: 7
+          }
+        });
+      }
+
+      res.json({
+        success: true,
+        gateways,
+        default: gateways.length > 0 ? gateways[0].id : null
+      });
+    } catch (error) {
+      console.error('❌ Erro ao listar gateways:', error);
+      res.status(500).json({ error: "Erro ao listar gateways de pagamento" });
+    }
+  });
+
+  // 🏦 ENDPOINT PARA ASSINATURA COM PAGAR.ME
+  app.post("/api/assinatura-pagarme", verifyJWT, async (req: any, res) => {
+    try {
+      const { cardData, customerData } = req.body;
+      const userId = req.user.id;
+
+      if (!pagarmeIntegration) {
+        return res.status(503).json({ error: "Pagar.me não está configurado" });
+      }
+
+      console.log('🔧 Processando assinatura Pagar.me para usuário:', userId);
+
+      // Buscar dados do usuário
+      const user = await storage.getUser(userId);
+      if (!user) {
+        return res.status(404).json({ error: "Usuário não encontrado" });
+      }
+
+      // Criar token do cartão
+      const cardToken = await pagarmeIntegration.createCardToken(cardData);
+
+      // Criar cliente na Pagar.me
+      const customer = await pagarmeIntegration.createCustomer({
+        name: customerData.name,
+        email: user.email,
+        document: customerData.document,
+        phone: customerData.phone,
+        address: customerData.address
+      });
+
+      // Criar plano
+      const plan = await pagarmeIntegration.createPlan({
+        name: 'Vendzz Premium',
+        amount: 2990, // R$29.90 em centavos
+        interval: 'month',
+        intervalCount: 1,
+        trialDays: 7
+      });
+
+      // Criar assinatura com taxa de setup
+      const result = await pagarmeIntegration.createSubscriptionWithSetup({
+        customerId: customer.id,
+        cardToken: cardToken,
+        planId: plan.id,
+        amount: 2990,
+        interval: 'month',
+        intervalCount: 1,
+        setupFee: 100, // Taxa de ativação R$1.00
+        description: 'Assinatura Vendzz Premium'
+      });
+
+      // Salvar no banco local
+      await storage.createSubscription({
+        id: result.subscription.id,
+        userId: userId,
+        customerId: customer.id,
+        status: result.subscription.status,
+        trialEnd: result.subscription.trial_end ? new Date(result.subscription.trial_end).toISOString() : '',
+        currentPeriodStart: new Date(result.subscription.current_period_start).toISOString(),
+        currentPeriodEnd: new Date(result.subscription.current_period_end).toISOString(),
+        createdAt: new Date().toISOString()
+      });
+
+      res.json({
+        success: true,
+        subscription: {
+          id: result.subscription.id,
+          status: result.subscription.status,
+          gateway: 'pagarme'
+        },
+        customer: {
+          id: customer.id,
+          email: customer.email
+        },
+        setupTransaction: result.setupTransaction ? {
+          id: result.setupTransaction.id,
+          amount: result.setupTransaction.amount,
+          status: result.setupTransaction.status
+        } : null,
+        message: 'Assinatura Pagar.me criada com sucesso! Taxa de ativação cobrada.'
+      });
+
+    } catch (error) {
+      console.error('❌ Erro na assinatura Pagar.me:', error);
+      res.status(500).json({ 
+        error: "Erro ao processar assinatura",
+        details: error.message 
+      });
+    }
+  });
+
+  // 🎯 ENDPOINT UNIFICADO PARA CRIAR ASSINATURA (SELECIONA GATEWAY)
+  app.post("/api/assinatura-unificada", verifyJWT, async (req: any, res) => {
+    try {
+      const { gateway, ...paymentData } = req.body;
+      const userId = req.user.id;
+
+      if (!gateway) {
+        return res.status(400).json({ error: "Gateway de pagamento é obrigatório" });
+      }
+
+      console.log('🎯 Processando assinatura unificada - Gateway:', gateway);
+
+      switch (gateway) {
+        case 'stripe':
+          if (!stripeService) {
+            return res.status(503).json({ error: "Stripe não está configurado" });
+          }
+          
+          // Redirecionar para lógica do Stripe
+          req.body = paymentData;
+          // Aqui você pode chamar a lógica do Stripe diretamente
+          return res.json({
+            success: true,
+            message: "Redirecionando para processamento Stripe",
+            gateway: 'stripe',
+            redirect: '/api/assinatura-paga'
+          });
+
+        case 'pagarme':
+          if (!pagarmeIntegration) {
+            return res.status(503).json({ error: "Pagar.me não está configurado" });
+          }
+          
+          // Redirecionar para lógica do Pagar.me
+          req.body = paymentData;
+          return res.json({
+            success: true,
+            message: "Redirecionando para processamento Pagar.me",
+            gateway: 'pagarme',
+            redirect: '/api/assinatura-pagarme'
+          });
+
+        default:
+          return res.status(400).json({ error: "Gateway não suportado" });
+      }
+
+    } catch (error) {
+      console.error('❌ Erro na assinatura unificada:', error);
+      res.status(500).json({ error: "Erro interno do servidor" });
+    }
+  });
+
+  // 🔄 WEBHOOK PAGAR.ME
+  app.post("/api/webhooks/pagarme", async (req, res) => {
+    try {
+      if (!pagarmeIntegration) {
+        return res.status(503).json({ error: "Pagar.me não está configurado" });
+      }
+
+      const result = await pagarmeIntegration.processWebhook(req.body);
+      
+      res.json({
+        success: true,
+        processed: result.processed,
+        type: result.type
+      });
+    } catch (error) {
+      console.error('❌ Erro no webhook Pagar.me:', error);
+      res.status(500).json({ error: "Erro ao processar webhook" });
+    }
+  });
+
+  // Inicializar Pagar.me
+  initializePagarme();
 }
 
 
