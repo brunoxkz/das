@@ -6122,12 +6122,21 @@ app.get("/api/whatsapp-templates", verifyJWT, async (req: any, res: Response) =>
 // WhatsApp extension status endpoint
 app.get("/api/whatsapp-extension/status", verifyJWT, async (req: any, res: Response) => {
   try {
-    // Check if extension is connected (placeholder for now)
+    const userId = req.user.id;
+    
+    // Verificar se há ping recente da extensão (últimos 30 segundos)
+    const recentPing = await storage.getRecentExtensionPing(userId);
+    const isConnected = recentPing && (Date.now() - recentPing.timestamp) < 30000;
+    
+    // Contar mensagens pendentes
+    const currentTime = Math.floor(Date.now() / 1000);
+    const pendingMessages = await storage.getScheduledWhatsappLogsByUser(userId, currentTime);
+    
     res.json({
-      connected: false,
-      version: "1.0.0",
-      lastPing: null,
-      pendingMessages: 0
+      connected: isConnected,
+      version: recentPing?.version || "2.0.0",
+      lastPing: recentPing?.timestamp || null,
+      pendingMessages: pendingMessages.length
     });
   } catch (error) {
     console.error('❌ ERRO ao verificar status da extensão:', error);
@@ -6143,6 +6152,20 @@ app.post("/api/whatsapp-extension/logs", verifyJWT, async (req: any, res: Respon
     res.json({ success: true });
   } catch (error) {
     console.error('❌ ERRO ao atualizar log WhatsApp:', error);
+    res.status(500).json({ error: 'Erro interno do servidor' });
+  }
+});
+
+// WhatsApp extension ping endpoint
+app.post("/api/whatsapp-extension/ping", verifyJWT, async (req: any, res: Response) => {
+  try {
+    const { version } = req.body;
+    const userId = req.user.id;
+    
+    await storage.saveExtensionPing(userId, version || "2.0.0");
+    res.json({ success: true, timestamp: Date.now() });
+  } catch (error) {
+    console.error('❌ ERRO ao salvar ping da extensão:', error);
     res.status(500).json({ error: 'Erro interno do servidor' });
   }
 });
@@ -9608,6 +9631,162 @@ app.get("/api/whatsapp-extension/pending", verifyJWT, async (req: any, res: Resp
     }
   });
 
+  // =============================================
+  // ENDPOINTS PARA TESTE A/B
+  // =============================================
+
+  // Listar testes A/B
+  app.get("/api/ab-tests", verifyJWT, async (req: any, res: Response) => {
+    try {
+      const tests = await storage.getAbTests(req.user.id);
+      res.json(tests);
+    } catch (error) {
+      console.error('❌ ERRO ao buscar testes A/B:', error);
+      res.status(500).json({ error: 'Erro interno do servidor' });
+    }
+  });
+
+  // Criar teste A/B
+  app.post("/api/ab-tests", verifyJWT, async (req: any, res: Response) => {
+    try {
+      const { name, description, funnelIds, trafficSplit, duration } = req.body;
+      
+      // Validar dados
+      if (!name || !funnelIds || funnelIds.length < 2) {
+        return res.status(400).json({ error: 'Nome e pelo menos 2 funis são obrigatórios' });
+      }
+      
+      // Buscar nomes dos funis
+      const funnelNames = [];
+      for (const funnelId of funnelIds) {
+        const quiz = await storage.getQuiz(funnelId);
+        if (quiz && quiz.userId === req.user.id) {
+          funnelNames.push(quiz.title);
+        } else {
+          return res.status(400).json({ error: 'Funil não encontrado ou sem permissão' });
+        }
+      }
+      
+      // Calcular data de término
+      const endDate = new Date();
+      endDate.setDate(endDate.getDate() + (duration || 14));
+      
+      const test = await storage.createAbTest({
+        userId: req.user.id,
+        name,
+        description: description || '',
+        funnelIds,
+        funnelNames,
+        trafficSplit: trafficSplit || [50, 50],
+        duration: duration || 14,
+        endDate: Math.floor(endDate.getTime() / 1000)
+      });
+      
+      res.json(test);
+    } catch (error) {
+      console.error('❌ ERRO ao criar teste A/B:', error);
+      res.status(500).json({ error: 'Erro interno do servidor' });
+    }
+  });
+
+  // Pausar/Retomar teste A/B
+  app.patch("/api/ab-tests/:id/pause", verifyJWT, async (req: any, res: Response) => {
+    try {
+      const test = await storage.getAbTest(req.params.id);
+      if (!test || test.userId !== req.user.id) {
+        return res.status(404).json({ error: 'Teste não encontrado' });
+      }
+      
+      const updatedTest = await storage.updateAbTest(req.params.id, { status: 'paused' });
+      res.json(updatedTest);
+    } catch (error) {
+      console.error('❌ ERRO ao pausar teste A/B:', error);
+      res.status(500).json({ error: 'Erro interno do servidor' });
+    }
+  });
+
+  app.patch("/api/ab-tests/:id/resume", verifyJWT, async (req: any, res: Response) => {
+    try {
+      const test = await storage.getAbTest(req.params.id);
+      if (!test || test.userId !== req.user.id) {
+        return res.status(404).json({ error: 'Teste não encontrado' });
+      }
+      
+      const updatedTest = await storage.updateAbTest(req.params.id, { status: 'active' });
+      res.json(updatedTest);
+    } catch (error) {
+      console.error('❌ ERRO ao retomar teste A/B:', error);
+      res.status(500).json({ error: 'Erro interno do servidor' });
+    }
+  });
+
+  // Deletar teste A/B
+  app.delete("/api/ab-tests/:id", verifyJWT, async (req: any, res: Response) => {
+    try {
+      const test = await storage.getAbTest(req.params.id);
+      if (!test || test.userId !== req.user.id) {
+        return res.status(404).json({ error: 'Teste não encontrado' });
+      }
+      
+      await storage.deleteAbTest(req.params.id);
+      res.json({ success: true });
+    } catch (error) {
+      console.error('❌ ERRO ao deletar teste A/B:', error);
+      res.status(500).json({ error: 'Erro interno do servidor' });
+    }
+  });
+
+  // Endpoint público para divisão automática de tráfego
+  app.get("/quiz/ab-test/:testId", async (req: Request, res: Response) => {
+    try {
+      const { testId } = req.params;
+      const visitorId = req.ip + req.headers['user-agent'];
+      
+      const test = await storage.getAbTest(testId);
+      if (!test || test.status !== 'active') {
+        return res.status(404).send('Teste não encontrado ou inativo');
+      }
+      
+      // Calcular qual funil mostrar baseado na divisão de tráfego
+      const hash = visitorId.split('').reduce((a, b) => {
+        a = ((a << 5) - a) + b.charCodeAt(0);
+        return a & a;
+      }, 0);
+      
+      const percentage = Math.abs(hash) % 100;
+      let selectedFunnelIndex = 0;
+      let cumulative = 0;
+      
+      for (let i = 0; i < test.trafficSplit.length; i++) {
+        cumulative += test.trafficSplit[i];
+        if (percentage < cumulative) {
+          selectedFunnelIndex = i;
+          break;
+        }
+      }
+      
+      const selectedFunnelId = test.funnelIds[selectedFunnelIndex];
+      
+      // Registrar visualização
+      await storage.createAbTestView({
+        testId,
+        quizId: selectedFunnelId,
+        visitorId,
+        ipAddress: req.ip,
+        userAgent: req.headers['user-agent'] as string
+      });
+      
+      // Atualizar contador de views do teste
+      await storage.updateAbTestViews(testId);
+      
+      // Redirecionar para o funil selecionado
+      res.redirect(`/quiz/${selectedFunnelId}`);
+    } catch (error) {
+      console.error('❌ ERRO na divisão de tráfego A/B:', error);
+      res.status(500).send('Erro interno do servidor');
+    }
+  });
+
   return httpServer;
 }
 
@@ -9700,5 +9879,7 @@ function generateUltraPersonalizedEmail(leadData: any, conditionalRules: any[], 
   // Fallback para conteúdo base
   return baseContent;
 }
+
+
 
 

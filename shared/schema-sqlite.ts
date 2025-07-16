@@ -677,12 +677,17 @@ export const abTests = sqliteTable('ab_tests', {
   userId: text('user_id').notNull().references(() => users.id),
   name: text('name').notNull(),
   description: text('description'),
-  quizIds: text('quiz_ids', { mode: 'json' }).notNull().$type<string[]>(),
-  subdomains: text('subdomains', { mode: 'json' }).default('[]').$type<string[]>(),
-  isActive: integer('is_active', { mode: 'boolean' }).default(true),
-  totalViews: integer('total_views').default(0),
-  createdAt: integer('created_at').notNull(),
-  updatedAt: integer('updated_at').notNull()
+  funnelIds: text('funnel_ids', { mode: 'json' }).notNull().$type<string[]>(),
+  funnelNames: text('funnel_names', { mode: 'json' }).notNull().$type<string[]>(),
+  trafficSplit: text('traffic_split', { mode: 'json' }).notNull().$type<number[]>(),
+  status: text('status').notNull().default('active'), // active, paused, completed
+  duration: integer('duration').default(14), // days
+  views: integer('views').default(0),
+  conversions: integer('conversions').default(0),
+  conversionRate: real('conversion_rate').default(0),
+  endDate: integer('end_date', { mode: 'timestamp' }),
+  createdAt: integer('created_at', { mode: 'timestamp' }).notNull().default(sql`(unixepoch())`),
+  updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull().default(sql`(unixepoch())`)
 });
 
 // A/B Test Views Schema

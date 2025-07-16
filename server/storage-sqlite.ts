@@ -206,6 +206,19 @@ export interface IStorage {
   createAffiliateSale(sale: Omit<InsertAffiliateSale, 'id' | 'createdAt' | 'updatedAt'>): Promise<AffiliateSale>;
   getAffiliateSales(affiliateId: string): Promise<AffiliateSale[]>;
   updateAffiliateSale(id: string, updates: Partial<InsertAffiliateSale>): Promise<AffiliateSale>;
+  
+  // WhatsApp Extension ping operations
+  saveExtensionPing(userId: string, version: string): Promise<void>;
+  getRecentExtensionPing(userId: string): Promise<{ timestamp: number; version: string } | null>;
+  
+  // A/B Testing operations
+  getAbTests(userId: string): Promise<AbTest[]>;
+  getAbTest(id: string): Promise<AbTest | undefined>;
+  createAbTest(test: Omit<InsertAbTest, 'id' | 'createdAt' | 'updatedAt'>): Promise<AbTest>;
+  updateAbTest(id: string, updates: Partial<InsertAbTest>): Promise<AbTest>;
+  deleteAbTest(id: string): Promise<void>;
+  createAbTestView(view: Omit<InsertAbTestView, 'id' | 'createdAt'>): Promise<AbTestView>;
+  updateAbTestViews(testId: string): Promise<void>;
 }
 
 export class SQLiteStorage implements IStorage {
@@ -4856,6 +4869,223 @@ export class SQLiteStorage implements IStorage {
       return integrations;
     } catch (error) {
       console.error('❌ ERRO ao buscar integrações TypeBot:', error);
+      throw error;
+    }
+  }
+
+  // WhatsApp Extension ping operations
+  async saveExtensionPing(userId: string, version: string): Promise<void> {
+    try {
+      const stmt = sqlite.prepare(`
+        INSERT OR REPLACE INTO extension_pings (user_id, version, timestamp)
+        VALUES (?, ?, ?)
+      `);
+      
+      stmt.run(userId, version, Date.now());
+    } catch (error) {
+      // Criar tabela se não existir
+      try {
+        sqlite.exec(`
+          CREATE TABLE IF NOT EXISTS extension_pings (
+            user_id TEXT PRIMARY KEY,
+            version TEXT,
+            timestamp INTEGER
+          )
+        `);
+        
+        const stmt = sqlite.prepare(`
+          INSERT OR REPLACE INTO extension_pings (user_id, version, timestamp)
+          VALUES (?, ?, ?)
+        `);
+        
+        stmt.run(userId, version, Date.now());
+      } catch (createError) {
+        console.error('❌ ERRO ao criar tabela extension_pings:', createError);
+      }
+    }
+  }
+
+  async getRecentExtensionPing(userId: string): Promise<{ timestamp: number; version: string } | null> {
+    try {
+      const stmt = sqlite.prepare(`
+        SELECT timestamp, version FROM extension_pings
+        WHERE user_id = ?
+      `);
+      
+      const result = stmt.get(userId) as { timestamp: number; version: string } | undefined;
+      return result || null;
+    } catch (error) {
+      console.error('❌ ERRO ao buscar ping da extensão:', error);
+      return null;
+    }
+  }
+
+  // A/B Testing operations
+  async getAbTests(userId: string): Promise<AbTest[]> {
+    try {
+      const stmt = sqlite.prepare(`
+        SELECT * FROM ab_tests WHERE userId = ? ORDER BY createdAt DESC
+      `);
+      
+      const rows = stmt.all(userId) as any[];
+      return rows.map(row => ({
+        ...row,
+        funnelIds: JSON.parse(row.funnelIds || '[]'),
+        funnelNames: JSON.parse(row.funnelNames || '[]'),
+        trafficSplit: JSON.parse(row.trafficSplit || '[]')
+      }));
+    } catch (error) {
+      console.error('❌ ERRO ao buscar testes A/B:', error);
+      throw error;
+    }
+  }
+
+  async getAbTest(id: string): Promise<AbTest | undefined> {
+    try {
+      const stmt = sqlite.prepare(`
+        SELECT * FROM ab_tests WHERE id = ?
+      `);
+      
+      const row = stmt.get(id) as any;
+      if (!row) return undefined;
+      
+      return {
+        ...row,
+        funnelIds: JSON.parse(row.funnelIds || '[]'),
+        funnelNames: JSON.parse(row.funnelNames || '[]'),
+        trafficSplit: JSON.parse(row.trafficSplit || '[]')
+      };
+    } catch (error) {
+      console.error('❌ ERRO ao buscar teste A/B:', error);
+      throw error;
+    }
+  }
+
+  async createAbTest(test: Omit<InsertAbTest, 'id' | 'createdAt' | 'updatedAt'>): Promise<AbTest> {
+    const id = this.generateId();
+    const timestamp = Math.floor(Date.now() / 1000);
+    
+    try {
+      const stmt = sqlite.prepare(`
+        INSERT INTO ab_tests (id, userId, name, description, funnelIds, funnelNames, trafficSplit, status, duration, endDate, createdAt, updatedAt)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      `);
+      
+      stmt.run(
+        id,
+        test.userId,
+        test.name,
+        test.description || '',
+        JSON.stringify(test.funnelIds),
+        JSON.stringify(test.funnelNames),
+        JSON.stringify(test.trafficSplit),
+        test.status || 'active',
+        test.duration || 14,
+        test.endDate,
+        timestamp,
+        timestamp
+      );
+      
+      const createdTest = await this.getAbTest(id);
+      if (!createdTest) {
+        throw new Error('Teste não criado');
+      }
+      
+      return createdTest;
+    } catch (error) {
+      console.error('❌ ERRO ao criar teste A/B:', error);
+      throw error;
+    }
+  }
+
+  async updateAbTest(id: string, updates: Partial<InsertAbTest>): Promise<AbTest> {
+    const timestamp = Math.floor(Date.now() / 1000);
+    
+    try {
+      const fields = [];
+      const values = [];
+      
+      for (const [key, value] of Object.entries(updates)) {
+        if (key === 'funnelIds' || key === 'funnelNames' || key === 'trafficSplit') {
+          fields.push(`${key} = ?`);
+          values.push(JSON.stringify(value));
+        } else if (key !== 'id' && key !== 'createdAt' && key !== 'updatedAt') {
+          fields.push(`${key} = ?`);
+          values.push(value);
+        }
+      }
+      
+      fields.push('updatedAt = ?');
+      values.push(timestamp);
+      values.push(id);
+      
+      const stmt = sqlite.prepare(`
+        UPDATE ab_tests SET ${fields.join(', ')} WHERE id = ?
+      `);
+      
+      stmt.run(...values);
+      
+      const updatedTest = await this.getAbTest(id);
+      if (!updatedTest) {
+        throw new Error('Teste não encontrado');
+      }
+      
+      return updatedTest;
+    } catch (error) {
+      console.error('❌ ERRO ao atualizar teste A/B:', error);
+      throw error;
+    }
+  }
+
+  async deleteAbTest(id: string): Promise<void> {
+    try {
+      const stmt = sqlite.prepare(`DELETE FROM ab_tests WHERE id = ?`);
+      stmt.run(id);
+    } catch (error) {
+      console.error('❌ ERRO ao deletar teste A/B:', error);
+      throw error;
+    }
+  }
+
+  async createAbTestView(view: Omit<InsertAbTestView, 'id' | 'createdAt'>): Promise<AbTestView> {
+    const id = this.generateId();
+    const timestamp = Math.floor(Date.now() / 1000);
+    
+    try {
+      const stmt = sqlite.prepare(`
+        INSERT INTO ab_test_views (id, testId, quizId, visitorId, ipAddress, userAgent, createdAt)
+        VALUES (?, ?, ?, ?, ?, ?, ?)
+      `);
+      
+      stmt.run(
+        id,
+        view.testId,
+        view.quizId,
+        view.visitorId,
+        view.ipAddress,
+        view.userAgent,
+        timestamp
+      );
+      
+      const createdView = sqlite.prepare(`
+        SELECT * FROM ab_test_views WHERE id = ?
+      `).get(id) as AbTestView;
+      
+      return createdView;
+    } catch (error) {
+      console.error('❌ ERRO ao criar visualização A/B:', error);
+      throw error;
+    }
+  }
+
+  async updateAbTestViews(testId: string): Promise<void> {
+    try {
+      const stmt = sqlite.prepare(`
+        UPDATE ab_tests SET views = views + 1 WHERE id = ?
+      `);
+      stmt.run(testId);
+    } catch (error) {
+      console.error('❌ ERRO ao atualizar visualizações A/B:', error);
       throw error;
     }
   }

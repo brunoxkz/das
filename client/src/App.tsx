@@ -36,6 +36,7 @@ import TesteSMSPage from "@/pages/teste-sms";
 import EmailMarketingPro from "@/pages/email-marketing-pro";
 import AIConversionPage from "@/pages/ai-conversion";
 import TesteAbPage from "@/pages/teste-ab";
+import ABTestingPage from "@/pages/ab-testing";
 import WebhooksPage from "@/pages/webhooks";
 import IntegracoesPage from "@/pages/integracoes";
 // import TypebotPage from "@/pages/typebot"; // TYPEBOT DESATIVADO
@@ -187,6 +188,12 @@ function App() {
         <Route path="/teste-ab">
           <Layout>
             <TesteAbPage />
+          </Layout>
+        </Route>
+        
+        <Route path="/ab-testing">
+          <Layout>
+            <ABTestingPage />
           </Layout>
         </Route>
         
