@@ -77,6 +77,13 @@ export interface IStorage {
   // Admin operations
   getAllUsers(): Promise<User[]>;
   updateUserRole(userId: string, role: string): Promise<User>;
+  getUserById(id: string): Promise<User | undefined>;
+
+  // Video operations
+  getVideoProjects(userId: string): Promise<AiVideoGeneration[]>;
+  createVideoProject(project: InsertAiVideoGeneration): Promise<AiVideoGeneration>;
+  updateVideoProject(id: string, updates: Partial<InsertAiVideoGeneration>): Promise<AiVideoGeneration>;
+  deleteVideoProject(id: string): Promise<void>;
 
   // Subscription Plans operations
   getSubscriptionPlans(): Promise<SubscriptionPlan[]>;
@@ -4895,6 +4902,94 @@ export class SQLiteStorage implements IStorage {
       return integrations;
     } catch (error) {
       console.error('❌ ERRO ao buscar integrações TypeBot:', error);
+      throw error;
+    }
+  }
+
+  // Métodos para getUserById
+  async getUserById(id: string): Promise<User | undefined> {
+    try {
+      const user = await db.select()
+        .from(users)
+        .where(eq(users.id, id))
+        .limit(1);
+      
+      return user[0];
+    } catch (error) {
+      console.error('❌ ERRO ao buscar usuário por ID:', error);
+      return undefined;
+    }
+  }
+
+  // Métodos para Video Projects
+  async getVideoProjects(userId: string): Promise<AiVideoGeneration[]> {
+    try {
+      const projects = await db.select()
+        .from(aiVideoGenerations)
+        .where(eq(aiVideoGenerations.userId, userId))
+        .orderBy(desc(aiVideoGenerations.createdAt));
+      
+      return projects;
+    } catch (error) {
+      console.error('❌ ERRO ao buscar projetos de vídeo:', error);
+      return [];
+    }
+  }
+
+  async createVideoProject(project: InsertAiVideoGeneration): Promise<AiVideoGeneration> {
+    try {
+      const now = Math.floor(Date.now() / 1000);
+      const id = nanoid();
+      
+      const result = await db.insert(aiVideoGenerations)
+        .values({
+          id,
+          ...project,
+          createdAt: now,
+          updatedAt: now
+        })
+        .returning();
+
+      console.log('✅ Projeto de vídeo criado:', result[0]);
+      return result[0];
+    } catch (error) {
+      console.error('❌ ERRO ao criar projeto de vídeo:', error);
+      throw error;
+    }
+  }
+
+  async updateVideoProject(id: string, updates: Partial<InsertAiVideoGeneration>): Promise<AiVideoGeneration> {
+    try {
+      const now = Math.floor(Date.now() / 1000);
+      
+      const result = await db.update(aiVideoGenerations)
+        .set({
+          ...updates,
+          updatedAt: now
+        })
+        .where(eq(aiVideoGenerations.id, id))
+        .returning();
+
+      if (result.length === 0) {
+        throw new Error('Projeto de vídeo não encontrado');
+      }
+
+      console.log('✅ Projeto de vídeo atualizado:', result[0]);
+      return result[0];
+    } catch (error) {
+      console.error('❌ ERRO ao atualizar projeto de vídeo:', error);
+      throw error;
+    }
+  }
+
+  async deleteVideoProject(id: string): Promise<void> {
+    try {
+      await db.delete(aiVideoGenerations)
+        .where(eq(aiVideoGenerations.id, id));
+
+      console.log('✅ Projeto de vídeo deletado:', id);
+    } catch (error) {
+      console.error('❌ ERRO ao deletar projeto de vídeo:', error);
       throw error;
     }
   }
