@@ -265,6 +265,72 @@ const LoadingWithQuestionElementPublic = ({ element, handleAnswer }: { element: 
   );
 };
 
+// Componente para netflix_intro (versão pública)
+const NetflixIntroElementPublic = ({ element }: { element: any }) => {
+  const [isVisible, setIsVisible] = useState(false);
+  const [currentLetter, setCurrentLetter] = useState(0);
+  const properties = element.properties || {};
+  
+  const letters = (properties.netflixLetters || "N-E-T-F-L-I-X").split("-");
+  const duration = (properties.netflixDuration || 4) * 1000;
+  const speed = properties.netflixAnimationSpeed || "normal";
+  const animationDelay = speed === "slow" ? 400 : speed === "fast" ? 200 : 300;
+  
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setIsVisible(true);
+    }, 100);
+    
+    return () => clearTimeout(timer);
+  }, []);
+  
+  useEffect(() => {
+    if (isVisible && currentLetter < letters.length) {
+      const timer = setTimeout(() => {
+        setCurrentLetter(prev => prev + 1);
+      }, animationDelay);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [isVisible, currentLetter, letters.length, animationDelay]);
+  
+  useEffect(() => {
+    if (properties.netflixAutoAdvance && currentLetter >= letters.length) {
+      const timer = setTimeout(() => {
+        // Auto advance logic can be added here
+      }, 1000);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [currentLetter, letters.length, properties.netflixAutoAdvance]);
+  
+  if (!isVisible) return null;
+  
+  return (
+    <div className={`netflix-intro-container ${properties.netflixFullscreen ? 'netflix-fullscreen' : ''}`}>
+      <div className="netflix-intro-content">
+        {properties.netflixShowTitle && (
+          <h1 className="netflix-intro-title">
+            {properties.netflixTitle || "NETFLIX"}
+          </h1>
+        )}
+        
+        <div className="netflix-intro-letters">
+          {letters.map((letter, index) => (
+            <span
+              key={index}
+              className={`netflix-intro-letter ${index < currentLetter ? 'netflix-intro-letter-visible' : ''}`}
+              style={{ animationDelay: `${index * 0.1}s` }}
+            >
+              {letter}
+            </span>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+};
+
 // Componente para loading_question (versão pública) - com popup modal
 const LoadingQuestionElementPublic = ({ element, handleAnswer }: { element: any, handleAnswer: any }) => {
   const [progress, setProgress] = useState(0);
@@ -1501,6 +1567,13 @@ export function QuizPublicRenderer({ quiz }: QuizPublicRendererProps) {
         return (
           <div key={id} className="mb-4">
             <LoadingQuestionElementPublic element={element} handleAnswer={handleElementAnswer} />
+          </div>
+        );
+
+      case 'netflix_intro':
+        return (
+          <div key={id} className="mb-4">
+            <NetflixIntroElementPublic element={element} />
           </div>
         );
 

@@ -909,6 +909,64 @@ export default function QuizPreview({ quiz, onClose, onSave }: QuizPreviewProps)
     );
   };
 
+  // Componente para netflix_intro (versão preview)
+  const NetflixIntroElementPreview = ({ element }: { element: any }) => {
+    const [isVisible, setIsVisible] = useState(false);
+    const [currentLetter, setCurrentLetter] = useState(0);
+    
+    const letters = (element.netflixLetters || "N-E-T-F-L-I-X").split("-");
+    const speed = element.netflixAnimationSpeed || "normal";
+    const animationDelay = speed === "slow" ? 400 : speed === "fast" ? 200 : 300;
+    
+    useEffect(() => {
+      const timer = setTimeout(() => {
+        setIsVisible(true);
+      }, 100);
+      
+      return () => clearTimeout(timer);
+    }, []);
+    
+    useEffect(() => {
+      if (isVisible && currentLetter < letters.length) {
+        const timer = setTimeout(() => {
+          setCurrentLetter(prev => prev + 1);
+        }, animationDelay);
+        
+        return () => clearTimeout(timer);
+      }
+    }, [isVisible, currentLetter, letters.length, animationDelay]);
+    
+    if (!isVisible) return null;
+    
+    return (
+      <div className={`netflix-intro-container ${element.netflixFullscreen ? 'netflix-fullscreen' : ''}`}>
+        <div className="netflix-intro-content">
+          {element.netflixShowTitle && (
+            <h1 className="netflix-intro-title">
+              {element.netflixTitle || "NETFLIX"}
+            </h1>
+          )}
+          
+          <div className="netflix-intro-letters">
+            {letters.map((letter, index) => (
+              <span
+                key={index}
+                className={`netflix-intro-letter ${index < currentLetter ? 'netflix-intro-letter-visible' : ''}`}
+                style={{ animationDelay: `${index * 0.1}s` }}
+              >
+                {letter}
+              </span>
+            ))}
+          </div>
+          
+          <div className="text-center text-sm text-gray-600 mt-4">
+            Preview: Netflix intro animation
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   // Componente para carregamento + pergunta
   const LoadingWithQuestionElement = ({ element }: { element: any }) => {
     const [progress, setProgress] = useState(0);
@@ -1866,6 +1924,13 @@ export default function QuizPreview({ quiz, onClose, onSave }: QuizPreviewProps)
         return (
           <div className="mb-4">
             <LoadingWithQuestionElement element={element} />
+          </div>
+        );
+
+      case 'netflix_intro':
+        return (
+          <div className="mb-4">
+            <NetflixIntroElementPreview element={element} />
           </div>
         );
 
