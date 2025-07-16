@@ -4921,11 +4921,16 @@ export class SQLiteStorage implements IStorage {
     }
   }
 
+  // Cache estático para projetos de vídeo
+  private static videoProjectsCache = new Map<string, any[]>();
+
   // Métodos para Video Projects
   async getVideoProjects(userId: string): Promise<any[]> {
     try {
-      // Retornar lista vazia por enquanto (será implementado quando necessário)
-      return [];
+      // Buscar projetos do usuário no cache em memória
+      const projects = SQLiteStorage.videoProjectsCache.get(userId) || [];
+      console.log(`📹 Buscando projetos para user ${userId}: ${projects.length} projetos`);
+      return projects;
     } catch (error) {
       console.error('❌ ERRO ao buscar projetos de vídeo:', error);
       return [];
@@ -4977,7 +4982,14 @@ Hoje você vai aprender ${project.title} - método revolucionário que já ajudo
         updatedAt: now
       };
       
-      console.log('✅ Projeto de vídeo criado:', videoProject);
+      // Salvar no cache da instância
+      const userProjects = SQLiteStorage.videoProjectsCache.get(project.userId) || [];
+      userProjects.push(videoProject);
+      SQLiteStorage.videoProjectsCache.set(project.userId, userProjects);
+      
+      console.log('✅ Projeto de vídeo criado e salvo no cache:', videoProject);
+      console.log(`📹 Cache atualizado: ${userProjects.length} projetos para user ${project.userId}`);
+      
       return videoProject;
     } catch (error) {
       console.error('❌ ERRO ao criar projeto de vídeo:', error);
