@@ -1,5 +1,5 @@
 import { Sidebar } from "@/components/sidebar";
-import { useAuth } from "@/hooks/useAuth-jwt";
+import { useAuth } from "@/hooks/useAuth";
 import { useSidebar } from "@/hooks/useSidebar";
 import { cn } from "@/lib/utils";
 

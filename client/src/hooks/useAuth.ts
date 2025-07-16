@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import React, { useState, useEffect, createContext, useContext } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 
@@ -121,4 +121,26 @@ export function useAuth() {
     register,
     logout,
   };
+}
+
+// Context para o Auth Provider
+const AuthContext = createContext<ReturnType<typeof useAuth> | undefined>(undefined);
+
+export function AuthProvider({ children }: { children: React.ReactNode }) {
+  const auth = useAuth();
+  
+  return (
+    <AuthContext.Provider value={auth}>
+      {children}
+    </AuthContext.Provider>
+  );
+}
+
+// Hook para usar o contexto de autenticação
+export function useAuthContext() {
+  const context = useContext(AuthContext);
+  if (context === undefined) {
+    throw new Error('useAuthContext must be used within an AuthProvider');
+  }
+  return context;
 }

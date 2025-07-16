@@ -15,7 +15,7 @@ import {
   Plus,
   Package
 } from "lucide-react";
-import { useAuth } from "@/hooks/useAuth-jwt";
+import { useAuth } from "@/hooks/useAuth";
 import { useLanguage } from "@/hooks/useLanguage";
 
 export default function Credits() {
