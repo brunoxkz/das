@@ -6486,7 +6486,91 @@ Hoje você vai aprender ${project.title} - método revolucionário que já ajudo
   // Criar tabelas do sistema de checkout
   private async createCheckoutTables(): Promise<void> {
     try {
-      // Tabela de checkouts
+      // Tabela de produtos de checkout
+      sqlite.exec(`
+        CREATE TABLE IF NOT EXISTS checkout_products (
+          id TEXT PRIMARY KEY,
+          user_id TEXT NOT NULL,
+          name TEXT NOT NULL,
+          description TEXT,
+          price REAL NOT NULL,
+          currency TEXT NOT NULL DEFAULT 'BRL',
+          category TEXT,
+          features TEXT DEFAULT '',
+          payment_mode TEXT DEFAULT 'one_time',
+          recurring_interval TEXT,
+          trial_period INTEGER,
+          trial_price REAL,
+          status TEXT DEFAULT 'active',
+          created_at TEXT NOT NULL,
+          updated_at TEXT NOT NULL,
+          FOREIGN KEY (user_id) REFERENCES users(id)
+        )
+      `);
+      
+      // Tabela de páginas de checkout
+      sqlite.exec(`
+        CREATE TABLE IF NOT EXISTS checkout_pages (
+          id TEXT PRIMARY KEY,
+          user_id TEXT NOT NULL,
+          product_id TEXT NOT NULL,
+          name TEXT NOT NULL,
+          slug TEXT NOT NULL,
+          template TEXT DEFAULT 'default',
+          custom_css TEXT,
+          custom_js TEXT,
+          seo_title TEXT,
+          seo_description TEXT,
+          status TEXT DEFAULT 'active',
+          created_at TEXT NOT NULL,
+          updated_at TEXT NOT NULL,
+          FOREIGN KEY (user_id) REFERENCES users(id),
+          FOREIGN KEY (product_id) REFERENCES checkout_products(id)
+        )
+      `);
+      
+      // Tabela de transações de checkout
+      sqlite.exec(`
+        CREATE TABLE IF NOT EXISTS checkout_transactions (
+          id TEXT PRIMARY KEY,
+          user_id TEXT NOT NULL,
+          product_id TEXT NOT NULL,
+          checkout_id TEXT,
+          customer_data TEXT NOT NULL,
+          total_amount REAL NOT NULL,
+          currency TEXT NOT NULL DEFAULT 'BRL',
+          payment_status TEXT DEFAULT 'pending',
+          payment_method TEXT,
+          gateway TEXT DEFAULT 'stripe',
+          gateway_transaction_id TEXT,
+          accepted_upsells TEXT DEFAULT '[]',
+          created_at TEXT NOT NULL,
+          paid_at TEXT,
+          FOREIGN KEY (user_id) REFERENCES users(id),
+          FOREIGN KEY (product_id) REFERENCES checkout_products(id)
+        )
+      `);
+      
+      // Tabela de analytics de checkout
+      sqlite.exec(`
+        CREATE TABLE IF NOT EXISTS checkout_analytics (
+          id TEXT PRIMARY KEY,
+          user_id TEXT NOT NULL,
+          product_id TEXT NOT NULL,
+          page_id TEXT,
+          event_type TEXT NOT NULL,
+          event_data TEXT,
+          ip_address TEXT,
+          user_agent TEXT,
+          referrer TEXT,
+          created_at TEXT NOT NULL,
+          FOREIGN KEY (user_id) REFERENCES users(id),
+          FOREIGN KEY (product_id) REFERENCES checkout_products(id),
+          FOREIGN KEY (page_id) REFERENCES checkout_pages(id)
+        )
+      `);
+      
+      // Tabela de checkouts (legacy)
       sqlite.exec(`
         CREATE TABLE IF NOT EXISTS checkouts (
           id TEXT PRIMARY KEY,
@@ -6509,7 +6593,7 @@ Hoje você vai aprender ${project.title} - método revolucionário que já ajudo
         )
       `);
       
-      // Tabela de estatísticas de checkout
+      // Tabela de estatísticas de checkout (legacy)
       sqlite.exec(`
         CREATE TABLE IF NOT EXISTS checkout_stats (
           checkout_id TEXT PRIMARY KEY,
@@ -6520,7 +6604,7 @@ Hoje você vai aprender ${project.title} - método revolucionário que já ajudo
         )
       `);
       
-      // Tabela de pedidos
+      // Tabela de pedidos (legacy)
       sqlite.exec(`
         CREATE TABLE IF NOT EXISTS orders (
           id TEXT PRIMARY KEY,
@@ -6540,6 +6624,14 @@ Hoje você vai aprender ${project.title} - método revolucionário que já ajudo
       
       // Índices para performance
       sqlite.exec(`
+        CREATE INDEX IF NOT EXISTS idx_checkout_products_user_id ON checkout_products(user_id);
+        CREATE INDEX IF NOT EXISTS idx_checkout_products_status ON checkout_products(status);
+        CREATE INDEX IF NOT EXISTS idx_checkout_pages_user_id ON checkout_pages(user_id);
+        CREATE INDEX IF NOT EXISTS idx_checkout_pages_product_id ON checkout_pages(product_id);
+        CREATE INDEX IF NOT EXISTS idx_checkout_transactions_user_id ON checkout_transactions(user_id);
+        CREATE INDEX IF NOT EXISTS idx_checkout_transactions_product_id ON checkout_transactions(product_id);
+        CREATE INDEX IF NOT EXISTS idx_checkout_analytics_user_id ON checkout_analytics(user_id);
+        CREATE INDEX IF NOT EXISTS idx_checkout_analytics_product_id ON checkout_analytics(product_id);
         CREATE INDEX IF NOT EXISTS idx_checkouts_user_id ON checkouts(user_id);
         CREATE INDEX IF NOT EXISTS idx_checkouts_active ON checkouts(active);
         CREATE INDEX IF NOT EXISTS idx_orders_checkout_id ON orders(checkout_id);
@@ -7083,7 +7175,7 @@ Hoje você vai aprender ${project.title} - método revolucionário que já ajudo
   // Buscar todos os produtos de checkout
   async getCheckoutProducts() {
     try {
-      return this.db.prepare("SELECT * FROM checkout_products ORDER BY created_at DESC").all();
+      return sqlite.prepare("SELECT * FROM checkout_products ORDER BY created_at DESC").all();
     } catch (error) {
       console.error('Erro ao buscar produtos de checkout:', error);
       return [];
@@ -7093,7 +7185,7 @@ Hoje você vai aprender ${project.title} - método revolucionário que já ajudo
   // Criar produto de checkout
   async createCheckout(productData: any) {
     const now = new Date().toISOString();
-    const stmt = this.db.prepare(`
+    const stmt = sqlite.prepare(`
       INSERT INTO checkout_products (
         id, user_id, name, description, price, currency, 
         category, features, payment_mode, recurring_interval, 
@@ -7119,7 +7211,7 @@ Hoje você vai aprender ${project.title} - método revolucionário que já ajudo
       now
     );
     
-    return this.db.prepare("SELECT * FROM checkout_products WHERE id = ?").get(productData.id);
+    return sqlite.prepare("SELECT * FROM checkout_products WHERE id = ?").get(productData.id);
   }
 
   // Atualizar produto de checkout
@@ -7129,14 +7221,14 @@ Hoje você vai aprender ${project.title} - método revolucionário que já ajudo
       const fields = Object.keys(updates).map(key => `${key} = ?`).join(', ');
       const values = Object.values(updates);
     
-      const stmt = this.db.prepare(`
+      const stmt = sqlite.prepare(`
         UPDATE checkout_products 
         SET ${fields}, updated_at = ? 
         WHERE id = ?
       `);
       
       stmt.run(...values, now, id);
-      return this.db.prepare("SELECT * FROM checkout_products WHERE id = ?").get(id);
+      return sqlite.prepare("SELECT * FROM checkout_products WHERE id = ?").get(id);
     } catch (error) {
       console.error('Erro ao atualizar produto de checkout:', error);
       throw error;
@@ -7146,7 +7238,7 @@ Hoje você vai aprender ${project.title} - método revolucionário que já ajudo
   // Deletar produto de checkout
   async deleteCheckout(id: string) {
     try {
-      const stmt = this.db.prepare("DELETE FROM checkout_products WHERE id = ?");
+      const stmt = sqlite.prepare("DELETE FROM checkout_products WHERE id = ?");
       stmt.run(id);
     } catch (error) {
       console.error('Erro ao deletar produto de checkout:', error);

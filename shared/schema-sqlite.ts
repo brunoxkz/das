@@ -1031,85 +1031,69 @@ export type TypebotIntegration = typeof typebotIntegrations.$inferSelect;
 // Produtos do Checkout Builder
 export const checkoutProducts = sqliteTable("checkout_products", {
   id: text("id").primaryKey(),
-  userId: text("userId").notNull().references(() => users.id),
+  user_id: text("user_id").notNull().references(() => users.id),
   name: text("name").notNull(),
-  description: text("description").notNull(),
+  description: text("description"),
   price: real("price").notNull(),
-  image: text("image"),
-  category: text("category").notNull(), // digital, physical, service, course, software
-  features: text("features", { mode: 'json' }).notNull(), // Array de strings
-  paymentMode: text("paymentMode").notNull(), // one_time, recurring
-  recurringInterval: text("recurringInterval"), // monthly, yearly
-  trialPeriod: integer("trialPeriod"), // days
-  status: text("status").notNull().default("active"), // active, inactive
-  customization: text("customization", { mode: 'json' }).notNull(), // theme, colors, etc
-  stripeProductId: text("stripeProductId"),
-  stripePriceId: text("stripePriceId"),
-  paymentLink: text("paymentLink"),
-  createdAt: integer("createdAt", { mode: 'timestamp' }).notNull().$defaultFn(() => new Date()),
-  updatedAt: integer("updatedAt", { mode: 'timestamp' }).notNull().$defaultFn(() => new Date()),
+  currency: text("currency").notNull().default("BRL"),
+  category: text("category"),
+  features: text("features").default(""),
+  payment_mode: text("payment_mode").default("one_time"),
+  recurring_interval: text("recurring_interval"),
+  trial_period: integer("trial_period"),
+  trial_price: real("trial_price"),
+  status: text("status").default("active"),
+  created_at: text("created_at").notNull(),
+  updated_at: text("updated_at").notNull(),
 });
 
 // Páginas de Checkout customizadas
 export const checkoutPages = sqliteTable("checkout_pages", {
   id: text("id").primaryKey(),
-  userId: text("userId").notNull().references(() => users.id),
-  productId: text("productId").notNull().references(() => checkoutProducts.id),
-  title: text("title").notNull(),
-  subtitle: text("subtitle"),
-  testimonials: text("testimonials", { mode: 'json' }), // Array de testimonials
-  guarantees: text("guarantees", { mode: 'json' }), // Array de garantias
-  urgency: text("urgency", { mode: 'json' }), // Configurações de urgência
-  orderBumps: text("orderBumps", { mode: 'json' }), // Array de order bumps
-  paymentMethods: text("paymentMethods", { mode: 'json' }), // Métodos de pagamento aceitos
-  customCss: text("customCss"),
-  customJs: text("customJs"),
-  isActive: integer("isActive", { mode: 'boolean' }).default(true),
-  createdAt: integer("createdAt", { mode: 'timestamp' }).notNull().$defaultFn(() => new Date()),
-  updatedAt: integer("updatedAt", { mode: 'timestamp' }).notNull().$defaultFn(() => new Date()),
+  user_id: text("user_id").notNull().references(() => users.id),
+  product_id: text("product_id").notNull().references(() => checkoutProducts.id),
+  name: text("name").notNull(),
+  slug: text("slug").notNull(),
+  template: text("template").default("default"),
+  custom_css: text("custom_css"),
+  custom_js: text("custom_js"),
+  seo_title: text("seo_title"),
+  seo_description: text("seo_description"),
+  status: text("status").default("active"),
+  created_at: text("created_at").notNull(),
+  updated_at: text("updated_at").notNull(),
 });
 
 // Transações de Checkout
 export const checkoutTransactions = sqliteTable("checkout_transactions", {
   id: text("id").primaryKey(),
-  userId: text("userId").notNull().references(() => users.id),
-  productId: text("productId").notNull().references(() => checkoutProducts.id),
-  checkoutPageId: text("checkoutPageId").references(() => checkoutPages.id),
-  checkoutId: text("checkoutId"), // ID do checkout específico
-  customerEmail: text("customerEmail").notNull(),
-  customerName: text("customerName").notNull(),
-  customerPhone: text("customerPhone"),
-  customerAddress: text("customerAddress", { mode: 'json' }),
-  customerData: text("customerData", { mode: 'json' }),
-  amount: real("amount").notNull(),
-  totalAmount: real("totalAmount").notNull(),
+  user_id: text("user_id").notNull().references(() => users.id),
+  product_id: text("product_id").notNull().references(() => checkoutProducts.id),
+  checkout_id: text("checkout_id"),
+  customer_data: text("customer_data").notNull(),
+  total_amount: real("total_amount").notNull(),
   currency: text("currency").notNull().default("BRL"),
-  status: text("status").notNull(), // pending, completed, failed, refunded
-  paymentMethod: text("paymentMethod").notNull(), // credit_card, pix, boleto
-  stripePaymentIntentId: text("stripePaymentIntentId"),
-  stripeSubscriptionId: text("stripeSubscriptionId"),
-  orderBumps: text("orderBumps", { mode: 'json' }), // Order bumps selecionados
-  acceptedUpsells: text("acceptedUpsells", { mode: 'json' }), // Upsells aceitos
-  paidAt: integer("paidAt"), // Timestamp quando foi pago
-  metadata: text("metadata", { mode: 'json' }),
-  createdAt: integer("createdAt", { mode: 'timestamp' }).notNull().$defaultFn(() => new Date()),
-  updatedAt: integer("updatedAt", { mode: 'timestamp' }).notNull().$defaultFn(() => new Date()),
+  payment_status: text("payment_status").default("pending"),
+  payment_method: text("payment_method"),
+  gateway: text("gateway").default("stripe"),
+  gateway_transaction_id: text("gateway_transaction_id"),
+  accepted_upsells: text("accepted_upsells").default("[]"),
+  created_at: text("created_at").notNull(),
+  paid_at: text("paid_at"),
 });
 
 // Analytics de Checkout
 export const checkoutAnalytics = sqliteTable("checkout_analytics", {
   id: text("id").primaryKey(),
-  userId: text("userId").notNull().references(() => users.id),
-  productId: text("productId").notNull().references(() => checkoutProducts.id),
-  checkoutPageId: text("checkoutPageId").references(() => checkoutPages.id),
-  date: text("date").notNull(), // YYYY-MM-DD
-  views: integer("views").notNull().default(0),
-  conversions: integer("conversions").notNull().default(0),
-  revenue: real("revenue").notNull().default(0),
-  avgOrderValue: real("avgOrderValue").notNull().default(0),
-  bounceRate: real("bounceRate").notNull().default(0),
-  createdAt: integer("createdAt", { mode: 'timestamp' }).notNull().$defaultFn(() => new Date()),
-  updatedAt: integer("updatedAt", { mode: 'timestamp' }).notNull().$defaultFn(() => new Date()),
+  user_id: text("user_id").notNull().references(() => users.id),
+  product_id: text("product_id").notNull().references(() => checkoutProducts.id),
+  page_id: text("page_id").references(() => checkoutPages.id),
+  event_type: text("event_type").notNull(),
+  event_data: text("event_data"),
+  ip_address: text("ip_address"),
+  user_agent: text("user_agent"),
+  referrer: text("referrer"),
+  created_at: text("created_at").notNull(),
 });
 
 // Checkout Builder Zod Schemas
