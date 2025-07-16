@@ -424,13 +424,23 @@ const LoadingQuestionElementPreview = ({ element }: { element: any }) => {
               
               <div className="flex gap-3 justify-center">
                 <button 
-                  className="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+                  className="px-6 py-2 rounded-lg border transition-colors"
+                  style={{
+                    backgroundColor: element.yesButtonBgColor || "transparent",
+                    color: element.yesButtonTextColor || "#000000",
+                    borderColor: element.yesButtonTextColor || "#000000"
+                  }}
                   onClick={() => handleQuestionAnswer('yes')}
                 >
                   {element.popupYesText || "Sim"}
                 </button>
                 <button 
-                  className="px-6 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+                  className="px-6 py-2 rounded-lg border transition-colors"
+                  style={{
+                    backgroundColor: element.noButtonBgColor || "transparent",
+                    color: element.noButtonTextColor || "#000000",
+                    borderColor: element.noButtonTextColor || "#000000"
+                  }}
                   onClick={() => handleQuestionAnswer('no')}
                 >
                   {element.popupNoText || "Não"}

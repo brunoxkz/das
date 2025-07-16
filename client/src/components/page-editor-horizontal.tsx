@@ -1533,10 +1533,21 @@ const gameElementCategories = [
         loadingDuration: 3,
         loadingBarColor: "#10B981",
         loadingBarBackgroundColor: "#E5E7EB",
+        loadingBarHeight: 8,
         loadingText: "Processando...",
         popupQuestion: "Você gostaria de continuar?",
+        popupQuestionColor: "#1F2937",
         popupYesText: "Sim",
         popupNoText: "Não",
+        yesButtonBgColor: "transparent",
+        yesButtonTextColor: "#000000",
+        noButtonBgColor: "transparent",
+        noButtonTextColor: "#000000",
+        showPercentage: true,
+        enableShine: false,
+        enableStripes: false,
+        showRemainingTime: false,
+        progressText: "Carregando...",
         responseId: `pergunta_${Date.now()}`
       }),
 
@@ -4233,15 +4244,19 @@ const gameElementCategories = [
                 {progressBarText}
               </div>
               <div 
-                className="w-full rounded-full h-3 relative overflow-hidden"
-                style={{ backgroundColor: element.loadingBarBackgroundColor || "#E5E7EB" }}
+                className="w-full rounded-full relative overflow-hidden"
+                style={{ 
+                  backgroundColor: element.loadingBarBackgroundColor || "#E5E7EB",
+                  height: `${element.loadingBarHeight || 8}px`
+                }}
               >
                 <div 
-                  className={`h-3 rounded-full transition-all duration-500 relative ${
+                  className={`rounded-full transition-all duration-500 relative ${
                     enableShineEffect ? 'animate-pulse' : ''
                   }`}
                   style={{ 
                     width: "75%", 
+                    height: `${element.loadingBarHeight || 8}px`,
                     backgroundColor: element.loadingBarColor || "#10B981",
                     backgroundImage: enableStripesEffect ? 'repeating-linear-gradient(45deg, transparent, transparent 10px, rgba(255,255,255,0.1) 10px, rgba(255,255,255,0.1) 20px)' : 'none'
                   }}
@@ -4267,10 +4282,24 @@ const gameElementCategories = [
                 {element.popupQuestion || "Você gostaria de continuar?"}
               </h4>
               <div className="flex gap-3 justify-center">
-                <button className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600 transition-colors">
+                <button 
+                  className="px-4 py-2 rounded border transition-colors"
+                  style={{
+                    backgroundColor: element.yesButtonBgColor || "transparent",
+                    color: element.yesButtonTextColor || "#000000",
+                    borderColor: element.yesButtonTextColor || "#000000"
+                  }}
+                >
                   {element.popupYesText || "Sim"}
                 </button>
-                <button className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600 transition-colors">
+                <button 
+                  className="px-4 py-2 rounded border transition-colors"
+                  style={{
+                    backgroundColor: element.noButtonBgColor || "transparent",
+                    color: element.noButtonTextColor || "#000000",
+                    borderColor: element.noButtonTextColor || "#000000"
+                  }}
+                >
                   {element.popupNoText || "Não"}
                 </button>
               </div>
@@ -9362,18 +9391,16 @@ const gameElementCategories = [
                     
                     <div className="grid grid-cols-2 gap-3">
                       <div>
-                        <Label>Altura da Barra</Label>
-                        <select
-                          value={selectedElementData.loadingBarHeight || "medium"}
-                          onChange={(e) => updateElement(selectedElementData.id, { loadingBarHeight: e.target.value })}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md mt-1"
-                        >
-                          <option value="thin">Muito Fina</option>
-                          <option value="small">Fina</option>
-                          <option value="medium">Média</option>
-                          <option value="large">Grossa</option>
-                          <option value="extra_large">Muito Grossa</option>
-                        </select>
+                        <Label>Altura da Barra (px)</Label>
+                        <Input
+                          type="number"
+                          min="4"
+                          max="30"
+                          value={selectedElementData.loadingBarHeight || 8}
+                          onChange={(e) => updateElement(selectedElementData.id, { loadingBarHeight: parseInt(e.target.value) })}
+                          placeholder="8"
+                          className="mt-1"
+                        />
                       </div>
                       <div>
                         <Label>Estilo das Bordas</Label>
@@ -9413,19 +9440,9 @@ const gameElementCategories = [
                   </div>
 
                   <div className="border-b pb-4">
-                    <h5 className="font-semibold text-sm mb-3">✨ Efeitos Visuais</h5>
+                    <h5 className="font-semibold text-sm mb-3">✨ Opções de Exibição</h5>
                     
                     <div className="space-y-3">
-                      <div className="flex items-center justify-between">
-                        <Label>Efeito de Brilho</Label>
-                        <input
-                          type="checkbox"
-                          checked={selectedElementData.showGlow !== false}
-                          onChange={(e) => updateElement(selectedElementData.id, { showGlow: e.target.checked })}
-                          className="h-4 w-4 text-green-600 border-gray-300 rounded focus:ring-green-500"
-                        />
-                      </div>
-                      
                       <div className="flex items-center justify-between">
                         <Label>Mostrar Porcentagem</Label>
                         <input
@@ -9437,122 +9454,193 @@ const gameElementCategories = [
                       </div>
 
                       <div className="flex items-center justify-between">
-                        <Label>Mostrar Tempo Restante</Label>
+                        <Label>Adicionar Brilho</Label>
                         <input
                           type="checkbox"
-                          checked={selectedElementData.showTimeRemaining || false}
-                          onChange={(e) => updateElement(selectedElementData.id, { showTimeRemaining: e.target.checked })}
+                          checked={selectedElementData.enableShine || false}
+                          onChange={(e) => updateElement(selectedElementData.id, { enableShine: e.target.checked })}
                           className="h-4 w-4 text-green-600 border-gray-300 rounded focus:ring-green-500"
                         />
                       </div>
 
                       <div className="flex items-center justify-between">
-                        <Label>Listras Animadas</Label>
+                        <Label>Padrão de Listras</Label>
                         <input
                           type="checkbox"
-                          checked={selectedElementData.showStripes || false}
-                          onChange={(e) => updateElement(selectedElementData.id, { showStripes: e.target.checked })}
+                          checked={selectedElementData.enableStripes || false}
+                          onChange={(e) => updateElement(selectedElementData.id, { enableStripes: e.target.checked })}
                           className="h-4 w-4 text-green-600 border-gray-300 rounded focus:ring-green-500"
                         />
                       </div>
 
-                      {selectedElementData.showStripes && (
-                        <div className="flex items-center justify-between pl-6">
-                          <Label>Animar Listras</Label>
-                          <input
-                            type="checkbox"
-                            checked={selectedElementData.animateStripes || false}
-                            onChange={(e) => updateElement(selectedElementData.id, { animateStripes: e.target.checked })}
-                            className="h-4 w-4 text-green-600 border-gray-300 rounded focus:ring-green-500"
-                          />
-                        </div>
-                      )}
+                      <div className="flex items-center justify-between">
+                        <Label>Tempo Restante</Label>
+                        <input
+                          type="checkbox"
+                          checked={selectedElementData.showRemainingTime || false}
+                          onChange={(e) => updateElement(selectedElementData.id, { showRemainingTime: e.target.checked })}
+                          className="h-4 w-4 text-green-600 border-gray-300 rounded focus:ring-green-500"
+                        />
+                      </div>
                       
                       <div>
-                        <Label>Cor da Porcentagem</Label>
+                        <Label>Texto da Barra</Label>
                         <Input
-                          type="color"
-                          value={selectedElementData.percentageColor || "#6B7280"}
-                          onChange={(e) => updateElement(selectedElementData.id, { percentageColor: e.target.value })}
-                          className="mt-1 h-10"
+                          value={selectedElementData.progressText || "Carregando..."}
+                          onChange={(e) => updateElement(selectedElementData.id, { progressText: e.target.value })}
+                          placeholder="Carregando..."
+                          className="mt-1"
                         />
                       </div>
                     </div>
                   </div>
 
                   <div className="border-b pb-4">
-                    <h5 className="font-semibold text-sm mb-3">📝 Texto Adicional</h5>
+                    <h5 className="font-semibold text-sm mb-3">🎨 Popup e Pergunta</h5>
                     
-                    <div>
-                      <Label>Texto Adicional (opcional)</Label>
-                      <Input
-                        value={selectedElementData.additionalText || ""}
-                        onChange={(e) => updateElement(selectedElementData.id, { additionalText: e.target.value })}
-                        placeholder="Texto que aparece abaixo da barra"
-                        className="mt-1"
-                      />
-                    </div>
+                    <div className="space-y-3">
+                      <div>
+                        <Label>Pergunta do Popup</Label>
+                        <Input
+                          value={selectedElementData.popupQuestion || "Você gostaria de continuar?"}
+                          onChange={(e) => updateElement(selectedElementData.id, { popupQuestion: e.target.value })}
+                          placeholder="Você gostaria de continuar?"
+                          className="mt-1"
+                        />
+                      </div>
 
-                    <div>
-                      <Label>Cor do Texto Adicional</Label>
-                      <Input
-                        type="color"
-                        value={selectedElementData.additionalTextColor || "#9CA3AF"}
-                        onChange={(e) => updateElement(selectedElementData.id, { additionalTextColor: e.target.value })}
-                        className="mt-1 h-10"
-                      />
+                      <div>
+                        <Label>Cor da Pergunta</Label>
+                        <div className="flex gap-2 mt-1">
+                          <Input
+                            type="color"
+                            value={selectedElementData.popupQuestionColor || "#1F2937"}
+                            onChange={(e) => updateElement(selectedElementData.id, { popupQuestionColor: e.target.value })}
+                            className="w-16 h-10 p-1"
+                          />
+                          <Input
+                            value={selectedElementData.popupQuestionColor || "#1F2937"}
+                            onChange={(e) => updateElement(selectedElementData.id, { popupQuestionColor: e.target.value })}
+                            placeholder="#1F2937"
+                            className="flex-1"
+                          />
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-3">
+                        <div>
+                          <Label>Texto Botão "Sim"</Label>
+                          <Input
+                            value={selectedElementData.popupYesText || "Sim"}
+                            onChange={(e) => updateElement(selectedElementData.id, { popupYesText: e.target.value })}
+                            placeholder="Sim"
+                            className="mt-1"
+                          />
+                        </div>
+                        <div>
+                          <Label>Texto Botão "Não"</Label>
+                          <Input
+                            value={selectedElementData.popupNoText || "Não"}
+                            onChange={(e) => updateElement(selectedElementData.id, { popupNoText: e.target.value })}
+                            placeholder="Não"
+                            className="mt-1"
+                          />
+                        </div>
+                      </div>
                     </div>
                   </div>
 
                   <div className="border-b pb-4">
-                    <h5 className="font-semibold text-sm mb-3">💬 Configuração do Popup</h5>
+                    <h5 className="font-semibold text-sm mb-3">🎯 Cores dos Botões</h5>
                     
-                    <div>
-                      <Label>Pergunta do Popup</Label>
-                      <Input
-                        value={selectedElementData.popupQuestion || ""}
-                        onChange={(e) => updateElement(selectedElementData.id, { popupQuestion: e.target.value })}
-                        placeholder="Você gostaria de continuar?"
-                        className="mt-1"
-                      />
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-3 mt-3">
-                      <div>
-                        <Label>Texto do "Sim"</Label>
-                        <Input
-                          value={selectedElementData.popupYesText || ""}
-                          onChange={(e) => updateElement(selectedElementData.id, { popupYesText: e.target.value })}
-                          placeholder="Sim"
-                          className="mt-1"
-                        />
+                    <div className="space-y-3">
+                      <div className="grid grid-cols-2 gap-3">
+                        <div>
+                          <Label>Fundo Botão "Sim"</Label>
+                          <div className="flex gap-2 mt-1">
+                            <Input
+                              type="color"
+                              value={selectedElementData.yesButtonBgColor || "transparent"}
+                              onChange={(e) => updateElement(selectedElementData.id, { yesButtonBgColor: e.target.value })}
+                              className="w-16 h-10 p-1"
+                            />
+                            <Input
+                              value={selectedElementData.yesButtonBgColor || "transparent"}
+                              onChange={(e) => updateElement(selectedElementData.id, { yesButtonBgColor: e.target.value })}
+                              placeholder="transparent"
+                              className="flex-1"
+                            />
+                          </div>
+                        </div>
+                        <div>
+                          <Label>Texto Botão "Sim"</Label>
+                          <div className="flex gap-2 mt-1">
+                            <Input
+                              type="color"
+                              value={selectedElementData.yesButtonTextColor || "#000000"}
+                              onChange={(e) => updateElement(selectedElementData.id, { yesButtonTextColor: e.target.value })}
+                              className="w-16 h-10 p-1"
+                            />
+                            <Input
+                              value={selectedElementData.yesButtonTextColor || "#000000"}
+                              onChange={(e) => updateElement(selectedElementData.id, { yesButtonTextColor: e.target.value })}
+                              placeholder="#000000"
+                              className="flex-1"
+                            />
+                          </div>
+                        </div>
                       </div>
-                      <div>
-                        <Label>Texto do "Não"</Label>
-                        <Input
-                          value={selectedElementData.popupNoText || ""}
-                          onChange={(e) => updateElement(selectedElementData.id, { popupNoText: e.target.value })}
-                          placeholder="Não"
-                          className="mt-1"
-                        />
+
+                      <div className="grid grid-cols-2 gap-3">
+                        <div>
+                          <Label>Fundo Botão "Não"</Label>
+                          <div className="flex gap-2 mt-1">
+                            <Input
+                              type="color"
+                              value={selectedElementData.noButtonBgColor || "transparent"}
+                              onChange={(e) => updateElement(selectedElementData.id, { noButtonBgColor: e.target.value })}
+                              className="w-16 h-10 p-1"
+                            />
+                            <Input
+                              value={selectedElementData.noButtonBgColor || "transparent"}
+                              onChange={(e) => updateElement(selectedElementData.id, { noButtonBgColor: e.target.value })}
+                              placeholder="transparent"
+                              className="flex-1"
+                            />
+                          </div>
+                        </div>
+                        <div>
+                          <Label>Texto Botão "Não"</Label>
+                          <div className="flex gap-2 mt-1">
+                            <Input
+                              type="color"
+                              value={selectedElementData.noButtonTextColor || "#000000"}
+                              onChange={(e) => updateElement(selectedElementData.id, { noButtonTextColor: e.target.value })}
+                              className="w-16 h-10 p-1"
+                            />
+                            <Input
+                              value={selectedElementData.noButtonTextColor || "#000000"}
+                              onChange={(e) => updateElement(selectedElementData.id, { noButtonTextColor: e.target.value })}
+                              placeholder="#000000"
+                              className="flex-1"
+                            />
+                          </div>
+                        </div>
                       </div>
                     </div>
                   </div>
 
                   <div>
-                    <h5 className="font-semibold text-sm mb-3">🎯 Captura de Resposta</h5>
-                    <div>
-                      <Label>ID da Variável</Label>
-                      <Input
-                        value={selectedElementData.responseId || ""}
-                        onChange={(e) => updateElement(selectedElementData.id, { responseId: e.target.value })}
-                        placeholder="questao_sim_nao"
-                        className="mt-1"
-                      />
-                      <div className="text-xs text-gray-500 mt-1">
-                        Use {`{${selectedElementData.responseId || 'questao_sim_nao'}}`} em outros elementos para referenciar a resposta (sim/não)
-                      </div>
-                    </div>
+                    <Label>ID da Resposta (para uso como variável)</Label>
+                    <Input
+                      value={selectedElementData.responseId || ""}
+                      onChange={(e) => updateElement(selectedElementData.id, { responseId: e.target.value })}
+                      placeholder="resposta_pergunta"
+                      className="mt-1"
+                    />
+                    <p className="text-xs text-gray-500 mt-1">
+                      Use esse ID para referenciar a resposta em campanhas. Ex: &#123;resposta_pergunta&#125;
+                    </p>
                   </div>
                 </div>
               )}
