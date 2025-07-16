@@ -404,6 +404,16 @@ export class StripeIntegration {
         undefined,
         paymentIntent.id
       );
+
+      // 🔄 INTEGRAÇÃO COM SISTEMA DE REATIVAÇÃO AUTOMÁTICA
+      try {
+        const { campaignAutoPauseSystem } = await import('./campaign-auto-pause-system');
+        await campaignAutoPauseSystem.checkCampaignsAfterCreditAddition(userId, type);
+        console.log(`▶️ Sistema de reativação automática executado para ${type} créditos (via Stripe)`);
+      } catch (error) {
+        console.error('⚠️ Erro no sistema de reativação automática:', error);
+        // Não bloquear o webhook se o sistema de reativação falhar
+      }
     }
   }
 

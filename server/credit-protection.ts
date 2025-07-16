@@ -239,6 +239,17 @@ export class CreditProtectionSystem {
       await this.logTransaction(transaction);
 
       console.log(`✅ Créditos adicionados: ${amount} créditos ${type} para ${userId}. Total: ${newCredits}`);
+      
+      // 🔄 INTEGRAÇÃO COM SISTEMA DE REATIVAÇÃO AUTOMÁTICA
+      try {
+        const { campaignAutoPauseSystem } = await import('./campaign-auto-pause-system');
+        await campaignAutoPauseSystem.checkCampaignsAfterCreditAddition(userId, type);
+        console.log(`▶️ Sistema de reativação automática executado para ${type} créditos (via proteção)`);
+      } catch (error) {
+        console.error('⚠️ Erro no sistema de reativação automática:', error);
+        // Não bloquear a operação se o sistema de reativação falhar
+      }
+      
       return true;
 
     } catch (error) {

@@ -2643,6 +2643,16 @@ export function registerSQLiteRoutes(app: Express): Server {
       // Update user in database
       await storage.updateUser(userId, updatedUser);
 
+      // 🔄 INTEGRAÇÃO COM SISTEMA DE REATIVAÇÃO AUTOMÁTICA
+      try {
+        const { campaignAutoPauseSystem } = await import('./campaign-auto-pause-system');
+        await campaignAutoPauseSystem.checkCampaignsAfterCreditAddition(userId, type);
+        console.log(`▶️ Sistema de reativação automática executado para ${type} créditos`);
+      } catch (error) {
+        console.error('⚠️ Erro no sistema de reativação automática:', error);
+        // Não bloquear a resposta se o sistema de reativação falhar
+      }
+
       res.json({
         success: true,
         message: `${selectedPackage.credits} créditos ${type} adicionados com sucesso!`,
@@ -3287,16 +3297,30 @@ export function registerSQLiteRoutes(app: Express): Server {
           // Formato novo - array de elementos
           console.log(`📱 FORMATO NOVO - RESPONSE ${index + 1}:`, responseData);
           
-          // Buscar telefone primeiro
+          // Buscar telefone primeiro (formato novo com responseId)
           for (const item of responseData) {
-            if (item.elementType === 'phone' && item.answer) {
-              phoneNumber = item.answer.toString().replace(/\D/g, ''); // Remove caracteres não numéricos
-              console.log(`📱 TELEFONE ENCONTRADO no elemento ${item.elementId}: ${phoneNumber}`);
+            console.log(`🔍 VERIFICANDO ITEM: responseId=${item.responseId}, value=${item.value}`);
+            if (item.responseId && item.responseId.includes('telefone') && item.value) {
+              phoneNumber = item.value.toString().replace(/\D/g, ''); // Remove caracteres não numéricos
+              console.log(`📱 TELEFONE ENCONTRADO no responseId ${item.responseId}: ${phoneNumber}`);
               break;
             }
           }
           
-          // Se não encontrou phone element, buscar por fieldId que contenha "telefone"
+          console.log(`📱 TELEFONE APÓS BUSCA: ${phoneNumber}`);
+          
+          // Se não encontrou, buscar por elementType phone
+          if (!phoneNumber) {
+            for (const item of responseData) {
+              if (item.elementType === 'phone' && item.answer) {
+                phoneNumber = item.answer.toString().replace(/\D/g, ''); // Remove caracteres não numéricos
+                console.log(`📱 TELEFONE ENCONTRADO no elemento ${item.elementId}: ${phoneNumber}`);
+                break;
+              }
+            }
+          }
+          
+          // Se não encontrou phone element, buscar por elementFieldId que contenha "telefone"
           if (!phoneNumber) {
             for (const item of responseData) {
               if (item.elementFieldId && item.elementFieldId.includes('telefone') && item.answer) {
@@ -3307,13 +3331,26 @@ export function registerSQLiteRoutes(app: Express): Server {
             }
           }
           
-          // Buscar nome
+          // Buscar nome (formato novo com responseId)
           for (const item of responseData) {
-            if (item.elementType === 'text' && item.elementFieldId && 
-                (item.elementFieldId.includes('nome') || item.elementFieldId.includes('name'))) {
-              userName = item.answer;
-              console.log(`📱 NOME ENCONTRADO no elemento ${item.elementId}: ${userName}`);
+            if (item.responseId && 
+                (item.responseId.includes('nome') || item.responseId.includes('name')) && 
+                item.value) {
+              userName = item.value;
+              console.log(`📱 NOME ENCONTRADO no responseId ${item.responseId}: ${userName}`);
               break;
+            }
+          }
+          
+          // Se não encontrou, buscar por elementType e elementFieldId
+          if (!userName) {
+            for (const item of responseData) {
+              if (item.elementType === 'text' && item.elementFieldId && 
+                  (item.elementFieldId.includes('nome') || item.elementFieldId.includes('name'))) {
+                userName = item.answer;
+                console.log(`📱 NOME ENCONTRADO no elemento ${item.elementId}: ${userName}`);
+                break;
+              }
             }
           }
           

@@ -206,6 +206,10 @@ let detectionCount = 0;
 const MAX_DETECTION_CYCLES = 100; // 100 ciclos por hora (vs 3600)
 const DETECTION_INTERVAL = 60000; // 60 segundos (vs 1 segundo) - 60x menos agressivo
 
+// Inicializar sistema de pause automático
+const { campaignAutoPauseSystem } = await import('./campaign-auto-pause-system');
+campaignAutoPauseSystem.startMonitoring();
+
 const unifiedDetectionInterval = setInterval(async () => {
   detectionCount++;
   
@@ -231,6 +235,25 @@ const unifiedDetectionInterval = setInterval(async () => {
         
         await Promise.allSettled(batch.map(async (campaign) => {
           try {
+            // Verificar se campanha ainda tem créditos antes de processar
+            const user = await localStorage.getUser(campaign.userId);
+            if (!user) return;
+            
+            const creditType = campaign.type === 'sms' ? 'sms' : 
+                             campaign.type === 'email' ? 'email' : 
+                             campaign.type === 'whatsapp' ? 'whatsapp' : 'sms';
+            
+            const userCredits = creditType === 'sms' ? (user.smsCredits || 0) :
+                               creditType === 'email' ? (user.emailCredits || 0) :
+                               creditType === 'whatsapp' ? (user.whatsappCredits || 0) : 0;
+            
+            // Se não tem créditos, pausar campanha imediatamente
+            if (userCredits <= 0) {
+              console.log(`⏸️ Pausando campanha ${campaign.id} - sem créditos ${creditType}`);
+              await localStorage.pauseCampaignsWithoutCredits(campaign.userId);
+              return;
+            }
+            
             const phones = await localStorage.getPhonesByCampaign(campaign.id, 100); // Max 100 phones por campanha
             
             if (phones.length > 0) {

@@ -1,5 +1,6 @@
 import { db } from "./db-sqlite";
 import Database from 'better-sqlite3';
+import { sql, eq, and, or, desc, asc } from 'drizzle-orm';
 
 // Instância direta do SQLite para comandos raw - CRÍTICO: NÃO SUPORTA 1000+ USUÁRIOS
 // SQLite tem limitações severas para alta concorrência:
@@ -643,6 +644,128 @@ export class SQLiteStorage implements IStorage {
     } catch (error) {
       console.error(`❌ ERRO ao debitar créditos:`, error);
       return { success: false, newBalance: 0, message: "Erro interno no débito" };
+    }
+  }
+
+  // === MÉTODOS PARA SISTEMA DE PAUSE AUTOMÁTICO ===
+
+  async getUsersWithActiveCampaigns(): Promise<{ id: string; email?: string }[]> {
+    try {
+      const usersWithCampaigns = await db.select({
+        id: users.id,
+        email: users.email
+      })
+      .from(users)
+      .where(sql`
+        EXISTS (
+          SELECT 1 FROM sms_campaigns WHERE userId = ${users.id} AND status = 'active'
+        ) OR EXISTS (
+          SELECT 1 FROM email_campaigns WHERE userId = ${users.id} AND status = 'active'
+        ) OR EXISTS (
+          SELECT 1 FROM whatsapp_campaigns WHERE userId = ${users.id} AND status = 'active'
+        )
+      `);
+
+      return usersWithCampaigns;
+    } catch (error) {
+      console.error('❌ Erro ao buscar usuários com campanhas ativas:', error);
+      return [];
+    }
+  }
+
+  async getActiveCampaignsByType(userId: string, type: 'sms' | 'email' | 'whatsapp'): Promise<any[]> {
+    try {
+      switch (type) {
+        case 'sms':
+          return await db.select()
+            .from(smsCampaigns)
+            .where(and(
+              eq(smsCampaigns.userId, userId),
+              eq(smsCampaigns.status, 'active')
+            ));
+        case 'email':
+          return await db.select()
+            .from(emailCampaigns)
+            .where(and(
+              eq(emailCampaigns.userId, userId),
+              eq(emailCampaigns.status, 'active')
+            ));
+        case 'whatsapp':
+          return await db.select()
+            .from(whatsappCampaigns)
+            .where(and(
+              eq(whatsappCampaigns.userId, userId),
+              eq(whatsappCampaigns.status, 'active')
+            ));
+        default:
+          return [];
+      }
+    } catch (error) {
+      console.error(`❌ Erro ao buscar campanhas ativas ${type}:`, error);
+      return [];
+    }
+  }
+
+  async getPausedCampaignsByType(userId: string, type: 'sms' | 'email' | 'whatsapp'): Promise<any[]> {
+    try {
+      switch (type) {
+        case 'sms':
+          return await db.select()
+            .from(smsCampaigns)
+            .where(and(
+              eq(smsCampaigns.userId, userId),
+              eq(smsCampaigns.status, 'paused')
+            ));
+        case 'email':
+          return await db.select()
+            .from(emailCampaigns)
+            .where(and(
+              eq(emailCampaigns.userId, userId),
+              eq(emailCampaigns.status, 'paused')
+            ));
+        case 'whatsapp':
+          return await db.select()
+            .from(whatsappCampaigns)
+            .where(and(
+              eq(whatsappCampaigns.userId, userId),
+              eq(whatsappCampaigns.status, 'paused')
+            ));
+        default:
+          return [];
+      }
+    } catch (error) {
+      console.error(`❌ Erro ao buscar campanhas pausadas ${type}:`, error);
+      return [];
+    }
+  }
+
+  async updateSmsCampaign(campaignId: string, updates: any): Promise<void> {
+    try {
+      await db.update(smsCampaigns)
+        .set(updates)
+        .where(eq(smsCampaigns.id, campaignId));
+    } catch (error) {
+      console.error(`❌ Erro ao atualizar campanha SMS ${campaignId}:`, error);
+    }
+  }
+
+  async updateEmailCampaign(campaignId: string, updates: any): Promise<void> {
+    try {
+      await db.update(emailCampaigns)
+        .set(updates)
+        .where(eq(emailCampaigns.id, campaignId));
+    } catch (error) {
+      console.error(`❌ Erro ao atualizar campanha Email ${campaignId}:`, error);
+    }
+  }
+
+  async updateWhatsappCampaign(campaignId: string, updates: any): Promise<void> {
+    try {
+      await db.update(whatsappCampaigns)
+        .set(updates)
+        .where(eq(whatsappCampaigns.id, campaignId));
+    } catch (error) {
+      console.error(`❌ Erro ao atualizar campanha WhatsApp ${campaignId}:`, error);
     }
   }
 
