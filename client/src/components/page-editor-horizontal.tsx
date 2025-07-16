@@ -69,12 +69,13 @@ import {
   ArrowLeftRight,
   HelpCircle,
   Brain,
-  Copy
+  Copy,
+  Timer
 } from "lucide-react";
 
 interface Element {
   id: number;
-  type: "multiple_choice" | "text" | "rating" | "email" | "checkbox" | "date" | "phone" | "number" | "textarea" | "image_upload" | "animated_transition" | "heading" | "paragraph" | "image" | "divider" | "video" | "audio" | "birth_date" | "height" | "current_weight" | "target_weight" | "transition_background" | "transition_text" | "transition_counter" | "transition_loader" | "transition_redirect" | "transition_button" | "spacer" | "game_wheel" | "game_scratch" | "game_color_pick" | "game_brick_break" | "game_memory_cards" | "game_slot_machine" | "continue_button" | "loading_question" | "share_quiz" | "price" | "icon_list" | "testimonials" | "guarantee" | "paypal" | "image_with_text" | "chart" | "metrics" | "before_after" | "pricing_plans" | "stripe_embed" | "hotmart_upsell" | "faq" | "image_carousel" | "body_type_classifier" | "age_classifier" | "fitness_goal_classifier" | "experience_classifier";
+  type: "multiple_choice" | "text" | "rating" | "email" | "checkbox" | "date" | "phone" | "number" | "textarea" | "image_upload" | "animated_transition" | "heading" | "paragraph" | "image" | "divider" | "video" | "audio" | "birth_date" | "height" | "current_weight" | "target_weight" | "transition_background" | "transition_text" | "transition_counter" | "transition_loader" | "transition_redirect" | "transition_button" | "spacer" | "game_wheel" | "game_scratch" | "game_color_pick" | "game_brick_break" | "game_memory_cards" | "game_slot_machine" | "continue_button" | "loading_question" | "share_quiz" | "price" | "icon_list" | "testimonials" | "guarantee" | "paypal" | "image_with_text" | "chart" | "metrics" | "before_after" | "pricing_plans" | "stripe_embed" | "hotmart_upsell" | "faq" | "image_carousel" | "body_type_classifier" | "age_classifier" | "fitness_goal_classifier" | "experience_classifier" | "progress_bar" | "loading_with_question";
   content: string;
   question?: string;
   description?: string;
@@ -123,6 +124,33 @@ interface Element {
   iconColor?: string;
   labelColor?: string;
   inputBackgroundColor?: string;
+  
+  // Configurações específicas para progress_bar
+  progressDuration?: number; // Duração em segundos
+  progressColor?: string; // Cor da barra de progresso
+  progressBackgroundColor?: string; // Cor do fundo da barra
+  progressStyle?: "rounded" | "squared" | "pill"; // Estilo da barra
+  progressHeight?: number; // Altura da barra em pixels
+  progressAnimation?: "smooth" | "stepped" | "pulse"; // Tipo de animação
+  progressShowPercentage?: boolean; // Mostrar porcentagem
+  progressShowText?: boolean; // Mostrar texto customizado
+  progressText?: string; // Texto personalizado durante carregamento
+  progressAutoStart?: boolean; // Iniciar automaticamente
+  
+  // Configurações específicas para loading_with_question
+  loadingDuration?: number; // Duração do carregamento em segundos
+  loadingColor?: string; // Cor da barra de carregamento
+  loadingBackgroundColor?: string; // Cor do fundo
+  loadingStyle?: "rounded" | "squared" | "pill"; // Estilo da barra
+  loadingHeight?: number; // Altura da barra
+  loadingAnimation?: "smooth" | "stepped" | "pulse"; // Animação
+  loadingShowPercentage?: boolean; // Mostrar porcentagem
+  loadingText?: string; // Texto durante carregamento
+  questionTitle?: string; // Título da pergunta após carregamento
+  questionDescription?: string; // Descrição da pergunta
+  yesButtonText?: string; // Texto do botão "Sim"
+  noButtonText?: string; // Texto do botão "Não"
+  questionAutoShow?: boolean; // Mostrar pergunta automaticamente
   inputBorderColor?: string;
   unitSelectorStyle?: "dropdown" | "tabs" | "buttons";
   
@@ -868,6 +896,8 @@ export function PageEditorHorizontal({
         { type: "continue_button", label: "Botão", icon: <ArrowRight className="w-4 h-4" /> },
         { type: "share_quiz", label: "Compartilhar", icon: <Share2 className="w-4 h-4" /> },
         { type: "animated_transition", label: "Transição", icon: <Sparkles className="w-4 h-4" /> },
+        { type: "progress_bar", label: "Barra de Progresso", icon: <Progress className="w-4 h-4" /> },
+        { type: "loading_with_question", label: "Carregamento + Pergunta", icon: <Timer className="w-4 h-4" /> },
       ]
     },
     {
@@ -4458,6 +4488,112 @@ const gameElementCategories = [
             
             <div className="text-xs text-center bg-gradient-to-r from-purple-100 to-blue-100 p-3 rounded-lg text-purple-700">
               🚀 <strong>Ultra Personalização:</strong> Cada seleção gera campanhas específicas • <strong>Integração total:</strong> SMS + Email + WhatsApp • <strong>Automação:</strong> 100% baseada na resposta
+            </div>
+          </div>
+        );
+
+      case "progress_bar":
+        return (
+          <div className="w-full space-y-3 p-4 border border-gray-200 rounded-lg bg-white">
+            <div className="flex items-center justify-between">
+              <h4 className="font-semibold text-gray-800">
+                {element.progressText || "Carregando..."}
+              </h4>
+              {element.progressShowPercentage && (
+                <span className="text-sm font-mono text-gray-600">0%</span>
+              )}
+            </div>
+            
+            <div className="w-full bg-gray-200 rounded-full" style={{ height: element.progressHeight || 8 }}>
+              <div 
+                className="h-full rounded-full transition-all duration-300"
+                style={{ 
+                  width: "0%",
+                  backgroundColor: element.progressColor || "#3b82f6",
+                  borderRadius: element.progressStyle === "squared" ? "0" : 
+                               element.progressStyle === "pill" ? "50px" : "4px"
+                }}
+              />
+            </div>
+            
+            <div className="text-xs text-gray-500 text-center">
+              Duração: {element.progressDuration || 5}s • Animação: {element.progressAnimation || "smooth"}
+            </div>
+            
+            <div className="flex items-center justify-center gap-2 text-xs bg-blue-50 p-2 rounded border border-blue-200">
+              <BarChart3 className="w-4 h-4 text-blue-600" />
+              <span className="text-blue-700">
+                <strong>Barra de Progresso:</strong> Animação automática até 100%
+              </span>
+            </div>
+          </div>
+        );
+
+      case "loading_with_question":
+        return (
+          <div className="w-full space-y-4 p-4 border border-gray-200 rounded-lg bg-white">
+            {/* Fase 1: Carregamento */}
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <h4 className="font-semibold text-gray-800">
+                  {element.loadingText || "Processando..."}
+                </h4>
+                {element.loadingShowPercentage && (
+                  <span className="text-sm font-mono text-gray-600">0%</span>
+                )}
+              </div>
+              
+              <div className="w-full bg-gray-200 rounded-full" style={{ height: element.loadingHeight || 8 }}>
+                <div 
+                  className="h-full rounded-full transition-all duration-300"
+                  style={{ 
+                    width: "0%",
+                    backgroundColor: element.loadingColor || "#3b82f6",
+                    borderRadius: element.loadingStyle === "squared" ? "0" : 
+                                 element.loadingStyle === "pill" ? "50px" : "4px"
+                  }}
+                />
+              </div>
+            </div>
+            
+            {/* Fase 2: Pergunta (mostrada após carregamento) */}
+            <div className="border-t pt-4 space-y-3 opacity-50">
+              <div className="text-center">
+                <h3 className="text-lg font-bold text-gray-800 mb-2">
+                  {element.questionTitle || "Pergunta Personalizada"}
+                </h3>
+                {element.questionDescription && (
+                  <p className="text-sm text-gray-600 mb-4">
+                    {element.questionDescription}
+                  </p>
+                )}
+              </div>
+              
+              <div className="flex gap-3 justify-center">
+                <button 
+                  className="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+                  disabled
+                >
+                  {element.yesButtonText || "Sim"}
+                </button>
+                <button 
+                  className="px-6 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+                  disabled
+                >
+                  {element.noButtonText || "Não"}
+                </button>
+              </div>
+            </div>
+            
+            <div className="text-xs text-gray-500 text-center">
+              Carregamento: {element.loadingDuration || 3}s • Pergunta aparece após 100%
+            </div>
+            
+            <div className="flex items-center justify-center gap-2 text-xs bg-purple-50 p-2 rounded border border-purple-200">
+              <Timer className="w-4 h-4 text-purple-600" />
+              <span className="text-purple-700">
+                <strong>Carregamento + Pergunta:</strong> Barra animada → Pergunta Sim/Não
+              </span>
             </div>
           </div>
         );
@@ -10377,6 +10513,252 @@ const gameElementCategories = [
                           placeholder="Ex: Sem riscos, total tranquilidade"
                           className="text-xs mt-1"
                         />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Propriedades para Barra de Progresso */}
+              {selectedElementData.type === "progress_bar" && (
+                <div className="space-y-4">
+                  <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
+                    <div className="flex items-center gap-2 mb-3">
+                      <BarChart3 className="w-5 h-5 text-blue-600" />
+                      <h4 className="font-semibold text-blue-800">Barra de Progresso</h4>
+                    </div>
+
+                    <div className="space-y-3">
+                      <div>
+                        <Label className="text-xs">Texto do Progresso</Label>
+                        <Input
+                          value={selectedElementData.progressText || ""}
+                          onChange={(e) => updateElement(selectedElementData.id, { progressText: e.target.value })}
+                          placeholder="Ex: Carregando..."
+                          className="text-xs mt-1"
+                        />
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-3">
+                        <div>
+                          <Label className="text-xs">Duração (segundos)</Label>
+                          <Input
+                            type="number"
+                            min="1"
+                            max="30"
+                            value={selectedElementData.progressDuration || 5}
+                            onChange={(e) => updateElement(selectedElementData.id, { progressDuration: parseInt(e.target.value) || 5 })}
+                            className="text-xs mt-1"
+                          />
+                        </div>
+
+                        <div>
+                          <Label className="text-xs">Altura (pixels)</Label>
+                          <Input
+                            type="number"
+                            min="4"
+                            max="50"
+                            value={selectedElementData.progressHeight || 8}
+                            onChange={(e) => updateElement(selectedElementData.id, { progressHeight: parseInt(e.target.value) || 8 })}
+                            className="text-xs mt-1"
+                          />
+                        </div>
+                      </div>
+
+                      <div>
+                        <Label className="text-xs">Cor da Barra</Label>
+                        <Input
+                          type="color"
+                          value={selectedElementData.progressColor || "#3b82f6"}
+                          onChange={(e) => updateElement(selectedElementData.id, { progressColor: e.target.value })}
+                          className="h-8 mt-1"
+                        />
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-3">
+                        <div>
+                          <Label className="text-xs">Estilo</Label>
+                          <select 
+                            className="w-full px-2 py-1 border rounded text-xs mt-1"
+                            value={selectedElementData.progressStyle || "rounded"}
+                            onChange={(e) => updateElement(selectedElementData.id, { progressStyle: e.target.value })}
+                          >
+                            <option value="rounded">Arredondado</option>
+                            <option value="squared">Quadrado</option>
+                            <option value="pill">Pill</option>
+                          </select>
+                        </div>
+
+                        <div>
+                          <Label className="text-xs">Animação</Label>
+                          <select 
+                            className="w-full px-2 py-1 border rounded text-xs mt-1"
+                            value={selectedElementData.progressAnimation || "smooth"}
+                            onChange={(e) => updateElement(selectedElementData.id, { progressAnimation: e.target.value })}
+                          >
+                            <option value="smooth">Suave</option>
+                            <option value="steps">Por Etapas</option>
+                            <option value="bounce">Saltitante</option>
+                          </select>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center justify-between">
+                        <Label className="text-xs">Mostrar Porcentagem</Label>
+                        <input
+                          type="checkbox"
+                          checked={selectedElementData.progressShowPercentage !== false}
+                          onChange={(e) => updateElement(selectedElementData.id, { progressShowPercentage: e.target.checked })}
+                          className="h-4 w-4"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Propriedades para Carregamento + Pergunta */}
+              {selectedElementData.type === "loading_with_question" && (
+                <div className="space-y-4">
+                  <div className="bg-purple-50 p-4 rounded-lg border border-purple-200">
+                    <div className="flex items-center gap-2 mb-3">
+                      <Timer className="w-5 h-5 text-purple-600" />
+                      <h4 className="font-semibold text-purple-800">Carregamento + Pergunta</h4>
+                    </div>
+
+                    {/* Seção de Carregamento */}
+                    <div className="space-y-3 mb-4">
+                      <h6 className="font-semibold text-sm text-purple-600">🔄 Carregamento</h6>
+                      
+                      <div>
+                        <Label className="text-xs">Texto do Carregamento</Label>
+                        <Input
+                          value={selectedElementData.loadingText || ""}
+                          onChange={(e) => updateElement(selectedElementData.id, { loadingText: e.target.value })}
+                          placeholder="Ex: Processando..."
+                          className="text-xs mt-1"
+                        />
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-3">
+                        <div>
+                          <Label className="text-xs">Duração (segundos)</Label>
+                          <Input
+                            type="number"
+                            min="1"
+                            max="15"
+                            value={selectedElementData.loadingDuration || 3}
+                            onChange={(e) => updateElement(selectedElementData.id, { loadingDuration: parseInt(e.target.value) || 3 })}
+                            className="text-xs mt-1"
+                          />
+                        </div>
+
+                        <div>
+                          <Label className="text-xs">Altura (pixels)</Label>
+                          <Input
+                            type="number"
+                            min="4"
+                            max="50"
+                            value={selectedElementData.loadingHeight || 8}
+                            onChange={(e) => updateElement(selectedElementData.id, { loadingHeight: parseInt(e.target.value) || 8 })}
+                            className="text-xs mt-1"
+                          />
+                        </div>
+                      </div>
+
+                      <div>
+                        <Label className="text-xs">Cor da Barra</Label>
+                        <Input
+                          type="color"
+                          value={selectedElementData.loadingColor || "#3b82f6"}
+                          onChange={(e) => updateElement(selectedElementData.id, { loadingColor: e.target.value })}
+                          className="h-8 mt-1"
+                        />
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-3">
+                        <div>
+                          <Label className="text-xs">Estilo</Label>
+                          <select 
+                            className="w-full px-2 py-1 border rounded text-xs mt-1"
+                            value={selectedElementData.loadingStyle || "rounded"}
+                            onChange={(e) => updateElement(selectedElementData.id, { loadingStyle: e.target.value })}
+                          >
+                            <option value="rounded">Arredondado</option>
+                            <option value="squared">Quadrado</option>
+                            <option value="pill">Pill</option>
+                          </select>
+                        </div>
+
+                        <div>
+                          <Label className="text-xs">Mostrar %</Label>
+                          <input
+                            type="checkbox"
+                            checked={selectedElementData.loadingShowPercentage !== false}
+                            onChange={(e) => updateElement(selectedElementData.id, { loadingShowPercentage: e.target.checked })}
+                            className="h-4 w-4"
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Seção da Pergunta */}
+                    <div className="space-y-3 border-t pt-4">
+                      <h6 className="font-semibold text-sm text-purple-600">❓ Pergunta</h6>
+                      
+                      <div>
+                        <Label className="text-xs">Título da Pergunta</Label>
+                        <Input
+                          value={selectedElementData.questionTitle || ""}
+                          onChange={(e) => updateElement(selectedElementData.id, { questionTitle: e.target.value })}
+                          placeholder="Ex: Você gostou do resultado?"
+                          className="text-xs mt-1"
+                        />
+                      </div>
+
+                      <div>
+                        <Label className="text-xs">Descrição (Opcional)</Label>
+                        <Input
+                          value={selectedElementData.questionDescription || ""}
+                          onChange={(e) => updateElement(selectedElementData.id, { questionDescription: e.target.value })}
+                          placeholder="Ex: Sua resposta nos ajuda a melhorar"
+                          className="text-xs mt-1"
+                        />
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-3">
+                        <div>
+                          <Label className="text-xs">Texto Botão "Sim"</Label>
+                          <Input
+                            value={selectedElementData.yesButtonText || ""}
+                            onChange={(e) => updateElement(selectedElementData.id, { yesButtonText: e.target.value })}
+                            placeholder="Sim"
+                            className="text-xs mt-1"
+                          />
+                        </div>
+
+                        <div>
+                          <Label className="text-xs">Texto Botão "Não"</Label>
+                          <Input
+                            value={selectedElementData.noButtonText || ""}
+                            onChange={(e) => updateElement(selectedElementData.id, { noButtonText: e.target.value })}
+                            placeholder="Não"
+                            className="text-xs mt-1"
+                          />
+                        </div>
+                      </div>
+
+                      <div>
+                        <Label className="text-xs">Field ID da Resposta</Label>
+                        <Input
+                          value={selectedElementData.fieldId || ""}
+                          onChange={(e) => updateElement(selectedElementData.id, { fieldId: e.target.value })}
+                          placeholder="Ex: satisfacao_usuario"
+                          className="text-xs mt-1"
+                        />
+                        <div className="text-xs text-gray-500 mt-1">
+                          Usado para capturar a resposta (sim/não) nas campanhas
+                        </div>
                       </div>
                     </div>
                   </div>

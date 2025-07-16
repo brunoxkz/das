@@ -103,6 +103,168 @@ interface SavedResponse {
   submittedAt: Date;
 }
 
+// Componente para barra de progresso (versão pública)
+const ProgressBarElementPublic = ({ element }: { element: any }) => {
+  const [progress, setProgress] = useState(0);
+  const [isComplete, setIsComplete] = useState(false);
+  const properties = element.properties || {};
+  
+  useEffect(() => {
+    const duration = (properties.progressDuration || 5) * 1000;
+    const steps = 100;
+    const interval = duration / steps;
+    
+    const timer = setInterval(() => {
+      setProgress((prev) => {
+        if (prev >= 100) {
+          setIsComplete(true);
+          clearInterval(timer);
+          return 100;
+        }
+        return prev + 1;
+      });
+    }, interval);
+    
+    return () => clearInterval(timer);
+  }, [properties.progressDuration]);
+  
+  return (
+    <div className="w-full space-y-3 p-4 border border-gray-200 rounded-lg bg-white">
+      <div className="flex items-center justify-between">
+        <h4 className="font-semibold text-gray-800">
+          {properties.progressText || "Carregando..."}
+        </h4>
+        {properties.progressShowPercentage && (
+          <span className="text-sm font-mono text-gray-600">{progress}%</span>
+        )}
+      </div>
+      
+      <div className="w-full bg-gray-200 rounded-full" style={{ height: properties.progressHeight || 8 }}>
+        <div 
+          className="h-full rounded-full transition-all duration-100"
+          style={{ 
+            width: `${progress}%`,
+            backgroundColor: properties.progressColor || "#3b82f6",
+            borderRadius: properties.progressStyle === "squared" ? "0" : 
+                         properties.progressStyle === "pill" ? "50px" : "4px"
+          }}
+        />
+      </div>
+      
+      {isComplete && (
+        <div className="text-center text-green-600 font-medium">
+          ✓ Completo!
+        </div>
+      )}
+    </div>
+  );
+};
+
+// Componente para carregamento + pergunta (versão pública)
+const LoadingWithQuestionElementPublic = ({ element, handleAnswer }: { element: any, handleAnswer: any }) => {
+  const [progress, setProgress] = useState(0);
+  const [showQuestion, setShowQuestion] = useState(false);
+  const [answer, setAnswer] = useState<string | null>(null);
+  const properties = element.properties || {};
+  
+  useEffect(() => {
+    const duration = (properties.loadingDuration || 3) * 1000;
+    const steps = 100;
+    const interval = duration / steps;
+    
+    const timer = setInterval(() => {
+      setProgress((prev) => {
+        if (prev >= 100) {
+          setShowQuestion(true);
+          clearInterval(timer);
+          return 100;
+        }
+        return prev + 1;
+      });
+    }, interval);
+    
+    return () => clearInterval(timer);
+  }, [properties.loadingDuration]);
+  
+  const handleQuestionAnswer = (value: string) => {
+    setAnswer(value);
+    handleAnswer(element.id, element.type, value, element.fieldId || properties.fieldId);
+  };
+  
+  return (
+    <div className="w-full space-y-4 p-4 border border-gray-200 rounded-lg bg-white">
+      {!showQuestion && (
+        <div className="space-y-3">
+          <div className="flex items-center justify-between">
+            <h4 className="font-semibold text-gray-800">
+              {properties.loadingText || "Processando..."}
+            </h4>
+            {properties.loadingShowPercentage && (
+              <span className="text-sm font-mono text-gray-600">{progress}%</span>
+            )}
+          </div>
+          
+          <div className="w-full bg-gray-200 rounded-full" style={{ height: properties.loadingHeight || 8 }}>
+            <div 
+              className="h-full rounded-full transition-all duration-100"
+              style={{ 
+                width: `${progress}%`,
+                backgroundColor: properties.loadingColor || "#3b82f6",
+                borderRadius: properties.loadingStyle === "squared" ? "0" : 
+                             properties.loadingStyle === "pill" ? "50px" : "4px"
+              }}
+            />
+          </div>
+        </div>
+      )}
+      
+      {showQuestion && (
+        <div className="space-y-3">
+          <div className="text-center">
+            <h3 className="text-lg font-bold text-gray-800 mb-2">
+              {properties.questionTitle || "Pergunta Personalizada"}
+            </h3>
+            {properties.questionDescription && (
+              <p className="text-sm text-gray-600 mb-4">
+                {properties.questionDescription}
+              </p>
+            )}
+          </div>
+          
+          <div className="flex gap-3 justify-center">
+            <button 
+              className={`px-6 py-2 rounded-lg transition-colors ${
+                answer === 'yes' 
+                  ? 'bg-green-600 text-white' 
+                  : 'bg-green-100 text-green-700 hover:bg-green-200'
+              }`}
+              onClick={() => handleQuestionAnswer('yes')}
+            >
+              {properties.yesButtonText || "Sim"}
+            </button>
+            <button 
+              className={`px-6 py-2 rounded-lg transition-colors ${
+                answer === 'no' 
+                  ? 'bg-red-600 text-white' 
+                  : 'bg-red-100 text-red-700 hover:bg-red-200'
+              }`}
+              onClick={() => handleQuestionAnswer('no')}
+            >
+              {properties.noButtonText || "Não"}
+            </button>
+          </div>
+          
+          {answer && (
+            <div className="text-center text-gray-600 text-sm mt-2">
+              Resposta registrada: {answer === 'yes' ? 'Sim' : 'Não'}
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+};
+
 export function QuizPublicRenderer({ quiz }: QuizPublicRendererProps) {
   const [currentPageIndex, setCurrentPageIndex] = useState(0);
   const [answers, setAnswers] = useState<Record<string, any>>({});
@@ -1195,6 +1357,20 @@ export function QuizPublicRenderer({ quiz }: QuizPublicRendererProps) {
                 {properties.beforeAfterDescription || "Comparação entre antes e depois"}
               </div>
             )}
+          </div>
+        );
+
+      case 'progress_bar':
+        return (
+          <div key={id} className="mb-4">
+            <ProgressBarElementPublic element={element} />
+          </div>
+        );
+
+      case 'loading_with_question':
+        return (
+          <div key={id} className="mb-4">
+            <LoadingWithQuestionElementPublic element={element} handleAnswer={handleElementAnswer} />
           </div>
         );
 
