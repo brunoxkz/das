@@ -73,6 +73,9 @@ export interface IStorage {
   updateUser(userId: string, updates: Partial<User>): Promise<User>;
   updateUserStripeInfo(userId: string, stripeCustomerId: string, stripeSubscriptionId: string): Promise<User>;
   updateUserPlan(userId: string, plan: string, subscriptionStatus?: string): Promise<User>;
+  getUserByStripeCustomerId(stripeCustomerId: string): Promise<User | undefined>;
+  logCreditTransaction(transaction: any): Promise<void>;
+  getUserByEmail(email: string): Promise<User | undefined>;
 
   // Admin operations
   getAllUsers(): Promise<User[]>;
@@ -516,6 +519,24 @@ export class SQLiteStorage implements IStorage {
       .where(eq(users.id, userId))
       .returning();
     return updatedUser;
+  }
+
+  async getUserByStripeCustomerId(stripeCustomerId: string): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.stripeCustomerId, stripeCustomerId));
+    return user || undefined;
+  }
+
+  async logCreditTransaction(transaction: any): Promise<void> {
+    await db.insert(creditTransactions).values({
+      id: transaction.id,
+      userId: transaction.userId,
+      type: transaction.type,
+      amount: transaction.amount,
+      operation: transaction.operation,
+      reason: transaction.reason,
+      metadata: transaction.metadata ? JSON.stringify(transaction.metadata) : null,
+      createdAt: transaction.timestamp || new Date()
+    });
   }
 
   async updateUser(userId: string, updates: Partial<User>): Promise<User> {

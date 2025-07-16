@@ -6,6 +6,8 @@ import { nanoid } from "nanoid";
 import { insertQuizSchema, insertQuizResponseSchema } from "../shared/schema-sqlite";
 import { z } from "zod";
 import { verifyJWT } from "./auth-sqlite";
+import { creditProtection } from "./credit-protection";
+import { stripeIntegration } from "./stripe-integration";
 import { sendSms } from "./twilio";
 import { emailService } from "./email-service";
 import { BrevoEmailService } from "./email-brevo";
@@ -2503,26 +2505,25 @@ export function registerSQLiteRoutes(app: Express): Server {
     }
   });
 
-  // SMS Credits endpoint  
+  // SMS Credits endpoint COM PROTEÇÃO ANTI-BURLA
   app.get("/api/sms-credits", verifyJWT, async (req: any, res) => {
     try {
       const userId = req.user.id;
-      const user = await storage.getUser(userId);
-      
-      if (!user) {
-        return res.status(404).json({ error: "User not found" });
-      }
-      
-      // Calcular créditos usados baseado nos SMS enviados com sucesso do usuário
-      const sentSMS = await storage.getSentSMSCount(userId);
-      const total = user.smsCredits || 100; // Valor padrão de 100 créditos
-      const used = sentSMS;
-      const remaining = Math.max(0, total - used);
+      const validation = await creditProtection.validateCreditsBeforeUse(
+        userId, 
+        'sms', 
+        0, // Não consumir créditos, apenas verificar
+        req.ip,
+        req.headers['user-agent']
+      );
       
       res.json({
-        total,
-        used,
-        remaining
+        total: validation.remaining + (validation.valid ? 0 : 0),
+        used: validation.valid ? 0 : 0,
+        remaining: validation.remaining,
+        plan: validation.userPlan,
+        valid: validation.valid,
+        error: validation.error
       });
     } catch (error) {
       console.error("Error fetching SMS credits:", error);
@@ -2530,32 +2531,39 @@ export function registerSQLiteRoutes(app: Express): Server {
     }
   });
 
-  // User Credits endpoint (general credits for all services)
+  // User Credits endpoint COM VALIDAÇÃO RIGOROSA
   app.get("/api/user/credits", verifyJWT, async (req: any, res) => {
     try {
       const userId = req.user.id;
-      const user = await storage.getUser(userId);
       
-      if (!user) {
-        return res.status(404).json({ error: "User not found" });
-      }
+      // Validar todos os tipos de crédito com proteção
+      const smsValidation = await creditProtection.validateCreditsBeforeUse(userId, 'sms', 0, req.ip, req.headers['user-agent']);
+      const emailValidation = await creditProtection.validateCreditsBeforeUse(userId, 'email', 0, req.ip, req.headers['user-agent']);
+      const whatsappValidation = await creditProtection.validateCreditsBeforeUse(userId, 'whatsapp', 0, req.ip, req.headers['user-agent']);
+      const aiValidation = await creditProtection.validateCreditsBeforeUse(userId, 'ai', 0, req.ip, req.headers['user-agent']);
       
-      // Calcular créditos totais do usuário
-      const smsCredits = user.smsCredits || 100;
-      const emailCredits = user.emailCredits || 500;
-      const whatsappCredits = user.whatsappCredits || 250;
-      const aiCredits = user.aiCredits || 50;
-      
-      // Calcular total de créditos disponíveis
-      const totalCredits = smsCredits + emailCredits + whatsappCredits + aiCredits;
+      const totalCredits = smsValidation.remaining + emailValidation.remaining + whatsappValidation.remaining + aiValidation.remaining;
       
       res.json({
         credits: totalCredits,
         breakdown: {
-          sms: smsCredits,
-          email: emailCredits,
-          whatsapp: whatsappCredits,
-          ai: aiCredits
+          sms: smsValidation.remaining,
+          email: emailValidation.remaining,
+          whatsapp: whatsappValidation.remaining,
+          ai: aiValidation.remaining
+        },
+        plan: smsValidation.userPlan,
+        status: {
+          sms: smsValidation.valid,
+          email: emailValidation.valid,
+          whatsapp: whatsappValidation.valid,
+          ai: aiValidation.valid
+        },
+        errors: {
+          sms: smsValidation.error,
+          email: emailValidation.error,
+          whatsapp: whatsappValidation.error,
+          ai: aiValidation.error
         }
       });
     } catch (error) {
@@ -2662,6 +2670,260 @@ export function registerSQLiteRoutes(app: Express): Server {
     }
   });
 
+  // STRIPE INTEGRATION - CRIAR CUSTOMER
+  app.post("/api/stripe/customer", verifyJWT, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const user = await storage.getUser(userId);
+      
+      if (!user) {
+        return res.status(404).json({ error: "User not found" });
+      }
+
+      const customerId = await stripeIntegration.createStripeCustomer(
+        userId,
+        user.email,
+        `${user.firstName} ${user.lastName}`
+      );
+
+      res.json({ customerId, success: true });
+    } catch (error) {
+      console.error("Error creating Stripe customer:", error);
+      res.status(500).json({ error: "Failed to create Stripe customer" });
+    }
+  });
+
+  // STRIPE INTEGRATION - CRIAR ASSINATURA
+  app.post("/api/stripe/subscription", verifyJWT, async (req: any, res) => {
+    try {
+      const { planId, paymentMethodId } = req.body;
+      const userId = req.user.id;
+
+      if (!planId || !paymentMethodId) {
+        return res.status(400).json({ error: "planId e paymentMethodId são obrigatórios" });
+      }
+
+      const result = await stripeIntegration.createSubscription(
+        userId,
+        planId,
+        paymentMethodId
+      );
+
+      res.json(result);
+    } catch (error) {
+      console.error("Error creating subscription:", error);
+      res.status(500).json({ error: "Failed to create subscription" });
+    }
+  });
+
+  // STRIPE INTEGRATION - CANCELAR ASSINATURA
+  app.post("/api/stripe/subscription/cancel", verifyJWT, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const success = await stripeIntegration.cancelSubscription(userId);
+
+      res.json({ success });
+    } catch (error) {
+      console.error("Error canceling subscription:", error);
+      res.status(500).json({ error: "Failed to cancel subscription" });
+    }
+  });
+
+  // STRIPE INTEGRATION - COMPRAR CRÉDITOS
+  app.post("/api/stripe/credits", verifyJWT, async (req: any, res) => {
+    try {
+      const { type, packageId, paymentMethodId } = req.body;
+      const userId = req.user.id;
+
+      if (!type || !packageId || !paymentMethodId) {
+        return res.status(400).json({ error: "type, packageId e paymentMethodId são obrigatórios" });
+      }
+
+      const result = await stripeIntegration.purchaseCredits(
+        userId,
+        type,
+        packageId,
+        paymentMethodId
+      );
+
+      res.json(result);
+    } catch (error) {
+      console.error("Error purchasing credits:", error);
+      res.status(500).json({ error: "Failed to purchase credits" });
+    }
+  });
+
+  // STRIPE WEBHOOKS - HANDLER SEGURO
+  app.post("/api/stripe/webhook", express.raw({ type: 'application/json' }), async (req, res) => {
+    try {
+      const signature = req.headers['stripe-signature'];
+      
+      if (!signature) {
+        return res.status(400).json({ error: "Missing Stripe signature" });
+      }
+
+      await stripeIntegration.handleWebhook(req.body, signature);
+      
+      res.json({ received: true });
+    } catch (error) {
+      console.error("Webhook error:", error);
+      res.status(400).json({ error: "Webhook signature verification failed" });
+    }
+  });
+
+  // CRÉDITO VALIDATION - VALIDAR ANTES DE USAR
+  app.post("/api/credits/validate", verifyJWT, async (req: any, res) => {
+    try {
+      const { type, amount = 1 } = req.body;
+      const userId = req.user.id;
+
+      if (!type) {
+        return res.status(400).json({ error: "Type é obrigatório" });
+      }
+
+      const validation = await creditProtection.validateCreditsBeforeUse(
+        userId,
+        type,
+        amount,
+        req.ip,
+        req.headers['user-agent']
+      );
+
+      res.json(validation);
+    } catch (error) {
+      console.error("Error validating credits:", error);
+      res.status(500).json({ error: "Failed to validate credits" });
+    }
+  });
+
+  // CRÉDITO AUDIT - RELATÓRIO DE AUDITORIA
+  app.get("/api/credits/audit", verifyJWT, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const days = parseInt(req.query.days as string) || 30;
+
+      const report = await creditProtection.generateAuditReport(userId, days);
+      
+      res.json(report);
+    } catch (error) {
+      console.error("Error generating audit report:", error);
+      res.status(500).json({ error: "Failed to generate audit report" });
+    }
+  });
+
+  // SISTEMA DE PROTEÇÃO ANTI-BURLA - TESTE COMPLETO
+  app.post("/api/anti-fraud/test", verifyJWT, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const { testType = 'comprehensive' } = req.body;
+      
+      console.log(`🔐 INICIANDO TESTE ANTI-BURLA - User: ${userId}, Type: ${testType}`);
+      
+      const testResults = {
+        userId,
+        testType,
+        timestamp: new Date().toISOString(),
+        results: {
+          sms: {},
+          email: {},
+          whatsapp: {},
+          ai: {},
+          stripe: {},
+          audit: {}
+        }
+      };
+
+      // Testar validação de créditos SMS
+      const smsValidation = await creditProtection.validateCreditsBeforeUse(
+        userId, 'sms', 1, req.ip, req.headers['user-agent']
+      );
+      testResults.results.sms = {
+        validation: smsValidation,
+        status: smsValidation.valid ? 'PASS' : 'FAIL'
+      };
+
+      // Testar validação de créditos Email
+      const emailValidation = await creditProtection.validateCreditsBeforeUse(
+        userId, 'email', 1, req.ip, req.headers['user-agent']
+      );
+      testResults.results.email = {
+        validation: emailValidation,
+        status: emailValidation.valid ? 'PASS' : 'FAIL'
+      };
+
+      // Testar validação de créditos WhatsApp
+      const whatsappValidation = await creditProtection.validateCreditsBeforeUse(
+        userId, 'whatsapp', 1, req.ip, req.headers['user-agent']
+      );
+      testResults.results.whatsapp = {
+        validation: whatsappValidation,
+        status: whatsappValidation.valid ? 'PASS' : 'FAIL'
+      };
+
+      // Testar validação de créditos AI
+      const aiValidation = await creditProtection.validateCreditsBeforeUse(
+        userId, 'ai', 1, req.ip, req.headers['user-agent']
+      );
+      testResults.results.ai = {
+        validation: aiValidation,
+        status: aiValidation.valid ? 'PASS' : 'FAIL'
+      };
+
+      // Testar Stripe Integration
+      try {
+        const user = await storage.getUser(userId);
+        if (user) {
+          const stripeTest = await stripeIntegration.createStripeCustomer(
+            userId,
+            user.email,
+            `${user.firstName} ${user.lastName}`
+          );
+          testResults.results.stripe = {
+            status: stripeTest ? 'PASS' : 'FAIL',
+            customerId: stripeTest
+          };
+        }
+      } catch (stripeError) {
+        testResults.results.stripe = {
+          status: 'FAIL',
+          error: stripeError.message
+        };
+      }
+
+      // Testar Audit System
+      try {
+        const auditReport = await creditProtection.generateAuditReport(userId, 7);
+        testResults.results.audit = {
+          status: 'PASS',
+          report: auditReport
+        };
+      } catch (auditError) {
+        testResults.results.audit = {
+          status: 'FAIL',
+          error: auditError.message
+        };
+      }
+
+      // Calcular score final
+      const passCount = Object.values(testResults.results).filter(r => r.status === 'PASS').length;
+      const totalTests = Object.keys(testResults.results).length;
+      const score = Math.round((passCount / totalTests) * 100);
+
+      console.log(`🔐 TESTE ANTI-BURLA CONCLUÍDO - Score: ${score}% (${passCount}/${totalTests})`);
+
+      res.json({
+        ...testResults,
+        score,
+        passCount,
+        totalTests,
+        status: score >= 80 ? 'SYSTEM_SECURE' : 'VULNERABILITIES_DETECTED'
+      });
+    } catch (error) {
+      console.error("Error in anti-fraud test:", error);
+      res.status(500).json({ error: "Failed to run anti-fraud test" });
+    }
+  });
+
   app.get("/api/health", (req, res) => {
     res.json({ 
       status: "ok", 
@@ -2705,35 +2967,27 @@ export function registerSQLiteRoutes(app: Express): Server {
       // Importar função sendSms do twilio
       const { sendSms } = await import("./twilio");
 
-      // Buscar dados do usuário
-      const user = await storage.getUser(userId);
-      if (!user) {
-        return res.status(404).json({ error: "User not found" });
+      // PROTEÇÃO ANTI-BURLA: Validar créditos ANTES de qualquer operação
+      const validation = await creditProtection.validateCreditsBeforeUse(
+        userId,
+        'sms',
+        validPhones.length,
+        req.ip,
+        req.headers['user-agent']
+      );
+
+      if (!validation.valid) {
+        console.log(`🚫 VALIDAÇÃO REJEITADA: ${validation.error}`);
+        return res.status(400).json({
+          error: validation.error,
+          remaining: validation.remaining,
+          needed: validPhones.length,
+          plan: validation.userPlan,
+          rateLimit: validation.rateLimit
+        });
       }
 
-      // Verificar créditos SMS antes do envio (usar validPhones)
-      const currentSentSMS = await storage.getSentSMSCount(userId);
-      const remainingCredits = Math.max(0, (user.smsCredits || 100) - currentSentSMS);
-      
-      console.log(`💰 VERIFICAÇÃO DE CRÉDITOS: Tem ${remainingCredits}, precisa ${validPhones.length}`);
-      
-      if (remainingCredits <= 0) {
-        console.log(`🚫 CRÉDITOS ESGOTADOS`);
-        return res.status(400).json({ 
-          error: "Créditos SMS insuficientes", 
-          remaining: remainingCredits,
-          needed: validPhones.length 
-        });
-      }
-      
-      if (validPhones.length > remainingCredits) {
-        console.log(`🚫 CRÉDITOS INSUFICIENTES`);
-        return res.status(400).json({ 
-          error: `Créditos insuficientes. Precisa de ${validPhones.length} créditos, restam ${remainingCredits}`,
-          remaining: remainingCredits,
-          needed: validPhones.length 
-        });
-      }
+      console.log(`✅ VALIDAÇÃO APROVADA: ${validation.remaining} créditos disponíveis para ${validPhones.length} SMS`);
 
       const results = [];
       let successCount = 0;
@@ -2747,28 +3001,33 @@ export function registerSQLiteRoutes(app: Express): Server {
           const success = await sendSms(phoneNumber, message);
           
           if (success) {
-            successCount++;
-            
-            // Consumir crédito SMS para teste
-            await storage.updateUserSmsCredits(userId, user.smsCredits - 1);
-            
-            // Registrar transação
-            await storage.createSmsTransaction({
-              userId: userId,
-              type: 'teste_sms',
-              amount: -1,
-              description: `Teste SMS: ${phoneNumber}`
-            });
-            
-            // Invalidar cache de créditos SMS para atualizar dashboard
-            cache.del(`sms-credits-${userId}`);
-            cache.invalidateUserCaches(userId);
-            
-            results.push({
-              phone: phoneNumber,
-              status: "success",
-              message: "SMS enviado com sucesso"
-            });
+            // DÉBITO SEGURO: Usar o sistema de proteção para debitar crédito
+            const debitResult = await creditProtection.debitCreditsSecurely(
+              userId,
+              'sms',
+              1,
+              `Teste SMS direto: ${phoneNumber}`,
+              req.ip,
+              req.headers['user-agent']
+            );
+
+            if (debitResult.success) {
+              successCount++;
+              console.log(`💳 CRÉDITO DEBITADO: Novo saldo: ${debitResult.remainingCredits}`);
+              
+              results.push({
+                phone: phoneNumber,
+                status: "success",
+                message: "SMS enviado com sucesso"
+              });
+            } else {
+              console.log(`🚫 ERRO NO DÉBITO: ${debitResult.error}`);
+              results.push({
+                phone: phoneNumber,
+                status: "warning",
+                message: "SMS enviado mas erro no débito: " + debitResult.error
+              });
+            }
           } else {
             failureCount++;
             results.push({
@@ -3383,17 +3642,26 @@ export function registerSQLiteRoutes(app: Express): Server {
               successCount++;
               
               // 🔒 DÉBITO DE CRÉDITO SEGURO - 1 SMS = 1 CRÉDITO
-              const debitResult = await storage.debitCredits(userId, 'sms', 1);
+              // DÉBITO SEGURO COM PROTEÇÃO ANTI-BURLA
+              const debitResult = await creditProtection.debitCreditsSecurely(
+                userId,
+                'sms',
+                1,
+                `Campanha SMS: ${campaign.name}`,
+                undefined, // IP não disponível no processamento interno
+                undefined // User-agent não disponível
+              );
+              
               if (!debitResult.success) {
-                console.log(`🚫 ERRO AO DEBITAR CRÉDITO: ${debitResult.message}`);
+                console.log(`🚫 ERRO AO DEBITAR CRÉDITO: ${debitResult.error}`);
                 // Ainda atualizar log como enviado pois o SMS foi enviado
                 await storage.updateSMSLog(logId, {
                   status: 'sent',
                   sentAt: Math.floor(Date.now() / 1000),
-                  errorMessage: `SMS enviado mas erro ao debitar crédito: ${debitResult.message}`
+                  errorMessage: `SMS enviado mas erro ao debitar crédito: ${debitResult.error}`
                 });
               } else {
-                console.log(`💳 CRÉDITO DEBITADO - Novo saldo: ${debitResult.newBalance} créditos SMS`);
+                console.log(`💳 CRÉDITO DEBITADO - Novo saldo: ${debitResult.remainingCredits} créditos SMS`);
                 // Atualizar log com sucesso
                 await storage.updateSMSLog(logId, {
                   status: 'sent',
