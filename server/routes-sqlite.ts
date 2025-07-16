@@ -10010,6 +10010,327 @@ app.get("/api/whatsapp-extension/pending", verifyJWT, async (req: any, res: Resp
     }
   });
 
+  // ============================================================================
+  // TELEGRAM AUTOMATION ROUTES
+  // ============================================================================
+
+  // Bot status check
+  app.get("/api/telegram-bot/status", verifyJWT, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const user = await storage.getUser(userId);
+      
+      if (!user) {
+        return res.status(404).json({ error: "User not found" });
+      }
+      
+      const botToken = user.telegramBotToken;
+      if (!botToken) {
+        return res.json({ connected: false, message: "Bot token not configured" });
+      }
+      
+      // Test bot connection
+      const testResponse = await fetch(`https://api.telegram.org/bot${botToken}/getMe`);
+      const testData = await testResponse.json();
+      
+      if (testData.ok) {
+        res.json({ 
+          connected: true, 
+          botInfo: testData.result,
+          message: "Bot connected successfully"
+        });
+      } else {
+        res.json({ 
+          connected: false, 
+          message: "Bot token invalid or expired"
+        });
+      }
+    } catch (error) {
+      console.error("Error checking Telegram bot status:", error);
+      res.json({ connected: false, message: "Error connecting to Telegram API" });
+    }
+  });
+
+  // Bot configuration
+  app.post("/api/telegram-bot/config", verifyJWT, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const { botToken, chatId } = req.body;
+      
+      if (!botToken) {
+        return res.status(400).json({ error: "Bot token is required" });
+      }
+      
+      // Test bot token validity
+      const testResponse = await fetch(`https://api.telegram.org/bot${botToken}/getMe`);
+      const testData = await testResponse.json();
+      
+      if (!testData.ok) {
+        return res.status(400).json({ error: "Invalid bot token" });
+      }
+      
+      // Save bot configuration
+      await storage.updateUser(userId, {
+        telegramBotToken: botToken,
+        telegramChatId: chatId
+      });
+      
+      res.json({ 
+        success: true, 
+        message: "Bot configured successfully",
+        botInfo: testData.result
+      });
+    } catch (error) {
+      console.error("Error configuring Telegram bot:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
+  // Generate automation file for Telegram
+  app.post("/api/telegram-automation-file", verifyJWT, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const { quizId, targetAudience = 'all', dateFilter } = req.body;
+      
+      if (!quizId) {
+        return res.status(400).json({ error: "Quiz ID is required" });
+      }
+      
+      // Get quiz data
+      const quiz = await storage.getQuiz(quizId);
+      if (!quiz) {
+        return res.status(404).json({ error: "Quiz not found" });
+      }
+      
+      // Check if user owns the quiz
+      if (quiz.userId !== userId) {
+        return res.status(403).json({ error: "Access denied" });
+      }
+      
+      // Get quiz responses
+      const responses = await storage.getQuizResponses(quizId);
+      
+      // Extract contact data
+      const contacts = responses.map(response => {
+        const parsedResponse = typeof response.response === 'string' ? JSON.parse(response.response) : response.response;
+        
+        // Try to find Telegram ID from response
+        let telegramId = null;
+        if (parsedResponse.telegram_id) {
+          telegramId = parsedResponse.telegram_id;
+        } else if (parsedResponse.telegramId) {
+          telegramId = parsedResponse.telegramId;
+        }
+        
+        // Extract name and email
+        const name = parsedResponse.nome_completo || parsedResponse.name || parsedResponse.nome || 'Lead';
+        const email = parsedResponse.email_contato || parsedResponse.email || null;
+        
+        return {
+          id: response.id,
+          name,
+          email,
+          telegramId,
+          isComplete: response.isComplete,
+          submittedAt: response.createdAt,
+          responses: parsedResponse
+        };
+      });
+      
+      // Filter contacts based on target audience
+      let filteredContacts = contacts;
+      if (targetAudience === 'completed') {
+        filteredContacts = contacts.filter(c => c.isComplete);
+      } else if (targetAudience === 'abandoned') {
+        filteredContacts = contacts.filter(c => !c.isComplete);
+      }
+      
+      // Filter by date if specified
+      if (dateFilter) {
+        const filterDate = new Date(dateFilter);
+        filteredContacts = filteredContacts.filter(c => {
+          const contactDate = new Date(c.submittedAt);
+          return contactDate >= filterDate;
+        });
+      }
+      
+      console.log(`📱 TELEGRAM AUTOMATION - Quiz: ${quiz.title}, Contacts: ${filteredContacts.length}`);
+      
+      res.json({
+        success: true,
+        quizId,
+        quizTitle: quiz.title,
+        totalContacts: filteredContacts.length,
+        contacts: filteredContacts,
+        targetAudience,
+        dateFilter,
+        createdAt: new Date().toISOString()
+      });
+    } catch (error) {
+      console.error("Error generating Telegram automation file:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
+  // Send bulk Telegram messages
+  app.post("/api/telegram/send-bulk", verifyJWT, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const { quizId, message, targetAudience = 'all' } = req.body;
+      
+      if (!quizId || !message) {
+        return res.status(400).json({ error: "Quiz ID and message are required" });
+      }
+      
+      // Get user's bot token
+      const user = await storage.getUser(userId);
+      if (!user || !user.telegramBotToken) {
+        return res.status(400).json({ error: "Telegram bot not configured" });
+      }
+      
+      // Get quiz and responses
+      const quiz = await storage.getQuiz(quizId);
+      if (!quiz || quiz.userId !== userId) {
+        return res.status(403).json({ error: "Access denied" });
+      }
+      
+      const responses = await storage.getQuizResponses(quizId);
+      
+      // Extract contacts with Telegram IDs
+      const contacts = responses
+        .map(response => {
+          const parsedResponse = typeof response.response === 'string' ? JSON.parse(response.response) : response.response;
+          const telegramId = parsedResponse.telegram_id || parsedResponse.telegramId;
+          
+          if (!telegramId) return null;
+          
+          return {
+            telegramId,
+            name: parsedResponse.nome_completo || parsedResponse.name || 'Lead',
+            isComplete: response.isComplete
+          };
+        })
+        .filter(contact => contact !== null);
+      
+      // Filter based on target audience
+      let filteredContacts = contacts;
+      if (targetAudience === 'completed') {
+        filteredContacts = contacts.filter(c => c.isComplete);
+      } else if (targetAudience === 'abandoned') {
+        filteredContacts = contacts.filter(c => !c.isComplete);
+      }
+      
+      // Send messages
+      const results = [];
+      for (const contact of filteredContacts) {
+        try {
+          // Personalize message
+          let personalizedMessage = message.replace(/\{nome_completo\}/g, contact.name);
+          personalizedMessage = personalizedMessage.replace(/\{nome\}/g, contact.name);
+          
+          // Send message via Telegram API
+          const response = await fetch(`https://api.telegram.org/bot${user.telegramBotToken}/sendMessage`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              chat_id: contact.telegramId,
+              text: personalizedMessage,
+              parse_mode: 'HTML'
+            })
+          });
+          
+          const data = await response.json();
+          
+          if (data.ok) {
+            results.push({ telegramId: contact.telegramId, status: 'sent', messageId: data.result.message_id });
+          } else {
+            results.push({ telegramId: contact.telegramId, status: 'failed', error: data.description });
+          }
+          
+          // Delay to avoid rate limits
+          await new Promise(resolve => setTimeout(resolve, 1000));
+        } catch (error) {
+          results.push({ telegramId: contact.telegramId, status: 'error', error: error.message });
+        }
+      }
+      
+      const successCount = results.filter(r => r.status === 'sent').length;
+      const failedCount = results.filter(r => r.status !== 'sent').length;
+      
+      console.log(`📱 TELEGRAM BULK SEND - Sent: ${successCount}, Failed: ${failedCount}`);
+      
+      res.json({
+        success: true,
+        totalSent: successCount,
+        totalFailed: failedCount,
+        results
+      });
+    } catch (error) {
+      console.error("Error sending bulk Telegram messages:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
+  // Test Telegram API connection
+  app.post("/api/telegram/test", verifyJWT, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const { botToken, chatId, message } = req.body;
+      
+      if (!botToken) {
+        return res.status(400).json({ error: "Bot token is required" });
+      }
+      
+      // Test bot info
+      const botResponse = await fetch(`https://api.telegram.org/bot${botToken}/getMe`);
+      const botData = await botResponse.json();
+      
+      if (!botData.ok) {
+        return res.status(400).json({ error: "Invalid bot token" });
+      }
+      
+      // Send test message if chat ID provided
+      if (chatId && message) {
+        const messageResponse = await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            chat_id: chatId,
+            text: message,
+            parse_mode: 'HTML'
+          })
+        });
+        
+        const messageData = await messageResponse.json();
+        
+        if (messageData.ok) {
+          res.json({
+            success: true,
+            botInfo: botData.result,
+            messageSent: true,
+            messageId: messageData.result.message_id
+          });
+        } else {
+          res.json({
+            success: true,
+            botInfo: botData.result,
+            messageSent: false,
+            messageError: messageData.description
+          });
+        }
+      } else {
+        res.json({
+          success: true,
+          botInfo: botData.result,
+          messageSent: false
+        });
+      }
+    } catch (error) {
+      console.error("Error testing Telegram connection:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
   return httpServer;
 }
 

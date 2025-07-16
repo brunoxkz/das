@@ -174,6 +174,13 @@ export function Sidebar() {
           badge: <span className="text-xs text-green-500 font-medium">grátis</span>
         },
         {
+          title: "TELEGRAM",
+          href: "/telegram-automation",
+          icon: <Bot className="w-4 h-4" />,
+          active: location === "/telegram-automation",
+          badge: <span className="text-xs text-blue-500 font-medium">API oficial</span>
+        },
+        {
           title: "VOZ",
           href: "/voice-calling",
           icon: <Phone className="w-4 h-4" />,

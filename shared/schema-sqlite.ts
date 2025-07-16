@@ -32,6 +32,10 @@ export const users = sqliteTable("users", {
   emailCredits: integer("emailCredits").default(0),
   whatsappCredits: integer("whatsappCredits").default(0),
   aiCredits: integer("aiCredits").default(0),
+  // Telegram Bot Integration
+  telegramBotToken: text("telegramBotToken"),
+  telegramChatId: text("telegramChatId"),
+  telegramCredits: integer("telegramCredits").default(0),
   createdAt: integer("createdAt", { mode: 'timestamp' }).notNull().$defaultFn(() => new Date()),
   updatedAt: integer("updatedAt", { mode: 'timestamp' }).notNull().$defaultFn(() => new Date()),
 });
