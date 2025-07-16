@@ -17,6 +17,76 @@ import { ptBR } from 'date-fns/locale';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
+// Tipos de campanha de email seguindo o padrão do SMS
+const EMAIL_CAMPAIGN_TYPES = {
+  remarketing: {
+    id: 'remarketing',
+    name: 'Remarketing',
+    icon: Package,
+    description: 'Envie emails para quem já respondeu ou abandonou o quiz',
+    color: 'bg-blue-500'
+  },
+  remarketing_custom: {
+    id: 'remarketing_custom',
+    name: 'Remarketing Avançado',
+    icon: Brain,
+    description: 'Envie emails ultra segmentados (idade, gênero, respostas)',
+    color: 'bg-purple-500'
+  },
+  live: {
+    id: 'live',
+    name: 'Ao Vivo',
+    icon: Zap,
+    description: 'Envie automaticamente após novos leads responderem o quiz',
+    color: 'bg-green-500'
+  },
+  live_custom: {
+    id: 'live_custom',
+    name: 'Ao Vivo Avançado',
+    icon: Flame,
+    description: 'Envie para novos leads com segmentação por resposta do quiz',
+    color: 'bg-orange-500'
+  },
+  mass: {
+    id: 'mass',
+    name: 'Disparo em Massa',
+    icon: FolderOpen,
+    description: 'Suba um CSV e envie emails em lote com variáveis simples',
+    color: 'bg-gray-500'
+  }
+};
+
+interface Quiz {
+  id: string;
+  title: string;
+  published: boolean;
+  responses: number;
+}
+
+interface EmailCampaignForm {
+  type: string;
+  name: string;
+  funnelId: string;
+  segment: 'completed' | 'abandoned' | 'all';
+  subject: string;
+  message: string;
+  scheduleType: 'now' | 'scheduled' | 'delayed';
+  scheduledDate?: string;
+  scheduledTime?: string;
+  delayMinutes?: number;
+  // Filtros avançados
+  ageMin?: number;
+  ageMax?: number;
+  gender?: 'male' | 'female' | 'all';
+  responseFilter?: {
+    field: string;
+    value: string;
+  };
+  // Upload CSV
+  csvFile?: File;
+  csvData?: any[];
+}
+
 // Componente para exibir logs da campanha
 const EmailCampaignLogs = ({ campaignId }: { campaignId: string }) => {
   const { data: logs, isLoading } = useQuery({

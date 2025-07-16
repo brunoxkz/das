@@ -36,6 +36,7 @@ import CloakerPage from "@/pages/cloaker";
 import TesteSMSPage from "@/pages/teste-sms";
 
 import EmailMarketingPro from "@/pages/email-marketing-pro";
+import EmailMarketingSimplified from "@/pages/email-marketing-simplified";
 import AIConversionPage from "@/pages/ai-conversion";
 import TesteAbPage from "@/pages/teste-ab";
 import ABTestingPage from "@/pages/ab-testing";
@@ -178,6 +179,11 @@ function App() {
           </Layout>
         </Route>
         <Route path="/email-marketing">
+          <Layout>
+            <EmailMarketingSimplified />
+          </Layout>
+        </Route>
+        <Route path="/email-marketing-pro">
           <Layout>
             <EmailMarketingPro />
           </Layout>
