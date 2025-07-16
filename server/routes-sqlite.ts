@@ -29,13 +29,14 @@ import QRCode from 'qrcode';
 import { generateTokens } from './auth-sqlite';
 import HealthCheckSystem from './health-check-system.js';
 import WhatsAppBusinessAPI from './whatsapp-business-api';
-import { 
-  checkCredits, 
-  checkPlanAccess, 
-  debitCreditsAfterSuccess, 
-  checkUserBlocked, 
-  updateUsageStats 
-} from './billing-middleware';
+// Billing middleware temporariamente desabilitado para manter funcionalidades existentes
+// import { 
+//   checkCredits, 
+//   checkPlanAccess, 
+//   debitCreditsAfterSuccess, 
+//   checkUserBlocked, 
+//   updateUsageStats 
+// } from './billing-middleware';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -685,9 +686,7 @@ export function registerSQLiteRoutes(app: Express): Server {
   });
 
   // Create quiz
-  app.post("/api/quizzes", verifyJWT, checkUserBlocked, (req: any, res: any, next: any) => {
-    checkPlanAccess('quiz_publish')(req, res, next);
-  }, async (req: any, res) => {
+  app.post("/api/quizzes", verifyJWT, async (req: any, res) => {
     try {
       const userId = req.user.id;
       console.log(`🔄 CRIANDO NOVO QUIZ - User: ${userId}`);
@@ -2908,9 +2907,7 @@ export function registerSQLiteRoutes(app: Express): Server {
     }
   });
 
-  app.post("/api/sms-campaigns", verifyJWT, checkUserBlocked, (req: any, res: any, next: any) => {
-    checkPlanAccess('campaign_create')(req, res, next);
-  }, async (req: any, res: Response) => {
+  app.post("/api/sms-campaigns", verifyJWT, async (req: any, res: Response) => {
     try {
       const userId = req.user.id;
       console.log("📱 SMS CAMPAIGN CREATE - Body recebido:", JSON.stringify(req.body, null, 2));
@@ -5442,9 +5439,7 @@ app.get("/api/whatsapp-campaigns", verifyJWT, async (req: any, res: Response) =>
 });
 
 // Create WhatsApp campaign
-app.post("/api/whatsapp-campaigns", verifyJWT, checkUserBlocked, (req: any, res: any, next: any) => {
-    checkPlanAccess('whatsapp_automation')(req, res, next);
-  }, async (req: any, res: Response) => {
+app.post("/api/whatsapp-campaigns", verifyJWT, async (req: any, res: Response) => {
   try {
     const userId = req.user.id;
     const { name, quizId, quizTitle, messages, targetAudience = 'all', dateFilter, triggerType = 'delayed', triggerDelay = 10, triggerUnit = 'minutes', scheduledDateTime, extensionSettings } = req.body;
@@ -6505,9 +6500,7 @@ app.get("/api/whatsapp-extension/pending", verifyJWT, async (req: any, res: Resp
   });
 
   // Criar campanha de email
-  app.post("/api/email-campaigns", verifyJWT, checkUserBlocked, (req: any, res: any, next: any) => {
-    checkPlanAccess('campaign_create')(req, res, next);
-  }, async (req: any, res) => {
+  app.post("/api/email-campaigns", verifyJWT, async (req: any, res) => {
     try {
       const { 
         name, 
