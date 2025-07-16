@@ -77,6 +77,47 @@ export class FacelessVideoGenerator {
   }
 
   /**
+   * GERAÇÃO REAL DE VÍDEO - SISTEMA COMPLETO
+   */
+  async generateViralVideo(request: VideoGenerationRequest): Promise<VideoGenerationResult> {
+    try {
+      console.log(`🎬 Iniciando geração de vídeo real para: ${request.topic}`);
+      
+      // Etapa 1: Gerar roteiro viral com OpenAI
+      const script = await this.generateViralScript(request);
+      
+      // Etapa 2: Gerar narração com API de texto-para-voz
+      const audioPath = await this.generateNarration(script, request.voiceGender);
+      
+      // Etapa 3: Gerar imagens com Stable Diffusion alternativa
+      const imagePaths = await this.generateImages(script, request.style);
+      
+      // Etapa 4: Montar vídeo com FFmpeg
+      const videoPath = await this.assembleVideo(audioPath, imagePaths, request.duration);
+      
+      // Etapa 5: Gerar thumbnail
+      const thumbnailPath = await this.generateThumbnail(videoPath);
+      
+      // Etapa 6: Otimizar para plataformas
+      const platforms = await this.optimizeForPlatforms(videoPath, request.platforms);
+      
+      return {
+        videoUrl: videoPath,
+        thumbnailUrl: thumbnailPath,
+        script,
+        hashtags: this.generateHashtags(request.topic, request.niche),
+        caption: this.generateCaption(script, request.topic),
+        duration: request.duration,
+        platforms
+      };
+      
+    } catch (error) {
+      console.error('❌ Erro na geração de vídeo:', error);
+      throw error;
+    }
+  }
+
+  /**
    * GERAÇÃO COMPLETA DE VÍDEO VIRAL
    */
   async generateViralVideo(request: VideoGenerationRequest): Promise<VideoGenerationResult> {

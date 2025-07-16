@@ -4937,6 +4937,25 @@ export class SQLiteStorage implements IStorage {
     }
   }
 
+  async getVideoProject(id: string): Promise<any> {
+    try {
+      // Buscar projeto específico no cache
+      for (const [userId, projects] of SQLiteStorage.videoProjectsCache.entries()) {
+        const project = projects.find(p => p.id === id);
+        if (project) {
+          console.log(`📹 Projeto ${id} encontrado no cache para user ${userId}`);
+          return project;
+        }
+      }
+      
+      console.log(`⚠️ Projeto ${id} não encontrado no cache`);
+      return null;
+    } catch (error) {
+      console.error('❌ ERRO ao buscar projeto de vídeo:', error);
+      return null;
+    }
+  }
+
   async createVideoProject(project: any): Promise<any> {
     try {
       const now = Math.floor(Date.now() / 1000);
@@ -5007,8 +5026,19 @@ Hoje você vai aprender ${project.title} - método revolucionário que já ajudo
 
   async updateVideoProject(id: string, updates: any): Promise<any> {
     try {
-      // Desabilitado temporariamente - schema incompatível
-      console.log('⚠️ updateVideoProject desabilitado - aguardando implementação de schema correto');
+      // Encontrar o projeto no cache
+      for (const [userId, projects] of SQLiteStorage.videoProjectsCache.entries()) {
+        const projectIndex = projects.findIndex(p => p.id === id);
+        if (projectIndex !== -1) {
+          // Atualizar projeto no cache
+          projects[projectIndex] = { ...projects[projectIndex], ...updates };
+          SQLiteStorage.videoProjectsCache.set(userId, projects);
+          console.log(`✅ Projeto ${id} atualizado no cache para user ${userId}`);
+          return projects[projectIndex];
+        }
+      }
+      
+      console.log(`⚠️ Projeto ${id} não encontrado no cache`);
       return { id, ...updates };
     } catch (error) {
       console.error('❌ ERRO ao atualizar projeto de vídeo:', error);

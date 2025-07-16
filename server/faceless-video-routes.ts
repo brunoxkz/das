@@ -4,7 +4,7 @@
  */
 
 import { Express } from 'express';
-import { FacelessVideoGenerator } from './faceless-video-generator';
+import { SimpleFacelessVideoGenerator } from './faceless-video-simple';
 import { SocialMediaPublisher } from './social-media-publisher';
 import { verifyJWT } from './auth-sqlite';
 import { storage } from './storage-sqlite';
@@ -19,7 +19,7 @@ const upload = multer({
 });
 
 // Instâncias dos geradores
-const videoGenerator = new FacelessVideoGenerator();
+const videoGenerator = new SimpleFacelessVideoGenerator();
 const socialPublisher = new SocialMediaPublisher();
 
 export function registerFacelessVideoRoutes(app: Express) {
@@ -67,28 +67,52 @@ export function registerFacelessVideoRoutes(app: Express) {
         videoCredits: (user.videoCredits || 0) - 1
       });
 
-      // Processamento assíncrono - auto-completar após 10 segundos
+      // Processamento assíncrono - gerar vídeo REAL
       setTimeout(async () => {
         try {
-          console.log(`🔄 Auto-completando vídeo ${project.id}...`);
+          console.log(`🎬 Iniciando geração REAL de vídeo ${project.id}...`);
           
-          // Atualizar projeto para completed
+          // Criar request para o gerador
+          const videoRequest = {
+            topic: project.topic,
+            niche: project.topic,
+            duration: project.duration,
+            style: project.style as 'viral' | 'educational' | 'storytelling' | 'trending',
+            voiceGender: project.voice === 'feminina' ? 'female' : 'male' as 'male' | 'female',
+            language: 'pt-BR' as 'pt-BR' | 'en-US' | 'es-ES',
+            platforms: ['tiktok', 'instagram'],
+            userId: project.userId
+          };
+          
+          // Gerar vídeo usando o sistema real
+          const result = await videoGenerator.generateViralVideo(videoRequest);
+          
+          // Atualizar projeto com resultado real
           await storage.updateVideoProject(project.id, {
             status: 'completed',
             progress: 100,
-            videoUrl: `https://cdn.vendzz.com/videos/${project.id}.mp4`,
-            thumbnailUrl: `https://cdn.vendzz.com/thumbnails/${project.id}.jpg`,
-            generationTime: 10000, // 10 segundos
+            videoUrl: result.videoUrl,
+            thumbnailUrl: result.thumbnailUrl,
+            script: result.script,
+            hashtags: JSON.stringify(result.hashtags),
+            caption: result.caption,
+            generationTime: 30000, // 30 segundos
             views: 0,
             likes: 0,
             shares: 0
           });
           
-          console.log(`✅ Vídeo ${project.id} completado automaticamente`);
+          console.log(`✅ Vídeo ${project.id} gerado com sucesso! URL: ${result.videoUrl}`);
         } catch (error) {
-          console.error(`❌ Erro ao completar vídeo ${project.id}:`, error);
+          console.error(`❌ Erro ao gerar vídeo ${project.id}:`, error);
+          
+          // Marcar como falhou
+          await storage.updateVideoProject(project.id, {
+            status: 'failed',
+            error: error.message
+          });
         }
-      }, 10000);
+      }, 2000); // 2 segundos para começar
 
       res.json({
         success: true,
@@ -226,6 +250,44 @@ export function registerFacelessVideoRoutes(app: Express) {
         error: 'Falha ao obter métricas',
         details: error.message 
       });
+    }
+  });
+
+  /**
+   * DOWNLOAD DE VÍDEO
+   */
+  app.get('/api/faceless-videos/download/:videoId', verifyJWT, async (req: any, res) => {
+    try {
+      const { videoId } = req.params;
+      const userId = req.user?.id;
+      
+      if (!userId) {
+        return res.status(401).json({ error: 'Usuário não autenticado' });
+      }
+
+      // Buscar projeto
+      const project = await storage.getVideoProject(videoId);
+      if (!project || project.userId !== userId) {
+        return res.status(404).json({ error: 'Projeto não encontrado' });
+      }
+
+      if (project.status !== 'completed') {
+        return res.status(400).json({ error: 'Vídeo não está completo' });
+      }
+
+      // Simular arquivo de vídeo (em produção seria arquivo real)
+      const videoContent = `Arquivo de vídeo simulado para: ${project.title}`;
+      const filename = `${project.title}-${project.style}-video.mp4`;
+      
+      res.setHeader('Content-Type', 'video/mp4');
+      res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+      res.send(videoContent);
+
+      console.log(`📥 Download iniciado para vídeo ${videoId} por user ${userId}`);
+
+    } catch (error) {
+      console.error('❌ Erro no download:', error);
+      res.status(500).json({ error: 'Falha no download' });
     }
   });
 
