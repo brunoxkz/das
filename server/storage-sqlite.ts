@@ -6652,7 +6652,7 @@ Hoje você vai aprender ${project.title} - método revolucionário que já ajudo
 
   async getProductsByUserId(userId: string): Promise<CheckoutProduct[]> {
     try {
-      const products = await db.select().from(checkoutProducts).where(eq(checkoutProducts.userId, userId));
+      const products = await db.select().from(checkoutProducts).where(eq(checkoutProducts.user_id, userId));
       return products;
     } catch (error) {
       console.error('Erro ao buscar produtos:', error);
@@ -6704,7 +6704,7 @@ Hoje você vai aprender ${project.title} - método revolucionário que já ajudo
 
   async getCheckoutPagesByUserId(userId: string): Promise<CheckoutPage[]> {
     try {
-      const pages = await db.select().from(checkoutPages).where(eq(checkoutPages.userId, userId));
+      const pages = await db.select().from(checkoutPages).where(eq(checkoutPages.user_id, userId));
       return pages;
     } catch (error) {
       console.error('Erro ao buscar páginas de checkout:', error);
@@ -6756,7 +6756,7 @@ Hoje você vai aprender ${project.title} - método revolucionário que já ajudo
 
   async getCheckoutTransactionsByUserId(userId: string): Promise<CheckoutTransaction[]> {
     try {
-      const transactions = await db.select().from(checkoutTransactions).where(eq(checkoutTransactions.userId, userId));
+      const transactions = await db.select().from(checkoutTransactions).where(eq(checkoutTransactions.user_id, userId));
       return transactions;
     } catch (error) {
       console.error('Erro ao buscar transações de checkout:', error);
@@ -6808,18 +6808,18 @@ Hoje você vai aprender ${project.title} - método revolucionário que já ajudo
 
   async getCheckoutAnalytics(userId: string, filters?: { startDate?: string; endDate?: string; productId?: string }): Promise<any> {
     try {
-      let query = db.select().from(checkoutAnalytics).where(eq(checkoutAnalytics.userId, userId));
+      let query = db.select().from(checkoutAnalytics).where(eq(checkoutAnalytics.user_id, userId));
       
       if (filters?.startDate) {
-        query = query.where(gte(checkoutAnalytics.createdAt, new Date(filters.startDate)));
+        query = query.where(gte(checkoutAnalytics.created_at, filters.startDate));
       }
       
       if (filters?.endDate) {
-        query = query.where(lte(checkoutAnalytics.createdAt, new Date(filters.endDate)));
+        query = query.where(lte(checkoutAnalytics.created_at, filters.endDate));
       }
       
       if (filters?.productId) {
-        query = query.where(eq(checkoutAnalytics.productId, filters.productId));
+        query = query.where(eq(checkoutAnalytics.product_id, filters.productId));
       }
       
       const analytics = await query;
@@ -6845,22 +6845,22 @@ Hoje você vai aprender ${project.title} - método revolucionário que já ajudo
     try {
       const result = sqlite.prepare(`
         SELECT * FROM checkout_analytics 
-        WHERE checkoutId = ?
+        WHERE id = ?
       `).get(checkoutId);
       
       if (result) {
         // Retorna dados reais encontrados
         return {
           id: result.id,
-          checkoutId: result.checkoutId,
-          userId: result.userId,
-          productId: result.productId,
-          views: result.views || 0,
-          conversions: result.conversions || 0,
-          revenue: result.revenue || 0,
-          conversionRate: result.conversionRate || 0,
-          createdAt: result.createdAt,
-          updatedAt: result.updatedAt
+          user_id: result.user_id,
+          product_id: result.product_id,
+          page_id: result.page_id,
+          event_type: result.event_type,
+          event_data: result.event_data,
+          ip_address: result.ip_address,
+          user_agent: result.user_agent,
+          referrer: result.referrer,
+          created_at: result.created_at
         };
       } else {
         // Retorna null quando não encontra dados ao invés de objeto vazio
@@ -7195,17 +7195,17 @@ Hoje você vai aprender ${project.title} - método revolucionário que já ajudo
     
     stmt.run(
       productData.id,
-      productData.userId,
+      productData.user_id || productData.userId,
       productData.name,
-      productData.description,
+      productData.description || '',
       productData.price,
       productData.currency || 'BRL',
-      productData.category,
+      productData.category || '',
       productData.features || '',
-      productData.paymentMode || 'one_time',
-      productData.recurringInterval || null,
-      productData.trialPeriod || null,
-      productData.trialPrice || null,
+      productData.payment_mode || productData.paymentMode || 'one_time',
+      productData.recurring_interval || productData.recurringInterval || null,
+      productData.trial_period || productData.trialPeriod || null,
+      productData.trial_price || productData.trialPrice || null,
       productData.status || 'active',
       now,
       now
