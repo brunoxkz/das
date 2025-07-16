@@ -153,10 +153,10 @@ export function Sidebar() {
           active: location === "/teste-ab"
         },
         {
-          title: "DASHBOARD CHECKOUT",
-          href: "/checkout-dashboard",
+          title: "SISTEMA CHECKOUT",
+          href: "/checkout-system",
           icon: <ShoppingCart className="w-4 h-4" />,
-          active: location === "/checkout-dashboard"
+          active: location === "/checkout-system"
         },
         {
           title: "PRODUCT BUILDER",

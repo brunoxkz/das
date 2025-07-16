@@ -115,6 +115,208 @@ export function registerSQLiteRoutes(app: Express): Server {
     }
   });
 
+  // Criar produto de checkout (autenticado)
+  app.post('/api/checkout-products', checkPlanExpiration, async (req, res) => {
+    try {
+      const user = req.user;
+      if (!user) {
+        return res.status(401).json({ error: 'Usuário não autenticado' });
+      }
+
+      const productData = {
+        ...req.body,
+        userId: user.id,
+        createdAt: Math.floor(Date.now() / 1000),
+        updatedAt: Math.floor(Date.now() / 1000)
+      };
+
+      const product = await storage.createCheckout(productData);
+      res.json(product);
+    } catch (error) {
+      console.error('Erro ao criar produto:', error);
+      res.status(500).json({ error: 'Erro interno do servidor' });
+    }
+  });
+
+  // Atualizar produto de checkout (autenticado)
+  app.put('/api/checkout-products/:id', checkPlanExpiration, async (req, res) => {
+    try {
+      const user = req.user;
+      if (!user) {
+        return res.status(401).json({ error: 'Usuário não autenticado' });
+      }
+
+      const { id } = req.params;
+      const updates = {
+        ...req.body,
+        updatedAt: Math.floor(Date.now() / 1000)
+      };
+
+      const product = await storage.updateCheckout(id, updates);
+      res.json(product);
+    } catch (error) {
+      console.error('Erro ao atualizar produto:', error);
+      res.status(500).json({ error: 'Erro interno do servidor' });
+    }
+  });
+
+  // Deletar produto de checkout (autenticado)
+  app.delete('/api/checkout-products/:id', checkPlanExpiration, async (req, res) => {
+    try {
+      const user = req.user;
+      if (!user) {
+        return res.status(401).json({ error: 'Usuário não autenticado' });
+      }
+
+      const { id } = req.params;
+      await storage.deleteCheckout(id);
+      res.json({ success: true });
+    } catch (error) {
+      console.error('Erro ao deletar produto:', error);
+      res.status(500).json({ error: 'Erro interno do servidor' });
+    }
+  });
+
+  // Buscar transações de checkout (autenticado)
+  app.get('/api/checkout-transactions', checkPlanExpiration, async (req, res) => {
+    try {
+      const user = req.user;
+      if (!user) {
+        return res.status(401).json({ error: 'Usuário não autenticado' });
+      }
+
+      const transactions = await storage.getAllCheckoutTransactions();
+      res.json(transactions);
+    } catch (error) {
+      console.error('Erro ao buscar transações:', error);
+      res.status(500).json({ error: 'Erro interno do servidor' });
+    }
+  });
+
+  // Buscar analytics de checkout (autenticado)
+  app.get('/api/checkout-analytics', checkPlanExpiration, async (req, res) => {
+    try {
+      const user = req.user;
+      if (!user) {
+        return res.status(401).json({ error: 'Usuário não autenticado' });
+      }
+
+      const analytics = await storage.getAllCheckoutAnalytics();
+      res.json(analytics);
+    } catch (error) {
+      console.error('Erro ao buscar analytics:', error);
+      res.status(500).json({ error: 'Erro interno do servidor' });
+    }
+  });
+
+  // Buscar produto específico por ID (público)
+  app.get('/api/checkout-products/:id', async (req, res) => {
+    try {
+      const { id } = req.params;
+      const product = await storage.getCheckoutById(id);
+      
+      if (!product) {
+        return res.status(404).json({ error: 'Produto não encontrado' });
+      }
+
+      // Incrementar views do produto
+      await storage.incrementCheckoutViews(id);
+      
+      res.json(product);
+    } catch (error) {
+      console.error('Erro ao buscar produto específico:', error);
+      res.status(500).json({ error: 'Erro interno do servidor' });
+    }
+  });
+
+  // Buscar analytics de produto específico (público)
+  app.get('/api/checkout-analytics/:id', async (req, res) => {
+    try {
+      const { id } = req.params;
+      const analytics = await storage.getCheckoutAnalyticsById(id);
+      
+      res.json(analytics || { views: 0, conversions: 0, revenue: 0 });
+    } catch (error) {
+      console.error('Erro ao buscar analytics específico:', error);
+      res.status(500).json({ error: 'Erro interno do servidor' });
+    }
+  });
+
+  // Processar transação de checkout (público)
+  app.post('/api/checkout-transaction', async (req, res) => {
+    try {
+      const { 
+        checkoutId, 
+        stripePaymentIntentId, 
+        customerData, 
+        totalAmount, 
+        currency = 'BRL',
+        orderBumps = [],
+        acceptedUpsells = []
+      } = req.body;
+
+      // Validar dados obrigatórios
+      if (!checkoutId || !stripePaymentIntentId || !customerData || !totalAmount) {
+        return res.status(400).json({ 
+          error: 'Dados obrigatórios faltando: checkoutId, stripePaymentIntentId, customerData, totalAmount' 
+        });
+      }
+
+      // Criar transação
+      const transaction = await storage.createCheckoutTransaction({
+        checkoutId,
+        stripePaymentIntentId,
+        customerData,
+        totalAmount,
+        currency,
+        orderBumps,
+        acceptedUpsells,
+        status: 'pending'
+      });
+
+      res.json({
+        success: true,
+        transaction
+      });
+    } catch (error) {
+      console.error('Erro ao processar transação de checkout:', error);
+      res.status(500).json({ error: 'Erro interno do servidor' });
+    }
+  });
+
+  // Confirmar pagamento e incrementar conversões (webhook)
+  app.post('/api/checkout-confirm/:transactionId', async (req, res) => {
+    try {
+      const { transactionId } = req.params;
+      const { status, paidAt } = req.body;
+
+      // Buscar transação
+      const transaction = await storage.getCheckoutTransactionById(transactionId);
+      if (!transaction) {
+        return res.status(404).json({ error: 'Transação não encontrada' });
+      }
+
+      // Atualizar status da transação
+      await storage.updateCheckoutTransaction(transactionId, {
+        status,
+        paidAt: paidAt || Math.floor(Date.now() / 1000)
+      });
+
+      // Se o pagamento foi confirmado, incrementar conversões
+      if (status === 'paid') {
+        await storage.incrementCheckoutConversions(
+          transaction.checkoutId, 
+          transaction.totalAmount
+        );
+      }
+
+      res.json({ success: true });
+    } catch (error) {
+      console.error('Erro ao confirmar pagamento:', error);
+      res.status(500).json({ error: 'Erro interno do servidor' });
+    }
+  });
+
   // Criar sessão de checkout Stripe (público)
   app.post('/api/create-checkout-session', async (req, res) => {
     try {

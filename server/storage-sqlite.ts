@@ -6716,6 +6716,21 @@ Hoje você vai aprender ${project.title} - método revolucionário que já ajudo
     }
   }
 
+  // Método para buscar analytics de checkout específico
+  async getCheckoutAnalyticsById(checkoutId: string): Promise<any | null> {
+    try {
+      const result = sqlite.prepare(`
+        SELECT * FROM checkout_analytics 
+        WHERE checkoutId = ?
+      `).get(checkoutId);
+      
+      return result || null;
+    } catch (error) {
+      console.error('Erro ao buscar analytics por ID:', error);
+      return null;
+    }
+  }
+
   // ==================== MÉTODOS DE PRODUTOS E ASSINATURAS ====================
 
   async getCustomProducts(): Promise<any[]> {

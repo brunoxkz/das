@@ -1,761 +1,605 @@
-import React, { useState, useEffect } from 'react';
-import { useParams, useLocation } from 'wouter';
-import { useQuery, useMutation } from '@tanstack/react-query';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Switch } from '@/components/ui/switch';
-import { Badge } from '@/components/ui/badge';
-import { Separator } from '@/components/ui/separator';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { useToast } from '@/hooks/use-toast';
+import { useQuery, useMutation } from "@tanstack/react-query";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { 
-  ShoppingCart, 
-  CreditCard, 
-  Gift, 
-  Zap, 
-  Check, 
-  X, 
-  Star, 
-  TrendingUp, 
-  Shield, 
-  Clock,
+  Plus, 
+  Edit, 
+  Trash2, 
+  ExternalLink, 
+  Copy,
+  Settings,
+  BarChart3,
   Users,
-  Crown,
-  Sparkles,
-  Globe,
-  Lock,
+  DollarSign,
+  ShoppingCart,
   Package,
-  ArrowRight,
-  Plus,
-  Minus,
-  Info,
+  Globe,
+  Palette,
+  Code,
+  Zap,
+  CreditCard,
+  FileText,
+  Target,
+  TrendingUp,
+  Eye,
+  CheckCircle,
+  XCircle,
+  Clock,
   AlertCircle
-} from 'lucide-react';
-import { loadStripe } from '@stripe/stripe-js';
-import { Elements, CardElement, useStripe, useElements } from '@stripe/react-stripe-js';
+} from "lucide-react";
+import { Link } from "wouter";
+import { useAuth } from "@/hooks/useAuth-jwt";
+import { useToast } from "@/hooks/use-toast";
+import { useState } from "react";
+import { queryClient, apiRequest } from "@/lib/queryClient";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
 
-// Configuração do Stripe
-const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLIC_KEY || '');
-
-interface CheckoutConfig {
-  id: string;
-  name: string;
-  description: string;
-  price: number;
-  originalPrice?: number;
-  currency: 'BRL' | 'USD' | 'EUR';
-  billingType: 'one_time' | 'subscription';
-  subscriptionInterval?: 'monthly' | 'yearly';
-  features: string[];
-  orderBumps: OrderBump[];
-  upsells: Upsell[];
-  design: CheckoutDesign;
-  active: boolean;
-  createdAt: string;
-  updatedAt: string;
-}
-
-interface OrderBump {
-  id: string;
-  title: string;
-  description: string;
-  price: number;
-  originalPrice?: number;
-  features: string[];
-  selected: boolean;
-  popular?: boolean;
-}
-
-interface Upsell {
-  id: string;
-  title: string;
-  description: string;
-  price: number;
-  originalPrice?: number;
-  features: string[];
-  triggerCondition: 'after_main_product' | 'after_payment' | 'exit_intent';
-  design: {
-    backgroundColor: string;
-    textColor: string;
-    buttonColor: string;
-  };
-}
-
-interface CheckoutDesign {
-  primaryColor: string;
-  secondaryColor: string;
-  backgroundColor: string;
-  textColor: string;
-  buttonColor: string;
-  buttonTextColor: string;
-  headerImage?: string;
-  logo?: string;
-  testimonials: Testimonial[];
-  urgencyTimer: boolean;
-  socialProof: boolean;
-  guaranteeBadge: boolean;
-  securityBadges: boolean;
-}
-
-interface Testimonial {
-  name: string;
-  photo?: string;
-  rating: number;
-  comment: string;
-  verified: boolean;
-}
-
-interface CheckoutFormData {
-  email: string;
-  fullName: string;
-  phone: string;
-  document: string;
-  address: {
-    street: string;
-    number: string;
-    complement?: string;
-    neighborhood: string;
-    city: string;
-    state: string;
-    zipCode: string;
-    country: string;
-  };
-  orderBumps: string[];
-  acceptedUpsells: string[];
-}
-
-// Componente de formulário de checkout
-const CheckoutForm: React.FC<{
-  config: CheckoutConfig;
-  onSubmit: (data: CheckoutFormData) => void;
-  loading: boolean;
-}> = ({ config, onSubmit, loading }) => {
-  const stripe = useStripe();
-  const elements = useElements();
+export default function CheckoutSystem() {
   const { toast } = useToast();
-  
-  const [formData, setFormData] = useState<CheckoutFormData>({
-    email: '',
-    fullName: '',
-    phone: '',
-    document: '',
-    address: {
-      street: '',
-      number: '',
-      complement: '',
-      neighborhood: '',
-      city: '',
-      state: '',
-      zipCode: '',
-      country: 'Brasil'
-    },
-    orderBumps: [],
-    acceptedUpsells: []
+  const { isAuthenticated, user } = useAuth();
+  const [activeTab, setActiveTab] = useState("produtos");
+  const [showCreateDialog, setShowCreateDialog] = useState(false);
+  const [editingProduct, setEditingProduct] = useState<any>(null);
+
+  // Buscar produtos de checkout
+  const { data: products = [], isLoading: productsLoading } = useQuery({
+    queryKey: ["/api/checkout-products"],
+    enabled: isAuthenticated,
   });
 
-  const [showUpsell, setShowUpsell] = useState(false);
-  const [currentUpsell, setCurrentUpsell] = useState<Upsell | null>(null);
-  const [timeLeft, setTimeLeft] = useState(15 * 60); // 15 minutos em segundos
+  // Buscar transações
+  const { data: transactions = [], isLoading: transactionsLoading } = useQuery({
+    queryKey: ["/api/checkout-transactions"],
+    enabled: isAuthenticated,
+  });
 
-  // Timer de urgência
-  useEffect(() => {
-    if (config.design.urgencyTimer && timeLeft > 0) {
-      const timer = setInterval(() => {
-        setTimeLeft(prev => prev - 1);
-      }, 1000);
-      return () => clearInterval(timer);
-    }
-  }, [config.design.urgencyTimer, timeLeft]);
+  // Buscar analytics
+  const { data: analytics, isLoading: analyticsLoading } = useQuery({
+    queryKey: ["/api/checkout-analytics"],
+    enabled: isAuthenticated,
+  });
 
-  // Formatação do timer
-  const formatTime = (seconds: number) => {
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
-  };
-
-  // Cálculo do preço total
-  const calculateTotal = () => {
-    let total = config.price;
-    
-    // Adicionar order bumps selecionados
-    config.orderBumps.forEach(bump => {
-      if (formData.orderBumps.includes(bump.id)) {
-        total += bump.price;
-      }
-    });
-    
-    return total;
-  };
-
-  // Formatação de moeda
-  const formatPrice = (price: number) => {
-    const formatter = new Intl.NumberFormat('pt-BR', {
-      style: 'currency',
-      currency: config.currency === 'BRL' ? 'BRL' : config.currency
-    });
-    return formatter.format(price);
-  };
-
-  // Toggle order bump
-  const toggleOrderBump = (bumpId: string) => {
-    setFormData(prev => ({
-      ...prev,
-      orderBumps: prev.orderBumps.includes(bumpId)
-        ? prev.orderBumps.filter(id => id !== bumpId)
-        : [...prev.orderBumps, bumpId]
-    }));
-  };
-
-  // Handlesubmit
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (!stripe || !elements) {
+  // Mutation para criar/editar produto
+  const createProductMutation = useMutation({
+    mutationFn: async (productData: any) => {
+      const endpoint = editingProduct ? `/api/checkout-products/${editingProduct.id}` : '/api/checkout-products';
+      const method = editingProduct ? 'PUT' : 'POST';
+      return apiRequest(method, endpoint, productData);
+    },
+    onSuccess: () => {
+      toast({
+        title: editingProduct ? "Produto atualizado" : "Produto criado",
+        description: editingProduct ? "Produto atualizado com sucesso!" : "Produto criado com sucesso!",
+      });
+      setShowCreateDialog(false);
+      setEditingProduct(null);
+      queryClient.invalidateQueries({ queryKey: ['/api/checkout-products'] });
+    },
+    onError: (error: any) => {
       toast({
         title: "Erro",
-        description: "Sistema de pagamento não carregado",
-        variant: "destructive"
+        description: error.message || "Erro ao salvar produto",
+        variant: "destructive",
       });
-      return;
-    }
+    },
+  });
 
-    const cardElement = elements.getElement(CardElement);
-    if (!cardElement) {
+  // Mutation para deletar produto
+  const deleteProductMutation = useMutation({
+    mutationFn: async (id: string) => {
+      return apiRequest('DELETE', `/api/checkout-products/${id}`);
+    },
+    onSuccess: () => {
+      toast({
+        title: "Produto deletado",
+        description: "Produto deletado com sucesso!",
+      });
+      queryClient.invalidateQueries({ queryKey: ['/api/checkout-products'] });
+    },
+    onError: (error: any) => {
       toast({
         title: "Erro",
-        description: "Dados do cartão não encontrados",
-        variant: "destructive"
+        description: error.message || "Erro ao deletar produto",
+        variant: "destructive",
       });
-      return;
-    }
+    },
+  });
 
-    try {
-      // Mostrar upsell se houver
-      const mainProductUpsell = config.upsells.find(
-        u => u.triggerCondition === 'after_main_product'
-      );
-      
-      if (mainProductUpsell && !formData.acceptedUpsells.includes(mainProductUpsell.id)) {
-        setCurrentUpsell(mainProductUpsell);
-        setShowUpsell(true);
-        return;
-      }
-
-      // Processar pagamento
-      onSubmit(formData);
-    } catch (error) {
-      toast({
-        title: "Erro no checkout",
-        description: "Tente novamente em alguns instantes",
-        variant: "destructive"
-      });
-    }
-  };
+  if (!isAuthenticated) {
+    return (
+      <div className="container mx-auto p-6">
+        <div className="text-center">
+          <h1 className="text-2xl font-bold mb-4">Acesso Negado</h1>
+          <p className="text-gray-600">Você precisa fazer login para acessar esta página.</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className="max-w-4xl mx-auto p-4">
-      {/* Header com logo e timer */}
-      <div className="text-center mb-8">
-        {config.design.logo && (
-          <img 
-            src={config.design.logo} 
-            alt="Logo" 
-            className="mx-auto mb-4 h-12"
-          />
-        )}
-        
-        {config.design.urgencyTimer && timeLeft > 0 && (
-          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
-            <div className="flex items-center justify-center gap-2">
-              <Clock className="w-5 h-5" />
-              <span className="font-bold">Oferta expira em: {formatTime(timeLeft)}</span>
-            </div>
+    <div className="container mx-auto p-6">
+      <div className="space-y-6">
+        {/* Header */}
+        <div className="flex justify-between items-center">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-800">Sistema de Checkout</h1>
+            <p className="text-gray-600 mt-2">Gerencie seus produtos, transações e analytics de checkout</p>
           </div>
-        )}
-      </div>
-
-      {/* Modal de Upsell */}
-      {showUpsell && currentUpsell && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div 
-            className="bg-white rounded-lg p-6 max-w-md w-full mx-4"
-            style={{ 
-              backgroundColor: currentUpsell.design.backgroundColor,
-              color: currentUpsell.design.textColor 
-            }}
+          <Button 
+            onClick={() => setShowCreateDialog(true)}
+            className="bg-green-600 hover:bg-green-700"
           >
-            <div className="text-center">
-              <Sparkles className="w-12 h-12 mx-auto mb-4 text-yellow-500" />
-              <h3 className="text-2xl font-bold mb-2">{currentUpsell.title}</h3>
-              <p className="mb-4">{currentUpsell.description}</p>
-              
-              <div className="mb-4">
-                <span className="text-3xl font-bold">
-                  {formatPrice(currentUpsell.price)}
-                </span>
-                {currentUpsell.originalPrice && (
-                  <span className="text-lg text-gray-500 line-through ml-2">
-                    {formatPrice(currentUpsell.originalPrice)}
-                  </span>
-                )}
-              </div>
-
-              <ul className="text-left mb-6">
-                {currentUpsell.features.map((feature, index) => (
-                  <li key={index} className="flex items-center gap-2 mb-2">
-                    <Check className="w-4 h-4 text-green-500" />
-                    {feature}
-                  </li>
-                ))}
-              </ul>
-
-              <div className="flex gap-3">
-                <Button 
-                  onClick={() => {
-                    setFormData(prev => ({
-                      ...prev,
-                      acceptedUpsells: [...prev.acceptedUpsells, currentUpsell.id]
-                    }));
-                    setShowUpsell(false);
-                    setCurrentUpsell(null);
-                  }}
-                  className="flex-1"
-                  style={{ 
-                    backgroundColor: currentUpsell.design.buttonColor,
-                    color: currentUpsell.design.textColor 
-                  }}
-                >
-                  Sim, eu quero!
-                </Button>
-                <Button 
-                  variant="outline" 
-                  onClick={() => {
-                    setShowUpsell(false);
-                    setCurrentUpsell(null);
-                  }}
-                  className="flex-1"
-                >
-                  Não, obrigado
-                </Button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Coluna 1: Produto Principal */}
-        <div className="lg:col-span-2">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Package className="w-5 h-5" />
-                {config.name}
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-gray-600 mb-4">{config.description}</p>
-              
-              <div className="mb-4">
-                <span className="text-3xl font-bold text-green-600">
-                  {formatPrice(config.price)}
-                </span>
-                {config.originalPrice && (
-                  <span className="text-lg text-gray-500 line-through ml-2">
-                    {formatPrice(config.originalPrice)}
-                  </span>
-                )}
-                {config.billingType === 'subscription' && (
-                  <span className="text-sm text-gray-500 ml-2">
-                    /{config.subscriptionInterval === 'monthly' ? 'mês' : 'ano'}
-                  </span>
-                )}
-              </div>
-
-              <ul className="space-y-2 mb-6">
-                {config.features.map((feature, index) => (
-                  <li key={index} className="flex items-center gap-2">
-                    <Check className="w-4 h-4 text-green-500" />
-                    {feature}
-                  </li>
-                ))}
-              </ul>
-
-              {/* Order Bumps */}
-              {config.orderBumps.length > 0 && (
-                <div className="space-y-4">
-                  <h3 className="text-lg font-semibold">Complementos Especiais</h3>
-                  {config.orderBumps.map((bump) => (
-                    <div 
-                      key={bump.id}
-                      className="border rounded-lg p-4 cursor-pointer hover:bg-gray-50"
-                      onClick={() => toggleOrderBump(bump.id)}
-                    >
-                      <div className="flex items-start gap-3">
-                        <div className="flex-shrink-0 mt-1">
-                          <div className={`w-4 h-4 rounded border-2 flex items-center justify-center ${
-                            formData.orderBumps.includes(bump.id) 
-                              ? 'bg-green-500 border-green-500' 
-                              : 'border-gray-300'
-                          }`}>
-                            {formData.orderBumps.includes(bump.id) && (
-                              <Check className="w-3 h-3 text-white" />
-                            )}
-                          </div>
-                        </div>
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2 mb-1">
-                            <h4 className="font-semibold">{bump.title}</h4>
-                            {bump.popular && (
-                              <Badge variant="secondary">Popular</Badge>
-                            )}
-                          </div>
-                          <p className="text-sm text-gray-600 mb-2">{bump.description}</p>
-                          <div className="flex items-center gap-2">
-                            <span className="font-bold text-green-600">
-                              {formatPrice(bump.price)}
-                            </span>
-                            {bump.originalPrice && (
-                              <span className="text-sm text-gray-500 line-through">
-                                {formatPrice(bump.originalPrice)}
-                              </span>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </CardContent>
-          </Card>
-
-          {/* Formulário de dados */}
-          <Card className="mt-6">
-            <CardHeader>
-              <CardTitle>Dados para Pagamento</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <form onSubmit={handleSubmit} className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <Label htmlFor="fullName">Nome Completo</Label>
-                    <Input
-                      id="fullName"
-                      value={formData.fullName}
-                      onChange={(e) => setFormData(prev => ({ ...prev, fullName: e.target.value }))}
-                      required
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="email">Email</Label>
-                    <Input
-                      id="email"
-                      type="email"
-                      value={formData.email}
-                      onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
-                      required
-                    />
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <Label htmlFor="phone">Telefone</Label>
-                    <Input
-                      id="phone"
-                      value={formData.phone}
-                      onChange={(e) => setFormData(prev => ({ ...prev, phone: e.target.value }))}
-                      required
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="document">CPF/CNPJ</Label>
-                    <Input
-                      id="document"
-                      value={formData.document}
-                      onChange={(e) => setFormData(prev => ({ ...prev, document: e.target.value }))}
-                      required
-                    />
-                  </div>
-                </div>
-
-                <Separator className="my-6" />
-
-                <div>
-                  <Label>Dados do Cartão</Label>
-                  <div className="mt-2 p-3 border rounded-md">
-                    <CardElement
-                      options={{
-                        style: {
-                          base: {
-                            fontSize: '16px',
-                            color: '#424770',
-                            '::placeholder': {
-                              color: '#aab7c4',
-                            },
-                          },
-                        },
-                      }}
-                    />
-                  </div>
-                </div>
-
-                <Button 
-                  type="submit"
-                  disabled={!stripe || loading}
-                  className="w-full"
-                  style={{ 
-                    backgroundColor: config.design.buttonColor,
-                    color: config.design.buttonTextColor 
-                  }}
-                >
-                  {loading ? (
-                    <div className="flex items-center gap-2">
-                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                      Processando...
-                    </div>
-                  ) : (
-                    <div className="flex items-center gap-2">
-                      <Lock className="w-4 h-4" />
-                      Finalizar Compra - {formatPrice(calculateTotal())}
-                    </div>
-                  )}
-                </Button>
-              </form>
-            </CardContent>
-          </Card>
+            <Plus className="w-4 h-4 mr-2" />
+            Criar Produto
+          </Button>
         </div>
 
-        {/* Coluna 2: Resumo e Elementos de Confiança */}
-        <div>
-          <Card className="sticky top-4">
-            <CardHeader>
-              <CardTitle>Resumo do Pedido</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-3">
-                <div className="flex justify-between">
-                  <span>{config.name}</span>
-                  <span>{formatPrice(config.price)}</span>
+        {/* Tabs */}
+        <Tabs value={activeTab} onValueChange={setActiveTab}>
+          <TabsList className="grid w-full grid-cols-4">
+            <TabsTrigger value="produtos">
+              <Package className="w-4 h-4 mr-2" />
+              Produtos
+            </TabsTrigger>
+            <TabsTrigger value="transacoes">
+              <CreditCard className="w-4 h-4 mr-2" />
+              Transações
+            </TabsTrigger>
+            <TabsTrigger value="analytics">
+              <BarChart3 className="w-4 h-4 mr-2" />
+              Analytics
+            </TabsTrigger>
+            <TabsTrigger value="configuracoes">
+              <Settings className="w-4 h-4 mr-2" />
+              Configurações
+            </TabsTrigger>
+          </TabsList>
+
+          {/* Tab: Produtos */}
+          <TabsContent value="produtos" className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {productsLoading ? (
+                <div className="col-span-full text-center py-8">
+                  <div className="animate-spin w-8 h-8 border-4 border-green-500 border-t-transparent rounded-full mx-auto mb-4"></div>
+                  <p className="text-gray-600">Carregando produtos...</p>
                 </div>
-
-                {formData.orderBumps.map(bumpId => {
-                  const bump = config.orderBumps.find(b => b.id === bumpId);
-                  return bump ? (
-                    <div key={bumpId} className="flex justify-between text-sm">
-                      <span>{bump.title}</span>
-                      <span>{formatPrice(bump.price)}</span>
-                    </div>
-                  ) : null;
-                })}
-
-                <Separator />
-                
-                <div className="flex justify-between font-bold text-lg">
-                  <span>Total</span>
-                  <span className="text-green-600">{formatPrice(calculateTotal())}</span>
+              ) : products.length === 0 ? (
+                <div className="col-span-full text-center py-8">
+                  <Package className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+                  <h3 className="text-lg font-semibold text-gray-700 mb-2">Nenhum produto encontrado</h3>
+                  <p className="text-gray-500 mb-4">Crie seu primeiro produto de checkout</p>
+                  <Button onClick={() => setShowCreateDialog(true)}>
+                    <Plus className="w-4 h-4 mr-2" />
+                    Criar Produto
+                  </Button>
                 </div>
-
-                {config.billingType === 'subscription' && (
-                  <p className="text-sm text-gray-600 text-center">
-                    Renovação automática {config.subscriptionInterval === 'monthly' ? 'mensal' : 'anual'}
-                  </p>
-                )}
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Elementos de Confiança */}
-          {config.design.guaranteeBadge && (
-            <Card className="mt-4">
-              <CardContent className="p-4">
-                <div className="flex items-center gap-3 text-center">
-                  <Shield className="w-8 h-8 text-green-500" />
-                  <div>
-                    <h4 className="font-semibold">Garantia de 7 dias</h4>
-                    <p className="text-sm text-gray-600">100% do seu dinheiro de volta</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          )}
-
-          {config.design.securityBadges && (
-            <Card className="mt-4">
-              <CardContent className="p-4">
-                <div className="flex items-center justify-center gap-4">
-                  <div className="text-center">
-                    <Lock className="w-6 h-6 text-gray-600 mx-auto mb-1" />
-                    <p className="text-xs text-gray-600">SSL Seguro</p>
-                  </div>
-                  <div className="text-center">
-                    <Shield className="w-6 h-6 text-gray-600 mx-auto mb-1" />
-                    <p className="text-xs text-gray-600">Stripe</p>
-                  </div>
-                  <div className="text-center">
-                    <CreditCard className="w-6 h-6 text-gray-600 mx-auto mb-1" />
-                    <p className="text-xs text-gray-600">Seguro</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          )}
-
-          {/* Depoimentos */}
-          {config.design.testimonials.length > 0 && (
-            <Card className="mt-4">
-              <CardContent className="p-4">
-                <h4 className="font-semibold mb-3">O que dizem nossos clientes</h4>
-                <div className="space-y-3">
-                  {config.design.testimonials.slice(0, 2).map((testimonial, index) => (
-                    <div key={index} className="border-l-4 border-green-500 pl-3">
-                      <div className="flex items-center gap-1 mb-1">
-                        {[...Array(5)].map((_, i) => (
-                          <Star 
-                            key={i} 
-                            className={`w-4 h-4 ${
-                              i < testimonial.rating ? 'text-yellow-500' : 'text-gray-300'
-                            }`}
-                            fill="currentColor"
-                          />
-                        ))}
+              ) : (
+                products.map((product: any) => (
+                  <Card key={product.id} className="border-2 border-gray-200 hover:border-green-300 transition-colors">
+                    <CardHeader className="pb-3">
+                      <div className="flex justify-between items-start">
+                        <div>
+                          <CardTitle className="text-lg">{product.name}</CardTitle>
+                          <p className="text-sm text-gray-600 mt-1">{product.category}</p>
+                        </div>
+                        <div className="flex space-x-2">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => {
+                              setEditingProduct(product);
+                              setShowCreateDialog(true);
+                            }}
+                          >
+                            <Edit className="w-4 h-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => deleteProductMutation.mutate(product.id)}
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        </div>
                       </div>
-                      <p className="text-sm text-gray-600 mb-2">"{testimonial.comment}"</p>
-                      <p className="text-xs font-semibold">
-                        {testimonial.name}
-                        {testimonial.verified && (
-                          <Badge variant="secondary" className="ml-2 text-xs">
-                            Verificado
+                    </CardHeader>
+                    <CardContent>
+                      <div className="space-y-3">
+                        <div className="flex justify-between items-center">
+                          <span className="text-2xl font-bold text-green-600">
+                            R$ {product.price}
+                          </span>
+                          <Badge variant={product.active ? "default" : "secondary"}>
+                            {product.active ? "Ativo" : "Inativo"}
                           </Badge>
-                        )}
+                        </div>
+                        
+                        <p className="text-sm text-gray-600 line-clamp-2">
+                          {product.description}
+                        </p>
+
+                        <div className="grid grid-cols-2 gap-2 text-sm">
+                          <div>
+                            <span className="text-gray-500">Tipo:</span>
+                            <span className="ml-1 font-medium">
+                              {product.paymentMode === 'recurring' ? 'Recorrente' : 'Único'}
+                            </span>
+                          </div>
+                          <div>
+                            <span className="text-gray-500">Trial:</span>
+                            <span className="ml-1 font-medium">
+                              {product.trialPeriod ? `${product.trialPeriod} dias` : 'Não'}
+                            </span>
+                          </div>
+                        </div>
+
+                        <div className="flex space-x-2 mt-4">
+                          <Button 
+                            size="sm" 
+                            variant="outline"
+                            onClick={() => {
+                              const url = `${window.location.origin}/checkout-individual/${product.id}`;
+                              navigator.clipboard.writeText(url);
+                              toast({
+                                title: "Link copiado!",
+                                description: "Link do checkout copiado para a área de transferência",
+                              });
+                            }}
+                          >
+                            <Copy className="w-4 h-4 mr-1" />
+                            Copiar Link
+                          </Button>
+                          <Button 
+                            size="sm" 
+                            variant="outline"
+                            onClick={() => window.open(`/checkout-individual/${product.id}`, '_blank')}
+                          >
+                            <Eye className="w-4 h-4 mr-1" />
+                            Visualizar
+                          </Button>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))
+              )}
+            </div>
+          </TabsContent>
+
+          {/* Tab: Transações */}
+          <TabsContent value="transacoes" className="space-y-4">
+            <Card>
+              <CardHeader>
+                <CardTitle>Transações Recentes</CardTitle>
+              </CardHeader>
+              <CardContent>
+                {transactionsLoading ? (
+                  <div className="text-center py-8">
+                    <div className="animate-spin w-8 h-8 border-4 border-green-500 border-t-transparent rounded-full mx-auto mb-4"></div>
+                    <p className="text-gray-600">Carregando transações...</p>
+                  </div>
+                ) : transactions.length === 0 ? (
+                  <div className="text-center py-8">
+                    <CreditCard className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+                    <h3 className="text-lg font-semibold text-gray-700 mb-2">Nenhuma transação encontrada</h3>
+                    <p className="text-gray-500">As transações aparecerão aqui quando os clientes fizerem compras</p>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {transactions.map((transaction: any) => (
+                      <div key={transaction.id} className="border rounded-lg p-4">
+                        <div className="flex justify-between items-start mb-2">
+                          <div>
+                            <h4 className="font-semibold">Transação #{transaction.id.slice(-8)}</h4>
+                            <p className="text-sm text-gray-600">
+                              {new Date(transaction.createdAt).toLocaleString('pt-BR')}
+                            </p>
+                          </div>
+                          <Badge 
+                            variant={
+                              transaction.status === 'paid' ? 'default' : 
+                              transaction.status === 'pending' ? 'secondary' : 
+                              'destructive'
+                            }
+                          >
+                            {transaction.status === 'paid' ? 'Pago' : 
+                             transaction.status === 'pending' ? 'Pendente' : 
+                             'Falhou'}
+                          </Badge>
+                        </div>
+                        
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                          <div>
+                            <span className="text-gray-500">Valor:</span>
+                            <span className="ml-1 font-medium">R$ {transaction.totalAmount}</span>
+                          </div>
+                          <div>
+                            <span className="text-gray-500">Cliente:</span>
+                            <span className="ml-1 font-medium">
+                              {transaction.customerData?.firstName} {transaction.customerData?.lastName}
+                            </span>
+                          </div>
+                          <div>
+                            <span className="text-gray-500">Email:</span>
+                            <span className="ml-1 font-medium">{transaction.customerData?.email}</span>
+                          </div>
+                          <div>
+                            <span className="text-gray-500">Produto:</span>
+                            <span className="ml-1 font-medium">
+                              {products.find((p: any) => p.id === transaction.checkoutId)?.name || 'N/A'}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Tab: Analytics */}
+          <TabsContent value="analytics" className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+              <Card>
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-sm text-gray-600">Total de Produtos</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold text-blue-600">{products.length}</div>
+                </CardContent>
+              </Card>
+              
+              <Card>
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-sm text-gray-600">Total de Transações</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold text-green-600">{transactions.length}</div>
+                </CardContent>
+              </Card>
+              
+              <Card>
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-sm text-gray-600">Receita Total</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold text-purple-600">
+                    R$ {transactions
+                      .filter((t: any) => t.status === 'paid')
+                      .reduce((sum: number, t: any) => sum + t.totalAmount, 0)
+                      .toFixed(2)}
+                  </div>
+                </CardContent>
+              </Card>
+              
+              <Card>
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-sm text-gray-600">Taxa de Conversão</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold text-orange-600">
+                    {transactions.length > 0 ? 
+                      ((transactions.filter((t: any) => t.status === 'paid').length / transactions.length) * 100).toFixed(1) : 0}%
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          </TabsContent>
+
+          {/* Tab: Configurações */}
+          <TabsContent value="configuracoes" className="space-y-4">
+            <Card>
+              <CardHeader>
+                <CardTitle>Configurações do Sistema</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-6">
+                  <div>
+                    <h3 className="text-lg font-semibold mb-3">Integração Stripe</h3>
+                    <div className="bg-gray-50 p-4 rounded-lg">
+                      <div className="flex items-center space-x-2 mb-2">
+                        <CheckCircle className="w-5 h-5 text-green-600" />
+                        <span className="font-medium">Sistema Configurado</span>
+                      </div>
+                      <p className="text-sm text-gray-600">
+                        Sistema de checkout pronto para uso.
                       </p>
                     </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          )}
-
-          {/* Prova Social */}
-          {config.design.socialProof && (
-            <Card className="mt-4">
-              <CardContent className="p-4">
-                <div className="flex items-center gap-2 text-center">
-                  <Users className="w-5 h-5 text-blue-500" />
-                  <div>
-                    <p className="text-sm font-semibold">+1.247 pessoas</p>
-                    <p className="text-xs text-gray-600">compraram hoje</p>
                   </div>
                 </div>
               </CardContent>
             </Card>
-          )}
-        </div>
+          </TabsContent>
+        </Tabs>
+
+        {/* Dialog para criar/editar produto */}
+        <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
+          <DialogContent className="max-w-2xl">
+            <DialogHeader>
+              <DialogTitle>
+                {editingProduct ? 'Editar Produto' : 'Criar Novo Produto'}
+              </DialogTitle>
+            </DialogHeader>
+            <ProductForm 
+              product={editingProduct}
+              onSubmit={(data) => createProductMutation.mutate(data)}
+              onCancel={() => {
+                setShowCreateDialog(false);
+                setEditingProduct(null);
+              }}
+              loading={createProductMutation.isPending}
+            />
+          </DialogContent>
+        </Dialog>
       </div>
     </div>
   );
-};
+}
 
-// Componente principal
-const CheckoutSystem: React.FC = () => {
-  const params = useParams();
-  const [location] = useLocation();
-  const { toast } = useToast();
-
-  const checkoutId = params.id || new URLSearchParams(location.split('?')[1]).get('id');
-
-  const { data: checkoutConfig, isLoading, error } = useQuery({
-    queryKey: ['/api/checkout', checkoutId],
-    queryFn: async () => {
-      if (!checkoutId) throw new Error('ID do checkout não fornecido');
-      
-      const response = await fetch(`/api/checkout/${checkoutId}`);
-      if (!response.ok) throw new Error('Checkout não encontrado');
-      
-      return response.json();
-    },
-    enabled: !!checkoutId
+// Componente do formulário de produto
+function ProductForm({ product, onSubmit, onCancel, loading }: {
+  product?: any;
+  onSubmit: (data: any) => void;
+  onCancel: () => void;
+  loading: boolean;
+}) {
+  const [formData, setFormData] = useState({
+    name: product?.name || '',
+    description: product?.description || '',
+    category: product?.category || 'digital',
+    price: product?.price || '',
+    originalPrice: product?.originalPrice || '',
+    paymentMode: product?.paymentMode || 'one_time',
+    recurringInterval: product?.recurringInterval || 'monthly',
+    trialPeriod: product?.trialPeriod || '',
+    features: product?.features ? product.features.join('\n') : '',
+    active: product?.active !== undefined ? product.active : true,
   });
 
-  const processPaymentMutation = useMutation({
-    mutationFn: async (formData: CheckoutFormData) => {
-      const response = await fetch('/api/checkout/process-payment', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          checkoutId,
-          formData
-        })
-      });
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    const submitData = {
+      ...formData,
+      price: parseFloat(formData.price),
+      originalPrice: formData.originalPrice ? parseFloat(formData.originalPrice) : null,
+      trialPeriod: formData.trialPeriod ? parseInt(formData.trialPeriod) : null,
+      features: formData.features.split('\n').filter(f => f.trim()),
+    };
 
-      if (!response.ok) throw new Error('Erro ao processar pagamento');
-      return response.json();
-    },
-    onSuccess: (data) => {
-      toast({
-        title: "Pagamento processado!",
-        description: "Seu pedido foi confirmado com sucesso."
-      });
-      
-      // Redirecionar para página de sucesso
-      window.location.href = `/checkout/success?orderId=${data.orderId}`;
-    },
-    onError: (error) => {
-      toast({
-        title: "Erro no pagamento",
-        description: error.message || "Tente novamente",
-        variant: "destructive"
-      });
-    }
-  });
-
-  if (isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="w-12 h-12 border-4 border-green-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-gray-600">Carregando checkout...</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (error || !checkoutConfig) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
-          <h1 className="text-2xl font-bold text-gray-900 mb-2">Checkout não encontrado</h1>
-          <p className="text-gray-600">Verifique o link e tente novamente.</p>
-        </div>
-      </div>
-    );
-  }
+    onSubmit(submitData);
+  };
 
   return (
-    <Elements stripe={stripePromise}>
-      <div 
-        className="min-h-screen"
-        style={{ 
-          backgroundColor: checkoutConfig.design.backgroundColor,
-          color: checkoutConfig.design.textColor 
-        }}
-      >
-        <CheckoutForm
-          config={checkoutConfig}
-          onSubmit={(formData) => processPaymentMutation.mutate(formData)}
-          loading={processPaymentMutation.isPending}
+    <form onSubmit={handleSubmit} className="space-y-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <Label htmlFor="name">Nome do Produto *</Label>
+          <Input
+            id="name"
+            value={formData.name}
+            onChange={(e) => setFormData({...formData, name: e.target.value})}
+            placeholder="Ex: Curso de Marketing Digital"
+            required
+          />
+        </div>
+        
+        <div>
+          <Label htmlFor="category">Categoria</Label>
+          <Select value={formData.category} onValueChange={(value) => setFormData({...formData, category: value})}>
+            <SelectTrigger>
+              <SelectValue placeholder="Selecione uma categoria" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="digital">Produto Digital</SelectItem>
+              <SelectItem value="curso">Curso Online</SelectItem>
+              <SelectItem value="ebook">E-book</SelectItem>
+              <SelectItem value="software">Software</SelectItem>
+              <SelectItem value="consultoria">Consultoria</SelectItem>
+              <SelectItem value="assinatura">Assinatura</SelectItem>
+              <SelectItem value="outros">Outros</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+
+      <div>
+        <Label htmlFor="description">Descrição</Label>
+        <Textarea
+          id="description"
+          value={formData.description}
+          onChange={(e) => setFormData({...formData, description: e.target.value})}
+          placeholder="Descreva seu produto..."
+          rows={3}
         />
       </div>
-    </Elements>
-  );
-};
 
-export default CheckoutSystem;
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div>
+          <Label htmlFor="price">Preço (R$) *</Label>
+          <Input
+            id="price"
+            type="number"
+            step="0.01"
+            value={formData.price}
+            onChange={(e) => setFormData({...formData, price: e.target.value})}
+            placeholder="29.90"
+            required
+          />
+        </div>
+        
+        <div>
+          <Label htmlFor="originalPrice">Preço Original (R$)</Label>
+          <Input
+            id="originalPrice"
+            type="number"
+            step="0.01"
+            value={formData.originalPrice}
+            onChange={(e) => setFormData({...formData, originalPrice: e.target.value})}
+            placeholder="59.90"
+          />
+        </div>
+        
+        <div>
+          <Label htmlFor="paymentMode">Tipo de Pagamento</Label>
+          <Select value={formData.paymentMode} onValueChange={(value) => setFormData({...formData, paymentMode: value})}>
+            <SelectTrigger>
+              <SelectValue placeholder="Selecione o tipo" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="one_time">Pagamento Único</SelectItem>
+              <SelectItem value="recurring">Recorrente</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+
+      <div>
+        <Label htmlFor="features">Recursos (um por linha)</Label>
+        <Textarea
+          id="features"
+          value={formData.features}
+          onChange={(e) => setFormData({...formData, features: e.target.value})}
+          placeholder="Acesso vitalício&#10;Suporte 24/7&#10;Certificado de conclusão"
+          rows={4}
+        />
+      </div>
+
+      <div className="flex items-center space-x-2">
+        <Switch
+          id="active"
+          checked={formData.active}
+          onCheckedChange={(checked) => setFormData({...formData, active: checked})}
+        />
+        <Label htmlFor="active">Produto ativo</Label>
+      </div>
+
+      <div className="flex space-x-3 pt-4">
+        <Button type="submit" disabled={loading}>
+          {loading ? (
+            <>
+              <div className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full mr-2"></div>
+              Salvando...
+            </>
+          ) : (
+            <>
+              <CheckCircle className="w-4 h-4 mr-2" />
+              {product ? 'Atualizar' : 'Criar'} Produto
+            </>
+          )}
+        </Button>
+        <Button type="button" variant="outline" onClick={onCancel}>
+          Cancelar
+        </Button>
+      </div>
+    </form>
+  );
+}

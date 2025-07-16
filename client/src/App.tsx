@@ -57,6 +57,7 @@ import CheckoutSubscriptionWrapper from "@/pages/checkout-subscription-wrapper";
 import CheckoutUnified from "@/pages/checkout-unified";
 import CheckoutDashboard from "@/pages/checkout-dashboard";
 import CheckoutPage from "@/pages/checkout";
+import CheckoutIndividual from "@/pages/checkout-individual";
 import PaymentSuccess from "@/pages/payment-success";
 import ProductBuilder from "@/pages/product-builder";
 import SubscriptionsManager from "@/pages/subscriptions-manager";
@@ -108,6 +109,7 @@ function App() {
         <Route path="/checkout/:linkId" component={CheckoutPublic} />
         <Route path="/checkout/success/:transactionId" component={CheckoutSuccess} />
         <Route path="/checkout-public" component={CheckoutPage} />
+        <Route path="/checkout-individual/:id" component={CheckoutIndividual} />
         <Route path="/payment-success" component={PaymentSuccess} />
         <Route path="/test" component={TestPage} />
 
