@@ -42,7 +42,7 @@ import IntegracoesPage from "@/pages/integracoes";
 import ExtensoesPage from "@/pages/extensoes";
 import VoiceCallingPage from "@/pages/voice-calling";
 import ConditionalCampaignsPage from "@/pages/conditional-campaigns";
-import { useAuth } from "@/hooks/useAuth";
+import { useAuth } from "@/hooks/useAuth-jwt";
 import { isUnauthorizedError } from "@/lib/authUtils";
 import { SidebarProvider } from "@/hooks/useSidebar";
 import { useTheme } from "@/hooks/useTheme";

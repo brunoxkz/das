@@ -28,7 +28,7 @@ import {
   X
 } from "lucide-react";
 import { Link } from "wouter";
-import { useAuth } from "@/hooks/useAuth";
+import { useAuth } from "@/hooks/useAuth-jwt";
 import { useToast } from "@/hooks/use-toast";
 import { useEffect, useState } from "react";
 import React from "react";
@@ -39,45 +39,27 @@ import { useLanguage } from "@/hooks/useLanguage";
 
 export default function Dashboard() {
   const { toast } = useToast();
-  const { isAuthenticated, user, isLoading } = useAuth();
+  const { isAuthenticated, user } = useAuth();
   const [showTutorial, setShowTutorial] = useState(false);
   const [showTrialBanner, setShowTrialBanner] = useState(true);
   const { t } = useLanguage();
 
-  // Redirecionar para login se não autenticado
-  if (!isLoading && !isAuthenticated) {
-    window.location.href = '/login';
-    return null;
-  }
-
-  // Mostrar loading enquanto verificando autenticação
-  if (isLoading) {
-    return (
-      <div className="min-h-screen bg-white flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin w-8 h-8 border-4 border-gray-300 border-t-green-500 rounded-full mx-auto mb-4"></div>
-          <p className="text-gray-600">Carregando...</p>
-        </div>
-      </div>
-    );
-  }
-
   // Buscar dados do usuário
-  const { data: userData, error: userError } = useQuery({
-    queryKey: ["/api/user"],
+  const { data: userData } = useQuery({
+    queryKey: ["/api/auth/validate"],
     enabled: isAuthenticated,
     retry: false,
   });
 
   // Buscar quizzes do usuário
-  const { data: userQuizzes, isLoading: quizzesLoading, error: quizzesError } = useQuery({
+  const { data: userQuizzes, isLoading: quizzesLoading } = useQuery({
     queryKey: ["/api/quizzes"],
     enabled: isAuthenticated,
     retry: false,
   });
 
   // Buscar analytics completos
-  const { data: allAnalytics, isLoading: analyticsLoading, error: analyticsError } = useQuery({
+  const { data: allAnalytics, isLoading: analyticsLoading } = useQuery({
     queryKey: ["/api/analytics"],
     enabled: isAuthenticated,
     retry: false,
@@ -281,20 +263,6 @@ export default function Dashboard() {
       color: "bg-orange-500"
     }
   ];
-
-  // Verificação de autenticação
-  if (!isAuthenticated) {
-    return (
-      <div className="flex items-center justify-center h-screen">
-        <div className="text-center">
-          <h2 className="text-xl font-semibold mb-4">Você precisa estar logado para acessar esta página</h2>
-          <Link href="/login">
-            <Button>Fazer Login</Button>
-          </Link>
-        </div>
-      </div>
-    );
-  }
 
   if (dashboardLoading) {
     return (
@@ -592,18 +560,6 @@ export default function Dashboard() {
               </Card>
             </Link>
           </div>
-
-          {/* Error Debug Section - Temporário */}
-          {(userError || quizzesError || analyticsError) && (
-            <Card className="mt-4 border-red-200 bg-red-50">
-              <CardContent className="p-4">
-                <h3 className="font-semibold text-red-800 mb-2">Debug de Erros:</h3>
-                {userError && <p className="text-red-600 text-sm">User Error: {String(userError)}</p>}
-                {quizzesError && <p className="text-red-600 text-sm">Quizzes Error: {String(quizzesError)}</p>}
-                {analyticsError && <p className="text-red-600 text-sm">Analytics Error: {String(analyticsError)}</p>}
-              </CardContent>
-            </Card>
-          )}
 
           {/* Tutorial Component */}
           {showTutorial && (

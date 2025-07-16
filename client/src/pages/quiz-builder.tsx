@@ -12,7 +12,7 @@ import QuizPreview from "@/components/quiz-preview";
 import { QuizFlowEditor } from "@/components/quiz-flow-editor";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
-import { useAuth } from "@/hooks/useAuth";
+import { useAuth } from "@/hooks/useAuth-jwt";
 import { isUnauthorizedError } from "@/lib/authUtils";
 import { 
   Save, 

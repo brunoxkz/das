@@ -1,298 +1,475 @@
 import { useState } from "react";
-import { useQuery, useMutation } from "@tanstack/react-query";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { apiRequest } from "@/lib/queryClient";
+import { useAuth } from "@/hooks/useAuth-jwt";
+import { 
+  Card, 
+  CardContent, 
+  CardDescription, 
+  CardHeader, 
+  CardTitle 
+} from "@/components/ui/card";
+import { 
+  Table, 
+  TableBody, 
+  TableCell, 
+  TableHead, 
+  TableHeader, 
+  TableRow 
+} from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { 
+  Select, 
+  SelectContent, 
+  SelectItem, 
+  SelectTrigger, 
+  SelectValue 
+} from "@/components/ui/select";
+import { Shield, Users, Settings, Crown, Bell, Send } from "lucide-react";
+import { toast } from "@/hooks/use-toast";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Badge } from "@/components/ui/badge";
+import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useAuth } from "@/hooks/useAuth";
-import { queryClient } from "@/lib/queryClient";
-import { 
-  Shield, 
-  Users, 
-  Settings, 
-  Activity, 
-  AlertTriangle,
-  CheckCircle,
-  XCircle,
-  UserCheck,
-  UserX,
-  Eye,
-  EyeOff,
-  Trash2,
-  Edit
-} from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
+import { Checkbox } from "@/components/ui/checkbox";
+
+interface User {
+  id: string;
+  email: string;
+  firstName: string;
+  lastName: string;
+  role: string;
+  plan: string;
+  createdAt: string;
+}
+
+const getRoleBadgeColor = (role: string) => {
+  switch (role) {
+    case 'admin': return 'bg-red-500 text-white';
+    case 'editor': return 'bg-blue-500 text-white';
+    case 'user': return 'bg-gray-500 text-white';
+    default: return 'bg-gray-500 text-white';
+  }
+};
+
+const getPlanBadgeColor = (plan: string) => {
+  switch (plan) {
+    case 'enterprise': return 'bg-purple-500 text-white';
+    case 'premium': return 'bg-green-500 text-white';
+    case 'free': return 'bg-gray-400 text-white';
+    default: return 'bg-gray-400 text-white';
+  }
+};
 
 export default function AdminPage() {
   const { user } = useAuth();
-  const { toast } = useToast();
+  const queryClient = useQueryClient();
+  const [selectedUser, setSelectedUser] = useState<string | null>(null);
+  const [newRole, setNewRole] = useState<string>('');
   
-  // Estados para gerenciamento de usuários
-  const [selectedUser, setSelectedUser] = useState<any>(null);
-  const [userSearchTerm, setUserSearchTerm] = useState("");
-  
-  // Buscar todos os usuários (apenas para admin)
-  const { data: users, isLoading: loadingUsers } = useQuery({
-    queryKey: ["/api/admin/users"],
-    enabled: !!user,
+  // Notification form state
+  const [notificationForm, setNotificationForm] = useState({
+    title: '',
+    message: '',
+    type: 'info' as 'info' | 'success' | 'warning' | 'error',
+    isGlobal: true,
+    targetUsers: [] as string[]
   });
 
-  // Buscar estatísticas do sistema
-  const { data: systemStats } = useQuery({
-    queryKey: ["/api/admin/stats"],
-    enabled: !!user,
+  // Fetch all users
+  const { data: users, isLoading, error } = useQuery<User[]>({
+    queryKey: ['/api/admin/users'],
+    queryFn: async () => {
+      console.log("ADMIN - Buscando usuários...");
+      const data = await apiRequest('GET', '/api/admin/users');
+      console.log("ADMIN - Users data:", data);
+      return Array.isArray(data) ? data : [];
+    },
+    enabled: user?.role === 'admin'
   });
 
-  // Buscar logs do sistema
-  const { data: systemLogs } = useQuery({
-    queryKey: ["/api/admin/logs"],
-    enabled: !!user,
-  });
+  console.log("ADMIN - Estado atual:", { user: user?.role, users, isLoading, error });
 
-  // Mutação para atualizar usuário
-  const updateUserMutation = useMutation({
-    mutationFn: async (userData: any) => {
-      const response = await fetch(`/api/admin/users/${userData.id}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(userData),
+  // Update user role mutation
+  const updateRoleMutation = useMutation({
+    mutationFn: async ({ userId, role }: { userId: string; role: string }) => {
+      const response = await apiRequest('PUT', `/api/admin/users/${userId}/role`, { 
+        body: JSON.stringify({ role }),
+        headers: { 'Content-Type': 'application/json' }
       });
-      if (!response.ok) throw new Error("Erro ao atualizar usuário");
       return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/admin/users"] });
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/users'] });
       toast({
-        title: "Usuário atualizado",
-        description: "As informações do usuário foram atualizadas com sucesso.",
+        title: "Sucesso",
+        description: "Papel do usuário atualizado com sucesso",
       });
+      setSelectedUser(null);
+      setNewRole('');
     },
+    onError: (error: any) => {
+      toast({
+        title: "Erro",
+        description: error.message || "Erro ao atualizar papel do usuário",
+        variant: "destructive"
+      });
+    }
   });
 
-  // Mutação para deletar usuário
-  const deleteUserMutation = useMutation({
-    mutationFn: async (userId: string) => {
-      const response = await fetch(`/api/admin/users/${userId}`, {
-        method: "DELETE",
+  // Send notification mutation
+  const sendNotificationMutation = useMutation({
+    mutationFn: async (notificationData: any) => {
+      return await apiRequest('POST', '/api/notifications', {
+        body: JSON.stringify(notificationData),
+        headers: { 'Content-Type': 'application/json' }
       });
-      if (!response.ok) throw new Error("Erro ao deletar usuário");
-      return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/admin/users"] });
       toast({
-        title: "Usuário deletado",
-        description: "O usuário foi removido do sistema.",
+        title: "Notificação enviada!",
+        description: "A notificação foi enviada com sucesso.",
+      });
+      setNotificationForm({
+        title: '',
+        message: '',
+        type: 'info',
+        isGlobal: true,
+        targetUsers: []
       });
     },
+    onError: (error: any) => {
+      toast({
+        title: "Erro ao enviar notificação",
+        description: error.message || "Erro interno do servidor",
+        variant: "destructive"
+      });
+    }
   });
 
-  // Filtrar usuários baseado na busca
-  const filteredUsers = users?.filter((user: any) => 
-    user.username?.toLowerCase().includes(userSearchTerm.toLowerCase()) ||
-    user.email?.toLowerCase().includes(userSearchTerm.toLowerCase())
-  ) || [];
-
-  const handleUserStatusToggle = (userId: string, currentStatus: boolean) => {
-    updateUserMutation.mutate({
-      id: userId,
-      isActive: !currentStatus
-    });
-  };
-
-  const handleUserRoleChange = (userId: string, newRole: string) => {
-    updateUserMutation.mutate({
-      id: userId,
-      role: newRole
-    });
-  };
-
-  if (loadingUsers) {
+  // Check if user is admin
+  if (user?.role !== 'admin') {
     return (
-      <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-6">
+        <div className="max-w-2xl mx-auto">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Shield className="h-5 w-5" />
+                Acesso Negado
+              </CardTitle>
+              <CardDescription>
+                Você não tem permissão para acessar esta página.
+              </CardDescription>
+            </CardHeader>
+          </Card>
+        </div>
       </div>
     );
   }
 
+  const handleUpdateRole = (userId: string, role: string) => {
+    updateRoleMutation.mutate({ userId, role });
+  };
+
+  const handleSendNotification = () => {
+    if (!notificationForm.title || !notificationForm.message) {
+      toast({
+        title: "Erro",
+        description: "Título e mensagem são obrigatórios",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    sendNotificationMutation.mutate(notificationForm);
+  };
+
+  const handleUserSelection = (userId: string, isChecked: boolean) => {
+    if (isChecked) {
+      setNotificationForm(prev => ({
+        ...prev,
+        targetUsers: [...prev.targetUsers, userId]
+      }));
+    } else {
+      setNotificationForm(prev => ({
+        ...prev,
+        targetUsers: prev.targetUsers.filter(id => id !== userId)
+      }));
+    }
+  };
+
   return (
-    <div className="container mx-auto p-6 space-y-6">
-      <div className="flex items-center gap-3 mb-6">
-        <Shield className="w-8 h-8 text-red-600" />
-        <div>
-          <h1 className="text-3xl font-bold">Painel de Administração</h1>
-          <p className="text-gray-600">Gerenciamento completo do sistema</p>
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-6">
+      <div className="max-w-7xl mx-auto">
+        {/* Header */}
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
+            <Crown className="h-8 w-8 text-yellow-500" />
+            Painel de Administração
+          </h1>
+          <p className="text-gray-600 dark:text-gray-300 mt-2">
+            Gerencie usuários, roles, permissões e notificações do sistema
+          </p>
         </div>
-      </div>
 
-      <Tabs defaultValue="users" className="w-full">
-        <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger value="users">Usuários</TabsTrigger>
-          <TabsTrigger value="system">Sistema</TabsTrigger>
-          <TabsTrigger value="logs">Logs</TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="users" className="space-y-4">
+        {/* Stats Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
           <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Users className="w-5 h-5" />
-                Gerenciamento de Usuários
-              </CardTitle>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Total de Usuários</CardTitle>
+              <Users className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="mb-4">
-                <Label htmlFor="user-search">Buscar Usuário</Label>
-                <Input
-                  id="user-search"
-                  placeholder="Digite o nome ou email do usuário..."
-                  value={userSearchTerm}
-                  onChange={(e) => setUserSearchTerm(e.target.value)}
-                  className="mt-1"
-                />
-              </div>
+              <div className="text-2xl font-bold">{users?.length || 0}</div>
+            </CardContent>
+          </Card>
 
-              <div className="space-y-2">
-                {filteredUsers.map((user: any) => (
-                  <div key={user.id} className="flex items-center justify-between p-4 border rounded-lg">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center">
-                        <span className="text-primary font-semibold">
-                          {user.username?.charAt(0).toUpperCase() || 'U'}
-                        </span>
-                      </div>
-                      <div>
-                        <h3 className="font-semibold">{user.username || 'Usuário'}</h3>
-                        <p className="text-sm text-gray-600">{user.email}</p>
-                        <div className="flex items-center gap-2 mt-1">
-                          <Badge variant={user.role === 'admin' ? 'destructive' : 'secondary'}>
-                            {user.role || 'user'}
-                          </Badge>
-                          <Badge variant={user.isActive ? 'default' : 'secondary'}>
-                            {user.isActive ? 'Ativo' : 'Inativo'}
-                          </Badge>
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Administradores</CardTitle>
+              <Shield className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">
+                {users?.filter(u => u.role === 'admin').length || 0}
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Usuários Premium</CardTitle>
+              <Crown className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">
+                {users?.filter(u => u.plan !== 'free').length || 0}
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Main Content with Tabs */}
+        <Tabs defaultValue="users" className="space-y-6">
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="users" className="flex items-center gap-2">
+              <Users className="h-4 w-4" />
+              Gerenciar Usuários
+            </TabsTrigger>
+            <TabsTrigger value="notifications" className="flex items-center gap-2">
+              <Bell className="h-4 w-4" />
+              Enviar Notificações
+            </TabsTrigger>
+          </TabsList>
+
+          {/* Users Management Tab */}
+          <TabsContent value="users">
+            <Card>
+              <CardHeader>
+                <CardTitle>Gerenciamento de Usuários</CardTitle>
+                <CardDescription>
+                  Visualize e edite os papéis dos usuários no sistema
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                {isLoading ? (
+                  <div className="flex items-center justify-center py-8">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600"></div>
+                  </div>
+                ) : (
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Nome</TableHead>
+                        <TableHead>Email</TableHead>
+                        <TableHead>Papel</TableHead>
+                        <TableHead>Plano</TableHead>
+                        <TableHead>Cadastrado em</TableHead>
+                        <TableHead>Ações</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {users?.map((user) => (
+                        <TableRow key={user.id}>
+                          <TableCell className="font-medium">
+                            {user.firstName} {user.lastName}
+                          </TableCell>
+                          <TableCell>{user.email}</TableCell>
+                          <TableCell>
+                            <Badge className={getRoleBadgeColor(user.role)}>
+                              {user.role}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>
+                            <Badge className={getPlanBadgeColor(user.plan)}>
+                              {user.plan}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>
+                            {new Date(user.createdAt).toLocaleDateString('pt-BR')}
+                          </TableCell>
+                          <TableCell>
+                            {selectedUser === user.id ? (
+                              <div className="flex gap-2">
+                                <Select value={newRole} onValueChange={setNewRole}>
+                                  <SelectTrigger className="w-32">
+                                    <SelectValue placeholder="Papel" />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="user">user</SelectItem>
+                                    <SelectItem value="editor">editor</SelectItem>
+                                    <SelectItem value="admin">admin</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                                <Button 
+                                  size="sm" 
+                                  onClick={() => handleUpdateRole(user.id, newRole)}
+                                  disabled={!newRole || updateRoleMutation.isPending}
+                                >
+                                  Salvar
+                                </Button>
+                                <Button 
+                                  size="sm" 
+                                  variant="outline"
+                                  onClick={() => {
+                                    setSelectedUser(null);
+                                    setNewRole('');
+                                  }}
+                                >
+                                  Cancelar
+                                </Button>
+                              </div>
+                            ) : (
+                              <Button 
+                                size="sm" 
+                                variant="outline"
+                                onClick={() => {
+                                  setSelectedUser(user.id);
+                                  setNewRole(user.role);
+                                }}
+                              >
+                                <Settings className="h-4 w-4 mr-2" />
+                                Editar
+                              </Button>
+                            )}
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Notifications Tab */}
+          <TabsContent value="notifications">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Bell className="h-5 w-5" />
+                  Enviar Notificações
+                </CardTitle>
+                <CardDescription>
+                  Envie notificações para todos os usuários ou usuários específicos
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                {/* Notification Form */}
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="title">Título da Notificação</Label>
+                    <Input
+                      id="title"
+                      placeholder="Digite o título da notificação"
+                      value={notificationForm.title}
+                      onChange={(e) => setNotificationForm(prev => ({ ...prev, title: e.target.value }))}
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="message">Mensagem</Label>
+                    <Textarea
+                      id="message"
+                      placeholder="Digite a mensagem da notificação"
+                      value={notificationForm.message}
+                      onChange={(e) => setNotificationForm(prev => ({ ...prev, message: e.target.value }))}
+                      rows={4}
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="type">Tipo de Notificação</Label>
+                    <Select 
+                      value={notificationForm.type} 
+                      onValueChange={(value: any) => setNotificationForm(prev => ({ ...prev, type: value }))}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecione o tipo" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="info">Informação</SelectItem>
+                        <SelectItem value="success">Sucesso</SelectItem>
+                        <SelectItem value="warning">Aviso</SelectItem>
+                        <SelectItem value="error">Erro</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  {/* Global vs Specific Users */}
+                  <div className="space-y-4">
+                    <div className="flex items-center space-x-2">
+                      <Checkbox
+                        id="global"
+                        checked={notificationForm.isGlobal}
+                        onCheckedChange={(checked) => 
+                          setNotificationForm(prev => ({ 
+                            ...prev, 
+                            isGlobal: checked as boolean,
+                            targetUsers: checked ? [] : prev.targetUsers
+                          }))
+                        }
+                      />
+                      <Label htmlFor="global">Enviar para todos os usuários</Label>
+                    </div>
+
+                    {!notificationForm.isGlobal && (
+                      <div className="space-y-2">
+                        <Label>Selecionar Usuários Específicos</Label>
+                        <div className="max-h-40 overflow-y-auto border rounded-md p-3">
+                          {users?.map((user) => (
+                            <div key={user.id} className="flex items-center space-x-2 py-1">
+                              <Checkbox
+                                id={`user-${user.id}`}
+                                checked={notificationForm.targetUsers.includes(user.id)}
+                                onCheckedChange={(checked) => handleUserSelection(user.id, checked as boolean)}
+                              />
+                              <Label htmlFor={`user-${user.id}`} className="text-sm">
+                                {user.firstName} {user.lastName} ({user.email})
+                              </Label>
+                            </div>
+                          ))}
                         </div>
                       </div>
-                    </div>
-                    
-                    <div className="flex items-center gap-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleUserStatusToggle(user.id, user.isActive)}
-                      >
-                        {user.isActive ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                      </Button>
-                      
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleUserRoleChange(user.id, user.role === 'admin' ? 'user' : 'admin')}
-                      >
-                        {user.role === 'admin' ? <UserX className="w-4 h-4" /> : <UserCheck className="w-4 h-4" />}
-                      </Button>
-                      
-                      <Button
-                        variant="destructive"
-                        size="sm"
-                        onClick={() => {
-                          if (confirm('Tem certeza que deseja deletar este usuário?')) {
-                            deleteUserMutation.mutate(user.id);
-                          }
-                        }}
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
-                    </div>
+                    )}
                   </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
 
-        <TabsContent value="system" className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            <Card>
-              <CardHeader className="pb-3">
-                <CardTitle className="text-sm font-medium">Total de Usuários</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{systemStats?.totalUsers || 0}</div>
-                <p className="text-xs text-gray-600">usuários registrados</p>
-              </CardContent>
-            </Card>
-            
-            <Card>
-              <CardHeader className="pb-3">
-                <CardTitle className="text-sm font-medium">Quizzes Ativos</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{systemStats?.activeQuizzes || 0}</div>
-                <p className="text-xs text-gray-600">quizzes publicados</p>
-              </CardContent>
-            </Card>
-            
-            <Card>
-              <CardHeader className="pb-3">
-                <CardTitle className="text-sm font-medium">Respostas Hoje</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{systemStats?.todayResponses || 0}</div>
-                <p className="text-xs text-gray-600">respostas recebidas</p>
-              </CardContent>
-            </Card>
-            
-            <Card>
-              <CardHeader className="pb-3">
-                <CardTitle className="text-sm font-medium">Status do Sistema</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="flex items-center gap-2">
-                  <CheckCircle className="w-5 h-5 text-green-500" />
-                  <span className="text-sm font-medium">Online</span>
+                  <Button 
+                    onClick={handleSendNotification}
+                    disabled={sendNotificationMutation.isPending || !notificationForm.title || !notificationForm.message}
+                    className="w-full bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700"
+                  >
+                    <Send className="w-4 h-4 mr-2" />
+                    {sendNotificationMutation.isPending ? 'Enviando...' : 'Enviar Notificação'}
+                  </Button>
                 </div>
-                <p className="text-xs text-gray-600">sistema operacional</p>
               </CardContent>
             </Card>
-          </div>
-        </TabsContent>
-
-        <TabsContent value="logs" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Activity className="w-5 h-5" />
-                Logs do Sistema
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-2 max-h-96 overflow-y-auto">
-                {systemLogs?.map((log: any, index: number) => (
-                  <div key={index} className="flex items-center gap-3 p-3 bg-gray-50 rounded">
-                    <div className="flex items-center gap-2">
-                      {log.level === 'error' && <XCircle className="w-4 h-4 text-red-500" />}
-                      {log.level === 'warning' && <AlertTriangle className="w-4 h-4 text-yellow-500" />}
-                      {log.level === 'info' && <CheckCircle className="w-4 h-4 text-blue-500" />}
-                      <span className="text-xs text-gray-500">{log.timestamp}</span>
-                    </div>
-                    <div className="flex-1">
-                      <p className="text-sm">{log.message}</p>
-                      {log.details && (
-                        <p className="text-xs text-gray-600 mt-1">{log.details}</p>
-                      )}
-                    </div>
-                  </div>
-                )) || (
-                  <p className="text-center text-gray-500 py-8">Nenhum log disponível</p>
-                )}
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
+          </TabsContent>
+        </Tabs>
+      </div>
     </div>
   );
 }

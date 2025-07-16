@@ -675,36 +675,6 @@ export class SQLiteStorage implements IStorage {
     await db.delete(users).where(eq(users.id, userId));
   }
 
-  async changeUserPassword(userId: string, newPassword: string): Promise<void> {
-    const hashedPassword = await bcrypt.hash(newPassword, 10);
-    await db.update(users)
-      .set({ password: hashedPassword, updatedAt: new Date() })
-      .where(eq(users.id, userId));
-  }
-
-  async changeUserPasswordWithVerification(userId: string, currentPassword: string, newPassword: string): Promise<boolean> {
-    const user = await this.getUser(userId);
-    if (!user) return false;
-
-    const isCurrentPasswordValid = await bcrypt.compare(currentPassword, user.password);
-    if (!isCurrentPasswordValid) return false;
-
-    await this.changeUserPassword(userId, newPassword);
-    return true;
-  }
-
-  async getAllResponses(): Promise<QuizResponse[]> {
-    const responses = await db.select()
-      .from(quizResponses)
-      .orderBy(desc(quizResponses.submittedAt));
-    
-    return responses.map(response => ({
-      ...response,
-      responses: typeof response.responses === 'string' ? JSON.parse(response.responses) : response.responses,
-      metadata: typeof response.metadata === 'string' ? JSON.parse(response.metadata) : response.metadata
-    }));
-  }
-
   async getUserQuizzes(userId: string): Promise<Quiz[]> {
     return await db.select()
       .from(quizzes)

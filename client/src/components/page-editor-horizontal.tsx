@@ -8209,7 +8209,18 @@ const gameElementCategories = [
                     </div>
                   </div>
 
-
+                  <div>
+                    <Label>Padrão de Listras</Label>
+                    <div className="flex items-center space-x-2 mt-1">
+                      <input
+                        type="checkbox"
+                        checked={selectedElementData.enableStripes || false}
+                        onChange={(e) => updateElement(selectedElementData.id, { enableStripes: e.target.checked })}
+                        className="w-4 h-4 text-blue-600"
+                      />
+                      <span className="text-sm text-gray-700">Adicionar listras animadas</span>
+                    </div>
+                  </div>
 
                   <div>
                     <Label>Exibir Tempo Restante</Label>
@@ -8235,19 +8246,6 @@ const gameElementCategories = [
                   </div>
 
                   <div>
-                    <Label>Altura da Barra</Label>
-                    <select 
-                      className="w-full px-3 py-2 border rounded-md mt-1"
-                      value={selectedElementData.barHeight || "medium"}
-                      onChange={(e) => updateElement(selectedElementData.id, { barHeight: e.target.value })}
-                    >
-                      <option value="small">Pequena (8px)</option>
-                      <option value="medium">Média (16px)</option>
-                      <option value="large">Grande (24px)</option>
-                    </select>
-                  </div>
-
-                  <div>
                     <Label>Cor da Pergunta no Popup</Label>
                     <div className="flex gap-2 mt-1">
                       <Input
@@ -8262,82 +8260,6 @@ const gameElementCategories = [
                         placeholder="#1F2937"
                         className="flex-1"
                       />
-                    </div>
-                  </div>
-
-                  <div className="space-y-3">
-                    <Label className="text-sm font-medium text-green-600">🎨 Cores dos Botões</Label>
-                    
-                    <div>
-                      <Label>Cor do Fundo - Botão "Sim"</Label>
-                      <div className="flex gap-2 mt-1">
-                        <Input
-                          type="color"
-                          value={selectedElementData.yesButtonBgColor || "transparent"}
-                          onChange={(e) => updateElement(selectedElementData.id, { yesButtonBgColor: e.target.value })}
-                          className="w-16 h-10 p-1"
-                        />
-                        <Input
-                          value={selectedElementData.yesButtonBgColor || "transparent"}
-                          onChange={(e) => updateElement(selectedElementData.id, { yesButtonBgColor: e.target.value })}
-                          placeholder="transparent"
-                          className="flex-1"
-                        />
-                      </div>
-                    </div>
-
-                    <div>
-                      <Label>Cor do Texto - Botão "Sim"</Label>
-                      <div className="flex gap-2 mt-1">
-                        <Input
-                          type="color"
-                          value={selectedElementData.yesButtonTextColor || "#000000"}
-                          onChange={(e) => updateElement(selectedElementData.id, { yesButtonTextColor: e.target.value })}
-                          className="w-16 h-10 p-1"
-                        />
-                        <Input
-                          value={selectedElementData.yesButtonTextColor || "#000000"}
-                          onChange={(e) => updateElement(selectedElementData.id, { yesButtonTextColor: e.target.value })}
-                          placeholder="#000000"
-                          className="flex-1"
-                        />
-                      </div>
-                    </div>
-
-                    <div>
-                      <Label>Cor do Fundo - Botão "Não"</Label>
-                      <div className="flex gap-2 mt-1">
-                        <Input
-                          type="color"
-                          value={selectedElementData.noButtonBgColor || "transparent"}
-                          onChange={(e) => updateElement(selectedElementData.id, { noButtonBgColor: e.target.value })}
-                          className="w-16 h-10 p-1"
-                        />
-                        <Input
-                          value={selectedElementData.noButtonBgColor || "transparent"}
-                          onChange={(e) => updateElement(selectedElementData.id, { noButtonBgColor: e.target.value })}
-                          placeholder="transparent"
-                          className="flex-1"
-                        />
-                      </div>
-                    </div>
-
-                    <div>
-                      <Label>Cor do Texto - Botão "Não"</Label>
-                      <div className="flex gap-2 mt-1">
-                        <Input
-                          type="color"
-                          value={selectedElementData.noButtonTextColor || "#000000"}
-                          onChange={(e) => updateElement(selectedElementData.id, { noButtonTextColor: e.target.value })}
-                          className="w-16 h-10 p-1"
-                        />
-                        <Input
-                          value={selectedElementData.noButtonTextColor || "#000000"}
-                          onChange={(e) => updateElement(selectedElementData.id, { noButtonTextColor: e.target.value })}
-                          placeholder="#000000"
-                          className="flex-1"
-                        />
-                      </div>
                     </div>
                   </div>
                 </div>
