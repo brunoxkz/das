@@ -1,373 +1,417 @@
-import { useState } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Progress } from "@/components/ui/progress";
-import { useToast } from "@/hooks/use-toast";
 import { 
-  Coins, 
   MessageSquare, 
   Mail, 
   Phone, 
   Zap, 
-  Plus, 
-  History,
+  ShoppingCart, 
+  History, 
   TrendingUp,
-  AlertCircle
+  Coins,
+  Plus,
+  Package
 } from "lucide-react";
-import { apiRequest } from "@/lib/queryClient";
-
-interface CreditInfo {
-  sms: number;
-  email: number;
-  whatsapp: number;
-  ai: number;
-  total: number;
-}
-
-interface PlanLimits {
-  quizzesLimit: number;
-  smsLimit: number;
-  emailLimit: number;
-  whatsappLimit: number;
-  aiLimit: number;
-}
-
-interface UsageStats {
-  quizzesCreated: number;
-  smsUsed: number;
-  emailUsed: number;
-  whatsappUsed: number;
-  aiUsed: number;
-}
-
-interface CreditTransaction {
-  id: string;
-  type: string;
-  amount: number;
-  description: string;
-  createdAt: string;
-}
+import { useAuth } from "@/hooks/useAuth-jwt";
+import { useLanguage } from "@/hooks/useLanguage";
 
 export default function Credits() {
-  const { toast } = useToast();
-  const queryClient = useQueryClient();
-
-  const { data: credits, isLoading: creditsLoading } = useQuery({
-    queryKey: ['/api/user/credits'],
-    queryFn: () => apiRequest('GET', '/api/user/credits')
+  const { user } = useAuth();
+  const { t } = useLanguage();
+  
+  // Buscar créditos do usuário
+  const { data: creditsData, isLoading } = useQuery({
+    queryKey: ["/api/user/credits"],
   });
 
-  const { data: planLimits, isLoading: limitsLoading } = useQuery({
-    queryKey: ['/api/user/plan-limits'],
-    queryFn: () => apiRequest('GET', '/api/user/plan-limits')
-  });
-
-  const { data: usageStats, isLoading: statsLoading } = useQuery({
-    queryKey: ['/api/user/usage-stats'],
-    queryFn: () => apiRequest('GET', '/api/user/usage-stats')
-  });
-
-  const { data: creditHistory, isLoading: historyLoading } = useQuery({
-    queryKey: ['/api/user/credit-history'],
-    queryFn: () => apiRequest('GET', '/api/user/credit-history')
-  });
-
-  const addCreditsMutation = useMutation({
-    mutationFn: ({ type, amount, description }: { type: string; amount: number; description: string }) =>
-      apiRequest('POST', '/api/user/credits', { type, amount, description }),
-    onSuccess: () => {
-      toast({
-        title: "Créditos adicionados",
-        description: "Seus créditos foram adicionados com sucesso!"
-      });
-      queryClient.invalidateQueries({ queryKey: ['/api/user/credits'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/user/credit-history'] });
+  const pacoteCreditos = [
+    {
+      nome: "Pacote Básico",
+      sms: 100,
+      email: 500,
+      voice: 50,
+      price: "R$ 19",
+      popular: false,
+      description: "Ideal para pequenos negócios"
     },
-    onError: (error: any) => {
-      toast({
-        title: "Erro",
-        description: error.message || "Erro ao adicionar créditos",
-        variant: "destructive"
-      });
-    }
-  });
-
-  const creditTypes = [
-    { 
-      key: 'sms', 
-      label: 'SMS', 
-      icon: MessageSquare, 
-      color: 'bg-blue-500',
-      price: 'R$ 0,12'
+    {
+      nome: "Pacote Profissional",
+      sms: 500,
+      email: 2000,
+      voice: 200,
+      price: "R$ 79",
+      popular: true,
+      description: "Para empresas em crescimento"
     },
-    { 
-      key: 'email', 
-      label: 'Email', 
-      icon: Mail, 
-      color: 'bg-green-500',
-      price: 'R$ 0,05'
-    },
-    { 
-      key: 'whatsapp', 
-      label: 'WhatsApp', 
-      icon: Phone, 
-      color: 'bg-purple-500',
-      price: 'R$ 0,15'
-    },
-    { 
-      key: 'ai', 
-      label: 'I.A.', 
-      icon: Zap, 
-      color: 'bg-orange-500',
-      price: 'R$ 2,50'
+    {
+      nome: "Pacote Enterprise",
+      sms: 1500,
+      email: 5000,
+      voice: 500,
+      price: "R$ 199",
+      popular: false,
+      description: "Para grandes volumes"
     }
   ];
 
-  const handleAddCredits = (type: string, amount: number) => {
-    addCreditsMutation.mutate({
-      type,
-      amount,
-      description: `Adicionados ${amount} créditos ${type.toUpperCase()}`
-    });
-  };
+  const creditosAvulsos = [
+    {
+      tipo: "SMS",
+      icon: <MessageSquare className="w-5 h-5" />,
+      preco: "R$ 0,12",
+      unidade: "por SMS",
+      color: "bg-blue-500",
+      description: "Envio de SMS marketing"
+    },
+    {
+      tipo: "Email",
+      icon: <Mail className="w-5 h-5" />,
+      preco: "R$ 0,05",
+      unidade: "por email",
+      color: "bg-green-500",
+      description: "Envio de email marketing"
+    },
+    {
+      tipo: "Voice",
+      icon: <Phone className="w-5 h-5" />,
+      preco: "R$ 0,25",
+      unidade: "por chamada",
+      color: "bg-purple-500",
+      description: "Chamadas de voz automatizadas"
+    },
+    {
+      tipo: "I.A.",
+      icon: <Zap className="w-5 h-5" />,
+      preco: "R$ 2,50",
+      unidade: "por vídeo",
+      color: "bg-orange-500",
+      description: "Vídeos personalizados com IA"
+    }
+  ];
 
-  if (creditsLoading || limitsLoading || statsLoading) {
+  if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="text-center">
-          <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full mx-auto mb-4"></div>
-          <p className="text-muted-foreground">Carregando créditos...</p>
-        </div>
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
       </div>
     );
   }
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold">Créditos</h1>
-          <p className="text-muted-foreground">
-            Gerencie seus créditos e monitore o uso
+    <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-100 p-6">
+      <div className="max-w-7xl mx-auto">
+        {/* Header */}
+        <div className="text-center mb-8">
+          <h1 className="text-4xl font-bold text-gray-900 mb-4">
+            Gerenciar Créditos
+          </h1>
+          <p className="text-xl text-gray-600">
+            Controle seus créditos para SMS, email, voz e IA
           </p>
         </div>
-        <Badge variant="secondary" className="px-3 py-1">
-          <Coins className="w-4 h-4 mr-1" />
-          {credits?.total || 0} créditos totais
-        </Badge>
-      </div>
 
-      {/* Credit Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        {creditTypes.map((type) => {
-          const Icon = type.icon;
-          const current = credits?.[type.key] || 0;
-          const used = usageStats?.[`${type.key}Used`] || 0;
-          const limit = planLimits?.[`${type.key}Limit`] || 0;
-          const percentage = limit > 0 ? (used / limit) * 100 : 0;
+        {/* Current Credits Overview */}
+        <div className="grid md:grid-cols-4 gap-6 mb-8">
+          <Card className="bg-white border-blue-200">
+            <CardHeader className="pb-3">
+              <CardTitle className="flex items-center gap-2 text-lg">
+                <MessageSquare className="w-5 h-5 text-blue-600" />
+                SMS
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-3xl font-bold text-blue-600">
+                {creditsData?.breakdown?.sms || 0}
+              </div>
+              <p className="text-sm text-gray-600 mt-1">créditos disponíveis</p>
+            </CardContent>
+          </Card>
 
-          return (
-            <Card key={type.key} className="relative overflow-hidden">
-              <div className={`absolute top-0 left-0 w-full h-1 ${type.color}`}></div>
-              <CardHeader className="pb-3">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-2">
-                    <Icon className="w-5 h-5 text-muted-foreground" />
-                    <CardTitle className="text-lg">{type.label}</CardTitle>
-                  </div>
-                  <Badge variant="outline" className="text-xs">
-                    {type.price}
-                  </Badge>
-                </div>
+          <Card className="bg-white border-green-200">
+            <CardHeader className="pb-3">
+              <CardTitle className="flex items-center gap-2 text-lg">
+                <Mail className="w-5 h-5 text-green-600" />
+                Email
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-3xl font-bold text-green-600">
+                {creditsData?.breakdown?.email || 0}
+              </div>
+              <p className="text-sm text-gray-600 mt-1">créditos disponíveis</p>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-white border-purple-200">
+            <CardHeader className="pb-3">
+              <CardTitle className="flex items-center gap-2 text-lg">
+                <Phone className="w-5 h-5 text-purple-600" />
+                Voice
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-3xl font-bold text-purple-600">
+                {creditsData?.breakdown?.voice || 0}
+              </div>
+              <p className="text-sm text-gray-600 mt-1">créditos disponíveis</p>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-white border-orange-200">
+            <CardHeader className="pb-3">
+              <CardTitle className="flex items-center gap-2 text-lg">
+                <Zap className="w-5 h-5 text-orange-600" />
+                I.A.
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-3xl font-bold text-orange-600">
+                {creditsData?.breakdown?.ia || 0}
+              </div>
+              <p className="text-sm text-gray-600 mt-1">créditos disponíveis</p>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Tabs para Pacotes e Créditos Avulsos */}
+        <Tabs defaultValue="pacotes" className="w-full">
+          <TabsList className="grid w-full grid-cols-3">
+            <TabsTrigger value="pacotes">Pacotes</TabsTrigger>
+            <TabsTrigger value="avulsos">Créditos Avulsos</TabsTrigger>
+            <TabsTrigger value="historico">Histórico</TabsTrigger>
+          </TabsList>
+
+          {/* Pacotes de Créditos */}
+          <TabsContent value="pacotes" className="mt-6">
+            <div className="grid md:grid-cols-3 gap-6">
+              {pacoteCreditos.map((pacote, index) => (
+                <Card key={index} className={`relative ${pacote.popular ? 'ring-2 ring-blue-500 bg-blue-50' : 'bg-white'}`}>
+                  {pacote.popular && (
+                    <div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
+                      <Badge className="bg-blue-500 text-white px-4 py-1">
+                        Mais Popular
+                      </Badge>
+                    </div>
+                  )}
+                  
+                  <CardHeader className="text-center">
+                    <CardTitle className="text-2xl font-bold text-gray-900">
+                      {pacote.nome}
+                    </CardTitle>
+                    <CardDescription className="text-gray-600">
+                      {pacote.description}
+                    </CardDescription>
+                    <div className="mt-4">
+                      <span className="text-4xl font-bold text-gray-900">{pacote.price}</span>
+                    </div>
+                  </CardHeader>
+
+                  <CardContent className="space-y-4">
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between">
+                        <span className="flex items-center gap-2">
+                          <MessageSquare className="w-4 h-4 text-blue-600" />
+                          SMS
+                        </span>
+                        <span className="font-semibold">{pacote.sms}</span>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="flex items-center gap-2">
+                          <Mail className="w-4 h-4 text-green-600" />
+                          Email
+                        </span>
+                        <span className="font-semibold">{pacote.email}</span>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="flex items-center gap-2">
+                          <Phone className="w-4 h-4 text-purple-600" />
+                          Voice
+                        </span>
+                        <span className="font-semibold">{pacote.voice}</span>
+                      </div>
+                    </div>
+
+                    <Button 
+                      className={`w-full ${pacote.popular ? 'bg-blue-600 hover:bg-blue-700' : ''}`}
+                      variant={pacote.popular ? "default" : "outline"}
+                    >
+                      <ShoppingCart className="w-4 h-4 mr-2" />
+                      Comprar Pacote
+                    </Button>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </TabsContent>
+
+          {/* Créditos Avulsos */}
+          <TabsContent value="avulsos" className="mt-6">
+            <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+              {creditosAvulsos.map((credito, index) => (
+                <Card key={index} className="bg-white">
+                  <CardHeader className="text-center pb-3">
+                    <div className={`w-12 h-12 rounded-full ${credito.color} flex items-center justify-center mx-auto mb-2`}>
+                      <div className="text-white">
+                        {credito.icon}
+                      </div>
+                    </div>
+                    <CardTitle className="text-xl font-bold text-gray-900">
+                      {credito.tipo}
+                    </CardTitle>
+                    <CardDescription className="text-gray-600">
+                      {credito.description}
+                    </CardDescription>
+                  </CardHeader>
+
+                  <CardContent className="text-center">
+                    <div className="mb-4">
+                      <span className="text-2xl font-bold text-gray-900">{credito.preco}</span>
+                      <span className="text-sm text-gray-600 block">{credito.unidade}</span>
+                    </div>
+                    
+                    <Button className="w-full" variant="outline">
+                      <Plus className="w-4 h-4 mr-2" />
+                      Comprar
+                    </Button>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </TabsContent>
+
+          {/* Histórico de Transações */}
+          <TabsContent value="historico" className="mt-6">
+            <Card className="bg-white">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <History className="w-5 h-5" />
+                  Histórico de Transações
+                </CardTitle>
                 <CardDescription>
-                  {current} créditos disponíveis
+                  Visualize suas compras e uso de créditos
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="space-y-3">
-                  <div className="flex justify-between text-sm">
-                    <span>Usado: {used}</span>
-                    <span>Limite: {limit}</span>
+                <div className="space-y-4">
+                  {/* Exemplo de transações */}
+                  <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
+                        <Plus className="w-4 h-4 text-green-600" />
+                      </div>
+                      <div>
+                        <p className="font-semibold text-gray-900">Pacote Profissional</p>
+                        <p className="text-sm text-gray-600">12 Jan 2025, 14:30</p>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <p className="font-semibold text-green-600">+2.700 créditos</p>
+                      <p className="text-sm text-gray-600">R$ 79,00</p>
+                    </div>
                   </div>
-                  <Progress 
-                    value={percentage} 
-                    className="h-2"
-                  />
-                  <div className="flex space-x-2">
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => handleAddCredits(type.key, 100)}
-                      disabled={addCreditsMutation.isPending}
-                    >
-                      <Plus className="w-4 h-4 mr-1" />
-                      +100
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => handleAddCredits(type.key, 500)}
-                      disabled={addCreditsMutation.isPending}
-                    >
-                      <Plus className="w-4 h-4 mr-1" />
-                      +500
+
+                  <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 bg-red-100 rounded-full flex items-center justify-center">
+                        <MessageSquare className="w-4 h-4 text-red-600" />
+                      </div>
+                      <div>
+                        <p className="font-semibold text-gray-900">Campanha SMS</p>
+                        <p className="text-sm text-gray-600">11 Jan 2025, 09:15</p>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <p className="font-semibold text-red-600">-45 SMS</p>
+                      <p className="text-sm text-gray-600">Campanha "Promoção"</p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 bg-red-100 rounded-full flex items-center justify-center">
+                        <Mail className="w-4 h-4 text-red-600" />
+                      </div>
+                      <div>
+                        <p className="font-semibold text-gray-900">Email Marketing</p>
+                        <p className="text-sm text-gray-600">10 Jan 2025, 16:20</p>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <p className="font-semibold text-red-600">-128 emails</p>
+                      <p className="text-sm text-gray-600">Newsletter semanal</p>
+                    </div>
+                  </div>
+
+                  <div className="text-center mt-6">
+                    <Button variant="outline">
+                      <TrendingUp className="w-4 h-4 mr-2" />
+                      Ver Histórico Completo
                     </Button>
                   </div>
                 </div>
               </CardContent>
             </Card>
-          );
-        })}
-      </div>
+          </TabsContent>
+        </Tabs>
 
-      {/* Tabs */}
-      <Tabs defaultValue="history" className="w-full">
-        <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger value="history">
-            <History className="w-4 h-4 mr-2" />
-            Histórico
-          </TabsTrigger>
-          <TabsTrigger value="usage">
-            <TrendingUp className="w-4 h-4 mr-2" />
-            Uso
-          </TabsTrigger>
-          <TabsTrigger value="packages">
-            <Coins className="w-4 h-4 mr-2" />
-            Pacotes
-          </TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="history" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Histórico de Transações</CardTitle>
-              <CardDescription>
-                Últimas movimentações de créditos
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              {historyLoading ? (
-                <div className="flex items-center justify-center py-8">
-                  <div className="animate-spin w-6 h-6 border-2 border-primary border-t-transparent rounded-full"></div>
-                </div>
-              ) : creditHistory?.length > 0 ? (
-                <div className="space-y-3">
-                  {creditHistory.map((transaction: CreditTransaction) => (
-                    <div key={transaction.id} className="flex items-center justify-between p-3 border rounded-lg">
-                      <div className="flex items-center space-x-3">
-                        <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                        <div>
-                          <p className="font-medium">{transaction.description}</p>
-                          <p className="text-sm text-muted-foreground">
-                            {new Date(transaction.createdAt).toLocaleString()}
-                          </p>
-                        </div>
-                      </div>
-                      <Badge variant="secondary">
-                        +{transaction.amount} {transaction.type.toUpperCase()}
-                      </Badge>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="text-center py-8 text-muted-foreground">
-                  <AlertCircle className="w-8 h-8 mx-auto mb-2" />
-                  <p>Nenhuma transação encontrada</p>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="usage" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Estatísticas de Uso</CardTitle>
-              <CardDescription>
-                Acompanhe o consumo de créditos
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {creditTypes.map((type) => {
-                  const used = usageStats?.[`${type.key}Used`] || 0;
-                  const limit = planLimits?.[`${type.key}Limit`] || 0;
-                  const percentage = limit > 0 ? (used / limit) * 100 : 0;
-                  const Icon = type.icon;
-
-                  return (
-                    <div key={type.key} className="space-y-2">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center space-x-2">
-                          <Icon className="w-4 h-4 text-muted-foreground" />
-                          <span className="font-medium">{type.label}</span>
-                        </div>
-                        <span className="text-sm text-muted-foreground">
-                          {used} / {limit}
-                        </span>
-                      </div>
-                      <Progress value={percentage} className="h-2" />
-                    </div>
-                  );
-                })}
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="packages" className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {[
-              { name: 'Pacote Básico', sms: 1000, email: 2000, whatsapp: 500, ai: 10, price: 'R$ 49,90' },
-              { name: 'Pacote Avançado', sms: 5000, email: 10000, whatsapp: 2000, ai: 50, price: 'R$ 149,90' },
-              { name: 'Pacote Premium', sms: 20000, email: 50000, whatsapp: 10000, ai: 200, price: 'R$ 499,90' }
-            ].map((pkg) => (
-              <Card key={pkg.name} className="relative">
-                <CardHeader>
-                  <CardTitle className="text-lg">{pkg.name}</CardTitle>
-                  <CardDescription>
-                    Pacote completo de créditos
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-3">
-                    <div className="space-y-2">
-                      <div className="flex justify-between text-sm">
-                        <span>SMS</span>
-                        <span>{pkg.sms.toLocaleString()}</span>
-                      </div>
-                      <div className="flex justify-between text-sm">
-                        <span>Email</span>
-                        <span>{pkg.email.toLocaleString()}</span>
-                      </div>
-                      <div className="flex justify-between text-sm">
-                        <span>WhatsApp</span>
-                        <span>{pkg.whatsapp.toLocaleString()}</span>
-                      </div>
-                      <div className="flex justify-between text-sm">
-                        <span>I.A.</span>
-                        <span>{pkg.ai}</span>
-                      </div>
-                    </div>
-                    <div className="border-t pt-3">
-                      <div className="flex items-center justify-between">
-                        <span className="text-lg font-bold">{pkg.price}</span>
-                        <Button size="sm">
-                          Comprar
-                        </Button>
-                      </div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
+        {/* Informações Adicionais */}
+        <div className="mt-12 bg-white rounded-lg p-8 shadow-lg">
+          <h2 className="text-2xl font-bold text-gray-900 mb-6 text-center">
+            Como Funcionam os Créditos
+          </h2>
+          <div className="grid md:grid-cols-2 gap-8">
+            <div>
+              <h3 className="text-lg font-semibold text-gray-900 mb-3">
+                Sistema de Créditos
+              </h3>
+              <ul className="space-y-2 text-gray-600">
+                <li className="flex items-start gap-2">
+                  <Coins className="w-4 h-4 mt-0.5 text-blue-600 flex-shrink-0" />
+                  <span>Cada ação consome 1 crédito específico</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <Coins className="w-4 h-4 mt-0.5 text-blue-600 flex-shrink-0" />
+                  <span>Créditos não utilizados são acumulados</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <Coins className="w-4 h-4 mt-0.5 text-blue-600 flex-shrink-0" />
+                  <span>Validade de 12 meses para créditos comprados</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <Coins className="w-4 h-4 mt-0.5 text-blue-600 flex-shrink-0" />
+                  <span>Débito automático apenas quando enviado com sucesso</span>
+                </li>
+              </ul>
+            </div>
+            <div>
+              <h3 className="text-lg font-semibold text-gray-900 mb-3">
+                Vantagens dos Pacotes
+              </h3>
+              <ul className="space-y-2 text-gray-600">
+                <li className="flex items-start gap-2">
+                  <Package className="w-4 h-4 mt-0.5 text-green-600 flex-shrink-0" />
+                  <span>Até 40% de desconto vs. compra avulsa</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <Package className="w-4 h-4 mt-0.5 text-green-600 flex-shrink-0" />
+                  <span>Mix de créditos para diferentes canais</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <Package className="w-4 h-4 mt-0.5 text-green-600 flex-shrink-0" />
+                  <span>Recarga automática disponível</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <Package className="w-4 h-4 mt-0.5 text-green-600 flex-shrink-0" />
+                  <span>Suporte prioritário incluído</span>
+                </li>
+              </ul>
+            </div>
           </div>
-        </TabsContent>
-      </Tabs>
+        </div>
+      </div>
     </div>
   );
 }

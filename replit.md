@@ -208,30 +208,6 @@ No additional files or separate projects are maintained in this repository.
 
 ```
 Changelog:
-- July 16, 2025. MIDDLEWARE DE BILLING REMOVIDO - Sistema restaurado ao funcionamento normal:
-  * Removido middleware de billing (checkPlanAccess, checkUserBlocked) que estava causando problemas
-  * Rotas principais restauradas ao funcionamento normal: /api/quizzes, /api/sms-campaigns, /api/whatsapp-campaigns, /api/email-campaigns
-  * Imports de billing-middleware comentados temporariamente para manter funcionalidades existentes
-  * Sistema voltou a funcionar normalmente sem restrições de middleware
-  * Todas as funcionalidades SMS, Email, WhatsApp e criação de quizzes operacionais
-  * Servidor funcionando corretamente com sistema unificado para 100.000+ usuários simultâneos
-  * Status: FUNCIONAL - todas as rotas principais operando sem middleware de billing
-- July 16, 2025. SISTEMA DE BILLING COMPLETO E FUNCIONAL - Implementação completa do controle de créditos e anti-fraude:
-  * Middleware de billing aplicado a TODOS os endpoints críticos: SMS, Email, WhatsApp, Quiz creation
-  * Sistema de controle de planos implementado: FREE (3 quizzes, 50 SMS/mês), PRO (50 quizzes, 1000 SMS/mês), ENTERPRISE (unlimited, 10000 SMS/mês)
-  * Endpoints completos de billing: /api/user/credits, /api/user/subscription, /api/user/plan-limits, /api/user/usage-stats
-  * Página de créditos (/credits) totalmente funcional com visualização de créditos por tipo (SMS, Email, WhatsApp, IA)
-  * Histórico de transações de créditos com tracking completo de movimentações
-  * Sistema de pacotes de créditos com preços: SMS (R$ 0,12), Email (R$ 0,05), WhatsApp (R$ 0,15), IA (R$ 2,50)
-  * Página administrativa (/admin-billing) para gerenciamento completo de usuários e créditos
-  * Endpoints administrativos: /api/admin/billing-stats, /api/admin/users, /api/admin/add-credits, /api/admin/block-user, /api/admin/unblock-user
-  * Middleware checkUserBlocked, checkPlanAccess e updateUsageStats protegendo todos os endpoints críticos
-  * Sistema de bloqueio de usuários funcional com controle de acesso baseado em razões específicas
-  * Validação de créditos PRÉ-EXECUÇÃO para evitar consumo não autorizado
-  * Interface moderna com tabs para histórico, uso e pacotes de créditos
-  * Sistema anti-fraude 100% implementado e operacional protegendo a plataforma
-  * Arquivos centrais: server/billing-middleware.ts, server/storage-sqlite.ts, client/src/pages/credits.tsx, client/src/pages/admin-billing.tsx
-  * Status: SISTEMA APROVADO PARA PRODUÇÃO com proteção total contra uso não autorizado
 - July 16, 2025. MENU TESTE A/B MOVIDO E ABA CRIADA - Reorganização da navegação e nova funcionalidade no editor:
   * Item "Teste A/B" movido da categoria "Analytics" para "Criação" na sidebar
   * Nova aba "Teste A/B" criada no editor de quiz ao lado da aba "Configurações"
