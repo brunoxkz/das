@@ -185,8 +185,8 @@ export function registerSQLiteRoutes(app: Express): Server {
         return res.status(401).json({ error: 'Usuário não autenticado' });
       }
 
-      const transactions = await storage.getAllCheckoutTransactions();
-      res.json(transactions);
+      const transactions = await storage.getCheckoutTransactionsByUserId(user.id);
+      res.json(transactions || []);
     } catch (error) {
       console.error('Erro ao buscar transações:', error);
       res.status(500).json({ error: 'Erro interno do servidor' });
@@ -201,7 +201,17 @@ export function registerSQLiteRoutes(app: Express): Server {
         return res.status(401).json({ error: 'Usuário não autenticado' });
       }
 
-      const analytics = await storage.getAllCheckoutAnalytics();
+      // Buscar todos os checkouts do usuário e calcular analytics
+      const checkouts = await storage.getCheckoutsByUserId(user.id);
+      const analytics = checkouts.map(checkout => ({
+        id: checkout.id,
+        title: checkout.title,
+        views: checkout.views || 0,
+        conversions: checkout.conversions || 0,
+        revenue: checkout.revenue || 0,
+        conversionRate: checkout.views > 0 ? ((checkout.conversions || 0) / checkout.views * 100).toFixed(2) : '0.00'
+      }));
+      
       res.json(analytics);
     } catch (error) {
       console.error('Erro ao buscar analytics:', error);

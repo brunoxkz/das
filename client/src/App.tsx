@@ -326,6 +326,11 @@ function App() {
             <CheckoutSystemPage />
           </Layout>
         </Route>
+        <Route path="/checkout-individual">
+          <Layout>
+            <CheckoutIndividual />
+          </Layout>
+        </Route>
         <Route path="/checkout-admin">
           <Layout>
             <CheckoutAdminPage />

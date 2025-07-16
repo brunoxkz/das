@@ -115,17 +115,10 @@ export function Sidebar() {
   };
 
   const checkoutItem = {
-    title: "CHECKOUT",
+    title: "CHECKOUT SISTEMA",
     href: "/checkout-system",
     icon: <ShoppingCart className="w-4 h-4" />,
     active: location === "/checkout-system"
-  };
-
-  const checkoutUnificadoItem = {
-    title: "CHECKOUT UNIFICADO",
-    href: "/checkout-unificado",
-    icon: <ShoppingCart className="w-4 h-4" />,
-    active: location === "/checkout-unificado"
   };
 
   const navCategories = [
@@ -157,6 +150,12 @@ export function Sidebar() {
           href: "/checkout-system",
           icon: <ShoppingCart className="w-4 h-4" />,
           active: location === "/checkout-system"
+        },
+        {
+          title: "CHECKOUT INDIVIDUAL",
+          href: "/checkout-individual",
+          icon: <ShoppingCart className="w-4 h-4" />,
+          active: location === "/checkout-individual"
         },
         {
           title: "PRODUCT BUILDER",
