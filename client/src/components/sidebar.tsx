@@ -44,7 +44,8 @@ import {
   Plug,
   Phone,
   Bot,
-  Coins
+  Coins,
+  Video
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -198,6 +199,13 @@ export function Sidebar() {
           icon: <Target className="w-4 h-4" />,
           active: location === "/conditional-campaigns",
           badge: <span className="text-xs text-orange-500 font-medium">SE → ENTÃO</span>
+        },
+        {
+          title: "VÍDEOS FACELESS",
+          href: "/faceless-videos",
+          icon: <Video className="w-4 h-4" />,
+          active: location === "/faceless-videos",
+          badge: <span className="text-xs text-purple-500 font-medium">IA + VIRAL</span>
         },
       ]
     },
