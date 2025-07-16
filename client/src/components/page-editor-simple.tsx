@@ -635,19 +635,21 @@ export function PageEditor({ pages, onPagesChange }: PageEditorProps) {
                 />
                 
                 {/* Opções de formatação */}
-                <div className="mt-4 space-y-2">
+                <div className="mt-4 space-y-4">
                   <Label>Formatação</Label>
+                  
+                  {/* Tamanho e Alinhamento */}
                   <div className="flex gap-2">
                     <select 
                       className="px-2 py-1 border rounded text-sm"
                       value={selectedElementData.fontSize || "xl"}
                       onChange={(e) => updateElement(selectedElementData.id, { fontSize: e.target.value })}
                     >
-                      <option value="lg">Pequeno</option>
-                      <option value="xl">Normal</option>
-                      <option value="2xl">Grande</option>
-                      <option value="3xl">Muito Grande</option>
-                      <option value="4xl">Gigante</option>
+                      <option value="sm">Pequeno</option>
+                      <option value="base">Normal</option>
+                      <option value="lg">Grande</option>
+                      <option value="xl">Muito Grande</option>
+                      <option value="2xl">Gigante</option>
                     </select>
                     
                     <select 
@@ -661,14 +663,60 @@ export function PageEditor({ pages, onPagesChange }: PageEditorProps) {
                     </select>
                   </div>
                   
+                  {/* Peso e Estilo */}
                   <div className="flex gap-2">
+                    <select 
+                      className="px-2 py-1 border rounded text-sm"
+                      value={selectedElementData.fontWeight || "normal"}
+                      onChange={(e) => updateElement(selectedElementData.id, { fontWeight: e.target.value })}
+                    >
+                      <option value="light">Leve</option>
+                      <option value="normal">Normal</option>
+                      <option value="medium">Médio</option>
+                      <option value="bold">Negrito</option>
+                    </select>
+                    
+                    <select 
+                      className="px-2 py-1 border rounded text-sm"
+                      value={selectedElementData.fontStyle || "normal"}
+                      onChange={(e) => updateElement(selectedElementData.id, { fontStyle: e.target.value })}
+                    >
+                      <option value="normal">Normal</option>
+                      <option value="italic">Itálico</option>
+                    </select>
+                  </div>
+                  
+                  {/* Cor do Texto */}
+                  <div className="flex gap-2 items-center">
                     <input 
                       type="color" 
                       className="w-8 h-8 border rounded"
-                      value={selectedElementData.color || "#000000"}
-                      onChange={(e) => updateElement(selectedElementData.id, { color: e.target.value })}
+                      value={selectedElementData.textColor || "#000000"}
+                      onChange={(e) => updateElement(selectedElementData.id, { textColor: e.target.value })}
                     />
                     <Label className="text-sm">Cor do Texto</Label>
+                  </div>
+                  
+                  {/* Cor de Fundo */}
+                  <div className="flex gap-2 items-center">
+                    <input 
+                      type="color" 
+                      className="w-8 h-8 border rounded"
+                      value={selectedElementData.backgroundColor || "#ffffff"}
+                      onChange={(e) => updateElement(selectedElementData.id, { backgroundColor: e.target.value })}
+                    />
+                    <Label className="text-sm">Cor de Fundo</Label>
+                  </div>
+                  
+                  {/* Sublinhado */}
+                  <div className="flex gap-2 items-center">
+                    <input 
+                      type="checkbox" 
+                      className="rounded"
+                      checked={selectedElementData.textDecoration === 'underline'}
+                      onChange={(e) => updateElement(selectedElementData.id, { textDecoration: e.target.checked ? 'underline' : 'none' })}
+                    />
+                    <Label className="text-sm">Sublinhado</Label>
                   </div>
                 </div>
               </div>

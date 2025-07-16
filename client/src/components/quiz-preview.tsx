@@ -766,6 +766,12 @@ export default function QuizPreview({ quiz, onClose, onSave, initialPage = 0 }: 
         case '2xl':
           styles.fontSize = '24px';
           break;
+        case '3xl':
+          styles.fontSize = '30px';
+          break;
+        case '4xl':
+          styles.fontSize = '36px';
+          break;
         default:
           styles.fontSize = '16px';
       }
@@ -831,6 +837,12 @@ export default function QuizPreview({ quiz, onClose, onSave, initialPage = 0 }: 
           break;
         case '2xl':
           classes += ' text-2xl';
+          break;
+        case '3xl':
+          classes += ' text-3xl';
+          break;
+        case '4xl':
+          classes += ' text-4xl';
           break;
       }
     }
@@ -1212,7 +1224,7 @@ export default function QuizPreview({ quiz, onClose, onSave, initialPage = 0 }: 
         return (
           <div className="mb-4">
             <h1 
-              className={`text-2xl font-bold text-gray-900 ${getElementClasses(element)}`}
+              className={`text-2xl font-bold text-gray-900${getElementClasses(element)}`}
               style={getElementStyles(element)}
             >
               {processVariables(element.content || 'Título')}

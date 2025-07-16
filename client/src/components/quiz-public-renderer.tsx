@@ -523,6 +523,12 @@ export function QuizPublicRenderer({ quiz }: QuizPublicRendererProps) {
         case '2xl':
           styles.fontSize = '24px';
           break;
+        case '3xl':
+          styles.fontSize = '30px';
+          break;
+        case '4xl':
+          styles.fontSize = '36px';
+          break;
         default:
           styles.fontSize = '16px';
       }
@@ -588,6 +594,12 @@ export function QuizPublicRenderer({ quiz }: QuizPublicRendererProps) {
           break;
         case '2xl':
           classes += ' text-2xl';
+          break;
+        case '3xl':
+          classes += ' text-3xl';
+          break;
+        case '4xl':
+          classes += ' text-4xl';
           break;
       }
     }
