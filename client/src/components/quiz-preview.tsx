@@ -316,6 +316,104 @@ import {
   White
 } from 'lucide-react';
 
+// Componente para loading_question no preview
+const LoadingQuestionElementPreview = ({ element }: { element: any }) => {
+  const [progress, setProgress] = useState(0);
+  const [showPopup, setShowPopup] = useState(false);
+  const [answer, setAnswer] = useState<string | null>(null);
+  const properties = element.properties || {};
+  
+  useEffect(() => {
+    const duration = (properties.loadingDuration || 4) * 1000;
+    const steps = 100;
+    const interval = duration / steps;
+    
+    const timer = setInterval(() => {
+      setProgress((prev) => {
+        if (prev >= 100) {
+          setShowPopup(true);
+          clearInterval(timer);
+          return 100;
+        }
+        return prev + 1;
+      });
+    }, interval);
+    
+    return () => clearInterval(timer);
+  }, [properties.loadingDuration]);
+  
+  const handleQuestionAnswer = (value: string) => {
+    setAnswer(value);
+    setShowPopup(false);
+  };
+  
+  return (
+    <>
+      {/* Barra de carregamento */}
+      <div className="w-full space-y-4 p-4 border border-gray-200 rounded-lg bg-white">
+        <div className="space-y-3">
+          <div className="flex items-center justify-between">
+            <h4 className="font-semibold text-gray-800">
+              {properties.loadingText || "Processando..."}
+            </h4>
+            <span className="text-sm font-mono text-gray-600">{progress}%</span>
+          </div>
+          
+          <div 
+            className="w-full rounded-full" 
+            style={{ 
+              height: properties.loadingBarHeight || 8,
+              backgroundColor: properties.loadingBarBackgroundColor || "#E5E7EB"
+            }}
+          >
+            <div 
+              className="h-full rounded-full transition-all duration-100"
+              style={{ 
+                width: `${progress}%`,
+                backgroundColor: properties.loadingBarColor || "#b62ac0"
+              }}
+            />
+          </div>
+        </div>
+        
+        {answer && (
+          <div className="text-center text-gray-600 text-sm mt-2">
+            Resposta registrada: {answer === 'yes' ? (properties.popupYesText || 'Sim') : (properties.popupNoText || 'Não')}
+          </div>
+        )}
+      </div>
+      
+      {/* Popup Modal */}
+      {showPopup && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4 shadow-lg">
+            <div className="text-center">
+              <h3 className="text-lg font-bold text-gray-800 mb-4">
+                {properties.popupQuestion || "Você gostaria de continuar?"}
+              </h3>
+              
+              <div className="flex gap-3 justify-center">
+                <button 
+                  className="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+                  onClick={() => handleQuestionAnswer('yes')}
+                >
+                  {properties.popupYesText || "Sim"}
+                </button>
+                <button 
+                  className="px-6 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+                  onClick={() => handleQuestionAnswer('no')}
+                >
+                  {properties.popupNoText || "Não"}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
+  );
+};
+
 interface QuizPreviewProps {
   quiz: any;
   onClose: () => void;
@@ -1455,16 +1553,8 @@ export default function QuizPreview({ quiz, onClose, onSave }: QuizPreviewProps)
 
       case 'loading_question':
         return (
-          <div className="mb-6 text-center">
-            <div className="p-6 border border-gray-200 rounded-lg bg-white">
-              <div className="animate-spin w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full mx-auto mb-4"></div>
-              <p 
-                className={`text-gray-600 ${getElementClasses(element)}`}
-                style={getElementStyles(element)}
-              >
-                {element.loadingText || element.content || '🧠 Analisando suas respostas...'}
-              </p>
-            </div>
+          <div className="mb-6">
+            <LoadingQuestionElementPreview element={element} />
           </div>
         );
 
