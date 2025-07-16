@@ -39,27 +39,45 @@ import { useLanguage } from "@/hooks/useLanguage";
 
 export default function Dashboard() {
   const { toast } = useToast();
-  const { isAuthenticated, user } = useAuth();
+  const { isAuthenticated, user, isLoading } = useAuth();
   const [showTutorial, setShowTutorial] = useState(false);
   const [showTrialBanner, setShowTrialBanner] = useState(true);
   const { t } = useLanguage();
 
+  // Redirecionar para login se não autenticado
+  if (!isLoading && !isAuthenticated) {
+    window.location.href = '/login';
+    return null;
+  }
+
+  // Mostrar loading enquanto verificando autenticação
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-900 via-purple-900 to-green-900 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin w-8 h-8 border-4 border-white border-t-transparent rounded-full mx-auto mb-4"></div>
+          <p className="text-white">Carregando...</p>
+        </div>
+      </div>
+    );
+  }
+
   // Buscar dados do usuário
-  const { data: userData } = useQuery({
-    queryKey: ["/api/auth/validate"],
+  const { data: userData, error: userError } = useQuery({
+    queryKey: ["/api/user"],
     enabled: isAuthenticated,
     retry: false,
   });
 
   // Buscar quizzes do usuário
-  const { data: userQuizzes, isLoading: quizzesLoading } = useQuery({
+  const { data: userQuizzes, isLoading: quizzesLoading, error: quizzesError } = useQuery({
     queryKey: ["/api/quizzes"],
     enabled: isAuthenticated,
     retry: false,
   });
 
   // Buscar analytics completos
-  const { data: allAnalytics, isLoading: analyticsLoading } = useQuery({
+  const { data: allAnalytics, isLoading: analyticsLoading, error: analyticsError } = useQuery({
     queryKey: ["/api/analytics"],
     enabled: isAuthenticated,
     retry: false,
@@ -574,6 +592,18 @@ export default function Dashboard() {
               </Card>
             </Link>
           </div>
+
+          {/* Error Debug Section - Temporário */}
+          {(userError || quizzesError || analyticsError) && (
+            <Card className="mt-4 border-red-200 bg-red-50">
+              <CardContent className="p-4">
+                <h3 className="font-semibold text-red-800 mb-2">Debug de Erros:</h3>
+                {userError && <p className="text-red-600 text-sm">User Error: {String(userError)}</p>}
+                {quizzesError && <p className="text-red-600 text-sm">Quizzes Error: {String(quizzesError)}</p>}
+                {analyticsError && <p className="text-red-600 text-sm">Analytics Error: {String(analyticsError)}</p>}
+              </CardContent>
+            </Card>
+          )}
 
           {/* Tutorial Component */}
           {showTutorial && (
