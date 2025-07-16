@@ -56,6 +56,8 @@ import CheckoutSuccess from "@/pages/checkout-success";
 import CheckoutSubscriptionWrapper from "@/pages/checkout-subscription-wrapper";
 import CheckoutUnified from "@/pages/checkout-unified";
 import CheckoutDashboard from "@/pages/checkout-dashboard";
+import CheckoutPage from "@/pages/checkout";
+import PaymentSuccess from "@/pages/payment-success";
 import ProductBuilder from "@/pages/product-builder";
 import SubscriptionsManager from "@/pages/subscriptions-manager";
 import { useAuth } from "@/hooks/useAuth-jwt";
@@ -105,6 +107,8 @@ function App() {
         <Route path="/quiz/:id" component={QuizPublicPage} />
         <Route path="/checkout/:linkId" component={CheckoutPublic} />
         <Route path="/checkout/success/:transactionId" component={CheckoutSuccess} />
+        <Route path="/checkout-public" component={CheckoutPage} />
+        <Route path="/payment-success" component={PaymentSuccess} />
         <Route path="/test" component={TestPage} />
 
         {/* Authenticated routes with sidebar */}

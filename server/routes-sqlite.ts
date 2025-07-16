@@ -102,8 +102,99 @@ export function registerSQLiteRoutes(app: Express): Server {
   // 🧠 RATE LIMITING INTELIGENTE - Diferencia usuários legítimos de invasores
   // app.use(intelligentRateLimiter.middleware()); // TEMPORARIAMENTE DESATIVADO
   
-  // 🛒 SISTEMA DE CHECKOUT - Registrar rotas de checkout
-  registerCheckoutRoutes(app);
+  // 🛒 SISTEMA DE CHECKOUT - Endpoints de checkout e assinatura
+  
+  // Buscar produtos de checkout (público)
+  app.get('/api/checkout-products', async (req, res) => {
+    try {
+      const products = await storage.getAllCheckouts();
+      res.json(products);
+    } catch (error) {
+      console.error('Erro ao buscar produtos:', error);
+      res.status(500).json({ error: 'Erro interno do servidor' });
+    }
+  });
+
+  // Criar assinatura com trial (público)
+  app.post('/api/create-subscription', async (req, res) => {
+    try {
+      const { productId, customer, paymentMethod, returnUrl, cancelUrl } = req.body;
+      
+      // Validação dos dados
+      if (!productId || !customer || !paymentMethod) {
+        return res.status(400).json({ error: 'Dados obrigatórios faltando' });
+      }
+
+      // Buscar produto
+      const products = await storage.getAllCheckouts();
+      const product = products.find(p => p.id === productId);
+      
+      if (!product) {
+        return res.status(404).json({ error: 'Produto não encontrado' });
+      }
+
+      // Simular criação de assinatura (aqui você integraria com Stripe/Pagar.me)
+      const subscriptionData = {
+        id: `sub_${Date.now()}`,
+        productId,
+        customerId: `cus_${Date.now()}`,
+        customer,
+        paymentMethod,
+        trialEnd: product.trialPeriod ? new Date(Date.now() + (product.trialPeriod * 24 * 60 * 60 * 1000)).toISOString() : null,
+        trialPrice: product.trialPrice || 0,
+        recurringPrice: product.price,
+        recurringInterval: product.recurringInterval || 'monthly',
+        status: 'trialing',
+        createdAt: new Date().toISOString()
+      };
+
+      // Para demo, vamos simular uma URL de checkout
+      const checkoutUrl = `${process.env.BASE_URL || `http://localhost:${process.env.PORT || 5000}`}/payment-success?session_id=${subscriptionData.id}`;
+
+      res.json({
+        success: true,
+        subscriptionId: subscriptionData.id,
+        url: checkoutUrl,
+        subscription: subscriptionData
+      });
+
+    } catch (error) {
+      console.error('Erro ao criar assinatura:', error);
+      res.status(500).json({ error: 'Erro ao processar assinatura' });
+    }
+  });
+
+  // Webhook de pagamento (público)
+  app.post('/api/webhook/payment', async (req, res) => {
+    try {
+      const { type, data } = req.body;
+      
+      console.log('Webhook recebido:', type, data);
+      
+      // Processar diferentes tipos de eventos
+      switch (type) {
+        case 'subscription.trial_will_end':
+          console.log('Trial terminando para assinatura:', data.subscriptionId);
+          break;
+          
+        case 'subscription.converted':
+          console.log('Assinatura convertida para recorrente:', data.subscriptionId);
+          break;
+          
+        case 'payment.succeeded':
+          console.log('Pagamento bem-sucedido:', data.paymentId);
+          break;
+          
+        default:
+          console.log('Evento não reconhecido:', type);
+      }
+      
+      res.json({ received: true });
+    } catch (error) {
+      console.error('Erro no webhook:', error);
+      res.status(500).json({ error: 'Erro ao processar webhook' });
+    }
+  });
   
   // Middleware de debug para todas as rotas POST
   app.use((req, res, next) => {

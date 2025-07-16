@@ -658,16 +658,49 @@ export default function CheckoutDashboard() {
                         </div>
                       </div>
 
-                      <div className="bg-blue-50 p-4 rounded-lg">
-                        <h4 className="font-medium text-blue-900 mb-2">💳 Configuração Stripe</h4>
-                        <p className="text-sm text-blue-700">
-                          Para assinaturas, será criado um método de pagamento no Stripe que permite:
+                      <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-4 rounded-lg border border-blue-200">
+                        <h4 className="font-medium text-blue-900 mb-2 flex items-center gap-2">
+                          <CreditCard className="w-5 h-5" />
+                          Sistema Trial-to-Recurring
+                        </h4>
+                        <p className="text-sm text-blue-700 mb-3">
+                          Como funciona o sistema de assinatura com trial:
                         </p>
-                        <ul className="text-sm text-blue-700 mt-2 space-y-1">
-                          <li>• Cobrança inicial do trial (ex: R$ 1,00)</li>
-                          <li>• Cobrança automática recorrente após o período de teste</li>
-                          <li>• Armazenamento seguro do cartão para futuras cobranças</li>
-                        </ul>
+                        <div className="space-y-2">
+                          <div className="flex items-start gap-2">
+                            <span className="bg-blue-500 text-white text-xs px-2 py-1 rounded font-medium">1</span>
+                            <div>
+                              <p className="text-sm font-medium text-blue-900">
+                                Cobrança Inicial (Trial)
+                              </p>
+                              <p className="text-xs text-blue-700">
+                                Cliente paga o valor do trial (ex: R$ 1,00) por {formData.trialPeriod || 3} dias
+                              </p>
+                            </div>
+                          </div>
+                          <div className="flex items-start gap-2">
+                            <span className="bg-green-500 text-white text-xs px-2 py-1 rounded font-medium">2</span>
+                            <div>
+                              <p className="text-sm font-medium text-blue-900">
+                                Conversão Automática
+                              </p>
+                              <p className="text-xs text-blue-700">
+                                Após o período de teste, converte automaticamente para cobrança recorrente de {formatPrice(formData.price, formData.currency)}
+                              </p>
+                            </div>
+                          </div>
+                          <div className="flex items-start gap-2">
+                            <span className="bg-purple-500 text-white text-xs px-2 py-1 rounded font-medium">3</span>
+                            <div>
+                              <p className="text-sm font-medium text-blue-900">
+                                Cobrança Recorrente
+                              </p>
+                              <p className="text-xs text-blue-700">
+                                A partir do {(formData.trialPeriod || 3) + 1}º dia, cobrança {formData.recurringInterval === 'monthly' ? 'mensal' : formData.recurringInterval === 'quarterly' ? 'trimestral' : 'anual'}
+                              </p>
+                            </div>
+                          </div>
+                        </div>
                       </div>
                     </div>
                   )}
