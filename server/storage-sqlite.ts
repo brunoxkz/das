@@ -5149,7 +5149,10 @@ export class SQLiteStorage implements IStorage {
 
   async getSubscriptionPlan(id: string): Promise<SubscriptionPlan | undefined> {
     try {
-      const plan = await db.select().from(subscriptionPlans).where(eq(subscriptionPlans.id, id)).get();
+      const plan = sqlite.prepare(`
+        SELECT * FROM subscription_plans WHERE id = ? AND isActive = 1
+      `).get(id) as SubscriptionPlan;
+      
       if (!plan) return undefined;
       
       return {
@@ -5165,21 +5168,38 @@ export class SQLiteStorage implements IStorage {
 
   async createSubscriptionPlan(plan: InsertSubscriptionPlan): Promise<SubscriptionPlan> {
     try {
-      const newPlan = {
-        id: crypto.randomUUID(),
-        ...plan,
-        features: JSON.stringify(plan.features),
-        limits: JSON.stringify(plan.limits),
-        createdAt: new Date(),
-        updatedAt: new Date()
-      };
+      const id = crypto.randomUUID();
+      const now = Date.now();
       
-      await db.insert(subscriptionPlans).values(newPlan);
+      const stmt = sqlite.prepare(`
+        INSERT INTO subscription_plans (
+          id, name, price, currency, billingInterval, features, limits, 
+          stripePriceId, isActive, createdAt, updatedAt
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      `);
+      
+      stmt.run(
+        id, 
+        plan.name, 
+        plan.price, 
+        plan.currency || 'BRL', 
+        plan.billingInterval,
+        JSON.stringify(plan.features),
+        JSON.stringify(plan.limits),
+        plan.stripePriceId || null,
+        plan.isActive ? 1 : 0,
+        now,
+        now
+      );
+      
+      const createdPlan = sqlite.prepare(`
+        SELECT * FROM subscription_plans WHERE id = ?
+      `).get(id) as SubscriptionPlan;
       
       return {
-        ...newPlan,
-        features: plan.features,
-        limits: plan.limits
+        ...createdPlan,
+        features: JSON.parse(createdPlan.features),
+        limits: JSON.parse(createdPlan.limits)
       };
     } catch (error) {
       console.error('❌ ERRO ao criar plano de assinatura:', error);
