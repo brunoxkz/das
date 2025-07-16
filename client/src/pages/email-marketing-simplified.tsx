@@ -7,10 +7,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Mail, Send, Clock, Users, Target, Upload, FileText, Eye, ArrowRight, CheckCircle, AlertCircle, Calendar, Zap, Crown, Package, Brain, Flame, FolderOpen } from "lucide-react";
+import { Mail, Send, Clock, Users, Target, Upload, FileText, Eye, ArrowRight, CheckCircle, AlertCircle, Calendar, Zap, Crown, Package, Brain, Flame, FolderOpen, Play, Pause, Trash2 } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { useToast } from "@/hooks/use-toast";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -133,6 +133,61 @@ export default function EmailMarketingSimplified() {
   const { data: campaigns = [], isLoading: loadingCampaigns } = useQuery({
     queryKey: ['/api/email-campaigns'],
     enabled: !!user
+  });
+
+  // Mutations para gerenciar campanhas
+  const toggleCampaignMutation = useMutation({
+    mutationFn: async ({ campaignId, action }: { campaignId: string; action: 'play' | 'pause' }) => {
+      const response = await fetch(`/api/email-campaigns/${campaignId}/${action}`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+      });
+      if (!response.ok) {
+        throw new Error('Erro ao alterar status da campanha');
+      }
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/email-campaigns'] });
+    },
+    onError: (error) => {
+      toast({
+        title: "Erro",
+        description: "Não foi possível alterar o status da campanha",
+        variant: "destructive"
+      });
+    }
+  });
+
+  const deleteCampaignMutation = useMutation({
+    mutationFn: async (campaignId: string) => {
+      const response = await fetch(`/api/email-campaigns/${campaignId}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+      });
+      if (!response.ok) {
+        throw new Error('Erro ao deletar campanha');
+      }
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/email-campaigns'] });
+      toast({
+        title: "Sucesso",
+        description: "Campanha deletada com sucesso"
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Erro",
+        description: "Não foi possível deletar a campanha",
+        variant: "destructive"
+      });
+    }
   });
   
   // Variáveis disponíveis para personalização
@@ -262,6 +317,51 @@ export default function EmailMarketingSimplified() {
     }
   };
   
+  // Componente para exibir logs da campanha
+  const EmailCampaignLogs = ({ campaignId }: { campaignId: string }) => {
+    const { data: logs = [], isLoading } = useQuery({
+      queryKey: ['/api/email-campaigns', campaignId, 'logs'],
+      enabled: !!campaignId
+    });
+
+    if (isLoading) {
+      return <div className="animate-pulse">Carregando logs...</div>;
+    }
+
+    return (
+      <div className="max-h-96 overflow-y-auto">
+        {logs.length === 0 ? (
+          <p className="text-gray-500">Nenhum log encontrado</p>
+        ) : (
+          <div className="space-y-2">
+            {logs.map((log: any, index: number) => (
+              <div key={index} className="bg-gray-50 p-3 rounded text-sm">
+                <div className="flex justify-between items-start">
+                  <div>
+                    <p className="font-medium">{log.recipientEmail}</p>
+                    <p className="text-gray-600">{log.message}</p>
+                  </div>
+                  <div className="text-right">
+                    <span className={`px-2 py-1 rounded text-xs ${
+                      log.status === 'sent' ? 'bg-green-100 text-green-800' :
+                      log.status === 'failed' ? 'bg-red-100 text-red-800' :
+                      'bg-yellow-100 text-yellow-800'
+                    }`}>
+                      {log.status}
+                    </span>
+                    <p className="text-xs text-gray-500 mt-1">
+                      {log.timestamp ? format(new Date(log.timestamp), 'dd/MM/yyyy HH:mm', { locale: ptBR }) : 'N/A'}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    );
+  };
+
   return (
     <div className="container mx-auto p-6 max-w-6xl">
       <div className="mb-8">
@@ -693,6 +793,197 @@ export default function EmailMarketingSimplified() {
             </CardContent>
           </Card>
         </div>
+      </div>
+      
+      {/* Campanhas Existentes */}
+      <div className="mt-8">
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <FileText className="w-5 h-5" />
+              Campanhas de Email Criadas
+            </CardTitle>
+            <CardDescription>
+              Gerencie suas campanhas de email marketing
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            {isLoadingCampaigns ? (
+              <div className="flex items-center justify-center py-8">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+              </div>
+            ) : campaigns.length === 0 ? (
+              <div className="text-center py-8">
+                <Mail className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+                <p className="text-gray-500">Nenhuma campanha criada ainda</p>
+                <p className="text-sm text-gray-400 mt-2">
+                  Crie sua primeira campanha de email usando o formulário acima
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {campaigns.map((campaign: any) => (
+                  <div key={campaign.id} className="border rounded-lg p-4 hover:bg-gray-50">
+                    <div className="flex items-center justify-between">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-3 mb-2">
+                          <div className="flex items-center gap-2">
+                            <Mail className="w-5 h-5 text-blue-600" />
+                            <h3 className="font-medium">{campaign.name}</h3>
+                          </div>
+                          <Badge 
+                            variant={campaign.status === 'active' ? 'default' : 
+                                   campaign.status === 'paused' ? 'secondary' : 'outline'}
+                            className={campaign.status === 'active' ? 'bg-green-100 text-green-800' : 
+                                     campaign.status === 'paused' ? 'bg-yellow-100 text-yellow-800' : 
+                                     'bg-gray-100 text-gray-800'}
+                          >
+                            {campaign.status === 'active' ? 'Ativo' : 
+                             campaign.status === 'paused' ? 'Pausado' : 'Inativo'}
+                          </Badge>
+                        </div>
+                        
+                        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 text-sm">
+                          <div>
+                            <p className="text-gray-500">Assunto</p>
+                            <p className="font-medium truncate">{campaign.subject}</p>
+                          </div>
+                          <div>
+                            <p className="text-gray-500">Quiz</p>
+                            <p className="font-medium truncate">{campaign.quizTitle || 'N/A'}</p>
+                          </div>
+                          <div>
+                            <p className="text-gray-500">Enviados</p>
+                            <p className="font-medium">{campaign.sent || 0}</p>
+                          </div>
+                          <div>
+                            <p className="text-gray-500">Taxa de Abertura</p>
+                            <p className="font-medium">
+                              {campaign.sent > 0 ? Math.round(((campaign.opened || 0) / campaign.sent) * 100) : 0}%
+                            </p>
+                          </div>
+                        </div>
+                        
+                        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 text-sm mt-2">
+                          <div>
+                            <p className="text-gray-500">Tipo</p>
+                            <p className="font-medium capitalize">
+                              {EMAIL_CAMPAIGN_TYPES[campaign.campaignType as keyof typeof EMAIL_CAMPAIGN_TYPES]?.name || 'Standard'}
+                            </p>
+                          </div>
+                          <div>
+                            <p className="text-gray-500">Abertos</p>
+                            <p className="font-medium">{campaign.opened || 0}</p>
+                          </div>
+                          <div>
+                            <p className="text-gray-500">Cliques</p>
+                            <p className="font-medium">{campaign.clicked || 0}</p>
+                          </div>
+                          <div>
+                            <p className="text-gray-500">Criado em</p>
+                            <p className="font-medium">
+                              {campaign.createdAt ? format(new Date(campaign.createdAt), 'dd/MM/yyyy', { locale: ptBR }) : 'N/A'}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                      
+                      <div className="flex items-center gap-2 ml-4">
+                        {/* Botão Play/Pause */}
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => {
+                            const action = campaign.status === 'active' ? 'pause' : 'play';
+                            toggleCampaignMutation.mutate({ campaignId: campaign.id, action });
+                            toast({
+                              title: campaign.status === 'active' ? 'Campanha pausada' : 'Campanha ativada',
+                              description: `Campanha ${campaign.name} foi ${campaign.status === 'active' ? 'pausada' : 'ativada'}.`
+                            });
+                          }}
+                          disabled={toggleCampaignMutation.isPending}
+                          className={campaign.status === 'active' ? 'text-yellow-600 hover:text-yellow-700' : 'text-green-600 hover:text-green-700'}
+                        >
+                          {toggleCampaignMutation.isPending ? (
+                            <div className="w-4 h-4 border-2 border-gray-400 border-t-transparent rounded-full animate-spin mr-1" />
+                          ) : campaign.status === 'active' ? (
+                            <>
+                              <Pause className="w-4 h-4 mr-1" />
+                              Pausar
+                            </>
+                          ) : (
+                            <>
+                              <Play className="w-4 h-4 mr-1" />
+                              Iniciar
+                            </>
+                          )}
+                        </Button>
+                        
+                        {/* Botão Analytics */}
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => {
+                            toast({
+                              title: "Analytics",
+                              description: "Abrindo analytics da campanha..."
+                            });
+                          }}
+                          className="text-blue-600 hover:text-blue-700"
+                        >
+                          <Eye className="w-4 h-4 mr-1" />
+                          Analytics
+                        </Button>
+                        
+                        {/* Botão Logs */}
+                        <Dialog>
+                          <DialogTrigger asChild>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="text-purple-600 hover:text-purple-700"
+                            >
+                              <FileText className="w-4 h-4 mr-1" />
+                              Logs
+                            </Button>
+                          </DialogTrigger>
+                          <DialogContent className="max-w-2xl">
+                            <DialogHeader>
+                              <DialogTitle>Logs da Campanha: {campaign.name}</DialogTitle>
+                            </DialogHeader>
+                            <div className="mt-4">
+                              <EmailCampaignLogs campaignId={campaign.id} />
+                            </div>
+                          </DialogContent>
+                        </Dialog>
+                        
+                        {/* Botão Deletar */}
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => {
+                            if (confirm('Tem certeza que deseja deletar esta campanha?')) {
+                              deleteCampaignMutation.mutate(campaign.id);
+                            }
+                          }}
+                          disabled={deleteCampaignMutation.isPending}
+                          className="text-red-600 hover:text-red-700"
+                        >
+                          {deleteCampaignMutation.isPending ? (
+                            <div className="w-4 h-4 border-2 border-red-400 border-t-transparent rounded-full animate-spin mr-1" />
+                          ) : (
+                            <Trash2 className="w-4 h-4 mr-1" />
+                          )}
+                          Deletar
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
       </div>
     </div>
   );
