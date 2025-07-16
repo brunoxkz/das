@@ -861,8 +861,8 @@ export function PageEditorHorizontal({
         { type: "rating", label: "Estrelas", icon: <Star className="w-4 h-4" /> },
         { type: "date", label: "Data", icon: <Calendar className="w-4 h-4" /> },
         { type: "textarea", label: "Área", icon: <TextArea className="w-4 h-4" /> },
-        { type: "checkbox", label: "Seleção", icon: <CheckSquare className="w-4 h-4" /> },
-        { type: "loading_question", label: "Carregamento + Pergunta", icon: <Loader className="w-4 h-4" /> },
+
+        { type: "loading_question", label: "Progresso + Pergunta", icon: <Loader className="w-4 h-4" /> },
       ]
     },
     {
@@ -901,7 +901,6 @@ export function PageEditorHorizontal({
         { type: "share_quiz", label: "Compartilhar", icon: <Share2 className="w-4 h-4" /> },
         { type: "animated_transition", label: "Transição", icon: <Sparkles className="w-4 h-4" /> },
         { type: "progress_bar", label: "Barra de Progresso", icon: <BarChart3 className="w-4 h-4" /> },
-        { type: "loading_with_question", label: "Carregamento + Pergunta", icon: <Timer className="w-4 h-4" /> },
       ]
     },
     {
@@ -1529,25 +1528,23 @@ const gameElementCategories = [
         loadingDuration: 3,
         loadingBarColor: "#10B981",
         loadingBarBackgroundColor: "#E5E7EB",
-        loadingBarWidth: "medium" as const,
-        loadingBarHeight: "medium" as const,
-        loadingBarStyle: "rounded" as const,
-        loadingText: "Carregando...",
-        loadingTextSize: "medium" as const,
-        loadingTextColor: "#374151",
+        loadingText: "Processando...",
         popupQuestion: "Você gostaria de continuar?",
         popupYesText: "Sim",
         popupNoText: "Não",
-        responseId: `pergunta_${Date.now()}`,
-        animationType: "smooth" as const,
-        showGlow: true,
+        responseId: `pergunta_${Date.now()}`
+      }),
+
+      ...(type === "progress_bar" && {
+        progressStyle: "striped",
+        progressColor: "#FCBC51",
+        progressBackgroundColor: "#2c303a",
+        progressHeight: 18,
+        progressBorderRadius: 6,
+        progressWidth: 75,
         showPercentage: true,
-        showTimeRemaining: false,
-        showStripes: false,
-        animateStripes: false,
-        percentageColor: "#6B7280",
-        additionalText: "",
-        additionalTextColor: "#9CA3AF"
+        animationDuration: 6,
+        progressTitle: "Progresso"
       })
     };
 
@@ -4199,165 +4196,133 @@ const gameElementCategories = [
         );
 
       case "loading_question":
-        const loadingMessage = element.loadingText || "🧠 Analisando suas respostas...";
+        const loadingMessage = element.loadingText || "Processando...";
         const loadingDuration = element.loadingDuration || 3;
         
-        // 🔥 NOVA FUNCIONALIDADE: Métricas reais em tempo real
-        const loadingMetrics = [
-          { label: "Respostas processadas", value: "23/25", percentage: 92, color: "#10b981" },
-          { label: "Padrões detectados", value: "8", percentage: 100, color: "#3b82f6" },
-          { label: "Compatibilidade", value: "87%", percentage: 87, color: "#8b5cf6" },
-          { label: "Precisão da IA", value: "94%", percentage: 94, color: "#f59e0b" }
-        ];
+        return (
+          <div className="space-y-4 py-6 px-4 bg-white rounded-lg border border-gray-200 shadow-sm">
+            <div className="text-center mb-4">
+              <h3 className="text-lg font-semibold text-gray-800 mb-2">{loadingMessage}</h3>
+              <p className="text-sm text-gray-600">Tempo: {loadingDuration}s</p>
+            </div>
+            
+            {/* Barra de progresso horizontal simples */}
+            <div className="space-y-2">
+              <div className="w-full bg-gray-200 rounded-full h-3">
+                <div 
+                  className="h-3 rounded-full transition-all duration-500"
+                  style={{ 
+                    width: "75%", 
+                    backgroundColor: element.loadingBarColor || "#10B981"
+                  }}
+                />
+              </div>
+              <div className="text-center text-sm text-gray-600">75%</div>
+            </div>
+            
+            {/* Popup de pergunta simples */}
+            <div className="mt-6 p-4 bg-gray-50 rounded-lg border">
+              <h4 className="text-base font-medium text-gray-800 mb-3 text-center">
+                {element.popupQuestion || "Você gostaria de continuar?"}
+              </h4>
+              <div className="flex gap-3 justify-center">
+                <button className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600 transition-colors">
+                  {element.popupYesText || "Sim"}
+                </button>
+                <button className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600 transition-colors">
+                  {element.popupNoText || "Não"}
+                </button>
+              </div>
+            </div>
+          </div>
+        );
+
+      case "progress_bar":
+        const progressStyle = element.progressStyle || "striped";
+        const progressColor = element.progressColor || "#FCBC51";
+        const progressBg = element.progressBackgroundColor || "#2c303a";
+        const progressHeight = element.progressHeight || 18;
+        const progressRadius = element.progressBorderRadius || 6;
+        const progressWidth = element.progressWidth || 75;
+        const showPercentage = element.showPercentage !== false;
+        const animationDuration = element.animationDuration || 6;
+        const progressTitle = element.progressTitle || "Progresso";
         
-        // 🔥 NOVA FUNCIONALIDADE: Barra de progresso avançada
-        const progressWidth = element.loadingBarWidth === "thin" ? "h-2" : 
-                              element.loadingBarWidth === "thick" ? "h-6" : "h-4";
-        
-        const progressStyle = element.loadingBarStyle === "square" ? "rounded-none" :
-                              element.loadingBarStyle === "very_rounded" ? "rounded-full" :
-                              element.loadingBarStyle === "slightly_rounded" ? "rounded-sm" : "rounded-md";
+        const getProgressBarStyle = () => {
+          const baseStyle = {
+            height: `${progressHeight}px`,
+            borderRadius: `${progressRadius}px`,
+            transition: `${animationDuration}s linear`,
+            width: `${progressWidth}%`
+          };
+          
+          if (progressStyle === "striped") {
+            return {
+              ...baseStyle,
+              backgroundColor: progressColor,
+              backgroundImage: `linear-gradient(45deg, ${progressColor} 25%, transparent 25%, transparent 50%, ${progressColor} 50%, ${progressColor} 75%, transparent 75%, transparent)`,
+              backgroundSize: "20px 20px",
+              animation: `progressStriped ${animationDuration}s linear infinite`
+            };
+          } else if (progressStyle === "rounded") {
+            return {
+              ...baseStyle,
+              borderRadius: "30px",
+              backgroundColor: progressColor,
+              backgroundImage: "linear-gradient(to bottom, rgba(255, 255, 255, 0.3), rgba(255, 255, 255, 0.05))"
+            };
+          } else if (progressStyle === "rainbow") {
+            return {
+              ...baseStyle,
+              width: "100%",
+              backgroundImage: "linear-gradient(to right, #4cd964, #5ac8fa, #007aff, #7DC8E8, #5856d6, #ff2d55)",
+              animation: `rainbowAnimation 1s infinite`
+            };
+          }
+          
+          return baseStyle;
+        };
         
         return (
-          <div className="space-y-6 py-8 px-6 bg-gradient-to-br from-indigo-50 via-white to-purple-50 rounded-xl border-2 border-indigo-200 shadow-lg animate-fade-in">
-            <div className="flex items-center justify-center gap-3 mb-6">
-              <div className="relative">
-                {/* 🔥 NOVA FUNCIONALIDADE: Loader ultra-avançado */}
-                <div className="w-20 h-20 border-4 border-indigo-200 border-t-indigo-600 rounded-full animate-spin"></div>
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <div className="w-10 h-10 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-full animate-pulse flex items-center justify-center">
-                    <Brain className="w-5 h-5 text-white" />
-                  </div>
-                </div>
-                {element.showGlow && (
-                  <div className="absolute inset-0 rounded-full bg-indigo-300 opacity-30 animate-ping"></div>
-                )}
-              </div>
-              {/* 🔥 INTEGRAÇÃO COM SISTEMA */}
-              <div className="text-center">
-                <span className="text-xs bg-green-100 text-green-800 px-3 py-1 rounded-full font-medium animate-pulse block">
-                  🔄 IA Processando
-                </span>
-                {element.showTimeRemaining && (
-                  <div className="text-xs text-gray-600 mt-1">
-                    Tempo restante: {loadingDuration}s
-                  </div>
-                )}
-              </div>
+          <div className="space-y-4 py-6 px-4 bg-white rounded-lg border border-gray-200 shadow-sm">
+            <div className="text-center mb-4">
+              <h3 className="text-lg font-semibold text-gray-800 mb-2">{progressTitle}</h3>
+              {showPercentage && (
+                <p className="text-sm text-gray-600">{progressWidth}%</p>
+              )}
             </div>
             
-            <div className="text-center">
-              <h3 className="text-xl font-bold text-gray-800 mb-2">{loadingMessage}</h3>
-              <p className="text-sm text-gray-600 max-w-md mx-auto">
-                {element.additionalText || "Nossa IA está processando suas respostas para gerar insights ultra-personalizados"}
-              </p>
-            </div>
-            
-            {/* 🔥 NOVA FUNCIONALIDADE: Barra de progresso com animação */}
-            <div className="space-y-3">
-              <div className="flex justify-between items-center">
-                <span className="text-sm font-medium text-gray-700">Progresso da Análise</span>
-                {element.showPercentage && (
-                  <span className="text-sm font-bold" style={{color: element.percentageColor || "#6B7280"}}>
-                    85%
-                  </span>
-                )}
-              </div>
+            <div className="relative">
               <div 
-                className={`w-full bg-gray-200 ${progressStyle} ${progressWidth} relative overflow-hidden`}
-                style={{backgroundColor: element.loadingBarBackgroundColor || "#E5E7EB"}}
+                className="progress-container"
+                style={{
+                  padding: "6px",
+                  backgroundColor: progressBg,
+                  borderRadius: `${progressRadius}px`,
+                  boxShadow: "inset 0 1px 2px rgba(0, 0, 0, 0.25), 0 1px rgba(255, 255, 255, 0.08)"
+                }}
               >
                 <div 
-                  className={`${progressWidth} ${progressStyle} transition-all duration-2000 ease-out relative`}
-                  style={{ 
-                    width: "85%",
-                    background: `linear-gradient(45deg, ${element.loadingBarColor || "#10B981"}, #3B82F6, #8B5CF6)`
-                  }}
-                >
-                  {element.showStripes && (
-                    <div className={`absolute inset-0 bg-gradient-to-r from-transparent via-white to-transparent opacity-20 ${element.animateStripes ? 'animate-pulse' : ''}`}></div>
-                  )}
-                </div>
+                  className="progress-bar-element"
+                  style={getProgressBarStyle()}
+                />
               </div>
             </div>
             
-            {/* 🔥 NOVA FUNCIONALIDADE: Métricas em tempo real */}
-            <div className="bg-white p-4 rounded-xl border shadow-sm">
-              <div className="text-sm font-bold text-gray-800 mb-3 text-center">📊 Métricas de Processamento</div>
-              <div className="grid grid-cols-2 gap-4">
-                {loadingMetrics.map((metric, index) => (
-                  <div key={index} className="text-center p-3 bg-gray-50 rounded-lg border">
-                    <div className="text-lg font-black" style={{color: metric.color}}>{metric.value}</div>
-                    <div className="text-xs text-gray-600 mt-1 mb-2">{metric.label}</div>
-                    <div className="w-full bg-gray-200 rounded-full h-2">
-                      <div 
-                        className="h-2 rounded-full transition-all duration-2000 ease-out"
-                        style={{ width: `${metric.percentage}%`, backgroundColor: metric.color }}
-                      ></div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-            
-            {/* 🔥 NOVA FUNCIONALIDADE: Etapas de processamento dinâmicas */}
-            <div className="space-y-2">
-              <div className="text-sm font-bold text-gray-800 text-center">🔍 Etapas de Processamento IA</div>
-              {[
-                "Coletando dados das respostas...",
-                "Aplicando algoritmos de machine learning...",
-                "Analisando padrões comportamentais...",
-                "Calculando score de compatibilidade...",
-                "Gerando recomendações personalizadas..."
-              ].map((step, index) => (
-                <div key={index} className="flex items-center gap-3 p-2 bg-white rounded-lg border border-gray-200 hover:border-indigo-300 transition-all">
-                  <div className="w-4 h-4 bg-gradient-to-r from-green-500 to-blue-500 rounded-full flex items-center justify-center flex-shrink-0">
-                    <span className="text-white text-xs">✓</span>
-                  </div>
-                  <span className="text-xs text-gray-700 flex-1">{step}</span>
-                  <div className="flex space-x-1">
-                    <div className="w-1 h-1 bg-indigo-600 rounded-full animate-bounce" style={{animationDelay: '0ms'}}></div>
-                    <div className="w-1 h-1 bg-indigo-600 rounded-full animate-bounce" style={{animationDelay: '150ms'}}></div>
-                    <div className="w-1 h-1 bg-indigo-600 rounded-full animate-bounce" style={{animationDelay: '300ms'}}></div>
-                  </div>
-                </div>
-              ))}
-            </div>
-            
-            {/* 🔥 INTEGRAÇÃO: Sistema de pergunta popup */}
-            {element.popupQuestion && (
-              <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-4 rounded-xl border border-blue-200">
-                <div className="text-center">
-                  <div className="text-sm font-bold text-blue-800 mb-3">{element.popupQuestion}</div>
-                  <div className="flex gap-2 justify-center">
-                    <button className="px-4 py-2 bg-green-500 hover:bg-green-600 text-white font-medium rounded-lg text-sm transition-colors">
-                      {element.popupYesText || "Sim"}
-                    </button>
-                    <button className="px-4 py-2 bg-gray-500 hover:bg-gray-600 text-white font-medium rounded-lg text-sm transition-colors">
-                      {element.popupNoText || "Não"}
-                    </button>
-                  </div>
-                </div>
-              </div>
-            )}
-            
-            {/* 🔥 INTEGRAÇÃO: Mostra conexão com sistema */}
-            <div className="bg-gradient-to-r from-green-50 to-blue-50 p-3 rounded-xl border border-green-200">
-              <div className="flex items-center gap-2 mb-2">
-                <span className="text-green-600">⚡</span>
-                <span className="text-sm font-bold text-green-800">Sistema de IA Integrado</span>
-              </div>
-              <div className="text-xs text-green-700 space-y-1">
-                <div>• <strong>Engine:</strong> IA de análise comportamental avançada</div>
-                <div>• <strong>Processamento:</strong> {loadingMetrics[0].value} respostas analisadas</div>
-                <div>• <strong>Resultado:</strong> Será usado em campanhas SMS/Email/WhatsApp personalizadas</div>
-                <div>• <strong>Duração:</strong> {loadingDuration} segundos de processamento</div>
-              </div>
-            </div>
-            
-            <div className="text-xs text-indigo-600 text-center bg-indigo-100 p-2 rounded-lg">
-              🤖 <strong>IA Ativa:</strong> Processando {loadingMetrics.length} métricas • <strong>Duração:</strong> {loadingDuration}s • <strong>Precisão:</strong> {loadingMetrics[3].value}
-            </div>
+            <style jsx>{`
+              @keyframes progressStriped {
+                0% { background-position: 0 0; }
+                100% { background-position: 20px 0; }
+              }
+              
+              @keyframes rainbowAnimation {
+                0% { background-image: linear-gradient(to right, #4cd964, #5ac8fa, #007aff, #7DC8E8, #5856d6, #ff2d55); }
+                20% { background-image: linear-gradient(to right, #5ac8fa, #007aff, #7DC8E8, #5856d6, #ff2d55, #4cd964); }
+                40% { background-image: linear-gradient(to right, #007aff, #7DC8E8, #5856d6, #ff2d55, #4cd964, #5ac8fa); }
+                60% { background-image: linear-gradient(to right, #7DC8E8, #5856d6, #ff2d55, #4cd964, #5ac8fa, #007aff); }
+                100% { background-image: linear-gradient(to right, #5856d6, #ff2d55, #4cd964, #5ac8fa, #007aff, #7DC8E8); }
+              }
+            `}</style>
           </div>
         );
 
@@ -4507,42 +4472,7 @@ const gameElementCategories = [
           </div>
         );
 
-      case "progress_bar":
-        return (
-          <div className="w-full space-y-3 p-4 border border-gray-200 rounded-lg bg-white">
-            <div className="flex items-center justify-between">
-              <h4 className="font-semibold text-gray-800">
-                {element.progressText || "Carregando..."}
-              </h4>
-              {element.progressShowPercentage && (
-                <span className="text-sm font-mono text-gray-600">0%</span>
-              )}
-            </div>
-            
-            <div className="w-full bg-gray-200 rounded-full" style={{ height: element.progressHeight || 8 }}>
-              <div 
-                className="h-full rounded-full transition-all duration-300"
-                style={{ 
-                  width: "0%",
-                  backgroundColor: element.progressColor || "#3b82f6",
-                  borderRadius: element.progressStyle === "squared" ? "0" : 
-                               element.progressStyle === "pill" ? "50px" : "4px"
-                }}
-              />
-            </div>
-            
-            <div className="text-xs text-gray-500 text-center">
-              Duração: {element.progressDuration || 5}s • Animação: {element.progressAnimation || "smooth"}
-            </div>
-            
-            <div className="flex items-center justify-center gap-2 text-xs bg-blue-50 p-2 rounded border border-blue-200">
-              <BarChart3 className="w-4 h-4 text-blue-600" />
-              <span className="text-blue-700">
-                <strong>Barra de Progresso:</strong> Animação automática até 100%
-              </span>
-            </div>
-          </div>
-        );
+
 
       case "loading_with_question":
         return (
@@ -5241,7 +5171,7 @@ const gameElementCategories = [
                 </div>
               )}
 
-              {(selectedElementData.type === "textarea" || selectedElementData.type === "date" || selectedElementData.type === "checkbox") && (
+              {(selectedElementData.type === "textarea" || selectedElementData.type === "date") && (
                 <div className="space-y-4">
                   <div>
                     <Label htmlFor="question-label">Pergunta/Label</Label>
@@ -5254,16 +5184,100 @@ const gameElementCategories = [
                   </div>
                   
                   {selectedElementData.type === "textarea" && (
-                    <div>
-                      <Label htmlFor="textarea-placeholder">Placeholder</Label>
-                      <Input
-                        id="textarea-placeholder"
-                        value={selectedElementData.placeholder || ""}
-                        onChange={(e) => updateElement(selectedElementData.id, { placeholder: e.target.value })}
-                        className="mt-1"
-                        placeholder="Digite sua resposta aqui..."
-                      />
-                    </div>
+                    <>
+                      {/* Formatação de Texto para Textarea */}
+                      <div className="border rounded-lg p-4 bg-gray-50">
+                        <h4 className="font-semibold text-sm mb-3">🎨 Formatação de Texto</h4>
+                        
+                        <div className="grid grid-cols-2 gap-3">
+                          {/* Tamanho da fonte */}
+                          <div>
+                            <Label className="text-xs">Tamanho</Label>
+                            <select 
+                              className="w-full px-2 py-1 border rounded text-xs mt-1"
+                              value={selectedElementData.fontSize || "base"}
+                              onChange={(e) => updateElement(selectedElementData.id, { fontSize: e.target.value })}
+                            >
+                              <option value="xs">Extra Pequeno</option>
+                              <option value="sm">Pequeno</option>
+                              <option value="base">Normal</option>
+                              <option value="lg">Grande</option>
+                              <option value="xl">Extra Grande</option>
+                            </select>
+                          </div>
+
+                          {/* Peso da fonte */}
+                          <div>
+                            <Label className="text-xs">Peso</Label>
+                            <select 
+                              className="w-full px-2 py-1 border rounded text-xs mt-1"
+                              value={selectedElementData.fontWeight || "normal"}
+                              onChange={(e) => updateElement(selectedElementData.id, { fontWeight: e.target.value })}
+                            >
+                              <option value="light">Leve</option>
+                              <option value="normal">Normal</option>
+                              <option value="medium">Médio</option>
+                              <option value="semibold">Semi-negrito</option>
+                              <option value="bold">Negrito</option>
+                            </select>
+                          </div>
+                        </div>
+                        
+                        <div className="grid grid-cols-2 gap-3 mt-3">
+                          {/* Alinhamento */}
+                          <div>
+                            <Label className="text-xs">Alinhamento</Label>
+                            <select 
+                              className="w-full px-2 py-1 border rounded text-xs mt-1"
+                              value={selectedElementData.textAlign || "left"}
+                              onChange={(e) => updateElement(selectedElementData.id, { textAlign: e.target.value })}
+                            >
+                              <option value="left">Esquerda</option>
+                              <option value="center">Centro</option>
+                              <option value="right">Direita</option>
+                            </select>
+                          </div>
+
+                          {/* Largura do Campo */}
+                          <div>
+                            <Label className="text-xs">Largura</Label>
+                            <select 
+                              className="w-full px-2 py-1 border rounded text-xs mt-1"
+                              value={selectedElementData.fieldWidth || "full"}
+                              onChange={(e) => updateElement(selectedElementData.id, { fieldWidth: e.target.value })}
+                            >
+                              <option value="small">Pequeno</option>
+                              <option value="medium">Médio</option>
+                              <option value="large">Grande</option>
+                              <option value="full">Largura Total</option>
+                            </select>
+                          </div>
+                        </div>
+                      </div>
+                      
+                      <div>
+                        <Label htmlFor="textarea-placeholder">Placeholder</Label>
+                        <Input
+                          id="textarea-placeholder"
+                          value={selectedElementData.placeholder || ""}
+                          onChange={(e) => updateElement(selectedElementData.id, { placeholder: e.target.value })}
+                          className="mt-1"
+                          placeholder="Digite sua resposta aqui..."
+                        />
+                      </div>
+
+                      <div>
+                        <Label htmlFor="maxLength">Limite de Caracteres</Label>
+                        <Input
+                          id="maxLength"
+                          type="number"
+                          value={selectedElementData.maxLength || ""}
+                          onChange={(e) => updateElement(selectedElementData.id, { maxLength: e.target.value })}
+                          className="mt-1"
+                          placeholder="Ex: 500"
+                        />
+                      </div>
+                    </>
                   )}
 
                   <div className="flex items-center space-x-2">
@@ -5775,17 +5789,89 @@ const gameElementCategories = [
                 </div>
               )}
 
-              {(selectedElementData.type === "text" || selectedElementData.type === "email" || selectedElementData.type === "phone") && (
-                <div>
-                  <Label htmlFor="question">Pergunta/Label</Label>
-                  <Input
-                    id="question"
-                    value={selectedElementData.question || ""}
-                    onChange={(e) => updateElement(selectedElementData.id, { question: e.target.value })}
-                    className="mt-1"
-                  />
+              {(selectedElementData.type === "text" || selectedElementData.type === "email" || selectedElementData.type === "phone" || selectedElementData.type === "number") && (
+                <div className="space-y-4">
+                  <div>
+                    <Label htmlFor="question">Pergunta/Label</Label>
+                    <Input
+                      id="question"
+                      value={selectedElementData.question || ""}
+                      onChange={(e) => updateElement(selectedElementData.id, { question: e.target.value })}
+                      className="mt-1"
+                    />
+                  </div>
                   
-                  <div className="mt-4">
+                  {/* Formatação de Texto */}
+                  <div className="border rounded-lg p-4 bg-gray-50">
+                    <h4 className="font-semibold text-sm mb-3">🎨 Formatação de Texto</h4>
+                    
+                    <div className="grid grid-cols-2 gap-3">
+                      {/* Tamanho da fonte */}
+                      <div>
+                        <Label className="text-xs">Tamanho</Label>
+                        <select 
+                          className="w-full px-2 py-1 border rounded text-xs mt-1"
+                          value={selectedElementData.fontSize || "base"}
+                          onChange={(e) => updateElement(selectedElementData.id, { fontSize: e.target.value })}
+                        >
+                          <option value="xs">Extra Pequeno</option>
+                          <option value="sm">Pequeno</option>
+                          <option value="base">Normal</option>
+                          <option value="lg">Grande</option>
+                          <option value="xl">Extra Grande</option>
+                        </select>
+                      </div>
+
+                      {/* Peso da fonte */}
+                      <div>
+                        <Label className="text-xs">Peso</Label>
+                        <select 
+                          className="w-full px-2 py-1 border rounded text-xs mt-1"
+                          value={selectedElementData.fontWeight || "normal"}
+                          onChange={(e) => updateElement(selectedElementData.id, { fontWeight: e.target.value })}
+                        >
+                          <option value="light">Leve</option>
+                          <option value="normal">Normal</option>
+                          <option value="medium">Médio</option>
+                          <option value="semibold">Semi-negrito</option>
+                          <option value="bold">Negrito</option>
+                        </select>
+                      </div>
+                    </div>
+                    
+                    <div className="grid grid-cols-2 gap-3 mt-3">
+                      {/* Alinhamento */}
+                      <div>
+                        <Label className="text-xs">Alinhamento</Label>
+                        <select 
+                          className="w-full px-2 py-1 border rounded text-xs mt-1"
+                          value={selectedElementData.textAlign || "left"}
+                          onChange={(e) => updateElement(selectedElementData.id, { textAlign: e.target.value })}
+                        >
+                          <option value="left">Esquerda</option>
+                          <option value="center">Centro</option>
+                          <option value="right">Direita</option>
+                        </select>
+                      </div>
+
+                      {/* Largura do Campo */}
+                      <div>
+                        <Label className="text-xs">Largura</Label>
+                        <select 
+                          className="w-full px-2 py-1 border rounded text-xs mt-1"
+                          value={selectedElementData.fieldWidth || "full"}
+                          onChange={(e) => updateElement(selectedElementData.id, { fieldWidth: e.target.value })}
+                        >
+                          <option value="small">Pequeno</option>
+                          <option value="medium">Médio</option>
+                          <option value="large">Grande</option>
+                          <option value="full">Largura Total</option>
+                        </select>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div>
                     <Label htmlFor="placeholder">Placeholder</Label>
                     <Input
                       id="placeholder"
@@ -5796,19 +5882,29 @@ const gameElementCategories = [
                     />
                   </div>
 
-                  <div className="mt-4">
-                    <div className="flex items-center space-x-2">
-                      <input
-                        type="checkbox"
-                        id="required"
-                        checked={selectedElementData.required || false}
-                        onChange={(e) => updateElement(selectedElementData.id, { required: e.target.checked })}
-                      />
-                      <Label htmlFor="required">Campo obrigatório</Label>
-                    </div>
+                  <div>
+                    <Label htmlFor="maxLength">Limite de Caracteres</Label>
+                    <Input
+                      id="maxLength"
+                      type="number"
+                      value={selectedElementData.maxLength || ""}
+                      onChange={(e) => updateElement(selectedElementData.id, { maxLength: e.target.value })}
+                      className="mt-1"
+                      placeholder="Ex: 100"
+                    />
                   </div>
 
-                  <div className="mt-4">
+                  <div className="flex items-center space-x-2">
+                    <input
+                      type="checkbox"
+                      id="required"
+                      checked={selectedElementData.required || false}
+                      onChange={(e) => updateElement(selectedElementData.id, { required: e.target.checked })}
+                    />
+                    <Label htmlFor="required">Campo obrigatório</Label>
+                  </div>
+
+                  <div>
                     <Label htmlFor="field-id">ID do Campo (para captura de leads)</Label>
                     <Input
                       id="field-id"
@@ -7860,6 +7956,241 @@ const gameElementCategories = [
                       <option value="medium">Médio (40px)</option>
                       <option value="large">Grande (80px)</option>
                     </select>
+                  </div>
+                </div>
+              )}
+
+              {/* Propriedades para Progresso + Pergunta */}
+              {selectedElementData.type === "loading_question" && (
+                <div className="space-y-4">
+                  <div>
+                    <Label>Texto do Carregamento</Label>
+                    <Input
+                      value={selectedElementData.loadingText || "Processando..."}
+                      onChange={(e) => updateElement(selectedElementData.id, { loadingText: e.target.value })}
+                      placeholder="Processando..."
+                      className="mt-1"
+                    />
+                  </div>
+
+                  <div>
+                    <Label>Duração (segundos)</Label>
+                    <Input
+                      type="number"
+                      min="1"
+                      max="20"
+                      value={selectedElementData.loadingDuration || 3}
+                      onChange={(e) => updateElement(selectedElementData.id, { loadingDuration: parseInt(e.target.value) })}
+                      placeholder="3"
+                      className="mt-1"
+                    />
+                  </div>
+
+                  <div>
+                    <Label>Cor da Barra de Progresso</Label>
+                    <div className="flex gap-2 mt-1">
+                      <Input
+                        type="color"
+                        value={selectedElementData.loadingBarColor || "#10B981"}
+                        onChange={(e) => updateElement(selectedElementData.id, { loadingBarColor: e.target.value })}
+                        className="w-16 h-10 p-1"
+                      />
+                      <Input
+                        value={selectedElementData.loadingBarColor || "#10B981"}
+                        onChange={(e) => updateElement(selectedElementData.id, { loadingBarColor: e.target.value })}
+                        placeholder="#10B981"
+                        className="flex-1"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <Label>Cor do Fundo da Barra</Label>
+                    <div className="flex gap-2 mt-1">
+                      <Input
+                        type="color"
+                        value={selectedElementData.loadingBarBackgroundColor || "#E5E7EB"}
+                        onChange={(e) => updateElement(selectedElementData.id, { loadingBarBackgroundColor: e.target.value })}
+                        className="w-16 h-10 p-1"
+                      />
+                      <Input
+                        value={selectedElementData.loadingBarBackgroundColor || "#E5E7EB"}
+                        onChange={(e) => updateElement(selectedElementData.id, { loadingBarBackgroundColor: e.target.value })}
+                        placeholder="#E5E7EB"
+                        className="flex-1"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <Label>Pergunta do Popup</Label>
+                    <Input
+                      value={selectedElementData.popupQuestion || "Você gostaria de continuar?"}
+                      onChange={(e) => updateElement(selectedElementData.id, { popupQuestion: e.target.value })}
+                      placeholder="Você gostaria de continuar?"
+                      className="mt-1"
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <Label>Texto Botão "Sim"</Label>
+                      <Input
+                        value={selectedElementData.popupYesText || "Sim"}
+                        onChange={(e) => updateElement(selectedElementData.id, { popupYesText: e.target.value })}
+                        placeholder="Sim"
+                        className="mt-1"
+                      />
+                    </div>
+                    <div>
+                      <Label>Texto Botão "Não"</Label>
+                      <Input
+                        value={selectedElementData.popupNoText || "Não"}
+                        onChange={(e) => updateElement(selectedElementData.id, { popupNoText: e.target.value })}
+                        placeholder="Não"
+                        className="mt-1"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <Label>ID da Resposta (para usar como variável)</Label>
+                    <Input
+                      value={selectedElementData.responseId || ""}
+                      onChange={(e) => updateElement(selectedElementData.id, { responseId: e.target.value })}
+                      placeholder="pergunta_decisao"
+                      className="mt-1"
+                    />
+                    <p className="text-xs text-gray-500 mt-1">
+                      Use {'{'}resposta{'}'} para referenciar a resposta (Sim/Não) em outras campanhas
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              {/* Propriedades para Barra de Progresso */}
+              {selectedElementData.type === "progress_bar" && (
+                <div className="space-y-4">
+                  <div>
+                    <Label>Título da Barra</Label>
+                    <Input
+                      value={selectedElementData.progressTitle || "Progresso"}
+                      onChange={(e) => updateElement(selectedElementData.id, { progressTitle: e.target.value })}
+                      placeholder="Progresso"
+                      className="mt-1"
+                    />
+                  </div>
+
+                  <div>
+                    <Label>Estilo da Animação</Label>
+                    <select 
+                      className="w-full px-3 py-2 border rounded-md mt-1"
+                      value={selectedElementData.progressStyle || "striped"}
+                      onChange={(e) => updateElement(selectedElementData.id, { progressStyle: e.target.value })}
+                    >
+                      <option value="striped">Listrado (Striped)</option>
+                      <option value="rounded">Arredondado (Rounded)</option>
+                      <option value="rainbow">Arco-íris (Rainbow)</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <Label>Cor da Barra</Label>
+                    <div className="flex gap-2 mt-1">
+                      <Input
+                        type="color"
+                        value={selectedElementData.progressColor || "#FCBC51"}
+                        onChange={(e) => updateElement(selectedElementData.id, { progressColor: e.target.value })}
+                        className="w-16 h-10 p-1"
+                      />
+                      <Input
+                        value={selectedElementData.progressColor || "#FCBC51"}
+                        onChange={(e) => updateElement(selectedElementData.id, { progressColor: e.target.value })}
+                        placeholder="#FCBC51"
+                        className="flex-1"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <Label>Cor do Fundo</Label>
+                    <div className="flex gap-2 mt-1">
+                      <Input
+                        type="color"
+                        value={selectedElementData.progressBackgroundColor || "#2c303a"}
+                        onChange={(e) => updateElement(selectedElementData.id, { progressBackgroundColor: e.target.value })}
+                        className="w-16 h-10 p-1"
+                      />
+                      <Input
+                        value={selectedElementData.progressBackgroundColor || "#2c303a"}
+                        onChange={(e) => updateElement(selectedElementData.id, { progressBackgroundColor: e.target.value })}
+                        placeholder="#2c303a"
+                        className="flex-1"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <Label>Altura (px)</Label>
+                      <Input
+                        type="number"
+                        min="10"
+                        max="50"
+                        value={selectedElementData.progressHeight || 18}
+                        onChange={(e) => updateElement(selectedElementData.id, { progressHeight: parseInt(e.target.value) })}
+                        placeholder="18"
+                        className="mt-1"
+                      />
+                    </div>
+                    <div>
+                      <Label>Largura (%)</Label>
+                      <Input
+                        type="number"
+                        min="1"
+                        max="100"
+                        value={selectedElementData.progressWidth || 75}
+                        onChange={(e) => updateElement(selectedElementData.id, { progressWidth: parseInt(e.target.value) })}
+                        placeholder="75"
+                        className="mt-1"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <Label>Arredondamento das Bordas (px)</Label>
+                    <Input
+                      type="number"
+                      min="0"
+                      max="30"
+                      value={selectedElementData.progressBorderRadius || 6}
+                      onChange={(e) => updateElement(selectedElementData.id, { progressBorderRadius: parseInt(e.target.value) })}
+                      placeholder="6"
+                      className="mt-1"
+                    />
+                  </div>
+
+                  <div>
+                    <Label>Duração da Animação (segundos)</Label>
+                    <Input
+                      type="number"
+                      min="1"
+                      max="20"
+                      value={selectedElementData.animationDuration || 6}
+                      onChange={(e) => updateElement(selectedElementData.id, { animationDuration: parseInt(e.target.value) })}
+                      placeholder="6"
+                      className="mt-1"
+                    />
+                  </div>
+
+                  <div className="flex items-center space-x-2">
+                    <input
+                      type="checkbox"
+                      id="show-percentage"
+                      checked={selectedElementData.showPercentage !== false}
+                      onChange={(e) => updateElement(selectedElementData.id, { showPercentage: e.target.checked })}
+                    />
+                    <Label htmlFor="show-percentage" className="text-sm">Mostrar porcentagem</Label>
                   </div>
                 </div>
               )}

@@ -208,6 +208,21 @@ No additional files or separate projects are maintained in this repository.
 
 ```
 Changelog:
+- July 16, 2025. PAINÉIS DE PROPRIEDADES COMPLETOS IMPLEMENTADOS - Customização total para elementos "Progresso + Pergunta" e "Barra de Progresso":
+  * Adicionado painel completo de propriedades para elemento "loading_question" (renomeado para "Progresso + Pergunta")
+  * Implementadas configurações: texto de carregamento, duração, cores da barra, pergunta do popup, textos dos botões Sim/Não
+  * Adicionado campo ID da resposta para integração com sistema de campanhas (usar {resposta} em SMS/Email/WhatsApp)
+  * Criado painel de propriedades para elemento "progress_bar" (Barra de Progresso) com customização completa:
+    - Título da barra editável
+    - 3 estilos de animação: Listrado (Striped), Arredondado (Rounded), Arco-íris (Rainbow)
+    - Cores personalizáveis: cor da barra e cor do fundo
+    - Dimensões ajustáveis: altura (10-50px), largura (1-100%), arredondamento das bordas (0-30px)
+    - Duração da animação configurável (1-20 segundos)
+    - Opção de mostrar/ocultar porcentagem
+  * Removido case duplicado "progress_bar" que causava erro de compilação
+  * Painéis seguem design consistente com outros elementos: labels claros, inputs apropriados, seletores de cor visuais
+  * Sistema permite total personalização visual e funcional dos elementos de progresso
+  * Integração completa com sistema de campanhas através de responseId personalizados
 - July 16, 2025. REMOÇÃO DE ASTERISCOS OBRIGATÓRIOS IMPLEMENTADA - Limpeza visual completa da interface:
   * Removidos todos os asteriscos (*) vermelhos que apareciam ao marcar "resposta obrigatória"
   * Limpeza aplicada em todos os componentes de renderização:
