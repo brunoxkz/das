@@ -6120,10 +6120,10 @@ Hoje você vai aprender ${project.title} - método revolucionário que já ajudo
     try {
       const stmt = sqlite.prepare(`
         INSERT INTO checkout_products (
-          id, userId, name, description, price, category, 
-          features, paymentMode, status, customization, 
-          createdAt, updatedAt
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+          id, userId, name, description, price, currency, category, 
+          features, paymentMode, recurringInterval, trialPeriod, trialPrice,
+          status, customization, createdAt, updatedAt
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       `);
       
       stmt.run(
@@ -6132,9 +6132,13 @@ Hoje você vai aprender ${project.title} - método revolucionário que já ajudo
         checkout.name,
         checkout.description,
         checkout.price,
+        checkout.currency || 'BRL',
         checkout.category || 'digital',
         checkout.features || 'Funcionalidades padrão',
         checkout.paymentMode || 'one_time',
+        checkout.recurringInterval || null,
+        checkout.trialPeriod || 0,
+        checkout.trialPrice || 0,
         checkout.status || 'active',
         JSON.stringify(checkout.customization || {}),
         Date.now(),
@@ -6970,6 +6974,84 @@ Hoje você vai aprender ${project.title} - método revolucionário que já ajudo
     } catch (error) {
       console.error('Erro ao buscar gateways de pagamento:', error);
       return [];
+    }
+  }
+
+  // =============================
+  // CHECKOUT PRODUCT FUNCTIONS
+  // =============================
+
+  // Buscar todos os produtos de checkout
+  async getCheckoutProducts() {
+    try {
+      return this.db.prepare("SELECT * FROM checkout_products ORDER BY created_at DESC").all();
+    } catch (error) {
+      console.error('Erro ao buscar produtos de checkout:', error);
+      return [];
+    }
+  }
+
+  // Criar produto de checkout
+  async createCheckout(productData: any) {
+    const now = new Date().toISOString();
+    const stmt = this.db.prepare(`
+      INSERT INTO checkout_products (
+        id, user_id, name, description, price, currency, 
+        category, features, payment_mode, recurring_interval, 
+        trial_period, trial_price, status, created_at, updated_at
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `);
+    
+    stmt.run(
+      productData.id,
+      productData.userId,
+      productData.name,
+      productData.description,
+      productData.price,
+      productData.currency || 'BRL',
+      productData.category,
+      productData.features || '',
+      productData.paymentMode || 'one_time',
+      productData.recurringInterval || null,
+      productData.trialPeriod || null,
+      productData.trialPrice || null,
+      productData.status || 'active',
+      now,
+      now
+    );
+    
+    return this.db.prepare("SELECT * FROM checkout_products WHERE id = ?").get(productData.id);
+  }
+
+  // Atualizar produto de checkout
+  async updateCheckout(id: string, updates: any) {
+    try {
+      const now = new Date().toISOString();
+      const fields = Object.keys(updates).map(key => `${key} = ?`).join(', ');
+      const values = Object.values(updates);
+    
+      const stmt = this.db.prepare(`
+        UPDATE checkout_products 
+        SET ${fields}, updated_at = ? 
+        WHERE id = ?
+      `);
+      
+      stmt.run(...values, now, id);
+      return this.db.prepare("SELECT * FROM checkout_products WHERE id = ?").get(id);
+    } catch (error) {
+      console.error('Erro ao atualizar produto de checkout:', error);
+      throw error;
+    }
+  }
+
+  // Deletar produto de checkout
+  async deleteCheckout(id: string) {
+    try {
+      const stmt = this.db.prepare("DELETE FROM checkout_products WHERE id = ?");
+      stmt.run(id);
+    } catch (error) {
+      console.error('Erro ao deletar produto de checkout:', error);
+      throw error;
     }
   }
 

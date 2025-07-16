@@ -859,8 +859,38 @@ export function runMigrations() {
     // sqlite.exec(createTypebotIntegrationsTable);
     */
 
+    // Criar tabela checkout_products com funcionalidades completas
+    const createCheckoutProductsTable = `
+      CREATE TABLE IF NOT EXISTS checkout_products (
+        id TEXT PRIMARY KEY,
+        userId TEXT NOT NULL,
+        name TEXT NOT NULL,
+        description TEXT,
+        price REAL NOT NULL,
+        currency TEXT NOT NULL DEFAULT 'BRL',
+        category TEXT NOT NULL DEFAULT 'digital',
+        features TEXT NOT NULL DEFAULT '[]',
+        paymentMode TEXT NOT NULL DEFAULT 'one_time',
+        recurringInterval TEXT,
+        trialPeriod INTEGER DEFAULT 0,
+        trialPrice REAL DEFAULT 0,
+        status TEXT NOT NULL DEFAULT 'active',
+        customization TEXT NOT NULL DEFAULT '{}',
+        stripeProductId TEXT,
+        stripePriceId TEXT,
+        stripeTrialPriceId TEXT,
+        paymentLink TEXT,
+        createdAt INTEGER NOT NULL,
+        updatedAt INTEGER NOT NULL,
+        FOREIGN KEY (userId) REFERENCES users(id)
+      )
+    `;
+
+    sqlite.exec(createCheckoutProductsTable);
+
     console.log('✅ Fresh SQLite database schema created successfully');
     console.log('📞 Voice calling system tables created and ready');
+    console.log('🛒 Checkout products table created successfully');
     console.log('🤖 TypeBot system: DESATIVADO (conforme solicitado)');
   }
 }

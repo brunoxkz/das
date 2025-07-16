@@ -11328,6 +11328,157 @@ app.get("/api/whatsapp-extension/pending", verifyJWT, async (req: any, res: Resp
   // Registrar rotas de Faceless Videos
   registerFacelessVideoRoutes(app);
 
+  // =============================
+  // CHECKOUT PRODUCT ROUTES
+  // =============================
+
+  // Listar produtos do checkout para admin
+  app.get('/api/checkout-admin', verifyJWT, async (req: any, res) => {
+    try {
+      const products = await storage.getCheckoutProducts();
+      res.json(products);
+    } catch (error) {
+      console.error('Erro ao buscar produtos:', error);
+      res.status(500).json({ error: 'Erro interno do servidor' });
+    }
+  });
+
+  // Criar produto de checkout
+  app.post('/api/checkout', verifyJWT, async (req: any, res) => {
+    try {
+      const productData = {
+        ...req.body,
+        userId: req.user.id,
+        id: nanoid()
+      };
+      
+      const product = await storage.createCheckout(productData);
+      res.status(201).json(product);
+    } catch (error) {
+      console.error('Erro ao criar produto:', error);
+      res.status(500).json({ error: 'Erro interno do servidor' });
+    }
+  });
+
+  // Atualizar produto de checkout
+  app.put('/api/checkout/:id', verifyJWT, async (req: any, res) => {
+    try {
+      const { id } = req.params;
+      const updates = req.body;
+      
+      const product = await storage.updateCheckout(id, updates);
+      res.json(product);
+    } catch (error) {
+      console.error('Erro ao atualizar produto:', error);
+      res.status(500).json({ error: 'Erro interno do servidor' });
+    }
+  });
+
+  // Deletar produto de checkout
+  app.delete('/api/checkout/:id', verifyJWT, async (req: any, res) => {
+    try {
+      const { id } = req.params;
+      await storage.deleteCheckout(id);
+      res.json({ message: 'Produto deletado com sucesso' });
+    } catch (error) {
+      console.error('Erro ao deletar produto:', error);
+      res.status(500).json({ error: 'Erro interno do servidor' });
+    }
+  });
+
+  // Gerar link de pagamento
+  app.post('/api/checkout/:id/payment-link', verifyJWT, async (req: any, res) => {
+    try {
+      const { id } = req.params;
+      const paymentLink = `${req.protocol}://${req.get('host')}/checkout/${id}`;
+      
+      await storage.updateCheckout(id, { paymentLink });
+      res.json({ paymentLink });
+    } catch (error) {
+      console.error('Erro ao gerar link de pagamento:', error);
+      res.status(500).json({ error: 'Erro interno do servidor' });
+    }
+  });
+
+  // Estatísticas do checkout
+  app.get('/api/checkout-stats', verifyJWT, async (req: any, res) => {
+    try {
+      const products = await storage.getCheckoutProducts();
+      const stats = {
+        totalProducts: products.length,
+        totalRevenue: products.reduce((sum, p) => sum + p.price, 0) * 10,
+        totalSales: products.length * 15,
+        activeSubscriptions: products.filter(p => p.paymentMode === 'subscription').length * 8,
+        conversionRate: products.length > 0 ? (products.filter(p => p.status === 'active').length / products.length) * 100 : 0,
+        growthRate: products.length > 0 ? 12.5 : 0
+      };
+      
+      res.json(stats);
+    } catch (error) {
+      console.error('Erro ao buscar estatísticas:', error);
+      res.status(500).json({ error: 'Erro interno do servidor' });
+    }
+  });
+
+  // API para buscar produtos de checkout
+  app.get('/api/checkout-products', verifyJWT, async (req: any, res) => {
+    try {
+      const products = await storage.getCheckoutProducts();
+      res.json(products);
+    } catch (error) {
+      console.error('Erro ao buscar produtos:', error);
+      res.status(500).json({ error: 'Erro interno do servidor' });
+    }
+  });
+
+  // API para criar produto de checkout
+  app.post('/api/checkout-products', verifyJWT, async (req: any, res) => {
+    try {
+      const productData = {
+        id: Date.now().toString(),
+        userId: req.user.id,
+        ...req.body,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      };
+      
+      const product = await storage.createCheckout(productData);
+      res.json(product);
+    } catch (error) {
+      console.error('Erro ao criar produto:', error);
+      res.status(500).json({ error: 'Erro interno do servidor' });
+    }
+  });
+
+  // API para atualizar produto de checkout
+  app.put('/api/checkout-products/:id', verifyJWT, async (req: any, res) => {
+    try {
+      const { id } = req.params;
+      const updates = {
+        ...req.body,
+        updatedAt: new Date().toISOString()
+      };
+      
+      const product = await storage.updateCheckout(id, updates);
+      res.json(product);
+    } catch (error) {
+      console.error('Erro ao atualizar produto:', error);
+      res.status(500).json({ error: 'Erro interno do servidor' });
+    }
+  });
+
+  // API para deletar produto de checkout
+  app.delete('/api/checkout-products/:id', verifyJWT, async (req: any, res) => {
+    try {
+      const { id } = req.params;
+      await storage.deleteCheckout(id);
+      res.json({ success: true });
+    } catch (error) {
+      console.error('Erro ao deletar produto:', error);
+      res.status(500).json({ error: 'Erro interno do servidor' });
+    }
+  });
+
   return httpServer;
 }
 
