@@ -15,6 +15,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { useLanguage } from "@/hooks/useLanguage";
 
 // Componente para exibir logs da campanha
 const CampaignLogs = ({ campaignId }: { campaignId: string }) => {
@@ -219,6 +220,7 @@ export default function SMSCampaignsAdvanced() {
   const { user } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { t } = useLanguage();
   
   // Estados do formulário
   const [currentStep, setCurrentStep] = useState(1);
@@ -471,11 +473,11 @@ export default function SMSCampaignsAdvanced() {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Target className="w-5 h-5" />
-                {currentStep === 1 && "Selecione o Tipo de Campanha"}
-                {currentStep === 2 && "Segmentação de Leads"}
-                {currentStep === 3 && "Criação da Mensagem"}
-                {currentStep === 4 && "Agendamento"}
-                {currentStep === 5 && "Resumo da Campanha"}
+                {currentStep === 1 && t("sms.selectCampaignType")}
+                {currentStep === 2 && t("sms.leadSegmentation")}
+                {currentStep === 3 && t("sms.messageCreation")}
+                {currentStep === 4 && t("sms.scheduling")}
+                {currentStep === 5 && t("sms.campaignSummary")}
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -519,13 +521,13 @@ export default function SMSCampaignsAdvanced() {
                   {form.type !== 'mass' ? (
                     <>
                       <div>
-                        <Label htmlFor="funnel">Quiz/Funil</Label>
+                        <Label htmlFor="funnel">{t("sms.quizFunnel")}</Label>
                         <Select 
                           value={form.funnelId} 
                           onValueChange={(value) => setForm(prev => ({ ...prev, funnelId: value }))}
                         >
                           <SelectTrigger>
-                            <SelectValue placeholder="Selecione um quiz" />
+                            <SelectValue placeholder={t("sms.selectQuiz")} />
                           </SelectTrigger>
                           <SelectContent>
                             {quizzes.map((quiz: Quiz) => (
@@ -538,7 +540,7 @@ export default function SMSCampaignsAdvanced() {
                       </div>
                       
                       <div>
-                        <Label htmlFor="segment">Segmento</Label>
+                        <Label htmlFor="segment">{t("sms.segment")}</Label>
                         <Select 
                           value={form.segment} 
                           onValueChange={(value: 'completed' | 'abandoned' | 'all') => 
@@ -549,7 +551,7 @@ export default function SMSCampaignsAdvanced() {
                           </SelectTrigger>
                           <SelectContent>
                             <SelectItem value="completed">
-                              ✅ Completou o quiz 
+                              ✅ {t("sms.completedQuiz")} 
                               {leadsBySegment && (
                                 <Badge variant="secondary" className="ml-2">
                                   {leadsBySegment.counts.completed} leads
@@ -557,7 +559,7 @@ export default function SMSCampaignsAdvanced() {
                               )}
                             </SelectItem>
                             <SelectItem value="abandoned">
-                              ❌ Abandonou o quiz
+                              ❌ {t("sms.abandonedQuiz")}
                               {leadsBySegment && (
                                 <Badge variant="secondary" className="ml-2">
                                   {leadsBySegment.counts.abandoned} leads
@@ -565,7 +567,7 @@ export default function SMSCampaignsAdvanced() {
                               )}
                             </SelectItem>
                             <SelectItem value="all">
-                              👥 Todos os leads
+                              👥 {t("sms.allLeads")}
                               {leadsBySegment && (
                                 <Badge variant="secondary" className="ml-2">
                                   {leadsBySegment.counts.all} leads
@@ -582,7 +584,7 @@ export default function SMSCampaignsAdvanced() {
                               <div className="flex items-center gap-2">
                                 <Users className="w-4 h-4 text-blue-600" />
                                 <span className="text-sm font-medium">
-                                  {leadsBySegment.counts[form.segment]} leads encontrados
+                                  {leadsBySegment.counts[form.segment]} {t("sms.leadsFound")}
                                 </span>
                               </div>
                               {leadsBySegment.counts[form.segment] > 0 && (
@@ -590,14 +592,14 @@ export default function SMSCampaignsAdvanced() {
                                   <DialogTrigger asChild>
                                     <Button variant="outline" size="sm">
                                       <Eye className="w-4 h-4 mr-1" />
-                                      Ver Lista
+                                      {t("sms.viewList")}
                                     </Button>
                                   </DialogTrigger>
                                   <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
                                     <DialogHeader>
                                       <DialogTitle className="flex items-center gap-2">
                                         <Users className="w-5 h-5" />
-                                        Lista de Leads - {form.segment === 'completed' ? 'Completaram' : form.segment === 'abandoned' ? 'Abandonaram' : 'Todos'}
+                                        {t("sms.leadsList")} - {form.segment === 'completed' ? t("sms.completed") : form.segment === 'abandoned' ? t("sms.abandoned") : t("sms.all")}
                                       </DialogTitle>
                                     </DialogHeader>
                                     <div className="space-y-2">
@@ -616,7 +618,7 @@ export default function SMSCampaignsAdvanced() {
                                               </p>
                                             </div>
                                             <Badge variant={lead.submittedAt ? 'default' : 'secondary'}>
-                                              {lead.submittedAt ? 'Completo' : 'Abandonado'}
+                                              {lead.submittedAt ? t("sms.complete") : t("sms.abandoned")}
                                             </Badge>
                                           </div>
                                         </div>

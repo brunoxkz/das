@@ -14,6 +14,7 @@ import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth-jwt";
 import { isUnauthorizedError } from "@/lib/authUtils";
+import { useLanguage } from "@/hooks/useLanguage";
 import { 
   Save, 
   Play, 
@@ -48,6 +49,7 @@ export default function QuizBuilder() {
   const { toast } = useToast();
   const { isAuthenticated, isLoading: authLoading } = useAuth();
   const queryClient = useQueryClient();
+  const { t } = useLanguage();
 
   const [quizData, setQuizData] = useState({
     title: "",
@@ -380,8 +382,8 @@ export default function QuizBuilder() {
       queryClient.invalidateQueries({ queryKey: ["/api/quizzes"] });
       
       toast({
-        title: "Quiz salvo com sucesso!",
-        description: "Dados salvos e cache atualizado.",
+        title: t("toasts.quizSaved"),
+        description: t("toasts.quizSavedDescription"),
       });
     },
     onError: (error) => {
