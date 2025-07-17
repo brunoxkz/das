@@ -7345,9 +7345,46 @@ Hoje você vai aprender ${project.title} - método revolucionário que já ajudo
 
   // ================ STRIPE SUBSCRIPTIONS METHODS ================
   
+  // Criar tabela de assinaturas do Stripe se não existir
+  private async ensureStripeSubscriptionsTable(): Promise<void> {
+    try {
+      await sqlite.exec(`
+        CREATE TABLE IF NOT EXISTS stripe_subscriptions (
+          id TEXT PRIMARY KEY,
+          userId TEXT NOT NULL,
+          stripeSubscriptionId TEXT,
+          stripeCustomerId TEXT,
+          stripePaymentMethodId TEXT,
+          status TEXT DEFAULT 'active',
+          planName TEXT,
+          planDescription TEXT,
+          activationFee REAL DEFAULT 0,
+          monthlyPrice REAL DEFAULT 0,
+          trialDays INTEGER DEFAULT 0,
+          trialStartDate TEXT,
+          trialEndDate TEXT,
+          currentPeriodStart TEXT,
+          currentPeriodEnd TEXT,
+          nextBillingDate TEXT,
+          canceledAt TEXT,
+          cancelAtPeriodEnd INTEGER DEFAULT 0,
+          customerName TEXT,
+          customerEmail TEXT,
+          activationInvoiceId TEXT,
+          metadata TEXT DEFAULT '{}',
+          createdAt INTEGER,
+          updatedAt INTEGER
+        )
+      `);
+    } catch (error) {
+      console.error('❌ ERRO ao criar tabela stripe_subscriptions:', error);
+    }
+  }
+
   // Criar assinatura Stripe
   async createStripeSubscription(subscription: any): Promise<any> {
     try {
+      await this.ensureStripeSubscriptionsTable();
       const timestamp = Date.now();
       const stmt = sqlite.prepare(`
         INSERT INTO stripe_subscriptions (
@@ -7359,32 +7396,35 @@ Hoje você vai aprender ${project.title} - método revolucionário que já ajudo
         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       `);
       
-      stmt.run(
-        subscription.id,
-        subscription.userId,
-        subscription.stripeSubscriptionId,
-        subscription.stripeCustomerId,
-        subscription.stripePaymentMethodId,
-        subscription.status,
-        subscription.planName,
-        subscription.planDescription,
-        subscription.activationFee,
-        subscription.monthlyPrice,
-        subscription.trialDays,
-        subscription.trialStartDate,
-        subscription.trialEndDate,
-        subscription.currentPeriodStart,
-        subscription.currentPeriodEnd,
-        subscription.nextBillingDate,
-        subscription.canceledAt,
-        subscription.cancelAtPeriodEnd || false,
-        subscription.customerName,
-        subscription.customerEmail,
-        subscription.activationInvoiceId,
+      // Converter todos os valores para tipos compatíveis com SQLite
+      const safeValues = [
+        subscription.id || null,
+        subscription.userId || null,
+        subscription.stripeSubscriptionId || null,
+        subscription.stripeCustomerId || null,
+        subscription.stripePaymentMethodId || null,
+        subscription.status || null,
+        subscription.planName || null,
+        subscription.planDescription || null,
+        typeof subscription.activationFee === 'number' ? subscription.activationFee : null,
+        typeof subscription.monthlyPrice === 'number' ? subscription.monthlyPrice : null,
+        typeof subscription.trialDays === 'number' ? subscription.trialDays : null,
+        subscription.trialStartDate || null,
+        subscription.trialEndDate || null,
+        subscription.currentPeriodStart || null,
+        subscription.currentPeriodEnd || null,
+        subscription.nextBillingDate || null,
+        subscription.canceledAt || null,
+        subscription.cancelAtPeriodEnd ? 1 : 0,
+        subscription.customerName || null,
+        subscription.customerEmail || null,
+        subscription.activationInvoiceId || null,
         JSON.stringify(subscription.metadata || {}),
         timestamp,
         timestamp
-      );
+      ];
+
+      stmt.run(...safeValues);
       
       return this.getStripeSubscriptionById(subscription.id);
     } catch (error) {
