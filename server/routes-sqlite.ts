@@ -3923,6 +3923,143 @@ export function registerSQLiteRoutes(app: Express): Server {
     }
   });
 
+  // ENDPOINT SIMULAÇÃO DE PAGAMENTO - SEM API REAL DO STRIPE
+  app.post("/api/stripe/simulate-payment", verifyJWT, async (req: any, res) => {
+    try {
+      const {
+        customerName,
+        customerEmail,
+        cardData,
+        trialDays = 3,
+        activationFee = 1.00,
+        monthlyPrice = 29.90,
+      } = req.body;
+
+      console.log('🎯 SIMULAÇÃO DE PAGAMENTO INICIADA:', {
+        customerName,
+        customerEmail,
+        cardData: cardData ? '***' : 'não fornecido',
+        trialDays,
+        activationFee,
+        monthlyPrice,
+      });
+
+      // Validações básicas
+      if (!customerName) {
+        return res.status(400).json({
+          success: false,
+          error: 'Nome do cliente é obrigatório',
+        });
+      }
+
+      // Simular IDs únicos
+      const uniqueId = Date.now();
+      const simulatedCustomerId = `cus_sim_${uniqueId}`;
+      const simulatedSubscriptionId = `sub_sim_${uniqueId}`;
+      const simulatedPaymentIntentId = `pi_sim_${uniqueId}`;
+      const simulatedInvoiceId = `in_sim_${uniqueId}`;
+
+      // Simular datas
+      const trialStart = new Date();
+      const trialEnd = new Date(trialStart.getTime() + (trialDays * 24 * 60 * 60 * 1000));
+      const nextBillingDate = new Date(trialEnd.getTime() + (30 * 24 * 60 * 60 * 1000));
+
+      // Criar registro de assinatura simulada no banco
+      const subscriptionRecord = {
+        id: nanoid(),
+        userId: req.user?.id || 'anonymous',
+        stripeSubscriptionId: simulatedSubscriptionId,
+        stripeCustomerId: simulatedCustomerId,
+        stripePaymentMethodId: `pm_sim_${uniqueId}`,
+        status: 'trialing',
+        planName: 'Vendzz Premium',
+        planDescription: 'Plano completo com todos os recursos - SIMULADO',
+        activationFee,
+        monthlyPrice,
+        trialDays,
+        trialStartDate: trialStart.getTime(),
+        trialEndDate: trialEnd.getTime(),
+        currentPeriodStart: trialStart.getTime(),
+        currentPeriodEnd: trialEnd.getTime(),
+        nextBillingDate: nextBillingDate.getTime(),
+        customerName,
+        customerEmail: customerEmail || 'cliente@teste.com',
+        activationInvoiceId: simulatedInvoiceId,
+        metadata: {
+          paymentMethodId: `pm_sim_${uniqueId}`,
+          activationFee,
+          monthlyPrice,
+          trialDays,
+          createdVia: 'checkout-stripe-final',
+          simulated: true
+        }
+      };
+
+      await storage.createStripeSubscription(subscriptionRecord);
+
+      console.log('✅ SIMULAÇÃO DE PAGAMENTO CONCLUÍDA:', {
+        customerId: simulatedCustomerId,
+        subscriptionId: simulatedSubscriptionId,
+        trialEndDate: trialEnd.toISOString(),
+        nextBillingDate: nextBillingDate.toISOString(),
+      });
+
+      res.json({
+        success: true,
+        message: 'Pagamento simulado com sucesso',
+        data: {
+          customer: {
+            id: simulatedCustomerId,
+            name: customerName,
+            email: customerEmail || 'cliente@teste.com'
+          },
+          subscription: {
+            id: simulatedSubscriptionId,
+            status: 'trialing',
+            trial_start: Math.floor(trialStart.getTime() / 1000),
+            trial_end: Math.floor(trialEnd.getTime() / 1000),
+            current_period_start: Math.floor(trialStart.getTime() / 1000),
+            current_period_end: Math.floor(trialEnd.getTime() / 1000),
+          },
+          invoice: {
+            id: simulatedInvoiceId,
+            amount_paid: Math.round(activationFee * 100),
+            currency: 'brl',
+            status: 'paid'
+          },
+          payment_intent: {
+            id: simulatedPaymentIntentId,
+            amount: Math.round(activationFee * 100),
+            currency: 'brl',
+            status: 'succeeded'
+          },
+          trialEndDate: trialEnd.toISOString(),
+          nextBillingDate: nextBillingDate.toISOString(),
+          planDetails: {
+            name: 'Vendzz Premium',
+            activationFee: `R$ ${activationFee.toFixed(2)}`,
+            monthlyPrice: `R$ ${monthlyPrice.toFixed(2)}`,
+            trialDays: `${trialDays} dias`,
+            features: [
+              'Criação ilimitada de quizzes',
+              'Campanhas SMS, Email e WhatsApp',
+              'Analytics avançadas',
+              'Suporte prioritário',
+              'Integrações ilimitadas'
+            ]
+          }
+        }
+      });
+
+    } catch (error) {
+      console.error('❌ ERRO NA SIMULAÇÃO DE PAGAMENTO:', error);
+      res.status(500).json({
+        success: false,
+        error: error.message || 'Erro interno na simulação'
+      });
+    }
+  });
+
   // STRIPE INTEGRATION - CRIAR SUBSCRIPTION APÓS PAGAMENTO
   app.post("/api/stripe/create-subscription-after-payment", verifyJWT, async (req: any, res) => {
     try {

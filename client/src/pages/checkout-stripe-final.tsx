@@ -78,14 +78,10 @@ const CheckoutForm: React.FC<CheckoutFormProps> = ({ onSuccess }) => {
     setIsProcessing(true);
 
     try {
-      // Simular criação do Payment Method (sem usar Stripe real)
-      const paymentMethodId = `pm_test_${Date.now()}`;
-      
-      console.log('✅ Payment Method simulado criado:', paymentMethodId);
+      console.log('✅ Iniciando simulação de pagamento...');
 
-      // Enviar para backend
-      const response = await apiRequest('POST', '/api/stripe/create-trial-flow', {
-        paymentMethodId,
+      // Enviar para novo endpoint de simulação
+      const response = await apiRequest('POST', '/api/stripe/simulate-payment', {
         customerName,
         customerEmail,
         trialDays: 3,
@@ -98,7 +94,7 @@ const CheckoutForm: React.FC<CheckoutFormProps> = ({ onSuccess }) => {
         }
       });
 
-      console.log('✅ Fluxo completo executado:', response);
+      console.log('✅ Simulação de pagamento concluída:', response);
 
       toast({
         title: "Sucesso!",
@@ -126,8 +122,9 @@ const CheckoutForm: React.FC<CheckoutFormProps> = ({ onSuccess }) => {
     <form onSubmit={handleSubmit} className="space-y-6">
       {/* Debug Info */}
       <div className="text-sm text-gray-600 p-3 bg-gray-50 rounded">
-        <p>Debug: Stripe=✅ (Simulado) | Form=✅ | Backend=✅</p>
+        <p>Debug: Simulação=✅ | Form=✅ | Backend=✅</p>
         <p className="mt-2 text-blue-600 font-medium">Cartão de teste: 4242 4242 4242 4242 | Data: 12/28 | CVC: 123</p>
+        <p className="mt-1 text-green-600 text-xs">Usa endpoint /api/stripe/simulate-payment (sem API real)</p>
       </div>
 
       {/* Informações do Cliente */}
