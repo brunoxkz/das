@@ -11,10 +11,14 @@ import { useToast } from '@/hooks/use-toast';
 import { apiRequest } from '@/lib/queryClient';
 
 // Stripe public key - inicialização mais robusta
-const STRIPE_PUBLIC_KEY = 'pk_test_51RjvV9HK6al3veW1PjziXLVqAk2y8HUIh5Rg2xP3wUUJ6Jdvaob5KB3PlKsWYWOtldtdbeLh0TpcMF5Pb5FfO6p100hNkeeWih';
+const STRIPE_PUBLIC_KEY = import.meta.env.VITE_STRIPE_PUBLIC_KEY;
 
 // Função para carregar Stripe com retry
 const loadStripeWithRetry = async (retries = 3) => {
+  if (!STRIPE_PUBLIC_KEY) {
+    throw new Error('STRIPE_PUBLIC_KEY não configurada');
+  }
+  
   for (let i = 0; i < retries; i++) {
     try {
       console.log(`Tentativa ${i + 1} de carregar Stripe...`);
@@ -32,7 +36,7 @@ const loadStripeWithRetry = async (retries = 3) => {
   throw new Error('Falha ao carregar Stripe após múltiplas tentativas');
 };
 
-const stripePromise = loadStripeWithRetry();
+const stripePromise = STRIPE_PUBLIC_KEY ? loadStripeWithRetry() : null;
 
 // Configuração dos elementos individuais do Stripe
 const stripeElementOptions = {
@@ -539,9 +543,18 @@ const CheckoutTrialFinal: React.FC = () => {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <Elements stripe={stripePromise}>
-              <CheckoutForm onSuccess={handleSuccess} />
-            </Elements>
+            {!STRIPE_PUBLIC_KEY ? (
+              <Alert>
+                <AlertCircle className="h-4 w-4" />
+                <AlertDescription>
+                  Stripe não configurado. Configure VITE_STRIPE_PUBLIC_KEY nas variáveis de ambiente.
+                </AlertDescription>
+              </Alert>
+            ) : (
+              <Elements stripe={stripePromise}>
+                <CheckoutForm onSuccess={handleSuccess} />
+              </Elements>
+            )}
           </CardContent>
         </Card>
 

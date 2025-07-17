@@ -73,6 +73,7 @@ import PaymentIntentExplanation from "@/pages/payment-intent-explanation";
 import CheckoutTrialFinal from "@/pages/checkout-trial-final";
 import CheckoutTrialFinalSimple from "@/pages/checkout-trial-final-simple";
 import CheckoutStripeBasic from "@/pages/checkout-stripe-basic";
+import CheckoutSimpleTrial from "@/pages/checkout-simple-trial";
 import CheckoutTrialCustom from "@/pages/checkout-trial-custom";
 import CheckoutTrialPerfect from "@/pages/checkout-trial-perfect";
 import StripePlansPerfeito from "@/pages/stripe-plans-perfect";
@@ -364,6 +365,12 @@ function App() {
         <Route path="/checkout-stripe-trial">
           <Layout>
             <CheckoutStripeTrial />
+          </Layout>
+        </Route>
+        
+        <Route path="/checkout-simple-trial">
+          <Layout>
+            <CheckoutSimpleTrial />
           </Layout>
         </Route>
         

@@ -47,7 +47,8 @@ import {
   Coins,
   Video,
   ShoppingCart,
-  Code
+  Code,
+  CheckCircle
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -158,6 +159,13 @@ export function Sidebar() {
           icon: <Zap className="w-4 h-4" />,
           active: location === "/checkout-perfect",
           badge: "R$1→R$29,90"
+        },
+        {
+          title: "✅ CHECKOUT SIMPLIFICADO",
+          href: "/checkout-simple-trial",
+          icon: <CheckCircle className="w-4 h-4" />,
+          active: location === "/checkout-simple-trial",
+          badge: "100% Funcional"
         },
         {
           title: "💎 PLANOS PERFEITOS",

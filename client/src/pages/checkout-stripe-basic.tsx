@@ -14,7 +14,7 @@ declare global {
   }
 }
 
-const STRIPE_PUBLIC_KEY = 'pk_test_51RjvV9HK6al3veW1PjziXLVqAk2y8HUIh5Rg2xP3wUUJ6Jdvaob5KB3PlKsWYWOtldtdbeLh0TpcMF5Pb5FfO6p100hNkeeWih';
+const STRIPE_PUBLIC_KEY = import.meta.env.VITE_STRIPE_PUBLIC_KEY;
 
 interface CheckoutFormProps {
   onSuccess: (result: any) => void;
@@ -36,6 +36,14 @@ const CheckoutForm: React.FC<CheckoutFormProps> = ({ onSuccess }) => {
   useEffect(() => {
     const loadStripe = async () => {
       try {
+        // Verificar se há chave do Stripe
+        if (!STRIPE_PUBLIC_KEY) {
+          console.log('❌ STRIPE_PUBLIC_KEY não configurada');
+          setError('Stripe não configurado');
+          setIsLoading(false);
+          return;
+        }
+
         // Verificar se o Stripe já está carregado
         if (window.Stripe) {
           console.log('✅ Stripe já carregado na window');

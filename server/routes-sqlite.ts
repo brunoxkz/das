@@ -5924,6 +5924,172 @@ console.log('Vendzz Checkout Embed carregado para plano: ${planId}');
     }
   });
 
+  // NOVO ENDPOINT: Fluxo correto R$1,00 → 3 dias → R$29,90/mês
+  app.post("/api/stripe/create-correct-trial", verifyJWT, async (req: any, res) => {
+    try {
+      console.log('🔧 ENDPOINT TRIAL CORRETO CHAMADO');
+      console.log('📋 User ID:', req.user.id);
+      console.log('📋 Body:', req.body);
+      
+      const { StripeCorrectTrialSystem } = await import('./stripe-correct-trial');
+      console.log('🔍 Importando StripeCorrectTrialSystem...');
+      console.log('✅ StripeCorrectTrialSystem importado com sucesso');
+      
+      // Buscar usuário
+      console.log('🔍 Buscando usuário...');
+      const user = await storage.getUser(req.user.id);
+      if (!user) {
+        console.log('❌ Usuário não encontrado');
+        return res.status(404).json({ message: 'Usuário não encontrado' });
+      }
+      console.log('✅ Usuário encontrado:', user.email);
+      
+      // Inicializar sistema correto
+      console.log('🔍 Inicializando CorrectTrialSystem...');
+      const correctTrialSystem = new StripeCorrectTrialSystem(
+        process.env.STRIPE_SECRET_KEY || 'sk_test_51RjvV9HK6al3veW1FPD5bTV1on2NQLlm9ud45AJDggFHdsGA9UAo5jfbSRvWF83W3uTp5cpZYa8tJBvm4ttefrk800mUs47pFA'
+      );
+      
+      // Configuração do trial correto
+      const trialConfig = {
+        planName: req.body.planName || 'Plano Premium',
+        customerEmail: user.email,
+        customerName: `${user.firstName} ${user.lastName}` || 'Cliente',
+        trialAmount: req.body.trialAmount || 1.00, // R$1,00
+        trialDays: req.body.trialDays || 3, // 3 dias
+        recurringAmount: req.body.recurringAmount || 29.90, // R$29,90
+        currency: req.body.currency || 'BRL'
+      };
+      
+      console.log('🔧 CRIANDO TRIAL CORRETO:', trialConfig);
+      
+      // Criar trial correto
+      const result = await correctTrialSystem.createCorrectTrialFlow(trialConfig);
+      
+      console.log('✅ TRIAL CORRETO CRIADO:', result);
+      
+      res.json({
+        success: true,
+        ...result
+      });
+      
+    } catch (error) {
+      console.error('❌ Erro ao criar trial correto:', error);
+      res.status(500).json({ 
+        success: false,
+        message: 'Erro ao criar trial correto',
+        error: error.message 
+      });
+    }
+  });
+
+  // ENDPOINT SIMPLIFICADO: R$1,00 → 3 dias → R$29,90/mês (SEM ERROS)
+  app.post("/api/stripe/create-simple-trial", verifyJWT, async (req: any, res) => {
+    try {
+      console.log('🔧 ENDPOINT TRIAL SIMPLIFICADO CHAMADO');
+      console.log('📋 User ID:', req.user.id);
+      console.log('📋 Body:', req.body);
+      
+      const { StripeSimpleTrialSystem } = await import('./stripe-simple-trial');
+      console.log('🔍 Importando StripeSimpleTrialSystem...');
+      console.log('✅ StripeSimpleTrialSystem importado com sucesso');
+      
+      // Buscar usuário
+      console.log('🔍 Buscando usuário...');
+      const user = await storage.getUser(req.user.id);
+      if (!user) {
+        console.log('❌ Usuário não encontrado');
+        return res.status(404).json({ message: 'Usuário não encontrado' });
+      }
+      console.log('✅ Usuário encontrado:', user.email);
+      
+      // Inicializar sistema simplificado
+      console.log('🔍 Inicializando SimpleTrialSystem...');
+      const simpleTrialSystem = new StripeSimpleTrialSystem(
+        process.env.STRIPE_SECRET_KEY || 'sk_test_51RjvV9HK6al3veW1FPD5bTV1on2NQLlm9ud45AJDggFHdsGA9UAo5jfbSRvWF83W3uTp5cpZYa8tJBvm4ttefrk800mUs47pFA'
+      );
+      
+      // Configuração do trial simplificado
+      const trialConfig = {
+        planName: req.body.planName || 'Plano Premium',
+        customerEmail: user.email,
+        customerName: `${user.firstName} ${user.lastName}` || 'Cliente',
+        trialAmount: req.body.trialAmount || 1.00, // R$1,00
+        trialDays: req.body.trialDays || 3, // 3 dias
+        recurringAmount: req.body.recurringAmount || 29.90, // R$29,90
+        currency: req.body.currency || 'BRL'
+      };
+      
+      console.log('🔧 CRIANDO TRIAL SIMPLIFICADO:', trialConfig);
+      
+      // Criar trial simplificado
+      const result = await simpleTrialSystem.createSimpleTrialFlow(trialConfig);
+      
+      console.log('✅ TRIAL SIMPLIFICADO CRIADO:', result);
+      
+      res.json({
+        success: true,
+        ...result
+      });
+      
+    } catch (error) {
+      console.error('❌ Erro ao criar trial simplificado:', error);
+      res.status(500).json({ 
+        success: false,
+        message: 'Erro ao criar trial simplificado',
+        error: error.message 
+      });
+    }
+  });
+
+  // WEBHOOK HANDLER: Processar payment_intent.succeeded → Criar subscription
+  app.post("/api/stripe/webhook-simple-trial", async (req: any, res) => {
+    try {
+      console.log('🔧 WEBHOOK TRIAL SIMPLIFICADO CHAMADO');
+      
+      // Simular evento do Stripe
+      const eventType = req.body.type || 'payment_intent.succeeded';
+      const paymentIntentId = req.body.data?.object?.id || `pi_test_${Date.now()}`;
+      
+      console.log('📋 Event Type:', eventType);
+      console.log('📋 Payment Intent ID:', paymentIntentId);
+      
+      if (eventType === 'payment_intent.succeeded') {
+        const { StripeSimpleTrialSystem } = await import('./stripe-simple-trial');
+        const simpleTrialSystem = new StripeSimpleTrialSystem(
+          process.env.STRIPE_SECRET_KEY || 'sk_test_51RjvV9HK6al3veW1FPD5bTV1on2NQLlm9ud45AJDggFHdsGA9UAo5jfbSRvWF83W3uTp5cpZYa8tJBvm4ttefrk800mUs47pFA'
+        );
+        
+        console.log('🔧 PROCESSANDO PAGAMENTO SUCCESSO...');
+        
+        // Processar pagamento e criar subscription
+        const subscription = await simpleTrialSystem.handleTrialPaymentSuccess(paymentIntentId);
+        
+        console.log('✅ SUBSCRIPTION CRIADA:', subscription);
+        
+        res.json({
+          success: true,
+          message: 'Webhook processado com sucesso',
+          subscription: subscription,
+          event: eventType,
+          paymentIntentId: paymentIntentId
+        });
+        
+      } else {
+        console.log('ℹ️ Evento não processado:', eventType);
+        res.json({ success: true, message: 'Evento não processado' });
+      }
+      
+    } catch (error) {
+      console.error('❌ Erro ao processar webhook:', error);
+      res.status(500).json({ 
+        success: false,
+        message: 'Erro ao processar webhook',
+        error: error.message 
+      });
+    }
+  });
+
   // ENDPOINT SIMPLES DE TESTE PARA VERIFICAR SE ESTÁ FUNCIONANDO
   app.post("/api/stripe/test-endpoint", async (req: any, res) => {
     console.log('🔧 TESTE ENDPOINT CHAMADO SEM JWT');

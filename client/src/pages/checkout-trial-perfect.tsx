@@ -12,9 +12,9 @@ import { apiRequest } from '@/lib/queryClient';
 import { Badge } from '@/components/ui/badge';
 
 // Stripe public key - sistema otimizado
-const STRIPE_PUBLIC_KEY = 'pk_test_51RjvV9HK6al3veW1PjziXLVqAk2y8HUIh5Rg2xP3wUUJ6Jdvaob5KB3PlKsWYWOtldtdbeLh0TpcMF5Pb5FfO6p100hNkeeWih';
+const STRIPE_PUBLIC_KEY = import.meta.env.VITE_STRIPE_PUBLIC_KEY;
 
-const stripePromise = loadStripe(STRIPE_PUBLIC_KEY);
+const stripePromise = STRIPE_PUBLIC_KEY ? loadStripe(STRIPE_PUBLIC_KEY) : null;
 
 // Configuração otimizada dos elementos Stripe
 const stripeElementOptions = {
@@ -394,9 +394,18 @@ const CheckoutTrialPerfect: React.FC = () => {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <Elements stripe={stripePromise}>
-                  <CheckoutForm onSuccess={handlePaymentSuccess} />
-                </Elements>
+                {!STRIPE_PUBLIC_KEY ? (
+                  <Alert>
+                    <AlertCircle className="h-4 w-4" />
+                    <AlertDescription>
+                      Stripe não configurado. Configure as chaves nas variáveis de ambiente.
+                    </AlertDescription>
+                  </Alert>
+                ) : (
+                  <Elements stripe={stripePromise}>
+                    <CheckoutForm onSuccess={handlePaymentSuccess} />
+                  </Elements>
+                )}
               </CardContent>
             </Card>
           </div>
