@@ -111,13 +111,9 @@ export default function StripeElementsPage() {
   // Mutation para criar Payment Intent
   const createPaymentIntentMutation = useMutation({
     mutationFn: async (planData: any) => {
-      return await apiRequest("POST", "/api/stripe/create-payment-intent-subscription", {
+      return await apiRequest("POST", "/api/stripe/payment-intent-simple", {
         customerEmail: 'admin@vendzz.com',
-        customerName: 'Admin Vendzz',
         immediateAmount: planData.immediateAmount,
-        trialDays: planData.trialDays,
-        recurringAmount: planData.recurringAmount,
-        recurringInterval: planData.recurringInterval,
       });
     },
     onSuccess: (data) => {

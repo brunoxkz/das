@@ -3625,18 +3625,43 @@ export function registerSQLiteRoutes(app: Express): Server {
   // STRIPE INTEGRATION - CRIAR PAYMENT INTENT COM SUBSCRIPTION
   app.post("/api/stripe/create-payment-intent-subscription", verifyJWT, async (req: any, res) => {
     try {
-      const { email, name, immediateAmount, trialDays, recurringAmount, recurringInterval } = req.body;
+      const { customerEmail, customerName, immediateAmount, trialDays, recurringAmount, recurringInterval } = req.body;
       
-      if (!activeStripeService) {
-        return res.status(500).json({ error: "Stripe não configurado" });
+      // Usar valores padrão caso não sejam fornecidos
+      const email = customerEmail || req.user.email;
+      const name = customerName || req.user.name || 'Cliente Vendzz';
+      
+      // Verificar se o Stripe está configurado
+      if (!process.env.STRIPE_SECRET_KEY) {
+        console.error('❌ ERRO: STRIPE_SECRET_KEY não configurada');
+        return res.status(500).json({ error: "Stripe não configurado - chave secreta ausente" });
+      }
+
+      // Usar stripeService existente ou activeStripeService
+      const stripe = stripeService?.stripe || activeStripeService?.stripe;
+      if (!stripe) {
+        console.error('❌ ERRO: Instância do Stripe não encontrada');
+        return res.status(500).json({ error: "Instância do Stripe não inicializada" });
       }
 
       console.log('🎯 CRIANDO PAYMENT INTENT PARA SUBSCRIPTION:', { email, name, immediateAmount, trialDays, recurringAmount });
+      console.log('🔍 VERIFICANDO STRIPE SERVICE:', { 
+        hasStripe: !!activeStripeService,
+        hasStripeInstance: !!activeStripeService?.stripe,
+        hasStripeFromImport: !!stripeService,
+        stripeKeyPrefix: process.env.STRIPE_SECRET_KEY?.substring(0, 7) || 'undefined'
+      });
+      
+      // Validar dados de entrada
+      if (!email || !immediateAmount || !trialDays || !recurringAmount) {
+        console.error('❌ ERRO: Dados obrigatórios ausentes:', { email, immediateAmount, trialDays, recurringAmount });
+        return res.status(400).json({ error: "Dados obrigatórios ausentes" });
+      }
 
       // Criar customer no Stripe
       let customer;
       try {
-        const customers = await activeStripeService.stripe.customers.list({
+        const customers = await stripe.customers.list({
           email: email,
           limit: 1
         });
@@ -3644,7 +3669,7 @@ export function registerSQLiteRoutes(app: Express): Server {
         if (customers.data.length > 0) {
           customer = customers.data[0];
         } else {
-          customer = await activeStripeService.stripe.customers.create({
+          customer = await stripe.customers.create({
             email: email,
             name: name,
             metadata: {
@@ -3661,12 +3686,12 @@ export function registerSQLiteRoutes(app: Express): Server {
       // Criar produto e preço para assinatura recorrente
       let product, price;
       try {
-        product = await activeStripeService.stripe.products.create({
+        product = await stripe.products.create({
           name: 'Vendzz Premium - Assinatura',
           description: `Plano Premium com trial de ${trialDays} dias`
         });
 
-        price = await activeStripeService.stripe.prices.create({
+        price = await stripe.prices.create({
           unit_amount: Math.round(recurringAmount * 100),
           currency: 'brl',
           recurring: {
@@ -3680,7 +3705,7 @@ export function registerSQLiteRoutes(app: Express): Server {
       }
 
       // Criar Payment Intent para cobrança imediata
-      const paymentIntent = await activeStripeService.stripe.paymentIntents.create({
+      const paymentIntent = await stripe.paymentIntents.create({
         amount: Math.round(immediateAmount * 100),
         currency: 'brl',
         customer: customer.id,
@@ -3705,7 +3730,55 @@ export function registerSQLiteRoutes(app: Express): Server {
         message: `Payment Intent criado para cobrança imediata de R$ ${immediateAmount.toFixed(2)}`
       });
     } catch (error) {
-      console.error("❌ Erro ao criar Payment Intent:", error);
+      console.error("❌ ERRO CRÍTICO NO PAYMENT INTENT:", error);
+      console.error("❌ STACK TRACE:", error.stack);
+      console.error("❌ DADOS DA REQUISIÇÃO:", req.body);
+      console.error("❌ USUÁRIO:", req.user);
+      
+      res.status(500).json({ 
+        error: error.message || "Erro desconhecido",
+        details: error.stack?.split('\n')[0] || "Sem detalhes",
+        timestamp: new Date().toISOString()
+      });
+    }
+  });
+
+  // STRIPE INTEGRATION - ENDPOINT SIMPLIFICADO PARA PAYMENT INTENT
+  app.post("/api/stripe/payment-intent-simple", verifyJWT, async (req: any, res) => {
+    try {
+      console.log('🔥 ENDPOINT SIMPLIFICADO - INICIANDO:', req.body);
+      
+      if (!process.env.STRIPE_SECRET_KEY) {
+        console.error('❌ STRIPE_SECRET_KEY não configurada');
+        return res.status(500).json({ error: "Stripe não configurado" });
+      }
+
+      // Criar instância direta do Stripe
+      const stripeInstance = new Stripe(process.env.STRIPE_SECRET_KEY);
+      
+      const { customerEmail, immediateAmount = 1 } = req.body;
+      
+      // Criar payment intent básico
+      const paymentIntent = await stripeInstance.paymentIntents.create({
+        amount: Math.round(immediateAmount * 100),
+        currency: 'brl',
+        description: 'Teste Payment Intent - Vendzz',
+        metadata: {
+          userId: req.user.id,
+          testMode: 'simple'
+        }
+      });
+
+      console.log('✅ Payment Intent criado com sucesso:', paymentIntent.id);
+      
+      res.json({
+        success: true,
+        clientSecret: paymentIntent.client_secret,
+        paymentIntentId: paymentIntent.id,
+        message: 'Payment Intent criado com sucesso'
+      });
+    } catch (error) {
+      console.error('❌ ERRO NO ENDPOINT SIMPLIFICADO:', error);
       res.status(500).json({ error: error.message });
     }
   });
