@@ -122,7 +122,7 @@ const CheckoutForm: React.FC<CheckoutFormProps> = ({ onSuccess }) => {
     <form onSubmit={handleSubmit} className="space-y-6">
       {/* Debug Info */}
       <div className="text-sm text-gray-600 p-3 bg-gray-50 rounded">
-        <p>Debug: Simulação=✅ | Form=✅ | Backend=✅</p>
+        <p>Debug: Simulação=✅ | Formulário=✅ | Backend=✅</p>
         <p className="mt-2 text-blue-600 font-medium">Cartão de teste: 4242 4242 4242 4242 | Data: 12/28 | CVC: 123</p>
         <p className="mt-1 text-green-600 text-xs">Usa endpoint /api/stripe/simulate-payment (sem API real)</p>
       </div>

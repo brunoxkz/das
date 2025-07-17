@@ -123,7 +123,7 @@ export function Sidebar() {
 
   const navCategories = [
     {
-      title: "CRIAÇÃO",
+      title: t("sidebar.creation"),
       icon: <Plus className="w-3 h-3" />,
       items: [
         {
@@ -134,13 +134,13 @@ export function Sidebar() {
           badge: totalQuizzes > 0 ? totalQuizzes.toString() : undefined
         },
         {
-          title: "TEMPLATES",
+          title: t("sidebar.templates"),
           href: "/templates",
           icon: <Palette className="w-4 h-4" />,
           active: location === "/templates"
         },
         {
-          title: "TESTE A/B",
+          title: t("sidebar.abTest"),
           href: "/teste-ab",
           icon: <BarChart className="w-4 h-4" />,
           active: location === "/teste-ab"
@@ -149,10 +149,10 @@ export function Sidebar() {
       ]
     },
     {
-      title: "RECURRING",
+      title: t("sidebar.recurring"),
       items: [
         {
-          title: "CHECKOUT OFICIAL",
+          title: t("sidebar.officialCheckout"),
           href: "/checkout-official",
           icon: <ShoppingCart className="w-4 h-4" />,
           active: location === "/checkout-official"
@@ -165,13 +165,13 @@ export function Sidebar() {
           badge: "R$1+Trial"
         },
         {
-          title: "GERENCIAR PLANOS",
+          title: t("sidebar.managePlans"),
           href: "/stripe-plans-manager",
           icon: <Package className="w-4 h-4" />,
           active: location === "/stripe-plans-manager"
         },
         {
-          title: "SISTEMA CHECKOUT",
+          title: t("sidebar.checkoutSystem"),
           href: "/checkout-system",
           icon: <ShoppingCart className="w-4 h-4" />,
           active: location === "/checkout-system"
