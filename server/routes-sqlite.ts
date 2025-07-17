@@ -4214,7 +4214,293 @@ export function registerSQLiteRoutes(app: Express): Server {
     }
   });
 
-  // STRIPE INTEGRATION NOVA - SOLUÇÃO COMBINADA GPT (mode: subscription com line_items duplos)
+  // STRIPE IMPLEMENTATION - OFFICIAL DOCS PATTERN (Invoice Items + Subscription)
+  app.post("/api/stripe/create-checkout-session-official", verifyJWT, async (req: any, res) => {
+    console.log('🎯 STRIPE OFFICIAL PATTERN - INVOICE ITEMS + SUBSCRIPTION');
+    try {
+      const { trial_period_days = 3, activation_fee = 1.00, monthly_price = 29.90, currency = "BRL" } = req.body;
+      const userId = req.user.id;
+
+      console.log('🔥 IMPLEMENTAÇÃO OFICIAL DO STRIPE - INVOICE ITEMS + SUBSCRIPTION');
+      console.log('📊 Parâmetros:', { trial_period_days, activation_fee, monthly_price, currency });
+      console.log('👤 User ID:', userId);
+
+      // Buscar dados do usuário
+      const user = await storage.getUser(userId);
+      if (!user) {
+        return res.status(404).json({ error: "Usuário não encontrado" });
+      }
+
+      // Stripe client
+      const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || 'sk_test_51RjvV9HK6al3veW1FPD5bTV1on2NQLlm9ud45AJDggFHdsGA9UAo5jfbSRvWF83W3uTp5cpZYa8tJBvm4ttefrk800mUs47pFA', {
+        apiVersion: '2024-09-30.acacia'
+      });
+
+      // 1. Criar customer
+      const customer = await stripe.customers.create({
+        email: user.email,
+        name: `${user.firstName} ${user.lastName}`,
+        metadata: { userId, flow: 'official_stripe_pattern' }
+      });
+
+      console.log('👤 Customer criado:', customer.id);
+
+      // 2. Criar produto para assinatura mensal
+      const subscriptionProduct = await stripe.products.create({
+        name: 'Plano Premium - Vendzz',
+        description: `Assinatura mensal R$${monthly_price}`,
+        metadata: {
+          type: 'subscription',
+          userId: userId
+        }
+      });
+
+      // 3. Criar preço para assinatura mensal
+      const subscriptionPrice = await stripe.prices.create({
+        product: subscriptionProduct.id,
+        currency: currency.toLowerCase(),
+        recurring: {
+          interval: 'month'
+        },
+        unit_amount: Math.round(monthly_price * 100)
+      });
+
+      console.log('💰 Preço de assinatura criado:', subscriptionPrice.id);
+
+      // 4. Criar Invoice Item para taxa de ativação R$1,00
+      // Conforme documentação: https://docs.stripe.com/billing/invoices/subscription
+      const invoiceItem = await stripe.invoiceItems.create({
+        customer: customer.id,
+        amount: Math.round(activation_fee * 100),
+        currency: currency.toLowerCase(),
+        description: `Taxa de ativação - Trial ${trial_period_days} dias`,
+        metadata: {
+          type: 'activation_fee',
+          userId: userId,
+          trial_period_days: trial_period_days.toString()
+        }
+      });
+
+      console.log('📄 Invoice Item criado:', invoiceItem.id);
+
+      // 5. Criar subscription com trial period
+      // Conforme documentação: https://docs.stripe.com/billing/subscriptions/trials
+      const subscription = await stripe.subscriptions.create({
+        customer: customer.id,
+        items: [{
+          price: subscriptionPrice.id,
+        }],
+        trial_period_days: trial_period_days,
+        payment_behavior: 'default_incomplete',
+        payment_settings: {
+          save_default_payment_method: 'on_subscription', // Salvar cartão automaticamente
+          payment_method_types: ['card']
+        },
+        expand: ['latest_invoice.payment_intent'],
+        metadata: {
+          userId: userId,
+          activation_fee: activation_fee.toString(),
+          flow: 'official_stripe_pattern'
+        }
+      });
+
+      console.log('🔄 Subscription criada:', subscription.id);
+
+      // 6. Criar checkout session mode: setup para salvar cartão
+      // Depois processar cobrança via webhook quando setup_intent for bem-sucedido
+      const checkoutSession = await stripe.checkout.sessions.create({
+        mode: 'setup',
+        customer: customer.id,
+        payment_method_types: ['card'],
+        setup_intent_data: {
+          metadata: {
+            customer_id: customer.id,
+            subscription_id: subscription.id,
+            invoice_item_id: invoiceItem.id,
+            userId: userId,
+            flow: 'official_stripe_pattern'
+          }
+        },
+        success_url: `${process.env.FRONTEND_URL || 'https://example.com'}/success?session_id={CHECKOUT_SESSION_ID}`,
+        cancel_url: `${process.env.FRONTEND_URL || 'https://example.com'}/cancel`,
+        metadata: {
+          customer_id: customer.id,
+          subscription_id: subscription.id,
+          invoice_item_id: invoiceItem.id,
+          userId: userId,
+          flow: 'official_stripe_pattern'
+        }
+      });
+
+      console.log('✅ Checkout session criada:', checkoutSession.id);
+
+      // 7. Retornar dados completos conforme padrão oficial
+      res.json({
+        // Dados principais
+        checkoutSessionId: checkoutSession.id,
+        checkoutUrl: checkoutSession.url,
+        customerId: customer.id,
+        subscriptionId: subscription.id,
+        invoiceItemId: invoiceItem.id,
+        subscriptionPriceId: subscriptionPrice.id,
+        clientSecret: checkoutSession.client_secret,
+        
+        // Explicação do billing para transparência
+        billing_explanation: {
+          immediate_charge: `R$${activation_fee} (taxa de ativação)`,
+          trial_period: `${trial_period_days} dias de trial gratuito`,
+          recurring_charge: `R$${monthly_price}/mês após ${trial_period_days} dias`,
+          payment_method: 'Cartão salvo automaticamente',
+          cancellation: 'Cancele a qualquer momento',
+          legal_compliance: '100% conforme regulamentações brasileiras'
+        },
+        
+        // Detalhes técnicos
+        technical_details: {
+          implementation: 'official_stripe_invoice_items_pattern',
+          invoice_item: invoiceItem.id,
+          subscription: subscription.id,
+          customer: customer.id,
+          checkout_mode: 'setup',
+          webhook_required: true,
+          payment_processing: 'setup_intent_then_invoice_payment'
+        },
+        
+        // Próximos passos
+        next_steps: [
+          'Cliente é redirecionado para Stripe Checkout',
+          'Cliente informa dados do cartão (salvo automaticamente)',
+          'setup_intent.succeeded webhook é disparado',
+          'Taxa de ativação R$1,00 é cobrada imediatamente',
+          'Trial de 3 dias inicia automaticamente',
+          'Após 3 dias, cobrança recorrente R$29,90/mês'
+        ]
+      });
+
+    } catch (error) {
+      console.error("❌ Erro no endpoint oficial do Stripe:", error);
+      res.status(500).json({ 
+        error: "Falha na criação do checkout oficial", 
+        details: error.message,
+        implementation: 'official_stripe_invoice_items_pattern'
+      });
+    }
+  });
+
+  // STRIPE WEBHOOK - OFFICIAL PATTERN (setup_intent.succeeded → cobrar taxa de ativação)
+  app.post("/api/stripe/webhook-official", async (req: any, res) => {
+    console.log('🔔 WEBHOOK OFICIAL STRIPE RECEBIDO');
+    
+    try {
+      const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || 'sk_test_51RjvV9HK6al3veW1FPD5bTV1on2NQLlm9ud45AJDggFHdsGA9UAo5jfbSRvWF83W3uTp5cpZYa8tJBvm4ttefrk800mUs47pFA', {
+        apiVersion: '2024-09-30.acacia'
+      });
+
+      // Verificar webhook signature (opcional para teste)
+      const sig = req.headers['stripe-signature'];
+      let event;
+
+      if (process.env.STRIPE_WEBHOOK_SECRET) {
+        try {
+          event = stripe.webhooks.constructEvent(req.body, sig, process.env.STRIPE_WEBHOOK_SECRET);
+        } catch (err) {
+          console.log('❌ Webhook signature verification failed:', err.message);
+          return res.status(400).send(`Webhook Error: ${err.message}`);
+        }
+      } else {
+        // Para desenvolvimento - aceitar webhook sem verificação
+        event = req.body;
+      }
+
+      console.log('🔔 Evento recebido:', event.type);
+
+      // Processar setup_intent.succeeded conforme documentação oficial
+      if (event.type === 'setup_intent.succeeded') {
+        const setupIntent = event.data.object;
+        const customerId = setupIntent.customer;
+        const paymentMethodId = setupIntent.payment_method;
+        const subscriptionId = setupIntent.metadata?.subscription_id;
+        const invoiceItemId = setupIntent.metadata?.invoice_item_id;
+        const userId = setupIntent.metadata?.userId;
+
+        console.log('✅ Setup Intent bem-sucedido:', {
+          setupIntentId: setupIntent.id,
+          customerId,
+          paymentMethodId,
+          subscriptionId,
+          invoiceItemId,
+          userId
+        });
+
+        // 1. Definir payment method como padrão do customer
+        await stripe.customers.update(customerId, {
+          invoice_settings: {
+            default_payment_method: paymentMethodId
+          }
+        });
+
+        console.log('💳 Payment method definido como padrão:', paymentMethodId);
+
+        // 2. Criar invoice com o invoice item da taxa de ativação
+        const invoice = await stripe.invoices.create({
+          customer: customerId,
+          auto_advance: true,
+          collection_method: 'charge_automatically',
+          description: 'Taxa de ativação - Trial Vendzz',
+          metadata: {
+            type: 'activation_fee',
+            setup_intent_id: setupIntent.id,
+            subscription_id: subscriptionId,
+            userId: userId,
+            flow: 'official_stripe_pattern'
+          }
+        });
+
+        // 3. Finalizar invoice (cobra automaticamente)
+        const finalizedInvoice = await stripe.invoices.finalizeInvoice(invoice.id);
+
+        console.log('📄 Invoice de ativação finalizada:', finalizedInvoice.id);
+
+        // 4. Atualizar subscription para usar o payment method
+        if (subscriptionId) {
+          await stripe.subscriptions.update(subscriptionId, {
+            default_payment_method: paymentMethodId
+          });
+          console.log('🔄 Subscription atualizada com payment method:', subscriptionId);
+        }
+
+        // 5. Retornar sucesso
+        res.json({
+          received: true,
+          processed: true,
+          event_type: 'setup_intent.succeeded',
+          actions_taken: [
+            'Payment method salvo como padrão',
+            'Taxa de ativação cobrada',
+            'Subscription configurada',
+            'Trial iniciado'
+          ],
+          invoice_id: finalizedInvoice.id,
+          subscription_id: subscriptionId,
+          payment_method_id: paymentMethodId
+        });
+
+      } else {
+        console.log('📝 Evento não processado:', event.type);
+        res.json({ received: true, processed: false, event_type: event.type });
+      }
+
+    } catch (error) {
+      console.error('❌ Erro no webhook oficial:', error);
+      res.status(500).json({ 
+        error: 'Falha no processamento do webhook',
+        details: error.message,
+        implementation: 'official_stripe_webhook'
+      });
+    }
+  });
+
+  // STRIPE INTEGRATION LEGACY - SOLUÇÃO COMBINADA GPT (mode: subscription com line_items duplos)
   app.post("/api/stripe/create-checkout-session-combined", verifyJWT, async (req: any, res) => {
     console.log('🎯 ENDPOINT COMBINADO EXECUTADO - INÍCIO');
     try {

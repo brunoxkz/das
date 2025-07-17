@@ -158,6 +158,12 @@ export function Sidebar() {
           active: location === "/checkout-individual"
         },
         {
+          title: "CHECKOUT OFICIAL",
+          href: "/checkout-official",
+          icon: <ShoppingCart className="w-4 h-4" />,
+          active: location === "/checkout-official"
+        },
+        {
           title: "PRODUCT BUILDER",
           href: "/product-builder",
           icon: <Package className="w-4 h-4" />,
