@@ -4,12 +4,16 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
-import { CreditCard, CheckCircle, AlertCircle, Clock, DollarSign } from 'lucide-react';
+import { CreditCard, CheckCircle, AlertCircle, Clock, DollarSign, Link, Monitor, ExternalLink, Settings } from 'lucide-react';
 import { apiRequest } from '@/lib/queryClient';
 import { loadStripe } from '@stripe/stripe-js';
 import { Elements, PaymentElement, useStripe, useElements } from '@stripe/react-stripe-js';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Badge } from '@/components/ui/badge';
+import { Separator } from '@/components/ui/separator';
 
-// Configuração do Stripe - CORRIGIDO
+// Configuração do Stripe
 const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLIC_KEY!);
 
 interface ElementsCheckoutData {
@@ -29,70 +33,88 @@ interface ElementsCheckoutData {
   };
 }
 
-interface PaymentResult {
-  success: boolean;
-  invoiceId: string;
-  subscriptionId: string;
-  immediateChargeStatus: string;
-  trialEndDate: string;
-  message: string;
+interface CheckoutConfig {
+  name: string;
+  description: string;
+  immediateAmount: number;
+  trialDays: number;
+  recurringAmount: number;
+  currency: string;
+  layout: 'tabs' | 'accordion' | 'auto';
+  appearance: 'default' | 'night' | 'stripe' | 'minimal';
 }
 
 // Componente do formulário de pagamento
 const PaymentForm: React.FC<{
   clientSecret: string;
   setupIntentId: string;
-  onPaymentSuccess: (result: PaymentResult) => void;
-}> = ({ clientSecret, setupIntentId, onPaymentSuccess }) => {
+  config: CheckoutConfig;
+  onPaymentSuccess: (result: any) => void;
+}> = ({ clientSecret, setupIntentId, config, onPaymentSuccess }) => {
   const stripe = useStripe();
   const elements = useElements();
   const { toast } = useToast();
   const [isProcessing, setIsProcessing] = useState(false);
+  const [paymentStatus, setPaymentStatus] = useState<'idle' | 'processing' | 'succeeded' | 'failed'>('idle');
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
     
     if (!stripe || !elements) {
+      toast({
+        title: "Erro",
+        description: "Sistema de pagamento não carregado. Tente novamente.",
+        variant: "destructive",
+      });
       return;
     }
 
     setIsProcessing(true);
+    setPaymentStatus('processing');
 
     try {
-      const cardElement = elements.getElement(CardElement);
-      
-      if (!cardElement) {
-        throw new Error('Card element não encontrado');
-      }
-
-      // 1. Confirmar setup intent (salvar cartão)
-      const { setupIntent, error } = await stripe.confirmCardSetup(clientSecret, {
-        payment_method: {
-          card: cardElement,
-        }
+      // Confirmar setup intent para salvar método de pagamento
+      const { setupIntent, error } = await stripe.confirmSetup({
+        elements,
+        confirmParams: {
+          return_url: `${window.location.origin}/payment-success`,
+        },
+        redirect: 'if_required'
       });
 
       if (error) {
-        throw new Error(error.message);
+        throw error;
       }
 
-      // 2. Processar pagamento no backend
-      const paymentResult = await apiRequest('POST', '/api/stripe/process-elements-payment', {
-        setupIntentId: setupIntent.id,
-      });
+      if (setupIntent?.status === 'succeeded') {
+        // Processar pagamento imediato e configurar assinatura
+        const paymentResult = await apiRequest('POST', '/api/stripe/process-elements-payment', {
+          setupIntentId: setupIntent.id,
+          paymentMethodId: setupIntent.payment_method,
+          customerId: setupIntent.customer,
+          immediateAmount: config.immediateAmount,
+          recurringAmount: config.recurringAmount,
+          trialDays: config.trialDays,
+          currency: config.currency
+        });
 
-      onPaymentSuccess(paymentResult);
-
-      toast({
-        title: "Pagamento Processado!",
-        description: "Cobrança imediata realizada e assinatura criada com sucesso",
-      });
-
-    } catch (error) {
-      console.error('Erro no pagamento:', error);
+        if (paymentResult.success) {
+          setPaymentStatus('succeeded');
+          onPaymentSuccess(paymentResult);
+          
+          toast({
+            title: "Pagamento Processado!",
+            description: `Cobrança imediata de R$ ${config.immediateAmount.toFixed(2)} realizada. Trial de ${config.trialDays} dias iniciado.`,
+          });
+        } else {
+          throw new Error(paymentResult.message || 'Erro ao processar pagamento');
+        }
+      }
+    } catch (error: any) {
+      setPaymentStatus('failed');
       toast({
         title: "Erro no Pagamento",
-        description: error.message,
+        description: error.message || "Erro desconhecido ao processar pagamento",
         variant: "destructive",
       });
     } finally {
@@ -100,126 +122,120 @@ const PaymentForm: React.FC<{
     }
   };
 
+  if (paymentStatus === 'succeeded') {
+    return (
+      <div className="text-center space-y-4">
+        <div className="flex justify-center">
+          <CheckCircle className="w-16 h-16 text-green-500" />
+        </div>
+        <h3 className="text-xl font-semibold">Pagamento Aprovado!</h3>
+        <p className="text-gray-600">
+          Cobrança imediata processada com sucesso. Sua assinatura está ativa com trial de {config.trialDays} dias.
+        </p>
+      </div>
+    );
+  }
+
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
-      <div className="p-4 bg-gray-700 rounded-lg">
-        <Label className="text-white mb-2 block">Dados do Cartão</Label>
-        <CardElement
+      <div className="p-4 border rounded-lg">
+        <PaymentElement 
           options={{
-            style: {
-              base: {
-                fontSize: '16px',
-                color: '#ffffff',
-                '::placeholder': {
-                  color: '#aab7c4',
-                },
-              },
-              invalid: {
-                color: '#fa755a',
-              },
-            },
+            layout: config.layout,
+            paymentMethodOrder: ['card', 'ideal', 'sepa_debit'],
+            fields: {
+              billingDetails: {
+                name: 'auto',
+                email: 'auto',
+                phone: 'auto',
+                address: {
+                  country: 'auto',
+                  line1: 'auto',
+                  line2: 'auto',
+                  city: 'auto',
+                  state: 'auto',
+                  postalCode: 'auto'
+                }
+              }
+            }
           }}
-          className="p-3"
         />
       </div>
 
-      <Button
-        type="submit"
-        disabled={!stripe || isProcessing}
-        className="w-full bg-gradient-to-r from-green-500 to-blue-600 hover:from-green-600 hover:to-blue-700 text-white font-semibold py-3"
+      <Button 
+        type="submit" 
+        disabled={!stripe || !elements || isProcessing}
+        className="w-full"
+        size="lg"
       >
         {isProcessing ? (
-          <div className="flex items-center gap-2">
-            <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-            Processando Pagamento...
-          </div>
+          <>
+            <Clock className="w-4 h-4 mr-2 animate-spin" />
+            Processando...
+          </>
         ) : (
-          <div className="flex items-center gap-2">
-            <CreditCard className="w-4 h-4" />
-            Pagar R$1,00 e Criar Assinatura
-          </div>
+          <>
+            <CreditCard className="w-4 h-4 mr-2" />
+            Pagar R$ {config.immediateAmount.toFixed(2)} + Trial {config.trialDays} dias
+          </>
         )}
       </Button>
+
+      <div className="text-xs text-gray-500 text-center">
+        <p>Após o trial, será cobrado R$ {config.recurringAmount.toFixed(2)}/mês</p>
+        <p>Você pode cancelar a qualquer momento</p>
+      </div>
     </form>
   );
 };
 
-// Componente principal
 export default function StripeElementsCheckout() {
-  const [formData, setFormData] = useState({
+  const [config, setConfig] = useState<CheckoutConfig>({
     name: 'Plano Premium - Vendzz',
     description: 'Acesso completo à plataforma com trial de 3 dias',
-    immediateAmount: 1.00,
+    immediateAmount: 1,
     trialDays: 3,
-    recurringAmount: 29.90,
-    currency: 'BRL'
+    recurringAmount: 29.9,
+    currency: 'BRL',
+    layout: 'tabs',
+    appearance: 'default'
   });
-  
-  const [isCreating, setIsCreating] = useState(false);
+
   const [checkoutData, setCheckoutData] = useState<ElementsCheckoutData | null>(null);
-  const [paymentResult, setPaymentResult] = useState<PaymentResult | null>(null);
-  const [linkData, setLinkData] = useState<any>(null);
-  const [isLinkMode, setIsLinkMode] = useState(false);
+  const [isCreating, setIsCreating] = useState(false);
+  const [deploymentType, setDeploymentType] = useState<'embed' | 'standalone'>('embed');
+  const [generatedUrl, setGeneratedUrl] = useState<string>('');
   const { toast } = useToast();
 
-  // Verificar se é um link direto na inicialização
-  useEffect(() => {
-    const urlParams = new URLSearchParams(window.location.search);
-    const linkId = urlParams.get('linkId');
-    const token = urlParams.get('token');
-
-    if (linkId && token) {
-      setIsLinkMode(true);
-      initializeFromLink(linkId, token);
-    }
-  }, []);
-
-  const initializeFromLink = async (linkId: string, token: string) => {
+  const createElementsCheckout = async () => {
     setIsCreating(true);
     try {
-      // Validar o link primeiro
-      const validationResponse = await apiRequest('GET', `/api/stripe/validate-checkout-link/${linkId}?token=${token}`);
+      const response = await apiRequest('POST', '/api/stripe/create-elements-checkout', config);
       
-      if (!validationResponse.success) {
-        throw new Error(validationResponse.error || 'Link inválido');
-      }
-
-      setLinkData(validationResponse);
-      
-      // Atualizar dados do formulário com os dados do link
-      setFormData({
-        name: validationResponse.config.name,
-        description: validationResponse.config.description,
-        immediateAmount: validationResponse.config.immediateAmount,
-        trialDays: validationResponse.config.trialDays,
-        recurringAmount: validationResponse.config.recurringAmount,
-        currency: validationResponse.config.currency.toUpperCase()
-      });
-
-      // Criar checkout automaticamente
-      const response = await apiRequest('POST', '/api/stripe/create-elements-checkout', {
-        name: validationResponse.config.name,
-        description: validationResponse.config.description,
-        immediateAmount: validationResponse.config.immediateAmount,
-        trialDays: validationResponse.config.trialDays,
-        recurringAmount: validationResponse.config.recurringAmount,
-        currency: validationResponse.config.currency,
-        metadata: {
-          source: 'checkout_link',
-          linkId: linkId,
+      if (response.success) {
+        setCheckoutData(response);
+        
+        // Gerar URL para página standalone
+        if (deploymentType === 'standalone') {
+          const params = new URLSearchParams({
+            clientSecret: response.clientSecret,
+            setupIntentId: response.setupIntentId,
+            config: JSON.stringify(config)
+          });
+          setGeneratedUrl(`${window.location.origin}/stripe-elements-standalone?${params.toString()}`);
         }
-      });
-      
-      setCheckoutData(response);
-      
+
+        toast({
+          title: "Checkout Criado!",
+          description: "Stripe Elements configurado com sucesso",
+        });
+      } else {
+        throw new Error(response.message);
+      }
+    } catch (error: any) {
       toast({
-        title: "Checkout do Link Carregado!",
-        description: "Agora você pode inserir os dados do cartão",
-      });
-    } catch (error) {
-      toast({
-        title: "Erro no Link de Checkout",
-        description: error.message || "Link inválido ou expirado",
+        title: "Erro",
+        description: error.message || "Erro ao criar checkout",
         variant: "destructive",
       });
     } finally {
@@ -227,190 +243,316 @@ export default function StripeElementsCheckout() {
     }
   };
 
-  const handleCreateCheckout = async () => {
-    setIsCreating(true);
-    try {
-      const response = await apiRequest('POST', '/api/stripe/create-elements-checkout', formData);
-      setCheckoutData(response);
-      
-      toast({
-        title: "Checkout Criado!",
-        description: "Agora você pode inserir os dados do cartão",
-      });
-    } catch (error) {
-      toast({
-        title: "Erro ao Criar Checkout",
-        description: error.message,
-        variant: "destructive",
-      });
-    } finally {
-      setIsCreating(false);
-    }
-  };
-
-  const handlePaymentSuccess = (result: PaymentResult) => {
-    setPaymentResult(result);
+  const handlePaymentSuccess = (result: any) => {
+    console.log('Payment successful:', result);
+    toast({
+      title: "Sucesso!",
+      description: "Pagamento processado e assinatura ativada",
+    });
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-black text-white">
-      <div className="container mx-auto px-4 py-8">
-        <div className="max-w-6xl mx-auto">
-          {/* Header */}
-          <div className="text-center mb-12">
-            <h1 className="text-4xl font-bold mb-4 bg-gradient-to-r from-green-400 to-blue-500 bg-clip-text text-transparent">
-              Stripe Elements - Checkout Correto
-            </h1>
-            <p className="text-xl text-gray-300">
-              Fluxo: Invoice Item (R$1) → Subscription com Trial (R$29,90/mês)
-            </p>
-          </div>
+    <div className="container mx-auto p-6 max-w-4xl">
+      <div className="mb-8">
+        <h1 className="text-3xl font-bold mb-2">Stripe Elements Checkout</h1>
+        <p className="text-gray-600">
+          Configure e customize seu checkout com Stripe Elements
+        </p>
+      </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            {/* Configuração */}
-            <Card className="bg-gray-800/50 border-gray-700">
-              <CardHeader>
-                <CardTitle className="text-white flex items-center gap-2">
-                  <DollarSign className="w-5 h-5 text-green-400" />
-                  Configuração do Plano
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="space-y-2">
-                  <Label className="text-white">Nome do Plano</Label>
+      <Tabs defaultValue="config" className="space-y-6">
+        <TabsList className="grid w-full grid-cols-3">
+          <TabsTrigger value="config">
+            <Settings className="w-4 h-4 mr-2" />
+            Configuração
+          </TabsTrigger>
+          <TabsTrigger value="embed">
+            <Monitor className="w-4 h-4 mr-2" />
+            Embed
+          </TabsTrigger>
+          <TabsTrigger value="standalone">
+            <ExternalLink className="w-4 h-4 mr-2" />
+            Página Única
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="config">
+          <Card>
+            <CardHeader>
+              <CardTitle>Configuração do Checkout</CardTitle>
+              <CardDescription>
+                Configure os detalhes do seu plano e personalização
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="name">Nome do Plano</Label>
                   <Input
-                    value={formData.name}
-                    onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
-                    className="bg-gray-700 border-gray-600 text-white"
+                    id="name"
+                    value={config.name}
+                    onChange={(e) => setConfig(prev => ({ ...prev, name: e.target.value }))}
+                    placeholder="Ex: Plano Premium"
                   />
-                </div>
-                
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <Label className="text-white">Taxa Imediata (R$)</Label>
-                    <Input
-                      type="number"
-                      step="0.01"
-                      value={formData.immediateAmount}
-                      onChange={(e) => setFormData(prev => ({ ...prev, immediateAmount: parseFloat(e.target.value) }))}
-                      className="bg-gray-700 border-gray-600 text-white"
-                    />
-                  </div>
-                  <div>
-                    <Label className="text-white">Dias de Trial</Label>
-                    <Input
-                      type="number"
-                      value={formData.trialDays}
-                      onChange={(e) => setFormData(prev => ({ ...prev, trialDays: parseInt(e.target.value) }))}
-                      className="bg-gray-700 border-gray-600 text-white"
-                    />
-                  </div>
                 </div>
 
                 <div>
-                  <Label className="text-white">Valor Recorrente (R$)</Label>
+                  <Label htmlFor="description">Descrição</Label>
                   <Input
-                    type="number"
-                    step="0.01"
-                    value={formData.recurringAmount}
-                    onChange={(e) => setFormData(prev => ({ ...prev, recurringAmount: parseFloat(e.target.value) }))}
-                    className="bg-gray-700 border-gray-600 text-white"
+                    id="description"
+                    value={config.description}
+                    onChange={(e) => setConfig(prev => ({ ...prev, description: e.target.value }))}
+                    placeholder="Descrição do plano"
                   />
                 </div>
 
-                <Button
-                  onClick={handleCreateCheckout}
-                  disabled={isCreating}
-                  className="w-full bg-gradient-to-r from-purple-500 to-pink-600 hover:from-purple-600 hover:to-pink-700"
-                >
-                  {isCreating ? (
-                    <div className="flex items-center gap-2">
-                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                      Criando Checkout...
-                    </div>
-                  ) : (
-                    'Criar Checkout Elements'
-                  )}
-                </Button>
-              </CardContent>
-            </Card>
-
-            {/* Formulário de Pagamento */}
-            <Card className="bg-gray-800/50 border-gray-700">
-              <CardHeader>
-                <CardTitle className="text-white flex items-center gap-2">
-                  <CreditCard className="w-5 h-5 text-green-400" />
-                  Pagamento
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                {paymentResult ? (
-                  <div className="space-y-4">
-                    <div className="bg-green-900/20 border border-green-600 rounded-lg p-4">
-                      <div className="flex items-center gap-2 mb-2">
-                        <CheckCircle className="w-5 h-5 text-green-400" />
-                        <span className="text-green-400 font-semibold">Pagamento Realizado!</span>
-                      </div>
-                      <p className="text-sm text-green-300">{paymentResult.message}</p>
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div className="bg-gray-700 p-3 rounded">
-                        <label className="text-xs text-gray-400">Invoice ID</label>
-                        <p className="text-sm font-mono text-white">{paymentResult.invoiceId}</p>
-                      </div>
-                      <div className="bg-gray-700 p-3 rounded">
-                        <label className="text-xs text-gray-400">Subscription ID</label>
-                        <p className="text-sm font-mono text-white">{paymentResult.subscriptionId}</p>
-                      </div>
-                      <div className="bg-gray-700 p-3 rounded">
-                        <label className="text-xs text-gray-400">Status Cobrança</label>
-                        <p className="text-sm font-mono text-white">{paymentResult.immediateChargeStatus}</p>
-                      </div>
-                      <div className="bg-gray-700 p-3 rounded">
-                        <label className="text-xs text-gray-400">Trial Termina Em</label>
-                        <p className="text-sm font-mono text-white">{new Date(paymentResult.trialEndDate).toLocaleString()}</p>
-                      </div>
-                    </div>
-                  </div>
-                ) : checkoutData ? (
-                  <Elements stripe={stripePromise}>
-                    <PaymentForm
-                      clientSecret={checkoutData.clientSecret}
-                      setupIntentId={checkoutData.setupIntentId}
-                      onPaymentSuccess={handlePaymentSuccess}
-                    />
-                  </Elements>
-                ) : (
-                  <div className="text-center py-8">
-                    <Clock className="w-12 h-12 text-gray-500 mx-auto mb-4" />
-                    <p className="text-gray-400">Aguardando criação do checkout...</p>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Fluxo Técnico */}
-          {checkoutData && (
-            <Card className="bg-gray-800/50 border-gray-700 mt-8">
-              <CardHeader>
-                <CardTitle className="text-white">Fluxo Técnico Elements</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
-                  {Object.entries(checkoutData.billing_flow).map(([key, step], index) => (
-                    <div key={key} className="bg-blue-900/20 border border-blue-600 rounded-lg p-4 text-center">
-                      <div className="text-2xl font-bold text-blue-400 mb-2">{index + 1}</div>
-                      <p className="text-sm text-blue-300">{step}</p>
-                    </div>
-                  ))}
+                <div>
+                  <Label htmlFor="immediateAmount">Valor Imediato (R$)</Label>
+                  <Input
+                    id="immediateAmount"
+                    type="number"
+                    step="0.01"
+                    value={config.immediateAmount}
+                    onChange={(e) => setConfig(prev => ({ ...prev, immediateAmount: parseFloat(e.target.value) }))}
+                  />
                 </div>
-              </CardContent>
-            </Card>
-          )}
-        </div>
-      </div>
+
+                <div>
+                  <Label htmlFor="trialDays">Dias de Trial</Label>
+                  <Input
+                    id="trialDays"
+                    type="number"
+                    value={config.trialDays}
+                    onChange={(e) => setConfig(prev => ({ ...prev, trialDays: parseInt(e.target.value) }))}
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="recurringAmount">Valor Recorrente (R$)</Label>
+                  <Input
+                    id="recurringAmount"
+                    type="number"
+                    step="0.01"
+                    value={config.recurringAmount}
+                    onChange={(e) => setConfig(prev => ({ ...prev, recurringAmount: parseFloat(e.target.value) }))}
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="currency">Moeda</Label>
+                  <Select value={config.currency} onValueChange={(value) => setConfig(prev => ({ ...prev, currency: value }))}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="BRL">BRL (Real)</SelectItem>
+                      <SelectItem value="USD">USD (Dólar)</SelectItem>
+                      <SelectItem value="EUR">EUR (Euro)</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div>
+                  <Label htmlFor="layout">Layout</Label>
+                  <Select value={config.layout} onValueChange={(value: any) => setConfig(prev => ({ ...prev, layout: value }))}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="tabs">Tabs</SelectItem>
+                      <SelectItem value="accordion">Accordion</SelectItem>
+                      <SelectItem value="auto">Auto</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div>
+                  <Label htmlFor="appearance">Aparência</Label>
+                  <Select value={config.appearance} onValueChange={(value: any) => setConfig(prev => ({ ...prev, appearance: value }))}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="default">Padrão</SelectItem>
+                      <SelectItem value="night">Noturno</SelectItem>
+                      <SelectItem value="stripe">Stripe</SelectItem>
+                      <SelectItem value="minimal">Minimal</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              <Separator />
+
+              <div className="space-y-4">
+                <Label>Tipo de Implementação</Label>
+                <div className="flex space-x-4">
+                  <Button 
+                    variant={deploymentType === 'embed' ? 'default' : 'outline'}
+                    onClick={() => setDeploymentType('embed')}
+                  >
+                    <Monitor className="w-4 h-4 mr-2" />
+                    Embed
+                  </Button>
+                  <Button 
+                    variant={deploymentType === 'standalone' ? 'default' : 'outline'}
+                    onClick={() => setDeploymentType('standalone')}
+                  >
+                    <ExternalLink className="w-4 h-4 mr-2" />
+                    Página Única
+                  </Button>
+                </div>
+              </div>
+
+              <Button 
+                onClick={createElementsCheckout}
+                disabled={isCreating}
+                className="w-full"
+                size="lg"
+              >
+                {isCreating ? (
+                  <>
+                    <Clock className="w-4 h-4 mr-2 animate-spin" />
+                    Criando Checkout...
+                  </>
+                ) : (
+                  <>
+                    <CreditCard className="w-4 h-4 mr-2" />
+                    Criar Stripe Elements Checkout
+                  </>
+                )}
+              </Button>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="embed">
+          <Card>
+            <CardHeader>
+              <CardTitle>Checkout Embed</CardTitle>
+              <CardDescription>
+                Checkout integrado diretamente na página
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {checkoutData && deploymentType === 'embed' ? (
+                <Elements
+                  stripe={stripePromise}
+                  options={{
+                    clientSecret: checkoutData.clientSecret,
+                    appearance: {
+                      theme: config.appearance === 'night' ? 'night' : 'stripe',
+                      variables: {
+                        colorPrimary: '#10b981',
+                        colorBackground: '#ffffff',
+                        colorText: '#374151',
+                        colorDanger: '#ef4444',
+                        fontFamily: 'Inter, sans-serif',
+                        spacingUnit: '4px',
+                        borderRadius: '8px',
+                      },
+                    },
+                  }}
+                >
+                  <PaymentForm
+                    clientSecret={checkoutData.clientSecret}
+                    setupIntentId={checkoutData.setupIntentId}
+                    config={config}
+                    onPaymentSuccess={handlePaymentSuccess}
+                  />
+                </Elements>
+              ) : (
+                <div className="text-center py-8">
+                  <CreditCard className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+                  <h3 className="text-lg font-semibold mb-2">Configure o Checkout</h3>
+                  <p className="text-gray-600">
+                    Vá para a aba "Configuração" e clique em "Criar Stripe Elements Checkout"
+                  </p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="standalone">
+          <Card>
+            <CardHeader>
+              <CardTitle>Página Única</CardTitle>
+              <CardDescription>
+                Link dedicado para o checkout
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {generatedUrl && deploymentType === 'standalone' ? (
+                <div className="space-y-4">
+                  <div className="p-4 bg-gray-50 rounded-lg">
+                    <Label className="text-sm font-medium">URL do Checkout</Label>
+                    <div className="flex items-center space-x-2 mt-2">
+                      <Input value={generatedUrl} readOnly />
+                      <Button 
+                        onClick={() => {
+                          navigator.clipboard.writeText(generatedUrl);
+                          toast({
+                            title: "Copiado!",
+                            description: "URL copiada para a área de transferência",
+                          });
+                        }}
+                        variant="outline"
+                        size="sm"
+                      >
+                        <Link className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  </div>
+
+                  <div className="flex space-x-2">
+                    <Button 
+                      onClick={() => window.open(generatedUrl, '_blank')}
+                      variant="outline"
+                    >
+                      <ExternalLink className="w-4 h-4 mr-2" />
+                      Abrir em Nova Aba
+                    </Button>
+
+                    <Button 
+                      onClick={() => window.location.href = generatedUrl}
+                    >
+                      <Monitor className="w-4 h-4 mr-2" />
+                      Ir para Checkout
+                    </Button>
+                  </div>
+
+                  <div className="mt-6 p-4 border rounded-lg">
+                    <h4 className="font-semibold mb-2">Resumo do Plano</h4>
+                    <div className="space-y-2 text-sm">
+                      <div className="flex justify-between">
+                        <span>Cobrança Imediata:</span>
+                        <Badge variant="outline">R$ {config.immediateAmount.toFixed(2)}</Badge>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>Trial:</span>
+                        <Badge variant="outline">{config.trialDays} dias</Badge>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>Valor Recorrente:</span>
+                        <Badge variant="outline">R$ {config.recurringAmount.toFixed(2)}/mês</Badge>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="text-center py-8">
+                  <ExternalLink className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+                  <h3 className="text-lg font-semibold mb-2">Configure o Checkout</h3>
+                  <p className="text-gray-600">
+                    Selecione "Página Única" na configuração e clique em "Criar Stripe Elements Checkout"
+                  </p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
