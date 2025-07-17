@@ -5,7 +5,8 @@
 
 import { useState } from 'react';
 import { Elements } from '@stripe/react-stripe-js';
-import { loadStripe } from '@stripe/stripe-js';
+// Stripe.js desabilitado para evitar erros CSP
+// import { loadStripe } from '@stripe/stripe-js';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -26,7 +27,8 @@ import { apiRequest } from '@/lib/queryClient';
 import GatewaySelector from '@/components/GatewaySelector';
 import CheckoutSubscription from './checkout-subscription';
 
-const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLIC_KEY || '');
+// Stripe.js desabilitado para evitar erros CSP
+const stripePromise = Promise.resolve(null);
 
 interface CheckoutUnifiedProps {
   onSuccess?: (subscriptionId: string) => void;

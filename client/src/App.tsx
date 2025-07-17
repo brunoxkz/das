@@ -70,9 +70,9 @@ import StripeElements from "@/pages/stripe-elements";
 import StripePaymentIntentDemo from "@/pages/stripe-payment-intent-demo";
 import PaymentSuccess from "@/pages/payment-success";
 import PaymentIntentExplanation from "@/pages/payment-intent-explanation";
-import CheckoutTrialFinal from "@/pages/checkout-trial-final";
+import CheckoutTrialSimple from "@/pages/checkout-trial-simple";
 import CheckoutTrialFinalSimple from "@/pages/checkout-trial-final-simple";
-import CheckoutStripeBasic from "@/pages/checkout-stripe-basic";
+import CheckoutNoStripe from "@/pages/checkout-no-stripe";
 import CheckoutSimpleTrial from "@/pages/checkout-simple-trial";
 import CheckoutTrialCustom from "@/pages/checkout-trial-custom";
 import CheckoutTrialPerfect from "@/pages/checkout-trial-perfect";
@@ -82,6 +82,7 @@ import StripeMonitoring from "@/pages/stripe-monitoring";
 import CheckoutStripeFinal from "@/pages/checkout-stripe-final";
 import ProductBuilder from "@/pages/product-builder";
 import SubscriptionsManager from "@/pages/subscriptions-manager";
+import SaasCobrancaManager from "@/pages/saas-cobran-manager";
 import { useAuth } from "@/hooks/useAuth-jwt";
 import { isUnauthorizedError } from "@/lib/authUtils";
 import { SidebarProvider } from "@/hooks/useSidebar";
@@ -436,7 +437,7 @@ function App() {
         
         <Route path="/checkout-trial-final">
           <Layout>
-            <CheckoutTrialFinal />
+            <CheckoutTrialSimple />
           </Layout>
         </Route>
         
@@ -466,7 +467,7 @@ function App() {
         
         <Route path="/checkout-stripe-basic">
           <Layout>
-            <CheckoutStripeBasic />
+            <CheckoutNoStripe />
           </Layout>
         </Route>
         
@@ -497,6 +498,12 @@ function App() {
         <Route path="/checkout-dashboard">
           <Layout>
             <CheckoutDashboard />
+          </Layout>
+        </Route>
+        
+        <Route path="/saas-cobran-manager">
+          <Layout>
+            <SaasCobrancaManager />
           </Layout>
         </Route>
 

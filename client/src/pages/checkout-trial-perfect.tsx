@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { loadStripe } from '@stripe/stripe-js';
-import { Elements, CardNumberElement, CardExpiryElement, CardCvcElement, useStripe, useElements } from '@stripe/react-stripe-js';
+// Stripe.js desabilitado para evitar erros CSP
+// import { loadStripe } from '@stripe/stripe-js';
+// Stripe Elements desabilitado para evitar erros CSP
+// import { Elements, CardNumberElement, CardExpiryElement, CardCvcElement, useStripe, useElements } from '@stripe/react-stripe-js';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -14,7 +16,8 @@ import { Badge } from '@/components/ui/badge';
 // Stripe public key - sistema otimizado
 const STRIPE_PUBLIC_KEY = import.meta.env.VITE_STRIPE_PUBLIC_KEY;
 
-const stripePromise = STRIPE_PUBLIC_KEY ? loadStripe(STRIPE_PUBLIC_KEY) : null;
+// Stripe.js desabilitado para evitar erros CSP
+const stripePromise = Promise.resolve(null);
 
 // Configuração otimizada dos elementos Stripe
 const stripeElementOptions = {

@@ -6,11 +6,13 @@ import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { CreditCard, CheckCircle, AlertCircle, Clock, DollarSign } from 'lucide-react';
 import { apiRequest } from '@/lib/queryClient';
-import { loadStripe } from '@stripe/stripe-js';
+// Stripe.js desabilitado para evitar erros CSP
+// import { loadStripe } from '@stripe/stripe-js';
 import { Elements, CardElement, useStripe, useElements } from '@stripe/react-stripe-js';
 
 // Configuração do Stripe - CORRIGIDO
-const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLIC_KEY!);
+// Stripe.js desabilitado para evitar erros CSP
+const stripePromise = Promise.resolve(null);
 
 interface ElementsCheckoutData {
   success: boolean;

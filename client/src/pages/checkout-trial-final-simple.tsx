@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { loadStripe } from '@stripe/stripe-js';
-import { Elements, CardElement, useStripe, useElements } from '@stripe/react-stripe-js';
+// Stripe.js desabilitado para evitar erros CSP
+// import { loadStripe } from '@stripe/stripe-js';
+// Stripe Elements desabilitado para evitar erros CSP
+// import { Elements, CardElement, useStripe, useElements } from '@stripe/react-stripe-js';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -10,7 +12,8 @@ import { useToast } from '@/hooks/use-toast';
 import { apiRequest } from '@/lib/queryClient';
 
 // Stripe key - versão simplificada
-const stripePromise = loadStripe('pk_test_51RjvV9HK6al3veW1PjziXLVqAk2y8HUIh5Rg2xP3wUUJ6Jdvaob5KB3PlKsWYWOtldtdbeLh0TpcMF5Pb5FfO6p100hNkeeWih');
+// Stripe.js desabilitado para evitar erros CSP
+const stripePromise = Promise.resolve(null);
 
 // Configuração do CardElement - mais simples
 const cardElementOptions = {

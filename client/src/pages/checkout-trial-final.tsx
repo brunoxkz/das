@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { loadStripe } from '@stripe/stripe-js';
-import { Elements, CardNumberElement, CardExpiryElement, CardCvcElement, useStripe, useElements } from '@stripe/react-stripe-js';
+// Stripe.js desabilitado para evitar erros CSP
+// import { loadStripe } from '@stripe/stripe-js';
+// import { Elements, CardNumberElement, CardExpiryElement, CardCvcElement, useStripe, useElements } from '@stripe/react-stripe-js';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -13,30 +14,8 @@ import { apiRequest } from '@/lib/queryClient';
 // Stripe public key - inicialização mais robusta
 const STRIPE_PUBLIC_KEY = import.meta.env.VITE_STRIPE_PUBLIC_KEY;
 
-// Função para carregar Stripe com retry
-const loadStripeWithRetry = async (retries = 3) => {
-  if (!STRIPE_PUBLIC_KEY) {
-    throw new Error('STRIPE_PUBLIC_KEY não configurada');
-  }
-  
-  for (let i = 0; i < retries; i++) {
-    try {
-      console.log(`Tentativa ${i + 1} de carregar Stripe...`);
-      const stripe = await loadStripe(STRIPE_PUBLIC_KEY);
-      if (stripe) {
-        console.log('✅ Stripe carregado com sucesso!');
-        return stripe;
-      }
-    } catch (error) {
-      console.error(`❌ Erro ao carregar Stripe (tentativa ${i + 1}):`, error);
-      if (i === retries - 1) throw error;
-      await new Promise(resolve => setTimeout(resolve, 1000));
-    }
-  }
-  throw new Error('Falha ao carregar Stripe após múltiplas tentativas');
-};
-
-const stripePromise = STRIPE_PUBLIC_KEY ? loadStripeWithRetry() : null;
+// Stripe.js desabilitado para evitar erros CSP
+const stripePromise = Promise.resolve(null);
 
 // Configuração dos elementos individuais do Stripe
 const stripeElementOptions = {
