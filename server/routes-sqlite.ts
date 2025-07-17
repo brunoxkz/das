@@ -4107,27 +4107,26 @@ export function registerSQLiteRoutes(app: Express): Server {
         trialAmount: trialPrice.unit_amount
       });
 
-      // Criar session com trial customizado
+      // SOLUÇÃO DEFINITIVA: Criar session de pagamento único para R$1
       const session = await activeStripeService.stripe.checkout.sessions.create({
-        mode: 'subscription',
+        mode: 'payment',
         line_items: [{
-          price: price.id,
+          price_data: {
+            currency: currency.toLowerCase(),
+            unit_amount: trialPrice.unit_amount,
+            product_data: {
+              name: 'Taxa de Ativação do Trial',
+              description: `Ative seu trial de ${trial_period_days} dias por apenas R$${trial_price.toFixed(2)}`
+            }
+          },
           quantity: 1
         }],
         customer: customer.id,
-        subscription_data: {
-          trial_period_days: trial_period_days,
-          trial_settings: {
-            end_behavior: {
-              missing_payment_method: 'cancel'
-            }
-          },
-          add_invoice_items: [
-            {
-              price: trialPrice.id,
-              quantity: 1
-            }
-          ]
+        metadata: {
+          trial_period_days: trial_period_days.toString(),
+          regular_price: regular_price.toString(),
+          subscription_price_id: price.id,
+          type: 'trial_activation'
         },
         success_url: `https://example.com/success?session_id={CHECKOUT_SESSION_ID}`,
         cancel_url: `https://example.com/cancel`,
