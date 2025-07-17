@@ -187,68 +187,26 @@ const CheckoutForm: React.FC<CheckoutFormProps> = ({ onSuccess }) => {
         <Label>Dados do Cartão *</Label>
         
         {/* Número do Cartão */}
-        <div className="space-y-2">
-          <Label htmlFor="card-number" className="text-sm font-medium">Número do Cartão</Label>
-          <div 
-            className="p-4 border-2 border-gray-200 rounded-lg bg-white hover:border-blue-400 focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-200 transition-all min-h-[50px] flex items-center cursor-text"
-            onClick={() => {
-              // Força o foco no elemento Stripe
-              const cardNumberElement = elements?.getElement(CardNumberElement);
-              if (cardNumberElement) {
-                cardNumberElement.focus();
-              }
-            }}
-          >
-            <CardNumberElement
-              id="card-number"
-              options={stripeElementOptions}
-              className="w-full"
-              onReady={() => {
-                console.log('✅ CardNumberElement ready and clickable');
-                setCardReady(true);
-              }}
-              onFocus={() => {
-                console.log('CardNumberElement focused');
-              }}
-              onBlur={() => {
-                console.log('CardNumberElement blurred');
-              }}
-              onChange={(event) => {
-                console.log('CardNumberElement change:', event);
-                if (event.error) {
-                  setCardError(event.error.message);
-                  setError(event.error.message);
-                } else {
-                  setCardError(null);
-                  if (cardError) setError(null);
-                }
-              }}
-            />
-          </div>
-        </div>
-
-        {/* Data de Validade e CVC */}
-        <div className="grid grid-cols-2 gap-4">
-          <div className="space-y-2">
-            <Label htmlFor="card-expiry" className="text-sm font-medium">Data de Validade</Label>
-            <div 
-              className="p-4 border-2 border-gray-200 rounded-lg bg-white hover:border-blue-400 focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-200 transition-all min-h-[50px] flex items-center cursor-text"
-              onClick={() => {
-                const cardExpiryElement = elements?.getElement(CardExpiryElement);
-                if (cardExpiryElement) {
-                  cardExpiryElement.focus();
-                }
-              }}
-            >
-              <CardExpiryElement
-                id="card-expiry"
+        <div>
+          <Label htmlFor="card-number">Número do Cartão *</Label>
+          <div className="relative">
+            <div className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50">
+              <CardNumberElement
+                id="card-number"
                 options={stripeElementOptions}
                 className="w-full"
-                onReady={() => console.log('✅ CardExpiryElement ready')}
-                onFocus={() => console.log('CardExpiryElement focused')}
-                onBlur={() => console.log('CardExpiryElement blurred')}
+                onReady={() => {
+                  console.log('✅ CardNumberElement ready and clickable');
+                  setCardReady(true);
+                }}
+                onFocus={() => {
+                  console.log('CardNumberElement focused');
+                }}
+                onBlur={() => {
+                  console.log('CardNumberElement blurred');
+                }}
                 onChange={(event) => {
-                  console.log('CardExpiryElement change:', event);
+                  console.log('CardNumberElement change:', event);
                   if (event.error) {
                     setCardError(event.error.message);
                     setError(event.error.message);
@@ -260,36 +218,59 @@ const CheckoutForm: React.FC<CheckoutFormProps> = ({ onSuccess }) => {
               />
             </div>
           </div>
+        </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="card-cvc" className="text-sm font-medium">CVC</Label>
-            <div 
-              className="p-4 border-2 border-gray-200 rounded-lg bg-white hover:border-blue-400 focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-200 transition-all min-h-[50px] flex items-center cursor-text"
-              onClick={() => {
-                const cardCvcElement = elements?.getElement(CardCvcElement);
-                if (cardCvcElement) {
-                  cardCvcElement.focus();
-                }
-              }}
-            >
-              <CardCvcElement
-                id="card-cvc"
-                options={stripeElementOptions}
-                className="w-full"
-                onReady={() => console.log('✅ CardCvcElement ready')}
-                onFocus={() => console.log('CardCvcElement focused')}
-                onBlur={() => console.log('CardCvcElement blurred')}
-                onChange={(event) => {
-                  console.log('CardCvcElement change:', event);
-                  if (event.error) {
-                    setCardError(event.error.message);
-                    setError(event.error.message);
-                  } else {
-                    setCardError(null);
-                    if (cardError) setError(null);
-                  }
-                }}
-              />
+        {/* Data de Validade e CVC */}
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <Label htmlFor="card-expiry">Data de Validade *</Label>
+            <div className="relative">
+              <div className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50">
+                <CardExpiryElement
+                  id="card-expiry"
+                  options={stripeElementOptions}
+                  className="w-full"
+                  onReady={() => console.log('✅ CardExpiryElement ready')}
+                  onFocus={() => console.log('CardExpiryElement focused')}
+                  onBlur={() => console.log('CardExpiryElement blurred')}
+                  onChange={(event) => {
+                    console.log('CardExpiryElement change:', event);
+                    if (event.error) {
+                      setCardError(event.error.message);
+                      setError(event.error.message);
+                    } else {
+                      setCardError(null);
+                      if (cardError) setError(null);
+                    }
+                  }}
+                />
+              </div>
+            </div>
+          </div>
+
+          <div>
+            <Label htmlFor="card-cvc">CVC *</Label>
+            <div className="relative">
+              <div className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50">
+                <CardCvcElement
+                  id="card-cvc"
+                  options={stripeElementOptions}
+                  className="w-full"
+                  onReady={() => console.log('✅ CardCvcElement ready')}
+                  onFocus={() => console.log('CardCvcElement focused')}
+                  onBlur={() => console.log('CardCvcElement blurred')}
+                  onChange={(event) => {
+                    console.log('CardCvcElement change:', event);
+                    if (event.error) {
+                      setCardError(event.error.message);
+                      setError(event.error.message);
+                    } else {
+                      setCardError(null);
+                      if (cardError) setError(null);
+                    }
+                  }}
+                />
+              </div>
             </div>
           </div>
         </div>
