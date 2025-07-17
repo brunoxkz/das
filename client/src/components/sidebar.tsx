@@ -94,21 +94,21 @@ export function Sidebar() {
   };
 
   const tutorialsItem = {
-    title: "TUTORIAIS",
+    title: t("sidebar.tutorials"),
     href: "/tutoriais",
     icon: <BookOpen className="w-4 h-4" />,
     active: location === "/tutoriais"
   };
 
   const planosItem = {
-    title: "PLANOS",
+    title: t("sidebar.plans"),
     href: "/planos",
     icon: <Crown className="w-4 h-4" />,
     active: location === "/planos"
   };
 
   const creditosItem = {
-    title: "CRÉDITOS",
+    title: t("sidebar.credits"),
     href: "/credits",
     icon: <Coins className="w-4 h-4" />,
     active: location === "/credits"
@@ -127,7 +127,7 @@ export function Sidebar() {
       icon: <Plus className="w-3 h-3" />,
       items: [
         {
-          title: "MEUS QUIZZES",
+          title: t("sidebar.myQuizzes"),
           href: "/quizzes",
           icon: <BarChart3 className="w-4 h-4" />,
           active: location.startsWith("/quizzes"),
@@ -204,11 +204,11 @@ export function Sidebar() {
       ]
     },
     {
-      title: "ANALYTICS",
+      title: t("sidebar.analytics"),
       icon: <TrendingUp className="w-3 h-3" />,
       items: [
         {
-          title: "ANALYTICS",
+          title: t("sidebar.analytics"),
           href: "/analytics",
           icon: <TrendingUp className="w-4 h-4" />,
           active: location === "/analytics"
@@ -216,49 +216,49 @@ export function Sidebar() {
       ]
     },
     {
-      title: "MARKETING",
+      title: t("sidebar.marketing"),
       icon: <Target className="w-3 h-3" />,
       items: [
         {
-          title: "SMS",
+          title: t("sidebar.sms"),
           href: "/sms-campaigns-advanced",
           icon: <MessageSquare className="w-4 h-4" />,
           active: location === "/sms-campaigns-advanced" || location === "/sms-credits"
         },
         {
-          title: "E-MAIL",
+          title: t("sidebar.email"),
           href: "/email-marketing",
           icon: <Mail className="w-4 h-4" />,
           active: location === "/email-marketing"
         },
         {
-          title: "WHATSAPP",
+          title: t("sidebar.whatsapp"),
           href: "/campanhas-whatsapp",
           icon: <Bot className="w-4 h-4" />,
           active: location === "/campanhas-whatsapp",
           badge: <span className="text-xs text-green-500 font-medium">grátis</span>
         },
         {
-          title: "TELEGRAM",
+          title: t("sidebar.telegram"),
           href: "/telegram-automation",
           icon: <Bot className="w-4 h-4" />,
           active: location === "/telegram-automation",
           badge: <span className="text-xs text-blue-500 font-medium">API oficial</span>
         },
         {
-          title: "VOZ",
+          title: t("sidebar.voice"),
           href: "/voice-calling",
           icon: <Phone className="w-4 h-4" />,
           active: location === "/voice-calling"
         },
         {
-          title: "SUPER AFILIADOS",
+          title: t("sidebar.superAffiliates"),
           href: "/super-afiliados",
           icon: <Crown className="w-4 h-4" />,
           active: location === "/super-afiliados"
         },
         {
-          title: "CAMPANHAS CONDICIONAIS",
+          title: t("sidebar.conditionalCampaigns"),
           href: "/conditional-campaigns",
           icon: <Target className="w-4 h-4" />,
           active: location === "/conditional-campaigns",
@@ -268,23 +268,23 @@ export function Sidebar() {
       ]
     },
     {
-      title: "INTEGRAÇÕES",
+      title: t("sidebar.integrations"),
       icon: <Plug className="w-3 h-3" />,
       items: [
         {
-          title: "WEBHOOKS",
+          title: t("sidebar.webhooks"),
           href: "/webhooks",
           icon: <Webhook className="w-4 h-4" />,
           active: location === "/webhooks"
         },
         {
-          title: "INTEGRAÇÕES",
+          title: t("sidebar.integrations"),
           href: "/integracoes",
           icon: <Plug className="w-4 h-4" />,
           active: location === "/integracoes"
         },
         {
-          title: "EXTENSÕES",
+          title: t("sidebar.extensions"),
           href: "/extensoes",
           icon: <Package className="w-4 h-4" />,
           active: location === "/extensoes"
@@ -292,11 +292,11 @@ export function Sidebar() {
       ]
     },
     {
-      title: "AVANÇADO",
+      title: t("sidebar.advanced"),
       icon: <Shield className="w-3 h-3" />,
       items: [
         {
-          title: "CLOAKER",
+          title: t("sidebar.cloaker"),
           href: "/cloaker",
           icon: <Shield className="w-4 h-4" />,
           active: location === "/cloaker"
