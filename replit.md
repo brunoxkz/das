@@ -221,6 +221,24 @@ No additional files or separate projects are maintained in this repository.
 - **PRODUCT BUILDER**: Product creation tools
 - **GERENCIAR ASSINATURAS**: Subscription management interface
 
+## Payment Intent System
+O sistema utiliza Stripe Payment Intent para processar pagamentos únicos de R$ 1,00 (taxa de ativação) que se convertem automaticamente em assinatura recorrente de R$ 29,90/mês após 3 dias de trial gratuito.
+
+### Como funciona:
+1. **Payment Intent**: Objeto oficial do Stripe que representa uma "intenção de pagamento"
+2. **Ciclo de vida**: Criação → Processamento → Confirmação → Sucesso/Falha
+3. **Segurança**: Dados do cartão não passam pelo servidor (tokenização do Stripe)
+4. **Funcionalidade**: Sistema 100% funcional, não é demonstração
+
+### Páginas disponíveis:
+- `/stripe-payment-intent-demo` - Sistema funcional de pagamento
+- `/payment-intent-explanation` - Explicação detalhada do conceito
+- `/payment-success` - Página de sucesso após pagamento
+
+### Endpoints:
+- `POST /api/stripe/payment-intent-simple` - Cria Payment Intent de R$ 1,00
+- Logs detalhados com ID único para rastreamento de transações
+
 ## Changelog
 
 ```

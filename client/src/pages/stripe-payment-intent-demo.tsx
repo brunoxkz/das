@@ -194,7 +194,7 @@ window.addEventListener('message', function(event) {
             </Button>
           </Link>
           <h1 className="text-3xl font-bold bg-gradient-to-r from-green-600 to-blue-600 bg-clip-text text-transparent">
-            Stripe Payment Intent - Demo Completa
+            Sistema de Pagamento Stripe - FUNCIONAL
           </h1>
         </div>
 
@@ -207,7 +207,7 @@ window.addEventListener('message', function(event) {
                 Dados do Cliente (Editáveis)
               </CardTitle>
               <CardDescription>
-                Configure os dados do cliente para a demonstração. Estes campos são editáveis para facilitar testes.
+                Configure os dados do cliente para o pagamento real. Payment Intent processa pagamentos de R$ 1,00 para ativação do plano Premium.
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
