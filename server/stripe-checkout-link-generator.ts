@@ -246,7 +246,7 @@ export class StripeCheckoutLinkGenerator {
   /**
    * BUSCAR LINKS POR USUÁRIO (MÉTODO PÚBLICO)
    */
-  async getUserLinks(userId: string): Promise<any[]> {
+  async getUserCheckoutLinks(userId: string): Promise<any[]> {
     try {
       const Database = await import('better-sqlite3');
       const db = new Database.default('./vendzz-database.db');
@@ -260,6 +260,12 @@ export class StripeCheckoutLinkGenerator {
 
       return rows.map(row => {
         const config = JSON.parse(row.config);
+        
+        // Gerar URL pública baseada no Replit domain
+        const baseUrl = process.env.REPLIT_DOMAINS ? 
+          `https://${process.env.REPLIT_DOMAINS.split(',')[0]}` : 
+          (process.env.BASE_URL || 'http://localhost:5000');
+        
         return {
           id: row.id,
           linkId: row.id,
@@ -269,7 +275,8 @@ export class StripeCheckoutLinkGenerator {
           trialDays: config.trialDays,
           recurringAmount: config.recurringAmount,
           currency: config.currency,
-          checkoutUrl: `${process.env.BASE_URL || 'http://localhost:5000'}/stripe-elements-checkout?linkId=${row.id}&token=${row.accessToken}`,
+          recurringInterval: config.recurringInterval || 'monthly',
+          checkoutUrl: `${baseUrl}/stripe-elements-checkout?linkId=${row.id}&token=${row.accessToken}`,
           accessToken: row.accessToken,
           expiresAt: row.expiresAt,
           createdAt: row.createdAt,

@@ -74,6 +74,70 @@ export default function StripeElementsPage() {
     }
   });
 
+  // Mutation para criar checkout session oficial
+  const createOfficialCheckoutMutation = useMutation({
+    mutationFn: async (planData: any) => {
+      return await apiRequest("POST", "/api/stripe/create-one-time-subscription", {
+        customerEmail: 'admin@vendzz.com',
+        customerName: 'Admin Vendzz',
+        immediateAmount: planData.immediateAmount,
+        trialDays: planData.trialDays,
+        recurringAmount: planData.recurringAmount,
+        recurringInterval: planData.recurringInterval,
+        successUrl: `${window.location.origin}/stripe-success`,
+        cancelUrl: `${window.location.origin}/stripe-cancel`,
+      });
+    },
+    onSuccess: (data) => {
+      toast({
+        title: "Checkout Session criado!",
+        description: "Redirecionando para o checkout oficial da Stripe...",
+      });
+      
+      // Redirecionar para o checkout da Stripe
+      if (data.checkoutUrl) {
+        window.location.href = data.checkoutUrl;
+      }
+    },
+    onError: (error) => {
+      toast({
+        title: "Erro ao criar checkout",
+        description: "Não foi possível criar o checkout session. Tente novamente.",
+        variant: "destructive",
+      });
+    }
+  });
+
+  // Mutation para criar Payment Intent
+  const createPaymentIntentMutation = useMutation({
+    mutationFn: async (planData: any) => {
+      return await apiRequest("POST", "/api/stripe/create-payment-intent-subscription", {
+        customerEmail: 'admin@vendzz.com',
+        customerName: 'Admin Vendzz',
+        immediateAmount: planData.immediateAmount,
+        trialDays: planData.trialDays,
+        recurringAmount: planData.recurringAmount,
+        recurringInterval: planData.recurringInterval,
+      });
+    },
+    onSuccess: (data) => {
+      toast({
+        title: "Payment Intent criado!",
+        description: "Client Secret gerado para integração com Stripe Elements.",
+      });
+      
+      console.log("Payment Intent criado:", data);
+      // Aqui você pode usar o clientSecret para integrar com Stripe Elements
+    },
+    onError: (error) => {
+      toast({
+        title: "Erro ao criar Payment Intent",
+        description: "Não foi possível criar o Payment Intent. Tente novamente.",
+        variant: "destructive",
+      });
+    }
+  });
+
   // Gerar código embed para o link
   const generateEmbedCode = (link: any) => {
     // Gerar URL pública baseada no domínio atual
@@ -435,37 +499,116 @@ export default function StripeElementsPage() {
                   </div>
                 </div>
 
+                {/* Três Opções de Checkout baseadas na Referência Stripe */}
+                <div className="bg-blue-50 p-4 rounded-lg mb-4">
+                  <h4 className="font-semibold text-blue-800 mb-2">📋 Fluxo Baseado na Referência Oficial Stripe</h4>
+                  <p className="text-sm text-blue-600 mb-3">
+                    Implementação baseada em: <code>stripe-samples/subscription-use-cases/one-time-and-subscription</code>
+                  </p>
+                  
+                  <div className="space-y-2">
+                    <div className="grid grid-cols-3 gap-2">
+                      <Button
+                        onClick={() => {
+                          if (!newPlan.name || !newPlan.description) {
+                            toast({
+                              title: "Campos obrigatórios",
+                              description: "Preencha nome e descrição do plano",
+                              variant: "destructive",
+                            });
+                            return;
+                          }
+                          createOfficialCheckoutMutation.mutate(newPlan);
+                        }}
+                        disabled={createOfficialCheckoutMutation.isPending}
+                        className="bg-green-600 hover:bg-green-700 text-white"
+                        size="sm"
+                      >
+                        {createOfficialCheckoutMutation.isPending ? (
+                          <div className="flex items-center">
+                            <div className="animate-spin w-3 h-3 border-2 border-white border-t-transparent rounded-full mr-1"></div>
+                            Criando...
+                          </div>
+                        ) : (
+                          <>
+                            <ExternalLink className="w-3 h-3 mr-1" />
+                            Checkout Oficial
+                          </>
+                        )}
+                      </Button>
+                      
+                      <Button
+                        onClick={() => {
+                          if (!newPlan.name || !newPlan.description) {
+                            toast({
+                              title: "Campos obrigatórios",
+                              description: "Preencha nome e descrição do plano",
+                              variant: "destructive",
+                            });
+                            return;
+                          }
+                          createPaymentIntentMutation.mutate(newPlan);
+                        }}
+                        disabled={createPaymentIntentMutation.isPending}
+                        className="bg-purple-600 hover:bg-purple-700 text-white"
+                        size="sm"
+                      >
+                        {createPaymentIntentMutation.isPending ? (
+                          <div className="flex items-center">
+                            <div className="animate-spin w-3 h-3 border-2 border-white border-t-transparent rounded-full mr-1"></div>
+                            Criando...
+                          </div>
+                        ) : (
+                          <>
+                            <Code className="w-3 h-3 mr-1" />
+                            Payment Intent
+                          </>
+                        )}
+                      </Button>
+                      
+                      <Button
+                        onClick={() => {
+                          if (!newPlan.name || !newPlan.description) {
+                            toast({
+                              title: "Campos obrigatórios",
+                              description: "Preencha nome e descrição do plano",
+                              variant: "destructive",
+                            });
+                            return;
+                          }
+                          createCheckoutMutation.mutate(newPlan);
+                        }}
+                        disabled={createCheckoutMutation.isPending}
+                        className="bg-blue-600 hover:bg-blue-700 text-white"
+                        size="sm"
+                      >
+                        {createCheckoutMutation.isPending ? (
+                          <div className="flex items-center">
+                            <div className="animate-spin w-3 h-3 border-2 border-white border-t-transparent rounded-full mr-1"></div>
+                            Criando...
+                          </div>
+                        ) : (
+                          <>
+                            <Zap className="w-3 h-3 mr-1" />
+                            Embed Link
+                          </>
+                        )}
+                      </Button>
+                    </div>
+                    
+                    <div className="text-xs text-blue-600 space-y-1">
+                      <p>🟢 <strong>Checkout Oficial:</strong> Redirecionamento para Stripe Checkout (recomendado)</p>
+                      <p>🟣 <strong>Payment Intent:</strong> Integração via Stripe Elements (customizável)</p>
+                      <p>🔵 <strong>Embed Link:</strong> Link compartilhável com embed code</p>
+                    </div>
+                  </div>
+                </div>
+
                 <div className="flex space-x-2">
-                  <Button
-                    onClick={() => {
-                      if (!newPlan.name || !newPlan.description) {
-                        toast({
-                          title: "Campos obrigatórios",
-                          description: "Preencha nome e descrição do plano",
-                          variant: "destructive",
-                        });
-                        return;
-                      }
-                      createCheckoutMutation.mutate(newPlan);
-                    }}
-                    disabled={createCheckoutMutation.isPending}
-                    className="flex-1"
-                  >
-                    {createCheckoutMutation.isPending ? (
-                      <div className="flex items-center">
-                        <div className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full mr-2"></div>
-                        Criando...
-                      </div>
-                    ) : (
-                      <>
-                        <Zap className="w-4 h-4 mr-2" />
-                        Criar Checkout Link
-                      </>
-                    )}
-                  </Button>
                   <Button
                     variant="outline"
                     onClick={() => setShowCreateForm(false)}
+                    className="flex-1"
                   >
                     Cancelar
                   </Button>

@@ -4407,6 +4407,186 @@ export function registerSQLiteRoutes(app: Express): Server {
     }
   });
 
+  // CRIAR CHECKOUT SESSION COMPLETO (FLUXO OFICIAL STRIPE)
+  app.post("/api/stripe/create-one-time-subscription", verifyJWT, async (req: any, res) => {
+    try {
+      const { 
+        customerEmail, 
+        customerName, 
+        immediateAmount, 
+        trialDays, 
+        recurringAmount, 
+        recurringInterval,
+        successUrl,
+        cancelUrl
+      } = req.body;
+
+      const { StripeOneTimeSubscriptionService } = await import('./stripe-one-time-subscription');
+      const stripeService = new StripeOneTimeSubscriptionService();
+
+      // Converter valores para centavos
+      const immediateAmountCents = Math.round(immediateAmount * 100);
+      const recurringAmountCents = Math.round(recurringAmount * 100);
+
+      // Mapear intervalo
+      const intervalMap = {
+        'monthly': 'month',
+        'quarterly': 'quarter',
+        'yearly': 'year'
+      };
+
+      const result = await stripeService.createOneTimeAndSubscriptionCheckout({
+        customerEmail: customerEmail || req.user.email,
+        customerName: customerName || req.user.name,
+        immediateAmount: immediateAmountCents,
+        trialDays: trialDays || 3,
+        recurringAmount: recurringAmountCents,
+        recurringInterval: intervalMap[recurringInterval] || 'month',
+        successUrl: successUrl || `${req.protocol}://${req.get('host')}/stripe-success`,
+        cancelUrl: cancelUrl || `${req.protocol}://${req.get('host')}/stripe-cancel`,
+        metadata: {
+          userId: req.user.id,
+          userEmail: req.user.email,
+          source: 'vendzz_platform',
+        },
+      });
+
+      res.json({
+        success: true,
+        sessionId: result.sessionId,
+        checkoutUrl: result.checkoutUrl,
+        customerId: result.customerId,
+        subscriptionPriceId: result.subscriptionPriceId,
+        message: 'Checkout session criado com sucesso!'
+      });
+    } catch (error) {
+      console.error('❌ ERRO AO CRIAR ONE-TIME SUBSCRIPTION:', error);
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  // CRIAR PAYMENT INTENT PARA STRIPE ELEMENTS
+  app.post("/api/stripe/create-payment-intent-subscription", verifyJWT, async (req: any, res) => {
+    try {
+      const { 
+        customerEmail, 
+        customerName, 
+        immediateAmount, 
+        trialDays, 
+        recurringAmount, 
+        recurringInterval 
+      } = req.body;
+
+      const { StripeOneTimeSubscriptionService } = await import('./stripe-one-time-subscription');
+      const stripeService = new StripeOneTimeSubscriptionService();
+
+      // Converter valores para centavos
+      const immediateAmountCents = Math.round(immediateAmount * 100);
+      const recurringAmountCents = Math.round(recurringAmount * 100);
+
+      // Mapear intervalo
+      const intervalMap = {
+        'monthly': 'month',
+        'quarterly': 'quarter',
+        'yearly': 'year'
+      };
+
+      const result = await stripeService.createPaymentIntentWithSubscription({
+        customerEmail: customerEmail || req.user.email,
+        customerName: customerName || req.user.name,
+        immediateAmount: immediateAmountCents,
+        trialDays: trialDays || 3,
+        recurringAmount: recurringAmountCents,
+        recurringInterval: intervalMap[recurringInterval] || 'month',
+        metadata: {
+          userId: req.user.id,
+          userEmail: req.user.email,
+          source: 'vendzz_elements',
+        },
+      });
+
+      res.json({
+        success: true,
+        paymentIntentId: result.paymentIntentId,
+        clientSecret: result.clientSecret,
+        customerId: result.customerId,
+        subscriptionPriceId: result.subscriptionPriceId,
+        message: 'Payment Intent criado com sucesso!'
+      });
+    } catch (error) {
+      console.error('❌ ERRO AO CRIAR PAYMENT INTENT SUBSCRIPTION:', error);
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  // CRIAR ASSINATURA APÓS PAGAMENTO IMEDIATO
+  app.post("/api/stripe/create-subscription-after-payment", verifyJWT, async (req: any, res) => {
+    try {
+      const { 
+        customerId, 
+        paymentMethodId, 
+        subscriptionPriceId, 
+        trialDays 
+      } = req.body;
+
+      const { StripeOneTimeSubscriptionService } = await import('./stripe-one-time-subscription');
+      const stripeService = new StripeOneTimeSubscriptionService();
+
+      const result = await stripeService.createSubscriptionAfterPayment({
+        customerId,
+        paymentMethodId,
+        subscriptionPriceId,
+        trialDays: trialDays || 3,
+        metadata: {
+          userId: req.user.id,
+          userEmail: req.user.email,
+          source: 'vendzz_post_payment',
+        },
+      });
+
+      res.json({
+        success: true,
+        subscriptionId: result.subscriptionId,
+        status: result.status,
+        trialEnd: result.trialEnd,
+        customerId: result.customerId,
+        message: 'Assinatura criada com sucesso!'
+      });
+    } catch (error) {
+      console.error('❌ ERRO AO CRIAR ASSINATURA APÓS PAGAMENTO:', error);
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  // PROCESSAR WEBHOOK PARA COBRANÇA IMEDIATA
+  app.post("/api/stripe/webhook-immediate-charge", async (req: any, res) => {
+    try {
+      const { sessionId } = req.body;
+
+      if (!sessionId) {
+        return res.status(400).json({ error: 'Session ID é obrigatório' });
+      }
+
+      const { StripeOneTimeSubscriptionService } = await import('./stripe-one-time-subscription');
+      const stripeService = new StripeOneTimeSubscriptionService();
+
+      const result = await stripeService.processImmediateChargeWebhook(sessionId);
+
+      res.json({
+        success: true,
+        invoiceId: result.invoiceId,
+        amount: result.amount,
+        status: result.status,
+        customerId: result.customerId,
+        subscriptionId: result.subscriptionId,
+        message: 'Cobrança imediata processada com sucesso!'
+      });
+    } catch (error) {
+      console.error('❌ ERRO AO PROCESSAR WEBHOOK COBRANÇA IMEDIATA:', error);
+      res.status(500).json({ error: error.message });
+    }
+  });
+
   // VALIDAR LINK DE CHECKOUT (SEM AUTENTICAÇÃO)
   app.get("/api/stripe/validate-checkout-link/:linkId", async (req, res) => {
     try {
