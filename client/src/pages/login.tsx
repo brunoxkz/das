@@ -9,7 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth-jwt";
-import { useLanguage } from "@/hooks/useLanguage";
+// import { useLanguage } from "@/hooks/useLanguage";
 import { Loader2, Mail, Lock, User, Phone, Shield } from "lucide-react";
 
 export default function LoginPage() {
@@ -30,7 +30,7 @@ export default function LoginPage() {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
   const { login, register } = useAuth();
-  const { t } = useLanguage();
+  // const { t } = useLanguage();
 
   // Gerar captcha simples
   const generateCaptcha = () => {
@@ -103,7 +103,7 @@ export default function LoginPage() {
       }
       
       toast({
-        title: t("login.loginSuccess"),
+        title: "Login realizado com sucesso!",
         description: "Redirecionando para dashboard...",
       });
       
@@ -112,8 +112,8 @@ export default function LoginPage() {
     } catch (error: any) {
       console.error("Login error:", error);
       toast({
-        title: t("login.loginError"),
-        description: error.message || t("login.loginError"),
+        title: "Erro no login",
+        description: error.message || "Erro no login",
         variant: "destructive",
       });
     } finally {
@@ -129,8 +129,8 @@ export default function LoginPage() {
       // Validações front-end
       if (registerData.password !== registerData.confirmPassword) {
         toast({
-          title: t("login.registerError"),
-          description: t("login.passwordMismatch"),
+          title: "Erro no registro",
+          description: "As senhas não coincidem",
           variant: "destructive",
         });
         return;
@@ -147,8 +147,8 @@ export default function LoginPage() {
 
       if (parseInt(captchaAnswer) !== captchaQuestion.answer) {
         toast({
-          title: t("login.registerError"),
-          description: t("login.wrongCaptcha"),
+          title: "Erro no registro",
+          description: "Resposta do captcha incorreta",
           variant: "destructive",
         });
         generateCaptcha(); // Gerar nova pergunta
@@ -169,7 +169,7 @@ export default function LoginPage() {
       await register(dataToSend);
       
       toast({
-        title: t("login.registerSuccess"),
+        title: "Registro realizado com sucesso!",
         description: "Redirecionando para dashboard...",
       });
       
@@ -177,8 +177,8 @@ export default function LoginPage() {
       
     } catch (error: any) {
       toast({
-        title: t("login.registerError"),
-        description: error.message || t("login.registerError"),
+        title: "Erro no registro",
+        description: error.message || "Erro no registro",
         variant: "destructive",
       });
     } finally {
@@ -198,20 +198,20 @@ export default function LoginPage() {
             />
           </CardTitle>
           <CardDescription>
-            {t("login.subtitle")}
+            Plataforma de Quiz Marketing para Captação de Leads
           </CardDescription>
         </CardHeader>
         <CardContent>
           <Tabs defaultValue="login" className="space-y-4">
             <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="login">{t("login.loginTab")}</TabsTrigger>
-              <TabsTrigger value="register">{t("login.registerTab")}</TabsTrigger>
+              <TabsTrigger value="login">Entrar</TabsTrigger>
+              <TabsTrigger value="register">Criar Conta</TabsTrigger>
             </TabsList>
 
             <TabsContent value="login">
               <form onSubmit={handleLogin} className="space-y-4" autoComplete="on">
                 <div className="space-y-2">
-                  <Label htmlFor="login-email">{t("login.email")}</Label>
+                  <Label htmlFor="login-email">Email</Label>
                   <div className="relative">
                     <Mail className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
                     <Input
@@ -228,7 +228,7 @@ export default function LoginPage() {
                   </div>
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="login-password">{t("login.password")}</Label>
+                  <Label htmlFor="login-password">Senha</Label>
                   <div className="relative">
                     <Lock className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
                     <Input
@@ -251,12 +251,12 @@ export default function LoginPage() {
                     onCheckedChange={handleRememberPasswordChange}
                   />
                   <Label htmlFor="remember-password" className="text-sm font-normal">
-                    {t("login.rememberPassword")}
+                    Lembrar senha
                   </Label>
                 </div>
                 <Button type="submit" className="w-full" disabled={isLoading}>
                   {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                  {t("login.login")}
+                  Entrar
                 </Button>
                 <div className="text-center mt-4">
                   <button
@@ -273,7 +273,7 @@ export default function LoginPage() {
                       }
                     }}
                   >
-                    {t("login.forgotPassword")}
+                    Esqueci minha senha
                   </button>
                 </div>
               </form>
@@ -283,7 +283,7 @@ export default function LoginPage() {
               <form onSubmit={handleRegister} className="space-y-4" autoComplete="on">
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="register-firstName">{t("login.firstName")}</Label>
+                    <Label htmlFor="register-firstName">Nome</Label>
                     <div className="relative">
                       <User className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
                       <Input
@@ -299,7 +299,7 @@ export default function LoginPage() {
                     </div>
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="register-lastName">{t("login.lastName")}</Label>
+                    <Label htmlFor="register-lastName">Sobrenome</Label>
                     <Input
                       id="register-lastName"
                       name="lastName"
@@ -312,7 +312,7 @@ export default function LoginPage() {
                   </div>
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="register-email">{t("login.email")}</Label>
+                  <Label htmlFor="register-email">Email</Label>
                   <div className="relative">
                     <Mail className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
                     <Input
@@ -329,7 +329,7 @@ export default function LoginPage() {
                   </div>
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="register-whatsapp">{t("login.whatsapp")}</Label>
+                  <Label htmlFor="register-whatsapp">WhatsApp</Label>
                   <div className="relative">
                     <Phone className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
                     <Input
@@ -346,7 +346,7 @@ export default function LoginPage() {
                   </div>
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="register-password">{t("login.password")}</Label>
+                  <Label htmlFor="register-password">Senha</Label>
                   <div className="relative">
                     <Lock className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
                     <Input
@@ -364,7 +364,7 @@ export default function LoginPage() {
                   </div>
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="register-confirmPassword">{t("login.confirmPassword")}</Label>
+                  <Label htmlFor="register-confirmPassword">Confirmar Senha</Label>
                   <div className="relative">
                     <Lock className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
                     <Input

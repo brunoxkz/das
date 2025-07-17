@@ -35,14 +35,14 @@ import React from "react";
 import { TutorialTour, dashboardTutorialSteps } from "@/components/tutorial-tour";
 import { HelpCircle } from "lucide-react";
 import { queryClient, apiRequest } from "@/lib/queryClient";
-import { useLanguage } from "@/hooks/useLanguage";
+// import { useLanguage } from "@/hooks/useLanguage";
 
 export default function Dashboard() {
   const { toast } = useToast();
   const { isAuthenticated, user } = useAuth();
   const [showTutorial, setShowTutorial] = useState(false);
   const [showTrialBanner, setShowTrialBanner] = useState(true);
-  const { t } = useLanguage();
+  // const { t } = useLanguage();
 
   // Buscar dados do usuário
   const { data: userData } = useQuery({
@@ -239,25 +239,25 @@ export default function Dashboard() {
 
   const dashboardStats = [
     {
-      title: t("dashboard.totalQuizzes"),
+      title: "Quizzes Criados",
       value: totalQuizzes,
       icon: <BarChart3 className="w-5 h-5" />,
       color: "bg-blue-500"
     },
     {
-      title: t("dashboard.totalLeads"),
+      title: "Leads Capturados",
       value: totalLeads,
       icon: <Users className="w-5 h-5" />,
       color: "bg-purple-500"
     },
     {
-      title: t("dashboard.totalViews"),
+      title: "Visualizações",
       value: totalViews,
       icon: <Eye className="w-5 h-5" />,
       color: "bg-green-500"
     },
     {
-      title: t("dashboard.conversionRate"),
+      title: "Taxa de Conversão",
       value: `${avgConversionRate}%`,
       icon: <TrendingUp className="w-5 h-5" />,
       color: "bg-orange-500"
@@ -282,11 +282,11 @@ export default function Dashboard() {
               <Clock className="w-5 h-5" />
               <div>
                 <span className="font-semibold">
-                  {t('plans.current_plan')} {userPlan === 'enterprise' ? t('plans.enterprise') : 
-                   userPlan === 'premium' ? t('plans.premium') : 
-                   userPlan === 'basic' ? t('plans.basic') : 
-                   userPlan === 'trial' ? t('plans.trial') : 
-                   t('plans.free')}: {daysLeft} {t('plans.days_remaining')}
+                  Plano Atual {userPlan === 'enterprise' ? 'Enterprise' : 
+                   userPlan === 'premium' ? 'Premium' : 
+                   userPlan === 'basic' ? 'Básico' : 
+                   userPlan === 'trial' ? 'Trial' : 
+                   'Gratuito'}: {daysLeft} dias restantes
                 </span>
                 <p className="text-sm text-green-100">
                   {userPlan === 'trial' ? 'Teste grátis por tempo limitado! Upgrade para continuar.' : 
@@ -302,7 +302,7 @@ export default function Dashboard() {
                   className="bg-white text-green-600 hover:bg-green-50 border-white"
                 >
                   <CreditCard className="w-4 h-4 mr-2" />
-                  {userPlan === 'trial' || userPlan === 'free' ? t('plans.upgrade') : t('plans.upgrade')}
+                  {userPlan === 'trial' || userPlan === 'free' ? 'Upgrade' : 'Renovar'}
                 </Button>
               </Link>
               <Link href="/credits">
@@ -333,10 +333,10 @@ export default function Dashboard() {
           <div className="flex items-center justify-between mb-8">
             <div>
               <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-                {t("dashboard.title")}
+                Dashboard
               </h1>
               <p className="dashboard-text-secondary mt-2">
-                {t("dashboard.welcome_back")} {userData?.user?.firstName || "Admin"}
+                Bem-vindo de volta, {userData?.user?.firstName || "Admin"}!
               </p>
             </div>
             <div className="flex items-center gap-4">
@@ -359,7 +359,7 @@ export default function Dashboard() {
               <Link href="/quizzes/new">
                 <Button className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 shadow-lg">
                   <Plus className="w-4 h-4 mr-2" />
-                  {t("common.create_quiz_btn")}
+                  Criar Quiz
                 </Button>
               </Link>
             </div>
@@ -390,7 +390,7 @@ export default function Dashboard() {
               <CardContent className="p-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm dashboard-text-muted mb-1 text-gray-600 dark:text-gray-300">{t('dashboard.smsCampaigns')}</p>
+                    <p className="text-sm dashboard-text-muted mb-1 text-gray-600 dark:text-gray-300">Campanhas SMS</p>
                     <p className="text-2xl font-bold dashboard-text-primary text-gray-900 dark:text-white">{smsCount?.count || 0}</p>
                   </div>
                   <div className="w-12 h-12 rounded-lg bg-cyan-500 flex items-center justify-center text-white">
@@ -404,7 +404,7 @@ export default function Dashboard() {
               <CardContent className="p-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm dashboard-text-muted mb-1 text-gray-600 dark:text-gray-300">{t('dashboard.whatsappCampaigns')}</p>
+                    <p className="text-sm dashboard-text-muted mb-1 text-gray-600 dark:text-gray-300">Campanhas WhatsApp</p>
                     <p className="text-2xl font-bold dashboard-text-primary text-gray-900 dark:text-white">{whatsappCount?.count || 0}</p>
                   </div>
                   <div className="w-12 h-12 rounded-lg bg-green-500 flex items-center justify-center text-white">
@@ -418,7 +418,7 @@ export default function Dashboard() {
               <CardContent className="p-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm dashboard-text-muted mb-1 text-gray-600 dark:text-gray-300">{t('dashboard.emailCampaigns')}</p>
+                    <p className="text-sm dashboard-text-muted mb-1 text-gray-600 dark:text-gray-300">Campanhas Email</p>
                     <p className="text-2xl font-bold dashboard-text-primary text-gray-900 dark:text-white">{emailCount?.count || 0}</p>
                   </div>
                   <div className="w-12 h-12 rounded-lg bg-blue-500 flex items-center justify-center text-white">
@@ -432,7 +432,7 @@ export default function Dashboard() {
               <CardContent className="p-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm dashboard-text-muted mb-1 text-gray-600 dark:text-gray-300">{t('sms.availableCredits')}</p>
+                    <p className="text-sm dashboard-text-muted mb-1 text-gray-600 dark:text-gray-300">Créditos Disponíveis</p>
                     <p className="text-2xl font-bold dashboard-text-primary text-gray-900 dark:text-white">{userCredits?.total || 0}</p>
                   </div>
                   <div className="w-12 h-12 rounded-lg bg-purple-500 flex items-center justify-center text-white">
@@ -447,12 +447,12 @@ export default function Dashboard() {
           <Card className="dashboard-card shadow-xl mb-8">
             <CardHeader className="dashboard-header border-b">
               <div className="flex items-center justify-between">
-                <CardTitle className="text-xl dashboard-text-primary">{t('dashboard.yourQuizzes')}</CardTitle>
+                <CardTitle className="text-xl dashboard-text-primary">Seus Quizzes</CardTitle>
                 {userQuizzes && userQuizzes.length > 6 && (
                   <Link href="/quizzes">
                     <Button variant="outline" size="sm" className="dashboard-button">
                       <Eye className="w-4 h-4 mr-2" />
-                      {t('dashboard.viewAll')} ({userQuizzes.length})
+                      Ver Todos ({userQuizzes.length})
                     </Button>
                   </Link>
                 )}
@@ -469,20 +469,20 @@ export default function Dashboard() {
                           <div className="flex items-center justify-between">
                             <h3 className="font-semibold dashboard-text-primary truncate">{quiz.title}</h3>
                             <Badge variant={quiz.isPublished ? "default" : "secondary"} className="dashboard-badge">
-                              {quiz.isPublished ? t('dashboard.published') : t('dashboard.draft')}
+                              {quiz.isPublished ? 'Publicado' : 'Rascunho'}
                             </Badge>
                           </div>
                         </CardHeader>
                         <CardContent className="pt-0">
                           <div className="flex justify-between text-sm dashboard-text-muted mb-3">
-                            <span>{analytics.views} {t('dashboard.views')}</span>
+                            <span>{analytics.views} visualizações</span>
                             <span>{analytics.leads} leads</span>
                           </div>
                           <div className="flex gap-2">
                             <Link href={`/quizzes/${quiz.id}/edit`}>
                               <Button size="sm" variant="outline" className="dashboard-button">
                                 <Edit className="w-3 h-3 mr-1" />
-                                {t('dashboard.edit')}
+                                Editar
                               </Button>
                             </Link>
                             <Button 
@@ -492,7 +492,7 @@ export default function Dashboard() {
                               onClick={() => handlePreviewQuiz(quiz)}
                             >
                               <ExternalLink className="w-3 h-3 mr-1" />
-                              {t('dashboard.preview')}
+                              Visualizar
                             </Button>
                           </div>
                         </CardContent>
@@ -502,11 +502,11 @@ export default function Dashboard() {
                 </div>
               ) : (
                 <div className="text-center py-8">
-                  <p className="dashboard-text-muted mb-4">{t('dashboard.noQuizzes')}</p>
+                  <p className="dashboard-text-muted mb-4">Você ainda não criou nenhum quiz.</p>
                   <Link href="/quizzes/new">
                     <Button>
                       <Plus className="w-4 h-4 mr-2" />
-                      {t('dashboard.createFirstQuiz')}
+                      Criar Primeiro Quiz
                     </Button>
                   </Link>
                 </div>
@@ -522,7 +522,7 @@ export default function Dashboard() {
                   <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center mx-auto mb-3">
                     <TrendingUp className="w-6 h-6 text-purple-600" />
                   </div>
-                  <h3 className="font-semibold dashboard-text-primary">{t('dashboard.viewAnalytics')}</h3>
+                  <h3 className="font-semibold dashboard-text-primary">Ver Analytics</h3>
                   <p className="text-sm dashboard-text-muted">Relatórios</p>
                 </CardContent>
               </Card>

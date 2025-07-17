@@ -374,8 +374,7 @@ const translations = {
     'common.back': 'Voltar',
     'common.next': 'Próximo',
     'common.previous': 'Anterior',
-    'common.finish': 'Finalizar',
-    'common.continue': 'Continuar',
+
   },
   'en-US': {
     // Dashboard
@@ -635,7 +634,6 @@ const translations = {
     'common.create_quiz_btn': 'Create Quiz',
     'common.upgrade': 'Upgrade',
     'common.current_plan': 'Current Plan',
-    'common.loading': 'Loading...',
     'common.loading': 'Loading...',
     'common.error': 'Error',
     'common.success': 'Success',
