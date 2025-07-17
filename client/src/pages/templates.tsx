@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useState } from "react";
+import { useLanguage } from "@/hooks/useLanguage";
 import { 
   Search, 
   Filter, 
@@ -40,6 +41,7 @@ import {
 } from "lucide-react";
 
 export default function Templates() {
+  const { t } = useLanguage();
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [selectedTemplate, setSelectedTemplate] = useState(null);
@@ -51,24 +53,24 @@ export default function Templates() {
   });
 
   const categories = [
-    { id: "all", label: "Todos", icon: <Filter className="w-4 h-4" /> },
-    { id: "ecommerce", label: "E-commerce", icon: <ShoppingCart className="w-4 h-4" /> },
-    { id: "saas", label: "SaaS", icon: <TrendingUp className="w-4 h-4" /> },
-    { id: "health", label: "Saúde", icon: <Heart className="w-4 h-4" /> },
-    { id: "education", label: "Educação", icon: <GraduationCap className="w-4 h-4" /> },
-    { id: "business", label: "Negócios", icon: <Building className="w-4 h-4" /> },
-    { id: "real-estate", label: "Imóveis", icon: <Home className="w-4 h-4" /> },
-    { id: "finance", label: "Finanças", icon: <Briefcase className="w-4 h-4" /> },
-    { id: "food", label: "Alimentação", icon: <Utensils className="w-4 h-4" /> },
-    { id: "fitness", label: "Fitness", icon: <Dumbbell className="w-4 h-4" /> },
-    { id: "design", label: "Design", icon: <Palette className="w-4 h-4" /> },
-    { id: "automotive", label: "Automotivo", icon: <Car className="w-4 h-4" /> },
-    { id: "gaming", label: "Games", icon: <GamepadIcon className="w-4 h-4" /> },
-    { id: "music", label: "Música", icon: <Music className="w-4 h-4" /> },
-    { id: "photography", label: "Fotografia", icon: <Camera className="w-4 h-4" /> },
-    { id: "lifestyle", label: "Estilo de Vida", icon: <Coffee className="w-4 h-4" /> },
-    { id: "travel", label: "Viagens", icon: <Plane className="w-4 h-4" /> },
-    { id: "technology", label: "Tecnologia", icon: <Smartphone className="w-4 h-4" /> },
+    { id: "all", label: t("templates.all"), icon: <Filter className="w-4 h-4" /> },
+    { id: "ecommerce", label: t("templates.ecommerce"), icon: <ShoppingCart className="w-4 h-4" /> },
+    { id: "saas", label: t("templates.saas"), icon: <TrendingUp className="w-4 h-4" /> },
+    { id: "health", label: t("templates.health"), icon: <Heart className="w-4 h-4" /> },
+    { id: "education", label: t("templates.education"), icon: <GraduationCap className="w-4 h-4" /> },
+    { id: "business", label: t("templates.business"), icon: <Building className="w-4 h-4" /> },
+    { id: "real-estate", label: t("templates.realEstate"), icon: <Home className="w-4 h-4" /> },
+    { id: "finance", label: t("templates.finance"), icon: <Briefcase className="w-4 h-4" /> },
+    { id: "food", label: t("templates.food"), icon: <Utensils className="w-4 h-4" /> },
+    { id: "fitness", label: t("templates.fitness"), icon: <Dumbbell className="w-4 h-4" /> },
+    { id: "design", label: t("templates.design"), icon: <Palette className="w-4 h-4" /> },
+    { id: "automotive", label: t("templates.automotive"), icon: <Car className="w-4 h-4" /> },
+    { id: "gaming", label: t("templates.gaming"), icon: <GamepadIcon className="w-4 h-4" /> },
+    { id: "music", label: t("templates.music"), icon: <Music className="w-4 h-4" /> },
+    { id: "photography", label: t("templates.photography"), icon: <Camera className="w-4 h-4" /> },
+    { id: "lifestyle", label: t("templates.lifestyle"), icon: <Coffee className="w-4 h-4" /> },
+    { id: "travel", label: t("templates.travel"), icon: <Plane className="w-4 h-4" /> },
+    { id: "technology", label: t("templates.technology"), icon: <Smartphone className="w-4 h-4" /> },
   ];
 
   // Comprehensive 50 templates with complete structures
@@ -1232,8 +1234,8 @@ export default function Templates() {
     <div className="p-6 space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-3xl font-bold text-gray-900">Templates de Quiz</h1>
-        <p className="text-gray-600">Comece rapidamente com templates otimizados para conversão</p>
+        <h1 className="text-3xl font-bold text-gray-900">{t("templates.title")}</h1>
+        <p className="text-gray-600">{t("templates.subtitle")}</p>
       </div>
 
       {/* Search and Filter */}
@@ -1241,7 +1243,7 @@ export default function Templates() {
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
           <Input
-            placeholder="Buscar templates..."
+            placeholder={t("templates.searchPlaceholder")}
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="pl-10"
@@ -1290,7 +1292,7 @@ export default function Templates() {
                 {template.isPopular && (
                   <Badge className="bg-yellow-100 text-yellow-800 flex-shrink-0 ml-2">
                     <Star className="w-3 h-3 mr-1" />
-                    Popular
+                    {t("templates.popular")}
                   </Badge>
                 )}
               </div>
@@ -1312,7 +1314,7 @@ export default function Templates() {
                     className="w-full text-xs"
                   >
                     <Eye className="w-3 h-3 mr-1" />
-                    Preview
+                    {t("templates.preview")}
                   </Button>
                   
                   <Button 
@@ -1320,7 +1322,7 @@ export default function Templates() {
                     onClick={() => handleUseTemplate(template)}
                     className="w-full text-xs"
                   >
-                    Usar
+                    {t("templates.use")}
                     <ArrowRight className="w-3 h-3 ml-1" />
                   </Button>
                 </div>
@@ -1334,10 +1336,10 @@ export default function Templates() {
         <div className="text-center py-12">
           <Search className="w-16 h-16 text-gray-400 mx-auto mb-4" />
           <h3 className="text-lg font-semibold text-gray-900 mb-2">
-            Nenhum template encontrado
+            {t("templates.noTemplatesFound")}
           </h3>
           <p className="text-gray-600">
-            Tente ajustar sua busca ou escolha uma categoria diferente
+            {t("templates.tryDifferentSearch")}
           </p>
         </div>
       )}

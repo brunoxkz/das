@@ -14,6 +14,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { useLanguage } from "@/hooks/useLanguage";
 
 interface TypebotProject {
   id: string;
@@ -245,6 +246,7 @@ const TEMPLATES = {
 };
 
 export default function TypebotPage() {
+  const { t } = useLanguage();
   const [selectedProject, setSelectedProject] = useState<TypebotProject | null>(null);
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [templateDialogOpen, setTemplateDialogOpen] = useState(false);
@@ -786,7 +788,7 @@ export default function TypebotPage() {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <Card>
             <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-medium text-muted-foreground">Total de Chatbots</CardTitle>
+              <CardTitle className="text-sm font-medium text-muted-foreground">{t("typebot.totalChatbots")}</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{projects.length}</div>
@@ -794,7 +796,7 @@ export default function TypebotPage() {
           </Card>
           <Card>
             <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-medium text-muted-foreground">Conversas Totais</CardTitle>
+              <CardTitle className="text-sm font-medium text-muted-foreground">{t("typebot.totalConversations")}</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">
@@ -804,7 +806,7 @@ export default function TypebotPage() {
           </Card>
           <Card>
             <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-medium text-muted-foreground">Visualizações</CardTitle>
+              <CardTitle className="text-sm font-medium text-muted-foreground">{t("typebot.views")}</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">
@@ -814,7 +816,7 @@ export default function TypebotPage() {
           </Card>
           <Card>
             <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-medium text-muted-foreground">Taxa de Conversão</CardTitle>
+              <CardTitle className="text-sm font-medium text-muted-foreground">{t("typebot.conversionRate")}</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">
@@ -831,10 +833,10 @@ export default function TypebotPage() {
         <div className="space-y-4">
           <h2 className="text-2xl font-bold flex items-center">
             <Target className="h-6 w-6 mr-3 text-green-500" />
-            Converter Quiz para TypeBot
+            {t("typebot.convertQuizToTypebot")}
           </h2>
           <p className="text-muted-foreground mb-4">
-            Transforme suas perguntas de múltipla escolha em chatbots interativos de forma automática
+            {t("typebot.convertQuizDescription")}
           </p>
           {quizzesQuery.isLoading ? (
             <div className="text-center py-8">Carregando quizzes...</div>
@@ -859,7 +861,7 @@ export default function TypebotPage() {
                       disabled={createProjectMutation.isPending}
                     >
                       <Bot className="h-4 w-4 mr-2" />
-                      {createProjectMutation.isPending ? "Convertendo..." : "Converter para Bot"}
+                      {createProjectMutation.isPending ? t("typebot.converting") : t("typebot.convertToBot")}
                     </Button>
                   </CardContent>
                 </Card>
@@ -870,7 +872,7 @@ export default function TypebotPage() {
               <CardContent className="text-center py-8">
                 <MessageSquare className="h-8 w-8 mx-auto mb-3 text-muted-foreground" />
                 <p className="text-muted-foreground">
-                  Nenhum quiz encontrado. Crie um quiz primeiro para converter em TypeBot.
+                  {t("typebot.noQuizzesFound")}
                 </p>
               </CardContent>
             </Card>
@@ -946,7 +948,7 @@ export default function TypebotPage() {
                           className="flex-1 bg-blue-500 hover:bg-blue-600 text-white"
                         >
                           <Edit3 className="h-4 w-4 mr-2" />
-                          Editar
+                          {t("typebot.edit")}
                         </Button>
                         {project.is_published ? (
                           <div className="flex space-x-1 flex-1">
@@ -957,7 +959,7 @@ export default function TypebotPage() {
                               className="flex-1"
                             >
                               <Copy className="h-4 w-4 mr-2" />
-                              Copiar URL
+                              {t("typebot.copyUrl")}
                             </Button>
                             <Button
                               onClick={() => unpublishProjectMutation.mutate(project.id)}
@@ -977,7 +979,7 @@ export default function TypebotPage() {
                             disabled={publishProjectMutation.isPending}
                           >
                             <Globe className="h-4 w-4 mr-2" />
-                            {publishProjectMutation.isPending ? "Publicando..." : "Publicar"}
+                            {publishProjectMutation.isPending ? t("typebot.publishing") : t("typebot.publish")}
                           </Button>
                         )}
                         <Button
