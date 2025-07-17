@@ -7,6 +7,11 @@ import { insertQuizSchema, insertQuizResponseSchema } from "../shared/schema-sql
 import { z } from "zod";
 import { verifyJWT } from "./auth-sqlite";
 import { creditProtection } from "./credit-protection";
+import { db } from "./db-sqlite";
+import Database from 'better-sqlite3';
+
+// Instância do banco SQLite para queries diretas
+const sqlite = new Database('./vendzz-database.db');
 import { stripeService, StripeService } from "./stripe-integration";
 
 // Garantir que o Stripe está inicializado
@@ -43,6 +48,9 @@ import HealthCheckSystem from './health-check-system.js';
 import WhatsAppBusinessAPI from './whatsapp-business-api';
 import { registerFacelessVideoRoutes } from './faceless-video-routes';
 import Stripe from 'stripe';
+
+// JWT Secret para validação de tokens
+const JWT_SECRET = process.env.JWT_SECRET || 'vendzz-jwt-secret-key-2024';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -4741,8 +4749,22 @@ export function registerSQLiteRoutes(app: Express): Server {
   });
 
   // STRIPE PLANS MANAGEMENT - CRIAR PLANO
-  app.post("/api/stripe/create-plan", verifyJWT, async (req: any, res) => {
+  app.post("/api/stripe/create-plan", async (req: any, res) => {
     try {
+      // Verificação de autenticação manual
+      const token = req.headers.authorization?.replace('Bearer ', '');
+      if (!token || token === 'null') {
+        return res.status(401).json({ error: "Token de autenticação necessário" });
+      }
+      
+      let userId;
+      try {
+        const decoded = jwt.verify(token, JWT_SECRET) as any;
+        userId = decoded.sub || decoded.userId || decoded.id;
+      } catch (error) {
+        return res.status(401).json({ error: "Token inválido" });
+      }
+      
       const { name, description, price, currency, interval, trial_period_days, activation_fee, features } = req.body;
       
       if (!activeStripeService) {
@@ -4755,8 +4777,7 @@ export function registerSQLiteRoutes(app: Express): Server {
         description,
         metadata: {
           trial_period_days: trial_period_days.toString(),
-          activation_fee: activation_fee.toString(),
-          features: JSON.stringify(features || [])
+          activation_fee: activation_fee.toString()
         }
       });
 
@@ -4772,39 +4793,55 @@ export function registerSQLiteRoutes(app: Express): Server {
 
       // Salvar no banco local
       const planData = {
-        name,
-        description,
-        price,
-        currency,
-        interval: interval || 'month',
-        trial_period_days,
-        activation_fee,
-        features: JSON.stringify(features || []),
-        stripe_product_id: product.id,
-        stripe_price_id: stripePrice.id,
-        active: true,
+        name: String(name),
+        description: String(description || ''),
+        price: Number(price),
+        currency: String(currency),
+        interval: String(interval || 'month'),
+        trial_days: Number(trial_period_days),
+        trial_price: Number(activation_fee),
+        stripe_product_id: String(product.id),
+        stripe_price_id: String(stripePrice.id),
+        active: 1,
         created_at: new Date().toISOString(),
-        user_id: req.user.id
+        user_id: String(userId)
       };
 
-      db.prepare(`
+      // Generate unique ID for the plan
+      const planId = `plan_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+      
+      // Debug - log all values with their types
+      console.log('🔍 DEBUG - All values for SQLite insertion:');
+      console.log('planId:', planId, typeof planId);
+      console.log('name:', planData.name, typeof planData.name);
+      console.log('description:', planData.description, typeof planData.description);
+      console.log('price:', planData.price, typeof planData.price);
+      console.log('currency:', planData.currency, typeof planData.currency);
+      console.log('interval:', planData.interval, typeof planData.interval);
+      console.log('trial_days:', planData.trial_days, typeof planData.trial_days);
+      console.log('trial_price:', planData.trial_price, typeof planData.trial_price);
+      console.log('stripe_product_id:', planData.stripe_product_id, typeof planData.stripe_product_id);
+      console.log('stripe_price_id:', planData.stripe_price_id, typeof planData.stripe_price_id);
+      console.log('active:', planData.active, typeof planData.active);
+      console.log('created_at:', planData.created_at, typeof planData.created_at);
+      
+      sqlite.prepare(`
         INSERT INTO stripe_plans 
-        (name, description, price, currency, interval, trial_period_days, activation_fee, features, stripe_product_id, stripe_price_id, active, created_at, user_id)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        (id, name, description, price, currency, interval, trial_days, trial_price, stripe_product_id, stripe_price_id, active, created_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       `).run(
+        planId,
         planData.name,
         planData.description,
         planData.price,
         planData.currency,
         planData.interval,
-        planData.trial_period_days,
-        planData.activation_fee,
-        planData.features,
+        planData.trial_days,
+        planData.trial_price,
         planData.stripe_product_id,
         planData.stripe_price_id,
         planData.active,
-        planData.created_at,
-        planData.user_id
+        planData.created_at
       );
 
       res.json({
@@ -4820,13 +4857,27 @@ export function registerSQLiteRoutes(app: Express): Server {
   });
 
   // STRIPE PLANS MANAGEMENT - LISTAR PLANOS
-  app.get("/api/stripe/plans", verifyJWT, async (req: any, res) => {
+  app.get("/api/stripe/plans", async (req: any, res) => {
     try {
+      // Verificação de autenticação manual
+      const token = req.headers.authorization?.replace('Bearer ', '');
+      if (!token || token === 'null') {
+        return res.status(401).json({ error: "Token de autenticação necessário" });
+      }
+      
+      let userId;
+      try {
+        const decoded = jwt.verify(token, JWT_SECRET) as any;
+        userId = decoded.sub || decoded.userId || decoded.id;
+      } catch (error) {
+        return res.status(401).json({ error: "Token inválido" });
+      }
+      
       const plans = db.prepare(`
         SELECT * FROM stripe_plans 
         WHERE user_id = ? 
         ORDER BY created_at DESC
-      `).all(req.user.id);
+      `).all(userId);
 
       const formattedPlans = plans.map(plan => ({
         ...plan,
