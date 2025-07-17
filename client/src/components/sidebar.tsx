@@ -158,6 +158,13 @@ export function Sidebar() {
           active: location === "/checkout-official"
         },
         {
+          title: "CHECKOUT TRIAL FINAL",
+          href: "/checkout-trial-final",
+          icon: <Zap className="w-4 h-4" />,
+          active: location === "/checkout-trial-final",
+          badge: "R$1+Trial"
+        },
+        {
           title: "GERENCIAR PLANOS",
           href: "/stripe-plans-manager",
           icon: <Package className="w-4 h-4" />,

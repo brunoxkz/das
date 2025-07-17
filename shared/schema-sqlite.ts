@@ -1082,6 +1082,34 @@ export const checkoutTransactions = sqliteTable("checkout_transactions", {
   paid_at: text("paid_at"),
 });
 
+// Assinaturas Stripe com Trial + Recorrência
+export const stripeSubscriptions = sqliteTable("stripe_subscriptions", {
+  id: text("id").primaryKey(),
+  userId: text("userId").notNull().references(() => users.id),
+  stripeSubscriptionId: text("stripeSubscriptionId").notNull().unique(),
+  stripeCustomerId: text("stripeCustomerId").notNull(),
+  stripePaymentMethodId: text("stripePaymentMethodId"),
+  status: text("status").notNull(), // trialing, active, past_due, canceled, unpaid
+  planName: text("planName").notNull(),
+  planDescription: text("planDescription"),
+  activationFee: real("activationFee").notNull(),
+  monthlyPrice: real("monthlyPrice").notNull(),
+  trialDays: integer("trialDays").notNull(),
+  trialStartDate: integer("trialStartDate", { mode: 'timestamp' }),
+  trialEndDate: integer("trialEndDate", { mode: 'timestamp' }),
+  currentPeriodStart: integer("currentPeriodStart", { mode: 'timestamp' }),
+  currentPeriodEnd: integer("currentPeriodEnd", { mode: 'timestamp' }),
+  nextBillingDate: integer("nextBillingDate", { mode: 'timestamp' }),
+  canceledAt: integer("canceledAt", { mode: 'timestamp' }),
+  cancelAtPeriodEnd: integer("cancelAtPeriodEnd", { mode: 'boolean' }).default(false),
+  customerName: text("customerName"),
+  customerEmail: text("customerEmail"),
+  activationInvoiceId: text("activationInvoiceId"),
+  metadata: text("metadata", { mode: 'json' }),
+  createdAt: integer("createdAt", { mode: 'timestamp' }).notNull().$defaultFn(() => new Date()),
+  updatedAt: integer("updatedAt", { mode: 'timestamp' }).notNull().$defaultFn(() => new Date()),
+});
+
 // Analytics de Checkout
 export const checkoutAnalytics = sqliteTable("checkout_analytics", {
   id: text("id").primaryKey(),

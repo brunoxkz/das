@@ -31,6 +31,7 @@ import {
   typebotProjects, typebotConversations, typebotMessages, typebotAnalytics, typebotWebhooks, typebotIntegrations,
   subscriptionPlans, subscriptionTransactions, creditTransactions,
   checkoutProducts, checkoutPages, checkoutTransactions, checkoutAnalytics,
+  stripeSubscriptions,
   type User, type UpsertUser, type InsertQuiz, type Quiz,
   type InsertQuizTemplate, type QuizTemplate,
   type InsertQuizResponse, type QuizResponse,
@@ -129,6 +130,14 @@ export interface IStorage {
   
   // Stripe Plans operations
   getStripePlans(): Promise<any[]>;
+  
+  // Stripe Subscriptions operations
+  createStripeSubscription(subscription: any): Promise<any>;
+  getStripeSubscriptionById(id: string): Promise<any | undefined>;
+  getStripeSubscriptionByStripeId(stripeSubscriptionId: string): Promise<any | undefined>;
+  updateStripeSubscription(id: string, updates: any): Promise<any>;
+  getStripeSubscriptionsByUser(userId: string): Promise<any[]>;
+  deleteStripeSubscription(id: string): Promise<void>;
   getStripePlan(id: string): Promise<any | undefined>;
   createStripePlan(plan: any): Promise<any>;
   updateStripePlan(id: string, updates: any): Promise<any>;
@@ -7331,6 +7340,147 @@ Hoje você vai aprender ${project.title} - método revolucionário que já ajudo
     } catch (error) {
       console.error('❌ ERRO ao buscar planos do Stripe:', error);
       return [];
+    }
+  }
+
+  // ================ STRIPE SUBSCRIPTIONS METHODS ================
+  
+  // Criar assinatura Stripe
+  async createStripeSubscription(subscription: any): Promise<any> {
+    try {
+      const timestamp = Date.now();
+      const stmt = sqlite.prepare(`
+        INSERT INTO stripe_subscriptions (
+          id, userId, stripeSubscriptionId, stripeCustomerId, stripePaymentMethodId,
+          status, planName, planDescription, activationFee, monthlyPrice, trialDays,
+          trialStartDate, trialEndDate, currentPeriodStart, currentPeriodEnd,
+          nextBillingDate, canceledAt, cancelAtPeriodEnd, customerName, customerEmail,
+          activationInvoiceId, metadata, createdAt, updatedAt
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      `);
+      
+      stmt.run(
+        subscription.id,
+        subscription.userId,
+        subscription.stripeSubscriptionId,
+        subscription.stripeCustomerId,
+        subscription.stripePaymentMethodId,
+        subscription.status,
+        subscription.planName,
+        subscription.planDescription,
+        subscription.activationFee,
+        subscription.monthlyPrice,
+        subscription.trialDays,
+        subscription.trialStartDate,
+        subscription.trialEndDate,
+        subscription.currentPeriodStart,
+        subscription.currentPeriodEnd,
+        subscription.nextBillingDate,
+        subscription.canceledAt,
+        subscription.cancelAtPeriodEnd || false,
+        subscription.customerName,
+        subscription.customerEmail,
+        subscription.activationInvoiceId,
+        JSON.stringify(subscription.metadata || {}),
+        timestamp,
+        timestamp
+      );
+      
+      return this.getStripeSubscriptionById(subscription.id);
+    } catch (error) {
+      console.error('❌ ERRO ao criar assinatura Stripe:', error);
+      throw error;
+    }
+  }
+
+  // Buscar assinatura por ID
+  async getStripeSubscriptionById(id: string): Promise<any | undefined> {
+    try {
+      const stmt = sqlite.prepare('SELECT * FROM stripe_subscriptions WHERE id = ?');
+      const result = stmt.get(id);
+      if (result && result.metadata) {
+        result.metadata = JSON.parse(result.metadata);
+      }
+      return result;
+    } catch (error) {
+      console.error('❌ ERRO ao buscar assinatura Stripe por ID:', error);
+      return undefined;
+    }
+  }
+
+  // Buscar assinatura por Stripe ID
+  async getStripeSubscriptionByStripeId(stripeSubscriptionId: string): Promise<any | undefined> {
+    try {
+      const stmt = sqlite.prepare('SELECT * FROM stripe_subscriptions WHERE stripeSubscriptionId = ?');
+      const result = stmt.get(stripeSubscriptionId);
+      if (result && result.metadata) {
+        result.metadata = JSON.parse(result.metadata);
+      }
+      return result;
+    } catch (error) {
+      console.error('❌ ERRO ao buscar assinatura Stripe por Stripe ID:', error);
+      return undefined;
+    }
+  }
+
+  // Atualizar assinatura Stripe
+  async updateStripeSubscription(id: string, updates: any): Promise<any> {
+    try {
+      const fields = Object.keys(updates)
+        .filter(key => key !== 'id')
+        .map(key => `${key} = ?`)
+        .join(', ');
+      
+      const values = Object.keys(updates)
+        .filter(key => key !== 'id')
+        .map(key => {
+          if (key === 'metadata') {
+            return JSON.stringify(updates[key]);
+          }
+          return updates[key];
+        });
+      
+      values.push(Date.now()); // updatedAt
+      
+      const stmt = sqlite.prepare(`
+        UPDATE stripe_subscriptions 
+        SET ${fields}, updatedAt = ? 
+        WHERE id = ?
+      `);
+      
+      stmt.run(...values, id);
+      return this.getStripeSubscriptionById(id);
+    } catch (error) {
+      console.error('❌ ERRO ao atualizar assinatura Stripe:', error);
+      throw error;
+    }
+  }
+
+  // Buscar assinaturas do usuário
+  async getStripeSubscriptionsByUser(userId: string): Promise<any[]> {
+    try {
+      const stmt = sqlite.prepare('SELECT * FROM stripe_subscriptions WHERE userId = ? ORDER BY createdAt DESC');
+      const results = stmt.all(userId);
+      return results.map(result => {
+        if (result.metadata) {
+          result.metadata = JSON.parse(result.metadata);
+        }
+        return result;
+      });
+    } catch (error) {
+      console.error('❌ ERRO ao buscar assinaturas do usuário:', error);
+      return [];
+    }
+  }
+
+  // Deletar assinatura Stripe
+  async deleteStripeSubscription(id: string): Promise<void> {
+    try {
+      const stmt = sqlite.prepare('DELETE FROM stripe_subscriptions WHERE id = ?');
+      stmt.run(id);
+    } catch (error) {
+      console.error('❌ ERRO ao deletar assinatura Stripe:', error);
+      throw error;
     }
   }
 

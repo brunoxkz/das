@@ -70,6 +70,7 @@ import StripeElements from "@/pages/stripe-elements";
 import StripePaymentIntentDemo from "@/pages/stripe-payment-intent-demo";
 import PaymentSuccess from "@/pages/payment-success";
 import PaymentIntentExplanation from "@/pages/payment-intent-explanation";
+import CheckoutTrialFinal from "@/pages/checkout-trial-final";
 import ProductBuilder from "@/pages/product-builder";
 import SubscriptionsManager from "@/pages/subscriptions-manager";
 import { useAuth } from "@/hooks/useAuth-jwt";
@@ -407,6 +408,12 @@ function App() {
         <Route path="/payment-intent-explanation">
           <Layout>
             <PaymentIntentExplanation />
+          </Layout>
+        </Route>
+        
+        <Route path="/checkout-trial-final">
+          <Layout>
+            <CheckoutTrialFinal />
           </Layout>
         </Route>
         

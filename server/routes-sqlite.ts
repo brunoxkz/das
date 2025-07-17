@@ -13,6 +13,8 @@ import Database from 'better-sqlite3';
 // Instância do banco SQLite para queries diretas
 const sqlite = new Database('./vendzz-database.db');
 import { stripeService, StripeService } from "./stripe-integration";
+import { stripeTrialService } from "./stripe-subscription-trial";
+import { nanoid } from "nanoid";
 
 // Garantir que o Stripe está inicializado
 let activeStripeService: StripeService | null = null;
@@ -134,6 +136,148 @@ export function registerSQLiteRoutes(app: Express): Server {
     } catch (error) {
       console.error('Erro ao buscar produtos:', error);
       res.status(500).json({ error: 'Erro interno do servidor' });
+    }
+  });
+
+  // 💳 STRIPE TRIAL SUBSCRIPTION - Sistema completo de trial + recorrência
+  
+  // Criar fluxo completo: Payment Method + R$1 + Assinatura Trial
+  app.post('/api/stripe/create-trial-flow', async (req, res) => {
+    try {
+      const {
+        paymentMethodId,
+        customerName,
+        customerEmail,
+        trialDays = 3,
+        activationFee = 1.00,
+        monthlyPrice = 29.90,
+      } = req.body;
+
+      // Validações
+      if (!paymentMethodId || !customerName) {
+        return res.status(400).json({
+          success: false,
+          message: 'Payment Method ID e nome do cliente são obrigatórios',
+        });
+      }
+
+      const uniqueId = Date.now();
+      console.log(`🎯 [${uniqueId}] FLUXO TRIAL COMPLETO INICIADO:`, {
+        paymentMethodId,
+        customerName,
+        customerEmail,
+        trialDays,
+        activationFee,
+        monthlyPrice,
+      });
+
+      // Executar fluxo completo
+      const result = await stripeTrialService.createCompleteTrialFlow({
+        paymentMethodId,
+        customerName,
+        customerEmail,
+        trialDays,
+        activationFee,
+        monthlyPrice,
+      });
+
+      // Salvar assinatura no banco de dados
+      const subscriptionRecord = {
+        id: nanoid(),
+        userId: req.user?.id || 'anonymous',
+        stripeSubscriptionId: result.subscription.id,
+        stripeCustomerId: result.customer.id,
+        stripePaymentMethodId: paymentMethodId,
+        status: result.subscription.status,
+        planName: 'Vendzz Premium',
+        planDescription: 'Plano completo com todos os recursos',
+        activationFee,
+        monthlyPrice,
+        trialDays,
+        trialStartDate: new Date(result.subscription.trial_start * 1000).getTime(),
+        trialEndDate: new Date(result.subscription.trial_end * 1000).getTime(),
+        currentPeriodStart: new Date(result.subscription.current_period_start * 1000).getTime(),
+        currentPeriodEnd: new Date(result.subscription.current_period_end * 1000).getTime(),
+        nextBillingDate: new Date(result.subscription.current_period_end * 1000).getTime(),
+        customerName,
+        customerEmail,
+        activationInvoiceId: result.invoice?.id,
+        metadata: {
+          paymentMethodId,
+          activationFee,
+          monthlyPrice,
+          trialDays,
+          createdVia: 'checkout-trial-final'
+        }
+      };
+
+      await storage.createStripeSubscription(subscriptionRecord);
+
+      console.log(`🎉 [${uniqueId}] FLUXO TRIAL FINALIZADO COM SUCESSO:`, {
+        customerId: result.customer.id,
+        subscriptionId: result.subscription.id,
+        trialEndDate: result.trialEndDate,
+        nextBillingDate: result.nextBillingDate,
+      });
+
+      res.json({
+        success: true,
+        message: 'Fluxo completo de trial criado com sucesso',
+        data: result,
+      });
+
+    } catch (error) {
+      console.error('❌ Erro no fluxo trial completo:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Erro ao criar fluxo trial completo',
+        error: error.message,
+      });
+    }
+  });
+
+  // Status da assinatura
+  app.get('/api/stripe/subscription-status/:subscriptionId', async (req, res) => {
+    try {
+      const { subscriptionId } = req.params;
+      const result = await stripeTrialService.getSubscriptionStatus(subscriptionId);
+
+      res.json({
+        success: true,
+        data: result,
+      });
+
+    } catch (error) {
+      console.error('❌ Erro ao buscar status da assinatura:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Erro ao buscar status da assinatura',
+        error: error.message,
+      });
+    }
+  });
+
+  // Cancelar assinatura
+  app.post('/api/stripe/cancel-subscription/:subscriptionId', async (req, res) => {
+    try {
+      const { subscriptionId } = req.params;
+      const { cancelAtPeriodEnd = true } = req.body;
+      
+      const result = await stripeTrialService.cancelSubscription(subscriptionId, cancelAtPeriodEnd);
+
+      res.json({
+        success: true,
+        message: 'Assinatura cancelada com sucesso',
+        data: result,
+      });
+
+    } catch (error) {
+      console.error('❌ Erro ao cancelar assinatura:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Erro ao cancelar assinatura',
+        error: error.message,
+      });
     }
   });
 
