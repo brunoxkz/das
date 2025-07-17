@@ -4222,6 +4222,101 @@ export function registerSQLiteRoutes(app: Express): Server {
     }
   });
 
+  // ENDPOINT ESPECÍFICO PARA CHECKOUT-OFFICIAL.TSX
+  app.post("/api/stripe/create-checkout-session-official-docs", verifyJWT, async (req: any, res) => {
+    try {
+      const { trial_period_days = 3, activation_fee = 1.00, monthly_price = 29.90, currency = "BRL" } = req.body;
+      const userId = req.user.id;
+
+      console.log('🔥 CHECKOUT OFICIAL DOCS - CRIANDO SESSÃO CHECKOUT');
+      console.log('📊 Parâmetros:', { trial_period_days, activation_fee, monthly_price, currency });
+
+      if (!stripeService) {
+        return res.status(500).json({ error: "Stripe não configurado" });
+      }
+
+      // Buscar dados do usuário
+      const user = await storage.getUser(userId);
+      if (!user) {
+        return res.status(404).json({ error: "Usuário não encontrado" });
+      }
+
+      // Usar Stripe diretamente para máxima compatibilidade
+      const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || 'sk_test_51RjvV9HK6al3veW1FPD5bTV1on2NQLlm9ud45AJDggFHdsGA9UAo5jfbSRvWF83W3uTp5cpZYa8tJBvm4ttefrk800mUs47pFA', {
+        apiVersion: '2024-09-30.acacia'
+      });
+
+      // Criar customer
+      const customer = await stripe.customers.create({
+        email: user.email,
+        name: `${user.firstName} ${user.lastName}`,
+        metadata: { userId }
+      });
+
+      // Criar produto de ativação
+      const activationProduct = await stripe.products.create({
+        name: 'Taxa de Ativação - Vendzz Premium',
+        description: `Taxa única de ativação para trial de ${trial_period_days} dias`,
+        metadata: {
+          type: 'activation_fee',
+          trial_period_days: trial_period_days.toString(),
+          userId: userId
+        }
+      });
+
+      // Criar sessão de checkout
+      const session = await stripe.checkout.sessions.create({
+        mode: 'payment',
+        customer: customer.id,
+        line_items: [{
+          price_data: {
+            currency: currency.toLowerCase(),
+            product: activationProduct.id,
+            unit_amount: Math.round(activation_fee * 100)
+          },
+          quantity: 1
+        }],
+        success_url: `${process.env.BASE_URL || 'https://example.com'}/success?session_id={CHECKOUT_SESSION_ID}`,
+        cancel_url: `${process.env.BASE_URL || 'https://example.com'}/cancel`,
+        metadata: {
+          userId,
+          trial_period_days: trial_period_days.toString(),
+          activation_fee: activation_fee.toString(),
+          monthly_price: monthly_price.toString(),
+          implementation: 'immediate_charge_then_subscription'
+        }
+      });
+
+      console.log('✅ Checkout session criada com sucesso:', {
+        sessionId: session.id,
+        checkoutUrl: session.url,
+        customerId: customer.id
+      });
+
+      res.json({
+        success: true,
+        checkoutSessionId: session.id,
+        checkoutUrl: session.url,
+        customerId: customer.id,
+        activationProductId: activationProduct.id,
+        trialPeriodDays: trial_period_days,
+        billing_summary: {
+          immediate_charge: `R$${activation_fee} (taxa de ativação)`,
+          trial_period: `${trial_period_days} dias gratuitos`,
+          recurring_charge: `R$${monthly_price}/mês após trial`,
+          cancellation: 'Cancele a qualquer momento'
+        }
+      });
+
+    } catch (error) {
+      console.error("❌ Erro ao criar checkout session oficial:", error);
+      res.status(500).json({ 
+        error: "Falha ao criar sessão de checkout", 
+        details: error.message 
+      });
+    }
+  });
+
   // STRIPE IMPLEMENTATION - OFFICIAL DOCS PATTERN (Invoice Items + Subscription)
   app.post("/api/stripe/create-checkout-session-official", verifyJWT, async (req: any, res) => {
     console.log('🎯 STRIPE OFFICIAL PATTERN - INVOICE ITEMS + SUBSCRIPTION');
