@@ -7807,6 +7807,93 @@ Hoje você vai aprender ${project.title} - método revolucionário que já ajudo
     }
   }
 
+  // Criar nova transação Stripe
+  async createStripeTransaction(transaction: any): Promise<any> {
+    try {
+      await this.ensureStripeTransactionsTable();
+      const timestamp = Date.now();
+      const stmt = sqlite.prepare(`
+        INSERT INTO stripe_transactions (
+          id, userId, stripePaymentIntentId, amount, currency, status,
+          customerName, customerEmail, description, metadata, createdAt, updatedAt
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      `);
+      
+      const safeValues = [
+        transaction.id || `txn_${timestamp}`,
+        transaction.userId || null,
+        transaction.stripePaymentIntentId || null,
+        typeof transaction.amount === 'number' ? transaction.amount : null,
+        transaction.currency || 'brl',
+        transaction.status || 'pending',
+        transaction.customerName || null,
+        transaction.customerEmail || null,
+        transaction.description || null,
+        JSON.stringify(transaction.metadata || {}),
+        timestamp,
+        timestamp
+      ];
+
+      stmt.run(...safeValues);
+      
+      return {
+        id: transaction.id || `txn_${timestamp}`,
+        userId: transaction.userId,
+        stripePaymentIntentId: transaction.stripePaymentIntentId,
+        amount: transaction.amount,
+        currency: transaction.currency || 'brl',
+        status: transaction.status || 'pending',
+        customerName: transaction.customerName,
+        customerEmail: transaction.customerEmail,
+        description: transaction.description,
+        metadata: transaction.metadata || {},
+        createdAt: timestamp,
+        updatedAt: timestamp
+      };
+    } catch (error) {
+      console.error('❌ ERRO ao criar transação Stripe:', error);
+      throw error;
+    }
+  }
+
+  // Criar log de webhook Stripe
+  async createStripeWebhookLog(log: any): Promise<any> {
+    try {
+      await this.ensureStripeWebhookLogsTable();
+      const timestamp = Date.now();
+      const stmt = sqlite.prepare(`
+        INSERT INTO stripe_webhook_logs (
+          id, eventId, eventType, status, payload, error, createdAt
+        ) VALUES (?, ?, ?, ?, ?, ?, ?)
+      `);
+      
+      const safeValues = [
+        log.id || `log_${timestamp}`,
+        log.eventId || null,
+        log.eventType || null,
+        log.status || 'success',
+        JSON.stringify(log.payload || {}),
+        log.error || null,
+        timestamp
+      ];
+
+      stmt.run(...safeValues);
+      
+      return {
+        id: log.id || `log_${timestamp}`,
+        eventId: log.eventId,
+        eventType: log.eventType,
+        status: log.status || 'success',
+        payload: log.payload || {},
+        error: log.error,
+        createdAt: timestamp
+      };
+    } catch (error) {
+      console.error('❌ ERRO ao criar log de webhook Stripe:', error);
+      throw error;
+    }
+  }
+
   async getRecentWebhookLogs(limit: number = 20): Promise<any[]> {
     try {
       await this.ensureStripeWebhookLogsTable();
@@ -7859,6 +7946,25 @@ Hoje você vai aprender ${project.title} - método revolucionário que já ajudo
       stmt.run();
     } catch (error) {
       console.error('❌ ERRO ao criar tabela stripe_transactions:', error);
+    }
+  }
+
+  async ensureStripeWebhookLogsTable(): Promise<void> {
+    try {
+      const stmt = sqlite.prepare(`
+        CREATE TABLE IF NOT EXISTS stripe_webhook_logs (
+          id TEXT PRIMARY KEY,
+          eventId TEXT,
+          eventType TEXT,
+          status TEXT,
+          payload TEXT,
+          error TEXT,
+          createdAt INTEGER DEFAULT (strftime('%s', 'now') * 1000)
+        )
+      `);
+      stmt.run();
+    } catch (error) {
+      console.error('❌ ERRO ao criar tabela stripe_webhook_logs:', error);
     }
   }
 

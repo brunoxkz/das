@@ -968,6 +968,17 @@ export function registerSQLiteRoutes(app: Express): Server {
     }
   });
 
+  app.get('/api/stripe/webhook-logs', verifyJWT, async (req, res) => {
+    try {
+      const limit = parseInt(req.query.limit as string) || 20;
+      const logs = await storage.getRecentWebhookLogs(limit);
+      res.json(logs);
+    } catch (error) {
+      console.error('❌ Erro ao buscar logs de webhook:', error);
+      res.status(500).json({ error: 'Erro ao buscar logs de webhook' });
+    }
+  });
+
   // Webhook genérico para outros provedores (público)
   app.post('/api/webhook/payment', async (req, res) => {
     try {
@@ -5363,6 +5374,61 @@ export function registerSQLiteRoutes(app: Express): Server {
         implementation: 'immediate_charge_then_subscription'
       };
       
+      // Salvar dados no banco para teste real
+      try {
+        // Salvar transação de teste usando método público
+        await storage.createStripeTransaction({
+          id: 'txn_test_' + mockTimestamp,
+          userId: req.user.id,
+          stripePaymentIntentId: 'pi_test_' + mockTimestamp,
+          amount: 1.00,
+          currency: 'BRL',
+          status: 'succeeded',
+          customerName: 'Admin Teste',
+          customerEmail: 'admin@vendzz.com',
+          description: 'Taxa de ativação - Teste',
+          metadata: JSON.stringify({ test: true, sessionId }),
+          createdAt: mockTimestamp
+        });
+
+        // Salvar log de webhook
+        await storage.createStripeWebhookLog({
+          id: 'log_test_' + mockTimestamp,
+          eventId: 'evt_test_' + mockTimestamp,
+          eventType: 'payment_intent.succeeded',
+          status: 'success',
+          payload: webhookSimulation,
+          error: null
+        });
+
+        // Salvar assinatura de teste usando método público
+        await storage.createStripeSubscription({
+          id: 'sub_db_' + mockTimestamp,
+          userId: req.user.id,
+          stripeSubscriptionId: 'sub_test_' + mockTimestamp,
+          stripeCustomerId: 'cus_test_' + mockTimestamp,
+          status: 'trialing',
+          planName: 'Plano Básico',
+          activationFee: 1.00,
+          monthlyPrice: 29.90,
+          trialDays: 3,
+          trialEndDate: trialEndDate.toISOString(),
+          customerEmail: 'admin@vendzz.com',
+          createdAt: mockTimestamp
+        });
+
+        console.log('✅ Dados salvos no banco para teste real');
+      } catch (dbError) {
+        console.error('❌ Erro ao salvar dados de teste:', dbError);
+        // Criar alerta de erro
+        await storage.createStripeAlert(
+          'database_error',
+          'high',
+          'Erro ao salvar dados de teste do webhook',
+          { error: dbError.message }
+        );
+      }
+
       console.log('✅ Webhook simulado processado com sucesso');
       console.log('📅 Trial termina em:', trialEndDate);
       console.log('💰 Cobrança imediata: R$1,00');
