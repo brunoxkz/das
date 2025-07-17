@@ -58,6 +58,7 @@ import CheckoutUnified from "@/pages/checkout-unified";
 import CheckoutDashboard from "@/pages/checkout-dashboard";
 import CheckoutPage from "@/pages/checkout";
 import CheckoutIndividual from "@/pages/checkout-individual";
+import CheckoutStripeTrial from "@/pages/checkout-stripe-trial";
 import PaymentSuccess from "@/pages/payment-success";
 import ProductBuilder from "@/pages/product-builder";
 import SubscriptionsManager from "@/pages/subscriptions-manager";
@@ -334,6 +335,12 @@ function App() {
         <Route path="/checkout-admin">
           <Layout>
             <CheckoutAdminPage />
+          </Layout>
+        </Route>
+        
+        <Route path="/checkout-stripe-trial">
+          <Layout>
+            <CheckoutStripeTrial />
           </Layout>
         </Route>
         
