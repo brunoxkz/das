@@ -127,6 +127,7 @@ const CheckoutForm: React.FC<CheckoutFormProps> = ({ onSuccess }) => {
       {/* Debug Info */}
       <div className="text-sm text-gray-600 p-3 bg-gray-50 rounded">
         <p>Debug: Stripe=✅ (Simulado) | Form=✅ | Backend=✅</p>
+        <p className="mt-2 text-blue-600 font-medium">Cartão de teste: 4242 4242 4242 4242 | Data: 12/28 | CVC: 123</p>
       </div>
 
       {/* Informações do Cliente */}
