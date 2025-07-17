@@ -82,9 +82,12 @@
     "published": "Publicado",
     "draft": "Rascunho"
   },
-  "dashboard": "Dashboard",
-  "welcome_back": "Bem-vindo de volta,",
-  "create_quiz": "Criar Quiz",
+  "dashboard": {
+    "title": "Dashboard",
+    "welcome_back": "Bora lucrar!",
+    "create_quiz": "Criar Quiz",
+    "quizzes_created": "Quizzes Criados"
+  },
   "common": {
     "loading": "Carregando...",
     "save": "Salvar",
@@ -110,8 +113,8 @@
     "success": "Sucesso",
     "warning": "Aviso",
     "info": "Informação",
-    "create_quiz_btn": "Criar Quiz",
-    "upgrade": "Atualizar",
+    "create_quiz_btn": "Criar Novo Quiz",
+    "upgrade": "Planos",
     "settings": "Configurações"
   },
   "auth": {
@@ -155,8 +158,8 @@
     "notifications": "Notificações",
     "systemPreferences": "Preferências do Sistema",
     "creation": "CRIAÇÃO",
-    "templates": "TEMPLATES",
-    "abTest": "TESTE A/B",
+    "templates": "Templates",
+    "abTest": "Teste A/B",
     "recurring": "RECORRENTE",
     "officialCheckout": "CHECKOUT OFICIAL",
     "managePlans": "GERENCIAR PLANOS",
@@ -173,14 +176,15 @@
     "inactive": "Inativo"
   },
   "plans": {
-    "current_plan": "Plano atual",
+    "current_plan": "Plano Atual",
     "enterprise": "Enterprise",
     "free": "Gratuito",
     "basic": "Básico",
     "premium": "Premium",
+    "trial": "Trial",
     "unlimited": "ilimitado",
-    "days_remaining": "dias restantes",
-    "upgrade": "Atualizar"
+    "days_remaining": "dias",
+    "upgrade": "Upgrade"
   },
   "checkout": {
     "title": "Checkout",

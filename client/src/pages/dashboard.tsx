@@ -282,7 +282,11 @@ export default function Dashboard() {
               <Clock className="w-5 h-5" />
               <div>
                 <span className="font-semibold">
-                  {t('plans.current_plan')} {userPlan === 'enterprise' ? t('plans.enterprise') : userPlan.charAt(0).toUpperCase() + userPlan.slice(1)}: {daysLeft} {daysLeft === 1 ? 'dia restante' : t('plans.days_remaining')}
+                  {t('plans.current_plan')} {userPlan === 'enterprise' ? t('plans.enterprise') : 
+                   userPlan === 'premium' ? t('plans.premium') : 
+                   userPlan === 'basic' ? t('plans.basic') : 
+                   userPlan === 'trial' ? t('plans.trial') : 
+                   t('plans.free')}: {daysLeft} {t('plans.days_remaining')}
                 </span>
                 <p className="text-sm text-green-100">
                   {userPlan === 'trial' ? 'Teste grátis por tempo limitado! Upgrade para continuar.' : 
@@ -329,7 +333,7 @@ export default function Dashboard() {
           <div className="flex items-center justify-between mb-8">
             <div>
               <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-                {t("dashboard")}
+                {t("dashboard.title")}
               </h1>
               <p className="dashboard-text-secondary mt-2">
                 {t("dashboard.welcome_back")} {userData?.user?.firstName || "Admin"}

@@ -399,7 +399,7 @@ export function Sidebar() {
             isCollapsed ? "px-0" : "px-4"
           )}>
             <Plus className="w-4 h-4" />
-            {!isCollapsed && <span className="ml-2">{t("create_quiz_btn")}</span>}
+            {!isCollapsed && <span className="ml-2">{t("common.create_quiz_btn")}</span>}
           </Button>
         </Link>
       </div>
