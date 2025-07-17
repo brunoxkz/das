@@ -4372,7 +4372,7 @@ export function registerSQLiteRoutes(app: Express): Server {
   // CRIAR LINK DIRETO PARA STRIPE ELEMENTS CHECKOUT
   app.post("/api/stripe/create-checkout-link", verifyJWT, async (req: any, res) => {
     try {
-      const { name, description, immediateAmount, trialDays, recurringAmount, currency, expiresInHours } = req.body;
+      const { name, description, immediateAmount, trialDays, recurringAmount, currency, expiresInHours, recurringInterval } = req.body;
       
       const { StripeCheckoutLinkGenerator, initCheckoutLinksTable } = await import('./stripe-checkout-link-generator');
       
@@ -4390,6 +4390,7 @@ export function registerSQLiteRoutes(app: Express): Server {
         currency,
         userId: req.user.id,
         expiresInHours,
+        recurringInterval: recurringInterval || 'monthly',
       });
 
       res.json({

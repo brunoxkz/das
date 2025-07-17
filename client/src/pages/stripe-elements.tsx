@@ -1,20 +1,32 @@
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Copy, Eye, Code, ExternalLink, Plus, Trash2 } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Copy, Eye, Code, ExternalLink, Plus, Trash2, Settings, Zap } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { apiRequest } from "@/lib/queryClient";
 
 export default function StripeElementsPage() {
   const { toast } = useToast();
+  const queryClient = useQueryClient();
   const [selectedLink, setSelectedLink] = useState<any>(null);
   const [showEmbedCode, setShowEmbedCode] = useState(false);
+  const [showCreateForm, setShowCreateForm] = useState(false);
+  const [newPlan, setNewPlan] = useState({
+    name: '',
+    description: '',
+    immediateAmount: 1.00,
+    trialDays: 3,
+    recurringAmount: 29.90,
+    recurringInterval: 'monthly' as 'monthly' | 'quarterly' | 'yearly'
+  });
 
   // Buscar links existentes
   const { data: linksData, isLoading, refetch } = useQuery({
@@ -23,11 +35,53 @@ export default function StripeElementsPage() {
 
   const links = linksData?.links || [];
 
+  // Mutation para criar novo checkout link
+  const createCheckoutMutation = useMutation({
+    mutationFn: async (planData: any) => {
+      return await apiRequest("POST", "/api/stripe/create-checkout-link", {
+        name: planData.name,
+        description: planData.description,
+        immediateAmount: planData.immediateAmount,
+        trialDays: planData.trialDays,
+        recurringAmount: planData.recurringAmount,
+        currency: 'BRL',
+        expiresInHours: 24 * 7, // 7 dias
+        recurringInterval: planData.recurringInterval // Adicionando suporte ao intervalo
+      });
+    },
+    onSuccess: () => {
+      toast({
+        title: "Checkout Link criado!",
+        description: "Seu novo link de checkout foi criado com sucesso.",
+      });
+      setShowCreateForm(false);
+      setNewPlan({
+        name: '',
+        description: '',
+        immediateAmount: 1.00,
+        trialDays: 3,
+        recurringAmount: 29.90,
+        recurringInterval: 'monthly'
+      });
+      queryClient.invalidateQueries({ queryKey: ["/api/stripe/checkout-links"] });
+    },
+    onError: (error) => {
+      toast({
+        title: "Erro ao criar link",
+        description: "Não foi possível criar o checkout link. Tente novamente.",
+        variant: "destructive",
+      });
+    }
+  });
+
   // Gerar código embed para o link
   const generateEmbedCode = (link: any) => {
+    // Gerar URL pública baseada no domínio atual
+    const publicUrl = window.location.origin + link.checkoutUrl.replace(/^https?:\/\/[^\/]+/, '');
+    
     const embedCode = `<!-- Stripe Elements Embed - ${link.name} -->
 <iframe 
-  src="${link.checkoutUrl}" 
+  src="${publicUrl}" 
   width="100%" 
   height="600" 
   frameborder="0" 
@@ -84,10 +138,21 @@ export default function StripeElementsPage() {
     <div className="container mx-auto p-6">
       {/* Header */}
       <div className="mb-8">
-        <h1 className="text-3xl font-bold mb-2">Stripe Elements</h1>
-        <p className="text-gray-600">
-          Gerencie códigos embed e integre checkouts em qualquer site
-        </p>
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold mb-2">Stripe Elements</h1>
+            <p className="text-gray-600">
+              Gerencie códigos embed e integre checkouts em qualquer site
+            </p>
+          </div>
+          <Button 
+            onClick={() => setShowCreateForm(true)}
+            className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
+          >
+            <Plus className="w-4 h-4 mr-2" />
+            Criar Checkout Link
+          </Button>
+        </div>
       </div>
 
       {/* Stats Cards */}
@@ -241,6 +306,174 @@ export default function StripeElementsPage() {
             </Button>
           </CardContent>
         </Card>
+      )}
+
+      {/* Create Checkout Form Modal */}
+      {showCreateForm && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <Card className="w-full max-w-2xl max-h-[80vh] overflow-y-auto">
+            <CardHeader>
+              <CardTitle className="flex items-center">
+                <Zap className="w-5 h-5 mr-2 text-blue-600" />
+                Criar Checkout Link
+              </CardTitle>
+              <CardDescription>
+                Configure seu plano com invoice + recurring + save payment card
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-6">
+                {/* Passo 1: Dados do Plano */}
+                <div className="space-y-4">
+                  <div className="flex items-center space-x-2 mb-4">
+                    <div className="w-8 h-8 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center text-sm font-bold">1</div>
+                    <h3 className="font-semibold">Dados do Plano</h3>
+                  </div>
+                  
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="name">Nome do Plano</Label>
+                      <Input
+                        id="name"
+                        value={newPlan.name}
+                        onChange={(e) => setNewPlan({...newPlan, name: e.target.value})}
+                        placeholder="Ex: Plano Premium"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="description">Descrição</Label>
+                      <Input
+                        id="description"
+                        value={newPlan.description}
+                        onChange={(e) => setNewPlan({...newPlan, description: e.target.value})}
+                        placeholder="Ex: Acesso completo às funcionalidades"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-3 gap-4">
+                    <div>
+                      <Label htmlFor="immediateAmount">Taxa de Ativação (R$)</Label>
+                      <Input
+                        id="immediateAmount"
+                        type="number"
+                        step="0.01"
+                        value={newPlan.immediateAmount}
+                        onChange={(e) => setNewPlan({...newPlan, immediateAmount: parseFloat(e.target.value) || 0})}
+                        placeholder="1.00"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="trialDays">Dias de Trial</Label>
+                      <Input
+                        id="trialDays"
+                        type="number"
+                        value={newPlan.trialDays}
+                        onChange={(e) => setNewPlan({...newPlan, trialDays: parseInt(e.target.value) || 0})}
+                        placeholder="3"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="recurringAmount">Valor Recorrente (R$)</Label>
+                      <Input
+                        id="recurringAmount"
+                        type="number"
+                        step="0.01"
+                        value={newPlan.recurringAmount}
+                        onChange={(e) => setNewPlan({...newPlan, recurringAmount: parseFloat(e.target.value) || 0})}
+                        placeholder="29.90"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <Label htmlFor="recurringInterval">Frequência da Cobrança</Label>
+                    <Select 
+                      value={newPlan.recurringInterval} 
+                      onValueChange={(value) => setNewPlan({...newPlan, recurringInterval: value as any})}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecione a frequência" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="monthly">Mensal</SelectItem>
+                        <SelectItem value="quarterly">Trimestral</SelectItem>
+                        <SelectItem value="yearly">Anual</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+
+                {/* Passo 2: Preview do Embed */}
+                <div className="space-y-4">
+                  <div className="flex items-center space-x-2 mb-4">
+                    <div className="w-8 h-8 bg-green-100 text-green-600 rounded-full flex items-center justify-center text-sm font-bold">2</div>
+                    <h3 className="font-semibold">Preview do Fluxo</h3>
+                  </div>
+                  
+                  <div className="bg-gray-50 p-4 rounded-lg">
+                    <div className="text-sm text-gray-600 space-y-2">
+                      <div className="flex items-center justify-between">
+                        <span>✅ Cobrança Imediata:</span>
+                        <span className="font-bold text-green-600">R$ {newPlan.immediateAmount.toFixed(2)}</span>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span>🎁 Trial Gratuito:</span>
+                        <span className="font-bold text-blue-600">{newPlan.trialDays} dias</span>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span>💳 Cobrança Recorrente:</span>
+                        <span className="font-bold text-purple-600">
+                          R$ {newPlan.recurringAmount.toFixed(2)}/{newPlan.recurringInterval === 'monthly' ? 'mês' : newPlan.recurringInterval === 'quarterly' ? 'trimestre' : 'ano'}
+                        </span>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span>💾 Cartão Salvo:</span>
+                        <span className="font-bold text-indigo-600">Sim (Auto-cobrança)</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex space-x-2">
+                  <Button
+                    onClick={() => {
+                      if (!newPlan.name || !newPlan.description) {
+                        toast({
+                          title: "Campos obrigatórios",
+                          description: "Preencha nome e descrição do plano",
+                          variant: "destructive",
+                        });
+                        return;
+                      }
+                      createCheckoutMutation.mutate(newPlan);
+                    }}
+                    disabled={createCheckoutMutation.isPending}
+                    className="flex-1"
+                  >
+                    {createCheckoutMutation.isPending ? (
+                      <div className="flex items-center">
+                        <div className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full mr-2"></div>
+                        Criando...
+                      </div>
+                    ) : (
+                      <>
+                        <Zap className="w-4 h-4 mr-2" />
+                        Criar Checkout Link
+                      </>
+                    )}
+                  </Button>
+                  <Button
+                    variant="outline"
+                    onClick={() => setShowCreateForm(false)}
+                  >
+                    Cancelar
+                  </Button>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
       )}
 
       {/* Embed Code Modal */}

@@ -10,6 +10,7 @@ export interface CheckoutLinkConfig {
   currency: string;
   userId: string;
   expiresInHours?: number;
+  recurringInterval?: 'monthly' | 'quarterly' | 'yearly';
 }
 
 export interface CheckoutLink {
@@ -55,7 +56,12 @@ export class StripeCheckoutLinkGenerator {
     // Salvar no banco (usando sistema de armazenamento existente)
     await this.saveCheckoutLink(checkoutLink);
 
-    const checkoutUrl = `${process.env.BASE_URL || 'http://localhost:5000'}/stripe-elements-checkout?linkId=${linkId}&token=${accessToken}`;
+    // Gerar URL pública baseada no Replit domain
+    const baseUrl = process.env.REPLIT_DOMAINS ? 
+      `https://${process.env.REPLIT_DOMAINS.split(',')[0]}` : 
+      (process.env.BASE_URL || 'http://localhost:5000');
+    
+    const checkoutUrl = `${baseUrl}/stripe-elements-checkout?linkId=${linkId}&token=${accessToken}`;
 
     console.log('✅ LINK DE CHECKOUT CRIADO:', {
       linkId,
