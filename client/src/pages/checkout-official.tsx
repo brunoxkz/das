@@ -25,7 +25,7 @@ export default function CheckoutOfficial() {
       }
 
       // Chamar o endpoint oficial
-      const response = await fetch('/api/stripe/create-checkout-session-official', {
+      const response = await fetch('/api/stripe/create-checkout-session-official-docs', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

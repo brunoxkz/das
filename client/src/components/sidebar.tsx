@@ -164,6 +164,12 @@ export function Sidebar() {
           active: location === "/checkout-official"
         },
         {
+          title: "GERENCIAR PLANOS",
+          href: "/stripe-plans-manager",
+          icon: <Package className="w-4 h-4" />,
+          active: location === "/stripe-plans-manager"
+        },
+        {
           title: "PRODUCT BUILDER",
           href: "/product-builder",
           icon: <Package className="w-4 h-4" />,

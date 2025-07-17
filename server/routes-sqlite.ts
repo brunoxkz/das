@@ -4740,6 +4740,108 @@ export function registerSQLiteRoutes(app: Express): Server {
     }
   });
 
+  // STRIPE PLANS MANAGEMENT - CRIAR PLANO
+  app.post("/api/stripe/create-plan", verifyJWT, async (req: any, res) => {
+    try {
+      const { name, description, price, currency, interval, trial_period_days, activation_fee, features } = req.body;
+      
+      if (!activeStripeService) {
+        return res.status(500).json({ error: "Stripe não configurado" });
+      }
+
+      // Criar produto no Stripe
+      const product = await activeStripeService.stripe.products.create({
+        name,
+        description,
+        metadata: {
+          trial_period_days: trial_period_days.toString(),
+          activation_fee: activation_fee.toString(),
+          features: JSON.stringify(features || [])
+        }
+      });
+
+      // Criar preço no Stripe
+      const stripePrice = await activeStripeService.stripe.prices.create({
+        product: product.id,
+        unit_amount: Math.round(price * 100),
+        currency: currency.toLowerCase(),
+        recurring: {
+          interval: interval || 'month'
+        }
+      });
+
+      // Salvar no banco local
+      const planData = {
+        name,
+        description,
+        price,
+        currency,
+        interval: interval || 'month',
+        trial_period_days,
+        activation_fee,
+        features: JSON.stringify(features || []),
+        stripe_product_id: product.id,
+        stripe_price_id: stripePrice.id,
+        active: true,
+        created_at: new Date().toISOString(),
+        user_id: req.user.id
+      };
+
+      db.prepare(`
+        INSERT INTO stripe_plans 
+        (name, description, price, currency, interval, trial_period_days, activation_fee, features, stripe_product_id, stripe_price_id, active, created_at, user_id)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      `).run(
+        planData.name,
+        planData.description,
+        planData.price,
+        planData.currency,
+        planData.interval,
+        planData.trial_period_days,
+        planData.activation_fee,
+        planData.features,
+        planData.stripe_product_id,
+        planData.stripe_price_id,
+        planData.active,
+        planData.created_at,
+        planData.user_id
+      );
+
+      res.json({
+        success: true,
+        plan: planData,
+        stripe_product_id: product.id,
+        stripe_price_id: stripePrice.id
+      });
+    } catch (error) {
+      console.error("Error creating plan:", error);
+      res.status(500).json({ error: "Failed to create plan" });
+    }
+  });
+
+  // STRIPE PLANS MANAGEMENT - LISTAR PLANOS
+  app.get("/api/stripe/plans", verifyJWT, async (req: any, res) => {
+    try {
+      const plans = db.prepare(`
+        SELECT * FROM stripe_plans 
+        WHERE user_id = ? 
+        ORDER BY created_at DESC
+      `).all(req.user.id);
+
+      const formattedPlans = plans.map(plan => ({
+        ...plan,
+        features: JSON.parse(plan.features || '[]'),
+        price: parseFloat(plan.price),
+        activation_fee: parseFloat(plan.activation_fee)
+      }));
+
+      res.json({ plans: formattedPlans });
+    } catch (error) {
+      console.error("Error fetching plans:", error);
+      res.status(500).json({ error: "Failed to fetch plans" });
+    }
+  });
+
   // STRIPE WEBHOOKS - HANDLER COMPLETO PARA TRIAL → RECORRÊNCIA AUTOMÁTICA
   app.post("/api/stripe/webhook", async (req, res) => {
     try {
