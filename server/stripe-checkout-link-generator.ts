@@ -238,7 +238,47 @@ export class StripeCheckoutLinkGenerator {
   }
 
   /**
-   * BUSCAR LINKS POR USUÁRIO
+   * BUSCAR LINKS POR USUÁRIO (MÉTODO PÚBLICO)
+   */
+  async getUserLinks(userId: string): Promise<any[]> {
+    try {
+      const Database = await import('better-sqlite3');
+      const db = new Database.default('./vendzz-database.db');
+      
+      const stmt = db.prepare(
+        'SELECT * FROM checkout_links WHERE userId = ? ORDER BY createdAt DESC'
+      );
+      const rows = stmt.all(userId);
+      
+      db.close();
+
+      return rows.map(row => {
+        const config = JSON.parse(row.config);
+        return {
+          id: row.id,
+          linkId: row.id,
+          name: config.name,
+          description: config.description,
+          immediateAmount: config.immediateAmount,
+          trialDays: config.trialDays,
+          recurringAmount: config.recurringAmount,
+          currency: config.currency,
+          checkoutUrl: `${process.env.BASE_URL || 'http://localhost:5000'}/stripe-elements-checkout?linkId=${row.id}&token=${row.accessToken}`,
+          accessToken: row.accessToken,
+          expiresAt: row.expiresAt,
+          createdAt: row.createdAt,
+          isActive: new Date(row.expiresAt) > new Date() && row.used === 0,
+          usageCount: row.used === 1 ? 1 : 0,
+        };
+      });
+    } catch (error) {
+      console.error('❌ ERRO AO BUSCAR LINKS DO USUÁRIO:', error);
+      return [];
+    }
+  }
+
+  /**
+   * BUSCAR LINKS POR USUÁRIO (MÉTODO PRIVADO)
    */
   private async getCheckoutLinksByUser(userId: string): Promise<CheckoutLink[]> {
     try {

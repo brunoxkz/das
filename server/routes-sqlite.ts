@@ -4436,6 +4436,25 @@ export function registerSQLiteRoutes(app: Express): Server {
     }
   });
 
+  // LISTAR LINKS DE CHECKOUT (COM AUTENTICAÇÃO)
+  app.get("/api/stripe/checkout-links", verifyJWT, async (req, res) => {
+    try {
+      const { StripeCheckoutLinkGenerator } = await import('./stripe-checkout-link-generator');
+      const linkGenerator = new StripeCheckoutLinkGenerator();
+
+      const links = await linkGenerator.getUserLinks(req.user.id);
+
+      res.json({
+        success: true,
+        links: links,
+        total: links.length,
+      });
+    } catch (error) {
+      console.error('❌ ERRO AO LISTAR LINKS:', error);
+      res.status(500).json({ error: error.message });
+    }
+  });
+
   // PROCESSAR CHECKOUT VIA LINK (SEM AUTENTICAÇÃO)
   app.post("/api/stripe/process-checkout-link/:linkId", async (req, res) => {
     try {
