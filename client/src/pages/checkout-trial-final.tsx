@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { loadStripe } from '@stripe/stripe-js';
-import { Elements, CardElement, useStripe, useElements } from '@stripe/react-stripe-js';
+import { Elements, CardNumberElement, CardExpiryElement, CardCvcElement, useStripe, useElements } from '@stripe/react-stripe-js';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -13,8 +13,8 @@ import { apiRequest } from '@/lib/queryClient';
 // Stripe public key
 const stripePromise = loadStripe('pk_test_51RjvV9HK6al3veW1PjziXLVqAk2y8HUIh5Rg2xP3wUUJ6Jdvaob5KB3PlKsWYWOtldtdbeLh0TpcMF5Pb5FfO6p100hNkeeWih');
 
-// Configuração do CardElement com estilo melhorado
-const cardElementOptions = {
+// Configuração dos elementos individuais do Stripe
+const stripeElementOptions = {
   style: {
     base: {
       fontSize: '16px',
@@ -35,7 +35,6 @@ const cardElementOptions = {
       iconColor: '#059669',
     },
   },
-  hidePostalCode: true,
 };
 
 interface CheckoutFormProps {
@@ -67,8 +66,8 @@ const CheckoutForm: React.FC<CheckoutFormProps> = ({ onSuccess }) => {
       return;
     }
 
-    const cardElement = elements.getElement(CardElement);
-    if (!cardElement) {
+    const cardNumberElement = elements.getElement(CardNumberElement);
+    if (!cardNumberElement) {
       setError('Elemento do cartão não encontrado');
       return;
     }
@@ -79,7 +78,7 @@ const CheckoutForm: React.FC<CheckoutFormProps> = ({ onSuccess }) => {
       // PASSO 1: Criar Payment Method com setup_future_usage
       const { paymentMethod, error: pmError } = await stripe.createPaymentMethod({
         type: 'card',
-        card: cardElement,
+        card: cardNumberElement,
         billing_details: {
           name: customerName,
           email: customerEmail || undefined,
@@ -153,32 +152,82 @@ const CheckoutForm: React.FC<CheckoutFormProps> = ({ onSuccess }) => {
         </div>
       </div>
 
-      {/* Cartão de Crédito */}
-      <div className="space-y-2">
+      {/* Cartão de Crédito - Elementos Individuais */}
+      <div className="space-y-4">
         <Label>Dados do Cartão *</Label>
-        <div className="p-4 border-2 border-gray-200 rounded-lg bg-white hover:border-blue-400 focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-200 transition-all min-h-[50px] flex items-center">
-          <CardElement 
-            options={cardElementOptions} 
-            className="w-full"
-            onReady={(element) => {
-              console.log('✅ CardElement ready and clickable:', element);
-              setCardReady(true);
-            }}
-            onChange={(event) => {
-              console.log('CardElement change:', event);
-              if (event.error) {
-                setCardError(event.error.message);
-                setError(event.error.message);
-              } else {
-                setCardError(null);
-                if (cardError) setError(null);
-              }
-            }}
-          />
+        
+        {/* Número do Cartão */}
+        <div className="space-y-2">
+          <Label htmlFor="card-number" className="text-sm font-medium">Número do Cartão</Label>
+          <div className="p-4 border-2 border-gray-200 rounded-lg bg-white hover:border-blue-400 focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-200 transition-all min-h-[50px] flex items-center">
+            <CardNumberElement
+              id="card-number"
+              options={stripeElementOptions}
+              className="w-full"
+              onReady={() => {
+                console.log('✅ CardNumberElement ready and clickable');
+                setCardReady(true);
+              }}
+              onChange={(event) => {
+                console.log('CardNumberElement change:', event);
+                if (event.error) {
+                  setCardError(event.error.message);
+                  setError(event.error.message);
+                } else {
+                  setCardError(null);
+                  if (cardError) setError(null);
+                }
+              }}
+            />
+          </div>
         </div>
+
+        {/* Data de Validade e CVC */}
+        <div className="grid grid-cols-2 gap-4">
+          <div className="space-y-2">
+            <Label htmlFor="card-expiry" className="text-sm font-medium">Data de Validade</Label>
+            <div className="p-4 border-2 border-gray-200 rounded-lg bg-white hover:border-blue-400 focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-200 transition-all min-h-[50px] flex items-center">
+              <CardExpiryElement
+                id="card-expiry"
+                options={stripeElementOptions}
+                className="w-full"
+                onChange={(event) => {
+                  if (event.error) {
+                    setCardError(event.error.message);
+                    setError(event.error.message);
+                  } else {
+                    setCardError(null);
+                    if (cardError) setError(null);
+                  }
+                }}
+              />
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="card-cvc" className="text-sm font-medium">CVC</Label>
+            <div className="p-4 border-2 border-gray-200 rounded-lg bg-white hover:border-blue-400 focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-200 transition-all min-h-[50px] flex items-center">
+              <CardCvcElement
+                id="card-cvc"
+                options={stripeElementOptions}
+                className="w-full"
+                onChange={(event) => {
+                  if (event.error) {
+                    setCardError(event.error.message);
+                    setError(event.error.message);
+                  } else {
+                    setCardError(null);
+                    if (cardError) setError(null);
+                  }
+                }}
+              />
+            </div>
+          </div>
+        </div>
+
         {cardReady && (
           <p className="text-sm text-green-600 mt-1">
-            ✅ Campo do cartão está pronto! Clique para digitar.
+            ✅ Campos do cartão estão prontos! Clique para digitar.
           </p>
         )}
         {cardError && (
