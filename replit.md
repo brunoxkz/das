@@ -204,6 +204,23 @@ No additional files or separate projects are maintained in this repository.
 - `debug-extracao-variaveis.cjs` - Debug do sistema de extração de variáveis
 - `RELATORIO-TESTES-SISTEMA-DESIGN.md` - Documentação completa dos testes
 
+## Sidebar Organization
+
+### Navigation Structure
+- **CRIAÇÃO**: Quiz building and campaign creation tools
+- **RECURRING**: All payment and subscription management features
+- **ANALYTICS**: Data visualization and reporting
+- **CAMPANHAS**: Campaign management (SMS, Email, WhatsApp)
+- **CONFIGURAÇÕES**: System settings and integrations
+
+### RECURRING Category Features
+- **CHECKOUT OFICIAL**: Main Stripe checkout implementation (R$1 + trial + R$29.90/month)
+- **GERENCIAR PLANOS**: Create and manage subscription plans
+- **SISTEMA CHECKOUT**: Advanced checkout configurations
+- **CHECKOUT INDIVIDUAL**: Individual payment processing
+- **PRODUCT BUILDER**: Product creation tools
+- **GERENCIAR ASSINATURAS**: Subscription management interface
+
 ## Changelog
 
 ```

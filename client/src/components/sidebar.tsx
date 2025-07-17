@@ -145,18 +145,12 @@ export function Sidebar() {
           icon: <BarChart className="w-4 h-4" />,
           active: location === "/teste-ab"
         },
-        {
-          title: "SISTEMA CHECKOUT",
-          href: "/checkout-system",
-          icon: <ShoppingCart className="w-4 h-4" />,
-          active: location === "/checkout-system"
-        },
-        {
-          title: "CHECKOUT INDIVIDUAL",
-          href: "/checkout-individual",
-          icon: <ShoppingCart className="w-4 h-4" />,
-          active: location === "/checkout-individual"
-        },
+
+      ]
+    },
+    {
+      title: "RECURRING",
+      items: [
         {
           title: "CHECKOUT OFICIAL",
           href: "/checkout-official",
@@ -168,6 +162,18 @@ export function Sidebar() {
           href: "/stripe-plans-manager",
           icon: <Package className="w-4 h-4" />,
           active: location === "/stripe-plans-manager"
+        },
+        {
+          title: "SISTEMA CHECKOUT",
+          href: "/checkout-system",
+          icon: <ShoppingCart className="w-4 h-4" />,
+          active: location === "/checkout-system"
+        },
+        {
+          title: "CHECKOUT INDIVIDUAL",
+          href: "/checkout-individual",
+          icon: <ShoppingCart className="w-4 h-4" />,
+          active: location === "/checkout-individual"
         },
         {
           title: "PRODUCT BUILDER",
