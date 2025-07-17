@@ -3575,6 +3575,145 @@ export function registerSQLiteRoutes(app: Express): Server {
     }
   });
 
+  // STRIPE INTEGRATION - TESTE ACELERADO DE COBRANÇA
+  app.post("/api/stripe/test-accelerated-billing", verifyJWT, async (req: any, res) => {
+    try {
+      const { paymentMethodId, testMinutes = 2 } = req.body;
+      const userId = req.user.id;
+
+      if (!paymentMethodId) {
+        return res.status(400).json({ error: "paymentMethodId é obrigatório" });
+      }
+
+      console.log('🚀 TESTE ACELERADO: Iniciando cobrança trial + recorrente');
+
+      if (!stripeService) {
+        return res.status(500).json({ error: "Stripe não configurado" });
+      }
+
+      // Buscar dados do usuário
+      const user = await storage.getUser(userId);
+      if (!user) {
+        return res.status(404).json({ error: "Usuário não encontrado" });
+      }
+
+      // Criar customer no Stripe
+      let customer;
+      try {
+        const customers = await stripeService.stripe.customers.list({
+          email: user.email,
+          limit: 1
+        });
+
+        if (customers.data.length > 0) {
+          customer = customers.data[0];
+        } else {
+          customer = await stripeService.stripe.customers.create({
+            email: user.email,
+            name: user.name || user.email,
+            metadata: {
+              userId: userId,
+              testMode: 'accelerated_billing'
+            }
+          });
+        }
+      } catch (error) {
+        console.error('❌ Erro ao criar customer para teste:', error);
+        return res.status(500).json({ error: "Erro ao criar customer" });
+      }
+
+      // Anexar método de pagamento
+      try {
+        await stripeService.stripe.paymentMethods.attach(paymentMethodId, {
+          customer: customer.id
+        });
+
+        await stripeService.stripe.customers.update(customer.id, {
+          invoice_settings: {
+            default_payment_method: paymentMethodId
+          }
+        });
+      } catch (error) {
+        console.error('❌ Erro ao anexar método de pagamento:', error);
+        return res.status(500).json({ error: "Erro ao processar método de pagamento" });
+      }
+
+      // 1. COBRANÇA IMEDIATA R$1.00 (TRIAL)
+      console.log('💰 Cobrando R$1.00 imediatamente...');
+      let trialCharge;
+      try {
+        trialCharge = await stripeService.stripe.paymentIntents.create({
+          amount: 100, // R$1.00 em centavos
+          currency: 'brl',
+          customer: customer.id,
+          payment_method: paymentMethodId,
+          confirm: true,
+          description: 'Taxa de Trial - Vendzz Premium (Teste Acelerado)',
+          metadata: {
+            userId: userId,
+            type: 'trial_charge',
+            testMode: 'accelerated'
+          }
+        });
+
+        console.log('✅ Cobrança trial realizada:', trialCharge.id);
+      } catch (error) {
+        console.error('❌ Erro na cobrança trial:', error);
+        return res.status(500).json({ error: "Erro na cobrança trial" });
+      }
+
+      // 2. PROGRAMAR COBRANÇA RECORRENTE APÓS X MINUTOS
+      console.log(`⏰ Programando cobrança de R$29.90 para ${testMinutes} minutos...`);
+      
+      const delayMs = testMinutes * 60 * 1000; // Converter minutos para milissegundos
+      
+      setTimeout(async () => {
+        try {
+          console.log('💰 Executando cobrança recorrente de R$29.90...');
+          
+          const recurringCharge = await stripeService.stripe.paymentIntents.create({
+            amount: 2990, // R$29.90 em centavos
+            currency: 'brl',
+            customer: customer.id,
+            payment_method: paymentMethodId,
+            confirm: true,
+            description: 'Cobrança Mensal - Vendzz Premium (Teste Acelerado)',
+            metadata: {
+              userId: userId,
+              type: 'recurring_charge',
+              testMode: 'accelerated'
+            }
+          });
+
+          console.log('✅ Cobrança recorrente realizada:', recurringCharge.id);
+          
+          // Atualizar status do usuário
+          await storage.updateUser(userId, {
+            plan: 'premium',
+            planExpiry: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000) // 30 dias
+          });
+
+        } catch (error) {
+          console.error('❌ Erro na cobrança recorrente:', error);
+        }
+      }, delayMs);
+
+      res.json({
+        success: true,
+        message: `Teste acelerado iniciado! R$1.00 cobrados agora, R$29.90 será cobrado em ${testMinutes} minutos.`,
+        trialChargeId: trialCharge.id,
+        customerId: customer.id,
+        scheduledChargeIn: `${testMinutes} minutos`,
+        trialAmount: 1.00,
+        recurringAmount: 29.90
+      });
+
+    } catch (error) {
+      console.error("❌ Erro no teste acelerado:", error);
+      res.status(500).json({ error: "Erro no teste acelerado" });
+    }
+  });
+
   // STRIPE INTEGRATION - TESTAR PAGAMENTO FALHO
   app.post("/api/stripe/test-failed-payment", verifyJWT, async (req: any, res) => {
     try {

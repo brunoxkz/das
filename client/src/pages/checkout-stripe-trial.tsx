@@ -4,9 +4,10 @@ import { Elements, PaymentElement, useStripe, useElements } from '@stripe/react-
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Check, CreditCard, Shield, Clock } from 'lucide-react';
+import { Check, CreditCard, Shield, Clock, TestTube, Zap } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest } from '@/lib/queryClient';
+import { Separator } from '@/components/ui/separator';
 
 // Stripe público do ambiente
 const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLIC_KEY || 'pk_test_51RjvV9HK6al3veW1PjziXLVqAk2y8HUIh5Rg2xP3wUUJ6Jdvaob5KB3PlKsWYWOtldtdbeLh0TpcMF5Pb5FfO6p100hNkeeWih');
@@ -28,6 +29,68 @@ function CheckoutForm({ clientSecret, plan }: CheckoutFormProps) {
   const elements = useElements();
   const { toast } = useToast();
   const [isProcessing, setIsProcessing] = useState(false);
+  const [isTestingAccelerated, setIsTestingAccelerated] = useState(false);
+
+  const handleAcceleratedTest = async () => {
+    if (!stripe || !elements) {
+      toast({
+        title: "Erro",
+        description: "Stripe ainda não foi carregado",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsTestingAccelerated(true);
+
+    try {
+      // Primeiro, criar o payment method
+      const { error: paymentMethodError, paymentMethod } = await stripe.createPaymentMethod({
+        type: 'card',
+        card: elements.getElement('card') || elements.getElement('cardNumber')!,
+      });
+
+      if (paymentMethodError) {
+        throw new Error(paymentMethodError.message);
+      }
+
+      // Agora chamar o endpoint de teste acelerado
+      const response = await apiRequest("POST", "/api/stripe/test-accelerated-billing", {
+        paymentMethodId: paymentMethod.id,
+        testMinutes: 2 // Cobrança recorrente após 2 minutos
+      });
+
+      toast({
+        title: "🚀 Teste Acelerado Iniciado!",
+        description: response.message,
+      });
+
+      // Mostrar detalhes do teste
+      setTimeout(() => {
+        toast({
+          title: "💰 Cobrança Trial",
+          description: `R$ ${response.trialAmount} cobrado com sucesso!`,
+        });
+      }, 2000);
+
+      // Avisar sobre cobrança recorrente
+      setTimeout(() => {
+        toast({
+          title: "⏰ Cobrança Recorrente Programada",
+          description: `R$ ${response.recurringAmount} será cobrado em ${response.scheduledChargeIn}`,
+        });
+      }, 4000);
+
+    } catch (error: any) {
+      toast({
+        title: "Erro no teste acelerado",
+        description: error.message || "Ocorreu um erro inesperado",
+        variant: "destructive",
+      });
+    } finally {
+      setIsTestingAccelerated(false);
+    }
+  };
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -90,7 +153,7 @@ function CheckoutForm({ clientSecret, plan }: CheckoutFormProps) {
 
       <Button 
         type="submit" 
-        disabled={!stripe || isProcessing}
+        disabled={!stripe || isProcessing || isTestingAccelerated}
         className="w-full"
         size="lg"
       >
@@ -106,6 +169,41 @@ function CheckoutForm({ clientSecret, plan }: CheckoutFormProps) {
           </>
         )}
       </Button>
+
+      <Separator className="my-6" />
+
+      <div className="space-y-4">
+        <div className="p-4 bg-orange-50 dark:bg-orange-900/20 rounded-lg border border-orange-200 dark:border-orange-800">
+          <div className="flex items-center gap-2 mb-2">
+            <TestTube className="h-5 w-5 text-orange-600" />
+            <span className="font-medium text-orange-900 dark:text-orange-100">
+              Teste Acelerado
+            </span>
+          </div>
+          <p className="text-sm text-orange-700 dark:text-orange-300 mb-3">
+            Teste o sistema de cobrança em modo acelerado: R$ 1,00 cobrado agora + R$ 29,90 após 2 minutos
+          </p>
+          <Button 
+            type="button"
+            variant="outline"
+            onClick={handleAcceleratedTest}
+            disabled={!stripe || isProcessing || isTestingAccelerated}
+            className="w-full border-orange-300 text-orange-700 hover:bg-orange-100"
+          >
+            {isTestingAccelerated ? (
+              <>
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-orange-600 mr-2"></div>
+                Iniciando Teste...
+              </>
+            ) : (
+              <>
+                <Zap className="h-4 w-4 mr-2" />
+                Testar Cobrança Acelerada
+              </>
+            )}
+          </Button>
+        </div>
+      </div>
 
       <div className="text-center">
         <p className="text-sm text-gray-600 dark:text-gray-400">
