@@ -10,8 +10,29 @@ import { CheckCircle, CreditCard, Shield, Clock, Repeat, AlertCircle } from 'luc
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest } from '@/lib/queryClient';
 
-// Stripe public key
-const stripePromise = loadStripe('pk_test_51RjvV9HK6al3veW1PjziXLVqAk2y8HUIh5Rg2xP3wUUJ6Jdvaob5KB3PlKsWYWOtldtdbeLh0TpcMF5Pb5FfO6p100hNkeeWih');
+// Stripe public key - inicialização mais robusta
+const STRIPE_PUBLIC_KEY = 'pk_test_51RjvV9HK6al3veW1PjziXLVqAk2y8HUIh5Rg2xP3wUUJ6Jdvaob5KB3PlKsWYWOtldtdbeLh0TpcMF5Pb5FfO6p100hNkeeWih';
+
+// Função para carregar Stripe com retry
+const loadStripeWithRetry = async (retries = 3) => {
+  for (let i = 0; i < retries; i++) {
+    try {
+      console.log(`Tentativa ${i + 1} de carregar Stripe...`);
+      const stripe = await loadStripe(STRIPE_PUBLIC_KEY);
+      if (stripe) {
+        console.log('✅ Stripe carregado com sucesso!');
+        return stripe;
+      }
+    } catch (error) {
+      console.error(`❌ Erro ao carregar Stripe (tentativa ${i + 1}):`, error);
+      if (i === retries - 1) throw error;
+      await new Promise(resolve => setTimeout(resolve, 1000));
+    }
+  }
+  throw new Error('Falha ao carregar Stripe após múltiplas tentativas');
+};
+
+const stripePromise = loadStripeWithRetry();
 
 // Configuração dos elementos individuais do Stripe
 const stripeElementOptions = {
@@ -184,11 +205,11 @@ const CheckoutForm: React.FC<CheckoutFormProps> = ({ onSuccess }) => {
 
       {/* Cartão de Crédito - Elementos Individuais */}
       <div className="space-y-4">
-        <Label>Dados do Cartão *</Label>
+        <Label>Dados do Cartão</Label>
         
         {/* Número do Cartão */}
         <div>
-          <Label htmlFor="card-number">Número do Cartão *</Label>
+          <Label htmlFor="card-number">Número do Cartão</Label>
           <div className="relative">
             <div className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50">
               <CardNumberElement
@@ -223,7 +244,7 @@ const CheckoutForm: React.FC<CheckoutFormProps> = ({ onSuccess }) => {
         {/* Data de Validade e CVC */}
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <Label htmlFor="card-expiry">Data de Validade *</Label>
+            <Label htmlFor="card-expiry">Data de Validade</Label>
             <div className="relative">
               <div className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50">
                 <CardExpiryElement
@@ -249,7 +270,7 @@ const CheckoutForm: React.FC<CheckoutFormProps> = ({ onSuccess }) => {
           </div>
 
           <div>
-            <Label htmlFor="card-cvc">CVC *</Label>
+            <Label htmlFor="card-cvc">CVC</Label>
             <div className="relative">
               <div className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50">
                 <CardCvcElement
