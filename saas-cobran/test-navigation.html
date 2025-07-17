@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teste de Navegação - SAAS COBRAN</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #1e3c72;
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+        .success {
+            background: #4caf50;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+        .btn {
+            background: #2196f3;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 10px;
+        }
+        .btn:hover {
+            background: #1976d2;
+        }
+    </style>
+</head>
+<body>
+    <h1>✅ Teste de Navegação Funcionando!</h1>
+    
+    <div class="success">
+        <h2>Parabéns!</h2>
+        <p>Se você está vendo esta página, significa que a navegação está funcionando corretamente.</p>
+        <p>Timestamp: <span id="timestamp"></span></p>
+    </div>
+    
+    <div>
+        <button class="btn" onclick="window.location.href='/saas-cobran/dashboard.html'">
+            ← Voltar ao Dashboard
+        </button>
+        <button class="btn" onclick="window.location.href='/saas-cobran/create-plan.html'">
+            Ir para Criar Plano
+        </button>
+    </div>
+    
+    <script>
+        document.getElementById('timestamp').textContent = new Date().toLocaleString();
+        console.log('✅ Página de teste carregada com sucesso!');
+    </script>
+</body>
+</html>

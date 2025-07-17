@@ -570,4 +570,14 @@ router.post('/confirm-payment', authenticateSaasCobran, async (req, res) => {
   }
 });
 
+// Rota de diagnóstico para testar navegação
+router.get('/test-navigation', (req, res) => {
+  res.json({ 
+    message: 'Navegação funcionando',
+    timestamp: new Date().toISOString(),
+    createPlanUrl: '/saas-cobran/create-plan.html',
+    status: 'OK'
+  });
+});
+
 export default router;
