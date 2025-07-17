@@ -124,6 +124,208 @@ export function registerSQLiteRoutes(app: Express): Server {
     }
   });
 
+  // 💳 STRIPE PLANS MANAGEMENT - Endpoints para gerenciar planos
+  
+  // Buscar todos os planos
+  app.get('/api/stripe/plans', verifyJWT, async (req, res) => {
+    try {
+      if (!activeStripeService) {
+        return res.status(503).json({ error: 'Stripe não está configurado' });
+      }
+      
+      const plans = await storage.getStripePlans();
+      res.json(plans);
+    } catch (error) {
+      console.error('Erro ao buscar planos:', error);
+      res.status(500).json({ error: 'Erro interno do servidor' });
+    }
+  });
+
+  // Criar novo plano
+  app.post('/api/stripe/plans', verifyJWT, async (req, res) => {
+    try {
+      if (!activeStripeService) {
+        return res.status(503).json({ error: 'Stripe não está configurado' });
+      }
+
+      const { name, description, price, currency, interval, trial_days, trial_price, gateway, active } = req.body;
+
+      if (!name || !price) {
+        return res.status(400).json({ error: 'Nome e preço são obrigatórios' });
+      }
+
+      // Criar produto no Stripe
+      const product = await activeStripeService.stripe.products.create({
+        name,
+        description,
+        metadata: { created_by: 'vendzz_admin' }
+      });
+
+      // Criar preço no Stripe
+      const stripePrice = await activeStripeService.stripe.prices.create({
+        unit_amount: Math.round(parseFloat(price) * 100), // Converter para centavos
+        currency: currency || 'brl',
+        recurring: {
+          interval: interval || 'month',
+        },
+        product: product.id,
+        metadata: { 
+          trial_days: trial_days?.toString() || '7',
+          trial_price: trial_price?.toString() || '1.00'
+        }
+      });
+
+      // Salvar no banco local
+      const planData = {
+        id: nanoid(),
+        name,
+        description,
+        price: parseFloat(price),
+        currency: currency || 'BRL',
+        interval: interval || 'month',
+        trial_days: trial_days || 7,
+        trial_price: trial_price || 1.00,
+        gateway: gateway || 'stripe',
+        active: active !== false,
+        stripe_price_id: stripePrice.id,
+        stripe_product_id: product.id,
+        created_at: new Date(),
+        updated_at: new Date()
+      };
+
+      await storage.createStripePlan(planData);
+      
+      res.json({
+        message: 'Plano criado com sucesso!',
+        plan: planData,
+        stripe_price_id: stripePrice.id,
+        stripe_product_id: product.id
+      });
+    } catch (error) {
+      console.error('Erro ao criar plano:', error);
+      res.status(500).json({ error: error.message || 'Erro interno do servidor' });
+    }
+  });
+
+  // Editar plano existente
+  app.put('/api/stripe/plans/:id', verifyJWT, async (req, res) => {
+    try {
+      if (!activeStripeService) {
+        return res.status(503).json({ error: 'Stripe não está configurado' });
+      }
+
+      const { id } = req.params;
+      const { name, description, active } = req.body;
+
+      const existingPlan = await storage.getStripePlan(id);
+      if (!existingPlan) {
+        return res.status(404).json({ error: 'Plano não encontrado' });
+      }
+
+      // Atualizar produto no Stripe (apenas nome e descrição podem ser alterados)
+      if (existingPlan.stripe_product_id) {
+        await activeStripeService.stripe.products.update(existingPlan.stripe_product_id, {
+          name: name || existingPlan.name,
+          description: description || existingPlan.description,
+        });
+      }
+
+      // Atualizar no banco local
+      const updatedPlan = await storage.updateStripePlan(id, {
+        name: name || existingPlan.name,
+        description: description || existingPlan.description,
+        active: active !== undefined ? active : existingPlan.active,
+        updated_at: new Date()
+      });
+      
+      res.json({
+        message: 'Plano atualizado com sucesso!',
+        plan: updatedPlan
+      });
+    } catch (error) {
+      console.error('Erro ao editar plano:', error);
+      res.status(500).json({ error: error.message || 'Erro interno do servidor' });
+    }
+  });
+
+  // Deletar plano
+  app.delete('/api/stripe/plans/:id', verifyJWT, async (req, res) => {
+    try {
+      if (!activeStripeService) {
+        return res.status(503).json({ error: 'Stripe não está configurado' });
+      }
+
+      const { id } = req.params;
+      const existingPlan = await storage.getStripePlan(id);
+      
+      if (!existingPlan) {
+        return res.status(404).json({ error: 'Plano não encontrado' });
+      }
+
+      // Arquivar produto no Stripe (não pode ser deletado)
+      if (existingPlan.stripe_product_id) {
+        await activeStripeService.stripe.products.update(existingPlan.stripe_product_id, {
+          active: false,
+        });
+      }
+
+      // Arquivar preço no Stripe
+      if (existingPlan.stripe_price_id) {
+        await activeStripeService.stripe.prices.update(existingPlan.stripe_price_id, {
+          active: false,
+        });
+      }
+
+      // Deletar do banco local
+      await storage.deleteStripePlan(id);
+      
+      res.json({ message: 'Plano deletado com sucesso!' });
+    } catch (error) {
+      console.error('Erro ao deletar plano:', error);
+      res.status(500).json({ error: error.message || 'Erro interno do servidor' });
+    }
+  });
+
+  // Configurações do sistema
+  app.get('/api/checkout/config', verifyJWT, async (req, res) => {
+    try {
+      const config = {
+        stripe: {
+          enabled: !!activeStripeService,
+          public_key: process.env.VITE_STRIPE_PUBLIC_KEY || 'pk_test_...',
+          webhook_configured: !!process.env.STRIPE_WEBHOOK_SECRET,
+        },
+        pagarme: {
+          enabled: !!pagarmeIntegration,
+          public_key: process.env.PAGARME_PUBLIC_KEY || '',
+          webhook_configured: !!process.env.PAGARME_WEBHOOK_SECRET,
+        },
+        default_settings: {
+          currency: 'BRL',
+          trial_days: 7,
+          trial_price: 1.00,
+          auto_cancel_trial: true,
+        }
+      };
+      
+      res.json(config);
+    } catch (error) {
+      console.error('Erro ao buscar configurações:', error);
+      res.status(500).json({ error: 'Erro interno do servidor' });
+    }
+  });
+
+  // Analytics do checkout
+  app.get('/api/checkout/analytics', verifyJWT, async (req, res) => {
+    try {
+      const analytics = await storage.getCheckoutAnalytics();
+      res.json(analytics);
+    } catch (error) {
+      console.error('Erro ao buscar analytics:', error);
+      res.status(500).json({ error: 'Erro interno do servidor' });
+    }
+  });
+
   // Buscar produto específico por ID
   app.get('/api/checkout-products/:id', async (req, res) => {
     try {

@@ -127,6 +127,15 @@ export interface IStorage {
   incrementCheckoutViews(checkoutId: string): Promise<void>;
   incrementCheckoutConversions(checkoutId: string): Promise<void>;
   
+  // Stripe Plans operations
+  getStripePlans(): Promise<any[]>;
+  getStripePlan(id: string): Promise<any | undefined>;
+  createStripePlan(plan: any): Promise<any>;
+  updateStripePlan(id: string, updates: any): Promise<any>;
+  deleteStripePlan(id: string): Promise<void>;
+  getCheckoutAnalytics(): Promise<any>;
+  getCheckoutProducts(): Promise<any[]>;
+  
   // Order operations
   createOrder(order: any): Promise<any>;
   getOrderById(id: string): Promise<any | undefined>;
@@ -7284,6 +7293,176 @@ Hoje você vai aprender ${project.title} - método revolucionário que já ajudo
     }
   }
 
+  // STRIPE PLANS MANAGEMENT - Métodos para gerenciar planos do Stripe
+
+  // Criar tabela de planos do Stripe se não existir
+  private async ensureStripePlansTable(): Promise<void> {
+    try {
+      await sqlite.exec(`
+        CREATE TABLE IF NOT EXISTS stripe_plans (
+          id TEXT PRIMARY KEY,
+          name TEXT NOT NULL,
+          description TEXT,
+          price REAL NOT NULL,
+          currency TEXT DEFAULT 'BRL',
+          interval TEXT DEFAULT 'month',
+          trial_days INTEGER DEFAULT 7,
+          trial_price REAL DEFAULT 1.00,
+          gateway TEXT DEFAULT 'stripe',
+          active INTEGER DEFAULT 1,
+          stripe_price_id TEXT,
+          stripe_product_id TEXT,
+          pagarme_plan_id TEXT,
+          created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+          updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        )
+      `);
+    } catch (error) {
+      console.error('❌ ERRO ao criar tabela stripe_plans:', error);
+    }
+  }
+
+  // Buscar todos os planos
+  async getStripePlans(): Promise<any[]> {
+    try {
+      await this.ensureStripePlansTable();
+      const stmt = sqlite.prepare('SELECT * FROM stripe_plans ORDER BY created_at DESC');
+      return stmt.all();
+    } catch (error) {
+      console.error('❌ ERRO ao buscar planos do Stripe:', error);
+      return [];
+    }
+  }
+
+  // Buscar plano específico
+  async getStripePlan(id: string): Promise<any | undefined> {
+    try {
+      await this.ensureStripePlansTable();
+      const stmt = sqlite.prepare('SELECT * FROM stripe_plans WHERE id = ?');
+      return stmt.get(id);
+    } catch (error) {
+      console.error('❌ ERRO ao buscar plano do Stripe:', error);
+      return undefined;
+    }
+  }
+
+  // Criar novo plano
+  async createStripePlan(plan: any): Promise<any> {
+    try {
+      await this.ensureStripePlansTable();
+      const stmt = sqlite.prepare(`
+        INSERT INTO stripe_plans (
+          id, name, description, price, currency, interval, 
+          trial_days, trial_price, gateway, active, 
+          stripe_price_id, stripe_product_id, pagarme_plan_id
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      `);
+      
+      stmt.run(
+        plan.id,
+        plan.name,
+        plan.description || null,
+        plan.price,
+        plan.currency || 'BRL',
+        plan.interval || 'month',
+        plan.trial_days || 7,
+        plan.trial_price || 1.00,
+        plan.gateway || 'stripe',
+        plan.active ? 1 : 0,
+        plan.stripe_price_id || null,
+        plan.stripe_product_id || null,
+        plan.pagarme_plan_id || null
+      );
+      
+      return plan;
+    } catch (error) {
+      console.error('❌ ERRO ao criar plano do Stripe:', error);
+      throw new Error('Erro ao criar plano');
+    }
+  }
+
+  // Atualizar plano existente
+  async updateStripePlan(id: string, updates: any): Promise<any> {
+    try {
+      await this.ensureStripePlansTable();
+      const stmt = sqlite.prepare(`
+        UPDATE stripe_plans 
+        SET name = ?, description = ?, active = ?, updated_at = CURRENT_TIMESTAMP
+        WHERE id = ?
+      `);
+      
+      stmt.run(
+        updates.name,
+        updates.description || null,
+        updates.active ? 1 : 0,
+        id
+      );
+      
+      return { id, ...updates };
+    } catch (error) {
+      console.error('❌ ERRO ao atualizar plano do Stripe:', error);
+      throw new Error('Erro ao atualizar plano');
+    }
+  }
+
+  // Deletar plano
+  async deleteStripePlan(id: string): Promise<void> {
+    try {
+      await this.ensureStripePlansTable();
+      const stmt = sqlite.prepare('DELETE FROM stripe_plans WHERE id = ?');
+      stmt.run(id);
+    } catch (error) {
+      console.error('❌ ERRO ao deletar plano do Stripe:', error);
+      throw new Error('Erro ao deletar plano');
+    }
+  }
+
+  // Analytics do checkout
+  async getCheckoutAnalytics(): Promise<any> {
+    try {
+      // Criar mock de analytics até implementar sistema real
+      return {
+        totalCheckouts: 156,
+        totalConversions: 89,
+        conversionRate: 0.57,
+        totalRevenue: 2689.50,
+        averageOrderValue: 30.22,
+        monthlyGrowth: {
+          checkouts: 12,
+          conversions: 8,
+          revenue: 15
+        },
+        topPlans: [
+          { name: 'Plano Premium', conversions: 45, revenue: 1345.50 },
+          { name: 'Plano Básico', conversions: 34, revenue: 1014.60 },
+          { name: 'Plano Enterprise', conversions: 10, revenue: 329.40 }
+        ]
+      };
+    } catch (error) {
+      console.error('❌ ERRO ao buscar analytics do checkout:', error);
+      return {
+        totalCheckouts: 0,
+        totalConversions: 0,
+        conversionRate: 0,
+        totalRevenue: 0,
+        averageOrderValue: 0,
+        monthlyGrowth: { checkouts: 0, conversions: 0, revenue: 0 },
+        topPlans: []
+      };
+    }
+  }
+
+  // Buscar produtos de checkout
+  async getCheckoutProducts(): Promise<any[]> {
+    try {
+      await this.ensureStripePlansTable();
+      const stmt = sqlite.prepare('SELECT * FROM stripe_plans WHERE active = 1 ORDER BY price ASC');
+      return stmt.all();
+    } catch (error) {
+      console.error('❌ ERRO ao buscar produtos de checkout:', error);
+      return [];
+    }
+  }
 }
 
 export const storage = new SQLiteStorage();

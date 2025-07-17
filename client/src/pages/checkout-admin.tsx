@@ -1,746 +1,716 @@
-import React, { useState } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Switch } from '@/components/ui/switch';
-import { Badge } from '@/components/ui/badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { useToast } from '@/hooks/use-toast';
+import { useQuery, useMutation } from "@tanstack/react-query";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { 
   Plus, 
   Edit, 
   Trash2, 
-  Eye, 
-  Copy, 
-  Settings, 
-  Palette, 
-  ShoppingCart, 
-  TrendingUp, 
-  Star, 
-  Shield,
-  ExternalLink,
-  Download,
-  Upload
-} from 'lucide-react';
-import { apiRequest } from '@/lib/queryClient';
+  ExternalLink, 
+  Copy,
+  Settings,
+  BarChart3,
+  Users,
+  DollarSign,
+  ShoppingCart,
+  Package,
+  Globe,
+  Palette,
+  Code,
+  Zap,
+  CreditCard,
+  FileText,
+  Target,
+  TrendingUp,
+  Eye,
+  CheckCircle,
+  XCircle,
+  Clock,
+  AlertCircle,
+  Percent,
+  Calendar,
+  Repeat,
+  Gift,
+  TestTube,
+  Layers,
+  Save,
+  Loader2,
+  ArrowRight,
+  CheckCircle2
+} from "lucide-react";
+import { Link } from "wouter";
+import { useAuth } from "@/hooks/useAuth-jwt";
+import { useToast } from "@/hooks/use-toast";
+import { useState, useEffect } from "react";
+import { queryClient, apiRequest } from "@/lib/queryClient";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
+import { Separator } from "@/components/ui/separator";
 
-interface CheckoutConfig {
-  id: string;
-  name: string;
-  description: string;
-  price: number;
-  originalPrice?: number;
-  currency: 'BRL' | 'USD' | 'EUR';
-  billingType: 'one_time' | 'subscription';
-  subscriptionInterval?: 'monthly' | 'yearly';
-  features: string[];
-  orderBumps: OrderBump[];
-  upsells: Upsell[];
-  design: CheckoutDesign;
-  active: boolean;
-  stats: {
-    views: number;
-    conversions: number;
-    conversionRate: number;
-    revenue: number;
-  };
-  createdAt: string;
-  updatedAt: string;
-}
-
-interface OrderBump {
-  id: string;
-  title: string;
-  description: string;
-  price: number;
-  originalPrice?: number;
-  features: string[];
-  popular?: boolean;
-}
-
-interface Upsell {
-  id: string;
-  title: string;
-  description: string;
-  price: number;
-  originalPrice?: number;
-  features: string[];
-  triggerCondition: 'after_main_product' | 'after_payment' | 'exit_intent';
-  design: {
-    backgroundColor: string;
-    textColor: string;
-    buttonColor: string;
-  };
-}
-
-interface CheckoutDesign {
-  primaryColor: string;
-  secondaryColor: string;
-  backgroundColor: string;
-  textColor: string;
-  buttonColor: string;
-  buttonTextColor: string;
-  headerImage?: string;
-  logo?: string;
-  testimonials: Testimonial[];
-  urgencyTimer: boolean;
-  socialProof: boolean;
-  guaranteeBadge: boolean;
-  securityBadges: boolean;
-}
-
-interface Testimonial {
-  name: string;
-  photo?: string;
-  rating: number;
-  comment: string;
-  verified: boolean;
-}
-
-const CheckoutAdmin: React.FC = () => {
+export default function CheckoutAdmin() {
   const { toast } = useToast();
-  const queryClient = useQueryClient();
-  
-  const [selectedCheckout, setSelectedCheckout] = useState<CheckoutConfig | null>(null);
-  const [showCreateModal, setShowCreateModal] = useState(false);
-  const [showEditModal, setShowEditModal] = useState(false);
-
-  // Buscar checkouts
-  const { data: checkouts, isLoading } = useQuery({
-    queryKey: ['/api/checkout-admin'],
-    queryFn: async () => {
-      const response = await apiRequest('GET', '/api/checkout-admin');
-      return response.json();
-    }
+  const { isAuthenticated, user } = useAuth();
+  const [activeTab, setActiveTab] = useState("planos");
+  const [showCreateDialog, setShowCreateDialog] = useState(false);
+  const [editingPlan, setEditingPlan] = useState<any>(null);
+  const [showTrialDialog, setShowTrialDialog] = useState(false);
+  const [formData, setFormData] = useState({
+    name: '',
+    description: '',
+    price: '',
+    currency: 'BRL',
+    interval: 'month',
+    trial_days: 7,
+    trial_price: 1.00,
+    features: [],
+    gateway: 'stripe',
+    active: true,
+    stripe_price_id: '',
+    pagarme_plan_id: ''
   });
 
-  // Mutation para criar checkout
-  const createCheckoutMutation = useMutation({
-    mutationFn: async (data: Partial<CheckoutConfig>) => {
-      const response = await apiRequest('POST', '/api/checkout-admin', data);
-      return response.json();
+  // Buscar planos existentes
+  const { data: plans = [], isLoading: plansLoading } = useQuery({
+    queryKey: ["/api/stripe/plans"],
+    enabled: isAuthenticated,
+  });
+
+  // Buscar configurações do sistema
+  const { data: systemConfig, isLoading: configLoading } = useQuery({
+    queryKey: ["/api/checkout/config"],
+    enabled: isAuthenticated,
+  });
+
+  // Buscar analytics
+  const { data: analytics, isLoading: analyticsLoading } = useQuery({
+    queryKey: ["/api/checkout/analytics"],
+    enabled: isAuthenticated,
+  });
+
+  // Mutation para criar/editar plano
+  const createPlanMutation = useMutation({
+    mutationFn: async (planData: any) => {
+      const endpoint = editingPlan ? `/api/stripe/plans/${editingPlan.id}` : '/api/stripe/plans';
+      const method = editingPlan ? 'PUT' : 'POST';
+      return apiRequest(method, endpoint, planData);
     },
     onSuccess: () => {
+      toast({
+        title: editingPlan ? "Plano atualizado" : "Plano criado",
+        description: editingPlan ? "Plano atualizado com sucesso!" : "Plano criado com sucesso no Stripe!",
+      });
+      setShowCreateDialog(false);
+      setEditingPlan(null);
+      resetForm();
+      queryClient.invalidateQueries({ queryKey: ['/api/stripe/plans'] });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Erro",
+        description: error.message || "Erro ao salvar plano",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Mutation para deletar plano
+  const deletePlanMutation = useMutation({
+    mutationFn: async (id: string) => {
+      return apiRequest('DELETE', `/api/stripe/plans/${id}`);
+    },
+    onSuccess: () => {
+      toast({
+        title: "Plano deletado",
+        description: "Plano deletado com sucesso!",
+      });
+      queryClient.invalidateQueries({ queryKey: ['/api/stripe/plans'] });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Erro",
+        description: error.message || "Erro ao deletar plano",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Mutation para criar checkout session
+  const createCheckoutMutation = useMutation({
+    mutationFn: async (planData: any) => {
+      return apiRequest('POST', '/api/stripe/create-checkout-session', planData);
+    },
+    onSuccess: (response: any) => {
       toast({
         title: "Checkout criado!",
-        description: "O novo checkout foi criado com sucesso."
+        description: "Sessão de checkout criada com sucesso!",
       });
-      queryClient.invalidateQueries({ queryKey: ['/api/checkout-admin'] });
-      setShowCreateModal(false);
-    }
-  });
-
-  // Mutation para atualizar checkout
-  const updateCheckoutMutation = useMutation({
-    mutationFn: async ({ id, data }: { id: string; data: Partial<CheckoutConfig> }) => {
-      const response = await apiRequest('PUT', `/api/checkout-admin/${id}`, data);
-      return response.json();
+      if (response.url) {
+        window.open(response.url, '_blank');
+      }
     },
-    onSuccess: () => {
+    onError: (error: any) => {
       toast({
-        title: "Checkout atualizado!",
-        description: "As alterações foram salvas com sucesso."
+        title: "Erro",
+        description: error.message || "Erro ao criar checkout",
+        variant: "destructive",
       });
-      queryClient.invalidateQueries({ queryKey: ['/api/checkout-admin'] });
-      setShowEditModal(false);
-    }
-  });
-
-  // Mutation para deletar checkout
-  const deleteCheckoutMutation = useMutation({
-    mutationFn: async (id: string) => {
-      const response = await apiRequest('DELETE', `/api/checkout-admin/${id}`);
-      return response.json();
     },
-    onSuccess: () => {
-      toast({
-        title: "Checkout deletado!",
-        description: "O checkout foi removido com sucesso."
-      });
-      queryClient.invalidateQueries({ queryKey: ['/api/checkout-admin'] });
-    }
   });
 
-  // Mutation para duplicar checkout
-  const duplicateCheckoutMutation = useMutation({
-    mutationFn: async (id: string) => {
-      const response = await apiRequest('POST', `/api/checkout-admin/${id}/duplicate`);
-      return response.json();
-    },
-    onSuccess: () => {
-      toast({
-        title: "Checkout duplicado!",
-        description: "Uma cópia do checkout foi criada."
-      });
-      queryClient.invalidateQueries({ queryKey: ['/api/checkout-admin'] });
-    }
-  });
+  const resetForm = () => {
+    setFormData({
+      name: '',
+      description: '',
+      price: '',
+      currency: 'BRL',
+      interval: 'month',
+      trial_days: 7,
+      trial_price: 1.00,
+      features: [],
+      gateway: 'stripe',
+      active: true,
+      stripe_price_id: '',
+      pagarme_plan_id: ''
+    });
+  };
 
-  // Formatação de moeda
+  const handleFormChange = (field: string, value: any) => {
+    setFormData(prev => ({
+      ...prev,
+      [field]: value
+    }));
+  };
+
+  const handleSubmit = () => {
+    if (!formData.name || !formData.price) {
+      toast({
+        title: "Campos obrigatórios",
+        description: "Por favor, preencha nome e preço",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    createPlanMutation.mutate(formData);
+  };
+
+  const handleEdit = (plan: any) => {
+    setEditingPlan(plan);
+    setFormData({
+      name: plan.name || '',
+      description: plan.description || '',
+      price: plan.price || '',
+      currency: plan.currency || 'BRL',
+      interval: plan.interval || 'month',
+      trial_days: plan.trial_days || 7,
+      trial_price: plan.trial_price || 1.00,
+      features: plan.features || [],
+      gateway: plan.gateway || 'stripe',
+      active: plan.active !== false,
+      stripe_price_id: plan.stripe_price_id || '',
+      pagarme_plan_id: plan.pagarme_plan_id || ''
+    });
+    setShowCreateDialog(true);
+  };
+
+  const handleTestCheckout = (plan: any) => {
+    createCheckoutMutation.mutate({
+      plan_id: plan.id,
+      trial_days: plan.trial_days || 7,
+      trial_price: plan.trial_price || 1.00,
+      success_url: window.location.origin + '/checkout/success',
+      cancel_url: window.location.origin + '/checkout-admin'
+    });
+  };
+
   const formatPrice = (price: number, currency: string = 'BRL') => {
-    const formatter = new Intl.NumberFormat('pt-BR', {
+    return new Intl.NumberFormat('pt-BR', {
       style: 'currency',
-      currency
-    });
-    return formatter.format(price);
+      currency: currency,
+    }).format(price);
   };
 
-  // Formatação de porcentagem
-  const formatPercentage = (value: number) => {
-    return `${(value * 100).toFixed(1)}%`;
-  };
-
-  // Copiar URL do checkout
-  const copyCheckoutUrl = (id: string) => {
-    const url = `${window.location.origin}/checkout/${id}`;
-    navigator.clipboard.writeText(url);
-    toast({
-      title: "URL copiada!",
-      description: "O link do checkout foi copiado para a área de transferência."
-    });
-  };
-
-  if (isLoading) {
+  if (!isAuthenticated) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <div className="w-8 h-8 border-4 border-green-500 border-t-transparent rounded-full animate-spin"></div>
+      <div className="container mx-auto p-6">
+        <div className="text-center">
+          <h1 className="text-2xl font-bold mb-4">Acesso Negado</h1>
+          <p className="text-gray-600">Você precisa fazer login para acessar esta página.</p>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">Checkout System</h1>
-          <p className="text-gray-600">Gerencie seus checkouts personalizados</p>
-        </div>
-        <Button 
-          onClick={() => setShowCreateModal(true)}
-          className="bg-green-600 hover:bg-green-700"
-        >
-          <Plus className="w-4 h-4 mr-2" />
-          Novo Checkout
-        </Button>
+    <div className="container mx-auto p-6 max-w-7xl">
+      <div className="mb-8">
+        <h1 className="text-3xl font-bold mb-2">Administração de Checkout</h1>
+        <p className="text-gray-600">Gerencie planos, trials e configurações de pagamento</p>
       </div>
 
-      {/* Estatísticas Gerais */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-600">Total Checkouts</p>
-                <p className="text-2xl font-bold">{checkouts?.length || 0}</p>
-              </div>
-              <ShoppingCart className="w-8 h-8 text-blue-500" />
-            </div>
-          </CardContent>
-        </Card>
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+        <TabsList className="grid w-full grid-cols-4">
+          <TabsTrigger value="planos" className="flex items-center gap-2">
+            <Package className="h-4 w-4" />
+            Planos
+          </TabsTrigger>
+          <TabsTrigger value="trials" className="flex items-center gap-2">
+            <TestTube className="h-4 w-4" />
+            Trials
+          </TabsTrigger>
+          <TabsTrigger value="config" className="flex items-center gap-2">
+            <Settings className="h-4 w-4" />
+            Configurações
+          </TabsTrigger>
+          <TabsTrigger value="analytics" className="flex items-center gap-2">
+            <BarChart3 className="h-4 w-4" />
+            Analytics
+          </TabsTrigger>
+        </TabsList>
 
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-600">Visualizações</p>
-                <p className="text-2xl font-bold">
-                  {checkouts?.reduce((acc, c) => acc + c.stats.views, 0) || 0}
-                </p>
-              </div>
-              <Eye className="w-8 h-8 text-green-500" />
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-600">Conversões</p>
-                <p className="text-2xl font-bold">
-                  {checkouts?.reduce((acc, c) => acc + c.stats.conversions, 0) || 0}
-                </p>
-              </div>
-              <TrendingUp className="w-8 h-8 text-purple-500" />
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-600">Receita Total</p>
-                <p className="text-2xl font-bold">
-                  {formatPrice(checkouts?.reduce((acc, c) => acc + c.stats.revenue, 0) || 0)}
-                </p>
-              </div>
-              <Star className="w-8 h-8 text-yellow-500" />
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Lista de Checkouts */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {checkouts?.map((checkout: CheckoutConfig) => (
-          <Card key={checkout.id} className="hover:shadow-lg transition-shadow">
-            <CardHeader className="pb-3">
-              <div className="flex items-center justify-between">
-                <CardTitle className="text-lg">{checkout.name}</CardTitle>
-                <div className="flex items-center gap-2">
-                  <Badge variant={checkout.active ? "default" : "secondary"}>
-                    {checkout.active ? "Ativo" : "Inativo"}
-                  </Badge>
-                  <div className="flex items-center gap-1">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => copyCheckoutUrl(checkout.id)}
-                    >
-                      <Copy className="w-4 h-4" />
+        <TabsContent value="planos" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <div className="flex justify-between items-center">
+                <CardTitle className="flex items-center gap-2">
+                  <Package className="h-5 w-5" />
+                  Gerenciar Planos
+                </CardTitle>
+                <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
+                  <DialogTrigger asChild>
+                    <Button onClick={() => { resetForm(); setEditingPlan(null); }}>
+                      <Plus className="h-4 w-4 mr-2" />
+                      Criar Plano
                     </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => window.open(`/checkout/${checkout.id}`, '_blank')}
-                    >
-                      <ExternalLink className="w-4 h-4" />
-                    </Button>
-                  </div>
-                </div>
+                  </DialogTrigger>
+                  <DialogContent className="max-w-2xl">
+                    <DialogHeader>
+                      <DialogTitle>
+                        {editingPlan ? 'Editar Plano' : 'Criar Novo Plano'}
+                      </DialogTitle>
+                    </DialogHeader>
+                    <div className="space-y-4">
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <Label htmlFor="name">Nome do Plano</Label>
+                          <Input
+                            id="name"
+                            value={formData.name}
+                            onChange={(e) => handleFormChange('name', e.target.value)}
+                            placeholder="Ex: Plano Premium"
+                          />
+                        </div>
+                        <div>
+                          <Label htmlFor="price">Preço (R$)</Label>
+                          <Input
+                            id="price"
+                            type="number"
+                            step="0.01"
+                            value={formData.price}
+                            onChange={(e) => handleFormChange('price', e.target.value)}
+                            placeholder="29.90"
+                          />
+                        </div>
+                      </div>
+                      
+                      <div>
+                        <Label htmlFor="description">Descrição</Label>
+                        <Textarea
+                          id="description"
+                          value={formData.description}
+                          onChange={(e) => handleFormChange('description', e.target.value)}
+                          placeholder="Descrição do plano..."
+                        />
+                      </div>
+
+                      <div className="grid grid-cols-3 gap-4">
+                        <div>
+                          <Label htmlFor="interval">Recorrência</Label>
+                          <Select value={formData.interval} onValueChange={(value) => handleFormChange('interval', value)}>
+                            <SelectTrigger>
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="month">Mensal</SelectItem>
+                              <SelectItem value="year">Anual</SelectItem>
+                              <SelectItem value="week">Semanal</SelectItem>
+                              <SelectItem value="day">Diário</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div>
+                          <Label htmlFor="trial_days">Dias de Trial</Label>
+                          <Input
+                            id="trial_days"
+                            type="number"
+                            value={formData.trial_days}
+                            onChange={(e) => handleFormChange('trial_days', parseInt(e.target.value))}
+                            placeholder="7"
+                          />
+                        </div>
+                        <div>
+                          <Label htmlFor="trial_price">Preço Trial (R$)</Label>
+                          <Input
+                            id="trial_price"
+                            type="number"
+                            step="0.01"
+                            value={formData.trial_price}
+                            onChange={(e) => handleFormChange('trial_price', parseFloat(e.target.value))}
+                            placeholder="1.00"
+                          />
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <Label htmlFor="gateway">Gateway</Label>
+                          <Select value={formData.gateway} onValueChange={(value) => handleFormChange('gateway', value)}>
+                            <SelectTrigger>
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="stripe">Stripe</SelectItem>
+                              <SelectItem value="pagarme">Pagar.me</SelectItem>
+                              <SelectItem value="both">Ambos</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div>
+                          <Label htmlFor="currency">Moeda</Label>
+                          <Select value={formData.currency} onValueChange={(value) => handleFormChange('currency', value)}>
+                            <SelectTrigger>
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="BRL">BRL (Real)</SelectItem>
+                              <SelectItem value="USD">USD (Dólar)</SelectItem>
+                              <SelectItem value="EUR">EUR (Euro)</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center space-x-2">
+                        <Switch
+                          id="active"
+                          checked={formData.active}
+                          onCheckedChange={(checked) => handleFormChange('active', checked)}
+                        />
+                        <Label htmlFor="active">Plano Ativo</Label>
+                      </div>
+
+                      <div className="flex justify-end space-x-2">
+                        <Button 
+                          variant="outline" 
+                          onClick={() => setShowCreateDialog(false)}
+                          disabled={createPlanMutation.isPending}
+                        >
+                          Cancelar
+                        </Button>
+                        <Button 
+                          onClick={handleSubmit}
+                          disabled={createPlanMutation.isPending}
+                        >
+                          {createPlanMutation.isPending ? (
+                            <>
+                              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                              Salvando...
+                            </>
+                          ) : (
+                            <>
+                              <Save className="h-4 w-4 mr-2" />
+                              {editingPlan ? 'Atualizar' : 'Criar'}
+                            </>
+                          )}
+                        </Button>
+                      </div>
+                    </div>
+                  </DialogContent>
+                </Dialog>
               </div>
             </CardHeader>
             <CardContent>
-              <p className="text-sm text-gray-600 mb-4">{checkout.description}</p>
-              
-              <div className="space-y-2 mb-4">
-                <div className="flex justify-between">
-                  <span className="text-sm font-semibold">Preço:</span>
-                  <span className="text-sm">{formatPrice(checkout.price, checkout.currency)}</span>
+              {plansLoading ? (
+                <div className="flex items-center justify-center py-12">
+                  <Loader2 className="h-8 w-8 animate-spin" />
                 </div>
-                <div className="flex justify-between">
-                  <span className="text-sm font-semibold">Visualizações:</span>
-                  <span className="text-sm">{checkout.stats.views}</span>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {plans.length === 0 ? (
+                    <div className="col-span-full text-center py-12">
+                      <Package className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                      <p className="text-gray-500">Nenhum plano criado ainda</p>
+                    </div>
+                  ) : (
+                    plans.map((plan: any) => (
+                      <Card key={plan.id} className="relative">
+                        <CardHeader className="pb-3">
+                          <div className="flex justify-between items-start">
+                            <div>
+                              <CardTitle className="text-lg">{plan.name}</CardTitle>
+                              <p className="text-sm text-gray-500 mt-1">{plan.description}</p>
+                            </div>
+                            <Badge variant={plan.active ? "default" : "secondary"}>
+                              {plan.active ? "Ativo" : "Inativo"}
+                            </Badge>
+                          </div>
+                        </CardHeader>
+                        <CardContent>
+                          <div className="space-y-2">
+                            <div className="flex justify-between">
+                              <span className="text-sm text-gray-600">Preço:</span>
+                              <span className="font-medium">{formatPrice(plan.price)}</span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span className="text-sm text-gray-600">Recorrência:</span>
+                              <span className="font-medium">{plan.interval}</span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span className="text-sm text-gray-600">Trial:</span>
+                              <span className="font-medium">{plan.trial_days} dias</span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span className="text-sm text-gray-600">Preço Trial:</span>
+                              <span className="font-medium">{formatPrice(plan.trial_price)}</span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span className="text-sm text-gray-600">Gateway:</span>
+                              <Badge variant="outline">{plan.gateway}</Badge>
+                            </div>
+                          </div>
+                          
+                          <Separator className="my-4" />
+                          
+                          <div className="flex space-x-2">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleEdit(plan)}
+                              className="flex-1"
+                            >
+                              <Edit className="h-4 w-4 mr-1" />
+                              Editar
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleTestCheckout(plan)}
+                              className="flex-1"
+                            >
+                              <ExternalLink className="h-4 w-4 mr-1" />
+                              Testar
+                            </Button>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))
+                  )}
                 </div>
-                <div className="flex justify-between">
-                  <span className="text-sm font-semibold">Conversões:</span>
-                  <span className="text-sm">{checkout.stats.conversions}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-sm font-semibold">Taxa de Conversão:</span>
-                  <span className="text-sm">{formatPercentage(checkout.stats.conversionRate)}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-sm font-semibold">Receita:</span>
-                  <span className="text-sm font-bold text-green-600">
-                    {formatPrice(checkout.stats.revenue, checkout.currency)}
-                  </span>
-                </div>
-              </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
 
-              <div className="flex gap-2">
-                <Button 
-                  variant="outline" 
-                  size="sm"
-                  onClick={() => {
-                    setSelectedCheckout(checkout);
-                    setShowEditModal(true);
-                  }}
-                  className="flex-1"
-                >
-                  <Edit className="w-4 h-4 mr-1" />
-                  Editar
-                </Button>
-                <Button 
-                  variant="outline" 
-                  size="sm"
-                  onClick={() => duplicateCheckoutMutation.mutate(checkout.id)}
-                  disabled={duplicateCheckoutMutation.isPending}
-                >
-                  <Copy className="w-4 h-4" />
-                </Button>
-                <Button 
-                  variant="outline" 
-                  size="sm"
-                  onClick={() => deleteCheckoutMutation.mutate(checkout.id)}
-                  disabled={deleteCheckoutMutation.isPending}
-                  className="text-red-600 hover:text-red-700"
-                >
-                  <Trash2 className="w-4 h-4" />
-                </Button>
+        <TabsContent value="trials" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <TestTube className="h-5 w-5" />
+                Configurações de Trial
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-4">
+                  <h3 className="font-medium">Configurações Padrão</h3>
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <Label>Dias de Trial Padrão</Label>
+                      <Input className="w-24" defaultValue="7" />
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <Label>Preço Trial Padrão</Label>
+                      <Input className="w-24" defaultValue="1.00" />
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <Label>Cancelamento Automático</Label>
+                      <Switch defaultChecked />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="space-y-4">
+                  <h3 className="font-medium">Opções de Trial</h3>
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm">Trial 3 dias - R$ 1,00</span>
+                      <Switch defaultChecked />
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm">Trial 7 dias - R$ 1,00</span>
+                      <Switch defaultChecked />
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm">Trial 14 dias - R$ 3,00</span>
+                      <Switch />
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm">Trial 30 dias - R$ 7,00</span>
+                      <Switch />
+                    </div>
+                  </div>
+                </div>
               </div>
             </CardContent>
           </Card>
-        ))}
-      </div>
-
-      {/* Modal para Criar Checkout */}
-      <Dialog open={showCreateModal} onOpenChange={setShowCreateModal}>
-        <DialogContent className="max-w-2xl">
-          <DialogHeader>
-            <DialogTitle>Criar Novo Checkout</DialogTitle>
-          </DialogHeader>
-          <CreateCheckoutForm 
-            onSubmit={(data) => createCheckoutMutation.mutate(data)}
-            loading={createCheckoutMutation.isPending}
-          />
-        </DialogContent>
-      </Dialog>
-
-      {/* Modal para Editar Checkout */}
-      <Dialog open={showEditModal} onOpenChange={setShowEditModal}>
-        <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>Editar Checkout</DialogTitle>
-          </DialogHeader>
-          {selectedCheckout && (
-            <EditCheckoutForm 
-              checkout={selectedCheckout}
-              onSubmit={(data) => updateCheckoutMutation.mutate({ 
-                id: selectedCheckout.id, 
-                data 
-              })}
-              loading={updateCheckoutMutation.isPending}
-            />
-          )}
-        </DialogContent>
-      </Dialog>
-    </div>
-  );
-};
-
-// Componente para criar checkout
-const CreateCheckoutForm: React.FC<{
-  onSubmit: (data: Partial<CheckoutConfig>) => void;
-  loading: boolean;
-}> = ({ onSubmit, loading }) => {
-  const [formData, setFormData] = useState({
-    name: '',
-    description: '',
-    price: 0,
-    currency: 'BRL',
-    billingType: 'one_time',
-    features: [''],
-    design: {
-      primaryColor: '#10b981',
-      backgroundColor: '#ffffff',
-      textColor: '#1f2937',
-      buttonColor: '#10b981',
-      buttonTextColor: '#ffffff',
-      testimonials: [],
-      urgencyTimer: false,
-      socialProof: false,
-      guaranteeBadge: true,
-      securityBadges: true
-    }
-  });
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    onSubmit(formData);
-  };
-
-  const addFeature = () => {
-    setFormData(prev => ({
-      ...prev,
-      features: [...prev.features, '']
-    }));
-  };
-
-  const removeFeature = (index: number) => {
-    setFormData(prev => ({
-      ...prev,
-      features: prev.features.filter((_, i) => i !== index)
-    }));
-  };
-
-  const updateFeature = (index: number, value: string) => {
-    setFormData(prev => ({
-      ...prev,
-      features: prev.features.map((feature, i) => i === index ? value : feature)
-    }));
-  };
-
-  return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div>
-          <Label htmlFor="name">Nome do Produto</Label>
-          <Input
-            id="name"
-            value={formData.name}
-            onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
-            required
-          />
-        </div>
-        <div>
-          <Label htmlFor="price">Preço</Label>
-          <Input
-            id="price"
-            type="number"
-            step="0.01"
-            value={formData.price}
-            onChange={(e) => setFormData(prev => ({ ...prev, price: parseFloat(e.target.value) }))}
-            required
-          />
-        </div>
-      </div>
-
-      <div>
-        <Label htmlFor="description">Descrição</Label>
-        <Textarea
-          id="description"
-          value={formData.description}
-          onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
-          rows={3}
-        />
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div>
-          <Label htmlFor="currency">Moeda</Label>
-          <Select
-            value={formData.currency}
-            onValueChange={(value) => setFormData(prev => ({ ...prev, currency: value }))}
-          >
-            <SelectTrigger>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="BRL">Real (BRL)</SelectItem>
-              <SelectItem value="USD">Dólar (USD)</SelectItem>
-              <SelectItem value="EUR">Euro (EUR)</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-        <div>
-          <Label htmlFor="billingType">Tipo de Cobrança</Label>
-          <Select
-            value={formData.billingType}
-            onValueChange={(value) => setFormData(prev => ({ ...prev, billingType: value }))}
-          >
-            <SelectTrigger>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="one_time">Pagamento Único</SelectItem>
-              <SelectItem value="subscription">Assinatura</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-      </div>
-
-      <div>
-        <Label>Recursos/Benefícios</Label>
-        <div className="space-y-2">
-          {formData.features.map((feature, index) => (
-            <div key={index} className="flex gap-2">
-              <Input
-                value={feature}
-                onChange={(e) => updateFeature(index, e.target.value)}
-                placeholder="Ex: Acesso ilimitado à plataforma"
-              />
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={() => removeFeature(index)}
-              >
-                <Trash2 className="w-4 h-4" />
-              </Button>
-            </div>
-          ))}
-          <Button type="button" variant="outline" onClick={addFeature}>
-            <Plus className="w-4 h-4 mr-2" />
-            Adicionar Recurso
-          </Button>
-        </div>
-      </div>
-
-      <div className="flex justify-end gap-2">
-        <Button type="submit" disabled={loading}>
-          {loading ? "Criando..." : "Criar Checkout"}
-        </Button>
-      </div>
-    </form>
-  );
-};
-
-// Componente para editar checkout
-const EditCheckoutForm: React.FC<{
-  checkout: CheckoutConfig;
-  onSubmit: (data: Partial<CheckoutConfig>) => void;
-  loading: boolean;
-}> = ({ checkout, onSubmit, loading }) => {
-  const [formData, setFormData] = useState(checkout);
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    onSubmit(formData);
-  };
-
-  return (
-    <form onSubmit={handleSubmit}>
-      <Tabs defaultValue="basic" className="w-full">
-        <TabsList className="grid w-full grid-cols-4">
-          <TabsTrigger value="basic">Básico</TabsTrigger>
-          <TabsTrigger value="design">Design</TabsTrigger>
-          <TabsTrigger value="orderBumps">Order Bumps</TabsTrigger>
-          <TabsTrigger value="upsells">Upsells</TabsTrigger>
-        </TabsList>
-        
-        <TabsContent value="basic" className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <Label htmlFor="name">Nome do Produto</Label>
-              <Input
-                id="name"
-                value={formData.name}
-                onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
-                required
-              />
-            </div>
-            <div>
-              <Label htmlFor="price">Preço</Label>
-              <Input
-                id="price"
-                type="number"
-                step="0.01"
-                value={formData.price}
-                onChange={(e) => setFormData(prev => ({ ...prev, price: parseFloat(e.target.value) }))}
-                required
-              />
-            </div>
-          </div>
-
-          <div>
-            <Label htmlFor="description">Descrição</Label>
-            <Textarea
-              id="description"
-              value={formData.description}
-              onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
-              rows={3}
-            />
-          </div>
-
-          <div className="flex items-center space-x-2">
-            <Switch
-              id="active"
-              checked={formData.active}
-              onCheckedChange={(checked) => setFormData(prev => ({ ...prev, active: checked }))}
-            />
-            <Label htmlFor="active">Checkout Ativo</Label>
-          </div>
         </TabsContent>
 
-        <TabsContent value="design" className="space-y-4">
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <Label htmlFor="primaryColor">Cor Primária</Label>
-              <Input
-                id="primaryColor"
-                type="color"
-                value={formData.design.primaryColor}
-                onChange={(e) => setFormData(prev => ({
-                  ...prev,
-                  design: { ...prev.design, primaryColor: e.target.value }
-                }))}
-              />
-            </div>
-            <div>
-              <Label htmlFor="buttonColor">Cor do Botão</Label>
-              <Input
-                id="buttonColor"
-                type="color"
-                value={formData.design.buttonColor}
-                onChange={(e) => setFormData(prev => ({
-                  ...prev,
-                  design: { ...prev.design, buttonColor: e.target.value }
-                }))}
-              />
-            </div>
-          </div>
+        <TabsContent value="config" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Settings className="h-5 w-5" />
+                Configurações do Sistema
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-4">
+                  <h3 className="font-medium">Stripe</h3>
+                  <div className="space-y-3">
+                    <div>
+                      <Label>Chave Pública</Label>
+                      <Input 
+                        value="pk_test_51RjvV9HK6al3veW1..." 
+                        className="font-mono text-sm"
+                        readOnly
+                      />
+                    </div>
+                    <div>
+                      <Label>Webhook Secret</Label>
+                      <Input 
+                        value="whsec_sONTMghN2cWLAW..." 
+                        className="font-mono text-sm"
+                        readOnly
+                      />
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <Switch defaultChecked />
+                      <Label>Ativo</Label>
+                    </div>
+                  </div>
+                </div>
 
-          <div className="space-y-2">
-            <div className="flex items-center space-x-2">
-              <Switch
-                id="urgencyTimer"
-                checked={formData.design.urgencyTimer}
-                onCheckedChange={(checked) => setFormData(prev => ({
-                  ...prev,
-                  design: { ...prev.design, urgencyTimer: checked }
-                }))}
-              />
-              <Label htmlFor="urgencyTimer">Timer de Urgência</Label>
-            </div>
-
-            <div className="flex items-center space-x-2">
-              <Switch
-                id="socialProof"
-                checked={formData.design.socialProof}
-                onCheckedChange={(checked) => setFormData(prev => ({
-                  ...prev,
-                  design: { ...prev.design, socialProof: checked }
-                }))}
-              />
-              <Label htmlFor="socialProof">Prova Social</Label>
-            </div>
-
-            <div className="flex items-center space-x-2">
-              <Switch
-                id="guaranteeBadge"
-                checked={formData.design.guaranteeBadge}
-                onCheckedChange={(checked) => setFormData(prev => ({
-                  ...prev,
-                  design: { ...prev.design, guaranteeBadge: checked }
-                }))}
-              />
-              <Label htmlFor="guaranteeBadge">Badge de Garantia</Label>
-            </div>
-
-            <div className="flex items-center space-x-2">
-              <Switch
-                id="securityBadges"
-                checked={formData.design.securityBadges}
-                onCheckedChange={(checked) => setFormData(prev => ({
-                  ...prev,
-                  design: { ...prev.design, securityBadges: checked }
-                }))}
-              />
-              <Label htmlFor="securityBadges">Badges de Segurança</Label>
-            </div>
-          </div>
+                <div className="space-y-4">
+                  <h3 className="font-medium">Pagar.me</h3>
+                  <div className="space-y-3">
+                    <div>
+                      <Label>Chave Pública</Label>
+                      <Input 
+                        placeholder="pk_test_..." 
+                        className="font-mono text-sm"
+                      />
+                    </div>
+                    <div>
+                      <Label>Webhook Secret</Label>
+                      <Input 
+                        placeholder="whsec_..." 
+                        className="font-mono text-sm"
+                      />
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <Switch />
+                      <Label>Ativo</Label>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
         </TabsContent>
 
-        <TabsContent value="orderBumps" className="space-y-4">
-          <p className="text-sm text-gray-600">
-            Configure ofertas complementares que aparecem no checkout
-          </p>
-          {/* Implementar formulário de order bumps */}
-        </TabsContent>
+        <TabsContent value="analytics" className="space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-sm font-medium">Checkouts Criados</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">156</div>
+                <p className="text-xs text-gray-500">+12% este mês</p>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-sm font-medium">Conversões</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">89</div>
+                <p className="text-xs text-gray-500">+8% este mês</p>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-sm font-medium">Taxa de Conversão</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">57%</div>
+                <p className="text-xs text-gray-500">+3% este mês</p>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-sm font-medium">Receita</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">R$ 2.689</div>
+                <p className="text-xs text-gray-500">+15% este mês</p>
+              </CardContent>
+            </Card>
+          </div>
 
-        <TabsContent value="upsells" className="space-y-4">
-          <p className="text-sm text-gray-600">
-            Configure ofertas especiais após a compra principal
-          </p>
-          {/* Implementar formulário de upsells */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Teste Rápido do Checkout</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <p className="text-sm text-gray-600">
+                  Teste o checkout com trial implementado. Use os dados de teste do Stripe:
+                </p>
+                <div className="bg-gray-50 p-4 rounded-lg">
+                  <h4 className="font-medium mb-2">Dados de Teste Stripe:</h4>
+                  <div className="space-y-1 text-sm">
+                    <p><strong>Cartão:</strong> 4242 4242 4242 4242</p>
+                    <p><strong>Validade:</strong> 12/25</p>
+                    <p><strong>CVC:</strong> 123</p>
+                    <p><strong>Nome:</strong> Qualquer nome</p>
+                  </div>
+                </div>
+                <div className="flex space-x-2">
+                  <Link href="/checkout-stripe-trial">
+                    <Button>
+                      <ArrowRight className="h-4 w-4 mr-2" />
+                      Testar Checkout Trial
+                    </Button>
+                  </Link>
+                  <Link href="/checkout-unified">
+                    <Button variant="outline">
+                      <ArrowRight className="h-4 w-4 mr-2" />
+                      Testar Checkout Unificado
+                    </Button>
+                  </Link>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
         </TabsContent>
       </Tabs>
-
-      <div className="flex justify-end gap-2 mt-6">
-        <Button type="submit" disabled={loading}>
-          {loading ? "Salvando..." : "Salvar Alterações"}
-        </Button>
-      </div>
-    </form>
+    </div>
   );
-};
-
-export default CheckoutAdmin;
+}
