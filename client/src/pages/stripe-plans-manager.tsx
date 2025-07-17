@@ -7,7 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { useToast } from '@/hooks/use-toast';
-import { Plus, Edit, Trash2, Check, X, DollarSign, Calendar, Users, Zap } from 'lucide-react';
+import { Plus, Edit, Trash2, Check, X, DollarSign, Calendar, Users, Zap, Copy, ExternalLink, Link } from 'lucide-react';
 
 interface StripePlan {
   id: string;
@@ -54,8 +54,8 @@ export default function StripePlansManager() {
 
   const loadPlans = async () => {
     try {
-      const token = localStorage.getItem('auth-token');
-      const response = await fetch('/api/stripe/plans', {
+      const token = localStorage.getItem('accessToken');
+      const response = await fetch('/api/stripe/custom-plans', {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -75,32 +75,46 @@ export default function StripePlansManager() {
       toast({
         title: "Erro de validação",
         description: "Preencha todos os campos obrigatórios",
-        variant: "destructive",
+        variant: "destructive"
       });
       return;
     }
 
     setLoading(true);
     try {
-      const token = localStorage.getItem('auth-token');
-      const response = await fetch('/api/stripe/create-plan', {
+      const token = localStorage.getItem('accessToken');
+      const response = await fetch('/api/stripe/create-custom-plan', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
         },
-        body: JSON.stringify(formData)
+        body: JSON.stringify({
+          name: formData.name,
+          description: formData.description,
+          trialAmount: formData.activation_fee,
+          trialDays: formData.trial_period_days,
+          recurringAmount: formData.price,
+          recurringInterval: formData.interval,
+          currency: formData.currency
+        })
       });
 
-      const data = await response.json();
-
       if (response.ok) {
+        const data = await response.json();
         toast({
-          title: "Plano criado com sucesso",
-          description: `Plano ${formData.name} criado no Stripe`,
+          title: "Plano criado com sucesso!",
+          description: `Link de pagamento: ${data.paymentLink}`,
+          variant: "default"
         });
         
-        // Resetar formulário
+        // Copiar link para clipboard
+        navigator.clipboard.writeText(data.paymentLink);
+        
+        // Recarregar planos
+        loadPlans();
+        
+        // Limpar formulário
         setFormData({
           name: '',
           description: '',
@@ -113,13 +127,85 @@ export default function StripePlansManager() {
           active: true
         });
         setShowCreateForm(false);
-        loadPlans();
       } else {
-        throw new Error(data.error || 'Erro ao criar plano');
+        const error = await response.json();
+        toast({
+          title: "Erro ao criar plano",
+          description: error.error || "Erro desconhecido",
+          variant: "destructive"
+        });
       }
     } catch (error) {
+      console.error('Erro ao criar plano:', error);
       toast({
-        title: "Erro ao criar plano",
+        title: "Erro no servidor",
+        description: "Falha ao criar plano. Tente novamente.",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const addFeature = () => {
+    if (newFeature.trim()) {
+      setFormData(prev => ({ 
+        ...prev, 
+        features: [...prev.features, newFeature.trim()] 
+      }));
+      setNewFeature('');
+    }
+  };
+
+  const removeFeature = (index: number) => {
+    setFormData(prev => ({ 
+      ...prev, 
+      features: prev.features.filter((_, i) => i !== index) 
+    }));
+  };
+
+  const handleCopyLink = async (plan: StripePlan) => {
+    try {
+      await navigator.clipboard.writeText(plan.paymentLink);
+      toast({
+        title: "Link copiado!",
+        description: `Link de pagamento do plano ${plan.name} copiado para a área de transferência`,
+      });
+    } catch (error) {
+      console.error('Erro ao copiar link:', error);
+      toast({
+        title: "Erro ao copiar link",
+        description: "Não foi possível copiar o link. Tente novamente.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleDeletePlan = async (planId: string) => {
+    setLoading(true);
+    try {
+      const token = localStorage.getItem('accessToken');
+      const response = await fetch(`/api/stripe/custom-plans/${planId}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      if (response.ok) {
+        toast({
+          title: "Plano desativado",
+          description: "O plano foi desativado com sucesso",
+        });
+        loadPlans();
+      } else {
+        const error = await response.json();
+        throw new Error(error.error || 'Erro ao desativar plano');
+      }
+    } catch (error) {
+      console.error('Erro ao desativar plano:', error);
+      toast({
+        title: "Erro ao desativar plano",
         description: error.message,
         variant: "destructive",
       });
@@ -131,19 +217,15 @@ export default function StripePlansManager() {
   const handleTestCheckout = async (plan: StripePlan) => {
     setLoading(true);
     try {
-      const token = localStorage.getItem('auth-token');
-      const response = await fetch('/api/stripe/create-checkout-session-official-docs', {
+      const token = localStorage.getItem('accessToken');
+      const response = await fetch(`/api/stripe/create-checkout-for-plan/${plan.id}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify({
-          plan_id: plan.id,
-          trial_period_days: plan.trial_period_days,
-          activation_fee: plan.activation_fee,
-          monthly_price: plan.price,
-          currency: plan.currency
+          customerEmail: 'test@example.com'
         })
       });
 
@@ -171,23 +253,6 @@ export default function StripePlansManager() {
     } finally {
       setLoading(false);
     }
-  };
-
-  const addFeature = () => {
-    if (newFeature.trim()) {
-      setFormData(prev => ({
-        ...prev,
-        features: [...prev.features, newFeature.trim()]
-      }));
-      setNewFeature('');
-    }
-  };
-
-  const removeFeature = (index: number) => {
-    setFormData(prev => ({
-      ...prev,
-      features: prev.features.filter((_, i) => i !== index)
-    }));
   };
 
   return (
@@ -344,51 +409,77 @@ export default function StripePlansManager() {
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
                   <span className="text-2xl font-bold">
-                    R$ {plan.price.toFixed(2)}
+                    R$ {(plan.recurringAmount || plan.price || 0).toFixed(2)}
                   </span>
-                  <span className="text-sm text-gray-500">/{plan.interval}</span>
+                  <span className="text-sm text-gray-500">/{plan.recurringInterval || plan.interval || 'mês'}</span>
                 </div>
 
                 <div className="space-y-2 text-sm">
                   <div className="flex items-center gap-2">
                     <DollarSign className="w-4 h-4 text-green-600" />
-                    Taxa de ativação: R$ {plan.activation_fee.toFixed(2)}
+                    Taxa de ativação: R$ {plan.trialAmount?.toFixed(2) || plan.activation_fee?.toFixed(2) || '0.00'}
                   </div>
                   <div className="flex items-center gap-2">
                     <Calendar className="w-4 h-4 text-blue-600" />
-                    Trial: {plan.trial_period_days} dias
+                    Trial: {plan.trialDays || plan.trial_period_days || 0} dias
                   </div>
                   <div className="flex items-center gap-2">
                     <Zap className="w-4 h-4 text-yellow-600" />
                     Moeda: {plan.currency}
                   </div>
+                  {plan.paymentLink && (
+                    <div className="flex items-center gap-2">
+                      <Link className="w-4 h-4 text-purple-600" />
+                      <span className="text-purple-600 truncate max-w-[200px]">
+                        {plan.paymentLink}
+                      </span>
+                    </div>
+                  )}
                 </div>
+
+                {plan.features && plan.features.length > 0 && (
+                  <div className="space-y-1">
+                    <span className="text-sm font-medium">Recursos:</span>
+                    <div className="flex flex-wrap gap-1">
+                      {plan.features.map((feature, index) => (
+                        <Badge key={index} variant="outline" className="text-xs">
+                          {feature}
+                        </Badge>
+                      ))}
+                    </div>
+                  </div>
+                )}
 
                 <Separator />
 
-                <div className="space-y-2">
-                  <h4 className="font-semibold text-sm">Recursos:</h4>
-                  <ul className="text-sm space-y-1">
-                    {plan.features.map((feature, index) => (
-                      <li key={index} className="flex items-center gap-2">
-                        <Check className="w-3 h-3 text-green-600" />
-                        {feature}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-
-                <div className="flex gap-2 pt-4">
-                  <Button
-                    onClick={() => handleTestCheckout(plan)}
-                    disabled={loading}
-                    className="flex-1 bg-green-600 hover:bg-green-700"
-                    size="sm"
+                <div className="flex gap-2">
+                  <Button 
+                    size="sm" 
+                    variant="outline" 
+                    onClick={() => handleCopyLink(plan)}
+                    className="flex-1"
+                    disabled={!plan.paymentLink}
                   >
-                    Testar Checkout
+                    <Copy className="w-4 h-4 mr-2" />
+                    Copiar Link
                   </Button>
-                  <Button variant="outline" size="sm">
-                    <Edit className="w-4 h-4" />
+                  <Button 
+                    size="sm" 
+                    variant="outline" 
+                    onClick={() => handleTestCheckout(plan)}
+                    className="flex-1"
+                    disabled={loading}
+                  >
+                    <ExternalLink className="w-4 h-4 mr-2" />
+                    Testar
+                  </Button>
+                  <Button 
+                    size="sm" 
+                    variant="destructive" 
+                    onClick={() => handleDeletePlan(plan.id)}
+                    disabled={loading}
+                  >
+                    <Trash2 className="w-4 h-4" />
                   </Button>
                 </div>
               </div>

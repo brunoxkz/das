@@ -4317,6 +4317,150 @@ export function registerSQLiteRoutes(app: Express): Server {
     }
   });
 
+  // SISTEMA DE PLANOS CUSTOMIZADOS
+  app.post("/api/stripe/create-custom-plan", verifyJWT, async (req: any, res) => {
+    try {
+      const { name, description, trialAmount, trialDays, recurringAmount, recurringInterval, currency = "BRL" } = req.body;
+      const userId = req.user.id;
+
+      console.log('🎯 CRIANDO PLANO CUSTOMIZADO:', req.body);
+
+      if (!stripeService) {
+        return res.status(500).json({ error: "Stripe não configurado" });
+      }
+
+      // Importar sistema de planos customizados
+      const { CustomPlansSystem } = await import('./custom-plans-system');
+      const customPlansSystem = new CustomPlansSystem(process.env.STRIPE_SECRET_KEY || '');
+
+      // Criar plano customizado
+      const customPlan = await customPlansSystem.createCustomPlan({
+        name,
+        description,
+        trialAmount,
+        trialDays,
+        recurringAmount,
+        recurringInterval,
+        currency,
+        userId
+      });
+
+      console.log('✅ PLANO CUSTOMIZADO CRIADO:', customPlan);
+
+      res.json({
+        success: true,
+        plan: customPlan,
+        paymentLink: customPlan.paymentLink
+      });
+
+    } catch (error) {
+      console.error('❌ Erro ao criar plano customizado:', error);
+      res.status(500).json({ 
+        error: "Falha ao criar plano customizado", 
+        details: error.message 
+      });
+    }
+  });
+
+  // LISTAR PLANOS CUSTOMIZADOS DO USUÁRIO
+  app.get("/api/stripe/custom-plans", verifyJWT, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+
+      console.log('📋 LISTANDO PLANOS CUSTOMIZADOS DO USUÁRIO:', userId);
+
+      if (!stripeService) {
+        return res.status(500).json({ error: "Stripe não configurado" });
+      }
+
+      const { CustomPlansSystem } = await import('./custom-plans-system');
+      const customPlansSystem = new CustomPlansSystem(process.env.STRIPE_SECRET_KEY || '');
+
+      const userPlans = await customPlansSystem.listUserPlans(userId);
+
+      console.log('✅ PLANOS ENCONTRADOS:', userPlans.length);
+
+      res.json({
+        success: true,
+        plans: userPlans
+      });
+
+    } catch (error) {
+      console.error('❌ Erro ao listar planos customizados:', error);
+      res.status(500).json({ 
+        error: "Falha ao listar planos customizados", 
+        details: error.message 
+      });
+    }
+  });
+
+  // DESATIVAR PLANO CUSTOMIZADO
+  app.delete("/api/stripe/custom-plans/:planId", verifyJWT, async (req: any, res) => {
+    try {
+      const { planId } = req.params;
+      const userId = req.user.id;
+
+      console.log('🔴 DESATIVANDO PLANO CUSTOMIZADO:', planId);
+
+      if (!stripeService) {
+        return res.status(500).json({ error: "Stripe não configurado" });
+      }
+
+      const { CustomPlansSystem } = await import('./custom-plans-system');
+      const customPlansSystem = new CustomPlansSystem(process.env.STRIPE_SECRET_KEY || '');
+
+      const success = await customPlansSystem.deactivatePlan(planId, userId);
+
+      console.log('✅ PLANO DESATIVADO:', success);
+
+      res.json({
+        success: true,
+        message: "Plano desativado com sucesso"
+      });
+
+    } catch (error) {
+      console.error('❌ Erro ao desativar plano customizado:', error);
+      res.status(500).json({ 
+        error: "Falha ao desativar plano customizado", 
+        details: error.message 
+      });
+    }
+  });
+
+  // CRIAR CHECKOUT SESSION PARA PLANO CUSTOMIZADO
+  app.post("/api/stripe/create-checkout-for-plan/:planId", verifyJWT, async (req: any, res) => {
+    try {
+      const { planId } = req.params;
+      const { customerEmail } = req.body;
+
+      console.log('🛒 CRIANDO CHECKOUT PARA PLANO CUSTOMIZADO:', planId);
+
+      if (!stripeService) {
+        return res.status(500).json({ error: "Stripe não configurado" });
+      }
+
+      const { CustomPlansSystem } = await import('./custom-plans-system');
+      const customPlansSystem = new CustomPlansSystem(process.env.STRIPE_SECRET_KEY || '');
+
+      const checkoutSession = await customPlansSystem.createCheckoutSession(planId, customerEmail);
+
+      console.log('✅ CHECKOUT SESSION CRIADA:', checkoutSession);
+
+      res.json({
+        success: true,
+        sessionId: checkoutSession.sessionId,
+        checkoutUrl: checkoutSession.url
+      });
+
+    } catch (error) {
+      console.error('❌ Erro ao criar checkout para plano customizado:', error);
+      res.status(500).json({ 
+        error: "Falha ao criar checkout para plano customizado", 
+        details: error.message 
+      });
+    }
+  });
+
   // STRIPE IMPLEMENTATION - OFFICIAL DOCS PATTERN (Invoice Items + Subscription)
   app.post("/api/stripe/create-checkout-session-official", verifyJWT, async (req: any, res) => {
     console.log('🎯 STRIPE OFFICIAL PATTERN - INVOICE ITEMS + SUBSCRIPTION');
