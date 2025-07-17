@@ -393,7 +393,7 @@ export function Sidebar() {
             isCollapsed ? "px-0" : "px-4"
           )}>
             <Plus className="w-4 h-4" />
-            {!isCollapsed && <span className="ml-2">{t("common.create_quiz_btn")}</span>}
+            {!isCollapsed && <span className="ml-2">Criar Quiz</span>}
           </Button>
         </Link>
       </div>
@@ -591,19 +591,19 @@ export function Sidebar() {
         {!isCollapsed && userData && (
           <div className="mt-4 p-3 bg-muted dark:bg-muted rounded-lg">
             <div className="flex items-center justify-between mb-2">
-              <span className="text-sm font-medium text-foreground dark:text-foreground">{t("current_plan")}</span>
+              <span className="text-sm font-medium text-foreground dark:text-foreground">Plano Atual</span>
               <Badge variant="outline" className="text-xs capitalize">
                 {userData.plan === 'enterprise' ? 'Enterprise' : userData.plan === 'premium' ? 'Premium' : 'Free'}
               </Badge>
             </div>
             {userData.plan === 'enterprise' ? (
               <div className="text-xs text-muted-foreground dark:text-muted-foreground">
-                {totalQuizzes} {t("quizzes_created")} ({t("unlimited")})
+                {totalQuizzes} quizzes criados (ilimitado)
               </div>
             ) : (
               <>
                 <div className="text-xs text-muted-foreground dark:text-muted-foreground mb-2">
-                  {totalQuizzes} de {userData.plan === 'premium' ? '25' : '3'} {t("quizzes_used")}
+                  {totalQuizzes} de {userData.plan === 'premium' ? '25' : '3'} quizzes usados
                 </div>
                 <div className="w-full bg-muted dark:bg-muted rounded-full h-1.5">
                   <div className="bg-primary h-1.5 rounded-full" style={{ 
