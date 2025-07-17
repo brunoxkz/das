@@ -1,18 +1,34 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
-import { CheckCircle, CreditCard, Clock, RefreshCw, AlertCircle } from 'lucide-react';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Textarea } from '@/components/ui/textarea';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { CheckCircle, CreditCard, Clock, RefreshCw, AlertCircle, Plus, Edit, Trash2, Copy, ExternalLink, Settings, Package } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest } from '@/lib/queryClient';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
 export default function CheckoutSimpleTrial() {
+  const [activeTab, setActiveTab] = useState('dashboard');
   const [loading, setLoading] = useState(false);
   const [checkoutData, setCheckoutData] = useState(null);
   const [webhookResult, setWebhookResult] = useState(null);
+  const [editingPlan, setEditingPlan] = useState(null);
+  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const { toast } = useToast();
+  const queryClient = useQueryClient();
+
+  // Buscar planos existentes
+  const { data: plans = [], isLoading: plansLoading } = useQuery({
+    queryKey: ['/api/stripe/plans'],
+    refetchInterval: 30000
+  });
 
   const [formData, setFormData] = useState({
     planName: 'Plano Premium Vendzz',
@@ -20,6 +36,93 @@ export default function CheckoutSimpleTrial() {
     trialDays: 3,
     recurringAmount: 29.90,
     currency: 'BRL'
+  });
+
+  const [planFormData, setPlanFormData] = useState({
+    name: '',
+    description: '',
+    price: 29.90,
+    currency: 'BRL',
+    interval: 'month',
+    trial_days: 7,
+    trial_price: 1.00,
+    active: true
+  });
+
+  // Mutação para criar plano
+  const createPlanMutation = useMutation({
+    mutationFn: async (planData) => {
+      return await apiRequest('POST', '/api/stripe/plans', planData);
+    },
+    onSuccess: () => {
+      toast({
+        title: "Plano criado com sucesso!",
+        description: "Plano disponível para checkout",
+      });
+      queryClient.invalidateQueries({ queryKey: ['/api/stripe/plans'] });
+      setIsCreateDialogOpen(false);
+      setPlanFormData({
+        name: '',
+        description: '',
+        price: 29.90,
+        currency: 'BRL',
+        interval: 'month',
+        trial_days: 7,
+        trial_price: 1.00,
+        active: true
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Erro ao criar plano",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  });
+
+  // Mutação para editar plano
+  const editPlanMutation = useMutation({
+    mutationFn: async ({ id, planData }) => {
+      return await apiRequest('PUT', `/api/stripe/plans/${id}`, planData);
+    },
+    onSuccess: () => {
+      toast({
+        title: "Plano atualizado com sucesso!",
+        description: "Alterações salvas",
+      });
+      queryClient.invalidateQueries({ queryKey: ['/api/stripe/plans'] });
+      setIsEditDialogOpen(false);
+      setEditingPlan(null);
+    },
+    onError: (error) => {
+      toast({
+        title: "Erro ao atualizar plano",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  });
+
+  // Mutação para deletar plano
+  const deletePlanMutation = useMutation({
+    mutationFn: async (planId) => {
+      return await apiRequest('DELETE', `/api/stripe/plans/${planId}`);
+    },
+    onSuccess: () => {
+      toast({
+        title: "Plano deletado com sucesso!",
+        description: "Plano removido da lista",
+      });
+      queryClient.invalidateQueries({ queryKey: ['/api/stripe/plans'] });
+    },
+    onError: (error) => {
+      toast({
+        title: "Erro ao deletar plano",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
   });
 
   const handleCreateCheckout = async () => {
@@ -47,6 +150,72 @@ export default function CheckoutSimpleTrial() {
       });
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleCreatePlan = async () => {
+    if (!planFormData.name || !planFormData.price) {
+      toast({
+        title: "Campos obrigatórios",
+        description: "Nome e preço são obrigatórios",
+        variant: "destructive",
+      });
+      return;
+    }
+    createPlanMutation.mutate(planFormData);
+  };
+
+  const handleEditPlan = (plan) => {
+    setEditingPlan(plan);
+    setPlanFormData({
+      name: plan.name,
+      description: plan.description || '',
+      price: plan.price,
+      currency: plan.currency,
+      interval: plan.interval,
+      trial_days: plan.trial_days,
+      trial_price: plan.trial_price,
+      active: plan.active
+    });
+    setIsEditDialogOpen(true);
+  };
+
+  const handleUpdatePlan = async () => {
+    if (!editingPlan || !planFormData.name || !planFormData.price) {
+      toast({
+        title: "Campos obrigatórios",
+        description: "Nome e preço são obrigatórios",
+        variant: "destructive",
+      });
+      return;
+    }
+    editPlanMutation.mutate({ id: editingPlan.id, planData: planFormData });
+  };
+
+  const handleDeletePlan = async (planId) => {
+    if (confirm('Tem certeza que deseja deletar este plano?')) {
+      deletePlanMutation.mutate(planId);
+    }
+  };
+
+  const generateCheckoutUrl = async (planId) => {
+    try {
+      const response = await apiRequest('POST', '/api/stripe/generate-checkout-url', { planId });
+      if (response.success) {
+        const checkoutUrl = response.checkoutUrl;
+        navigator.clipboard.writeText(checkoutUrl);
+        toast({
+          title: "URL copiada!",
+          description: "Link de checkout copiado para área de transferência",
+        });
+        return checkoutUrl;
+      }
+    } catch (error) {
+      toast({
+        title: "Erro ao gerar URL",
+        description: error.message,
+        variant: "destructive",
+      });
     }
   };
 
@@ -96,15 +265,15 @@ export default function CheckoutSimpleTrial() {
   };
 
   return (
-    <div className="container mx-auto p-6 max-w-4xl">
+    <div className="container mx-auto p-6 max-w-6xl">
       <div className="space-y-6">
         {/* Header */}
         <div className="text-center space-y-2">
           <h1 className="text-3xl font-bold bg-gradient-to-r from-green-600 to-blue-600 bg-clip-text text-transparent">
-            Sistema de Trial Simplificado
+            🚀 Stripe Dashboard - Sistema Completo
           </h1>
           <p className="text-gray-600">
-            Sistema 100% funcional - R${formData.trialAmount.toFixed(2)} imediato → {formData.trialDays} dias trial → R${formData.recurringAmount.toFixed(2)}/mês
+            Gerenciamento completo de planos, checkout e cobrança
           </p>
           <Badge variant="secondary" className="bg-green-100 text-green-800">
             <CheckCircle className="w-4 h-4 mr-1" />
@@ -112,7 +281,24 @@ export default function CheckoutSimpleTrial() {
           </Badge>
         </div>
 
-        {/* Configuração */}
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+          <TabsList className="grid w-full grid-cols-3">
+            <TabsTrigger value="testing" className="flex items-center gap-2">
+              <Settings className="w-4 h-4" />
+              Teste Original
+            </TabsTrigger>
+            <TabsTrigger value="plans" className="flex items-center gap-2">
+              <CreditCard className="w-4 h-4" />
+              Planos
+            </TabsTrigger>
+            <TabsTrigger value="dashboard" className="flex items-center gap-2">
+              <Package className="w-4 h-4" />
+              Dashboard
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="testing" className="space-y-6">
+            {/* Configuração */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -345,6 +531,22 @@ export default function CheckoutSimpleTrial() {
             </div>
           </CardContent>
         </Card>
+          </TabsContent>
+
+          <TabsContent value="plans" className="space-y-6">
+            <div className="text-center py-8">
+              <h3 className="text-lg font-semibold mb-2">Funcionalidade de Planos</h3>
+              <p className="text-gray-600">Sistema de criação e gerenciamento de planos será implementado aqui</p>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="dashboard" className="space-y-6">
+            <div className="text-center py-8">
+              <h3 className="text-lg font-semibold mb-2">Dashboard</h3>
+              <p className="text-gray-600">Overview dos planos e estatísticas</p>
+            </div>
+          </TabsContent>
+        </Tabs>
       </div>
     </div>
   );

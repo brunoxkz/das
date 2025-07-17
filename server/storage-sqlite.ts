@@ -8044,6 +8044,136 @@ Hoje você vai aprender ${project.title} - método revolucionário que já ajudo
       console.error('❌ ERRO ao criar alerta:', error);
     }
   }
+
+  // ==================== STRIPE CHECKOUT PLANS MANAGEMENT ====================
+
+  // Buscar todos os planos de checkout
+  async getStripeCheckoutPlans(): Promise<any[]> {
+    try {
+      const stmt = sqlite.prepare(`
+        SELECT * FROM stripe_plans 
+        WHERE active = 1
+        ORDER BY created_at DESC
+      `);
+      
+      const plans = stmt.all();
+      return plans.map(plan => ({
+        ...plan,
+        features: typeof plan.features === 'string' ? JSON.parse(plan.features) : plan.features
+      }));
+    } catch (error) {
+      console.error('Erro ao buscar planos de checkout:', error);
+      return [];
+    }
+  }
+
+  // Buscar plano específico
+  async getStripeCheckoutPlan(id: string): Promise<any> {
+    try {
+      const stmt = sqlite.prepare(`
+        SELECT * FROM stripe_plans 
+        WHERE id = ? AND active = 1
+      `);
+      
+      const plan = stmt.get(id);
+      if (!plan) return null;
+      
+      return {
+        ...plan,
+        features: typeof plan.features === 'string' ? JSON.parse(plan.features) : plan.features
+      };
+    } catch (error) {
+      console.error('Erro ao buscar plano:', error);
+      return null;
+    }
+  }
+
+  // Criar novo plano de checkout
+  async createStripeCheckoutPlan(planData: any): Promise<any> {
+    try {
+      const id = nanoid();
+      const now = new Date().toISOString();
+      
+      const stmt = sqlite.prepare(`
+        INSERT INTO stripe_plans (
+          id, name, description, price, currency, interval, 
+          trial_period_days, activation_fee, features, active, 
+          created_at, updated_at, user_id
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      `);
+      
+      stmt.run(
+        id,
+        planData.name,
+        planData.description || '',
+        planData.price || 29.90,
+        planData.currency || 'BRL',
+        planData.interval || 'month',
+        planData.trial_days || 3,
+        planData.trial_price || 1.00,
+        JSON.stringify(planData.features || []),
+        1, // active
+        now,
+        now,
+        planData.userId
+      );
+      
+      return this.getStripeCheckoutPlan(id);
+    } catch (error) {
+      console.error('Erro ao criar plano de checkout:', error);
+      throw error;
+    }
+  }
+
+  // Atualizar plano existente
+  async updateStripeCheckoutPlan(id: string, planData: any): Promise<any> {
+    try {
+      const now = new Date().toISOString();
+      
+      const stmt = sqlite.prepare(`
+        UPDATE stripe_plans 
+        SET name = ?, description = ?, price = ?, currency = ?, 
+            interval = ?, trial_period_days = ?, activation_fee = ?, 
+            features = ?, active = ?, updated_at = ?
+        WHERE id = ?
+      `);
+      
+      stmt.run(
+        planData.name,
+        planData.description || '',
+        planData.price || 29.90,
+        planData.currency || 'BRL',
+        planData.interval || 'month',
+        planData.trial_days || 3,
+        planData.trial_price || 1.00,
+        JSON.stringify(planData.features || []),
+        planData.active !== undefined ? planData.active : 1,
+        now,
+        id
+      );
+      
+      return this.getStripeCheckoutPlan(id);
+    } catch (error) {
+      console.error('Erro ao atualizar plano de checkout:', error);
+      throw error;
+    }
+  }
+
+  // Deletar plano
+  async deleteStripeCheckoutPlan(id: string): Promise<void> {
+    try {
+      const stmt = sqlite.prepare(`
+        UPDATE stripe_plans 
+        SET active = 0, updated_at = ?
+        WHERE id = ?
+      `);
+      
+      stmt.run(new Date().toISOString(), id);
+    } catch (error) {
+      console.error('Erro ao deletar plano de checkout:', error);
+      throw error;
+    }
+  }
 }
 
 export const storage = new SQLiteStorage();

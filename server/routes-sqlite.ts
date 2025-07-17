@@ -18588,6 +18588,112 @@ export function registerCheckoutRoutes(app: Express) {
     }
   });
 
+  // ==================== STRIPE PLANS MANAGEMENT ====================
+  
+  // Buscar todos os planos
+  app.get('/api/stripe/plans', verifyJWT, async (req: any, res) => {
+    try {
+      const plans = await storage.getStripeCheckoutPlans();
+      res.json(plans);
+    } catch (error) {
+      console.error('Erro ao buscar planos:', error);
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  // Criar novo plano
+  app.post('/api/stripe/plans', verifyJWT, async (req: any, res) => {
+    try {
+      const planData = {
+        ...req.body,
+        userId: req.user.id
+      };
+      const plan = await storage.createStripeCheckoutPlan(planData);
+      res.json(plan);
+    } catch (error) {
+      console.error('Erro ao criar plano:', error);
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  // Atualizar plano existente
+  app.put('/api/stripe/plans/:id', verifyJWT, async (req: any, res) => {
+    try {
+      const { id } = req.params;
+      const planData = req.body;
+      
+      // Verificar se o plano pertence ao usuário
+      const existingPlan = await storage.getStripeCheckoutPlan(id);
+      if (!existingPlan || existingPlan.userId !== req.user.id) {
+        return res.status(403).json({ message: 'Acesso negado' });
+      }
+      
+      const plan = await storage.updateStripeCheckoutPlan(id, planData);
+      res.json(plan);
+    } catch (error) {
+      console.error('Erro ao atualizar plano:', error);
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  // Deletar plano
+  app.delete('/api/stripe/plans/:id', verifyJWT, async (req: any, res) => {
+    try {
+      const { id } = req.params;
+      
+      // Verificar se o plano pertence ao usuário
+      const existingPlan = await storage.getStripeCheckoutPlan(id);
+      if (!existingPlan || existingPlan.userId !== req.user.id) {
+        return res.status(403).json({ message: 'Acesso negado' });
+      }
+      
+      await storage.deleteStripeCheckoutPlan(id);
+      res.json({ success: true });
+    } catch (error) {
+      console.error('Erro ao deletar plano:', error);
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  // Gerar URL de checkout para plano
+  app.post('/api/stripe/generate-checkout-url', verifyJWT, async (req: any, res) => {
+    try {
+      const { planId } = req.body;
+      
+      if (!planId) {
+        return res.status(400).json({ success: false, message: 'ID do plano é obrigatório' });
+      }
+      
+      const plan = await storage.getStripeCheckoutPlan(planId);
+      
+      if (!plan) {
+        return res.status(404).json({ success: false, message: 'Plano não encontrado' });
+      }
+      
+      if (plan.userId !== req.user.id) {
+        return res.status(403).json({ success: false, message: 'Acesso negado' });
+      }
+
+      const { StripeSimpleTrialSystem } = await import('./stripe-simple-trial');
+      const trialSystem = new StripeSimpleTrialSystem(process.env.STRIPE_SECRET_KEY);
+      
+      const result = await trialSystem.createSimpleTrialFlow({
+        planName: plan.name,
+        customerEmail: 'checkout@example.com',
+        customerName: 'Cliente Checkout',
+        trialAmount: plan.trial_price || 1.00,
+        trialDays: plan.trial_days || 3,
+        recurringAmount: plan.price || 29.90,
+        currency: plan.currency || 'BRL'
+      });
+
+      res.json({ success: true, checkoutUrl: result.checkoutUrl });
+    } catch (error) {
+      console.error('Erro ao gerar URL de checkout:', error);
+      res.status(500).json({ success: false, message: error.message });
+    }
+  });
+
   // Inicializar Pagar.me
   initializePagarme();
 
