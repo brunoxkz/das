@@ -5,6 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { useToast } from '@/hooks/use-toast';
 import { Check, CreditCard, Shield, Zap, Users, Clock, ArrowRight } from 'lucide-react';
+import { getAuthHeaders, isAuthenticated } from '@/lib/authUtils';
 
 export default function CheckoutOfficial() {
   const [isLoading, setIsLoading] = useState(false);
@@ -13,9 +14,8 @@ export default function CheckoutOfficial() {
   const handleCreateCheckout = async () => {
     setIsLoading(true);
     try {
-      // Buscar token do localStorage
-      const token = localStorage.getItem('auth-token');
-      if (!token) {
+      // Verificar autenticação usando função padronizada
+      if (!isAuthenticated()) {
         toast({
           title: "Erro de autenticação",
           description: "Por favor, faça login primeiro",
@@ -29,7 +29,7 @@ export default function CheckoutOfficial() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
+          ...getAuthHeaders()
         },
         body: JSON.stringify({
           trial_period_days: 3,
