@@ -283,6 +283,64 @@ export function registerSQLiteRoutes(app: Express): Server {
 
   // 💳 STRIPE PLANS MANAGEMENT - Endpoints para gerenciar planos
   
+  // Teste de criação de plano (sem autenticação para teste)
+  app.post('/api/stripe/plans/test', async (req, res) => {
+    try {
+      const { name, description, price, currency, interval, trial_days, trial_price, active } = req.body;
+      
+      console.log('🔍 TESTE CRIAÇÃO DE PLANO:', { name, description, price, currency, interval, trial_days, trial_price, active });
+      
+      if (!name || !price) {
+        return res.status(400).json({ error: 'Nome e preço são obrigatórios' });
+      }
+
+      // Criar plano localmente sem Stripe (para teste)
+      const planData = {
+        id: nanoid(),
+        name,
+        description,
+        price: parseFloat(price),
+        currency: currency || 'BRL',
+        interval: interval || 'month',
+        trial_days: trial_days || 7,
+        trial_price: trial_price || 1.00,
+        active: active !== false,
+        stripe_price_id: `price_test_${Date.now()}`,
+        stripe_product_id: `prod_test_${Date.now()}`,
+        created_at: new Date(),
+        updated_at: new Date()
+      };
+
+      await storage.createStripePlan(planData);
+      
+      res.json({
+        success: true,
+        message: 'Plano criado com sucesso (teste)!',
+        plan: planData
+      });
+    } catch (error) {
+      console.error('❌ Erro ao criar plano (teste):', error);
+      res.status(500).json({ 
+        success: false,
+        error: error.message || 'Erro interno do servidor' 
+      });
+    }
+  });
+
+  // Buscar todos os planos (teste sem autenticação)
+  app.get('/api/stripe/plans/test', async (req, res) => {
+    try {
+      const plans = await storage.getStripePlans();
+      res.json({ success: true, plans });
+    } catch (error) {
+      console.error('❌ Erro ao buscar planos (teste):', error);
+      res.status(500).json({ 
+        success: false,
+        error: 'Erro interno do servidor' 
+      });
+    }
+  });
+  
   // Buscar todos os planos
   app.get('/api/stripe/plans', verifyJWT, async (req, res) => {
     try {
