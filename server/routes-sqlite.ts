@@ -51,6 +51,7 @@ import { generateTokens } from './auth-sqlite';
 import HealthCheckSystem from './health-check-system.js';
 import WhatsAppBusinessAPI from './whatsapp-business-api';
 import { registerFacelessVideoRoutes } from './faceless-video-routes';
+import { StripeCheckoutLinkGenerator } from './stripe-checkout-link-generator';
 import Stripe from 'stripe';
 
 // JWT Secret para validação de tokens
@@ -4332,6 +4333,222 @@ export function registerSQLiteRoutes(app: Express): Server {
       });
     } catch (error) {
       console.error('❌ ERRO AO VERIFICAR STATUS:', error);
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  // WEBHOOK DO STRIPE - CONVERSÃO AUTOMÁTICA TRIAL → RECORRÊNCIA
+  app.post("/api/stripe/webhook", express.raw({ type: 'application/json' }), async (req, res) => {
+    const sig = req.headers['stripe-signature'];
+    
+    if (!sig) {
+      console.error('❌ WEBHOOK SEM SIGNATURE');
+      return res.status(400).send('Webhook signature missing');
+    }
+
+    if (!process.env.STRIPE_WEBHOOK_SECRET) {
+      console.error('❌ STRIPE_WEBHOOK_SECRET não configurada');
+      return res.status(500).send('Webhook secret not configured');
+    }
+
+    try {
+      const { StripeWebhookHandler } = await import('./stripe-webhook-handler');
+      const webhookHandler = new StripeWebhookHandler(process.env.STRIPE_SECRET_KEY);
+
+      const result = await webhookHandler.handleWebhook(
+        req.body,
+        sig as string,
+        process.env.STRIPE_WEBHOOK_SECRET
+      );
+
+      console.log('✅ WEBHOOK PROCESSADO COM SUCESSO');
+      res.json(result);
+    } catch (error) {
+      console.error('❌ ERRO NO WEBHOOK:', error);
+      res.status(400).send(`Webhook error: ${error.message}`);
+    }
+  });
+
+  // CRIAR LINK DIRETO PARA STRIPE ELEMENTS CHECKOUT
+  app.post("/api/stripe/create-checkout-link", verifyJWT, async (req: any, res) => {
+    try {
+      const { name, description, immediateAmount, trialDays, recurringAmount, currency, expiresInHours } = req.body;
+      
+      const { StripeCheckoutLinkGenerator, initCheckoutLinksTable } = await import('./stripe-checkout-link-generator');
+      
+      // Garantir que a tabela existe
+      await initCheckoutLinksTable();
+      
+      const linkGenerator = new StripeCheckoutLinkGenerator();
+      
+      const linkData = await linkGenerator.createCheckoutLink({
+        name,
+        description,
+        immediateAmount,
+        trialDays,
+        recurringAmount,
+        currency,
+        userId: req.user.id,
+        expiresInHours,
+      });
+
+      res.json({
+        success: true,
+        linkId: linkData.linkId,
+        checkoutUrl: linkData.checkoutUrl,
+        accessToken: linkData.accessToken,
+        expiresAt: linkData.expiresAt,
+        message: `Link de checkout criado com sucesso! Válido por ${expiresInHours || 24} horas.`,
+      });
+    } catch (error) {
+      console.error('❌ ERRO AO CRIAR LINK DE CHECKOUT:', error);
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  // VALIDAR LINK DE CHECKOUT (SEM AUTENTICAÇÃO)
+  app.get("/api/stripe/validate-checkout-link/:linkId", async (req, res) => {
+    try {
+      const { linkId } = req.params;
+      const { token } = req.query;
+
+      if (!token) {
+        return res.status(400).json({ error: 'Token obrigatório' });
+      }
+
+      const { StripeCheckoutLinkGenerator } = await import('./stripe-checkout-link-generator');
+      const linkGenerator = new StripeCheckoutLinkGenerator();
+
+      const validation = await linkGenerator.validateCheckoutLink(linkId, token as string);
+
+      if (!validation.valid) {
+        return res.status(400).json({ error: validation.error });
+      }
+
+      res.json({
+        success: true,
+        valid: true,
+        config: validation.config,
+      });
+    } catch (error) {
+      console.error('❌ ERRO AO VALIDAR LINK:', error);
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  // PROCESSAR CHECKOUT VIA LINK (SEM AUTENTICAÇÃO)
+  app.post("/api/stripe/process-checkout-link/:linkId", async (req, res) => {
+    try {
+      const { linkId } = req.params;
+      const { token } = req.body;
+
+      if (!token) {
+        return res.status(400).json({ error: 'Token obrigatório' });
+      }
+
+      const { StripeCheckoutLinkGenerator } = await import('./stripe-checkout-link-generator');
+      const linkGenerator = new StripeCheckoutLinkGenerator();
+
+      const validation = await linkGenerator.validateCheckoutLink(linkId, token);
+
+      if (!validation.valid || !validation.config) {
+        return res.status(400).json({ error: validation.error });
+      }
+
+      // Criar checkout Elements com configuração do link
+      const { StripeElementsSystem } = await import('./stripe-elements-system');
+      const elementsSystem = new StripeElementsSystem(process.env.STRIPE_SECRET_KEY);
+
+      const elementsData = await elementsSystem.createElementsCheckout({
+        ...validation.config,
+        customerEmail: req.body.customerEmail || `guest-${Date.now()}@vendzz.com`,
+        customerName: req.body.customerName || 'Cliente',
+      });
+
+      // Marcar link como usado
+      await linkGenerator.markLinkAsUsed(linkId);
+
+      res.json({
+        success: true,
+        clientSecret: elementsData.clientSecret,
+        customerId: elementsData.customerId,
+        productId: elementsData.productId,
+        subscriptionPriceId: elementsData.subscriptionPriceId,
+        setupIntentId: elementsData.setupIntentId,
+        message: `Checkout via link criado com sucesso!`,
+      });
+    } catch (error) {
+      console.error('❌ ERRO AO PROCESSAR CHECKOUT VIA LINK:', error);
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  // CRIAR LINK DE CHECKOUT
+  app.post("/api/stripe/checkout-links", verifyJWT, async (req: any, res) => {
+    try {
+      const linkGenerator = new StripeCheckoutLinkGenerator();
+      
+      const config = {
+        ...req.body,
+        userId: req.user.id,
+      };
+
+      const link = await linkGenerator.createCheckoutLink(config);
+
+      res.json({
+        success: true,
+        ...link,
+      });
+    } catch (error) {
+      console.error('Erro ao criar checkout link:', error);
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  // VALIDAR LINK DE CHECKOUT
+  app.post("/api/stripe/validate-checkout-link", async (req: any, res) => {
+    try {
+      const { linkId, token } = req.body;
+      
+      const linkGenerator = new StripeCheckoutLinkGenerator();
+      const isValid = await linkGenerator.validateCheckoutLink(linkId, token);
+
+      if (!isValid) {
+        return res.status(400).json({ 
+          success: false, 
+          error: 'Link inválido ou expirado' 
+        });
+      }
+
+      const linkData = await linkGenerator.getCheckoutLink(linkId);
+
+      res.json({
+        success: true,
+        linkData,
+      });
+    } catch (error) {
+      console.error('Erro ao validar checkout link:', error);
+      res.status(500).json({ 
+        success: false, 
+        error: error.message 
+      });
+    }
+  });
+
+  // LISTAR LINKS DE CHECKOUT DO USUÁRIO
+  app.get("/api/stripe/checkout-links", verifyJWT, async (req: any, res) => {
+    try {
+      const { StripeCheckoutLinkGenerator } = await import('./stripe-checkout-link-generator');
+      const linkGenerator = new StripeCheckoutLinkGenerator();
+
+      const links = await linkGenerator.getUserCheckoutLinks(req.user.id);
+
+      res.json({
+        success: true,
+        links,
+      });
+    } catch (error) {
+      console.error('❌ ERRO AO LISTAR LINKS:', error);
       res.status(500).json({ error: error.message });
     }
   });
@@ -16519,6 +16736,48 @@ export function registerCheckoutRoutes(app: Express) {
     } catch (error) {
       console.error('❌ ERRO AO CRIAR CHECKOUT SESSION:', error);
       res.status(500).json({ error: error.message });
+    }
+  });
+
+  // =========================
+  // CHECKOUT LINKS - VALIDAÇÃO
+  // =========================
+  
+  // Validar checkout link (público - não requer autenticação)
+  app.get('/api/stripe/validate-checkout-link/:linkId', async (req, res) => {
+    try {
+      const { linkId } = req.params;
+      const { token } = req.query;
+
+      if (!linkId || !token) {
+        return res.status(400).json({ 
+          success: false, 
+          error: 'LinkId e token são obrigatórios' 
+        });
+      }
+
+      // Usar o StripeCheckoutLinkGenerator para validar
+      const linkGenerator = new StripeCheckoutLinkGenerator();
+      const validation = await linkGenerator.validateCheckoutLink(linkId, token as string);
+
+      if (!validation.valid) {
+        return res.status(400).json({
+          success: false,
+          error: validation.error || 'Link inválido'
+        });
+      }
+
+      res.json({
+        success: true,
+        valid: true,
+        config: validation.config
+      });
+    } catch (error) {
+      console.error('Erro na validação do checkout link:', error);
+      res.status(500).json({ 
+        success: false, 
+        error: 'Erro interno do servidor' 
+      });
     }
   });
 

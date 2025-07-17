@@ -64,6 +64,7 @@ import CheckoutOfficial from "@/pages/checkout-official";
 import StripePlansManager from "@/pages/stripe-plans-manager";
 import StripeCheckoutCustom from "@/pages/stripe-checkout-custom";
 import StripeElementsCheckout from "@/pages/stripe-elements-checkout";
+import StripeCheckoutLink from "@/pages/stripe-checkout-link";
 import PaymentSuccess from "@/pages/payment-success";
 import ProductBuilder from "@/pages/product-builder";
 import SubscriptionsManager from "@/pages/subscriptions-manager";
@@ -90,7 +91,8 @@ function App() {
   const publicRoutes = ["/", "/dark", "/modern", "/login"];
   const isQuizRoute = location.startsWith("/quiz/");
   const isCheckoutRoute = location.startsWith("/checkout/");
-  const isPublicRoute = publicRoutes.includes(location) || isQuizRoute || isCheckoutRoute;
+  const isStripeCheckoutLink = location.startsWith("/stripe-checkout-link/");
+  const isPublicRoute = publicRoutes.includes(location) || isQuizRoute || isCheckoutRoute || isStripeCheckoutLink;
 
   // Redirect to dashboard if authenticated and on login page
   if (isAuthenticated && location === "/login") {
@@ -117,6 +119,7 @@ function App() {
         <Route path="/checkout-public" component={CheckoutPage} />
         <Route path="/checkout-individual/:id" component={CheckoutIndividual} />
         <Route path="/payment-success" component={PaymentSuccess} />
+        <Route path="/stripe-checkout-link/:linkId" component={StripeCheckoutLink} />
         <Route path="/test" component={TestPage} />
 
         {/* Authenticated routes with sidebar */}

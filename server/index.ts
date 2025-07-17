@@ -122,11 +122,7 @@ setupHybridAuth(app);
 // Register all routes
 registerHybridRoutes(app);
 
-// Middleware para proteger rotas API antes do Vite
-app.use('/api/*', (req, res, next) => {
-  // Se chegou aqui, significa que a rota API não foi encontrada
-  res.status(404).json({ error: 'Endpoint API não encontrado' });
-});
+// Middleware para proteger rotas API antes do Vite removido para permitir novos endpoints
 
 // Setup Vite middleware for dev and production
 setupVite(app);

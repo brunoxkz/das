@@ -9,8 +9,8 @@ import { apiRequest } from '@/lib/queryClient';
 import { loadStripe } from '@stripe/stripe-js';
 import { Elements, CardElement, useStripe, useElements } from '@stripe/react-stripe-js';
 
-// Configuração do Stripe
-const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLIC_KEY || 'pk_test_51RjvV9HK6al3veW1qbsZYJyZjCkQRjfEuJCdUVz3S9zUMwj2dGZFjBHhKJjKXJCF4jbLhJfCqz4k5jSrH5TjmNjz00J7F7nGgH');
+// Configuração do Stripe - CORRIGIDO
+const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLIC_KEY!);
 
 interface ElementsCheckoutData {
   success: boolean;
@@ -158,7 +158,74 @@ export default function StripeElementsCheckout() {
   const [isCreating, setIsCreating] = useState(false);
   const [checkoutData, setCheckoutData] = useState<ElementsCheckoutData | null>(null);
   const [paymentResult, setPaymentResult] = useState<PaymentResult | null>(null);
+  const [linkData, setLinkData] = useState<any>(null);
+  const [isLinkMode, setIsLinkMode] = useState(false);
   const { toast } = useToast();
+
+  // Verificar se é um link direto na inicialização
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const linkId = urlParams.get('linkId');
+    const token = urlParams.get('token');
+
+    if (linkId && token) {
+      setIsLinkMode(true);
+      initializeFromLink(linkId, token);
+    }
+  }, []);
+
+  const initializeFromLink = async (linkId: string, token: string) => {
+    setIsCreating(true);
+    try {
+      // Validar o link primeiro
+      const validationResponse = await apiRequest('GET', `/api/stripe/validate-checkout-link/${linkId}?token=${token}`);
+      
+      if (!validationResponse.success) {
+        throw new Error(validationResponse.error || 'Link inválido');
+      }
+
+      setLinkData(validationResponse);
+      
+      // Atualizar dados do formulário com os dados do link
+      setFormData({
+        name: validationResponse.config.name,
+        description: validationResponse.config.description,
+        immediateAmount: validationResponse.config.immediateAmount,
+        trialDays: validationResponse.config.trialDays,
+        recurringAmount: validationResponse.config.recurringAmount,
+        currency: validationResponse.config.currency.toUpperCase()
+      });
+
+      // Criar checkout automaticamente
+      const response = await apiRequest('POST', '/api/stripe/create-elements-checkout', {
+        name: validationResponse.config.name,
+        description: validationResponse.config.description,
+        immediateAmount: validationResponse.config.immediateAmount,
+        trialDays: validationResponse.config.trialDays,
+        recurringAmount: validationResponse.config.recurringAmount,
+        currency: validationResponse.config.currency,
+        metadata: {
+          source: 'checkout_link',
+          linkId: linkId,
+        }
+      });
+      
+      setCheckoutData(response);
+      
+      toast({
+        title: "Checkout do Link Carregado!",
+        description: "Agora você pode inserir os dados do cartão",
+      });
+    } catch (error) {
+      toast({
+        title: "Erro no Link de Checkout",
+        description: error.message || "Link inválido ou expirado",
+        variant: "destructive",
+      });
+    } finally {
+      setIsCreating(false);
+    }
+  };
 
   const handleCreateCheckout = async () => {
     setIsCreating(true);
