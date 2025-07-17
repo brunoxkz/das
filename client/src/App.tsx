@@ -67,6 +67,7 @@ import StripeElementsCheckout from "@/pages/stripe-elements-checkout";
 import StripeCheckoutLink from "@/pages/stripe-checkout-link";
 import StripeCheckoutManager from "@/pages/stripe-checkout-manager";
 import StripeElements from "@/pages/stripe-elements";
+import StripePaymentIntentDemo from "@/pages/stripe-payment-intent-demo";
 import PaymentSuccess from "@/pages/payment-success";
 import ProductBuilder from "@/pages/product-builder";
 import SubscriptionsManager from "@/pages/subscriptions-manager";
@@ -393,6 +394,12 @@ function App() {
         <Route path="/stripe-elements">
           <Layout>
             <StripeElements />
+          </Layout>
+        </Route>
+        
+        <Route path="/stripe-payment-intent-demo">
+          <Layout>
+            <StripePaymentIntentDemo />
           </Layout>
         </Route>
         

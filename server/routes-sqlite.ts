@@ -3622,6 +3622,151 @@ export function registerSQLiteRoutes(app: Express): Server {
     }
   });
 
+  // STRIPE INTEGRATION - CRIAR PAYMENT INTENT COM SUBSCRIPTION
+  app.post("/api/stripe/create-payment-intent-subscription", verifyJWT, async (req: any, res) => {
+    try {
+      const { email, name, immediateAmount, trialDays, recurringAmount, recurringInterval } = req.body;
+      
+      if (!activeStripeService) {
+        return res.status(500).json({ error: "Stripe não configurado" });
+      }
+
+      console.log('🎯 CRIANDO PAYMENT INTENT PARA SUBSCRIPTION:', { email, name, immediateAmount, trialDays, recurringAmount });
+
+      // Criar customer no Stripe
+      let customer;
+      try {
+        const customers = await activeStripeService.stripe.customers.list({
+          email: email,
+          limit: 1
+        });
+
+        if (customers.data.length > 0) {
+          customer = customers.data[0];
+        } else {
+          customer = await activeStripeService.stripe.customers.create({
+            email: email,
+            name: name,
+            metadata: {
+              userId: req.user.id,
+              flow: 'payment_intent_subscription'
+            }
+          });
+        }
+      } catch (error) {
+        console.error('❌ Erro ao criar customer:', error);
+        return res.status(500).json({ error: "Erro ao criar customer" });
+      }
+
+      // Criar produto e preço para assinatura recorrente
+      let product, price;
+      try {
+        product = await activeStripeService.stripe.products.create({
+          name: 'Vendzz Premium - Assinatura',
+          description: `Plano Premium com trial de ${trialDays} dias`
+        });
+
+        price = await activeStripeService.stripe.prices.create({
+          unit_amount: Math.round(recurringAmount * 100),
+          currency: 'brl',
+          recurring: {
+            interval: recurringInterval || 'month'
+          },
+          product: product.id
+        });
+      } catch (error) {
+        console.error('❌ Erro ao criar produto/preço:', error);
+        return res.status(500).json({ error: "Erro ao criar produto" });
+      }
+
+      // Criar Payment Intent para cobrança imediata
+      const paymentIntent = await activeStripeService.stripe.paymentIntents.create({
+        amount: Math.round(immediateAmount * 100),
+        currency: 'brl',
+        customer: customer.id,
+        description: `Taxa de ativação - Vendzz Premium (Trial ${trialDays} dias)`,
+        metadata: {
+          userId: req.user.id,
+          type: 'immediate_charge',
+          subscriptionPriceId: price.id,
+          trialDays: trialDays.toString(),
+          flow: 'payment_intent_subscription'
+        }
+      });
+
+      console.log('✅ Payment Intent criado:', paymentIntent.id);
+
+      res.json({
+        success: true,
+        clientSecret: paymentIntent.client_secret,
+        paymentIntentId: paymentIntent.id,
+        customerId: customer.id,
+        subscriptionPriceId: price.id,
+        message: `Payment Intent criado para cobrança imediata de R$ ${immediateAmount.toFixed(2)}`
+      });
+    } catch (error) {
+      console.error("❌ Erro ao criar Payment Intent:", error);
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  // STRIPE INTEGRATION - CRIAR SUBSCRIPTION APÓS PAGAMENTO
+  app.post("/api/stripe/create-subscription-after-payment", verifyJWT, async (req: any, res) => {
+    try {
+      const { customerId, paymentMethodId, subscriptionPriceId, trialDays } = req.body;
+      
+      if (!activeStripeService) {
+        return res.status(500).json({ error: "Stripe não configurado" });
+      }
+
+      console.log('🎯 CRIANDO SUBSCRIPTION APÓS PAGAMENTO:', { customerId, subscriptionPriceId, trialDays });
+
+      // Anexar método de pagamento ao customer
+      try {
+        await activeStripeService.stripe.paymentMethods.attach(paymentMethodId, {
+          customer: customerId
+        });
+
+        await activeStripeService.stripe.customers.update(customerId, {
+          invoice_settings: {
+            default_payment_method: paymentMethodId
+          }
+        });
+      } catch (error) {
+        console.error('❌ Erro ao anexar método de pagamento:', error);
+        return res.status(500).json({ error: "Erro ao processar método de pagamento" });
+      }
+
+      // Criar assinatura com trial
+      const subscription = await activeStripeService.stripe.subscriptions.create({
+        customer: customerId,
+        items: [{
+          price: subscriptionPriceId
+        }],
+        trial_period_days: trialDays,
+        payment_behavior: 'default_incomplete',
+        expand: ['latest_invoice.payment_intent'],
+        metadata: {
+          userId: req.user.id,
+          flow: 'after_payment_intent'
+        }
+      });
+
+      console.log('✅ Assinatura criada:', subscription.id);
+
+      res.json({
+        success: true,
+        subscriptionId: subscription.id,
+        status: subscription.status,
+        trialEnd: subscription.trial_end,
+        message: `Assinatura criada com trial de ${trialDays} dias`
+      });
+    } catch (error) {
+      console.error("❌ Erro ao criar assinatura:", error);
+      res.status(500).json({ error: error.message });
+    }
+  });
+
   // STRIPE INTEGRATION - TESTE ACELERADO DE COBRANÇA
   app.post("/api/stripe/test-accelerated-billing", verifyJWT, async (req: any, res) => {
     try {
@@ -4623,7 +4768,7 @@ export function registerSQLiteRoutes(app: Express): Server {
       const { StripeCheckoutLinkGenerator } = await import('./stripe-checkout-link-generator');
       const linkGenerator = new StripeCheckoutLinkGenerator();
 
-      const links = await linkGenerator.getUserLinks(req.user.id);
+      const links = await linkGenerator.getUserCheckoutLinks(req.user.id);
 
       res.json({
         success: true,

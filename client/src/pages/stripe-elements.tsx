@@ -123,11 +123,12 @@ export default function StripeElementsPage() {
     onSuccess: (data) => {
       toast({
         title: "Payment Intent criado!",
-        description: "Client Secret gerado para integração com Stripe Elements.",
+        description: "Redirecionando para demonstração completa...",
       });
       
       console.log("Payment Intent criado:", data);
-      // Aqui você pode usar o clientSecret para integrar com Stripe Elements
+      // Redirecionar para página de demonstração
+      window.location.href = '/stripe-payment-intent-demo';
     },
     onError: (error) => {
       toast({
