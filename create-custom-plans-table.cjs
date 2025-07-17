@@ -1,5 +1,5 @@
 const Database = require('better-sqlite3');
-const db = new Database('vendzz.db');
+const db = new Database('./database.sqlite');
 
 console.log('🔧 CRIANDO TABELA CUSTOM_PLANS...');
 

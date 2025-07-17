@@ -17,8 +17,12 @@ import { stripeService, StripeService } from "./stripe-integration";
 // Garantir que o Stripe está inicializado
 let activeStripeService: StripeService | null = null;
 try {
-  activeStripeService = new StripeService();
-  console.log('✅ StripeService inicializado com sucesso');
+  if (process.env.STRIPE_SECRET_KEY) {
+    activeStripeService = new StripeService();
+    console.log('✅ StripeService inicializado com sucesso');
+  } else {
+    console.log('⚠️ STRIPE_SECRET_KEY não encontrada, StripeService não inicializado');
+  }
 } catch (error) {
   console.log('⚠️ StripeService não pôde ser inicializado:', error.message);
 }
@@ -291,6 +295,40 @@ export function registerSQLiteRoutes(app: Express): Server {
     } catch (error) {
       console.error('Erro ao deletar plano:', error);
       res.status(500).json({ error: error.message || 'Erro interno do servidor' });
+    }
+  });
+
+  // Rota para criar subscription com cobrança imediata usando add_invoice_items
+  app.post('/api/stripe/create-subscription-immediate', verifyJWT, async (req, res) => {
+    try {
+      const { planId, customerEmail } = req.body;
+      
+      if (!planId || !customerEmail) {
+        return res.status(400).json({ error: 'planId e customerEmail são obrigatórios' });
+      }
+
+      if (!process.env.STRIPE_SECRET_KEY) {
+        return res.status(503).json({ error: 'Stripe não está configurado' });
+      }
+
+      console.log('🎯 CRIANDO SUBSCRIPTION COM COBRANÇA IMEDIATA:', { planId, customerEmail });
+
+      // Importar e inicializar o sistema de planos customizados
+      const { CustomPlansSystem } = await import('./custom-plans-system');
+      const customPlansSystem = new CustomPlansSystem(process.env.STRIPE_SECRET_KEY);
+
+      const result = await customPlansSystem.createSubscriptionWithImmediateCharge(customerEmail, planId);
+      
+      res.json({
+        success: true,
+        subscriptionId: result.subscriptionId,
+        paymentIntentId: result.paymentIntentId,
+        clientSecret: result.clientSecret,
+        message: 'Subscription criada com cobrança imediata de R$1 + trial de 3 dias',
+      });
+    } catch (error) {
+      console.error('❌ ERRO AO CRIAR SUBSCRIPTION COM COBRANÇA IMEDIATA:', error);
+      res.status(500).json({ error: error.message });
     }
   });
 
@@ -4324,9 +4362,20 @@ export function registerSQLiteRoutes(app: Express): Server {
       const userId = req.user.id;
 
       console.log('🎯 CRIANDO PLANO CUSTOMIZADO:', req.body);
+      console.log('🔍 DEBUG activeStripeService:', activeStripeService);
+      console.log('🔍 DEBUG process.env.STRIPE_SECRET_KEY:', process.env.STRIPE_SECRET_KEY ? 'PRESENTE' : 'AUSENTE');
 
-      if (!stripeService) {
-        return res.status(500).json({ error: "Stripe não configurado" });
+      if (!activeStripeService) {
+        console.log('❌ activeStripeService é nulo, tentando criar novo...');
+        
+        // Tentar criar uma nova instância
+        try {
+          activeStripeService = new StripeService();
+          console.log('✅ Nova instância de StripeService criada com sucesso');
+        } catch (error) {
+          console.log('❌ Erro ao criar nova instância:', error.message);
+          return res.status(500).json({ error: "Stripe não configurado" });
+        }
       }
 
       // Importar sistema de planos customizados
@@ -16073,17 +16122,25 @@ export function registerCheckoutRoutes(app: Express) {
   });
 
   // === ENDPOINTS STRIPE CUSTOM PLANS ===
+  console.log('📋 REGISTRANDO ROTA: POST /api/custom-plans/create');
+  
   // Endpoint para criar plano customizado
-  app.post('/api/stripe/create-custom-plan', verifyJWT, async (req: any, res) => {
+  app.post('/api/custom-plans/create', verifyJWT, async (req: any, res) => {
+    console.log('🔥 ENDPOINT STRIPE CUSTOM PLAN CHAMADO!');
     try {
       const { name, description, trialAmount, trialDays, recurringAmount, recurringInterval, currency } = req.body;
       const user = req.user;
 
+      console.log('🔐 USER:', user);
+      console.log('📝 DADOS RECEBIDOS:', { name, description, trialAmount, trialDays, recurringAmount, recurringInterval, currency });
+
       if (!user) {
+        console.error('❌ USUÁRIO NÃO AUTENTICADO');
         return res.status(401).json({ error: "Usuário não autenticado" });
       }
 
       // Verificar se o Stripe está configurado
+      console.log('🔍 VERIFICANDO STRIPE_SECRET_KEY:', process.env.STRIPE_SECRET_KEY ? 'PRESENTE' : 'AUSENTE');
       if (!process.env.STRIPE_SECRET_KEY) {
         console.error('❌ STRIPE_SECRET_KEY não configurada');
         return res.status(500).json({ error: "STRIPE_SECRET_KEY não configurada no arquivo .env" });
@@ -16092,10 +16149,16 @@ export function registerCheckoutRoutes(app: Express) {
       console.log('🔥 CRIANDO PLANO CUSTOMIZADO:', { name, description, trialAmount, trialDays, recurringAmount, recurringInterval, currency });
 
       // Importar e criar instância do CustomPlansSystem
+      console.log('📦 Importando CustomPlansSystem...');
       const { CustomPlansSystem } = await import('./custom-plans-system');
+      console.log('✅ CustomPlansSystem importado com sucesso');
+      
+      console.log('🔧 Criando instância do CustomPlansSystem...');
       const customPlansSystem = new CustomPlansSystem(process.env.STRIPE_SECRET_KEY);
+      console.log('✅ Instância criada com sucesso');
 
       // Criar o plano customizado
+      console.log('🚀 Iniciando criação do plano customizado...');
       const customPlan = await customPlansSystem.createCustomPlan({
         name,
         description,
