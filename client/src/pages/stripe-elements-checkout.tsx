@@ -7,7 +7,7 @@ import { useToast } from '@/hooks/use-toast';
 import { CreditCard, CheckCircle, AlertCircle, Clock, DollarSign } from 'lucide-react';
 import { apiRequest } from '@/lib/queryClient';
 import { loadStripe } from '@stripe/stripe-js';
-import { Elements, CardElement, useStripe, useElements } from '@stripe/react-stripe-js';
+import { Elements, PaymentElement, useStripe, useElements } from '@stripe/react-stripe-js';
 
 // Configuração do Stripe - CORRIGIDO
 const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLIC_KEY!);
