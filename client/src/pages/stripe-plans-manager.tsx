@@ -1,58 +1,61 @@
 import React, { useState, useEffect } from 'react';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Badge } from '@/components/ui/badge';
-import { Separator } from '@/components/ui/separator';
-import { useToast } from '@/hooks/use-toast';
-import { Plus, Edit, Trash2, Check, X, DollarSign, Calendar, Users, Zap, Copy, ExternalLink, Link } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
+import { useToast } from "@/hooks/use-toast";
+import { Plus, Edit, Trash2, Copy, ExternalLink, Power } from 'lucide-react';
 
 interface StripePlan {
   id: string;
   name: string;
   description: string;
+  trialAmount: number;
+  trialDays: number;
+  recurringAmount: number;
+  recurringInterval: string;
+  currency: string;
+  active: boolean;
+  paymentLink: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+interface PlanFormData {
+  name: string;
+  description: string;
   price: number;
   currency: string;
-  interval: 'month' | 'year';
+  interval: string;
   trial_period_days: number;
   activation_fee: number;
-  stripe_price_id?: string;
-  stripe_product_id?: string;
   features: string[];
   active: boolean;
-  created_at: string;
 }
 
 export default function StripePlansManager() {
   const [plans, setPlans] = useState<StripePlan[]>([]);
-  const [editingPlan, setEditingPlan] = useState<StripePlan | null>(null);
-  const [showCreateForm, setShowCreateForm] = useState(false);
   const [loading, setLoading] = useState(false);
-  const { toast } = useToast();
-
-  // Formulário para criar/editar plano
-  const [formData, setFormData] = useState({
+  const [showCreateForm, setShowCreateForm] = useState(false);
+  const [editingPlan, setEditingPlan] = useState<StripePlan | null>(null);
+  const [formData, setFormData] = useState<PlanFormData>({
     name: '',
     description: '',
     price: 29.90,
     currency: 'BRL',
-    interval: 'month' as 'month' | 'year',
+    interval: 'month',
     trial_period_days: 3,
     activation_fee: 1.00,
-    features: [] as string[],
+    features: [],
     active: true
   });
-
   const [newFeature, setNewFeature] = useState('');
-
-  // Carregar planos existentes
-  useEffect(() => {
-    loadPlans();
-  }, []);
+  const { toast } = useToast();
 
   const loadPlans = async () => {
+    setLoading(true);
     try {
       const token = localStorage.getItem('accessToken');
       const response = await fetch('/api/stripe/custom-plans', {
@@ -60,18 +63,22 @@ export default function StripePlansManager() {
           'Authorization': `Bearer ${token}`
         }
       });
-      
+
       if (response.ok) {
         const data = await response.json();
         setPlans(data.plans || []);
+      } else {
+        console.error('Erro ao carregar planos:', response.statusText);
       }
     } catch (error) {
       console.error('Erro ao carregar planos:', error);
+    } finally {
+      setLoading(false);
     }
   };
 
   const handleCreatePlan = async () => {
-    if (!formData.name || !formData.description || formData.price <= 0) {
+    if (!formData.name.trim() || !formData.description.trim() || formData.price <= 0) {
       toast({
         title: "Erro de validação",
         description: "Preencha todos os campos obrigatórios",
@@ -115,17 +122,7 @@ export default function StripePlansManager() {
         loadPlans();
         
         // Limpar formulário
-        setFormData({
-          name: '',
-          description: '',
-          price: 29.90,
-          currency: 'BRL',
-          interval: 'month',
-          trial_period_days: 3,
-          activation_fee: 1.00,
-          features: [],
-          active: true
-        });
+        resetForm();
         setShowCreateForm(false);
       } else {
         const error = await response.json();
@@ -140,44 +137,103 @@ export default function StripePlansManager() {
       toast({
         title: "Erro no servidor",
         description: "Falha ao criar plano. Tente novamente.",
-        variant: "destructive",
+        variant: "destructive"
       });
     } finally {
       setLoading(false);
     }
   };
 
-  const addFeature = () => {
-    if (newFeature.trim()) {
-      setFormData(prev => ({ 
-        ...prev, 
-        features: [...prev.features, newFeature.trim()] 
-      }));
-      setNewFeature('');
+  const handleUpdatePlan = async () => {
+    if (!editingPlan) return;
+
+    setLoading(true);
+    try {
+      const token = localStorage.getItem('accessToken');
+      const response = await fetch(`/api/stripe/custom-plans/${editingPlan.id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          name: formData.name,
+          description: formData.description,
+          trialAmount: formData.activation_fee,
+          trialDays: formData.trial_period_days,
+          recurringAmount: formData.price,
+          recurringInterval: formData.interval,
+          currency: formData.currency
+        })
+      });
+
+      if (response.ok) {
+        toast({
+          title: "Plano atualizado com sucesso!",
+          description: `Plano ${formData.name} foi atualizado`
+        });
+        
+        loadPlans();
+        resetForm();
+        setEditingPlan(null);
+        setShowCreateForm(false);
+      } else {
+        const error = await response.json();
+        toast({
+          title: "Erro ao atualizar plano",
+          description: error.error || "Erro desconhecido",
+          variant: "destructive"
+        });
+      }
+    } catch (error) {
+      console.error('Erro ao atualizar plano:', error);
+      toast({
+        title: "Erro no servidor",
+        description: "Falha ao atualizar plano. Tente novamente.",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
     }
   };
 
-  const removeFeature = (index: number) => {
-    setFormData(prev => ({ 
-      ...prev, 
-      features: prev.features.filter((_, i) => i !== index) 
-    }));
-  };
-
-  const handleCopyLink = async (plan: StripePlan) => {
+  const handleTogglePlan = async (planId: string, active: boolean) => {
+    setLoading(true);
     try {
-      await navigator.clipboard.writeText(plan.paymentLink);
-      toast({
-        title: "Link copiado!",
-        description: `Link de pagamento do plano ${plan.name} copiado para a área de transferência`,
+      const token = localStorage.getItem('accessToken');
+      const response = await fetch(`/api/stripe/custom-plans/${planId}/toggle`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ active })
       });
+
+      if (response.ok) {
+        toast({
+          title: `Plano ${active ? 'ativado' : 'desativado'} com sucesso!`,
+          description: `O plano foi ${active ? 'ativado' : 'desativado'} no Stripe`
+        });
+        
+        loadPlans();
+      } else {
+        const error = await response.json();
+        toast({
+          title: "Erro ao alterar status",
+          description: error.error || "Erro desconhecido",
+          variant: "destructive"
+        });
+      }
     } catch (error) {
-      console.error('Erro ao copiar link:', error);
+      console.error('Erro ao alterar status:', error);
       toast({
-        title: "Erro ao copiar link",
-        description: "Não foi possível copiar o link. Tente novamente.",
-        variant: "destructive",
+        title: "Erro no servidor",
+        description: "Falha ao alterar status. Tente novamente.",
+        variant: "destructive"
       });
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -194,292 +250,198 @@ export default function StripePlansManager() {
 
       if (response.ok) {
         toast({
-          title: "Plano desativado",
-          description: "O plano foi desativado com sucesso",
+          title: "Plano deletado com sucesso!",
+          description: "O plano foi removido do sistema e arquivado no Stripe"
         });
+        
         loadPlans();
       } else {
         const error = await response.json();
-        throw new Error(error.error || 'Erro ao desativar plano');
-      }
-    } catch (error) {
-      console.error('Erro ao desativar plano:', error);
-      toast({
-        title: "Erro ao desativar plano",
-        description: error.message,
-        variant: "destructive",
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleTestCheckout = async (plan: StripePlan) => {
-    setLoading(true);
-    try {
-      const token = localStorage.getItem('accessToken');
-      const response = await fetch(`/api/stripe/create-checkout-for-plan/${plan.id}`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({
-          customerEmail: 'test@example.com'
-        })
-      });
-
-      const data = await response.json();
-
-      if (response.ok) {
         toast({
-          title: "Checkout criado",
-          description: `Redirecionando para pagamento do plano ${plan.name}`,
+          title: "Erro ao deletar plano",
+          description: error.error || "Erro desconhecido",
+          variant: "destructive"
         });
-        
-        // Redirecionar para o Stripe Checkout
-        if (data.checkoutUrl) {
-          window.location.href = data.checkoutUrl;
-        }
-      } else {
-        throw new Error(data.error || 'Erro ao criar checkout');
       }
     } catch (error) {
+      console.error('Erro ao deletar plano:', error);
       toast({
-        title: "Erro no checkout",
-        description: error.message,
-        variant: "destructive",
+        title: "Erro no servidor",
+        description: "Falha ao deletar plano. Tente novamente.",
+        variant: "destructive"
       });
     } finally {
       setLoading(false);
     }
   };
+
+  const handleCopyLink = async (plan: StripePlan) => {
+    try {
+      await navigator.clipboard.writeText(plan.paymentLink);
+      toast({
+        title: "Link copiado!",
+        description: `Link de pagamento do plano ${plan.name} copiado para a área de transferência`
+      });
+    } catch (error) {
+      console.error('Erro ao copiar link:', error);
+      toast({
+        title: "Erro ao copiar link",
+        description: "Não foi possível copiar o link. Tente novamente.",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const resetForm = () => {
+    setFormData({
+      name: '',
+      description: '',
+      price: 29.90,
+      currency: 'BRL',
+      interval: 'month',
+      trial_period_days: 3,
+      activation_fee: 1.00,
+      features: [],
+      active: true
+    });
+    setNewFeature('');
+  };
+
+  const startEdit = (plan: StripePlan) => {
+    setEditingPlan(plan);
+    setFormData({
+      name: plan.name,
+      description: plan.description,
+      price: plan.recurringAmount,
+      currency: plan.currency,
+      interval: plan.recurringInterval,
+      trial_period_days: plan.trialDays,
+      activation_fee: plan.trialAmount,
+      features: [],
+      active: plan.active
+    });
+    setShowCreateForm(true);
+  };
+
+  const formatCurrency = (value: number) => {
+    return new Intl.NumberFormat('pt-BR', {
+      style: 'currency',
+      currency: 'BRL'
+    }).format(value);
+  };
+
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString('pt-BR');
+  };
+
+  useEffect(() => {
+    loadPlans();
+  }, []);
 
   return (
-    <div className="container mx-auto py-8 px-4 max-w-6xl">
-      <div className="flex justify-between items-center mb-8">
+    <div className="container mx-auto p-6 max-w-7xl">
+      <div className="mb-8">
+        <h1 className="text-3xl font-bold text-white mb-2">Gerenciamento de Planos</h1>
+        <p className="text-gray-400">Crie e gerencie planos personalizados com integração Stripe</p>
+      </div>
+
+      <div className="flex justify-between items-center mb-6">
         <div>
-          <h1 className="text-3xl font-bold mb-2">Gerenciador de Planos Stripe</h1>
-          <p className="text-gray-600">Crie e gerencie planos de assinatura com trial automático</p>
+          <h2 className="text-xl font-semibold text-white">Planos Customizados</h2>
+          <p className="text-gray-400">
+            {plans.length} planos criados
+          </p>
         </div>
-        <Button
-          onClick={() => setShowCreateForm(!showCreateForm)}
-          className="bg-green-600 hover:bg-green-700"
+        <Button 
+          onClick={() => setShowCreateForm(true)}
+          className="bg-green-600 hover:bg-green-700 text-white"
         >
           <Plus className="w-4 h-4 mr-2" />
-          Novo Plano
+          Criar Novo Plano
         </Button>
       </div>
 
-      {/* Formulário de criação */}
-      {showCreateForm && (
-        <Card className="mb-8 border-green-200">
-          <CardHeader>
-            <CardTitle className="text-green-800">Criar Novo Plano</CardTitle>
-            <CardDescription>Configure um novo plano de assinatura com trial</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="name">Nome do Plano</Label>
-                <Input
-                  id="name"
-                  value={formData.name}
-                  onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
-                  placeholder="Ex: Plano Premium"
-                />
-              </div>
-              <div>
-                <Label htmlFor="description">Descrição</Label>
-                <Input
-                  id="description"
-                  value={formData.description}
-                  onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
-                  placeholder="Descrição do plano"
-                />
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-              <div>
-                <Label htmlFor="price">Preço Mensal (R$)</Label>
-                <Input
-                  id="price"
-                  type="number"
-                  step="0.01"
-                  value={formData.price}
-                  onChange={(e) => setFormData(prev => ({ ...prev, price: parseFloat(e.target.value) }))}
-                />
-              </div>
-              <div>
-                <Label htmlFor="activation_fee">Taxa de Ativação (R$)</Label>
-                <Input
-                  id="activation_fee"
-                  type="number"
-                  step="0.01"
-                  value={formData.activation_fee}
-                  onChange={(e) => setFormData(prev => ({ ...prev, activation_fee: parseFloat(e.target.value) }))}
-                />
-              </div>
-              <div>
-                <Label htmlFor="trial_days">Dias de Trial</Label>
-                <Input
-                  id="trial_days"
-                  type="number"
-                  value={formData.trial_period_days}
-                  onChange={(e) => setFormData(prev => ({ ...prev, trial_period_days: parseInt(e.target.value) }))}
-                />
-              </div>
-              <div>
-                <Label htmlFor="currency">Moeda</Label>
-                <Select value={formData.currency} onValueChange={(value) => setFormData(prev => ({ ...prev, currency: value }))}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="BRL">BRL (Real)</SelectItem>
-                    <SelectItem value="USD">USD (Dólar)</SelectItem>
-                    <SelectItem value="EUR">EUR (Euro)</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-
-            <div>
-              <Label htmlFor="features">Recursos do Plano</Label>
-              <div className="flex gap-2 mb-2">
-                <Input
-                  value={newFeature}
-                  onChange={(e) => setNewFeature(e.target.value)}
-                  placeholder="Ex: 1000 SMS por mês"
-                  onKeyPress={(e) => e.key === 'Enter' && addFeature()}
-                />
-                <Button type="button" onClick={addFeature} variant="outline">
-                  <Plus className="w-4 h-4" />
-                </Button>
-              </div>
-              <div className="flex flex-wrap gap-2">
-                {formData.features.map((feature, index) => (
-                  <Badge key={index} variant="secondary" className="flex items-center gap-1">
-                    {feature}
-                    <X 
-                      className="w-3 h-3 cursor-pointer" 
-                      onClick={() => removeFeature(index)}
-                    />
-                  </Badge>
-                ))}
-              </div>
-            </div>
-
-            <div className="flex justify-end gap-2">
-              <Button 
-                variant="outline" 
-                onClick={() => setShowCreateForm(false)}
-              >
-                Cancelar
-              </Button>
-              <Button 
-                onClick={handleCreatePlan}
-                disabled={loading}
-                className="bg-green-600 hover:bg-green-700"
-              >
-                {loading ? 'Criando...' : 'Criar Plano'}
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Lista de planos */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      {/* Grid de Planos */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
         {plans.map((plan) => (
-          <Card key={plan.id} className="border-2 hover:border-green-300 transition-colors">
-            <CardHeader>
+          <Card key={plan.id} className="bg-gray-800 border-gray-700">
+            <CardHeader className="pb-3">
               <div className="flex justify-between items-start">
-                <div>
-                  <CardTitle className="text-lg">{plan.name}</CardTitle>
-                  <CardDescription>{plan.description}</CardDescription>
+                <div className="flex-1">
+                  <CardTitle className="text-green-400 text-lg">{plan.name}</CardTitle>
+                  <p className="text-gray-400 text-sm mt-1">{plan.description}</p>
                 </div>
-                <Badge variant={plan.active ? "default" : "secondary"}>
-                  {plan.active ? "Ativo" : "Inativo"}
-                </Badge>
+                <div className={`p-2 rounded-full ${plan.active ? 'bg-green-600' : 'bg-gray-600'}`}>
+                  <Power className="w-4 h-4 text-white" />
+                </div>
               </div>
             </CardHeader>
             <CardContent>
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <span className="text-2xl font-bold">
-                    R$ {(plan.recurringAmount || plan.price || 0).toFixed(2)}
+              <div className="space-y-3">
+                <div className="flex justify-between text-sm">
+                  <span className="text-gray-400">Taxa de Ativação:</span>
+                  <span className="text-white font-medium">{formatCurrency(plan.trialAmount)}</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-gray-400">Trial:</span>
+                  <span className="text-white font-medium">{plan.trialDays} dias</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-gray-400">Recorrência:</span>
+                  <span className="text-white font-medium">
+                    {formatCurrency(plan.recurringAmount)}/{plan.recurringInterval === 'month' ? 'mês' : 'ano'}
                   </span>
-                  <span className="text-sm text-gray-500">/{plan.recurringInterval || plan.interval || 'mês'}</span>
                 </div>
-
-                <div className="space-y-2 text-sm">
-                  <div className="flex items-center gap-2">
-                    <DollarSign className="w-4 h-4 text-green-600" />
-                    Taxa de ativação: R$ {plan.trialAmount?.toFixed(2) || plan.activation_fee?.toFixed(2) || '0.00'}
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Calendar className="w-4 h-4 text-blue-600" />
-                    Trial: {plan.trialDays || plan.trial_period_days || 0} dias
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Zap className="w-4 h-4 text-yellow-600" />
-                    Moeda: {plan.currency}
-                  </div>
-                  {plan.paymentLink && (
-                    <div className="flex items-center gap-2">
-                      <Link className="w-4 h-4 text-purple-600" />
-                      <span className="text-purple-600 truncate max-w-[200px]">
-                        {plan.paymentLink}
-                      </span>
-                    </div>
-                  )}
+                <div className="flex justify-between text-sm">
+                  <span className="text-gray-400">Criado:</span>
+                  <span className="text-white font-medium">{formatDate(plan.createdAt)}</span>
                 </div>
-
-                {plan.features && plan.features.length > 0 && (
-                  <div className="space-y-1">
-                    <span className="text-sm font-medium">Recursos:</span>
-                    <div className="flex flex-wrap gap-1">
-                      {plan.features.map((feature, index) => (
-                        <Badge key={index} variant="outline" className="text-xs">
-                          {feature}
-                        </Badge>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                <Separator />
-
-                <div className="flex gap-2">
-                  <Button 
-                    size="sm" 
-                    variant="outline" 
+                
+                <div className="flex gap-2 mt-4">
+                  <Button
+                    size="sm"
+                    variant="outline"
                     onClick={() => handleCopyLink(plan)}
                     className="flex-1"
-                    disabled={!plan.paymentLink}
                   >
-                    <Copy className="w-4 h-4 mr-2" />
+                    <Copy className="w-3 h-3 mr-1" />
                     Copiar Link
                   </Button>
-                  <Button 
-                    size="sm" 
-                    variant="outline" 
-                    onClick={() => handleTestCheckout(plan)}
-                    className="flex-1"
-                    disabled={loading}
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => window.open(plan.paymentLink, '_blank')}
                   >
-                    <ExternalLink className="w-4 h-4 mr-2" />
-                    Testar
+                    <ExternalLink className="w-3 h-3" />
                   </Button>
-                  <Button 
-                    size="sm" 
-                    variant="destructive" 
-                    onClick={() => handleDeletePlan(plan.id)}
-                    disabled={loading}
+                </div>
+                
+                <div className="flex gap-2 mt-2">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => startEdit(plan)}
+                    className="flex-1"
                   >
-                    <Trash2 className="w-4 h-4" />
+                    <Edit className="w-3 h-3 mr-1" />
+                    Editar
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => handleTogglePlan(plan.id, !plan.active)}
+                    className="flex-1"
+                  >
+                    <Power className="w-3 h-3 mr-1" />
+                    {plan.active ? 'Desativar' : 'Ativar'}
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => handleDeletePlan(plan.id)}
+                    className="text-red-400 hover:text-red-300"
+                  >
+                    <Trash2 className="w-3 h-3" />
                   </Button>
                 </div>
               </div>
@@ -488,23 +450,129 @@ export default function StripePlansManager() {
         ))}
       </div>
 
-      {plans.length === 0 && !showCreateForm && (
-        <Card className="text-center py-12">
-          <CardContent>
-            <div className="text-gray-500 mb-4">
-              <DollarSign className="w-12 h-12 mx-auto mb-4 opacity-50" />
-              <p>Nenhum plano criado ainda</p>
-              <p className="text-sm">Crie seu primeiro plano de assinatura</p>
+      {/* Formulário de Criação/Edição */}
+      {showCreateForm && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <Card className="bg-gray-800 border-gray-700 max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+            <CardHeader>
+              <CardTitle className="text-green-400">
+                {editingPlan ? 'Editar Plano' : 'Criar Novo Plano'}
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div>
+                <Label htmlFor="name" className="text-white">Nome do Plano</Label>
+                <Input
+                  id="name"
+                  value={formData.name}
+                  onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
+                  className="bg-gray-700 border-gray-600 text-white"
+                  placeholder="Ex: Plano Premium"
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="description" className="text-white">Descrição</Label>
+                <Textarea
+                  id="description"
+                  value={formData.description}
+                  onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
+                  className="bg-gray-700 border-gray-600 text-white"
+                  placeholder="Descrição do plano..."
+                  rows={3}
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="activation_fee" className="text-white">Taxa de Ativação (R$)</Label>
+                  <Input
+                    id="activation_fee"
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    value={formData.activation_fee}
+                    onChange={(e) => setFormData(prev => ({ ...prev, activation_fee: parseFloat(e.target.value) || 0 }))}
+                    className="bg-gray-700 border-gray-600 text-white"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="trial_period_days" className="text-white">Dias de Trial</Label>
+                  <Input
+                    id="trial_period_days"
+                    type="number"
+                    min="1"
+                    value={formData.trial_period_days}
+                    onChange={(e) => setFormData(prev => ({ ...prev, trial_period_days: parseInt(e.target.value) || 1 }))}
+                    className="bg-gray-700 border-gray-600 text-white"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="price" className="text-white">Preço Recorrente (R$)</Label>
+                  <Input
+                    id="price"
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    value={formData.price}
+                    onChange={(e) => setFormData(prev => ({ ...prev, price: parseFloat(e.target.value) || 0 }))}
+                    className="bg-gray-700 border-gray-600 text-white"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="interval" className="text-white">Intervalo</Label>
+                  <Select value={formData.interval} onValueChange={(value) => setFormData(prev => ({ ...prev, interval: value }))}>
+                    <SelectTrigger className="bg-gray-700 border-gray-600 text-white">
+                      <SelectValue placeholder="Selecione o intervalo" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="month">Mensal</SelectItem>
+                      <SelectItem value="year">Anual</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              <div>
+                <Label htmlFor="currency" className="text-white">Moeda</Label>
+                <Select value={formData.currency} onValueChange={(value) => setFormData(prev => ({ ...prev, currency: value }))}>
+                  <SelectTrigger className="bg-gray-700 border-gray-600 text-white">
+                    <SelectValue placeholder="Selecione a moeda" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="BRL">Real (R$)</SelectItem>
+                    <SelectItem value="USD">Dólar ($)</SelectItem>
+                    <SelectItem value="EUR">Euro (€)</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </CardContent>
+            
+            <div className="flex justify-end gap-2 p-6 pt-0">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setShowCreateForm(false);
+                  setEditingPlan(null);
+                  resetForm();
+                }}
+                disabled={loading}
+              >
+                Cancelar
+              </Button>
+              <Button
+                onClick={editingPlan ? handleUpdatePlan : handleCreatePlan}
+                disabled={loading}
+                className="bg-green-600 hover:bg-green-700 text-white"
+              >
+                {loading ? 'Salvando...' : editingPlan ? 'Atualizar' : 'Criar'}
+              </Button>
             </div>
-            <Button 
-              onClick={() => setShowCreateForm(true)}
-              className="bg-green-600 hover:bg-green-700"
-            >
-              <Plus className="w-4 h-4 mr-2" />
-              Criar Primeiro Plano
-            </Button>
-          </CardContent>
-        </Card>
+          </Card>
+        </div>
       )}
     </div>
   );

@@ -356,6 +356,158 @@ export class CustomPlansSystem {
     stmt.run(active ? 1 : 0, new Date().toISOString(), planId);
   }
 
+  async updateCustomPlan(planId: string, userId: string, data: Partial<CreateCustomPlanData>): Promise<CustomPlan> {
+    try {
+      // Buscar plano no banco
+      const plan = await this.getPlanById(planId);
+      
+      if (!plan || plan.userId !== userId) {
+        throw new Error('Plano não encontrado ou não pertence ao usuário');
+      }
+
+      // Atualizar produto no Stripe se nome ou descrição foram alterados
+      if (plan.stripeProductId && (data.name || data.description)) {
+        await this.stripe.products.update(plan.stripeProductId, {
+          name: data.name || plan.name,
+          description: data.description || plan.description,
+        });
+      }
+
+      // Atualizar preço no Stripe se valor recorrente foi alterado
+      if (plan.stripePriceId && data.recurringAmount && data.recurringAmount !== plan.recurringAmount) {
+        // Criar novo preço (preços no Stripe são imutáveis)
+        const newPrice = await this.stripe.prices.create({
+          unit_amount: Math.round(data.recurringAmount * 100),
+          currency: (data.currency || plan.currency).toLowerCase(),
+          recurring: {
+            interval: (data.recurringInterval || plan.recurringInterval) as 'month' | 'year',
+          },
+          product: plan.stripeProductId!,
+        });
+
+        // Desativar preço antigo
+        await this.stripe.prices.update(plan.stripePriceId, {
+          active: false,
+        });
+
+        // Atualizar referência no banco
+        data.stripePriceId = newPrice.id;
+      }
+
+      // Atualizar dados no banco
+      const updatedData = {
+        ...data,
+        updatedAt: new Date(),
+      };
+
+      const query = `
+        UPDATE custom_plans 
+        SET 
+          name = ?, 
+          description = ?, 
+          trial_amount = ?, 
+          trial_days = ?, 
+          recurring_amount = ?, 
+          recurring_interval = ?, 
+          currency = ?, 
+          stripe_price_id = ?, 
+          updated_at = ?
+        WHERE id = ? AND user_id = ?
+      `;
+
+      const stmt = this.sqlite.prepare(query);
+      stmt.run(
+        data.name || plan.name,
+        data.description || plan.description,
+        data.trialAmount || plan.trialAmount,
+        data.trialDays || plan.trialDays,
+        data.recurringAmount || plan.recurringAmount,
+        data.recurringInterval || plan.recurringInterval,
+        data.currency || plan.currency,
+        (data as any).stripePriceId || plan.stripePriceId,
+        updatedData.updatedAt.toISOString(),
+        planId,
+        userId
+      );
+
+      console.log('✅ PLANO ATUALIZADO COM SUCESSO:', planId);
+      return await this.getPlanById(planId)!;
+    } catch (error) {
+      console.error('❌ ERRO AO ATUALIZAR PLANO:', error);
+      throw new Error(`Falha ao atualizar plano: ${error.message}`);
+    }
+  }
+
+  async togglePlanStatus(planId: string, userId: string, active: boolean): Promise<boolean> {
+    try {
+      // Buscar plano no banco
+      const plan = await this.getPlanById(planId);
+      
+      if (!plan || plan.userId !== userId) {
+        throw new Error('Plano não encontrado ou não pertence ao usuário');
+      }
+
+      // Atualizar status do produto no Stripe
+      if (plan.stripeProductId) {
+        await this.stripe.products.update(plan.stripeProductId, {
+          active: active,
+        });
+      }
+
+      // Atualizar status do preço no Stripe
+      if (plan.stripePriceId) {
+        await this.stripe.prices.update(plan.stripePriceId, {
+          active: active,
+        });
+      }
+
+      // Atualizar status no banco
+      await this.updatePlanStatus(planId, active);
+
+      console.log('✅ STATUS DO PLANO ALTERADO COM SUCESSO:', planId, active);
+      return true;
+    } catch (error) {
+      console.error('❌ ERRO AO ALTERAR STATUS DO PLANO:', error);
+      throw new Error(`Falha ao alterar status do plano: ${error.message}`);
+    }
+  }
+
+  async deletePlan(planId: string, userId: string): Promise<boolean> {
+    try {
+      // Buscar plano no banco
+      const plan = await this.getPlanById(planId);
+      
+      if (!plan || plan.userId !== userId) {
+        throw new Error('Plano não encontrado ou não pertence ao usuário');
+      }
+
+      // Arquivar produto no Stripe (não pode ser deletado)
+      if (plan.stripeProductId) {
+        await this.stripe.products.update(plan.stripeProductId, {
+          active: false,
+        });
+      }
+
+      // Arquivar preço no Stripe
+      if (plan.stripePriceId) {
+        await this.stripe.prices.update(plan.stripePriceId, {
+          active: false,
+        });
+      }
+
+      // Deletar do banco local
+      const query = `DELETE FROM custom_plans WHERE id = ? AND user_id = ?`;
+      const stmt = this.sqlite.prepare(query);
+      stmt.run(planId, userId);
+
+      console.log('✅ PLANO DELETADO COM SUCESSO:', planId);
+      return true;
+    } catch (error) {
+      console.error('❌ ERRO AO DELETAR PLANO:', error);
+      throw new Error(`Falha ao deletar plano: ${error.message}`);
+    }
+  }
+
   private mapRowToPlan(row: any): CustomPlan {
     return {
       id: row.id,

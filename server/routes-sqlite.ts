@@ -4418,7 +4418,7 @@ export function registerSQLiteRoutes(app: Express): Server {
 
       console.log('📋 LISTANDO PLANOS CUSTOMIZADOS DO USUÁRIO:', userId);
 
-      if (!stripeService) {
+      if (!process.env.STRIPE_SECRET_KEY) {
         return res.status(500).json({ error: "Stripe não configurado" });
       }
 
@@ -4443,34 +4443,123 @@ export function registerSQLiteRoutes(app: Express): Server {
     }
   });
 
-  // DESATIVAR PLANO CUSTOMIZADO
-  app.delete("/api/stripe/custom-plans/:planId", verifyJWT, async (req: any, res) => {
+  // ATUALIZAR PLANO CUSTOMIZADO
+  app.put("/api/stripe/custom-plans/:planId", verifyJWT, async (req: any, res) => {
     try {
       const { planId } = req.params;
       const userId = req.user.id;
+      const { name, description, trialAmount, trialDays, recurringAmount, recurringInterval, currency } = req.body;
 
-      console.log('🔴 DESATIVANDO PLANO CUSTOMIZADO:', planId);
+      console.log('🔄 ATUALIZANDO PLANO CUSTOMIZADO:', planId, req.body);
 
-      if (!stripeService) {
-        return res.status(500).json({ error: "Stripe não configurado" });
+      if (!activeStripeService) {
+        try {
+          activeStripeService = new StripeService();
+        } catch (error) {
+          return res.status(500).json({ error: "Stripe não configurado" });
+        }
       }
 
       const { CustomPlansSystem } = await import('./custom-plans-system');
       const customPlansSystem = new CustomPlansSystem(process.env.STRIPE_SECRET_KEY || '');
 
-      const success = await customPlansSystem.deactivatePlan(planId, userId);
+      const updatedPlan = await customPlansSystem.updateCustomPlan(planId, userId, {
+        name,
+        description,
+        trialAmount,
+        trialDays,
+        recurringAmount,
+        recurringInterval,
+        currency
+      });
 
-      console.log('✅ PLANO DESATIVADO:', success);
+      console.log('✅ PLANO ATUALIZADO:', updatedPlan);
 
       res.json({
         success: true,
-        message: "Plano desativado com sucesso"
+        plan: updatedPlan,
+        message: "Plano atualizado com sucesso"
       });
 
     } catch (error) {
-      console.error('❌ Erro ao desativar plano customizado:', error);
+      console.error('❌ Erro ao atualizar plano customizado:', error);
       res.status(500).json({ 
-        error: "Falha ao desativar plano customizado", 
+        error: "Falha ao atualizar plano customizado", 
+        details: error.message 
+      });
+    }
+  });
+
+  // ALTERNAR STATUS DO PLANO CUSTOMIZADO
+  app.patch("/api/stripe/custom-plans/:planId/toggle", verifyJWT, async (req: any, res) => {
+    try {
+      const { planId } = req.params;
+      const userId = req.user.id;
+      const { active } = req.body;
+
+      console.log('🔄 ALTERANDO STATUS DO PLANO CUSTOMIZADO:', planId, { active });
+
+      if (!activeStripeService) {
+        try {
+          activeStripeService = new StripeService();
+        } catch (error) {
+          return res.status(500).json({ error: "Stripe não configurado" });
+        }
+      }
+
+      const { CustomPlansSystem } = await import('./custom-plans-system');
+      const customPlansSystem = new CustomPlansSystem(process.env.STRIPE_SECRET_KEY || '');
+
+      const success = await customPlansSystem.togglePlanStatus(planId, userId, active);
+
+      console.log('✅ STATUS DO PLANO ALTERADO:', success);
+
+      res.json({
+        success: true,
+        message: `Plano ${active ? 'ativado' : 'desativado'} com sucesso`
+      });
+
+    } catch (error) {
+      console.error('❌ Erro ao alterar status do plano customizado:', error);
+      res.status(500).json({ 
+        error: "Falha ao alterar status do plano customizado", 
+        details: error.message 
+      });
+    }
+  });
+
+  // DELETAR PLANO CUSTOMIZADO
+  app.delete("/api/stripe/custom-plans/:planId", verifyJWT, async (req: any, res) => {
+    try {
+      const { planId } = req.params;
+      const userId = req.user.id;
+
+      console.log('🗑️ DELETANDO PLANO CUSTOMIZADO:', planId);
+
+      if (!activeStripeService) {
+        try {
+          activeStripeService = new StripeService();
+        } catch (error) {
+          return res.status(500).json({ error: "Stripe não configurado" });
+        }
+      }
+
+      const { CustomPlansSystem } = await import('./custom-plans-system');
+      const customPlansSystem = new CustomPlansSystem(process.env.STRIPE_SECRET_KEY || '');
+
+      const success = await customPlansSystem.deletePlan(planId, userId);
+
+      console.log('✅ PLANO DELETADO:', success);
+
+      res.json({
+        success: true,
+        message: "Plano deletado com sucesso"
+      });
+
+    } catch (error) {
+      console.error('❌ Erro ao deletar plano customizado:', error);
+      res.status(500).json({ 
+        error: "Falha ao deletar plano customizado", 
         details: error.message 
       });
     }
