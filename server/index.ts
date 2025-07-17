@@ -132,33 +132,7 @@ app.use(blacklistMiddleware);
 // Initialize auth ANTES das rotas
 setupHybridAuth(app);
 
-// SOLUÇÃO CRÍTICA: Registrar SAAS COBRAN ANTES do Vite para evitar interceptação
-import saasCobrancaRoutes from './saas-cobran-routes.js';
-import path from 'path';
-import { fileURLToPath } from 'url';
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
-// Debug middleware para SAAS COBRAN
-app.use('/api/saas-cobran', (req, res, next) => {
-  console.log('🔍 SAAS COBRAN MIDDLEWARE -', req.method, req.path);
-  console.log('📝 Body:', JSON.stringify(req.body, null, 2));
-  next();
-});
-
-// Registrar rotas SAAS COBRAN ANTES do Vite
-app.use('/api/saas-cobran', saasCobrancaRoutes);
-
-// Servir arquivos estáticos do SAAS COBRAN
-app.use('/saas-cobran', express.static(path.join(__dirname, '../saas-cobran')));
-
-// Rota específica para o index do SAAS COBRAN
-app.get('/saas-cobran/', (req, res) => {
-  res.sendFile(path.join(__dirname, '../saas-cobran/index.html'));
-});
-
-console.log('✅ SAAS COBRAN ROUTES registradas ANTES do Vite');
+// System initialization and routes
 
 // Register all routes
 const server = registerHybridRoutes(app);

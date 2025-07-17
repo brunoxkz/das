@@ -260,13 +260,7 @@ export function Sidebar() {
       title: "INTEGRAÇÕES",
       icon: <Plug className="w-3 h-3" />,
       items: [
-        {
-          title: "SAAS COBRAN",
-          href: "/saas-cobran-manager",
-          icon: <CheckCircle className="w-4 h-4" />,
-          active: location === "/saas-cobran-manager",
-          badge: <span className="text-xs text-green-500 font-medium">Cobrança</span>
-        },
+
         {
           title: "Webhooks",
           href: "/webhooks",

@@ -82,7 +82,7 @@ import StripeMonitoring from "@/pages/stripe-monitoring";
 import CheckoutStripeFinal from "@/pages/checkout-stripe-final";
 import ProductBuilder from "@/pages/product-builder";
 import SubscriptionsManager from "@/pages/subscriptions-manager";
-import SaasCobrancaManager from "@/pages/saas-cobran-manager";
+
 import { useAuth } from "@/hooks/useAuth-jwt";
 import { isUnauthorizedError } from "@/lib/authUtils";
 import { SidebarProvider } from "@/hooks/useSidebar";
@@ -501,11 +501,7 @@ function App() {
           </Layout>
         </Route>
         
-        <Route path="/saas-cobran-manager">
-          <Layout>
-            <SaasCobrancaManager />
-          </Layout>
-        </Route>
+
 
         <Route component={NotFoundPage} />
         </Switch>

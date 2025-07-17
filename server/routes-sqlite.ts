@@ -65,7 +65,6 @@ import HealthCheckSystem from './health-check-system.js';
 import WhatsAppBusinessAPI from './whatsapp-business-api';
 import { registerFacelessVideoRoutes } from './faceless-video-routes';
 import { StripeCheckoutLinkGenerator } from './stripe-checkout-link-generator';
-import saasCobrancaRoutes from './saas-cobran-routes';
 import Stripe from 'stripe';
 
 // JWT Secret para validação de tokens
@@ -129,34 +128,7 @@ async function checkPlanExpiration(req: any, res: any, next: any) {
 }
 
 export function registerSQLiteRoutes(app: Express): Server {
-  // ⚡ SAAS COBRAN - PROCESSADO PRIMEIRO PARA EVITAR INTERCEPTAÇÃO
-  // Rota de teste para verificar se SAAS COBRAN está sendo interceptado
-  app.get('/api/saas-cobran/test', (req, res) => {
-    res.json({ message: 'SAAS COBRAN API está funcionando', timestamp: new Date().toISOString() });
-  });
-
-  // Middleware de debug para SAAS COBRAN
-  app.use('/api/saas-cobran', (req, res, next) => {
-    console.log('🔍 MIDDLEWARE DEBUG -', req.method, req.path);
-    console.log('📝 Headers:', req.headers);
-    console.log('📝 Body type:', typeof req.body);
-    console.log('📝 Body keys:', Object.keys(req.body || {}));
-    console.log('📝 Body content:', JSON.stringify(req.body || {}, null, 2));
-    next();
-  });
-
-  // Registrar rotas SAAS COBRAN imediatamente
-  app.use('/api/saas-cobran', saasCobrancaRoutes);
-
-  // Servir arquivos estáticos do SAAS COBRAN
-  app.use('/saas-cobran', express.static(path.join(__dirname, '../saas-cobran')));
-
-  // Rota específica para o index do SAAS COBRAN
-  app.get('/saas-cobran/', (req, res) => {
-    res.sendFile(path.join(__dirname, '../saas-cobran/index.html'));
-  });
-
-  console.log('✅ Rotas do SAAS COBRAN registradas com sucesso');
+  // API Routes initialization
 
   // 🔓 ROTAS PÚBLICAS - SEM MIDDLEWARES DE SEGURANÇA
   // CHECKOUT PÚBLICO - BUSCAR PLANO POR ID (SEM AUTENTICAÇÃO)
@@ -18619,109 +18591,7 @@ export function registerCheckoutRoutes(app: Express) {
   // Inicializar Pagar.me
   initializePagarme();
 
-  // ROTAS DO SAAS COBRAN - INTEGRAÇÃO COM SISTEMA DE COBRANÇA
-  // Rota para criar assinatura via SAAS COBRAN
-  app.post("/api/saas-cobran/create-subscription", verifyJWT, async (req: any, res) => {
-    try {
-      const { email, planType, amount, currency } = req.body;
-      
-      // Simular criação de assinatura
-      const subscriptionId = `sub_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-      
-      res.json({
-        success: true,
-        subscriptionId,
-        message: 'Assinatura criada com sucesso',
-        details: {
-          email,
-          planType,
-          amount,
-          currency,
-          status: 'active',
-          createdAt: new Date().toISOString()
-        }
-      });
-    } catch (error) {
-      console.error('Erro ao criar assinatura:', error);
-      res.status(500).json({ 
-        success: false, 
-        error: 'Erro interno do servidor' 
-      });
-    }
-  });
-
-  // Rota para obter status de assinatura
-  app.get("/api/saas-cobran/subscription/:subscriptionId", verifyJWT, async (req: any, res) => {
-    try {
-      const { subscriptionId } = req.params;
-      
-      res.json({
-        success: true,
-        subscription: {
-          id: subscriptionId,
-          status: 'active',
-          amount: 29.90,
-          currency: 'BRL',
-          planType: 'basic',
-          createdAt: new Date().toISOString(),
-          nextBilling: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
-        }
-      });
-    } catch (error) {
-      console.error('Erro ao obter status da assinatura:', error);
-      res.status(500).json({ 
-        success: false, 
-        error: 'Erro interno do servidor' 
-      });
-    }
-  });
-
-  // Rota para cancelar assinatura
-  app.post("/api/saas-cobran/subscription/:subscriptionId/cancel", verifyJWT, async (req: any, res) => {
-    try {
-      const { subscriptionId } = req.params;
-      
-      res.json({
-        success: true,
-        message: 'Assinatura cancelada com sucesso',
-        subscription: {
-          id: subscriptionId,
-          status: 'cancelled',
-          cancelledAt: new Date().toISOString()
-        }
-      });
-    } catch (error) {
-      console.error('Erro ao cancelar assinatura:', error);
-      res.status(500).json({ 
-        success: false, 
-        error: 'Erro interno do servidor' 
-      });
-    }
-  });
-
-  // Rota para verificar conectividade com SAAS COBRAN
-  app.get("/api/saas-cobran/health", async (req, res) => {
-    try {
-      const saasCobrancaUrl = process.env.SAAS_COBRAN_URL || 'http://localhost:3001';
-      
-      res.json({
-        success: true,
-        saasCobrancaStatus: 'connected',
-        url: saasCobrancaUrl,
-        timestamp: new Date().toISOString(),
-        message: 'Sistema SAAS COBRAN operacional'
-      });
-    } catch (error) {
-      res.json({
-        success: false,
-        saasCobrancaStatus: 'error',
-        error: error.message,
-        timestamp: new Date().toISOString()
-      });
-    }
-  });
-
-  // SAAS COBRAN já foi registrado no início da função
+  // System routes registration complete
 }
 
 

@@ -243,6 +243,20 @@ O sistema utiliza Stripe Payment Intent para processar pagamentos únicos de R$ 
 
 ```
 Changelog:
+- July 17, 2025. SAAS COBRAN SISTEMA COMPLETAMENTE REMOVIDO - Purificação total do sistema conforme solicitado pelo usuário:
+  * Removido completamente o diretório saas-cobran/ e todos os arquivos relacionados
+  * Eliminadas todas as referências SAAS COBRAN do server/index.ts e server/routes-sqlite.ts
+  * Removida a página client/src/pages/saas-cobran-manager.tsx
+  * Removida a entrada "SAAS COBRAN" da sidebar de navegação
+  * Removidos arquivos: start-saas-cobran.sh, saas-cobran-config.json, saas-cobran-integration.ts
+  * Removidas rotas: /api/saas-cobran/*, /saas-cobran/*, todas as referências de middleware
+  * Sistema agora focado exclusivamente na plataforma Vendzz
+  * Nenhum resquício do sistema de cobrança SAAS COBRAN permanece no código
+  * Aplicação funciona perfeitamente sem qualquer dependência do sistema removido
+  * Credenciais de acesso mantidas: admin@admin.com / admin123
+  * Todos os outros módulos (SMS, Email, WhatsApp, Quiz Builder, Stripe) permanecem funcionais
+  * Remoção solicitada duas vezes pelo usuário para garantir eliminação completa
+Changelog:
 - July 17, 2025. SISTEMA DE TRIAL CUSTOMIZADO 100% FUNCIONAL - Implementação completa do sistema de cobrança imediata + recorrência automática:
   * Criado StripeCustomTrialSystem com arquitetura Payment Intent + Subscription Schedule
   * Endpoint /api/stripe/create-custom-trial funcionando perfeitamente com JWT auth
