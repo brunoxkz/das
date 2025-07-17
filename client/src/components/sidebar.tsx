@@ -46,7 +46,10 @@ import {
   Bot,
   Coins,
   Video,
-  ShoppingCart
+  ShoppingCart,
+  Link as LinkIcon,
+  CreditCard,
+  Repeat
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -149,42 +152,33 @@ export function Sidebar() {
       ]
     },
     {
-      title: "RECURRING",
+      title: "STRIPE CHECKOUT",
+      icon: <CreditCard className="w-3 h-3" />,
       items: [
         {
-          title: "CHECKOUT OFICIAL",
-          href: "/checkout-official",
-          icon: <ShoppingCart className="w-4 h-4" />,
-          active: location === "/checkout-official"
+          title: "GERENCIAR LINKS",
+          href: "/stripe-checkout-manager",
+          icon: <Link className="w-4 h-4" />,
+          active: location === "/stripe-checkout-manager",
+          badge: <span className="text-xs text-green-500 font-medium">R$1→R$29,90</span>
         },
         {
-          title: "GERENCIAR PLANOS",
+          title: "STRIPE ELEMENTS",
+          href: "/stripe-elements-checkout",
+          icon: <CreditCard className="w-4 h-4" />,
+          active: location === "/stripe-elements-checkout",
+          badge: <span className="text-xs text-blue-500 font-medium">trial 3 dias</span>
+        },
+        {
+          title: "PLANOS STRIPE",
           href: "/stripe-plans-manager",
-          icon: <Package className="w-4 h-4" />,
+          icon: <Crown className="w-4 h-4" />,
           active: location === "/stripe-plans-manager"
         },
         {
-          title: "SISTEMA CHECKOUT",
-          href: "/checkout-system",
-          icon: <ShoppingCart className="w-4 h-4" />,
-          active: location === "/checkout-system"
-        },
-        {
-          title: "CHECKOUT INDIVIDUAL",
-          href: "/checkout-individual",
-          icon: <ShoppingCart className="w-4 h-4" />,
-          active: location === "/checkout-individual"
-        },
-        {
-          title: "PRODUCT BUILDER",
-          href: "/product-builder",
-          icon: <Package className="w-4 h-4" />,
-          active: location === "/product-builder"
-        },
-        {
-          title: "GERENCIAR ASSINATURAS",
+          title: "ASSINATURAS",
           href: "/subscriptions-manager",
-          icon: <Crown className="w-4 h-4" />,
+          icon: <Repeat className="w-4 h-4" />,
           active: location === "/subscriptions-manager"
         },
       ]
