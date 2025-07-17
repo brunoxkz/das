@@ -4041,7 +4041,7 @@ export function registerSQLiteRoutes(app: Express): Server {
     }
   });
 
-  // STRIPE INTEGRATION - CRIAR CHECKOUT SESSION COM TRIAL
+  // STRIPE INTEGRATION - CRIAR CHECKOUT SESSION COM TRIAL FIXO R$1
   app.post("/api/stripe/create-checkout-session", verifyJWT, async (req: any, res) => {
     try {
       const { trial_period_days = 3, trial_price = 1.00, regular_price = 29.90, currency = "BRL" } = req.body;
@@ -4050,6 +4050,9 @@ export function registerSQLiteRoutes(app: Express): Server {
       if (!activeStripeService) {
         return res.status(500).json({ error: "Stripe não configurado" });
       }
+
+      console.log('🔥 CRIANDO CHECKOUT SESSION COM TRIAL FIXO R$1');
+      console.log('📊 Parâmetros:', { trial_period_days, trial_price, regular_price, currency });
 
       // Buscar ou criar customer
       const user = await storage.getUser(userId);
@@ -4070,21 +4073,45 @@ export function registerSQLiteRoutes(app: Express): Server {
         customer = { id: `cus_test_${Date.now()}` };
       }
 
-      // Criar checkout session direto usando Stripe API
+      // ABORDAGEM CORRETA: Criar produto e preço no Stripe para garantir cobrança R$1
+      const product = await activeStripeService.stripe.products.create({
+        name: 'Plano Premium - Vendzz',
+        description: `Trial ${trial_period_days} dias por R$${trial_price}, depois R$${regular_price}/mês`,
+        metadata: {
+          trial_period_days: trial_period_days.toString(),
+          trial_price: trial_price.toString(),
+          regular_price: regular_price.toString()
+        }
+      });
+
+      const price = await activeStripeService.stripe.prices.create({
+        product: product.id,
+        currency: currency.toLowerCase(),
+        recurring: {
+          interval: 'month'
+        },
+        unit_amount: Math.round(regular_price * 100) // R$29.90 mensal
+      });
+
+      // Criar preço específico para trial
+      const trialPrice = await activeStripeService.stripe.prices.create({
+        product: product.id,
+        currency: currency.toLowerCase(),
+        unit_amount: Math.round(trial_price * 100) // R$1.00 único
+      });
+
+      console.log('💰 Preços criados:', {
+        monthlyPriceId: price.id,
+        trialPriceId: trialPrice.id,
+        monthlyAmount: price.unit_amount,
+        trialAmount: trialPrice.unit_amount
+      });
+
+      // Criar session com trial customizado
       const session = await activeStripeService.stripe.checkout.sessions.create({
         mode: 'subscription',
         line_items: [{
-          price_data: {
-            currency: currency.toLowerCase(),
-            product_data: {
-              name: 'Plano Premium - Vendzz',
-              description: `Trial ${trial_period_days} dias por R$${trial_price}, depois R$${regular_price}/mês`
-            },
-            unit_amount: Math.round(regular_price * 100),
-            recurring: {
-              interval: 'month'
-            }
-          },
+          price: price.id,
           quantity: 1
         }],
         customer: customer.id,
@@ -4094,22 +4121,114 @@ export function registerSQLiteRoutes(app: Express): Server {
             end_behavior: {
               missing_payment_method: 'cancel'
             }
-          }
+          },
+          add_invoice_items: [
+            {
+              price: trialPrice.id,
+              quantity: 1
+            }
+          ]
         },
         success_url: `https://example.com/success?session_id={CHECKOUT_SESSION_ID}`,
         cancel_url: `https://example.com/cancel`,
         allow_promotion_codes: true
       });
 
+      console.log('✅ Session criada com sucesso:', {
+        sessionId: session.id,
+        url: session.url
+      });
+
       res.json({
         clientSecret: session.client_secret,
         sessionId: session.id,
         url: session.url,
-        customerId: customer.id
+        customerId: customer.id,
+        productId: product.id,
+        monthlyPriceId: price.id,
+        trialPriceId: trialPrice.id
       });
     } catch (error) {
-      console.error("Error creating checkout session:", error);
+      console.error("❌ Error creating checkout session:", error);
       res.status(500).json({ error: "Failed to create checkout session" });
+    }
+  });
+
+  // STRIPE INTEGRATION - CRIAR CHECKOUT SESSION COM TRIAL FEE GARANTIDO
+  app.post("/api/stripe/create-checkout-session-with-trial-fee", verifyJWT, async (req: any, res) => {
+    try {
+      const { trial_period_days = 3, trial_price = 1.00, regular_price = 29.90, currency = "BRL" } = req.body;
+      const userId = req.user.id;
+
+      if (!activeStripeService) {
+        return res.status(500).json({ error: "Stripe não configurado" });
+      }
+
+      console.log('🔥 CRIANDO CHECKOUT SESSION COM TRIAL FEE GARANTIDO');
+      console.log('📊 Parâmetros:', { trial_period_days, trial_price, regular_price, currency });
+
+      // Buscar ou criar customer
+      const user = await storage.getUser(userId);
+      if (!user) {
+        return res.status(404).json({ error: "Usuário não encontrado" });
+      }
+
+      let customer;
+      try {
+        customer = await activeStripeService.createCustomer({
+          email: user.email,
+          name: `${user.firstName} ${user.lastName}`,
+          metadata: { userId }
+        });
+      } catch (error) {
+        console.error("Error creating customer:", error);
+        // Usar um ID de customer fictício para teste
+        customer = { id: `cus_test_${Date.now()}` };
+      }
+
+      // SOLUÇÃO DEFINITIVA: Usar mode='payment' para cobrar R$1 imediatamente
+      const sessionTrialFee = await activeStripeService.stripe.checkout.sessions.create({
+        mode: 'payment',
+        line_items: [{
+          price_data: {
+            currency: currency.toLowerCase(),
+            product_data: {
+              name: 'Taxa de Ativação do Trial - Vendzz',
+              description: `Ativação do período de teste (${trial_period_days} dias) - Plano Premium`
+            },
+            unit_amount: Math.round(trial_price * 100) // R$1.00 cobrado imediatamente
+          },
+          quantity: 1
+        }],
+        customer: customer.id,
+        success_url: `https://example.com/success?session_id={CHECKOUT_SESSION_ID}&payment_type=trial_fee`,
+        cancel_url: `https://example.com/cancel`,
+        metadata: {
+          payment_type: 'trial_fee',
+          trial_period_days: trial_period_days.toString(),
+          regular_price: regular_price.toString(),
+          userId: userId
+        }
+      });
+
+      console.log('✅ Session trial fee criada com sucesso:', {
+        sessionId: sessionTrialFee.id,
+        url: sessionTrialFee.url,
+        amount: trial_price
+      });
+
+      res.json({
+        clientSecret: sessionTrialFee.client_secret,
+        sessionId: sessionTrialFee.id,
+        url: sessionTrialFee.url,
+        customerId: customer.id,
+        paymentType: 'trial_fee',
+        amount: trial_price,
+        currency: currency
+      });
+    } catch (error) {
+      console.error("❌ Error creating trial fee checkout session:", error);
+      res.status(500).json({ error: "Failed to create trial fee checkout session" });
     }
   });
 
