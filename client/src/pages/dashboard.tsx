@@ -282,7 +282,7 @@ export default function Dashboard() {
               <Clock className="w-5 h-5" />
               <div>
                 <span className="font-semibold">
-                  {t('dashboard.currentPlan')} {userPlan.charAt(0).toUpperCase() + userPlan.slice(1)}: {daysLeft} {daysLeft === 1 ? 'dia restante' : 'dias restantes'}
+                  {t('plans.current_plan')} {userPlan === 'enterprise' ? t('plans.enterprise') : userPlan.charAt(0).toUpperCase() + userPlan.slice(1)}: {daysLeft} {daysLeft === 1 ? 'dia restante' : t('plans.days_remaining')}
                 </span>
                 <p className="text-sm text-green-100">
                   {userPlan === 'trial' ? 'Teste grátis por tempo limitado! Upgrade para continuar.' : 
@@ -298,7 +298,7 @@ export default function Dashboard() {
                   className="bg-white text-green-600 hover:bg-green-50 border-white"
                 >
                   <CreditCard className="w-4 h-4 mr-2" />
-                  {userPlan === 'trial' || userPlan === 'free' ? t('dashboard.upgradeAccount') : t('dashboard.upgradeAccount')}
+                  {userPlan === 'trial' || userPlan === 'free' ? t('plans.upgrade') : t('plans.upgrade')}
                 </Button>
               </Link>
               <Link href="/credits">
@@ -332,7 +332,7 @@ export default function Dashboard() {
                 {t("dashboard")}
               </h1>
               <p className="dashboard-text-secondary mt-2">
-                {t("welcome_back")} {userData?.user?.firstName || "Usuário"}
+                {t("dashboard.welcome_back")} {userData?.user?.firstName || "Admin"}
               </p>
             </div>
             <div className="flex items-center gap-4">
@@ -355,7 +355,7 @@ export default function Dashboard() {
               <Link href="/quizzes/new">
                 <Button className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 shadow-lg">
                   <Plus className="w-4 h-4 mr-2" />
-                  Criar Quiz
+                  {t("common.create_quiz_btn")}
                 </Button>
               </Link>
             </div>
