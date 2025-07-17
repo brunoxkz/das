@@ -3944,11 +3944,108 @@ export function registerSQLiteRoutes(app: Express): Server {
         monthlyPrice,
       });
 
-      // Validações básicas
-      if (!customerName) {
+      console.log('🔍 VALIDAÇÃO DEBUG:', {
+        customerNameValid: customerName && customerName.trim().length >= 2,
+        customerEmailValid: customerEmail && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(customerEmail),
+        activationFeeValid: typeof activationFee === 'number' && activationFee > 0 && activationFee <= 10000,
+        monthlyPriceValid: typeof monthlyPrice === 'number' && monthlyPrice > 0 && monthlyPrice <= 10000,
+        trialDaysValid: Number.isInteger(trialDays) && trialDays >= 0 && trialDays <= 90,
+        cardDataValid: cardData && cardData.cardNumber
+      });
+
+      // VALIDAÇÕES CRÍTICAS IMPLEMENTADAS (CORREÇÕES DOS TESTES)
+      
+      // 1. Validação de nome do cliente
+      if (!customerName || customerName.trim().length < 2) {
         return res.status(400).json({
           success: false,
-          error: 'Nome do cliente é obrigatório',
+          error: 'Nome do cliente é obrigatório e deve ter pelo menos 2 caracteres',
+        });
+      }
+      
+      // 2. Validação de email - CORREÇÃO CRÍTICA
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!customerEmail || !emailRegex.test(customerEmail)) {
+        return res.status(400).json({
+          success: false,
+          error: 'Email inválido - formato correto: exemplo@email.com',
+        });
+      }
+      
+      // 3. Validação de valores monetários - CORREÇÃO CRÍTICA
+      if (typeof activationFee !== 'number' || activationFee <= 0 || activationFee > 10000) {
+        return res.status(400).json({
+          success: false,
+          error: 'Taxa de ativação inválida - deve ser um valor positivo entre R$ 0,01 e R$ 10.000',
+        });
+      }
+      
+      if (typeof monthlyPrice !== 'number' || monthlyPrice <= 0 || monthlyPrice > 10000) {
+        return res.status(400).json({
+          success: false,
+          error: 'Preço mensal inválido - deve ser um valor positivo entre R$ 0,01 e R$ 10.000',
+        });
+      }
+      
+      // 4. Validação de período de trial - CORREÇÃO CRÍTICA
+      if (!Number.isInteger(trialDays) || trialDays < 0 || trialDays > 90) {
+        return res.status(400).json({
+          success: false,
+          error: 'Período de trial inválido - deve ser um número inteiro entre 0 e 90 dias',
+        });
+      }
+      
+      // 5. Validação de cartão de crédito - CORREÇÃO CRÍTICA
+      if (!cardData || !cardData.cardNumber) {
+        return res.status(400).json({
+          success: false,
+          error: 'Dados do cartão são obrigatórios',
+        });
+      }
+      
+      // Algoritmo de Luhn para validação de cartão
+      const luhnCheck = (cardNumber: string) => {
+        const cleanNumber = cardNumber.replace(/\s/g, '');
+        if (!/^\d{13,19}$/.test(cleanNumber)) return false;
+        
+        let sum = 0;
+        let isEven = false;
+        
+        for (let i = cleanNumber.length - 1; i >= 0; i--) {
+          let digit = parseInt(cleanNumber[i]);
+          
+          if (isEven) {
+            digit *= 2;
+            if (digit > 9) digit -= 9;
+          }
+          
+          sum += digit;
+          isEven = !isEven;
+        }
+        
+        return sum % 10 === 0;
+      };
+      
+      if (!luhnCheck(cardData.cardNumber)) {
+        return res.status(400).json({
+          success: false,
+          error: 'Número do cartão inválido - verifique os dígitos e tente novamente',
+        });
+      }
+      
+      // 6. Validação de data de expiração
+      if (!cardData.expiryDate || !/^\d{2}\/\d{2}$/.test(cardData.expiryDate)) {
+        return res.status(400).json({
+          success: false,
+          error: 'Data de expiração inválida - formato correto: MM/AA',
+        });
+      }
+      
+      // 7. Validação de CVC
+      if (!cardData.cvc || !/^\d{3,4}$/.test(cardData.cvc)) {
+        return res.status(400).json({
+          success: false,
+          error: 'CVC inválido - deve conter 3 ou 4 dígitos',
         });
       }
 
