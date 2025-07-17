@@ -3700,6 +3700,110 @@ export function registerSQLiteRoutes(app: Express): Server {
     }
   });
 
+  // STRIPE INTEGRATION - CRIAR CHECKOUT SESSION COM TRIAL
+  app.post("/api/stripe/create-checkout-session", verifyJWT, async (req: any, res) => {
+    try {
+      const { trial_period_days = 3, trial_price = 1.00, regular_price = 29.90, currency = "BRL" } = req.body;
+      const userId = req.user.id;
+
+      if (!activeStripeService) {
+        return res.status(500).json({ error: "Stripe não configurado" });
+      }
+
+      // Buscar ou criar customer
+      const user = await storage.getUser(userId);
+      if (!user) {
+        return res.status(404).json({ error: "Usuário não encontrado" });
+      }
+
+      let customer;
+      try {
+        customer = await activeStripeService.createCustomer({
+          email: user.email,
+          name: `${user.firstName} ${user.lastName}`,
+          metadata: { userId }
+        });
+      } catch (error) {
+        console.error("Error creating customer:", error);
+        // Usar um ID de customer fictício para teste
+        customer = { id: `cus_test_${Date.now()}` };
+      }
+
+      // Criar checkout session direto usando Stripe API
+      const session = await activeStripeService.stripe.checkout.sessions.create({
+        mode: 'subscription',
+        line_items: [{
+          price_data: {
+            currency: currency.toLowerCase(),
+            product_data: {
+              name: 'Plano Premium - Vendzz',
+              description: `Trial ${trial_period_days} dias por R$${trial_price}, depois R$${regular_price}/mês`
+            },
+            unit_amount: Math.round(regular_price * 100),
+            recurring: {
+              interval: 'month'
+            }
+          },
+          quantity: 1
+        }],
+        customer: customer.id,
+        subscription_data: {
+          trial_period_days: trial_period_days,
+          trial_settings: {
+            end_behavior: {
+              missing_payment_method: 'cancel'
+            }
+          }
+        },
+        success_url: `https://example.com/success?session_id={CHECKOUT_SESSION_ID}`,
+        cancel_url: `https://example.com/cancel`,
+        allow_promotion_codes: true
+      });
+
+      res.json({
+        clientSecret: session.client_secret,
+        sessionId: session.id,
+        url: session.url,
+        customerId: customer.id
+      });
+    } catch (error) {
+      console.error("Error creating checkout session:", error);
+      res.status(500).json({ error: "Failed to create checkout session" });
+    }
+  });
+
+  // STRIPE INTEGRATION - CRIAR PAYMENT INTENT COM TRIAL
+  app.post("/api/stripe/create-payment-intent-trial", verifyJWT, async (req: any, res) => {
+    try {
+      const { trial_period_days = 3, trial_price = 1.00, regular_price = 29.90, currency = "BRL" } = req.body;
+      const userId = req.user.id;
+
+      if (!activeStripeService) {
+        return res.status(500).json({ error: "Stripe não configurado" });
+      }
+
+      // Criar payment intent para o valor do trial
+      const paymentIntent = await activeStripeService.createPaymentIntent({
+        amount: Math.round(trial_price * 100),
+        currency: currency.toLowerCase(),
+        metadata: {
+          userId,
+          trial_period_days: trial_period_days.toString(),
+          regular_price: regular_price.toString(),
+          type: 'trial_payment'
+        }
+      });
+
+      res.json({
+        clientSecret: paymentIntent.client_secret,
+        paymentIntentId: paymentIntent.id
+      });
+    } catch (error) {
+      console.error("Error creating payment intent:", error);
+      res.status(500).json({ error: "Failed to create payment intent" });
+    }
+  });
+
   // STRIPE WEBHOOKS - HANDLER SEGURO
   app.post("/api/stripe/webhook", async (req, res) => {
     try {

@@ -345,8 +345,17 @@ export class StripeService {
 
   // Criar sessão de checkout
   async createCheckoutSession(
-    priceId: string,
-    options: {
+    priceIdOrOptions: string | {
+      successUrl: string;
+      cancelUrl: string;
+      customerId?: string;
+      trialPeriodDays?: number;
+      allowPromotionCodes?: boolean;
+      collectTaxes?: boolean;
+      mode?: 'payment' | 'subscription' | 'setup';
+      lineItems?: any[];
+    },
+    options?: {
       successUrl: string;
       cancelUrl: string;
       customerId?: string;
@@ -357,35 +366,56 @@ export class StripeService {
     }
   ): Promise<Stripe.Checkout.Session> {
     try {
-      const sessionData: Stripe.Checkout.SessionCreateParams = {
-        mode: options.mode || 'payment',
-        line_items: [
-          {
-            price: priceId,
-            quantity: 1,
-          },
-        ],
-        success_url: options.successUrl,
-        cancel_url: options.cancelUrl,
-        automatic_tax: {
-          enabled: options.collectTaxes || false,
-        },
-        allow_promotion_codes: options.allowPromotionCodes || false,
-      };
-
-      if (options.customerId) {
-        sessionData.customer = options.customerId;
+      let sessionOptions: any;
+      
+      // Se primeiro parâmetro é um objeto, use-o como options
+      if (typeof priceIdOrOptions === 'object') {
+        sessionOptions = priceIdOrOptions;
+      } else {
+        sessionOptions = { ...options, priceId: priceIdOrOptions };
       }
 
-      if (options.mode === 'subscription' && options.trialPeriodDays) {
+      const sessionData: Stripe.Checkout.SessionCreateParams = {
+        mode: sessionOptions.mode || 'payment',
+        success_url: sessionOptions.successUrl,
+        cancel_url: sessionOptions.cancelUrl,
+        automatic_tax: {
+          enabled: sessionOptions.collectTaxes || false,
+        },
+        allow_promotion_codes: sessionOptions.allowPromotionCodes || false,
+      };
+
+      // Line items customizados ou padrão
+      if (sessionOptions.lineItems) {
+        sessionData.line_items = sessionOptions.lineItems;
+      } else if (sessionOptions.priceId) {
+        sessionData.line_items = [
+          {
+            price: sessionOptions.priceId,
+            quantity: 1,
+          },
+        ];
+      }
+
+      if (sessionOptions.customerId) {
+        sessionData.customer = sessionOptions.customerId;
+      }
+
+      if (sessionOptions.mode === 'subscription' && sessionOptions.trialPeriodDays) {
         sessionData.subscription_data = {
-          trial_period_days: options.trialPeriodDays,
+          trial_period_days: sessionOptions.trialPeriodDays,
+          trial_settings: {
+            end_behavior: {
+              missing_payment_method: 'cancel'
+            }
+          }
         };
       }
 
       return await this.stripe.checkout.sessions.create(sessionData);
     } catch (error) {
       console.error('Erro ao criar sessão de checkout:', error);
+      console.error('Session data:', JSON.stringify(sessionData, null, 2));
       throw new Error('Falha ao criar sessão de checkout');
     }
   }
@@ -450,13 +480,14 @@ export class StripeService {
   }
 
   // Criar cliente
-  async createCustomer(email: string, name?: string): Promise<Stripe.Customer> {
+  async createCustomer(params: { email: string; name?: string; metadata?: Record<string, string> }): Promise<Stripe.Customer> {
     try {
       return await this.stripe.customers.create({
-        email,
-        name,
+        email: params.email,
+        name: params.name,
         metadata: {
           created_by: 'vendzz_checkout_builder',
+          ...params.metadata
         },
       });
     } catch (error) {
