@@ -11,22 +11,31 @@ import { useToast } from '@/hooks/use-toast';
 import { apiRequest } from '@/lib/queryClient';
 
 // Stripe public key
-const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLIC_KEY || 'pk_test_51RjvV9HK6al3veW1M5U8GpNKwsIhHCBJhKBaZbBKdWQgQzKgJGP3xLIKKrQzO4K9bAFQqvOxMjHITwlPvEXjYcFK00qVPpbNjr');
+const stripePromise = loadStripe('pk_test_51RjvV9HK6al3veW1PjziXLVqAk2y8HUIh5Rg2xP3wUUJ6Jdvaob5KB3PlKsWYWOtldtdbeLh0TpcMF5Pb5FfO6p100hNkeeWih');
 
-// Configuração do CardElement
+// Configuração do CardElement com estilo melhorado
 const cardElementOptions = {
   style: {
     base: {
       fontSize: '16px',
-      color: '#424770',
+      color: '#1f2937',
+      fontFamily: 'system-ui, -apple-system, sans-serif',
+      fontSmoothing: 'antialiased',
       '::placeholder': {
-        color: '#aab7c4',
+        color: '#6b7280',
       },
+      iconColor: '#6b7280',
     },
     invalid: {
-      color: '#9e2146',
+      color: '#dc2626',
+      iconColor: '#dc2626',
+    },
+    complete: {
+      color: '#059669',
+      iconColor: '#059669',
     },
   },
+  hidePostalCode: true,
 };
 
 interface CheckoutFormProps {
@@ -42,6 +51,8 @@ const CheckoutForm: React.FC<CheckoutFormProps> = ({ onSuccess }) => {
   const [customerEmail, setCustomerEmail] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [cardReady, setCardReady] = useState(false);
+  const [cardError, setCardError] = useState<string | null>(null);
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -145,9 +156,39 @@ const CheckoutForm: React.FC<CheckoutFormProps> = ({ onSuccess }) => {
       {/* Cartão de Crédito */}
       <div className="space-y-2">
         <Label>Dados do Cartão *</Label>
-        <div className="p-4 border rounded-lg bg-white">
-          <CardElement options={cardElementOptions} />
+        <div className="p-4 border-2 border-gray-200 rounded-lg bg-white hover:border-blue-400 focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-200 transition-all min-h-[50px] flex items-center">
+          <CardElement 
+            options={cardElementOptions} 
+            className="w-full"
+            onReady={(element) => {
+              console.log('✅ CardElement ready and clickable:', element);
+              setCardReady(true);
+            }}
+            onChange={(event) => {
+              console.log('CardElement change:', event);
+              if (event.error) {
+                setCardError(event.error.message);
+                setError(event.error.message);
+              } else {
+                setCardError(null);
+                if (cardError) setError(null);
+              }
+            }}
+          />
         </div>
+        {cardReady && (
+          <p className="text-sm text-green-600 mt-1">
+            ✅ Campo do cartão está pronto! Clique para digitar.
+          </p>
+        )}
+        {cardError && (
+          <p className="text-sm text-red-600 mt-1">
+            ❌ {cardError}
+          </p>
+        )}
+        <p className="text-sm text-gray-500 mt-1">
+          Use cartão de teste: 4242 4242 4242 4242 com qualquer CVC e data futura
+        </p>
       </div>
 
       {/* Erro */}
@@ -162,7 +203,7 @@ const CheckoutForm: React.FC<CheckoutFormProps> = ({ onSuccess }) => {
       <Button
         type="submit"
         className="w-full h-12 text-lg font-semibold"
-        disabled={!stripe || isProcessing}
+        disabled={!stripe || isProcessing || !cardReady}
       >
         {isProcessing ? (
           <>
