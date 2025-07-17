@@ -1,416 +1,311 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, useLocation } from 'wouter';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
-import { apiRequest } from '@/lib/queryClient';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Separator } from '@/components/ui/separator';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { Badge } from '@/components/ui/badge';
+import { Separator } from '@/components/ui/separator';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, ShoppingCart, CreditCard, Lock, CheckCircle, Package } from 'lucide-react';
+import { apiRequest } from '@/lib/queryClient';
+import { 
+  CheckCircle, 
+  Shield, 
+  Clock, 
+  CreditCard, 
+  Star,
+  ArrowRight,
+  Loader2
+} from 'lucide-react';
 
-const checkoutFormSchema = z.object({
-  customerName: z.string().min(2, 'Nome deve ter pelo menos 2 caracteres'),
-  customerEmail: z.string().email('Email inválido'),
-  customerPhone: z.string().min(10, 'Telefone deve ter pelo menos 10 dígitos'),
-  customerAddress: z.string().min(5, 'Endereço deve ter pelo menos 5 caracteres'),
-  paymentMethod: z.enum(['credit_card', 'pix', 'boleto'], {
-    required_error: 'Selecione um método de pagamento'
-  })
-});
-
-type CheckoutFormData = z.infer<typeof checkoutFormSchema>;
-
-interface Product {
+interface Plan {
   id: string;
   name: string;
   description: string;
   price: number;
-  image: string;
-  category: string;
-  features: string[];
-  billingType: 'one_time' | 'recurring';
-  subscriptionInterval?: 'monthly' | 'yearly';
+  currency: string;
+  interval: string;
+  trial_days: number;
+  trial_price: number;
+  features?: string[];
 }
 
-export default function CheckoutPublic() {
-  const { linkId } = useParams<{ linkId: string }>();
-  const [, navigate] = useLocation();
+const CheckoutPublico: React.FC = () => {
+  const { planId } = useParams<{ planId: string }>();
+  const [, setLocation] = useLocation();
+  const [plan, setPlan] = useState<Plan | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [processing, setProcessing] = useState(false);
+  const [customerData, setCustomerData] = useState({
+    name: '',
+    email: '',
+    phone: ''
+  });
   const { toast } = useToast();
-  const queryClient = useQueryClient();
-  
-  const [currentStep, setCurrentStep] = useState(1);
-  const [processingPayment, setProcessingPayment] = useState(false);
 
-  const form = useForm<CheckoutFormData>({
-    resolver: zodResolver(checkoutFormSchema),
-    defaultValues: {
-      customerName: '',
-      customerEmail: '',
-      customerPhone: '',
-      customerAddress: '',
-      paymentMethod: 'credit_card'
+  useEffect(() => {
+    if (planId) {
+      fetchPlan();
     }
-  });
+  }, [planId]);
 
-  // Buscar dados do produto pelo link
-  const { data: product, isLoading: loadingProduct } = useQuery<Product>({
-    queryKey: ['/api/checkout/product', linkId],
-    enabled: !!linkId,
-    retry: false
-  });
-
-  // Processar pagamento
-  const processPaymentMutation = useMutation({
-    mutationFn: async (data: CheckoutFormData) => {
-      return apiRequest('POST', '/api/checkout/process', {
-        productId: product?.id,
-        customerData: data,
-        paymentMethod: data.paymentMethod
-      });
-    },
-    onSuccess: (response) => {
+  const fetchPlan = async () => {
+    try {
+      const response = await apiRequest('GET', `/api/stripe/plans/${planId}`);
+      setPlan(response);
+    } catch (error) {
+      console.error('Erro ao buscar plano:', error);
       toast({
-        title: "Pagamento Processado",
-        description: "Seu pagamento foi processado com sucesso!",
-        variant: "default",
-      });
-      
-      // Redirecionar para página de sucesso
-      navigate(`/checkout/success/${response.transactionId}`);
-    },
-    onError: (error: Error) => {
-      toast({
-        title: "Erro no Pagamento",
-        description: error.message || "Erro ao processar pagamento",
+        title: "Erro",
+        description: "Plano não encontrado ou não disponível.",
         variant: "destructive",
       });
-      setProcessingPayment(false);
-    }
-  });
-
-  const handleSubmit = async (data: CheckoutFormData) => {
-    setProcessingPayment(true);
-    processPaymentMutation.mutate(data);
-  };
-
-  const formatPrice = (price: number) => {
-    return new Intl.NumberFormat('pt-BR', {
-      style: 'currency',
-      currency: 'BRL'
-    }).format(price);
-  };
-
-  const getPaymentMethodIcon = (method: string) => {
-    switch (method) {
-      case 'credit_card':
-        return <CreditCard className="w-4 h-4" />;
-      case 'pix':
-        return <Package className="w-4 h-4" />;
-      case 'boleto':
-        return <Package className="w-4 h-4" />;
-      default:
-        return <CreditCard className="w-4 h-4" />;
+    } finally {
+      setLoading(false);
     }
   };
 
-  if (loadingProduct) {
+  const handleCheckout = async () => {
+    if (!plan) return;
+
+    if (!customerData.name || !customerData.email) {
+      toast({
+        title: "Dados incompletos",
+        description: "Por favor, preencha nome e email.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setProcessing(true);
+    
+    try {
+      const response = await apiRequest('POST', '/api/stripe/create-checkout-session', {
+        planId: plan.id,
+        customerEmail: customerData.email,
+        customerName: customerData.name,
+        successUrl: `${window.location.origin}/payment-success`,
+        cancelUrl: `${window.location.origin}/payment-cancel`
+      });
+
+      if (response.checkoutUrl) {
+        window.location.href = response.checkoutUrl;
+      } else {
+        throw new Error('URL de checkout não retornada');
+      }
+    } catch (error) {
+      console.error('Erro ao criar checkout:', error);
+      toast({
+        title: "Erro no checkout",
+        description: "Não foi possível processar o pagamento. Tente novamente.",
+        variant: "destructive",
+      });
+    } finally {
+      setProcessing(false);
+    }
+  };
+
+  if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50 flex items-center justify-center">
-        <div className="text-center space-y-4">
-          <Loader2 className="w-8 h-8 animate-spin mx-auto text-green-600" />
-          <p className="text-gray-600">Carregando produto...</p>
+        <div className="text-center">
+          <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4" />
+          <p className="text-gray-600">Carregando plano...</p>
         </div>
       </div>
     );
   }
 
-  if (!product) {
+  if (!plan) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-red-50 to-pink-50 flex items-center justify-center">
-        <Card className="max-w-md">
-          <CardHeader>
-            <CardTitle className="text-red-600">Produto Não Encontrado</CardTitle>
-            <CardDescription>O link de checkout não é válido ou o produto não existe.</CardDescription>
-          </CardHeader>
-          <CardFooter>
-            <Button onClick={() => navigate('/')} className="w-full">
-              Voltar ao Início
-            </Button>
-          </CardFooter>
+      <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50 flex items-center justify-center">
+        <Card className="max-w-md w-full mx-4">
+          <CardContent className="pt-6 text-center">
+            <div className="text-red-500 mb-4">
+              <Shield className="h-12 w-12 mx-auto" />
+            </div>
+            <h2 className="text-xl font-bold mb-2">Plano não encontrado</h2>
+            <p className="text-gray-600">O plano solicitado não está disponível.</p>
+          </CardContent>
         </Card>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50 py-8">
-      <div className="container mx-auto px-4 max-w-4xl">
-        
-        {/* Header */}
-        <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Finalizar Compra</h1>
-          <p className="text-gray-600">Checkout seguro e protegido</p>
-        </div>
-
-        {/* Progress Steps */}
-        <div className="flex justify-center mb-8">
-          <div className="flex items-center space-x-4">
-            <div className={`flex items-center justify-center w-8 h-8 rounded-full ${
-              currentStep >= 1 ? 'bg-green-600 text-white' : 'bg-gray-200 text-gray-600'
-            }`}>
-              1
-            </div>
-            <div className={`w-16 h-0.5 ${currentStep >= 2 ? 'bg-green-600' : 'bg-gray-200'}`} />
-            <div className={`flex items-center justify-center w-8 h-8 rounded-full ${
-              currentStep >= 2 ? 'bg-green-600 text-white' : 'bg-gray-200 text-gray-600'
-            }`}>
-              2
-            </div>
-            <div className={`w-16 h-0.5 ${currentStep >= 3 ? 'bg-green-600' : 'bg-gray-200'}`} />
-            <div className={`flex items-center justify-center w-8 h-8 rounded-full ${
-              currentStep >= 3 ? 'bg-green-600 text-white' : 'bg-gray-200 text-gray-600'
-            }`}>
-              3
-            </div>
-          </div>
-        </div>
-
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+    <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50">
+      <div className="container mx-auto px-4 py-8">
+        <div className="max-w-4xl mx-auto">
           
-          {/* Product Summary */}
-          <div className="space-y-6">
+          {/* Header */}
+          <div className="text-center mb-8">
+            <h1 className="text-4xl font-bold text-gray-900 mb-4">
+              {plan.name}
+            </h1>
+            <p className="text-xl text-gray-600 max-w-2xl mx-auto">
+              {plan.description}
+            </p>
+          </div>
+
+          <div className="grid md:grid-cols-2 gap-8">
+            
+            {/* Informações do Plano */}
+            <Card className="h-fit">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Star className="h-5 w-5 text-yellow-500" />
+                  Detalhes do Plano
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                
+                {/* Preço */}
+                <div className="text-center p-6 bg-gradient-to-r from-green-500 to-blue-500 text-white rounded-lg">
+                  <div className="text-3xl font-bold mb-2">
+                    R$ {plan.trial_price.toFixed(2)}
+                  </div>
+                  <div className="text-lg opacity-90">
+                    por {plan.trial_days} dias
+                  </div>
+                  <Separator className="my-4 bg-white/20" />
+                  <div className="text-sm opacity-80">
+                    Depois R$ {plan.price.toFixed(2)}/{plan.interval === 'month' ? 'mês' : 'ano'}
+                  </div>
+                </div>
+
+                {/* Benefícios */}
+                <div className="space-y-3">
+                  <div className="flex items-center gap-3">
+                    <CheckCircle className="h-5 w-5 text-green-500 flex-shrink-0" />
+                    <span>Teste gratuito por {plan.trial_days} dias</span>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <CheckCircle className="h-5 w-5 text-green-500 flex-shrink-0" />
+                    <span>Cancele a qualquer momento</span>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <CheckCircle className="h-5 w-5 text-green-500 flex-shrink-0" />
+                    <span>Acesso completo a todas as funcionalidades</span>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <CheckCircle className="h-5 w-5 text-green-500 flex-shrink-0" />
+                    <span>Suporte 24/7</span>
+                  </div>
+                </div>
+
+                {/* Garantias */}
+                <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Shield className="h-5 w-5 text-blue-600" />
+                    <span className="font-medium text-blue-900">Garantias</span>
+                  </div>
+                  <ul className="text-sm text-blue-800 space-y-1">
+                    <li>• Pagamento 100% seguro</li>
+                    <li>• Seus dados protegidos</li>
+                    <li>• Garantia de 30 dias</li>
+                  </ul>
+                </div>
+
+              </CardContent>
+            </Card>
+
+            {/* Formulário de Checkout */}
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <ShoppingCart className="w-5 h-5" />
-                  Resumo do Pedido
+                  <CreditCard className="h-5 w-5" />
+                  Finalizar Compra
                 </CardTitle>
               </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="flex items-start gap-4">
-                  <div className="w-20 h-20 bg-gradient-to-br from-green-100 to-blue-100 rounded-lg flex items-center justify-center">
-                    <Package className="w-8 h-8 text-green-600" />
-                  </div>
-                  <div className="flex-1">
-                    <h3 className="font-semibold text-lg">{product.name}</h3>
-                    <p className="text-gray-600 text-sm mb-2">{product.description}</p>
-                    <Badge variant="outline">{product.category}</Badge>
-                  </div>
-                </div>
-                
-                <Separator />
-                
-                <div className="space-y-2">
-                  <div className="flex justify-between">
-                    <span>Subtotal:</span>
-                    <span>{formatPrice(product.price)}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>Taxas:</span>
-                    <span>R$ 0,00</span>
-                  </div>
-                  <Separator />
-                  <div className="flex justify-between text-lg font-semibold">
-                    <span>Total:</span>
-                    <span className="text-green-600">{formatPrice(product.price)}</span>
-                  </div>
-                </div>
-
-                {product.billingType === 'recurring' && (
-                  <div className="bg-blue-50 p-3 rounded-lg">
-                    <p className="text-sm text-blue-700">
-                      <strong>Assinatura {product.subscriptionInterval === 'monthly' ? 'Mensal' : 'Anual'}</strong>
-                      <br />
-                      Cobrança recorrente de {formatPrice(product.price)} {product.subscriptionInterval === 'monthly' ? 'por mês' : 'por ano'}
-                    </p>
-                  </div>
-                )}
-
-                {product.features && product.features.length > 0 && (
-                  <div>
-                    <h4 className="font-medium mb-2">Recursos Inclusos:</h4>
-                    <ul className="space-y-1">
-                      {product.features.map((feature, index) => (
-                        <li key={index} className="flex items-center gap-2 text-sm">
-                          <CheckCircle className="w-4 h-4 text-green-500" />
-                          {feature}
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-
-            {/* Security Badge */}
-            <Card>
-              <CardContent className="pt-6">
-                <div className="flex items-center gap-3 text-gray-600">
-                  <Lock className="w-5 h-5" />
-                  <div>
-                    <p className="font-medium">Pagamento Seguro</p>
-                    <p className="text-sm">Seus dados estão protegidos com criptografia SSL</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Checkout Form */}
-          <div>
-            <Card>
-              <CardHeader>
-                <CardTitle>Informações de Pagamento</CardTitle>
-                <CardDescription>
-                  Preencha seus dados para finalizar a compra
-                </CardDescription>
-              </CardHeader>
               <CardContent>
-                <Form {...form}>
-                  <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
-                    
-                    {/* Customer Information */}
-                    <div className="space-y-4">
-                      <h3 className="font-medium text-lg">Dados Pessoais</h3>
-                      
-                      <FormField
-                        control={form.control}
-                        name="customerName"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Nome Completo</FormLabel>
-                            <FormControl>
-                              <Input placeholder="Digite seu nome completo" {...field} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
+                <form onSubmit={(e) => { e.preventDefault(); handleCheckout(); }} className="space-y-4">
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="name">Nome Completo *</Label>
+                    <Input
+                      id="name"
+                      type="text"
+                      value={customerData.name}
+                      onChange={(e) => setCustomerData(prev => ({ ...prev, name: e.target.value }))}
+                      placeholder="Seu nome completo"
+                      required
+                    />
+                  </div>
 
-                      <FormField
-                        control={form.control}
-                        name="customerEmail"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Email</FormLabel>
-                            <FormControl>
-                              <Input type="email" placeholder="seu@email.com" {...field} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
+                  <div className="space-y-2">
+                    <Label htmlFor="email">Email *</Label>
+                    <Input
+                      id="email"
+                      type="email"
+                      value={customerData.email}
+                      onChange={(e) => setCustomerData(prev => ({ ...prev, email: e.target.value }))}
+                      placeholder="seu@email.com"
+                      required
+                    />
+                  </div>
 
-                      <FormField
-                        control={form.control}
-                        name="customerPhone"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Telefone</FormLabel>
-                            <FormControl>
-                              <Input placeholder="(11) 99999-9999" {...field} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
+                  <div className="space-y-2">
+                    <Label htmlFor="phone">Telefone (opcional)</Label>
+                    <Input
+                      id="phone"
+                      type="tel"
+                      value={customerData.phone}
+                      onChange={(e) => setCustomerData(prev => ({ ...prev, phone: e.target.value }))}
+                      placeholder="(11) 99999-9999"
+                    />
+                  </div>
 
-                      <FormField
-                        control={form.control}
-                        name="customerAddress"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Endereço</FormLabel>
-                            <FormControl>
-                              <Input placeholder="Rua, Número, Cidade - CEP" {...field} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
+                  <Separator className="my-6" />
+
+                  {/* Resumo do Pedido */}
+                  <div className="bg-gray-50 p-4 rounded-lg">
+                    <h3 className="font-medium mb-3">Resumo do Pedido</h3>
+                    <div className="space-y-2 text-sm">
+                      <div className="flex justify-between">
+                        <span>Teste por {plan.trial_days} dias</span>
+                        <span>R$ {plan.trial_price.toFixed(2)}</span>
+                      </div>
+                      <div className="flex justify-between text-gray-600">
+                        <span>Renovação {plan.interval === 'month' ? 'mensal' : 'anual'}</span>
+                        <span>R$ {plan.price.toFixed(2)}</span>
+                      </div>
                     </div>
+                  </div>
 
-                    <Separator />
+                  <Button 
+                    type="submit" 
+                    className="w-full" 
+                    size="lg"
+                    disabled={processing}
+                  >
+                    {processing ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Processando...
+                      </>
+                    ) : (
+                      <>
+                        <ArrowRight className="mr-2 h-4 w-4" />
+                        Iniciar Teste Grátis
+                      </>
+                    )}
+                  </Button>
 
-                    {/* Payment Method */}
-                    <div className="space-y-4">
-                      <h3 className="font-medium text-lg">Método de Pagamento</h3>
-                      
-                      <FormField
-                        control={form.control}
-                        name="paymentMethod"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Forma de Pagamento</FormLabel>
-                            <Select onValueChange={field.onChange} defaultValue={field.value}>
-                              <FormControl>
-                                <SelectTrigger>
-                                  <SelectValue placeholder="Selecione o método" />
-                                </SelectTrigger>
-                              </FormControl>
-                              <SelectContent>
-                                <SelectItem value="credit_card">
-                                  <div className="flex items-center gap-2">
-                                    <CreditCard className="w-4 h-4" />
-                                    Cartão de Crédito
-                                  </div>
-                                </SelectItem>
-                                <SelectItem value="pix">
-                                  <div className="flex items-center gap-2">
-                                    <Package className="w-4 h-4" />
-                                    PIX
-                                  </div>
-                                </SelectItem>
-                                <SelectItem value="boleto">
-                                  <div className="flex items-center gap-2">
-                                    <Package className="w-4 h-4" />
-                                    Boleto Bancário
-                                  </div>
-                                </SelectItem>
-                              </SelectContent>
-                            </Select>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                    </div>
+                  <div className="text-xs text-gray-500 text-center">
+                    <Clock className="h-4 w-4 inline mr-1" />
+                    Você será redirecionado para o checkout seguro do Stripe
+                  </div>
 
-                    <Separator />
-
-                    {/* Submit Button */}
-                    <Button
-                      type="submit"
-                      className="w-full bg-green-600 hover:bg-green-700"
-                      size="lg"
-                      disabled={processingPayment}
-                    >
-                      {processingPayment ? (
-                        <>
-                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                          Processando Pagamento...
-                        </>
-                      ) : (
-                        <>
-                          {getPaymentMethodIcon(form.watch('paymentMethod'))}
-                          <span className="ml-2">Finalizar Compra - {formatPrice(product.price)}</span>
-                        </>
-                      )}
-                    </Button>
-                  </form>
-                </Form>
+                </form>
               </CardContent>
             </Card>
+
           </div>
+
         </div>
       </div>
     </div>
   );
-}
+};
+
+export default CheckoutPublico;

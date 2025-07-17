@@ -75,7 +75,7 @@ import CheckoutTrialFinalSimple from "@/pages/checkout-trial-final-simple";
 import CheckoutStripeBasic from "@/pages/checkout-stripe-basic";
 import CheckoutTrialPerfect from "@/pages/checkout-trial-perfect";
 import StripePlansPerfeito from "@/pages/stripe-plans-perfect";
-import CheckoutEmbed from "@/components/checkout-embed";
+import CheckoutEmbed from "@/pages/checkout-embed";
 import StripeMonitoring from "@/pages/stripe-monitoring";
 import CheckoutStripeFinal from "@/pages/checkout-stripe-final";
 import ProductBuilder from "@/pages/product-builder";
@@ -100,11 +100,12 @@ function App() {
   }
 
   // Public routes that don't require authentication
-  const publicRoutes = ["/", "/dark", "/modern", "/login"];
+  const publicRoutes = ["/", "/dark", "/modern", "/login", "/payment-success", "/payment-cancel"];
   const isQuizRoute = location.startsWith("/quiz/");
   const isCheckoutRoute = location.startsWith("/checkout/");
   const isStripeCheckoutLink = location.startsWith("/stripe-checkout-link/");
-  const isPublicRoute = publicRoutes.includes(location) || isQuizRoute || isCheckoutRoute || isStripeCheckoutLink;
+  const isCheckoutPublic = location.startsWith("/checkout-public/");
+  const isPublicRoute = publicRoutes.includes(location) || isQuizRoute || isCheckoutRoute || isStripeCheckoutLink || isCheckoutPublic;
 
   // Redirect to dashboard if authenticated and on login page
   if (isAuthenticated && location === "/login") {
@@ -128,9 +129,10 @@ function App() {
         <Route path="/quiz/:id" component={QuizPublicPage} />
         <Route path="/checkout/:linkId" component={CheckoutPublic} />
         <Route path="/checkout/success/:transactionId" component={CheckoutSuccess} />
-        <Route path="/checkout-public" component={CheckoutPage} />
+        <Route path="/checkout-public/:planId" component={CheckoutPublic} />
         <Route path="/checkout-individual/:id" component={CheckoutIndividual} />
         <Route path="/payment-success" component={PaymentSuccess} />
+        <Route path="/payment-cancel" component={PaymentSuccess} />
         <Route path="/stripe-checkout-link/:linkId" component={StripeCheckoutLink} />
         <Route path="/test" component={TestPage} />
 

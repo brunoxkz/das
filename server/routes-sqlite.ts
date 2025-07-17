@@ -11,20 +11,31 @@ import { db } from "./db-sqlite";
 import Database from 'better-sqlite3';
 
 // Instância do banco SQLite para queries diretas
-const sqlite = new Database('./vendzz-database.db');
+const sqlite = new Database('./database.sqlite');
 import { stripeService, StripeService } from "./stripe-integration";
 import { stripeTrialService } from "./stripe-subscription-trial";
 import { nanoid } from "nanoid";
+import Stripe from 'stripe';
 
 // Garantir que o Stripe está inicializado
-let activeStripeService: StripeService | null = null;
+let activeStripeService: any = null;
+
 try {
-  if (process.env.STRIPE_SECRET_KEY) {
-    activeStripeService = new StripeService();
-    console.log('✅ StripeService inicializado com sucesso');
-  } else {
-    console.log('⚠️ STRIPE_SECRET_KEY não encontrada, StripeService não inicializado');
-  }
+  // Inicializar Stripe diretamente
+  const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || 'sk_test_51RjvV9HK6al3veW1FPD5bTV1on2NQLlm9ud45AJDggFHdsGA9UAo5jfbSRvWF83W3uTp5cpZYa8tJBvm4ttefrk800mUs47pFA', {
+    apiVersion: '2024-09-30.acacia',
+  });
+  
+  // Criar um serviço simples
+  activeStripeService = {
+    stripe: stripe,
+    createCustomer: async (data: any) => stripe.customers.create(data),
+    createProduct: async (data: any) => stripe.products.create(data),
+    createPrice: async (data: any) => stripe.prices.create(data),
+    createCheckoutSession: async (data: any) => stripe.checkout.sessions.create(data)
+  };
+  
+  console.log('✅ StripeService inicializado com sucesso');
 } catch (error) {
   console.log('⚠️ StripeService não pôde ser inicializado:', error.message);
 }
@@ -117,6 +128,148 @@ async function checkPlanExpiration(req: any, res: any, next: any) {
 }
 
 export function registerSQLiteRoutes(app: Express): Server {
+  // 🔓 ROTAS PÚBLICAS - SEM MIDDLEWARES DE SEGURANÇA
+  // CHECKOUT PÚBLICO - BUSCAR PLANO POR ID (SEM AUTENTICAÇÃO)
+  app.get("/api/public/checkout/plan/:planId", async (req: any, res) => {
+    try {
+      const { planId } = req.params;
+      
+      console.log('🔍 BUSCANDO PLANO PARA CHECKOUT PÚBLICO:', planId);
+      
+      // Buscar plano
+      const plan = sqlite.prepare(`
+        SELECT id, name, description, price, currency, interval, trial_period_days, activation_fee, features, stripe_product_id, stripe_price_id, active
+        FROM stripe_plans 
+        WHERE id = ? AND active = 1
+      `).get(planId);
+      
+      if (!plan) {
+        return res.status(404).json({ 
+          error: "Plano não encontrado",
+          planId: planId
+        });
+      }
+      
+      // Parsear features se for string JSON
+      if (typeof plan.features === 'string') {
+        try {
+          plan.features = JSON.parse(plan.features);
+        } catch (e) {
+          plan.features = [];
+        }
+      }
+      
+      console.log('✅ PLANO ENCONTRADO:', plan);
+      
+      res.json({
+        success: true,
+        plan: plan
+      });
+    } catch (error) {
+      console.error('❌ Erro ao buscar plano:', error);
+      res.status(500).json({ 
+        error: 'Erro ao buscar plano',
+        details: error.message
+      });
+    }
+  });
+
+  // CRIAR CHECKOUT SESSION PARA PLANO ESPECÍFICO (SEM AUTENTICAÇÃO)
+  app.post("/api/public/checkout/create-session/:planId", async (req: any, res) => {
+    try {
+      const { planId } = req.params;
+      const { customerEmail, customerName } = req.body;
+      
+      console.log('🔥 CRIANDO CHECKOUT SESSION PARA PLANO:', planId);
+      console.log('🔍 activeStripeService:', activeStripeService);
+      
+      // Buscar plano
+      const plan = sqlite.prepare(`
+        SELECT * FROM stripe_plans 
+        WHERE id = ? AND active = 1
+      `).get(planId);
+      
+      if (!plan) {
+        return res.status(404).json({ error: "Plano não encontrado" });
+      }
+      
+      if (!activeStripeService) {
+        return res.status(500).json({ error: "Stripe não configurado" });
+      }
+      
+      // Criar customer
+      const customer = await activeStripeService.stripe.customers.create({
+        email: customerEmail,
+        name: customerName,
+        metadata: { planId }
+      });
+      
+      // Criar checkout session
+      const session = await activeStripeService.stripe.checkout.sessions.create({
+        mode: 'subscription',
+        customer: customer.id,
+        line_items: [{
+          price: plan.stripe_price_id,
+          quantity: 1
+        }],
+        subscription_data: {
+          trial_period_days: plan.trial_period_days,
+          metadata: {
+            planId: plan.id,
+            customerEmail,
+            customerName
+          }
+        },
+        success_url: `${process.env.BASE_URL || 'https://checkout.vendzz.com'}/success?session_id={CHECKOUT_SESSION_ID}`,
+        cancel_url: `${process.env.BASE_URL || 'https://checkout.vendzz.com'}/cancel`,
+        metadata: {
+          planId: plan.id,
+          customerEmail,
+          customerName,
+          trial_price: plan.activation_fee.toString(),
+          type: 'public_checkout'
+        }
+      });
+      
+      res.json({
+        success: true,
+        sessionId: session.id,
+        sessionUrl: session.url
+      });
+    } catch (error) {
+      console.error('❌ Erro ao criar checkout session:', error);
+      res.status(500).json({ error: 'Erro ao criar checkout session' });
+    }
+  });
+
+  // BUSCAR TODOS OS PLANOS (SEM AUTENTICAÇÃO)
+  app.get("/api/public/checkout/plans", async (req: any, res) => {
+    try {
+      console.log('🔍 BUSCANDO TODOS OS PLANOS PÚBLICOS');
+      
+      const plans = sqlite.prepare(`
+        SELECT id, name, description, price, currency, interval, trial_period_days, activation_fee, features, active
+        FROM stripe_plans 
+        WHERE active = 1
+        ORDER BY price ASC
+      `).all();
+      
+      // Parsear features para todos os planos
+      const parsedPlans = plans.map(plan => ({
+        ...plan,
+        features: typeof plan.features === 'string' ? JSON.parse(plan.features) : plan.features
+      }));
+      
+      res.json({
+        success: true,
+        plans: parsedPlans
+      });
+    } catch (error) {
+      console.error('❌ Erro ao buscar planos:', error);
+      res.status(500).json({ error: 'Erro ao buscar planos' });
+    }
+  });
+
   // 🔒 SISTEMA DE SEGURANÇA - Aplicar middlewares de proteção
   app.use(helmetSecurity);
   // app.use(antiDdosMiddleware); // TEMPORARIAMENTE DESATIVADO
@@ -5109,6 +5262,310 @@ export function registerSQLiteRoutes(app: Express): Server {
     }
   });
 
+  // ===== SISTEMA COMPLETO DE PLANOS STRIPE =====
+  
+  // LISTAR TODOS OS PLANOS
+  app.get("/api/stripe/plans", async (req: Request, res: Response) => {
+    try {
+      const plans = sqlite.prepare('SELECT * FROM stripe_plans WHERE active = 1 ORDER BY created_at DESC').all();
+      res.json(plans);
+    } catch (error) {
+      console.error('❌ Erro ao buscar planos:', error);
+      res.status(500).json({ error: 'Erro ao buscar planos' });
+    }
+  });
+
+  // CRIAR NOVO PLANO
+  app.post("/api/stripe/plans", verifyJWT, async (req: any, res) => {
+    try {
+      const { name, description, price, currency, interval, trial_days, trial_price, gateway } = req.body;
+      
+      if (!name || !price) {
+        return res.status(400).json({ error: 'Nome e preço são obrigatórios' });
+      }
+
+      const planId = nanoid();
+      const stripeProductId = `prod_${Date.now()}`;
+      const stripePriceId = `price_${Date.now()}`;
+      
+      const insertPlan = sqlite.prepare(`
+        INSERT INTO stripe_plans 
+        (id, name, description, price, currency, interval, trial_days, trial_price, gateway, active, stripe_price_id, stripe_product_id, created_at, updated_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      `);
+
+      const result = insertPlan.run(
+        planId,
+        name,
+        description || '',
+        price,
+        currency || 'BRL',
+        interval || 'month',
+        trial_days || 3,
+        trial_price || 1.00,
+        gateway || 'stripe',
+        1,
+        stripePriceId,
+        stripeProductId,
+        new Date().toISOString(),
+        new Date().toISOString()
+      );
+
+      const newPlan = sqlite.prepare('SELECT * FROM stripe_plans WHERE id = ?').get(planId);
+      
+      res.status(201).json({
+        success: true,
+        plan: newPlan,
+        message: 'Plano criado com sucesso!'
+      });
+    } catch (error) {
+      console.error('❌ Erro ao criar plano:', error);
+      res.status(500).json({ error: 'Erro ao criar plano' });
+    }
+  });
+
+  // ATUALIZAR PLANO
+  app.put("/api/stripe/plans/:id", verifyJWT, async (req: any, res) => {
+    try {
+      const { id } = req.params;
+      const { name, description, price, currency, interval, trial_days, trial_price, active } = req.body;
+      
+      const updatePlan = sqlite.prepare(`
+        UPDATE stripe_plans 
+        SET name = ?, description = ?, price = ?, currency = ?, interval = ?, trial_days = ?, trial_price = ?, active = ?, updated_at = ?
+        WHERE id = ?
+      `);
+
+      const result = updatePlan.run(
+        name,
+        description || '',
+        price,
+        currency || 'BRL',
+        interval || 'month',
+        trial_days || 3,
+        trial_price || 1.00,
+        active !== undefined ? active : 1,
+        new Date().toISOString(),
+        id
+      );
+
+      if (result.changes === 0) {
+        return res.status(404).json({ error: 'Plano não encontrado' });
+      }
+
+      const updatedPlan = sqlite.prepare('SELECT * FROM stripe_plans WHERE id = ?').get(id);
+      
+      res.json({
+        success: true,
+        plan: updatedPlan,
+        message: 'Plano atualizado com sucesso!'
+      });
+    } catch (error) {
+      console.error('❌ Erro ao atualizar plano:', error);
+      res.status(500).json({ error: 'Erro ao atualizar plano' });
+    }
+  });
+
+  // DELETAR PLANO
+  app.delete("/api/stripe/plans/:id", verifyJWT, async (req: any, res) => {
+    try {
+      const { id } = req.params;
+      
+      const deletePlan = sqlite.prepare('DELETE FROM stripe_plans WHERE id = ?');
+      const result = deletePlan.run(id);
+
+      if (result.changes === 0) {
+        return res.status(404).json({ error: 'Plano não encontrado' });
+      }
+
+      res.json({
+        success: true,
+        message: 'Plano deletado com sucesso!'
+      });
+    } catch (error) {
+      console.error('❌ Erro ao deletar plano:', error);
+      res.status(500).json({ error: 'Erro ao deletar plano' });
+    }
+  });
+
+  // OBTER PLANO POR ID
+  app.get("/api/stripe/plans/:id", async (req: Request, res: Response) => {
+    try {
+      const { id } = req.params;
+      const plan = sqlite.prepare('SELECT * FROM stripe_plans WHERE id = ?').get(id);
+      
+      if (!plan) {
+        return res.status(404).json({ error: 'Plano não encontrado' });
+      }
+
+      res.json(plan);
+    } catch (error) {
+      console.error('❌ Erro ao buscar plano:', error);
+      res.status(500).json({ error: 'Erro ao buscar plano' });
+    }
+  });
+
+  // CRIAR CHECKOUT PÚBLICO A PARTIR DE PLANO
+  app.post("/api/stripe/create-checkout-session", async (req: Request, res: Response) => {
+    try {
+      const { planId, customerEmail, customerName, successUrl, cancelUrl } = req.body;
+      
+      if (!planId) {
+        return res.status(400).json({ error: 'planId é obrigatório' });
+      }
+
+      // Buscar plano
+      const plan = sqlite.prepare('SELECT * FROM stripe_plans WHERE id = ? AND active = 1').get(planId);
+      if (!plan) {
+        return res.status(404).json({ error: 'Plano não encontrado' });
+      }
+
+      // Criar checkout session com Stripe
+      const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '');
+      
+      const session = await stripe.checkout.sessions.create({
+        payment_method_types: ['card'],
+        line_items: [
+          {
+            price_data: {
+              currency: (plan.currency || 'BRL').toLowerCase(),
+              product_data: {
+                name: plan.name,
+                description: plan.description,
+              },
+              unit_amount: Math.round(plan.trial_price * 100), // Trial price
+            },
+            quantity: 1,
+          },
+        ],
+        mode: 'payment',
+        success_url: successUrl || `${req.protocol}://${req.get('host')}/payment-success?session_id={CHECKOUT_SESSION_ID}`,
+        cancel_url: cancelUrl || `${req.protocol}://${req.get('host')}/payment-cancel`,
+        customer_email: customerEmail,
+        metadata: {
+          planId: plan.id,
+          customerName: customerName || '',
+          trialDays: plan.trial_days?.toString() || '3',
+          recurringAmount: plan.price?.toString() || '0',
+          recurringInterval: plan.interval || 'month',
+        },
+      });
+
+      res.json({
+        success: true,
+        sessionId: session.id,
+        checkoutUrl: session.url,
+        planName: plan.name,
+        trialPrice: plan.trial_price,
+        recurringPrice: plan.price,
+        trialDays: plan.trial_days,
+        message: 'Checkout session criado com sucesso!'
+      });
+    } catch (error) {
+      console.error('❌ Erro ao criar checkout session:', error);
+      res.status(500).json({ error: 'Erro ao criar checkout session' });
+    }
+  });
+
+  // GERAR CÓDIGO DE EMBED PARA CHECKOUT
+  app.post("/api/stripe/generate-embed", verifyJWT, async (req: any, res) => {
+    try {
+      const { planId, width, height, buttonText, buttonColor, backgroundColor } = req.body;
+      
+      if (!planId) {
+        return res.status(400).json({ error: 'planId é obrigatório' });
+      }
+
+      // Verificar se o plano existe
+      const plan = sqlite.prepare('SELECT * FROM stripe_plans WHERE id = ? AND active = 1').get(planId);
+      if (!plan) {
+        return res.status(404).json({ error: 'Plano não encontrado' });
+      }
+
+      // Gerar código de embed
+      const embedId = nanoid();
+      const baseUrl = `${req.protocol}://${req.get('host')}`;
+      
+      const embedCode = `
+<div id="vendzz-checkout-${embedId}" style="width: ${width || '100%'}; height: ${height || '600px'}; background: ${backgroundColor || '#f8f9fa'}; border-radius: 8px; padding: 20px; text-align: center; border: 1px solid #e9ecef;">
+  <h3 style="color: #333; margin-bottom: 20px;">${plan.name}</h3>
+  <p style="color: #666; margin-bottom: 20px;">${plan.description}</p>
+  <div style="margin-bottom: 20px;">
+    <span style="color: #28a745; font-size: 24px; font-weight: bold;">R$ ${plan.trial_price.toFixed(2)}</span>
+    <span style="color: #666; font-size: 14px;"> por ${plan.trial_days} dias</span>
+  </div>
+  <div style="margin-bottom: 20px;">
+    <span style="color: #666; font-size: 14px;">Depois R$ ${plan.price.toFixed(2)}/${plan.interval === 'month' ? 'mês' : 'ano'}</span>
+  </div>
+  <button 
+    onclick="window.open('${baseUrl}/checkout-public/${planId}', '_blank')" 
+    style="background: ${buttonColor || '#007bff'}; color: white; border: none; padding: 15px 30px; border-radius: 5px; font-size: 16px; cursor: pointer; font-weight: bold;"
+  >
+    ${buttonText || 'Iniciar Teste Grátis'}
+  </button>
+</div>
+<script>
+// Código de tracking opcional
+console.log('Vendzz Checkout Embed carregado para plano: ${planId}');
+</script>`;
+
+      // Salvar embed no banco
+      const insertEmbed = sqlite.prepare(`
+        INSERT INTO checkout_embeds (id, plan_id, user_id, embed_code, width, height, button_text, button_color, background_color, views, clicks, created_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      `);
+
+      // Criar tabela se não existir
+      try {
+        sqlite.exec(`
+          CREATE TABLE IF NOT EXISTS checkout_embeds (
+            id TEXT PRIMARY KEY,
+            plan_id TEXT NOT NULL,
+            user_id TEXT NOT NULL,
+            embed_code TEXT NOT NULL,
+            width TEXT,
+            height TEXT,
+            button_text TEXT,
+            button_color TEXT,
+            background_color TEXT,
+            views INTEGER DEFAULT 0,
+            clicks INTEGER DEFAULT 0,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (plan_id) REFERENCES stripe_plans(id)
+          )
+        `);
+      } catch (e) {
+        // Tabela já existe
+      }
+
+      insertEmbed.run(
+        embedId,
+        planId,
+        req.user.id,
+        embedCode,
+        width || '100%',
+        height || '600px',
+        buttonText || 'Iniciar Teste Grátis',
+        buttonColor || '#007bff',
+        backgroundColor || '#f8f9fa',
+        0,
+        0,
+        new Date().toISOString()
+      );
+
+      res.json({
+        success: true,
+        embedId,
+        embedCode,
+        previewUrl: `${baseUrl}/checkout-public/${planId}`,
+        message: 'Código de embed gerado com sucesso!'
+      });
+    } catch (error) {
+      console.error('❌ Erro ao gerar embed:', error);
+      res.status(500).json({ error: 'Erro ao gerar embed' });
+    }
+  });
+
   // CRIAR PAYMENT INTENT PARA STRIPE ELEMENTS
   app.post("/api/stripe/create-payment-intent-subscription", verifyJWT, async (req: any, res) => {
     try {
@@ -6496,6 +6953,178 @@ export function registerSQLiteRoutes(app: Express): Server {
     } catch (error) {
       console.error("Error creating plan:", error);
       res.status(500).json({ error: "Failed to create plan" });
+    }
+  });
+
+  // CHECKOUT PÚBLICO - BUSCAR PLANO POR ID (SEM AUTENTICAÇÃO)
+  app.get("/api/public/checkout/plan/:planId", async (req: any, res) => {
+    try {
+      const { planId } = req.params;
+      
+      console.log('🔍 BUSCANDO PLANO PARA CHECKOUT PÚBLICO:', planId);
+      
+      // Primeiro, verificar se a tabela existe
+      const tableExists = sqlite.prepare(`
+        SELECT name FROM sqlite_master 
+        WHERE type='table' AND name='stripe_plans'
+      `).get();
+      
+      if (!tableExists) {
+        return res.status(500).json({ error: "Tabela stripe_plans não encontrada" });
+      }
+      
+      console.log('✅ TABELA STRIPE_PLANS EXISTE');
+      
+      // Depois, buscar o plano
+      const plan = sqlite.prepare(`
+        SELECT id, name, description, price, currency, interval, trial_period_days, activation_fee, features, stripe_product_id, stripe_price_id, active
+        FROM stripe_plans 
+        WHERE id = ? AND active = 1
+      `).get(planId);
+      
+      console.log('🔍 PLANO ENCONTRADO:', plan);
+      
+      if (!plan) {
+        // Mostrar planos disponíveis para debug
+        const allPlans = sqlite.prepare(`
+          SELECT id, name, active FROM stripe_plans
+        `).all();
+        
+        console.log('📋 PLANOS DISPONÍVEIS:', allPlans);
+        
+        return res.status(404).json({ 
+          error: "Plano não encontrado",
+          planId: planId,
+          availablePlans: allPlans
+        });
+      }
+      
+      // Parsear features se for string JSON
+      if (typeof plan.features === 'string') {
+        try {
+          plan.features = JSON.parse(plan.features);
+        } catch (e) {
+          plan.features = [];
+        }
+      }
+      
+      console.log('✅ PLANO ENCONTRADO:', plan);
+      
+      res.json({
+        success: true,
+        plan: plan
+      });
+    } catch (error) {
+      console.error('❌ Erro ao buscar plano:', error);
+      res.status(500).json({ 
+        error: 'Erro ao buscar plano',
+        details: error.message,
+        stack: error.stack 
+      });
+    }
+  });
+
+  // CRIAR CHECKOUT SESSION PARA PLANO ESPECÍFICO (SEM AUTENTICAÇÃO)
+  app.post("/api/checkout/create-session/:planId", async (req: any, res) => {
+    try {
+      const { planId } = req.params;
+      const { customerEmail, customerName } = req.body;
+      
+      console.log('🔥 CRIANDO CHECKOUT SESSION PARA PLANO:', planId);
+      console.log('👤 Dados do cliente:', { customerEmail, customerName });
+      
+      // Buscar plano
+      const plan = sqlite.prepare(`
+        SELECT * FROM stripe_plans 
+        WHERE id = ? AND active = 1
+      `).get(planId);
+      
+      if (!plan) {
+        return res.status(404).json({ error: "Plano não encontrado" });
+      }
+      
+      if (!activeStripeService) {
+        return res.status(500).json({ error: "Stripe não configurado" });
+      }
+      
+      // Criar customer
+      const customer = await activeStripeService.stripe.customers.create({
+        email: customerEmail,
+        name: customerName,
+        metadata: { planId }
+      });
+      
+      // Criar checkout session
+      const session = await activeStripeService.stripe.checkout.sessions.create({
+        mode: 'subscription',
+        customer: customer.id,
+        line_items: [{
+          price: plan.stripe_price_id,
+          quantity: 1
+        }],
+        subscription_data: {
+          trial_period_days: plan.trial_period_days,
+          metadata: {
+            planId: plan.id,
+            customerEmail,
+            customerName
+          }
+        },
+        success_url: `${process.env.BASE_URL || 'https://checkout.vendzz.com'}/success?session_id={CHECKOUT_SESSION_ID}`,
+        cancel_url: `${process.env.BASE_URL || 'https://checkout.vendzz.com'}/cancel`,
+        metadata: {
+          planId: plan.id,
+          customerEmail,
+          customerName,
+          trial_price: plan.activation_fee.toString(),
+          type: 'public_checkout'
+        }
+      });
+      
+      console.log('✅ CHECKOUT SESSION CRIADA:', session.id);
+      
+      res.json({
+        success: true,
+        sessionId: session.id,
+        checkoutUrl: session.url,
+        customerId: customer.id
+      });
+    } catch (error) {
+      console.error('❌ Erro ao criar checkout session:', error);
+      res.status(500).json({ error: 'Erro ao criar checkout session' });
+    }
+  });
+
+  // VERIFICAR STATUS DO CHECKOUT SESSION
+  app.get("/api/checkout/session/:sessionId", async (req: any, res) => {
+    try {
+      const { sessionId } = req.params;
+      
+      console.log('🔍 VERIFICANDO STATUS DO CHECKOUT SESSION:', sessionId);
+      
+      if (!activeStripeService) {
+        return res.status(500).json({ error: "Stripe não configurado" });
+      }
+      
+      const session = await activeStripeService.stripe.checkout.sessions.retrieve(sessionId);
+      
+      res.json({
+        success: true,
+        session: {
+          id: session.id,
+          payment_status: session.payment_status,
+          status: session.status,
+          customer_email: session.customer_details?.email,
+          customer_name: session.customer_details?.name,
+          subscription_id: session.subscription,
+          amount_total: session.amount_total,
+          currency: session.currency,
+          metadata: session.metadata
+        }
+      });
+    } catch (error) {
+      console.error('❌ Erro ao verificar session:', error);
+      res.status(500).json({ error: 'Erro ao verificar session' });
     }
   });
 
