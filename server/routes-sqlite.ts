@@ -65,6 +65,7 @@ import HealthCheckSystem from './health-check-system.js';
 import WhatsAppBusinessAPI from './whatsapp-business-api';
 import { registerFacelessVideoRoutes } from './faceless-video-routes';
 import { StripeCheckoutLinkGenerator } from './stripe-checkout-link-generator';
+import saasCobrancaRoutes from './saas-cobran-routes';
 import Stripe from 'stripe';
 
 // JWT Secret para validação de tokens
@@ -18690,6 +18691,12 @@ export function registerCheckoutRoutes(app: Express) {
       });
     }
   });
+
+  // SAAS COBRAN - Sistema de Cobrança Separado
+  app.use('/api/saas-cobran', saasCobrancaRoutes);
+
+  // Servir arquivos estáticos do SAAS COBRAN
+  app.use('/saas-cobran', express.static(path.join(__dirname, '../saas-cobran')));
 
   console.log('✅ Rotas do SAAS COBRAN registradas com sucesso');
 }

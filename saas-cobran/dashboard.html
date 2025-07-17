@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SAAS COBRAN - Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+        }
+        .glass-card {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+            transition: all 0.3s ease;
+        }
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+        }
+        .metric-card {
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            transition: all 0.3s ease;
+        }
+        .metric-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.3);
+        }
+    </style>
+</head>
+<body class="min-h-screen p-8">
+    <div class="max-w-7xl mx-auto">
+        <!-- Header -->
+        <div class="mb-8 flex justify-between items-center">
+            <div>
+                <h1 class="text-white text-3xl font-bold mb-2">SAAS COBRAN Dashboard</h1>
+                <p class="text-white/70">Sistema de Cobrança e Assinaturas</p>
+            </div>
+            <div class="flex gap-4">
+                <button onclick="window.location.href='/saas-cobran/create-plan.html'" 
+                        class="btn-primary text-white py-2 px-4 rounded-lg font-medium">
+                    <i class="fas fa-plus mr-2"></i>Criar Plano
+                </button>
+                <button onclick="window.location.href='/saas-cobran/charge-r1.html'" 
+                        class="bg-green-600 hover:bg-green-700 text-white py-2 px-4 rounded-lg font-medium transition">
+                    <i class="fas fa-credit-card mr-2"></i>Cobrar R$1
+                </button>
+                <button onclick="logout()" 
+                        class="bg-red-600 hover:bg-red-700 text-white py-2 px-4 rounded-lg font-medium transition">
+                    <i class="fas fa-sign-out-alt mr-2"></i>Sair
+                </button>
+            </div>
+        </div>
+
+        <!-- Métricas -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+            <div class="metric-card rounded-xl p-6">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-white/70 text-sm">Cobranças R$1</p>
+                        <p class="text-white text-2xl font-bold" id="cobrancasR1">0</p>
+                    </div>
+                    <div class="bg-green-500/20 rounded-full p-3">
+                        <i class="fas fa-dollar-sign text-green-400 text-xl"></i>
+                    </div>
+                </div>
+            </div>
+
+            <div class="metric-card rounded-xl p-6">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-white/70 text-sm">Recorrentes</p>
+                        <p class="text-white text-2xl font-bold" id="recorrentes">0</p>
+                    </div>
+                    <div class="bg-blue-500/20 rounded-full p-3">
+                        <i class="fas fa-repeat text-blue-400 text-xl"></i>
+                    </div>
+                </div>
+            </div>
+
+            <div class="metric-card rounded-xl p-6">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-white/70 text-sm">Clientes Ativos</p>
+                        <p class="text-white text-2xl font-bold" id="clientesAtivos">0</p>
+                    </div>
+                    <div class="bg-purple-500/20 rounded-full p-3">
+                        <i class="fas fa-users text-purple-400 text-xl"></i>
+                    </div>
+                </div>
+            </div>
+
+            <div class="metric-card rounded-xl p-6">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-white/70 text-sm">Receita Total</p>
+                        <p class="text-white text-2xl font-bold" id="receitaTotal">R$ 0,00</p>
+                    </div>
+                    <div class="bg-yellow-500/20 rounded-full p-3">
+                        <i class="fas fa-chart-line text-yellow-400 text-xl"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Conteúdo Principal -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <!-- Planos -->
+            <div class="glass-card rounded-xl p-6">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-white text-xl font-semibold">Planos Ativos</h2>
+                    <button onclick="loadPlans()" class="text-white/70 hover:text-white transition">
+                        <i class="fas fa-refresh"></i>
+                    </button>
+                </div>
+                <div id="plansList" class="space-y-3">
+                    <div class="animate-pulse">
+                        <div class="bg-white/10 rounded-lg p-4">
+                            <div class="h-4 bg-white/20 rounded w-3/4 mb-2"></div>
+                            <div class="h-3 bg-white/20 rounded w-1/2"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Cobranças Recentes -->
+            <div class="glass-card rounded-xl p-6">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-white text-xl font-semibold">Cobranças Recentes</h2>
+                    <button onclick="loadCharges()" class="text-white/70 hover:text-white transition">
+                        <i class="fas fa-refresh"></i>
+                    </button>
+                </div>
+                <div id="chargesList" class="space-y-3">
+                    <div class="animate-pulse">
+                        <div class="bg-white/10 rounded-lg p-4">
+                            <div class="h-4 bg-white/20 rounded w-3/4 mb-2"></div>
+                            <div class="h-3 bg-white/20 rounded w-1/2"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Verificar autenticação
+        if (!localStorage.getItem('saas-cobran-token')) {
+            window.location.href = '/saas-cobran/index.html';
+        }
+
+        // Função de logout
+        function logout() {
+            localStorage.removeItem('saas-cobran-token');
+            window.location.href = '/saas-cobran/index.html';
+        }
+
+        // Carregar métricas do dashboard
+        async function loadDashboard() {
+            try {
+                const response = await fetch('/api/saas-cobran/dashboard', {
+                    headers: {
+                        'Authorization': `Bearer ${localStorage.getItem('saas-cobran-token')}`
+                    }
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    document.getElementById('cobrancasR1').textContent = data.metrics.cobrancasR1;
+                    document.getElementById('recorrentes').textContent = data.metrics.recorrentes;
+                    document.getElementById('clientesAtivos').textContent = data.metrics.clientesAtivos;
+                    document.getElementById('receitaTotal').textContent = `R$ ${data.metrics.receitaTotal.toFixed(2)}`;
+                }
+            } catch (error) {
+                console.error('Erro ao carregar dashboard:', error);
+            }
+        }
+
+        // Carregar planos
+        async function loadPlans() {
+            try {
+                const response = await fetch('/api/saas-cobran/plans', {
+                    headers: {
+                        'Authorization': `Bearer ${localStorage.getItem('saas-cobran-token')}`
+                    }
+                });
+                
+                const data = await response.json();
+                const plansList = document.getElementById('plansList');
+                
+                if (data.success && data.plans && data.plans.length > 0) {
+                    plansList.innerHTML = data.plans.map(plan => `
+                        <div class="bg-white/5 rounded-lg p-4">
+                            <div class="flex justify-between items-start">
+                                <div>
+                                    <h3 class="text-white font-semibold">${plan.name}</h3>
+                                    <p class="text-white/70 text-sm mb-2">${plan.description || 'Sem descrição'}</p>
+                                    <div class="flex items-center gap-4 text-xs">
+                                        <span class="text-green-400">R$ ${plan.amount.toFixed(2)}/${plan.interval}</span>
+                                        <span class="text-blue-400">${plan.trial_days} dias trial</span>
+                                        <span class="text-yellow-400">Taxa: R$ ${plan.activation_fee.toFixed(2)}</span>
+                                    </div>
+                                </div>
+                                <div class="text-right">
+                                    <span class="text-white/70 text-xs">ID: ${plan.id}</span>
+                                </div>
+                            </div>
+                        </div>
+                    `).join('');
+                } else {
+                    plansList.innerHTML = `
+                        <div class="bg-white/5 rounded-lg p-4 text-center">
+                            <p class="text-white/70 mb-2">Nenhum plano criado</p>
+                            <button onclick="window.location.href='/saas-cobran/create-plan.html'" 
+                                    class="btn-primary text-white py-2 px-4 rounded-lg text-sm">
+                                Criar Primeiro Plano
+                            </button>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                console.error('Erro ao carregar planos:', error);
+                document.getElementById('plansList').innerHTML = `
+                    <div class="bg-red-500/20 rounded-lg p-4 text-center">
+                        <p class="text-red-200">Erro ao carregar planos</p>
+                    </div>
+                `;
+            }
+        }
+
+        // Carregar cobranças
+        async function loadCharges() {
+            try {
+                const response = await fetch('/api/saas-cobran/charges', {
+                    headers: {
+                        'Authorization': `Bearer ${localStorage.getItem('saas-cobran-token')}`
+                    }
+                });
+                
+                const data = await response.json();
+                const chargesList = document.getElementById('chargesList');
+                
+                if (data.success && data.charges && data.charges.length > 0) {
+                    chargesList.innerHTML = data.charges.slice(0, 5).map(charge => `
+                        <div class="bg-white/5 rounded-lg p-4">
+                            <div class="flex justify-between items-start">
+                                <div>
+                                    <h3 class="text-white font-semibold">${charge.name || 'Cliente'}</h3>
+                                    <p class="text-white/70 text-sm">${charge.email}</p>
+                                    <div class="flex items-center gap-4 text-xs mt-1">
+                                        <span class="text-green-400">R$ ${charge.amount.toFixed(2)}</span>
+                                        <span class="text-blue-400">${charge.type}</span>
+                                        <span class="text-yellow-400 capitalize">${charge.status}</span>
+                                    </div>
+                                </div>
+                                <div class="text-right">
+                                    <span class="text-white/70 text-xs">
+                                        ${new Date(charge.created_at).toLocaleDateString('pt-BR')}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    `).join('');
+                } else {
+                    chargesList.innerHTML = `
+                        <div class="bg-white/5 rounded-lg p-4 text-center">
+                            <p class="text-white/70 mb-2">Nenhuma cobrança encontrada</p>
+                            <button onclick="window.location.href='/saas-cobran/charge-r1.html'" 
+                                    class="btn-primary text-white py-2 px-4 rounded-lg text-sm">
+                                Criar Primeira Cobrança
+                            </button>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                console.error('Erro ao carregar cobranças:', error);
+                document.getElementById('chargesList').innerHTML = `
+                    <div class="bg-red-500/20 rounded-lg p-4 text-center">
+                        <p class="text-red-200">Erro ao carregar cobranças</p>
+                    </div>
+                `;
+            }
+        }
+
+        // Carregar dados iniciais
+        loadDashboard();
+        loadPlans();
+        loadCharges();
+
+        // Atualizar dados a cada 30 segundos
+        setInterval(() => {
+            loadDashboard();
+            loadPlans();
+            loadCharges();
+        }, 30000);
+    </script>
+</body>
+</html>

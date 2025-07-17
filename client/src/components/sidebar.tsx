@@ -48,7 +48,8 @@ import {
   Video,
   ShoppingCart,
   Code,
-  CheckCircle
+  CheckCircle,
+  CreditCard
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -122,6 +123,8 @@ export function Sidebar() {
     icon: <ShoppingCart className="w-4 h-4" />,
     active: location === "/checkout-system"
   };
+
+
 
   const navCategories = [
     {
