@@ -16072,6 +16072,154 @@ export function registerCheckoutRoutes(app: Express) {
     }
   });
 
+  // === ENDPOINTS STRIPE CUSTOM PLANS ===
+  // Endpoint para criar plano customizado
+  app.post('/api/stripe/create-custom-plan', verifyJWT, async (req: any, res) => {
+    try {
+      const { name, description, trialAmount, trialDays, recurringAmount, recurringInterval, currency } = req.body;
+      const user = req.user;
+
+      if (!user) {
+        return res.status(401).json({ error: "Usuário não autenticado" });
+      }
+
+      // Verificar se o Stripe está configurado
+      if (!process.env.STRIPE_SECRET_KEY) {
+        console.error('❌ STRIPE_SECRET_KEY não configurada');
+        return res.status(500).json({ error: "STRIPE_SECRET_KEY não configurada no arquivo .env" });
+      }
+
+      console.log('🔥 CRIANDO PLANO CUSTOMIZADO:', { name, description, trialAmount, trialDays, recurringAmount, recurringInterval, currency });
+
+      // Importar e criar instância do CustomPlansSystem
+      const { CustomPlansSystem } = await import('./custom-plans-system');
+      const customPlansSystem = new CustomPlansSystem(process.env.STRIPE_SECRET_KEY);
+
+      // Criar o plano customizado
+      const customPlan = await customPlansSystem.createCustomPlan({
+        name,
+        description,
+        trialAmount,
+        trialDays,
+        recurringAmount,
+        recurringInterval,
+        currency,
+        userId: user.id,
+      });
+
+      console.log('✅ PLANO CUSTOMIZADO CRIADO:', customPlan.id);
+
+      res.json({ 
+        success: true, 
+        plan: customPlan,
+        message: "Plano customizado criado com sucesso" 
+      });
+    } catch (error) {
+      console.error('❌ ERRO AO CRIAR PLANO CUSTOMIZADO:', error);
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  // Endpoint para listar planos customizados do usuário
+  app.get('/api/stripe/custom-plans', verifyJWT, async (req: any, res) => {
+    try {
+      const user = req.user;
+
+      if (!user) {
+        return res.status(401).json({ error: "Usuário não autenticado" });
+      }
+
+      console.log('📋 LISTANDO PLANOS CUSTOMIZADOS DO USUÁRIO:', user.id);
+
+      // Verificar se o Stripe está configurado
+      if (!process.env.STRIPE_SECRET_KEY) {
+        return res.status(500).json({ error: "STRIPE_SECRET_KEY não configurada no arquivo .env" });
+      }
+
+      // Importar e criar instância do CustomPlansSystem
+      const { CustomPlansSystem } = await import('./custom-plans-system');
+      const customPlansSystem = new CustomPlansSystem(process.env.STRIPE_SECRET_KEY);
+
+      // Listar planos do usuário
+      const plans = await customPlansSystem.listUserPlans(user.id);
+
+      res.json({ 
+        success: true, 
+        plans: plans,
+        total: plans.length 
+      });
+    } catch (error) {
+      console.error('❌ ERRO AO LISTAR PLANOS CUSTOMIZADOS:', error);
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  // Endpoint para desativar plano customizado
+  app.delete('/api/stripe/custom-plans/:id', verifyJWT, async (req: any, res) => {
+    try {
+      const { id } = req.params;
+      const user = req.user;
+
+      if (!user) {
+        return res.status(401).json({ error: "Usuário não autenticado" });
+      }
+
+      // Verificar se o Stripe está configurado
+      if (!process.env.STRIPE_SECRET_KEY) {
+        return res.status(500).json({ error: "STRIPE_SECRET_KEY não configurada no arquivo .env" });
+      }
+
+      // Importar e criar instância do CustomPlansSystem
+      const { CustomPlansSystem } = await import('./custom-plans-system');
+      const customPlansSystem = new CustomPlansSystem(process.env.STRIPE_SECRET_KEY);
+
+      // Desativar plano
+      await customPlansSystem.deactivatePlan(id, user.id);
+
+      res.json({ 
+        success: true, 
+        message: "Plano desativado com sucesso" 
+      });
+    } catch (error) {
+      console.error('❌ ERRO AO DESATIVAR PLANO CUSTOMIZADO:', error);
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  // Endpoint para criar checkout session para plano customizado
+  app.post('/api/stripe/create-checkout-for-plan/:id', verifyJWT, async (req: any, res) => {
+    try {
+      const { id } = req.params;
+      const { customerEmail } = req.body;
+      const user = req.user;
+
+      if (!user) {
+        return res.status(401).json({ error: "Usuário não autenticado" });
+      }
+
+      // Verificar se o Stripe está configurado
+      if (!process.env.STRIPE_SECRET_KEY) {
+        return res.status(500).json({ error: "STRIPE_SECRET_KEY não configurada no arquivo .env" });
+      }
+
+      // Importar e criar instância do CustomPlansSystem
+      const { CustomPlansSystem } = await import('./custom-plans-system');
+      const customPlansSystem = new CustomPlansSystem(process.env.STRIPE_SECRET_KEY);
+
+      // Criar checkout session
+      const checkout = await customPlansSystem.createCheckoutSession(id, customerEmail);
+
+      res.json({ 
+        success: true, 
+        sessionId: checkout.sessionId,
+        checkoutUrl: checkout.url 
+      });
+    } catch (error) {
+      console.error('❌ ERRO AO CRIAR CHECKOUT SESSION:', error);
+      res.status(500).json({ error: error.message });
+    }
+  });
+
   // Inicializar Pagar.me
   initializePagarme();
 }

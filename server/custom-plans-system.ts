@@ -1,15 +1,6 @@
 import Stripe from 'stripe';
-
-export interface CustomPlanConfig {
-  name: string;
-  description: string;
-  trialAmount: number; // Valor cobrado no trial (ex: R$ 1.00)
-  trialDays: number; // Dias de trial (ex: 3)
-  recurringAmount: number; // Valor recorrente (ex: R$ 29.90)
-  recurringInterval: 'month' | 'year' | 'week'; // Frequência da cobrança
-  currency: string; // BRL, USD, etc.
-  userId: string;
-}
+import { nanoid } from 'nanoid';
+import { db } from './db-sqlite';
 
 export interface CustomPlan {
   id: string;
@@ -18,15 +9,26 @@ export interface CustomPlan {
   trialAmount: number;
   trialDays: number;
   recurringAmount: number;
-  recurringInterval: 'month' | 'year' | 'week';
+  recurringInterval: string;
   currency: string;
   userId: string;
-  stripeProductId: string;
-  stripePriceId: string;
-  paymentLink: string;
+  active: boolean;
+  paymentLink?: string;
+  stripeProductId?: string;
+  stripePriceId?: string;
   createdAt: Date;
   updatedAt: Date;
-  isActive: boolean;
+}
+
+export interface CreateCustomPlanData {
+  name: string;
+  description: string;
+  trialAmount: number;
+  trialDays: number;
+  recurringAmount: number;
+  recurringInterval: string;
+  currency: string;
+  userId: string;
 }
 
 export class CustomPlansSystem {
@@ -34,270 +36,223 @@ export class CustomPlansSystem {
 
   constructor(stripeSecretKey: string) {
     this.stripe = new Stripe(stripeSecretKey, {
-      apiVersion: '2024-09-30.acacia'
+      apiVersion: '2023-10-16',
     });
   }
 
-  /**
-   * Cria um plano customizado no Stripe
-   */
-  async createCustomPlan(config: CustomPlanConfig): Promise<CustomPlan> {
+  async createCustomPlan(data: CreateCustomPlanData): Promise<CustomPlan> {
+    const planId = nanoid();
+    
     try {
-      console.log('🎯 CRIANDO PLANO CUSTOMIZADO:', config);
-
-      // 1. Criar produto no Stripe
+      // Criar produto no Stripe
       const product = await this.stripe.products.create({
-        name: config.name,
-        description: config.description,
-        metadata: {
-          userId: config.userId,
-          trialAmount: config.trialAmount.toString(),
-          trialDays: config.trialDays.toString(),
-          recurringAmount: config.recurringAmount.toString(),
-          recurringInterval: config.recurringInterval,
-          type: 'custom_plan'
-        }
+        name: data.name,
+        description: data.description,
       });
 
-      // 2. Criar preço recorrente
+      // Criar preço recorrente no Stripe
       const price = await this.stripe.prices.create({
-        product: product.id,
-        currency: config.currency.toLowerCase(),
+        unit_amount: Math.round(data.recurringAmount * 100), // Converter para centavos
+        currency: data.currency.toLowerCase(),
         recurring: {
-          interval: config.recurringInterval
+          interval: data.recurringInterval as 'month' | 'year',
         },
-        unit_amount: Math.round(config.recurringAmount * 100), // Converter para centavos
-        metadata: {
-          trialAmount: config.trialAmount.toString(),
-          trialDays: config.trialDays.toString(),
-          userId: config.userId
-        }
+        product: product.id,
       });
 
-      // 3. Criar payment link
+      // Criar link de pagamento
       const paymentLink = await this.stripe.paymentLinks.create({
-        line_items: [{
-          price: price.id,
-          quantity: 1
-        }],
-        metadata: {
-          userId: config.userId,
-          planType: 'custom_plan',
-          trialAmount: config.trialAmount.toString(),
-          trialDays: config.trialDays.toString()
-        }
+        line_items: [
+          {
+            price: price.id,
+            quantity: 1,
+          },
+        ],
+        subscription_data: {
+          trial_period_days: data.trialDays,
+        },
+        invoice_creation: {
+          enabled: true,
+        },
       });
 
+      // Salvar no banco de dados local
       const customPlan: CustomPlan = {
-        id: product.id,
-        name: config.name,
-        description: config.description,
-        trialAmount: config.trialAmount,
-        trialDays: config.trialDays,
-        recurringAmount: config.recurringAmount,
-        recurringInterval: config.recurringInterval,
-        currency: config.currency,
-        userId: config.userId,
+        id: planId,
+        name: data.name,
+        description: data.description,
+        trialAmount: data.trialAmount,
+        trialDays: data.trialDays,
+        recurringAmount: data.recurringAmount,
+        recurringInterval: data.recurringInterval,
+        currency: data.currency,
+        userId: data.userId,
+        active: true,
+        paymentLink: paymentLink.url,
         stripeProductId: product.id,
         stripePriceId: price.id,
-        paymentLink: paymentLink.url,
         createdAt: new Date(),
         updatedAt: new Date(),
-        isActive: true
       };
 
-      console.log('✅ PLANO CUSTOMIZADO CRIADO:', {
-        productId: product.id,
-        priceId: price.id,
-        paymentLink: paymentLink.url
-      });
+      // Inserir no banco
+      await this.savePlanToDatabase(customPlan);
 
+      console.log('✅ PLANO CUSTOMIZADO CRIADO COM SUCESSO:', customPlan);
+      
       return customPlan;
-
     } catch (error) {
-      console.error('❌ Erro ao criar plano customizado:', error);
+      console.error('❌ ERRO AO CRIAR PLANO CUSTOMIZADO:', error);
       throw new Error(`Falha ao criar plano customizado: ${error.message}`);
     }
   }
 
-  /**
-   * Cria checkout session para plano customizado
-   */
-  async createCheckoutSession(planId: string, customerEmail?: string): Promise<{ sessionId: string; url: string }> {
+  async listUserPlans(userId: string): Promise<CustomPlan[]> {
     try {
-      console.log('🛒 CRIANDO CHECKOUT SESSION PARA PLANO:', planId);
+      const plans = await this.getPlansByUserId(userId);
+      return plans.filter(plan => plan.active);
+    } catch (error) {
+      console.error('❌ ERRO AO LISTAR PLANOS:', error);
+      return [];
+    }
+  }
 
-      // Buscar produto no Stripe
-      const product = await this.stripe.products.retrieve(planId);
-      if (!product) {
-        throw new Error('Plano não encontrado');
+  async deactivatePlan(planId: string, userId: string): Promise<boolean> {
+    try {
+      // Buscar plano no banco
+      const plan = await this.getPlanById(planId);
+      
+      if (!plan || plan.userId !== userId) {
+        throw new Error('Plano não encontrado ou não pertence ao usuário');
       }
 
-      // Buscar preço do produto
-      const prices = await this.stripe.prices.list({
-        product: planId,
-        active: true,
-        limit: 1
-      });
-
-      if (prices.data.length === 0) {
-        throw new Error('Preço não encontrado para o plano');
+      // Desativar produto no Stripe
+      if (plan.stripeProductId) {
+        await this.stripe.products.update(plan.stripeProductId, {
+          active: false,
+        });
       }
 
-      const price = prices.data[0];
-      const trialAmount = parseFloat(product.metadata.trialAmount || '0');
-      const trialDays = parseInt(product.metadata.trialDays || '0');
+      // Marcar como inativo no banco
+      await this.updatePlanStatus(planId, false);
 
-      // Criar checkout session
+      console.log('✅ PLANO DESATIVADO COM SUCESSO:', planId);
+      return true;
+    } catch (error) {
+      console.error('❌ ERRO AO DESATIVAR PLANO:', error);
+      throw new Error(`Falha ao desativar plano: ${error.message}`);
+    }
+  }
+
+  async createCheckoutSession(planId: string, customerEmail: string): Promise<{sessionId: string, url: string}> {
+    try {
+      const plan = await this.getPlanById(planId);
+      
+      if (!plan || !plan.active) {
+        throw new Error('Plano não encontrado ou inativo');
+      }
+
       const session = await this.stripe.checkout.sessions.create({
+        payment_method_types: ['card'],
+        line_items: [
+          {
+            price: plan.stripePriceId,
+            quantity: 1,
+          },
+        ],
         mode: 'subscription',
-        line_items: [{
-          price: price.id,
-          quantity: 1
-        }],
-        success_url: `${process.env.BASE_URL || 'https://example.com'}/success?session_id={CHECKOUT_SESSION_ID}`,
-        cancel_url: `${process.env.BASE_URL || 'https://example.com'}/cancel`,
+        success_url: `${process.env.FRONTEND_URL || 'http://localhost:3000'}/success?session_id={CHECKOUT_SESSION_ID}`,
+        cancel_url: `${process.env.FRONTEND_URL || 'http://localhost:3000'}/cancel`,
         customer_email: customerEmail,
         subscription_data: {
-          trial_period_days: trialDays,
-          metadata: {
-            planId: planId,
-            trialAmount: trialAmount.toString(),
-            userId: product.metadata.userId
-          }
+          trial_period_days: plan.trialDays,
         },
-        metadata: {
-          planId: planId,
-          trialAmount: trialAmount.toString(),
-          userId: product.metadata.userId,
-          type: 'custom_plan_checkout'
-        }
-      });
-
-      console.log('✅ CHECKOUT SESSION CRIADA:', {
-        sessionId: session.id,
-        url: session.url
       });
 
       return {
         sessionId: session.id,
-        url: session.url
+        url: session.url!,
       };
-
     } catch (error) {
-      console.error('❌ Erro ao criar checkout session:', error);
+      console.error('❌ ERRO AO CRIAR CHECKOUT SESSION:', error);
       throw new Error(`Falha ao criar checkout session: ${error.message}`);
     }
   }
 
-  /**
-   * Lista todos os planos de um usuário
-   */
-  async listUserPlans(userId: string): Promise<CustomPlan[]> {
-    try {
-      console.log('📋 LISTANDO PLANOS DO USUÁRIO:', userId);
+  // Métodos auxiliares para o banco de dados
+  private async savePlanToDatabase(plan: CustomPlan): Promise<void> {
+    const query = `
+      INSERT INTO custom_plans (
+        id, name, description, trial_amount, trial_days, 
+        recurring_amount, recurring_interval, currency, user_id, 
+        active, payment_link, stripe_product_id, stripe_price_id,
+        created_at, updated_at
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `;
 
-      const products = await this.stripe.products.list({
-        active: true,
-        limit: 100
-      });
-
-      const userPlans: CustomPlan[] = [];
-
-      for (const product of products.data) {
-        if (product.metadata.userId === userId && product.metadata.type === 'custom_plan') {
-          // Buscar preço
-          const prices = await this.stripe.prices.list({
-            product: product.id,
-            active: true,
-            limit: 1
-          });
-
-          if (prices.data.length > 0) {
-            const price = prices.data[0];
-            
-            // Buscar payment link
-            const paymentLinks = await this.stripe.paymentLinks.list({
-              active: true,
-              limit: 10
-            });
-
-            let paymentLink = '';
-            for (const link of paymentLinks.data) {
-              if (link.line_items.data.some(item => item.price.id === price.id)) {
-                paymentLink = link.url;
-                break;
-              }
-            }
-
-            const plan: CustomPlan = {
-              id: product.id,
-              name: product.name,
-              description: product.description || '',
-              trialAmount: parseFloat(product.metadata.trialAmount || '0'),
-              trialDays: parseInt(product.metadata.trialDays || '0'),
-              recurringAmount: price.unit_amount ? price.unit_amount / 100 : 0,
-              recurringInterval: price.recurring?.interval as 'month' | 'year' | 'week',
-              currency: price.currency.toUpperCase(),
-              userId: product.metadata.userId,
-              stripeProductId: product.id,
-              stripePriceId: price.id,
-              paymentLink: paymentLink,
-              createdAt: new Date(product.created * 1000),
-              updatedAt: new Date(product.updated * 1000),
-              isActive: product.active
-            };
-
-            userPlans.push(plan);
-          }
-        }
-      }
-
-      console.log('✅ PLANOS ENCONTRADOS:', userPlans.length);
-      return userPlans;
-
-    } catch (error) {
-      console.error('❌ Erro ao listar planos:', error);
-      throw new Error(`Falha ao listar planos: ${error.message}`);
-    }
+    await db.run(query, [
+      plan.id,
+      plan.name,
+      plan.description,
+      plan.trialAmount,
+      plan.trialDays,
+      plan.recurringAmount,
+      plan.recurringInterval,
+      plan.currency,
+      plan.userId,
+      plan.active ? 1 : 0,
+      plan.paymentLink,
+      plan.stripeProductId,
+      plan.stripePriceId,
+      plan.createdAt.toISOString(),
+      plan.updatedAt.toISOString(),
+    ]);
   }
 
-  /**
-   * Desativa um plano customizado
-   */
-  async deactivatePlan(planId: string, userId: string): Promise<boolean> {
-    try {
-      console.log('🔴 DESATIVANDO PLANO:', planId);
+  private async getPlansByUserId(userId: string): Promise<CustomPlan[]> {
+    const query = `
+      SELECT * FROM custom_plans 
+      WHERE user_id = ? 
+      ORDER BY created_at DESC
+    `;
 
-      // Verificar se o plano pertence ao usuário
-      const product = await this.stripe.products.retrieve(planId);
-      if (product.metadata.userId !== userId) {
-        throw new Error('Plano não pertence ao usuário');
-      }
+    const rows = await db.all(query, [userId]);
+    return rows.map(this.mapRowToPlan);
+  }
 
-      // Desativar produto
-      await this.stripe.products.update(planId, {
-        active: false
-      });
+  private async getPlanById(planId: string): Promise<CustomPlan | null> {
+    const query = `SELECT * FROM custom_plans WHERE id = ?`;
+    const row = await db.get(query, [planId]);
+    return row ? this.mapRowToPlan(row) : null;
+  }
 
-      // Desativar preços
-      const prices = await this.stripe.prices.list({
-        product: planId,
-        active: true
-      });
+  private async updatePlanStatus(planId: string, active: boolean): Promise<void> {
+    const query = `
+      UPDATE custom_plans 
+      SET active = ?, updated_at = ? 
+      WHERE id = ?
+    `;
 
-      for (const price of prices.data) {
-        await this.stripe.prices.update(price.id, {
-          active: false
-        });
-      }
+    await db.run(query, [active ? 1 : 0, new Date().toISOString(), planId]);
+  }
 
-      console.log('✅ PLANO DESATIVADO COM SUCESSO');
-      return true;
-
-    } catch (error) {
-      console.error('❌ Erro ao desativar plano:', error);
-      throw new Error(`Falha ao desativar plano: ${error.message}`);
-    }
+  private mapRowToPlan(row: any): CustomPlan {
+    return {
+      id: row.id,
+      name: row.name,
+      description: row.description,
+      trialAmount: row.trial_amount,
+      trialDays: row.trial_days,
+      recurringAmount: row.recurring_amount,
+      recurringInterval: row.recurring_interval,
+      currency: row.currency,
+      userId: row.user_id,
+      active: Boolean(row.active),
+      paymentLink: row.payment_link,
+      stripeProductId: row.stripe_product_id,
+      stripePriceId: row.stripe_price_id,
+      createdAt: new Date(row.created_at),
+      updatedAt: new Date(row.updated_at),
+    };
   }
 }
