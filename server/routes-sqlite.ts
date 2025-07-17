@@ -4233,6 +4233,109 @@ export function registerSQLiteRoutes(app: Express): Server {
     }
   });
 
+  // STRIPE ELEMENTS - FLUXO CORRETO COM INVOICE + SUBSCRIPTION
+  app.post("/api/stripe/create-elements-checkout", verifyJWT, async (req: any, res) => {
+    try {
+      const { name, description, immediateAmount, trialDays, recurringAmount, currency } = req.body;
+      const userEmail = req.user.email;
+      const userName = `${req.user.firstName} ${req.user.lastName}`;
+
+      console.log('🎯 CRIANDO ELEMENTS CHECKOUT:', { name, immediateAmount, recurringAmount, trialDays });
+
+      if (!process.env.STRIPE_SECRET_KEY) {
+        return res.status(500).json({ error: "Stripe não configurado" });
+      }
+
+      const { StripeElementsSystem } = await import('./stripe-elements-system');
+      const elementsSystem = new StripeElementsSystem(process.env.STRIPE_SECRET_KEY);
+
+      const elementsData = await elementsSystem.createElementsCheckout({
+        name,
+        description,
+        immediateAmount,
+        trialDays,
+        recurringAmount,
+        currency,
+        customerEmail: userEmail,
+        customerName: userName,
+      });
+
+      console.log('✅ ELEMENTS CHECKOUT CRIADO:', elementsData.setupIntentId);
+
+      res.json({
+        success: true,
+        clientSecret: elementsData.clientSecret,
+        customerId: elementsData.customerId,
+        productId: elementsData.productId,
+        subscriptionPriceId: elementsData.subscriptionPriceId,
+        setupIntentId: elementsData.setupIntentId,
+        message: `Elements checkout criado: R$${immediateAmount.toFixed(2)} imediato, depois R$${recurringAmount.toFixed(2)}/mês após ${trialDays} dias`,
+        billing_flow: {
+          step_1: `Cliente insere cartão (Elements)`,
+          step_2: `Payment method salvo automaticamente`,
+          step_3: `R$${immediateAmount.toFixed(2)} cobrado via invoice imediatamente`,
+          step_4: `Assinatura criada com trial de ${trialDays} dias`,
+          step_5: `R$${recurringAmount.toFixed(2)}/mês cobrado automaticamente após trial`,
+        },
+      });
+    } catch (error) {
+      console.error('❌ ERRO AO CRIAR ELEMENTS CHECKOUT:', error);
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  // PROCESSAR PAGAMENTO APÓS CONFIRMAÇÃO DO CARTÃO
+  app.post("/api/stripe/process-elements-payment", verifyJWT, async (req: any, res) => {
+    try {
+      const { setupIntentId } = req.body;
+
+      if (!setupIntentId) {
+        return res.status(400).json({ error: "Setup Intent ID obrigatório" });
+      }
+
+      console.log('🎯 PROCESSANDO PAGAMENTO ELEMENTS:', setupIntentId);
+
+      const { StripeElementsSystem } = await import('./stripe-elements-system');
+      const elementsSystem = new StripeElementsSystem(process.env.STRIPE_SECRET_KEY);
+
+      const paymentResult = await elementsSystem.processElementsPayment(setupIntentId);
+
+      console.log('✅ PAGAMENTO PROCESSADO:', paymentResult);
+
+      res.json({
+        success: true,
+        invoiceId: paymentResult.invoiceId,
+        subscriptionId: paymentResult.subscriptionId,
+        immediateChargeStatus: paymentResult.immediateChargeStatus,
+        trialEndDate: paymentResult.trialEndDate,
+        message: `Pagamento processado com sucesso! Cobrança imediata: ${paymentResult.immediateChargeStatus}`,
+      });
+    } catch (error) {
+      console.error('❌ ERRO AO PROCESSAR PAGAMENTO:', error);
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  // VERIFICAR STATUS DO PAGAMENTO
+  app.get("/api/stripe/payment-status/:setupIntentId", verifyJWT, async (req: any, res) => {
+    try {
+      const { setupIntentId } = req.params;
+
+      const { StripeElementsSystem } = await import('./stripe-elements-system');
+      const elementsSystem = new StripeElementsSystem(process.env.STRIPE_SECRET_KEY);
+
+      const status = await elementsSystem.getPaymentStatus(setupIntentId);
+
+      res.json({
+        success: true,
+        status,
+      });
+    } catch (error) {
+      console.error('❌ ERRO AO VERIFICAR STATUS:', error);
+      res.status(500).json({ error: error.message });
+    }
+  });
+
   // TESTE DE SIMULAÇÃO DO WEBHOOK - COMPLETAMENTE SIMPLIFICADO
   app.post("/api/stripe/test-webhook", verifyJWT, async (req: any, res) => {
     try {

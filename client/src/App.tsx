@@ -63,6 +63,7 @@ import CheckoutGPTSolution from "@/pages/checkout-gpt-solution";
 import CheckoutOfficial from "@/pages/checkout-official";
 import StripePlansManager from "@/pages/stripe-plans-manager";
 import StripeCheckoutCustom from "@/pages/stripe-checkout-custom";
+import StripeElementsCheckout from "@/pages/stripe-elements-checkout";
 import PaymentSuccess from "@/pages/payment-success";
 import ProductBuilder from "@/pages/product-builder";
 import SubscriptionsManager from "@/pages/subscriptions-manager";
@@ -369,6 +370,12 @@ function App() {
         <Route path="/stripe-checkout-custom">
           <Layout>
             <StripeCheckoutCustom />
+          </Layout>
+        </Route>
+        
+        <Route path="/stripe-elements-checkout">
+          <Layout>
+            <StripeElementsCheckout />
           </Layout>
         </Route>
         
