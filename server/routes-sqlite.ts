@@ -5854,6 +5854,117 @@ console.log('Vendzz Checkout Embed carregado para plano: ${planId}');
     }
   });
 
+  // SISTEMA DE TRIAL CUSTOMIZADO - R$10 IMEDIATO + R$40 MENSAL APÓS 3 DIAS
+  app.post("/api/stripe/create-custom-trial", verifyJWT, async (req: any, res) => {
+    console.log('🔧 ENDPOINT TRIAL CUSTOMIZADO CHAMADO');
+    console.log('📋 User ID:', req.user.id);
+    console.log('📋 Body:', req.body);
+    
+    try {
+      console.log('🔍 Importando StripeCustomTrialSystem...');
+      const { StripeCustomTrialSystem } = await import('./stripe-custom-trial');
+      console.log('✅ StripeCustomTrialSystem importado com sucesso');
+      
+      const {
+        planName = 'Plano Premium',
+        planDescription = 'Acesso completo à plataforma',
+        trialAmount = 10.00,
+        trialDays = 3,
+        recurringAmount = 40.00,
+        recurringInterval = 'month',
+        currency = 'BRL'
+      } = req.body;
+
+      console.log('🔍 Buscando usuário...');
+      const user = await storage.getUser(req.user.id);
+      if (!user) {
+        console.log('❌ Usuário não encontrado');
+        return res.status(404).json({ error: "Usuário não encontrado" });
+      }
+      console.log('✅ Usuário encontrado:', user.email);
+
+      const stripeKey = process.env.STRIPE_SECRET_KEY || 'sk_test_51RjvV9HK6al3veW1FPD5bTV1on2NQLlm9ud45AJDggFHdsGA9UAo5jfbSRvWF83W3uTp5cpZYa8tJBvm4ttefrk800mUs47pFA';
+      console.log('🔍 Inicializando CustomTrialSystem...');
+      const customTrialSystem = new StripeCustomTrialSystem(stripeKey);
+
+      const config = {
+        planName,
+        planDescription,
+        trialAmount,
+        trialDays,
+        recurringAmount,
+        recurringInterval: recurringInterval as 'month' | 'year',
+        currency,
+        customerEmail: user.email,
+        customerName: `${user.firstName} ${user.lastName}`,
+      };
+
+      console.log('🔧 CRIANDO TRIAL CUSTOMIZADO:', config);
+
+      const result = await customTrialSystem.createCustomTrialCheckout(config);
+      
+      console.log('✅ TRIAL CUSTOMIZADO CRIADO:', result);
+      
+      return res.json({
+        success: true,
+        sessionId: result.sessionId,
+        sessionUrl: result.sessionUrl,
+        paymentIntentId: result.paymentIntentId,
+        subscriptionScheduleId: result.subscriptionScheduleId
+      });
+
+    } catch (error) {
+      console.error('❌ ERRO NO ENDPOINT TRIAL CUSTOMIZADO:', error);
+      
+      return res.status(500).json({
+        success: false,
+        error: error.message,
+        type: 'custom_trial_error'
+      });
+    }
+  });
+
+  // ENDPOINT SIMPLES DE TESTE PARA VERIFICAR SE ESTÁ FUNCIONANDO
+  app.post("/api/stripe/test-endpoint", async (req: any, res) => {
+    console.log('🔧 TESTE ENDPOINT CHAMADO SEM JWT');
+    console.log('📋 Body:', req.body);
+    
+    return res.json({
+      success: true,
+      message: 'Endpoint funcionando corretamente',
+      timestamp: new Date().toISOString()
+    });
+  });
+
+  // WEBHOOK HANDLER PARA TRIAL CUSTOMIZADO
+  app.post("/api/stripe/webhook-custom-trial", async (req: any, res) => {
+    try {
+      const { StripeCustomTrialSystem } = await import('./stripe-custom-trial');
+      
+      const stripeKey = process.env.STRIPE_SECRET_KEY || 'sk_test_51RjvV9HK6al3veW1FPD5bTV1on2NQLlm9ud45AJDggFHdsGA9UAo5jfbSRvWF83W3uTp5cpZYa8tJBvm4ttefrk800mUs47pFA';
+      const customTrialSystem = new StripeCustomTrialSystem(stripeKey);
+
+      const { event_type, payment_intent_id } = req.body;
+
+      if (event_type === 'payment_intent.succeeded' && payment_intent_id) {
+        await customTrialSystem.handleTrialPaymentSuccess(payment_intent_id);
+        
+        console.log('✅ WEBHOOK TRIAL CUSTOMIZADO PROCESSADO:', payment_intent_id);
+        
+        res.json({
+          success: true,
+          message: 'Webhook processado com sucesso',
+          payment_intent_id,
+        });
+      } else {
+        res.status(400).json({ error: 'Evento não suportado' });
+      }
+    } catch (error) {
+      console.error('❌ ERRO NO WEBHOOK TRIAL CUSTOMIZADO:', error);
+      res.status(500).json({ error: error.message });
+    }
+  });
+
   // TESTE DE SIMULAÇÃO DO WEBHOOK - COMPLETAMENTE SIMPLIFICADO
   app.post("/api/stripe/test-webhook", verifyJWT, async (req: any, res) => {
     try {

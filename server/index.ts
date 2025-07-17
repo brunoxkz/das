@@ -133,12 +133,10 @@ app.use(blacklistMiddleware);
 setupHybridAuth(app);
 
 // Register all routes
-registerHybridRoutes(app);
+const server = registerHybridRoutes(app);
 
-// Middleware para proteger rotas API antes do Vite removido para permitir novos endpoints
-
-// Setup Vite middleware for dev and production
-setupVite(app);
+// Setup Vite middleware for dev and production APÓS as rotas
+setupVite(app, server);
 
 // Sistema de debug avançado
 const debugAuthenticatedSMSLogs = async () => {
@@ -382,7 +380,7 @@ async function startServer() {
     // Email service já está disponível
     console.log('📧 Serviço de email disponível');
     
-    const server = app.listen(PORT, "0.0.0.0", () => {
+    server.listen(PORT, "0.0.0.0", () => {
       log(`🚀 Server running on port ${PORT}`);
       log(`🚀 SISTEMA UNIFICADO OTIMIZADO: ${MAX_DETECTION_CYCLES} ciclos/hora, intervalo 60s`);
       log(`⚡ REDUÇÃO DE 70% NO USO DE RECURSOS - SUPORTE 100.000+ USUÁRIOS`);
