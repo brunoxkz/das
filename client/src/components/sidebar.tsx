@@ -46,7 +46,8 @@ import {
   Bot,
   Coins,
   Video,
-  ShoppingCart
+  ShoppingCart,
+  Code
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -152,48 +153,25 @@ export function Sidebar() {
       title: "RECURRING",
       items: [
         {
-          title: "Checkout Oficial",
-          href: "/checkout-official",
-          icon: <ShoppingCart className="w-4 h-4" />,
-          active: location === "/checkout-official"
-        },
-        {
-          title: "CHECKOUT TRIAL FINAL",
-          href: "/checkout-trial-final",
+          title: "💎 CHECKOUT PERFEITO",
+          href: "/checkout-perfect",
           icon: <Zap className="w-4 h-4" />,
-          active: location === "/checkout-trial-final",
-          badge: "R$1+Trial"
+          active: location === "/checkout-perfect",
+          badge: "R$1→R$29,90"
         },
         {
-          title: "Gerenciar Planos",
-          href: "/stripe-plans-manager",
+          title: "💎 PLANOS PERFEITOS",
+          href: "/stripe-plans-perfect",
           icon: <Package className="w-4 h-4" />,
-          active: location === "/stripe-plans-manager"
+          active: location === "/stripe-plans-perfect",
+          badge: "Gerenciar"
         },
         {
-          title: "Sistema Checkout",
-          href: "/checkout-system",
-          icon: <ShoppingCart className="w-4 h-4" />,
-          active: location === "/checkout-system"
-        },
-        {
-          title: "CHECKOUT INDIVIDUAL",
-          href: "/checkout-individual",
-          icon: <ShoppingCart className="w-4 h-4" />,
-          active: location === "/checkout-individual"
-        },
-        {
-          title: "STRIPE ELEMENTS",
-          href: "/stripe-elements",
-          icon: <Plug className="w-4 h-4" />,
-          active: location === "/stripe-elements",
-          badge: "embed"
-        },
-        {
-          title: "PRODUCT BUILDER",
-          href: "/product-builder",
-          icon: <Package className="w-4 h-4" />,
-          active: location === "/product-builder"
+          title: "🔗 CHECKOUT EMBED",
+          href: "/checkout-embed",
+          icon: <Code className="w-4 h-4" />,
+          active: location === "/checkout-embed",
+          badge: "Integrar"
         },
         {
           title: "GERENCIAR ASSINATURAS",

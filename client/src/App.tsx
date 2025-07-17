@@ -73,6 +73,9 @@ import PaymentIntentExplanation from "@/pages/payment-intent-explanation";
 import CheckoutTrialFinal from "@/pages/checkout-trial-final";
 import CheckoutTrialFinalSimple from "@/pages/checkout-trial-final-simple";
 import CheckoutStripeBasic from "@/pages/checkout-stripe-basic";
+import CheckoutTrialPerfect from "@/pages/checkout-trial-perfect";
+import StripePlansPerfeito from "@/pages/stripe-plans-perfect";
+import CheckoutEmbed from "@/components/checkout-embed";
 import StripeMonitoring from "@/pages/stripe-monitoring";
 import CheckoutStripeFinal from "@/pages/checkout-stripe-final";
 import ProductBuilder from "@/pages/product-builder";
@@ -418,6 +421,24 @@ function App() {
         <Route path="/checkout-trial-final">
           <Layout>
             <CheckoutTrialFinal />
+          </Layout>
+        </Route>
+        
+        <Route path="/checkout-perfect">
+          <Layout>
+            <CheckoutTrialPerfect />
+          </Layout>
+        </Route>
+        
+        <Route path="/stripe-plans-perfect">
+          <Layout>
+            <StripePlansPerfeito />
+          </Layout>
+        </Route>
+        
+        <Route path="/checkout-embed">
+          <Layout>
+            <CheckoutEmbed />
           </Layout>
         </Route>
         
