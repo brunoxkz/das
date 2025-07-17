@@ -1,3 +1,29 @@
+// Carregamento manual das variáveis de ambiente do .env
+import { readFileSync, existsSync } from "fs";
+import { resolve } from "path";
+
+if (existsSync(".env")) {
+  try {
+    const envFile = readFileSync(".env", "utf8");
+    const lines = envFile.split("\n");
+    
+    lines.forEach(line => {
+      if (line.trim() && !line.startsWith("#") && line.includes("=")) {
+        const [key, ...values] = line.split("=");
+        const value = values.join("=").replace(/^["']|["']$/g, "");
+        process.env[key.trim()] = value.trim();
+      }
+    });
+    
+    console.log("✅ Variáveis de ambiente carregadas do .env");
+    console.log("🔍 STRIPE_SECRET_KEY:", process.env.STRIPE_SECRET_KEY ? process.env.STRIPE_SECRET_KEY.substring(0, 10) + "..." : "undefined");
+  } catch (error) {
+    console.error("❌ Erro ao carregar .env:", error.message);
+  }
+} else {
+  console.warn("⚠️  Arquivo .env não encontrado");
+}
+
 import express, { type Request, Response, NextFunction } from "express";
 import compression from "compression";
 import helmet from "helmet";

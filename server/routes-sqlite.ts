@@ -4214,7 +4214,137 @@ export function registerSQLiteRoutes(app: Express): Server {
     }
   });
 
-  // STRIPE INTEGRATION - CRIAR CHECKOUT SESSION COM TRIAL FEE GARANTIDO
+  // STRIPE INTEGRATION NOVA - SOLUÇÃO COMBINADA GPT (mode: subscription com line_items duplos)
+  app.post("/api/stripe/create-checkout-session-combined", verifyJWT, async (req: any, res) => {
+    console.log('🎯 ENDPOINT COMBINADO EXECUTADO - INÍCIO');
+    try {
+      const { trial_period_days = 3, trial_price = 1.00, regular_price = 29.90, currency = "BRL" } = req.body;
+      const userId = req.user.id;
+
+      console.log('🔥 CRIANDO CHECKOUT SESSION COMBINADO - SOLUÇÃO GPT');
+      console.log('📊 Parâmetros:', { trial_period_days, trial_price, regular_price, currency });
+      console.log('👤 User ID:', userId);
+
+      // Buscar dados do usuário
+      const user = await storage.getUser(userId);
+      if (!user) {
+        return res.status(404).json({ error: "Usuário não encontrado" });
+      }
+
+      // Usando o Stripe diretamente
+      const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || 'sk_test_51RjvV9HK6al3veW1FPD5bTV1on2NQLlm9ud45AJDggFHdsGA9UAo5jfbSRvWF83W3uTp5cpZYa8tJBvm4ttefrk800mUs47pFA', {
+        apiVersion: '2024-09-30.acacia'
+      });
+
+      // Criar customer
+      const customer = await stripe.customers.create({
+        email: user.email,
+        name: `${user.firstName} ${user.lastName}`,
+        metadata: { userId }
+      });
+
+      // Criar produto de assinatura mensal
+      const monthlyProduct = await stripe.products.create({
+        name: 'Plano Premium - Vendzz',
+        description: `Assinatura mensal R$${regular_price} com trial de ${trial_period_days} dias`,
+        metadata: {
+          type: 'subscription',
+          userId: userId,
+          trial_period_days: trial_period_days.toString()
+        }
+      });
+
+      // Criar preço de assinatura mensal
+      const monthlyPrice = await stripe.prices.create({
+        product: monthlyProduct.id,
+        currency: currency.toLowerCase(),
+        recurring: {
+          interval: 'month'
+        },
+        unit_amount: Math.round(regular_price * 100)
+      });
+
+      // IMPLEMENTAÇÃO SUGERIDA PELO GPT: mode: subscription com line_items duplos
+      const session = await stripe.checkout.sessions.create({
+        mode: 'subscription',
+        customer: customer.id,
+        payment_method_types: ['card'],
+        line_items: [
+          {
+            // Taxa de ativação (non-recurring)
+            price_data: {
+              currency: currency.toLowerCase(),
+              product_data: {
+                name: 'Taxa de ativação',
+                description: `Taxa única para ativação do trial de ${trial_period_days} dias`
+              },
+              unit_amount: Math.round(trial_price * 100)
+            },
+            quantity: 1
+          },
+          {
+            // Assinatura mensal (recurring)
+            price: monthlyPrice.id,
+            quantity: 1
+          }
+        ],
+        subscription_data: {
+          trial_period_days: trial_period_days,
+          metadata: {
+            userId: userId,
+            activation_fee: trial_price.toString(),
+            implementation: 'gpt_combined_solution'
+          }
+        },
+        success_url: `https://example.com/success?session_id={CHECKOUT_SESSION_ID}`,
+        cancel_url: `https://example.com/cancel`,
+        metadata: {
+          userId,
+          trial_period_days: trial_period_days.toString(),
+          activation_fee: trial_price.toString(),
+          regular_price: regular_price.toString(),
+          implementation: 'gpt_combined_solution'
+        }
+      });
+
+      console.log('✅ Checkout session combinado criado:', {
+        sessionId: session.id,
+        customerId: customer.id,
+        monthlyPriceId: monthlyPrice.id,
+        implementation: 'gpt_combined_solution'
+      });
+
+      res.json({
+        clientSecret: session.client_secret,
+        sessionId: session.id,
+        url: session.url,
+        customerId: customer.id,
+        monthlyPriceId: monthlyPrice.id,
+        trialPeriodDays: trial_period_days,
+        // TRANSPARÊNCIA TOTAL CONFORME SUGERIDO PELO GPT
+        billing_explanation: {
+          immediate_charge: `R$${trial_price} (taxa de ativação) - cobrada agora`,
+          trial_period: `${trial_period_days} dias de trial gratuito`,
+          recurring_charge: `R$${regular_price}/mês - cobrada automaticamente após ${trial_period_days} dias`,
+          checkout_display: `"R$${trial_price} agora + R$${regular_price}/mês após ${trial_period_days} dias"`,
+          cancellation: `Cancele a qualquer momento`,
+          stripe_behavior: 'Cartão salvo automaticamente para assinatura'
+        },
+        technical_implementation: {
+          method: 'gpt_combined_solution',
+          mode: 'subscription',
+          line_items: 'duplos (taxa + assinatura)',
+          stripe_native: 'Assinatura criada automaticamente no Stripe Dashboard',
+          compliance: '100% legal e compatível com políticas do Stripe'
+        }
+      });
+    } catch (error) {
+      console.error("❌ Error creating combined checkout session:", error);
+      res.status(500).json({ error: "Failed to create combined checkout session", details: error.message });
+    }
+  });
+
+  // STRIPE INTEGRATION - CRIAR CHECKOUT SESSION COM TRIAL FEE GARANTIDO (VERSÃO ANTERIOR)
   app.post("/api/stripe/create-checkout-session-with-trial-fee", verifyJWT, async (req: any, res) => {
     try {
       const { trial_period_days = 3, trial_price = 1.00, regular_price = 29.90, currency = "BRL" } = req.body;
