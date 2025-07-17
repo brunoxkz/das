@@ -186,38 +186,63 @@ router.post('/login', async (req, res) => {
 // Rota do dashboard
 router.get('/dashboard', authenticateSaasCobran, (req, res) => {
   try {
-    // Buscar métricas do banco
-    const cobrancasR1 = db.prepare(`
-      SELECT COUNT(*) as count 
-      FROM saas_cobran_charges 
-      WHERE type = 'activation' AND status = 'succeeded'
-    `).get();
+    // Buscar métricas do banco com fallback para tabelas não existentes
+    let cobrancasR1 = 0;
+    let recorrentes = 0;
+    let clientesAtivos = 0;
+    let receitaTotal = 0;
 
-    const recorrentes = db.prepare(`
-      SELECT COUNT(*) as count 
-      FROM saas_cobran_charges 
-      WHERE type = 'recurring' AND status = 'succeeded'
-    `).get();
+    try {
+      const result = db.prepare(`
+        SELECT COUNT(*) as count 
+        FROM saas_cobran_charges 
+        WHERE type = 'activation' AND status = 'succeeded'
+      `).get();
+      cobrancasR1 = result?.count || 0;
+    } catch (e) {
+      // Tabela ainda não existe
+    }
 
-    const clientesAtivos = db.prepare(`
-      SELECT COUNT(*) as count 
-      FROM saas_cobran_subscriptions 
-      WHERE status = 'active'
-    `).get();
+    try {
+      const result = db.prepare(`
+        SELECT COUNT(*) as count 
+        FROM saas_cobran_charges 
+        WHERE type = 'recurring' AND status = 'succeeded'
+      `).get();
+      recorrentes = result?.count || 0;
+    } catch (e) {
+      // Tabela ainda não existe
+    }
 
-    const receitaTotal = db.prepare(`
-      SELECT SUM(amount) as total 
-      FROM saas_cobran_charges 
-      WHERE status = 'succeeded'
-    `).get();
+    try {
+      const result = db.prepare(`
+        SELECT COUNT(*) as count 
+        FROM saas_cobran_subscriptions 
+        WHERE status = 'active'
+      `).get();
+      clientesAtivos = result?.count || 0;
+    } catch (e) {
+      // Tabela ainda não existe
+    }
+
+    try {
+      const result = db.prepare(`
+        SELECT SUM(amount) as total 
+        FROM saas_cobran_charges 
+        WHERE status = 'succeeded'
+      `).get();
+      receitaTotal = result?.total || 0;
+    } catch (e) {
+      // Tabela ainda não existe
+    }
 
     res.json({
       success: true,
       metrics: {
-        cobrancasR1: cobrancasR1?.count || 0,
-        recorrentes: recorrentes?.count || 0,
-        clientesAtivos: clientesAtivos?.count || 0,
-        receitaTotal: receitaTotal?.total || 0
+        cobrancasR1,
+        recorrentes,
+        clientesAtivos,
+        receitaTotal
       },
       timestamp: new Date().toISOString()
     });

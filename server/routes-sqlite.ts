@@ -129,6 +129,35 @@ async function checkPlanExpiration(req: any, res: any, next: any) {
 }
 
 export function registerSQLiteRoutes(app: Express): Server {
+  // ⚡ SAAS COBRAN - PROCESSADO PRIMEIRO PARA EVITAR INTERCEPTAÇÃO
+  // Rota de teste para verificar se SAAS COBRAN está sendo interceptado
+  app.get('/api/saas-cobran/test', (req, res) => {
+    res.json({ message: 'SAAS COBRAN API está funcionando', timestamp: new Date().toISOString() });
+  });
+
+  // Middleware de debug para SAAS COBRAN
+  app.use('/api/saas-cobran', (req, res, next) => {
+    console.log('🔍 MIDDLEWARE DEBUG -', req.method, req.path);
+    console.log('📝 Headers:', req.headers);
+    console.log('📝 Body type:', typeof req.body);
+    console.log('📝 Body keys:', Object.keys(req.body || {}));
+    console.log('📝 Body content:', JSON.stringify(req.body || {}, null, 2));
+    next();
+  });
+
+  // Registrar rotas SAAS COBRAN imediatamente
+  app.use('/api/saas-cobran', saasCobrancaRoutes);
+
+  // Servir arquivos estáticos do SAAS COBRAN
+  app.use('/saas-cobran', express.static(path.join(__dirname, '../saas-cobran')));
+
+  // Rota específica para o index do SAAS COBRAN
+  app.get('/saas-cobran/', (req, res) => {
+    res.sendFile(path.join(__dirname, '../saas-cobran/index.html'));
+  });
+
+  console.log('✅ Rotas do SAAS COBRAN registradas com sucesso');
+
   // 🔓 ROTAS PÚBLICAS - SEM MIDDLEWARES DE SEGURANÇA
   // CHECKOUT PÚBLICO - BUSCAR PLANO POR ID (SEM AUTENTICAÇÃO)
   app.get("/api/public/checkout/plan/:planId", async (req: any, res) => {
@@ -18692,13 +18721,7 @@ export function registerCheckoutRoutes(app: Express) {
     }
   });
 
-  // SAAS COBRAN - Sistema de Cobrança Separado
-  app.use('/api/saas-cobran', saasCobrancaRoutes);
-
-  // Servir arquivos estáticos do SAAS COBRAN
-  app.use('/saas-cobran', express.static(path.join(__dirname, '../saas-cobran')));
-
-  console.log('✅ Rotas do SAAS COBRAN registradas com sucesso');
+  // SAAS COBRAN já foi registrado no início da função
 }
 
 
