@@ -894,94 +894,77 @@ export function registerSQLiteRoutes(app: Express): Server {
     }
   });
 
-  // Webhook de pagamento (público)
-  // Webhook do Stripe para processar pagamentos (público)
+  // Webhook do Stripe para processar pagamentos (público) - VERSÃO COMPLETA
   app.post('/api/webhook/stripe', express.raw({ type: 'application/json' }), async (req, res) => {
+    const { handleStripeWebhook } = await import('./stripe-webhook');
+    await handleStripeWebhook(req, res);
+  });
+
+  // APIs de Monitoramento Stripe
+  app.get('/api/stripe/monitoring', verifyJWT, async (req, res) => {
     try {
-      const sig = req.headers['stripe-signature'];
+      const now = Date.now();
+      const todayStart = new Date().setHours(0, 0, 0, 0);
+      const yesterdayStart = todayStart - 24 * 60 * 60 * 1000;
       
-      if (!sig) {
-        return res.status(400).json({ error: 'Stripe signature não encontrada' });
-      }
-
-      // Verificar se Stripe está disponível
-      if (!process.env.STRIPE_SECRET_KEY) {
-        return res.status(500).json({ error: 'Stripe não configurado' });
-      }
-
-      // Importar StripeService
-      const { StripeService } = await import('./stripe-integration');
-      const stripeService = new StripeService();
-
-      // Verificar webhook
-      let event;
-      try {
-        event = stripeService.verifyWebhook(req.body, sig);
-      } catch (error) {
-        console.error('Erro na verificação do webhook:', error);
-        return res.status(400).json({ error: 'Webhook inválido' });
-      }
-
-      console.log('Evento Stripe recebido:', event.type);
-
-      // Processar diferentes tipos de eventos
-      switch (event.type) {
-        case 'checkout.session.completed':
-          const session = event.data.object as any;
-          console.log('Checkout session completed:', session.id);
-          
-          // Aqui você pode salvar os dados da sessão no banco
-          // Atualizar status do pedido, criar usuário, etc.
-          break;
-
-        case 'customer.subscription.created':
-          const subscription = event.data.object as any;
-          console.log('Assinatura criada:', subscription.id);
-          
-          // Salvar dados da assinatura no banco
-          // Ativar acesso do usuário, etc.
-          break;
-
-        case 'customer.subscription.trial_will_end':
-          const trialEndingSub = event.data.object as any;
-          console.log('Trial terminando em 3 dias:', trialEndingSub.id);
-          
-          // Enviar email de lembrete do fim do trial
-          // Verificar se há método de pagamento, etc.
-          break;
-
-        case 'invoice.payment_succeeded':
-          const invoice = event.data.object as any;
-          console.log('Pagamento realizado com sucesso:', invoice.id);
-          
-          // Confirmar pagamento recorrente
-          // Renovar acesso do usuário, etc.
-          break;
-
-        case 'invoice.payment_failed':
-          const failedInvoice = event.data.object as any;
-          console.log('Pagamento falhou:', failedInvoice.id);
-          
-          // Lidar com falha no pagamento
-          // Pausar acesso, enviar email, etc.
-          break;
-
-        case 'customer.subscription.deleted':
-          const cancelledSub = event.data.object as any;
-          console.log('Assinatura cancelada:', cancelledSub.id);
-          
-          // Desativar acesso do usuário
-          // Enviar email de cancelamento, etc.
-          break;
-
-        default:
-          console.log('Evento não tratado:', event.type);
-      }
-
-      res.json({ received: true });
+      // Buscar transações de hoje
+      const todayTransactions = await storage.getTransactionsByDateRange(todayStart, now);
+      const yesterdayTransactions = await storage.getTransactionsByDateRange(yesterdayStart, todayStart);
+      
+      // Buscar assinaturas ativas
+      const activeSubscriptions = await storage.getActiveSubscriptions();
+      
+      // Calcular métricas
+      const todayRevenue = todayTransactions.reduce((sum, t) => sum + (t.amount || 0), 0);
+      const yesterdayRevenue = yesterdayTransactions.reduce((sum, t) => sum + (t.amount || 0), 0);
+      
+      const revenueGrowth = yesterdayRevenue > 0 ? 
+        ((todayRevenue - yesterdayRevenue) / yesterdayRevenue * 100).toFixed(1) : 0;
+      
+      const transactionsGrowth = yesterdayTransactions.length > 0 ? 
+        ((todayTransactions.length - yesterdayTransactions.length) / yesterdayTransactions.length * 100).toFixed(1) : 0;
+      
+      // Calcular taxa de conversão
+      const totalAttempts = todayTransactions.length;
+      const successfulTransactions = todayTransactions.filter(t => t.status === 'succeeded').length;
+      const conversionRate = totalAttempts > 0 ? ((successfulTransactions / totalAttempts) * 100).toFixed(1) : 0;
+      
+      res.json({
+        todayTransactions: todayTransactions.length,
+        todayRevenue: todayRevenue.toFixed(2),
+        activeSubscriptions: activeSubscriptions.length,
+        conversionRate: conversionRate,
+        transactionsGrowth: parseFloat(transactionsGrowth),
+        revenueGrowth: parseFloat(revenueGrowth),
+        subscriptionsGrowth: 0, // Implementar se necessário
+        conversionGrowth: 0, // Implementar se necessário
+        subscriptions: activeSubscriptions.slice(0, 10), // Últimas 10
+        webhookLogs: await storage.getRecentWebhookLogs(20)
+      });
     } catch (error) {
-      console.error('Erro no webhook do Stripe:', error);
-      res.status(500).json({ error: 'Erro ao processar webhook' });
+      console.error('❌ Erro ao buscar dados de monitoramento:', error);
+      res.status(500).json({ error: 'Erro ao buscar dados de monitoramento' });
+    }
+  });
+
+  app.get('/api/stripe/transactions/recent', verifyJWT, async (req, res) => {
+    try {
+      const limit = parseInt(req.query.limit as string) || 20;
+      const transactions = await storage.getRecentTransactions(limit);
+      res.json(transactions);
+    } catch (error) {
+      console.error('❌ Erro ao buscar transações recentes:', error);
+      res.status(500).json({ error: 'Erro ao buscar transações recentes' });
+    }
+  });
+
+  app.get('/api/stripe/alerts', verifyJWT, async (req, res) => {
+    try {
+      const alerts = await storage.getStripeAlerts();
+      res.json(alerts);
+    } catch (error) {
+      console.error('❌ Erro ao buscar alertas:', error);
+      res.status(500).json({ error: 'Erro ao buscar alertas' });
     }
   });
 

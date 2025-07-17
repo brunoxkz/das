@@ -7653,6 +7653,291 @@ Hoje você vai aprender ${project.title} - método revolucionário que já ajudo
       return [];
     }
   }
+
+  // Métodos para webhook do Stripe
+  async getSubscriptionByPaymentIntent(paymentIntentId: string): Promise<any> {
+    try {
+      const stmt = sqlite.prepare('SELECT * FROM stripe_subscriptions WHERE activationInvoiceId = ?');
+      return stmt.get(paymentIntentId);
+    } catch (error) {
+      console.error('❌ ERRO ao buscar assinatura por payment intent:', error);
+      return null;
+    }
+  }
+
+  async getSubscriptionByStripeId(stripeSubscriptionId: string): Promise<any> {
+    try {
+      const stmt = sqlite.prepare('SELECT * FROM stripe_subscriptions WHERE stripeSubscriptionId = ?');
+      return stmt.get(stripeSubscriptionId);
+    } catch (error) {
+      console.error('❌ ERRO ao buscar assinatura por Stripe ID:', error);
+      return null;
+    }
+  }
+
+  async updateSubscriptionStatus(id: string, status: string): Promise<void> {
+    try {
+      const stmt = sqlite.prepare('UPDATE stripe_subscriptions SET status = ?, updatedAt = ? WHERE id = ?');
+      stmt.run(status, Date.now(), id);
+    } catch (error) {
+      console.error('❌ ERRO ao atualizar status da assinatura:', error);
+      throw error;
+    }
+  }
+
+  async updateSubscriptionBilling(id: string, nextBillingDate: Date): Promise<void> {
+    try {
+      const stmt = sqlite.prepare('UPDATE stripe_subscriptions SET nextBillingDate = ?, updatedAt = ? WHERE id = ?');
+      stmt.run(nextBillingDate.toISOString(), Date.now(), id);
+    } catch (error) {
+      console.error('❌ ERRO ao atualizar cobrança da assinatura:', error);
+      throw error;
+    }
+  }
+
+  async createSubscription(subscriptionData: any): Promise<void> {
+    try {
+      await this.ensureStripeSubscriptionsTable();
+      const stmt = sqlite.prepare(`
+        INSERT INTO stripe_subscriptions (
+          id, userId, stripeSubscriptionId, stripeCustomerId, stripePaymentMethodId,
+          status, planName, planDescription, activationFee, monthlyPrice, trialDays,
+          trialStartDate, trialEndDate, currentPeriodStart, currentPeriodEnd,
+          nextBillingDate, canceledAt, cancelAtPeriodEnd, customerName, customerEmail,
+          activationInvoiceId, metadata, createdAt, updatedAt
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      `);
+      
+      stmt.run(
+        subscriptionData.id,
+        subscriptionData.userId,
+        subscriptionData.stripeSubscriptionId,
+        subscriptionData.stripeCustomerId,
+        subscriptionData.stripePaymentMethodId || null,
+        subscriptionData.status,
+        subscriptionData.planName,
+        subscriptionData.planDescription,
+        subscriptionData.activationFee,
+        subscriptionData.monthlyPrice,
+        subscriptionData.trialDays,
+        subscriptionData.trialStartDate,
+        subscriptionData.trialEndDate,
+        subscriptionData.currentPeriodStart,
+        subscriptionData.currentPeriodEnd,
+        subscriptionData.nextBillingDate,
+        subscriptionData.canceledAt,
+        subscriptionData.cancelAtPeriodEnd || 0,
+        subscriptionData.customerName,
+        subscriptionData.customerEmail,
+        subscriptionData.activationInvoiceId || null,
+        subscriptionData.metadata,
+        subscriptionData.createdAt,
+        subscriptionData.updatedAt
+      );
+    } catch (error) {
+      console.error('❌ ERRO ao criar assinatura:', error);
+      throw error;
+    }
+  }
+
+  async updateSubscription(id: string, updates: any): Promise<void> {
+    try {
+      const fields = [];
+      const values = [];
+      
+      for (const [key, value] of Object.entries(updates)) {
+        fields.push(`${key} = ?`);
+        values.push(value);
+      }
+      
+      if (fields.length > 0) {
+        values.push(id);
+        const stmt = sqlite.prepare(`UPDATE stripe_subscriptions SET ${fields.join(', ')} WHERE id = ?`);
+        stmt.run(...values);
+      }
+    } catch (error) {
+      console.error('❌ ERRO ao atualizar assinatura:', error);
+      throw error;
+    }
+  }
+
+  // Métodos para monitoramento de pagamentos
+  async getTransactionsByDateRange(startDate: number, endDate: number): Promise<any[]> {
+    try {
+      await this.ensureStripeTransactionsTable();
+      const stmt = sqlite.prepare(`
+        SELECT * FROM stripe_transactions 
+        WHERE createdAt >= ? AND createdAt <= ? 
+        ORDER BY createdAt DESC
+      `);
+      return stmt.all(startDate, endDate);
+    } catch (error) {
+      console.error('❌ ERRO ao buscar transações por data:', error);
+      return [];
+    }
+  }
+
+  async getActiveSubscriptions(): Promise<any[]> {
+    try {
+      await this.ensureStripeSubscriptionsTable();
+      const stmt = sqlite.prepare(`
+        SELECT * FROM stripe_subscriptions 
+        WHERE status IN ('active', 'trialing') 
+        ORDER BY createdAt DESC
+      `);
+      return stmt.all();
+    } catch (error) {
+      console.error('❌ ERRO ao buscar assinaturas ativas:', error);
+      return [];
+    }
+  }
+
+  async getRecentTransactions(limit: number = 20): Promise<any[]> {
+    try {
+      await this.ensureStripeTransactionsTable();
+      const stmt = sqlite.prepare(`
+        SELECT * FROM stripe_transactions 
+        ORDER BY createdAt DESC 
+        LIMIT ?
+      `);
+      return stmt.all(limit);
+    } catch (error) {
+      console.error('❌ ERRO ao buscar transações recentes:', error);
+      return [];
+    }
+  }
+
+  async getRecentWebhookLogs(limit: number = 20): Promise<any[]> {
+    try {
+      await this.ensureStripeWebhookLogsTable();
+      const stmt = sqlite.prepare(`
+        SELECT * FROM stripe_webhook_logs 
+        ORDER BY createdAt DESC 
+        LIMIT ?
+      `);
+      return stmt.all(limit);
+    } catch (error) {
+      console.error('❌ ERRO ao buscar logs de webhook:', error);
+      return [];
+    }
+  }
+
+  async getStripeAlerts(): Promise<any[]> {
+    try {
+      await this.ensureStripeAlertsTable();
+      const stmt = sqlite.prepare(`
+        SELECT * FROM stripe_alerts 
+        WHERE resolved = 0 
+        ORDER BY createdAt DESC
+      `);
+      return stmt.all();
+    } catch (error) {
+      console.error('❌ ERRO ao buscar alertas:', error);
+      return [];
+    }
+  }
+
+  // Criar tabelas auxiliares para monitoramento
+  async ensureStripeTransactionsTable(): Promise<void> {
+    try {
+      const stmt = sqlite.prepare(`
+        CREATE TABLE IF NOT EXISTS stripe_transactions (
+          id TEXT PRIMARY KEY,
+          userId TEXT,
+          stripePaymentIntentId TEXT,
+          amount REAL,
+          currency TEXT DEFAULT 'brl',
+          status TEXT,
+          customerName TEXT,
+          customerEmail TEXT,
+          description TEXT,
+          metadata TEXT,
+          createdAt INTEGER DEFAULT (strftime('%s', 'now') * 1000),
+          updatedAt INTEGER DEFAULT (strftime('%s', 'now') * 1000)
+        )
+      `);
+      stmt.run();
+    } catch (error) {
+      console.error('❌ ERRO ao criar tabela stripe_transactions:', error);
+    }
+  }
+
+  async ensureStripeWebhookLogsTable(): Promise<void> {
+    try {
+      const stmt = sqlite.prepare(`
+        CREATE TABLE IF NOT EXISTS stripe_webhook_logs (
+          id TEXT PRIMARY KEY,
+          eventId TEXT,
+          eventType TEXT,
+          status TEXT,
+          payload TEXT,
+          error TEXT,
+          createdAt INTEGER DEFAULT (strftime('%s', 'now') * 1000)
+        )
+      `);
+      stmt.run();
+    } catch (error) {
+      console.error('❌ ERRO ao criar tabela stripe_webhook_logs:', error);
+    }
+  }
+
+  async ensureStripeAlertsTable(): Promise<void> {
+    try {
+      const stmt = sqlite.prepare(`
+        CREATE TABLE IF NOT EXISTS stripe_alerts (
+          id TEXT PRIMARY KEY,
+          type TEXT,
+          severity TEXT,
+          message TEXT,
+          details TEXT,
+          resolved INTEGER DEFAULT 0,
+          createdAt INTEGER DEFAULT (strftime('%s', 'now') * 1000)
+        )
+      `);
+      stmt.run();
+    } catch (error) {
+      console.error('❌ ERRO ao criar tabela stripe_alerts:', error);
+    }
+  }
+
+  async logWebhookEvent(eventId: string, eventType: string, status: string, payload: any, error?: string): Promise<void> {
+    try {
+      await this.ensureStripeWebhookLogsTable();
+      const stmt = sqlite.prepare(`
+        INSERT INTO stripe_webhook_logs (id, eventId, eventType, status, payload, error)
+        VALUES (?, ?, ?, ?, ?, ?)
+      `);
+      stmt.run(
+        Date.now().toString(),
+        eventId,
+        eventType,
+        status,
+        JSON.stringify(payload),
+        error || null
+      );
+    } catch (error) {
+      console.error('❌ ERRO ao registrar log de webhook:', error);
+    }
+  }
+
+  async createStripeAlert(type: string, severity: string, message: string, details?: any): Promise<void> {
+    try {
+      await this.ensureStripeAlertsTable();
+      const stmt = sqlite.prepare(`
+        INSERT INTO stripe_alerts (id, type, severity, message, details)
+        VALUES (?, ?, ?, ?, ?)
+      `);
+      stmt.run(
+        Date.now().toString(),
+        type,
+        severity,
+        message,
+        details ? JSON.stringify(details) : null
+      );
+    } catch (error) {
+      console.error('❌ ERRO ao criar alerta:', error);
+    }
+  }
 }
 
 export const storage = new SQLiteStorage();

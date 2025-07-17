@@ -73,6 +73,7 @@ import PaymentIntentExplanation from "@/pages/payment-intent-explanation";
 import CheckoutTrialFinal from "@/pages/checkout-trial-final";
 import CheckoutTrialFinalSimple from "@/pages/checkout-trial-final-simple";
 import CheckoutStripeBasic from "@/pages/checkout-stripe-basic";
+import StripeMonitoring from "@/pages/stripe-monitoring";
 import CheckoutStripeFinal from "@/pages/checkout-stripe-final";
 import ProductBuilder from "@/pages/product-builder";
 import SubscriptionsManager from "@/pages/subscriptions-manager";
@@ -435,6 +436,12 @@ function App() {
         <Route path="/checkout-stripe-final">
           <Layout>
             <CheckoutStripeFinal />
+          </Layout>
+        </Route>
+        
+        <Route path="/stripe-monitoring">
+          <Layout>
+            <StripeMonitoring />
           </Layout>
         </Route>
         
