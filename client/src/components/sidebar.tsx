@@ -176,6 +176,13 @@ export function Sidebar() {
           active: location === "/checkout-individual"
         },
         {
+          title: "STRIPE ELEMENTS",
+          href: "/stripe-elements",
+          icon: <Plug className="w-4 h-4" />,
+          active: location === "/stripe-elements",
+          badge: "embed"
+        },
+        {
           title: "PRODUCT BUILDER",
           href: "/product-builder",
           icon: <Package className="w-4 h-4" />,

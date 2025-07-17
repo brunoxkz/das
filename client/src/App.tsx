@@ -66,6 +66,7 @@ import StripeCheckoutCustom from "@/pages/stripe-checkout-custom";
 import StripeElementsCheckout from "@/pages/stripe-elements-checkout";
 import StripeCheckoutLink from "@/pages/stripe-checkout-link";
 import StripeCheckoutManager from "@/pages/stripe-checkout-manager";
+import StripeElements from "@/pages/stripe-elements";
 import PaymentSuccess from "@/pages/payment-success";
 import ProductBuilder from "@/pages/product-builder";
 import SubscriptionsManager from "@/pages/subscriptions-manager";
@@ -386,6 +387,12 @@ function App() {
         <Route path="/stripe-checkout-manager">
           <Layout>
             <StripeCheckoutManager />
+          </Layout>
+        </Route>
+        
+        <Route path="/stripe-elements">
+          <Layout>
+            <StripeElements />
           </Layout>
         </Route>
         
