@@ -21,6 +21,7 @@ const stripeElementOptions = {
       color: '#1f2937',
       fontFamily: 'system-ui, -apple-system, sans-serif',
       fontSmoothing: 'antialiased',
+      lineHeight: '1.5',
       '::placeholder': {
         color: '#6b7280',
       },
@@ -35,6 +36,10 @@ const stripeElementOptions = {
       iconColor: '#059669',
     },
   },
+  // Configurações para garantir interação
+  disabled: false,
+  hideIcon: false,
+  showIcon: true,
 };
 
 interface CheckoutFormProps {
@@ -52,6 +57,31 @@ const CheckoutForm: React.FC<CheckoutFormProps> = ({ onSuccess }) => {
   const [error, setError] = useState<string | null>(null);
   const [cardReady, setCardReady] = useState(false);
   const [cardError, setCardError] = useState<string | null>(null);
+
+  // Verificar se os elementos do Stripe estão carregados
+  useEffect(() => {
+    const checkStripeElements = () => {
+      if (stripe && elements) {
+        console.log('✅ Stripe e Elements carregados com sucesso');
+        // Verificar se os elementos individuais estão disponíveis
+        setTimeout(() => {
+          const cardNumber = elements.getElement(CardNumberElement);
+          const cardExpiry = elements.getElement(CardExpiryElement);
+          const cardCvc = elements.getElement(CardCvcElement);
+          
+          console.log('Elementos disponíveis:', {
+            cardNumber: cardNumber ? '✅' : '❌',
+            cardExpiry: cardExpiry ? '✅' : '❌',
+            cardCvc: cardCvc ? '✅' : '❌'
+          });
+        }, 1000);
+      } else {
+        console.log('❌ Stripe ou Elements não carregados ainda');
+      }
+    };
+
+    checkStripeElements();
+  }, [stripe, elements]);
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -159,7 +189,16 @@ const CheckoutForm: React.FC<CheckoutFormProps> = ({ onSuccess }) => {
         {/* Número do Cartão */}
         <div className="space-y-2">
           <Label htmlFor="card-number" className="text-sm font-medium">Número do Cartão</Label>
-          <div className="p-4 border-2 border-gray-200 rounded-lg bg-white hover:border-blue-400 focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-200 transition-all min-h-[50px] flex items-center">
+          <div 
+            className="p-4 border-2 border-gray-200 rounded-lg bg-white hover:border-blue-400 focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-200 transition-all min-h-[50px] flex items-center cursor-text"
+            onClick={() => {
+              // Força o foco no elemento Stripe
+              const cardNumberElement = elements?.getElement(CardNumberElement);
+              if (cardNumberElement) {
+                cardNumberElement.focus();
+              }
+            }}
+          >
             <CardNumberElement
               id="card-number"
               options={stripeElementOptions}
@@ -167,6 +206,12 @@ const CheckoutForm: React.FC<CheckoutFormProps> = ({ onSuccess }) => {
               onReady={() => {
                 console.log('✅ CardNumberElement ready and clickable');
                 setCardReady(true);
+              }}
+              onFocus={() => {
+                console.log('CardNumberElement focused');
+              }}
+              onBlur={() => {
+                console.log('CardNumberElement blurred');
               }}
               onChange={(event) => {
                 console.log('CardNumberElement change:', event);
@@ -186,12 +231,24 @@ const CheckoutForm: React.FC<CheckoutFormProps> = ({ onSuccess }) => {
         <div className="grid grid-cols-2 gap-4">
           <div className="space-y-2">
             <Label htmlFor="card-expiry" className="text-sm font-medium">Data de Validade</Label>
-            <div className="p-4 border-2 border-gray-200 rounded-lg bg-white hover:border-blue-400 focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-200 transition-all min-h-[50px] flex items-center">
+            <div 
+              className="p-4 border-2 border-gray-200 rounded-lg bg-white hover:border-blue-400 focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-200 transition-all min-h-[50px] flex items-center cursor-text"
+              onClick={() => {
+                const cardExpiryElement = elements?.getElement(CardExpiryElement);
+                if (cardExpiryElement) {
+                  cardExpiryElement.focus();
+                }
+              }}
+            >
               <CardExpiryElement
                 id="card-expiry"
                 options={stripeElementOptions}
                 className="w-full"
+                onReady={() => console.log('✅ CardExpiryElement ready')}
+                onFocus={() => console.log('CardExpiryElement focused')}
+                onBlur={() => console.log('CardExpiryElement blurred')}
                 onChange={(event) => {
+                  console.log('CardExpiryElement change:', event);
                   if (event.error) {
                     setCardError(event.error.message);
                     setError(event.error.message);
@@ -206,12 +263,24 @@ const CheckoutForm: React.FC<CheckoutFormProps> = ({ onSuccess }) => {
 
           <div className="space-y-2">
             <Label htmlFor="card-cvc" className="text-sm font-medium">CVC</Label>
-            <div className="p-4 border-2 border-gray-200 rounded-lg bg-white hover:border-blue-400 focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-200 transition-all min-h-[50px] flex items-center">
+            <div 
+              className="p-4 border-2 border-gray-200 rounded-lg bg-white hover:border-blue-400 focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-200 transition-all min-h-[50px] flex items-center cursor-text"
+              onClick={() => {
+                const cardCvcElement = elements?.getElement(CardCvcElement);
+                if (cardCvcElement) {
+                  cardCvcElement.focus();
+                }
+              }}
+            >
               <CardCvcElement
                 id="card-cvc"
                 options={stripeElementOptions}
                 className="w-full"
+                onReady={() => console.log('✅ CardCvcElement ready')}
+                onFocus={() => console.log('CardCvcElement focused')}
+                onBlur={() => console.log('CardCvcElement blurred')}
                 onChange={(event) => {
+                  console.log('CardCvcElement change:', event);
                   if (event.error) {
                     setCardError(event.error.message);
                     setError(event.error.message);
@@ -227,7 +296,7 @@ const CheckoutForm: React.FC<CheckoutFormProps> = ({ onSuccess }) => {
 
         {cardReady && (
           <p className="text-sm text-green-600 mt-1">
-            ✅ Campos do cartão estão prontos! Clique para digitar.
+            ✅ Campos do cartão estão prontos! Clique para digitar nos campos acima.
           </p>
         )}
         {cardError && (
@@ -235,9 +304,23 @@ const CheckoutForm: React.FC<CheckoutFormProps> = ({ onSuccess }) => {
             ❌ {cardError}
           </p>
         )}
-        <p className="text-sm text-gray-500 mt-1">
-          Use cartão de teste: 4242 4242 4242 4242 com qualquer CVC e data futura
-        </p>
+        <div className="bg-blue-50 p-3 rounded-lg mt-2">
+          <p className="text-sm text-blue-700 font-medium">
+            📋 Instruções de Teste:
+          </p>
+          <ul className="text-sm text-blue-600 mt-1 space-y-1">
+            <li>• Número: 4242 4242 4242 4242</li>
+            <li>• Data: qualquer data futura (ex: 12/25)</li>
+            <li>• CVC: qualquer 3 dígitos (ex: 123)</li>
+          </ul>
+        </div>
+        
+        {/* Debug Info */}
+        <div className="bg-gray-50 p-3 rounded-lg mt-2">
+          <p className="text-xs text-gray-600">
+            Debug: Stripe={stripe ? '✅' : '❌'} | Elements={elements ? '✅' : '❌'} | Ready={cardReady ? '✅' : '❌'}
+          </p>
+        </div>
       </div>
 
       {/* Erro */}
