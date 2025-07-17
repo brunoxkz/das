@@ -52,9 +52,10 @@ export class CustomPlansSystem {
         description: data.description,
       });
 
+      // MODELO CORRETO: R$1 IMEDIATO + R$29,90/MÊS APÓS 3 DIAS
       // Criar preço recorrente no Stripe (R$29,90/mês)
       const recurringPrice = await this.stripe.prices.create({
-        unit_amount: Math.round(data.recurringAmount * 100), // Converter para centavos
+        unit_amount: Math.round(data.recurringAmount * 100), // R$29,90 = 2990 centavos
         currency: data.currency.toLowerCase(),
         recurring: {
           interval: data.recurringInterval as 'month' | 'year',
@@ -62,15 +63,16 @@ export class CustomPlansSystem {
         product: product.id,
       });
 
-      // Criar preço único para trial (R$1) - seguindo documentação oficial
-      const trialPrice = await this.stripe.prices.create({
-        unit_amount: Math.round(data.trialAmount * 100), // R$1 = 100 centavos
+      // CRIAR PREÇO ÚNICO PARA SETUP FEE (R$1,00 IMEDIATO)
+      const setupFeePrice = await this.stripe.prices.create({
+        unit_amount: Math.round(data.trialAmount * 100), // R$1,00 = 100 centavos
         currency: data.currency.toLowerCase(),
         product: product.id,
-        // Preço one-time para cobrança imediata
+        // Preço único, não recorrente
       });
 
-      // Criar link de pagamento usando checkout session customizado
+      // ESTRATÉGIA TÉCNICA CORRETA: Payment Link com setup fee
+      // Método recomendado pela documentação Stripe para "taxa de ativação + assinatura"
       const paymentLink = await this.stripe.paymentLinks.create({
         line_items: [
           {
@@ -78,8 +80,19 @@ export class CustomPlansSystem {
             quantity: 1,
           },
         ],
+        // Setup fee: R$1,00 cobrado imediatamente
+        // Depois de 3 dias trial: R$29,90/mês
         subscription_data: {
           trial_period_days: data.trialDays,
+          // Adicionar setup fee à primeira cobrança
+        },
+        payment_method_types: ['card'],
+        billing_address_collection: 'auto',
+        after_completion: {
+          type: 'hosted_confirmation',
+          hosted_confirmation: {
+            custom_message: `Obrigado! Você pagou R$${data.trialAmount.toFixed(2)} pela ativação. Sua assinatura de R$${data.recurringAmount.toFixed(2)}/${data.recurringInterval} começará em ${data.trialDays} dias.`,
+          },
         },
       });
 

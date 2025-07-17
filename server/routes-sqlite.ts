@@ -4186,6 +4186,53 @@ export function registerSQLiteRoutes(app: Express): Server {
     }
   });
 
+  // STRIPE CHECKOUT CUSTOMIZADO - MODELO CORRETO R$1 + R$29,90/MÊS
+  app.post("/api/stripe/create-custom-checkout", verifyJWT, async (req: any, res) => {
+    try {
+      const { name, description, trialAmount, trialDays, recurringAmount, recurringInterval, currency } = req.body;
+      const userEmail = req.user.email;
+
+      console.log('🎯 CRIANDO CHECKOUT CUSTOMIZADO:', { name, trialAmount, recurringAmount, trialDays });
+
+      if (!process.env.STRIPE_SECRET_KEY) {
+        return res.status(500).json({ error: "Stripe não configurado" });
+      }
+
+      // Importar e usar o sistema de checkout customizado
+      const { StripeCheckoutCustom } = await import('./stripe-checkout-custom');
+      const checkoutCustom = new StripeCheckoutCustom(process.env.STRIPE_SECRET_KEY);
+
+      const checkoutData = await checkoutCustom.createTrialSubscriptionCheckout({
+        name,
+        description,
+        trialAmount,
+        trialDays,
+        recurringAmount,
+        recurringInterval: recurringInterval as 'month' | 'year',
+        currency,
+        customerEmail: userEmail,
+      });
+
+      console.log('✅ CHECKOUT CUSTOMIZADO CRIADO:', checkoutData.checkoutSessionId);
+
+      res.json({
+        success: true,
+        checkoutSessionId: checkoutData.checkoutSessionId,
+        checkoutUrl: `https://checkout.stripe.com/c/pay/${checkoutData.checkoutSessionId}`,
+        clientSecret: checkoutData.clientSecret,
+        customerId: checkoutData.customerId,
+        productId: checkoutData.productId,
+        recurringPriceId: checkoutData.recurringPriceId,
+        immediatePaymentIntentId: checkoutData.immediatePaymentIntentId,
+        message: `Checkout criado: R$${trialAmount.toFixed(2)} imediato, depois R$${recurringAmount.toFixed(2)}/${recurringInterval} após ${trialDays} dias`,
+        billing_explanation: `Cobrança imediata de R$${trialAmount.toFixed(2)} para ativação, seguida de assinatura de R$${recurringAmount.toFixed(2)}/${recurringInterval} após ${trialDays} dias`,
+      });
+    } catch (error) {
+      console.error('❌ ERRO AO CRIAR CHECKOUT CUSTOMIZADO:', error);
+      res.status(500).json({ error: error.message });
+    }
+  });
+
   // TESTE DE SIMULAÇÃO DO WEBHOOK - COMPLETAMENTE SIMPLIFICADO
   app.post("/api/stripe/test-webhook", verifyJWT, async (req: any, res) => {
     try {
