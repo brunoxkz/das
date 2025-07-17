@@ -6,6 +6,12 @@ let stripe: Stripe | null = null;
 // Verificar .env explicitamente
 const stripeSecretKey = process.env.STRIPE_SECRET_KEY || 'sk_test_51RjvV9HK6al3veW1FPD5bTV1on2NQLlm9ud45AJDggFHdsGA9UAo5jfbSRvWF83W3uTp5cpZYa8tJBvm4ttefrk800mUs47pFA';
 
+console.log('🔍 Verificando Stripe ENV:', { 
+  hasStripeSecret: !!process.env.STRIPE_SECRET_KEY,
+  stripeKey: process.env.STRIPE_SECRET_KEY ? process.env.STRIPE_SECRET_KEY.substring(0, 10) + '...' : 'undefined'
+});
+
+// Forçar inicialização do Stripe com a chave que sabemos estar correta
 if (stripeSecretKey && stripeSecretKey.startsWith('sk_')) {
   stripe = new Stripe(stripeSecretKey, {
     apiVersion: '2024-09-30.acacia',
@@ -13,6 +19,15 @@ if (stripeSecretKey && stripeSecretKey.startsWith('sk_')) {
   console.log('✅ Stripe inicializado com sucesso');
 } else {
   console.log('⚠️ Stripe não inicializado - chave não encontrada');
+}
+
+// Forçar inicialização se não funcionou
+if (!stripe) {
+  console.log('🔧 Tentando inicializar Stripe com chave hardcoded...');
+  stripe = new Stripe('sk_test_51RjvV9HK6al3veW1FPD5bTV1on2NQLlm9ud45AJDggFHdsGA9UAo5jfbSRvWF83W3uTp5cpZYa8tJBvm4ttefrk800mUs47pFA', {
+    apiVersion: '2024-09-30.acacia',
+  });
+  console.log('✅ Stripe inicializado com chave hardcoded');
 }
 
 export interface StripeProductConfig {

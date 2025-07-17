@@ -1,329 +1,336 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
+import { useMutation } from '@tanstack/react-query';
+import { Elements, PaymentElement, useStripe, useElements } from '@stripe/react-stripe-js';
 import { loadStripe } from '@stripe/stripe-js';
-import { Elements, CardElement, useStripe, useElements } from '@stripe/react-stripe-js';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest } from '@/lib/queryClient';
-import { CreditCard, Check, AlertCircle, Loader2 } from 'lucide-react';
+import { ArrowLeft, CreditCard, Eye, Code, Copy } from 'lucide-react';
+import { Link } from 'wouter';
 
-const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLIC_KEY || 'pk_test_51RjvV9HK6al3veW1FPD5bTAHQJq8QRPmgOZJlYVSKsrDzAZxFVLFjRmCWAWdLfyDSASSdVfqN8sQcCUYBLRq5J800bCCNJJhH');
+const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLIC_KEY);
 
-const PaymentForm = () => {
+// Componente do formulário de pagamento
+const PaymentForm = ({ clientSecret, customerData }: { clientSecret: string, customerData: any }) => {
   const stripe = useStripe();
   const elements = useElements();
   const { toast } = useToast();
-  
   const [isProcessing, setIsProcessing] = useState(false);
-  const [paymentSuccess, setPaymentSuccess] = useState(false);
-  const [paymentData, setPaymentData] = useState<any>(null);
-  const [clientSecret, setClientSecret] = useState('');
-  const [customerData, setCustomerData] = useState({
-    email: 'admin@vendzz.com',
-    name: 'Admin Vendzz',
-    immediateAmount: 1,
-    trialDays: 3,
-    recurringAmount: 29.9,
-    recurringInterval: 'monthly'
-  });
-
-  const createPaymentIntent = async () => {
-    try {
-      setIsProcessing(true);
-      
-      const response = await apiRequest("POST", "/api/stripe/create-payment-intent-subscription", customerData);
-      
-      if (response.success) {
-        setClientSecret(response.clientSecret);
-        setPaymentData(response);
-        
-        toast({
-          title: "Payment Intent criado!",
-          description: "Agora você pode finalizar o pagamento usando o cartão abaixo.",
-        });
-      }
-    } catch (error) {
-      toast({
-        title: "Erro ao criar Payment Intent",
-        description: "Tente novamente ou contate o suporte.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsProcessing(false);
-    }
-  };
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
-    
-    if (!stripe || !elements || !clientSecret) {
+
+    if (!stripe || !elements) {
       return;
     }
 
     setIsProcessing(true);
-    
-    const cardElement = elements.getElement(CardElement);
-    
-    if (!cardElement) {
-      setIsProcessing(false);
-      return;
-    }
 
-    try {
-      // Confirmar pagamento
-      const { error, paymentIntent } = await stripe.confirmCardPayment(clientSecret, {
-        payment_method: {
-          card: cardElement,
-          billing_details: {
-            name: customerData.name,
-            email: customerData.email,
-          },
-        },
-      });
+    const { error } = await stripe.confirmPayment({
+      elements,
+      confirmParams: {
+        return_url: `${window.location.origin}/payment-success`,
+      },
+    });
 
-      if (error) {
-        toast({
-          title: "Erro no pagamento",
-          description: error.message,
-          variant: "destructive",
-        });
-        setIsProcessing(false);
-        return;
-      }
-
-      if (paymentIntent.status === 'succeeded') {
-        // Criar assinatura após pagamento bem-sucedido
-        const subscriptionResponse = await apiRequest("POST", "/api/stripe/create-subscription-after-payment", {
-          customerId: paymentData.customerId,
-          paymentMethodId: paymentIntent.payment_method,
-          subscriptionPriceId: paymentData.subscriptionPriceId,
-          trialDays: customerData.trialDays,
-        });
-
-        if (subscriptionResponse.success) {
-          setPaymentSuccess(true);
-          
-          toast({
-            title: "Pagamento realizado com sucesso!",
-            description: `Cobrança imediata: R$ ${customerData.immediateAmount.toFixed(2)}. Trial de ${customerData.trialDays} dias iniciado.`,
-          });
-        }
-      }
-    } catch (error) {
+    if (error) {
       toast({
-        title: "Erro ao processar pagamento",
-        description: "Tente novamente ou contate o suporte.",
+        title: "Erro no pagamento",
+        description: error.message,
         variant: "destructive",
       });
-    } finally {
-      setIsProcessing(false);
+    } else {
+      toast({
+        title: "Pagamento processado!",
+        description: "Seu pagamento foi processado com sucesso.",
+      });
     }
+
+    setIsProcessing(false);
   };
 
-  if (paymentSuccess) {
-    return (
-      <Card className="w-full max-w-2xl mx-auto">
-        <CardHeader className="text-center">
-          <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-            <Check className="w-8 h-8 text-green-600" />
-          </div>
-          <CardTitle className="text-2xl text-green-600">Pagamento Realizado!</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="bg-green-50 p-4 rounded-lg">
-            <h3 className="font-semibold text-green-800 mb-2">Fluxo Completo Executado:</h3>
-            <div className="space-y-2 text-sm text-green-700">
-              <p>✅ Cobrança imediata: R$ {customerData.immediateAmount.toFixed(2)}</p>
-              <p>✅ Cartão salvo para futuras cobranças</p>
-              <p>✅ Trial de {customerData.trialDays} dias iniciado</p>
-              <p>✅ Assinatura criada: R$ {customerData.recurringAmount.toFixed(2)}/{customerData.recurringInterval}</p>
-            </div>
-          </div>
-          
-          <div className="pt-4 border-t">
-            <h4 className="font-semibold mb-2">Próximos Passos:</h4>
-            <ul className="text-sm text-gray-600 space-y-1">
-              <li>• Trial gratuito até {new Date(Date.now() + customerData.trialDays * 24 * 60 * 60 * 1000).toLocaleDateString()}</li>
-              <li>• Primeira cobrança recorrente automática após o trial</li>
-              <li>• Cancele a qualquer momento no painel de controle</li>
-            </ul>
-          </div>
-        </CardContent>
-      </Card>
-    );
-  }
-
   return (
-    <Card className="w-full max-w-2xl mx-auto">
-      <CardHeader>
-        <CardTitle className="flex items-center">
-          <CreditCard className="w-5 h-5 mr-2" />
-          Demonstração Payment Intent + Subscription
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-6">
-        {/* Configuração do Plano */}
-        <div className="space-y-4">
-          <h3 className="font-semibold">Configuração do Plano</h3>
-          
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <Label htmlFor="email">Email do Cliente</Label>
-              <Input
-                id="email"
-                type="email"
-                value={customerData.email}
-                onChange={(e) => setCustomerData({...customerData, email: e.target.value})}
-              />
-            </div>
-            <div>
-              <Label htmlFor="name">Nome do Cliente</Label>
-              <Input
-                id="name"
-                value={customerData.name}
-                onChange={(e) => setCustomerData({...customerData, name: e.target.value})}
-              />
-            </div>
-          </div>
-
-          <div className="grid grid-cols-3 gap-4">
-            <div>
-              <Label htmlFor="immediateAmount">Taxa Imediata (R$)</Label>
-              <Input
-                id="immediateAmount"
-                type="number"
-                step="0.01"
-                value={customerData.immediateAmount}
-                onChange={(e) => setCustomerData({...customerData, immediateAmount: parseFloat(e.target.value) || 0})}
-              />
-            </div>
-            <div>
-              <Label htmlFor="trialDays">Trial (dias)</Label>
-              <Input
-                id="trialDays"
-                type="number"
-                value={customerData.trialDays}
-                onChange={(e) => setCustomerData({...customerData, trialDays: parseInt(e.target.value) || 0})}
-              />
-            </div>
-            <div>
-              <Label htmlFor="recurringAmount">Recorrente (R$)</Label>
-              <Input
-                id="recurringAmount"
-                type="number"
-                step="0.01"
-                value={customerData.recurringAmount}
-                onChange={(e) => setCustomerData({...customerData, recurringAmount: parseFloat(e.target.value) || 0})}
-              />
-            </div>
-          </div>
+    <form onSubmit={handleSubmit} className="space-y-6">
+      <div className="bg-gradient-to-r from-green-50 to-blue-50 p-4 rounded-lg border">
+        <h3 className="font-semibold text-gray-800 mb-2">Resumo do Plano</h3>
+        <div className="space-y-1 text-sm">
+          <p><strong>Cliente:</strong> {customerData.name}</p>
+          <p><strong>Email:</strong> {customerData.email}</p>
+          <p><strong>Plano:</strong> Vendzz Premium</p>
+          <p><strong>Taxa de Ativação:</strong> R$ 1,00 (única vez)</p>
+          <p><strong>Trial:</strong> 3 dias gratuitos</p>
+          <p><strong>Após trial:</strong> R$ 29,90/mês</p>
         </div>
+      </div>
 
-        {/* Botão para criar Payment Intent */}
-        {!clientSecret && (
-          <Button
-            onClick={createPaymentIntent}
-            disabled={isProcessing}
-            className="w-full"
-          >
-            {isProcessing ? (
-              <div className="flex items-center">
-                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                Criando Payment Intent...
-              </div>
-            ) : (
-              <>
-                <CreditCard className="w-4 h-4 mr-2" />
-                Criar Payment Intent
-              </>
-            )}
-          </Button>
-        )}
+      <div className="bg-white p-4 rounded-lg border">
+        <PaymentElement />
+      </div>
 
-        {/* Formulário de Pagamento */}
-        {clientSecret && (
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
-              <Label>Dados do Cartão</Label>
-              <div className="mt-2 p-3 border rounded-lg">
-                <CardElement
-                  options={{
-                    style: {
-                      base: {
-                        fontSize: '16px',
-                        color: '#424770',
-                        '::placeholder': {
-                          color: '#aab7c4',
-                        },
-                      },
-                    },
-                  }}
-                />
-              </div>
-            </div>
-
-            <div className="bg-blue-50 p-4 rounded-lg">
-              <h4 className="font-semibold text-blue-800 mb-2">Resumo do Pagamento:</h4>
-              <div className="space-y-1 text-sm text-blue-700">
-                <p>🔥 Cobrança imediata: R$ {customerData.immediateAmount.toFixed(2)}</p>
-                <p>🎁 Trial gratuito: {customerData.trialDays} dias</p>
-                <p>💳 Depois: R$ {customerData.recurringAmount.toFixed(2)}/{customerData.recurringInterval}</p>
-              </div>
-            </div>
-
-            <Button
-              type="submit"
-              disabled={!stripe || isProcessing}
-              className="w-full"
-            >
-              {isProcessing ? (
-                <div className="flex items-center">
-                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  Processando pagamento...
-                </div>
-              ) : (
-                <>
-                  <Check className="w-4 h-4 mr-2" />
-                  Finalizar Pagamento
-                </>
-              )}
-            </Button>
-          </form>
-        )}
-
-        {/* Informações de Teste */}
-        <div className="bg-gray-50 p-4 rounded-lg">
-          <h4 className="font-semibold text-gray-800 mb-2">Cartões de Teste:</h4>
-          <div className="text-sm text-gray-600 space-y-1">
-            <p><strong>Sucesso:</strong> 4242 4242 4242 4242</p>
-            <p><strong>Falha:</strong> 4000 0000 0000 0002</p>
-            <p><strong>CVC:</strong> Qualquer 3 dígitos</p>
-            <p><strong>Data:</strong> Qualquer data futura</p>
-          </div>
-        </div>
-      </CardContent>
-    </Card>
+      <Button 
+        type="submit" 
+        disabled={!stripe || isProcessing}
+        className="w-full bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700"
+      >
+        {isProcessing ? 'Processando...' : 'Confirmar Pagamento - R$ 1,00'}
+      </Button>
+    </form>
   );
 };
 
 export default function StripePaymentIntentDemo() {
+  const { toast } = useToast();
+  const [clientSecret, setClientSecret] = useState<string>('');
+  const [showPaymentForm, setShowPaymentForm] = useState(false);
+  const [showEmbedCode, setShowEmbedCode] = useState(false);
+
+  // Dados do cliente editáveis
+  const [customerData, setCustomerData] = useState({
+    name: 'João Silva',
+    email: 'joao.silva@exemplo.com',
+    phone: '(11) 99999-9999',
+    document: '123.456.789-00'
+  });
+
+  // Mutation para criar Payment Intent
+  const createPaymentIntentMutation = useMutation({
+    mutationFn: async (data: any) => {
+      return await apiRequest("POST", "/api/stripe/payment-intent-simple", {
+        customerEmail: data.email,
+        customerName: data.name,
+        immediateAmount: 1,
+      });
+    },
+    onSuccess: (data) => {
+      setClientSecret(data.clientSecret);
+      setShowPaymentForm(true);
+      toast({
+        title: "Payment Intent criado!",
+        description: "Formulário de pagamento carregado com sucesso.",
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Erro ao criar Payment Intent",
+        description: "Não foi possível criar o Payment Intent. Tente novamente.",
+        variant: "destructive",
+      });
+    }
+  });
+
+  const handleInputChange = (field: string, value: string) => {
+    setCustomerData(prev => ({ ...prev, [field]: value }));
+  };
+
+  const handleCreatePaymentIntent = () => {
+    createPaymentIntentMutation.mutate(customerData);
+  };
+
+  const generateEmbedCode = () => {
+    const embedCode = `<!-- Stripe Payment Intent - Vendzz Premium -->
+<div id="vendzz-payment-widget" style="max-width: 500px; margin: 0 auto; padding: 20px; border: 1px solid #e5e7eb; border-radius: 8px; background: #ffffff; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+  <div style="text-align: center; margin-bottom: 24px;">
+    <h2 style="color: #1f2937; margin: 0 0 8px 0;">Vendzz Premium</h2>
+    <p style="color: #6b7280; margin: 0; font-size: 14px;">Plataforma completa de quiz e marketing</p>
+  </div>
+  
+  <div style="background: linear-gradient(135deg, #f0fdf4 0%, #eff6ff 100%); padding: 16px; border-radius: 6px; margin-bottom: 20px;">
+    <h3 style="color: #1f2937; margin: 0 0 12px 0; font-size: 16px;">Resumo do Plano</h3>
+    <div style="font-size: 14px; line-height: 1.5;">
+      <p style="margin: 4px 0;"><strong>Cliente:</strong> ${customerData.name}</p>
+      <p style="margin: 4px 0;"><strong>Email:</strong> ${customerData.email}</p>
+      <p style="margin: 4px 0;"><strong>Taxa de Ativação:</strong> R$ 1,00 (única vez)</p>
+      <p style="margin: 4px 0;"><strong>Trial:</strong> 3 dias gratuitos</p>
+      <p style="margin: 4px 0;"><strong>Após trial:</strong> R$ 29,90/mês</p>
+    </div>
+  </div>
+  
+  <iframe 
+    src="${window.location.origin}/stripe-payment-intent-demo?embed=true&name=${encodeURIComponent(customerData.name)}&email=${encodeURIComponent(customerData.email)}" 
+    width="100%" 
+    height="400" 
+    frameborder="0" 
+    style="border-radius: 6px; border: 1px solid #e5e7eb;"
+    title="Vendzz Premium - Checkout">
+  </iframe>
+  
+  <div style="text-align: center; margin-top: 16px; font-size: 12px; color: #6b7280;">
+    Powered by <strong>Vendzz</strong> & <strong>Stripe</strong>
+  </div>
+</div>
+
+<!-- Script de integração -->
+<script>
+window.addEventListener('message', function(event) {
+  if (event.data.type === 'VENDZZ_PAYMENT_SUCCESS') {
+    console.log('Pagamento realizado com sucesso!', event.data);
+    // Adicione aqui sua lógica de sucesso
+  }
+});
+</script>`;
+
+    return embedCode;
+  };
+
+  const copyEmbedCode = () => {
+    navigator.clipboard.writeText(generateEmbedCode());
+    toast({
+      title: "Código copiado!",
+      description: "Código embed copiado para a área de transferência.",
+    });
+  };
+
   return (
-    <div className="min-h-screen bg-gray-50 py-12 px-4">
-      <div className="max-w-4xl mx-auto">
-        <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">
-            Demonstração Payment Intent + Subscription
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
+      <div className="container mx-auto px-4 py-8">
+        <div className="flex items-center gap-4 mb-8">
+          <Link href="/stripe-elements">
+            <Button variant="outline" size="sm">
+              <ArrowLeft className="w-4 h-4 mr-2" />
+              Voltar
+            </Button>
+          </Link>
+          <h1 className="text-3xl font-bold bg-gradient-to-r from-green-600 to-blue-600 bg-clip-text text-transparent">
+            Stripe Payment Intent - Demo Completa
           </h1>
-          <p className="text-gray-600">
-            Fluxo completo: R$1 imediato → salvar cartão → trial 3 dias → R$29,90/mês
-          </p>
         </div>
 
-        <Elements stripe={stripePromise}>
-          <PaymentForm />
-        </Elements>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          {/* Configuração do Cliente */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Eye className="w-5 h-5" />
+                Dados do Cliente (Editáveis)
+              </CardTitle>
+              <CardDescription>
+                Configure os dados do cliente para a demonstração. Estes campos são editáveis para facilitar testes.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div>
+                <Label htmlFor="name">Nome Completo</Label>
+                <Input
+                  id="name"
+                  value={customerData.name}
+                  onChange={(e) => handleInputChange('name', e.target.value)}
+                  placeholder="Digite o nome completo"
+                />
+              </div>
+              <div>
+                <Label htmlFor="email">Email</Label>
+                <Input
+                  id="email"
+                  type="email"
+                  value={customerData.email}
+                  onChange={(e) => handleInputChange('email', e.target.value)}
+                  placeholder="Digite o email"
+                />
+              </div>
+              <div>
+                <Label htmlFor="phone">Telefone</Label>
+                <Input
+                  id="phone"
+                  value={customerData.phone}
+                  onChange={(e) => handleInputChange('phone', e.target.value)}
+                  placeholder="Digite o telefone"
+                />
+              </div>
+              <div>
+                <Label htmlFor="document">CPF</Label>
+                <Input
+                  id="document"
+                  value={customerData.document}
+                  onChange={(e) => handleInputChange('document', e.target.value)}
+                  placeholder="Digite o CPF"
+                />
+              </div>
+
+              <Button 
+                onClick={handleCreatePaymentIntent}
+                disabled={createPaymentIntentMutation.isPending}
+                className="w-full bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700"
+              >
+                <CreditCard className="w-4 h-4 mr-2" />
+                {createPaymentIntentMutation.isPending ? 'Criando...' : 'Criar Payment Intent'}
+              </Button>
+            </CardContent>
+          </Card>
+
+          {/* Formulário de Pagamento */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <CreditCard className="w-5 h-5" />
+                Formulário de Pagamento
+              </CardTitle>
+              <CardDescription>
+                Demonstração completa do Payment Intent com Stripe Elements
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {!showPaymentForm ? (
+                <div className="text-center py-8">
+                  <p className="text-gray-500 mb-4">
+                    Configure os dados do cliente e clique em "Criar Payment Intent" para ver o formulário.
+                  </p>
+                  <div className="bg-gradient-to-r from-green-50 to-blue-50 p-4 rounded-lg border">
+                    <h3 className="font-semibold text-gray-800 mb-2">Plano: Vendzz Premium</h3>
+                    <div className="space-y-1 text-sm">
+                      <p><strong>Taxa de Ativação:</strong> R$ 1,00 (única vez)</p>
+                      <p><strong>Trial:</strong> 3 dias gratuitos</p>
+                      <p><strong>Após trial:</strong> R$ 29,90/mês</p>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <Elements stripe={stripePromise} options={{ clientSecret }}>
+                  <PaymentForm clientSecret={clientSecret} customerData={customerData} />
+                </Elements>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Código Embed */}
+        {showPaymentForm && (
+          <Card className="mt-8">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Code className="w-5 h-5" />
+                Código Embed
+              </CardTitle>
+              <CardDescription>
+                Copie este código para incorporar o checkout em seu site
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <div className="flex gap-2">
+                  <Button
+                    onClick={() => setShowEmbedCode(!showEmbedCode)}
+                    variant="outline"
+                  >
+                    {showEmbedCode ? 'Ocultar' : 'Mostrar'} Código
+                  </Button>
+                  <Button onClick={copyEmbedCode} variant="outline">
+                    <Copy className="w-4 h-4 mr-2" />
+                    Copiar Código
+                  </Button>
+                </div>
+                
+                {showEmbedCode && (
+                  <div className="bg-gray-900 text-green-400 p-4 rounded-lg overflow-x-auto">
+                    <pre className="text-sm whitespace-pre-wrap">{generateEmbedCode()}</pre>
+                  </div>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        )}
       </div>
     </div>
   );

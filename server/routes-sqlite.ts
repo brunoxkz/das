@@ -3637,12 +3637,8 @@ export function registerSQLiteRoutes(app: Express): Server {
         return res.status(500).json({ error: "Stripe não configurado - chave secreta ausente" });
       }
 
-      // Usar stripeService existente ou activeStripeService
-      const stripe = stripeService?.stripe || activeStripeService?.stripe;
-      if (!stripe) {
-        console.error('❌ ERRO: Instância do Stripe não encontrada');
-        return res.status(500).json({ error: "Instância do Stripe não inicializada" });
-      }
+      // Criar instância direta do Stripe
+      const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
       console.log('🎯 CRIANDO PAYMENT INTENT PARA SUBSCRIPTION:', { email, name, immediateAmount, trialDays, recurringAmount });
       console.log('🔍 VERIFICANDO STRIPE SERVICE:', { 
