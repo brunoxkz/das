@@ -45,7 +45,7 @@ export default function CheckoutOficial() {
     const plan = plans.find(p => p.id === selectedPlan);
     if (!plan) return;
 
-    const checkoutUrl = `${window.location.origin}/checkout/${selectedPlan}`;
+    const checkoutUrl = `${window.location.origin}/checkout-embed/${selectedPlan}`;
     
     const embedCode = `<!-- Vendzz Checkout Embed -->
 <div id="vendzz-checkout-${selectedPlan}" class="vendzz-checkout-container">
@@ -92,7 +92,7 @@ export default function CheckoutOficial() {
       return;
     }
 
-    return `${window.location.origin}/checkout/${selectedPlan}`;
+    return `${window.location.origin}/checkout-embed/${selectedPlan}`;
   };
 
   const copyToClipboard = (text: string, type: string) => {
@@ -113,7 +113,7 @@ export default function CheckoutOficial() {
       return;
     }
 
-    window.open(`/checkout/${selectedPlan}`, '_blank');
+    window.open(`/checkout-embed/${selectedPlan}`, '_blank');
   };
 
   return (

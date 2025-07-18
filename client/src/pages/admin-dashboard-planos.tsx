@@ -175,7 +175,7 @@ export default function AdminDashboardPlanos() {
 
   // Função para gerar links de checkout e embed
   const generateCheckoutLink = (planId: string) => {
-    return `${window.location.origin}/checkout/${planId}`;
+    return `${window.location.origin}/checkout-embed/${planId}`;
   };
 
   const generateEmbedCode = (planId: string) => {
