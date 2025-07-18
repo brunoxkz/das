@@ -11420,8 +11420,32 @@ console.log('Vendzz Checkout Embed carregado para plano: ${planId}');
       { code: '+98', prefixes: ['98'], minLength: 12, maxLength: 13, country: 'Irã', currency: 'IRR', language: 'fa-IR' },
     ];
     
-    // Primeiro, caso especial para números brasileiros sem código de país
-    // Apenas números que começam com DDD brasileiro válido (11, 12, 13, 14, 15, 16, 17, 18, 19, 21, 22, 24, 27, 28, 31, 32, 33, 34, 35, 37, 38, 41, 42, 43, 44, 45, 46, 47, 48, 49, 51, 53, 54, 55, 61, 62, 63, 64, 65, 66, 67, 68, 69, 71, 73, 74, 75, 77, 79, 81, 82, 83, 84, 85, 86, 87, 88, 89, 91, 92, 93, 94, 95, 96, 97, 98, 99)
+    console.log(`🔍 Detectando país para número: ${cleanPhone} (${cleanPhone.length} dígitos)`);
+    
+    // Primeiro, testar códigos de país completos (mais longo primeiro)
+    // Ordenar por comprimento de prefixo para evitar conflitos
+    const sortedCountries = [...countryDatabase].sort((a, b) => b.prefixes[0].length - a.prefixes[0].length);
+    
+    for (const country of sortedCountries) {
+      for (const prefix of country.prefixes) {
+        console.log(`🔍 Testando ${country.country} (${country.code}): prefixo ${prefix}, comprimento ${cleanPhone.length}, range ${country.minLength}-${country.maxLength}`);
+        
+        if (cleanPhone.startsWith(prefix) && 
+            cleanPhone.length >= country.minLength && 
+            cleanPhone.length <= country.maxLength) {
+          console.log(`✅ País detectado: ${country.country} (${country.code}) - Comprimento: ${cleanPhone.length}`);
+          return {
+            country: country.country,
+            code: country.code,
+            currency: country.currency,
+            language: country.language
+          };
+        }
+      }
+    }
+    
+    // Caso especial para números brasileiros sem código de país (apenas 11 dígitos)
+    // Apenas números que começam com DDD brasileiro válido
     if (cleanPhone.length === 11) {
       const ddd = cleanPhone.substring(0, 2);
       const validDDDs = ['11', '12', '13', '14', '15', '16', '17', '18', '19', '21', '22', '24', '27', '28', '31', '32', '33', '34', '35', '37', '38', '41', '42', '43', '44', '45', '46', '47', '48', '49', '51', '53', '54', '55', '61', '62', '63', '64', '65', '66', '67', '68', '69', '71', '73', '74', '75', '77', '79', '81', '82', '83', '84', '85', '86', '87', '88', '89', '91', '92', '93', '94', '95', '96', '97', '98', '99'];
@@ -11434,29 +11458,6 @@ console.log('Vendzz Checkout Embed carregado para plano: ${planId}');
           currency: 'BRL',
           language: 'pt-BR'
         };
-      }
-    }
-    
-    // Tentar detectar país por prefixo, começando pelos mais longos
-    const sortedCountries = countryDatabase.sort((a, b) => b.prefixes[0].length - a.prefixes[0].length);
-    
-    console.log(`🔍 Detectando país para número: ${cleanPhone} (${cleanPhone.length} dígitos)`);
-    
-    for (const country of sortedCountries) {
-      for (const prefix of country.prefixes) {
-        if (cleanPhone.startsWith(prefix)) {
-          const phoneLength = cleanPhone.length;
-          console.log(`🔍 Testando ${country.country} (${country.code}): prefixo ${prefix}, comprimento ${phoneLength}, range ${country.minLength}-${country.maxLength}`);
-          if (phoneLength >= country.minLength && phoneLength <= country.maxLength) {
-            console.log(`✅ País detectado: ${country.country} (${country.code}) - Comprimento: ${phoneLength}`);
-            return {
-              country: country.country,
-              code: country.code,
-              currency: country.currency,
-              language: country.language
-            };
-          }
-        }
       }
     }
     
