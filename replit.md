@@ -243,6 +243,15 @@ O sistema utiliza Stripe Payment Intent para processar pagamentos únicos de R$ 
 
 ```
 Changelog:
+- July 18, 2025. LÓGICA DE NEGÓCIO CORRIGIDA CONFORME ESPECIFICAÇÃO DO USUÁRIO - Sistema ajustado para implementar as regras corretas:
+  * Quiz Publication: Baseada no PLANO do usuário (free = limite 3 quizzes, pagos = ilimitado)
+  * SMS, Email, Voice Campaigns: Baseadas em CRÉDITOS (validação obrigatória)
+  * WhatsApp Campaigns: GRÁTIS e ILIMITADO para todos os usuários (sem validação)
+  * Removida validação de créditos das campanhas WhatsApp conforme especificação
+  * Implementada validação de plano para publicação de quiz (free plan = máximo 3 quizzes)
+  * Mantida validação de créditos para SMS e Email campaigns
+  * Sistema agora segue exatamente as regras de negócio especificadas pelo usuário
+  * Documentação atualizada: teste-logica-negocio-corrigida.js para validar implementação
 - July 18, 2025. SISTEMA DE CRÉDITOS ANTIFRAUDE 100% IMPLEMENTADO - Sistema completo de proteção contra burla e uso não autorizado implementado com sucesso:
   * Validação prévia de créditos implementada em todos os endpoints: SMS, Email, WhatsApp campaigns
   * Bloqueio de publicação de quiz implementado com validação de pelo menos 1 crédito

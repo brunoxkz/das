@@ -4363,8 +4363,8 @@ export function registerSQLiteRoutes(app: Express): Server {
         return res.status(403).json({ message: "Access denied" });
       }
 
-      // 🔒 VALIDAÇÃO DE CRÉDITOS PARA PUBLICAÇÃO - ANTI-BURLA
-      console.log(`🔒 VALIDAÇÃO DE CRÉDITOS PARA PUBLICAÇÃO - Quiz: ${req.params.id}`);
+      // 🔒 VALIDAÇÃO DE PLANO PARA PUBLICAÇÃO - ANTI-BURLA
+      console.log(`🔒 VALIDAÇÃO DE PLANO PARA PUBLICAÇÃO - Quiz: ${req.params.id}`);
       
       const user = await storage.getUser(req.user.id);
       if (!user) {
@@ -4372,28 +4372,30 @@ export function registerSQLiteRoutes(app: Express): Server {
         return res.status(404).json({ message: "Usuário não encontrado" });
       }
       
-      const currentSmsCredits = user.smsCredits || 0;
-      const currentEmailCredits = user.emailCredits || 0;
-      const currentWhatsappCredits = user.whatsappCredits || 0;
+      const userPlan = user.plan || 'free';
       
-      // VALIDAÇÃO: Pelo menos 1 crédito de qualquer tipo é necessário para publicar
-      const hasAnyCredits = currentSmsCredits > 0 || currentEmailCredits > 0 || currentWhatsappCredits > 0;
-      
-      if (!hasAnyCredits) {
-        console.log(`❌ PUBLICAÇÃO BLOQUEADA - Usuário sem créditos: SMS: ${currentSmsCredits}, Email: ${currentEmailCredits}, WhatsApp: ${currentWhatsappCredits}`);
-        return res.status(402).json({ 
-          message: "Você precisa de pelo menos 1 crédito (SMS, Email ou WhatsApp) para publicar um quiz",
-          error: "Créditos insuficientes para publicação",
-          currentCredits: {
-            sms: currentSmsCredits,
-            email: currentEmailCredits,
-            whatsapp: currentWhatsappCredits
-          },
-          requiredCredits: 1
-        });
+      // VALIDAÇÃO: Plano gratuito permite publicação limitada, planos pagos permitem ilimitado
+      if (userPlan === 'free') {
+        // Verificar quantos quizzes publicados o usuário já tem
+        const publishedQuizzes = await storage.getUserQuizzes(req.user.id);
+        const publishedCount = publishedQuizzes.filter(q => q.isPublished).length;
+        
+        // Limite do plano gratuito: 3 quizzes publicados
+        const freeLimit = 3;
+        
+        if (publishedCount >= freeLimit) {
+          console.log(`❌ PUBLICAÇÃO BLOQUEADA - Plano gratuito limitado: ${publishedCount}/${freeLimit} quizzes publicados`);
+          return res.status(402).json({ 
+            message: `Plano gratuito permite apenas ${freeLimit} quizzes publicados. Faça upgrade para publicar mais.`,
+            error: "Limite do plano gratuito atingido",
+            currentPlan: userPlan,
+            publishedQuizzes: publishedCount,
+            planLimit: freeLimit
+          });
+        }
       }
       
-      console.log(`✅ PUBLICAÇÃO PERMITIDA - Usuário com créditos: SMS: ${currentSmsCredits}, Email: ${currentEmailCredits}, WhatsApp: ${currentWhatsappCredits}`);
+      console.log(`✅ PUBLICAÇÃO PERMITIDA - Plano: ${userPlan}`);
 
       const updatedQuiz = await storage.updateQuiz(req.params.id, { isPublished: true });
 
@@ -12769,48 +12771,12 @@ app.post("/api/whatsapp-campaigns", verifyJWT, async (req: any, res: Response) =
     
     console.log(`📱 LEADS FILTRADOS: ${filteredPhones.length} de ${phones.length} total (dateFilter: ${dateFilter}, audience: ${targetAudience})`);
     
-    // 🔒 VALIDAÇÃO DE CRÉDITOS WHATSAPP - ANTI-BURLA
-    // VALIDAR CRÉDITOS ANTES DE PROCESSAR TELEFONES
-    const user = await storage.getUser(userId);
-    if (!user) {
-      console.log("❌ ERRO: Usuário não encontrado");
-      return res.status(404).json({ error: "Usuário não encontrado" });
-    }
-    
-    const currentWhatsAppCredits = user.whatsappCredits || 0;
-    
-    // VALIDAÇÃO PRÉVIA DE CRÉDITOS - BLOQUEAR CRIAÇÃO SE ZERO
-    if (currentWhatsAppCredits <= 0) {
-      console.log(`❌ CRÉDITOS WHATSAPP INSUFICIENTES - Atual: ${currentWhatsAppCredits}, Necessário: pelo menos 1`);
-      return res.status(402).json({ 
-        error: "Créditos WhatsApp insuficientes. Você precisa de pelo menos 1 crédito para criar campanhas WhatsApp.",
-        message: "Carregue créditos WhatsApp para continuar",
-        currentCredits: currentWhatsAppCredits,
-        requiredCredits: 1,
-        shortfall: 1 - currentWhatsAppCredits
-      });
-    }
+    // 🆓 WHATSAPP É GRÁTIS E ILIMITADO PARA TODOS OS USUÁRIOS
+    console.log(`✅ WHATSAPP GRÁTIS - Criando campanha para ${filteredPhones.length} mensagens (sem validação de créditos)`);
     
     if (filteredPhones.length === 0) {
       return res.status(400).json({ error: "Nenhum telefone válido encontrado após filtros" });
     }
-
-    const requiredCredits = filteredPhones.length;
-    console.log(`🔒 VALIDAÇÃO DE CRÉDITOS WHATSAPP - Necessário: ${requiredCredits} créditos`);
-    
-    const creditValidation = await storage.validateCreditsForCampaign(userId, 'whatsapp', requiredCredits);
-    if (!creditValidation.valid) {
-      console.log(`❌ CRÉDITOS WHATSAPP INSUFICIENTES - Atual: ${creditValidation.currentCredits}, Necessário: ${requiredCredits}`);
-      return res.status(402).json({ 
-        error: "Créditos WhatsApp insuficientes para criar esta campanha",
-        message: creditValidation.message,
-        currentCredits: creditValidation.currentCredits,
-        requiredCredits: requiredCredits,
-        shortfall: requiredCredits - creditValidation.currentCredits
-      });
-    }
-    
-    console.log(`✅ CRÉDITOS WHATSAPP SUFICIENTES - Pode criar campanha para ${requiredCredits} mensagens`);
     
     let scheduledAt;
     let initialStatus = 'active';
