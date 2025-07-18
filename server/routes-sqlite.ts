@@ -1658,6 +1658,20 @@ export function registerSQLiteRoutes(app: Express): Server {
 
       console.log('✅ CUSTOMER CRIADO:', customer.id);
 
+      // 🔥 CORREÇÃO CRÍTICA: Anexar payment method ao customer
+      await stripeSystem.stripe.paymentMethods.attach(paymentMethodId, {
+        customer: customer.id,
+      });
+
+      // Definir payment method como padrão do customer
+      await stripeSystem.stripe.customers.update(customer.id, {
+        invoice_settings: {
+          default_payment_method: paymentMethodId,
+        },
+      });
+
+      console.log('✅ PAYMENT METHOD ANEXADO E DEFINIDO COMO PADRÃO');
+
       // Criar Payment Intent e processar pagamento
       const paymentIntent = await stripeSystem.stripe.paymentIntents.create({
         amount: Math.round(amount * 100), // converter para centavos
@@ -1666,6 +1680,7 @@ export function registerSQLiteRoutes(app: Express): Server {
         payment_method: paymentMethodId,
         confirmation_method: 'automatic',
         confirm: true,
+        setup_future_usage: 'off_session', // 🔥 SALVAR CARTÃO PARA COBRANÇA AUTOMÁTICA
         return_url: `${req.protocol}://${req.get('host')}/payment-success`,
         metadata: {
           plan_name: planName || 'Vendzz Pro',
@@ -1703,6 +1718,7 @@ export function registerSQLiteRoutes(app: Express): Server {
         customer: customer.id,
         items: [{ price: price.id }],
         trial_period_days: 3,
+        default_payment_method: paymentMethodId, // 🔥 DEFINIR PAYMENT METHOD PADRÃO
         metadata: {
           activation_payment_intent: paymentIntent.id,
           plan_name: planName || 'Vendzz Pro'
@@ -1752,6 +1768,66 @@ export function registerSQLiteRoutes(app: Express): Server {
       res.status(500).json({
         success: false,
         message: 'Erro ao processar pagamento',
+        error: error.message
+      });
+    }
+  });
+
+  // 🔍 STRIPE VALIDAR SALVAMENTO DO CARTÃO - Verificar se payment method foi anexado
+  app.post("/api/stripe/validate-customer-payment-method", async (req, res) => {
+    try {
+      const { customerId, paymentMethodId } = req.body;
+      
+      if (!customerId || !paymentMethodId) {
+        return res.status(400).json({ 
+          success: false,
+          message: 'customerId e paymentMethodId são obrigatórios' 
+        });
+      }
+      
+      const { StripeSimpleTrialSystem } = await import('./stripe-simple-trial');
+      const stripeSystem = new StripeSimpleTrialSystem(
+        process.env.STRIPE_SECRET_KEY || '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'
+      );
+      
+      // Buscar customer no Stripe
+      const customer = await stripeSystem.stripe.customers.retrieve(customerId);
+      
+      // Listar payment methods do customer
+      const paymentMethods = await stripeSystem.stripe.paymentMethods.list({
+        customer: customerId,
+        type: 'card',
+      });
+      
+      // Verificar se o payment method específico está anexado
+      const paymentMethodAttached = paymentMethods.data.some(pm => pm.id === paymentMethodId);
+      
+      // Verificar se é o payment method padrão
+      const isDefaultPaymentMethod = customer.invoice_settings?.default_payment_method === paymentMethodId;
+      
+      console.log('🔍 VALIDAÇÃO DO CARTÃO:', {
+        customerId,
+        paymentMethodId,
+        paymentMethodAttached,
+        isDefaultPaymentMethod,
+        totalPaymentMethods: paymentMethods.data.length
+      });
+      
+      res.json({
+        success: true,
+        customerId,
+        paymentMethodId,
+        paymentMethodAttached,
+        isDefaultPaymentMethod,
+        totalPaymentMethods: paymentMethods.data.length,
+        message: paymentMethodAttached ? 'Cartão salvo com sucesso' : 'Cartão não está salvo'
+      });
+      
+    } catch (error) {
+      console.error('❌ ERRO AO VALIDAR CARTÃO:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Erro ao validar cartão',
         error: error.message
       });
     }
