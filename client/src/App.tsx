@@ -81,6 +81,7 @@ import CheckoutTrialPerfect from "@/pages/checkout-trial-perfect";
 import StripePlansPerfeito from "@/pages/stripe-plans-perfect";
 import CheckoutEmbed from "@/pages/checkout-embed";
 import CheckoutEmbedCodes from "@/pages/checkout-embed-codes";
+import PlanosPublicos from "@/pages/planos-publicos";
 import StripeMonitoring from "@/pages/stripe-monitoring";
 import CheckoutStripeFinal from "@/pages/checkout-stripe-final";
 import ProductBuilder from "@/pages/product-builder";
@@ -472,6 +473,18 @@ function App() {
           <Layout>
             <CheckoutEmbedCodes />
           </Layout>
+        </Route>
+        
+        <Route path="/planos">
+          <PlanosPublicos />
+        </Route>
+        
+        <Route path="/checkout/:planId">
+          <PlanosPublicos />
+        </Route>
+        
+        <Route path="/success">
+          <CheckoutSuccess />
         </Route>
         
         <Route path="/checkout-trial-final-simple">

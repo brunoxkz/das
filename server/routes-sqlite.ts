@@ -183,20 +183,45 @@ export function registerSQLiteRoutes(app: Express): Server {
   });
 
   // CRIAR CHECKOUT SESSION PARA PLANO ESPECÍFICO (SEM AUTENTICAÇÃO)
-  app.post("/api/public/checkout/create-session/:planId", async (req: any, res) => {
+  app.post("/api/public/checkout/create-session", async (req: any, res) => {
     try {
-      const { planId } = req.params;
-      const { customerEmail, customerName } = req.body;
+      const { planId, customerEmail, customerName, customerPhone, returnUrl, cancelUrl } = req.body;
       
       console.log('🔥 CRIANDO CHECKOUT SESSION PARA PLANO:', planId);
       console.log('🔍 activeStripeService:', activeStripeService);
       
-      // Buscar plano
-      const plan = sqlite.prepare(`
-        SELECT * FROM stripe_plans 
-        WHERE id = ? AND active = 1
-      `).get(planId);
+      // Definir planos disponíveis
+      const availablePlans = {
+        'plan_basico': {
+          id: 'plan_basico',
+          name: 'Plano Básico',
+          description: 'Acesso completo à plataforma',
+          price: 29.90,
+          currency: 'brl',
+          interval: 'month',
+          trial_days: 3
+        },
+        'plan_premium': {
+          id: 'plan_premium',
+          name: 'Plano Premium',
+          description: 'Para empresas em crescimento',
+          price: 69.90,
+          currency: 'brl',
+          interval: 'month',
+          trial_days: 7
+        },
+        'plan_enterprise': {
+          id: 'plan_enterprise',
+          name: 'Plano Enterprise',
+          description: 'Para grandes operações',
+          price: 149.90,
+          currency: 'brl',
+          interval: 'month',
+          trial_days: 14
+        }
+      };
       
+      const plan = availablePlans[planId];
       if (!plan) {
         return res.status(404).json({ error: "Plano não encontrado" });
       }
@@ -209,7 +234,23 @@ export function registerSQLiteRoutes(app: Express): Server {
       const customer = await activeStripeService.stripe.customers.create({
         email: customerEmail,
         name: customerName,
+        phone: customerPhone,
         metadata: { planId }
+      });
+      
+      // Criar produto e preço no Stripe
+      const product = await activeStripeService.stripe.products.create({
+        name: plan.name,
+        description: plan.description,
+      });
+      
+      const price = await activeStripeService.stripe.prices.create({
+        unit_amount: Math.round(plan.price * 100),
+        currency: plan.currency,
+        recurring: {
+          interval: plan.interval,
+        },
+        product: product.id,
       });
       
       // Criar checkout session
@@ -217,24 +258,23 @@ export function registerSQLiteRoutes(app: Express): Server {
         mode: 'subscription',
         customer: customer.id,
         line_items: [{
-          price: plan.stripe_price_id,
+          price: price.id,
           quantity: 1
         }],
         subscription_data: {
-          trial_period_days: plan.trial_period_days,
+          trial_period_days: plan.trial_days,
           metadata: {
             planId: plan.id,
             customerEmail,
             customerName
           }
         },
-        success_url: `${process.env.BASE_URL || 'https://checkout.vendzz.com'}/success?session_id={CHECKOUT_SESSION_ID}`,
-        cancel_url: `${process.env.BASE_URL || 'https://checkout.vendzz.com'}/cancel`,
+        success_url: returnUrl || `${process.env.BASE_URL || 'https://checkout.vendzz.com'}/success?session_id={CHECKOUT_SESSION_ID}`,
+        cancel_url: cancelUrl || `${process.env.BASE_URL || 'https://checkout.vendzz.com'}/cancel`,
         metadata: {
           planId: plan.id,
           customerEmail,
           customerName,
-          trial_price: plan.activation_fee.toString(),
           type: 'public_checkout'
         }
       });
@@ -242,7 +282,7 @@ export function registerSQLiteRoutes(app: Express): Server {
       res.json({
         success: true,
         sessionId: session.id,
-        sessionUrl: session.url
+        checkoutUrl: session.url
       });
     } catch (error) {
       console.error('❌ Erro ao criar checkout session:', error);
