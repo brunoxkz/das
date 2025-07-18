@@ -4363,6 +4363,38 @@ export function registerSQLiteRoutes(app: Express): Server {
         return res.status(403).json({ message: "Access denied" });
       }
 
+      // 🔒 VALIDAÇÃO DE CRÉDITOS PARA PUBLICAÇÃO - ANTI-BURLA
+      console.log(`🔒 VALIDAÇÃO DE CRÉDITOS PARA PUBLICAÇÃO - Quiz: ${req.params.id}`);
+      
+      const user = await storage.getUser(req.user.id);
+      if (!user) {
+        console.log("❌ ERRO: Usuário não encontrado");
+        return res.status(404).json({ message: "Usuário não encontrado" });
+      }
+      
+      const currentSmsCredits = user.smsCredits || 0;
+      const currentEmailCredits = user.emailCredits || 0;
+      const currentWhatsappCredits = user.whatsappCredits || 0;
+      
+      // VALIDAÇÃO: Pelo menos 1 crédito de qualquer tipo é necessário para publicar
+      const hasAnyCredits = currentSmsCredits > 0 || currentEmailCredits > 0 || currentWhatsappCredits > 0;
+      
+      if (!hasAnyCredits) {
+        console.log(`❌ PUBLICAÇÃO BLOQUEADA - Usuário sem créditos: SMS: ${currentSmsCredits}, Email: ${currentEmailCredits}, WhatsApp: ${currentWhatsappCredits}`);
+        return res.status(402).json({ 
+          message: "Você precisa de pelo menos 1 crédito (SMS, Email ou WhatsApp) para publicar um quiz",
+          error: "Créditos insuficientes para publicação",
+          currentCredits: {
+            sms: currentSmsCredits,
+            email: currentEmailCredits,
+            whatsapp: currentWhatsappCredits
+          },
+          requiredCredits: 1
+        });
+      }
+      
+      console.log(`✅ PUBLICAÇÃO PERMITIDA - Usuário com créditos: SMS: ${currentSmsCredits}, Email: ${currentEmailCredits}, WhatsApp: ${currentWhatsappCredits}`);
+
       const updatedQuiz = await storage.updateQuiz(req.params.id, { isPublished: true });
 
       // Invalidar caches relevantes
@@ -10423,6 +10455,27 @@ console.log('Vendzz Checkout Embed carregado para plano: ${planId}');
       console.log(`📱 TELEFONES EXTRAÍDOS: ${allPhones.length}, FILTRADOS: ${filteredPhones.length}`);
 
       // 🔒 VALIDAÇÃO CRÍTICA DE CRÉDITOS - ANTI-BURLA
+      // VALIDAR CRÉDITOS ANTES DE PROCESSAR TELEFONES
+      const user = await storage.getUser(userId);
+      if (!user) {
+        console.log("❌ ERRO: Usuário não encontrado");
+        return res.status(404).json({ error: "Usuário não encontrado" });
+      }
+      
+      const currentSMSCredits = user.smsCredits || 0;
+      
+      // VALIDAÇÃO PRÉVIA DE CRÉDITOS - BLOQUEAR CRIAÇÃO SE ZERO
+      if (currentSMSCredits <= 0) {
+        console.log(`❌ CRÉDITOS INSUFICIENTES - Atual: ${currentSMSCredits}, Necessário: pelo menos 1`);
+        return res.status(402).json({ 
+          error: "Créditos SMS insuficientes. Você precisa de pelo menos 1 crédito para criar campanhas SMS.",
+          message: "Carregue créditos SMS para continuar",
+          currentCredits: currentSMSCredits,
+          requiredCredits: 1,
+          shortfall: 1 - currentSMSCredits
+        });
+      }
+      
       if (filteredPhones.length === 0) {
         console.log("❌ ERRO: Nenhum telefone válido encontrado após filtros");
         return res.status(400).json({ error: "Nenhum telefone válido encontrado para envio" });
@@ -12717,6 +12770,27 @@ app.post("/api/whatsapp-campaigns", verifyJWT, async (req: any, res: Response) =
     console.log(`📱 LEADS FILTRADOS: ${filteredPhones.length} de ${phones.length} total (dateFilter: ${dateFilter}, audience: ${targetAudience})`);
     
     // 🔒 VALIDAÇÃO DE CRÉDITOS WHATSAPP - ANTI-BURLA
+    // VALIDAR CRÉDITOS ANTES DE PROCESSAR TELEFONES
+    const user = await storage.getUser(userId);
+    if (!user) {
+      console.log("❌ ERRO: Usuário não encontrado");
+      return res.status(404).json({ error: "Usuário não encontrado" });
+    }
+    
+    const currentWhatsAppCredits = user.whatsappCredits || 0;
+    
+    // VALIDAÇÃO PRÉVIA DE CRÉDITOS - BLOQUEAR CRIAÇÃO SE ZERO
+    if (currentWhatsAppCredits <= 0) {
+      console.log(`❌ CRÉDITOS WHATSAPP INSUFICIENTES - Atual: ${currentWhatsAppCredits}, Necessário: pelo menos 1`);
+      return res.status(402).json({ 
+        error: "Créditos WhatsApp insuficientes. Você precisa de pelo menos 1 crédito para criar campanhas WhatsApp.",
+        message: "Carregue créditos WhatsApp para continuar",
+        currentCredits: currentWhatsAppCredits,
+        requiredCredits: 1,
+        shortfall: 1 - currentWhatsAppCredits
+      });
+    }
+    
     if (filteredPhones.length === 0) {
       return res.status(400).json({ error: "Nenhum telefone válido encontrado após filtros" });
     }
@@ -13754,6 +13828,27 @@ app.get("/api/whatsapp-extension/pending", verifyJWT, async (req: any, res: Resp
       } = req.body;
 
       // 🔒 VALIDAÇÃO DE CRÉDITOS EMAIL - ANTI-BURLA
+      // VALIDAR CRÉDITOS ANTES DE PROCESSAR EMAILS
+      const user = await storage.getUser(req.user.id);
+      if (!user) {
+        console.log("❌ ERRO: Usuário não encontrado");
+        return res.status(404).json({ error: "Usuário não encontrado" });
+      }
+      
+      const currentEmailCredits = user.emailCredits || 0;
+      
+      // VALIDAÇÃO PRÉVIA DE CRÉDITOS - BLOQUEAR CRIAÇÃO SE ZERO
+      if (currentEmailCredits <= 0) {
+        console.log(`❌ CRÉDITOS EMAIL INSUFICIENTES - Atual: ${currentEmailCredits}, Necessário: pelo menos 1`);
+        return res.status(402).json({ 
+          error: "Créditos Email insuficientes. Você precisa de pelo menos 1 crédito para criar campanhas Email.",
+          message: "Carregue créditos Email para continuar",
+          currentCredits: currentEmailCredits,
+          requiredCredits: 1,
+          shortfall: 1 - currentEmailCredits
+        });
+      }
+      
       console.log(`🔒 VALIDAÇÃO DE CRÉDITOS EMAIL - Iniciando verificação...`);
       
       // Buscar emails do quiz para calcular créditos necessários
