@@ -1292,7 +1292,7 @@ export default function Templates() {
                 {template.isPopular && (
                   <Badge className="bg-yellow-100 text-yellow-800 flex-shrink-0 ml-2">
                     <Star className="w-3 h-3 mr-1" />
-                    {t("templates.popular")}
+                    Popular
                   </Badge>
                 )}
               </div>
@@ -1314,7 +1314,7 @@ export default function Templates() {
                     className="w-full text-xs"
                   >
                     <Eye className="w-3 h-3 mr-1" />
-                    {t("templates.preview")}
+                    Visualizar
                   </Button>
                   
                   <Button 
@@ -1322,7 +1322,7 @@ export default function Templates() {
                     onClick={() => handleUseTemplate(template)}
                     className="w-full text-xs"
                   >
-                    {t("templates.use")}
+                    Usar
                     <ArrowRight className="w-3 h-3 ml-1" />
                   </Button>
                 </div>
@@ -1336,10 +1336,10 @@ export default function Templates() {
         <div className="text-center py-12">
           <Search className="w-16 h-16 text-gray-400 mx-auto mb-4" />
           <h3 className="text-lg font-semibold text-gray-900 mb-2">
-            {t("templates.noTemplatesFound")}
+            Nenhum template encontrado
           </h3>
           <p className="text-gray-600">
-            {t("templates.tryDifferentSearch")}
+            Tente uma busca diferente
           </p>
         </div>
       )}

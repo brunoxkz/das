@@ -57,7 +57,7 @@ export default function QuizBuilder() {
     structure: {
       pages: [{
         id: Date.now(),
-        title: t("quizBuilder.defaultPageTitle"),
+        title: "Página 1",
         elements: []
       }],
       settings: {
@@ -171,8 +171,8 @@ export default function QuizBuilder() {
         };
         setTrackingPixels(prev => [...prev, newPixel]);
         toast({
-          title: t("toasts.pixelAdded"),
-          description: `${pixelType.name} ${t("toasts.pixelAddedDescription")}`,
+          title: "Pixel Adicionado",
+          description: `${pixelType.name} adicionado com sucesso`,
         });
       } else {
         throw new Error(`Tipo de pixel não encontrado: ${type}`);
@@ -180,8 +180,8 @@ export default function QuizBuilder() {
     } catch (error) {
       console.error('Erro ao adicionar pixel:', error);
       toast({
-        title: t("toasts.error"),
-        description: t("toasts.errorAddPixel"),
+        title: "Erro",
+        description: "Erro ao adicionar pixel",
         variant: "destructive",
       });
     }
@@ -192,14 +192,14 @@ export default function QuizBuilder() {
     try {
       setTrackingPixels(prev => prev.filter(pixel => pixel.id !== id));
       toast({
-        title: t("toasts.pixelRemoved"),
-        description: t("toasts.pixelRemovedDescription"),
+        title: "Pixel Removido",
+        description: "Pixel removido com sucesso",
       });
     } catch (error) {
       console.error('Erro ao remover pixel:', error);
       toast({
-        title: t("toasts.error"),
-        description: t("toasts.errorRemovePixel"),
+        title: "Erro",
+        description: "Erro ao remover pixel",
         variant: "destructive",
       });
     }
@@ -382,15 +382,15 @@ export default function QuizBuilder() {
       queryClient.invalidateQueries({ queryKey: ["/api/quizzes"] });
       
       toast({
-        title: t("toasts.quizSaved"),
-        description: t("toasts.quizSavedDescription"),
+        title: "Quiz Salvo",
+        description: "Quiz salvo com sucesso",
       });
     },
     onError: (error) => {
       if (isUnauthorizedError(error)) {
         toast({
-          title: t("toasts.accessDenied"),
-          description: t("toasts.accessDeniedDescription"),
+          title: "Acesso Negado",
+          description: "Você foi desconectado. Redirecionando para login...",
           variant: "destructive",
         });
         setTimeout(() => {
@@ -400,8 +400,8 @@ export default function QuizBuilder() {
       }
       
       toast({
-        title: t("toasts.errorSaveQuiz"),
-        description: t("toasts.errorSaveQuizDescription"),
+        title: "Erro ao Salvar",
+        description: "Ocorreu um erro ao salvar o quiz. Tente novamente.",
         variant: "destructive",
       });
     },
@@ -763,17 +763,17 @@ export default function QuizBuilder() {
             <Link href="/dashboard">
               <Button variant="ghost" size="sm">
                 <ArrowLeft className="w-4 h-4 mr-2" />
-                {t("quizBuilder.back")}
+                Voltar
               </Button>
             </Link>
             <div>
               <h1 className="text-lg font-semibold text-gray-900">
-                {isEditing ? t("quizBuilder.editQuiz") : t("quizBuilder.createNewQuiz")}
+                {isEditing ? "Editar Quiz" : "Criar Novo Quiz"}
               </h1>
               <div className="flex items-center space-x-2 text-sm text-gray-600">
-                <span>{t("quizBuilder.status")}:</span>
+                <span>Status:</span>
                 <Badge variant={quizData.isPublished ? "default" : "secondary"}>
-                  {quizData.isPublished ? t("quizBuilder.published") : t("quizBuilder.draft")}
+                  {quizData.isPublished ? "Publicado" : "Rascunho"}
                 </Badge>
               </div>
             </div>
@@ -786,7 +786,7 @@ export default function QuizBuilder() {
               onClick={() => setActiveTab("preview")}
             >
               <Eye className="w-4 h-4 mr-2" />
-              {t("quizBuilder.preview")}
+              Visualizar
             </Button>
             <Button
               variant="outline"
@@ -795,7 +795,7 @@ export default function QuizBuilder() {
               disabled={saveMutation.isPending}
             >
               <Save className="w-4 h-4 mr-2" />
-              {saveMutation.isPending ? t("quizBuilder.saving") : t("quizBuilder.save")}
+              {saveMutation.isPending ? "Salvando..." : "Salvar"}
             </Button>
             <Button
               size="sm"
@@ -803,7 +803,7 @@ export default function QuizBuilder() {
               disabled={saveMutation.isPending || !quizData.title?.trim()}
             >
               <Globe className="w-4 h-4 mr-2" />
-              {t("quizBuilder.publish")}
+              Publicar
             </Button>
           </div>
         </div>
@@ -813,14 +813,14 @@ export default function QuizBuilder() {
       <div className="bg-white border-b border-gray-200 px-6">
         <div className="flex space-x-8">
           {[
-            { id: "editor", label: t("quizBuilder.editor"), icon: <Settings className="w-4 h-4" /> },
-            { id: "preview", label: t("quizBuilder.preview"), icon: <Play className="w-4 h-4" /> },
-            { id: "fluxo", label: t("quizBuilder.advancedFlow"), icon: <Network className="w-4 h-4" /> },
-            { id: "design", label: t("quizBuilder.design"), icon: <Palette className="w-4 h-4" /> },
-            { id: "settings", label: t("quizBuilder.settings"), icon: <Settings className="w-4 h-4" /> },
-            { id: "teste-ab", label: t("quizBuilder.abTest"), icon: <BarChart className="w-4 h-4" /> },
-            { id: "pixels", label: t("quizBuilder.pixelsScripts"), icon: <Target className="w-4 h-4" /> },
-            { id: "blackhat", label: t("quizBuilder.blackhat"), icon: <Target className="w-4 h-4" /> },
+            { id: "editor", label: "Editor", icon: <Settings className="w-4 h-4" /> },
+            { id: "preview", label: "Visualizar", icon: <Play className="w-4 h-4" /> },
+            { id: "fluxo", label: "Fluxo Avançado", icon: <Network className="w-4 h-4" /> },
+            { id: "design", label: "Design", icon: <Palette className="w-4 h-4" /> },
+            { id: "settings", label: "Configurações", icon: <Settings className="w-4 h-4" /> },
+            { id: "teste-ab", label: "Teste A/B", icon: <BarChart className="w-4 h-4" /> },
+            { id: "pixels", label: "Pixels/Scripts", icon: <Target className="w-4 h-4" /> },
+            { id: "blackhat", label: "BlackHat", icon: <Target className="w-4 h-4" /> },
 
           ].map((tab) => (
             <button
@@ -1008,11 +1008,11 @@ export default function QuizBuilder() {
                     <Globe className="w-5 h-5" />
                     Favicon
                   </CardTitle>
-                  <p className="text-sm text-gray-600">{t("quizBuilder.faviconDescription")}</p>
+                  <p className="text-sm text-gray-600">Configure o favicon do seu quiz para uma aparência mais profissional</p>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div>
-                    <Label htmlFor="faviconUpload">{t("quizBuilder.faviconUpload")}</Label>
+                    <Label htmlFor="faviconUpload">Upload do Favicon</Label>
                     <Input
                       id="faviconUpload"
                       type="file"
@@ -1022,7 +1022,7 @@ export default function QuizBuilder() {
                         if (file) {
                           // Validação de segurança
                           if (file.size > 1024 * 1024) { // 1MB
-                            alert(t("quizBuilder.fileTooLarge"));
+                            alert("Arquivo muito grande. Máximo 2MB.");
                             return;
                           }
                           const faviconUrl = URL.createObjectURL(file);
@@ -1038,7 +1038,7 @@ export default function QuizBuilder() {
                   </div>
 
                   <div>
-                    <Label htmlFor="faviconUrl">{t("quizBuilder.faviconUrl")}</Label>
+                    <Label htmlFor="faviconUrl">URL do Favicon</Label>
                     <Input
                       id="faviconUrl"
                       value={quizData.design?.faviconUrl || ""}
@@ -1183,8 +1183,8 @@ export default function QuizBuilder() {
               {/* Configurações da Barra de Progresso */}
               <Card>
                 <CardHeader>
-                  <CardTitle>{t("quizBuilder.progressBarSettings")}</CardTitle>
-                  <p className="text-sm text-gray-600">{t("quizBuilder.progressBarDescription")}</p>
+                  <CardTitle>Configurações da Barra de Progresso</CardTitle>
+                  <p className="text-sm text-gray-600">Configure como a barra de progresso será exibida no seu quiz</p>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   {/* Ativar/Desativar Barra de Progresso */}
@@ -1199,7 +1199,7 @@ export default function QuizBuilder() {
                       }))}
                       className="w-4 h-4 text-green-600 bg-gray-100 border-gray-300 rounded focus:ring-green-500"
                     />
-                    <Label htmlFor="showProgressBar" className="font-medium">{t("quizBuilder.showProgressBar")}</Label>
+                    <Label htmlFor="showProgressBar" className="font-medium">Mostrar Barra de Progresso</Label>
                   </div>
 
                   {/* Configurações só aparecem se a barra estiver ativa */}
@@ -1207,7 +1207,7 @@ export default function QuizBuilder() {
                     <>
                       {/* Tipo de Contador */}
                       <div>
-                        <Label htmlFor="progressBarType">{t("quizBuilder.counterType")}</Label>
+                        <Label htmlFor="progressBarType">Tipo de Contador</Label>
                         <select
                           id="progressBarType"
                           value={quizData.design?.progressBarType || "percentage"}
@@ -1217,16 +1217,16 @@ export default function QuizBuilder() {
                           }))}
                           className="mt-2 w-full px-3 py-2 border border-gray-300 rounded-md"
                         >
-                          <option value="percentage">{t("quizBuilder.percentageOption")}</option>
-                          <option value="steps">{t("quizBuilder.stepsOption")}</option>
-                          <option value="none">{t("quizBuilder.noCounterOption")}</option>
+                          <option value="percentage">Porcentagem</option>
+                          <option value="steps">Passos</option>
+                          <option value="none">Sem contador</option>
                         </select>
                       </div>
 
                       {/* Posição do Contador */}
                       {quizData.design?.progressBarType !== "none" && (
                         <div>
-                          <Label htmlFor="progressBarPosition">{t("quizBuilder.counterPosition")}</Label>
+                          <Label htmlFor="progressBarPosition">Posição do Contador</Label>
                           <select
                             id="progressBarPosition"
                             value={quizData.design?.progressBarPosition || "center"}
@@ -1236,18 +1236,18 @@ export default function QuizBuilder() {
                             }))}
                             className="mt-2 w-full px-3 py-2 border border-gray-300 rounded-md"
                           >
-                            <option value="left">{t("quizBuilder.left")}</option>
-                            <option value="center">{t("quizBuilder.center")}</option>
-                            <option value="right">{t("quizBuilder.right")}</option>
-                            <option value="above">{t("quizBuilder.above")}</option>
-                            <option value="below">{t("quizBuilder.below")}</option>
+                            <option value="left">Esquerda</option>
+                            <option value="center">Centro</option>
+                            <option value="right">Direita</option>
+                            <option value="above">Acima</option>
+                            <option value="below">Abaixo</option>
                           </select>
                         </div>
                       )}
 
                       {/* Cor da Barra de Progresso */}
                       <div>
-                        <Label htmlFor="progressBarColor">{t("quizBuilder.progressBarColor")}</Label>
+                        <Label htmlFor="progressBarColor">Cor da Barra de Progresso</Label>
                         <div className="flex items-center gap-3 mt-2">
                           <input
                             type="color"
@@ -1273,7 +1273,7 @@ export default function QuizBuilder() {
 
                       {/* Preview do Contador */}
                       <div className="p-4 bg-gray-50 rounded-lg">
-                        <Label className="text-sm font-medium mb-2 block">{t("quizBuilder.progressBarPreview")}</Label>
+                        <Label className="text-sm font-medium mb-2 block">Pré-visualização da Barra de Progresso</Label>
                         <div className="space-y-2">
                           {/* Contador acima */}
                           {quizData.design?.progressBarPosition === "above" && quizData.design?.progressBarType !== "none" && (
@@ -1326,7 +1326,7 @@ export default function QuizBuilder() {
 
                       {/* Estilo Visual */}
                       <div>
-                        <Label htmlFor="progressBarStyle">{t("quizBuilder.visualStyle")}</Label>
+                        <Label htmlFor="progressBarStyle">Estilo Visual</Label>
                         <select
                           id="progressBarStyle"
                           value={quizData.design?.progressBarStyle || "rounded"}
@@ -1336,15 +1336,15 @@ export default function QuizBuilder() {
                           }))}
                           className="mt-2 w-full px-3 py-2 border border-gray-300 rounded-md"
                         >
-                          <option value="rounded">{t("quizBuilder.rounded")}</option>
-                          <option value="square">{t("quizBuilder.square")}</option>
-                          <option value="thin">{t("quizBuilder.thin")}</option>
-                          <option value="thick">{t("quizBuilder.thick")}</option>
+                          <option value="rounded">Arredondado</option>
+                          <option value="square">Quadrado</option>
+                          <option value="thin">Fino</option>
+                          <option value="thick">Grosso</option>
                         </select>
                       </div>
 
                       <div>
-                        <Label htmlFor="progressBarHeight">{t("quizBuilder.height")}</Label>
+                        <Label htmlFor="progressBarHeight">Altura</Label>
                         <Input
                           type="number"
                           id="progressBarHeight"
@@ -1374,16 +1374,16 @@ export default function QuizBuilder() {
               {/* Quiz Info */}
               <Card>
                 <CardHeader>
-                  <CardTitle>{t("quizBuilder.quizInformation")}</CardTitle>
+                  <CardTitle>Informações do Quiz</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div>
-                    <Label htmlFor="title">{t("quizBuilder.quizTitle")}</Label>
+                    <Label htmlFor="title">Título do Quiz</Label>
                     <Input
                       id="title"
                       value={quizData.title || ""}
                       onChange={(e) => setQuizData(prev => ({ ...prev, title: e.target.value }))}
-                      placeholder={t("quizBuilder.quizTitlePlaceholder")}
+                      placeholder="Digite o título do seu quiz"
                       className="mt-2"
                     />
                   </div>
@@ -1393,9 +1393,9 @@ export default function QuizBuilder() {
                   <div className="p-4 bg-gray-50 rounded-lg">
                     <div className="flex items-center justify-between mb-2">
                       <div>
-                        <p className="font-medium text-gray-900">{t("quizBuilder.publicationStatus")}</p>
+                        <p className="font-medium text-gray-900">Status da Publicação</p>
                         <p className="text-sm text-gray-600">
-                          {quizData.isPublished ? t("quizBuilder.quizPublishedAndAvailable") : t("quizBuilder.quizInDraftMode")}
+                          {quizData.isPublished ? "Quiz publicado e disponível publicamente" : "Quiz em modo rascunho"}
                         </p>
                       </div>
                       <div className={`px-2 py-1 rounded text-xs font-medium ${
@@ -1403,7 +1403,7 @@ export default function QuizBuilder() {
                           ? "bg-green-100 text-green-800" 
                           : "bg-yellow-100 text-yellow-800"
                       }`}>
-                        {quizData.isPublished ? t("quizBuilder.published") : t("quizBuilder.draft")}
+                        {quizData.isPublished ? "Publicado" : "Rascunho"}
                       </div>
                     </div>
                     
@@ -1426,7 +1426,7 @@ export default function QuizBuilder() {
                         className="w-full mt-2"
                       >
                         <Eye className="w-4 h-4 mr-2" />
-                        {t("quizBuilder.unpublishQuiz")}
+                        Despublicar Quiz
                       </Button>
                     )}
                   </div>
@@ -1580,7 +1580,7 @@ export default function QuizBuilder() {
                       <Badge variant="secondary" className="bg-blue-100 text-blue-800">{t("quizBuilder.optimization")}</Badge>
                     </div>
                     <p className="text-sm text-gray-700 leading-relaxed">
-                      <strong>🎯 {t("quizBuilder.testDifferentVersions")}:</strong> {t("quizBuilder.compareElementsDescription")}
+                      <strong>🎯 Teste Diferentes Versões:</strong> Compare diferentes elementos, títulos, cores ou fluxos completos
                     </p>
                   </div>
 
@@ -1588,26 +1588,26 @@ export default function QuizBuilder() {
                     <div className="space-y-4">
                       {/* Nome do Teste */}
                       <div>
-                        <Label htmlFor="abTestName" className="text-sm font-medium">{t("quizBuilder.testName")}</Label>
+                        <Label htmlFor="abTestName" className="text-sm font-medium">Nome do Teste</Label>
                         <Input
                           id="abTestName"
                           value={quizData.abTestName || ""}
                           onChange={(e) => setQuizData(prev => ({ ...prev, abTestName: e.target.value }))}
-                          placeholder={t("quizBuilder.testNamePlaceholder")}
+                          placeholder="Ex: Título vs Título Alternativo"
                           className="mt-1"
                         />
                       </div>
 
                       {/* Divisão de Tráfego */}
                       <div>
-                        <Label className="text-sm font-medium">{t("quizBuilder.trafficSplit")}</Label>
+                        <Label className="text-sm font-medium">Divisão de Tráfego</Label>
                         <div className="mt-2 space-y-2">
                           <div className="flex items-center justify-between">
-                            <span className="text-sm text-gray-600">{t("quizBuilder.versionAOriginal")}</span>
+                            <span className="text-sm text-gray-600">Versão A (Original)</span>
                             <span className="text-sm font-medium">{quizData.abTestSplit || 50}%</span>
                           </div>
                           <div className="flex items-center justify-between">
-                            <span className="text-sm text-gray-600">{t("quizBuilder.versionBVariation")}</span>
+                            <span className="text-sm text-gray-600">Versão B (Variação)</span>
                             <span className="text-sm font-medium">{100 - (quizData.abTestSplit || 50)}%</span>
                           </div>
                           <input
@@ -1623,7 +1623,7 @@ export default function QuizBuilder() {
 
                       {/* Tipo de Teste */}
                       <div>
-                        <Label className="text-sm font-medium">{t("quizBuilder.testType")}</Label>
+                        <Label className="text-sm font-medium">Tipo de Teste</Label>
                         <select
                           value={quizData.abTestType || "title"}
                           onChange={(e) => setQuizData(prev => ({ ...prev, abTestType: e.target.value }))}
