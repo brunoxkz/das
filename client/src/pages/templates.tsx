@@ -53,24 +53,24 @@ export default function Templates() {
   });
 
   const categories = [
-    { id: "all", label: t("templates.all"), icon: <Filter className="w-4 h-4" /> },
-    { id: "ecommerce", label: t("templates.ecommerce"), icon: <ShoppingCart className="w-4 h-4" /> },
-    { id: "saas", label: t("templates.saas"), icon: <TrendingUp className="w-4 h-4" /> },
-    { id: "health", label: t("templates.health"), icon: <Heart className="w-4 h-4" /> },
-    { id: "education", label: t("templates.education"), icon: <GraduationCap className="w-4 h-4" /> },
-    { id: "business", label: t("templates.business"), icon: <Building className="w-4 h-4" /> },
-    { id: "real-estate", label: t("templates.realEstate"), icon: <Home className="w-4 h-4" /> },
-    { id: "finance", label: t("templates.finance"), icon: <Briefcase className="w-4 h-4" /> },
-    { id: "food", label: t("templates.food"), icon: <Utensils className="w-4 h-4" /> },
-    { id: "fitness", label: t("templates.fitness"), icon: <Dumbbell className="w-4 h-4" /> },
-    { id: "design", label: t("templates.design"), icon: <Palette className="w-4 h-4" /> },
-    { id: "automotive", label: t("templates.automotive"), icon: <Car className="w-4 h-4" /> },
-    { id: "gaming", label: t("templates.gaming"), icon: <GamepadIcon className="w-4 h-4" /> },
-    { id: "music", label: t("templates.music"), icon: <Music className="w-4 h-4" /> },
-    { id: "photography", label: t("templates.photography"), icon: <Camera className="w-4 h-4" /> },
-    { id: "lifestyle", label: t("templates.lifestyle"), icon: <Coffee className="w-4 h-4" /> },
-    { id: "travel", label: t("templates.travel"), icon: <Plane className="w-4 h-4" /> },
-    { id: "technology", label: t("templates.technology"), icon: <Smartphone className="w-4 h-4" /> },
+    { id: "all", label: "Todos", icon: <Filter className="w-4 h-4" /> },
+    { id: "ecommerce", label: "E-commerce", icon: <ShoppingCart className="w-4 h-4" /> },
+    { id: "saas", label: "SaaS", icon: <TrendingUp className="w-4 h-4" /> },
+    { id: "health", label: "Saúde", icon: <Heart className="w-4 h-4" /> },
+    { id: "education", label: "Educação", icon: <GraduationCap className="w-4 h-4" /> },
+    { id: "business", label: "Negócios", icon: <Building className="w-4 h-4" /> },
+    { id: "real-estate", label: "Imóveis", icon: <Home className="w-4 h-4" /> },
+    { id: "finance", label: "Finanças", icon: <Briefcase className="w-4 h-4" /> },
+    { id: "food", label: "Alimentação", icon: <Utensils className="w-4 h-4" /> },
+    { id: "fitness", label: "Fitness", icon: <Dumbbell className="w-4 h-4" /> },
+    { id: "design", label: "Design", icon: <Palette className="w-4 h-4" /> },
+    { id: "automotive", label: "Automotivo", icon: <Car className="w-4 h-4" /> },
+    { id: "gaming", label: "Games", icon: <GamepadIcon className="w-4 h-4" /> },
+    { id: "music", label: "Música", icon: <Music className="w-4 h-4" /> },
+    { id: "photography", label: "Fotografia", icon: <Camera className="w-4 h-4" /> },
+    { id: "lifestyle", label: "Estilo de Vida", icon: <Coffee className="w-4 h-4" /> },
+    { id: "travel", label: "Viagem", icon: <Plane className="w-4 h-4" /> },
+    { id: "technology", label: "Tecnologia", icon: <Smartphone className="w-4 h-4" /> },
   ];
 
   // Comprehensive 50 templates with complete structures
@@ -1234,8 +1234,8 @@ export default function Templates() {
     <div className="p-6 space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-3xl font-bold text-gray-900">{t("templates.title")}</h1>
-        <p className="text-gray-600">{t("templates.subtitle")}</p>
+        <h1 className="text-3xl font-bold text-gray-900">Templates de Quiz</h1>
+        <p className="text-gray-600">Escolha um template para começar rapidamente</p>
       </div>
 
       {/* Search and Filter */}
@@ -1243,7 +1243,7 @@ export default function Templates() {
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
           <Input
-            placeholder={t("templates.searchPlaceholder")}
+            placeholder="Buscar templates..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="pl-10"

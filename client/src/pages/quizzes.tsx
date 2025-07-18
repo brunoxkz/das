@@ -229,9 +229,9 @@ export default function Quizzes() {
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-8">
           <div className="space-y-1">
             <h1 className="text-3xl font-bold bg-gradient-to-r from-gray-900 to-gray-600 bg-clip-text text-transparent">
-              {t("my_quizzes")}
+              Meus Quizzes
             </h1>
-            <p className="text-gray-600">{t("manage_your_quizzes")}</p>
+            <p className="text-gray-600">Gerencie seus quizzes e campanhas</p>
           </div>
           
           <div className="flex items-center gap-3">
@@ -258,7 +258,7 @@ export default function Quizzes() {
             <Link href="/quizzes/new">
               <Button className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 shadow-lg">
                 <Plus className="w-4 h-4 mr-2" />
-{t("create_quiz")}
+                Criar Quiz
               </Button>
             </Link>
           </div>
@@ -269,7 +269,7 @@ export default function Quizzes() {
           <div className="relative flex-1 max-w-md">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
             <Input
-              placeholder={t("search_quizzes")}
+              placeholder="Buscar quizzes..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="pl-10 bg-white border-0 shadow-sm"
