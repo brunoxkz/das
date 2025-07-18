@@ -1051,6 +1051,121 @@ export function registerSQLiteRoutes(app: Express): Server {
     }
   });
 
+  // 🔍 ENDPOINT PARA CONSULTAR CONFIGURAÇÃO DE TRIAL E COBRANÇA AUTOMÁTICA
+  app.get('/api/stripe/trial-config/:email', async (req, res) => {
+    try {
+      const { email } = req.params;
+      
+      // Importar Stripe
+      const { StripeSimpleTrialSystem } = await import('./stripe-simple-trial');
+      const stripeSystem = new StripeSimpleTrialSystem(
+        process.env.STRIPE_SECRET_KEY || 'sk_test_51RjvV9HK6al3veW1FPD5bTV1on2NQLlm9ud45AJDggFHdsGA9UAo5jfbSRvWF83W3uTp5cpZYa8tJBvm4ttefrk800mUs47pFA'
+      );
+
+      // Buscar customer
+      const customers = await stripeSystem.stripe.customers.list({
+        email: email,
+        limit: 1
+      });
+
+      if (customers.data.length === 0) {
+        return res.json({
+          success: false,
+          message: 'Cliente não encontrado'
+        });
+      }
+
+      const customer = customers.data[0];
+
+      // Buscar assinatura ativa
+      const subscriptions = await stripeSystem.stripe.subscriptions.list({
+        customer: customer.id,
+        limit: 1
+      });
+
+      if (subscriptions.data.length === 0) {
+        return res.json({
+          success: false,
+          message: 'Nenhuma assinatura encontrada'
+        });
+      }
+
+      const subscription = subscriptions.data[0];
+
+      // Buscar payment method padrão do customer
+      const paymentMethods = await stripeSystem.stripe.paymentMethods.list({
+        customer: customer.id,
+        type: 'card'
+      });
+
+      // Buscar setup intents para verificar se cartão foi salvo
+      const setupIntents = await stripeSystem.stripe.setupIntents.list({
+        customer: customer.id,
+        limit: 10
+      });
+
+      console.log('🔍 ANÁLISE DE TRIAL E COBRANÇA AUTOMÁTICA:');
+      console.log('👤 Customer:', customer.id);
+      console.log('🔄 Subscription:', subscription.id);
+      console.log('📅 Trial end:', subscription.trial_end ? new Date(subscription.trial_end * 1000) : 'Sem trial');
+      console.log('💳 Payment methods:', paymentMethods.data.length);
+      console.log('🔒 Setup intents:', setupIntents.data.length);
+      console.log('🎯 Default payment method:', subscription.default_payment_method);
+
+      res.json({
+        success: true,
+        customer: {
+          id: customer.id,
+          email: customer.email,
+          name: customer.name
+        },
+        subscription: {
+          id: subscription.id,
+          status: subscription.status,
+          trial_end: subscription.trial_end ? new Date(subscription.trial_end * 1000).toISOString() : null,
+          trial_start: subscription.trial_start ? new Date(subscription.trial_start * 1000).toISOString() : null,
+          current_period_end: new Date(subscription.current_period_end * 1000).toISOString(),
+          cancel_at_period_end: subscription.cancel_at_period_end,
+          default_payment_method: subscription.default_payment_method,
+          collection_method: subscription.collection_method,
+          billing_cycle_anchor: subscription.billing_cycle_anchor,
+          automatic_tax: subscription.automatic_tax?.enabled
+        },
+        payment_setup: {
+          has_payment_method: paymentMethods.data.length > 0,
+          payment_methods_count: paymentMethods.data.length,
+          setup_intents_count: setupIntents.data.length,
+          default_payment_method: subscription.default_payment_method,
+          payment_methods: paymentMethods.data.map(pm => ({
+            id: pm.id,
+            type: pm.type,
+            card: pm.card ? {
+              brand: pm.card.brand,
+              last4: pm.card.last4,
+              exp_month: pm.card.exp_month,
+              exp_year: pm.card.exp_year
+            } : null,
+            created: new Date(pm.created * 1000).toISOString()
+          }))
+        },
+        billing_info: {
+          will_charge_automatically: subscription.default_payment_method !== null,
+          trial_ends_in_days: subscription.trial_end ? Math.ceil((subscription.trial_end * 1000 - Date.now()) / (1000 * 60 * 60 * 24)) : null,
+          next_payment_date: subscription.trial_end ? new Date(subscription.trial_end * 1000).toISOString() : new Date(subscription.current_period_end * 1000).toISOString(),
+          requires_authorization: subscription.default_payment_method === null
+        }
+      });
+
+    } catch (error) {
+      console.error('❌ ERRO AO CONSULTAR CONFIGURAÇÃO DE TRIAL:', error.message);
+      res.status(500).json({ 
+        success: false, 
+        message: 'Erro ao consultar configuração',
+        error: error.message 
+      });
+    }
+  });
+
   // 🔍 ENDPOINT PARA CONSULTAR CLIENTE COMPLETO POR EMAIL
   app.get('/api/stripe/customer/:email', async (req, res) => {
     try {

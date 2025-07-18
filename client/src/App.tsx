@@ -72,6 +72,7 @@ import StripeElements from "@/pages/stripe-elements";
 import StripePaymentIntentDemo from "@/pages/stripe-payment-intent-demo";
 import PaymentSuccess from "@/pages/payment-success";
 import CheckPayment from "@/pages/check-payment";
+import TrialAnalysis from "@/pages/trial-analysis";
 import PaymentIntentExplanation from "@/pages/payment-intent-explanation";
 import CheckoutTrialSimple from "@/pages/checkout-trial-simple";
 import CheckoutTrialFinalSimple from "@/pages/checkout-trial-final-simple";
@@ -307,6 +308,12 @@ function App() {
         <Route path="/check-payment">
           <Layout>
             <CheckPayment />
+          </Layout>
+        </Route>
+        
+        <Route path="/trial-analysis">
+          <Layout>
+            <TrialAnalysis />
           </Layout>
         </Route>
         
