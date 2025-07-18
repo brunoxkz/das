@@ -49,7 +49,8 @@ import {
   ShoppingCart,
   Code,
   CheckCircle,
-  CreditCard
+  CreditCard,
+  Send
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -249,10 +250,10 @@ export function Sidebar() {
           badge: <span className="text-xs text-green-500 font-medium">GRÁTIS</span>
         },
         {
-          title: "Telegram",
-          href: "/telegram-automation",
-          icon: <Bot className="w-4 h-4" />,
-          active: location === "/telegram-automation",
+          title: "TELEGRAM",
+          href: "/telegram-campaigns",
+          icon: <Send className="w-4 h-4" />,
+          active: location === "/telegram-campaigns",
           badge: <span className="text-xs text-blue-500 font-medium">API oficial</span>
         },
         {

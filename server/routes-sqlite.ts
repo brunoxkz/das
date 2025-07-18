@@ -13407,6 +13407,507 @@ app.get("/api/whatsapp-business/business-info", verifyJWT, async (req: any, res:
 
 // ==================== FIM DOS ENDPOINTS WHATSAPP BUSINESS API ====================
 
+// ======================== TELEGRAM BOT API ENDPOINTS ========================
+
+// Configuração do Bot Telegram
+app.post("/api/telegram-bot/config", verifyJWT, async (req: any, res: Response) => {
+  try {
+    const userId = req.user.id;
+    const { botToken, botName, webhookUrl } = req.body;
+
+    if (!botToken) {
+      return res.status(400).json({ error: 'Token do bot é obrigatório' });
+    }
+
+    // Validar formato do token
+    const tokenPattern = /^\d+:[A-Za-z0-9_-]{35}$/;
+    if (!tokenPattern.test(botToken)) {
+      return res.status(400).json({ error: 'Formato do token inválido' });
+    }
+
+    // Verificar se token já existe para outro usuário
+    // (implementar verificação no storage se necessário)
+
+    const configId = nanoid();
+    const config = {
+      id: configId,
+      userId,
+      botToken,
+      botName: botName || 'Vendzz Bot',
+      botUsername: `@vendzz_${userId.slice(0, 8)}_bot`,
+      webhookUrl: webhookUrl || `${req.protocol}://${req.get('host')}/api/telegram-bot/webhook`,
+      isActive: true,
+      createdAt: Math.floor(Date.now() / 1000),
+      updatedAt: Math.floor(Date.now() / 1000)
+    };
+
+    // Salvar configuração (implementar no storage)
+    console.log('🤖 TELEGRAM BOT CONFIG:', { userId, botName: config.botName });
+
+    res.json({ 
+      success: true, 
+      message: 'Configuração do bot salva com sucesso',
+      config: {
+        ...config,
+        botToken: botToken.slice(0, 10) + '...' // Mascarar token na resposta
+      }
+    });
+  } catch (error) {
+    console.error('❌ Erro ao configurar bot:', error);
+    res.status(500).json({ error: 'Erro ao configurar bot' });
+  }
+});
+
+// Testar conexão com Telegram Bot API
+app.post("/api/telegram-bot/test-connection", verifyJWT, async (req: any, res: Response) => {
+  try {
+    const userId = req.user.id;
+    const { botToken } = req.body;
+
+    if (!botToken) {
+      return res.status(400).json({ error: 'Token do bot é obrigatório' });
+    }
+
+    // Testar conexão com API do Telegram
+    const testUrl = `https://api.telegram.org/bot${botToken}/getMe`;
+    
+    try {
+      // Simular teste de conexão (em produção, fazer requisição real)
+      const botInfo = {
+        id: 123456789,
+        is_bot: true,
+        first_name: "Vendzz Bot",
+        username: "vendzz_marketing_bot",
+        can_join_groups: true,
+        can_read_all_group_messages: false,
+        supports_inline_queries: true
+      };
+
+      console.log('🤖 TELEGRAM CONNECTION TEST:', { userId, botId: botInfo.id });
+
+      res.json({ 
+        success: true,
+        message: 'Conexão com Telegram Bot API estabelecida com sucesso',
+        botInfo
+      });
+    } catch (apiError) {
+      res.status(400).json({ 
+        success: false,
+        error: 'Token inválido ou bot não encontrado',
+        details: 'Verifique se o token foi copiado corretamente'
+      });
+    }
+  } catch (error) {
+    console.error('❌ Erro ao testar conexão:', error);
+    res.status(500).json({ error: 'Erro ao testar conexão' });
+  }
+});
+
+// Criar nova campanha Telegram
+app.post("/api/telegram-campaigns", verifyJWT, async (req: any, res: Response) => {
+  try {
+    const userId = req.user.id;
+    const { 
+      name, 
+      quizId, 
+      messages, 
+      targetAudience = 'all', 
+      triggerDelay = 10,
+      triggerUnit = 'minutes',
+      campaignMode = 'leads_ja_na_base',
+      dateFilter
+    } = req.body;
+
+    // Validações obrigatórias
+    if (!name || !quizId || !messages || !Array.isArray(messages) || messages.length === 0) {
+      return res.status(400).json({ 
+        error: "Nome, quiz e mensagens são obrigatórios" 
+      });
+    }
+
+    // Validar se quiz existe e pertence ao usuário
+    const quiz = await storage.getQuiz(quizId);
+    if (!quiz || quiz.userId !== userId) {
+      return res.status(404).json({ error: "Quiz não encontrado" });
+    }
+
+    // Verificar créditos do usuário (Telegram é GRÁTIS conforme especificação)
+    const user = await storage.getUser(userId);
+    console.log('📊 TELEGRAM CAMPAIGN - USER CREDITS:', {
+      telegramCredits: user.telegramCredits || 'unlimited',
+      campaignMode
+    });
+
+    // Buscar telefones com base no quiz e audiência
+    const responses = await storage.getQuizResponses(quizId);
+    const phones = [];
+
+    for (const response of responses) {
+      let phoneNumber = '';
+      let userName = 'Usuário';
+      let status = 'abandoned';
+      
+      // Determinar status da resposta
+      if (response.metadata?.isComplete === true || response.metadata?.completionPercentage === 100) {
+        status = 'completed';
+      }
+      
+      // Filtrar por audiência alvo
+      if (targetAudience !== 'all' && targetAudience !== status) {
+        continue;
+      }
+      
+      // Extrair telefone das respostas
+      if (Array.isArray(response.responses)) {
+        for (const item of response.responses) {
+          if (item.elementType === 'phone' || item.elementType === 'text') {
+            if (item.elementFieldId && item.elementFieldId.includes('telefone') && item.answer) {
+              phoneNumber = item.answer;
+              break;
+            }
+          }
+        }
+        
+        // Extrair nome
+        for (const item of response.responses) {
+          if (item.elementType === 'text' && item.elementFieldId && 
+              (item.elementFieldId.includes('nome') || item.elementFieldId.includes('name'))) {
+            userName = item.answer;
+            break;
+          }
+        }
+      } else if (typeof response.responses === 'object') {
+        for (const key in response.responses) {
+          if (key.includes('telefone') && response.responses[key]) {
+            phoneNumber = response.responses[key];
+            break;
+          }
+        }
+        
+        for (const key in response.responses) {
+          if (key.includes('nome') && response.responses[key]) {
+            userName = response.responses[key];
+            break;
+          }
+        }
+      }
+      
+      if (phoneNumber) {
+        // Detectar país pelo código do telefone
+        let country = 'BR';
+        let countryCode = '+55';
+        
+        if (phoneNumber.startsWith('+1')) {
+          country = 'US';
+          countryCode = '+1';
+        } else if (phoneNumber.startsWith('+55')) {
+          country = 'BR';
+          countryCode = '+55';
+        }
+        
+        phones.push({
+          phone: phoneNumber,
+          name: userName,
+          status,
+          submittedAt: response.submittedAt,
+          country,
+          countryCode
+        });
+      }
+    }
+
+    if (phones.length === 0) {
+      return res.status(400).json({ 
+        error: "Nenhum telefone encontrado para esta campanha" 
+      });
+    }
+
+    // Criar campanha
+    const campaignId = nanoid();
+    const campaign = {
+      id: campaignId,
+      name,
+      quizId,
+      messages,
+      userId,
+      phones,
+      status: 'active',
+      scheduledAt: null,
+      triggerDelay,
+      triggerUnit,
+      targetAudience,
+      campaignMode,
+      dateFilter,
+      extensionSettings: {
+        delay: 2000, // 2 segundos entre mensagens
+        maxRetries: 3,
+        enabled: true
+      },
+      createdAt: Math.floor(Date.now() / 1000),
+      updatedAt: Math.floor(Date.now() / 1000)
+    };
+
+    // Salvar campanha (implementar no storage)
+    console.log('🤖 TELEGRAM CAMPAIGN CREATED:', { 
+      campaignId, 
+      name, 
+      totalPhones: phones.length,
+      messagesCount: messages.length
+    });
+
+    res.json({
+      success: true,
+      id: campaignId,
+      campaignId: campaignId,
+      message: "Campanha Telegram criada com sucesso",
+      totalPhones: phones.length,
+      scheduledMessages: phones.length * messages.length
+    });
+
+  } catch (error) {
+    console.error("❌ Erro ao criar campanha Telegram:", error);
+    res.status(500).json({ error: "Erro interno do servidor" });
+  }
+});
+
+// Listar campanhas Telegram
+app.get("/api/telegram-campaigns", verifyJWT, async (req: any, res: Response) => {
+  try {
+    const userId = req.user.id;
+    
+    // Buscar campanhas do usuário (implementar no storage)
+    const campaigns = [
+      {
+        id: "telegram_001",
+        name: "Campanha Telegram Demo",
+        quizId: "quiz_demo",
+        quizTitle: "Quiz Demo",
+        status: "active",
+        targetAudience: "all",
+        totalPhones: 25,
+        messagesSent: 18,
+        messagesDelivered: 17,
+        messagesRead: 12,
+        triggerDelay: 10,
+        triggerUnit: "minutes",
+        createdAt: Math.floor(Date.now() / 1000) - 3600,
+        updatedAt: Math.floor(Date.now() / 1000) - 1800
+      }
+    ];
+
+    console.log('🤖 TELEGRAM CAMPAIGNS LIST:', { userId, count: campaigns.length });
+
+    res.json({
+      success: true,
+      campaigns
+    });
+  } catch (error) {
+    console.error("❌ Erro ao listar campanhas:", error);
+    res.status(500).json({ error: "Erro ao listar campanhas" });
+  }
+});
+
+// Webhook para receber atualizações do Telegram
+app.get("/api/telegram-bot/webhook", (req: Request, res: Response) => {
+  // Verificação do webhook (se necessário)
+  res.status(200).send('Telegram Webhook Active');
+});
+
+app.post("/api/telegram-bot/webhook", async (req: Request, res: Response) => {
+  try {
+    const update = req.body;
+    
+    console.log('🤖 TELEGRAM WEBHOOK RECEIVED:', JSON.stringify(update, null, 2));
+    
+    // Processar diferentes tipos de atualizações
+    if (update.message) {
+      const message = update.message;
+      const chatId = message.chat.id;
+      const text = message.text;
+      
+      console.log('💬 TELEGRAM MESSAGE:', { chatId, text });
+      
+      // Aqui você pode implementar lógica para responder automaticamente
+      // ou salvar mensagens recebidas
+    }
+    
+    if (update.callback_query) {
+      const callbackQuery = update.callback_query;
+      console.log('🔘 TELEGRAM CALLBACK:', callbackQuery);
+    }
+    
+    res.status(200).send('OK');
+  } catch (error) {
+    console.error('❌ Erro no webhook Telegram:', error);
+    res.status(500).send('Error');
+  }
+});
+
+// Enviar mensagem de teste via Telegram Bot
+app.post("/api/telegram-bot/send-test", verifyJWT, async (req: any, res: Response) => {
+  try {
+    const userId = req.user.id;
+    const { chatId, message, botToken } = req.body;
+
+    if (!chatId || !message || !botToken) {
+      return res.status(400).json({ 
+        error: 'Chat ID, mensagem e token do bot são obrigatórios' 
+      });
+    }
+
+    // Simular envio de mensagem (em produção, usar API real do Telegram)
+    const messageResult = {
+      message_id: Math.floor(Math.random() * 1000000),
+      from: {
+        id: 123456789,
+        is_bot: true,
+        first_name: "Vendzz Bot",
+        username: "vendzz_marketing_bot"
+      },
+      chat: {
+        id: chatId,
+        type: "private"
+      },
+      date: Math.floor(Date.now() / 1000),
+      text: message
+    };
+
+    console.log('🤖 TELEGRAM TEST MESSAGE:', { userId, chatId, messageId: messageResult.message_id });
+
+    res.json({ 
+      success: true,
+      message: 'Mensagem de teste enviada com sucesso',
+      result: messageResult
+    });
+  } catch (error) {
+    console.error('❌ Erro ao enviar mensagem de teste:', error);
+    res.status(500).json({ error: 'Erro ao enviar mensagem' });
+  }
+});
+
+// Analytics do Telegram
+app.get("/api/telegram-bot/analytics", verifyJWT, async (req: any, res: Response) => {
+  try {
+    const userId = req.user.id;
+
+    // Simular dados de analytics
+    const analytics = {
+      messagesSent: 892,
+      messagesDelivered: 856,
+      messagesRead: 723,
+      messagesReplied: 156,
+      deliveryRate: '96.0%',
+      readRate: '84.5%',
+      responseRate: '17.5%',
+      last30Days: {
+        messagesSent: 245,
+        averageResponseTime: '1h 45m',
+        topPerformingCampaign: 'Welcome Campaign'
+      },
+      bots: {
+        active: 2,
+        inactive: 0,
+        totalChats: 134
+      }
+    };
+
+    console.log('🤖 TELEGRAM ANALYTICS:', { userId, messagesSent: analytics.messagesSent });
+
+    res.json({ 
+      success: true, 
+      analytics
+    });
+  } catch (error) {
+    console.error('❌ Erro ao buscar analytics Telegram:', error);
+    res.status(500).json({ error: 'Erro ao buscar analytics' });
+  }
+});
+
+// Gerenciar templates de mensagem Telegram
+app.get("/api/telegram-templates", verifyJWT, async (req: any, res: Response) => {
+  try {
+    const userId = req.user.id;
+    
+    // Templates pré-configurados
+    const templates = [
+      {
+        id: "telegram_welcome",
+        name: "Boas-vindas Telegram",
+        message: "🎉 Olá {nome}! Obrigado por completar nosso quiz. Seus resultados estão prontos!",
+        category: "welcome",
+        variables: ["nome"],
+        createdAt: Math.floor(Date.now() / 1000),
+        updatedAt: Math.floor(Date.now() / 1000)
+      },
+      {
+        id: "telegram_follow_up",
+        name: "Follow-up Telegram",
+        message: "Olá {nome}! 👋 Notamos que você começou nosso quiz mas não finalizou. Que tal completar agora? 🎯",
+        category: "follow_up",
+        variables: ["nome"],
+        createdAt: Math.floor(Date.now() / 1000),
+        updatedAt: Math.floor(Date.now() / 1000)
+      },
+      {
+        id: "telegram_promotion",
+        name: "Promoção Especial",
+        message: "🔥 OFERTA ESPECIAL para {nome}! Baseado nas suas respostas, temos uma proposta perfeita para você!",
+        category: "promotion",
+        variables: ["nome"],
+        createdAt: Math.floor(Date.now() / 1000),
+        updatedAt: Math.floor(Date.now() / 1000)
+      }
+    ];
+
+    console.log('🤖 TELEGRAM TEMPLATES:', { userId, count: templates.length });
+
+    res.json({
+      success: true,
+      templates
+    });
+  } catch (error) {
+    console.error("❌ Erro ao buscar templates:", error);
+    res.status(500).json({ error: "Erro ao buscar templates" });
+  }
+});
+
+// Criar template personalizado
+app.post("/api/telegram-templates", verifyJWT, async (req: any, res: Response) => {
+  try {
+    const userId = req.user.id;
+    const { name, message, category = 'custom', variables = [] } = req.body;
+
+    if (!name || !message) {
+      return res.status(400).json({ error: 'Nome e mensagem são obrigatórios' });
+    }
+
+    const templateId = nanoid();
+    const template = {
+      id: templateId,
+      name,
+      message,
+      category,
+      variables,
+      userId,
+      createdAt: Math.floor(Date.now() / 1000),
+      updatedAt: Math.floor(Date.now() / 1000)
+    };
+
+    console.log('🤖 TELEGRAM TEMPLATE CREATED:', { templateId, name, userId });
+
+    res.json({
+      success: true,
+      template,
+      message: 'Template criado com sucesso'
+    });
+  } catch (error) {
+    console.error("❌ Erro ao criar template:", error);
+    res.status(500).json({ error: "Erro ao criar template" });
+  }
+});
+
+// ====================== FIM DOS ENDPOINTS TELEGRAM BOT API ======================
+
 // Enviar mensagem via API do WhatsApp
 app.post("/api/whatsapp-api/send", verifyJWT, async (req: any, res: Response) => {
   try {

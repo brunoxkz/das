@@ -571,6 +571,95 @@ export type WhatsappTemplate = typeof whatsappTemplates.$inferSelect;
 export type InsertWhatsappAutomationFile = z.infer<typeof insertWhatsappAutomationFileSchema>;
 export type WhatsappAutomationFile = typeof whatsappAutomationFiles.$inferSelect;
 
+// Telegram Campaigns Schema
+export const telegramCampaigns = sqliteTable('telegram_campaigns', {
+  id: text('id').primaryKey().notNull(),
+  name: text('name').notNull(),
+  quizId: text('quiz_id').notNull(),
+  messages: text('messages', { mode: 'json' }).notNull().$type<string[]>(), // Array de mensagens rotativas
+  userId: text('user_id').notNull().references(() => users.id),
+  phones: text('phones', { mode: 'json' }).notNull().$type<Array<{
+    phone: string;
+    name?: string;
+    status?: 'completed' | 'abandoned';
+    submittedAt?: string;
+    country?: string;
+    countryCode?: string;
+  }>>(),
+  status: text('status').notNull().default('active'),
+  scheduledAt: integer('scheduled_at'),
+  triggerDelay: integer('trigger_delay').default(10),
+  triggerUnit: text('trigger_unit').default('minutes'),
+  targetAudience: text('target_audience').notNull().default('all'),
+  campaignMode: text('campaign_mode').default('leads_ja_na_base'), // "modo_ao_vivo" ou "leads_ja_na_base"
+  dateFilter: text('date_filter'), // Filtro de data para frente
+  extensionSettings: text('extension_settings', { mode: 'json' }).$type<{
+    delay: number;
+    maxRetries: number;
+    enabled: boolean;
+  }>(),
+  createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
+  updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull()
+});
+
+// Telegram Logs Schema
+export const telegramLogs = sqliteTable('telegram_logs', {
+  id: text('id').primaryKey().notNull(),
+  campaignId: text('campaign_id').notNull().references(() => telegramCampaigns.id, { onDelete: 'cascade' }),
+  phone: text('phone').notNull(),
+  message: text('message').notNull(),
+  status: text('status').notNull().default('pending'),
+  scheduledAt: integer('scheduled_at'),
+  sentAt: integer('sent_at'),
+  extensionStatus: text('extension_status'),
+  error: text('error'),
+  country: text('country'), // País detectado do telefone
+  countryCode: text('country_code'), // Código do país (+55, +1, etc.)
+  createdAt: integer('created_at', { mode: 'timestamp' }).notNull().default(sql`(unixepoch())`),
+  updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull().default(sql`(unixepoch())`)
+});
+
+// Telegram Templates Schema
+export const telegramTemplates = sqliteTable('telegram_templates', {
+  id: text('id').primaryKey().notNull(),
+  name: text('name').notNull(),
+  message: text('message').notNull(),
+  category: text('category').notNull(),
+  variables: text('variables', { mode: 'json' }).notNull().$type<string[]>(),
+  userId: text('user_id').notNull().references(() => users.id),
+  createdAt: integer('created_at', { mode: 'timestamp' }).notNull().default(sql`(unixepoch())`),
+  updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull().default(sql`(unixepoch())`)
+});
+
+// Telegram Bot Configurations Schema
+export const telegramBotConfigs = sqliteTable('telegram_bot_configs', {
+  id: text('id').primaryKey().notNull(),
+  userId: text('user_id').notNull().references(() => users.id),
+  botToken: text('bot_token').notNull(),
+  botName: text('bot_name'),
+  botUsername: text('bot_username'),
+  webhookUrl: text('webhook_url'),
+  isActive: integer('is_active', { mode: 'boolean' }).default(true),
+  createdAt: integer('created_at', { mode: 'timestamp' }).notNull().default(sql`(unixepoch())`),
+  updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull().default(sql`(unixepoch())`)
+});
+
+// Telegram Zod Schemas
+export const insertTelegramCampaignSchema = createInsertSchema(telegramCampaigns);
+export const insertTelegramLogSchema = createInsertSchema(telegramLogs);
+export const insertTelegramTemplateSchema = createInsertSchema(telegramTemplates);
+export const insertTelegramBotConfigSchema = createInsertSchema(telegramBotConfigs);
+
+// Telegram Types
+export type InsertTelegramCampaign = z.infer<typeof insertTelegramCampaignSchema>;
+export type TelegramCampaign = typeof telegramCampaigns.$inferSelect;
+export type InsertTelegramLog = z.infer<typeof insertTelegramLogSchema>;
+export type TelegramLog = typeof telegramLogs.$inferSelect;
+export type InsertTelegramTemplate = z.infer<typeof insertTelegramTemplateSchema>;
+export type TelegramTemplate = typeof telegramTemplates.$inferSelect;
+export type InsertTelegramBotConfig = z.infer<typeof insertTelegramBotConfigSchema>;
+export type TelegramBotConfig = typeof telegramBotConfigs.$inferSelect;
+
 // Response Variables Schema e Types
 export const insertResponseVariableSchema = createInsertSchema(responseVariables);
 export type InsertResponseVariable = z.infer<typeof insertResponseVariableSchema>;

@@ -32,6 +32,7 @@ import WhatsAppAutomationPage from "@/pages/whatsapp-automation";
 import WhatsAppCampaignsPage from "@/pages/whatsapp-campaigns";
 import WhatsAppDualSystem from "@/pages/whatsapp-dual-system";
 import TelegramAutomationPage from "@/pages/telegram-automation";
+import TelegramCampaigns from "@/pages/telegram-campaigns";
 import CloakerPage from "@/pages/cloaker";
 import TesteSMSPage from "@/pages/teste-sms";
 
@@ -369,6 +370,12 @@ function App() {
         <Route path="/telegram-automation">
           <Layout>
             <TelegramAutomationPage />
+          </Layout>
+        </Route>
+        
+        <Route path="/telegram-campaigns">
+          <Layout>
+            <TelegramCampaigns />
           </Layout>
         </Route>
         
