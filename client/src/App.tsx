@@ -95,6 +95,7 @@ import ProductBuilder from "@/pages/product-builder";
 import SubscriptionsManager from "@/pages/subscriptions-manager";
 import AdminDashboardPlanos from "@/pages/admin-dashboard-planos";
 import CheckoutPlan from "@/pages/checkout-plan";
+import PaymentVerification from "@/pages/payment-verification";
 
 import { useAuth } from "@/hooks/useAuth-jwt";
 import { isUnauthorizedError } from "@/lib/authUtils";
@@ -579,6 +580,16 @@ function App() {
         <Route path="/admin-dashboard-planos">
           <Layout>
             <AdminDashboardPlanos />
+          </Layout>
+        </Route>
+        <Route path="/payment-verification">
+          <Layout>
+            <PaymentVerification />
+          </Layout>
+        </Route>
+        <Route path="/payment-verification">
+          <Layout>
+            <PaymentVerification />
           </Layout>
         </Route>
         

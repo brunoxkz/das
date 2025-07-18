@@ -125,6 +125,7 @@ function CheckoutForm({ plan }: { plan: any }) {
                   color: '#9e2146',
                 },
               },
+              hidePostalCode: true,
             }}
           />
         </div>

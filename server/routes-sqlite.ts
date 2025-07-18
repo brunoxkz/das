@@ -1792,6 +1792,51 @@ export function registerSQLiteRoutes(app: Express): Server {
     }
   });
 
+  // 🔍 ENDPOINTS DE VERIFICAÇÃO DE PAGAMENTOS
+  // Buscar transações recentes
+  app.get('/api/payment-verification/transactions', verifyJWT, async (req: any, res) => {
+    try {
+      const limit = parseInt(req.query.limit as string) || 10;
+      const transactions = await storage.getRecentTransactions(limit);
+      
+      res.json({
+        success: true,
+        transactions: transactions,
+        count: transactions.length,
+        timestamp: new Date().toISOString()
+      });
+    } catch (error) {
+      console.error('❌ Erro ao buscar transações:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Erro ao buscar transações',
+        error: error.message
+      });
+    }
+  });
+
+  // Buscar assinaturas recentes
+  app.get('/api/payment-verification/subscriptions', verifyJWT, async (req: any, res) => {
+    try {
+      const limit = parseInt(req.query.limit as string) || 10;
+      const subscriptions = await storage.getRecentSubscriptions(limit);
+      
+      res.json({
+        success: true,
+        subscriptions: subscriptions,
+        count: subscriptions.length,
+        timestamp: new Date().toISOString()
+      });
+    } catch (error) {
+      console.error('❌ Erro ao buscar assinaturas:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Erro ao buscar assinaturas',
+        error: error.message
+      });
+    }
+  });
+
   // Buscar produto específico por ID (público)
   app.get('/api/checkout-products/:id', async (req, res) => {
     try {
@@ -7033,6 +7078,27 @@ console.log('Vendzz Checkout Embed carregado para plano: ${planId}');
         message: 'Erro ao criar trial correto',
         error: error.message 
       });
+    }
+  });
+
+  // Endpoints para verificação de pagamentos
+  app.get('/api/stripe/transactions', verifyJWT, async (req: any, res) => {
+    try {
+      const transactions = await storage.getRecentTransactions(10);
+      res.json(transactions || []);
+    } catch (error) {
+      console.error('❌ Erro ao buscar transações:', error);
+      res.json([]);
+    }
+  });
+
+  app.get('/api/stripe/subscriptions', verifyJWT, async (req: any, res) => {
+    try {
+      const subscriptions = await storage.getRecentSubscriptions(10);
+      res.json(subscriptions || []);
+    } catch (error) {
+      console.error('❌ Erro ao buscar assinaturas:', error);
+      res.json([]);
     }
   });
 

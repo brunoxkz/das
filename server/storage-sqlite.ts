@@ -478,6 +478,47 @@ export class SQLiteStorage implements IStorage {
     return user || undefined;
   }
 
+  // Métodos para verificação de pagamentos
+  async getRecentTransactions(limit: number = 10): Promise<any[]> {
+    try {
+      const stmt = sqlite.prepare(`
+        SELECT * FROM stripe_transactions 
+        ORDER BY createdAt DESC 
+        LIMIT ?
+      `);
+      return stmt.all(limit);
+    } catch (error) {
+      console.error('❌ Erro ao buscar transações:', error);
+      return [];
+    }
+  }
+
+  async getRecentSubscriptions(limit: number = 10): Promise<any[]> {
+    try {
+      const stmt = sqlite.prepare(`
+        SELECT * FROM stripe_subscriptions 
+        ORDER BY created_at DESC 
+        LIMIT ?
+      `);
+      return stmt.all(limit);
+    } catch (error) {
+      console.error('❌ Erro ao buscar assinaturas:', error);
+      // Tentar buscar na tabela existente
+      try {
+        const stmt2 = sqlite.prepare(`
+          SELECT * FROM stripe_transactions 
+          WHERE status = 'succeeded' 
+          ORDER BY createdAt DESC 
+          LIMIT ?
+        `);
+        return stmt2.all(limit);
+      } catch (error2) {
+        console.error('❌ Erro ao buscar transações:', error2);
+        return [];
+      }
+    }
+  }
+
   async getUserByEmail(email: string): Promise<User | null> {
     const [user] = await db.select().from(users).where(eq(users.email, email));
     return user || null;
