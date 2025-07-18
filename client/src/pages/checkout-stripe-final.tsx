@@ -7,7 +7,7 @@ import { CheckCircle, CreditCard, Shield, Clock, Repeat, AlertCircle, Loader2 } 
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest } from '@/lib/queryClient';
 
-const STRIPE_PUBLIC_KEY = 'pk_test_51RjvV9HK6al3veW1PjziXLVqAk2y8HUIh5Rg2xP3wUUJ6Jdvaob5KB3PlKsWYWOtldtdbeLh0TpcMF5Pb5FfO6p100hNkeeWih';
+const STRIPE_PUBLIC_KEY = import.meta.env.VITE_STRIPE_PUBLIC_KEY;
 
 interface CheckoutFormProps {
   onSuccess: (result: any) => void;
