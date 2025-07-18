@@ -14,6 +14,7 @@ import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import EmailCampaignModal from "@/components/EmailCampaignModal";
 
 // Tipos de campanha de email seguindo o padrão do SMS
 const EMAIL_CAMPAIGN_TYPES = {
@@ -412,46 +413,44 @@ export default function EmailMarketingSimplified() {
               {/* Step 1: Tipo de Campanha */}
               {currentStep === 1 && (
                 <div className="space-y-4">
+                  <div className="text-center mb-6">
+                    <h3 className="text-lg font-semibold mb-2">Escolha o Tipo de Campanha</h3>
+                    <p className="text-gray-600">Selecione o tipo de campanha que deseja criar. Cada tipo abrirá um assistente personalizado.</p>
+                  </div>
+                  
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {Object.values(EMAIL_CAMPAIGN_TYPES).map((type) => {
                       const Icon = type.icon;
                       return (
-                        <Card 
+                        <EmailCampaignModal
                           key={type.id}
-                          className={`cursor-pointer transition-all hover:shadow-md ${
-                            form.type === type.id ? 'ring-2 ring-blue-500 bg-blue-50' : ''
-                          }`}
-                          onClick={() => setForm(prev => ({ ...prev, type: type.id }))}
+                          onCampaignCreated={() => {
+                            queryClient.invalidateQueries({ queryKey: ['/api/email-campaigns'] });
+                            toast({
+                              title: "Campanha Criada",
+                              description: "Sua campanha foi criada com sucesso!",
+                            });
+                          }}
                         >
-                          <CardContent className="p-4">
-                            <div className="flex items-start gap-3">
-                              <div className={`p-2 rounded-lg ${type.color} text-white`}>
-                                <Icon className="w-5 h-5" />
+                          <Card className="cursor-pointer transition-all hover:shadow-md hover:scale-105">
+                            <CardContent className="p-4">
+                              <div className="flex items-start gap-3">
+                                <div className={`p-2 rounded-lg ${type.color} text-white`}>
+                                  <Icon className="w-5 h-5" />
+                                </div>
+                                <div>
+                                  <h3 className="font-medium">{type.name}</h3>
+                                  <p className="text-sm text-gray-600 mt-1">
+                                    {type.description}
+                                  </p>
+                                </div>
                               </div>
-                              <div>
-                                <h3 className="font-medium">{type.name}</h3>
-                                <p className="text-sm text-gray-600 mt-1">
-                                  {type.description}
-                                </p>
-                              </div>
-                            </div>
-                          </CardContent>
-                        </Card>
+                            </CardContent>
+                          </Card>
+                        </EmailCampaignModal>
                       );
                     })}
                   </div>
-                  
-                  {form.type && (
-                    <div className="mt-4">
-                      <Label htmlFor="campaign-name">Nome da Campanha</Label>
-                      <Input 
-                        id="campaign-name"
-                        placeholder="Ex: Remarketing Quiz Emagrecimento"
-                        value={form.name}
-                        onChange={(e) => setForm(prev => ({ ...prev, name: e.target.value }))}
-                      />
-                    </div>
-                  )}
                 </div>
               )}
               

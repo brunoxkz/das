@@ -16,6 +16,7 @@ import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { useLanguage } from "@/hooks/useLanguage";
+import SMSCampaignModal from "@/components/SMSCampaignModal";
 
 // Componente para exibir logs da campanha
 const CampaignLogs = ({ campaignId }: { campaignId: string }) => {
@@ -484,31 +485,41 @@ export default function SMSCampaignsAdvanced() {
               {/* Step 1: Tipo de Campanha */}
               {currentStep === 1 && (
                 <div className="space-y-4">
+                  <div className="text-center mb-6">
+                    <h3 className="text-lg font-semibold mb-2">Escolha o Tipo de Campanha SMS</h3>
+                    <p className="text-gray-600">Selecione o tipo de campanha que deseja criar. Cada tipo abrirá um assistente personalizado.</p>
+                  </div>
+                  
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {Object.values(CAMPAIGN_TYPES).map((type) => {
                       const Icon = type.icon;
                       return (
-                        <Card 
+                        <SMSCampaignModal
                           key={type.id}
-                          className={`cursor-pointer transition-all hover:shadow-md ${
-                            form.type === type.id ? 'ring-2 ring-green-500 bg-green-50' : ''
-                          }`}
-                          onClick={() => setForm(prev => ({ ...prev, type: type.id }))}
+                          onCampaignCreated={() => {
+                            queryClient.invalidateQueries({ queryKey: ['/api/sms-campaigns'] });
+                            toast({
+                              title: "Campanha Criada",
+                              description: "Sua campanha SMS foi criada com sucesso!",
+                            });
+                          }}
                         >
-                          <CardContent className="p-4">
-                            <div className="flex items-start gap-3">
-                              <div className={`p-2 rounded-lg ${type.color} text-white`}>
-                                <Icon className="w-5 h-5" />
+                          <Card className="cursor-pointer transition-all hover:shadow-md hover:scale-105">
+                            <CardContent className="p-4">
+                              <div className="flex items-start gap-3">
+                                <div className={`p-2 rounded-lg ${type.color} text-white`}>
+                                  <Icon className="w-5 h-5" />
+                                </div>
+                                <div>
+                                  <h3 className="font-medium">{type.name}</h3>
+                                  <p className="text-sm text-gray-600 mt-1">
+                                    {type.description}
+                                  </p>
+                                </div>
                               </div>
-                              <div>
-                                <h3 className="font-medium">{type.name}</h3>
-                                <p className="text-sm text-gray-600 mt-1">
-                                  {type.description}
-                                </p>
-                              </div>
-                            </div>
-                          </CardContent>
-                        </Card>
+                            </CardContent>
+                          </Card>
+                        </SMSCampaignModal>
                       );
                     })}
                   </div>
