@@ -71,6 +71,7 @@ import StripeCheckoutManager from "@/pages/stripe-checkout-manager";
 import StripeElements from "@/pages/stripe-elements";
 import StripePaymentIntentDemo from "@/pages/stripe-payment-intent-demo";
 import PaymentSuccess from "@/pages/payment-success";
+import CheckPayment from "@/pages/check-payment";
 import PaymentIntentExplanation from "@/pages/payment-intent-explanation";
 import CheckoutTrialSimple from "@/pages/checkout-trial-simple";
 import CheckoutTrialFinalSimple from "@/pages/checkout-trial-final-simple";
@@ -300,6 +301,12 @@ function App() {
         <Route path="/faceless-videos">
           <Layout>
             <FacelessVideosPage />
+          </Layout>
+        </Route>
+
+        <Route path="/check-payment">
+          <Layout>
+            <CheckPayment />
           </Layout>
         </Route>
         

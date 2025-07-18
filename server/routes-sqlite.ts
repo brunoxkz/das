@@ -1051,6 +1051,75 @@ export function registerSQLiteRoutes(app: Express): Server {
     }
   });
 
+  // 🔍 ENDPOINT PARA CONSULTAR DETALHES DE PAYMENT INTENT
+  app.get('/api/stripe/payment-intent/:paymentIntentId', async (req, res) => {
+    try {
+      const { paymentIntentId } = req.params;
+      
+      // Importar Stripe
+      const { StripeSimpleTrialSystem } = await import('./stripe-simple-trial');
+      const stripeSystem = new StripeSimpleTrialSystem(
+        process.env.STRIPE_SECRET_KEY || 'sk_test_51RjvV9HK6al3veW1FPD5bTV1on2NQLlm9ud45AJDggFHdsGA9UAo5jfbSRvWF83W3uTp5cpZYa8tJBvm4ttefrk800mUs47pFA'
+      );
+
+      // Buscar Payment Intent no Stripe
+      const paymentIntent = await stripeSystem.stripe.paymentIntents.retrieve(paymentIntentId);
+      
+      // Buscar charges associadas
+      const charges = await stripeSystem.stripe.charges.list({
+        payment_intent: paymentIntentId
+      });
+
+      console.log('🔍 CONSULTANDO PAYMENT INTENT:', paymentIntentId);
+      console.log('💰 DETALHES DO PAGAMENTO:', {
+        id: paymentIntent.id,
+        status: paymentIntent.status,
+        amount: paymentIntent.amount,
+        amount_received: paymentIntent.amount_received,
+        currency: paymentIntent.currency,
+        customer: paymentIntent.customer,
+        charges: charges.data.map(charge => ({
+          id: charge.id,
+          amount: charge.amount,
+          status: charge.status,
+          paid: charge.paid,
+          fee: charge.application_fee_amount,
+          created: new Date(charge.created * 1000).toISOString()
+        }))
+      });
+
+      res.json({
+        success: true,
+        paymentIntent: {
+          id: paymentIntent.id,
+          status: paymentIntent.status,
+          amount: paymentIntent.amount,
+          amount_received: paymentIntent.amount_received,
+          currency: paymentIntent.currency,
+          customer: paymentIntent.customer,
+          created: new Date(paymentIntent.created * 1000).toISOString(),
+          charges: charges.data.map(charge => ({
+            id: charge.id,
+            amount: charge.amount,
+            status: charge.status,
+            paid: charge.paid,
+            fee: charge.application_fee_amount,
+            created: new Date(charge.created * 1000).toISOString(),
+            description: charge.description,
+            receipt_url: charge.receipt_url
+          }))
+        }
+      });
+    } catch (error) {
+      console.error('❌ ERRO AO CONSULTAR PAYMENT INTENT:', error.message);
+      res.status(500).json({ 
+        success: false, 
+        message: 'Erro ao consultar Payment Intent',
+        error: error.message 
+      });
+    }
+  });
+
   // 💳 STRIPE PROCESSAR PAGAMENTO INLINE - Endpoint para processar pagamento via API
   app.post("/api/stripe/process-payment-inline", async (req, res) => {
     try {
