@@ -146,10 +146,14 @@ export default function CheckoutEmbed() {
   const [, params] = useRoute('/checkout-embed/:planId');
   const planId = params?.planId;
 
-  const { data: plan, isLoading } = useQuery({
-    queryKey: [`/api/public/plans/${planId}`],
+  console.log('🔍 DEBUG Frontend - Checkout Embed:', { planId, params });
+
+  const { data: plan, isLoading, error } = useQuery({
+    queryKey: [`/api/stripe/plans/${planId}`],
     enabled: !!planId,
   });
+
+  console.log('🔍 DEBUG Frontend - Query Result:', { plan, isLoading, error });
 
   if (isLoading) {
     return (

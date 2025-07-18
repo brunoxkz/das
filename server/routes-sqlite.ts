@@ -512,12 +512,18 @@ export function registerSQLiteRoutes(app: Express): Server {
         updated_at: new Date()
       };
 
+      console.log('🔍 DEBUG - Criando plano:', JSON.stringify(planData, null, 2));
       await storage.createStripePlan(planData);
+      
+      // Verificar se o plano foi realmente criado
+      const planCriado = await storage.getStripePlan(planData.id);
+      console.log('🔍 DEBUG - Plano após criação:', JSON.stringify(planCriado, null, 2));
       
       res.json({
         success: true,
         message: 'Plano criado com sucesso (teste)!',
-        plan: planData
+        plan: planData,
+        planCriado: planCriado
       });
     } catch (error) {
       console.error('❌ Erro ao criar plano (teste):', error);
@@ -557,10 +563,24 @@ export function registerSQLiteRoutes(app: Express): Server {
   app.get('/api/stripe/plans/:id', async (req, res) => {
     try {
       const { id } = req.params;
+      console.log('🔍 DEBUG - Buscando plano:', { id });
+      
+      // Buscar sem filtro ativo primeiro
+      const planSemFiltro = sqlite.prepare('SELECT * FROM stripe_plans WHERE id = ?').get(id);
+      console.log('🔍 DEBUG - Plano sem filtro ativo:', JSON.stringify(planSemFiltro, null, 2));
+      
+      // Buscar com filtro ativo
       const plan = sqlite.prepare('SELECT * FROM stripe_plans WHERE id = ? AND active = 1').get(id);
+      console.log('🔍 DEBUG - Plano com filtro ativo:', JSON.stringify(plan, null, 2));
       
       if (!plan) {
-        return res.status(404).json({ error: 'Plano não encontrado' });
+        console.log('❌ DEBUG - Plano não encontrado para ID:', id);
+        return res.status(404).json({ 
+          error: 'Plano não encontrado',
+          planId: id,
+          planSemFiltro: planSemFiltro,
+          debug: 'Plano não encontrado com active=1'
+        });
       }
 
       res.json(plan);
@@ -622,11 +642,17 @@ export function registerSQLiteRoutes(app: Express): Server {
         updated_at: new Date()
       };
 
+      console.log('🔍 DEBUG - Criando plano principal:', JSON.stringify(planData, null, 2));
       await storage.createStripePlan(planData);
+      
+      // Verificar se o plano foi realmente criado
+      const planCriado = await storage.getStripePlan(planData.id);
+      console.log('🔍 DEBUG - Plano principal após criação:', JSON.stringify(planCriado, null, 2));
       
       res.json({
         message: 'Plano criado com sucesso!',
         plan: planData,
+        planCriado: planCriado,
         stripe_price_id: stripePrice.id,
         stripe_product_id: product.id
       });
