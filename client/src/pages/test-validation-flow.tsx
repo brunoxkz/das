@@ -22,10 +22,8 @@ export default function TestValidationFlow() {
       setLoading(true);
       setResult(null);
       
-      const response = await apiRequest('POST', '/api/stripe/simple-trial', {
+      const response = await apiRequest('POST', '/api/stripe/create-simple-trial', {
         planName: 'Plano Premium Vendzz',
-        customerEmail: email || 'test@example.com',
-        customerName: 'Cliente Teste',
         trialAmount: 1.00,
         trialDays: 3,
         recurringAmount: 29.90,
@@ -55,8 +53,9 @@ export default function TestValidationFlow() {
     try {
       setLoading(true);
       
-      const response = await apiRequest('POST', '/api/stripe/test-webhook-trial', {
-        email: email || 'test@example.com'
+      const response = await apiRequest('POST', '/api/stripe/test-webhook', {
+        type: 'payment_intent.succeeded',
+        simulate: true
       });
 
       setResult(response);
@@ -107,17 +106,6 @@ export default function TestValidationFlow() {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="email">Email do Cliente</Label>
-              <Input
-                id="email"
-                type="email"
-                placeholder="cliente@exemplo.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-              />
-            </div>
-
             <div className="flex gap-4">
               <Button
                 onClick={handleCreateValidationFlow}
