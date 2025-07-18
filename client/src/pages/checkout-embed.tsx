@@ -16,18 +16,33 @@ export default function CheckoutEmbed() {
   
   // Form state
   const [formData, setFormData] = useState({
-    name: '',
     email: '',
-    phone: '',
     cardNumber: '',
     expiryDate: '',
     cvv: ''
   });
 
   const handleFormChange = (field: string, value: string) => {
+    let formattedValue = value;
+    
+    // Formatação automática para campos específicos
+    if (field === 'cardNumber') {
+      // Remove espaços e adiciona espaços a cada 4 dígitos
+      formattedValue = value.replace(/\s/g, '').replace(/(.{4})/g, '$1 ').trim();
+    } else if (field === 'expiryDate') {
+      // Remove caracteres não numéricos e adiciona /
+      formattedValue = value.replace(/\D/g, '').replace(/(\d{2})(\d{2})/, '$1/$2');
+    } else if (field === 'cvv') {
+      // Apenas números
+      formattedValue = value.replace(/\D/g, '');
+    } else if (field === 'phone') {
+      // Formatação básica para telefone brasileiro
+      formattedValue = value.replace(/\D/g, '').replace(/(\d{2})(\d{5})(\d{4})/, '($1) $2-$3');
+    }
+    
     setFormData(prev => ({
       ...prev,
-      [field]: value
+      [field]: formattedValue
     }));
   };
 
@@ -40,10 +55,10 @@ export default function CheckoutEmbed() {
     if (!plan) return;
     
     // Validar campos obrigatórios
-    if (!formData.name || !formData.email || !formData.phone) {
+    if (!formData.email) {
       toast({
-        title: "Campos obrigatórios",
-        description: "Por favor, preencha todos os campos pessoais",
+        title: "Email obrigatório",
+        description: "Por favor, preencha seu email",
         variant: "destructive"
       });
       return;
@@ -61,16 +76,16 @@ export default function CheckoutEmbed() {
     setLoading(true);
     try {
       const response = await apiRequest('POST', '/api/stripe/simple-trial', {
-        productName: plan.name,
-        description: plan.description,
-        activationPrice: plan.trial_price,
-        trialDays: plan.trial_days,
-        recurringPrice: plan.price,
+        productName: plan.name || 'Plano Premium',
+        description: plan.description || 'Plano com trial',
+        activationPrice: plan.trial_price || 1.00,
+        trialDays: plan.trial_days || 3,
+        recurringPrice: plan.price || 29.90,
         currency: plan.currency || 'BRL',
+        returnUrl: `${window.location.origin}/checkout/success`,
+        cancelUrl: `${window.location.origin}/checkout-embed/${planId}`,
         customerData: {
-          name: formData.name,
-          email: formData.email,
-          phone: formData.phone
+          email: formData.email
         }
       });
       
@@ -190,20 +205,6 @@ export default function CheckoutEmbed() {
               <div className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium mb-2">
-                    <User className="w-4 h-4 inline mr-2" />
-                    Nome Completo
-                  </label>
-                  <input 
-                    type="text" 
-                    value={formData.name}
-                    onChange={(e) => handleFormChange('name', e.target.value)}
-                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    placeholder="Digite seu nome completo"
-                    required
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium mb-2">
                     <Mail className="w-4 h-4 inline mr-2" />
                     Email
                   </label>
@@ -213,20 +214,6 @@ export default function CheckoutEmbed() {
                     onChange={(e) => handleFormChange('email', e.target.value)}
                     className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     placeholder="seu@email.com"
-                    required
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium mb-2">
-                    <Phone className="w-4 h-4 inline mr-2" />
-                    Telefone
-                  </label>
-                  <input 
-                    type="tel" 
-                    value={formData.phone}
-                    onChange={(e) => handleFormChange('phone', e.target.value)}
-                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    placeholder="(11) 99999-9999"
                     required
                   />
                 </div>

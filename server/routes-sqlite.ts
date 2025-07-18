@@ -6881,7 +6881,7 @@ console.log('Vendzz Checkout Embed carregado para plano: ${planId}');
   });
 
   // ENDPOINT SIMPLIFICADO: R$1,00 → 3 dias → R$29,90/mês (SEM ERROS)
-  app.post("/api/stripe/create-simple-trial", verifyJWT, async (req: any, res) => {
+  app.post("/api/stripe/simple-trial", verifyJWT, async (req: any, res) => {
     try {
       console.log('🔧 ENDPOINT TRIAL SIMPLIFICADO CHAMADO');
       console.log('📋 User ID:', req.user.id);
@@ -6908,13 +6908,15 @@ console.log('Vendzz Checkout Embed carregado para plano: ${planId}');
       
       // Configuração do trial simplificado
       const trialConfig = {
-        planName: req.body.planName || 'Plano Premium',
-        customerEmail: user.email,
-        customerName: `${user.firstName} ${user.lastName}` || 'Cliente',
-        trialAmount: req.body.trialAmount || 1.00, // R$1,00
+        planName: req.body.productName || 'Plano Premium',
+        customerEmail: req.body.customerData?.email || user.email,
+        customerName: req.body.customerData?.name || `${user.firstName} ${user.lastName}` || 'Cliente',
+        trialAmount: req.body.activationPrice || 1.00, // R$1,00
         trialDays: req.body.trialDays || 3, // 3 dias
-        recurringAmount: req.body.recurringAmount || 29.90, // R$29,90
-        currency: req.body.currency || 'BRL'
+        recurringAmount: req.body.recurringPrice || 29.90, // R$29,90
+        currency: req.body.currency || 'BRL',
+        returnUrl: req.body.returnUrl || 'https://vendzz.com/success',
+        cancelUrl: req.body.cancelUrl || 'https://vendzz.com/cancel'
       };
       
       console.log('🔧 CRIANDO TRIAL SIMPLIFICADO:', trialConfig);
