@@ -6752,7 +6752,7 @@ export function registerSQLiteRoutes(app: Express): Server {
           },
         ],
         mode: 'payment',
-        success_url: successUrl || `${req.protocol}://${req.get('host')}/payment-success?session_id={CHECKOUT_SESSION_ID}`,
+        success_url: successUrl || `${req.protocol}://${req.get('host')}/payment-success?session_id={CHECKOUT_SESSION_ID}&planId=${planId}`,
         cancel_url: cancelUrl || `${req.protocol}://${req.get('host')}/payment-cancel`,
         customer_email: customerEmail,
         metadata: {

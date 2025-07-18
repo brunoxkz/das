@@ -2,8 +2,25 @@ import { CheckCircle, Download, FileText, Mail, Phone } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { useQuery } from "@tanstack/react-query";
+import { useRoute } from "wouter";
 
 export default function PaymentSuccess() {
+  const [, params] = useRoute('/payment-success/:planId?');
+  const planId = params?.planId || new URLSearchParams(window.location.search).get('planId');
+  
+  console.log('🔍 DEBUG Payment Success - Plan ID:', planId);
+  
+  const { data: plan } = useQuery({
+    queryKey: [`/api/public/plans/${planId}`],
+    enabled: !!planId,
+  });
+  
+  console.log('🔍 DEBUG Payment Success - Plan Data:', plan);
+  
+  const trialDays = plan?.trial_days || 3;
+  const recurringPrice = plan?.price || 29.90;
+  const trialPrice = plan?.trial_price || 1.00;
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50 flex items-center justify-center p-4">
       <Card className="max-w-2xl w-full">
@@ -29,19 +46,19 @@ export default function PaymentSuccess() {
               <div className="flex justify-between">
                 <span>Cobrança Imediata:</span>
                 <Badge variant="outline" className="bg-green-100 text-green-700">
-                  R$ 1,00 - Pago ✓
+                  R$ {trialPrice.toFixed(2)} - Pago ✓
                 </Badge>
               </div>
               <div className="flex justify-between">
                 <span>Trial Gratuito:</span>
                 <Badge variant="outline" className="bg-blue-100 text-blue-700">
-                  3 dias - Ativo
+                  {trialDays} {trialDays === 1 ? 'dia' : 'dias'} - Ativo
                 </Badge>
               </div>
               <div className="flex justify-between">
                 <span>Próxima Cobrança:</span>
                 <Badge variant="outline" className="bg-yellow-100 text-yellow-700">
-                  R$ 29,90/mês
+                  R$ {recurringPrice.toFixed(2)}/mês
                 </Badge>
               </div>
             </div>
