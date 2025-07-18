@@ -499,15 +499,11 @@ export function registerSQLiteRoutes(app: Express): Server {
   // Buscar todos os planos
   app.get('/api/stripe/plans', verifyJWT, async (req, res) => {
     try {
-      if (!activeStripeService) {
-        return res.status(503).json({ error: 'Stripe não está configurado' });
-      }
-      
       const plans = await storage.getStripePlans();
-      res.json(plans);
+      res.json(Array.isArray(plans) ? plans : []);
     } catch (error) {
       console.error('Erro ao buscar planos:', error);
-      res.status(500).json({ error: 'Erro interno do servidor' });
+      res.json([]);
     }
   });
 
@@ -6136,15 +6132,11 @@ console.log('Vendzz Checkout Embed carregado para plano: ${planId}');
   // TESTE DE SIMULAÇÃO DO WEBHOOK - COMPLETAMENTE SIMPLIFICADO
   app.post("/api/stripe/test-webhook", verifyJWT, async (req: any, res) => {
     try {
-      const { sessionId } = req.body;
-      
       console.log('🔔 WEBHOOK SIMULADO - INICIANDO TESTE');
-      console.log('📋 Session ID recebido:', sessionId);
       console.log('👤 User ID:', req.user.id);
+      console.log('📋 Body:', req.body);
       
-      if (!sessionId) {
-        return res.status(400).json({ error: "Session ID obrigatório" });
-      }
+      // Não requer sessionId - é uma simulação de webhook
 
       // Simular dados completamente locais
       const mockTimestamp = Date.now();

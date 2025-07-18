@@ -228,14 +228,13 @@ export default function CheckoutSimpleTrial() {
   };
 
   const handleSimulateWebhook = async () => {
-    if (!checkoutData) return;
-
     setLoading(true);
     setWebhookResult(null);
 
     try {
       const webhookData = {
-        sessionId: checkoutData.sessionId // Usar sessionId conforme esperado pelo backend
+        type: 'payment_intent.succeeded',
+        simulate: true
       };
 
       const response = await apiRequest('POST', '/api/stripe/test-webhook', webhookData);
@@ -269,7 +268,7 @@ export default function CheckoutSimpleTrial() {
     }));
   };
 
-  const plans = plansQuery.data || [];
+  const plans = Array.isArray(plansQuery.data) ? plansQuery.data : [];
 
   return (
     <div className="container mx-auto p-6 max-w-7xl">
