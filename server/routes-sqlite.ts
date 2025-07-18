@@ -994,6 +994,62 @@ export function registerSQLiteRoutes(app: Express): Server {
     }
   });
 
+  // 💳 STRIPE PAYMENT INTENT INLINE - Endpoint para pagamento inline
+  app.post("/api/public/checkout/create-payment-intent", async (req, res) => {
+    try {
+      console.log('🔧 ENDPOINT PAYMENT INTENT INLINE CHAMADO');
+      console.log('📋 Body:', req.body);
+      
+      const { amount, currency, planName } = req.body;
+      
+      if (!amount || !currency) {
+        return res.status(400).json({ 
+          success: false,
+          message: 'Amount e currency são obrigatórios' 
+        });
+      }
+      
+      const { StripeSimpleTrialSystem } = await import('./stripe-simple-trial');
+      console.log('🔍 Importando StripeSimpleTrialSystem...');
+      
+      const correctTrialSystem = new StripeSimpleTrialSystem(
+        process.env.STRIPE_SECRET_KEY || 'sk_test_51RjvV9HK6al3veW1FPD5bTV1on2NQLlm9ud45AJDggFHdsGA9UAo5jfbSRvWF83W3uTp5cpZYa8tJBvm4ttefrk800mUs47pFA'
+      );
+      
+      // Criar Payment Intent para pagamento inline
+      const paymentIntent = await correctTrialSystem.stripe.paymentIntents.create({
+        amount: Math.round(amount * 100), // Converter para centavos
+        currency: currency.toLowerCase(),
+        automatic_payment_methods: {
+          enabled: true,
+        },
+        setup_future_usage: 'off_session', // Salvar cartão para uso futuro
+        metadata: {
+          planName: planName || 'Vendzz Pro',
+          trialDays: '3',
+          recurringAmount: '29.90',
+        },
+      });
+      
+      console.log('✅ PAYMENT INTENT CRIADO:', paymentIntent.id);
+      
+      res.json({
+        success: true,
+        clientSecret: paymentIntent.client_secret,
+        paymentIntentId: paymentIntent.id,
+        message: 'Payment Intent criado com sucesso'
+      });
+      
+    } catch (error) {
+      console.error('❌ Erro ao criar Payment Intent:', error);
+      res.status(500).json({ 
+        success: false,
+        message: 'Erro ao criar Payment Intent',
+        error: error.message 
+      });
+    }
+  });
+
   // Buscar produto específico por ID (público)
   app.get('/api/checkout-products/:id', async (req, res) => {
     try {
