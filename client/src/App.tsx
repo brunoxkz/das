@@ -80,6 +80,7 @@ import CheckoutTrialCustom from "@/pages/checkout-trial-custom";
 import CheckoutTrialPerfect from "@/pages/checkout-trial-perfect";
 import StripePlansPerfeito from "@/pages/stripe-plans-perfect";
 import CheckoutEmbed from "@/pages/checkout-embed";
+import CheckoutEmbedCodes from "@/pages/checkout-embed-codes";
 import StripeMonitoring from "@/pages/stripe-monitoring";
 import CheckoutStripeFinal from "@/pages/checkout-stripe-final";
 import ProductBuilder from "@/pages/product-builder";
@@ -464,6 +465,12 @@ function App() {
         <Route path="/checkout-embed">
           <Layout>
             <CheckoutEmbed />
+          </Layout>
+        </Route>
+        
+        <Route path="/checkout-embed-codes">
+          <Layout>
+            <CheckoutEmbedCodes />
           </Layout>
         </Route>
         

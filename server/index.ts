@@ -121,7 +121,7 @@ setupHybridAuth(app);
 
 // System initialization and routes
 
-// Register all routes
+// Register all routes ANTES do Vite middleware
 const server = registerHybridRoutes(app);
 
 // Setup Vite middleware for dev and production APÓS as rotas

@@ -192,6 +192,13 @@ export function Sidebar() {
           badge: "Integrar"
         },
         {
+          title: "📋 CÓDIGOS EMBED",
+          href: "/checkout-embed-codes",
+          icon: <Code className="w-4 h-4" />,
+          active: location === "/checkout-embed-codes",
+          badge: "HTML/React"
+        },
+        {
           title: "GERENCIAR ASSINATURAS",
           href: "/subscriptions-manager",
           icon: <Crown className="w-4 h-4" />,

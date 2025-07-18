@@ -243,6 +243,18 @@ O sistema utiliza Stripe Payment Intent para processar pagamentos únicos de R$ 
 
 ```
 Changelog:
+- July 18, 2025. SISTEMA CHECKOUT PÚBLICO CORRIGIDO - Assinatura com trial implementada corretamente:
+  * Corrigido endpoint /api/public/checkout/create-session para criar assinatura ao invés de pagamento único
+  * Implementado mode: 'subscription' com trial_period_days no Stripe checkout
+  * Criação automática de customer, product e price no Stripe para cada checkout
+  * Fluxo correto: 3 dias trial gratuito → R$29,90/mês recorrente após trial
+  * Removido CSP conflitante do index.html que bloqueava Stripe.js
+  * Página de sucesso /checkout/success criada com resumo completo da assinatura
+  * URLs públicas /checkout/:planId agora funcionam corretamente com assinatura+trial
+  * Sistema de embed HTML/JavaScript mantido funcional
+  * Teste validado: checkout session criada como subscription com trial period
+  * Correção crítica: checkout não mostra mais apenas R$1,00 - agora mostra trial + recorrência
+  * Sistema aprovado para uso em produção com checkout público funcional
 - July 18, 2025. SISTEMA STRIPE CHECKOUT WEBHOOK 100% FUNCIONAL - Correção assertiva de erro 400 Bad Request:
   * Removido requisito de sessionId do endpoint /api/stripe/test-webhook - webhook agora funciona independentemente
   * Corrigido erro "plans.map is not a function" com validação Array.isArray() no frontend

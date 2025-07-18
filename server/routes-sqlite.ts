@@ -6092,31 +6092,56 @@ console.log('Vendzz Checkout Embed carregado para plano: ${planId}');
         process.env.STRIPE_SECRET_KEY || 'sk_test_51RjvV9HK6al3veW1FPD5bTV1on2NQLlm9ud45AJDggFHdsGA9UAo5jfbSRvWF83W3uTp5cpZYa8tJBvm4ttefrk800mUs47pFA'
       );
       
-      // Criar sessão de checkout
+      // Criar customer no Stripe
+      const customer = await stripeSystem.stripe.customers.create({
+        email: customerEmail,
+        name: customerName,
+        phone: customerPhone || '',
+        metadata: {
+          planId: planId,
+          publicCheckout: 'true'
+        }
+      });
+
+      // PASSO 1: Criar sessão de checkout para pagamento único de R$ 1,00 (taxa de ativação)
       const session = await stripeSystem.stripe.checkout.sessions.create({
         payment_method_types: ['card'],
+        mode: 'payment',
+        customer: customer.id,
         line_items: [
           {
             price_data: {
               currency: 'brl',
               product_data: {
-                name: plan.name,
-                description: plan.description || '',
+                name: `${plan.name} - Taxa de Ativação`,
+                description: `Taxa de ativação para ${plan.name}. Após 3 dias você será cobrado R$ ${plan.price.toFixed(2)}/mês.`,
               },
-              unit_amount: Math.round((plan.trial_price || 1.00) * 100),
+              unit_amount: Math.round((plan.trial_price || 1.00) * 100), // R$ 1,00
             },
             quantity: 1,
           },
         ],
-        mode: 'payment',
+        payment_intent_data: {
+          setup_future_usage: 'off_session', // Salvar cartão para futuras cobranças
+          metadata: {
+            planId: planId,
+            customerName: customerName,
+            customerPhone: customerPhone || '',
+            publicCheckout: 'true',
+            activationPrice: (plan.trial_price || 1.00).toString(),
+            recurringPrice: plan.price.toString(),
+            trialDays: (plan.trial_days || 3).toString(),
+            type: 'activation_payment'
+          }
+        },
         success_url: returnUrl || `${req.headers.origin}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
         cancel_url: cancelUrl || `${req.headers.origin}/checkout/${planId}`,
-        customer_email: customerEmail,
         metadata: {
           planId: planId,
           customerName: customerName,
           customerPhone: customerPhone || '',
-          publicCheckout: 'true'
+          publicCheckout: 'true',
+          type: 'activation_payment_with_saved_card'
         }
       });
       
@@ -6138,35 +6163,82 @@ console.log('Vendzz Checkout Embed carregado para plano: ${planId}');
     }
   });
 
-  // WEBHOOK HANDLER: Processar payment_intent.succeeded → Criar subscription
-  app.post("/api/stripe/webhook-simple-trial", async (req: any, res) => {
+  // WEBHOOK HANDLER: Processar payment_intent.succeeded → Criar subscription recorrente
+  app.post("/api/stripe/webhook-activation-payment", async (req: any, res) => {
     try {
-      console.log('🔧 WEBHOOK TRIAL SIMPLIFICADO CHAMADO');
+      console.log('🔧 WEBHOOK ACTIVATION PAYMENT CHAMADO');
       
-      // Simular evento do Stripe
       const eventType = req.body.type || 'payment_intent.succeeded';
-      const paymentIntentId = req.body.data?.object?.id || `pi_test_${Date.now()}`;
+      const paymentIntent = req.body.data?.object || {};
+      const paymentIntentId = paymentIntent.id || `pi_test_${Date.now()}`;
       
       console.log('📋 Event Type:', eventType);
       console.log('📋 Payment Intent ID:', paymentIntentId);
+      console.log('📋 Payment Intent Metadata:', paymentIntent.metadata);
       
-      if (eventType === 'payment_intent.succeeded') {
+      if (eventType === 'payment_intent.succeeded' && paymentIntent.metadata?.type === 'activation_payment') {
         const { StripeSimpleTrialSystem } = await import('./stripe-simple-trial');
-        const simpleTrialSystem = new StripeSimpleTrialSystem(
+        const stripeSystem = new StripeSimpleTrialSystem(
           process.env.STRIPE_SECRET_KEY || 'sk_test_51RjvV9HK6al3veW1FPD5bTV1on2NQLlm9ud45AJDggFHdsGA9UAo5jfbSRvWF83W3uTp5cpZYa8tJBvm4ttefrk800mUs47pFA'
         );
         
-        console.log('🔧 PROCESSANDO PAGAMENTO SUCCESSO...');
+        console.log('🔧 PROCESSANDO PAGAMENTO DE ATIVAÇÃO...');
         
-        // Processar pagamento e criar subscription
-        const subscription = await simpleTrialSystem.handleTrialPaymentSuccess(paymentIntentId);
+        // Criar produto e preço para assinatura recorrente
+        const product = await stripeSystem.stripe.products.create({
+          name: `${paymentIntent.metadata.planId} - Assinatura Recorrente`,
+          description: `Assinatura recorrente para ${paymentIntent.metadata.planId}`,
+          metadata: {
+            planId: paymentIntent.metadata.planId,
+            type: 'recurring_subscription'
+          }
+        });
+
+        const recurringPrice = await stripeSystem.stripe.prices.create({
+          currency: 'brl',
+          unit_amount: Math.round(parseFloat(paymentIntent.metadata.recurringPrice) * 100),
+          recurring: {
+            interval: 'month',
+          },
+          product: product.id,
+          metadata: {
+            planId: paymentIntent.metadata.planId,
+            type: 'recurring'
+          }
+        });
+
+        // Criar assinatura com trial usando o cartão salvo
+        const subscription = await stripeSystem.stripe.subscriptions.create({
+          customer: paymentIntent.customer,
+          items: [
+            {
+              price: recurringPrice.id,
+            },
+          ],
+          trial_period_days: parseInt(paymentIntent.metadata.trialDays) || 3,
+          default_payment_method: paymentIntent.payment_method,
+          metadata: {
+            planId: paymentIntent.metadata.planId,
+            customerName: paymentIntent.metadata.customerName,
+            customerPhone: paymentIntent.metadata.customerPhone,
+            publicCheckout: 'true',
+            activationPaymentIntent: paymentIntentId,
+            type: 'recurring_subscription'
+          }
+        });
         
-        console.log('✅ SUBSCRIPTION CRIADA:', subscription);
+        console.log('✅ SUBSCRIPTION RECORRENTE CRIADA:', subscription.id);
         
         res.json({
           success: true,
-          message: 'Webhook processado com sucesso',
-          subscription: subscription,
+          message: 'Pagamento de ativação processado e assinatura recorrente criada',
+          subscription: {
+            id: subscription.id,
+            status: subscription.status,
+            current_period_start: subscription.current_period_start,
+            current_period_end: subscription.current_period_end,
+            trial_end: subscription.trial_end
+          },
           event: eventType,
           paymentIntentId: paymentIntentId
         });
@@ -6177,25 +6249,152 @@ console.log('Vendzz Checkout Embed carregado para plano: ${planId}');
       }
       
     } catch (error) {
-      console.error('❌ Erro ao processar webhook:', error);
+      console.error('❌ Erro ao processar webhook de ativação:', error);
       res.status(500).json({ 
         success: false,
-        message: 'Erro ao processar webhook',
+        message: 'Erro ao processar webhook de ativação',
         error: error.message 
       });
     }
   });
 
-  // ENDPOINT SIMPLES DE TESTE PARA VERIFICAR SE ESTÁ FUNCIONANDO
-  app.post("/api/stripe/test-endpoint", async (req: any, res) => {
-    console.log('🔧 TESTE ENDPOINT CHAMADO SEM JWT');
-    console.log('📋 Body:', req.body);
-    
-    return res.json({
+  // ENDPOINT DE TESTE SIMPLES PARA VERIFICAR CONECTIVIDADE
+  app.get("/api/stripe/test-simple", async (req: any, res) => {
+    console.log('🔧 TESTE SIMPLES FUNCIONANDO');
+    res.json({
       success: true,
       message: 'Endpoint funcionando corretamente',
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
+      billing_model: 'R$ 1,00 pagamento único + R$ 29,90/mês recorrente'
     });
+  });
+
+  // ENDPOINT DE TESTE COMPLETO DO FLUXO: Pagamento Único + Assinatura Recorrente
+  app.post("/api/stripe/test-complete-flow", async (req: any, res) => {
+    try {
+      console.log('🔧 TESTE COMPLETO DO FLUXO INICIADO');
+      
+      const { StripeSimpleTrialSystem } = await import('./stripe-simple-trial');
+      const stripeSystem = new StripeSimpleTrialSystem(
+        process.env.STRIPE_SECRET_KEY || 'sk_test_51RjvV9HK6al3veW1FPD5bTV1on2NQLlm9ud45AJDggFHdsGA9UAo5jfbSRvWF83W3uTp5cpZYa8tJBvm4ttefrk800mUs47pFA'
+      );
+      
+      // PASSO 1: Criar customer de teste
+      const customer = await stripeSystem.stripe.customers.create({
+        email: 'test@example.com',
+        name: 'Test User',
+        phone: '11999999999'
+      });
+      
+      console.log('✅ Customer criado:', customer.id);
+      
+      // PASSO 2: Criar payment intent para taxa de ativação (R$ 1,00)
+      const paymentIntent = await stripeSystem.stripe.paymentIntents.create({
+        amount: 100, // R$ 1,00
+        currency: 'brl',
+        customer: customer.id,
+        setup_future_usage: 'off_session',
+        metadata: {
+          planId: 'plan_test_complete_flow',
+          customerName: 'Test User',
+          customerPhone: '11999999999',
+          publicCheckout: 'true',
+          activationPrice: '1.00',
+          recurringPrice: '29.90',
+          trialDays: '3',
+          type: 'activation_payment'
+        }
+      });
+      
+      console.log('✅ Payment Intent criado:', paymentIntent.id);
+      
+      // PASSO 3: Simular pagamento bem-sucedido
+      const confirmedPayment = await stripeSystem.stripe.paymentIntents.confirm(paymentIntent.id, {
+        payment_method: 'pm_card_visa' // Método de pagamento de teste
+      });
+      
+      console.log('✅ Pagamento confirmado:', confirmedPayment.status);
+      
+      // PASSO 4: Criar produto e preço para assinatura recorrente
+      const product = await stripeSystem.stripe.products.create({
+        name: 'Plano Teste - Assinatura Recorrente',
+        description: 'Assinatura recorrente para teste completo'
+      });
+      
+      const recurringPrice = await stripeSystem.stripe.prices.create({
+        currency: 'brl',
+        unit_amount: 2990, // R$ 29,90
+        recurring: {
+          interval: 'month',
+        },
+        product: product.id
+      });
+      
+      console.log('✅ Produto e preço criados:', product.id, recurringPrice.id);
+      
+      // PASSO 5: Criar assinatura com trial usando o cartão salvo
+      const subscription = await stripeSystem.stripe.subscriptions.create({
+        customer: customer.id,
+        items: [
+          {
+            price: recurringPrice.id,
+          },
+        ],
+        trial_period_days: 3,
+        default_payment_method: confirmedPayment.payment_method,
+        metadata: {
+          planId: 'plan_test_complete_flow',
+          customerName: 'Test User',
+          customerPhone: '11999999999',
+          publicCheckout: 'true',
+          activationPaymentIntent: paymentIntent.id,
+          type: 'recurring_subscription'
+        }
+      });
+      
+      console.log('✅ Assinatura recorrente criada:', subscription.id);
+      
+      // Resposta completa
+      res.json({
+        success: true,
+        message: 'Fluxo completo testado com sucesso',
+        flow: {
+          step1: {
+            description: 'Customer criado',
+            customer_id: customer.id,
+            email: customer.email
+          },
+          step2: {
+            description: 'Taxa de ativação R$ 1,00 cobrada',
+            payment_intent_id: paymentIntent.id,
+            amount: 'R$ 1,00',
+            status: confirmedPayment.status
+          },
+          step3: {
+            description: 'Assinatura recorrente criada',
+            subscription_id: subscription.id,
+            trial_period: '3 dias',
+            recurring_amount: 'R$ 29,90/mês',
+            status: subscription.status,
+            trial_end: new Date(subscription.trial_end * 1000).toISOString()
+          }
+        },
+        billing_explanation: {
+          immediate_charge: 'R$ 1,00 (taxa de ativação cobrada imediatamente)',
+          trial_period: '3 dias gratuitos para testar o serviço',
+          recurring_charge: 'R$ 29,90/mês após o final do trial',
+          card_saved: 'Cartão salvo para futuras cobranças automáticas'
+        }
+      });
+      
+    } catch (error) {
+      console.error('❌ Erro no teste completo:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Erro no teste completo',
+        error: error.message
+      });
+    }
   });
 
   // WEBHOOK HANDLER PARA TRIAL CUSTOMIZADO
