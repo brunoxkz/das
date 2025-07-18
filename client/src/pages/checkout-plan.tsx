@@ -21,7 +21,7 @@ const CheckoutFormForPlan = ({ planId }: { planId: string }) => {
 
   // Buscar dados do plano
   const { data: plan, isLoading: planLoading } = useQuery({
-    queryKey: ['/api/public/plans', planId],
+    queryKey: [`/api/public/plans/${planId}`],
     enabled: !!planId,
   });
 
