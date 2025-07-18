@@ -7345,6 +7345,7 @@ Hoje você vai aprender ${project.title} - método revolucionário que já ajudo
           price REAL NOT NULL,
           currency TEXT DEFAULT 'BRL',
           interval TEXT DEFAULT 'month',
+          interval_count INTEGER DEFAULT 1,
           trial_days INTEGER DEFAULT 7,
           trial_price REAL DEFAULT 1.00,
           gateway TEXT DEFAULT 'stripe',
@@ -7352,10 +7353,31 @@ Hoje você vai aprender ${project.title} - método revolucionário que já ajudo
           stripe_price_id TEXT,
           stripe_product_id TEXT,
           pagarme_plan_id TEXT,
+          billing_cycles INTEGER DEFAULT NULL,
+          has_limited_cycles INTEGER DEFAULT 0,
           created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
           updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
         )
       `);
+      
+      // Verificar se as colunas existem e adicionar se necessário
+      try {
+        await sqlite.exec(`ALTER TABLE stripe_plans ADD COLUMN interval_count INTEGER DEFAULT 1`);
+      } catch (e) {
+        // Coluna já existe, ignora
+      }
+      
+      try {
+        await sqlite.exec(`ALTER TABLE stripe_plans ADD COLUMN billing_cycles INTEGER DEFAULT NULL`);
+      } catch (e) {
+        // Coluna já existe, ignora
+      }
+      
+      try {
+        await sqlite.exec(`ALTER TABLE stripe_plans ADD COLUMN has_limited_cycles INTEGER DEFAULT 0`);
+      } catch (e) {
+        // Coluna já existe, ignora
+      }
     } catch (error) {
       console.error('❌ ERRO ao criar tabela stripe_plans:', error);
     }
@@ -7584,10 +7606,11 @@ Hoje você vai aprender ${project.title} - método revolucionário que já ajudo
       await this.ensureStripePlansTable();
       const stmt = sqlite.prepare(`
         INSERT INTO stripe_plans (
-          id, name, description, price, currency, interval, 
+          id, name, description, price, currency, interval, interval_count,
           trial_days, trial_price, gateway, active, 
-          stripe_price_id, stripe_product_id, pagarme_plan_id
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+          stripe_price_id, stripe_product_id, pagarme_plan_id,
+          billing_cycles, has_limited_cycles
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       `);
       
       stmt.run(
@@ -7597,13 +7620,16 @@ Hoje você vai aprender ${project.title} - método revolucionário que já ajudo
         plan.price,
         plan.currency || 'BRL',
         plan.interval || 'month',
+        plan.interval_count || 1,
         plan.trial_days || 7,
         plan.trial_price || 1.00,
         plan.gateway || 'stripe',
         plan.active ? 1 : 0,
         plan.stripe_price_id || null,
         plan.stripe_product_id || null,
-        plan.pagarme_plan_id || null
+        plan.pagarme_plan_id || null,
+        plan.billing_cycles || null,
+        plan.has_limited_cycles ? 1 : 0
       );
       
       return plan;
@@ -8138,10 +8164,10 @@ Hoje você vai aprender ${project.title} - método revolucionário que já ajudo
       
       const stmt = sqlite.prepare(`
         INSERT INTO stripe_plans (
-          id, name, description, price, currency, interval, 
+          id, name, description, price, currency, interval, interval_count,
           trial_period_days, activation_fee, features, active, 
-          created_at, updated_at, user_id
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+          created_at, updated_at, user_id, billing_cycles, has_limited_cycles
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       `);
       
       stmt.run(
@@ -8151,13 +8177,16 @@ Hoje você vai aprender ${project.title} - método revolucionário que já ajudo
         planData.price || 29.90,
         planData.currency || 'BRL',
         planData.interval || 'month',
+        planData.interval_count || 1,
         planData.trial_days || 3,
         planData.trial_price || 1.00,
         JSON.stringify(planData.features || []),
         1, // active
         now,
         now,
-        planData.userId
+        planData.userId,
+        planData.billing_cycles || null,
+        planData.has_limited_cycles ? 1 : 0
       );
       
       return this.getStripeCheckoutPlan(id);

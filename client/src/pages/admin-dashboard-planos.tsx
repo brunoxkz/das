@@ -63,7 +63,9 @@ export default function AdminDashboardPlanos() {
     trial_days: 3,
     trial_price: 1.00,
     active: true,
-    features: [] as string[]
+    features: [] as string[],
+    billing_cycles: null as number | null, // null = infinito, número = limitado
+    has_limited_cycles: false
   });
 
   // Reset form data
@@ -78,7 +80,9 @@ export default function AdminDashboardPlanos() {
       trial_days: 3,
       trial_price: 1.00,
       active: true,
-      features: []
+      features: [],
+      billing_cycles: null,
+      has_limited_cycles: false
     });
   };
 
@@ -507,6 +511,59 @@ export default function AdminDashboardPlanos() {
                             />
                           </div>
                         </div>
+                        <div className="space-y-4">
+                          <div className="flex items-center space-x-2">
+                            <Switch
+                              id="has_limited_cycles"
+                              checked={formData.has_limited_cycles}
+                              onCheckedChange={(checked) => setFormData({...formData, has_limited_cycles: checked, billing_cycles: checked ? 12 : null})}
+                            />
+                            <Label htmlFor="has_limited_cycles">Limitar Recorrência</Label>
+                          </div>
+                          {formData.has_limited_cycles && (
+                            <div>
+                              <Label htmlFor="billing_cycles">
+                                Quantas Cobranças (Total)
+                              </Label>
+                              <Input
+                                id="billing_cycles"
+                                type="number"
+                                min="1"
+                                max="999"
+                                value={formData.billing_cycles || ''}
+                                onChange={(e) => setFormData({...formData, billing_cycles: parseInt(e.target.value) || null})}
+                                placeholder="12"
+                              />
+                              <p className="text-sm text-gray-500 mt-1">
+                                Exemplo: 12 cobranças = 1 ano se mensal, 12 horas se por hora
+                              </p>
+                            </div>
+                          )}
+                        </div>
+                        
+                        {/* Resumo da Configuração */}
+                        <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg border">
+                          <h4 className="font-semibold mb-2">📋 Resumo da Configuração</h4>
+                          <div className="space-y-1 text-sm">
+                            <p><strong>Cobrança:</strong> R$ {formData.price.toFixed(2)} a cada {formData.interval_count} {
+                              formData.interval === 'minute' ? 'minuto(s)' :
+                              formData.interval === 'hour' ? 'hora(s)' :
+                              formData.interval === 'day' ? 'dia(s)' :
+                              formData.interval === 'week' ? 'semana(s)' :
+                              formData.interval === 'month' ? 'mês(es)' :
+                              formData.interval === 'quarter' ? 'trimestre(s)' :
+                              formData.interval === 'year' ? 'ano(s)' : 'período(s)'
+                            }</p>
+                            <p><strong>Trial:</strong> {formData.trial_days} dias por R$ {formData.trial_price.toFixed(2)}</p>
+                            <p><strong>Duração:</strong> {formData.has_limited_cycles ? `${formData.billing_cycles} cobranças (limitado)` : 'Ilimitado'}</p>
+                            {formData.has_limited_cycles && (
+                              <p className="text-blue-600 dark:text-blue-400">
+                                <strong>Total máximo:</strong> R$ {((formData.billing_cycles || 0) * formData.price + formData.trial_price).toFixed(2)}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+
                         <div className="flex items-center space-x-2">
                           <Switch
                             id="active"
