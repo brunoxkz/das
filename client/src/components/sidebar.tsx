@@ -204,6 +204,13 @@ export function Sidebar() {
           icon: <Crown className="w-4 h-4" />,
           active: location === "/subscriptions-manager"
         },
+        {
+          title: "📊 DASHBOARD ADMIN",
+          href: "/admin-dashboard-planos",
+          icon: <BarChart3 className="w-4 h-4" />,
+          active: location === "/admin-dashboard-planos",
+          badge: "Visão Geral"
+        },
       ]
     },
     {

@@ -93,6 +93,7 @@ import StripeMonitoring from "@/pages/stripe-monitoring";
 import CheckoutStripeFinal from "@/pages/checkout-stripe-final";
 import ProductBuilder from "@/pages/product-builder";
 import SubscriptionsManager from "@/pages/subscriptions-manager";
+import AdminDashboardPlanos from "@/pages/admin-dashboard-planos";
 
 import { useAuth } from "@/hooks/useAuth-jwt";
 import { isUnauthorizedError } from "@/lib/authUtils";
@@ -571,6 +572,12 @@ function App() {
         <Route path="/checkout-dashboard">
           <Layout>
             <CheckoutDashboard />
+          </Layout>
+        </Route>
+        
+        <Route path="/admin-dashboard-planos">
+          <Layout>
+            <AdminDashboardPlanos />
           </Layout>
         </Route>
         
