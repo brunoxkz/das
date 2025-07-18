@@ -612,12 +612,15 @@ export function registerSQLiteRoutes(app: Express): Server {
         price: parseFloat(price),
         currency: currency || 'BRL',
         interval: interval || 'month',
+        interval_count: interval_count || 1,
         trial_days: trial_days || 7,
         trial_price: trial_price || 1.00,
         gateway: gateway || 'stripe',
         active: active !== false,
         stripe_price_id: stripePrice.id,
         stripe_product_id: product.id,
+        billing_cycles: billing_cycles || null,
+        has_limited_cycles: has_limited_cycles || false,
         created_at: new Date(),
         updated_at: new Date()
       };
@@ -628,7 +631,7 @@ export function registerSQLiteRoutes(app: Express): Server {
         message: 'Plano criado com sucesso!',
         plan: {
           ...planData,
-          id: planId,
+          id: planData.id,
           intervalDisplay: interval === 'minute' ? `${interval_count} minuto(s)` :
                           interval === 'hour' ? `${interval_count} hora(s)` :
                           interval === 'quarter' ? 'Trimestral' :
