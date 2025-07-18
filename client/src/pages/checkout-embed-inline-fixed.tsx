@@ -228,6 +228,7 @@ const CheckoutForm = () => {
                 <div className="p-4 border border-gray-300 rounded-lg bg-white">
                   <CardElement 
                     options={{
+                      hidePostalCode: true,
                       style: {
                         base: {
                           fontSize: '16px',
