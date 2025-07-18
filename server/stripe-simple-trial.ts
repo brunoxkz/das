@@ -147,6 +147,35 @@ export class StripeSimpleTrialSystem {
   }
 
   /**
+   * Criar método de pagamento de teste para pagamento inline
+   */
+  async createTestPaymentMethod(): Promise<any> {
+    try {
+      console.log('🔧 Criando método de pagamento de teste...');
+      
+      // Criar método de pagamento de teste
+      const paymentMethod = await this.stripe.paymentMethods.create({
+        type: 'card',
+        card: {
+          number: '4242424242424242',
+          exp_month: 12,
+          exp_year: 2025,
+          cvc: '123',
+        },
+        billing_details: {
+          name: 'Teste Cliente',
+        },
+      });
+
+      console.log('✅ Método de pagamento de teste criado:', paymentMethod.id);
+      return paymentMethod;
+    } catch (error) {
+      console.error('❌ Erro ao criar método de pagamento de teste:', error);
+      throw error;
+    }
+  }
+
+  /**
    * Webhook handler para processar payment_intent.succeeded
    * Cria subscription com trial após pagamento da taxa
    */

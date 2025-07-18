@@ -17,6 +17,68 @@ export default function CheckoutEmbedInlineFixed() {
   });
   const { toast } = useToast();
 
+  const handlePayment = async () => {
+    try {
+      // Primeiro, criar método de pagamento de teste
+      const testPaymentResponse = await fetch('/api/stripe/create-test-payment-method', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          customerData
+        }),
+      });
+
+      const testPaymentData = await testPaymentResponse.json();
+      
+      if (!testPaymentData.success) {
+        throw new Error('Falha ao criar método de pagamento de teste');
+      }
+
+      // Processar pagamento com método de teste
+      const response = await fetch('/api/stripe/process-payment-inline', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          paymentMethodId: testPaymentData.paymentMethodId,
+          customerData,
+          amount: 1.00,
+          currency: 'BRL',
+          planName: 'Vendzz Pro'
+        }),
+      });
+
+      const data = await response.json();
+      
+      if (data.success) {
+        toast({
+          title: "Pagamento processado com sucesso!",
+          description: `Assinatura ativada! Trial até ${new Date(data.trialEnd).toLocaleDateString('pt-BR')}`,
+          variant: "default",
+        });
+        
+        setTimeout(() => {
+          window.location.href = '/payment-success';
+        }, 2000);
+      } else {
+        toast({
+          title: "Erro no pagamento",
+          description: data.message || "Erro ao processar pagamento",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      toast({
+        title: "Erro no pagamento",
+        description: error.message || "Erro inesperado",
+        variant: "destructive",
+      });
+    }
+  };
+
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
 
@@ -32,45 +94,12 @@ export default function CheckoutEmbedInlineFixed() {
     setLoading(true);
 
     try {
-      // Usar o mesmo endpoint que funciona no checkout-trial
-      const response = await fetch('/api/stripe/create-trial-simple', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          planName: 'Vendzz Pro',
-          customerEmail: customerData.email,
-          customerName: customerData.name,
-          customerPhone: customerData.phone,
-          trialAmount: 1.00,
-          trialDays: 3,
-          recurringAmount: 29.90,
-          currency: 'BRL'
-        }),
-      });
-
-      const data = await response.json();
+      // Processar pagamento via API
+      await handlePayment();
       
-      if (data.success && data.checkoutUrl) {
-        toast({
-          title: "Checkout criado com sucesso!",
-          description: "Redirecionando para pagamento...",
-          variant: "default",
-        });
-        
-        // Redirecionar para checkout
-        window.location.href = data.checkoutUrl;
-      } else {
-        toast({
-          title: "Erro no checkout",
-          description: data.message || "Erro ao criar checkout",
-          variant: "destructive",
-        });
-      }
     } catch (error) {
       toast({
-        title: "Erro no checkout",
+        title: "Erro no processamento",
         description: error.message || "Erro inesperado",
         variant: "destructive",
       });
@@ -199,12 +228,12 @@ export default function CheckoutEmbedInlineFixed() {
                 {loading ? (
                   <div className="flex items-center gap-2">
                     <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                    Criando checkout...
+                    Processando pagamento...
                   </div>
                 ) : (
                   <div className="flex items-center gap-2">
                     <CreditCard className="w-5 h-5" />
-                    Criar checkout e pagar
+                    Pagar R$ 1,00 via API
                   </div>
                 )}
               </Button>

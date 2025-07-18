@@ -1050,6 +1050,145 @@ export function registerSQLiteRoutes(app: Express): Server {
     }
   });
 
+  // 💳 STRIPE PROCESSAR PAGAMENTO INLINE - Endpoint para processar pagamento via API
+  app.post("/api/stripe/process-payment-inline", async (req, res) => {
+    try {
+      console.log('🔧 ENDPOINT PROCESSAR PAGAMENTO INLINE CHAMADO');
+      console.log('📋 Body:', req.body);
+      
+      const { paymentMethodId, customerData, amount, currency, planName } = req.body;
+
+      // Validar dados obrigatórios
+      if (!paymentMethodId || !customerData || !amount || !currency) {
+        return res.status(400).json({ 
+          success: false,
+          message: 'PaymentMethodId, customerData, amount e currency são obrigatórios' 
+        });
+      }
+
+      // Importar Stripe
+      const { StripeSimpleTrialSystem } = await import('./stripe-simple-trial');
+      const stripeSystem = new StripeSimpleTrialSystem(
+        process.env.STRIPE_SECRET_KEY || 'sk_test_51RjvV9HK6al3veW1FPD5bTV1on2NQLlm9ud45AJDggFHdsGA9UAo5jfbSRvWF83W3uTp5cpZYa8tJBvm4ttefrk800mUs47pFA'
+      );
+
+      // Criar Customer
+      const customer = await stripeSystem.stripe.customers.create({
+        email: customerData.email,
+        name: customerData.name,
+        phone: customerData.phone,
+        metadata: {
+          processed_via: 'inline_checkout',
+          plan_name: planName || 'Vendzz Pro'
+        }
+      });
+
+      console.log('✅ CUSTOMER CRIADO:', customer.id);
+
+      // Criar Payment Intent e processar pagamento
+      const paymentIntent = await stripeSystem.stripe.paymentIntents.create({
+        amount: Math.round(amount * 100), // converter para centavos
+        currency: currency.toLowerCase(),
+        customer: customer.id,
+        payment_method: paymentMethodId,
+        confirmation_method: 'automatic',
+        confirm: true,
+        metadata: {
+          plan_name: planName || 'Vendzz Pro',
+          customer_name: customerData.name,
+          customer_email: customerData.email,
+          customer_phone: customerData.phone,
+          processed_via: 'inline_api'
+        }
+      });
+
+      console.log('✅ PAYMENT INTENT PROCESSADO:', paymentIntent.id);
+
+      // Criar produto e preço para assinatura
+      const product = await stripeSystem.stripe.products.create({
+        name: planName || 'Vendzz Pro',
+        description: 'Assinatura mensal após trial de 3 dias'
+      });
+
+      const price = await stripeSystem.stripe.prices.create({
+        unit_amount: 2990, // R$ 29,90
+        currency: currency.toLowerCase(),
+        recurring: { interval: 'month' },
+        product: product.id
+      });
+
+      // Criar assinatura com trial
+      const subscription = await stripeSystem.stripe.subscriptions.create({
+        customer: customer.id,
+        items: [{ price: price.id }],
+        trial_period_days: 3,
+        metadata: {
+          activation_payment_intent: paymentIntent.id,
+          plan_name: planName || 'Vendzz Pro'
+        }
+      });
+
+      console.log('✅ ASSINATURA CRIADA:', subscription.id);
+
+      res.json({
+        success: true,
+        message: 'Pagamento processado com sucesso',
+        paymentIntentId: paymentIntent.id,
+        customerId: customer.id,
+        subscriptionId: subscription.id,
+        trialEnd: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString(),
+        billing: {
+          immediate_charge: `R$ ${amount.toFixed(2)}`,
+          trial_period: '3 dias gratuitos',
+          recurring_charge: 'R$ 29,90/mês após trial'
+        }
+      });
+
+    } catch (error) {
+      console.error('❌ ERRO AO PROCESSAR PAGAMENTO INLINE:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Erro ao processar pagamento',
+        error: error.message
+      });
+    }
+  });
+
+  // 💳 STRIPE CRIAR MÉTODO DE PAGAMENTO DE TESTE - Para checkout inline
+  app.post("/api/stripe/create-test-payment-method", async (req, res) => {
+    try {
+      console.log('🔧 ENDPOINT CRIAR MÉTODO DE PAGAMENTO DE TESTE CHAMADO');
+      console.log('📋 Body:', req.body);
+      
+      const { customerData } = req.body;
+
+      // Importar Stripe
+      const { StripeSimpleTrialSystem } = await import('./stripe-simple-trial');
+      const stripeSystem = new StripeSimpleTrialSystem(
+        process.env.STRIPE_SECRET_KEY || 'sk_test_51RjvV9HK6al3veW1FPD5bTV1on2NQLlm9ud45AJDggFHdsGA9UAo5jfbSRvWF83W3uTp5cpZYa8tJBvm4ttefrk800mUs47pFA'
+      );
+
+      // Criar método de pagamento de teste
+      const paymentMethod = await stripeSystem.createTestPaymentMethod();
+
+      console.log('✅ MÉTODO DE PAGAMENTO DE TESTE CRIADO:', paymentMethod.id);
+
+      res.json({
+        success: true,
+        paymentMethodId: paymentMethod.id,
+        message: 'Método de pagamento de teste criado com sucesso'
+      });
+
+    } catch (error) {
+      console.error('❌ ERRO AO CRIAR MÉTODO DE PAGAMENTO DE TESTE:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Erro ao criar método de pagamento de teste',
+        error: error.message
+      });
+    }
+  });
+
   // Buscar produto específico por ID (público)
   app.get('/api/checkout-products/:id', async (req, res) => {
     try {
