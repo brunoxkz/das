@@ -27,8 +27,23 @@ import {
   Rocket,
   Copy,
   Eye,
-  EyeOff
+  EyeOff,
+  Send,
+  Database,
+  Webhook,
+  FileText,
+  Plus,
+  Edit,
+  Trash2,
+  Save,
+  TestTube,
+  Shield
 } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Switch } from "@/components/ui/switch";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 export default function WhatsAppCampaigns() {
   const { user } = useAuth();
@@ -388,55 +403,213 @@ export default function WhatsAppCampaigns() {
         <TabsContent value="api" className="space-y-6">
           <Card>
             <CardHeader>
-              <CardTitle>WhatsApp Business API</CardTitle>
+              <CardTitle className="flex items-center gap-2">
+                <Shield className="h-6 w-6 text-green-600" />
+                WhatsApp Business API (Oficial)
+              </CardTitle>
               <CardDescription>
-                Configure a API oficial do WhatsApp para empresas
+                Sistema completo de integração com a API oficial do Meta
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                <div className="flex items-start gap-3">
-                  <AlertTriangle className="h-5 w-5 text-blue-600 mt-0.5" />
-                  <div>
-                    <h4 className="font-semibold text-blue-800 mb-1">API Oficial vs Extensão Gratuita</h4>
-                    <div className="text-sm text-blue-700 space-y-2">
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                          <h5 className="font-medium mb-1">✅ Extensão Gratuita:</h5>
-                          <ul className="text-xs space-y-1">
-                            <li>• Gratuita e ilimitada</li>
-                            <li>• Setup em 5 minutos</li>
-                            <li>• Ideal para PMEs</li>
-                            <li>• Sem custos mensais</li>
-                          </ul>
-                        </div>
-                        <div>
-                          <h5 className="font-medium mb-1">🏢 API Oficial:</h5>
-                          <ul className="text-xs space-y-1">
-                            <li>• Para grandes volumes</li>
-                            <li>• Verificação empresarial</li>
-                            <li>• Templates aprovados</li>
-                            <li>• Custo por mensagem</li>
-                          </ul>
-                        </div>
-                      </div>
+              {/* Configuração da API */}
+              <div className="p-6 bg-gradient-to-br from-green-50 to-blue-50 rounded-lg border">
+                <div className="flex items-center gap-3 mb-4">
+                  <Settings className="h-6 w-6 text-green-600" />
+                  <h3 className="text-lg font-semibold">Configuração da API</h3>
+                </div>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                  <div className="space-y-2">
+                    <Label htmlFor="accessToken">Access Token</Label>
+                    <Input
+                      id="accessToken"
+                      type="password"
+                      placeholder="Seu Access Token do Meta"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="phoneNumberId">Phone Number ID</Label>
+                    <Input
+                      id="phoneNumberId"
+                      placeholder="ID do número de telefone"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="businessAccountId">Business Account ID</Label>
+                    <Input
+                      id="businessAccountId"
+                      placeholder="ID da conta comercial"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="webhookUrl">Webhook URL</Label>
+                    <Input
+                      id="webhookUrl"
+                      placeholder="https://seudominio.com/webhook"
+                    />
+                  </div>
+                </div>
+
+                <div className="flex items-center space-x-2 mb-4">
+                  <Switch id="enableApi" />
+                  <Label htmlFor="enableApi">Habilitar API do WhatsApp Business</Label>
+                </div>
+
+                <div className="flex gap-2">
+                  <Button>
+                    <TestTube className="h-4 w-4 mr-2" />
+                    Testar Conexão
+                  </Button>
+                  <Button variant="outline">
+                    <Save className="h-4 w-4 mr-2" />
+                    Salvar Configuração
+                  </Button>
+                </div>
+              </div>
+
+              {/* Templates */}
+              <div className="p-6 bg-gradient-to-br from-blue-50 to-purple-50 rounded-lg border">
+                <div className="flex items-center gap-3 mb-4">
+                  <FileText className="h-6 w-6 text-blue-600" />
+                  <h3 className="text-lg font-semibold">Gerenciar Templates</h3>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="templateName">Nome do Template</Label>
+                    <Input
+                      id="templateName"
+                      placeholder="nome_do_template"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="templateCategory">Categoria</Label>
+                    <Select>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecione uma categoria" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="MARKETING">Marketing</SelectItem>
+                        <SelectItem value="UTILITY">Utilitário</SelectItem>
+                        <SelectItem value="AUTHENTICATION">Autenticação</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+
+                <div className="space-y-2 mb-4">
+                  <Label htmlFor="templateBody">Conteúdo da Mensagem</Label>
+                  <Textarea
+                    id="templateBody"
+                    placeholder="Olá {1}, sua mensagem personalizada aqui..."
+                    rows={4}
+                  />
+                  <p className="text-xs text-gray-600">Use {"{1}"}, {"{2}"} para variáveis dinâmicas</p>
+                </div>
+
+                <Button>
+                  <Plus className="h-4 w-4 mr-2" />
+                  Criar Template
+                </Button>
+              </div>
+
+              {/* Webhooks */}
+              <div className="p-6 bg-gradient-to-br from-purple-50 to-pink-50 rounded-lg border">
+                <div className="flex items-center gap-3 mb-4">
+                  <Webhook className="h-6 w-6 text-purple-600" />
+                  <h3 className="text-lg font-semibold">Webhooks</h3>
+                </div>
+
+                <div className="p-4 bg-white rounded-lg border mb-4">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="font-medium">Status do Webhook</span>
+                    <Badge variant="secondary">Desconectado</Badge>
+                  </div>
+                  <p className="text-sm text-gray-600">
+                    URL: Não configurado
+                  </p>
+                </div>
+
+                <div className="flex gap-2">
+                  <Button>
+                    <TestTube className="h-4 w-4 mr-2" />
+                    Testar Webhook
+                  </Button>
+                  <Button variant="outline">
+                    <Send className="h-4 w-4 mr-2" />
+                    Enviar Teste
+                  </Button>
+                </div>
+              </div>
+
+              {/* Analytics */}
+              <div className="p-6 bg-gradient-to-br from-orange-50 to-yellow-50 rounded-lg border">
+                <div className="flex items-center gap-3 mb-4">
+                  <BarChart className="h-6 w-6 text-orange-600" />
+                  <h3 className="text-lg font-semibold">Analytics da API</h3>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-4">
+                  <div className="text-center p-4 bg-white rounded-lg border">
+                    <Send className="h-8 w-8 text-green-500 mx-auto mb-2" />
+                    <div className="text-2xl font-bold text-green-600 mb-1">0</div>
+                    <div className="text-sm text-gray-600">Mensagens Enviadas</div>
+                  </div>
+                  <div className="text-center p-4 bg-white rounded-lg border">
+                    <CheckCircle className="h-8 w-8 text-blue-500 mx-auto mb-2" />
+                    <div className="text-2xl font-bold text-blue-600 mb-1">0%</div>
+                    <div className="text-sm text-gray-600">Taxa de Entrega</div>
+                  </div>
+                  <div className="text-center p-4 bg-white rounded-lg border">
+                    <TrendingUp className="h-8 w-8 text-purple-500 mx-auto mb-2" />
+                    <div className="text-2xl font-bold text-purple-600 mb-1">0%</div>
+                    <div className="text-sm text-gray-600">Taxa de Resposta</div>
+                  </div>
+                </div>
+
+                <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+                  <div className="flex items-start gap-3">
+                    <AlertTriangle className="h-5 w-5 text-yellow-600 mt-0.5" />
+                    <div>
+                      <h4 className="font-semibold text-yellow-800 mb-1">Configuração Necessária</h4>
+                      <p className="text-sm text-yellow-700">
+                        Configure suas credenciais da API para começar a ver as métricas de performance.
+                      </p>
                     </div>
                   </div>
                 </div>
               </div>
 
-              <div className="space-y-4">
-                <h3 className="text-lg font-semibold">Configuração da API Oficial</h3>
+              {/* Guia de Setup */}
+              <div className="p-6 bg-gradient-to-br from-gray-50 to-slate-50 rounded-lg border">
+                <div className="flex items-center gap-3 mb-4">
+                  <FileText className="h-6 w-6 text-gray-600" />
+                  <h3 className="text-lg font-semibold">Guia de Configuração</h3>
+                </div>
+
+                <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg mb-4">
+                  <h4 className="font-semibold text-blue-800 mb-2">📋 Passo a Passo:</h4>
+                  <ol className="text-sm text-blue-700 space-y-1 list-decimal list-inside">
+                    <li>Acesse o <a href="https://developers.facebook.com/apps" target="_blank" className="underline">Meta for Developers</a></li>
+                    <li>Crie um novo app e adicione o produto "WhatsApp Business API"</li>
+                    <li>Configure um número de telefone comercial</li>
+                    <li>Obtenha o Access Token e Phone Number ID</li>
+                    <li>Configure o webhook com sua URL</li>
+                    <li>Verifique o webhook com o token</li>
+                    <li>Teste a conexão usando o botão acima</li>
+                  </ol>
+                </div>
                 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <Button 
                     variant="outline" 
                     className="justify-start h-auto p-4"
-                    onClick={() => window.open('https://developers.facebook.com/docs/whatsapp', '_blank')}
+                    onClick={() => window.open('https://developers.facebook.com/docs/whatsapp/business-management-api/get-started', '_blank')}
                   >
                     <div className="text-left">
-                      <div className="font-medium">Documentação API</div>
-                      <div className="text-sm text-gray-600">Guias e referências</div>
+                      <div className="font-medium">📚 Documentação Oficial</div>
+                      <div className="text-sm text-gray-600">Guia completo do Meta</div>
                     </div>
                     <ExternalLink className="w-4 h-4 ml-auto" />
                   </Button>
@@ -447,8 +620,8 @@ export default function WhatsAppCampaigns() {
                     onClick={() => window.open('https://business.facebook.com', '_blank')}
                   >
                     <div className="text-left">
-                      <div className="font-medium">Meta Business</div>
-                      <div className="text-sm text-gray-600">Gerenciar recursos</div>
+                      <div className="font-medium">🏢 Meta Business</div>
+                      <div className="text-sm text-gray-600">Gerenciar conta</div>
                     </div>
                     <ExternalLink className="w-4 h-4 ml-auto" />
                   </Button>
