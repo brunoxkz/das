@@ -289,11 +289,12 @@ export class CustomPlansSystem {
 
   // Métodos auxiliares para o banco de dados
   private async savePlanToDatabase(plan: CustomPlan): Promise<void> {
+    // CORREÇÃO CRÍTICA: Salvar na tabela stripe_plans para compatibilidade
     const query = `
-      INSERT INTO custom_plans (
-        id, name, description, trial_amount, trial_days, 
-        recurring_amount, recurring_interval, currency, user_id, 
-        active, payment_link, stripe_product_id, stripe_price_id,
+      INSERT INTO stripe_plans (
+        id, name, description, price, currency, interval, 
+        trial_days, trial_price, gateway, active, 
+        stripe_price_id, stripe_product_id, pagarme_plan_id,
         created_at, updated_at
       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `;
@@ -302,22 +303,22 @@ export class CustomPlansSystem {
       plan.id,
       plan.name,
       plan.description,
-      plan.trialAmount,
-      plan.trialDays,
-      plan.recurringAmount,
-      plan.recurringInterval,
+      plan.recurringAmount,  // price = recurringAmount
       plan.currency,
-      plan.userId,
+      plan.recurringInterval, // interval
+      plan.trialDays,        // trial_days
+      plan.trialAmount,      // trial_price
+      'stripe',              // gateway
       plan.active ? 1 : 0,
-      plan.paymentLink,
-      plan.stripeProductId,
       plan.stripePriceId,
+      plan.stripeProductId,
+      null,                  // pagarme_plan_id
       plan.createdAt.toISOString(),
       plan.updatedAt.toISOString(),
     ];
 
-    console.log('🔍 DEBUG QUERY:', query);
-    console.log('🔍 DEBUG PARAMS:', params);
+    console.log('🔍 DEBUG QUERY (CORRIGIDA):', query);
+    console.log('🔍 DEBUG PARAMS (CORRIGIDOS):', params);
     console.log('🔍 DEBUG PARAMS LENGTH:', params.length);
 
     // Usar SQLite diretamente ao invés do Drizzle ORM
@@ -328,20 +329,35 @@ export class CustomPlansSystem {
   }
 
   private async getPlansByUserId(userId: string): Promise<CustomPlan[]> {
+    // CORREÇÃO CRÍTICA: Buscar na tabela stripe_plans
     const query = `
-      SELECT * FROM custom_plans 
-      WHERE user_id = ? 
+      SELECT 
+        id, name, description, price as recurringAmount, currency, 
+        interval as recurringInterval, trial_days as trialDays, 
+        trial_price as trialAmount, active, stripe_price_id as stripePriceId, 
+        stripe_product_id as stripeProductId, created_at, updated_at
+      FROM stripe_plans 
+      WHERE gateway = 'stripe' AND active = 1
       ORDER BY created_at DESC
     `;
 
     const stmt = this.sqlite.prepare(query);
-    const rows = stmt.all(userId);
+    const rows = stmt.all();
     return rows.map(this.mapRowToPlan);
   }
 
   private async getPlanById(planId: string): Promise<CustomPlan | null> {
     console.log('🔍 DEBUG getPlanById - planId:', planId);
-    const query = `SELECT * FROM custom_plans WHERE id = ?`;
+    // CORREÇÃO CRÍTICA: Buscar na tabela stripe_plans
+    const query = `
+      SELECT 
+        id, name, description, price as recurringAmount, currency, 
+        interval as recurringInterval, trial_days as trialDays, 
+        trial_price as trialAmount, active, stripe_price_id as stripePriceId, 
+        stripe_product_id as stripeProductId, created_at, updated_at
+      FROM stripe_plans 
+      WHERE id = ? AND gateway = 'stripe'
+    `;
     console.log('🔍 DEBUG getPlanById - query:', query);
     
     try {
@@ -526,16 +542,16 @@ export class CustomPlansSystem {
       id: row.id,
       name: row.name,
       description: row.description,
-      trialAmount: row.trial_amount,
-      trialDays: row.trial_days,
-      recurringAmount: row.recurring_amount,
-      recurringInterval: row.recurring_interval,
+      trialAmount: row.trialAmount || row.trial_price,
+      trialDays: row.trialDays || row.trial_days,
+      recurringAmount: row.recurringAmount || row.price,
+      recurringInterval: row.recurringInterval || row.interval,
       currency: row.currency,
-      userId: row.user_id,
+      userId: row.user_id || 'admin-user-id',
       active: Boolean(row.active),
-      paymentLink: row.payment_link,
-      stripeProductId: row.stripe_product_id,
-      stripePriceId: row.stripe_price_id,
+      paymentLink: row.payment_link || '',
+      stripeProductId: row.stripeProductId || row.stripe_product_id,
+      stripePriceId: row.stripePriceId || row.stripe_price_id,
       createdAt: new Date(row.created_at),
       updatedAt: new Date(row.updated_at),
     };
