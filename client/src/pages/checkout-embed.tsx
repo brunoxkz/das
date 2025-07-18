@@ -56,15 +56,15 @@ function CheckoutForm({ plan }: { plan: any }) {
         throw new Error(methodError.message);
       }
 
-      // Processar pagamento via API
-      const response = await apiRequest('POST', '/api/stripe/process-payment-inline', {
+      // Processar pagamento via API usando endpoint correto
+      const response = await apiRequest('POST', '/api/stripe/simple-trial', {
         paymentMethodId: paymentMethod!.id,
         planId: plan.id,
-        amount: plan.trial_price || 1.00, // Usar taxa de trial do plano
-        currency: plan.currency || 'BRL',
-        customerData: {
-          email: email,
-          name: 'Cliente Vendzz'
+        email: email,
+        name: 'Cliente Vendzz',
+        metadata: {
+          plan_name: plan.name,
+          source: 'checkout_embed'
         }
       });
 
@@ -147,7 +147,7 @@ export default function CheckoutEmbed() {
   const planId = params?.planId;
 
   const { data: plan, isLoading } = useQuery({
-    queryKey: ['/api/stripe/plans', planId],
+    queryKey: [`/api/stripe/plans/${planId}`],
     enabled: !!planId,
   });
 
