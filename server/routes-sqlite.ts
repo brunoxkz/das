@@ -1577,6 +1577,137 @@ export function registerSQLiteRoutes(app: Express): Server {
     }
   });
 
+  // 🔐 ENDPOINT PARA ALTERAR SENHA
+  app.post("/api/auth/change-password", verifyJWT, async (req: any, res) => {
+    try {
+      const { currentPassword, newPassword } = req.body;
+      const userId = req.user.id;
+
+      if (!currentPassword || !newPassword) {
+        return res.status(400).json({ message: 'Senha atual e nova senha são obrigatórias' });
+      }
+
+      if (newPassword.length < 6) {
+        return res.status(400).json({ message: 'A nova senha deve ter pelo menos 6 caracteres' });
+      }
+
+      // Buscar usuário atual
+      const user = await storage.getUser(userId);
+      if (!user) {
+        return res.status(404).json({ message: 'Usuário não encontrado' });
+      }
+
+      // Verificar senha atual
+      const bcrypt = await import('bcryptjs');
+      const isCurrentPasswordValid = await bcrypt.compare(currentPassword, user.password);
+      if (!isCurrentPasswordValid) {
+        return res.status(400).json({ message: 'Senha atual incorreta' });
+      }
+
+      // Criptografar nova senha
+      const hashedNewPassword = await bcrypt.hash(newPassword, 10);
+
+      // Atualizar senha no banco
+      await storage.updateUserPassword(userId, hashedNewPassword);
+
+      res.json({ 
+        success: true, 
+        message: 'Senha alterada com sucesso' 
+      });
+    } catch (error) {
+      console.error('❌ ERRO AO ALTERAR SENHA:', error);
+      res.status(500).json({ message: 'Erro interno do servidor' });
+    }
+  });
+
+  // 🔐 ENDPOINT PARA HABILITAR 2FA
+  app.post("/api/auth/enable-2fa", verifyJWT, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+
+      // Buscar usuário atual
+      const user = await storage.getUser(userId);
+      if (!user) {
+        return res.status(404).json({ message: 'Usuário não encontrado' });
+      }
+
+      // Gerar secret para 2FA
+      const secret = speakeasy.generateSecret({
+        name: `Vendzz (${user.email})`,
+        issuer: 'Vendzz',
+        length: 32
+      });
+
+      // Gerar QR Code
+      const qrCodeUrl = await QRCode.toDataURL(secret.otpauth_url);
+
+      // Salvar secret temporário (ainda não ativo)
+      await storage.updateUserTwoFactorSecret(userId, secret.base32, false);
+
+      res.json({
+        success: true,
+        secret: secret.base32,
+        qrCodeUrl: qrCodeUrl
+      });
+    } catch (error) {
+      console.error('❌ ERRO AO HABILITAR 2FA:', error);
+      res.status(500).json({ message: 'Erro interno do servidor' });
+    }
+  });
+
+  // 🔐 ENDPOINT PARA VERIFICAR E ATIVAR 2FA
+  app.post("/api/auth/verify-2fa", verifyJWT, async (req: any, res) => {
+    try {
+      const { secret, token } = req.body;
+      const userId = req.user.id;
+
+      if (!secret || !token) {
+        return res.status(400).json({ message: 'Secret e token são obrigatórios' });
+      }
+
+      // Verificar token
+      const verified = speakeasy.totp.verify({
+        secret: secret,
+        encoding: 'base32',
+        token: token,
+        window: 1
+      });
+
+      if (!verified) {
+        return res.status(400).json({ message: 'Código de verificação inválido' });
+      }
+
+      // Ativar 2FA no banco
+      await storage.updateUserTwoFactorSecret(userId, secret, true);
+
+      res.json({
+        success: true,
+        message: '2FA ativado com sucesso'
+      });
+    } catch (error) {
+      console.error('❌ ERRO AO VERIFICAR 2FA:', error);
+      res.status(500).json({ message: 'Erro interno do servidor' });
+    }
+  });
+
+  // 🔐 ENDPOINT PARA DESABILITAR 2FA
+  app.post("/api/auth/disable-2fa", verifyJWT, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+
+      // Desabilitar 2FA no banco
+      await storage.updateUserTwoFactorSecret(userId, null, false);
+
+      res.json({
+        success: true,
+        message: '2FA desabilitado com sucesso'
+      });
+    } catch (error) {
+      console.error('❌ ERRO AO DESABILITAR 2FA:', error);
+      res.status(500).json({ message: 'Erro interno do servidor' });
+    }
+  });
+
   // 🔍 ENDPOINT PARA CONSULTAR DETALHES DE PAYMENT INTENT
   app.get('/api/stripe/payment-intent/:paymentIntentId', async (req, res) => {
     try {

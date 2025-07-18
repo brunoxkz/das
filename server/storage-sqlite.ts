@@ -8259,6 +8259,79 @@ Hoje você vai aprender ${project.title} - método revolucionário que já ajudo
       throw error;
     }
   }
+
+  // 🔐 MÉTODOS DE SEGURANÇA: SENHA E 2FA
+  async updateUserPassword(userId: string, hashedPassword: string): Promise<void> {
+    console.log('🔐 ATUALIZANDO SENHA DO USUÁRIO:', userId);
+    
+    try {
+      const stmt = sqlite.prepare(`
+        UPDATE users 
+        SET password = ?, updatedAt = ?
+        WHERE id = ?
+      `);
+      
+      const result = stmt.run(hashedPassword, Math.floor(Date.now() / 1000), userId);
+      
+      if (result.changes === 0) {
+        throw new Error('Usuário não encontrado');
+      }
+      
+      console.log('✅ SENHA ATUALIZADA COM SUCESSO');
+    } catch (error) {
+      console.error('❌ ERRO AO ATUALIZAR SENHA:', error);
+      throw error;
+    }
+  }
+
+  async updateUserTwoFactorSecret(userId: string, secret: string | null, enabled: boolean): Promise<void> {
+    console.log('🔐 ATUALIZANDO 2FA DO USUÁRIO:', userId, enabled ? 'ATIVANDO' : 'DESATIVANDO');
+    
+    try {
+      const stmt = sqlite.prepare(`
+        UPDATE users 
+        SET twoFactorSecret = ?, twoFactorEnabled = ?, updatedAt = ?
+        WHERE id = ?
+      `);
+      
+      const result = stmt.run(secret, enabled ? 1 : 0, Math.floor(Date.now() / 1000), userId);
+      
+      if (result.changes === 0) {
+        throw new Error('Usuário não encontrado');
+      }
+      
+      console.log('✅ 2FA ATUALIZADO COM SUCESSO');
+    } catch (error) {
+      console.error('❌ ERRO AO ATUALIZAR 2FA:', error);
+      throw error;
+    }
+  }
+
+  async getUserTwoFactorStatus(userId: string): Promise<{ enabled: boolean; secret: string | null }> {
+    console.log('🔐 VERIFICANDO STATUS 2FA DO USUÁRIO:', userId);
+    
+    try {
+      const stmt = sqlite.prepare(`
+        SELECT twoFactorEnabled, twoFactorSecret
+        FROM users
+        WHERE id = ?
+      `);
+      
+      const result = stmt.get(userId);
+      
+      if (!result) {
+        throw new Error('Usuário não encontrado');
+      }
+      
+      return {
+        enabled: result.twoFactorEnabled === 1,
+        secret: result.twoFactorSecret
+      };
+    } catch (error) {
+      console.error('❌ ERRO AO VERIFICAR STATUS 2FA:', error);
+      throw error;
+    }
+  }
 }
 
 export const storage = new SQLiteStorage();
