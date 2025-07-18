@@ -1,0 +1,60 @@
+{
+  "summary": {
+    "passed": 11,
+    "failed": 1,
+    "successRate": 91.7,
+    "duration": 1686,
+    "timestamp": "2025-07-18T21:03:57.283Z",
+    "status": "FUNCTIONAL"
+  },
+  "tests": {
+    "successful": [
+      {
+        "test": "Autenticação JWT",
+        "details": "Token válido obtido"
+      },
+      {
+        "test": "Sistema de créditos funcionando",
+        "details": "Créditos disponíveis: 100/100"
+      },
+      {
+        "test": "Busca de quizzes",
+        "details": "12 quizzes encontrados"
+      },
+      {
+        "test": "Busca de emails do quiz",
+        "details": "Dados de emails obtidos para quiz OruYT3gLYlXAlb8Vmc_rt"
+      },
+      {
+        "test": "Endpoint Créditos",
+        "details": "GET /api/email-credits - Status: 200"
+      },
+      {
+        "test": "Endpoint Listar campanhas",
+        "details": "GET /api/email-campaigns - Status: 200"
+      },
+      {
+        "test": "Endpoint Contagem",
+        "details": "GET /api/email-campaigns/count - Status: 200"
+      },
+      {
+        "test": "Endpoint Quizzes",
+        "details": "GET /api/quizzes - Status: 200"
+      },
+      {
+        "test": "Rejeição de dados inválidos",
+        "details": "Status: 400 (deveria rejeitar)"
+      },
+      {
+        "test": "Proteção de autenticação",
+        "details": "Status: 401 (deveria ser 401)"
+      },
+      {
+        "test": "Tratamento de recursos inexistentes",
+        "details": "Status: 404 (deveria ser 404)"
+      }
+    ],
+    "errors": [],
+    "critical": []
+  }
+}
