@@ -412,7 +412,18 @@ export default function AdminDashboardPlanos() {
                             />
                           </div>
                           <div>
-                            <Label htmlFor="price">Preço Mensal (R$)</Label>
+                            <Label htmlFor="price">
+                              Preço {
+                                formData.interval === 'minute' ? `por ${formData.interval_count} Minuto(s)` :
+                                formData.interval === 'hour' ? `por ${formData.interval_count} Hora(s)` :
+                                formData.interval === 'day' ? `por ${formData.interval_count} Dia(s)` :
+                                formData.interval === 'week' ? `por ${formData.interval_count} Semana(s)` :
+                                formData.interval === 'month' ? `por ${formData.interval_count} Mês(es)` :
+                                formData.interval === 'quarter' ? `por ${formData.interval_count} Trimestre(s)` :
+                                formData.interval === 'year' ? `por ${formData.interval_count} Ano(s)` :
+                                'do Plano'
+                              } (R$)
+                            </Label>
                             <Input
                               id="price"
                               type="number"
