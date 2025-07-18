@@ -19,19 +19,10 @@ const CheckoutFormForPlan = ({ planId }: { planId: string }) => {
   });
   const { toast } = useToast();
 
-  // Buscar dados do plano
-  const { data: plan, isLoading: planLoading, error } = useQuery({
-    queryKey: [`/api/public/plans/${planId}`],
+  // Buscar dados do plano - usando o mesmo endpoint que funcionava no checkout-embed
+  const { data: plan, isLoading: planLoading } = useQuery({
+    queryKey: ['/api/stripe/plans', planId],
     enabled: !!planId,
-  });
-
-  // Debug logs
-  console.log('🔍 Debug CheckoutPlan:', {
-    planId,
-    planLoading,
-    plan,
-    error,
-    queryEnabled: !!planId
   });
 
   const handlePayment = async () => {
@@ -47,8 +38,8 @@ const CheckoutFormForPlan = ({ planId }: { planId: string }) => {
           planName: plan?.name || 'Vendzz Pro',
           customerEmail: customerData.email,
           customerName: customerData.name,
-          trialAmount: plan?.activation_fee || 1.00,
-          trialDays: plan?.trial_period_days || 3,
+          trialAmount: plan?.trial_price || 1.00,
+          trialDays: plan?.trial_days || 3,
           recurringAmount: plan?.price || 29.90,
           currency: 'BRL'
         }),
@@ -126,13 +117,6 @@ const CheckoutFormForPlan = ({ planId }: { planId: string }) => {
           <CardContent className="p-8 text-center">
             <h2 className="text-xl font-bold mb-2">Plano não encontrado</h2>
             <p className="text-gray-600">O plano solicitado não existe ou foi removido.</p>
-            <div className="mt-4 text-sm text-gray-500 bg-gray-100 p-3 rounded">
-              <p><strong>Debug:</strong></p>
-              <p>Plan ID: {planId}</p>
-              <p>Loading: {planLoading ? 'true' : 'false'}</p>
-              <p>Error: {error ? error.message : 'nenhum erro'}</p>
-              <p>Query URL: /api/public/plans/{planId}</p>
-            </div>
           </CardContent>
         </Card>
       </div>
@@ -154,11 +138,11 @@ const CheckoutFormForPlan = ({ planId }: { planId: string }) => {
             <div className="flex items-center justify-center gap-2 mt-4">
               <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
                 <CreditCard className="w-4 h-4 mr-1" />
-                R$ {(plan.activation_fee || 1.00).toFixed(2)} ativação
+                R$ {(plan.trial_price || 1.00).toFixed(2)} ativação
               </Badge>
               <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
                 <Shield className="w-4 h-4 mr-1" />
-                {plan.trial_period_days || 3} dias trial
+                {plan.trial_days || 3} dias trial
               </Badge>
               <Badge variant="outline" className="bg-purple-50 text-purple-700 border-purple-200">
                 <CheckCircle className="w-4 h-4 mr-1" />
@@ -235,8 +219,8 @@ const CheckoutFormForPlan = ({ planId }: { planId: string }) => {
                 
                 <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
                   <p className="text-sm text-blue-800">
-                    ✅ <strong>Etapa 1:</strong> Você pagará R$ {(plan.activation_fee || 1.00).toFixed(2)} para validar seu cartão<br/>
-                    ✅ <strong>Etapa 2:</strong> Acesso imediato com {plan.trial_period_days || 3} dias de trial gratuito<br/>
+                    ✅ <strong>Etapa 1:</strong> Você pagará R$ {(plan.trial_price || 1.00).toFixed(2)} para validar seu cartão<br/>
+                    ✅ <strong>Etapa 2:</strong> Acesso imediato com {plan.trial_days || 3} dias de trial gratuito<br/>
                     ✅ <strong>Etapa 3:</strong> Após o trial, R$ {(plan.price || 29.90).toFixed(2)}/mês automaticamente<br/>
                     🔒 <strong>Segurança:</strong> Certificado SSL e proteção Stripe
                   </p>
@@ -251,11 +235,11 @@ const CheckoutFormForPlan = ({ planId }: { planId: string }) => {
                 <div className="space-y-2 text-sm">
                   <div className="flex justify-between">
                     <span>Taxa de ativação:</span>
-                    <span className="font-semibold">R$ {(plan.activation_fee || 1.00).toFixed(2)}</span>
+                    <span className="font-semibold">R$ {(plan.trial_price || 1.00).toFixed(2)}</span>
                   </div>
                   <div className="flex justify-between">
                     <span>Trial gratuito:</span>
-                    <span className="font-semibold text-green-600">{plan.trial_period_days || 3} dias</span>
+                    <span className="font-semibold text-green-600">{plan.trial_days || 3} dias</span>
                   </div>
                   <div className="flex justify-between">
                     <span>Após o trial:</span>
@@ -264,7 +248,7 @@ const CheckoutFormForPlan = ({ planId }: { planId: string }) => {
                   <Separator />
                   <div className="flex justify-between font-bold text-green-800">
                     <span>Total hoje:</span>
-                    <span>R$ {(plan.activation_fee || 1.00).toFixed(2)}</span>
+                    <span>R$ {(plan.trial_price || 1.00).toFixed(2)}</span>
                   </div>
                 </div>
               </div>
@@ -283,7 +267,7 @@ const CheckoutFormForPlan = ({ planId }: { planId: string }) => {
                 ) : (
                   <div className="flex items-center gap-2">
                     <CreditCard className="w-5 h-5" />
-                    Iniciar Checkout → R$ {(plan.activation_fee || 1.00).toFixed(2)} + Trial
+                    Iniciar Checkout → R$ {(plan.trial_price || 1.00).toFixed(2)} + Trial
                   </div>
                 )}
               </Button>
