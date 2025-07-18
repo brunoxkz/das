@@ -20,9 +20,18 @@ const CheckoutFormForPlan = ({ planId }: { planId: string }) => {
   const { toast } = useToast();
 
   // Buscar dados do plano
-  const { data: plan, isLoading: planLoading } = useQuery({
+  const { data: plan, isLoading: planLoading, error } = useQuery({
     queryKey: [`/api/public/plans/${planId}`],
     enabled: !!planId,
+  });
+
+  // Debug logs
+  console.log('🔍 Debug CheckoutPlan:', {
+    planId,
+    planLoading,
+    plan,
+    error,
+    queryEnabled: !!planId
   });
 
   const handlePayment = async () => {
@@ -110,13 +119,20 @@ const CheckoutFormForPlan = ({ planId }: { planId: string }) => {
     );
   }
 
-  if (!plan) {
+  if (!plan && !planLoading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <Card className="max-w-md">
           <CardContent className="p-8 text-center">
             <h2 className="text-xl font-bold mb-2">Plano não encontrado</h2>
             <p className="text-gray-600">O plano solicitado não existe ou foi removido.</p>
+            <div className="mt-4 text-sm text-gray-500 bg-gray-100 p-3 rounded">
+              <p><strong>Debug:</strong></p>
+              <p>Plan ID: {planId}</p>
+              <p>Loading: {planLoading ? 'true' : 'false'}</p>
+              <p>Error: {error ? error.message : 'nenhum erro'}</p>
+              <p>Query URL: /api/public/plans/{planId}</p>
+            </div>
           </CardContent>
         </Card>
       </div>
