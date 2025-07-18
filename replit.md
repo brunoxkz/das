@@ -243,6 +243,18 @@ O sistema utiliza Stripe Payment Intent para processar pagamentos únicos de R$ 
 
 ```
 Changelog:
+- July 18, 2025. SISTEMA DE VALIDAÇÃO STRIPE SINCRONIZADO - Correção crítica no fluxo de pagamento e atualização do checkout inline:
+  * Corrigido metadata.type de 'trial_activation' para 'validation_payment' no webhook handler
+  * Sincronizado `/checkout-embed-inline-fixed` com novo sistema de validação
+  * Removido CardElement não utilizado e simplificado interface do checkout inline
+  * Atualizado fluxo para usar endpoint `/api/stripe/simple-trial` ao invés de `/api/stripe/process-payment-inline`
+  * Página de teste `/test-validation-flow` criada para demonstrar funcionamento completo
+  * Fluxo correto implementado: R$ 1,00 validação → cartão salvo → subscription com 3 dias trial → R$ 29,90/mês
+  * Webhook agora detecta corretamente pagamentos de validação com metadata.type === 'validation_payment'
+  * Sistema completamente sincronizado entre todos os endpoints e páginas
+  * Conformidade total com políticas Stripe: setup_future_usage para salvar cartão, cobrança automática sem re-autorização
+  * Checkout inline agora redireciona para Stripe Checkout ao invés de processar pagamento inline
+  * Interface simplificada com explicação clara do fluxo de duas etapas
 - July 18, 2025. SISTEMA CHECKOUT PÚBLICO CORRIGIDO - Assinatura com trial implementada corretamente:
   * Corrigido endpoint /api/public/checkout/create-session para criar assinatura ao invés de pagamento único
   * Implementado mode: 'subscription' com trial_period_days no Stripe checkout

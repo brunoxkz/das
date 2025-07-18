@@ -7,14 +7,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { CreditCard, Phone, Mail, User, Shield, CheckCircle } from 'lucide-react';
-import { loadStripe } from '@stripe/stripe-js';
-import { Elements, CardElement, useStripe, useElements } from '@stripe/react-stripe-js';
-
-const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLIC_KEY || 'pk_test_51RjvV9HK6al3veW1NLGtWPQTaGT5nLFHoSJFYfUAqfKtNhZpxhNQT4jEJwJSqpO1sVrZgfZYE8pzE4YD2mAK4zrM00bNAHaOQE');
-
 const CheckoutForm = () => {
-  const stripe = useStripe();
-  const elements = useElements();
   const [loading, setLoading] = useState(false);
   const [customerData, setCustomerData] = useState({
     name: '',
@@ -24,72 +17,39 @@ const CheckoutForm = () => {
   const { toast } = useToast();
 
   const handlePayment = async () => {
-    if (!stripe || !elements) {
-      toast({
-        title: "Erro",
-        description: "Stripe ainda não foi carregado",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    const cardElement = elements.getElement(CardElement);
-    if (!cardElement) {
-      toast({
-        title: "Erro",
-        description: "Elemento do cartão não encontrado",
-        variant: "destructive",
-      });
-      return;
-    }
-
     try {
-      // Criar método de pagamento com os dados do cartão
-      const { error, paymentMethod } = await stripe.createPaymentMethod({
-        type: 'card',
-        card: cardElement,
-        billing_details: {
-          name: customerData.name,
-          email: customerData.email,
-          phone: customerData.phone,
-        },
-      });
-
-      if (error) {
-        throw new Error(error.message);
-      }
-
-      // Processar pagamento com método criado
-      const response = await fetch('/api/stripe/process-payment-inline', {
+      // Criar checkout de validação (novo sistema)
+      const response = await fetch('/api/stripe/simple-trial', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          paymentMethodId: paymentMethod.id,
-          customerData,
-          amount: 1.00,
-          currency: 'BRL',
-          planName: 'Vendzz Pro'
+          planName: 'Vendzz Pro',
+          customerEmail: customerData.email,
+          customerName: customerData.name,
+          trialAmount: 1.00,
+          trialDays: 3,
+          recurringAmount: 29.90,
+          currency: 'BRL'
         }),
       });
 
       const data = await response.json();
       
-      if (data.success) {
+      if (data.success && data.checkoutUrl) {
         toast({
-          title: "Pagamento processado com sucesso!",
-          description: `Assinatura ativada! Trial até ${new Date(data.trialEnd).toLocaleDateString('pt-BR')}`,
+          title: "Checkout criado com sucesso!",
+          description: "Redirecionando para o pagamento...",
           variant: "default",
         });
         
-        setTimeout(() => {
-          window.location.href = '/payment-success';
-        }, 2000);
+        // Redirecionar para o checkout do Stripe
+        window.location.href = data.checkoutUrl;
       } else {
         toast({
-          title: "Erro no pagamento",
-          description: data.message || "Erro ao processar pagamento",
+          title: "Erro no checkout",
+          description: data.message || "Erro ao criar checkout",
           variant: "destructive",
         });
       }
@@ -218,31 +178,20 @@ const CheckoutForm = () => {
 
               <Separator />
 
-              {/* Informações do cartão */}
+              {/* Informações do pagamento */}
               <div className="space-y-4">
                 <h3 className="text-lg font-semibold text-gray-800 flex items-center gap-2">
-                  <CreditCard className="w-5 h-5 text-green-600" />
-                  Informações do cartão
+                  <Shield className="w-5 h-5 text-green-600" />
+                  Fluxo de Pagamento Seguro
                 </h3>
                 
-                <div className="p-4 border border-gray-300 rounded-lg bg-white">
-                  <CardElement 
-                    options={{
-                      hidePostalCode: true,
-                      style: {
-                        base: {
-                          fontSize: '16px',
-                          color: '#424770',
-                          '::placeholder': {
-                            color: '#aab7c4',
-                          },
-                        },
-                        invalid: {
-                          color: '#9e2146',
-                        },
-                      },
-                    }}
-                  />
+                <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
+                  <p className="text-sm text-blue-800">
+                    ✅ <strong>Etapa 1:</strong> Você pagará R$ 1,00 para validar seu cartão<br/>
+                    ✅ <strong>Etapa 2:</strong> Acesso imediato com 3 dias de trial gratuito<br/>
+                    ✅ <strong>Etapa 3:</strong> Após o trial, R$ 29,90/mês automaticamente<br/>
+                    🔒 <strong>Segurança:</strong> Certificado SSL e proteção Stripe
+                  </p>
                 </div>
               </div>
 
@@ -286,7 +235,7 @@ const CheckoutForm = () => {
                 ) : (
                   <div className="flex items-center gap-2">
                     <CreditCard className="w-5 h-5" />
-                    Pagar R$ 1,00 via API
+                    Iniciar Checkout → R$ 1,00 + Trial
                   </div>
                 )}
               </Button>
@@ -307,11 +256,7 @@ const CheckoutForm = () => {
   );
 };
 
-// Componente principal com wrapper Elements
+// Componente principal simplificado
 export default function CheckoutEmbedInlineFixed() {
-  return (
-    <Elements stripe={stripePromise}>
-      <CheckoutForm />
-    </Elements>
-  );
+  return <CheckoutForm />;
 }
