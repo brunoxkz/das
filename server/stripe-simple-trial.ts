@@ -69,8 +69,8 @@ export class StripeSimpleTrialSystem {
 
       console.log('✅ Price recorrente criado:', recurringPrice.id);
 
-      // 4. Criar PRIMEIRO checkout para cobrança de ativação (R$ 1,00)
-      const activationCheckout = await this.stripe.checkout.sessions.create({
+      // 4. Criar PRIMEIRO checkout para pagamento único (R$ 1,00)
+      const oneTimePaymentCheckout = await this.stripe.checkout.sessions.create({
         customer: customer.id,
         payment_method_types: ['card'],
         mode: 'payment',
@@ -79,8 +79,8 @@ export class StripeSimpleTrialSystem {
             price_data: {
               currency: config.currency.toLowerCase(),
               product_data: {
-                name: `${config.planName} - Taxa de Ativação`,
-                description: `R$${config.trialAmount.toFixed(2)} taxa de ativação. Após pagamento, assinatura de R$${config.recurringAmount.toFixed(2)}/mês será criada com ${config.trialDays} dias de trial gratuito.`,
+                name: `${config.planName} - Pagamento Único`,
+                description: `R$${config.trialAmount.toFixed(2)} pagamento único. Após confirmação, assinatura de R$${config.recurringAmount.toFixed(2)}/mês será criada com ${config.trialDays} dias de trial gratuito.`,
               },
               unit_amount: Math.round(config.trialAmount * 100),
             },
@@ -90,42 +90,42 @@ export class StripeSimpleTrialSystem {
         payment_intent_data: {
           setup_future_usage: 'off_session',
           metadata: {
-            type: 'activation_payment',
+            type: 'onetime_payment',
             customer_id: customer.id,
             recurring_price_id: recurringPrice.id,
             trial_days: config.trialDays.toString(),
-            step: 'activation',
+            step: 'onetime',
           },
         },
-        success_url: `${process.env.FRONTEND_URL || 'http://localhost:5000'}/checkout/success?session_id={CHECKOUT_SESSION_ID}&type=activation_success`,
+        success_url: `${process.env.FRONTEND_URL || 'http://localhost:5000'}/checkout/success?session_id={CHECKOUT_SESSION_ID}&type=onetime_success`,
         cancel_url: `${process.env.FRONTEND_URL || 'http://localhost:5000'}/checkout/cancel`,
         metadata: {
-          type: 'activation_checkout',
+          type: 'onetime_checkout',
           customer_id: customer.id,
           recurring_price_id: recurringPrice.id,
           trial_amount: config.trialAmount.toString(),
           recurring_amount: config.recurringAmount.toString(),
           trial_days: config.trialDays.toString(),
-          step: 'activation',
+          step: 'onetime',
         },
       });
 
-      console.log('✅ Checkout de Ativação criado:', activationCheckout.id);
+      console.log('✅ Checkout de Pagamento Único criado:', oneTimePaymentCheckout.id);
 
       const explanation = `
 ✅ FLUXO DE COBRANÇA IMPLEMENTADO:
 1. Customer criado: ${customer.id}
 2. Product criado: ${product.id}
 3. Price R$${config.recurringAmount.toFixed(2)}/mês criado: ${recurringPrice.id}
-4. Checkout de Ativação criado: ${activationCheckout.id}
+4. Checkout de Pagamento Único criado: ${oneTimePaymentCheckout.id}
 5. setup_future_usage configurado para salvar cartão
 
 🔧 FLUXO CORRETO EM DUAS ETAPAS:
-ETAPA 1: Cobrança de ativação R$${config.trialAmount.toFixed(2)} (salva cartão)
+ETAPA 1: Pagamento único R$${config.trialAmount.toFixed(2)} (salva cartão)
 ETAPA 2: Webhook cria subscription com trial de ${config.trialDays} dias + R$${config.recurringAmount.toFixed(2)}/mês
 
 📋 SEQUÊNCIA DE COBRANÇA:
-1. Cliente paga R$${config.trialAmount.toFixed(2)} TAXA DE ATIVAÇÃO
+1. Cliente paga R$${config.trialAmount.toFixed(2)} PAGAMENTO ÚNICO (invoice separado)
 2. Webhook detecta pagamento e cria subscription automaticamente
 3. Subscription inicia com ${config.trialDays} dias de trial GRATUITO
 4. Após ${config.trialDays} dias → cobrança automática R$${config.recurringAmount.toFixed(2)}/mês
@@ -136,11 +136,11 @@ ETAPA 2: Webhook cria subscription com trial de ${config.trialDays} dias + R$${c
         customerId: customer.id,
         productId: product.id,
         recurringPriceId: recurringPrice.id,
-        checkoutSessionId: activationCheckout.id,
-        checkoutUrl: activationCheckout.url!,
+        checkoutSessionId: oneTimePaymentCheckout.id,
+        checkoutUrl: oneTimePaymentCheckout.url!,
         explanation,
         success: true,
-        step: 'activation',
+        step: 'onetime',
       };
 
     } catch (error) {

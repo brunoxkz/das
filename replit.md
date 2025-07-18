@@ -243,6 +243,17 @@ O sistema utiliza Stripe Payment Intent para processar pagamentos únicos de R$ 
 
 ```
 Changelog:
+- July 18, 2025. SISTEMA DE PAGAMENTO ÚNICO STRIPE COMPLETAMENTE SINCRONIZADO - Correção crítica da terminologia e arquitetura:
+  * Convertido sistema de "validação" para "pagamento único" em todo o codebase
+  * Atualizado stripe-simple-trial.ts para usar tipo 'onetime_payment' ao invés de 'activation_payment'
+  * Sincronizado webhook handler para processar pagamentos únicos corretamente
+  * Atualizada interface do usuário: "Taxa de Ativação" → "Pagamento Único"
+  * Corrigidos títulos e descrições em checkout-simple-trial.tsx e test-validation-flow.tsx
+  * Fluxo correto implementado: R$1,00 pagamento único (cobrança real) → subscription automática com 3 dias trial
+  * Nomenclatura padronizada: metadata.type = 'onetime_payment' e step = 'onetime'
+  * Sistema agora reflete corretamente que R$1,00 é cobrança real, não validação
+  * Conformidade total com modelo de negócio: duas cobranças separadas (R$1,00 + R$29,90/mês)
+  * Todas as interfaces e endpoints sincronizados com nova terminologia
 - July 18, 2025. SISTEMA DE VALIDAÇÃO STRIPE SINCRONIZADO - Correção crítica no fluxo de pagamento e atualização do checkout inline:
   * Corrigido metadata.type de 'trial_activation' para 'validation_payment' no webhook handler
   * Sincronizado `/checkout-embed-inline-fixed` com novo sistema de validação

@@ -274,7 +274,7 @@ export default function CheckoutSimpleTrial() {
     <div className="container mx-auto p-6 max-w-7xl">
       <div className="mb-8">
         <h1 className="text-3xl font-bold mb-2">Sistema de Checkout Stripe</h1>
-        <p className="text-gray-600">Checkout Trial R$1 + Recorrência R$29,90/mês</p>
+        <p className="text-gray-600">Pagamento Único R$1 + Subscription R$29,90/mês</p>
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
@@ -310,7 +310,7 @@ export default function CheckoutSimpleTrial() {
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <Label htmlFor="activationPrice">Taxa de Ativação (R$)</Label>
+                    <Label htmlFor="activationPrice">Pagamento Único (R$)</Label>
                     <Input
                       id="activationPrice"
                       type="number"
@@ -429,7 +429,7 @@ export default function CheckoutSimpleTrial() {
                     </div>
                     <div className="grid grid-cols-3 gap-4">
                       <div>
-                        <Label htmlFor="trialPrice">Taxa de Ativação (R$)</Label>
+                        <Label htmlFor="trialPrice">Pagamento Único (R$)</Label>
                         <Input
                           id="trialPrice"
                           type="number"
@@ -644,7 +644,7 @@ export default function CheckoutSimpleTrial() {
             </div>
             <div className="grid grid-cols-3 gap-4">
               <div>
-                <Label htmlFor="editTrialPrice">Taxa de Ativação (R$)</Label>
+                <Label htmlFor="editTrialPrice">Pagamento Único (R$)</Label>
                 <Input
                   id="editTrialPrice"
                   type="number"

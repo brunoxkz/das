@@ -79,9 +79,9 @@ async function handlePaymentIntentSucceeded(paymentIntent: Stripe.PaymentIntent)
   console.log('💰 Payment Intent succeeded:', paymentIntent.id);
   
   try {
-    // Verificar se é um pagamento de ativação
-    if (paymentIntent.metadata?.type === 'activation_payment') {
-      console.log('🔄 PROCESSANDO ATIVAÇÃO - Criando subscription automática com trial');
+    // Verificar se é um pagamento único
+    if (paymentIntent.metadata?.type === 'onetime_payment') {
+      console.log('🔄 PROCESSANDO PAGAMENTO ÚNICO - Criando subscription automática com trial');
       
       const customerId = paymentIntent.metadata.customer_id;
       const recurringPriceId = paymentIntent.metadata.recurring_price_id;

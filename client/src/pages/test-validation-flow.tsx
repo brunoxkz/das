@@ -87,9 +87,9 @@ export default function TestValidationFlow() {
   return (
     <div className="container max-w-4xl mx-auto p-6">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold mb-2">Sistema de Validação Stripe</h1>
+        <h1 className="text-3xl font-bold mb-2">Sistema de Pagamento Único + Subscription</h1>
         <p className="text-muted-foreground">
-          Teste o fluxo correto: R$ 1,00 validação → Subscription automática com trial
+          Teste o fluxo correto: R$ 1,00 pagamento único → Subscription automática com trial
         </p>
       </div>
 
