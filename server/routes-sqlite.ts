@@ -7320,8 +7320,8 @@ console.log('Vendzz Checkout Embed carregado para plano: ${planId}');
         process.env.STRIPE_SECRET_KEY || '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'
       );
 
-      // Buscar plano no banco
-      const plan = await getStripePlan(planId);
+      // Buscar plano no banco diretamente
+      const plan = await storage.getStripePlan(planId);
       if (!plan) {
         return res.status(404).json({
           success: false,
@@ -7448,8 +7448,8 @@ console.log('Vendzz Checkout Embed carregado para plano: ${planId}');
         default_payment_method: subscription.default_payment_method
       });
 
-      // Salvar transação no banco
-      await saveStripeTransaction({
+      // Salvar transação no banco diretamente
+      await storage.saveStripeTransaction({
         id: paymentIntent.id,
         userId: 'public_user',
         stripePaymentIntentId: paymentIntent.id,
