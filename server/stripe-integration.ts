@@ -4,7 +4,7 @@ import Stripe from 'stripe';
 let stripe: Stripe | null = null;
 
 // Verificar .env explicitamente
-const stripeSecretKey = process.env.STRIPE_SECRET_KEY || 'sk_test_51RjvV9HK6al3veW1FPD5bTV1on2NQLlm9ud45AJDggFHdsGA9UAo5jfbSRvWF83W3uTp5cpZYa8tJBvm4ttefrk800mUs47pFA';
+const stripeSecretKey = process.env.STRIPE_SECRET_KEY || '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';
 
 console.log('🔍 Verificando Stripe ENV:', { 
   hasStripeSecret: !!process.env.STRIPE_SECRET_KEY,
@@ -24,7 +24,7 @@ if (stripeSecretKey && stripeSecretKey.startsWith('sk_')) {
 // Forçar inicialização se não funcionou
 if (!stripe) {
   console.log('🔧 Tentando inicializar Stripe com chave hardcoded...');
-  stripe = new Stripe('sk_test_51RjvV9HK6al3veW1FPD5bTV1on2NQLlm9ud45AJDggFHdsGA9UAo5jfbSRvWF83W3uTp5cpZYa8tJBvm4ttefrk800mUs47pFA', {
+  stripe = new Stripe('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', {
     apiVersion: '2024-09-30.acacia',
   });
   console.log('✅ Stripe inicializado com chave hardcoded');

@@ -21,7 +21,7 @@ let activeStripeService: any = null;
 
 // Função para inicializar o Stripe com delay
 const initializeStripe = () => {
-  const stripeKey = process.env.STRIPE_SECRET_KEY || 'sk_test_51RjvV9HK6al3veW1FPD5bTV1on2NQLlm9ud45AJDggFHdsGA9UAo5jfbSRvWF83W3uTp5cpZYa8tJBvm4ttefrk800mUs47pFA';
+  const stripeKey = process.env.STRIPE_SECRET_KEY || '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';
   
   if (!activeStripeService && stripeKey) {
     try {
@@ -975,7 +975,7 @@ export function registerSQLiteRoutes(app: Express): Server {
       console.log('🔍 Importando StripeSimpleTrialSystem...');
       
       const correctTrialSystem = new StripeSimpleTrialSystem(
-        process.env.STRIPE_SECRET_KEY || 'sk_test_51RjvV9HK6al3veW1FPD5bTV1on2NQLlm9ud45AJDggFHdsGA9UAo5jfbSRvWF83W3uTp5cpZYa8tJBvm4ttefrk800mUs47pFA'
+        process.env.STRIPE_SECRET_KEY || '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'
       );
       
       // Configuração do trial
@@ -1030,7 +1030,7 @@ export function registerSQLiteRoutes(app: Express): Server {
       console.log('🔍 Importando StripeSimpleTrialSystem...');
       
       const correctTrialSystem = new StripeSimpleTrialSystem(
-        process.env.STRIPE_SECRET_KEY || 'sk_test_51RjvV9HK6al3veW1FPD5bTV1on2NQLlm9ud45AJDggFHdsGA9UAo5jfbSRvWF83W3uTp5cpZYa8tJBvm4ttefrk800mUs47pFA'
+        process.env.STRIPE_SECRET_KEY || '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'
       );
       
       // Criar Payment Intent para pagamento inline
@@ -1074,7 +1074,7 @@ export function registerSQLiteRoutes(app: Express): Server {
       // Importar Stripe
       const { StripeSimpleTrialSystem } = await import('./stripe-simple-trial');
       const stripeSystem = new StripeSimpleTrialSystem(
-        process.env.STRIPE_SECRET_KEY || 'sk_test_51RjvV9HK6al3veW1FPD5bTV1on2NQLlm9ud45AJDggFHdsGA9UAo5jfbSRvWF83W3uTp5cpZYa8tJBvm4ttefrk800mUs47pFA'
+        process.env.STRIPE_SECRET_KEY || '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'
       );
 
       // Simular um payment_intent.succeeded para testar o webhook
@@ -1222,7 +1222,7 @@ export function registerSQLiteRoutes(app: Express): Server {
         // Importar Stripe
         const { StripeSimpleTrialSystem } = await import('./stripe-simple-trial');
         const stripeSystem = new StripeSimpleTrialSystem(
-          process.env.STRIPE_SECRET_KEY || 'sk_test_51RjvV9HK6al3veW1FPD5bTV1on2NQLlm9ud45AJDggFHdsGA9UAo5jfbSRvWF83W3uTp5cpZYa8tJBvm4ttefrk800mUs47pFA'
+          process.env.STRIPE_SECRET_KEY || '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'
         );
         
         // Buscar o payment method usado no pagamento
@@ -1300,7 +1300,7 @@ export function registerSQLiteRoutes(app: Express): Server {
       // Importar Stripe
       const { StripeSimpleTrialSystem } = await import('./stripe-simple-trial');
       const stripeSystem = new StripeSimpleTrialSystem(
-        process.env.STRIPE_SECRET_KEY || 'sk_test_51RjvV9HK6al3veW1FPD5bTV1on2NQLlm9ud45AJDggFHdsGA9UAo5jfbSRvWF83W3uTp5cpZYa8tJBvm4ttefrk800mUs47pFA'
+        process.env.STRIPE_SECRET_KEY || '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'
       );
 
       // Buscar customer
@@ -1415,7 +1415,7 @@ export function registerSQLiteRoutes(app: Express): Server {
       // Importar Stripe
       const { StripeSimpleTrialSystem } = await import('./stripe-simple-trial');
       const stripeSystem = new StripeSimpleTrialSystem(
-        process.env.STRIPE_SECRET_KEY || 'sk_test_51RjvV9HK6al3veW1FPD5bTV1on2NQLlm9ud45AJDggFHdsGA9UAo5jfbSRvWF83W3uTp5cpZYa8tJBvm4ttefrk800mUs47pFA'
+        process.env.STRIPE_SECRET_KEY || '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'
       );
 
       // Buscar customers pelo email
@@ -1562,7 +1562,7 @@ export function registerSQLiteRoutes(app: Express): Server {
       // Importar Stripe
       const { StripeSimpleTrialSystem } = await import('./stripe-simple-trial');
       const stripeSystem = new StripeSimpleTrialSystem(
-        process.env.STRIPE_SECRET_KEY || 'sk_test_51RjvV9HK6al3veW1FPD5bTV1on2NQLlm9ud45AJDggFHdsGA9UAo5jfbSRvWF83W3uTp5cpZYa8tJBvm4ttefrk800mUs47pFA'
+        process.env.STRIPE_SECRET_KEY || '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'
       );
 
       // Buscar Payment Intent no Stripe
@@ -1642,7 +1642,7 @@ export function registerSQLiteRoutes(app: Express): Server {
       // Importar Stripe
       const { StripeSimpleTrialSystem } = await import('./stripe-simple-trial');
       const stripeSystem = new StripeSimpleTrialSystem(
-        process.env.STRIPE_SECRET_KEY || 'sk_test_51RjvV9HK6al3veW1FPD5bTV1on2NQLlm9ud45AJDggFHdsGA9UAo5jfbSRvWF83W3uTp5cpZYa8tJBvm4ttefrk800mUs47pFA'
+        process.env.STRIPE_SECRET_KEY || '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'
       );
 
       // Criar Customer
@@ -1768,7 +1768,7 @@ export function registerSQLiteRoutes(app: Express): Server {
       // Importar Stripe
       const { StripeSimpleTrialSystem } = await import('./stripe-simple-trial');
       const stripeSystem = new StripeSimpleTrialSystem(
-        process.env.STRIPE_SECRET_KEY || 'sk_test_51RjvV9HK6al3veW1FPD5bTV1on2NQLlm9ud45AJDggFHdsGA9UAo5jfbSRvWF83W3uTp5cpZYa8tJBvm4ttefrk800mUs47pFA'
+        process.env.STRIPE_SECRET_KEY || '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'
       );
 
       // Criar método de pagamento de teste
@@ -5973,7 +5973,7 @@ export function registerSQLiteRoutes(app: Express): Server {
       }
 
       // Usando o Stripe diretamente para evitar complexidades
-      const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || 'sk_test_51RjvV9HK6al3veW1FPD5bTV1on2NQLlm9ud45AJDggFHdsGA9UAo5jfbSRvWF83W3uTp5cpZYa8tJBvm4ttefrk800mUs47pFA', {
+      const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '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', {
         apiVersion: '2024-09-30.acacia'
       });
 
@@ -6981,7 +6981,7 @@ console.log('Vendzz Checkout Embed carregado para plano: ${planId}');
       }
       console.log('✅ Usuário encontrado:', user.email);
 
-      const stripeKey = process.env.STRIPE_SECRET_KEY || 'sk_test_51RjvV9HK6al3veW1FPD5bTV1on2NQLlm9ud45AJDggFHdsGA9UAo5jfbSRvWF83W3uTp5cpZYa8tJBvm4ttefrk800mUs47pFA';
+      const stripeKey = process.env.STRIPE_SECRET_KEY || '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';
       console.log('🔍 Inicializando CustomTrialSystem...');
       const customTrialSystem = new StripeCustomTrialSystem(stripeKey);
 
@@ -7045,7 +7045,7 @@ console.log('Vendzz Checkout Embed carregado para plano: ${planId}');
       // Inicializar sistema correto
       console.log('🔍 Inicializando CorrectTrialSystem...');
       const correctTrialSystem = new StripeCorrectTrialSystem(
-        process.env.STRIPE_SECRET_KEY || 'sk_test_51RjvV9HK6al3veW1FPD5bTV1on2NQLlm9ud45AJDggFHdsGA9UAo5jfbSRvWF83W3uTp5cpZYa8tJBvm4ttefrk800mUs47pFA'
+        process.env.STRIPE_SECRET_KEY || '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'
       );
       
       // Configuração do trial correto
@@ -7125,7 +7125,7 @@ console.log('Vendzz Checkout Embed carregado para plano: ${planId}');
       // Inicializar sistema simplificado
       console.log('🔍 Inicializando SimpleTrialSystem...');
       const simpleTrialSystem = new StripeSimpleTrialSystem(
-        process.env.STRIPE_SECRET_KEY || 'sk_test_51RjvV9HK6al3veW1FPD5bTV1on2NQLlm9ud45AJDggFHdsGA9UAo5jfbSRvWF83W3uTp5cpZYa8tJBvm4ttefrk800mUs47pFA'
+        process.env.STRIPE_SECRET_KEY || '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'
       );
       
       // Configuração do trial simplificado
@@ -7206,7 +7206,7 @@ console.log('Vendzz Checkout Embed carregado para plano: ${planId}');
       // Inicializar Stripe
       const { StripeSimpleTrialSystem } = await import('./stripe-simple-trial');
       const stripeSystem = new StripeSimpleTrialSystem(
-        process.env.STRIPE_SECRET_KEY || 'sk_test_51RjvV9HK6al3veW1FPD5bTV1on2NQLlm9ud45AJDggFHdsGA9UAo5jfbSRvWF83W3uTp5cpZYa8tJBvm4ttefrk800mUs47pFA'
+        process.env.STRIPE_SECRET_KEY || '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'
       );
       
       // Criar customer no Stripe
@@ -7296,7 +7296,7 @@ console.log('Vendzz Checkout Embed carregado para plano: ${planId}');
       if (eventType === 'payment_intent.succeeded' && paymentIntent.metadata?.type === 'activation_payment') {
         const { StripeSimpleTrialSystem } = await import('./stripe-simple-trial');
         const stripeSystem = new StripeSimpleTrialSystem(
-          process.env.STRIPE_SECRET_KEY || 'sk_test_51RjvV9HK6al3veW1FPD5bTV1on2NQLlm9ud45AJDggFHdsGA9UAo5jfbSRvWF83W3uTp5cpZYa8tJBvm4ttefrk800mUs47pFA'
+          process.env.STRIPE_SECRET_KEY || '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'
         );
         
         console.log('🔧 PROCESSANDO PAGAMENTO DE ATIVAÇÃO...');
@@ -7393,7 +7393,7 @@ console.log('Vendzz Checkout Embed carregado para plano: ${planId}');
       
       const { StripeSimpleTrialSystem } = await import('./stripe-simple-trial');
       const stripeSystem = new StripeSimpleTrialSystem(
-        process.env.STRIPE_SECRET_KEY || 'sk_test_51RjvV9HK6al3veW1FPD5bTV1on2NQLlm9ud45AJDggFHdsGA9UAo5jfbSRvWF83W3uTp5cpZYa8tJBvm4ttefrk800mUs47pFA'
+        process.env.STRIPE_SECRET_KEY || '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'
       );
       
       // PASSO 1: Criar customer de teste
@@ -7519,7 +7519,7 @@ console.log('Vendzz Checkout Embed carregado para plano: ${planId}');
     try {
       const { StripeCustomTrialSystem } = await import('./stripe-custom-trial');
       
-      const stripeKey = process.env.STRIPE_SECRET_KEY || 'sk_test_51RjvV9HK6al3veW1FPD5bTV1on2NQLlm9ud45AJDggFHdsGA9UAo5jfbSRvWF83W3uTp5cpZYa8tJBvm4ttefrk800mUs47pFA';
+      const stripeKey = process.env.STRIPE_SECRET_KEY || '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';
       const customTrialSystem = new StripeCustomTrialSystem(stripeKey);
 
       const { event_type, payment_intent_id } = req.body;
@@ -7688,7 +7688,7 @@ console.log('Vendzz Checkout Embed carregado para plano: ${planId}');
       }
 
       // Usar Stripe diretamente para máxima compatibilidade
-      const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || 'sk_test_51RjvV9HK6al3veW1FPD5bTV1on2NQLlm9ud45AJDggFHdsGA9UAo5jfbSRvWF83W3uTp5cpZYa8tJBvm4ttefrk800mUs47pFA', {
+      const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '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', {
         apiVersion: '2024-09-30.acacia'
       });
 
@@ -8025,7 +8025,7 @@ console.log('Vendzz Checkout Embed carregado para plano: ${planId}');
       }
 
       // Stripe client
-      const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || 'sk_test_51RjvV9HK6al3veW1FPD5bTV1on2NQLlm9ud45AJDggFHdsGA9UAo5jfbSRvWF83W3uTp5cpZYa8tJBvm4ttefrk800mUs47pFA', {
+      const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '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', {
         apiVersion: '2024-09-30.acacia'
       });
 
@@ -8185,7 +8185,7 @@ console.log('Vendzz Checkout Embed carregado para plano: ${planId}');
     console.log('🔔 WEBHOOK OFICIAL STRIPE RECEBIDO');
     
     try {
-      const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || 'sk_test_51RjvV9HK6al3veW1FPD5bTV1on2NQLlm9ud45AJDggFHdsGA9UAo5jfbSRvWF83W3uTp5cpZYa8tJBvm4ttefrk800mUs47pFA', {
+      const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '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', {
         apiVersion: '2024-09-30.acacia'
       });
 
@@ -8311,7 +8311,7 @@ console.log('Vendzz Checkout Embed carregado para plano: ${planId}');
       }
 
       // Usando o Stripe diretamente
-      const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || 'sk_test_51RjvV9HK6al3veW1FPD5bTV1on2NQLlm9ud45AJDggFHdsGA9UAo5jfbSRvWF83W3uTp5cpZYa8tJBvm4ttefrk800mUs47pFA', {
+      const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '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', {
         apiVersion: '2024-09-30.acacia'
       });
 
@@ -9114,7 +9114,7 @@ console.log('Vendzz Checkout Embed carregado para plano: ${planId}');
             const trialDays = parseInt(paymentIntent.metadata.trial_period_days);
             
             // Usar Stripe diretamente
-            const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || 'sk_test_51RjvV9HK6al3veW1FPD5bTV1on2NQLlm9ud45AJDggFHdsGA9UAo5jfbSRvWF83W3uTp5cpZYa8tJBvm4ttefrk800mUs47pFA', {
+            const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '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', {
               apiVersion: '2024-09-30.acacia'
             });
             

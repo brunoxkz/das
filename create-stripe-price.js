@@ -5,7 +5,7 @@
 
 import Stripe from 'stripe';
 
-const stripe = new Stripe('sk_test_51RjvV9HK6al3veW1FPD5bTV1on2NQLlm9ud45AJDggFHdsGA9UAo5jfbSRvWF83W3uTp5cpZYa8tJBvm4ttefrk800mUs47pFA', {
+const stripe = new Stripe('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', {
   apiVersion: '2024-09-30.acacia'
 });
 

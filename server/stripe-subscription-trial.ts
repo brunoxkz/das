@@ -1,7 +1,7 @@
 import Stripe from 'stripe';
 
 // Inicialização do Stripe
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || 'sk_test_51RjvV9HK6al3veW1FPD5bTV1on2NQLlm9ud45AJDggFHdsGA9UAo5jfbSRvWF83W3uTp5cpZYa8tJBvm4ttefrk800mUs47pFA', {
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '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', {
   apiVersion: '2024-09-30.acacia',
 });
 
