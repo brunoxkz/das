@@ -61,6 +61,8 @@ import CheckoutIndividual from "@/pages/checkout-individual";
 import CheckoutStripeTrial from "@/pages/checkout-stripe-trial";
 import CheckoutGPTSolution from "@/pages/checkout-gpt-solution";
 import CheckoutOfficial from "@/pages/checkout-official";
+import CheckoutOficial from "@/pages/checkout-oficial";
+import PublicCheckout from "@/pages/public-checkout";
 import StripePlansManager from "@/pages/stripe-plans-manager";
 import StripeCheckoutCustom from "@/pages/stripe-checkout-custom";
 import StripeElementsCheckout from "@/pages/stripe-elements-checkout";
@@ -130,8 +132,8 @@ function App() {
         <Route path="/modern" component={ModernHomePage} />
         <Route path="/login" component={LoginPage} />
         <Route path="/quiz/:id" component={QuizPublicPage} />
-        <Route path="/checkout/:linkId" component={CheckoutPublic} />
-        <Route path="/checkout/success/:transactionId" component={CheckoutSuccess} />
+        <Route path="/checkout/:planId" component={PublicCheckout} />
+        <Route path="/checkout/success" component={CheckoutSuccess} />
         <Route path="/checkout-public/:planId" component={CheckoutPublic} />
         <Route path="/checkout-individual/:id" component={CheckoutIndividual} />
         <Route path="/payment-success" component={PaymentSuccess} />
@@ -390,6 +392,12 @@ function App() {
         <Route path="/checkout-official">
           <Layout>
             <CheckoutOfficial />
+          </Layout>
+        </Route>
+        
+        <Route path="/checkout-oficial">
+          <Layout>
+            <CheckoutOficial />
           </Layout>
         </Route>
         

@@ -157,6 +157,13 @@ export function Sidebar() {
       title: "RECURRING",
       items: [
         {
+          title: "💎 CHECKOUT OFICIAL",
+          href: "/checkout-oficial",
+          icon: <CreditCard className="w-4 h-4" />,
+          active: location === "/checkout-oficial",
+          badge: "Embed Code"
+        },
+        {
           title: "💎 CHECKOUT PERFEITO",
           href: "/checkout-perfect",
           icon: <Zap className="w-4 h-4" />,

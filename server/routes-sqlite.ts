@@ -14,31 +14,38 @@ import Database from 'better-sqlite3';
 const sqlite = new Database('./database.sqlite');
 import { stripeService, StripeService } from "./stripe-integration";
 import { stripeTrialService } from "./stripe-subscription-trial";
-import { nanoid } from "nanoid";
 import Stripe from 'stripe';
 
-// Garantir que o Stripe está inicializado
+// Garantir que o Stripe está inicializado com a chave correta
 let activeStripeService: any = null;
 
-try {
-  // Inicializar Stripe diretamente
-  const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || 'sk_test_51RjvV9HK6al3veW1FPD5bTV1on2NQLlm9ud45AJDggFHdsGA9UAo5jfbSRvWF83W3uTp5cpZYa8tJBvm4ttefrk800mUs47pFA', {
-    apiVersion: '2024-09-30.acacia',
-  });
+// Função para inicializar o Stripe com delay
+const initializeStripe = () => {
+  const stripeKey = process.env.STRIPE_SECRET_KEY || 'sk_test_51RjvV9HK6al3veW1FPD5bTV1on2NQLlm9ud45AJDggFHdsGA9UAo5jfbSRvWF83W3uTp5cpZYa8tJBvm4ttefrk800mUs47pFA';
   
-  // Criar um serviço simples
-  activeStripeService = {
-    stripe: stripe,
-    createCustomer: async (data: any) => stripe.customers.create(data),
-    createProduct: async (data: any) => stripe.products.create(data),
-    createPrice: async (data: any) => stripe.prices.create(data),
-    createCheckoutSession: async (data: any) => stripe.checkout.sessions.create(data)
-  };
-  
-  console.log('✅ StripeService inicializado com sucesso');
-} catch (error) {
-  console.log('⚠️ StripeService não pôde ser inicializado:', error.message);
-}
+  if (!activeStripeService && stripeKey) {
+    try {
+      const stripe = new Stripe(stripeKey, {
+        apiVersion: '2024-09-30.acacia',
+      });
+      
+      activeStripeService = {
+        stripe: stripe,
+        createCustomer: async (data: any) => stripe.customers.create(data),
+        createProduct: async (data: any) => stripe.products.create(data),
+        createPrice: async (data: any) => stripe.prices.create(data),
+        createCheckoutSession: async (data: any) => stripe.checkout.sessions.create(data)
+      };
+      
+      console.log('✅ StripeService inicializado com sucesso:', stripeKey.substring(0, 20) + '...');
+    } catch (error) {
+      console.log('⚠️ StripeService não pôde ser inicializado:', error.message);
+    }
+  }
+};
+
+// Inicializar imediatamente
+initializeStripe();
 import { initializePagarme, pagarmeIntegration } from './pagarme-integration';
 import { sendSms } from "./twilio";
 import { emailService } from "./email-service";
@@ -65,7 +72,6 @@ import HealthCheckSystem from './health-check-system.js';
 import WhatsAppBusinessAPI from './whatsapp-business-api';
 import { registerFacelessVideoRoutes } from './faceless-video-routes';
 import { StripeCheckoutLinkGenerator } from './stripe-checkout-link-generator';
-import Stripe from 'stripe';
 
 // JWT Secret para validação de tokens
 const JWT_SECRET = process.env.JWT_SECRET || 'vendzz-jwt-secret-key-2024';
@@ -1020,20 +1026,20 @@ export function registerSQLiteRoutes(app: Express): Server {
       }
 
       // Verificar se Stripe está disponível
-      if (!process.env.STRIPE_SECRET_KEY) {
-        return res.status(500).json({ 
-          error: 'Stripe não configurado. Configure STRIPE_SECRET_KEY.' 
-        });
+      if (!activeStripeService) {
+        initializeStripe(); // Tentar inicializar novamente
+        
+        if (!activeStripeService) {
+          return res.status(500).json({ 
+            error: 'Stripe não configurado. Configure STRIPE_SECRET_KEY.' 
+          });
+        }
       }
-
-      // Importar StripeService
-      const { StripeService } = await import('./stripe-integration');
-      const stripeService = new StripeService();
 
       // Criar ou obter cliente Stripe
       let customer;
       try {
-        customer = await stripeService.createCustomer({
+        customer = await activeStripeService.createCustomer({
           email: customerEmail,
           metadata: {
             productId: productId,
@@ -1054,7 +1060,7 @@ export function registerSQLiteRoutes(app: Express): Server {
       let priceId = product.stripePriceId;
       if (!priceId) {
         try {
-          const stripeProduct = await stripeService.createProduct({
+          const stripeProduct = await activeStripeService.createProduct({
             name: product.name,
             description: product.description || '',
             price: product.recurringPrice || product.price,
@@ -1077,7 +1083,7 @@ export function registerSQLiteRoutes(app: Express): Server {
       }
 
       // Criar sessão de checkout
-      const session = await stripeService.createCheckoutSession({
+      const session = await activeStripeService.createCheckoutSession({
         priceId: priceId,
         customerId: customer.id,
         trialPeriodDays: product.trialPeriod || 3,
@@ -6035,6 +6041,98 @@ console.log('Vendzz Checkout Embed carregado para plano: ${planId}');
       res.status(500).json({ 
         success: false,
         message: 'Erro ao criar trial simplificado',
+        error: error.message 
+      });
+    }
+  });
+
+  // ENDPOINTS PÚBLICOS PARA CHECKOUT SEM AUTENTICAÇÃO
+  
+  // Buscar plano público (sem autenticação)
+  app.get("/api/public/plans/:id", async (req, res) => {
+    try {
+      const planId = req.params.id;
+      const plan = await storage.getStripePlan(planId);
+      
+      if (!plan) {
+        return res.status(404).json({ success: false, message: 'Plano não encontrado' });
+      }
+      
+      res.json({
+        success: true,
+        plan: plan
+      });
+    } catch (error) {
+      console.error('Erro ao buscar plano público:', error);
+      res.status(500).json({ success: false, message: 'Erro interno do servidor' });
+    }
+  });
+
+  // Criar sessão de checkout pública
+  app.post("/api/public/checkout/create-session", async (req, res) => {
+    try {
+      const { planId, customerName, customerEmail, customerPhone, returnUrl, cancelUrl } = req.body;
+      
+      if (!planId || !customerName || !customerEmail) {
+        return res.status(400).json({ 
+          success: false, 
+          message: 'Dados obrigatórios: planId, customerName, customerEmail' 
+        });
+      }
+      
+      // Buscar plano
+      const plan = await storage.getStripePlan(planId);
+      if (!plan) {
+        return res.status(404).json({ success: false, message: 'Plano não encontrado' });
+      }
+      
+      // Inicializar Stripe
+      const { StripeSimpleTrialSystem } = await import('./stripe-simple-trial');
+      const stripeSystem = new StripeSimpleTrialSystem(
+        process.env.STRIPE_SECRET_KEY || 'sk_test_51RjvV9HK6al3veW1FPD5bTV1on2NQLlm9ud45AJDggFHdsGA9UAo5jfbSRvWF83W3uTp5cpZYa8tJBvm4ttefrk800mUs47pFA'
+      );
+      
+      // Criar sessão de checkout
+      const session = await stripeSystem.stripe.checkout.sessions.create({
+        payment_method_types: ['card'],
+        line_items: [
+          {
+            price_data: {
+              currency: 'brl',
+              product_data: {
+                name: plan.name,
+                description: plan.description || '',
+              },
+              unit_amount: Math.round((plan.trial_price || 1.00) * 100),
+            },
+            quantity: 1,
+          },
+        ],
+        mode: 'payment',
+        success_url: returnUrl || `${req.headers.origin}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
+        cancel_url: cancelUrl || `${req.headers.origin}/checkout/${planId}`,
+        customer_email: customerEmail,
+        metadata: {
+          planId: planId,
+          customerName: customerName,
+          customerPhone: customerPhone || '',
+          publicCheckout: 'true'
+        }
+      });
+      
+      console.log('✅ Sessão de checkout público criada:', session.id);
+      
+      res.json({
+        success: true,
+        sessionId: session.id,
+        checkoutUrl: session.url
+      });
+      
+    } catch (error) {
+      console.error('❌ Erro ao criar sessão de checkout pública:', error);
+      res.status(500).json({ 
+        success: false, 
+        message: 'Erro ao criar sessão de checkout',
         error: error.message 
       });
     }

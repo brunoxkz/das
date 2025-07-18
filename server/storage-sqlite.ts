@@ -7343,6 +7343,18 @@ Hoje você vai aprender ${project.title} - método revolucionário que já ajudo
     }
   }
 
+  // Buscar plano por ID
+  async getStripePlan(id: string): Promise<any | undefined> {
+    try {
+      await this.ensureStripePlansTable();
+      const stmt = sqlite.prepare('SELECT * FROM stripe_plans WHERE id = ?');
+      return stmt.get(id);
+    } catch (error) {
+      console.error('❌ ERRO ao buscar plano do Stripe:', error);
+      return undefined;
+    }
+  }
+
   // ================ STRIPE SUBSCRIPTIONS METHODS ================
   
   // Criar tabela de assinaturas do Stripe se não existir
