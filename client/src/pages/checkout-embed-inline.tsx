@@ -30,7 +30,14 @@ function CheckoutForm({ onSuccess }: CheckoutFormProps) {
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
 
-    if (!stripe || !elements) return;
+    if (!stripe || !elements) {
+      toast({
+        title: "Erro",
+        description: "Stripe não está carregado. Aguarde um momento.",
+        variant: "destructive",
+      });
+      return;
+    }
 
     if (!customerData.name || !customerData.email || !customerData.phone) {
       toast({
@@ -44,13 +51,34 @@ function CheckoutForm({ onSuccess }: CheckoutFormProps) {
     setLoading(true);
 
     try {
+      // Primeiro, submit dos elements para validar
+      const { error: submitError } = await elements.submit();
+      
+      if (submitError) {
+        toast({
+          title: "Erro na validação",
+          description: submitError.message || "Erro ao validar dados do pagamento",
+          variant: "destructive",
+        });
+        setLoading(false);
+        return;
+      }
+
       // Confirmar pagamento diretamente no elemento
-      const { error } = await stripe.confirmPayment({
+      const { error, paymentIntent } = await stripe.confirmPayment({
         elements,
         confirmParams: {
           return_url: `${window.location.origin}/payment-success`,
           receipt_email: customerData.email,
+          payment_method_data: {
+            billing_details: {
+              name: customerData.name,
+              email: customerData.email,
+              phone: customerData.phone,
+            },
+          },
         },
+        redirect: 'if_required', // Evitar redirecionamento automático
       });
 
       if (error) {
@@ -59,15 +87,22 @@ function CheckoutForm({ onSuccess }: CheckoutFormProps) {
           description: error.message || "Erro ao processar pagamento",
           variant: "destructive",
         });
-      } else {
+      } else if (paymentIntent && paymentIntent.status === 'succeeded') {
         toast({
           title: "Pagamento aprovado!",
           description: "Sua assinatura foi criada com sucesso. Você receberá um email de confirmação.",
           variant: "default",
         });
-        onSuccess({ success: true });
+        onSuccess({ success: true, paymentIntent });
+      } else {
+        toast({
+          title: "Pagamento pendente",
+          description: "Seu pagamento está sendo processado. Aguarde a confirmação.",
+          variant: "default",
+        });
       }
     } catch (error) {
+      console.error('Erro no pagamento:', error);
       toast({
         title: "Erro no pagamento",
         description: error.message || "Erro inesperado",
@@ -105,7 +140,8 @@ function CheckoutForm({ onSuccess }: CheckoutFormProps) {
           </div>
         </CardHeader>
 
-        <CardContent className="space-y-6">
+        <CardContent>
+          <form onSubmit={handleSubmit} className="space-y-6">
           {/* Informações do cliente */}
           <div className="space-y-4">
             <h3 className="text-lg font-semibold text-gray-800 flex items-center gap-2">
@@ -205,34 +241,34 @@ function CheckoutForm({ onSuccess }: CheckoutFormProps) {
             </div>
           </div>
 
-          {/* Botão de pagamento */}
-          <Button
-            type="submit"
-            className="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-3 text-lg"
-            disabled={!stripe || loading}
-            onClick={handleSubmit}
-          >
-            {loading ? (
-              <div className="flex items-center gap-2">
-                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                Processando pagamento...
-              </div>
-            ) : (
-              <div className="flex items-center gap-2">
-                <CreditCard className="w-5 h-5" />
-                Pagar R$ 1,00 e ativar assinatura
-              </div>
-            )}
-          </Button>
+            {/* Botão de pagamento */}
+            <Button
+              type="submit"
+              className="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-3 text-lg"
+              disabled={!stripe || loading}
+            >
+              {loading ? (
+                <div className="flex items-center gap-2">
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                  Processando pagamento...
+                </div>
+              ) : (
+                <div className="flex items-center gap-2">
+                  <CreditCard className="w-5 h-5" />
+                  Pagar R$ 1,00 e ativar assinatura
+                </div>
+              )}
+            </Button>
 
-          {/* Informações de segurança */}
-          <div className="text-center text-sm text-gray-500 space-y-1">
-            <div className="flex items-center justify-center gap-1">
-              <Shield className="w-4 h-4 text-green-600" />
-              <span>Pagamento seguro processado pelo Stripe</span>
+            {/* Informações de segurança */}
+            <div className="text-center text-sm text-gray-500 space-y-1">
+              <div className="flex items-center justify-center gap-1">
+                <Shield className="w-4 h-4 text-green-600" />
+                <span>Pagamento seguro processado pelo Stripe</span>
+              </div>
+              <p>Seus dados estão protegidos com criptografia SSL</p>
             </div>
-            <p>Seus dados estão protegidos com criptografia SSL</p>
-          </div>
+          </form>
         </CardContent>
       </Card>
     </div>
