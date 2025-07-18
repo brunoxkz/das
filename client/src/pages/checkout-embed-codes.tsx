@@ -21,7 +21,7 @@ export default function CheckoutEmbedCodes() {
   };
 
   const planId = "plan_1752718530673_uqs8yuk7e";
-  const baseUrl = "https://vendzz.replit.app";
+  const baseUrl = "https://51f74588-7b5b-4e89-adab-b70610c96e0b-00-zr6ug9hu0yss.janeway.replit.dev";
 
   const htmlEmbedCode = `<!-- Vendzz Checkout Embed - R$ 1,00 + R$ 29,90/mês -->
 <div id="vendzz-checkout-embed" style="text-align: center; padding: 20px;">

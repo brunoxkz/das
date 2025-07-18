@@ -53,7 +53,7 @@ export function NotificationSystem() {
     refetchInterval: 30000, // Atualizar a cada 30 segundos
   });
 
-  const unreadCount = notifications.filter((n: Notification) => !n.isRead).length;
+  const unreadCount = Array.isArray(notifications) ? notifications.filter((n: Notification) => !n.isRead).length : 0;
 
   // Marcar notificação como lida
   const markAsReadMutation = useMutation({
@@ -151,7 +151,7 @@ export function NotificationSystem() {
         </div>
         
         <div className="max-h-64 overflow-y-auto">
-          {notifications.length === 0 ? (
+          {!Array.isArray(notifications) || notifications.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-8 text-gray-500">
               <Bell className="h-8 w-8 mb-2 opacity-50" />
               <p className="text-sm">Nenhuma notificação</p>
