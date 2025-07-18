@@ -6173,7 +6173,7 @@ console.log('Vendzz Checkout Embed carregado para plano: ${planId}');
           customerName: 'Admin Teste',
           customerEmail: 'admin@vendzz.com',
           description: 'Taxa de ativação - Teste',
-          metadata: JSON.stringify({ test: true, sessionId }),
+          metadata: JSON.stringify({ test: true, simulatedWebhook: true }),
           createdAt: mockTimestamp
         });
 
