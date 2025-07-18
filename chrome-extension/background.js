@@ -385,22 +385,27 @@ async function processMessages() {
 // Sistema de ping para manter conexão ativa
 async function pingServer() {
   try {
-    await apiRequest('/api/whatsapp-extension/status', {
+    const response = await apiRequest('/api/whatsapp-extension/ping', {
       method: 'POST',
       body: JSON.stringify({
-        version: config.version,
-        pendingMessages: extensionState.pendingMessages,
-        sentMessages: extensionState.sentMessages,
-        failedMessages: extensionState.failedMessages,
-        isActive: extensionState.isActive
+        version: config.version
       })
     });
 
-    config.lastPing = new Date().toISOString();
+    if (response.success) {
+      config.isConnected = true;
+      config.lastPing = new Date().toISOString();
+      console.log('✅ Ping enviado com sucesso - Extensão conectada');
+    } else {
+      config.isConnected = false;
+      console.log('❌ Ping falhou - Extensão desconectada');
+    }
+    
     saveConfig();
   } catch (error) {
     config.isConnected = false;
-    console.error('❌ Erro no ping:', error);
+    console.error('❌ Erro no ping - Extensão desconectada:', error);
+    saveConfig();
   }
 }
 

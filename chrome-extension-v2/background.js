@@ -290,11 +290,37 @@ chrome.runtime.onInstalled.addListener(async () => {
   }
 });
 
+// Sistema de ping para manter conexão ativa
+async function pingServer() {
+  try {
+    const response = await apiRequest('/api/whatsapp-extension/ping', {
+      method: 'POST',
+      body: JSON.stringify({
+        version: "2.1.0"
+      })
+    });
+
+    if (response.success) {
+      console.log('✅ Ping v2 enviado com sucesso - Extensão conectada');
+    } else {
+      console.log('❌ Ping v2 falhou - Extensão desconectada');
+    }
+  } catch (error) {
+    console.error('❌ Erro no ping v2 - Extensão desconectada:', error);
+  }
+}
+
 // Carregar configuração na inicialização
 loadConfig().then(() => {
   console.log('⚙️ Configuração carregada:', config);
   
   if (config.autoMode) {
     startMonitoring();
+  }
+  
+  // Ping a cada 60 segundos se autenticado
+  if (config.authToken) {
+    setInterval(pingServer, 60000);
+    pingServer(); // Ping imediato
   }
 });

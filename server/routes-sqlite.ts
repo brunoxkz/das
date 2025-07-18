@@ -13161,22 +13161,7 @@ app.post("/api/whatsapp-extension/sync", verifyJWT, async (req: any, res: Respon
   }
 });
 
-// Get extension status (ultra-optimized for <50ms response)
-app.get("/api/whatsapp-extension/status", verifyJWT, (req: any, res: Response) => {
-  res.json({
-    connected: true,
-    version: "1.0.0",
-    lastPing: Date.now()
-  });
-});
-
-// Update extension status (ultra-optimized for <50ms response)
-app.post("/api/whatsapp-extension/status", verifyJWT, (req, res) => {
-  res.json({
-    success: true,
-    serverTime: Date.now()
-  });
-});
+// Endpoint removido - duplicação corrigida
 
 // Get user extension settings (real-time sync)
 app.get("/api/whatsapp-extension/settings", verifyJWT, async (req: any, res: Response) => {
@@ -13407,28 +13392,45 @@ app.get("/api/whatsapp-templates", verifyJWT, async (req: any, res: Response) =>
   }
 });
 
-// WhatsApp extension status endpoint
+// WhatsApp extension status endpoint - verificação real de conexão
 app.get("/api/whatsapp-extension/status", verifyJWT, async (req: any, res: Response) => {
   try {
     const userId = req.user.id;
+    const userEmail = req.user.email || 'unknown';
     
-    // Verificar se há ping recente da extensão (últimos 30 segundos)
+    // Verificar se há ping recente da extensão (últimos 60 segundos para mais tolerância)
     const recentPing = await storage.getRecentExtensionPing(userId);
-    const isConnected = recentPing && (Date.now() - recentPing.timestamp) < 30000;
+    const isConnected = recentPing && (Date.now() - recentPing.timestamp) < 60000;
     
-    // Contar mensagens pendentes
-    const currentTime = Math.floor(Date.now() / 1000);
-    const pendingMessages = await storage.getScheduledWhatsappLogsByUser(userId, currentTime);
+    // Contar mensagens pendentes apenas se conectado
+    let pendingMessages = 0;
+    if (isConnected) {
+      const currentTime = Math.floor(Date.now() / 1000);
+      const logs = await storage.getScheduledWhatsappLogsByUser(userId, currentTime);
+      pendingMessages = logs.length;
+    }
+    
+    console.log(`🔍 STATUS EXTENSÃO - User: ${userEmail}, Conectado: ${isConnected}, Último ping: ${recentPing?.timestamp || 'nunca'}, Pendentes: ${pendingMessages}`);
     
     res.json({
       connected: isConnected,
       version: recentPing?.version || "2.0.0",
       lastPing: recentPing?.timestamp || null,
-      pendingMessages: pendingMessages.length
+      pendingMessages: pendingMessages,
+      statusMessage: isConnected ? 'Extensão Conectada' : 'Extensão Desconectada',
+      lastPingAgo: recentPing ? Math.floor((Date.now() - recentPing.timestamp) / 1000) : null
     });
   } catch (error) {
     console.error('❌ ERRO ao verificar status da extensão:', error);
-    res.status(500).json({ error: 'Erro interno do servidor' });
+    // Retornar desconectado em caso de erro
+    res.json({
+      connected: false,
+      version: "2.0.0",
+      lastPing: null,
+      pendingMessages: 0,
+      statusMessage: 'Extensão Desconectada',
+      error: 'Erro na verificação'
+    });
   }
 });
 

@@ -45,14 +45,37 @@ export default function WhatsAppCampaigns() {
     conversionRate: 15.7
   };
 
-  const checkExtensionStatus = () => {
-    // Simular verificação da extensão
-    const isConnected = Math.random() > 0.5;
-    setExtensionStatus({
-      connected: isConnected,
-      pendingMessages: isConnected ? Math.floor(Math.random() * 20) : 0,
-      version: isConnected ? "2.1.4" : null
-    });
+  const checkExtensionStatus = async () => {
+    try {
+      const response = await fetch('/api/whatsapp-extension/status', {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        setExtensionStatus({
+          connected: data.connected || false,
+          pendingMessages: data.pendingMessages || 0,
+          version: data.version || null
+        });
+      } else {
+        // Se erro na API, marcar como desconectado
+        setExtensionStatus({
+          connected: false,
+          pendingMessages: 0,
+          version: null
+        });
+      }
+    } catch (error) {
+      console.error('Erro ao verificar status da extensão:', error);
+      setExtensionStatus({
+        connected: false,
+        pendingMessages: 0,
+        version: null
+      });
+    }
   };
 
   useEffect(() => {
