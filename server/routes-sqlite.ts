@@ -1051,6 +1051,230 @@ export function registerSQLiteRoutes(app: Express): Server {
     }
   });
 
+  // 🔧 ENDPOINT PARA TESTAR WEBHOOK E VERIFICAR CRIAÇÃO DE SUBSCRIPTION
+  app.post('/api/stripe/test-webhook-trial', async (req, res) => {
+    try {
+      // Importar Stripe
+      const { StripeSimpleTrialSystem } = await import('./stripe-simple-trial');
+      const stripeSystem = new StripeSimpleTrialSystem(
+        process.env.STRIPE_SECRET_KEY || 'sk_test_51RjvV9HK6al3veW1FPD5bTV1on2NQLlm9ud45AJDggFHdsGA9UAo5jfbSRvWF83W3uTp5cpZYa8tJBvm4ttefrk800mUs47pFA'
+      );
+
+      // Simular um payment_intent.succeeded para testar o webhook
+      const { email } = req.body;
+      
+      if (!email) {
+        return res.status(400).json({
+          success: false,
+          message: 'Email obrigatório'
+        });
+      }
+
+      // Buscar customer por email
+      const customers = await stripeSystem.stripe.customers.list({
+        email: email,
+        limit: 1
+      });
+
+      if (customers.data.length === 0) {
+        return res.json({
+          success: false,
+          message: 'Cliente não encontrado'
+        });
+      }
+
+      const customer = customers.data[0];
+
+      // Buscar payment intents recentes do customer
+      const paymentIntents = await stripeSystem.stripe.paymentIntents.list({
+        customer: customer.id,
+        limit: 5
+      });
+
+      let validationPaymentIntent = null;
+      for (const pi of paymentIntents.data) {
+        if (pi.metadata?.type === 'validation_payment') {
+          validationPaymentIntent = pi;
+          break;
+        }
+      }
+
+      if (!validationPaymentIntent) {
+        return res.json({
+          success: false,
+          message: 'Nenhum payment intent de validação encontrado'
+        });
+      }
+
+      // Simular processamento do webhook
+      const { handleStripeWebhook } = await import('./stripe-webhook');
+      
+      // Criar evento mock para testar
+      const mockEvent = {
+        id: 'evt_test_webhook',
+        object: 'event',
+        created: Math.floor(Date.now() / 1000),
+        livemode: false,
+        pending_webhooks: 1,
+        request: {
+          id: 'req_test',
+          idempotency_key: null,
+        },
+        type: 'payment_intent.succeeded',
+        data: {
+          object: validationPaymentIntent,
+        },
+      };
+
+      // Simular processamento do webhook
+      console.log('🔄 SIMULANDO WEBHOOK payment_intent.succeeded');
+      console.log('📧 Email:', email);
+      console.log('💳 Payment Intent:', validationPaymentIntent.id);
+      console.log('🧾 Metadata:', validationPaymentIntent.metadata);
+
+      // Processar o webhook internamente
+      await handlePaymentIntentSucceeded(validationPaymentIntent);
+
+      // Verificar se subscription foi criada
+      const subscriptions = await stripeSystem.stripe.subscriptions.list({
+        customer: customer.id,
+        limit: 5
+      });
+
+      const autoCreatedSubscription = subscriptions.data.find(sub => 
+        sub.metadata?.type === 'auto_created_after_trial_payment'
+      );
+
+      res.json({
+        success: true,
+        message: 'Webhook simulado com sucesso',
+        data: {
+          customer: {
+            id: customer.id,
+            email: customer.email
+          },
+          payment_intent: {
+            id: validationPaymentIntent.id,
+            status: validationPaymentIntent.status,
+            amount: validationPaymentIntent.amount,
+            metadata: validationPaymentIntent.metadata
+          },
+          subscription_created: autoCreatedSubscription ? {
+            id: autoCreatedSubscription.id,
+            status: autoCreatedSubscription.status,
+            trial_end: autoCreatedSubscription.trial_end ? new Date(autoCreatedSubscription.trial_end * 1000).toISOString() : null,
+            current_period_end: new Date(autoCreatedSubscription.current_period_end * 1000).toISOString(),
+            default_payment_method: autoCreatedSubscription.default_payment_method
+          } : null,
+          webhook_test: {
+            processed: true,
+            event_type: 'payment_intent.succeeded',
+            timestamp: new Date().toISOString()
+          }
+        }
+      });
+
+    } catch (error) {
+      console.error('❌ ERRO AO TESTAR WEBHOOK:', error.message);
+      res.status(500).json({ 
+        success: false, 
+        message: 'Erro ao testar webhook',
+        error: error.message 
+      });
+    }
+  });
+
+  // Função auxiliar para simular handlePaymentIntentSucceeded
+  async function handlePaymentIntentSucceeded(paymentIntent) {
+    console.log('💰 Payment Intent succeeded:', paymentIntent.id);
+    
+    try {
+      // Verificar se é um pagamento de validação
+      if (paymentIntent.metadata?.type === 'validation_payment') {
+        console.log('🔄 PROCESSANDO VALIDAÇÃO - Criando subscription automática com trial');
+        
+        const customerId = paymentIntent.metadata.customer_id;
+        const recurringPriceId = paymentIntent.metadata.recurring_price_id;
+        const trialDays = parseInt(paymentIntent.metadata.trial_days || '3');
+        
+        if (!customerId || !recurringPriceId) {
+          console.error('❌ Metadata incompleta para criar subscription');
+          return;
+        }
+        
+        // Importar Stripe
+        const { StripeSimpleTrialSystem } = await import('./stripe-simple-trial');
+        const stripeSystem = new StripeSimpleTrialSystem(
+          process.env.STRIPE_SECRET_KEY || 'sk_test_51RjvV9HK6al3veW1FPD5bTV1on2NQLlm9ud45AJDggFHdsGA9UAo5jfbSRvWF83W3uTp5cpZYa8tJBvm4ttefrk800mUs47pFA'
+        );
+        
+        // Buscar o payment method usado no pagamento
+        const paymentMethod = paymentIntent.payment_method;
+        
+        if (!paymentMethod) {
+          console.error('❌ Payment method não encontrado');
+          return;
+        }
+        
+        // Verificar se já existe uma subscription
+        const existingSubscriptions = await stripeSystem.stripe.subscriptions.list({
+          customer: customerId,
+          limit: 5
+        });
+        
+        const hasAutoCreatedSub = existingSubscriptions.data.find(sub => 
+          sub.metadata?.type === 'auto_created_after_trial_payment'
+        );
+        
+        if (hasAutoCreatedSub) {
+          console.log('✅ Subscription já existe:', hasAutoCreatedSub.id);
+          return;
+        }
+        
+        // Anexar payment method ao customer (se não estiver anexado)
+        try {
+          await stripeSystem.stripe.paymentMethods.attach(paymentMethod as string, {
+            customer: customerId,
+          });
+        } catch (attachError) {
+          console.log('⚠️ Payment method já anexado ou erro:', attachError.message);
+        }
+        
+        // Definir como payment method padrão
+        await stripeSystem.stripe.customers.update(customerId, {
+          invoice_settings: {
+            default_payment_method: paymentMethod as string,
+          },
+        });
+        
+        // Criar subscription com trial
+        const subscription = await stripeSystem.stripe.subscriptions.create({
+          customer: customerId,
+          items: [{
+            price: recurringPriceId,
+          }],
+          trial_period_days: trialDays,
+          default_payment_method: paymentMethod as string,
+          expand: ['latest_invoice.payment_intent'],
+          metadata: {
+            type: 'auto_created_after_trial_payment',
+            original_payment_intent: paymentIntent.id,
+            trial_days: trialDays.toString(),
+          },
+        });
+        
+        console.log('✅ SUBSCRIPTION CRIADA AUTOMATICAMENTE:', subscription.id);
+        console.log('📅 Trial end:', new Date(subscription.trial_end * 1000).toISOString());
+        console.log('💳 Payment method anexado:', paymentMethod);
+        
+        return subscription;
+      }
+    } catch (error) {
+      console.error('❌ Erro ao processar payment_intent.succeeded:', error);
+      throw error;
+    }
+  }
+
   // 🔍 ENDPOINT PARA CONSULTAR CONFIGURAÇÃO DE TRIAL E COBRANÇA AUTOMÁTICA
   app.get('/api/stripe/trial-config/:email', async (req, res) => {
     try {

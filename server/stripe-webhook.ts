@@ -79,11 +79,84 @@ async function handlePaymentIntentSucceeded(paymentIntent: Stripe.PaymentIntent)
   console.log('💰 Payment Intent succeeded:', paymentIntent.id);
   
   try {
-    // Buscar assinatura no banco de dados
+    // Verificar se é um pagamento de validação
+    if (paymentIntent.metadata?.type === 'validation_payment') {
+      console.log('🔄 PROCESSANDO VALIDAÇÃO - Criando subscription automática com trial');
+      
+      const customerId = paymentIntent.metadata.customer_id;
+      const recurringPriceId = paymentIntent.metadata.recurring_price_id;
+      const trialDays = parseInt(paymentIntent.metadata.trial_days || '3');
+      
+      if (!customerId || !recurringPriceId) {
+        console.error('❌ Metadata incompleta para criar subscription');
+        return;
+      }
+      
+      // Buscar o payment method usado no pagamento
+      const paymentMethod = paymentIntent.payment_method;
+      
+      if (!paymentMethod) {
+        console.error('❌ Payment method não encontrado');
+        return;
+      }
+      
+      // Anexar payment method ao customer (já foi salvo via setup_future_usage)
+      await stripe.paymentMethods.attach(paymentMethod as string, {
+        customer: customerId,
+      });
+      
+      // Definir como payment method padrão
+      await stripe.customers.update(customerId, {
+        invoice_settings: {
+          default_payment_method: paymentMethod as string,
+        },
+      });
+      
+      // Criar subscription com trial
+      const subscription = await stripe.subscriptions.create({
+        customer: customerId,
+        items: [{
+          price: recurringPriceId,
+        }],
+        trial_period_days: trialDays,
+        default_payment_method: paymentMethod as string,
+        expand: ['latest_invoice.payment_intent'],
+        metadata: {
+          type: 'auto_created_after_trial_payment',
+          original_payment_intent: paymentIntent.id,
+          trial_days: trialDays.toString(),
+        },
+      });
+      
+      console.log('✅ SUBSCRIPTION CRIADA AUTOMATICAMENTE:', subscription.id);
+      console.log('📅 Trial end:', new Date(subscription.trial_end * 1000).toISOString());
+      console.log('💳 Payment method anexado:', paymentMethod);
+      
+      // Salvar informações no banco de dados local
+      try {
+        await storage.createSubscription({
+          userId: paymentIntent.metadata.user_id || 'unknown',
+          stripeSubscriptionId: subscription.id,
+          stripeCustomerId: customerId,
+          stripePriceId: recurringPriceId,
+          status: 'trialing',
+          trialEndsAt: new Date(subscription.trial_end * 1000),
+          currentPeriodStart: new Date(subscription.current_period_start * 1000),
+          currentPeriodEnd: new Date(subscription.current_period_end * 1000),
+          paymentIntentId: paymentIntent.id,
+        });
+        console.log('✅ Subscription salva no banco local');
+      } catch (dbError) {
+        console.log('⚠️ Erro ao salvar no banco local (subscription criada no Stripe):', dbError.message);
+      }
+      
+      return;
+    }
+    
+    // Lógica original para outras assinaturas
     const subscription = await storage.getSubscriptionByPaymentIntent(paymentIntent.id);
     
     if (subscription) {
-      // Atualizar status da assinatura
       await storage.updateSubscriptionStatus(subscription.id, 'active');
       console.log('✅ Assinatura ativada:', subscription.stripeSubscriptionId);
     }

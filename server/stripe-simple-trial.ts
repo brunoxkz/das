@@ -18,7 +18,7 @@ interface TrialConfig {
 }
 
 export class StripeSimpleTrialSystem {
-  private stripe: Stripe;
+  public stripe: Stripe;
 
   constructor(apiKey: string) {
     this.stripe = new Stripe(apiKey, {
@@ -69,8 +69,8 @@ export class StripeSimpleTrialSystem {
 
       console.log('✅ Price recorrente criado:', recurringPrice.id);
 
-      // 4. Criar Checkout Session com cobrança imediata + setup para trial
-      const checkoutSession = await this.stripe.checkout.sessions.create({
+      // 4. Criar PRIMEIRO checkout para validação de cartão (R$ 1,00)
+      const validationCheckout = await this.stripe.checkout.sessions.create({
         customer: customer.id,
         payment_method_types: ['card'],
         mode: 'payment',
@@ -79,8 +79,8 @@ export class StripeSimpleTrialSystem {
             price_data: {
               currency: config.currency.toLowerCase(),
               product_data: {
-                name: `${config.planName} - Taxa de Ativação`,
-                description: `R$${config.trialAmount.toFixed(2)} para ativação + R$${config.recurringAmount.toFixed(2)}/mês após ${config.trialDays} dias`,
+                name: `${config.planName} - Taxa de Validação`,
+                description: `R$${config.trialAmount.toFixed(2)} para validar cartão. Após confirmação, assinatura de R$${config.recurringAmount.toFixed(2)}/mês será criada com ${config.trialDays} dias de trial gratuito.`,
               },
               unit_amount: Math.round(config.trialAmount * 100),
             },
@@ -90,54 +90,57 @@ export class StripeSimpleTrialSystem {
         payment_intent_data: {
           setup_future_usage: 'off_session',
           metadata: {
-            type: 'trial_activation',
+            type: 'validation_payment',
             customer_id: customer.id,
             recurring_price_id: recurringPrice.id,
             trial_days: config.trialDays.toString(),
+            step: 'validation',
           },
         },
-        success_url: `${process.env.FRONTEND_URL || 'http://localhost:5000'}/checkout/success?session_id={CHECKOUT_SESSION_ID}&type=simple_trial`,
+        success_url: `${process.env.FRONTEND_URL || 'http://localhost:5000'}/checkout/success?session_id={CHECKOUT_SESSION_ID}&type=validation_success`,
         cancel_url: `${process.env.FRONTEND_URL || 'http://localhost:5000'}/checkout/cancel`,
         metadata: {
-          type: 'simple_trial_checkout',
+          type: 'validation_checkout',
           customer_id: customer.id,
           recurring_price_id: recurringPrice.id,
           trial_amount: config.trialAmount.toString(),
           recurring_amount: config.recurringAmount.toString(),
           trial_days: config.trialDays.toString(),
+          step: 'validation',
         },
       });
 
-      console.log('✅ Checkout Session criado:', checkoutSession.id);
+      console.log('✅ Checkout de Validação criado:', validationCheckout.id);
 
       const explanation = `
-✅ FLUXO SIMPLIFICADO IMPLEMENTADO:
+✅ FLUXO CORRIGIDO IMPLEMENTADO:
 1. Customer criado: ${customer.id}
 2. Product criado: ${product.id}
 3. Price R$${config.recurringAmount.toFixed(2)}/mês criado: ${recurringPrice.id}
-4. Checkout Session para cobrança imediata: ${checkoutSession.id}
+4. Checkout de Validação criado: ${validationCheckout.id}
 5. setup_future_usage configurado para salvar cartão
 
-🔧 PRÓXIMOS PASSOS:
-- Webhook processar payment_intent.succeeded
-- Criar subscription com trial_period_days: ${config.trialDays}
-- Usar cartão salvo para cobrança recorrente
+🔧 FLUXO CORRETO EM DUAS ETAPAS:
+ETAPA 1: Pagamento de validação R$${config.trialAmount.toFixed(2)} (salva cartão)
+ETAPA 2: Webhook cria subscription com trial de ${config.trialDays} dias + R$${config.recurringAmount.toFixed(2)}/mês
 
-📋 FLUXO DE COBRANÇA:
-1. Cliente paga R$${config.trialAmount.toFixed(2)} IMEDIATAMENTE
-2. Recebe ${config.trialDays} dias de trial
-3. Após ${config.trialDays} dias → cobrança automática R$${config.recurringAmount.toFixed(2)}/mês
-4. Cartão salvo automaticamente via setup_future_usage
+📋 SEQUÊNCIA DE COBRANÇA:
+1. Cliente paga R$${config.trialAmount.toFixed(2)} para VALIDAR cartão
+2. Webhook detecta pagamento e cria subscription automaticamente
+3. Subscription inicia com ${config.trialDays} dias de trial GRATUITO
+4. Após ${config.trialDays} dias → cobrança automática R$${config.recurringAmount.toFixed(2)}/mês
+5. Cartão já salvo é usado para cobranças futuras (sem nova autorização)
       `.trim();
 
       return {
         customerId: customer.id,
         productId: product.id,
         recurringPriceId: recurringPrice.id,
-        checkoutSessionId: checkoutSession.id,
-        checkoutUrl: checkoutSession.url!,
+        checkoutSessionId: validationCheckout.id,
+        checkoutUrl: validationCheckout.url!,
         explanation,
         success: true,
+        step: 'validation',
       };
 
     } catch (error) {
