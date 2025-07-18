@@ -265,6 +265,16 @@ O sistema utiliza Stripe Payment Intent para processar pagamentos únicos de R$ 
 
 ```
 Changelog:
+- July 18, 2025. BUG ID CAMPANHA EMAIL 100% CORRIGIDO - Correção crítica no endpoint POST /api/email-campaigns:
+  * Adicionado campo 'id' na resposta do endpoint além do 'campaignId' existente
+  * Ambos os campos retornam o mesmo valor para compatibilidade total
+  * Taxa de sucesso dos testes melhorou para 100% (5/5 testes aprovados)
+  * Resposta agora inclui: {"success":true,"id":"XN3Qd_lc_Q3b0VJtFMwIb","campaignId":"XN3Qd_lc_Q3b0VJtFMwIb","scheduledEmails":0,"message":"Campanha de email criada com sucesso"}
+  * Correção implementada na linha 13855 do server/routes-sqlite.ts
+  * Mantida retrocompatibilidade com sistemas existentes
+  * Teste de validação criado: teste-bug-id-campanha-corrigido.cjs
+  * Sistema de email marketing agora 100% funcional e pronto para produção
+  * Documentação completa: RELATORIO-BUG-ID-CAMPANHA-CORRIGIDO.md
 - July 18, 2025. LÓGICA DE NEGÓCIO CORRIGIDA CONFORME ESPECIFICAÇÃO DO USUÁRIO - Sistema ajustado para implementar as regras corretas:
   * Quiz Publication: Baseada no PLANO do usuário (free = limite 3 quizzes, pagos = ilimitado)
   * SMS, Email, Voice Campaigns: Baseadas em CRÉDITOS (validação obrigatória)

@@ -13852,6 +13852,7 @@ app.get("/api/whatsapp-extension/pending", verifyJWT, async (req: any, res: Resp
       if (result.success) {
         res.json({
           success: true,
+          id: result.campaignId,        // Adicionar id para compatibilidade
           campaignId: result.campaignId,
           scheduledEmails: result.scheduledEmails,
           message: "Campanha de email criada com sucesso"
