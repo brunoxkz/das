@@ -553,6 +553,23 @@ export function registerSQLiteRoutes(app: Express): Server {
     }
   });
 
+  // Buscar plano específico por ID (público)
+  app.get('/api/stripe/plans/:id', async (req, res) => {
+    try {
+      const { id } = req.params;
+      const plan = sqlite.prepare('SELECT * FROM stripe_plans WHERE id = ?').get(id);
+      
+      if (!plan) {
+        return res.status(404).json({ error: 'Plano não encontrado' });
+      }
+
+      res.json(plan);
+    } catch (error) {
+      console.error('Erro ao buscar plano específico:', error);
+      res.status(500).json({ error: 'Erro interno do servidor' });
+    }
+  });
+
   // Criar novo plano
   app.post('/api/stripe/plans', verifyJWT, async (req, res) => {
     try {

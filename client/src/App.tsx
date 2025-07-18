@@ -83,6 +83,7 @@ import CheckoutTrialCustom from "@/pages/checkout-trial-custom";
 import CheckoutTrialPerfect from "@/pages/checkout-trial-perfect";
 import StripePlansPerfeito from "@/pages/stripe-plans-perfect";
 import CheckoutEmbed from "@/pages/checkout-embed";
+import CheckoutEmbedPage from "@/pages/checkout-embed";
 import CheckoutEmbedCodes from "@/pages/checkout-embed-codes";
 import CheckoutEmbedStripe from "@/pages/checkout-embed-stripe";
 import CheckoutEmbedInline from "@/pages/checkout-embed-inline";
@@ -118,7 +119,8 @@ function App() {
   const isCheckoutRoute = location.startsWith("/checkout/");
   const isStripeCheckoutLink = location.startsWith("/stripe-checkout-link/");
   const isCheckoutPublic = location.startsWith("/checkout-public/");
-  const isPublicRoute = publicRoutes.includes(location) || isQuizRoute || isCheckoutRoute || isStripeCheckoutLink || isCheckoutPublic;
+  const isCheckoutEmbed = location.startsWith("/checkout-embed/");
+  const isPublicRoute = publicRoutes.includes(location) || isQuizRoute || isCheckoutRoute || isStripeCheckoutLink || isCheckoutPublic || isCheckoutEmbed;
 
   // Redirect to dashboard if authenticated and on login page
   if (isAuthenticated && location === "/login") {
@@ -143,6 +145,7 @@ function App() {
         <Route path="/checkout/:planId" component={PublicCheckout} />
         <Route path="/checkout/success" component={CheckoutSuccess} />
         <Route path="/checkout-public/:planId" component={CheckoutPublic} />
+        <Route path="/checkout-embed/:planId" component={CheckoutEmbedPage} />
         <Route path="/checkout-individual/:id" component={CheckoutIndividual} />
         <Route path="/payment-success" component={PaymentSuccess} />
         <Route path="/payment-cancel" component={PaymentSuccess} />

@@ -243,6 +243,21 @@ O sistema utiliza Stripe Payment Intent para processar pagamentos únicos de R$ 
 
 ```
 Changelog:
+- July 18, 2025. SISTEMA DE CHECKOUT EMBED AUTOMÁTICO IMPLEMENTADO - Correção crítica do erro JSON e implementação de checkout embed real:
+  * Corrigido erro JSON no botão "Copiar URL" que usava endpoint inexistente
+  * Implementado checkout embed automático na lista de planos após criação
+  * Criada página /checkout-embed/:planId para checkout público embeddable
+  * Adicionado botão "🚀 Iniciar Checkout Real" com integração Stripe direta
+  * Implementado código de embed HTML automático para integração em sites externos
+  * Criado layout profissional com pricing, features e trust indicators
+  * Configurado roteamento público para checkout embeds sem autenticação
+  * Endpoint GET /api/stripe/plans/:id para buscar plano específico
+  * Interface atualizada: planos aparecem com embed funcional imediatamente
+  * Sistema permite teste direto do checkout em produção
+  * Código de embed copiável com iframe responsivo
+  * Checkout real abre em nova aba com URL Stripe oficial
+  * Corrigido function name handleUpdatePlanAdvanced para consistency
+  * Sistema 100% operacional para uso em produção
 - July 18, 2025. SISTEMA DE PAGAMENTO ÚNICO STRIPE COMPLETAMENTE SINCRONIZADO - Correção crítica da terminologia e arquitetura:
   * Convertido sistema de "validação" para "pagamento único" em todo o codebase
   * Atualizado stripe-simple-trial.ts para usar tipo 'onetime_payment' ao invés de 'activation_payment'

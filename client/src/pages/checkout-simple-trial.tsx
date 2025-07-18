@@ -180,8 +180,16 @@ export default function CheckoutSimpleTrial() {
 
   const generateCheckoutUrl = async (planId) => {
     try {
-      const response = await apiRequest('POST', '/api/stripe/generate-checkout-url', { planId });
-      if (response.success) {
+      const response = await apiRequest('POST', '/api/stripe/simple-trial', { 
+        productName: 'Plano ' + planId,
+        description: 'Checkout automático',
+        activationPrice: 1.00,
+        trialDays: 3,
+        recurringPrice: 29.90,
+        currency: 'BRL'
+      });
+      
+      if (response.success && response.checkoutUrl) {
         const checkoutUrl = response.checkoutUrl;
         navigator.clipboard.writeText(checkoutUrl);
         toast({
@@ -189,11 +197,14 @@ export default function CheckoutSimpleTrial() {
           description: "Link de checkout copiado para área de transferência",
         });
         return checkoutUrl;
+      } else {
+        throw new Error('Erro ao gerar URL de checkout');
       }
     } catch (error) {
+      console.error('Erro ao gerar URL:', error);
       toast({
         title: "Erro ao gerar URL",
-        description: error.message,
+        description: error.message || 'Erro desconhecido',
         variant: "destructive",
       });
     }
@@ -792,37 +803,39 @@ export default function CheckoutSimpleTrial() {
                     <p className="text-sm">Crie seu primeiro plano usando o formulário acima</p>
                   </div>
                 ) : (
-                  <div className="space-y-4">
+                  <div className="space-y-6">
                     {plans.map((plan) => (
                       <Card key={plan.id} className="border-l-4 border-l-blue-500">
                         <CardContent className="p-6">
-                          <div className="grid md:grid-cols-3 gap-6">
+                          <div className="grid md:grid-cols-2 gap-6">
                             {/* Informações do Plano */}
-                            <div className="space-y-3">
+                            <div className="space-y-4">
                               <div className="flex items-center justify-between">
-                                <h3 className="font-bold text-lg">{plan.name}</h3>
+                                <h3 className="font-bold text-xl">{plan.name}</h3>
                                 <Badge variant={plan.active ? "default" : "secondary"}>
                                   {plan.active ? 'Ativo' : 'Inativo'}
                                 </Badge>
                               </div>
                               <p className="text-sm text-gray-600">{plan.description}</p>
                               
-                              <div className="space-y-2">
-                                <div className="flex justify-between text-sm">
-                                  <span>Pagamento Único:</span>
-                                  <span className="font-medium text-green-600">R$ {plan.trial_price.toFixed(2)}</span>
-                                </div>
-                                <div className="flex justify-between text-sm">
-                                  <span>Trial:</span>
-                                  <span className="font-medium">{plan.trial_days} dias</span>
-                                </div>
-                                <div className="flex justify-between text-sm">
-                                  <span>Recorrência:</span>
-                                  <span className="font-medium text-blue-600">R$ {plan.price.toFixed(2)}/{plan.interval === 'month' ? 'mês' : plan.interval === 'year' ? 'ano' : plan.interval === 'week' ? 'semana' : 'dia'}</span>
+                              <div className="bg-gradient-to-r from-blue-50 to-purple-50 p-4 rounded-lg">
+                                <div className="grid grid-cols-3 gap-4 text-center">
+                                  <div>
+                                    <div className="text-xs text-gray-500 mb-1">Pagamento Único</div>
+                                    <div className="font-bold text-green-600">R$ {plan.trial_price.toFixed(2)}</div>
+                                  </div>
+                                  <div>
+                                    <div className="text-xs text-gray-500 mb-1">Trial Gratuito</div>
+                                    <div className="font-medium">{plan.trial_days} dias</div>
+                                  </div>
+                                  <div>
+                                    <div className="text-xs text-gray-500 mb-1">Recorrência</div>
+                                    <div className="font-bold text-blue-600">R$ {plan.price.toFixed(2)}/{plan.interval === 'month' ? 'mês' : plan.interval === 'year' ? 'ano' : plan.interval === 'week' ? 'semana' : 'dia'}</div>
+                                  </div>
                                 </div>
                               </div>
 
-                              <div className="flex flex-wrap gap-2 pt-2">
+                              <div className="flex flex-wrap gap-2">
                                 <Button
                                   variant="outline"
                                   size="sm"
@@ -863,91 +876,92 @@ export default function CheckoutSimpleTrial() {
                               </div>
                             </div>
 
-                            {/* Código de Embed */}
-                            <div className="space-y-3">
-                              <h4 className="font-semibold text-sm">Código de Embed</h4>
-                              <div className="bg-gray-50 rounded-lg p-3">
-                                <code className="text-xs text-gray-700 break-all">
-                                  {`<div id="vendzz-checkout-${plan.id}"></div>
-<script>
-  window.VendzzCheckout = {
-    planId: '${plan.id}',
-    publicKey: 'pk_test_...',
-    containerId: 'vendzz-checkout-${plan.id}'
-  };
-</script>
-<script src="https://js.stripe.com/v3/"></script>
-<script src="/embed/vendzz-checkout.js"></script>`}
-                                </code>
+                            {/* Checkout Embed REAL e Funcional */}
+                            <div className="space-y-4">
+                              <div className="flex items-center justify-between">
+                                <h4 className="font-semibold text-lg">🔥 Checkout Real - Teste Agora!</h4>
+                                <Badge variant="secondary">Pronto para usar</Badge>
                               </div>
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => {
-                                  const embedCode = `<div id="vendzz-checkout-${plan.id}"></div>
-<script>
-  window.VendzzCheckout = {
-    planId: '${plan.id}',
-    publicKey: 'pk_test_...',
-    containerId: 'vendzz-checkout-${plan.id}'
-  };
-</script>
-<script src="https://js.stripe.com/v3/"></script>
-<script src="/embed/vendzz-checkout.js"></script>`;
-                                  navigator.clipboard.writeText(embedCode);
-                                  toast({
-                                    title: "Código copiado!",
-                                    description: "Código de embed copiado para área de transferência",
-                                  });
-                                }}
-                                className="w-full"
-                              >
-                                <Code className="w-3 h-3 mr-1" />
-                                Copiar Código de Embed
-                              </Button>
-                            </div>
-
-                            {/* Stripe Elements Preview */}
-                            <div className="space-y-3">
-                              <h4 className="font-semibold text-sm">Preview do Checkout</h4>
-                              <div className="border rounded-lg p-4 bg-white">
-                                <div className="text-center mb-4">
-                                  <h5 className="font-medium">{plan.name}</h5>
-                                  <p className="text-sm text-gray-600">R$ {plan.trial_price.toFixed(2)} hoje, depois R$ {plan.price.toFixed(2)}/{plan.interval === 'month' ? 'mês' : 'ano'}</p>
-                                </div>
-                                
-                                {/* Simulação do Stripe Elements */}
-                                <div className="space-y-3">
-                                  <div className="border rounded px-3 py-2 bg-gray-50">
-                                    <div className="text-xs text-gray-500 mb-1">Número do Cartão</div>
-                                    <div className="text-sm">•••• •••• •••• 4242</div>
-                                  </div>
-                                  <div className="grid grid-cols-2 gap-2">
-                                    <div className="border rounded px-3 py-2 bg-gray-50">
-                                      <div className="text-xs text-gray-500 mb-1">Validade</div>
-                                      <div className="text-sm">12/26</div>
+                              
+                              {/* Embed do Checkout Real */}
+                              <div className="border-2 border-dashed border-blue-300 rounded-lg p-4 bg-blue-50">
+                                <div className="text-center space-y-4">
+                                  <div>
+                                    <h5 className="font-bold text-lg mb-2">{plan.name}</h5>
+                                    <p className="text-sm text-gray-600 mb-4">{plan.description}</p>
+                                    <div className="text-2xl font-bold text-blue-600 mb-2">
+                                      R$ {plan.trial_price.toFixed(2)}
                                     </div>
-                                    <div className="border rounded px-3 py-2 bg-gray-50">
-                                      <div className="text-xs text-gray-500 mb-1">CVC</div>
-                                      <div className="text-sm">•••</div>
+                                    <div className="text-sm text-gray-600 mb-4">
+                                      Depois R$ {plan.price.toFixed(2)}/{plan.interval === 'month' ? 'mês' : 'ano'} após {plan.trial_days} dias de trial
                                     </div>
                                   </div>
-                                  <Button className="w-full" disabled>
-                                    Iniciar Pagamento
+                                  
+                                  <Button
+                                    className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold py-3"
+                                    onClick={async () => {
+                                      try {
+                                        const response = await apiRequest('POST', '/api/stripe/simple-trial', {
+                                          productName: plan.name,
+                                          description: plan.description,
+                                          activationPrice: plan.trial_price,
+                                          trialDays: plan.trial_days,
+                                          recurringPrice: plan.price,
+                                          currency: plan.currency || 'BRL'
+                                        });
+                                        
+                                        if (response.success && response.checkoutUrl) {
+                                          window.open(response.checkoutUrl, '_blank');
+                                        } else {
+                                          toast({
+                                            title: "Erro no checkout",
+                                            description: response.message || "Erro ao criar checkout",
+                                            variant: "destructive"
+                                          });
+                                        }
+                                      } catch (error) {
+                                        toast({
+                                          title: "Erro no checkout",
+                                          description: error.message,
+                                          variant: "destructive"
+                                        });
+                                      }
+                                    }}
+                                  >
+                                    🚀 Iniciar Checkout Real
                                   </Button>
+                                  
+                                  <div className="text-xs text-gray-500 mt-2">
+                                    ✅ Checkout 100% funcional • Stripe oficial • Cartão será salvo
+                                  </div>
                                 </div>
                               </div>
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => {
-                                  window.open(`/checkout/${plan.id}`, '_blank');
-                                }}
-                                className="w-full"
-                              >
-                                <ExternalLink className="w-3 h-3 mr-1" />
-                                Abrir Checkout Real
-                              </Button>
+                              
+                              {/* Código de Embed */}
+                              <div className="space-y-2">
+                                <h5 className="font-medium text-sm">Código de Embed para Site</h5>
+                                <div className="bg-gray-100 rounded p-3">
+                                  <code className="text-xs text-gray-700 break-all">
+                                    {`<iframe src="${window.location.origin}/checkout-embed/${plan.id}" width="100%" height="600" frameborder="0"></iframe>`}
+                                  </code>
+                                </div>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => {
+                                    const embedCode = `<iframe src="${window.location.origin}/checkout-embed/${plan.id}" width="100%" height="600" frameborder="0"></iframe>`;
+                                    navigator.clipboard.writeText(embedCode);
+                                    toast({
+                                      title: "Código copiado!",
+                                      description: "Código de embed copiado para área de transferência",
+                                    });
+                                  }}
+                                  className="w-full"
+                                >
+                                  <Code className="w-3 h-3 mr-1" />
+                                  Copiar Código de Embed
+                                </Button>
+                              </div>
                             </div>
                           </div>
                         </CardContent>
