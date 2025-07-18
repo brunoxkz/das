@@ -142,6 +142,7 @@ export interface IStorage {
   createStripePlan(plan: any): Promise<any>;
   updateStripePlan(id: string, updates: any): Promise<any>;
   deleteStripePlan(id: string): Promise<void>;
+  saveStripeTransaction(transaction: any): Promise<any>;
   getCheckoutAnalytics(): Promise<any>;
   getCheckoutProducts(): Promise<any[]>;
   
@@ -7646,6 +7647,48 @@ Hoje você vai aprender ${project.title} - método revolucionário que já ajudo
     } catch (error) {
       console.error('❌ ERRO ao deletar plano do Stripe:', error);
       throw new Error('Erro ao deletar plano');
+    }
+  }
+
+  // Salvar transação Stripe
+  async saveStripeTransaction(transaction: any): Promise<any> {
+    try {
+      await this.ensureStripeTransactionsTable();
+      const stmt = sqlite.prepare(`
+        INSERT OR REPLACE INTO stripe_transactions (
+          id, userId, stripePaymentIntentId, amount, currency, 
+          status, customerName, customerEmail, description, metadata,
+          createdAt, updatedAt
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      `);
+      
+      const now = Date.now();
+      stmt.run(
+        transaction.id,
+        transaction.userId,
+        transaction.stripePaymentIntentId,
+        transaction.amount,
+        transaction.currency,
+        transaction.status,
+        transaction.customerName,
+        transaction.customerEmail,
+        transaction.description,
+        transaction.metadata,
+        now,
+        now
+      );
+      
+      console.log('💾 Transação Stripe salva:', {
+        id: transaction.id,
+        paymentIntentId: transaction.stripePaymentIntentId,
+        amount: transaction.amount,
+        status: transaction.status
+      });
+      
+      return { ...transaction, createdAt: now, updatedAt: now };
+    } catch (error) {
+      console.error('❌ Erro ao salvar transação Stripe:', error);
+      throw error;
     }
   }
 
