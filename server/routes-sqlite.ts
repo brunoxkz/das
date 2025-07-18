@@ -7295,6 +7295,207 @@ console.log('Vendzz Checkout Embed carregado para plano: ${planId}');
   });
 
   // ENDPOINT SIMPLIFICADO: R$1,00 → 3 dias → R$29,90/mês (SEM ERROS)
+  // 🔥 ENDPOINT PÚBLICO PARA CHECKOUT-EMBED (sem autenticação JWT)
+  app.post("/api/stripe/simple-trial-public", async (req: any, res) => {
+    try {
+      const { paymentMethodId, planId, email, name, metadata } = req.body;
+      
+      console.log('🔥 PAGAMENTO PÚBLICO INICIADO:', {
+        paymentMethodId: paymentMethodId ? 'PRESENTE' : 'AUSENTE',
+        planId,
+        email,
+        name,
+        timestamp: new Date().toISOString()
+      });
+
+      if (!paymentMethodId || !planId || !email) {
+        return res.status(400).json({
+          success: false,
+          message: 'paymentMethodId, planId e email são obrigatórios'
+        });
+      }
+
+      const { StripeSimpleTrialSystem } = await import('./stripe-simple-trial');
+      const stripeSystem = new StripeSimpleTrialSystem(
+        process.env.STRIPE_SECRET_KEY || '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'
+      );
+
+      // Buscar plano no banco
+      const plan = await getStripePlan(planId);
+      if (!plan) {
+        return res.status(404).json({
+          success: false,
+          message: 'Plano não encontrado'
+        });
+      }
+
+      // 🔥 PROCESSAR PAGAMENTO DIRETO (R$1,00)
+      const amount = plan.trial_price || 1.00;
+      const currency = plan.currency || 'BRL';
+      
+      console.log('💰 COBRANÇA IMEDIATA:', {
+        amount,
+        currency,
+        planPrice: plan.price,
+        trialDays: plan.trial_days
+      });
+
+      // Criar customer
+      const customer = await stripeSystem.stripe.customers.create({
+        email: email,
+        name: name || 'Cliente Vendzz',
+        payment_method: paymentMethodId,
+        invoice_settings: {
+          default_payment_method: paymentMethodId,
+        },
+        metadata: {
+          plan_id: planId,
+          created_via: 'checkout_embed_public'
+        }
+      });
+
+      console.log('👤 CUSTOMER CRIADO:', customer.id);
+
+      // Anexar payment method ao customer
+      await stripeSystem.stripe.paymentMethods.attach(paymentMethodId, {
+        customer: customer.id,
+      });
+
+      // 🔥 COBRANÇA IMEDIATA - R$1,00
+      const paymentIntent = await stripeSystem.stripe.paymentIntents.create({
+        amount: Math.round(amount * 100), // Converter para centavos
+        currency: currency.toLowerCase(),
+        customer: customer.id,
+        payment_method: paymentMethodId,
+        confirmation_method: 'manual',
+        confirm: true,
+        setup_future_usage: 'off_session', // 🔥 SALVAR CARTÃO PARA FUTURO
+        return_url: 'https://vendzz.com/success',
+        metadata: {
+          type: 'onetime_payment',
+          plan_id: planId,
+          plan_name: plan.name,
+          customer_email: email,
+          created_via: 'checkout_embed_public'
+        }
+      });
+
+      console.log('💳 PAYMENT INTENT CRIADO:', {
+        id: paymentIntent.id,
+        status: paymentIntent.status,
+        amount: paymentIntent.amount,
+        currency: paymentIntent.currency
+      });
+
+      // Criar produto e price automaticamente
+      let product, price;
+      try {
+        const planName = plan.name || 'Vendzz Pro';
+        const idempotencyKey = `${planId}_${Date.now()}`;
+        
+        // Criar produto
+        product = await stripeSystem.stripe.products.create({
+          name: planName,
+          description: plan.description || 'Plataforma de Quiz e Marketing',
+          metadata: {
+            plan_id: planId,
+            created_via: 'checkout_embed_public'
+          }
+        }, {
+          idempotencyKey: `product_${idempotencyKey}`
+        });
+
+        // Criar price
+        price = await stripeSystem.stripe.prices.create({
+          unit_amount: Math.round((plan.price || 29.90) * 100),
+          currency: currency.toLowerCase(),
+          recurring: { interval: 'month' },
+          product: product.id,
+          metadata: {
+            plan_name: planName,
+            created_via: 'checkout_embed_public'
+          }
+        }, {
+          idempotencyKey: `price_${idempotencyKey}`
+        });
+        
+      } catch (error) {
+        console.error('❌ Erro ao criar produto/price:', error);
+        return res.status(500).json({
+          success: false,
+          message: 'Erro ao configurar produto no Stripe'
+        });
+      }
+
+      // 🔥 CRIAR ASSINATURA COM TRIAL
+      const subscription = await stripeSystem.stripe.subscriptions.create({
+        customer: customer.id,
+        items: [{ price: price.id }],
+        trial_period_days: plan.trial_days || 3,
+        default_payment_method: paymentMethodId,
+        metadata: {
+          activation_payment_intent: paymentIntent.id,
+          plan_name: plan.name,
+          created_via: 'checkout_embed_public',
+          customer_email: email
+        }
+      });
+
+      console.log('🔥 ASSINATURA CRIADA:', {
+        id: subscription.id,
+        status: subscription.status,
+        trial_end: subscription.trial_end,
+        default_payment_method: subscription.default_payment_method
+      });
+
+      // Salvar transação no banco
+      await saveStripeTransaction({
+        id: paymentIntent.id,
+        userId: 'public_user',
+        stripePaymentIntentId: paymentIntent.id,
+        amount: amount,
+        currency: currency,
+        status: paymentIntent.status,
+        customerName: name || 'Cliente Vendzz',
+        customerEmail: email,
+        description: `Ativação ${plan.name} - R$ ${amount.toFixed(2)}`,
+        metadata: JSON.stringify({
+          type: 'onetime_payment',
+          plan_id: planId,
+          subscription_id: subscription.id,
+          customer_id: customer.id,
+          created_via: 'checkout_embed_public'
+        })
+      });
+
+      const trialEndDate = new Date(subscription.trial_end * 1000);
+      const response = {
+        success: true,
+        message: 'Pagamento processado com sucesso',
+        paymentIntentId: paymentIntent.id,
+        customerId: customer.id,
+        subscriptionId: subscription.id,
+        trialEnd: trialEndDate.toISOString(),
+        billing: {
+          immediate_charge: `R$ ${amount.toFixed(2)}`,
+          trial_period: `${plan.trial_days || 3} dias gratuitos`,
+          recurring_charge: `R$ ${(plan.price || 29.90).toFixed(2)}/mês após trial`
+        }
+      };
+
+      console.log('🎉 PAGAMENTO PÚBLICO COMPLETO:', response);
+      res.json(response);
+
+    } catch (error) {
+      console.error('❌ ERRO NO PAGAMENTO PÚBLICO:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Erro ao processar pagamento',
+        error: error.message
+      });
+    }
+  });
+
   app.post("/api/stripe/simple-trial", verifyJWT, async (req: any, res) => {
     try {
       console.log('🔧 ENDPOINT TRIAL SIMPLIFICADO CHAMADO');

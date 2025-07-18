@@ -56,8 +56,8 @@ function CheckoutForm({ plan }: { plan: any }) {
         throw new Error(methodError.message);
       }
 
-      // Processar pagamento via API usando endpoint correto
-      const response = await apiRequest('POST', '/api/stripe/simple-trial', {
+      // Processar pagamento via API usando endpoint público
+      const response = await apiRequest('POST', '/api/stripe/simple-trial-public', {
         paymentMethodId: paymentMethod!.id,
         planId: plan.id,
         email: email,
