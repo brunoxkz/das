@@ -8721,6 +8721,153 @@ console.log('Vendzz Checkout Embed carregado para plano: ${planId}');
     }
   });
 
+  // 💼 ADMIN PLAN MANAGEMENT - Endpoints para gerenciar planos
+  
+  // Criar novo plano
+  app.post("/api/admin/plans", verifyJWT, async (req: any, res) => {
+    try {
+      const { name, description, price, currency, trial_days, trial_price, active } = req.body;
+      
+      if (!name || !price) {
+        return res.status(400).json({ error: "Nome e preço são obrigatórios" });
+      }
+      
+      const planId = nanoid();
+      const planData = {
+        id: planId,
+        name,
+        description: description || '',
+        price: parseFloat(price),
+        currency: currency || 'BRL',
+        trial_days: parseInt(trial_days) || 3,
+        trial_price: parseFloat(trial_price) || 1.00,
+        active: active !== undefined ? active : true,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      };
+      
+      // Inserir no banco de dados
+      sqlite.prepare(`
+        INSERT INTO stripe_plans (id, name, description, price, currency, trial_period_days, activation_fee, active, created_at, updated_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      `).run(planId, name, description, price, currency, trial_days, trial_price, active ? 1 : 0, planData.created_at, planData.updated_at);
+      
+      res.json({
+        success: true,
+        plan: planData,
+        message: 'Plano criado com sucesso'
+      });
+    } catch (error) {
+      console.error('❌ Erro ao criar plano:', error);
+      res.status(500).json({ error: 'Erro ao criar plano' });
+    }
+  });
+  
+  // Listar todos os planos
+  app.get("/api/admin/plans", verifyJWT, async (req: any, res) => {
+    try {
+      const plans = sqlite.prepare(`
+        SELECT * FROM stripe_plans
+        ORDER BY created_at DESC
+      `).all();
+      
+      res.json({
+        success: true,
+        plans: plans || []
+      });
+    } catch (error) {
+      console.error('❌ Erro ao buscar planos:', error);
+      res.status(500).json({ error: 'Erro ao buscar planos' });
+    }
+  });
+  
+  // Atualizar plano
+  app.put("/api/admin/plans/:id", verifyJWT, async (req: any, res) => {
+    try {
+      const { id } = req.params;
+      const { name, description, price, currency, trial_days, trial_price, active } = req.body;
+      
+      sqlite.prepare(`
+        UPDATE stripe_plans 
+        SET name = ?, description = ?, price = ?, currency = ?, trial_period_days = ?, activation_fee = ?, active = ?, updated_at = ?
+        WHERE id = ?
+      `).run(name, description, price, currency, trial_days, trial_price, active ? 1 : 0, new Date().toISOString(), id);
+      
+      res.json({
+        success: true,
+        message: 'Plano atualizado com sucesso'
+      });
+    } catch (error) {
+      console.error('❌ Erro ao atualizar plano:', error);
+      res.status(500).json({ error: 'Erro ao atualizar plano' });
+    }
+  });
+  
+  // Alternar status ativo/inativo do plano
+  app.patch("/api/admin/plans/:id/toggle", verifyJWT, async (req: any, res) => {
+    try {
+      const { id } = req.params;
+      const { active } = req.body;
+      
+      sqlite.prepare(`
+        UPDATE stripe_plans 
+        SET active = ?, updated_at = ?
+        WHERE id = ?
+      `).run(active ? 1 : 0, new Date().toISOString(), id);
+      
+      res.json({
+        success: true,
+        message: `Plano ${active ? 'ativado' : 'desativado'} com sucesso`
+      });
+    } catch (error) {
+      console.error('❌ Erro ao alterar status do plano:', error);
+      res.status(500).json({ error: 'Erro ao alterar status do plano' });
+    }
+  });
+  
+  // Deletar plano
+  app.delete("/api/admin/plans/:id", verifyJWT, async (req: any, res) => {
+    try {
+      const { id } = req.params;
+      
+      sqlite.prepare(`
+        DELETE FROM stripe_plans 
+        WHERE id = ?
+      `).run(id);
+      
+      res.json({
+        success: true,
+        message: 'Plano deletado com sucesso'
+      });
+    } catch (error) {
+      console.error('❌ Erro ao deletar plano:', error);
+      res.status(500).json({ error: 'Erro ao deletar plano' });
+    }
+  });
+  
+  // Buscar plano específico
+  app.get("/api/admin/plans/:id", verifyJWT, async (req: any, res) => {
+    try {
+      const { id } = req.params;
+      const plan = sqlite.prepare(`
+        SELECT * FROM stripe_plans 
+        WHERE id = ?
+      `).get(id);
+      
+      if (!plan) {
+        return res.status(404).json({ error: 'Plano não encontrado' });
+      }
+      
+      res.json({
+        success: true,
+        plan: plan
+      });
+    } catch (error) {
+      console.error('❌ Erro ao buscar plano:', error);
+      res.status(500).json({ error: 'Erro ao buscar plano' });
+    }
+  });
+
   // STRIPE PLANS MANAGEMENT - LISTAR PLANOS
   app.get("/api/stripe/plans", async (req: any, res) => {
     try {
