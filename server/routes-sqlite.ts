@@ -1094,6 +1094,7 @@ export function registerSQLiteRoutes(app: Express): Server {
         payment_method: paymentMethodId,
         confirmation_method: 'automatic',
         confirm: true,
+        return_url: 'https://vendzz.com/payment-success',
         metadata: {
           plan_name: planName || 'Vendzz Pro',
           customer_name: customerData.name,
