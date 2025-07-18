@@ -147,7 +147,7 @@ export default function CheckoutEmbed() {
   const planId = params?.planId;
 
   const { data: plan, isLoading } = useQuery({
-    queryKey: [`/api/stripe/plans/${planId}`],
+    queryKey: [`/api/public/plans/${planId}`],
     enabled: !!planId,
   });
 
