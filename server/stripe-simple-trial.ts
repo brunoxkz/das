@@ -154,23 +154,32 @@ ETAPA 2: Webhook cria subscription com trial de ${config.trialDays} dias + R$${c
    */
   async createTestPaymentMethod(): Promise<any> {
     try {
-      console.log('🔧 Criando método de pagamento de teste...');
+      console.log('🔧 Criando método de pagamento de teste com token seguro...');
       
-      // Criar método de pagamento de teste
-      const paymentMethod = await this.stripe.paymentMethods.create({
-        type: 'card',
+      // Primeiro, criar um token de teste (forma segura)
+      const token = await this.stripe.tokens.create({
         card: {
           number: '4242424242424242',
           exp_month: 12,
           exp_year: 2025,
           cvc: '123',
         },
+      });
+
+      console.log('✅ Token de teste criado:', token.id);
+
+      // Agora criar o método de pagamento usando o token
+      const paymentMethod = await this.stripe.paymentMethods.create({
+        type: 'card',
+        card: {
+          token: token.id,
+        },
         billing_details: {
           name: 'Teste Cliente',
         },
       });
 
-      console.log('✅ Método de pagamento de teste criado:', paymentMethod.id);
+      console.log('✅ Método de pagamento de teste criado com token seguro:', paymentMethod.id);
       return paymentMethod;
     } catch (error) {
       console.error('❌ Erro ao criar método de pagamento de teste:', error);

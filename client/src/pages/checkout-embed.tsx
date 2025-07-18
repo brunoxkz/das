@@ -7,107 +7,148 @@ import { CheckCircle, CreditCard, Shield, Clock, User, Mail, Phone } from 'lucid
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest } from '@/lib/queryClient';
 import { useQuery } from '@tanstack/react-query';
+import { loadStripe } from '@stripe/stripe-js';
+import { Elements, CardElement, useStripe, useElements } from '@stripe/react-stripe-js';
 
-export default function CheckoutEmbed() {
-  const [, params] = useRoute('/checkout-embed/:planId');
-  const planId = params?.planId;
+// Configurar Stripe
+const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLIC_KEY || 'pk_test_51RjvV9HK6al3veW1YJvFPzLq5RZWrMRFSGrYTm5Yqrc9HvnPLEMqT7IlxYYNXsqHhpjjg2cCaBZjm8bJOGMx00kCpzavcL');
+
+// Componente de checkout usando Stripe Elements
+function CheckoutForm({ plan }: { plan: any }) {
+  const stripe = useStripe();
+  const elements = useElements();
   const [loading, setLoading] = useState(false);
+  const [email, setEmail] = useState('');
   const { toast } = useToast();
-  
-  // Form state
-  const [formData, setFormData] = useState({
-    email: '',
-    cardNumber: '',
-    expiryDate: '',
-    cvv: ''
-  });
 
-  const handleFormChange = (field: string, value: string) => {
-    let formattedValue = value;
-    
-    // Formatação automática para campos específicos
-    if (field === 'cardNumber') {
-      // Remove espaços e adiciona espaços a cada 4 dígitos
-      formattedValue = value.replace(/\s/g, '').replace(/(.{4})/g, '$1 ').trim();
-    } else if (field === 'expiryDate') {
-      // Remove caracteres não numéricos e adiciona /
-      formattedValue = value.replace(/\D/g, '').replace(/(\d{2})(\d{2})/, '$1/$2');
-    } else if (field === 'cvv') {
-      // Apenas números
-      formattedValue = value.replace(/\D/g, '');
-    } else if (field === 'phone') {
-      // Formatação básica para telefone brasileiro
-      formattedValue = value.replace(/\D/g, '').replace(/(\d{2})(\d{5})(\d{4})/, '($1) $2-$3');
-    }
-    
-    setFormData(prev => ({
-      ...prev,
-      [field]: formattedValue
-    }));
-  };
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
 
-  const { data: plan, isLoading } = useQuery({
-    queryKey: ['/api/stripe/plans', planId],
-    enabled: !!planId,
-  });
-
-  const handleCheckout = async () => {
-    if (!plan) return;
-    
-    // Validar campos obrigatórios
-    if (!formData.email) {
+    if (!stripe || !elements || !email) {
       toast({
-        title: "Email obrigatório",
-        description: "Por favor, preencha seu email",
-        variant: "destructive"
+        title: "Erro",
+        description: "Por favor, preencha todos os campos.",
+        variant: "destructive",
       });
       return;
     }
-    
-    if (!formData.cardNumber || !formData.expiryDate || !formData.cvv) {
-      toast({
-        title: "Dados do cartão",
-        description: "Por favor, preencha todos os dados do cartão",
-        variant: "destructive"
-      });
-      return;
-    }
-    
+
     setLoading(true);
+
     try {
-      const response = await apiRequest('POST', '/api/stripe/simple-trial', {
-        productName: plan.name || 'Plano Premium',
-        description: plan.description || 'Plano com trial',
-        activationPrice: plan.trial_price || 1.00,
-        trialDays: plan.trial_days || 3,
-        recurringPrice: plan.price || 29.90,
-        currency: plan.currency || 'BRL',
-        returnUrl: `${window.location.origin}/checkout/success`,
-        cancelUrl: `${window.location.origin}/checkout-embed/${planId}`,
+      // Obter elemento do cartão
+      const cardElement = elements.getElement(CardElement);
+      
+      if (!cardElement) {
+        throw new Error('Elemento do cartão não encontrado');
+      }
+
+      // Criar método de pagamento
+      const { error: methodError, paymentMethod } = await stripe.createPaymentMethod({
+        type: 'card',
+        card: cardElement,
+        billing_details: {
+          email: email,
+        },
+      });
+
+      if (methodError) {
+        throw new Error(methodError.message);
+      }
+
+      // Processar pagamento via API
+      const response = await apiRequest('POST', '/api/stripe/process-payment-inline', {
+        paymentMethodId: paymentMethod!.id,
+        planId: plan.id,
+        amount: 1.00, // R$1 taxa de ativação
+        currency: 'BRL',
         customerData: {
-          email: formData.email
+          email: email,
+          name: 'Cliente Vendzz'
         }
       });
-      
-      if (response.success && response.checkoutUrl) {
-        window.location.href = response.checkoutUrl;
-      } else {
+
+      if (response.success) {
         toast({
-          title: "Erro no checkout",
-          description: response.message || "Erro ao criar checkout",
-          variant: "destructive"
+          title: "Pagamento processado!",
+          description: "Sua assinatura foi criada com sucesso. Trial de 3 dias iniciado.",
+          variant: "default",
         });
+        
+        // Redirecionar para página de sucesso
+        window.location.href = '/payment-success';
+      } else {
+        throw new Error(response.message || 'Erro ao processar pagamento');
       }
-    } catch (error) {
+
+    } catch (error: any) {
+      console.error('Erro no pagamento:', error);
       toast({
-        title: "Erro no checkout",
-        description: error.message,
-        variant: "destructive"
+        title: "Erro no pagamento",
+        description: error.message || "Erro ao processar pagamento",
+        variant: "destructive",
       });
     } finally {
       setLoading(false);
     }
   };
+
+  return (
+    <form onSubmit={handleSubmit} className="space-y-6">
+      <div className="space-y-2">
+        <label htmlFor="email" className="text-sm font-medium">Email</label>
+        <input
+          id="email"
+          type="email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+          placeholder="seu@email.com"
+          required
+        />
+      </div>
+      
+      <div className="space-y-2">
+        <label className="text-sm font-medium">Cartão de Crédito</label>
+        <div className="p-3 border border-gray-300 rounded-md">
+          <CardElement
+            options={{
+              style: {
+                base: {
+                  fontSize: '16px',
+                  color: '#424770',
+                  '::placeholder': {
+                    color: '#aab7c4',
+                  },
+                },
+                invalid: {
+                  color: '#9e2146',
+                },
+              },
+            }}
+          />
+        </div>
+      </div>
+
+      <Button 
+        type="submit" 
+        className="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-3 px-6 rounded-lg transition-colors"
+        disabled={loading || !stripe}
+      >
+        {loading ? 'Processando...' : `Pagar R$ 1,00 e Iniciar Trial`}
+      </Button>
+    </form>
+  );
+}
+
+export default function CheckoutEmbed() {
+  const [, params] = useRoute('/checkout-embed/:planId');
+  const planId = params?.planId;
+
+  const { data: plan, isLoading } = useQuery({
+    queryKey: ['/api/stripe/plans', planId],
+    enabled: !!planId,
+  });
 
   if (isLoading) {
     return (
@@ -131,186 +172,104 @@ export default function CheckoutEmbed() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50 py-12 px-4">
-      <div className="max-w-2xl mx-auto">
-        <Card className="shadow-xl border-0 overflow-hidden">
-          <CardHeader className="bg-gradient-to-r from-blue-600 to-purple-600 text-white text-center pb-8">
-            <div className="mb-4">
-              <Badge className="bg-white/20 text-white border-white/30">
-                Oferta Especial
-              </Badge>
-            </div>
-            <CardTitle className="text-3xl font-bold mb-2">{plan.name}</CardTitle>
-            <CardDescription className="text-blue-100 text-lg">
-              {plan.description}
-            </CardDescription>
-          </CardHeader>
-          
-          <CardContent className="p-8">
-            {/* Pricing Section */}
-            <div className="text-center mb-8">
-              <div className="flex items-center justify-center gap-4 mb-4">
-                <div className="text-center">
-                  <div className="text-3xl font-bold text-green-600">
-                    R$ {(plan.trial_price || 1.00).toFixed(2)}
-                  </div>
-                  <div className="text-sm text-gray-600">Hoje</div>
-                </div>
-                <div className="text-gray-400">+</div>
-                <div className="text-center">
-                  <div className="text-2xl font-bold text-blue-600">
-                    R$ {(plan.price || 29.90).toFixed(2)}
-                  </div>
-                  <div className="text-sm text-gray-600">
-                    /{plan.interval === 'month' ? 'mês' : 'ano'}
-                  </div>
-                </div>
+    <Elements stripe={stripePromise}>
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50 py-12 px-4">
+        <div className="max-w-2xl mx-auto">
+          <Card className="shadow-xl border-0 overflow-hidden">
+            <CardHeader className="bg-gradient-to-r from-blue-600 to-purple-600 text-white text-center pb-8">
+              <div className="mb-4">
+                <Badge className="bg-white/20 text-white border-white/30">
+                  Oferta Especial
+                </Badge>
               </div>
-              
-              <div className="bg-blue-50 rounded-lg p-4 mb-6">
-                <div className="flex items-center justify-center gap-2 text-blue-700">
-                  <Clock className="w-4 h-4" />
-                  <span className="font-medium">
-                    {plan.trial_days || 3} dias de trial gratuito após primeiro pagamento
-                  </span>
-                </div>
-              </div>
-            </div>
-
-            {/* Features Section */}
-            <div className="mb-8">
-              <h3 className="font-semibold mb-4 text-center">O que está incluso:</h3>
-              <div className="grid grid-cols-2 gap-3">
-                {[
-                  'Quiz Builder Avançado',
-                  'SMS Marketing',
-                  'Email Marketing',
-                  'WhatsApp Business',
-                  'Analytics Completo',
-                  'Integrações',
-                  'Suporte Prioritário',
-                  'Temas Personalizados'
-                ].map((feature, index) => (
-                  <div key={index} className="flex items-center gap-2">
-                    <CheckCircle className="w-4 h-4 text-green-500" />
-                    <span className="text-sm">{feature}</span>
+              <CardTitle className="text-3xl font-bold mb-2">{plan.name}</CardTitle>
+              <CardDescription className="text-blue-100 text-lg">
+                {plan.description}
+              </CardDescription>
+            </CardHeader>
+            
+            <CardContent className="p-8">
+              {/* Pricing Section */}
+              <div className="text-center mb-8">
+                <div className="flex items-center justify-center gap-4 mb-4">
+                  <div className="text-center">
+                    <div className="text-3xl font-bold text-green-600">
+                      R$ {(plan.trial_price || 1.00).toFixed(2)}
+                    </div>
+                    <div className="text-sm text-gray-600">Hoje</div>
                   </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Customer Information Form */}
-            <div className="mb-8">
-              <h3 className="font-semibold mb-4 text-center text-lg">Complete seus dados</h3>
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium mb-2">
-                    <Mail className="w-4 h-4 inline mr-2" />
-                    Email
-                  </label>
-                  <input 
-                    type="email" 
-                    value={formData.email}
-                    onChange={(e) => handleFormChange('email', e.target.value)}
-                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    placeholder="seu@email.com"
-                    required
-                  />
-                </div>
-              </div>
-            </div>
-
-            {/* Payment Information */}
-            <div className="mb-8">
-              <h3 className="font-semibold mb-4 text-center text-lg">
-                <CreditCard className="w-5 h-5 inline mr-2" />
-                Informações de Pagamento
-              </h3>
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium mb-2">Número do Cartão</label>
-                  <input 
-                    type="text" 
-                    value={formData.cardNumber}
-                    onChange={(e) => handleFormChange('cardNumber', e.target.value)}
-                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    placeholder="1234 5678 9012 3456"
-                    maxLength={19}
-                    required
-                  />
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium mb-2">Validade</label>
-                    <input 
-                      type="text" 
-                      value={formData.expiryDate}
-                      onChange={(e) => handleFormChange('expiryDate', e.target.value)}
-                      className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      placeholder="MM/AA"
-                      maxLength={5}
-                      required
-                    />
+                  <div className="text-gray-400">+</div>
+                  <div className="text-center">
+                    <div className="text-2xl font-bold text-blue-600">
+                      R$ {(plan.price || 29.90).toFixed(2)}
+                    </div>
+                    <div className="text-sm text-gray-600">
+                      /mês
+                    </div>
                   </div>
-                  <div>
-                    <label className="block text-sm font-medium mb-2">CVV</label>
-                    <input 
-                      type="text" 
-                      value={formData.cvv}
-                      onChange={(e) => handleFormChange('cvv', e.target.value)}
-                      className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      placeholder="123"
-                      maxLength={4}
-                      required
-                    />
+                </div>
+                
+                <div className="bg-blue-50 rounded-lg p-4 mb-6">
+                  <div className="flex items-center justify-center gap-2 text-blue-700">
+                    <Clock className="w-4 h-4" />
+                    <span className="font-medium">
+                      {plan.trial_days || 3} dias de trial gratuito após primeiro pagamento
+                    </span>
                   </div>
                 </div>
               </div>
-            </div>
 
-            {/* Trust Indicators */}
-            <div className="flex items-center justify-center gap-6 mb-6 text-sm text-gray-600">
-              <div className="flex items-center gap-2">
-                <Shield className="w-4 h-4" />
-                <span>Pagamento Seguro</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <CreditCard className="w-4 h-4" />
-                <span>Stripe</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <CheckCircle className="w-4 h-4" />
-                <span>Cancele quando quiser</span>
-              </div>
-            </div>
-
-            {/* CTA Button */}
-            <Button
-              onClick={handleCheckout}
-              disabled={loading}
-              className="w-full bg-gradient-to-r from-green-500 to-blue-600 hover:from-green-600 hover:to-blue-700 text-white font-bold py-4 text-lg shadow-lg transform hover:scale-105 transition-all duration-200"
-            >
-              {loading ? (
-                <div className="flex items-center gap-2">
-                  <div className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full"></div>
-                  Processando...
+              {/* Features Section */}
+              <div className="mb-8">
+                <h3 className="text-lg font-semibold mb-4">Includes:</h3>
+                <div className="space-y-3">
+                  <div className="flex items-center gap-2">
+                    <CheckCircle className="w-5 h-5 text-green-500" />
+                    <span>Quizzes ilimitados</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <CheckCircle className="w-5 h-5 text-green-500" />
+                    <span>Leads ilimitados</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <CheckCircle className="w-5 h-5 text-green-500" />
+                    <span>Analytics completo</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <CheckCircle className="w-5 h-5 text-green-500" />
+                    <span>Integração WhatsApp</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <CheckCircle className="w-5 h-5 text-green-500" />
+                    <span>Suporte prioritário</span>
+                  </div>
                 </div>
-              ) : (
-                <>
-                  🔒 Finalizar Compra - R$ {(plan?.trial_price || 1.00).toFixed(2)}
-                </>
-              )}
-            </Button>
+              </div>
 
-            {/* Guarantee */}
-            <div className="text-center mt-6">
-              <p className="text-sm text-gray-600">
-                ✅ Garantia de 30 dias • 🔒 Dados seguros • 📱 Suporte via WhatsApp
-              </p>
-            </div>
-          </CardContent>
-        </Card>
+              {/* Checkout Form */}
+              <CheckoutForm plan={plan} />
+
+              {/* Trust Indicators */}
+              <div className="mt-8 pt-6 border-t border-gray-200">
+                <div className="flex items-center justify-center gap-6 text-sm text-gray-600">
+                  <div className="flex items-center gap-1">
+                    <Shield className="w-4 h-4" />
+                    <span>Seguro</span>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <CreditCard className="w-4 h-4" />
+                    <span>Pagamento protegido</span>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <CheckCircle className="w-4 h-4" />
+                    <span>Garantia 30 dias</span>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
       </div>
-    </div>
+    </Elements>
   );
 }

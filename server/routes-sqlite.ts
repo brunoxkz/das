@@ -1900,6 +1900,136 @@ export function registerSQLiteRoutes(app: Express): Server {
     }
   });
 
+  // NOVO: Processamento direto via API sem redirecionamento
+  app.post('/api/stripe/process-direct-payment', async (req, res) => {
+    try {
+      const { 
+        email, 
+        planId, 
+        paymentMethodId, 
+        returnUrl 
+      } = req.body;
+
+      console.log('🔧 PROCESSAMENTO DIRETO VIA API:', { email, planId, paymentMethodId, returnUrl });
+
+      // Validar dados obrigatórios
+      if (!email || !planId || !paymentMethodId) {
+        return res.status(400).json({ 
+          success: false,
+          error: 'Dados obrigatórios faltando: email, planId, paymentMethodId' 
+        });
+      }
+
+      // Buscar plano
+      const plan = await storage.getStripePlanById(planId);
+      if (!plan) {
+        return res.status(404).json({ 
+          success: false,
+          error: 'Plano não encontrado' 
+        });
+      }
+
+      // Importar API de pagamento direto
+      const { stripePaymentAPI } = await import('./stripe-payment-api.js');
+
+      // 1. Criar Payment Intent para R$ 1,00
+      const paymentIntentResult = await stripePaymentAPI.createPaymentIntent({
+        amount: plan.trial_price,
+        currency: plan.currency,
+        customerEmail: email,
+        description: `${plan.name} - Pagamento único R$ ${plan.trial_price.toFixed(2)}`,
+        setupFutureUsage: true,
+        metadata: {
+          plan_id: planId,
+          plan_name: plan.name,
+          trial_days: plan.trial_days.toString(),
+          recurring_price: plan.price.toString(),
+          step: 'onetime_payment'
+        }
+      });
+
+      console.log('✅ Payment Intent criado:', paymentIntentResult.paymentIntentId);
+
+      // 2. Confirmar pagamento com o método de pagamento fornecido
+      const confirmation = await activeStripeService.stripe.paymentIntents.confirm(
+        paymentIntentResult.paymentIntentId,
+        {
+          payment_method: paymentMethodId,
+          return_url: returnUrl || `${req.protocol}://${req.get('host')}/checkout/success`
+        }
+      );
+
+      console.log('✅ Pagamento confirmado:', confirmation.status);
+
+      // 3. Se o pagamento foi bem-sucedido, criar produto e preço para subscription
+      if (confirmation.status === 'succeeded') {
+        console.log('🔧 CRIANDO SUBSCRIPTION AUTOMATICAMENTE...');
+
+        const productResult = await stripePaymentAPI.createProductAndPrice(
+          plan.name,
+          plan.price,
+          plan.currency
+        );
+
+        // 4. Criar subscription com trial
+        const subscription = await activeStripeService.stripe.subscriptions.create({
+          customer: paymentIntentResult.customerId,
+          items: [{ price: productResult.priceId }],
+          default_payment_method: paymentMethodId,
+          trial_period_days: plan.trial_days,
+          metadata: {
+            type: 'direct_api_subscription',
+            original_payment_intent: paymentIntentResult.paymentIntentId,
+            plan_id: planId,
+            trial_days: plan.trial_days.toString(),
+          }
+        });
+
+        console.log('✅ Subscription criada:', subscription.id);
+
+        // 5. Retornar sucesso com dados completos
+        res.json({
+          success: true,
+          message: 'Pagamento processado com sucesso via API',
+          data: {
+            paymentIntentId: paymentIntentResult.paymentIntentId,
+            customerId: paymentIntentResult.customerId,
+            subscriptionId: subscription.id,
+            status: confirmation.status,
+            amount: plan.trial_price,
+            currency: plan.currency,
+            planName: plan.name,
+            trialDays: plan.trial_days,
+            recurringPrice: plan.price,
+            nextBillingDate: new Date(Date.now() + (plan.trial_days * 24 * 60 * 60 * 1000)).toISOString(),
+            returnUrl: returnUrl || `${req.protocol}://${req.get('host')}/checkout/success`
+          }
+        });
+
+      } else {
+        // Pagamento requer ação adicional (3D Secure, etc.)
+        res.json({
+          success: false,
+          requiresAction: true,
+          clientSecret: confirmation.client_secret,
+          message: 'Pagamento requer confirmação adicional',
+          data: {
+            paymentIntentId: paymentIntentResult.paymentIntentId,
+            status: confirmation.status
+          }
+        });
+      }
+
+    } catch (error) {
+      console.error('❌ ERRO NO PROCESSAMENTO DIRETO:', error);
+      res.status(500).json({
+        success: false,
+        error: 'Erro interno no processamento',
+        message: error.message
+      });
+    }
+  });
+
   // Criar sessão de checkout Stripe (público)
   app.post('/api/create-checkout-session', async (req, res) => {
     try {
