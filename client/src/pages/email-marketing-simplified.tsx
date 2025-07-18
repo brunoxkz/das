@@ -694,7 +694,7 @@ export default function EmailMarketingSimplified() {
               )}
               
               {/* Navigation Buttons */}
-              <div className="flex justify-between mt-8">
+              <div className="flex justify-end gap-2 mt-8">
                 <Button 
                   variant="outline" 
                   onClick={() => setCurrentStep(Math.max(1, currentStep - 1))}
@@ -703,35 +703,33 @@ export default function EmailMarketingSimplified() {
                   Voltar
                 </Button>
                 
-                <div className="flex gap-2">
-                  {currentStep < 5 ? (
-                    <Button 
-                      onClick={() => setCurrentStep(currentStep + 1)}
-                      disabled={!canProceedToNext()}
-                    >
-                      Próximo
-                      <ArrowRight className="w-4 h-4 ml-2" />
-                    </Button>
-                  ) : (
-                    <Button 
-                      onClick={createCampaign}
-                      disabled={isCreating}
-                      className="bg-blue-600 hover:bg-blue-700"
-                    >
-                      {isCreating ? (
-                        <>
-                          <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
-                          Criando...
-                        </>
-                      ) : (
-                        <>
-                          <Send className="w-4 h-4 mr-2" />
-                          Criar Campanha
-                        </>
-                      )}
-                    </Button>
-                  )}
-                </div>
+                {currentStep < 5 ? (
+                  <Button 
+                    onClick={() => setCurrentStep(currentStep + 1)}
+                    disabled={!canProceedToNext()}
+                  >
+                    Próximo
+                    <ArrowRight className="w-4 h-4 ml-2" />
+                  </Button>
+                ) : (
+                  <Button 
+                    onClick={createCampaign}
+                    disabled={isCreating}
+                    className="bg-blue-600 hover:bg-blue-700"
+                  >
+                    {isCreating ? (
+                      <>
+                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
+                        Criando...
+                      </>
+                    ) : (
+                      <>
+                        <Send className="w-4 h-4 mr-2" />
+                        Criar Campanha
+                      </>
+                    )}
+                  </Button>
+                )}
               </div>
             </CardContent>
           </Card>

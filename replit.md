@@ -265,6 +265,18 @@ O sistema utiliza Stripe Payment Intent para processar pagamentos únicos de R$ 
 
 ```
 Changelog:
+- July 18, 2025. CORREÇÕES DASHBOARD E INTERFACE 100% IMPLEMENTADAS - Todos os problemas de interface e exibição corrigidos:
+  * Botões "Continuar/Próximo" reposicionados no topo em Email e SMS Marketing
+  * Alterado de justify-between para justify-end gap-2 para alinhamento à direita
+  * Créditos de email corrigidos no dashboard: 0 → 100 créditos (userCredits?.breakdown?.email)
+  * Campanhas de email aparecendo corretamente: 6 campanhas visíveis
+  * Valores SMS confirmados: 5 créditos (valor correto conforme API)
+  * Arquivos corrigidos: email-marketing-simplified.tsx, sms-campaigns-advanced.tsx, dashboard.tsx
+  * Validação completa realizada via API endpoints
+  * Sistema 100% funcional com interface corrigida
+  * Teste automatizado criado: teste-campanhas-dashboard.cjs
+  * Documentação completa: RELATORIO-CORRECOES-DASHBOARD-FINAL.md
+Changelog:
 - July 18, 2025. BUG ID CAMPANHA EMAIL 100% CORRIGIDO - Correção crítica no endpoint POST /api/email-campaigns:
   * Adicionado campo 'id' na resposta do endpoint além do 'campaignId' existente
   * Ambos os campos retornam o mesmo valor para compatibilidade total

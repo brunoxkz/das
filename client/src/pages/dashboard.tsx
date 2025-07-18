@@ -432,8 +432,8 @@ export default function Dashboard() {
               <CardContent className="p-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm dashboard-text-muted mb-1 text-gray-600 dark:text-gray-300">Créditos Disponíveis</p>
-                    <p className="text-2xl font-bold dashboard-text-primary text-gray-900 dark:text-white">{userCredits?.total || 0}</p>
+                    <p className="text-sm dashboard-text-muted mb-1 text-gray-600 dark:text-gray-300">Créditos Email</p>
+                    <p className="text-2xl font-bold dashboard-text-primary text-gray-900 dark:text-white">{userCredits?.breakdown?.email || 0}</p>
                   </div>
                   <div className="w-12 h-12 rounded-lg bg-purple-500 flex items-center justify-center text-white">
                     <Coins className="w-5 h-5" />
