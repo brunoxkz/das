@@ -354,6 +354,12 @@ function App() {
           </Layout>
         </Route>
 
+        <Route path="/whatsapp">
+          <Layout>
+            <WhatsAppCampaignsPage />
+          </Layout>
+        </Route>
+        
         <Route path="/campanhas-whatsapp">
           <Layout>
             <WhatsAppCampaignsPage />
