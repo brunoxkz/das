@@ -230,19 +230,19 @@ export function Sidebar() {
       icon: <Target className="w-3 h-3" />,
       items: [
         {
-          title: "SMS Marketing",
+          title: "SMS",
           href: "/sms-campaigns-advanced",
           icon: <MessageSquare className="w-4 h-4" />,
           active: location === "/sms-campaigns-advanced" || location === "/sms-credits"
         },
         {
-          title: "Email Marketing",
+          title: "EMAIL",
           href: "/email-marketing",
           icon: <Mail className="w-4 h-4" />,
           active: location === "/email-marketing"
         },
         {
-          title: "WhatsApp Business",
+          title: "WHATSAPP (GRÁTIS)",
           href: "/campanhas-whatsapp",
           icon: <Bot className="w-4 h-4" />,
           active: location === "/campanhas-whatsapp",
@@ -256,7 +256,7 @@ export function Sidebar() {
           badge: <span className="text-xs text-blue-500 font-medium">API oficial</span>
         },
         {
-          title: "Voice Marketing",
+          title: "LIGAÇÃO/VOZ",
           href: "/voice-calling",
           icon: <Phone className="w-4 h-4" />,
           active: location === "/voice-calling"

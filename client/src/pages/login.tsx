@@ -190,13 +190,11 @@ export default function LoginPage() {
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-50 to-blue-50 p-4">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
-          <CardTitle className="text-2xl font-bold bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">
-            <img 
-              src="/logo-vendzz-white-green.png" 
-              alt="Vendzz" 
-              className="h-10 object-contain"
-            />
-          </CardTitle>
+          <div className="flex justify-center mb-4">
+            <div className="text-3xl font-bold text-black">
+              VENDZZ
+            </div>
+          </div>
           <CardDescription>
             Plataforma de Quiz Marketing para Captação de Leads
           </CardDescription>
