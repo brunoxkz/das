@@ -60,8 +60,8 @@ function CheckoutForm({ plan }: { plan: any }) {
       const response = await apiRequest('POST', '/api/stripe/process-payment-inline', {
         paymentMethodId: paymentMethod!.id,
         planId: plan.id,
-        amount: 1.00, // R$1 taxa de ativação
-        currency: 'BRL',
+        amount: plan.trial_price || 1.00, // Usar taxa de trial do plano
+        currency: plan.currency || 'BRL',
         customerData: {
           email: email,
           name: 'Cliente Vendzz'
@@ -71,7 +71,7 @@ function CheckoutForm({ plan }: { plan: any }) {
       if (response.success) {
         toast({
           title: "Pagamento processado!",
-          description: "Sua assinatura foi criada com sucesso. Trial de 3 dias iniciado.",
+          description: `Sua assinatura foi criada com sucesso. Trial de ${plan.trial_days || 3} dias iniciado.`,
           variant: "default",
         });
         
@@ -136,7 +136,7 @@ function CheckoutForm({ plan }: { plan: any }) {
         className="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-3 px-6 rounded-lg transition-colors"
         disabled={loading || !stripe}
       >
-        {loading ? 'Processando...' : `Pagar R$ 1,00 e Iniciar Trial`}
+        {loading ? 'Processando...' : `Pagar R$ ${(plan.trial_price || 1.00).toFixed(2)} e Iniciar Trial`}
       </Button>
     </form>
   );
