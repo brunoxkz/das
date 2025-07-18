@@ -1441,14 +1441,14 @@ export default function QuizBuilder() {
 
               <Card>
                 <CardHeader>
-                  <CardTitle>{t("quizBuilder.sharing")}</CardTitle>
+                  <CardTitle>Compartilhamento</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div>
-                    <Label>{t("quizBuilder.publicLink")}</Label>
+                    <Label>Link Público</Label>
                     <div className="flex mt-2">
                       <Input
-                        value={quizData.isPublished && currentQuizId ? `${window.location.origin}/quiz/${currentQuizId}` : t("quizBuilder.quizNotPublished")}
+                        value={quizData.isPublished && currentQuizId ? `${window.location.origin}/quiz/${currentQuizId}` : "Quiz não publicado"}
                         readOnly
                         className="flex-1"
                       />
@@ -1459,10 +1459,10 @@ export default function QuizBuilder() {
                   </div>
 
                   <div>
-                    <Label>{t("quizBuilder.embedCode")}</Label>
+                    <Label>Código de Incorporação</Label>
                     <div className="flex mt-2">
                       <Textarea
-                        value={quizData.isPublished ? `<iframe src="${window.location.origin}/quiz/${quizId}" width="100%" height="600"></iframe>` : t("quizBuilder.quizNotPublished")}
+                        value={quizData.isPublished ? `<iframe src="${window.location.origin}/quiz/${quizId}" width="100%" height="600"></iframe>` : "Quiz não publicado"}
                         readOnly
                         className="flex-1"
                         rows={3}
@@ -1480,9 +1480,9 @@ export default function QuizBuilder() {
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <Globe className="w-5 h-5" />
-                    {t("quizBuilder.customSubdomains")}
+                    Subdomínios Personalizados
                   </CardTitle>
-                  <p className="text-sm text-gray-600">{t("quizBuilder.subdomainDescription")}</p>
+                  <p className="text-sm text-gray-600">Configure subdomínios personalizados para seus quizzes (máximo 3)</p>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   {/* Lista de subdomínios */}
@@ -1526,15 +1526,15 @@ export default function QuizBuilder() {
                       className="w-full"
                     >
                       <Plus className="w-4 h-4 mr-2" />
-                      {t("quizBuilder.addSubdomain")} ({(quizData.subdomains?.length || 0)}/3)
+                      Adicionar Subdomínio ({(quizData.subdomains?.length || 0)}/3)
                     </Button>
                   )}
 
                   {/* Informações sobre subdomínios */}
                   <div className="p-3 bg-blue-50 rounded-lg border border-blue-200">
                     <p className="text-sm text-blue-800">
-                      <strong>💡 {t("quizBuilder.howToUse")}:</strong> {t("quizBuilder.configureSubdomainDns")} 
-                      {t("quizBuilder.afterConfigurationAvailable")}
+                      <strong>💡 Como usar:</strong> Configure o DNS do seu subdomínio para apontar para nossos servidores. 
+                      Após a configuração, estará disponível em até 24 horas.
                     </p>
                   </div>
                 </CardContent>
@@ -1550,8 +1550,8 @@ export default function QuizBuilder() {
             <div className="max-w-2xl mx-auto space-y-6">
               {/* Cabeçalho da Aba */}
               <div className="text-center">
-                <h2 className="text-2xl font-bold text-gray-900 mb-2">{t("quizBuilder.abTest")}</h2>
-                <p className="text-gray-600">{t("quizBuilder.configureAbTestDescription")}</p>
+                <h2 className="text-2xl font-bold text-gray-900 mb-2">Teste A/B</h2>
+                <p className="text-gray-600">Configure testes A/B para otimizar a performance do seu quiz</p>
               </div>
 
               {/* Configuração do Teste A/B */}
@@ -1559,9 +1559,9 @@ export default function QuizBuilder() {
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <BarChart className="w-5 h-5" />
-                    {t("quizBuilder.configureAbTest")}
+                    Configurar Teste A/B
                   </CardTitle>
-                  <p className="text-sm text-gray-600">{t("quizBuilder.createVariationsDescription")}</p>
+                  <p className="text-sm text-gray-600">Crie variações do seu quiz para testar o que funciona melhor</p>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   {/* Ativar/Desativar Teste A/B */}
@@ -1575,9 +1575,9 @@ export default function QuizBuilder() {
                         className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500"
                       />
                       <Label htmlFor="abTestEnabled" className="text-sm font-medium text-gray-900">
-                        {t("quizBuilder.enableAbTest")}
+                        Ativar Teste A/B
                       </Label>
-                      <Badge variant="secondary" className="bg-blue-100 text-blue-800">{t("quizBuilder.optimization")}</Badge>
+                      <Badge variant="secondary" className="bg-blue-100 text-blue-800">Otimização</Badge>
                     </div>
                     <p className="text-sm text-gray-700 leading-relaxed">
                       <strong>🎯 Teste Diferentes Versões:</strong> Compare diferentes elementos, títulos, cores ou fluxos completos
@@ -1629,26 +1629,26 @@ export default function QuizBuilder() {
                           onChange={(e) => setQuizData(prev => ({ ...prev, abTestType: e.target.value }))}
                           className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-md"
                         >
-                          <option value="title">{t("quizBuilder.titleTest")}</option>
-                          <option value="design">{t("quizBuilder.designTest")}</option>
-                          <option value="flow">{t("quizBuilder.flowTest")}</option>
-                          <option value="elements">{t("quizBuilder.elementsTest")}</option>
-                          <option value="complete">{t("quizBuilder.completeTest")}</option>
+                          <option value="title">Teste de Título</option>
+                          <option value="design">Teste de Design/Cores</option>
+                          <option value="flow">Teste de Fluxo de Páginas</option>
+                          <option value="elements">Teste de Elementos/Perguntas</option>
+                          <option value="complete">Teste de Quiz Completo</option>
                         </select>
                       </div>
 
                       {/* Configurações da Versão B */}
                       <div className="p-4 bg-gray-50 rounded-lg">
-                        <h4 className="font-medium text-gray-900 mb-3">{t("quizBuilder.versionBSettings")}</h4>
+                        <h4 className="font-medium text-gray-900 mb-3">Configurações da Versão B</h4>
                         
                         {quizData.abTestType === "title" && (
                           <div>
-                            <Label htmlFor="abTestTitleB" className="text-sm font-medium">{t("quizBuilder.alternativeTitle")}</Label>
+                            <Label htmlFor="abTestTitleB" className="text-sm font-medium">Título Alternativo</Label>
                             <Input
                               id="abTestTitleB"
                               value={quizData.abTestTitleB || ""}
                               onChange={(e) => setQuizData(prev => ({ ...prev, abTestTitleB: e.target.value }))}
-                              placeholder={t("quizBuilder.alternativeTitlePlaceholder")}
+                              placeholder="Digite o título alternativo para testar"
                               className="mt-1"
                             />
                           </div>
@@ -1657,7 +1657,7 @@ export default function QuizBuilder() {
                         {quizData.abTestType === "design" && (
                           <div className="space-y-3">
                             <div>
-                              <Label htmlFor="abTestColorB" className="text-sm font-medium">{t("quizBuilder.alternativePrimaryColor")}</Label>
+                              <Label htmlFor="abTestColorB" className="text-sm font-medium">Cor Primária Alternativa</Label>
                               <Input
                                 id="abTestColorB"
                                 type="color"
@@ -1667,7 +1667,7 @@ export default function QuizBuilder() {
                               />
                             </div>
                             <div>
-                              <Label htmlFor="abTestBackgroundB" className="text-sm font-medium">{t("quizBuilder.alternativeBackgroundColor")}</Label>
+                              <Label htmlFor="abTestBackgroundB" className="text-sm font-medium">Cor de Fundo Alternativa</Label>
                               <Input
                                 id="abTestBackgroundB"
                                 type="color"
@@ -1681,9 +1681,9 @@ export default function QuizBuilder() {
 
                         {quizData.abTestType === "complete" && (
                           <div>
-                            <Label className="text-sm font-medium">{t("quizBuilder.alternativeQuiz")}</Label>
+                            <Label className="text-sm font-medium">Quiz Alternativo</Label>
                             <p className="text-sm text-gray-600 mt-1">
-                              {t("quizBuilder.alternativeQuizDescription")}
+                              Para testes completos, você pode criar um quiz totalmente diferente
                             </p>
                           </div>
                         )}
@@ -1691,13 +1691,13 @@ export default function QuizBuilder() {
 
                       {/* Métricas a Acompanhar */}
                       <div>
-                        <Label className="text-sm font-medium">{t("quizBuilder.metricsToTrack")}</Label>
+                        <Label className="text-sm font-medium">Métricas a Acompanhar</Label>
                         <div className="mt-2 space-y-2">
                           {[
-                            { id: "completion", label: t("quizBuilder.completionRate") },
-                            { id: "conversion", label: t("quizBuilder.conversionRate") },
-                            { id: "engagement", label: t("quizBuilder.engagement") },
-                            { id: "leadquality", label: t("quizBuilder.leadQuality") }
+                            { id: "completion", label: "Taxa de Conclusão" },
+                            { id: "conversion", label: "Taxa de Conversão" },
+                            { id: "engagement", label: "Engajamento" },
+                            { id: "leadquality", label: "Qualidade dos Leads" }
                           ].map((metric) => (
                             <div key={metric.id} className="flex items-center space-x-3">
                               <input
@@ -1723,7 +1723,7 @@ export default function QuizBuilder() {
 
                       {/* Duração do Teste */}
                       <div>
-                        <Label htmlFor="abTestDuration" className="text-sm font-medium">{t("quizBuilder.testDuration")}</Label>
+                        <Label htmlFor="abTestDuration" className="text-sm font-medium">Duração do Teste (dias)</Label>
                         <Input
                           id="abTestDuration"
                           type="number"
@@ -1734,7 +1734,7 @@ export default function QuizBuilder() {
                           className="mt-1"
                         />
                         <p className="text-xs text-gray-500 mt-1">
-                          {t("quizBuilder.testDurationRecommendation")}
+                          Recomendamos no mínimo 7 dias para resultados estatisticamente significativos
                         </p>
                       </div>
 
@@ -1743,25 +1743,25 @@ export default function QuizBuilder() {
                         className="w-full"
                         onClick={() => {
                           toast({
-                            title: t("quizBuilder.abTestConfigured"),
-                            description: t("quizBuilder.testWillStartWhenPublished"),
+                            title: "Teste A/B Configurado",
+                            description: "O teste será iniciado quando o quiz for publicado",
                           });
                         }}
                       >
                         <Target className="w-4 h-4 mr-2" />
-                        {t("quizBuilder.configureAbTest")}
+                        Configurar Teste A/B
                       </Button>
                     </div>
                   )}
 
                   {/* Informações sobre Teste A/B */}
                   <div className="p-4 bg-green-50 rounded-lg border border-green-200">
-                    <h4 className="font-medium text-green-900 mb-2">💡 {t("quizBuilder.abTestTips")}</h4>
+                    <h4 className="font-medium text-green-900 mb-2">💡 Dicas para Teste A/B Eficaz</h4>
                     <ul className="text-sm text-green-800 space-y-1">
-                      <li>• {t("quizBuilder.abTestTip1")}</li>
-                      <li>• {t("quizBuilder.abTestTip2")}</li>
-                      <li>• {t("quizBuilder.abTestTip3")}</li>
-                      <li>• {t("quizBuilder.abTestTip4")}</li>
+                      <li>• Teste apenas uma variável por vez para resultados claros</li>
+                      <li>• Execute o teste por no mínimo 7 dias para dados confiáveis</li>
+                      <li>• Aguarde pelo menos 100 visualizações em cada versão</li>
+                      <li>• Monitore estatísticas de conversão e engajamento</li>
                     </ul>
                   </div>
                 </CardContent>
@@ -1778,9 +1778,9 @@ export default function QuizBuilder() {
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <Target className="w-5 h-5" />
-                    {t("quizBuilder.trackingPixels")}
+                    Pixels de Rastreamento
                   </CardTitle>
-                  <p className="text-sm text-gray-600">{t("quizBuilder.pixelsDescription")}</p>
+                  <p className="text-sm text-gray-600">Configure pixels de rastreamento para Facebook, Google e outras plataformas</p>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   {/* Opção de Delay */}
@@ -1794,13 +1794,13 @@ export default function QuizBuilder() {
                         className="w-4 h-4 text-green-600 bg-gray-100 border-gray-300 rounded focus:ring-green-500"
                       />
                       <Label htmlFor="pixelDelay" className="text-sm font-medium text-gray-900">
-                        {t("quizBuilder.pixelDelay")}
+                        Delay de Pixel Inteligente
                       </Label>
-                      <Badge variant="secondary" className="bg-green-100 text-green-800">{t("quizBuilder.cpaOptimization")}</Badge>
+                      <Badge variant="secondary" className="bg-green-100 text-green-800">Otimização de CPA</Badge>
                     </div>
                     <p className="text-sm text-gray-700 leading-relaxed">
-                      <strong>💡 {t("quizBuilder.pixelDelayBenefit")}</strong> 
-                      {t("quizBuilder.pixelDelayExplanation")}
+                      <strong>💡 Benefício do Delay:</strong> 
+                      Dispara o pixel apenas quando o usuário está realmente engajado, melhorando as métricas de qualidade.
                     </p>
                   </div>
 
