@@ -242,11 +242,11 @@ export function Sidebar() {
           active: location === "/email-marketing"
         },
         {
-          title: "WHATSAPP (GRÁTIS)",
+          title: "WHATSAPP",
           href: "/campanhas-whatsapp",
           icon: <Bot className="w-4 h-4" />,
           active: location === "/campanhas-whatsapp",
-          badge: <span className="text-xs text-green-500 font-medium">grátis</span>
+          badge: <span className="text-xs text-green-500 font-medium">GRÁTIS</span>
         },
         {
           title: "Telegram",
