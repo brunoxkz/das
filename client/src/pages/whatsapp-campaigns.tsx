@@ -70,24 +70,13 @@ export default function WhatsAppCampaigns() {
 
   return (
     <div className="container mx-auto p-6">
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">WhatsApp Marketing</h1>
-          <p className="text-gray-600">Automação gratuita e API oficial para campanhas</p>
-        </div>
-        
-        {/* Status Minimalista com Mini Ícones */}
-        <div className="flex items-center gap-3">
-          <div className="flex items-center gap-2 bg-gray-50 px-3 py-2 rounded-lg">
-            <div className={`w-2 h-2 rounded-full ${extensionStatus.connected ? 'bg-green-500' : 'bg-red-500'}`}></div>
-            <span className="text-xs text-gray-600">
-              {extensionStatus.connected ? 'ON' : 'OFF'}
-            </span>
+      <div className="mb-6">
+        <div className="flex items-center justify-between mb-4">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900">WhatsApp Marketing</h1>
+            <p className="text-gray-600">Automação gratuita e API oficial para campanhas</p>
           </div>
-          <div className="flex items-center gap-2 bg-gray-50 px-3 py-2 rounded-lg">
-            <MessageCircle className="w-3 h-3 text-blue-500" />
-            <span className="text-xs text-gray-600">{extensionStatus.pendingMessages}</span>
-          </div>
+          
           <Button
             variant="outline"
             size="sm"
@@ -96,6 +85,17 @@ export default function WhatsAppCampaigns() {
           >
             <RefreshCw className="h-3 w-3" />
           </Button>
+        </div>
+
+        {/* Status da Extensão */}
+        <div className="flex items-center gap-3 mb-4">
+          <span className="text-sm font-medium text-gray-700">Status:</span>
+          <div className="flex items-center gap-2">
+            <div className={`w-3 h-3 rounded-full ${extensionStatus.connected ? 'bg-green-500 animate-pulse' : 'bg-red-500 animate-pulse'}`}></div>
+            <span className={`text-sm font-medium ${extensionStatus.connected ? 'text-green-700' : 'text-red-700'}`}>
+              {extensionStatus.connected ? 'Extensão Conectada' : 'Extensão Desconectada'}
+            </span>
+          </div>
         </div>
       </div>
 
@@ -282,33 +282,7 @@ export default function WhatsAppCampaigns() {
             </CardContent>
           </Card>
 
-          {/* Estatísticas Atuais */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <Card>
-              <CardContent className="p-4 text-center">
-                <div className="text-2xl font-bold text-blue-600">{stats.totalCampaigns}</div>
-                <div className="text-sm text-gray-600">Campanhas</div>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardContent className="p-4 text-center">
-                <div className="text-2xl font-bold text-green-600">{stats.totalSent}</div>
-                <div className="text-sm text-gray-600">Enviadas</div>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardContent className="p-4 text-center">
-                <div className="text-2xl font-bold text-purple-600">{stats.totalDelivered}</div>
-                <div className="text-sm text-gray-600">Entregues</div>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardContent className="p-4 text-center">
-                <div className="text-2xl font-bold text-orange-600">{stats.totalReplies}</div>
-                <div className="text-sm text-gray-600">Respostas</div>
-              </CardContent>
-            </Card>
-          </div>
+
         </TabsContent>
 
         <TabsContent value="api" className="space-y-6">
