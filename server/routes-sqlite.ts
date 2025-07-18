@@ -1658,7 +1658,15 @@ export function registerSQLiteRoutes(app: Express): Server {
 
       console.log('✅ CUSTOMER CRIADO:', customer.id);
 
-      // 🔥 CORREÇÃO CRÍTICA: Anexar payment method ao customer
+      // 🔥 CORREÇÃO CRÍTICA: Verificar se payment method está anexado a outro customer
+      const paymentMethod = await stripeSystem.stripe.paymentMethods.retrieve(paymentMethodId);
+      
+      if (paymentMethod.customer && paymentMethod.customer !== customer.id) {
+        // Desanexar do customer anterior se necessário
+        await stripeSystem.stripe.paymentMethods.detach(paymentMethodId);
+      }
+      
+      // Anexar payment method ao customer
       await stripeSystem.stripe.paymentMethods.attach(paymentMethodId, {
         customer: customer.id,
       });
@@ -1671,6 +1679,11 @@ export function registerSQLiteRoutes(app: Express): Server {
       });
 
       console.log('✅ PAYMENT METHOD ANEXADO E DEFINIDO COMO PADRÃO');
+      console.log('🔍 VALIDAÇÃO PAYMENT METHOD:', {
+        paymentMethodId: paymentMethodId,
+        attachedTo: customer.id,
+        defaultPaymentMethod: paymentMethodId
+      });
 
       // Criar Payment Intent e processar pagamento
       const paymentIntent = await stripeSystem.stripe.paymentIntents.create({
@@ -1731,11 +1744,25 @@ export function registerSQLiteRoutes(app: Express): Server {
         status: subscription.status,
         trial_end: subscription.trial_end,
         current_period_end: subscription.current_period_end,
+        default_payment_method: subscription.default_payment_method,
         items: subscription.items.data.map(item => ({
           price_id: item.price.id,
           amount: item.price.unit_amount,
           interval: item.price.recurring?.interval
         }))
+      });
+      
+      // 🔥 VALIDAÇÃO CRÍTICA: Verificar se trial e payment method estão corretos
+      const trialEndDate = new Date(subscription.trial_end * 1000);
+      const now = new Date();
+      const trialDaysRemaining = Math.ceil((trialEndDate - now) / (1000 * 60 * 60 * 24));
+      
+      console.log('🔍 VALIDAÇÃO DO TRIAL:', {
+        trialActive: subscription.status === 'trialing',
+        trialEndDate: trialEndDate.toISOString(),
+        trialDaysRemaining: trialDaysRemaining,
+        paymentMethodAttached: !!subscription.default_payment_method,
+        readyForRecurring: subscription.status === 'trialing' && !!subscription.default_payment_method
       });
 
       const response = {
@@ -1744,11 +1771,18 @@ export function registerSQLiteRoutes(app: Express): Server {
         paymentIntentId: paymentIntent.id,
         customerId: customer.id,
         subscriptionId: subscription.id,
-        trialEnd: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString(),
+        trialEnd: trialEndDate.toISOString(),
         billing: {
           immediate_charge: `R$ ${amount.toFixed(2)}`,
           trial_period: '3 dias gratuitos',
           recurring_charge: 'R$ 29,90/mês após trial'
+        },
+        // 🔥 DADOS CRÍTICOS PARA VALIDAÇÃO
+        validation: {
+          paymentMethodAttached: !!subscription.default_payment_method,
+          trialActive: subscription.status === 'trialing',
+          readyForRecurring: subscription.status === 'trialing' && !!subscription.default_payment_method,
+          trialDaysRemaining: trialDaysRemaining
         }
       };
 

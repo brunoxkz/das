@@ -50,6 +50,15 @@ export class StripeWebhookHandler {
         await this.handleSetupIntentSucceeded(event.data.object as Stripe.SetupIntent);
         break;
       
+      // 🔥 CRÍTICO: Processar conversão Trial → Recurring automaticamente
+      case 'customer.subscription.trial_will_end':
+        await this.handleTrialWillEnd(event.data.object as Stripe.Subscription);
+        break;
+      
+      case 'payment_intent.succeeded':
+        await this.handlePaymentIntentSucceeded(event.data.object as Stripe.PaymentIntent);
+        break;
+      
       default:
         console.log(`⚠️ WEBHOOK NÃO TRATADO: ${event.type}`);
     }
@@ -192,6 +201,64 @@ export class StripeWebhookHandler {
       }
     } catch (error) {
       console.error('❌ ERRO AO PROCESSAR SETUP INTENT SUCCEEDED:', error);
+    }
+  }
+
+  /**
+   * 🔥 CRÍTICO: Processar quando trial vai terminar
+   */
+  private async handleTrialWillEnd(subscription: Stripe.Subscription) {
+    console.log('⚠️ Trial terminando em breve para subscription:', subscription.id);
+    
+    try {
+      // Verificar se tem payment method anexado
+      const customerId = subscription.customer as string;
+      const customer = await this.stripe.customers.retrieve(customerId);
+      
+      if (customer.deleted) {
+        console.error('❌ Customer foi deletado:', customerId);
+        return;
+      }
+      
+      const defaultPaymentMethod = (customer as Stripe.Customer).invoice_settings?.default_payment_method;
+      
+      if (!defaultPaymentMethod) {
+        console.error('❌ Nenhum payment method padrão encontrado para customer:', customerId);
+        // Cancelar subscription se não tiver payment method
+        await this.stripe.subscriptions.update(subscription.id, {
+          cancel_at_period_end: true,
+        });
+        console.log('❌ Subscription cancelada por falta de payment method');
+        return;
+      }
+      
+      console.log('✅ Trial será convertido automaticamente para recurring');
+      console.log('💳 Payment method disponível:', defaultPaymentMethod);
+      
+    } catch (error) {
+      console.error('❌ Erro ao processar trial_will_end:', error);
+    }
+  }
+
+  /**
+   * 🔥 CRÍTICO: Processar payment intent bem-sucedido (R$1,00)
+   */
+  private async handlePaymentIntentSucceeded(paymentIntent: Stripe.PaymentIntent) {
+    console.log('💰 Payment Intent bem-sucedido:', paymentIntent.id);
+    
+    try {
+      // Verificar se é payment intent de ativação
+      const metadata = paymentIntent.metadata;
+      
+      if (metadata?.type === 'onetime_payment' || metadata?.step === 'onetime') {
+        console.log('🔥 PAYMENT INTENT DE ATIVAÇÃO PROCESSADO');
+        console.log('✅ R$1,00 cobrado com sucesso');
+        console.log('🎯 Trial de 3 dias iniciado');
+        
+        console.log('✅ Pagamento de ativação processado com sucesso');
+      }
+    } catch (error) {
+      console.error('❌ Erro ao processar payment intent succeeded:', error);
     }
   }
 }
