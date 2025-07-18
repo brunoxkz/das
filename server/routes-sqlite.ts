@@ -939,6 +939,61 @@ export function registerSQLiteRoutes(app: Express): Server {
     }
   });
 
+  // 💳 STRIPE CHECKOUT EMBED - Endpoint público para checkout embed
+  app.post("/api/public/checkout/create-embed-session", async (req, res) => {
+    try {
+      console.log('🔧 ENDPOINT EMBED CHECKOUT CHAMADO');
+      console.log('📋 Body:', req.body);
+      
+      const { customerName, customerEmail, customerPhone } = req.body;
+      
+      if (!customerName || !customerEmail || !customerPhone) {
+        return res.status(400).json({ 
+          success: false,
+          message: 'Nome, email e telefone são obrigatórios' 
+        });
+      }
+      
+      const { StripeSimpleTrialSystem } = await import('./stripe-simple-trial');
+      console.log('🔍 Importando StripeSimpleTrialSystem...');
+      
+      const correctTrialSystem = new StripeSimpleTrialSystem(
+        process.env.STRIPE_SECRET_KEY || 'sk_test_51RjvV9HK6al3veW1FPD5bTV1on2NQLlm9ud45AJDggFHdsGA9UAo5jfbSRvWF83W3uTp5cpZYa8tJBvm4ttefrk800mUs47pFA'
+      );
+      
+      // Configuração do trial
+      const trialConfig = {
+        planName: 'Vendzz Pro',
+        customerEmail: customerEmail,
+        customerName: customerName,
+        trialAmount: 1.00, // R$1,00
+        trialDays: 3, // 3 dias
+        recurringAmount: 29.90, // R$29,90
+        currency: 'BRL'
+      };
+      
+      console.log('🔧 CRIANDO TRIAL EMBED:', trialConfig);
+      
+      // Criar trial
+      const result = await correctTrialSystem.createSimpleTrialFlow(trialConfig);
+      
+      console.log('✅ TRIAL EMBED CRIADO:', result);
+      
+      res.json({
+        success: true,
+        ...result
+      });
+      
+    } catch (error) {
+      console.error('❌ Erro ao criar checkout embed:', error);
+      res.status(500).json({ 
+        success: false,
+        message: 'Erro ao criar checkout embed',
+        error: error.message 
+      });
+    }
+  });
+
   // Buscar produto específico por ID (público)
   app.get('/api/checkout-products/:id', async (req, res) => {
     try {
