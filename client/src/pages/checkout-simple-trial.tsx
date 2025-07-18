@@ -235,20 +235,7 @@ export default function CheckoutSimpleTrial() {
 
     try {
       const webhookData = {
-        type: 'payment_intent.succeeded',
-        data: {
-          object: {
-            id: checkoutData.paymentIntentId,
-            customer: checkoutData.customerId,
-            amount: Math.round(formData.activationPrice * 100),
-            currency: formData.currency.toLowerCase(),
-            metadata: {
-              trial_days: formData.trialDays,
-              recurring_price: formData.recurringPrice,
-              product_name: formData.productName
-            }
-          }
-        }
+        sessionId: checkoutData.sessionId // Usar sessionId conforme esperado pelo backend
       };
 
       const response = await apiRequest('POST', '/api/stripe/test-webhook', webhookData);
