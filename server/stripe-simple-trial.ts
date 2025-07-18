@@ -69,8 +69,8 @@ export class StripeSimpleTrialSystem {
 
       console.log('✅ Price recorrente criado:', recurringPrice.id);
 
-      // 4. Criar PRIMEIRO checkout para validação de cartão (R$ 1,00)
-      const validationCheckout = await this.stripe.checkout.sessions.create({
+      // 4. Criar PRIMEIRO checkout para cobrança de ativação (R$ 1,00)
+      const activationCheckout = await this.stripe.checkout.sessions.create({
         customer: customer.id,
         payment_method_types: ['card'],
         mode: 'payment',
@@ -79,8 +79,8 @@ export class StripeSimpleTrialSystem {
             price_data: {
               currency: config.currency.toLowerCase(),
               product_data: {
-                name: `${config.planName} - Taxa de Validação`,
-                description: `R$${config.trialAmount.toFixed(2)} para validar cartão. Após confirmação, assinatura de R$${config.recurringAmount.toFixed(2)}/mês será criada com ${config.trialDays} dias de trial gratuito.`,
+                name: `${config.planName} - Taxa de Ativação`,
+                description: `R$${config.trialAmount.toFixed(2)} taxa de ativação. Após pagamento, assinatura de R$${config.recurringAmount.toFixed(2)}/mês será criada com ${config.trialDays} dias de trial gratuito.`,
               },
               unit_amount: Math.round(config.trialAmount * 100),
             },
@@ -90,42 +90,42 @@ export class StripeSimpleTrialSystem {
         payment_intent_data: {
           setup_future_usage: 'off_session',
           metadata: {
-            type: 'validation_payment',
+            type: 'activation_payment',
             customer_id: customer.id,
             recurring_price_id: recurringPrice.id,
             trial_days: config.trialDays.toString(),
-            step: 'validation',
+            step: 'activation',
           },
         },
-        success_url: `${process.env.FRONTEND_URL || 'http://localhost:5000'}/checkout/success?session_id={CHECKOUT_SESSION_ID}&type=validation_success`,
+        success_url: `${process.env.FRONTEND_URL || 'http://localhost:5000'}/checkout/success?session_id={CHECKOUT_SESSION_ID}&type=activation_success`,
         cancel_url: `${process.env.FRONTEND_URL || 'http://localhost:5000'}/checkout/cancel`,
         metadata: {
-          type: 'validation_checkout',
+          type: 'activation_checkout',
           customer_id: customer.id,
           recurring_price_id: recurringPrice.id,
           trial_amount: config.trialAmount.toString(),
           recurring_amount: config.recurringAmount.toString(),
           trial_days: config.trialDays.toString(),
-          step: 'validation',
+          step: 'activation',
         },
       });
 
-      console.log('✅ Checkout de Validação criado:', validationCheckout.id);
+      console.log('✅ Checkout de Ativação criado:', activationCheckout.id);
 
       const explanation = `
-✅ FLUXO CORRIGIDO IMPLEMENTADO:
+✅ FLUXO DE COBRANÇA IMPLEMENTADO:
 1. Customer criado: ${customer.id}
 2. Product criado: ${product.id}
 3. Price R$${config.recurringAmount.toFixed(2)}/mês criado: ${recurringPrice.id}
-4. Checkout de Validação criado: ${validationCheckout.id}
+4. Checkout de Ativação criado: ${activationCheckout.id}
 5. setup_future_usage configurado para salvar cartão
 
 🔧 FLUXO CORRETO EM DUAS ETAPAS:
-ETAPA 1: Pagamento de validação R$${config.trialAmount.toFixed(2)} (salva cartão)
+ETAPA 1: Cobrança de ativação R$${config.trialAmount.toFixed(2)} (salva cartão)
 ETAPA 2: Webhook cria subscription com trial de ${config.trialDays} dias + R$${config.recurringAmount.toFixed(2)}/mês
 
 📋 SEQUÊNCIA DE COBRANÇA:
-1. Cliente paga R$${config.trialAmount.toFixed(2)} para VALIDAR cartão
+1. Cliente paga R$${config.trialAmount.toFixed(2)} TAXA DE ATIVAÇÃO
 2. Webhook detecta pagamento e cria subscription automaticamente
 3. Subscription inicia com ${config.trialDays} dias de trial GRATUITO
 4. Após ${config.trialDays} dias → cobrança automática R$${config.recurringAmount.toFixed(2)}/mês
@@ -136,11 +136,11 @@ ETAPA 2: Webhook cria subscription com trial de ${config.trialDays} dias + R$${c
         customerId: customer.id,
         productId: product.id,
         recurringPriceId: recurringPrice.id,
-        checkoutSessionId: validationCheckout.id,
-        checkoutUrl: validationCheckout.url!,
+        checkoutSessionId: activationCheckout.id,
+        checkoutUrl: activationCheckout.url!,
         explanation,
         success: true,
-        step: 'validation',
+        step: 'activation',
       };
 
     } catch (error) {

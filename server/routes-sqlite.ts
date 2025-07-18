@@ -7325,12 +7325,12 @@ console.log('Vendzz Checkout Embed carregado para plano: ${planId}');
         user_id: req.user.id,
         trial_period_days: trialDays,
         regular_price_brl: regularPrice,
-        immediate_charge_brl: 1.00,
+        activation_fee_brl: 1.00,
         processed_at: new Date().toISOString(),
         trial_end_date: trialEndDate.toISOString(),
         subscription_id: 'sub_test_' + mockTimestamp,
         subscription_status: 'trialing',
-        implementation: 'immediate_charge_then_subscription'
+        implementation: 'activation_fee_then_subscription'
       };
       
       // Salvar dados no banco para teste real
