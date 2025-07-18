@@ -496,26 +496,15 @@ export class SQLiteStorage implements IStorage {
   async getRecentSubscriptions(limit: number = 10): Promise<any[]> {
     try {
       const stmt = sqlite.prepare(`
-        SELECT * FROM stripe_subscriptions 
-        ORDER BY created_at DESC 
+        SELECT * FROM stripe_transactions 
+        WHERE status = 'succeeded' 
+        ORDER BY createdAt DESC 
         LIMIT ?
       `);
       return stmt.all(limit);
     } catch (error) {
       console.error('❌ Erro ao buscar assinaturas:', error);
-      // Tentar buscar na tabela existente
-      try {
-        const stmt2 = sqlite.prepare(`
-          SELECT * FROM stripe_transactions 
-          WHERE status = 'succeeded' 
-          ORDER BY createdAt DESC 
-          LIMIT ?
-        `);
-        return stmt2.all(limit);
-      } catch (error2) {
-        console.error('❌ Erro ao buscar transações:', error2);
-        return [];
-      }
+      return [];
     }
   }
 
