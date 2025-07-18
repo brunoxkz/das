@@ -382,15 +382,15 @@ export default function QuizBuilder() {
       queryClient.invalidateQueries({ queryKey: ["/api/quizzes"] });
       
       toast({
-        title: "Quiz Salvo",
-        description: "Quiz salvo com sucesso",
+        title: t('quizBuilder.messages.quizSaved'),
+        description: t('quizBuilder.messages.quizSaved'),
       });
     },
     onError: (error) => {
       if (isUnauthorizedError(error)) {
         toast({
-          title: "Acesso Negado",
-          description: "Você foi desconectado. Redirecionando para login...",
+          title: t('quizBuilder.messages.unauthorized'),
+          description: t('quizBuilder.messages.unauthorizedDesc'),
           variant: "destructive",
         });
         setTimeout(() => {
@@ -400,8 +400,8 @@ export default function QuizBuilder() {
       }
       
       toast({
-        title: "Erro ao Salvar",
-        description: "Ocorreu um erro ao salvar o quiz. Tente novamente.",
+        title: t('quizBuilder.messages.errorSaving'),
+        description: t('quizBuilder.messages.errorSaving'),
         variant: "destructive",
       });
     },
@@ -516,8 +516,8 @@ export default function QuizBuilder() {
   useEffect(() => {
     if (!authLoading && !isAuthenticated) {
       toast({
-        title: "Acesso negado",
-        description: "Você precisa estar logado para acessar o editor.",
+        title: t('quizBuilder.messages.accessDenied'),
+        description: t('quizBuilder.messages.accessDeniedDesc'),
         variant: "destructive",
       });
       setTimeout(() => {
@@ -529,8 +529,8 @@ export default function QuizBuilder() {
   const handleSave = (isPublishing = false) => {
     if (!quizData.title?.trim()) {
       toast({
-        title: "Título obrigatório",
-        description: "Por favor, adicione um título para o quiz na aba 'Configurações' antes de salvar.",
+        title: t('quizBuilder.messages.titleRequired'),
+        description: t('quizBuilder.messages.titleRequiredDesc'),
         variant: "destructive",
       });
       setActiveTab("settings"); // Redireciona para a aba de configurações
@@ -786,7 +786,7 @@ export default function QuizBuilder() {
               onClick={() => setActiveTab("preview")}
             >
               <Eye className="w-4 h-4 mr-2" />
-              Visualizar
+              {t('quizBuilder.preview')}
             </Button>
             <Button
               variant="outline"
@@ -795,7 +795,7 @@ export default function QuizBuilder() {
               disabled={saveMutation.isPending}
             >
               <Save className="w-4 h-4 mr-2" />
-              {saveMutation.isPending ? "Salvando..." : "Salvar"}
+              {saveMutation.isPending ? t('quizBuilder.saving') : t('quizBuilder.save')}
             </Button>
             <Button
               size="sm"
@@ -803,7 +803,7 @@ export default function QuizBuilder() {
               disabled={saveMutation.isPending || !quizData.title?.trim()}
             >
               <Globe className="w-4 h-4 mr-2" />
-              Publicar
+              {t('quizBuilder.publish')}
             </Button>
           </div>
         </div>
@@ -813,14 +813,14 @@ export default function QuizBuilder() {
       <div className="bg-white border-b border-gray-200 px-6">
         <div className="flex space-x-8">
           {[
-            { id: "editor", label: "Editor", icon: <Settings className="w-4 h-4" /> },
-            { id: "preview", label: "Visualizar", icon: <Play className="w-4 h-4" /> },
-            { id: "fluxo", label: "Fluxo Avançado", icon: <Network className="w-4 h-4" /> },
-            { id: "design", label: "Design", icon: <Palette className="w-4 h-4" /> },
-            { id: "settings", label: "Configurações", icon: <Settings className="w-4 h-4" /> },
-            { id: "teste-ab", label: "Teste A/B", icon: <BarChart className="w-4 h-4" /> },
-            { id: "pixels", label: "Pixels/Scripts", icon: <Target className="w-4 h-4" /> },
-            { id: "blackhat", label: "BlackHat", icon: <Target className="w-4 h-4" /> },
+            { id: "editor", label: t('quizBuilder.tabs.editor'), icon: <Settings className="w-4 h-4" /> },
+            { id: "preview", label: t('quizBuilder.tabs.preview'), icon: <Play className="w-4 h-4" /> },
+            { id: "fluxo", label: t('quizBuilder.tabs.flow'), icon: <Network className="w-4 h-4" /> },
+            { id: "design", label: t('quizBuilder.tabs.design'), icon: <Palette className="w-4 h-4" /> },
+            { id: "settings", label: t('quizBuilder.tabs.settings'), icon: <Settings className="w-4 h-4" /> },
+            { id: "teste-ab", label: t('quizBuilder.tabs.abTest'), icon: <BarChart className="w-4 h-4" /> },
+            { id: "pixels", label: t('quizBuilder.tabs.pixels'), icon: <Target className="w-4 h-4" /> },
+            { id: "blackhat", label: t('quizBuilder.tabs.blackhat'), icon: <Target className="w-4 h-4" /> },
 
           ].map((tab) => (
             <button
