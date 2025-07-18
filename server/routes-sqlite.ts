@@ -1661,6 +1661,14 @@ export function registerSQLiteRoutes(app: Express): Server {
       // 🔥 CORREÇÃO CRÍTICA: Verificar se payment method está anexado a outro customer
       const paymentMethod = await stripeSystem.stripe.paymentMethods.retrieve(paymentMethodId);
       
+      // Validar se payment method está disponível
+      if (!paymentMethod || paymentMethod.type !== 'card') {
+        return res.status(400).json({
+          success: false,
+          message: 'Payment method inválido ou não é um cartão'
+        });
+      }
+      
       if (paymentMethod.customer && paymentMethod.customer !== customer.id) {
         // Desanexar do customer anterior se necessário
         await stripeSystem.stripe.paymentMethods.detach(paymentMethodId);
@@ -1685,7 +1693,9 @@ export function registerSQLiteRoutes(app: Express): Server {
         defaultPaymentMethod: paymentMethodId
       });
 
-      // Criar Payment Intent e processar pagamento
+      // 🔥 CORREÇÃO: Criar Payment Intent com idempotência e metadata consistente
+      const paymentIdempotencyKey = `payment_${customer.id}_${Date.now()}`;
+      
       const paymentIntent = await stripeSystem.stripe.paymentIntents.create({
         amount: Math.round(amount * 100), // converter para centavos
         currency: currency.toLowerCase(),
@@ -1696,12 +1706,16 @@ export function registerSQLiteRoutes(app: Express): Server {
         setup_future_usage: 'off_session', // 🔥 SALVAR CARTÃO PARA COBRANÇA AUTOMÁTICA
         return_url: `${req.protocol}://${req.get('host')}/payment-success`,
         metadata: {
+          type: 'onetime_payment', // 🔥 CRÍTICO: Metadata consistente para webhook
+          step: 'onetime',
           plan_name: planName || 'Vendzz Pro',
           customer_name: customerData.name,
           customer_email: customerData.email,
           customer_phone: customerData.phone,
           processed_via: 'inline_api'
         }
+      }, {
+        idempotencyKey: paymentIdempotencyKey
       });
 
       console.log('✅ PAYMENT INTENT PROCESSADO:', {
@@ -1713,20 +1727,77 @@ export function registerSQLiteRoutes(app: Express): Server {
         payment_method: paymentIntent.payment_method
       });
 
-      // Criar produto e preço para assinatura
-      const product = await stripeSystem.stripe.products.create({
-        name: planName || 'Vendzz Pro',
-        description: 'Assinatura mensal após trial de 3 dias'
-      });
+      // 🔥 CORREÇÃO: Usar produtos/prices pré-criados ou criar com idempotência
+      const idempotencyKey = `product_${planName?.replace(/\s+/g, '_').toLowerCase() || 'vendzz_pro'}`;
+      
+      let product, price;
+      
+      try {
+        // Buscar produto existente primeiro
+        const existingProducts = await stripeSystem.stripe.products.list({
+          limit: 10,
+          active: true
+        });
+        
+        product = existingProducts.data.find(p => 
+          p.name === (planName || 'Vendzz Pro') || 
+          p.metadata?.plan_name === (planName || 'Vendzz Pro')
+        );
+        
+        if (!product) {
+          // Criar produto com idempotência
+          product = await stripeSystem.stripe.products.create({
+            name: planName || 'Vendzz Pro',
+            description: 'Assinatura mensal após trial de 3 dias',
+            metadata: {
+              plan_name: planName || 'Vendzz Pro',
+              created_via: 'vendzz_api'
+            }
+          }, {
+            idempotencyKey: idempotencyKey
+          });
+        }
+        
+        // Buscar price existente
+        const existingPrices = await stripeSystem.stripe.prices.list({
+          product: product.id,
+          active: true,
+          limit: 10
+        });
+        
+        price = existingPrices.data.find(p => 
+          p.unit_amount === 2990 && 
+          p.currency === currency.toLowerCase() && 
+          p.recurring?.interval === 'month'
+        );
+        
+        if (!price) {
+          // Criar price com idempotência
+          price = await stripeSystem.stripe.prices.create({
+            unit_amount: 2990, // R$ 29,90
+            currency: currency.toLowerCase(),
+            recurring: { interval: 'month' },
+            product: product.id,
+            metadata: {
+              plan_name: planName || 'Vendzz Pro',
+              created_via: 'vendzz_api'
+            }
+          }, {
+            idempotencyKey: `price_${idempotencyKey}`
+          });
+        }
+        
+      } catch (error) {
+        console.error('❌ Erro ao criar/buscar produto/price:', error);
+        return res.status(500).json({
+          success: false,
+          message: 'Erro ao configurar produto no Stripe'
+        });
+      }
 
-      const price = await stripeSystem.stripe.prices.create({
-        unit_amount: 2990, // R$ 29,90
-        currency: currency.toLowerCase(),
-        recurring: { interval: 'month' },
-        product: product.id
-      });
-
-      // Criar assinatura com trial
+      // 🔥 CORREÇÃO: Criar assinatura com idempotência
+      const subscriptionIdempotencyKey = `subscription_${customer.id}_${paymentIntent.id}`;
+      
       const subscription = await stripeSystem.stripe.subscriptions.create({
         customer: customer.id,
         items: [{ price: price.id }],
@@ -1734,8 +1805,12 @@ export function registerSQLiteRoutes(app: Express): Server {
         default_payment_method: paymentMethodId, // 🔥 DEFINIR PAYMENT METHOD PADRÃO
         metadata: {
           activation_payment_intent: paymentIntent.id,
-          plan_name: planName || 'Vendzz Pro'
+          plan_name: planName || 'Vendzz Pro',
+          created_via: 'vendzz_api',
+          customer_email: customerData.email
         }
+      }, {
+        idempotencyKey: subscriptionIdempotencyKey
       });
 
       console.log('✅ ASSINATURA CRIADA:', {
