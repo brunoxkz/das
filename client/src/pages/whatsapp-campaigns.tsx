@@ -24,7 +24,10 @@ import {
   Settings,
   BarChart,
   DollarSign,
-  Rocket
+  Rocket,
+  Copy,
+  Eye,
+  EyeOff
 } from "lucide-react";
 
 export default function WhatsAppCampaigns() {
@@ -34,6 +37,12 @@ export default function WhatsAppCampaigns() {
     connected: false,
     pendingMessages: 0,
     version: null
+  });
+  
+  const [tokenData, setTokenData] = useState({
+    isVisible: false,
+    token: '',
+    showToken: false
   });
 
   // Dados simulados para demonstração
@@ -83,12 +92,35 @@ export default function WhatsAppCampaigns() {
   }, []);
 
   const generateToken = () => {
-    const token = `wzz_${Math.random().toString(36).substring(2, 15)}${Math.random().toString(36).substring(2, 15)}`;
-    navigator.clipboard.writeText(token);
-    toast({
-      title: "Token gerado e copiado!",
-      description: `Token: ${token}`,
+    const newToken = `wzz_${Math.random().toString(36).substring(2, 15)}${Math.random().toString(36).substring(2, 15)}`;
+    setTokenData({
+      isVisible: true,
+      token: newToken,
+      showToken: false
     });
+  };
+
+  const copyToken = async () => {
+    try {
+      await navigator.clipboard.writeText(tokenData.token);
+      toast({
+        title: "Token copiado!",
+        description: "Token copiado para a área de transferência",
+      });
+    } catch (error) {
+      toast({
+        title: "Erro ao copiar",
+        description: "Não foi possível copiar o token",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const toggleTokenVisibility = () => {
+    setTokenData(prev => ({
+      ...prev,
+      showToken: !prev.showToken
+    }));
   };
 
   return (
@@ -212,6 +244,51 @@ export default function WhatsAppCampaigns() {
                   GERAR TOKEN
                 </Button>
               </div>
+
+              {/* Token Display Section */}
+              {tokenData.isVisible && (
+                <div className="p-4 bg-gray-50 rounded-lg border border-gray-200 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <h4 className="font-semibold text-gray-800">🔐 Seu Token de Autenticação</h4>
+                    <div className="flex items-center gap-2">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={toggleTokenVisibility}
+                        className="h-8"
+                      >
+                        {tokenData.showToken ? (
+                          <><EyeOff className="h-4 w-4 mr-1" /> Ocultar</>
+                        ) : (
+                          <><Eye className="h-4 w-4 mr-1" /> Mostrar</>
+                        )}
+                      </Button>
+                      <Button
+                        size="sm"
+                        onClick={copyToken}
+                        className="h-8 bg-green-600 hover:bg-green-700"
+                      >
+                        <Copy className="h-4 w-4 mr-1" />
+                        Copiar
+                      </Button>
+                    </div>
+                  </div>
+                  
+                  <div className="bg-white p-3 rounded border border-dashed border-gray-300">
+                    <code className="text-sm font-mono text-gray-700 break-all">
+                      {tokenData.showToken ? tokenData.token : '•'.repeat(tokenData.token.length)}
+                    </code>
+                  </div>
+                  
+                  <div className="text-xs text-gray-600 space-y-1">
+                    <p>✅ <strong>Instruções:</strong></p>
+                    <p>1. Copie este token usando o botão "Copiar" acima</p>
+                    <p>2. Abra a extensão WhatsApp Vendzz no seu navegador</p>
+                    <p>3. Cole o token no campo "Token de Autenticação"</p>
+                    <p>4. Clique em "Conectar" para ativar a automação</p>
+                  </div>
+                </div>
+              )}
             </CardContent>
           </Card>
 
