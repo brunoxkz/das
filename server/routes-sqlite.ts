@@ -559,27 +559,24 @@ export function registerSQLiteRoutes(app: Express): Server {
     }
   });
 
-  // Buscar plano específico por ID (público) - CORRIGIDO
-  app.get('/api/stripe/plans/:id', async (req, res) => {
+  // Buscar plano específico por ID (público) - ENDPOINT PÚBLICO
+  app.get('/api/public/plans/:id', async (req, res) => {
     try {
       const { id } = req.params;
-      console.log('🔍 DEBUG - Buscando plano:', { id });
+      console.log('🔍 DEBUG - Buscando plano público:', { id });
       
-      // Buscar sem filtro ativo primeiro
-      const planSemFiltro = sqlite.prepare('SELECT * FROM stripe_plans WHERE id = ?').get(id);
-      console.log('🔍 DEBUG - Plano sem filtro ativo:', JSON.stringify(planSemFiltro, null, 2));
+      // Usar mesma query que funciona no endpoint de teste
+      const plans = await storage.getStripePlans();
+      const plan = plans.find(p => p.id === id);
       
-      // Buscar com filtro ativo
-      const plan = sqlite.prepare('SELECT * FROM stripe_plans WHERE id = ? AND active = 1').get(id);
-      console.log('🔍 DEBUG - Plano com filtro ativo:', JSON.stringify(plan, null, 2));
+      console.log('🔍 DEBUG - Plano encontrado via storage:', JSON.stringify(plan, null, 2));
       
-      if (!plan) {
-        console.log('❌ DEBUG - Plano não encontrado para ID:', id);
+      if (!plan || plan.active !== 1) {
+        console.log('❌ DEBUG - Plano não encontrado ou inativo:', { id, plan });
         return res.status(404).json({ 
           error: 'Plano não encontrado',
           planId: id,
-          planSemFiltro: planSemFiltro,
-          debug: 'Plano não encontrado com active=1'
+          debug: plan ? 'Plano inativo' : 'Plano não encontrado'
         });
       }
 
