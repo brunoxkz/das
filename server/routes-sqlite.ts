@@ -553,11 +553,11 @@ export function registerSQLiteRoutes(app: Express): Server {
     }
   });
 
-  // Buscar plano específico por ID (público)
+  // Buscar plano específico por ID (público) - CORRIGIDO
   app.get('/api/stripe/plans/:id', async (req, res) => {
     try {
       const { id } = req.params;
-      const plan = sqlite.prepare('SELECT * FROM stripe_plans WHERE id = ?').get(id);
+      const plan = sqlite.prepare('SELECT * FROM stripe_plans WHERE id = ? AND active = 1').get(id);
       
       if (!plan) {
         return res.status(404).json({ error: 'Plano não encontrado' });
@@ -6532,7 +6532,7 @@ export function registerSQLiteRoutes(app: Express): Server {
     }
   });
 
-  // CRIAR NOVO PLANO
+  // CRIAR NOVO PLANO COM STRIPE REAL
   app.post("/api/stripe/plans", verifyJWT, async (req: any, res) => {
     try {
       const { name, description, price, currency, interval, trial_days, trial_price, gateway } = req.body;
@@ -6541,9 +6541,29 @@ export function registerSQLiteRoutes(app: Express): Server {
         return res.status(400).json({ error: 'Nome e preço são obrigatórios' });
       }
 
+      // Criar produto real no Stripe
+      const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '');
+      const product = await stripe.products.create({
+        name,
+        description,
+        metadata: { created_by: 'vendzz_admin' }
+      });
+
+      // Criar preço real no Stripe
+      const stripePrice = await stripe.prices.create({
+        unit_amount: Math.round(parseFloat(price) * 100), // Converter para centavos
+        currency: currency || 'brl',
+        recurring: {
+          interval: interval || 'month',
+        },
+        product: product.id,
+        metadata: { 
+          trial_days: trial_days?.toString() || '3',
+          trial_price: trial_price?.toString() || '1.00'
+        }
+      });
+
       const planId = nanoid();
-      const stripeProductId = `prod_${Date.now()}`;
-      const stripePriceId = `price_${Date.now()}`;
       
       const insertPlan = sqlite.prepare(`
         INSERT INTO stripe_plans 
@@ -6562,8 +6582,8 @@ export function registerSQLiteRoutes(app: Express): Server {
         trial_price || 1.00,
         gateway || 'stripe',
         1,
-        stripePriceId,
-        stripeProductId,
+        stripePrice.id,
+        product.id,
         new Date().toISOString(),
         new Date().toISOString()
       );
@@ -6573,11 +6593,13 @@ export function registerSQLiteRoutes(app: Express): Server {
       res.status(201).json({
         success: true,
         plan: newPlan,
-        message: 'Plano criado com sucesso!'
+        stripe_price_id: stripePrice.id,
+        stripe_product_id: product.id,
+        message: 'Plano criado com sucesso no Stripe!'
       });
     } catch (error) {
       console.error('❌ Erro ao criar plano:', error);
-      res.status(500).json({ error: 'Erro ao criar plano' });
+      res.status(500).json({ error: 'Erro ao criar plano: ' + error.message });
     }
   });
 
@@ -6671,22 +6693,7 @@ export function registerSQLiteRoutes(app: Express): Server {
     }
   });
 
-  // OBTER PLANO POR ID (PRIVADO - COM AUTENTICAÇÃO)
-  app.get("/api/stripe/plans/:id", async (req: Request, res: Response) => {
-    try {
-      const { id } = req.params;
-      const plan = sqlite.prepare('SELECT * FROM stripe_plans WHERE id = ?').get(id);
-      
-      if (!plan) {
-        return res.status(404).json({ error: 'Plano não encontrado' });
-      }
-
-      res.json(plan);
-    } catch (error) {
-      console.error('❌ Erro ao buscar plano:', error);
-      res.status(500).json({ error: 'Erro ao buscar plano' });
-    }
-  });
+  // ENDPOINT DUPLICADO REMOVIDO - USANDO APENAS O ENDPOINT PRINCIPAL
 
   // CRIAR CHECKOUT PÚBLICO A PARTIR DE PLANO
   app.post("/api/stripe/create-checkout-session", async (req: Request, res: Response) => {
