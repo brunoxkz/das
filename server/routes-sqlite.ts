@@ -626,9 +626,18 @@ export function registerSQLiteRoutes(app: Express): Server {
       
       res.json({
         message: 'Plano criado com sucesso!',
-        plan: planData,
+        plan: {
+          ...planData,
+          id: planId,
+          intervalDisplay: interval === 'minute' ? `${interval_count} minuto(s)` :
+                          interval === 'hour' ? `${interval_count} hora(s)` :
+                          interval === 'quarter' ? 'Trimestral' :
+                          interval === 'month' ? 'Mensal' :
+                          interval === 'year' ? 'Anual' : interval
+        },
         stripe_price_id: stripePrice.id,
-        stripe_product_id: product.id
+        stripe_product_id: product.id,
+        intervalConfig: intervalConfig
       });
     } catch (error) {
       console.error('Erro ao criar plano:', error);
@@ -8533,6 +8542,33 @@ console.log('Vendzz Checkout Embed carregado para plano: ${planId}');
     }
   });
 
+  // FUNÇÃO PARA CONVERTER INTERVALOS PERSONALIZADOS
+  function convertIntervalToStripe(interval: string, interval_count: number = 1) {
+    const conversions = {
+      'minute': { 
+        stripeInterval: 'day', 
+        stripeIntervalCount: 1, 
+        useSchedule: true,
+        scheduleInterval: 'minute',
+        scheduleIntervalCount: interval_count
+      },
+      'hour': { 
+        stripeInterval: 'day', 
+        stripeIntervalCount: 1, 
+        useSchedule: true,
+        scheduleInterval: 'hour',
+        scheduleIntervalCount: interval_count
+      },
+      'day': { stripeInterval: 'day', stripeIntervalCount: 1, useSchedule: false },
+      'week': { stripeInterval: 'week', stripeIntervalCount: 1, useSchedule: false },
+      'month': { stripeInterval: 'month', stripeIntervalCount: 1, useSchedule: false },
+      'quarter': { stripeInterval: 'month', stripeIntervalCount: 3, useSchedule: false },
+      'year': { stripeInterval: 'year', stripeIntervalCount: 1, useSchedule: false }
+    };
+    
+    return conversions[interval] || { stripeInterval: 'month', stripeIntervalCount: 1, useSchedule: false };
+  }
+
   // STRIPE PLANS MANAGEMENT - CRIAR PLANO
   app.post("/api/stripe/create-plan", async (req: any, res) => {
     try {
@@ -8550,7 +8586,7 @@ console.log('Vendzz Checkout Embed carregado para plano: ${planId}');
         return res.status(401).json({ error: "Token inválido" });
       }
       
-      const { name, description, price, currency, interval, trial_period_days, activation_fee, features } = req.body;
+      const { name, description, price, currency, interval, interval_count, trial_period_days, activation_fee, features } = req.body;
       
       if (!activeStripeService) {
         return res.status(500).json({ error: "Stripe não configurado" });
@@ -8566,13 +8602,23 @@ console.log('Vendzz Checkout Embed carregado para plano: ${planId}');
         }
       });
 
+      // Converter intervalo personalizado para formato Stripe
+      const intervalConfig = convertIntervalToStripe(interval, interval_count);
+      
+      console.log('🔄 CONVERSÃO DE INTERVALO:', {
+        originalInterval: interval,
+        intervalCount: interval_count,
+        stripeConfig: intervalConfig
+      });
+
       // Criar preço no Stripe
       const stripePrice = await activeStripeService.stripe.prices.create({
         product: product.id,
         unit_amount: Math.round(price * 100),
         currency: currency.toLowerCase(),
         recurring: {
-          interval: interval || 'month'
+          interval: intervalConfig.stripeInterval,
+          interval_count: intervalConfig.stripeIntervalCount
         }
       });
 
@@ -8583,13 +8629,18 @@ console.log('Vendzz Checkout Embed carregado para plano: ${planId}');
         price: Number(price),
         currency: String(currency),
         interval: String(interval || 'month'),
+        interval_count: Number(interval_count || 1),
         trial_days: Number(trial_period_days),
         trial_price: Number(activation_fee),
         stripe_product_id: String(product.id),
         stripe_price_id: String(stripePrice.id),
         active: 1,
         created_at: new Date().toISOString(),
-        user_id: String(userId)
+        user_id: String(userId),
+        // Adicionar informações sobre configuração especial
+        uses_schedule: intervalConfig.useSchedule,
+        schedule_interval: intervalConfig.useSchedule ? intervalConfig.scheduleInterval : null,
+        schedule_interval_count: intervalConfig.useSchedule ? intervalConfig.scheduleIntervalCount : null
       };
 
       // Generate unique ID for the plan
@@ -8612,8 +8663,8 @@ console.log('Vendzz Checkout Embed carregado para plano: ${planId}');
       
       sqlite.prepare(`
         INSERT INTO stripe_plans 
-        (id, name, description, price, currency, interval, trial_days, trial_price, stripe_product_id, stripe_price_id, active, created_at)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        (id, name, description, price, currency, interval, interval_count, trial_days, trial_price, stripe_product_id, stripe_price_id, active, created_at, uses_schedule, schedule_interval, schedule_interval_count)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       `).run(
         planId,
         planData.name,
@@ -8621,12 +8672,16 @@ console.log('Vendzz Checkout Embed carregado para plano: ${planId}');
         planData.price,
         planData.currency,
         planData.interval,
+        planData.interval_count,
         planData.trial_days,
         planData.trial_price,
         planData.stripe_product_id,
         planData.stripe_price_id,
         planData.active,
-        planData.created_at
+        planData.created_at,
+        planData.uses_schedule,
+        planData.schedule_interval,
+        planData.schedule_interval_count
       );
 
       res.json({

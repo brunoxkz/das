@@ -29,6 +29,7 @@ interface PlanFormData {
   price: number;
   currency: string;
   interval: string;
+  interval_count?: number;
   trial_period_days: number;
   activation_fee: number;
   features: string[];
@@ -523,18 +524,67 @@ export default function StripePlansManager() {
                   />
                 </div>
                 <div>
-                  <Label htmlFor="interval" className="text-white">Intervalo</Label>
+                  <Label htmlFor="interval" className="text-white">Intervalo de Cobrança</Label>
                   <Select value={formData.interval} onValueChange={(value) => setFormData(prev => ({ ...prev, interval: value }))}>
                     <SelectTrigger className="bg-gray-700 border-gray-600 text-white">
                       <SelectValue placeholder="Selecione o intervalo" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="month">Mensal</SelectItem>
-                      <SelectItem value="year">Anual</SelectItem>
+                      <SelectItem value="minute">📍 Minutos (Teste)</SelectItem>
+                      <SelectItem value="hour">⏰ Horas (Teste)</SelectItem>
+                      <SelectItem value="day">📅 Diário</SelectItem>
+                      <SelectItem value="week">📆 Semanal</SelectItem>
+                      <SelectItem value="month">📊 Mensal</SelectItem>
+                      <SelectItem value="quarter">📈 Trimestral</SelectItem>
+                      <SelectItem value="year">🎯 Anual</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
               </div>
+
+              {/* Configuração de Intervalo Personalizado */}
+              {(formData.interval === 'minute' || formData.interval === 'hour') && (
+                <div className="bg-yellow-900/20 border border-yellow-600 rounded-lg p-4">
+                  <h3 className="text-yellow-400 font-medium mb-2">⚠️ Configuração para Testes</h3>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="interval_count" className="text-white">
+                        Quantidade de {formData.interval === 'minute' ? 'Minutos' : 'Horas'}
+                      </Label>
+                      <Input
+                        id="interval_count"
+                        type="number"
+                        min="1"
+                        max={formData.interval === 'minute' ? 60 : 24}
+                        value={formData.interval_count || 1}
+                        onChange={(e) => setFormData(prev => ({ ...prev, interval_count: parseInt(e.target.value) || 1 }))}
+                        className="bg-gray-700 border-gray-600 text-white"
+                        placeholder={formData.interval === 'minute' ? 'Ex: 10' : 'Ex: 2'}
+                      />
+                    </div>
+                    <div className="flex items-end">
+                      <div className="text-sm text-yellow-300">
+                        {formData.interval === 'minute' ? 
+                          `Cobrança a cada ${formData.interval_count || 1} minuto(s)` : 
+                          `Cobrança a cada ${formData.interval_count || 1} hora(s)`
+                        }
+                      </div>
+                    </div>
+                  </div>
+                  <p className="text-yellow-300 text-xs mt-2">
+                    💡 Ideal para testes rápidos. Em produção, use intervalos maiores.
+                  </p>
+                </div>
+              )}
+
+              {formData.interval === 'quarter' && (
+                <div className="bg-blue-900/20 border border-blue-600 rounded-lg p-4">
+                  <h3 className="text-blue-400 font-medium mb-2">📈 Cobrança Trimestral</h3>
+                  <p className="text-blue-300 text-sm">
+                    Cliente será cobrado a cada 3 meses. Valor total: R$ {(formData.price * 3).toFixed(2)}
+                  </p>
+                </div>
+              )}
 
               <div>
                 <Label htmlFor="currency" className="text-white">Moeda</Label>
