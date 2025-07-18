@@ -59,6 +59,7 @@ export default function AdminDashboardPlanos() {
     price: 29.90,
     currency: 'BRL',
     interval: 'month',
+    interval_count: 1,
     trial_days: 3,
     trial_price: 1.00,
     active: true,
@@ -73,6 +74,7 @@ export default function AdminDashboardPlanos() {
       price: 29.90,
       currency: 'BRL',
       interval: 'month',
+      interval_count: 1,
       trial_days: 3,
       trial_price: 1.00,
       active: true,
@@ -431,6 +433,50 @@ export default function AdminDashboardPlanos() {
                         </div>
                         <div className="grid grid-cols-3 gap-4">
                           <div>
+                            <Label htmlFor="interval">Intervalo de Cobrança</Label>
+                            <Select value={formData.interval} onValueChange={(value) => setFormData({...formData, interval: value})}>
+                              <SelectTrigger>
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="month">📅 Mensal</SelectItem>
+                                <SelectItem value="quarter">📅 Trimestral</SelectItem>
+                                <SelectItem value="year">📅 Anual</SelectItem>
+                                <SelectItem value="week">📅 Semanal</SelectItem>
+                                <SelectItem value="day">📅 Diário</SelectItem>
+                                <SelectItem value="hour">⏰ Por Hora (Teste)</SelectItem>
+                                <SelectItem value="minute">⏰ Por Minuto (Teste)</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+                          <div>
+                            <Label htmlFor="interval_count">Quantidade</Label>
+                            <Input
+                              id="interval_count"
+                              type="number"
+                              min="1"
+                              max="999"
+                              value={formData.interval_count}
+                              onChange={(e) => setFormData({...formData, interval_count: parseInt(e.target.value) || 1})}
+                              placeholder="1"
+                            />
+                          </div>
+                          <div>
+                            <Label htmlFor="currency">Moeda</Label>
+                            <Select value={formData.currency} onValueChange={(value) => setFormData({...formData, currency: value})}>
+                              <SelectTrigger>
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="BRL">BRL - Real</SelectItem>
+                                <SelectItem value="USD">USD - Dólar</SelectItem>
+                                <SelectItem value="EUR">EUR - Euro</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+                        </div>
+                        <div className="grid grid-cols-2 gap-4">
+                          <div>
                             <Label htmlFor="trial_days">Dias de Trial</Label>
                             <Input
                               id="trial_days"
@@ -448,19 +494,6 @@ export default function AdminDashboardPlanos() {
                               value={formData.trial_price}
                               onChange={(e) => setFormData({...formData, trial_price: parseFloat(e.target.value)})}
                             />
-                          </div>
-                          <div>
-                            <Label htmlFor="currency">Moeda</Label>
-                            <Select value={formData.currency} onValueChange={(value) => setFormData({...formData, currency: value})}>
-                              <SelectTrigger>
-                                <SelectValue />
-                              </SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="BRL">BRL - Real</SelectItem>
-                                <SelectItem value="USD">USD - Dólar</SelectItem>
-                                <SelectItem value="EUR">EUR - Euro</SelectItem>
-                              </SelectContent>
-                            </Select>
                           </div>
                         </div>
                         <div className="flex items-center space-x-2">
