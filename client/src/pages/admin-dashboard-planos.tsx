@@ -59,13 +59,10 @@ export default function AdminDashboardPlanos() {
     price: 29.90,
     currency: 'BRL',
     interval: 'month',
-    interval_count: 1,
     trial_days: 3,
     trial_price: 1.00,
     active: true,
-    features: [] as string[],
-    billing_cycles: null as number | null, // null = infinito, número = limitado
-    has_limited_cycles: false
+    features: [] as string[]
   });
 
   // Reset form data
@@ -76,13 +73,10 @@ export default function AdminDashboardPlanos() {
       price: 29.90,
       currency: 'BRL',
       interval: 'month',
-      interval_count: 1,
       trial_days: 3,
       trial_price: 1.00,
       active: true,
-      features: [],
-      billing_cycles: null,
-      has_limited_cycles: false
+      features: []
     });
   };
 
@@ -416,18 +410,7 @@ export default function AdminDashboardPlanos() {
                             />
                           </div>
                           <div>
-                            <Label htmlFor="price">
-                              Preço {
-                                formData.interval === 'minute' ? `por ${formData.interval_count} Minuto(s)` :
-                                formData.interval === 'hour' ? `por ${formData.interval_count} Hora(s)` :
-                                formData.interval === 'day' ? `por ${formData.interval_count} Dia(s)` :
-                                formData.interval === 'week' ? `por ${formData.interval_count} Semana(s)` :
-                                formData.interval === 'month' ? `por ${formData.interval_count} Mês(es)` :
-                                formData.interval === 'quarter' ? `por ${formData.interval_count} Trimestre(s)` :
-                                formData.interval === 'year' ? `por ${formData.interval_count} Ano(s)` :
-                                'do Plano'
-                              } (R$)
-                            </Label>
+                            <Label htmlFor="price">Preço Mensal (R$)</Label>
                             <Input
                               id="price"
                               type="number"
@@ -448,50 +431,6 @@ export default function AdminDashboardPlanos() {
                         </div>
                         <div className="grid grid-cols-3 gap-4">
                           <div>
-                            <Label htmlFor="interval">Intervalo de Cobrança</Label>
-                            <Select value={formData.interval} onValueChange={(value) => setFormData({...formData, interval: value})}>
-                              <SelectTrigger>
-                                <SelectValue />
-                              </SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="month">📅 Mensal</SelectItem>
-                                <SelectItem value="quarter">📅 Trimestral</SelectItem>
-                                <SelectItem value="year">📅 Anual</SelectItem>
-                                <SelectItem value="week">📅 Semanal</SelectItem>
-                                <SelectItem value="day">📅 Diário</SelectItem>
-                                <SelectItem value="hour">⏰ Por Hora (Teste)</SelectItem>
-                                <SelectItem value="minute">⏰ Por Minuto (Teste)</SelectItem>
-                              </SelectContent>
-                            </Select>
-                          </div>
-                          <div>
-                            <Label htmlFor="interval_count">Quantidade</Label>
-                            <Input
-                              id="interval_count"
-                              type="number"
-                              min="1"
-                              max="999"
-                              value={formData.interval_count}
-                              onChange={(e) => setFormData({...formData, interval_count: parseInt(e.target.value) || 1})}
-                              placeholder="1"
-                            />
-                          </div>
-                          <div>
-                            <Label htmlFor="currency">Moeda</Label>
-                            <Select value={formData.currency} onValueChange={(value) => setFormData({...formData, currency: value})}>
-                              <SelectTrigger>
-                                <SelectValue />
-                              </SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="BRL">BRL - Real</SelectItem>
-                                <SelectItem value="USD">USD - Dólar</SelectItem>
-                                <SelectItem value="EUR">EUR - Euro</SelectItem>
-                              </SelectContent>
-                            </Select>
-                          </div>
-                        </div>
-                        <div className="grid grid-cols-2 gap-4">
-                          <div>
                             <Label htmlFor="trial_days">Dias de Trial</Label>
                             <Input
                               id="trial_days"
@@ -510,60 +449,20 @@ export default function AdminDashboardPlanos() {
                               onChange={(e) => setFormData({...formData, trial_price: parseFloat(e.target.value)})}
                             />
                           </div>
-                        </div>
-                        <div className="space-y-4">
-                          <div className="flex items-center space-x-2">
-                            <Switch
-                              id="has_limited_cycles"
-                              checked={formData.has_limited_cycles}
-                              onCheckedChange={(checked) => setFormData({...formData, has_limited_cycles: checked, billing_cycles: checked ? 12 : null})}
-                            />
-                            <Label htmlFor="has_limited_cycles">Limitar Recorrência</Label>
-                          </div>
-                          {formData.has_limited_cycles && (
-                            <div>
-                              <Label htmlFor="billing_cycles">
-                                Quantas Cobranças (Total)
-                              </Label>
-                              <Input
-                                id="billing_cycles"
-                                type="number"
-                                min="1"
-                                max="999"
-                                value={formData.billing_cycles || ''}
-                                onChange={(e) => setFormData({...formData, billing_cycles: parseInt(e.target.value) || null})}
-                                placeholder="12"
-                              />
-                              <p className="text-sm text-gray-500 mt-1">
-                                Exemplo: 12 cobranças = 1 ano se mensal, 12 horas se por hora
-                              </p>
-                            </div>
-                          )}
-                        </div>
-                        
-                        {/* Resumo da Configuração */}
-                        <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg border">
-                          <h4 className="font-semibold mb-2">📋 Resumo da Configuração</h4>
-                          <div className="space-y-1 text-sm">
-                            <p><strong>Cobrança:</strong> R$ {formData.price.toFixed(2)} a cada {formData.interval_count} {
-                              formData.interval === 'minute' ? 'minuto(s)' :
-                              formData.interval === 'hour' ? 'hora(s)' :
-                              formData.interval === 'day' ? 'dia(s)' :
-                              formData.interval === 'week' ? 'semana(s)' :
-                              formData.interval === 'month' ? 'mês(es)' :
-                              formData.interval === 'quarter' ? 'trimestre(s)' :
-                              formData.interval === 'year' ? 'ano(s)' : 'período(s)'
-                            }</p>
-                            <p><strong>Trial:</strong> {formData.trial_days} dias por R$ {formData.trial_price.toFixed(2)}</p>
-                            <p><strong>Duração:</strong> {formData.has_limited_cycles ? `${formData.billing_cycles} cobranças (limitado)` : 'Ilimitado'}</p>
-                            {formData.has_limited_cycles && (
-                              <p className="text-blue-600 dark:text-blue-400">
-                                <strong>Total máximo:</strong> R$ {((formData.billing_cycles || 0) * formData.price + formData.trial_price).toFixed(2)}
-                              </p>
-                            )}
+                          <div>
+                            <Label htmlFor="currency">Moeda</Label>
+                            <Select value={formData.currency} onValueChange={(value) => setFormData({...formData, currency: value})}>
+                              <SelectTrigger>
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="BRL">BRL - Real</SelectItem>
+                                <SelectItem value="USD">USD - Dólar</SelectItem>
+                                <SelectItem value="EUR">EUR - Euro</SelectItem>
+                              </SelectContent>
+                            </Select>
                           </div>
                         </div>
-
                         <div className="flex items-center space-x-2">
                           <Switch
                             id="active"
