@@ -1199,13 +1199,32 @@ export default function SMSCampaignsAdvanced() {
                         variant="outline" 
                         size="sm"
                         className="text-red-600 hover:text-red-700"
-                        onClick={() => {
-                          if (confirm('Tem certeza que deseja excluir esta campanha?')) {
-                            // Implementar delete campaign
-                            toast({
-                              title: "Campanha excluída",
-                              description: "A campanha foi excluída permanentemente.",
-                            });
+                        onClick={async () => {
+                          if (confirm('Tem certeza que deseja excluir esta campanha? Esta ação não pode ser desfeita.')) {
+                            try {
+                              const response = await fetch(`/api/sms-campaigns/${campaign.id}`, {
+                                method: 'DELETE',
+                                headers: {
+                                  'Authorization': `Bearer ${localStorage.getItem('token')}`
+                                }
+                              });
+                              
+                              if (response.ok) {
+                                toast({
+                                  title: "Campanha excluída",
+                                  description: "A campanha foi excluída permanentemente.",
+                                });
+                                queryClient.invalidateQueries({ queryKey: ['/api/sms-campaigns'] });
+                              } else {
+                                throw new Error('Erro ao excluir campanha');
+                              }
+                            } catch (error) {
+                              toast({
+                                title: "Erro ao excluir campanha",
+                                description: "Tente novamente em alguns instantes.",
+                                variant: "destructive"
+                              });
+                            }
                           }
                         }}
                       >
