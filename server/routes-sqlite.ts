@@ -1051,6 +1051,153 @@ export function registerSQLiteRoutes(app: Express): Server {
     }
   });
 
+  // 🔍 ENDPOINT PARA CONSULTAR CLIENTE COMPLETO POR EMAIL
+  app.get('/api/stripe/customer/:email', async (req, res) => {
+    try {
+      const { email } = req.params;
+      
+      // Importar Stripe
+      const { StripeSimpleTrialSystem } = await import('./stripe-simple-trial');
+      const stripeSystem = new StripeSimpleTrialSystem(
+        process.env.STRIPE_SECRET_KEY || 'sk_test_51RjvV9HK6al3veW1FPD5bTV1on2NQLlm9ud45AJDggFHdsGA9UAo5jfbSRvWF83W3uTp5cpZYa8tJBvm4ttefrk800mUs47pFA'
+      );
+
+      // Buscar customers pelo email
+      const customers = await stripeSystem.stripe.customers.list({
+        email: email,
+        limit: 10
+      });
+
+      if (customers.data.length === 0) {
+        return res.json({
+          success: false,
+          message: 'Nenhum cliente encontrado com este email'
+        });
+      }
+
+      const customer = customers.data[0]; // Pegar o primeiro customer
+
+      // Buscar Payment Intents do customer
+      const paymentIntents = await stripeSystem.stripe.paymentIntents.list({
+        customer: customer.id,
+        limit: 20
+      });
+
+      // Buscar Assinaturas do customer
+      const subscriptions = await stripeSystem.stripe.subscriptions.list({
+        customer: customer.id,
+        limit: 20
+      });
+
+      // Buscar Charges do customer
+      const charges = await stripeSystem.stripe.charges.list({
+        customer: customer.id,
+        limit: 20
+      });
+
+      // Buscar Invoices do customer
+      const invoices = await stripeSystem.stripe.invoices.list({
+        customer: customer.id,
+        limit: 20
+      });
+
+      console.log('🔍 CONSULTANDO CLIENTE COMPLETO:', email);
+      console.log('👤 CUSTOMER:', customer.id);
+      console.log('💳 PAYMENT INTENTS:', paymentIntents.data.length);
+      console.log('🔄 ASSINATURAS:', subscriptions.data.length);
+      console.log('💰 CHARGES:', charges.data.length);
+      console.log('📄 INVOICES:', invoices.data.length);
+
+      // Processar dados das assinaturas
+      const subscriptionData = subscriptions.data.map(sub => ({
+        id: sub.id,
+        status: sub.status,
+        current_period_start: new Date(sub.current_period_start * 1000).toISOString(),
+        current_period_end: new Date(sub.current_period_end * 1000).toISOString(),
+        trial_end: sub.trial_end ? new Date(sub.trial_end * 1000).toISOString() : null,
+        trial_start: sub.trial_start ? new Date(sub.trial_start * 1000).toISOString() : null,
+        cancel_at_period_end: sub.cancel_at_period_end,
+        items: sub.items.data.map(item => ({
+          price_id: item.price.id,
+          amount: item.price.unit_amount,
+          currency: item.price.currency,
+          interval: item.price.recurring?.interval,
+          product: item.price.product
+        }))
+      }));
+
+      // Processar dados dos payment intents
+      const paymentData = paymentIntents.data.map(pi => ({
+        id: pi.id,
+        status: pi.status,
+        amount: pi.amount,
+        amount_received: pi.amount_received,
+        currency: pi.currency,
+        created: new Date(pi.created * 1000).toISOString(),
+        description: pi.description,
+        metadata: pi.metadata
+      }));
+
+      // Processar dados das charges
+      const chargeData = charges.data.map(charge => ({
+        id: charge.id,
+        amount: charge.amount,
+        status: charge.status,
+        paid: charge.paid,
+        created: new Date(charge.created * 1000).toISOString(),
+        description: charge.description,
+        receipt_url: charge.receipt_url,
+        payment_intent: charge.payment_intent
+      }));
+
+      // Processar dados das invoices
+      const invoiceData = invoices.data.map(invoice => ({
+        id: invoice.id,
+        status: invoice.status,
+        amount_paid: invoice.amount_paid,
+        amount_due: invoice.amount_due,
+        currency: invoice.currency,
+        created: new Date(invoice.created * 1000).toISOString(),
+        period_start: new Date(invoice.period_start * 1000).toISOString(),
+        period_end: new Date(invoice.period_end * 1000).toISOString(),
+        hosted_invoice_url: invoice.hosted_invoice_url,
+        subscription: invoice.subscription
+      }));
+
+      res.json({
+        success: true,
+        customer: {
+          id: customer.id,
+          email: customer.email,
+          name: customer.name,
+          phone: customer.phone,
+          created: new Date(customer.created * 1000).toISOString(),
+          metadata: customer.metadata
+        },
+        subscriptions: subscriptionData,
+        paymentIntents: paymentData,
+        charges: chargeData,
+        invoices: invoiceData,
+        summary: {
+          total_payment_intents: paymentIntents.data.length,
+          total_subscriptions: subscriptions.data.length,
+          total_charges: charges.data.length,
+          total_invoices: invoices.data.length,
+          active_subscriptions: subscriptions.data.filter(s => s.status === 'active').length,
+          trialing_subscriptions: subscriptions.data.filter(s => s.status === 'trialing').length,
+          total_paid: charges.data.filter(c => c.paid).reduce((sum, c) => sum + c.amount, 0)
+        }
+      });
+    } catch (error) {
+      console.error('❌ ERRO AO CONSULTAR CLIENTE:', error.message);
+      res.status(500).json({ 
+        success: false, 
+        message: 'Erro ao consultar cliente',
+        error: error.message 
+      });
+    }
+  });
+
   // 🔍 ENDPOINT PARA CONSULTAR DETALHES DE PAYMENT INTENT
   app.get('/api/stripe/payment-intent/:paymentIntentId', async (req, res) => {
     try {
