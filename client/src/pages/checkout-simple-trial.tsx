@@ -268,6 +268,12 @@ export default function CheckoutSimpleTrial() {
     }));
   };
 
+  // Função para atualizar plano (reutilizando a mutation existente)
+  const handleUpdatePlanAdvanced = async () => {
+    if (!editingPlan) return;
+    editPlanMutation.mutate({ id: editingPlan.id, planData: planFormData });
+  };
+
   const plans = Array.isArray(plansQuery.data) ? plansQuery.data : [];
 
   return (
@@ -278,9 +284,10 @@ export default function CheckoutSimpleTrial() {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-3">
+        <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="checkout">Checkout</TabsTrigger>
           <TabsTrigger value="plans">Planos</TabsTrigger>
+          <TabsTrigger value="advanced-plans">Planos Avançados</TabsTrigger>
           <TabsTrigger value="webhooks">Webhooks</TabsTrigger>
         </TabsList>
 
@@ -521,7 +528,7 @@ export default function CheckoutSimpleTrial() {
                     <CardContent>
                       <div className="space-y-3">
                         <div className="flex justify-between text-sm">
-                          <span>Taxa de Ativação:</span>
+                          <span>Pagamento Único:</span>
                           <span className="font-medium">R$ {plan.trial_price.toFixed(2)}</span>
                         </div>
                         <div className="flex justify-between text-sm">
@@ -573,6 +580,383 @@ export default function CheckoutSimpleTrial() {
                 ))
               )}
             </div>
+          </div>
+        </TabsContent>
+
+        <TabsContent value="advanced-plans" className="mt-6">
+          <div className="space-y-6">
+            <div className="grid gap-6 md:grid-cols-2">
+              {/* Formulário de Criação/Edição */}
+              <Card>
+                <CardHeader>
+                  <CardTitle>
+                    {editingPlan ? 'Editar Plano' : 'Criar Novo Plano'}
+                  </CardTitle>
+                  <CardDescription>
+                    Configure todos os detalhes do seu plano de assinatura
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div>
+                    <Label htmlFor="advancedPlanName">Nome do Plano</Label>
+                    <Input
+                      id="advancedPlanName"
+                      value={planFormData.name}
+                      onChange={(e) => setPlanFormData(prev => ({ ...prev, name: e.target.value }))}
+                      placeholder="Ex: Plano Premium"
+                    />
+                  </div>
+                  
+                  <div>
+                    <Label htmlFor="advancedPlanDescription">Descrição</Label>
+                    <Textarea
+                      id="advancedPlanDescription"
+                      value={planFormData.description}
+                      onChange={(e) => setPlanFormData(prev => ({ ...prev, description: e.target.value }))}
+                      placeholder="Descreva os benefícios do plano..."
+                      rows={3}
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="advancedOneTimePayment">Pagamento Único (R$)</Label>
+                      <Input
+                        id="advancedOneTimePayment"
+                        type="number"
+                        step="0.01"
+                        value={planFormData.trial_price}
+                        onChange={(e) => setPlanFormData(prev => ({ ...prev, trial_price: parseFloat(e.target.value) }))}
+                        placeholder="1.00"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="advancedTrialDays">Dias de Trial</Label>
+                      <Input
+                        id="advancedTrialDays"
+                        type="number"
+                        min="0"
+                        max="30"
+                        value={planFormData.trial_days}
+                        onChange={(e) => setPlanFormData(prev => ({ ...prev, trial_days: parseInt(e.target.value) }))}
+                        placeholder="3"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="advancedRecurringPrice">Valor Recorrente (R$)</Label>
+                      <Input
+                        id="advancedRecurringPrice"
+                        type="number"
+                        step="0.01"
+                        value={planFormData.price}
+                        onChange={(e) => setPlanFormData(prev => ({ ...prev, price: parseFloat(e.target.value) }))}
+                        placeholder="29.90"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="advancedInterval">Período de Cobrança</Label>
+                      <Select value={planFormData.interval} onValueChange={(value) => setPlanFormData(prev => ({ ...prev, interval: value }))}>
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="month">Mensal</SelectItem>
+                          <SelectItem value="year">Anual</SelectItem>
+                          <SelectItem value="week">Semanal</SelectItem>
+                          <SelectItem value="day">Diário</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+
+                  <div>
+                    <Label>Recursos Inclusos</Label>
+                    <div className="grid grid-cols-2 gap-2 mt-2">
+                      {[
+                        { id: 'sms', label: 'SMS Marketing' },
+                        { id: 'email', label: 'Email Marketing' },
+                        { id: 'whatsapp', label: 'WhatsApp Business' },
+                        { id: 'analytics', label: 'Analytics Avançado' },
+                        { id: 'automation', label: 'Automações' },
+                        { id: 'integrations', label: 'Integrações' },
+                        { id: 'support', label: 'Suporte Priority' },
+                        { id: 'custom', label: 'Personalização' }
+                      ].map(feature => (
+                        <div key={feature.id} className="flex items-center space-x-2">
+                          <Checkbox
+                            id={feature.id}
+                            checked={planFormData.features.includes(feature.id)}
+                            onCheckedChange={() => handleFeatureToggle(feature.id)}
+                          />
+                          <Label htmlFor={feature.id} className="text-sm">{feature.label}</Label>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="flex items-center space-x-2">
+                    <Checkbox
+                      id="planActive"
+                      checked={planFormData.active}
+                      onCheckedChange={(checked) => setPlanFormData(prev => ({ ...prev, active: checked }))}
+                    />
+                    <Label htmlFor="planActive">Plano Ativo</Label>
+                  </div>
+
+                  <div className="flex space-x-2">
+                    {editingPlan ? (
+                      <>
+                        <Button onClick={handleUpdatePlanAdvanced} disabled={editPlanMutation.isPending} className="flex-1">
+                          {editPlanMutation.isPending ? <RefreshCw className="w-4 h-4 animate-spin mr-2" /> : <Edit className="w-4 h-4 mr-2" />}
+                          Atualizar Plano
+                        </Button>
+                        <Button variant="outline" onClick={() => { setEditingPlan(null); setIsEditDialogOpen(false); }}>
+                          Cancelar
+                        </Button>
+                      </>
+                    ) : (
+                      <Button onClick={handleCreatePlan} disabled={createPlanMutation.isPending} className="w-full">
+                        {createPlanMutation.isPending ? <RefreshCw className="w-4 h-4 animate-spin mr-2" /> : <Plus className="w-4 h-4 mr-2" />}
+                        Criar Plano
+                      </Button>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Preview do Plano */}
+              <Card>
+                <CardHeader>
+                  <CardTitle>Preview do Plano</CardTitle>
+                  <CardDescription>Como o plano aparecerá para os clientes</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="border rounded-lg p-4 bg-gradient-to-br from-blue-50 to-purple-50">
+                    <div className="text-center">
+                      <h3 className="text-xl font-bold mb-2">{planFormData.name || 'Nome do Plano'}</h3>
+                      <p className="text-sm text-gray-600 mb-4">{planFormData.description || 'Descrição do plano'}</p>
+                      
+                      <div className="space-y-2 mb-4">
+                        <div className="flex justify-between items-center">
+                          <span className="text-sm">Pagamento Único:</span>
+                          <span className="font-bold text-green-600">R$ {planFormData.trial_price.toFixed(2)}</span>
+                        </div>
+                        <div className="flex justify-between items-center">
+                          <span className="text-sm">Trial Gratuito:</span>
+                          <span className="font-medium">{planFormData.trial_days} dias</span>
+                        </div>
+                        <div className="flex justify-between items-center">
+                          <span className="text-sm">Após Trial:</span>
+                          <span className="font-bold text-blue-600">R$ {planFormData.price.toFixed(2)}/{planFormData.interval === 'month' ? 'mês' : planFormData.interval === 'year' ? 'ano' : planFormData.interval === 'week' ? 'semana' : 'dia'}</span>
+                        </div>
+                      </div>
+
+                      {planFormData.features.length > 0 && (
+                        <div className="text-left">
+                          <h4 className="font-semibold text-sm mb-2">Recursos Inclusos:</h4>
+                          <div className="space-y-1">
+                            {planFormData.features.map(feature => (
+                              <div key={feature} className="flex items-center text-sm">
+                                <CheckCircle className="w-3 h-3 text-green-500 mr-2" />
+                                <span>{feature.charAt(0).toUpperCase() + feature.slice(1)}</span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Lista de Planos com Stripe Elements */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Planos Criados</CardTitle>
+                <CardDescription>Gerencie seus planos e obtenha códigos de embed</CardDescription>
+              </CardHeader>
+              <CardContent>
+                {plansQuery.isLoading ? (
+                  <div className="text-center py-8">
+                    <RefreshCw className="w-8 h-8 animate-spin mx-auto mb-4" />
+                    <p>Carregando planos...</p>
+                  </div>
+                ) : plans.length === 0 ? (
+                  <div className="text-center py-8 text-gray-500">
+                    <Package className="w-12 h-12 mx-auto mb-4" />
+                    <p>Nenhum plano criado ainda</p>
+                    <p className="text-sm">Crie seu primeiro plano usando o formulário acima</p>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {plans.map((plan) => (
+                      <Card key={plan.id} className="border-l-4 border-l-blue-500">
+                        <CardContent className="p-6">
+                          <div className="grid md:grid-cols-3 gap-6">
+                            {/* Informações do Plano */}
+                            <div className="space-y-3">
+                              <div className="flex items-center justify-between">
+                                <h3 className="font-bold text-lg">{plan.name}</h3>
+                                <Badge variant={plan.active ? "default" : "secondary"}>
+                                  {plan.active ? 'Ativo' : 'Inativo'}
+                                </Badge>
+                              </div>
+                              <p className="text-sm text-gray-600">{plan.description}</p>
+                              
+                              <div className="space-y-2">
+                                <div className="flex justify-between text-sm">
+                                  <span>Pagamento Único:</span>
+                                  <span className="font-medium text-green-600">R$ {plan.trial_price.toFixed(2)}</span>
+                                </div>
+                                <div className="flex justify-between text-sm">
+                                  <span>Trial:</span>
+                                  <span className="font-medium">{plan.trial_days} dias</span>
+                                </div>
+                                <div className="flex justify-between text-sm">
+                                  <span>Recorrência:</span>
+                                  <span className="font-medium text-blue-600">R$ {plan.price.toFixed(2)}/{plan.interval === 'month' ? 'mês' : plan.interval === 'year' ? 'ano' : plan.interval === 'week' ? 'semana' : 'dia'}</span>
+                                </div>
+                              </div>
+
+                              <div className="flex flex-wrap gap-2 pt-2">
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => {
+                                    setEditingPlan(plan);
+                                    setPlanFormData({
+                                      name: plan.name,
+                                      description: plan.description || '',
+                                      price: plan.price,
+                                      currency: plan.currency || 'BRL',
+                                      interval: plan.interval,
+                                      trial_days: plan.trial_days,
+                                      trial_price: plan.trial_price,
+                                      features: plan.features || [],
+                                      active: plan.active
+                                    });
+                                  }}
+                                >
+                                  <Edit className="w-3 h-3 mr-1" />
+                                  Editar
+                                </Button>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => generateCheckoutUrl(plan.id)}
+                                >
+                                  <Copy className="w-3 h-3 mr-1" />
+                                  Copiar URL
+                                </Button>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => handleDeletePlan(plan.id)}
+                                >
+                                  <Trash2 className="w-3 h-3 mr-1" />
+                                  Excluir
+                                </Button>
+                              </div>
+                            </div>
+
+                            {/* Código de Embed */}
+                            <div className="space-y-3">
+                              <h4 className="font-semibold text-sm">Código de Embed</h4>
+                              <div className="bg-gray-50 rounded-lg p-3">
+                                <code className="text-xs text-gray-700 break-all">
+                                  {`<div id="vendzz-checkout-${plan.id}"></div>
+<script>
+  window.VendzzCheckout = {
+    planId: '${plan.id}',
+    publicKey: 'pk_test_...',
+    containerId: 'vendzz-checkout-${plan.id}'
+  };
+</script>
+<script src="https://js.stripe.com/v3/"></script>
+<script src="/embed/vendzz-checkout.js"></script>`}
+                                </code>
+                              </div>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => {
+                                  const embedCode = `<div id="vendzz-checkout-${plan.id}"></div>
+<script>
+  window.VendzzCheckout = {
+    planId: '${plan.id}',
+    publicKey: 'pk_test_...',
+    containerId: 'vendzz-checkout-${plan.id}'
+  };
+</script>
+<script src="https://js.stripe.com/v3/"></script>
+<script src="/embed/vendzz-checkout.js"></script>`;
+                                  navigator.clipboard.writeText(embedCode);
+                                  toast({
+                                    title: "Código copiado!",
+                                    description: "Código de embed copiado para área de transferência",
+                                  });
+                                }}
+                                className="w-full"
+                              >
+                                <Code className="w-3 h-3 mr-1" />
+                                Copiar Código de Embed
+                              </Button>
+                            </div>
+
+                            {/* Stripe Elements Preview */}
+                            <div className="space-y-3">
+                              <h4 className="font-semibold text-sm">Preview do Checkout</h4>
+                              <div className="border rounded-lg p-4 bg-white">
+                                <div className="text-center mb-4">
+                                  <h5 className="font-medium">{plan.name}</h5>
+                                  <p className="text-sm text-gray-600">R$ {plan.trial_price.toFixed(2)} hoje, depois R$ {plan.price.toFixed(2)}/{plan.interval === 'month' ? 'mês' : 'ano'}</p>
+                                </div>
+                                
+                                {/* Simulação do Stripe Elements */}
+                                <div className="space-y-3">
+                                  <div className="border rounded px-3 py-2 bg-gray-50">
+                                    <div className="text-xs text-gray-500 mb-1">Número do Cartão</div>
+                                    <div className="text-sm">•••• •••• •••• 4242</div>
+                                  </div>
+                                  <div className="grid grid-cols-2 gap-2">
+                                    <div className="border rounded px-3 py-2 bg-gray-50">
+                                      <div className="text-xs text-gray-500 mb-1">Validade</div>
+                                      <div className="text-sm">12/26</div>
+                                    </div>
+                                    <div className="border rounded px-3 py-2 bg-gray-50">
+                                      <div className="text-xs text-gray-500 mb-1">CVC</div>
+                                      <div className="text-sm">•••</div>
+                                    </div>
+                                  </div>
+                                  <Button className="w-full" disabled>
+                                    Iniciar Pagamento
+                                  </Button>
+                                </div>
+                              </div>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => {
+                                  window.open(`/checkout/${plan.id}`, '_blank');
+                                }}
+                                className="w-full"
+                              >
+                                <ExternalLink className="w-3 h-3 mr-1" />
+                                Abrir Checkout Real
+                              </Button>
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
           </div>
         </TabsContent>
 
