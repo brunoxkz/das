@@ -6415,7 +6415,33 @@ export function registerSQLiteRoutes(app: Express): Server {
     }
   });
 
-  // OBTER PLANO POR ID
+  // OBTER PLANO POR ID (PÚBLICO - SEM AUTENTICAÇÃO)
+  app.get("/api/public/plans/:id", async (req: Request, res: Response) => {
+    try {
+      const { id } = req.params;
+      const plan = sqlite.prepare('SELECT * FROM stripe_plans WHERE id = ? AND active = 1').get(id);
+      
+      if (!plan) {
+        return res.status(404).json({ error: 'Plano não encontrado' });
+      }
+      
+      // Parsear features se for string JSON
+      if (typeof plan.features === 'string') {
+        try {
+          plan.features = JSON.parse(plan.features);
+        } catch (e) {
+          plan.features = [];
+        }
+      }
+      
+      res.json(plan);
+    } catch (error) {
+      console.error('❌ Erro ao buscar plano:', error);
+      res.status(500).json({ error: 'Erro ao buscar plano' });
+    }
+  });
+
+  // OBTER PLANO POR ID (PRIVADO - COM AUTENTICAÇÃO)
   app.get("/api/stripe/plans/:id", async (req: Request, res: Response) => {
     try {
       const { id } = req.params;

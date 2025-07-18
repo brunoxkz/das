@@ -94,6 +94,7 @@ import CheckoutStripeFinal from "@/pages/checkout-stripe-final";
 import ProductBuilder from "@/pages/product-builder";
 import SubscriptionsManager from "@/pages/subscriptions-manager";
 import AdminDashboardPlanos from "@/pages/admin-dashboard-planos";
+import CheckoutPlan from "@/pages/checkout-plan";
 
 import { useAuth } from "@/hooks/useAuth-jwt";
 import { isUnauthorizedError } from "@/lib/authUtils";
@@ -526,7 +527,7 @@ function App() {
         </Route>
         
         <Route path="/checkout/:planId">
-          <PlanosPublicos />
+          <CheckoutPlan />
         </Route>
         
         <Route path="/success">
