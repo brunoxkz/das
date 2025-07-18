@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -7,8 +7,14 @@ import { useToast } from '@/hooks/use-toast';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { CreditCard, Phone, Mail, User, Shield, CheckCircle } from 'lucide-react';
+import { loadStripe } from '@stripe/stripe-js';
+import { Elements, CardElement, useStripe, useElements } from '@stripe/react-stripe-js';
 
-export default function CheckoutEmbedInlineFixed() {
+const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLIC_KEY || 'pk_test_51RjvV9HK6al3veW1NLGtWPQTaGT5nLFHoSJFYfUAqfKtNhZpxhNQT4jEJwJSqpO1sVrZgfZYE8pzE4YD2mAK4zrM00bNAHaOQE');
+
+const CheckoutForm = () => {
+  const stripe = useStripe();
+  const elements = useElements();
   const [loading, setLoading] = useState(false);
   const [customerData, setCustomerData] = useState({
     name: '',
@@ -18,32 +24,49 @@ export default function CheckoutEmbedInlineFixed() {
   const { toast } = useToast();
 
   const handlePayment = async () => {
+    if (!stripe || !elements) {
+      toast({
+        title: "Erro",
+        description: "Stripe ainda não foi carregado",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const cardElement = elements.getElement(CardElement);
+    if (!cardElement) {
+      toast({
+        title: "Erro",
+        description: "Elemento do cartão não encontrado",
+        variant: "destructive",
+      });
+      return;
+    }
+
     try {
-      // Primeiro, criar método de pagamento de teste
-      const testPaymentResponse = await fetch('/api/stripe/create-test-payment-method', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
+      // Criar método de pagamento com os dados do cartão
+      const { error, paymentMethod } = await stripe.createPaymentMethod({
+        type: 'card',
+        card: cardElement,
+        billing_details: {
+          name: customerData.name,
+          email: customerData.email,
+          phone: customerData.phone,
         },
-        body: JSON.stringify({
-          customerData
-        }),
       });
 
-      const testPaymentData = await testPaymentResponse.json();
-      
-      if (!testPaymentData.success) {
-        throw new Error('Falha ao criar método de pagamento de teste');
+      if (error) {
+        throw new Error(error.message);
       }
 
-      // Processar pagamento com método de teste
+      // Processar pagamento com método criado
       const response = await fetch('/api/stripe/process-payment-inline', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          paymentMethodId: testPaymentData.paymentMethodId,
+          paymentMethodId: paymentMethod.id,
           customerData,
           amount: 1.00,
           currency: 'BRL',
@@ -195,6 +218,35 @@ export default function CheckoutEmbedInlineFixed() {
 
               <Separator />
 
+              {/* Informações do cartão */}
+              <div className="space-y-4">
+                <h3 className="text-lg font-semibold text-gray-800 flex items-center gap-2">
+                  <CreditCard className="w-5 h-5 text-green-600" />
+                  Informações do cartão
+                </h3>
+                
+                <div className="p-4 border border-gray-300 rounded-lg bg-white">
+                  <CardElement 
+                    options={{
+                      style: {
+                        base: {
+                          fontSize: '16px',
+                          color: '#424770',
+                          '::placeholder': {
+                            color: '#aab7c4',
+                          },
+                        },
+                        invalid: {
+                          color: '#9e2146',
+                        },
+                      },
+                    }}
+                  />
+                </div>
+              </div>
+
+              <Separator />
+
               {/* Resumo do plano */}
               <div className="bg-green-50 p-4 rounded-lg border border-green-200">
                 <h4 className="font-semibold text-green-800 mb-2">Resumo do plano:</h4>
@@ -251,5 +303,14 @@ export default function CheckoutEmbedInlineFixed() {
         </Card>
       </div>
     </div>
+  );
+};
+
+// Componente principal com wrapper Elements
+export default function CheckoutEmbedInlineFixed() {
+  return (
+    <Elements stripe={stripePromise}>
+      <CheckoutForm />
+    </Elements>
   );
 }
