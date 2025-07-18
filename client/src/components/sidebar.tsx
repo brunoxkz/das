@@ -50,7 +50,8 @@ import {
   Code,
   CheckCircle,
   CreditCard,
-  Send
+  Send,
+  GraduationCap
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -150,6 +151,13 @@ export function Sidebar() {
           href: "/teste-ab",
           icon: <BarChart className="w-4 h-4" />,
           active: location === "/teste-ab"
+        },
+        {
+          title: "Área de Membros",
+          href: "/members-area",
+          icon: <GraduationCap className="w-4 h-4" />,
+          active: location === "/members-area",
+          badge: <span className="text-xs text-purple-500 font-medium">ADMIN</span>
         },
 
       ]

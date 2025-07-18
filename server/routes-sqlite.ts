@@ -21775,6 +21775,568 @@ export function registerCheckoutRoutes(app: Express) {
   // Inicializar Pagar.me
   initializePagarme();
 
+  // =============================================
+  // ÁREA DE MEMBROS - MEMBERS AREA API ENDPOINTS
+  // Sistema completo de cursos, módulos e aulas
+  // =============================================
+
+  // CRUD - CURSOS
+  // Listar cursos do instrutor (somente admin)
+  app.get("/api/courses", verifyJWT, async (req: any, res) => {
+    try {
+      // Verificar se o usuário é admin
+      if (req.user.email !== 'admin@admin.com') {
+        return res.status(403).json({ error: "Acesso negado. Apenas administradores podem gerenciar cursos." });
+      }
+
+      const courses = await storage.getCourses(req.user.id);
+      res.json(courses);
+    } catch (error) {
+      console.error("Error fetching courses:", error);
+      res.status(500).json({ error: "Erro ao buscar cursos" });
+    }
+  });
+
+  // Buscar curso específico
+  app.get("/api/courses/:id", verifyJWT, async (req: any, res) => {
+    try {
+      if (req.user.email !== 'admin@admin.com') {
+        return res.status(403).json({ error: "Acesso negado. Apenas administradores podem gerenciar cursos." });
+      }
+
+      const course = await storage.getCourse(req.params.id);
+      if (!course) {
+        return res.status(404).json({ error: "Curso não encontrado" });
+      }
+
+      if (course.instructorId !== req.user.id) {
+        return res.status(403).json({ error: "Acesso negado" });
+      }
+
+      res.json(course);
+    } catch (error) {
+      console.error("Error fetching course:", error);
+      res.status(500).json({ error: "Erro ao buscar curso" });
+    }
+  });
+
+  // Criar novo curso
+  app.post("/api/courses", verifyJWT, async (req: any, res) => {
+    try {
+      if (req.user.email !== 'admin@admin.com') {
+        return res.status(403).json({ error: "Acesso negado. Apenas administradores podem criar cursos." });
+      }
+
+      const courseData = {
+        ...req.body,
+        instructorId: req.user.id,
+        id: nanoid()
+      };
+
+      const course = await storage.createCourse(courseData);
+      res.json(course);
+    } catch (error) {
+      console.error("Error creating course:", error);
+      res.status(500).json({ error: "Erro ao criar curso" });
+    }
+  });
+
+  // Atualizar curso
+  app.put("/api/courses/:id", verifyJWT, async (req: any, res) => {
+    try {
+      if (req.user.email !== 'admin@admin.com') {
+        return res.status(403).json({ error: "Acesso negado. Apenas administradores podem editar cursos." });
+      }
+
+      const course = await storage.getCourse(req.params.id);
+      if (!course) {
+        return res.status(404).json({ error: "Curso não encontrado" });
+      }
+
+      if (course.instructorId !== req.user.id) {
+        return res.status(403).json({ error: "Acesso negado" });
+      }
+
+      const updatedCourse = await storage.updateCourse(req.params.id, req.body);
+      res.json(updatedCourse);
+    } catch (error) {
+      console.error("Error updating course:", error);
+      res.status(500).json({ error: "Erro ao atualizar curso" });
+    }
+  });
+
+  // Deletar curso
+  app.delete("/api/courses/:id", verifyJWT, async (req: any, res) => {
+    try {
+      if (req.user.email !== 'admin@admin.com') {
+        return res.status(403).json({ error: "Acesso negado. Apenas administradores podem deletar cursos." });
+      }
+
+      const course = await storage.getCourse(req.params.id);
+      if (!course) {
+        return res.status(404).json({ error: "Curso não encontrado" });
+      }
+
+      if (course.instructorId !== req.user.id) {
+        return res.status(403).json({ error: "Acesso negado" });
+      }
+
+      await storage.deleteCourse(req.params.id);
+      res.json({ success: true, message: "Curso deletado com sucesso" });
+    } catch (error) {
+      console.error("Error deleting course:", error);
+      res.status(500).json({ error: "Erro ao deletar curso" });
+    }
+  });
+
+  // Publicar/despublicar curso
+  app.patch("/api/courses/:id/publish", verifyJWT, async (req: any, res) => {
+    try {
+      if (req.user.email !== 'admin@admin.com') {
+        return res.status(403).json({ error: "Acesso negado. Apenas administradores podem publicar cursos." });
+      }
+
+      const { isPublished } = req.body;
+      const course = await storage.getCourse(req.params.id);
+      
+      if (!course) {
+        return res.status(404).json({ error: "Curso não encontrado" });
+      }
+
+      if (course.instructorId !== req.user.id) {
+        return res.status(403).json({ error: "Acesso negado" });
+      }
+
+      const updatedCourse = await storage.updateCourse(req.params.id, { isPublished });
+      res.json(updatedCourse);
+    } catch (error) {
+      console.error("Error publishing course:", error);
+      res.status(500).json({ error: "Erro ao publicar curso" });
+    }
+  });
+
+  // CRUD - MÓDULOS DO CURSO
+  // Listar módulos de um curso
+  app.get("/api/courses/:courseId/modules", verifyJWT, async (req: any, res) => {
+    try {
+      if (req.user.email !== 'admin@admin.com') {
+        return res.status(403).json({ error: "Acesso negado. Apenas administradores podem gerenciar módulos." });
+      }
+
+      const course = await storage.getCourse(req.params.courseId);
+      if (!course) {
+        return res.status(404).json({ error: "Curso não encontrado" });
+      }
+
+      if (course.instructorId !== req.user.id) {
+        return res.status(403).json({ error: "Acesso negado" });
+      }
+
+      const modules = await storage.getCourseModules(req.params.courseId);
+      res.json(modules);
+    } catch (error) {
+      console.error("Error fetching course modules:", error);
+      res.status(500).json({ error: "Erro ao buscar módulos do curso" });
+    }
+  });
+
+  // Criar módulo
+  app.post("/api/courses/:courseId/modules", verifyJWT, async (req: any, res) => {
+    try {
+      if (req.user.email !== 'admin@admin.com') {
+        return res.status(403).json({ error: "Acesso negado. Apenas administradores podem criar módulos." });
+      }
+
+      const course = await storage.getCourse(req.params.courseId);
+      if (!course) {
+        return res.status(404).json({ error: "Curso não encontrado" });
+      }
+
+      if (course.instructorId !== req.user.id) {
+        return res.status(403).json({ error: "Acesso negado" });
+      }
+
+      const moduleData = {
+        ...req.body,
+        courseId: req.params.courseId,
+        id: nanoid()
+      };
+
+      const module = await storage.createCourseModule(moduleData);
+      res.json(module);
+    } catch (error) {
+      console.error("Error creating course module:", error);
+      res.status(500).json({ error: "Erro ao criar módulo" });
+    }
+  });
+
+  // Atualizar módulo
+  app.put("/api/modules/:id", verifyJWT, async (req: any, res) => {
+    try {
+      if (req.user.email !== 'admin@admin.com') {
+        return res.status(403).json({ error: "Acesso negado. Apenas administradores podem editar módulos." });
+      }
+
+      const module = await storage.getCourseModule(req.params.id);
+      if (!module) {
+        return res.status(404).json({ error: "Módulo não encontrado" });
+      }
+
+      // Verificar se o usuário é o instrutor do curso
+      const course = await storage.getCourse(module.courseId);
+      if (!course || course.instructorId !== req.user.id) {
+        return res.status(403).json({ error: "Acesso negado" });
+      }
+
+      const updatedModule = await storage.updateCourseModule(req.params.id, req.body);
+      res.json(updatedModule);
+    } catch (error) {
+      console.error("Error updating course module:", error);
+      res.status(500).json({ error: "Erro ao atualizar módulo" });
+    }
+  });
+
+  // Deletar módulo
+  app.delete("/api/modules/:id", verifyJWT, async (req: any, res) => {
+    try {
+      if (req.user.email !== 'admin@admin.com') {
+        return res.status(403).json({ error: "Acesso negado. Apenas administradores podem deletar módulos." });
+      }
+
+      const module = await storage.getCourseModule(req.params.id);
+      if (!module) {
+        return res.status(404).json({ error: "Módulo não encontrado" });
+      }
+
+      // Verificar se o usuário é o instrutor do curso
+      const course = await storage.getCourse(module.courseId);
+      if (!course || course.instructorId !== req.user.id) {
+        return res.status(403).json({ error: "Acesso negado" });
+      }
+
+      await storage.deleteCourseModule(req.params.id);
+      res.json({ success: true, message: "Módulo deletado com sucesso" });
+    } catch (error) {
+      console.error("Error deleting course module:", error);
+      res.status(500).json({ error: "Erro ao deletar módulo" });
+    }
+  });
+
+  // CRUD - AULAS DO MÓDULO
+  // Listar aulas de um módulo
+  app.get("/api/modules/:moduleId/lessons", verifyJWT, async (req: any, res) => {
+    try {
+      if (req.user.email !== 'admin@admin.com') {
+        return res.status(403).json({ error: "Acesso negado. Apenas administradores podem gerenciar aulas." });
+      }
+
+      const module = await storage.getCourseModule(req.params.moduleId);
+      if (!module) {
+        return res.status(404).json({ error: "Módulo não encontrado" });
+      }
+
+      // Verificar se o usuário é o instrutor do curso
+      const course = await storage.getCourse(module.courseId);
+      if (!course || course.instructorId !== req.user.id) {
+        return res.status(403).json({ error: "Acesso negado" });
+      }
+
+      const lessons = await storage.getModuleLessons(req.params.moduleId);
+      res.json(lessons);
+    } catch (error) {
+      console.error("Error fetching module lessons:", error);
+      res.status(500).json({ error: "Erro ao buscar aulas do módulo" });
+    }
+  });
+
+  // Criar aula
+  app.post("/api/modules/:moduleId/lessons", verifyJWT, async (req: any, res) => {
+    try {
+      if (req.user.email !== 'admin@admin.com') {
+        return res.status(403).json({ error: "Acesso negado. Apenas administradores podem criar aulas." });
+      }
+
+      const module = await storage.getCourseModule(req.params.moduleId);
+      if (!module) {
+        return res.status(404).json({ error: "Módulo não encontrado" });
+      }
+
+      // Verificar se o usuário é o instrutor do curso
+      const course = await storage.getCourse(module.courseId);
+      if (!course || course.instructorId !== req.user.id) {
+        return res.status(403).json({ error: "Acesso negado" });
+      }
+
+      const lessonData = {
+        ...req.body,
+        moduleId: req.params.moduleId,
+        id: nanoid()
+      };
+
+      const lesson = await storage.createCourseLesson(lessonData);
+      res.json(lesson);
+    } catch (error) {
+      console.error("Error creating course lesson:", error);
+      res.status(500).json({ error: "Erro ao criar aula" });
+    }
+  });
+
+  // Buscar aula específica
+  app.get("/api/lessons/:id", verifyJWT, async (req: any, res) => {
+    try {
+      if (req.user.email !== 'admin@admin.com') {
+        return res.status(403).json({ error: "Acesso negado. Apenas administradores podem visualizar aulas." });
+      }
+
+      const lesson = await storage.getCourseLesson(req.params.id);
+      if (!lesson) {
+        return res.status(404).json({ error: "Aula não encontrada" });
+      }
+
+      // Verificar se o usuário é o instrutor do curso
+      const module = await storage.getCourseModule(lesson.moduleId);
+      const course = await storage.getCourse(module.courseId);
+      if (!course || course.instructorId !== req.user.id) {
+        return res.status(403).json({ error: "Acesso negado" });
+      }
+
+      res.json(lesson);
+    } catch (error) {
+      console.error("Error fetching course lesson:", error);
+      res.status(500).json({ error: "Erro ao buscar aula" });
+    }
+  });
+
+  // Atualizar aula
+  app.put("/api/lessons/:id", verifyJWT, async (req: any, res) => {
+    try {
+      if (req.user.email !== 'admin@admin.com') {
+        return res.status(403).json({ error: "Acesso negado. Apenas administradores podem editar aulas." });
+      }
+
+      const lesson = await storage.getCourseLesson(req.params.id);
+      if (!lesson) {
+        return res.status(404).json({ error: "Aula não encontrada" });
+      }
+
+      // Verificar se o usuário é o instrutor do curso
+      const module = await storage.getCourseModule(lesson.moduleId);
+      const course = await storage.getCourse(module.courseId);
+      if (!course || course.instructorId !== req.user.id) {
+        return res.status(403).json({ error: "Acesso negado" });
+      }
+
+      const updatedLesson = await storage.updateCourseLesson(req.params.id, req.body);
+      res.json(updatedLesson);
+    } catch (error) {
+      console.error("Error updating course lesson:", error);
+      res.status(500).json({ error: "Erro ao atualizar aula" });
+    }
+  });
+
+  // Deletar aula
+  app.delete("/api/lessons/:id", verifyJWT, async (req: any, res) => {
+    try {
+      if (req.user.email !== 'admin@admin.com') {
+        return res.status(403).json({ error: "Acesso negado. Apenas administradores podem deletar aulas." });
+      }
+
+      const lesson = await storage.getCourseLesson(req.params.id);
+      if (!lesson) {
+        return res.status(404).json({ error: "Aula não encontrada" });
+      }
+
+      // Verificar se o usuário é o instrutor do curso
+      const module = await storage.getCourseModule(lesson.moduleId);
+      const course = await storage.getCourse(module.courseId);
+      if (!course || course.instructorId !== req.user.id) {
+        return res.status(403).json({ error: "Acesso negado" });
+      }
+
+      await storage.deleteCourseLesson(req.params.id);
+      res.json({ success: true, message: "Aula deletada com sucesso" });
+    } catch (error) {
+      console.error("Error deleting course lesson:", error);
+      res.status(500).json({ error: "Erro ao deletar aula" });
+    }
+  });
+
+  // Reordenar aulas de um módulo
+  app.put("/api/modules/:moduleId/lessons/reorder", verifyJWT, async (req: any, res) => {
+    try {
+      if (req.user.email !== 'admin@admin.com') {
+        return res.status(403).json({ error: "Acesso negado. Apenas administradores podem reordenar aulas." });
+      }
+
+      const { lessonIds } = req.body;
+      if (!Array.isArray(lessonIds)) {
+        return res.status(400).json({ error: "lessonIds deve ser um array" });
+      }
+
+      const module = await storage.getCourseModule(req.params.moduleId);
+      if (!module) {
+        return res.status(404).json({ error: "Módulo não encontrado" });
+      }
+
+      // Verificar se o usuário é o instrutor do curso
+      const course = await storage.getCourse(module.courseId);
+      if (!course || course.instructorId !== req.user.id) {
+        return res.status(403).json({ error: "Acesso negado" });
+      }
+
+      // Atualizar ordem das aulas
+      for (let i = 0; i < lessonIds.length; i++) {
+        await storage.updateCourseLesson(lessonIds[i], { orderIndex: i + 1 });
+      }
+
+      res.json({ success: true, message: "Ordem das aulas atualizada com sucesso" });
+    } catch (error) {
+      console.error("Error reordering lessons:", error);
+      res.status(500).json({ error: "Erro ao reordenar aulas" });
+    }
+  });
+
+  // Upload de arquivos para aulas (PDFs, videos, etc)
+  app.post("/api/lessons/:id/upload", verifyJWT, uploadMiddleware, async (req: any, res) => {
+    try {
+      if (req.user.email !== 'admin@admin.com') {
+        return res.status(403).json({ error: "Acesso negado. Apenas administradores podem fazer upload de arquivos." });
+      }
+
+      const lesson = await storage.getCourseLesson(req.params.id);
+      if (!lesson) {
+        return res.status(404).json({ error: "Aula não encontrada" });
+      }
+
+      // Verificar se o usuário é o instrutor do curso
+      const module = await storage.getCourseModule(lesson.moduleId);
+      const course = await storage.getCourse(module.courseId);
+      if (!course || course.instructorId !== req.user.id) {
+        return res.status(403).json({ error: "Acesso negado" });
+      }
+
+      const uploadResult = await handleSecureUpload(req, res, {
+        maxFileSize: 100 * 1024 * 1024, // 100MB
+        allowedTypes: ['pdf', 'mp4', 'mp3', 'webm', 'avi', 'mov', 'doc', 'docx', 'ppt', 'pptx'],
+        uploadPath: 'lessons'
+      });
+
+      if (uploadResult.success) {
+        // Atualizar aula com URL do arquivo
+        const updateData: any = {};
+        const fileType = uploadResult.file.mimetype;
+        
+        if (fileType.startsWith('video/')) {
+          updateData.videoUrl = uploadResult.file.url;
+        } else if (fileType.startsWith('audio/')) {
+          updateData.audioUrl = uploadResult.file.url;
+        } else {
+          // Adicionar aos attachments
+          const currentAttachments = lesson.attachments ? JSON.parse(lesson.attachments) : [];
+          currentAttachments.push({
+            name: uploadResult.file.originalName,
+            url: uploadResult.file.url,
+            type: fileType,
+            size: uploadResult.file.size
+          });
+          updateData.attachments = JSON.stringify(currentAttachments);
+        }
+
+        await storage.updateCourseLesson(req.params.id, updateData);
+        
+        res.json({
+          success: true,
+          message: "Arquivo enviado com sucesso",
+          file: uploadResult.file
+        });
+      } else {
+        res.status(400).json({
+          success: false,
+          error: uploadResult.error
+        });
+      }
+    } catch (error) {
+      console.error("Error uploading lesson file:", error);
+      res.status(500).json({ error: "Erro ao enviar arquivo" });
+    }
+  });
+
+  // CATEGORIAS DE CURSOS
+  // Listar categorias
+  app.get("/api/course-categories", verifyJWT, async (req: any, res) => {
+    try {
+      if (req.user.email !== 'admin@admin.com') {
+        return res.status(403).json({ error: "Acesso negado. Apenas administradores podem gerenciar categorias." });
+      }
+
+      const categories = await storage.getCourseCategories();
+      res.json(categories);
+    } catch (error) {
+      console.error("Error fetching course categories:", error);
+      res.status(500).json({ error: "Erro ao buscar categorias" });
+    }
+  });
+
+  // Criar categoria
+  app.post("/api/course-categories", verifyJWT, async (req: any, res) => {
+    try {
+      if (req.user.email !== 'admin@admin.com') {
+        return res.status(403).json({ error: "Acesso negado. Apenas administradores podem criar categorias." });
+      }
+
+      const categoryData = {
+        ...req.body,
+        id: nanoid()
+      };
+
+      const category = await storage.createCourseCategory(categoryData);
+      res.json(category);
+    } catch (error) {
+      console.error("Error creating course category:", error);
+      res.status(500).json({ error: "Erro ao criar categoria" });
+    }
+  });
+
+  // ANALYTICS DA ÁREA DE MEMBROS
+  // Dashboard de estatísticas gerais
+  app.get("/api/members-area/dashboard", verifyJWT, async (req: any, res) => {
+    try {
+      if (req.user.email !== 'admin@admin.com') {
+        return res.status(403).json({ error: "Acesso negado. Apenas administradores podem ver analytics." });
+      }
+
+      const stats = await storage.getMembersAreaDashboard(req.user.id);
+      res.json(stats);
+    } catch (error) {
+      console.error("Error fetching members area dashboard:", error);
+      res.status(500).json({ error: "Erro ao buscar dashboard" });
+    }
+  });
+
+  // Analytics de um curso específico
+  app.get("/api/courses/:id/analytics", verifyJWT, async (req: any, res) => {
+    try {
+      if (req.user.email !== 'admin@admin.com') {
+        return res.status(403).json({ error: "Acesso negado. Apenas administradores podem ver analytics." });
+      }
+
+      const course = await storage.getCourse(req.params.id);
+      if (!course) {
+        return res.status(404).json({ error: "Curso não encontrado" });
+      }
+
+      if (course.instructorId !== req.user.id) {
+        return res.status(403).json({ error: "Acesso negado" });
+      }
+
+      const analytics = await storage.getCourseAnalytics(req.params.id);
+      res.json(analytics);
+    } catch (error) {
+      console.error("Error fetching course analytics:", error);
+      res.status(500).json({ error: "Erro ao buscar analytics do curso" });
+    }
+  });
+
   // System routes registration complete
 }
 
