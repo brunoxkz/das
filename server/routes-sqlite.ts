@@ -1094,7 +1094,7 @@ export function registerSQLiteRoutes(app: Express): Server {
         payment_method: paymentMethodId,
         confirmation_method: 'automatic',
         confirm: true,
-        return_url: 'https://vendzz.com/payment-success',
+        return_url: `${req.protocol}://${req.get('host')}/payment-success`,
         metadata: {
           plan_name: planName || 'Vendzz Pro',
           customer_name: customerData.name,
@@ -1104,7 +1104,14 @@ export function registerSQLiteRoutes(app: Express): Server {
         }
       });
 
-      console.log('✅ PAYMENT INTENT PROCESSADO:', paymentIntent.id);
+      console.log('✅ PAYMENT INTENT PROCESSADO:', {
+        id: paymentIntent.id,
+        status: paymentIntent.status,
+        amount: paymentIntent.amount,
+        currency: paymentIntent.currency,
+        customer: paymentIntent.customer,
+        payment_method: paymentIntent.payment_method
+      });
 
       // Criar produto e preço para assinatura
       const product = await stripeSystem.stripe.products.create({
@@ -1130,9 +1137,20 @@ export function registerSQLiteRoutes(app: Express): Server {
         }
       });
 
-      console.log('✅ ASSINATURA CRIADA:', subscription.id);
+      console.log('✅ ASSINATURA CRIADA:', {
+        id: subscription.id,
+        customer: subscription.customer,
+        status: subscription.status,
+        trial_end: subscription.trial_end,
+        current_period_end: subscription.current_period_end,
+        items: subscription.items.data.map(item => ({
+          price_id: item.price.id,
+          amount: item.price.unit_amount,
+          interval: item.price.recurring?.interval
+        }))
+      });
 
-      res.json({
+      const response = {
         success: true,
         message: 'Pagamento processado com sucesso',
         paymentIntentId: paymentIntent.id,
@@ -1144,7 +1162,18 @@ export function registerSQLiteRoutes(app: Express): Server {
           trial_period: '3 dias gratuitos',
           recurring_charge: 'R$ 29,90/mês após trial'
         }
+      };
+
+      console.log('🎉 PAGAMENTO INLINE COMPLETO - SUCESSO TOTAL:', {
+        payment_intent: paymentIntent.status,
+        customer_created: customer.id,
+        subscription_status: subscription.status,
+        trial_active: subscription.trial_end ? 'SIM' : 'NÃO',
+        billing_flow: 'R$1 → 3 dias trial → R$29,90/mês',
+        timestamp: new Date().toISOString()
       });
+
+      res.json(response);
 
     } catch (error) {
       console.error('❌ ERRO AO PROCESSAR PAGAMENTO INLINE:', error);
