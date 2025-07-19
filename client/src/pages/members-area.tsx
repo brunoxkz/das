@@ -91,8 +91,12 @@ export default function MembersArea() {
   const [showModuleModal, setShowModuleModal] = useState(false);
   const [showLessonModal, setShowLessonModal] = useState(false);
 
-  // Verificar se é admin
-  const isAdmin = user?.email === 'admin@admin.com';
+  // Verificar se é admin - aceitar role admin ou email específico
+  const isAdmin = user?.role === 'admin' || user?.email === 'admin@admin.com' || user?.id === 'admin-user-id';
+  
+  // Debug do usuário atual
+  console.log('User data:', user);
+  console.log('Is admin:', isAdmin);
 
   if (!isAdmin) {
     return (
@@ -102,6 +106,10 @@ export default function MembersArea() {
             <CardTitle className="text-red-600 dark:text-red-400">Acesso Negado</CardTitle>
             <CardDescription>
               Apenas administradores podem acessar a Área de Membros.
+              <br />
+              <small className="text-gray-500 mt-2 block">
+                Usuário: {user?.email || 'N/A'} | Role: {user?.role || 'N/A'} | ID: {user?.id || 'N/A'}
+              </small>
             </CardDescription>
           </CardHeader>
         </Card>
