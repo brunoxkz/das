@@ -353,7 +353,7 @@ export default function Dashboard() {
                 onClick={() => setShowTutorial(true)}
                 className="dashboard-button"
               >
-                <HelpCircle className="w-4 h-4 mr-2" />
+                <BookOpen className="w-4 h-4 mr-2" />
                 Tutorial
               </Button>
               <Link href="/quizzes/new">
