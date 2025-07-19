@@ -34,7 +34,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           return;
         }
 
-        const userData = await apiRequest("GET", "/api/user");
+        const response = await apiRequest("GET", "/api/auth/verify");
+        const userData = response.user;
         setUser(userData);
       } catch (error) {
         console.error("Auth check failed:", error);

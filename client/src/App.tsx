@@ -93,13 +93,12 @@ import CheckoutPlan from "@/pages/checkout-plan";
 import PaymentVerification from "@/pages/payment-verification";
 import MembersAreaNetflix from "@/pages/members-area-netflix";
 
-import { useAuth } from "@/hooks/useAuth-jwt";
+import { AuthProvider, useAuth } from "@/hooks/use-auth-sqlite";
 import { isUnauthorizedError } from "@/lib/authUtils";
 import { SidebarProvider } from "@/hooks/useSidebar";
 import { useTheme } from "@/hooks/useTheme";
 
-
-function App() {
+function AppContent() {
   const { isAuthenticated, isLoading } = useAuth();
   const [location] = useLocation();
   const { theme } = useTheme();
@@ -572,6 +571,14 @@ function App() {
         <Toaster />
       </div>
     </SidebarProvider>
+  );
+}
+
+function App() {
+  return (
+    <AuthProvider>
+      <AppContent />
+    </AuthProvider>
   );
 }
 
