@@ -93,7 +93,7 @@ import CheckoutPlan from "@/pages/checkout-plan";
 import PaymentVerification from "@/pages/payment-verification";
 import MembersAreaNetflix from "@/pages/members-area-netflix";
 
-import { AuthProvider, useAuth } from "@/hooks/use-auth-sqlite";
+import { AuthProvider, useAuth } from "@/hooks/useAuth-jwt";
 import { isUnauthorizedError } from "@/lib/authUtils";
 import { SidebarProvider } from "@/hooks/useSidebar";
 import { useTheme } from "@/hooks/useTheme";
