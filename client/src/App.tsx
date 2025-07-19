@@ -372,6 +372,12 @@ function App() {
           <MembersAreaNetflix />
         </Route>
         
+        <Route path="/admin">
+          <Layout>
+            <AdminPage />
+          </Layout>
+        </Route>
+        
         <Route path="/whatsapp-dual">
           <Layout>
             <WhatsAppDualSystem />
