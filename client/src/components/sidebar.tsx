@@ -275,11 +275,18 @@ export function Sidebar() {
       active: location === "/settings"
     },
     {
-      title: "Admin",
+      title: "Admin Área",
       href: "/members-admin",
       icon: <Shield className="w-4 h-4" />,
       active: location === "/members-admin",
       className: "text-red-600 border-red-600/20 bg-red-600/5 hover:bg-red-600/10"
+    },
+    {
+      title: "Admin",
+      href: "/admin-dashboard",
+      icon: <Users className="w-4 h-4" />,
+      active: location === "/admin-dashboard",
+      className: "text-red-500 border-red-500/20 bg-red-500/5 hover:bg-red-500/10"
     }
   ];
 

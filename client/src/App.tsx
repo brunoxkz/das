@@ -93,6 +93,7 @@ import CheckoutPlan from "@/pages/checkout-plan";
 import PaymentVerification from "@/pages/payment-verification";
 import MembersAreaNetflix from "@/pages/members-area-netflix";
 import MembersArea from "@/pages/members-area";
+import AdminDashboard from "@/pages/admin-dashboard";
 
 import { useAuth } from "@/hooks/useAuth-jwt";
 import { isUnauthorizedError } from "@/lib/authUtils";
@@ -376,6 +377,12 @@ function App() {
         <Route path="/members-admin">
           <Layout>
             <MembersArea />
+          </Layout>
+        </Route>
+
+        <Route path="/admin-dashboard">
+          <Layout>
+            <AdminDashboard />
           </Layout>
         </Route>
         
