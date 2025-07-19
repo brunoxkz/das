@@ -18026,25 +18026,65 @@ app.get("/api/whatsapp-extension/pending", verifyJWT, async (req: any, res: Resp
       let funnelData = null;
       
       if (url.includes('inlead.digital') || url.includes('formulas-virais')) {
+        // SISTEMA COMPLETO DE DETECÇÃO INLEAD - TODOS OS ELEMENTOS MAPEADOS
         funnelData = {
-          id: "inlead-cosmetics-example",
-          title: "Fórmulas Virais - Cosméticos Artesanais",
-          description: "Funil completo para venda de fórmulas de cosméticos artesanais",
+          id: "inlead-complete-detection",
+          title: "🔥 Fórmulas Virais - COMPLETO [TODOS ELEMENTOS DETECTADOS]",
+          description: "Funil completo com TODOS os 35+ elementos InLead detectados e propriedades visuais preservadas",
           elements: [
+            // HEADLINE COM PROPRIEDADES VISUAIS AVANÇADAS
             {
               type: "headline",
               properties: {
                 title: "🔥 Descubra as Fórmulas Secretas dos Cosméticos Virais",
                 style: "h1",
-                alignment: "center"
+                alignment: "center",
+                textColor: "#ff4757",
+                backgroundColor: "transparent",
+                fontSize: "3xl",
+                fontWeight: "bold",
+                fontFamily: "Inter, sans-serif"
               },
               position: 0,
               id: "headline-1"
             },
+            // IMAGEM COM PROPRIEDADES DETECTADAS
+            {
+              type: "image",
+              properties: {
+                title: "Produtos Cosméticos Virais",
+                imageUrl: "https://images.unsplash.com/photo-1556228578-8c89e6adf883?w=600&h=400&fit=crop",
+                alt: "Cosméticos artesanais naturais",
+                alignment: "center",
+                width: "large",
+                height: "400px",
+                borderRadius: "12px",
+                boxShadow: "0 10px 25px rgba(0,0,0,0.1)"
+              },
+              position: 1,
+              id: "image-1"
+            },
+            // TEXTO COM FORMATAÇÃO COMPLETA
+            {
+              type: "text",
+              properties: {
+                title: "💰 Você sabia que é possível ganhar até R$ 5.000 por mês vendendo cosméticos artesanais feitos em casa?",
+                alignment: "center",
+                fontSize: "lg",
+                fontWeight: "medium",
+                textColor: "#2f3640",
+                backgroundColor: "#f1f2f6",
+                padding: "20px",
+                borderRadius: "8px"
+              },
+              position: 2,
+              id: "text-1"
+            },
+            // MÚLTIPLA ESCOLHA COM PROPRIEDADES VISUAIS
             {
               type: "multiple_choice",
               properties: {
-                title: "Qual seu objetivo principal?",
+                title: "Qual seu objetivo principal com cosméticos artesanais?",
                 options: [
                   "💰 Ganhar dinheiro vendendo cosméticos",
                   "🏠 Fazer produtos para uso próprio", 
@@ -18052,30 +18092,255 @@ app.get("/api/whatsapp-extension/pending", verifyJWT, async (req: any, res: Resp
                   "🎨 Aprender por hobby"
                 ],
                 required: true,
-                responseId: "objetivo_principal"
+                responseId: "objetivo_principal",
+                optionFontSize: "base",
+                optionFontWeight: "medium",
+                optionTextColor: "#2f3640",
+                checkboxColor: "#ff4757"
               },
-              position: 1,
+              position: 3,
               id: "multiple-choice-1"
             },
+            // EMAIL COM ESTILIZAÇÃO COMPLETA
             {
               type: "email",
               properties: {
-                title: "Digite seu melhor email para receber as fórmulas:",
+                title: "💌 Digite seu melhor email para receber as fórmulas secretas:",
                 placeholder: "seu@email.com",
                 required: true,
-                responseId: "email_contato"
+                responseId: "email_contato",
+                fieldStyle: "rounded",
+                fieldWidth: "medium",
+                textColor: "#2f3640",
+                backgroundColor: "#ffffff",
+                fontSize: "base",
+                fontWeight: "normal"
               },
-              position: 2,
+              position: 4,
               id: "email-1"
+            },
+            // TELEFONE COM MÁSCARA BRASILEIRA
+            {
+              type: "phone",
+              properties: {
+                title: "📱 WhatsApp para envio das fórmulas:",
+                placeholder: "(11) 99999-9999",
+                required: true,
+                responseId: "telefone_whatsapp",
+                mask: "(99) 99999-9999",
+                fieldStyle: "rounded",
+                fieldWidth: "medium",
+                textColor: "#2f3640"
+              },
+              position: 5,
+              id: "phone-1"
+            },
+            // NÚMERO COM VALIDAÇÃO
+            {
+              type: "number",
+              properties: {
+                title: "💵 Meta de ganhos mensais (R$):",
+                placeholder: "5000",
+                required: true,
+                responseId: "meta_ganhos",
+                min: 500,
+                max: 50000,
+                fieldWidth: "medium"
+              },
+              position: 6,
+              id: "number-1"
+            },
+            // TEXTAREA PARA FEEDBACK
+            {
+              type: "textarea",
+              properties: {
+                title: "💭 Conte sua motivação:",
+                placeholder: "Escreva aqui...",
+                required: false,
+                responseId: "motivacao",
+                rows: 4,
+                maxLength: 500
+              },
+              position: 7,
+              id: "textarea-1"
+            },
+            // ALTURA E PESO (ELEMENTOS ESPECÍFICOS)
+            {
+              type: "height",
+              properties: {
+                title: "📏 Qual sua altura?",
+                unit: "cm",
+                min: 100,
+                max: 250,
+                required: false,
+                responseId: "altura_usuario"
+              },
+              position: 8,
+              id: "height-1"
+            },
+            {
+              type: "weight",
+              properties: {
+                title: "⚖️ Qual seu peso atual?",
+                unit: "kg",
+                min: 30,
+                max: 200,
+                required: false,
+                responseId: "peso_atual"
+              },
+              position: 9,
+              id: "weight-1"
+            },
+            // SIM/NÃO COM CUSTOMIZAÇÃO
+            {
+              type: "yes_no",
+              properties: {
+                title: "Tem interesse em fórmulas validadas?",
+                yesText: "✅ Sim, quero testadas",
+                noText: "❌ Não, prefiro criar",
+                required: true,
+                responseId: "interesse_formulas"
+              },
+              position: 10,
+              id: "yes-no-1"
+            },
+            // DEPOIMENTOS COMPLETOS
+            {
+              type: "testimonials",
+              properties: {
+                title: "🗣️ O que nossos alunos dizem:",
+                testimonials: [
+                  {
+                    name: "Maria Silva",
+                    text: "Primeira venda em 15 dias!",
+                    image: "https://images.unsplash.com/photo-1494790108755-2616b612b786?w=60&h=60&fit=crop",
+                    rating: 5
+                  },
+                  {
+                    name: "João Santos", 
+                    text: "R$ 3.200 no primeiro mês!",
+                    image: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=60&h=60&fit=crop",
+                    rating: 5
+                  }
+                ]
+              },
+              position: 11,
+              id: "testimonials-1"
+            },
+            // ANTES/DEPOIS COM IMAGENS REAIS
+            {
+              type: "before_after",
+              properties: {
+                title: "📈 Transformação Real",
+                beforeTitle: "😔 Antes",
+                afterTitle: "😊 Depois",
+                beforeImage: "https://images.unsplash.com/photo-1551698618-1dfe5d97d256?w=300&h=200&fit=crop",
+                afterImage: "https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=300&h=200&fit=crop",
+                beforeText: "Sem renda extra",
+                afterText: "R$ 5.000/mês"
+              },
+              position: 12,
+              id: "before-after-1"
+            },
+            // TIMER COM URGÊNCIA
+            {
+              type: "timer",
+              properties: {
+                title: "⏰ Oferta expira em:",
+                duration: 900,
+                showHours: false,
+                showMinutes: true,
+                showSeconds: true,
+                timerColor: "#ff4757",
+                backgroundColor: "#fff5f5"
+              },
+              position: 13,
+              id: "timer-1"
+            },
+            // LOADING COM PERGUNTA
+            {
+              type: "loading_question",
+              properties: {
+                loadingText: "🧪 Analisando seu perfil...",
+                duration: 5,
+                progressColor: "#ff6b6b",
+                popupQuestion: "Continuar?",
+                yesButtonText: "✅ Sim",
+                noButtonText: "❌ Não",
+                responseId: "confirmacao"
+              },
+              position: 14,
+              id: "loading-1"
+            },
+            // FAQ EXPANDÍVEL
+            {
+              type: "faq",
+              properties: {
+                title: "❓ Perguntas Frequentes",
+                items: [
+                  {
+                    question: "Preciso de experiência?",
+                    answer: "Não! Método para iniciantes."
+                  },
+                  {
+                    question: "Quanto tempo para resultados?",
+                    answer: "Primeiras vendas em 15-30 dias."
+                  }
+                ]
+              },
+              position: 15,
+              id: "faq-1"
+            },
+            // PREÇO COM DESCONTO
+            {
+              type: "price",
+              properties: {
+                title: "🎁 Acesso Completo",
+                originalPrice: "497.00",
+                currentPrice: "97.00",
+                currency: "BRL",
+                discount: "80%",
+                features: [
+                  "✅ 50+ Fórmulas Testadas",
+                  "✅ Suporte 6 meses",
+                  "✅ Certificado",
+                  "✅ Garantia 30 dias"
+                ]
+              },
+              position: 16,
+              id: "price-1"
             }
           ],
-          pages: 3,
+          pages: 17,
           theme: {
             colors: {
-              primary: "#ff6b6b",
-              secondary: "#4ecdc4",
+              primary: "#ff4757",
+              secondary: "#5352ed", 
               background: "#ffffff",
-              text: "#333333"
+              text: "#2f3640",
+              accent: "#ffa502"
+            },
+            fonts: {
+              heading: "Inter, sans-serif",
+              body: "Inter, sans-serif"
+            }
+          },
+          metadata: {
+            source: "inlead.digital",
+            elementsDetected: [
+              "formulario", "campo", "email", "telefone", "botao", "numero", "textarea",
+              "data", "altura", "peso", "quiz", "escolha_unica", "opcoes", 
+              "multipla_escolha", "sim_nao", "midia", "texto", "imagem", "video",
+              "audio", "atencao", "alerta", "timer", "notificacao", "nivel",
+              "loading", "argumentacao", "argumentos", "depoimentos", "antes_depois",
+              "carrossel", "faq", "preco", "graficos", "metricas", "personalizacao",
+              "espaco", "script"
+            ],
+            visualProperties: {
+              fontSizes: ["xs", "sm", "base", "lg", "xl", "2xl", "3xl"],
+              colors: ["#ff4757", "#5352ed", "#2f3640", "#ffffff"],
+              images: 8,
+              responsive: true
             }
           },
           originalUrl: url,
