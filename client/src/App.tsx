@@ -49,7 +49,7 @@ import ExtensoesPage from "@/pages/extensoes";
 import VoiceCallingPage from "@/pages/voice-calling";
 import ConditionalCampaignsPage from "@/pages/conditional-campaigns";
 import FacelessVideosPage from "@/pages/faceless-videos";
-import FunnelImporter from "@/pages/funnel-importer";
+import FunnelImporter from "@/pages/funnel-importer-fixed";
 
 import CheckoutAdminPage from "@/pages/checkout-admin";
 import CheckoutBuilder from "@/pages/checkout-builder";

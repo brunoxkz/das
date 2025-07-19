@@ -18374,11 +18374,69 @@ app.get("/api/whatsapp-extension/pending", verifyJWT, async (req: any, res: Resp
         };
       }
 
-      res.json({
-        success: true,
-        data: funnelData,
-        message: 'Funil detectado com sucesso'
-      });
+      if (funnelData) {
+        // SALVAR O FUNIL IMPORTADO COMO QUIZ NO BANCO DE DADOS
+        try {
+          const quizId = funnelData.id;
+          const userId = req.user.id;
+          
+          // Criar quiz completo no banco
+          const insertQuery = `
+            INSERT OR REPLACE INTO quizzes (
+              id, user_id, title, description, elements, pages, theme, settings, 
+              status, created_at, updated_at, variables, original_url, imported_at
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+          `;
+          
+          const currentTime = new Date().toISOString();
+          
+          db.prepare(insertQuery).run(
+            quizId,
+            userId, 
+            funnelData.title,
+            funnelData.description,
+            JSON.stringify(funnelData.elements),
+            funnelData.pages || funnelData.elements.length,
+            JSON.stringify(funnelData.theme),
+            JSON.stringify(funnelData.settings || {}),
+            'draft',
+            currentTime,
+            currentTime,
+            JSON.stringify(funnelData.metadata?.elementsDetected || []),
+            funnelData.originalUrl,
+            currentTime
+          );
+
+          console.log(`✅ FUNIL IMPORTADO E SALVO: ${quizId} - ${funnelData.elements.length} elementos`);
+          
+          res.json({
+            success: true,
+            data: {
+              ...funnelData,
+              saved: true,
+              quizId: quizId,
+              editUrl: `/quiz-builder?edit=${quizId}`
+            },
+            message: `Funil importado com sucesso! ${funnelData.elements.length} elementos detectados e salvos.`
+          });
+        } catch (dbError) {
+          console.error('❌ ERRO AO SALVAR FUNIL:', dbError);
+          res.json({
+            success: true,
+            data: {
+              ...funnelData,
+              saved: false,
+              error: 'Funil analisado mas não foi possível salvar no banco'
+            },
+            message: 'Funil analisado mas houve erro ao salvar. Dados temporários disponíveis.'
+          });
+        }
+      } else {
+        res.status(400).json({
+          success: false,
+          error: 'Não foi possível analisar este funil. Verifique se a URL é válida.'
+        });
+      }
 
     } catch (error) {
       console.error('Erro ao analisar funil:', error);
