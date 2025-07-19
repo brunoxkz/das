@@ -92,6 +92,7 @@ import AdminDashboardPlanos from "@/pages/admin-dashboard-planos";
 import CheckoutPlan from "@/pages/checkout-plan";
 import PaymentVerification from "@/pages/payment-verification";
 import MembersAreaNetflix from "@/pages/members-area-netflix";
+import MembersArea from "@/pages/members-area";
 
 import { useAuth } from "@/hooks/useAuth-jwt";
 import { isUnauthorizedError } from "@/lib/authUtils";
@@ -370,6 +371,12 @@ function App() {
         </Route>
         <Route path="/members-area">
           <MembersAreaNetflix />
+        </Route>
+        
+        <Route path="/members-admin">
+          <Layout>
+            <MembersArea />
+          </Layout>
         </Route>
         
         <Route path="/whatsapp-dual">
