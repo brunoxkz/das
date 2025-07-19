@@ -278,12 +278,6 @@ export default function AdminDashboard() {
                       <span className="text-muted-foreground">WhatsApp</span>
                     </div>
 
-                    <div className="flex items-center gap-1 text-purple-600">
-                      <Zap className="h-3 w-3" />
-                      <span className="font-medium">{u.aiCredits || 0}</span>
-                      <span className="text-muted-foreground">IA</span>
-                    </div>
-
                     <div className="flex items-center gap-1 text-blue-500">
                       <Send className="h-3 w-3" />
                       <span className="font-medium">{u.telegramCredits || 0}</span>

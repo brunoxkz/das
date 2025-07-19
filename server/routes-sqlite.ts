@@ -2845,7 +2845,41 @@ export function registerSQLiteRoutes(app: Express): Server {
       }
 
       const users = await storage.getAllUsers();
-      res.json(users);
+      
+      // Get unified credit data for each user
+      const usersWithCredits = await Promise.all(users.map(async (user) => {
+        try {
+          // Get real-time credit data from different endpoints
+          const smsCredits = user.smsCredits || 0;
+          const emailCredits = user.emailCredits || 0;
+          const whatsappCredits = user.whatsappCredits || 0;
+          const telegramCredits = user.telegramCredits || 0;
+          
+          return {
+            ...user,
+            smsCredits,
+            emailCredits,
+            whatsappCredits,
+            telegramCredits,
+            // Remove sensitive data for admin view
+            password: undefined,
+            refreshToken: undefined,
+            twoFactorSecret: undefined,
+            twoFactorBackupCodes: undefined
+          };
+        } catch (error) {
+          console.error(`Error getting credits for user ${user.id}:`, error);
+          return {
+            ...user,
+            password: undefined,
+            refreshToken: undefined,
+            twoFactorSecret: undefined,
+            twoFactorBackupCodes: undefined
+          };
+        }
+      }));
+      
+      res.json(usersWithCredits);
     } catch (error) {
       console.error('Erro ao buscar usuários:', error);
       res.status(500).json({ error: 'Erro interno do servidor' });
@@ -12151,33 +12185,33 @@ console.log('Vendzz Checkout Embed carregado para plano: ${planId}');
     }
   });
 
-  // Get all users (admin only) - for notification targeting
-  app.get("/api/admin/users", verifyJWT, async (req: any, res: Response) => {
-    try {
-      const userId = req.user.id;
-      const user = await storage.getUser(userId);
+  // Get all users (admin only) - for notification targeting - COMMENTED TO AVOID DUPLICATION
+  // app.get("/api/admin/users", verifyJWT, async (req: any, res: Response) => {
+  //   try {
+  //     const userId = req.user.id;
+  //     const user = await storage.getUser(userId);
       
-      if (!user || user.role !== 'admin') {
-        return res.status(403).json({ error: 'Acesso negado' });
-      }
+  //     if (!user || user.role !== 'admin') {
+  //       return res.status(403).json({ error: 'Acesso negado' });
+  //     }
 
-      const users = await storage.getAllUsers();
-      const safeUsers = users.map(u => ({
-        id: u.id,
-        email: u.email,
-        firstName: u.firstName,
-        lastName: u.lastName,
-        plan: u.plan,
-        role: u.role,
-        createdAt: u.createdAt
-      }));
+  //     const users = await storage.getAllUsers();
+  //     const safeUsers = users.map(u => ({
+  //       id: u.id,
+  //       email: u.email,
+  //       firstName: u.firstName,
+  //       lastName: u.lastName,
+  //       plan: u.plan,
+  //       role: u.role,
+  //       createdAt: u.createdAt
+  //     }));
       
-      res.json(safeUsers);
-    } catch (error) {
-      console.error('❌ ERRO ao buscar usuários:', error);
-      res.status(500).json({ error: 'Erro interno do servidor' });
-    }
-  });
+  //     res.json(safeUsers);
+  //   } catch (error) {
+  //     console.error('❌ ERRO ao buscar usuários:', error);
+  //     res.status(500).json({ error: 'Erro interno do servidor' });
+  //   }
+  // });
 
   // ===== SUPER AFILIADOS ENDPOINTS =====
 
