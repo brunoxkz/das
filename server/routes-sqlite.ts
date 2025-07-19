@@ -2904,6 +2904,21 @@ export function registerSQLiteRoutes(app: Express): Server {
     }
   });
 
+  // Get top funnels with high traffic - Admin only
+  app.get('/api/admin/top-funnels', verifyJWT, async (req: any, res) => {
+    try {
+      if (req.user.role !== 'admin') {
+        return res.status(403).json({ error: 'Acesso negado' });
+      }
+
+      const topFunnels = await storage.getTopFunnels();
+      res.json(topFunnels);
+    } catch (error) {
+      console.error('Erro ao buscar funis em alta:', error);
+      res.status(500).json({ error: 'Erro interno do servidor' });
+    }
+  });
+
   // Update user profile - Admin only
   app.put("/api/admin/users/:id", verifyJWT, async (req: any, res) => {
     try {
@@ -22015,7 +22030,7 @@ export function registerCheckoutRoutes(app: Express) {
   app.get("/api/courses", verifyJWT, async (req: any, res) => {
     try {
       // Verificar se o usuário é admin
-      if (req.user.email !== 'admin@admin.com') {
+      if (req.user.email !== 'bruno@vendzz.com') {
         return res.status(403).json({ error: "Acesso negado. Apenas administradores podem gerenciar cursos." });
       }
 
@@ -22030,7 +22045,7 @@ export function registerCheckoutRoutes(app: Express) {
   // Buscar curso específico
   app.get("/api/courses/:id", verifyJWT, async (req: any, res) => {
     try {
-      if (req.user.email !== 'admin@admin.com') {
+      if (req.user.email !== 'bruno@vendzz.com') {
         return res.status(403).json({ error: "Acesso negado. Apenas administradores podem gerenciar cursos." });
       }
 
@@ -22053,7 +22068,7 @@ export function registerCheckoutRoutes(app: Express) {
   // Criar novo curso
   app.post("/api/courses", verifyJWT, async (req: any, res) => {
     try {
-      if (req.user.email !== 'admin@admin.com') {
+      if (req.user.email !== 'bruno@vendzz.com') {
         return res.status(403).json({ error: "Acesso negado. Apenas administradores podem criar cursos." });
       }
 
@@ -22074,7 +22089,7 @@ export function registerCheckoutRoutes(app: Express) {
   // Atualizar curso
   app.put("/api/courses/:id", verifyJWT, async (req: any, res) => {
     try {
-      if (req.user.email !== 'admin@admin.com') {
+      if (req.user.email !== 'bruno@vendzz.com') {
         return res.status(403).json({ error: "Acesso negado. Apenas administradores podem editar cursos." });
       }
 
@@ -22098,7 +22113,7 @@ export function registerCheckoutRoutes(app: Express) {
   // Deletar curso
   app.delete("/api/courses/:id", verifyJWT, async (req: any, res) => {
     try {
-      if (req.user.email !== 'admin@admin.com') {
+      if (req.user.email !== 'bruno@vendzz.com') {
         return res.status(403).json({ error: "Acesso negado. Apenas administradores podem deletar cursos." });
       }
 
@@ -22122,7 +22137,7 @@ export function registerCheckoutRoutes(app: Express) {
   // Publicar/despublicar curso
   app.patch("/api/courses/:id/publish", verifyJWT, async (req: any, res) => {
     try {
-      if (req.user.email !== 'admin@admin.com') {
+      if (req.user.email !== 'bruno@vendzz.com') {
         return res.status(403).json({ error: "Acesso negado. Apenas administradores podem publicar cursos." });
       }
 
@@ -22149,7 +22164,7 @@ export function registerCheckoutRoutes(app: Express) {
   // Listar módulos de um curso
   app.get("/api/courses/:courseId/modules", verifyJWT, async (req: any, res) => {
     try {
-      if (req.user.email !== 'admin@admin.com') {
+      if (req.user.email !== 'bruno@vendzz.com') {
         return res.status(403).json({ error: "Acesso negado. Apenas administradores podem gerenciar módulos." });
       }
 
@@ -22173,7 +22188,7 @@ export function registerCheckoutRoutes(app: Express) {
   // Criar módulo
   app.post("/api/courses/:courseId/modules", verifyJWT, async (req: any, res) => {
     try {
-      if (req.user.email !== 'admin@admin.com') {
+      if (req.user.email !== 'bruno@vendzz.com') {
         return res.status(403).json({ error: "Acesso negado. Apenas administradores podem criar módulos." });
       }
 
@@ -22203,7 +22218,7 @@ export function registerCheckoutRoutes(app: Express) {
   // Atualizar módulo
   app.put("/api/modules/:id", verifyJWT, async (req: any, res) => {
     try {
-      if (req.user.email !== 'admin@admin.com') {
+      if (req.user.email !== 'bruno@vendzz.com') {
         return res.status(403).json({ error: "Acesso negado. Apenas administradores podem editar módulos." });
       }
 
@@ -22229,7 +22244,7 @@ export function registerCheckoutRoutes(app: Express) {
   // Deletar módulo
   app.delete("/api/modules/:id", verifyJWT, async (req: any, res) => {
     try {
-      if (req.user.email !== 'admin@admin.com') {
+      if (req.user.email !== 'bruno@vendzz.com') {
         return res.status(403).json({ error: "Acesso negado. Apenas administradores podem deletar módulos." });
       }
 
@@ -22256,7 +22271,7 @@ export function registerCheckoutRoutes(app: Express) {
   // Listar aulas de um módulo
   app.get("/api/modules/:moduleId/lessons", verifyJWT, async (req: any, res) => {
     try {
-      if (req.user.email !== 'admin@admin.com') {
+      if (req.user.email !== 'bruno@vendzz.com') {
         return res.status(403).json({ error: "Acesso negado. Apenas administradores podem gerenciar aulas." });
       }
 
@@ -22282,7 +22297,7 @@ export function registerCheckoutRoutes(app: Express) {
   // Criar aula
   app.post("/api/modules/:moduleId/lessons", verifyJWT, async (req: any, res) => {
     try {
-      if (req.user.email !== 'admin@admin.com') {
+      if (req.user.email !== 'bruno@vendzz.com') {
         return res.status(403).json({ error: "Acesso negado. Apenas administradores podem criar aulas." });
       }
 
@@ -22314,7 +22329,7 @@ export function registerCheckoutRoutes(app: Express) {
   // Buscar aula específica
   app.get("/api/lessons/:id", verifyJWT, async (req: any, res) => {
     try {
-      if (req.user.email !== 'admin@admin.com') {
+      if (req.user.email !== 'bruno@vendzz.com') {
         return res.status(403).json({ error: "Acesso negado. Apenas administradores podem visualizar aulas." });
       }
 
@@ -22340,7 +22355,7 @@ export function registerCheckoutRoutes(app: Express) {
   // Atualizar aula
   app.put("/api/lessons/:id", verifyJWT, async (req: any, res) => {
     try {
-      if (req.user.email !== 'admin@admin.com') {
+      if (req.user.email !== 'bruno@vendzz.com') {
         return res.status(403).json({ error: "Acesso negado. Apenas administradores podem editar aulas." });
       }
 
@@ -22367,7 +22382,7 @@ export function registerCheckoutRoutes(app: Express) {
   // Deletar aula
   app.delete("/api/lessons/:id", verifyJWT, async (req: any, res) => {
     try {
-      if (req.user.email !== 'admin@admin.com') {
+      if (req.user.email !== 'bruno@vendzz.com') {
         return res.status(403).json({ error: "Acesso negado. Apenas administradores podem deletar aulas." });
       }
 
@@ -22394,7 +22409,7 @@ export function registerCheckoutRoutes(app: Express) {
   // Reordenar aulas de um módulo
   app.put("/api/modules/:moduleId/lessons/reorder", verifyJWT, async (req: any, res) => {
     try {
-      if (req.user.email !== 'admin@admin.com') {
+      if (req.user.email !== 'bruno@vendzz.com') {
         return res.status(403).json({ error: "Acesso negado. Apenas administradores podem reordenar aulas." });
       }
 
@@ -22429,7 +22444,7 @@ export function registerCheckoutRoutes(app: Express) {
   // Upload de arquivos para aulas (PDFs, videos, etc)
   app.post("/api/lessons/:id/upload", verifyJWT, uploadMiddleware, async (req: any, res) => {
     try {
-      if (req.user.email !== 'admin@admin.com') {
+      if (req.user.email !== 'bruno@vendzz.com') {
         return res.status(403).json({ error: "Acesso negado. Apenas administradores podem fazer upload de arquivos." });
       }
 
@@ -22495,7 +22510,7 @@ export function registerCheckoutRoutes(app: Express) {
   // Listar categorias
   app.get("/api/course-categories", verifyJWT, async (req: any, res) => {
     try {
-      if (req.user.email !== 'admin@admin.com') {
+      if (req.user.email !== 'bruno@vendzz.com') {
         return res.status(403).json({ error: "Acesso negado. Apenas administradores podem gerenciar categorias." });
       }
 
@@ -22510,7 +22525,7 @@ export function registerCheckoutRoutes(app: Express) {
   // Criar categoria
   app.post("/api/course-categories", verifyJWT, async (req: any, res) => {
     try {
-      if (req.user.email !== 'admin@admin.com') {
+      if (req.user.email !== 'bruno@vendzz.com') {
         return res.status(403).json({ error: "Acesso negado. Apenas administradores podem criar categorias." });
       }
 
@@ -22531,7 +22546,7 @@ export function registerCheckoutRoutes(app: Express) {
   // Dashboard de estatísticas gerais
   app.get("/api/members-area/dashboard", verifyJWT, async (req: any, res) => {
     try {
-      if (req.user.email !== 'admin@admin.com') {
+      if (req.user.email !== 'bruno@vendzz.com') {
         return res.status(403).json({ error: "Acesso negado. Apenas administradores podem ver analytics." });
       }
 
@@ -22546,7 +22561,7 @@ export function registerCheckoutRoutes(app: Express) {
   // Analytics de um curso específico
   app.get("/api/courses/:id/analytics", verifyJWT, async (req: any, res) => {
     try {
-      if (req.user.email !== 'admin@admin.com') {
+      if (req.user.email !== 'bruno@vendzz.com') {
         return res.status(403).json({ error: "Acesso negado. Apenas administradores podem ver analytics." });
       }
 
@@ -22564,6 +22579,17 @@ export function registerCheckoutRoutes(app: Express) {
     } catch (error) {
       console.error("Error fetching course analytics:", error);
       res.status(500).json({ error: "Erro ao buscar analytics do curso" });
+    }
+  });
+
+  // Endpoint para buscar top funis (Analytics)
+  router.get('/api/admin/top-funnels', validateToken, async (req, res) => {
+    try {
+      const topFunnels = await storage.getTopFunnels();
+      res.json({ success: true, funnels: topFunnels });
+    } catch (error) {
+      console.error('Erro ao buscar top funis:', error);
+      res.status(500).json({ success: false, message: 'Erro interno do servidor' });
     }
   });
 

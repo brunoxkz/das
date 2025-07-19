@@ -33,7 +33,6 @@ import { useToast } from "@/hooks/use-toast";
 import { useEffect, useState } from "react";
 import React from "react";
 import { TutorialTour, dashboardTutorialSteps } from "@/components/tutorial-tour";
-import { HelpCircle } from "lucide-react";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 // import { useLanguage } from "@/hooks/useLanguage";
 
@@ -493,6 +492,20 @@ export default function Dashboard() {
                             >
                               <ExternalLink className="w-3 h-3 mr-1" />
                               Visualizar
+                            </Button>
+                            <Button 
+                              size="sm" 
+                              variant="outline" 
+                              className="dashboard-button bg-blue-50 hover:bg-blue-100 text-blue-600"
+                              onClick={() => {
+                                toast({
+                                  title: "Clonar Quiz",
+                                  description: `Quiz "${quiz.title}" será clonado em breve`,
+                                });
+                              }}
+                            >
+                              <Copy className="w-3 h-3 mr-1" />
+                              Clonar
                             </Button>
                           </div>
                         </CardContent>

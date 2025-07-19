@@ -955,6 +955,30 @@ export class SQLiteStorage implements IStorage {
     return await db.select().from(users).orderBy(desc(users.createdAt));
   }
 
+  async getTopFunnels(): Promise<any[]> {
+    const stmt = sqlite.prepare(`
+      SELECT 
+        q.id,
+        q.title,
+        q.createdAt,
+        u.firstName || ' ' || u.lastName as creatorName,
+        COALESCE(qa.views, 0) as views,
+        COALESCE(qa.completions, 0) as completions,
+        CASE 
+          WHEN COALESCE(qa.views, 0) > 0 
+          THEN ROUND((COALESCE(qa.completions, 0) * 100.0) / qa.views, 1)
+          ELSE 0 
+        END as conversionRate
+      FROM quizzes q
+      LEFT JOIN users u ON q.userId = u.id
+      LEFT JOIN quiz_analytics qa ON q.id = qa.quizId
+      WHERE q.status = 'published'
+      ORDER BY COALESCE(qa.views, 0) DESC
+      LIMIT 20
+    `);
+    return stmt.all();
+  }
+
   async updateUserRole(userId: string, role: string): Promise<User> {
     const [updatedUser] = await db.update(users)
       .set({ role, updatedAt: new Date() })
@@ -8538,6 +8562,38 @@ Hoje você vai aprender ${project.title} - método revolucionário que já ajudo
       console.error('Erro ao buscar histórico de créditos:', error);
       return [];
     }
+  }
+
+  async getTopFunnels(): Promise<any[]> {
+    const query = `
+      SELECT 
+        q.id,
+        q.title,
+        q.userId,
+        u.firstName as creatorFirstName,
+        u.lastName as creatorLastName,
+        COALESCE(qa.views, 0) as views,
+        COALESCE(qa.completions, 0) as completions,
+        CASE 
+          WHEN COALESCE(qa.views, 0) > 0 
+          THEN ROUND(CAST(COALESCE(qa.completions, 0) AS FLOAT) / CAST(qa.views AS FLOAT) * 100, 2)
+          ELSE 0 
+        END as conversionRate,
+        datetime(q.createdAt, 'unixepoch') as createdAt
+      FROM quizzes q
+      LEFT JOIN users u ON q.userId = u.id
+      LEFT JOIN quiz_analytics qa ON q.id = qa.quizId
+      WHERE q.isPublished = 1 AND COALESCE(qa.views, 0) > 0
+      ORDER BY qa.views DESC, qa.completions DESC
+      LIMIT 10
+    `;
+
+    const funnels = sqlite.prepare(query).all();
+    
+    return funnels.map((funnel: any) => ({
+      ...funnel,
+      creatorName: `${funnel.creatorFirstName || ''} ${funnel.creatorLastName || ''}`.trim() || 'Usuário Anônimo'
+    }));
   }
 }
 

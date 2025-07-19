@@ -45,13 +45,13 @@ import {
   Phone,
   Bot,
   Coins,
-  Video,
   ShoppingCart,
   Code,
   CheckCircle,
   CreditCard,
   Send,
-  GraduationCap
+  GraduationCap,
+  Copy
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -356,15 +356,37 @@ export function Sidebar() {
 
       {/* Create Button */}
       <div className="p-4 border-b border-border dark:border-gray-700">
-        <Link href="/quizzes/new">
-          <Button className={cn(
-            "w-full",
-            isCollapsed ? "px-0" : "px-4"
-          )}>
-            <Plus className="w-4 h-4" />
-            {!isCollapsed && <span className="ml-2">Criar Quiz</span>}
-          </Button>
-        </Link>
+        <div className="space-y-2">
+          <Link href="/quizzes/new">
+            <Button className={cn(
+              "w-full",
+              isCollapsed ? "px-0" : "px-4"
+            )}>
+              <Plus className="w-4 h-4" />
+              {!isCollapsed && <span className="ml-2">Criar Quiz</span>}
+            </Button>
+          </Link>
+          
+          <Link href="/quiz-cloner">
+            <Button className={cn(
+              "w-full bg-blue-600 hover:bg-blue-700 text-white",
+              isCollapsed ? "px-0" : "px-4"
+            )}>
+              <Copy className="w-4 h-4" />
+              {!isCollapsed && <span className="ml-2">Clonar Quiz</span>}
+            </Button>
+          </Link>
+          
+          <Link href="/vsl-to-quiz">
+            <Button className={cn(
+              "w-full bg-purple-600 hover:bg-purple-700 text-white",
+              isCollapsed ? "px-0" : "px-4"
+            )}>
+              <Video className="w-4 h-4" />
+              {!isCollapsed && <span className="ml-2">VSL para Quiz</span>}
+            </Button>
+          </Link>
+        </div>
       </div>
 
       {/* Navigation */}
