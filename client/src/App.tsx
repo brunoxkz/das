@@ -49,7 +49,7 @@ import ExtensoesPage from "@/pages/extensoes";
 import VoiceCallingPage from "@/pages/voice-calling";
 import ConditionalCampaignsPage from "@/pages/conditional-campaigns";
 import FacelessVideosPage from "@/pages/faceless-videos";
-import CheckoutSystemPage from "@/pages/checkout-system";
+
 import CheckoutAdminPage from "@/pages/checkout-admin";
 import CheckoutBuilder from "@/pages/checkout-builder";
 import CheckoutPublic from "@/pages/checkout-public";
@@ -62,7 +62,7 @@ import CheckoutIndividual from "@/pages/checkout-individual";
 import CheckoutStripeTrial from "@/pages/checkout-stripe-trial";
 import CheckoutGPTSolution from "@/pages/checkout-gpt-solution";
 import CheckoutOfficial from "@/pages/checkout-official";
-import CheckoutOficial from "@/pages/checkout-oficial";
+
 import PublicCheckout from "@/pages/public-checkout";
 import StripePlansManager from "@/pages/stripe-plans-manager";
 import StripeCheckoutCustom from "@/pages/stripe-checkout-custom";
@@ -79,21 +79,15 @@ import PaymentIntentExplanation from "@/pages/payment-intent-explanation";
 import CheckoutTrialSimple from "@/pages/checkout-trial-simple";
 import CheckoutTrialFinalSimple from "@/pages/checkout-trial-final-simple";
 import CheckoutNoStripe from "@/pages/checkout-no-stripe";
-import CheckoutSimpleTrial from "@/pages/checkout-simple-trial";
+
 import CheckoutTrialCustom from "@/pages/checkout-trial-custom";
-import CheckoutTrialPerfect from "@/pages/checkout-trial-perfect";
-import StripePlansPerfeito from "@/pages/stripe-plans-perfect";
-import CheckoutEmbed from "@/pages/checkout-embed";
-import CheckoutEmbedPage from "@/pages/checkout-embed";
-import CheckoutEmbedCodes from "@/pages/checkout-embed-codes";
-import CheckoutEmbedStripe from "@/pages/checkout-embed-stripe";
-import CheckoutEmbedInline from "@/pages/checkout-embed-inline";
-import CheckoutEmbedInlineFixed from "@/pages/checkout-embed-inline-fixed";
+
+
 import PlanosPublicos from "@/pages/planos-publicos";
 import StripeMonitoring from "@/pages/stripe-monitoring";
 import CheckoutStripeFinal from "@/pages/checkout-stripe-final";
 import ProductBuilder from "@/pages/product-builder";
-import SubscriptionsManager from "@/pages/subscriptions-manager";
+
 import AdminDashboardPlanos from "@/pages/admin-dashboard-planos";
 import CheckoutPlan from "@/pages/checkout-plan";
 import PaymentVerification from "@/pages/payment-verification";
@@ -124,8 +118,7 @@ function App() {
   const isCheckoutRoute = location.startsWith("/checkout/");
   const isStripeCheckoutLink = location.startsWith("/stripe-checkout-link/");
   const isCheckoutPublic = location.startsWith("/checkout-public/");
-  const isCheckoutEmbed = location.startsWith("/checkout-embed/");
-  const isPublicRoute = publicRoutes.includes(location) || isQuizRoute || isCheckoutRoute || isStripeCheckoutLink || isCheckoutPublic || isCheckoutEmbed;
+  const isPublicRoute = publicRoutes.includes(location) || isQuizRoute || isCheckoutRoute || isStripeCheckoutLink || isCheckoutPublic;
 
   // Redirect to dashboard if authenticated and on login page
   if (isAuthenticated && location === "/login") {
@@ -150,7 +143,7 @@ function App() {
         <Route path="/checkout/:planId" component={PublicCheckout} />
         <Route path="/checkout/success" component={CheckoutSuccess} />
         <Route path="/checkout-public/:planId" component={CheckoutPublic} />
-        <Route path="/checkout-embed/:planId" component={CheckoutEmbedPage} />
+
         <Route path="/checkout-individual/:id" component={CheckoutIndividual} />
         <Route path="/payment-success" component={PaymentSuccess} />
         <Route path="/payment-cancel" component={PaymentSuccess} />
@@ -350,11 +343,7 @@ function App() {
           </Layout>
         </Route>
         
-        <Route path="/subscriptions-manager">
-          <Layout>
-            <SubscriptionsManager />
-          </Layout>
-        </Route>
+
 
         <Route path="/whatsapp">
           <Layout>
@@ -400,11 +389,7 @@ function App() {
             <TesteSMSPage />
           </Layout>
         </Route>
-        <Route path="/checkout-system">
-          <Layout>
-            <CheckoutSystemPage />
-          </Layout>
-        </Route>
+
         <Route path="/checkout-individual">
           <Layout>
             <CheckoutIndividual />
@@ -422,11 +407,7 @@ function App() {
           </Layout>
         </Route>
         
-        <Route path="/checkout-simple-trial">
-          <Layout>
-            <CheckoutSimpleTrial />
-          </Layout>
-        </Route>
+
         
         <Route path="/checkout-trial-custom">
           <Layout>
@@ -446,11 +427,7 @@ function App() {
           </Layout>
         </Route>
         
-        <Route path="/checkout-oficial">
-          <Layout>
-            <CheckoutOficial />
-          </Layout>
-        </Route>
+
         
         <Route path="/stripe-plans-manager">
           <Layout>
@@ -500,47 +477,19 @@ function App() {
           </Layout>
         </Route>
         
-        <Route path="/checkout-perfect">
-          <Layout>
-            <CheckoutTrialPerfect />
-          </Layout>
-        </Route>
+
         
-        <Route path="/stripe-plans-perfect">
-          <Layout>
-            <StripePlansPerfeito />
-          </Layout>
-        </Route>
+
         
-        <Route path="/checkout-embed">
-          <Layout>
-            <CheckoutEmbed />
-          </Layout>
-        </Route>
+
         
-        <Route path="/checkout-embed-codes">
-          <Layout>
-            <CheckoutEmbedCodes />
-          </Layout>
-        </Route>
+
         
-        <Route path="/checkout-embed-stripe">
-          <Layout>
-            <CheckoutEmbedStripe />
-          </Layout>
-        </Route>
+
         
-        <Route path="/checkout-embed-inline">
-          <Layout>
-            <CheckoutEmbedInline />
-          </Layout>
-        </Route>
+
         
-        <Route path="/checkout-embed-inline-fixed">
-          <Layout>
-            <CheckoutEmbedInlineFixed />
-          </Layout>
-        </Route>
+
         
         <Route path="/planos">
           <PlanosPublicos />

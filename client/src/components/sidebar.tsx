@@ -119,12 +119,7 @@ export function Sidebar() {
     active: location === "/credits"
   };
 
-  const checkoutItem = {
-    title: "CHECKOUT SISTEMA",
-    href: "/checkout-system",
-    icon: <ShoppingCart className="w-4 h-4" />,
-    active: location === "/checkout-system"
-  };
+
 
 
 
@@ -160,66 +155,6 @@ export function Sidebar() {
           badge: <span className="text-xs text-purple-500 font-medium">ADMIN</span>
         },
 
-      ]
-    },
-    {
-      title: "RECURRING",
-      items: [
-        {
-          title: "💎 CHECKOUT OFICIAL",
-          href: "/checkout-oficial",
-          icon: <CreditCard className="w-4 h-4" />,
-          active: location === "/checkout-oficial",
-          badge: "Embed Code"
-        },
-        {
-          title: "💎 CHECKOUT PERFEITO",
-          href: "/checkout-perfect",
-          icon: <Zap className="w-4 h-4" />,
-          active: location === "/checkout-perfect",
-          badge: "R$1→R$29,90"
-        },
-        {
-          title: "✅ CHECKOUT SIMPLIFICADO",
-          href: "/checkout-simple-trial",
-          icon: <CheckCircle className="w-4 h-4" />,
-          active: location === "/checkout-simple-trial",
-          badge: "100% Funcional"
-        },
-        {
-          title: "💎 PLANOS PERFEITOS",
-          href: "/stripe-plans-perfect",
-          icon: <Package className="w-4 h-4" />,
-          active: location === "/stripe-plans-perfect",
-          badge: "Gerenciar"
-        },
-        {
-          title: "🔗 CHECKOUT EMBED",
-          href: "/checkout-embed",
-          icon: <Code className="w-4 h-4" />,
-          active: location === "/checkout-embed",
-          badge: "Integrar"
-        },
-        {
-          title: "📋 CÓDIGOS EMBED",
-          href: "/checkout-embed-codes",
-          icon: <Code className="w-4 h-4" />,
-          active: location === "/checkout-embed-codes",
-          badge: "HTML/React"
-        },
-        {
-          title: "GERENCIAR ASSINATURAS",
-          href: "/subscriptions-manager",
-          icon: <Crown className="w-4 h-4" />,
-          active: location === "/subscriptions-manager"
-        },
-        {
-          title: "📊 DASHBOARD ADMIN",
-          href: "/admin-dashboard-planos",
-          icon: <BarChart3 className="w-4 h-4" />,
-          active: location === "/admin-dashboard-planos",
-          badge: "Visão Geral"
-        },
       ]
     },
     {
@@ -547,39 +482,7 @@ export function Sidebar() {
             </Button>
           </Link>
 
-          {/* Checkout - Standalone */}
-          <Link href={checkoutItem.href}>
-            <Button
-              variant="ghost"
-              className={cn(
-                "nav-item w-full justify-start text-foreground hover:bg-accent hover:text-accent-foreground",
-                isCollapsed ? "px-0" : "px-3",
-                checkoutItem.active && "bg-accent text-accent-foreground"
-              )}
-            >
-              {checkoutItem.icon}
-              {!isCollapsed && (
-                <span className="ml-2 flex-1 text-left text-foreground">{checkoutItem.title}</span>
-              )}
-            </Button>
-          </Link>
 
-          {/* Checkout Unificado - Standalone */}
-          <Link href="/checkout-unificado">
-            <Button
-              variant="ghost"
-              className={cn(
-                "nav-item w-full justify-start text-foreground hover:bg-accent hover:text-accent-foreground",
-                isCollapsed ? "px-0" : "px-3",
-                location === "/checkout-unificado" && "bg-accent text-accent-foreground"
-              )}
-            >
-              <ShoppingCart className="w-4 h-4" />
-              {!isCollapsed && (
-                <span className="ml-2 flex-1 text-left text-foreground">CHECKOUT UNIFICADO</span>
-              )}
-            </Button>
-          </Link>
         </div>
       </nav>
 
