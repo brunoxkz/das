@@ -15,7 +15,7 @@ import {
   ChevronRight,
   ArrowLeft
 } from "lucide-react";
-import { useAuth } from "@/hooks/useAuth-jwt";
+import { useAuth } from "@/hooks/use-auth-sqlite";
 import { useToast } from "@/hooks/use-toast";
 import { useEffect } from "react";
 import React from "react";

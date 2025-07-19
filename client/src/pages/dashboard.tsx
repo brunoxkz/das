@@ -28,7 +28,7 @@ import {
   X
 } from "lucide-react";
 import { Link } from "wouter";
-import { useAuth } from "@/hooks/useAuth-jwt";
+import { useAuth } from "@/hooks/use-auth-sqlite";
 import { useToast } from "@/hooks/use-toast";
 import { useEffect, useState } from "react";
 import React from "react";
