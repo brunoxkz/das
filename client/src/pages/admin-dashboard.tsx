@@ -17,10 +17,11 @@ import {
   Phone,
   Mail,
   MessageSquare,
-  Zap,
-  Video,
-  Send
+  Send,
+  Edit,
+  Shield
 } from "lucide-react";
+import { EditUserModal } from "@/components/EditUserModal";
 
 interface User {
   id: string;
@@ -34,9 +35,13 @@ interface User {
   smsCredits: number;
   emailCredits: number;
   whatsappCredits: number;
-  aiCredits: number;
-  videoCredits: number;
   telegramCredits: number;
+  smsDispatched?: number;
+  emailDispatched?: number;
+  whatsappDispatched?: number;
+  telegramDispatched?: number;
+  isBlocked?: boolean;
+  blockReason?: string;
   createdAt: string;
 }
 
@@ -45,6 +50,8 @@ export default function AdminDashboard() {
   const [searchTerm, setSearchTerm] = useState("");
   const [filterPlan, setFilterPlan] = useState("all");
   const [filterRole, setFilterRole] = useState("all");
+  const [editingUser, setEditingUser] = useState<User | null>(null);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
   // Fetch all users
   const { data: users = [], isLoading } = useQuery<User[]>({
@@ -94,6 +101,16 @@ export default function AdminDashboard() {
       case "user": return "bg-blue-100 text-blue-800";
       default: return "bg-gray-100 text-gray-800";
     }
+  };
+
+  const handleEditUser = (selectedUser: User) => {
+    setEditingUser(selectedUser);
+    setIsEditModalOpen(true);
+  };
+
+  const closeEditModal = () => {
+    setEditingUser(null);
+    setIsEditModalOpen(false);
   };
 
   if (isLoading) {
@@ -258,31 +275,53 @@ export default function AdminDashboard() {
                     )}
                   </div>
 
-                  {/* Credits - Single Row */}
-                  <div className="flex justify-between items-center text-xs">
+                  {/* Credits - Single Row with dispatched info */}
+                  <div className="grid grid-cols-2 gap-4 text-xs">
                     <div className="flex items-center gap-1 text-green-600">
-                      <MessageSquare className="h-3 w-3" />
+                      <Phone className="h-3 w-3" />
                       <span className="font-medium">{u.smsCredits || 0}</span>
-                      <span className="text-muted-foreground">SMS</span>
+                      <span className="text-muted-foreground">SMS ({u.smsDispatched || 0} enviados)</span>
                     </div>
-                    
                     <div className="flex items-center gap-1 text-blue-600">
                       <Mail className="h-3 w-3" />
                       <span className="font-medium">{u.emailCredits || 0}</span>
-                      <span className="text-muted-foreground">Email</span>
+                      <span className="text-muted-foreground">Email ({u.emailDispatched || 0} enviados)</span>
                     </div>
-
-                    <div className="flex items-center gap-1 text-green-500">
-                      <Phone className="h-3 w-3" />
+                  </div>
+                  <div className="grid grid-cols-2 gap-4 text-xs">
+                    <div className="flex items-center gap-1 text-emerald-600">
+                      <MessageSquare className="h-3 w-3" />
                       <span className="font-medium">{u.whatsappCredits || 0}</span>
-                      <span className="text-muted-foreground">WhatsApp</span>
+                      <span className="text-muted-foreground">WhatsApp ({u.whatsappDispatched || 0} enviados)</span>
                     </div>
-
-                    <div className="flex items-center gap-1 text-blue-500">
+                    <div className="flex items-center gap-1 text-purple-600">
                       <Send className="h-3 w-3" />
                       <span className="font-medium">{u.telegramCredits || 0}</span>
-                      <span className="text-muted-foreground">Telegram</span>
+                      <span className="text-muted-foreground">Telegram ({u.telegramDispatched || 0} enviados)</span>
                     </div>
+                  </div>
+                  
+                  {/* Action Buttons */}
+                  <div className="flex justify-end gap-2">
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      onClick={() => handleEditUser(u)}
+                    >
+                      <Edit className="h-4 w-4 mr-1" />
+                      Editar
+                    </Button>
+                    {u.isBlocked ? (
+                      <Button variant="outline" size="sm" className="text-green-600">
+                        <Shield className="h-4 w-4 mr-1" />
+                        Desbloqueado
+                      </Button>
+                    ) : (
+                      <Button variant="outline" size="sm" className="text-red-600">
+                        <Shield className="h-4 w-4 mr-1" />
+                        Ativo
+                      </Button>
+                    )}
                   </div>
                 </div>
               </Card>
@@ -296,6 +335,18 @@ export default function AdminDashboard() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Edit User Modal */}
+      {editingUser && (
+        <EditUserModal
+          user={editingUser}
+          open={isEditModalOpen}
+          onClose={closeEditModal}
+          onUserUpdated={() => {
+            closeEditModal();
+          }}
+        />
+      )}
     </div>
   );
 }

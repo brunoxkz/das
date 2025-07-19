@@ -2846,14 +2846,20 @@ export function registerSQLiteRoutes(app: Express): Server {
 
       const users = await storage.getAllUsers();
       
-      // Get unified credit data for each user
+      // Get unified credit data and usage statistics for each user
       const usersWithCredits = await Promise.all(users.map(async (user) => {
         try {
-          // Get real-time credit data from different endpoints
+          // Get current credits
           const smsCredits = user.smsCredits || 0;
           const emailCredits = user.emailCredits || 0;
           const whatsappCredits = user.whatsappCredits || 0;
           const telegramCredits = user.telegramCredits || 0;
+          
+          // Get usage statistics (dispatched messages)
+          const smsDispatched = await storage.getUserSMSUsage(user.id);
+          const emailDispatched = await storage.getUserEmailUsage(user.id);
+          const whatsappDispatched = await storage.getUserWhatsAppUsage(user.id);
+          const telegramDispatched = await storage.getUserTelegramUsage(user.id);
           
           return {
             ...user,
@@ -2861,6 +2867,10 @@ export function registerSQLiteRoutes(app: Express): Server {
             emailCredits,
             whatsappCredits,
             telegramCredits,
+            smsDispatched: smsDispatched || 0,
+            emailDispatched: emailDispatched || 0,
+            whatsappDispatched: whatsappDispatched || 0,
+            telegramDispatched: telegramDispatched || 0,
             // Remove sensitive data for admin view
             password: undefined,
             refreshToken: undefined,
@@ -2871,6 +2881,14 @@ export function registerSQLiteRoutes(app: Express): Server {
           console.error(`Error getting credits for user ${user.id}:`, error);
           return {
             ...user,
+            smsCredits: user.smsCredits || 0,
+            emailCredits: user.emailCredits || 0,
+            whatsappCredits: user.whatsappCredits || 0,
+            telegramCredits: user.telegramCredits || 0,
+            smsDispatched: 0,
+            emailDispatched: 0,
+            whatsappDispatched: 0,
+            telegramDispatched: 0,
             password: undefined,
             refreshToken: undefined,
             twoFactorSecret: undefined,
@@ -2882,6 +2900,184 @@ export function registerSQLiteRoutes(app: Express): Server {
       res.json(usersWithCredits);
     } catch (error) {
       console.error('Erro ao buscar usuários:', error);
+      res.status(500).json({ error: 'Erro interno do servidor' });
+    }
+  });
+
+  // Update user profile - Admin only
+  app.put("/api/admin/users/:id", verifyJWT, async (req: any, res) => {
+    try {
+      if (req.user.role !== 'admin') {
+        return res.status(403).json({ error: 'Acesso negado' });
+      }
+
+      const { id } = req.params;
+      const { firstName, lastName, email, whatsapp, plan, role, planExpiresAt, isBlocked, blockReason } = req.body;
+      
+      const updateData: any = {
+        firstName,
+        lastName,
+        email,
+        whatsapp,
+        plan,
+        role
+      };
+
+      if (planExpiresAt) {
+        updateData.planExpiresAt = planExpiresAt;
+      }
+
+      if (isBlocked !== undefined) {
+        updateData.isBlocked = isBlocked;
+        updateData.blockReason = blockReason || '';
+      }
+
+      await storage.updateUser(id, updateData);
+      
+      res.json({ success: true, message: 'Usuário atualizado com sucesso' });
+    } catch (error) {
+      console.error('Erro ao atualizar usuário:', error);
+      res.status(500).json({ error: 'Erro interno do servidor' });
+    }
+  });
+
+  // Manage user credits - Admin only
+  app.post("/api/admin/users/:id/credits", verifyJWT, async (req: any, res) => {
+    try {
+      if (req.user.role !== 'admin') {
+        return res.status(403).json({ error: 'Acesso negado' });
+      }
+
+      const { id } = req.params;
+      const { operation, type, amount, description } = req.body;
+
+      if (!['add', 'subtract', 'set'].includes(operation)) {
+        return res.status(400).json({ error: 'Operação inválida' });
+      }
+
+      if (!['sms', 'email', 'whatsapp', 'telegram'].includes(type)) {
+        return res.status(400).json({ error: 'Tipo de crédito inválido' });
+      }
+
+      if (amount < 0) {
+        return res.status(400).json({ error: 'Quantidade deve ser positiva' });
+      }
+
+      // Get current user
+      const user = await storage.getUserById(id);
+      if (!user) {
+        return res.status(404).json({ error: 'Usuário não encontrado' });
+      }
+
+      // Calculate new credits
+      let newCredits = {
+        sms: user.smsCredits || 0,
+        email: user.emailCredits || 0,
+        whatsapp: user.whatsappCredits || 0,
+        telegram: user.telegramCredits || 0
+      };
+
+      const oldValue = newCredits[type as keyof typeof newCredits];
+
+      switch (operation) {
+        case 'add':
+          newCredits[type as keyof typeof newCredits] += amount;
+          break;
+        case 'subtract':
+          newCredits[type as keyof typeof newCredits] = Math.max(0, newCredits[type as keyof typeof newCredits] - amount);
+          break;
+        case 'set':
+          newCredits[type as keyof typeof newCredits] = amount;
+          break;
+      }
+
+      // Update user credits
+      const updateData = {
+        smsCredits: newCredits.sms,
+        emailCredits: newCredits.email,
+        whatsappCredits: newCredits.whatsapp,
+        telegramCredits: newCredits.telegram
+      };
+
+      await storage.updateUser(id, updateData);
+
+      // Log the credit change
+      const creditChange = {
+        sms: type === 'sms' ? (newCredits.sms - oldValue) : 0,
+        email: type === 'email' ? (newCredits.email - (user.emailCredits || 0)) : 0,
+        whatsapp: type === 'whatsapp' ? (newCredits.whatsapp - (user.whatsappCredits || 0)) : 0,
+        telegram: type === 'telegram' ? (newCredits.telegram - (user.telegramCredits || 0)) : 0
+      };
+
+      await storage.logCreditChange(id, operation, creditChange, description);
+      
+      res.json({ 
+        success: true, 
+        message: 'Créditos atualizados com sucesso',
+        newCredits 
+      });
+    } catch (error) {
+      console.error('Erro ao atualizar créditos:', error);
+      res.status(500).json({ error: 'Erro interno do servidor' });
+    }
+  });
+
+  // Get user credit history
+  app.get("/api/admin/users/:id/credit-history", verifyJWT, async (req: any, res) => {
+    try {
+      if (req.user.role !== 'admin') {
+        return res.status(403).json({ error: 'Acesso negado' });
+      }
+
+      const { id } = req.params;
+      const history = await storage.getUserCreditHistory(id);
+      res.json(history);
+    } catch (error) {
+      console.error('Erro ao buscar histórico de créditos:', error);
+      res.status(500).json({ error: 'Erro interno do servidor' });
+    }
+  });
+
+  // Update user data (new endpoint)
+  app.put("/api/admin/users/:id/update", verifyJWT, async (req: any, res) => {
+    try {
+      if (req.user.role !== 'admin') {
+        return res.status(403).json({ error: 'Acesso negado' });
+      }
+
+      const { id } = req.params;
+      const { plan, expiresAt, credits } = req.body;
+
+      const updateData: any = { plan };
+      
+      if (expiresAt) {
+        updateData.planExpiresAt = new Date(expiresAt);
+      }
+      
+      if (credits) {
+        updateData.smsCredits = credits.sms || 0;
+        updateData.emailCredits = credits.email || 0;
+        updateData.whatsappCredits = credits.whatsapp || 0;
+        updateData.telegramCredits = credits.telegram || 0;
+        
+        // Log credit changes for history
+        await storage.logCreditChange(id, 'admin_update', {
+          sms: credits.sms || 0,
+          email: credits.email || 0,
+          whatsapp: credits.whatsapp || 0,
+          telegram: credits.telegram || 0
+        });
+      }
+
+      // Desbloquear usuário se estiver bloqueado
+      updateData.isBlocked = false;
+      updateData.planRenewalRequired = false;
+      updateData.blockReason = null;
+
+      await storage.updateUser(id, updateData);
+      res.json({ success: true, message: 'Usuário atualizado com sucesso' });
+    } catch (error) {
+      console.error('Erro ao atualizar usuário:', error);
       res.status(500).json({ error: 'Erro interno do servidor' });
     }
   });

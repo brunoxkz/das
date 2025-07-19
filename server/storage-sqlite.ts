@@ -8332,6 +8332,213 @@ Hoje você vai aprender ${project.title} - método revolucionário que já ajudo
       throw error;
     }
   }
+
+  // User usage statistics methods
+  async getUserSMSUsage(userId: string): Promise<number> {
+    try {
+      const stmt = sqlite.prepare(`
+        SELECT COUNT(*) as count
+        FROM sms_logs 
+        WHERE user_id = ? AND status = 'delivered'
+      `);
+      const result = stmt.get(userId) as { count: number } | undefined;
+      return result?.count || 0;
+    } catch (error) {
+      console.error('Erro ao buscar uso de SMS:', error);
+      return 0;
+    }
+  }
+
+  async getUserEmailUsage(userId: string): Promise<number> {
+    try {
+      // Create table if not exists
+      sqlite.exec(`
+        CREATE TABLE IF NOT EXISTS email_logs (
+          id TEXT PRIMARY KEY DEFAULT (lower(hex(randomblob(16)))),
+          user_id TEXT NOT NULL,
+          subject TEXT,
+          recipient TEXT,
+          status TEXT DEFAULT 'pending',
+          created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+          FOREIGN KEY (user_id) REFERENCES users(id)
+        )
+      `);
+      
+      const stmt = sqlite.prepare(`
+        SELECT COUNT(*) as count
+        FROM email_logs 
+        WHERE user_id = ? AND status = 'delivered'
+      `);
+      const result = stmt.get(userId) as { count: number } | undefined;
+      return result?.count || 0;
+    } catch (error) {
+      console.error('Erro ao buscar uso de Email:', error);
+      return 0;
+    }
+  }
+
+  async getUserWhatsAppUsage(userId: string): Promise<number> {
+    try {
+      // Create table if not exists
+      sqlite.exec(`
+        CREATE TABLE IF NOT EXISTS whatsapp_logs (
+          id TEXT PRIMARY KEY DEFAULT (lower(hex(randomblob(16)))),
+          user_id TEXT NOT NULL,
+          message TEXT,
+          phone_number TEXT,
+          status TEXT DEFAULT 'pending',
+          created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+          FOREIGN KEY (user_id) REFERENCES users(id)
+        )
+      `);
+      
+      const stmt = sqlite.prepare(`
+        SELECT COUNT(*) as count
+        FROM whatsapp_logs 
+        WHERE user_id = ? AND status = 'delivered'
+      `);
+      const result = stmt.get(userId) as { count: number } | undefined;
+      return result?.count || 0;
+    } catch (error) {
+      console.error('Erro ao buscar uso de WhatsApp:', error);
+      return 0;
+    }
+  }
+
+  async getUserTelegramUsage(userId: string): Promise<number> {
+    try {
+      // Create table if not exists
+      sqlite.exec(`
+        CREATE TABLE IF NOT EXISTS telegram_logs (
+          id TEXT PRIMARY KEY DEFAULT (lower(hex(randomblob(16)))),
+          user_id TEXT NOT NULL,
+          message TEXT,
+          phone_number TEXT,
+          status TEXT DEFAULT 'pending',
+          created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+          FOREIGN KEY (user_id) REFERENCES users(id)
+        )
+      `);
+      
+      const stmt = sqlite.prepare(`
+        SELECT COUNT(*) as count
+        FROM telegram_logs 
+        WHERE user_id = ? AND status = 'delivered'
+      `);
+      const result = stmt.get(userId) as { count: number } | undefined;
+      return result?.count || 0;
+    } catch (error) {
+      console.error('Erro ao buscar uso de Telegram:', error);
+      return 0;
+    }
+  }
+
+  // Credit history methods
+  async logCreditChange(userId: string, changeType: string, credits: { sms: number; email: number; whatsapp: number; telegram: number }, description?: string): Promise<void> {
+    try {
+      // Create credit_history table if not exists
+      sqlite.exec(`
+        CREATE TABLE IF NOT EXISTS credit_history (
+          id TEXT PRIMARY KEY DEFAULT (lower(hex(randomblob(16)))),
+          user_id TEXT NOT NULL,
+          change_type TEXT NOT NULL,
+          sms_credits INTEGER DEFAULT 0,
+          email_credits INTEGER DEFAULT 0,
+          whatsapp_credits INTEGER DEFAULT 0,
+          telegram_credits INTEGER DEFAULT 0,
+          description TEXT,
+          created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+          FOREIGN KEY (user_id) REFERENCES users(id)
+        )
+      `);
+
+      const stmt = sqlite.prepare(`
+        INSERT INTO credit_history (user_id, change_type, sms_credits, email_credits, whatsapp_credits, telegram_credits, description)
+        VALUES (?, ?, ?, ?, ?, ?, ?)
+      `);
+      
+      stmt.run(
+        userId, 
+        changeType, 
+        credits.sms, 
+        credits.email, 
+        credits.whatsapp, 
+        credits.telegram, 
+        description || `Admin update: ${changeType}`
+      );
+    } catch (error) {
+      console.error('Erro ao registrar histórico de créditos:', error);
+    }
+  }
+
+  async logCreditChange(userId: string, operation: string, creditChange: any, description: string): Promise<void> {
+    try {
+      // Create credit_transactions table if not exists
+      sqlite.exec(`
+        CREATE TABLE IF NOT EXISTS credit_history (
+          id TEXT PRIMARY KEY DEFAULT (lower(hex(randomblob(16)))),
+          user_id TEXT NOT NULL,
+          change_type TEXT NOT NULL,
+          sms_credits INTEGER DEFAULT 0,
+          email_credits INTEGER DEFAULT 0,
+          whatsapp_credits INTEGER DEFAULT 0,
+          telegram_credits INTEGER DEFAULT 0,
+          description TEXT,
+          created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+          FOREIGN KEY (user_id) REFERENCES users(id)
+        )
+      `);
+      
+      const stmt = sqlite.prepare(`
+        INSERT INTO credit_history (
+          user_id, change_type, sms_credits, email_credits, whatsapp_credits, telegram_credits, description
+        ) VALUES (?, ?, ?, ?, ?, ?, ?)
+      `);
+      
+      stmt.run(
+        userId,
+        operation,
+        creditChange.sms || 0,
+        creditChange.email || 0,
+        creditChange.whatsapp || 0,
+        creditChange.telegram || 0,
+        description
+      );
+    } catch (error) {
+      console.error('Erro ao registrar alteração de créditos:', error);
+    }
+  }
+
+  async getUserCreditHistory(userId: string): Promise<any[]> {
+    try {
+      // Ensure table exists
+      sqlite.exec(`
+        CREATE TABLE IF NOT EXISTS credit_history (
+          id TEXT PRIMARY KEY DEFAULT (lower(hex(randomblob(16)))),
+          user_id TEXT NOT NULL,
+          change_type TEXT NOT NULL,
+          sms_credits INTEGER DEFAULT 0,
+          email_credits INTEGER DEFAULT 0,
+          whatsapp_credits INTEGER DEFAULT 0,
+          telegram_credits INTEGER DEFAULT 0,
+          description TEXT,
+          created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+          FOREIGN KEY (user_id) REFERENCES users(id)
+        )
+      `);
+
+      const stmt = sqlite.prepare(`
+        SELECT * FROM credit_history 
+        WHERE user_id = ? 
+        ORDER BY created_at DESC 
+        LIMIT 50
+      `);
+      return stmt.all(userId) as any[];
+    } catch (error) {
+      console.error('Erro ao buscar histórico de créditos:', error);
+      return [];
+    }
+  }
 }
 
 export const storage = new SQLiteStorage();
