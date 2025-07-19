@@ -154,12 +154,13 @@ export default function AdminDashboard() {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Créditos SMS</CardTitle>
+            <CardTitle className="text-sm font-medium">Total Créditos</CardTitle>
             <MessageSquare className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">
-              {users.reduce((sum, u) => sum + (u.smsCredits || 0), 0)}
+            <div className="text-sm space-y-1">
+              <div>SMS: {users.reduce((sum, u) => sum + (u.smsCredits || 0), 0)}</div>
+              <div>Email: {users.reduce((sum, u) => sum + (u.emailCredits || 0), 0)}</div>
             </div>
           </CardContent>
         </Card>
@@ -218,105 +219,86 @@ export default function AdminDashboard() {
         </CardContent>
       </Card>
 
-      {/* Users Table */}
+      {/* Users List - Mobile Optimized */}
       <Card>
         <CardHeader>
           <CardTitle>Usuários ({filteredUsers.length})</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="overflow-x-auto">
-            <div className="space-y-4">
-              {filteredUsers.map((u) => (
-                <Card key={u.id} className="p-4">
-                  <div className="flex flex-col lg:flex-row lg:items-center justify-between space-y-4 lg:space-y-0">
-                    {/* User Info */}
-                    <div className="flex-1">
-                      <div className="flex items-center space-x-3 mb-2">
-                        <div>
-                          <h3 className="font-medium">{u.firstName} {u.lastName}</h3>
-                          <p className="text-sm text-muted-foreground flex items-center">
-                            <Mail className="h-3 w-3 mr-1" />
-                            {u.email}
-                          </p>
-                          {u.whatsapp && (
-                            <p className="text-sm text-muted-foreground flex items-center mt-1">
-                              <Phone className="h-3 w-3 mr-1" />
-                              {u.whatsapp}
-                            </p>
-                          )}
-                        </div>
-                      </div>
-                      
-                      <div className="flex flex-wrap items-center gap-2">
-                        <Badge className={getPlanBadgeColor(u.plan)}>
-                          {u.plan.charAt(0).toUpperCase() + u.plan.slice(1)}
-                        </Badge>
-                        <Badge className={getRoleBadgeColor(u.role)}>
-                          {u.role.charAt(0).toUpperCase() + u.role.slice(1)}
-                        </Badge>
-                        {u.planExpiresAt && (
-                          <Badge variant="outline" className="flex items-center">
-                            <Calendar className="h-3 w-3 mr-1" />
-                            Expira: {formatDate(u.planExpiresAt)}
-                          </Badge>
-                        )}
-                      </div>
+          <div className="space-y-3">
+            {filteredUsers.map((u) => (
+              <Card key={u.id} className="p-3">
+                <div className="space-y-3">
+                  {/* User Header */}
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1 min-w-0">
+                      <h3 className="font-medium text-sm truncate">{u.firstName} {u.lastName}</h3>
+                      <p className="text-xs text-muted-foreground truncate">{u.email}</p>
+                      {u.whatsapp && (
+                        <p className="text-xs text-muted-foreground">{u.whatsapp}</p>
+                      )}
                     </div>
-
-                    {/* Credits */}
-                    <div className="grid grid-cols-2 lg:grid-cols-6 gap-4 text-center">
-                      <div className="flex flex-col items-center">
-                        <MessageSquare className="h-4 w-4 text-green-600 mb-1" />
-                        <span className="text-sm font-medium">{u.smsCredits || 0}</span>
-                        <span className="text-xs text-muted-foreground">SMS</span>
-                      </div>
-                      
-                      <div className="flex flex-col items-center">
-                        <Mail className="h-4 w-4 text-blue-600 mb-1" />
-                        <span className="text-sm font-medium">{u.emailCredits || 0}</span>
-                        <span className="text-xs text-muted-foreground">Email</span>
-                      </div>
-
-                      <div className="flex flex-col items-center">
-                        <Phone className="h-4 w-4 text-green-500 mb-1" />
-                        <span className="text-sm font-medium">{u.whatsappCredits || 0}</span>
-                        <span className="text-xs text-muted-foreground">WhatsApp</span>
-                      </div>
-
-                      <div className="flex flex-col items-center">
-                        <Zap className="h-4 w-4 text-purple-600 mb-1" />
-                        <span className="text-sm font-medium">{u.aiCredits || 0}</span>
-                        <span className="text-xs text-muted-foreground">IA</span>
-                      </div>
-
-                      <div className="flex flex-col items-center">
-                        <Video className="h-4 w-4 text-red-600 mb-1" />
-                        <span className="text-sm font-medium">{u.videoCredits || 0}</span>
-                        <span className="text-xs text-muted-foreground">Vídeo</span>
-                      </div>
-
-                      <div className="flex flex-col items-center">
-                        <Send className="h-4 w-4 text-blue-500 mb-1" />
-                        <span className="text-sm font-medium">{u.telegramCredits || 0}</span>
-                        <span className="text-xs text-muted-foreground">Telegram</span>
-                      </div>
-                    </div>
-
-                    {/* Created Date */}
-                    <div className="text-right text-sm text-muted-foreground">
-                      <div>Criado em:</div>
-                      <div>{formatDate(u.createdAt)}</div>
+                    <div className="text-right text-xs text-muted-foreground">
+                      {formatDate(u.createdAt)}
                     </div>
                   </div>
-                </Card>
-              ))}
 
-              {filteredUsers.length === 0 && (
-                <div className="text-center py-8">
-                  <p className="text-muted-foreground">Nenhum usuário encontrado com os filtros aplicados.</p>
+                  {/* Badges */}
+                  <div className="flex flex-wrap gap-2">
+                    <Badge className={`text-xs ${getPlanBadgeColor(u.plan)}`}>
+                      {u.plan.charAt(0).toUpperCase() + u.plan.slice(1)}
+                    </Badge>
+                    <Badge className={`text-xs ${getRoleBadgeColor(u.role)}`}>
+                      {u.role.charAt(0).toUpperCase() + u.role.slice(1)}
+                    </Badge>
+                    {u.planExpiresAt && (
+                      <Badge variant="outline" className="text-xs">
+                        Expira: {formatDate(u.planExpiresAt)}
+                      </Badge>
+                    )}
+                  </div>
+
+                  {/* Credits - Single Row */}
+                  <div className="flex justify-between items-center text-xs">
+                    <div className="flex items-center gap-1 text-green-600">
+                      <MessageSquare className="h-3 w-3" />
+                      <span className="font-medium">{u.smsCredits || 0}</span>
+                      <span className="text-muted-foreground">SMS</span>
+                    </div>
+                    
+                    <div className="flex items-center gap-1 text-blue-600">
+                      <Mail className="h-3 w-3" />
+                      <span className="font-medium">{u.emailCredits || 0}</span>
+                      <span className="text-muted-foreground">Email</span>
+                    </div>
+
+                    <div className="flex items-center gap-1 text-green-500">
+                      <Phone className="h-3 w-3" />
+                      <span className="font-medium">{u.whatsappCredits || 0}</span>
+                      <span className="text-muted-foreground">WhatsApp</span>
+                    </div>
+
+                    <div className="flex items-center gap-1 text-purple-600">
+                      <Zap className="h-3 w-3" />
+                      <span className="font-medium">{u.aiCredits || 0}</span>
+                      <span className="text-muted-foreground">IA</span>
+                    </div>
+
+                    <div className="flex items-center gap-1 text-blue-500">
+                      <Send className="h-3 w-3" />
+                      <span className="font-medium">{u.telegramCredits || 0}</span>
+                      <span className="text-muted-foreground">Telegram</span>
+                    </div>
+                  </div>
                 </div>
-              )}
-            </div>
+              </Card>
+            ))}
+
+            {filteredUsers.length === 0 && (
+              <div className="text-center py-8">
+                <p className="text-muted-foreground">Nenhum usuário encontrado com os filtros aplicados.</p>
+              </div>
+            )}
           </div>
         </CardContent>
       </Card>
