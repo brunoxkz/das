@@ -35,6 +35,19 @@ interface User {
   plan: 'free' | 'basic' | 'premium' | 'enterprise';
   createdAt: string;
   lastLoginAt: string;
+  quizCount: number;
+  planExpiryDate?: string;
+  daysRemaining?: number;
+  totalPayments: number;
+  smsCount: number;
+  emailCount: number;
+  credits: {
+    sms: number;
+    email: number;
+    whatsapp: number;
+    ai: number;
+    video: number;
+  };
 }
 
 interface UserCredits {
@@ -92,10 +105,12 @@ export default function AdminPage() {
   });
 
   // Fetch plans
-  const { data: plans = [], isLoading: loadingPlans } = useQuery({
+  const { data: plansResponse, isLoading: loadingPlans } = useQuery({
     queryKey: ['/api/admin/plans'],
     retry: false,
   });
+  
+  const plans = Array.isArray(plansResponse) ? plansResponse : [];
 
   // Fetch system stats
   const { data: stats } = useQuery({
@@ -262,8 +277,10 @@ export default function AdminPage() {
                       <TableHead>Usuário</TableHead>
                       <TableHead>Role</TableHead>
                       <TableHead>Plano</TableHead>
+                      <TableHead>Quizzes</TableHead>
+                      <TableHead>Créditos</TableHead>
+                      <TableHead>Envios</TableHead>
                       <TableHead>Criado em</TableHead>
-                      <TableHead>Último Login</TableHead>
                       <TableHead>Ações</TableHead>
                     </TableRow>
                   </TableHeader>
@@ -277,9 +294,33 @@ export default function AdminPage() {
                           </div>
                         </TableCell>
                         <TableCell>{getRoleBadge(user.role)}</TableCell>
-                        <TableCell>{getPlanBadge(user.plan)}</TableCell>
+                        <TableCell>
+                          <div>
+                            {getPlanBadge(user.plan)}
+                            {user.daysRemaining && user.daysRemaining > 0 && (
+                              <div className="text-xs text-muted-foreground mt-1">
+                                {user.daysRemaining} dias restantes
+                              </div>
+                            )}
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant="outline">{user.quizCount || 0}</Badge>
+                        </TableCell>
+                        <TableCell>
+                          <div className="space-y-1">
+                            <div className="text-xs">SMS: {user.credits?.sms || 0}</div>
+                            <div className="text-xs">Email: {user.credits?.email || 0}</div>
+                            <div className="text-xs">WhatsApp: {user.credits?.whatsapp || 0}</div>
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <div className="space-y-1">
+                            <div className="text-xs">SMS: {user.smsCount || 0}</div>
+                            <div className="text-xs">Email: {user.emailCount || 0}</div>
+                          </div>
+                        </TableCell>
                         <TableCell>{new Date(user.createdAt).toLocaleDateString('pt-BR')}</TableCell>
-                        <TableCell>{user.lastLoginAt ? new Date(user.lastLoginAt).toLocaleDateString('pt-BR') : 'Nunca'}</TableCell>
                         <TableCell>
                           <Button 
                             variant="outline" 

@@ -13908,6 +13908,282 @@ app.post("/api/telegram-templates", verifyJWT, async (req: any, res: Response) =
 
 // ====================== FIM DOS ENDPOINTS TELEGRAM BOT API ======================
 
+  // ================================
+  // ADMIN MANAGEMENT ENDPOINTS
+  // ================================
+
+// Admin middleware
+function requireAdmin(req: any, res: Response, next: Function) {
+  if (req.user.role !== 'admin') {
+    return res.status(403).json({ message: 'Acesso negado: permissão de administrador necessária' });
+  }
+  next();
+}
+
+  // Get all users with detailed information
+  app.get('/api/admin/users', verifyJWT, requireAdmin, async (req: any, res) => {
+    try {
+      console.log('📊 Buscando informações detalhadas de usuários para admin...');
+
+      const usersQuery = `
+        SELECT 
+          id, email, username, role, plan, createdAt, lastLoginAt
+        FROM users
+        ORDER BY createdAt DESC
+      `;
+      
+      const users = db.prepare(usersQuery).all();
+
+      // Enrich users with additional data
+      const enrichedUsers = await Promise.all(users.map(async (user: any) => {
+        // Count quizzes
+        const quizCount = db.prepare('SELECT COUNT(*) as count FROM quizzes WHERE userId = ?').get(user.id)?.count || 0;
+
+        // Get credits
+        const credits = db.prepare(`
+          SELECT 
+            COALESCE(smsCredits, 0) as sms,
+            COALESCE(emailCredits, 0) as email, 
+            COALESCE(whatsappCredits, 0) as whatsapp,
+            COALESCE(aiCredits, 0) as ai,
+            COALESCE(videoCredits, 0) as video
+          FROM user_credits WHERE userId = ?
+        `).get(user.id) || { sms: 0, email: 0, whatsapp: 0, ai: 0, video: 0 };
+
+        // Count SMS sends
+        const smsCount = db.prepare('SELECT COUNT(*) as count FROM sms_logs WHERE userId = ?').get(user.id)?.count || 0;
+
+        // Count email sends (from email campaigns)
+        const emailCount = db.prepare('SELECT COUNT(*) as count FROM email_campaigns WHERE userId = ?').get(user.id)?.count || 0;
+
+        // Calculate plan expiry (dummy calculation for now - would need subscription data)
+        let daysRemaining = null;
+        if (user.plan !== 'free') {
+          // Placeholder: assume 30 days from creation for demo
+          const createdDate = new Date(user.createdAt);
+          const expiryDate = new Date(createdDate.getTime() + (30 * 24 * 60 * 60 * 1000));
+          const today = new Date();
+          const diffTime = expiryDate.getTime() - today.getTime();
+          daysRemaining = Math.max(0, Math.ceil(diffTime / (1000 * 60 * 60 * 24)));
+        }
+
+        // Count total payments (dummy for now)
+        const totalPayments = 0; // Would need subscription_transactions table
+
+        return {
+          ...user,
+          quizCount,
+          credits,
+          smsCount,
+          emailCount,
+          daysRemaining,
+          totalPayments
+        };
+      }));
+
+      res.json(enrichedUsers);
+    } catch (error) {
+      console.error('❌ Erro ao buscar usuários:', error);
+      res.status(500).json({ message: 'Erro interno do servidor' });
+    }
+  });
+
+  // Get admin statistics
+  app.get('/api/admin/stats', verifyJWT, requireAdmin, async (req: any, res) => {
+    try {
+      console.log('📊 Buscando estatísticas do sistema...');
+
+      const totalUsers = db.prepare('SELECT COUNT(*) as count FROM users').get()?.count || 0;
+      const totalQuizzes = db.prepare('SELECT COUNT(*) as count FROM quizzes').get()?.count || 0;
+      
+      // Users created this month
+      const thisMonth = new Date();
+      thisMonth.setDate(1);
+      thisMonth.setHours(0, 0, 0, 0);
+      
+      const newUsersThisMonth = db.prepare(
+        'SELECT COUNT(*) as count FROM users WHERE createdAt >= ?'
+      ).get(thisMonth.toISOString())?.count || 0;
+
+      const newQuizzesThisMonth = db.prepare(
+        'SELECT COUNT(*) as count FROM quizzes WHERE createdAt >= ?'
+      ).get(thisMonth.toISOString())?.count || 0;
+
+      const activeSubscribers = db.prepare(
+        'SELECT COUNT(*) as count FROM users WHERE plan != "free"'
+      ).get()?.count || 0;
+
+      const stats = {
+        totalUsers,
+        totalQuizzes,
+        newUsersThisMonth,
+        newQuizzesThisMonth,
+        activeSubscribers,
+        monthlyRevenue: 2450, // Placeholder
+        revenueGrowth: 12, // Placeholder
+        subscriptionRate: totalUsers > 0 ? Math.round((activeSubscribers / totalUsers) * 100) : 0
+      };
+
+      res.json(stats);
+    } catch (error) {
+      console.error('❌ Erro ao buscar estatísticas:', error);
+      res.status(500).json({ message: 'Erro interno do servidor' });
+    }
+  });
+
+  // Get plans for admin
+  app.get('/api/admin/plans', verifyJWT, requireAdmin, async (req: any, res) => {
+    try {
+      console.log('📊 Buscando planos para admin...');
+      
+      // Return static plans for now
+      const plans = [
+        {
+          id: '1',
+          name: 'Gratuito',
+          price: 0,
+          currency: 'BRL',
+          interval: 'month',
+          features: ['3 Quizzes', '100 Respostas', 'Suporte Email'],
+          limits: { quizzes: 3, responses: 100, storage: 1 }
+        },
+        {
+          id: '2', 
+          name: 'Básico',
+          price: 29.90,
+          currency: 'BRL',
+          interval: 'month',
+          features: ['Quizzes Ilimitados', '1.000 Respostas', 'Suporte Prioritário'],
+          limits: { quizzes: -1, responses: 1000, storage: 5 }
+        },
+        {
+          id: '3',
+          name: 'Premium',
+          price: 69.90,
+          currency: 'BRL', 
+          interval: 'month',
+          features: ['Tudo do Básico', '10.000 Respostas', 'API Access', 'White Label'],
+          limits: { quizzes: -1, responses: 10000, storage: 20 }
+        },
+        {
+          id: '4',
+          name: 'Enterprise',
+          price: 149.90,
+          currency: 'BRL',
+          interval: 'month', 
+          features: ['Tudo do Premium', 'Respostas Ilimitadas', 'Suporte 24/7', 'Manager Dedicado'],
+          limits: { quizzes: -1, responses: -1, storage: 100 }
+        }
+      ];
+
+      res.json(plans);
+    } catch (error) {
+      console.error('❌ Erro ao buscar planos:', error);
+      res.status(500).json({ message: 'Erro interno do servidor' });
+    }
+  });
+
+  // Update user (role/plan)
+  app.patch('/api/admin/users/:userId', verifyJWT, requireAdmin, async (req: any, res) => {
+    try {
+      const { userId } = req.params;
+      const { role, plan } = req.body;
+
+      console.log(`🔧 Atualizando usuário ${userId}:`, { role, plan });
+
+      const updates: string[] = [];
+      const values: any[] = [];
+
+      if (role && ['user', 'admin', 'moderator'].includes(role)) {
+        updates.push('role = ?');
+        values.push(role);
+      }
+
+      if (plan && ['free', 'basic', 'premium', 'enterprise'].includes(plan)) {
+        updates.push('plan = ?');
+        values.push(plan);
+      }
+
+      if (updates.length === 0) {
+        return res.status(400).json({ message: 'Nenhum campo válido para atualizar' });
+      }
+
+      values.push(userId);
+      
+      const updateQuery = `UPDATE users SET ${updates.join(', ')} WHERE id = ?`;
+      const result = db.prepare(updateQuery).run(...values);
+
+      if (result.changes === 0) {
+        return res.status(404).json({ message: 'Usuário não encontrado' });
+      }
+
+      res.json({ message: 'Usuário atualizado com sucesso' });
+    } catch (error) {
+      console.error('❌ Erro ao atualizar usuário:', error);
+      res.status(500).json({ message: 'Erro interno do servidor' });
+    }
+  });
+
+  // Add credits to user
+  app.post('/api/admin/credits/add', verifyJWT, requireAdmin, async (req: any, res) => {
+    try {
+      const { userId, type, amount } = req.body;
+
+      if (!userId || !type || !amount || amount <= 0) {
+        return res.status(400).json({ message: 'Parâmetros inválidos' });
+      }
+
+      const validTypes = ['sms', 'email', 'whatsapp', 'ai', 'video'];
+      if (!validTypes.includes(type)) {
+        return res.status(400).json({ message: 'Tipo de crédito inválido' });
+      }
+
+      console.log(`💰 Adicionando ${amount} créditos ${type} para usuário ${userId}`);
+
+      // Get or create user credits
+      let userCredits = db.prepare('SELECT * FROM user_credits WHERE userId = ?').get(userId);
+      
+      if (!userCredits) {
+        // Create new credit record
+        const insertQuery = `
+          INSERT INTO user_credits (userId, smsCredits, emailCredits, whatsappCredits, aiCredits, videoCredits) 
+          VALUES (?, 0, 0, 0, 0, 0)
+        `;
+        db.prepare(insertQuery).run(userId);
+        userCredits = { userId, smsCredits: 0, emailCredits: 0, whatsappCredits: 0, aiCredits: 0, videoCredits: 0 };
+      }
+
+      // Update credits
+      const columnMap = {
+        sms: 'smsCredits',
+        email: 'emailCredits', 
+        whatsapp: 'whatsappCredits',
+        ai: 'aiCredits',
+        video: 'videoCredits'
+      };
+
+      const column = columnMap[type as keyof typeof columnMap];
+      const updateQuery = `UPDATE user_credits SET ${column} = ${column} + ? WHERE userId = ?`;
+      db.prepare(updateQuery).run(amount, userId);
+
+      // Log the transaction
+      const logQuery = `
+        INSERT INTO credit_transactions (userId, type, amount, reason, createdAt)
+        VALUES (?, ?, ?, ?, ?)
+      `;
+      db.prepare(logQuery).run(userId, type, amount, 'Admin addition', new Date().toISOString());
+
+      res.json({ message: 'Créditos adicionados com sucesso' });
+    } catch (error) {
+      console.error('❌ Erro ao adicionar créditos:', error);
+      res.status(500).json({ message: 'Erro interno do servidor' });
+    }
+  });
+
+  // ================================
+  // END ADMIN MANAGEMENT ENDPOINTS
+  // ================================
+
 // Enviar mensagem via API do WhatsApp
 app.post("/api/whatsapp-api/send", verifyJWT, async (req: any, res: Response) => {
   try {
