@@ -136,6 +136,60 @@ async function checkPlanExpiration(req: any, res: any, next: any) {
 export function registerSQLiteRoutes(app: Express): Server {
   // API Routes initialization
 
+  // ✅ LOGIN ENDPOINT CORRIGIDO
+  app.post('/api/auth/login', async (req, res) => {
+    try {
+      const { email, password } = req.body;
+      
+      if (!email || !password) {
+        return res.status(400).json({ message: 'Email and password are required' });
+      }
+
+      console.log(`🔐 LOGIN ATTEMPT: ${email}`);
+
+      // Buscar usuário
+      const user = await storage.getUserByEmail(email);
+      if (!user) {
+        console.log(`❌ USER NOT FOUND: ${email}`);
+        return res.status(401).json({ message: 'Invalid credentials' });
+      }
+
+      console.log(`👤 USER FOUND: ${user.email}, ID: ${user.id}`);
+
+      // Verificar senha
+      const bcrypt = require('bcryptjs');
+      const isValidPassword = await bcrypt.compare(password, user.password);
+      if (!isValidPassword) {
+        console.log(`❌ INVALID PASSWORD for ${email}`);
+        return res.status(401).json({ message: 'Invalid credentials' });
+      }
+
+      console.log(`✅ PASSWORD VALID for ${email}`);
+
+      // Gerar tokens usando função existente
+      const tokens = generateTokens(user);
+
+      // Atualizar refresh token no usuário
+      await storage.storeRefreshToken(user.id, tokens.refreshToken);
+
+      // Remover senha da resposta
+      const { password: _, ...userSafeData } = user;
+
+      console.log(`✅ LOGIN SUCCESS: ${email}`);
+      
+      res.json({
+        message: 'Login successful',
+        accessToken: tokens.accessToken,
+        refreshToken: tokens.refreshToken,
+        user: userSafeData
+      });
+
+    } catch (error) {
+      console.error('❌ Login error:', error);
+      res.status(500).json({ message: 'Internal server error' });
+    }
+  });
+
   // 🔓 ROTAS PÚBLICAS - SEM MIDDLEWARES DE SEGURANÇA
   // CHECKOUT PÚBLICO - BUSCAR PLANO POR ID (SEM AUTENTICAÇÃO)
   app.get("/api/public/checkout/plan/:planId", async (req: any, res) => {
@@ -19613,6 +19667,7 @@ const stripe = process.env.STRIPE_SECRET_KEY ? new Stripe(process.env.STRIPE_SEC
 }) : null;
 
 // Função para registrar rotas de checkout
+
 export function registerCheckoutRoutes(app: Express) {
   
   // Buscar todos os checkouts (admin)

@@ -103,15 +103,35 @@ export function setupSQLiteAuth(app: Express) {
         return res.status(400).json({ message: "Password must be at least 6 characters long" });
       }
 
+      console.log(`🔐 AUTH-SQLITE LOGIN ATTEMPT: ${cleanEmail}`);
+
       const user = await storage.getUserByEmail(cleanEmail);
       if (!user || !user.password) {
+        console.log(`❌ USER NOT FOUND: ${cleanEmail}`);
         return res.status(401).json({ message: "Invalid credentials" });
       }
 
-      const isValidPassword = await bcrypt.compare(password, user.password);
-      if (!isValidPassword) {
+      console.log(`👤 USER FOUND: ${user.email}, ID: ${user.id}`);
+
+      console.log(`🔍 COMPARANDO SENHAS:`);
+      console.log(`   Password digitada: "${password}"`);
+      console.log(`   Hash armazenado: "${user.password}"`);
+      console.log(`   Tamanho password: ${password.length}`);
+      console.log(`   Tamanho hash: ${user.password.length}`);
+      
+      // Testar tanto sync quanto async
+      const isValidPasswordSync = bcrypt.compareSync(password, user.password);
+      const isValidPasswordAsync = await bcrypt.compare(password, user.password);
+      
+      console.log(`   bcrypt.compareSync: ${isValidPasswordSync}`);
+      console.log(`   bcrypt.compare: ${isValidPasswordAsync}`);
+      
+      if (!isValidPasswordAsync) {
+        console.log(`❌ INVALID PASSWORD for ${cleanEmail}`);
         return res.status(401).json({ message: "Invalid credentials" });
       }
+
+      console.log(`✅ PASSWORD VALID for ${cleanEmail} - AUTH-SQLITE`);
 
       const { accessToken, refreshToken } = generateTokens(user);
       

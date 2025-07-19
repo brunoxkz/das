@@ -99,7 +99,8 @@ import { SidebarProvider } from "@/hooks/useSidebar";
 import { useTheme } from "@/hooks/useTheme";
 
 function AppContent() {
-  const { isAuthenticated, isLoading } = useAuth();
+  const { user, isLoading } = useAuth();
+  const isAuthenticated = !!user;
   const [location] = useLocation();
   const { theme } = useTheme();
 
