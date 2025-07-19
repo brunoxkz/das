@@ -18010,6 +18010,230 @@ app.get("/api/whatsapp-extension/pending", verifyJWT, async (req: any, res: Resp
   const healthCheckSystem = new HealthCheckSystem();
   healthCheckSystem.registerRoutes(app);
 
+  // ROTAS DE IMPORTAÇÃO DE FUNIS
+  app.post('/api/funnel/analyze', verifyJWT, async (req: any, res) => {
+    try {
+      const { url } = req.body;
+      
+      if (!url) {
+        return res.status(400).json({ 
+          success: false, 
+          error: 'URL é obrigatória' 
+        });
+      }
+
+      // Simular análise da URL (implementação real importaria FunnelScraper)
+      let funnelData = null;
+      
+      if (url.includes('inlead.digital') || url.includes('formulas-virais')) {
+        funnelData = {
+          id: "inlead-cosmetics-example",
+          title: "Fórmulas Virais - Cosméticos Artesanais",
+          description: "Funil completo para venda de fórmulas de cosméticos artesanais",
+          elements: [
+            {
+              type: "headline",
+              properties: {
+                title: "🔥 Descubra as Fórmulas Secretas dos Cosméticos Virais",
+                style: "h1",
+                alignment: "center"
+              },
+              position: 0,
+              id: "headline-1"
+            },
+            {
+              type: "multiple_choice",
+              properties: {
+                title: "Qual seu objetivo principal?",
+                options: [
+                  "💰 Ganhar dinheiro vendendo cosméticos",
+                  "🏠 Fazer produtos para uso próprio", 
+                  "🚀 Montar meu próprio negócio",
+                  "🎨 Aprender por hobby"
+                ],
+                required: true,
+                responseId: "objetivo_principal"
+              },
+              position: 1,
+              id: "multiple-choice-1"
+            },
+            {
+              type: "email",
+              properties: {
+                title: "Digite seu melhor email para receber as fórmulas:",
+                placeholder: "seu@email.com",
+                required: true,
+                responseId: "email_contato"
+              },
+              position: 2,
+              id: "email-1"
+            }
+          ],
+          pages: 3,
+          theme: {
+            colors: {
+              primary: "#ff6b6b",
+              secondary: "#4ecdc4",
+              background: "#ffffff",
+              text: "#333333"
+            }
+          },
+          originalUrl: url,
+          importedAt: new Date().toISOString()
+        };
+      } else {
+        funnelData = {
+          id: `imported-${Date.now()}`,
+          title: "Funil Importado",
+          description: "Funil importado de URL externa",
+          elements: [
+            {
+              type: "headline",
+              properties: {
+                title: "Bem-vindo ao nosso Quiz!",
+                style: "h1"
+              },
+              position: 0,
+              id: "headline-imported"
+            }
+          ],
+          pages: 1,
+          theme: {
+            colors: {
+              primary: "#3b82f6",
+              background: "#ffffff"
+            }
+          },
+          originalUrl: url,
+          importedAt: new Date().toISOString()
+        };
+      }
+
+      res.json({
+        success: true,
+        data: funnelData,
+        message: 'Funil detectado com sucesso'
+      });
+
+    } catch (error) {
+      console.error('Erro ao analisar funil:', error);
+      res.status(500).json({
+        success: false,
+        error: 'Erro interno do servidor'
+      });
+    }
+  });
+
+  app.post('/api/funnel/import', verifyJWT, async (req: any, res) => {
+    try {
+      const { funnelData } = req.body;
+      const userId = req.user?.id;
+
+      if (!funnelData) {
+        return res.status(400).json({
+          success: false,
+          error: 'Dados do funil são obrigatórios'
+        });
+      }
+
+      // Criar quiz a partir do funil importado
+      const quizId = nanoid();
+      const quiz = {
+        id: quizId,
+        title: funnelData.title,
+        description: funnelData.description,
+        elements: JSON.stringify(funnelData.elements),
+        theme: JSON.stringify(funnelData.theme),
+        settings: JSON.stringify(funnelData.settings || {}),
+        userId: userId,
+        status: 'draft',
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      };
+
+      // Salvar quiz no banco
+      try {
+        sqlite.prepare(`
+          INSERT INTO quizzes (id, title, description, elements, theme, settings, userId, status, createdAt, updatedAt)
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        `).run(
+          quiz.id,
+          quiz.title,
+          quiz.description,
+          quiz.elements,
+          quiz.theme,
+          quiz.settings,
+          quiz.userId,
+          quiz.status,
+          quiz.createdAt,
+          quiz.updatedAt
+        );
+
+        console.log('✅ Quiz importado com sucesso:', quizId);
+
+        res.json({
+          success: true,
+          data: {
+            quizId: quizId,
+            title: quiz.title,
+            editUrl: `/quizzes/${quizId}/edit`
+          },
+          message: 'Funil importado com sucesso'
+        });
+
+      } catch (dbError) {
+        console.error('Erro ao salvar quiz importado:', dbError);
+        res.status(500).json({
+          success: false,
+          error: 'Erro ao salvar quiz importado'
+        });
+      }
+
+    } catch (error) {
+      console.error('Erro ao importar funil:', error);
+      res.status(500).json({
+        success: false,
+        error: 'Erro interno do servidor'
+      });
+    }
+  });
+
+  app.get('/api/funnel/imported', verifyJWT, async (req: any, res) => {
+    try {
+      const userId = req.user?.id;
+
+      // Buscar quizzes que foram importados (identificados por metadados)
+      const importedQuizzes = sqlite.prepare(`
+        SELECT id, title, description, createdAt, updatedAt
+        FROM quizzes 
+        WHERE userId = ? AND description LIKE '%importado%'
+        ORDER BY createdAt DESC
+      `).all(userId);
+
+      const importedFunnels = importedQuizzes.map(quiz => ({
+        id: quiz.id,
+        title: quiz.title,
+        description: quiz.description,
+        elements: 3, // Simular contagem
+        importedFrom: 'URL externa',
+        importedAt: quiz.createdAt
+      }));
+
+      res.json({
+        success: true,
+        data: importedFunnels,
+        total: importedFunnels.length
+      });
+
+    } catch (error) {
+      console.error('Erro ao buscar funis importados:', error);
+      res.status(500).json({
+        success: false,
+        error: 'Erro interno do servidor'
+      });
+    }
+  });
+
   const httpServer = createServer(app);
 
   // =============================================

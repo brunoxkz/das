@@ -52,7 +52,8 @@ import {
   Send,
   GraduationCap,
   Copy,
-  Play
+  Play,
+  Download
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -154,6 +155,13 @@ export function Sidebar() {
           icon: <GraduationCap className="w-4 h-4" />,
           active: location === "/members-area",
           badge: <span className="text-xs text-purple-500 font-medium">ADMIN</span>
+        },
+        {
+          title: "Importar Funis",
+          href: "/funnel-importer",
+          icon: <Download className="w-4 h-4" />,
+          active: location === "/funnel-importer",
+          badge: <span className="text-xs text-purple-500 font-medium">NOVO</span>
         },
 
       ]
