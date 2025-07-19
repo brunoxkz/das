@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth-jwt";
+import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -22,7 +23,8 @@ import {
   List,
   Eye,
   Heart,
-  Download
+  Download,
+  ArrowLeft
 } from "lucide-react";
 
 // Dados mockados para demonstração estilo Netflix
@@ -135,6 +137,7 @@ const categories = ["Todos", "Marketing", "Vendas", "Tecnologia", "Conteúdo"];
 
 export default function MembersAreaNetflix() {
   const { user } = useAuth();
+  const [, setLocation] = useLocation();
   const [selectedCategory, setSelectedCategory] = useState("Todos");
   const [searchTerm, setSearchTerm] = useState("");
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
@@ -260,6 +263,19 @@ export default function MembersAreaNetflix() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-black via-gray-900 to-black">
+      {/* Back to Dashboard Button */}
+      <div className="absolute top-4 left-4 z-50">
+        <Button 
+          variant="outline" 
+          size="sm"
+          onClick={() => setLocation('/dashboard')}
+          className="bg-black/80 border-gray-600 text-white hover:bg-gray-800 hover:text-white backdrop-blur-sm"
+        >
+          <ArrowLeft className="w-4 h-4 mr-2" />
+          Voltar ao Dashboard
+        </Button>
+      </div>
+
       {/* Hero Section */}
       <div className="relative h-96 overflow-hidden">
         <img 
@@ -279,34 +295,14 @@ export default function MembersAreaNetflix() {
                 Transforme seu conhecimento em resultados extraordinários.
               </p>
               <div className="flex gap-4">
-                <Button size="lg" className="bg-green-600 hover:bg-green-700">
+                <Button size="lg" className="bg-green-600 hover:bg-green-700 text-white">
                   <Play className="w-5 h-5 mr-2" />
                   Começar Agora
                 </Button>
-                <Dialog open={showAddCourse} onOpenChange={setShowAddCourse}>
-                  <DialogTrigger asChild>
-                    <Button size="lg" variant="outline" className="border-white text-white hover:bg-white hover:text-black">
-                      <Plus className="w-5 h-5 mr-2" />
-                      Adicionar Curso
-                    </Button>
-                  </DialogTrigger>
-                  <DialogContent className="bg-gray-900 border-gray-700">
-                    <DialogHeader>
-                      <DialogTitle className="text-white">Adicionar Novo Curso</DialogTitle>
-                      <DialogDescription className="text-gray-400">
-                        Crie um novo curso para a área de membros
-                      </DialogDescription>
-                    </DialogHeader>
-                    <div className="space-y-4">
-                      <Input placeholder="Título do curso" className="bg-gray-800 border-gray-700 text-white" />
-                      <Input placeholder="Descrição" className="bg-gray-800 border-gray-700 text-white" />
-                      <div className="flex gap-2">
-                        <Button className="bg-green-600 hover:bg-green-700">Criar Curso</Button>
-                        <Button variant="outline" onClick={() => setShowAddCourse(false)}>Cancelar</Button>
-                      </div>
-                    </div>
-                  </DialogContent>
-                </Dialog>
+                <Button size="lg" variant="outline" className="border-white text-white hover:bg-white hover:text-black">
+                  <Plus className="w-5 h-5 mr-2" />
+                  Ver Todos os Cursos
+                </Button>
               </div>
             </div>
           </div>
@@ -376,8 +372,8 @@ export default function MembersAreaNetflix() {
                 variant={selectedCategory === category ? "default" : "outline"}
                 onClick={() => setSelectedCategory(category)}
                 className={selectedCategory === category 
-                  ? "bg-green-600 hover:bg-green-700" 
-                  : "border-gray-600 text-gray-300 hover:bg-gray-800"
+                  ? "bg-green-600 hover:bg-green-700 text-white" 
+                  : "border-gray-600 text-gray-300 hover:bg-gray-800 hover:text-white"
                 }
               >
                 {category}
@@ -399,7 +395,7 @@ export default function MembersAreaNetflix() {
               variant="outline"
               size="icon"
               onClick={() => setViewMode(viewMode === "grid" ? "list" : "grid")}
-              className="border-gray-600 text-gray-300 hover:bg-gray-800"
+              className="border-gray-600 text-gray-300 hover:bg-gray-800 hover:text-white"
             >
               {viewMode === "grid" ? <List className="w-4 h-4" /> : <Grid className="w-4 h-4" />}
             </Button>
