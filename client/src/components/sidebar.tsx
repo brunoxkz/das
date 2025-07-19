@@ -51,7 +51,8 @@ import {
   CreditCard,
   Send,
   GraduationCap,
-  Copy
+  Copy,
+  Play
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -382,7 +383,7 @@ export function Sidebar() {
               "w-full bg-purple-600 hover:bg-purple-700 text-white",
               isCollapsed ? "px-0" : "px-4"
             )}>
-              <Video className="w-4 h-4" />
+              <Play className="w-4 h-4" />
               {!isCollapsed && <span className="ml-2">VSL para Quiz</span>}
             </Button>
           </Link>
