@@ -265,46 +265,6 @@ O sistema utiliza Stripe Payment Intent para processar pagamentos únicos de R$ 
 
 ```
 Changelog:
-- July 19, 2025. SISTEMA DE AUTENTICAÇÃO FRONTEND+BACKEND 100% INTEGRADO - Correção crítica completa dos hooks de autenticação:
-  * Problema crítico resolvido: useAuth-jwt.tsx estava conflitando com use-auth-sqlite.tsx
-  * Correção massiva aplicada: 15+ componentes migraram de useAuth-jwt para use-auth-sqlite
-  * Endpoint GET /api/auth/verify criado e funcionando (filtro de dados sensíveis ativo)
-  * Hook use-auth-sqlite.tsx corrigido com propriedade isAuthenticated faltante
-  * Middleware verifyJWT aprimorado para filtrar dados sensíveis (sem password/token no req.user)
-  * Arquivos corrigidos: dashboard.tsx, quiz-builder.tsx, email-marketing.tsx, analytics.tsx, settings.tsx, credits.tsx, sms-campaigns-advanced.tsx, whatsapp-campaigns.tsx, members-area.tsx e 6+ outros
-  * Sistema AuthProvider configurado corretamente no App.tsx com AppContent separado
-  * Teste funcional validado: login admin@admin.com/admin123 → dashboard funcional
-  * Performance otimizada: endpoint /api/auth/verify responde em <50ms
-  * Segurança aprimorada: dados do usuário filtrados (apenas id, email, firstName, lastName, role, plan)
-  * Status final: SISTEMA 100% FUNCIONAL, SEGURO E PRONTO PARA PRODUÇÃO
-- July 19, 2025. SISTEMA DE AUTENTICAÇÃO 100% FUNCIONAL E CORRIGIDO - Resolução completa do bug de login crítico:
-  * Problema raiz identificado: função createDefaultUsers() estava gerando hashes inconsistentes a cada execução
-  * Correção definitiva aplicada: hash fixo implementado para evitar regeneração constante
-  * Credenciais oficiais confirmadas: admin@admin.com / admin123 (funcionando 100%)
-  * Endpoint POST /api/auth/login: totalmente funcional com logs detalhados
-  * Sistema de tokens JWT: access token (15min) + refresh token (7 dias) funcionando
-  * Verificação de senha bcrypt: corrigida e validada (tanto sync quanto async)
-  * Hash final confirmado: $2b$10$xf7No9cVJvS9FtaRRb4wiepHZHbu9AdhhDlQoRoaMTjEtVJvK2fZa
-  * Debug logging implementado: logs completos para troubleshooting futuro
-  * Storage SQLite: getUserByEmail(), password verification, token generation 100% funcionais
-  * Sistema pronto para integração frontend com credenciais: admin@admin.com / admin123
-  * Performance validada: login em <100ms, tokens gerados instantaneamente
-  * Status final: AUTENTICAÇÃO BACKEND COMPLETAMENTE OPERACIONAL E APROVADA
-Changelog:
-- July 19, 2025. SISTEMA ADMIN 100% FUNCIONAL E PRONTO PARA PRODUÇÃO - Correção completa da integração frontend+backend:
-  * Backend admin endpoints: 4/4 funcionando (100%) - /api/admin/stats, /api/admin/users, /api/admin/credits/add, /api/admin/users/:id
-  * Autenticação JWT: 100% funcional com verificação de token via /api/auth/verify
-  * Hook useAuth corrigido: mudança de /api/user para /api/auth/verify + estrutura response.user
-  * AuthProvider configurado: App.tsx envolvido com AuthProvider do hook use-auth-sqlite
-  * Remoção de dependência duplicada: main.tsx limpo, sem conflitos de AuthProvider
-  * Sistema de rotas: /admin acessível via sidebar com verificação de role admin
-  * Teste final validado: 100% funcional em todos os componentes (auth, backend, frontend)
-  * Dados sincronizados: admin@admin.com com role admin, plan enterprise, créditos funcionais
-  * Performance: endpoints respondem em <50ms, verificação de token instantânea
-  * Sistema pronto para uso em produção com 0 erros de integração
-  * Correção de arquitetura: AppContent separado para uso correto do hook dentro do AuthProvider
-  * Status final: SISTEMA 100% OPERACIONAL E APROVADO PARA PRODUÇÃO```
-Changelog:
 - July 18, 2025. WHATSAPP BUSINESS API 100% FUNCIONAL - Sistema completo de integração com a API oficial do WhatsApp Business implementado:
   * Endpoints completos implementados em server/routes-sqlite.ts para integração total com Meta WhatsApp Business API
   * /api/whatsapp-business/config - Configuração de credenciais (Access Token, Phone Number ID, Business Account ID)

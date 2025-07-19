@@ -1,586 +1,475 @@
 import { useState } from "react";
-import { useAuth } from "@/hooks/use-auth-sqlite";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { apiRequest } from "@/lib/queryClient";
+import { useAuth } from "@/hooks/useAuth-jwt";
+import { 
+  Card, 
+  CardContent, 
+  CardDescription, 
+  CardHeader, 
+  CardTitle 
+} from "@/components/ui/card";
+import { 
+  Table, 
+  TableBody, 
+  TableCell, 
+  TableHead, 
+  TableHeader, 
+  TableRow 
+} from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { 
+  Select, 
+  SelectContent, 
+  SelectItem, 
+  SelectTrigger, 
+  SelectValue 
+} from "@/components/ui/select";
+import { Shield, Users, Settings, Crown, Bell, Send } from "lucide-react";
+import { toast } from "@/hooks/use-toast";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { useToast } from "@/hooks/use-toast";
-import { apiRequest } from "@/lib/queryClient";
-import { 
-  Users, 
-  CreditCard, 
-  Shield, 
-  Coins, 
-  Plus, 
-  Edit, 
-  Trash2,
-  UserCog,
-  Award,
-  Activity,
-  DollarSign,
-  Package
-} from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
 
 interface User {
   id: string;
   email: string;
-  username: string;
-  role: 'user' | 'admin' | 'moderator';
-  plan: 'free' | 'basic' | 'premium' | 'enterprise';
+  firstName: string;
+  lastName: string;
+  role: string;
+  plan: string;
   createdAt: string;
-  lastLoginAt: string;
-  quizCount: number;
-  planExpiryDate?: string;
-  daysRemaining?: number;
-  totalPayments: number;
-  smsCount: number;
-  emailCount: number;
-  credits: {
-    sms: number;
-    email: number;
-    whatsapp: number;
-    ai: number;
-    video: number;
-  };
 }
 
-interface UserCredits {
-  userId: string;
-  smsCredits: number;
-  emailCredits: number;
-  whatsappCredits: number;
-  aiCredits: number;
-  videoCredits: number;
-}
+const getRoleBadgeColor = (role: string) => {
+  switch (role) {
+    case 'admin': return 'bg-red-500 text-white';
+    case 'editor': return 'bg-blue-500 text-white';
+    case 'user': return 'bg-gray-500 text-white';
+    default: return 'bg-gray-500 text-white';
+  }
+};
 
-interface Plan {
-  id: string;
-  name: string;
-  price: number;
-  currency: string;
-  interval: 'month' | 'year';
-  features: string[];
-  limits: {
-    quizzes: number;
-    responses: number;
-    storage: number;
-  };
-}
+const getPlanBadgeColor = (plan: string) => {
+  switch (plan) {
+    case 'enterprise': return 'bg-purple-500 text-white';
+    case 'premium': return 'bg-green-500 text-white';
+    case 'free': return 'bg-gray-400 text-white';
+    default: return 'bg-gray-400 text-white';
+  }
+};
 
 export default function AdminPage() {
   const { user } = useAuth();
-  const { toast } = useToast();
   const queryClient = useQueryClient();
-  const [selectedUser, setSelectedUser] = useState<User | null>(null);
-  const [showUserDialog, setShowUserDialog] = useState(false);
-  const [showPlanDialog, setShowPlanDialog] = useState(false);
-  const [showCreditsDialog, setShowCreditsDialog] = useState(false);
+  const [selectedUser, setSelectedUser] = useState<string | null>(null);
+  const [newRole, setNewRole] = useState<string>('');
+  
+  // Notification form state
+  const [notificationForm, setNotificationForm] = useState({
+    title: '',
+    message: '',
+    type: 'info' as 'info' | 'success' | 'warning' | 'error',
+    isGlobal: true,
+    targetUsers: [] as string[]
+  });
+
+  // Fetch all users
+  const { data: users, isLoading, error } = useQuery<User[]>({
+    queryKey: ['/api/admin/users'],
+    queryFn: async () => {
+      console.log("ADMIN - Buscando usuários...");
+      const data = await apiRequest('GET', '/api/admin/users');
+      console.log("ADMIN - Users data:", data);
+      return Array.isArray(data) ? data : [];
+    },
+    enabled: user?.role === 'admin'
+  });
+
+  console.log("ADMIN - Estado atual:", { user: user?.role, users, isLoading, error });
+
+  // Update user role mutation
+  const updateRoleMutation = useMutation({
+    mutationFn: async ({ userId, role }: { userId: string; role: string }) => {
+      const response = await apiRequest('PUT', `/api/admin/users/${userId}/role`, { 
+        body: JSON.stringify({ role }),
+        headers: { 'Content-Type': 'application/json' }
+      });
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/users'] });
+      toast({
+        title: "Sucesso",
+        description: "Papel do usuário atualizado com sucesso",
+      });
+      setSelectedUser(null);
+      setNewRole('');
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Erro",
+        description: error.message || "Erro ao atualizar papel do usuário",
+        variant: "destructive"
+      });
+    }
+  });
+
+  // Send notification mutation
+  const sendNotificationMutation = useMutation({
+    mutationFn: async (notificationData: any) => {
+      return await apiRequest('POST', '/api/notifications', {
+        body: JSON.stringify(notificationData),
+        headers: { 'Content-Type': 'application/json' }
+      });
+    },
+    onSuccess: () => {
+      toast({
+        title: "Notificação enviada!",
+        description: "A notificação foi enviada com sucesso.",
+      });
+      setNotificationForm({
+        title: '',
+        message: '',
+        type: 'info',
+        isGlobal: true,
+        targetUsers: []
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Erro ao enviar notificação",
+        description: error.message || "Erro interno do servidor",
+        variant: "destructive"
+      });
+    }
+  });
 
   // Check if user is admin
   if (user?.role !== 'admin') {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <Card className="w-96">
-          <CardHeader>
-            <CardTitle className="text-center text-red-600">Acesso Negado</CardTitle>
-            <CardDescription className="text-center">
-              Você precisa ser administrador para acessar esta página.
-            </CardDescription>
-          </CardHeader>
-        </Card>
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-6">
+        <div className="max-w-2xl mx-auto">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Shield className="h-5 w-5" />
+                Acesso Negado
+              </CardTitle>
+              <CardDescription>
+                Você não tem permissão para acessar esta página.
+              </CardDescription>
+            </CardHeader>
+          </Card>
+        </div>
       </div>
     );
   }
 
-  // Fetch users
-  const { data: users = [], isLoading: loadingUsers } = useQuery({
-    queryKey: ['/api/admin/users'],
-    retry: false,
-  });
-
-  // Fetch plans
-  const { data: plansResponse, isLoading: loadingPlans } = useQuery({
-    queryKey: ['/api/admin/plans'],
-    retry: false,
-  });
-  
-  const plans = Array.isArray(plansResponse) ? plansResponse : [];
-
-  // Fetch system stats
-  const { data: stats } = useQuery({
-    queryKey: ['/api/admin/stats'],
-    retry: false,
-  });
-
-  // Update user mutation
-  const updateUserMutation = useMutation({
-    mutationFn: async (data: { userId: string; role?: string; plan?: string }) => {
-      return await apiRequest("PATCH", `/api/admin/users/${data.userId}`, {
-        role: data.role,
-        plan: data.plan
-      });
-    },
-    onSuccess: () => {
-      toast({
-        title: "Usuário atualizado",
-        description: "As alterações foram salvas com sucesso."
-      });
-      queryClient.invalidateQueries({ queryKey: ['/api/admin/users'] });
-      setShowUserDialog(false);
-    },
-    onError: (error: any) => {
-      toast({
-        title: "Erro ao atualizar usuário",
-        description: error.message || "Ocorreu um erro inesperado.",
-        variant: "destructive"
-      });
-    }
-  });
-
-  // Add credits mutation
-  const addCreditsMutation = useMutation({
-    mutationFn: async (data: { userId: string; type: string; amount: number }) => {
-      return await apiRequest("POST", "/api/admin/credits/add", data);
-    },
-    onSuccess: () => {
-      toast({
-        title: "Créditos adicionados",
-        description: "Os créditos foram adicionados com sucesso."
-      });
-      setShowCreditsDialog(false);
-    },
-    onError: (error: any) => {
-      toast({
-        title: "Erro ao adicionar créditos",
-        description: error.message || "Ocorreu um erro inesperado.",
-        variant: "destructive"
-      });
-    }
-  });
-
-  const getRoleBadge = (role: string) => {
-    const variants = {
-      admin: "bg-red-100 text-red-800",
-      moderator: "bg-blue-100 text-blue-800", 
-      user: "bg-gray-100 text-gray-800"
-    };
-    return <Badge className={variants[role as keyof typeof variants]}>{role}</Badge>;
+  const handleUpdateRole = (userId: string, role: string) => {
+    updateRoleMutation.mutate({ userId, role });
   };
 
-  const getPlanBadge = (plan: string) => {
-    const variants = {
-      enterprise: "bg-purple-100 text-purple-800",
-      premium: "bg-gold-100 text-gold-800",
-      basic: "bg-blue-100 text-blue-800",
-      free: "bg-gray-100 text-gray-800"
-    };
-    return <Badge className={variants[plan as keyof typeof variants]}>{plan}</Badge>;
+  const handleSendNotification = () => {
+    if (!notificationForm.title || !notificationForm.message) {
+      toast({
+        title: "Erro",
+        description: "Título e mensagem são obrigatórios",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    sendNotificationMutation.mutate(notificationForm);
+  };
+
+  const handleUserSelection = (userId: string, isChecked: boolean) => {
+    if (isChecked) {
+      setNotificationForm(prev => ({
+        ...prev,
+        targetUsers: [...prev.targetUsers, userId]
+      }));
+    } else {
+      setNotificationForm(prev => ({
+        ...prev,
+        targetUsers: prev.targetUsers.filter(id => id !== userId)
+      }));
+    }
   };
 
   return (
-    <div className="container mx-auto px-6 py-8">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold flex items-center gap-2">
-          <UserCog className="w-8 h-8 text-orange-600" />
-          Painel de Administração
-        </h1>
-        <p className="text-muted-foreground mt-2">
-          Gerencie usuários, planos, créditos e configurações do sistema
-        </p>
-      </div>
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-6">
+      <div className="max-w-7xl mx-auto">
+        {/* Header */}
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
+            <Crown className="h-8 w-8 text-yellow-500" />
+            Painel de Administração
+          </h1>
+          <p className="text-gray-600 dark:text-gray-300 mt-2">
+            Gerencie usuários, roles, permissões e notificações do sistema
+          </p>
+        </div>
 
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total de Usuários</CardTitle>
-            <Users className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats?.totalUsers || 0}</div>
-            <p className="text-xs text-muted-foreground">
-              +{stats?.newUsersThisMonth || 0} este mês
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Receita Mensal</CardTitle>
-            <DollarSign className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">R$ {stats?.monthlyRevenue || 0}</div>
-            <p className="text-xs text-muted-foreground">
-              +{stats?.revenueGrowth || 0}% vs mês anterior
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Quizzes Criados</CardTitle>
-            <Activity className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats?.totalQuizzes || 0}</div>
-            <p className="text-xs text-muted-foreground">
-              +{stats?.newQuizzesThisMonth || 0} este mês
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Assinantes Ativos</CardTitle>
-            <Award className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats?.activeSubscribers || 0}</div>
-            <p className="text-xs text-muted-foreground">
-              {stats?.subscriptionRate || 0}% taxa de conversão
-            </p>
-          </CardContent>
-        </Card>
-      </div>
-
-      <Tabs defaultValue="users" className="space-y-4">
-        <TabsList>
-          <TabsTrigger value="users">Usuários</TabsTrigger>
-          <TabsTrigger value="plans">Planos</TabsTrigger>
-          <TabsTrigger value="credits">Créditos</TabsTrigger>
-          <TabsTrigger value="settings">Configurações</TabsTrigger>
-        </TabsList>
-
-        {/* Users Tab */}
-        <TabsContent value="users" className="space-y-4">
+        {/* Stats Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
           <Card>
-            <CardHeader>
-              <CardTitle>Gerenciar Usuários</CardTitle>
-              <CardDescription>
-                Visualize e gerencie todos os usuários da plataforma
-              </CardDescription>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Total de Usuários</CardTitle>
+              <Users className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              {loadingUsers ? (
-                <div className="text-center py-8">Carregando usuários...</div>
-              ) : (
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Usuário</TableHead>
-                      <TableHead>Role</TableHead>
-                      <TableHead>Plano</TableHead>
-                      <TableHead>Quizzes</TableHead>
-                      <TableHead>Créditos</TableHead>
-                      <TableHead>Envios</TableHead>
-                      <TableHead>Criado em</TableHead>
-                      <TableHead>Ações</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {users.map((user: User) => (
-                      <TableRow key={user.id}>
-                        <TableCell>
-                          <div>
-                            <div className="font-medium">{user.username}</div>
-                            <div className="text-sm text-muted-foreground">{user.email}</div>
-                          </div>
-                        </TableCell>
-                        <TableCell>{getRoleBadge(user.role)}</TableCell>
-                        <TableCell>
-                          <div>
-                            {getPlanBadge(user.plan)}
-                            {user.daysRemaining && user.daysRemaining > 0 && (
-                              <div className="text-xs text-muted-foreground mt-1">
-                                {user.daysRemaining} dias restantes
-                              </div>
-                            )}
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <Badge variant="outline">{user.quizCount || 0}</Badge>
-                        </TableCell>
-                        <TableCell>
-                          <div className="space-y-1">
-                            <div className="text-xs">SMS: {user.credits?.sms || 0}</div>
-                            <div className="text-xs">Email: {user.credits?.email || 0}</div>
-                            <div className="text-xs">WhatsApp: {user.credits?.whatsapp || 0}</div>
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <div className="space-y-1">
-                            <div className="text-xs">SMS: {user.smsCount || 0}</div>
-                            <div className="text-xs">Email: {user.emailCount || 0}</div>
-                          </div>
-                        </TableCell>
-                        <TableCell>{new Date(user.createdAt).toLocaleDateString('pt-BR')}</TableCell>
-                        <TableCell>
-                          <Button 
-                            variant="outline" 
-                            size="sm"
-                            onClick={() => {
-                              setSelectedUser(user);
-                              setShowUserDialog(true);
-                            }}
-                          >
-                            <Edit className="w-4 h-4 mr-1" />
-                            Editar
-                          </Button>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              )}
+              <div className="text-2xl font-bold">{users?.length || 0}</div>
             </CardContent>
           </Card>
-        </TabsContent>
 
-        {/* Plans Tab */}
-        <TabsContent value="plans" className="space-y-4">
           <Card>
-            <CardHeader className="flex flex-row items-center justify-between">
-              <div>
-                <CardTitle>Gerenciar Planos</CardTitle>
-                <CardDescription>Configure os planos de assinatura</CardDescription>
-              </div>
-              <Button onClick={() => setShowPlanDialog(true)}>
-                <Plus className="w-4 h-4 mr-2" />
-                Novo Plano
-              </Button>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Administradores</CardTitle>
+              <Shield className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                {plans.map((plan: Plan) => (
-                  <Card key={plan.id} className="relative">
-                    <CardHeader>
-                      <CardTitle className="flex items-center justify-between">
-                        {plan.name}
-                        <Badge>{plan.interval === 'month' ? 'Mensal' : 'Anual'}</Badge>
-                      </CardTitle>
-                      <CardDescription>
-                        R$ {plan.price}/{plan.interval === 'month' ? 'mês' : 'ano'}
-                      </CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="space-y-2">
-                        <div className="text-sm">
-                          <strong>Limites:</strong>
-                        </div>
-                        <ul className="text-sm space-y-1">
-                          <li>• {plan.limits?.quizzes || 'Ilimitado'} quizzes</li>
-                          <li>• {plan.limits?.responses || 'Ilimitado'} respostas</li>
-                          <li>• {plan.limits?.storage || 'Ilimitado'} GB de armazenamento</li>
-                        </ul>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
+              <div className="text-2xl font-bold">
+                {users?.filter(u => u.role === 'admin').length || 0}
               </div>
             </CardContent>
           </Card>
-        </TabsContent>
 
-        {/* Credits Tab */}
-        <TabsContent value="credits" className="space-y-4">
           <Card>
-            <CardHeader className="flex flex-row items-center justify-between">
-              <div>
-                <CardTitle>Gerenciar Créditos</CardTitle>
-                <CardDescription>Adicione ou remova créditos dos usuários</CardDescription>
-              </div>
-              <Button onClick={() => setShowCreditsDialog(true)}>
-                <Coins className="w-4 h-4 mr-2" />
-                Adicionar Créditos
-              </Button>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Usuários Premium</CardTitle>
+              <Crown className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-center py-8 text-muted-foreground">
-                Selecione "Adicionar Créditos" para gerenciar créditos de usuários específicos
+              <div className="text-2xl font-bold">
+                {users?.filter(u => u.plan !== 'free').length || 0}
               </div>
             </CardContent>
           </Card>
-        </TabsContent>
+        </div>
 
-        {/* Settings Tab */}
-        <TabsContent value="settings" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Configurações do Sistema</CardTitle>
-              <CardDescription>Configure parâmetros globais da plataforma</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-6">
-                <div>
-                  <Label htmlFor="max-quiz-limit">Limite máximo de quizzes (plano gratuito)</Label>
-                  <Input id="max-quiz-limit" type="number" defaultValue="3" className="mt-1" />
-                </div>
-                
-                <div>
-                  <Label htmlFor="default-credits">Créditos padrão para novos usuários</Label>
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-2">
-                    <div>
-                      <Label className="text-xs">SMS</Label>
-                      <Input type="number" defaultValue="5" />
-                    </div>
-                    <div>
-                      <Label className="text-xs">Email</Label>
-                      <Input type="number" defaultValue="100" />
-                    </div>
-                    <div>
-                      <Label className="text-xs">WhatsApp</Label>
-                      <Input type="number" defaultValue="10" />
-                    </div>
-                    <div>
-                      <Label className="text-xs">IA</Label>
-                      <Input type="number" defaultValue="20" />
-                    </div>
+        {/* Main Content with Tabs */}
+        <Tabs defaultValue="users" className="space-y-6">
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="users" className="flex items-center gap-2">
+              <Users className="h-4 w-4" />
+              Gerenciar Usuários
+            </TabsTrigger>
+            <TabsTrigger value="notifications" className="flex items-center gap-2">
+              <Bell className="h-4 w-4" />
+              Enviar Notificações
+            </TabsTrigger>
+          </TabsList>
+
+          {/* Users Management Tab */}
+          <TabsContent value="users">
+            <Card>
+              <CardHeader>
+                <CardTitle>Gerenciamento de Usuários</CardTitle>
+                <CardDescription>
+                  Visualize e edite os papéis dos usuários no sistema
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                {isLoading ? (
+                  <div className="flex items-center justify-center py-8">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600"></div>
                   </div>
+                ) : (
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Nome</TableHead>
+                        <TableHead>Email</TableHead>
+                        <TableHead>Papel</TableHead>
+                        <TableHead>Plano</TableHead>
+                        <TableHead>Cadastrado em</TableHead>
+                        <TableHead>Ações</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {users?.map((user) => (
+                        <TableRow key={user.id}>
+                          <TableCell className="font-medium">
+                            {user.firstName} {user.lastName}
+                          </TableCell>
+                          <TableCell>{user.email}</TableCell>
+                          <TableCell>
+                            <Badge className={getRoleBadgeColor(user.role)}>
+                              {user.role}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>
+                            <Badge className={getPlanBadgeColor(user.plan)}>
+                              {user.plan}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>
+                            {new Date(user.createdAt).toLocaleDateString('pt-BR')}
+                          </TableCell>
+                          <TableCell>
+                            {selectedUser === user.id ? (
+                              <div className="flex gap-2">
+                                <Select value={newRole} onValueChange={setNewRole}>
+                                  <SelectTrigger className="w-32">
+                                    <SelectValue placeholder="Papel" />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="user">user</SelectItem>
+                                    <SelectItem value="editor">editor</SelectItem>
+                                    <SelectItem value="admin">admin</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                                <Button 
+                                  size="sm" 
+                                  onClick={() => handleUpdateRole(user.id, newRole)}
+                                  disabled={!newRole || updateRoleMutation.isPending}
+                                >
+                                  Salvar
+                                </Button>
+                                <Button 
+                                  size="sm" 
+                                  variant="outline"
+                                  onClick={() => {
+                                    setSelectedUser(null);
+                                    setNewRole('');
+                                  }}
+                                >
+                                  Cancelar
+                                </Button>
+                              </div>
+                            ) : (
+                              <Button 
+                                size="sm" 
+                                variant="outline"
+                                onClick={() => {
+                                  setSelectedUser(user.id);
+                                  setNewRole(user.role);
+                                }}
+                              >
+                                <Settings className="h-4 w-4 mr-2" />
+                                Editar
+                              </Button>
+                            )}
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Notifications Tab */}
+          <TabsContent value="notifications">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Bell className="h-5 w-5" />
+                  Enviar Notificações
+                </CardTitle>
+                <CardDescription>
+                  Envie notificações para todos os usuários ou usuários específicos
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                {/* Notification Form */}
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="title">Título da Notificação</Label>
+                    <Input
+                      id="title"
+                      placeholder="Digite o título da notificação"
+                      value={notificationForm.title}
+                      onChange={(e) => setNotificationForm(prev => ({ ...prev, title: e.target.value }))}
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="message">Mensagem</Label>
+                    <Textarea
+                      id="message"
+                      placeholder="Digite a mensagem da notificação"
+                      value={notificationForm.message}
+                      onChange={(e) => setNotificationForm(prev => ({ ...prev, message: e.target.value }))}
+                      rows={4}
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="type">Tipo de Notificação</Label>
+                    <Select 
+                      value={notificationForm.type} 
+                      onValueChange={(value: any) => setNotificationForm(prev => ({ ...prev, type: value }))}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecione o tipo" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="info">Informação</SelectItem>
+                        <SelectItem value="success">Sucesso</SelectItem>
+                        <SelectItem value="warning">Aviso</SelectItem>
+                        <SelectItem value="error">Erro</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  {/* Global vs Specific Users */}
+                  <div className="space-y-4">
+                    <div className="flex items-center space-x-2">
+                      <Checkbox
+                        id="global"
+                        checked={notificationForm.isGlobal}
+                        onCheckedChange={(checked) => 
+                          setNotificationForm(prev => ({ 
+                            ...prev, 
+                            isGlobal: checked as boolean,
+                            targetUsers: checked ? [] : prev.targetUsers
+                          }))
+                        }
+                      />
+                      <Label htmlFor="global">Enviar para todos os usuários</Label>
+                    </div>
+
+                    {!notificationForm.isGlobal && (
+                      <div className="space-y-2">
+                        <Label>Selecionar Usuários Específicos</Label>
+                        <div className="max-h-40 overflow-y-auto border rounded-md p-3">
+                          {users?.map((user) => (
+                            <div key={user.id} className="flex items-center space-x-2 py-1">
+                              <Checkbox
+                                id={`user-${user.id}`}
+                                checked={notificationForm.targetUsers.includes(user.id)}
+                                onCheckedChange={(checked) => handleUserSelection(user.id, checked as boolean)}
+                              />
+                              <Label htmlFor={`user-${user.id}`} className="text-sm">
+                                {user.firstName} {user.lastName} ({user.email})
+                              </Label>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  <Button 
+                    onClick={handleSendNotification}
+                    disabled={sendNotificationMutation.isPending || !notificationForm.title || !notificationForm.message}
+                    className="w-full bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700"
+                  >
+                    <Send className="w-4 h-4 mr-2" />
+                    {sendNotificationMutation.isPending ? 'Enviando...' : 'Enviar Notificação'}
+                  </Button>
                 </div>
-
-                <Button>Salvar Configurações</Button>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
-
-      {/* Edit User Dialog */}
-      <Dialog open={showUserDialog} onOpenChange={setShowUserDialog}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Editar Usuário</DialogTitle>
-            <DialogDescription>
-              Altere o role ou plano do usuário selecionado
-            </DialogDescription>
-          </DialogHeader>
-          {selectedUser && (
-            <div className="space-y-4">
-              <div>
-                <Label>Usuário</Label>
-                <div className="text-sm text-muted-foreground mt-1">
-                  {selectedUser.username} ({selectedUser.email})
-                </div>
-              </div>
-
-              <div>
-                <Label htmlFor="user-role">Role</Label>
-                <Select defaultValue={selectedUser.role}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecione o role" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="user">Usuário</SelectItem>
-                    <SelectItem value="moderator">Moderador</SelectItem>
-                    <SelectItem value="admin">Administrador</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div>
-                <Label htmlFor="user-plan">Plano</Label>
-                <Select defaultValue={selectedUser.plan}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecione o plano" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="free">Gratuito</SelectItem>
-                    <SelectItem value="basic">Básico</SelectItem>
-                    <SelectItem value="premium">Premium</SelectItem>
-                    <SelectItem value="enterprise">Enterprise</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="flex gap-2">
-                <Button 
-                  onClick={() => {
-                    // Here you would handle the form submission
-                    setShowUserDialog(false);
-                  }}
-                  disabled={updateUserMutation.isPending}
-                >
-                  Salvar Alterações
-                </Button>
-                <Button variant="outline" onClick={() => setShowUserDialog(false)}>
-                  Cancelar
-                </Button>
-              </div>
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
-
-      {/* Add Credits Dialog */}
-      <Dialog open={showCreditsDialog} onOpenChange={setShowCreditsDialog}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Adicionar Créditos</DialogTitle>
-            <DialogDescription>
-              Adicione créditos para um usuário específico
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4">
-            <div>
-              <Label htmlFor="credits-user">Usuário</Label>
-              <Select>
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecione o usuário" />
-                </SelectTrigger>
-                <SelectContent>
-                  {users.map((user: User) => (
-                    <SelectItem key={user.id} value={user.id}>
-                      {user.username} ({user.email})
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div>
-              <Label htmlFor="credits-type">Tipo de Crédito</Label>
-              <Select>
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecione o tipo" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="sms">SMS</SelectItem>
-                  <SelectItem value="email">Email</SelectItem>
-                  <SelectItem value="whatsapp">WhatsApp</SelectItem>
-                  <SelectItem value="ai">IA</SelectItem>
-                  <SelectItem value="video">Vídeo</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div>
-              <Label htmlFor="credits-amount">Quantidade</Label>
-              <Input 
-                id="credits-amount" 
-                type="number" 
-                placeholder="Digite a quantidade de créditos"
-                min="1"
-              />
-            </div>
-
-            <div className="flex gap-2">
-              <Button disabled={addCreditsMutation.isPending}>
-                Adicionar Créditos
-              </Button>
-              <Button variant="outline" onClick={() => setShowCreditsDialog(false)}>
-                Cancelar
-              </Button>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
+      </div>
     </div>
   );
 }

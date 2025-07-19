@@ -1,5 +1,5 @@
 import { Link, useLocation } from "wouter";
-import { useAuth } from "@/hooks/use-auth-sqlite";
+import { useAuth } from "@/hooks/useAuth-jwt";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -51,8 +51,7 @@ import {
   CheckCircle,
   CreditCard,
   Send,
-  GraduationCap,
-  UserCog
+  GraduationCap
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -274,13 +273,6 @@ export function Sidebar() {
       href: "/settings",
       icon: <Settings className="w-4 h-4" />,
       active: location === "/settings"
-    },
-    {
-      title: "Admin",
-      href: "/admin",
-      icon: <UserCog className="w-4 h-4" />,
-      active: location === "/admin",
-      className: "text-orange-600 border-orange-600/20 bg-orange-600/5 hover:bg-orange-600/10"
     }
   ];
 

@@ -69,15 +69,7 @@ export const verifyJWT: RequestHandler = async (req: any, res, next) => {
         return res.status(401).json({ message: "User not found" });
       }
 
-      // Filtrar dados sensíveis para req.user
-      req.user = {
-        id: user.id,
-        email: user.email,
-        firstName: user.firstName,
-        lastName: user.lastName,
-        role: user.role,
-        plan: user.plan,
-      };
+      req.user = user;
       next();
     } catch (jwtError) {
       return res.status(401).json({ message: "Invalid token" });
@@ -111,35 +103,15 @@ export function setupSQLiteAuth(app: Express) {
         return res.status(400).json({ message: "Password must be at least 6 characters long" });
       }
 
-      console.log(`🔐 AUTH-SQLITE LOGIN ATTEMPT: ${cleanEmail}`);
-
       const user = await storage.getUserByEmail(cleanEmail);
       if (!user || !user.password) {
-        console.log(`❌ USER NOT FOUND: ${cleanEmail}`);
         return res.status(401).json({ message: "Invalid credentials" });
       }
 
-      console.log(`👤 USER FOUND: ${user.email}, ID: ${user.id}`);
-
-      console.log(`🔍 COMPARANDO SENHAS:`);
-      console.log(`   Password digitada: "${password}"`);
-      console.log(`   Hash armazenado: "${user.password}"`);
-      console.log(`   Tamanho password: ${password.length}`);
-      console.log(`   Tamanho hash: ${user.password.length}`);
-      
-      // Testar tanto sync quanto async
-      const isValidPasswordSync = bcrypt.compareSync(password, user.password);
-      const isValidPasswordAsync = await bcrypt.compare(password, user.password);
-      
-      console.log(`   bcrypt.compareSync: ${isValidPasswordSync}`);
-      console.log(`   bcrypt.compare: ${isValidPasswordAsync}`);
-      
-      if (!isValidPasswordAsync) {
-        console.log(`❌ INVALID PASSWORD for ${cleanEmail}`);
+      const isValidPassword = await bcrypt.compare(password, user.password);
+      if (!isValidPassword) {
         return res.status(401).json({ message: "Invalid credentials" });
       }
-
-      console.log(`✅ PASSWORD VALID for ${cleanEmail} - AUTH-SQLITE`);
 
       const { accessToken, refreshToken } = generateTokens(user);
       
@@ -303,20 +275,6 @@ export function setupSQLiteAuth(app: Express) {
   app.post('/api/auth/verify', verifyJWT, (req: any, res: Response) => {
     res.json({
       valid: true,
-      user: {
-        id: req.user.id,
-        email: req.user.email,
-        firstName: req.user.firstName,
-        lastName: req.user.lastName,
-        role: req.user.role,
-        plan: req.user.plan,
-      }
-    });
-  });
-
-  // GET endpoint para verificar token e retornar dados do usuário (para o frontend)
-  app.get('/api/auth/verify', verifyJWT, (req: any, res: Response) => {
-    res.json({
       user: {
         id: req.user.id,
         email: req.user.email,

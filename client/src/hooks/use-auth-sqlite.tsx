@@ -16,7 +16,6 @@ interface AuthContextType {
   register: (email: string, password: string, firstName: string, lastName: string) => Promise<void>;
   logout: () => Promise<void>;
   isLoading: boolean;
-  isAuthenticated: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
@@ -35,8 +34,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           return;
         }
 
-        const response = await apiRequest("GET", "/api/auth/verify");
-        const userData = response.user;
+        const userData = await apiRequest("GET", "/api/user");
         setUser(userData);
       } catch (error) {
         console.error("Auth check failed:", error);
@@ -70,14 +68,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const register = async (email: string, password: string, firstName: string, lastName: string) => {
+  const register = async (userData: { email: string; password: string; firstName: string; lastName: string }) => {
     try {
-      const response = await apiRequest("POST", "/api/auth/register", {
-        email,
-        password,
-        firstName,
-        lastName
-      });
+      const response = await apiRequest("POST", "/api/auth/register", userData);
 
       localStorage.setItem("accessToken", response.accessToken);
       localStorage.setItem("refreshToken", response.refreshToken);
@@ -105,7 +98,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, login, register, logout, isLoading, isAuthenticated: !!user }}>
+    <AuthContext.Provider value={{ user, login, register, logout, isLoading }}>
       {children}
     </AuthContext.Provider>
   );

@@ -10,7 +10,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
 import { Bell, X, Check, AlertCircle, Info, CheckCircle, AlertTriangle } from "lucide-react";
-import { useAuth } from "@/hooks/use-auth-sqlite";
+import { useAuth } from "@/hooks/useAuth-jwt";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { formatDistanceToNow } from "date-fns";

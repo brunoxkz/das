@@ -330,17 +330,6 @@ export class SQLiteStorage implements IStorage {
 
   private async createDefaultUsers() {
     try {
-      // CORREÇÃO DEFINITIVA: Não recriar admin@admin.com, apenas verificar outros usuários
-      console.log('🔧 VERIFICANDO USUÁRIOS PADRÃO (SEM ALTERAR ADMIN PRINCIPAL)');
-      
-      // Verificar apenas se admin@admin.com existe, mas NÃO recriar
-      const existingMainAdmin = await this.getUserByEmail('admin@admin.com');
-      if (!existingMainAdmin) {
-        // Apenas criar uma única vez, nunca mais
-        console.log('⚠️ Admin principal não encontrado - mas NÃO será criado automaticamente');
-        console.log('🔧 Use o comando manual para criar o usuário admin se necessário');
-      }
-      
       const existingAdmin = await this.getUserByEmail('admin@vendzz.com');
       if (!existingAdmin) {
         await this.createUserWithPassword({

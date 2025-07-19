@@ -11,7 +11,7 @@ import {
   BarChart3,
   RefreshCw
 } from "lucide-react";
-import { useAuth } from "@/hooks/use-auth-sqlite";
+import { useAuth } from "@/hooks/useAuth-jwt";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
 

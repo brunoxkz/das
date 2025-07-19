@@ -1,5 +1,5 @@
 import { Sidebar } from "@/components/sidebar";
-import { useAuth } from "@/hooks/use-auth-sqlite";
+import { useAuth } from "@/hooks/useAuth-jwt";
 import { useSidebar } from "@/hooks/useSidebar";
 import { cn } from "@/lib/utils";
 

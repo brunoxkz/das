@@ -93,14 +93,14 @@ import CheckoutPlan from "@/pages/checkout-plan";
 import PaymentVerification from "@/pages/payment-verification";
 import MembersAreaNetflix from "@/pages/members-area-netflix";
 
-import { AuthProvider, useAuth } from "@/hooks/useAuth-jwt";
+import { useAuth } from "@/hooks/useAuth-jwt";
 import { isUnauthorizedError } from "@/lib/authUtils";
 import { SidebarProvider } from "@/hooks/useSidebar";
 import { useTheme } from "@/hooks/useTheme";
 
-function AppContent() {
-  const { user, isLoading } = useAuth();
-  const isAuthenticated = !!user;
+
+function App() {
+  const { isAuthenticated, isLoading } = useAuth();
   const [location] = useLocation();
   const { theme } = useTheme();
 
@@ -372,12 +372,6 @@ function AppContent() {
           <MembersAreaNetflix />
         </Route>
         
-        <Route path="/admin">
-          <Layout>
-            <AdminPage />
-          </Layout>
-        </Route>
-        
         <Route path="/whatsapp-dual">
           <Layout>
             <WhatsAppDualSystem />
@@ -572,14 +566,6 @@ function AppContent() {
         <Toaster />
       </div>
     </SidebarProvider>
-  );
-}
-
-function App() {
-  return (
-    <AuthProvider>
-      <AppContent />
-    </AuthProvider>
   );
 }
 
