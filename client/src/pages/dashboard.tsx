@@ -25,7 +25,8 @@ import {
   BookOpen,
   Clock,
   CreditCard,
-  X
+  X,
+  Zap
 } from "lucide-react";
 import { Link } from "wouter";
 import { useAuth } from "@/hooks/useAuth-jwt";
@@ -516,12 +517,28 @@ export default function Dashboard() {
               ) : (
                 <div className="text-center py-8">
                   <p className="dashboard-text-muted mb-4">Você ainda não criou nenhum quiz.</p>
-                  <Link href="/quizzes/new">
-                    <Button>
-                      <Plus className="w-4 h-4 mr-2" />
-                      Criar Primeiro Quiz
+                  <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                    <Link href="/quizzes/new">
+                      <Button>
+                        <Plus className="w-4 h-4 mr-2" />
+                        Criar Primeiro Quiz
+                      </Button>
+                    </Link>
+                    <Button 
+                      variant="outline" 
+                      className="bg-gradient-to-r from-purple-50 to-blue-50 hover:from-purple-100 hover:to-blue-100 border-purple-200 text-purple-700 font-semibold"
+                      onClick={() => {
+                        toast({
+                          title: "Transforme VSL > Quiz",
+                          description: "Funcionalidade de conversão será implementada em breve",
+                          duration: 3000,
+                        });
+                      }}
+                    >
+                      <Zap className="w-4 h-4 mr-2" />
+                      Transforme VSL &gt; Quiz
                     </Button>
-                  </Link>
+                  </div>
                 </div>
               )}
             </CardContent>
