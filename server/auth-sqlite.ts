@@ -69,7 +69,15 @@ export const verifyJWT: RequestHandler = async (req: any, res, next) => {
         return res.status(401).json({ message: "User not found" });
       }
 
-      req.user = user;
+      // Filtrar dados sensíveis para req.user
+      req.user = {
+        id: user.id,
+        email: user.email,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        role: user.role,
+        plan: user.plan,
+      };
       next();
     } catch (jwtError) {
       return res.status(401).json({ message: "Invalid token" });
@@ -295,6 +303,20 @@ export function setupSQLiteAuth(app: Express) {
   app.post('/api/auth/verify', verifyJWT, (req: any, res: Response) => {
     res.json({
       valid: true,
+      user: {
+        id: req.user.id,
+        email: req.user.email,
+        firstName: req.user.firstName,
+        lastName: req.user.lastName,
+        role: req.user.role,
+        plan: req.user.plan,
+      }
+    });
+  });
+
+  // GET endpoint para verificar token e retornar dados do usuário (para o frontend)
+  app.get('/api/auth/verify', verifyJWT, (req: any, res: Response) => {
+    res.json({
       user: {
         id: req.user.id,
         email: req.user.email,
