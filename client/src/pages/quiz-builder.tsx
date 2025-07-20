@@ -428,13 +428,56 @@ export default function QuizBuilder() {
             defaultFlow: true
           }
         } : {
-          pages: [{
-            id: Date.now(),
-            title: "Página 1",
-            elements: []
-          }],
+          // Verificar se existe pageData (funil importado) e converter para estrutura de páginas
+          pages: (() => {
+            try {
+              // Tentar carregar pageData se for funil importado
+              const pageData = (existingQuiz as any).page_data ? 
+                (typeof (existingQuiz as any).page_data === 'string' ? 
+                  JSON.parse((existingQuiz as any).page_data) : 
+                  (existingQuiz as any).page_data) : null;
+              
+              if (pageData && Array.isArray(pageData) && pageData.length > 0) {
+                console.log(`🔄 CARREGANDO FUNIL IMPORTADO: ${pageData.length} páginas detectadas`);
+                return pageData.map((page, index) => ({
+                  id: page.id || Date.now() + index,
+                  title: page.title || `Página ${page.pageNumber || index + 1}`,
+                  elements: page.elements || []
+                }));
+              }
+              
+              // Tentar carregar elements direto se não tem pageData
+              const elements = (existingQuiz as any).elements ? 
+                (typeof (existingQuiz as any).elements === 'string' ? 
+                  JSON.parse((existingQuiz as any).elements) : 
+                  (existingQuiz as any).elements) : [];
+              
+              if (elements && Array.isArray(elements) && elements.length > 0) {
+                console.log(`🔄 CARREGANDO ELEMENTOS DIRETOS: ${elements.length} elementos`);
+                return [{
+                  id: Date.now(),
+                  title: "Página Única",
+                  elements: elements
+                }];
+              }
+              
+              // Fallback para página vazia
+              return [{
+                id: Date.now(),
+                title: "Página 1",
+                elements: []
+              }];
+            } catch (error) {
+              console.error('Erro ao processar dados de páginas:', error);
+              return [{
+                id: Date.now(),
+                title: "Página 1",
+                elements: []
+              }];
+            }
+          })(),
           settings: {
-            theme: "vendzz",
+            theme: (existingQuiz as any).theme?.colors?.primary ? "custom" : "vendzz",
             showProgressBar: true,
             collectEmail: true,
             collectName: true,
@@ -449,15 +492,54 @@ export default function QuizBuilder() {
             defaultFlow: true
           }
         },
-        design: {
-          brandingLogo: (existingQuiz as any).brandingLogo || "",
-          progressBarColor: (existingQuiz as any).progressBarColor || "#10b981",
-          buttonColor: (existingQuiz as any).buttonColor || "#10b981",
-          favicon: (existingQuiz as any).favicon || "",
-          seoTitle: (existingQuiz as any).seoTitle || "",
-          seoDescription: (existingQuiz as any).seoDescription || "",
-          seoKeywords: (existingQuiz as any).seoKeywords || ""
-        },
+        design: (() => {
+          try {
+            // Carregar tema do funil importado se disponível
+            const theme = (existingQuiz as any).theme ? 
+              (typeof (existingQuiz as any).theme === 'string' ? 
+                JSON.parse((existingQuiz as any).theme) : 
+                (existingQuiz as any).theme) : null;
+            
+            const baseDesign = {
+              brandingLogo: (existingQuiz as any).brandingLogo || "",
+              progressBarColor: (existingQuiz as any).progressBarColor || "#10b981",
+              buttonColor: (existingQuiz as any).buttonColor || "#10b981",
+              backgroundColor: "#ffffff",
+              primaryColor: "#10b981",
+              favicon: (existingQuiz as any).favicon || "",
+              seoTitle: (existingQuiz as any).seoTitle || "",
+              seoDescription: (existingQuiz as any).seoDescription || "",
+              seoKeywords: (existingQuiz as any).seoKeywords || ""
+            };
+            
+            // Se tem tema do funil, aplicar as cores
+            if (theme && theme.colors) {
+              console.log('🎨 APLICANDO TEMA DO FUNIL:', theme.colors);
+              return {
+                ...baseDesign,
+                primaryColor: theme.colors.primary || baseDesign.primaryColor,
+                backgroundColor: theme.colors.background || baseDesign.backgroundColor,
+                buttonColor: theme.colors.primary || baseDesign.buttonColor,
+                progressBarColor: theme.colors.primary || baseDesign.progressBarColor
+              };
+            }
+            
+            return baseDesign;
+          } catch (error) {
+            console.error('Erro ao processar tema:', error);
+            return {
+              brandingLogo: "",
+              progressBarColor: "#10b981",
+              buttonColor: "#10b981",
+              backgroundColor: "#ffffff",
+              primaryColor: "#10b981",
+              favicon: "",
+              seoTitle: "",
+              seoDescription: "",
+              seoKeywords: ""
+            };
+          }
+        })(),
         isPublished: existingQuiz.isPublished || false,
         facebookPixel: (existingQuiz as any).facebookPixel || "",
         googlePixel: (existingQuiz as any).googlePixel || "",
