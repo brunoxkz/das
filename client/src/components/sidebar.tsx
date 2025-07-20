@@ -4,11 +4,11 @@ import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { NotificationSystem } from "@/components/notification-system";
-import { LanguageSelector } from "@/components/language-selector";
+// import { LanguageSelector } from "@/components/language-selector"; // Removido - usando World Icon
 import { ThemeToggle } from "@/components/theme-toggle";
 // import { useLanguage } from "@/hooks/useLanguage";
 import { useSidebar } from "@/hooks/useSidebar";
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { MobileSidebar, FloatingMobileMenu } from "@/components/mobile-sidebar";
 
 import { 
@@ -56,7 +56,8 @@ import {
   Play,
   Download,
   Calendar,
-  MessageCircle
+  MessageCircle,
+  Languages
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -68,11 +69,28 @@ export function Sidebar() {
   const { isCollapsed, toggleSidebar } = useSidebar();
   const [expandedCategories, setExpandedCategories] = useState<string[]>(["Principal"]);
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
+  const [showLanguageDropdown, setShowLanguageDropdown] = useState(false);
+  const [currentLanguage, setCurrentLanguage] = useState("pt-BR");
+  const languageDropdownRef = useRef<HTMLDivElement>(null);
 
   // Buscar dados dos quizzes em tempo real
   const { data: quizzes } = useQuery({
     queryKey: ["/api/quizzes"],
   });
+
+  // Fechar dropdown quando clicar fora
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (languageDropdownRef.current && !languageDropdownRef.current.contains(event.target as Node)) {
+        setShowLanguageDropdown(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
 
   const { data: responses } = useQuery({
     queryKey: ["/api/quiz-responses"],
@@ -356,8 +374,44 @@ export function Sidebar() {
         {/* Language and Notification Icons (moved below) */}
         {!isCollapsed && (
           <div className="flex items-center justify-center space-x-2 mt-3">
-            {/* Language Selector */}
-            <LanguageSelector />
+            {/* Language Selector - World Icon with Dropdown */}
+            <div className="relative" ref={languageDropdownRef}>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setShowLanguageDropdown(!showLanguageDropdown)}
+                className="flex items-center gap-2 h-8 px-2 hover:bg-muted"
+              >
+                <Globe className="w-4 h-4" />
+                <span className="text-xs">{currentLanguage === "pt-BR" ? "PT-BR" : "EN-US"}</span>
+                <ChevronDown className="w-3 h-3" />
+              </Button>
+              
+              {showLanguageDropdown && (
+                <div className="absolute top-full left-0 mt-1 bg-background border border-border rounded-md shadow-lg z-50 min-w-[120px]">
+                  <div className="py-1">
+                    <button
+                      className="w-full px-3 py-2 text-left text-sm hover:bg-muted flex items-center gap-2"
+                      onClick={() => {
+                        setCurrentLanguage("pt-BR");
+                        setShowLanguageDropdown(false);
+                      }}
+                    >
+                      🇧🇷 Português
+                    </button>
+                    <button
+                      className="w-full px-3 py-2 text-left text-sm hover:bg-muted flex items-center gap-2"
+                      onClick={() => {
+                        setCurrentLanguage("en-US");
+                        setShowLanguageDropdown(false);
+                      }}
+                    >
+                      🇺🇸 English
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
             
             {/* Theme Toggle - DESATIVADO TEMPORARIAMENTE */}
             {/* <ThemeToggle /> */}
@@ -369,8 +423,42 @@ export function Sidebar() {
 
         {isCollapsed && (
           <div className="flex flex-col items-center space-y-1 mt-3">
-            {/* Language Selector - Collapsed */}
-            <LanguageSelector collapsed={true} />
+            {/* Language Selector - World Icon Only */}
+            <div className="relative" ref={languageDropdownRef}>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setShowLanguageDropdown(!showLanguageDropdown)}
+                className="flex items-center justify-center w-8 h-8 p-0 hover:bg-muted"
+              >
+                <Globe className="w-4 h-4" />
+              </Button>
+              
+              {showLanguageDropdown && (
+                <div className="absolute top-full left-0 mt-1 bg-background border border-border rounded-md shadow-lg z-50 min-w-[120px]">
+                  <div className="py-1">
+                    <button
+                      className="w-full px-3 py-2 text-left text-sm hover:bg-muted flex items-center gap-2"
+                      onClick={() => {
+                        setCurrentLanguage("pt-BR");
+                        setShowLanguageDropdown(false);
+                      }}
+                    >
+                      🇧🇷 Português
+                    </button>
+                    <button
+                      className="w-full px-3 py-2 text-left text-sm hover:bg-muted flex items-center gap-2"
+                      onClick={() => {
+                        setCurrentLanguage("en-US");
+                        setShowLanguageDropdown(false);
+                      }}
+                    >
+                      🇺🇸 English
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
             
             {/* Theme Toggle - DESATIVADO TEMPORARIAMENTE */}
             {/* <ThemeToggle /> */}
@@ -555,11 +643,13 @@ export function Sidebar() {
           {bottomItems.map((item) => (
             <Link key={item.href} href={item.href}>
               <Button
-                variant={item.active ? "secondary" : "ghost"}
+                variant="ghost"
                 className={cn(
                   "w-full justify-start text-foreground hover:bg-accent hover:text-accent-foreground",
                   isCollapsed ? "px-0" : "px-3",
-                  item.active && "bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-200 border-l-4 border-green-500"
+                  item.active && "bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-200 border-l-4 border-green-500",
+                  // Aplicar classes específicas apenas quando NÃO estiver ativo
+                  !item.active && item.className
                 )}
               >
                 {item.icon}
