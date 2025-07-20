@@ -35,6 +35,7 @@ import { useEffect, useState } from "react";
 import React from "react";
 import { TutorialTour, dashboardTutorialSteps } from "@/components/tutorial-tour";
 import { queryClient, apiRequest } from "@/lib/queryClient";
+import QuizFullPreview from "@/components/QuizFullPreview";
 // import { useLanguage } from "@/hooks/useLanguage";
 
 export default function Dashboard() {
@@ -42,6 +43,8 @@ export default function Dashboard() {
   const { isAuthenticated, user } = useAuth();
   const [showTutorial, setShowTutorial] = useState(false);
   const [showTrialBanner, setShowTrialBanner] = useState(true);
+  const [previewQuiz, setPreviewQuiz] = useState(null);
+  const [showQuizPreview, setShowQuizPreview] = useState(false);
   // const { t } = useLanguage();
 
   // Buscar dados do usuário
@@ -180,8 +183,8 @@ export default function Dashboard() {
   };
 
   const handlePreviewQuiz = (quiz: any) => {
-    const previewUrl = `/quiz/${quiz.id}?preview=true`;
-    window.open(previewUrl, '_blank');
+    setPreviewQuiz(quiz);
+    setShowQuizPreview(true);
   };
 
   const handlePublicUrl = (quiz: any) => {
@@ -604,6 +607,16 @@ export default function Dashboard() {
               onComplete={() => setShowTutorial(false)}
             />
           )}
+
+          {/* Quiz Full Preview */}
+          <QuizFullPreview
+            quiz={previewQuiz}
+            isOpen={showQuizPreview}
+            onClose={() => {
+              setShowQuizPreview(false);
+              setPreviewQuiz(null);
+            }}
+          />
         </div>
       </div>
     </div>
