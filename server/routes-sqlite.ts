@@ -18565,71 +18565,166 @@ app.get("/api/whatsapp-extension/pending", verifyJWT, async (req: any, res: Resp
 
   app.post('/api/funnel/import', verifyJWT, async (req: any, res) => {
     try {
-      const { funnelData } = req.body;
+      const { funnelId, title, url } = req.body;
       const userId = req.user?.id;
 
-      if (!funnelData) {
+      if (!funnelId) {
         return res.status(400).json({
           success: false,
-          error: 'Dados do funil são obrigatórios'
+          error: 'ID do funil é obrigatório'
         });
       }
 
-      // Criar quiz a partir do funil importado
-      const quizId = nanoid();
-      const quiz = {
-        id: quizId,
-        title: funnelData.title,
-        description: funnelData.description,
-        elements: JSON.stringify(funnelData.elements),
-        theme: JSON.stringify(funnelData.theme),
-        settings: JSON.stringify(funnelData.settings || {}),
-        userId: userId,
-        status: 'draft',
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
-      };
+      console.log(`🚀 IMPORTANDO FUNIL: ${funnelId} para usuário ${userId}`);
 
-      // Salvar quiz no banco
+      // Buscar dados do funil já analisado no cache ou re-analisar
+      let funnelData = null;
+      
       try {
-        sqlite.prepare(`
-          INSERT INTO quizzes (id, title, description, elements, theme, settings, userId, status, createdAt, updatedAt)
-          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        `).run(
-          quiz.id,
-          quiz.title,
-          quiz.description,
-          quiz.elements,
-          quiz.theme,
-          quiz.settings,
-          quiz.userId,
-          quiz.status,
-          quiz.createdAt,
-          quiz.updatedAt
+        // Re-analisar o funil usando a URL se fornecida
+        if (url) {
+          const { CompleteAnalyzer } = await import('./funnel-analyzer-complete');
+          funnelData = await CompleteAnalyzer.analyzeFunnel(url);
+          console.log(`📊 Funil re-analisado: ${funnelData.pages} páginas, ${funnelData.elements.length} elementos`);
+        } else {
+          // Fallback: criar estrutura básica com base no ID
+          funnelData = {
+            id: funnelId,
+            title: title || 'Funil Importado',
+            description: 'Funil importado e pronto para customização',
+            pages: 3,
+            pageData: [
+              {
+                id: nanoid(),
+                pageNumber: 1,
+                title: 'Página Inicial',
+                elements: [
+                  {
+                    id: nanoid(),
+                    type: 'headline',
+                    position: 0,
+                    properties: {
+                      title: title || 'Bem-vindo ao Quiz',
+                      style: 'h1',
+                      fontSize: 'xl',
+                      textColor: '#000000',
+                      alignment: 'center'
+                    }
+                  }
+                ],
+                settings: { background: '#ffffff' }
+              }
+            ],
+            elements: [],
+            theme: { colors: { primary: '#3b82f6' } },
+            settings: { progressBar: true },
+            metadata: {
+              originalUrl: url || '',
+              importedAt: new Date().toISOString(),
+              detectionMethod: 'import_request'
+            }
+          };
+          
+          // Consolidar elementos
+          funnelData.elements = funnelData.pageData.flatMap(page => page.elements);
+        }
+      } catch (analysisError) {
+        console.error('❌ Erro ao analisar funil durante importação:', analysisError);
+        return res.status(400).json({
+          success: false,
+          error: 'Não foi possível analisar o funil para importação'
+        });
+      }
+
+      // Criar quiz importado no banco de dados
+      const newQuizId = nanoid();
+      const currentTime = new Date().toISOString();
+      
+      try {
+        // Garantir que tabela existe
+        sqlite.exec(`
+          CREATE TABLE IF NOT EXISTS quizzes (
+            id TEXT PRIMARY KEY,
+            user_id TEXT NOT NULL,
+            title TEXT NOT NULL,
+            description TEXT DEFAULT '',
+            elements TEXT DEFAULT '[]',
+            pages INTEGER DEFAULT 1,
+            theme TEXT DEFAULT '{}',
+            settings TEXT DEFAULT '{}',
+            status TEXT DEFAULT 'draft',
+            created_at TEXT NOT NULL,
+            updated_at TEXT NOT NULL,
+            variables TEXT DEFAULT '[]',
+            page_data TEXT DEFAULT '[]',
+            original_url TEXT,
+            imported_at TEXT
+          )
+        `);
+
+        // Adicionar colunas se não existirem
+        try {
+          sqlite.exec(`ALTER TABLE quizzes ADD COLUMN page_data TEXT DEFAULT '[]'`);
+        } catch (e) {}
+        try {
+          sqlite.exec(`ALTER TABLE quizzes ADD COLUMN original_url TEXT`);
+        } catch (e) {}
+        try {
+          sqlite.exec(`ALTER TABLE quizzes ADD COLUMN imported_at TEXT`);
+        } catch (e) {}
+
+        const insertQuery = `
+          INSERT INTO quizzes (
+            id, user_id, title, description, elements, pages, theme, settings,
+            status, created_at, updated_at, variables, page_data, original_url, imported_at
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        `;
+
+        sqlite.prepare(insertQuery).run(
+          newQuizId,
+          userId,
+          funnelData.title,
+          funnelData.description,
+          JSON.stringify(funnelData.elements || []),
+          funnelData.pages || Math.max(1, funnelData.pageData?.length || 1),
+          JSON.stringify(funnelData.theme || { colors: { primary: '#3b82f6' } }),
+          JSON.stringify(funnelData.settings || { progressBar: true }),
+          'draft',
+          currentTime,
+          currentTime,
+          JSON.stringify([]),
+          JSON.stringify(funnelData.pageData || []),
+          funnelData.metadata?.originalUrl || url || '',
+          currentTime
         );
 
-        console.log('✅ Quiz importado com sucesso:', quizId);
+        console.log(`✅ FUNIL IMPORTADO COM SUCESSO: ${newQuizId}`);
+        console.log(`📊 Dados: ${funnelData.pages} páginas, ${funnelData.elements?.length || 0} elementos`);
 
         res.json({
           success: true,
           data: {
-            quizId: quizId,
-            title: quiz.title,
-            editUrl: `/quizzes/${quizId}/edit`
+            id: newQuizId,
+            title: funnelData.title,
+            description: funnelData.description,
+            pages: funnelData.pages,
+            elements: funnelData.elements?.length || 0,
+            editUrl: `/quiz-builder?edit=${newQuizId}`,
+            previewUrl: `/quiz-preview?id=${newQuizId}`
           },
-          message: 'Funil importado com sucesso'
+          message: `Funil importado com sucesso! ${funnelData.pages} páginas e ${funnelData.elements?.length || 0} elementos prontos para edição.`
         });
 
       } catch (dbError) {
-        console.error('Erro ao salvar quiz importado:', dbError);
+        console.error('❌ Erro ao salvar quiz importado:', dbError);
         res.status(500).json({
           success: false,
-          error: 'Erro ao salvar quiz importado'
+          error: 'Erro ao salvar funil importado no banco de dados'
         });
       }
 
     } catch (error) {
-      console.error('Erro ao importar funil:', error);
+      console.error('❌ Erro geral ao importar funil:', error);
       res.status(500).json({
         success: false,
         error: 'Erro interno do servidor'

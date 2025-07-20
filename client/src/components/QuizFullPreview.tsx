@@ -208,8 +208,8 @@ export default function QuizFullPreview({ quiz, isOpen, onClose }: QuizFullPrevi
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-4xl max-h-[90vh] p-0">
-        <DialogHeader className="p-6 pb-0">
+      <DialogContent className="max-w-4xl h-[90vh] p-0 flex flex-col">
+        <DialogHeader className="p-6 pb-4 border-b flex-shrink-0">
           <div className="flex items-center justify-between">
             <div>
               <DialogTitle className="text-2xl font-bold text-gray-900">
@@ -243,26 +243,28 @@ export default function QuizFullPreview({ quiz, isOpen, onClose }: QuizFullPrevi
           </div>
         </DialogHeader>
 
-        <ScrollArea className="flex-1 p-6 pt-4">
-          <div className="space-y-0">
-            {filteredPages.map((page, index) => (
-              <PageRenderer 
-                key={page.id} 
-                page={page} 
-                isLast={index === filteredPages.length - 1}
-              />
-            ))}
-          </div>
+        <div className="flex-1 overflow-hidden">
+          <ScrollArea className="h-full">
+            <div className="p-6 space-y-0">
+              {filteredPages.map((page, index) => (
+                <PageRenderer 
+                  key={page.id} 
+                  page={page} 
+                  isLast={index === filteredPages.length - 1}
+                />
+              ))}
 
-          {filteredPages.length === 0 && (
-            <div className="text-center py-12 text-gray-500">
-              <Eye className="w-12 h-12 mx-auto mb-4 opacity-50" />
-              <p>Nenhuma página encontrada para o filtro selecionado.</p>
+              {filteredPages.length === 0 && (
+                <div className="text-center py-12 text-gray-500">
+                  <Eye className="w-12 h-12 mx-auto mb-4 opacity-50" />
+                  <p>Nenhuma página encontrada para o filtro selecionado.</p>
+                </div>
+              )}
             </div>
-          )}
-        </ScrollArea>
+          </ScrollArea>
+        </div>
 
-        <div className="p-6 pt-0 border-t bg-gray-50">
+        <div className="p-6 pt-4 border-t bg-gray-50 flex-shrink-0">
           <div className="flex items-center justify-between">
             <div className="text-sm text-gray-600">
               Visualizando {filteredPages.length} de {quiz.pages} páginas

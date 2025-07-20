@@ -5,9 +5,10 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
+import { useQuery } from "@tanstack/react-query";
 import { 
   Download, Globe, Link, Eye, CheckCircle, PlayCircle, 
-  Upload, Code, Copy
+  Upload, Code, Copy, Plus
 } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
 import QuizFullPreview from "@/components/QuizFullPreview";
@@ -18,7 +19,90 @@ export default function FunnelImporter() {
   const [analysisResult, setAnalysisResult] = useState<any>(null);
   const [showQuizPreview, setShowQuizPreview] = useState(false);
   const [previewQuiz, setPreviewQuiz] = useState<any>(null);
+  const [showImportConfirm, setShowImportConfirm] = useState(false);
+  const [importing, setImporting] = useState(false);
   const { toast } = useToast();
+
+  // Buscar dados do usuário e limites do plano
+  const { data: userData } = useQuery({
+    queryKey: ['/api/auth/user']
+  });
+
+  const { data: userQuizzes } = useQuery({
+    queryKey: ['/api/quizzes']
+  });
+
+  // Verificar limites do plano
+  const checkPlanLimits = () => {
+    if (!userData || !userQuizzes) return false;
+    
+    const planLimits = {
+      free: 3,
+      basic: Infinity,
+      premium: Infinity,
+      enterprise: Infinity
+    };
+    
+    const currentPlan = userData.plan || 'free';
+    const currentQuizCount = userQuizzes.length || 0;
+    const limit = planLimits[currentPlan as keyof typeof planLimits] || 3;
+    
+    return currentQuizCount < limit;
+  };
+
+  const getPlanInfo = () => {
+    if (!userData || !userQuizzes) return { current: 0, limit: 3, plan: 'free' };
+    
+    const planLimits = {
+      free: 3,
+      basic: Infinity,
+      premium: Infinity,
+      enterprise: Infinity
+    };
+    
+    const currentPlan = userData.plan || 'free';
+    const currentQuizCount = userQuizzes.length || 0;
+    const limit = planLimits[currentPlan as keyof typeof planLimits] || 3;
+    
+    return { current: currentQuizCount, limit, plan: currentPlan };
+  };
+
+  const importFunnel = async () => {
+    if (!analysisResult || !checkPlanLimits()) return;
+    
+    setImporting(true);
+    setShowImportConfirm(false);
+    
+    try {
+      // Criar quiz importado na conta do usuário
+      const response = await apiRequest("POST", "/api/funnel/import", {
+        funnelId: analysisResult.data.id,
+        title: `${analysisResult.data.title} (Importado)`,
+        url: url.trim()
+      });
+
+      if (response.success) {
+        toast({
+          title: "🎉 Funil importado com sucesso!",
+          description: `Quiz "${response.data.title}" foi criado na sua conta.`,
+        });
+        
+        // Redirecionar para edição do quiz importado
+        window.location.href = `/quiz-builder?edit=${response.data.id}`;
+      } else {
+        throw new Error(response.error || "Erro na importação");
+      }
+    } catch (error: any) {
+      console.error("❌ ERRO NA IMPORTAÇÃO:", error);
+      toast({
+        title: "Erro na importação",
+        description: error.message || "Não foi possível importar este funil.",
+        variant: "destructive"
+      });
+    } finally {
+      setImporting(false);
+    }
+  };
 
   const analyzeUrl = async () => {
     if (!url.trim()) {
@@ -193,6 +277,48 @@ export default function FunnelImporter() {
                   </div>
                 </div>
 
+                {/* Botão de Importar */}
+                <div className="mb-4 p-4 bg-gradient-to-r from-purple-50 to-blue-50 dark:from-purple-900/20 dark:to-blue-900/20 rounded-lg border border-purple-200 dark:border-purple-700">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h3 className="font-semibold text-purple-800 dark:text-purple-200 mb-1">
+                        Importar para sua conta
+                      </h3>
+                      <p className="text-sm text-purple-600 dark:text-purple-300">
+                        Adicione este funil aos seus quizzes e customize como desejar
+                      </p>
+                    </div>
+                    <Button
+                      onClick={() => {
+                        if (!checkPlanLimits()) {
+                          const planInfo = getPlanInfo();
+                          toast({
+                            title: "Limite de quizzes atingido",
+                            description: `Plano ${planInfo.plan}: ${planInfo.current}/${planInfo.limit === Infinity ? '∞' : planInfo.limit} quizzes. Faça upgrade para criar mais quizzes.`,
+                            variant: "destructive"
+                          });
+                          return;
+                        }
+                        setShowImportConfirm(true);
+                      }}
+                      disabled={importing}
+                      className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700"
+                    >
+                      {importing ? (
+                        <>
+                          <div className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full mr-2" />
+                          Importando...
+                        </>
+                      ) : (
+                        <>
+                          <Plus className="w-4 h-4 mr-2" />
+                          IMPORTAR FUNIL
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                </div>
+
                 <div className="flex gap-4 pt-4 border-t">
                   <a
                     href={`/quiz-builder?edit=${analysisResult.data.quizId || analysisResult.data.id}`}
@@ -247,6 +373,70 @@ export default function FunnelImporter() {
             setPreviewQuiz(null);
           }}
         />
+
+        {/* Modal de Confirmação de Importação */}
+        {showImportConfirm && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+            <div className="bg-white dark:bg-gray-800 rounded-lg p-6 max-w-md w-full mx-4">
+              <h3 className="text-lg font-semibold mb-4">Confirmar Importação</h3>
+              
+              <div className="mb-6">
+                <p className="text-gray-600 dark:text-gray-300 mb-4">
+                  Tem certeza que deseja importar este funil para sua conta?
+                </p>
+                
+                {analysisResult && (
+                  <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4 space-y-2">
+                    <div className="flex justify-between">
+                      <span className="font-medium">Funil:</span>
+                      <span>{analysisResult.data.title}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="font-medium">Páginas:</span>
+                      <span>{analysisResult.data.pages}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="font-medium">Elementos:</span>
+                      <span>{analysisResult.data.elements.length}</span>
+                    </div>
+                    
+                    {(() => {
+                      const planInfo = getPlanInfo();
+                      return (
+                        <div className="flex justify-between pt-2 border-t">
+                          <span className="font-medium">Seus quizzes:</span>
+                          <span>
+                            {planInfo.current}/{planInfo.limit === Infinity ? '∞' : planInfo.limit}
+                            <Badge variant="outline" className="ml-2 text-xs">
+                              {planInfo.plan}
+                            </Badge>
+                          </span>
+                        </div>
+                      );
+                    })()}
+                  </div>
+                )}
+              </div>
+              
+              <div className="flex gap-3">
+                <Button
+                  variant="outline"
+                  onClick={() => setShowImportConfirm(false)}
+                  className="flex-1"
+                >
+                  Cancelar
+                </Button>
+                <Button
+                  onClick={importFunnel}
+                  className="flex-1 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700"
+                >
+                  <Plus className="w-4 h-4 mr-2" />
+                  Importar Agora
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
