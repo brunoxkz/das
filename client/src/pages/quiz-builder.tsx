@@ -826,7 +826,58 @@ export default function QuizBuilder() {
     return [...new Set(variables)]; // Remove duplicatas
   };
 
-  // Função removida - agora gerenciada pelo PageEditor
+  // Função de preview com URL única e popup
+  const handlePreview = async () => {
+    try {
+      // Primeiro salvar o quiz atual para garantir que os dados estejam atualizados
+      if (currentQuizId) {
+        console.log('🔄 Salvando quiz antes do preview...');
+        await saveMutation.mutateAsync();
+      } else {
+        // Se não tem ID, salvar como novo quiz primeiro
+        console.log('🔄 Criando novo quiz para preview...');
+        const result = await saveMutation.mutateAsync();
+        if (result?.quiz?.id) {
+          setCurrentQuizId(result.quiz.id);
+        }
+      }
+
+      // Gerar URL única de preview
+      const previewId = currentQuizId || Date.now().toString();
+      const previewUrl = `${window.location.origin}/quiz/${previewId}?preview=1`;
+      
+      console.log('🎯 Abrindo preview:', previewUrl);
+      
+      // Abrir em popup
+      const popup = window.open(
+        previewUrl,
+        'quiz-preview',
+        'width=800,height=600,scrollbars=yes,resizable=yes,status=no,location=no,toolbar=no,menubar=no'
+      );
+      
+      if (!popup) {
+        // Fallback: abrir em nova aba se popup bloqueado
+        window.open(previewUrl, '_blank');
+        toast({
+          title: "Preview aberto",
+          description: "O preview foi aberto em uma nova aba.",
+        });
+      } else {
+        toast({
+          title: "Preview aberto",
+          description: "O preview foi aberto em uma popup. Verifique se não foi bloqueado pelo navegador.",
+        });
+      }
+      
+    } catch (error) {
+      console.error('Erro ao abrir preview:', error);
+      toast({
+        title: "Erro no preview",
+        description: "Não foi possível abrir o preview. Tente salvar o quiz primeiro.",
+        variant: "destructive",
+      });
+    }
+  };
 
   if (authLoading || (isEditing && quizLoading)) {
     return (
@@ -865,7 +916,7 @@ export default function QuizBuilder() {
             <Button
               variant="outline"
               size="sm"
-              onClick={() => setActiveTab("preview")}
+              onClick={handlePreview}
             >
               <Eye className="w-4 h-4 mr-2" />
               {t('quizBuilder.preview')}
