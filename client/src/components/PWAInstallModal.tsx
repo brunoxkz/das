@@ -128,13 +128,13 @@ export default function PWAInstallModal({ isOpen, onClose, onInstall }: PWAInsta
     <div className="space-y-4">
       <div className="text-center">
         <div className="w-16 h-16 bg-green-600 rounded-full flex items-center justify-center mx-auto mb-4">
-          <Monitor className="w-8 h-8 text-white" />
+          <Smartphone className="w-8 h-8 text-white" />
         </div>
         <h3 className="text-lg font-semibold text-white mb-2">
-          Instalar no Computador
+          Instalar no iPhone
         </h3>
         <p className="text-gray-300 text-sm mb-4">
-          Adicione o Vendzz como aplicativo do desktop
+          Para a melhor experiência, acesse pelo Safari no iPhone
         </p>
       </div>
 
@@ -144,8 +144,8 @@ export default function PWAInstallModal({ isOpen, onClose, onInstall }: PWAInsta
             1
           </div>
           <div>
-            <p className="text-white font-medium">Procure o ícone de instalação</p>
-            <p className="text-gray-400 text-sm">Na barra de endereços, procure por <Download className="w-4 h-4 inline mx-1" /> ou ⊕</p>
+            <p className="text-white font-medium">Abra no Safari (iPhone)</p>
+            <p className="text-gray-400 text-sm">Use o navegador Safari para acessar esta página</p>
           </div>
         </div>
 
@@ -154,8 +154,8 @@ export default function PWAInstallModal({ isOpen, onClose, onInstall }: PWAInsta
             2
           </div>
           <div>
-            <p className="text-white font-medium">Clique em "Instalar Vendzz"</p>
-            <p className="text-gray-400 text-sm">O navegador mostrará uma opção de instalação</p>
+            <p className="text-white font-medium">Toque no botão compartilhar</p>
+            <p className="text-gray-400 text-sm">Encontre o ícone <Share className="w-4 h-4 inline mx-1" /> na parte inferior</p>
           </div>
         </div>
 
@@ -164,8 +164,8 @@ export default function PWAInstallModal({ isOpen, onClose, onInstall }: PWAInsta
             3
           </div>
           <div>
-            <p className="text-white font-medium">Confirme a instalação</p>
-            <p className="text-gray-400 text-sm">O app será adicionado ao seu desktop e menu iniciar</p>
+            <p className="text-white font-medium">Adicionar à Tela de Início</p>
+            <p className="text-gray-400 text-sm">Selecione "Adicionar à Tela de Início" <Plus className="w-4 h-4 inline mx-1" /></p>
           </div>
         </div>
       </div>

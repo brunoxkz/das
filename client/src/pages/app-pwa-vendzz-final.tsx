@@ -12,6 +12,7 @@ import { Settings, Users, Target, TrendingUp, Zap, BarChart3, BookOpen, Bot, Mes
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest } from '@/lib/queryClient';
 import { useAuth } from '@/hooks/useAuth';
+// @ts-ignore
 import logoVendzz from '@assets/logo-vendzz-white_1753041219534.png';
 import PWAInstallModal from '@/components/PWAInstallModal';
 
@@ -22,7 +23,15 @@ export default function AppPWAVendzz() {
   // Estados da aplicação
   const [quizzes, setQuizzes] = useState([]);
   const [campaigns, setCampaigns] = useState([]);
-  const [forumPosts, setForumPosts] = useState([]);
+  interface ForumPost {
+    id: number;
+    title: string;
+    category: string;
+    replies: number;
+    author: string;
+    time: string;
+  }
+  const [forumPosts, setForumPosts] = useState<ForumPost[]>([]);
   const [analytics, setAnalytics] = useState({
     totalQuizzes: 0,
     totalResponses: 0,
@@ -33,8 +42,9 @@ export default function AppPWAVendzz() {
   // Estados PWA
   const [showInstallModal, setShowInstallModal] = useState(false);
   const [installPromptShown, setInstallPromptShown] = useState(false);
-  const [notificationPermission, setNotificationPermission] = useState('default');
-  const [deferredPrompt, setDeferredPrompt] = useState(null);
+  const [notificationPermission, setNotificationPermission] = useState<NotificationPermission>('default');
+  const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
+  const [currentTab, setCurrentTab] = useState('quizzes');
 
   // Mostrar modal de instalação primeiro, depois verificar login
   useEffect(() => {
@@ -61,10 +71,33 @@ export default function AppPWAVendzz() {
     }
   }, [isLoading, isAuthenticated, showInstallModal]);
 
+  // Função para solicitar permissão de notificações push
+  const requestNotificationPermission = async () => {
+    try {
+      if ('Notification' in window) {
+        const permission = await Notification.requestPermission();
+        setNotificationPermission(permission);
+        
+        if (permission === 'granted') {
+          console.log('🔔 Permissão de notificação concedida');
+          toast({
+            title: "Notificações Ativadas",
+            description: "Agora você receberá notificações importantes do Vendzz",
+            variant: "default",
+          });
+        } else {
+          console.log('🚫 Permissão de notificação negada');
+        }
+      }
+    } catch (error) {
+      console.error('❌ Erro ao solicitar permissão de notificação:', error);
+    }
+  };
+
   // PWA Install Prompt e Notificações
   useEffect(() => {
     // 1. Capturar evento beforeinstallprompt (Android/Desktop)
-    const handleBeforeInstallPrompt = (e) => {
+    const handleBeforeInstallPrompt = (e: any) => {
       e.preventDefault();
       setDeferredPrompt(e);
     };
@@ -133,6 +166,16 @@ export default function AppPWAVendzz() {
       window.location.href = '/login-pwa';
     }
   };
+
+  // Solicitar permissão de notificação quando entrar no PWA (após login)
+  useEffect(() => {
+    if (isAuthenticated && notificationPermission === 'default') {
+      // Delay para dar tempo do usuário se acostumar com a interface
+      setTimeout(() => {
+        requestNotificationPermission();
+      }, 3000); // 3 segundos após login
+    }
+  }, [isAuthenticated, notificationPermission]);
 
   const handleInstallFromModal = async () => {
     if (deferredPrompt) {

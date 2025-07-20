@@ -159,9 +159,6 @@ export default function LoginPWA() {
             alt="Vendzz" 
             className="h-16 w-auto mx-auto mb-4"
           />
-          <h1 className="text-2xl font-bold text-white mb-2">
-            Vendzz App
-          </h1>
           <p className="text-gray-400 text-sm">
             {isMobile ? 'Acesso Mobile' : 'Plataforma de Quiz e Marketing'}
           </p>
@@ -238,12 +235,6 @@ export default function LoginPWA() {
               <button className="text-green-400 hover:text-green-300 text-sm">
                 Esqueci minha senha
               </button>
-              
-              <div className="pt-4 border-t border-gray-700">
-                <p className="text-gray-400 text-xs">
-                  Dados de teste: admin@admin.com / admin123
-                </p>
-              </div>
             </div>
           </CardContent>
         </Card>
