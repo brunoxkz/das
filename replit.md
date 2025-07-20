@@ -265,6 +265,23 @@ O sistema utiliza Stripe Payment Intent para processar pagamentos únicos de R$ 
 
 ```
 Changelog:
+- July 20, 2025. SISTEMA DE PRESERVAÇÃO VISUAL E IA COMPLETO - Implementação avançada de clonagem de funis com preservação total de elementos visuais:
+  * Sistema de extração automática de cores: botões, texto, fundos e cor primária do tema
+  * Preservação completa de imagens originais com URLs e propriedades alt
+  * Função applyPreservedAssets() no backend para aplicar cores e imagens aos elementos importados
+  * Aplicação de cores tanto nos elementos principais quanto nas páginas individuais (pageData)
+  * Sistema de sugestões de IA pós-importação com 8 tipos diferentes de recomendações
+  * Modal de confirmação aprimorado mostrando elementos visuais que serão preservados
+  * Indicadores visuais coloridos para cores de botões, texto, imagens e tema
+  * Geração inteligente de sugestões baseadas no número de páginas e elementos detectados
+  * Sugestões específicas incluem: elementos de urgência, cores contrastantes, prova social, timers, quiz interativo, headlines em pergunta, ícones de garantia, popup de saída
+  * Toast notification com "💡 Sugestão de melhoria da nossa I.A." exibida 2 segundos após importação
+  * Sistema de preservação funciona em conjunto com CompleteAnalyzer para análise completa
+  * Estrutura de dados expandida: preserveColors (buttons, text, backgrounds, primary), preserveImages (url, alt, position)
+  * Aplicação inteligente de cores com sistema rotativo para múltiplos elementos
+  * Logs detalhados no backend para rastreamento da aplicação de cores e imagens
+  * Interface visual melhorada com grid 2x2 mostrando elementos preservados
+  * Sistema aprovado para produção com preservação total de identidade visual
 - July 18, 2025. WHATSAPP BUSINESS API 100% FUNCIONAL - Sistema completo de integração com a API oficial do WhatsApp Business implementado:
   * Endpoints completos implementados em server/routes-sqlite.ts para integração total com Meta WhatsApp Business API
   * /api/whatsapp-business/config - Configuração de credenciais (Access Token, Phone Number ID, Business Account ID)

@@ -18010,6 +18010,95 @@ app.get("/api/whatsapp-extension/pending", verifyJWT, async (req: any, res: Resp
   const healthCheckSystem = new HealthCheckSystem();
   healthCheckSystem.registerRoutes(app);
 
+  // FUNÇÃO PARA APLICAR CORES E IMAGENS PRESERVADAS
+  function applyPreservedAssets(funnelData: any, preserveColors: any, preserveImages: any) {
+    console.log(`🎨 APLICANDO CORES E IMAGENS PRESERVADAS`);
+    
+    // Aplicar cores preservadas
+    if (preserveColors) {
+      // Aplicar cor primária ao tema
+      if (preserveColors.primary) {
+        if (!funnelData.theme) funnelData.theme = {};
+        if (!funnelData.theme.colors) funnelData.theme.colors = {};
+        funnelData.theme.colors.primary = preserveColors.primary;
+        console.log(`🎨 Cor primária aplicada: ${preserveColors.primary}`);
+      }
+
+      // Aplicar cores aos elementos
+      if (funnelData.elements) {
+        funnelData.elements.forEach((element: any, index: number) => {
+          if (element.type === 'button' && preserveColors.buttons.length > 0) {
+            const colorIndex = index % preserveColors.buttons.length;
+            if (!element.properties) element.properties = {};
+            element.properties.backgroundColor = preserveColors.buttons[colorIndex];
+            element.properties.borderColor = preserveColors.buttons[colorIndex];
+            console.log(`🎨 Cor de botão aplicada: ${preserveColors.buttons[colorIndex]}`);
+          }
+          
+          if (preserveColors.text.length > 0) {
+            const colorIndex = index % preserveColors.text.length;
+            if (!element.properties) element.properties = {};
+            if (!element.properties.textColor) {
+              element.properties.textColor = preserveColors.text[colorIndex];
+            }
+          }
+        });
+      }
+
+      // Aplicar cores às páginas também
+      if (funnelData.pageData) {
+        funnelData.pageData.forEach((page: any) => {
+          if (page.elements) {
+            page.elements.forEach((element: any, index: number) => {
+              if (element.type === 'button' && preserveColors.buttons.length > 0) {
+                const colorIndex = index % preserveColors.buttons.length;
+                if (!element.properties) element.properties = {};
+                element.properties.backgroundColor = preserveColors.buttons[colorIndex];
+                element.properties.borderColor = preserveColors.buttons[colorIndex];
+              }
+            });
+          }
+        });
+      }
+    }
+
+    // Aplicar imagens preservadas
+    if (preserveImages && preserveImages.length > 0) {
+      let imageIndex = 0;
+      
+      // Aplicar aos elementos principais
+      if (funnelData.elements) {
+        funnelData.elements.forEach((element: any) => {
+          if (element.type === 'image' && imageIndex < preserveImages.length) {
+            if (!element.properties) element.properties = {};
+            element.properties.imageUrl = preserveImages[imageIndex].url;
+            element.properties.alt = preserveImages[imageIndex].alt;
+            console.log(`🖼️ Imagem aplicada: ${preserveImages[imageIndex].url}`);
+            imageIndex++;
+          }
+        });
+      }
+
+      // Aplicar às páginas também
+      if (funnelData.pageData) {
+        funnelData.pageData.forEach((page: any) => {
+          if (page.elements) {
+            page.elements.forEach((element: any) => {
+              if (element.type === 'image' && imageIndex < preserveImages.length) {
+                if (!element.properties) element.properties = {};
+                element.properties.imageUrl = preserveImages[imageIndex].url;
+                element.properties.alt = preserveImages[imageIndex].alt;
+                imageIndex++;
+              }
+            });
+          }
+        });
+      }
+    }
+
+    return funnelData;
+  }
+
   // ROTAS DE IMPORTAÇÃO DE FUNIS
   app.post('/api/funnel/analyze', verifyJWT, async (req: any, res) => {
     try {
@@ -18565,7 +18654,7 @@ app.get("/api/whatsapp-extension/pending", verifyJWT, async (req: any, res: Resp
 
   app.post('/api/funnel/import', verifyJWT, async (req: any, res) => {
     try {
-      const { funnelId, title, url } = req.body;
+      const { funnelId, title, url, preserveColors, preserveImages } = req.body;
       const userId = req.user?.id;
 
       if (!funnelId) {
@@ -18586,6 +18675,12 @@ app.get("/api/whatsapp-extension/pending", verifyJWT, async (req: any, res: Resp
           const { CompleteAnalyzer } = await import('./funnel-analyzer-complete');
           funnelData = await CompleteAnalyzer.analyzeFunnel(url);
           console.log(`📊 Funil re-analisado: ${funnelData.pages} páginas, ${funnelData.elements.length} elementos`);
+          
+          // APLICAR CORES E IMAGENS PRESERVADAS
+          if (preserveColors || preserveImages) {
+            funnelData = applyPreservedAssets(funnelData, preserveColors, preserveImages);
+            console.log(`🎨 Cores e imagens preservadas aplicadas`);
+          }
         } else {
           // Fallback: criar estrutura básica com base no ID
           funnelData = {
