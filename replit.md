@@ -265,16 +265,17 @@ O sistema utiliza Stripe Payment Intent para processar pagamentos únicos de R$ 
 
 ```
 Changelog:
-- July 20, 2025. VERDE VENDZZ BRANDING COMPLETO DASHBOARD E SIDEBAR - Atualização visual completa com consistência de marca:
-  * Título "Dashboard" atualizado para cor verde Vendzz (#16a34a) removendo gradiente azul/roxo
-  * Botão "Criar Quiz" no dashboard com fundo verde sólido e efeito shock-green
-  * Botão "Criar Quiz" na sidebar atualizado para verde Vendzz consistente com shadow
-  * Botão "Tutorial" melhorado com gradiente verde claro e emoji 🎯 "Tutorial Completo"
-  * Cores padronizadas: bg-green-600 hover:bg-green-700 para todos os botões principais
-  * Efeito shock-green mantido em todos os botões de ação primária
-  * Interface consistente entre dashboard e sidebar com identidade visual unificada
-  * Sistema de cores Vendzz aplicado: verde primário para ações principais, gradientes suaves para secundárias
-  * Experiência visual aprimorada: botões com contraste adequado e feedback hover otimizado
+- July 20, 2025. MODO FÓRUM E BRANDING VENDZZ COMPLETO - Sistema de máscara de fórum implementado com interface completa:
+  * Botão "Modo Fórum" criado ao lado do "Criar Quiz" para alternar para visualização de fórum
+  * Sistema de máscara implementado: campanhas aparecem em linha minimalista quando modo fórum ativo
+  * Fórum versão black criado com categorias: Marketing Digital, Quiz Builder, Empreendedorismo
+  * Botão "Voltar Dashboard" implementado para retornar à visualização normal
+  * Tutorial simplificado para apenas "Tutorial" com texto preto, sem ícones
+  * Cores Vendzz padronizadas: bg-green-600 hover:bg-green-700 em todos os botões principais
+  * Interface híbrida funcional: dashboard normal + modo fórum como overlay
+  * Conteúdo fórum inclui discussões simuladas, categorias com estatísticas, seção "Criar Nova Discussão"
+  * Sistema de toggle perfeito entre modos dashboard e fórum
+  * Experiência visual unificada mantendo identidade Vendzz verde consistente
 Changelog:
 - July 20, 2025. SISTEMA UPLOAD .TXT 100% FUNCIONAL - Sistema completo de upload de arquivos .txt para campanhas SMS e WhatsApp implementado com sucesso:
   * Handler seguro txt-upload-handler.ts criado com validação completa e sanitização automática

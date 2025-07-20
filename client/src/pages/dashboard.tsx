@@ -1,3 +1,4 @@
+import React, { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -31,8 +32,6 @@ import {
 import { Link } from "wouter";
 import { useAuth } from "@/hooks/useAuth-jwt";
 import { useToast } from "@/hooks/use-toast";
-import { useEffect, useState } from "react";
-import React from "react";
 import { TutorialTour, dashboardTutorialSteps } from "@/components/tutorial-tour";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import QuizFullPreview from "@/components/QuizFullPreview";
@@ -45,6 +44,7 @@ export default function Dashboard() {
   const [showTrialBanner, setShowTrialBanner] = useState(true);
   const [previewQuiz, setPreviewQuiz] = useState(null);
   const [showQuizPreview, setShowQuizPreview] = useState(false);
+  const [forumMode, setForumMode] = useState(false);
   // const { t } = useLanguage();
 
   // Buscar dados do usuário
@@ -360,11 +360,29 @@ export default function Dashboard() {
               <Button
                 variant="outline"
                 onClick={() => setShowTutorial(true)}
-                className="bg-gradient-to-r from-green-50 to-emerald-50 border-green-200 text-green-700 hover:from-green-100 hover:to-emerald-100 hover:border-green-300 transition-all duration-300 shadow-sm font-semibold"
+                className="border-gray-300 text-black hover:bg-gray-50 transition-all duration-300"
               >
-                <BookOpen className="w-4 h-4 mr-2" />
-                🎯 Tutorial Completo
+                Tutorial
               </Button>
+              {!forumMode && (
+                <Button
+                  variant="outline"
+                  onClick={() => setForumMode(true)}
+                  className="border-purple-200 text-purple-700 hover:bg-purple-50 mr-2"
+                >
+                  <Users className="w-4 h-4 mr-2" />
+                  Modo Fórum
+                </Button>
+              )}
+              {forumMode && (
+                <Button
+                  variant="outline"
+                  onClick={() => setForumMode(false)}
+                  className="border-blue-200 text-blue-700 hover:bg-blue-50 mr-2"
+                >
+                  Voltar Dashboard
+                </Button>
+              )}
               <Link href="/quizzes/new">
                 <Button className="bg-green-600 hover:bg-green-700 shadow-lg text-white shock-green">
                   <Plus className="w-4 h-4 mr-2" />
@@ -374,27 +392,42 @@ export default function Dashboard() {
             </div>
           </div>
 
-          {/* Stats Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-            {dashboardStats.map((stat, index) => (
-              <Card key={index} className="dashboard-stat-card shadow-lg bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700">
-                <CardContent className="p-6">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm dashboard-text-muted mb-1 text-gray-600 dark:text-gray-300">{stat.title}</p>
-                      <p className="text-2xl font-bold dashboard-text-primary text-gray-900 dark:text-white">{stat.value}</p>
+          {/* Stats Grid - Minimalista no modo fórum */}
+          {!forumMode ? (
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+              {dashboardStats.map((stat, index) => (
+                <Card key={index} className="dashboard-stat-card shadow-lg bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700">
+                  <CardContent className="p-6">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm dashboard-text-muted mb-1 text-gray-600 dark:text-gray-300">{stat.title}</p>
+                        <p className="text-2xl font-bold dashboard-text-primary text-gray-900 dark:text-white">{stat.value}</p>
+                      </div>
+                      <div className={`w-12 h-12 rounded-lg ${stat.color} flex items-center justify-center text-white`}>
+                        {stat.icon}
+                      </div>
                     </div>
-                    <div className={`w-12 h-12 rounded-lg ${stat.color} flex items-center justify-center text-white`}>
-                      {stat.icon}
-                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          ) : (
+            <div className="flex gap-4 mb-6 overflow-x-auto">
+              {dashboardStats.map((stat, index) => (
+                <div key={index} className="flex items-center gap-2 bg-gray-100 px-4 py-2 rounded-lg min-w-fit">
+                  <div className={`w-6 h-6 rounded ${stat.color} flex items-center justify-center`}>
+                    {React.cloneElement(stat.icon, { className: "w-3 h-3 text-white" })}
                   </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
+                  <span className="text-sm font-medium">{stat.value}</span>
+                  <span className="text-xs text-gray-600">{stat.title}</span>
+                </div>
+              ))}
+            </div>
+          )}
 
-          {/* Campanhas Row */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+          {/* Campanhas Row - Minimalista no modo fórum */}
+          {!forumMode && (
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
             <Card className="dashboard-stat-card shadow-lg bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700">
               <CardContent className="p-6">
                 <div className="flex items-center justify-between">
@@ -451,7 +484,87 @@ export default function Dashboard() {
               </CardContent>
             </Card>
           </div>
+          )}
 
+          {/* Conteúdo do Fórum em modo black */}
+          {forumMode && (
+            <div className="bg-black text-white p-8 rounded-lg">
+              <div className="max-w-6xl mx-auto">
+                <h2 className="text-2xl font-bold mb-6 text-center">💬 Fórum da Comunidade Vendzz</h2>
+                
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                  <div className="bg-gray-900 p-6 rounded-lg">
+                    <h3 className="text-lg font-semibold mb-3 text-green-400">📈 Marketing Digital</h3>
+                    <p className="text-gray-300 text-sm mb-4">Estratégias, dicas e discussões sobre marketing digital</p>
+                    <div className="flex justify-between text-xs text-gray-400">
+                      <span>245 tópicos</span>
+                      <span>1.2k mensagens</span>
+                    </div>
+                  </div>
+                  
+                  <div className="bg-gray-900 p-6 rounded-lg">
+                    <h3 className="text-lg font-semibold mb-3 text-blue-400">🎯 Quiz Builder</h3>
+                    <p className="text-gray-300 text-sm mb-4">Ajuda e tutoriais para criação de quizzes</p>
+                    <div className="flex justify-between text-xs text-gray-400">
+                      <span>189 tópicos</span>
+                      <span>956 mensagens</span>
+                    </div>
+                  </div>
+                  
+                  <div className="bg-gray-900 p-6 rounded-lg">
+                    <h3 className="text-lg font-semibold mb-3 text-purple-400">💼 Empreendedorismo</h3>
+                    <p className="text-gray-300 text-sm mb-4">Discussões sobre negócios e crescimento</p>
+                    <div className="flex justify-between text-xs text-gray-400">
+                      <span>156 tópicos</span>
+                      <span>743 mensagens</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="bg-gray-900 p-6 rounded-lg">
+                  <h3 className="text-xl font-semibold mb-4">🔥 Discussões Recentes</h3>
+                  <div className="space-y-4">
+                    <div className="border-b border-gray-700 pb-4">
+                      <h4 className="font-medium text-green-400 mb-2">Como aumentar a taxa de conversão dos meus quizzes?</h4>
+                      <p className="text-gray-300 text-sm mb-2">Estou com uma taxa de 12% mas gostaria de melhorar...</p>
+                      <div className="flex justify-between text-xs text-gray-400">
+                        <span>Por: @MarketingPro</span>
+                        <span>23 respostas • 2h atrás</span>
+                      </div>
+                    </div>
+                    
+                    <div className="border-b border-gray-700 pb-4">
+                      <h4 className="font-medium text-blue-400 mb-2">Melhores práticas para campanhas SMS</h4>
+                      <p className="text-gray-300 text-sm mb-2">Compartilho aqui as estratégias que me deram 35% de conversão...</p>
+                      <div className="flex justify-between text-xs text-gray-400">
+                        <span>Por: @SMSMaster</span>
+                        <span>15 respostas • 4h atrás</span>
+                      </div>
+                    </div>
+                    
+                    <div className="pb-4">
+                      <h4 className="font-medium text-purple-400 mb-2">Automatização de WhatsApp: vale a pena?</h4>
+                      <p className="text-gray-300 text-sm mb-2">Quero implementar mas tenho dúvidas sobre compliance...</p>
+                      <div className="flex justify-between text-xs text-gray-400">
+                        <span>Por: @AutomationGuru</span>
+                        <span>8 respostas • 6h atrás</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="text-center mt-8">
+                  <Button className="bg-green-600 hover:bg-green-700 text-white">
+                    <MessageSquare className="w-4 h-4 mr-2" />
+                    Criar Nova Discussão
+                  </Button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {!forumMode && (
+            <>
           {/* Seus Quizzes */}
           <Card className="dashboard-card shadow-xl mb-8">
             <CardHeader className="dashboard-header border-b">
@@ -623,6 +736,8 @@ export default function Dashboard() {
               setPreviewQuiz(null);
             }}
           />
+          </>
+          )}
         </div>
       </div>
     </div>
