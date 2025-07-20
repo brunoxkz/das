@@ -3,6 +3,7 @@ import { sql } from "drizzle-orm";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 import { desc } from "drizzle-orm";
+import { nanoid } from "nanoid";
 
 export const users = sqliteTable("users", {
   id: text("id").primaryKey(),
@@ -869,6 +870,46 @@ export type WebhookLog = typeof webhookLogs.$inferSelect;
 // Integrations Types
 export type InsertIntegration = z.infer<typeof insertIntegrationSchema>;
 export type Integration = typeof integrations.$inferSelect;
+
+// ===============================================
+// PUSH NOTIFICATIONS PWA - SISTEMA COMPLETO
+// ===============================================
+
+// Push Subscriptions Schema
+export const pushSubscriptions = sqliteTable('push_subscriptions', {
+  id: text('id').primaryKey().notNull().$defaultFn(() => nanoid()),
+  userId: text('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  endpoint: text('endpoint').notNull(),
+  p256dhKey: text('p256dh_key').notNull(),
+  authKey: text('auth_key').notNull(),
+  isActive: integer('is_active', { mode: 'boolean' }).default(true),
+  createdAt: integer('created_at', { mode: 'timestamp' }).notNull().default(sql`(unixepoch())`),
+  updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull().default(sql`(unixepoch())`)
+});
+
+// Push Notification Logs Schema  
+export const pushNotificationLogs = sqliteTable('push_notification_logs', {
+  id: text('id').primaryKey().notNull().$defaultFn(() => nanoid()),
+  userId: text('user_id').notNull().references(() => users.id),
+  title: text('title').notNull(),
+  body: text('body').notNull(),
+  url: text('url'),
+  campaignId: text('campaign_id'),
+  leadId: text('lead_id'),
+  status: text('status').notNull().default('sent'), // sent, delivered, failed
+  errorMessage: text('error_message'),
+  sentAt: integer('sent_at', { mode: 'timestamp' }).notNull().default(sql`(unixepoch())`),
+});
+
+// Push Notifications Zod Schemas
+export const insertPushSubscriptionSchema = createInsertSchema(pushSubscriptions);
+export const insertPushNotificationLogSchema = createInsertSchema(pushNotificationLogs);
+
+// Push Notifications Types
+export type InsertPushSubscription = z.infer<typeof insertPushSubscriptionSchema>;
+export type PushSubscription = typeof pushSubscriptions.$inferSelect;
+export type InsertPushNotificationLog = z.infer<typeof insertPushNotificationLogSchema>;
+export type PushNotificationLog = typeof pushNotificationLogs.$inferSelect;
 
 // ===============================================
 // TYPEBOT AUTO-HOSPEDADO - SISTEMA COMPLETO

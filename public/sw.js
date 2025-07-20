@@ -1,8 +1,90 @@
 /**
- * VENDZZ PWA SERVICE WORKER
+ * VENDZZ PWA SERVICE WORKER + PUSH NOTIFICATIONS
  * Otimizado para 100.000 usuários simultâneos
  * Web Push Nativo + Cache Estratégico
+ * PUSH NOTIFICATIONS: Funcionam MESMO com app fechado ou celular reiniciado
  */
+
+// ===== PUSH NOTIFICATIONS =====
+
+// Receber notificação push
+self.addEventListener('push', function(event) {
+  console.log('📢 Push notification recebida:', event);
+
+  let notificationData = {
+    title: '🎯 Vendzz',
+    body: 'Nova notificação do Vendzz!',
+    icon: '/vendzz-logo-official.png',
+    badge: '/vendzz-logo-official.png',
+    tag: 'vendzz-notification',
+    data: { url: '/app-pwa-vendzz', timestamp: Date.now() },
+    actions: [
+      { action: 'view', title: '🚀 Abrir App', icon: '/vendzz-logo-official.png' },
+      { action: 'dashboard', title: '📊 Dashboard', icon: '/vendzz-logo-official.png' }
+    ]
+  };
+
+  if (event.data) {
+    try {
+      const data = event.data.json();
+      notificationData = { ...notificationData, ...data };
+    } catch (error) {
+      console.error('❌ Erro ao parse dos dados da notificação:', error);
+    }
+  }
+
+  event.waitUntil(
+    self.registration.showNotification(notificationData.title, {
+      body: notificationData.body,
+      icon: notificationData.icon,
+      badge: notificationData.badge,
+      tag: notificationData.tag,
+      data: notificationData.data,
+      actions: notificationData.actions,
+      requireInteraction: true,
+      vibrate: [200, 100, 200],
+      silent: false
+    })
+  );
+});
+
+// Click na notificação
+self.addEventListener('notificationclick', function(event) {
+  console.log('🖱️ Notificação clicada:', event);
+  event.notification.close();
+
+  let urlToOpen = '/app-pwa-vendzz';
+  if (event.action === 'dashboard') {
+    urlToOpen = '/app-pwa-vendzz?tab=analytics';
+  } else if (event.notification.data && event.notification.data.url) {
+    urlToOpen = event.notification.data.url;
+  }
+
+  event.waitUntil(
+    clients.matchAll({ type: 'window', includeUncontrolled: true })
+      .then(function(clientList) {
+        for (let i = 0; i < clientList.length; i++) {
+          const client = clientList[i];
+          if (client.url.includes('/app-pwa-vendzz') && 'focus' in client) {
+            client.postMessage({
+              type: 'NOTIFICATION_CLICK',
+              url: urlToOpen,
+              data: event.notification.data
+            });
+            return client.focus();
+          }
+        }
+        if (clients.openWindow) {
+          return clients.openWindow(urlToOpen);
+        }
+      })
+  );
+});
+
+// Fechar notificação
+self.addEventListener('notificationclose', function(event) {
+  console.log('❌ Notificação fechada:', event.notification.tag);
+});
 
 const CACHE_NAME = 'vendzz-pwa-v1.2.0';
 const STATIC_CACHE = 'vendzz-static-v1.2.0';
@@ -23,6 +105,7 @@ const STATIC_RESOURCES = [
   '/app-pwa-vendzz',
   '/manifest.json',
   '/logo-vendzz-white.png',
+  '/vendzz-logo-official.png',
   '/icon-192x192.png',
   '/icon-512x512.png'
 ];
@@ -200,8 +283,8 @@ self.addEventListener('push', event => {
   const options = {
     title: data.title || '🎯 Vendzz',
     body: data.body || 'Nova notificação',
-    icon: data.icon || '/vendzz-icon-192.png',
-    badge: '/vendzz-icon-192.png',
+    icon: data.icon || '/vendzz-logo-official.png',
+    badge: '/vendzz-logo-official.png',
     image: data.image,
     data: {
       url: data.url || '/app-pwa-vendzz',
@@ -214,12 +297,12 @@ self.addEventListener('push', event => {
       {
         action: 'view',
         title: '🚀 Abrir App',
-        icon: '/vendzz-icon-192.png'
+        icon: '/vendzz-logo-official.png'
       },
       {
         action: 'dashboard',
         title: '📊 Dashboard',
-        icon: '/vendzz-icon-192.png'
+        icon: '/vendzz-logo-official.png'
       },
       {
         action: 'dismiss',

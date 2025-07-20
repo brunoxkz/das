@@ -15,6 +15,7 @@ import { useAuth } from '@/hooks/useAuth';
 // @ts-ignore
 import logoVendzz from '@assets/logo-vendzz-white_1753041219534.png';
 import PWAInstallModal from '@/components/PWAInstallModal';
+import PushNotificationManager from '@/components/PushNotificationManager';
 
 export default function AppPWAVendzz() {
   const { user, isLoading, isAuthenticated } = useAuth();
@@ -596,6 +597,9 @@ export default function AppPWAVendzz() {
         onClose={handleInstallModalClose}
         onInstall={handleInstallFromModal}
       />
+      
+      {/* Push Notification Manager */}
+      {isAuthenticated && <PushNotificationManager />}
     </div>
   );
 }

@@ -53,6 +53,7 @@ import { BrevoEmailService } from "./email-brevo";
 import { handleSecureUpload, uploadMiddleware } from "./upload-secure";
 import { sanitizeAllScripts, sanitizeUTMCode, sanitizeCustomScript } from './script-sanitizer-new';
 import { intelligentRateLimiter } from './intelligent-rate-limiter';
+import { PushNotificationSystem } from './push-notifications';
 import { isUserBlocked, canCreateQuiz, getPlanLimits } from './rbac';
 import { 
   antiDdosMiddleware, 
@@ -73,6 +74,7 @@ import HealthCheckSystem from './health-check-system.js';
 import WhatsAppBusinessAPI from './whatsapp-business-api';
 import { registerFacelessVideoRoutes } from './faceless-video-routes';
 import { StripeCheckoutLinkGenerator } from './stripe-checkout-link-generator';
+import { PushNotificationSystem } from './push-notifications';
 import { webPushService } from './web-push';
 import { planManager } from './plan-manager';
 
@@ -24969,11 +24971,150 @@ export function registerCheckoutRoutes(app: Express) {
 
   console.log('🔔 PWA WEB PUSH ENDPOINTS REGISTRADOS');
 
+  // =============================================
+  // PUSH NOTIFICATIONS PWA ENDPOINTS
+  // =============================================
+
+  // Obter VAPID public key
+  app.get('/api/notifications/vapid-key', (req, res) => {
+    try {
+      const publicKey = PushNotificationSystem.getVapidPublicKey();
+      res.json({ publicKey });
+    } catch (error) {
+      console.error('❌ Erro ao obter VAPID key:', error);
+      res.status(500).json({ error: 'Erro ao obter VAPID key' });
+    }
+  });
+
+  // Salvar subscription de push notification
+  app.post('/api/notifications/subscribe', verifyJWT, async (req: any, res: any) => {
+    try {
+      const { subscription } = req.body;
+      
+      if (!subscription || !subscription.endpoint || !subscription.keys) {
+        return res.status(400).json({ error: 'Subscription inválida' });
+      }
+
+      const success = await PushNotificationSystem.saveUserSubscription(req.user.id, subscription);
+      
+      if (success) {
+        res.json({ success: true, message: 'Subscription salva com sucesso' });
+      } else {
+        res.status(500).json({ error: 'Erro ao salvar subscription' });
+      }
+    } catch (error) {
+      console.error('❌ Erro ao salvar subscription:', error);
+      res.status(500).json({ error: 'Erro ao salvar subscription' });
+    }
+  });
+
+  // Remover subscription de push notification
+  app.post('/api/notifications/unsubscribe', verifyJWT, async (req: any, res: any) => {
+    try {
+      // Marcar subscription como inativa no banco
+      await storage.markPushSubscriptionInactive(req.user.id);
+      res.json({ success: true, message: 'Subscription removida com sucesso' });
+    } catch (error) {
+      console.error('❌ Erro ao remover subscription:', error);
+      res.status(500).json({ error: 'Erro ao remover subscription' });
+    }
+  });
+
+  // Enviar notificação de teste
+  app.post('/api/notifications/test', verifyJWT, async (req: any, res: any) => {
+    try {
+      const success = await PushNotificationSystem.sendNotificationToUser(req.user.id, {
+        title: '🎯 Teste - Vendzz PWA',
+        body: 'Esta é uma notificação de teste! Funciona mesmo com o app fechado.',
+        url: '/app-pwa-vendzz',
+        tag: 'test-notification',
+        priority: 'high'
+      });
+
+      if (success) {
+        res.json({ success: true, message: 'Notificação de teste enviada' });
+      } else {
+        res.status(404).json({ error: 'Usuário não tem subscription ativa' });
+      }
+    } catch (error) {
+      console.error('❌ Erro ao enviar notificação de teste:', error);
+      res.status(500).json({ error: 'Erro ao enviar notificação de teste' });
+    }
+  });
+
+  // Obter histórico de notificações do usuário
+  app.get('/api/notifications/history', verifyJWT, async (req: any, res: any) => {
+    try {
+      const notifications = await storage.getPushNotificationHistory(req.user.id);
+      res.json(notifications);
+    } catch (error) {
+      console.error('❌ Erro ao buscar histórico de notificações:', error);
+      res.status(500).json({ error: 'Erro ao buscar histórico' });
+    }
+  });
+
+  // Endpoint para admin enviar notificação para todos os usuários
+  app.post('/api/notifications/broadcast', verifyJWT, async (req: any, res: any) => {
+    try {
+      if (req.user.role !== 'admin') {
+        return res.status(403).json({ error: 'Acesso negado' });
+      }
+
+      const { title, body, url, tag, priority } = req.body;
+      
+      if (!title || !body) {
+        return res.status(400).json({ error: 'Título e corpo são obrigatórios' });
+      }
+
+      const sentCount = await PushNotificationSystem.sendNotificationToAllUsers({
+        title,
+        body,
+        url: url || '/app-pwa-vendzz',
+        tag: tag || 'admin-broadcast',
+        priority: priority || 'normal'
+      });
+
+      res.json({ 
+        success: true, 
+        message: `Notificação enviada para ${sentCount} usuários`,
+        sentCount 
+      });
+    } catch (error) {
+      console.error('❌ Erro ao enviar broadcast:', error);
+      res.status(500).json({ error: 'Erro ao enviar broadcast' });
+    }
+  });
+
+  // Limpar subscriptions inativas (endpoint para admin)
+  app.post('/api/notifications/cleanup', verifyJWT, async (req: any, res: any) => {
+    try {
+      if (req.user.role !== 'admin') {
+        return res.status(403).json({ error: 'Acesso negado' });
+      }
+
+      const cleanedCount = await PushNotificationSystem.cleanupInactiveSubscriptions();
+      res.json({ 
+        success: true, 
+        message: `${cleanedCount} subscriptions inativas removidas`,
+        cleanedCount 
+      });
+    } catch (error) {
+      console.error('❌ Erro ao limpar subscriptions:', error);
+      res.status(500).json({ error: 'Erro ao limpar subscriptions' });
+    }
+  });
+
+  console.log('🔔 PUSH NOTIFICATIONS PWA ENDPOINTS ADICIONADOS');
+
   // Inicializar sistema automático de regressão de planos
   console.log('🚀 INICIANDO PLAN MANAGER...');
   planManager.startAutomaticPlanRegression();
 
   // System routes registration complete
+  
+  const httpServer = createServer(app);
+  
+  return httpServer;
 }
 
 

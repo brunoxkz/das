@@ -32,6 +32,7 @@ import {
   subscriptionPlans, subscriptionTransactions, creditTransactions,
   checkoutProducts, checkoutPages, checkoutTransactions, checkoutAnalytics,
   stripeSubscriptions,
+  pushSubscriptions, pushNotificationLogs,
   type User, type UpsertUser, type InsertQuiz, type Quiz,
   type InsertQuizTemplate, type QuizTemplate,
   type InsertQuizResponse, type QuizResponse,
@@ -66,7 +67,9 @@ import {
   type InsertCheckoutProduct, type CheckoutProduct,
   type InsertCheckoutPage, type CheckoutPage,
   type InsertCheckoutTransaction, type CheckoutTransaction,
-  type InsertCheckoutAnalytics, type CheckoutAnalytics
+  type InsertCheckoutAnalytics, type CheckoutAnalytics,
+  type InsertPushSubscription, type PushSubscription,
+  type InsertPushNotificationLog, type PushNotificationLog
 } from "../shared/schema-sqlite";
 import { eq, desc, and, gte, lte, count, asc, or, inArray } from "drizzle-orm";
 import { nanoid } from "nanoid";
@@ -4367,8 +4370,89 @@ export class SQLiteStorage implements IStorage {
     }
   }
 
-  // ===== SUPER AFFILIATES METHODS =====
+  // ===== PUSH NOTIFICATION OPERATIONS =====
 
+  async savePushSubscription(subscription: InsertPushSubscription): Promise<PushSubscription> {
+    try {
+      const [savedSubscription] = await db.insert(pushSubscriptions)
+        .values(subscription)
+        .returning();
+      return savedSubscription;
+    } catch (error) {
+      console.error('❌ ERRO ao salvar push subscription:', error);
+      throw error;
+    }
+  }
+
+  async markPushSubscriptionInactive(userId: string): Promise<void> {
+    try {
+      await db.update(pushSubscriptions)
+        .set({ isActive: false, updatedAt: new Date() })
+        .where(eq(pushSubscriptions.userId, userId));
+    } catch (error) {
+      console.error('❌ ERRO ao marcar push subscriptions como inativas:', error);
+      throw error;
+    }
+  }
+
+  async getActivePushSubscriptions(userId: string): Promise<PushSubscription[]> {
+    try {
+      return await db.select()
+        .from(pushSubscriptions)
+        .where(and(eq(pushSubscriptions.userId, userId), eq(pushSubscriptions.isActive, true)));
+    } catch (error) {
+      return [];
+    }
+  }
+
+  async getAllActivePushSubscriptions(): Promise<PushSubscription[]> {
+    try {
+      return await db.select()
+        .from(pushSubscriptions)
+        .where(eq(pushSubscriptions.isActive, true));
+    } catch (error) {
+      return [];
+    }
+  }
+
+  async savePushNotificationLog(log: InsertPushNotificationLog): Promise<PushNotificationLog> {
+    try {
+      const [savedLog] = await db.insert(pushNotificationLogs)
+        .values(log)
+        .returning();
+      return savedLog;
+    } catch (error) {
+      console.error('❌ ERRO ao salvar push notification log:', error);
+      throw error;
+    }
+  }
+
+  async getPushNotificationHistory(userId: string): Promise<PushNotificationLog[]> {
+    try {
+      return await db.select()
+        .from(pushNotificationLogs)
+        .where(eq(pushNotificationLogs.userId, userId))
+        .orderBy(desc(pushNotificationLogs.sentAt));
+    } catch (error) {
+      return [];
+    }
+  }
+
+  async cleanupInactivePushSubscriptions(): Promise<number> {
+    try {
+      const thirtyDaysAgo = new Date();
+      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+      const result = await db.delete(pushSubscriptions)
+        .where(and(eq(pushSubscriptions.isActive, false), lte(pushSubscriptions.updatedAt, thirtyDaysAgo)));
+      return result.changes || 0;
+    } catch (error) {
+      return 0;
+    }
+  }
+
+
+  // ===== SUPER AFFILIATES METHODS =====
+  
   async createAffiliate(affiliate: Omit<InsertSuperAffiliate, 'id' | 'createdAt' | 'updatedAt'>): Promise<SuperAffiliate> {
     try {
       const now = Math.floor(Date.now() / 1000);
