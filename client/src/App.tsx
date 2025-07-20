@@ -101,6 +101,7 @@ import MembersArea from "@/pages/members-area";
 import AdminDashboard from "@/pages/admin-dashboard";
 import PWADashboard from "@/pages/pwa-dashboard";
 import AppPWAComplete from "@/pages/app-pwa-complete";
+import AppQuizEditorPWA from "@/pages/app-quiz-editor-pwa";
 
 import { useAuth } from "@/hooks/useAuth-jwt";
 import { isUnauthorizedError } from "@/lib/authUtils";
@@ -148,6 +149,7 @@ function App() {
         <Route path="/dark" component={DarkLandingPage} />
         <Route path="/modern" component={ModernHomePage} />
         <Route path="/app" component={AppPWAComplete} />
+        <Route path="/app/quiz-editor/:quizId" component={AppQuizEditorPWA} />
         <Route path="/login" component={LoginPage} />
         <Route path="/quiz/:id" component={QuizPublicPage} />
         <Route path="/checkout/:planId" component={PublicCheckout} />
