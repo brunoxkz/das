@@ -10209,6 +10209,38 @@ console.log('Vendzz Checkout Embed carregado para plano: ${planId}');
     }
   });
 
+  // NOVOS ENDPOINTS PARA SINCRONIZAÇÃO COM EXTENSÃO (carregamento dinâmico)
+  
+  // Sync apenas novos leads (reduz 90% do tráfego)
+  app.post("/api/extension/sync-leads", verifyJWT, async (req, res) => {
+    const { extensionSyncEndpoints } = await import('./extension-sync-endpoints');
+    return extensionSyncEndpoints.syncNewLeads(req, res);
+  });
+  
+  // Configurações leves da campanha
+  app.get("/api/extension/campaign/:campaignId", verifyJWT, async (req, res) => {
+    const { extensionSyncEndpoints } = await import('./extension-sync-endpoints');
+    return extensionSyncEndpoints.getCampaignConfig(req, res);
+  });
+  
+  // Atualizar estatísticas em tempo real
+  app.post("/api/extension/campaign/:campaignId/stats", verifyJWT, async (req, res) => {
+    const { extensionSyncEndpoints } = await import('./extension-sync-endpoints');
+    return extensionSyncEndpoints.updateCampaignStats(req, res);
+  });
+  
+  // Status do usuário (créditos, plano)
+  app.get("/api/extension/user-status", verifyJWT, async (req, res) => {
+    const { extensionSyncEndpoints } = await import('./extension-sync-endpoints');
+    return extensionSyncEndpoints.getUserStatus(req, res);
+  });
+  
+  // Marcar telefones como processados
+  app.post("/api/extension/mark-processed", verifyJWT, async (req, res) => {
+    const { extensionSyncEndpoints } = await import('./extension-sync-endpoints');
+    return extensionSyncEndpoints.markPhonesAsProcessed(req, res);
+  });
+
   app.get("/api/health", (req, res) => {
     res.json({ 
       status: "ok", 

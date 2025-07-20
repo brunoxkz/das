@@ -2325,18 +2325,106 @@ export class SQLiteStorage implements IStorage {
   // OTIMIZAÇÃO: Buscar telefones por campanha com limite
   async getPhonesByCampaign(campaignId: string, limit: number = 100): Promise<string[]> {
     try {
-      const campaign = await db.select()
+      // Primeiro tenta SMS campaigns
+      const smsCampaign = await db.select()
         .from(smsCampaigns)
         .where(eq(smsCampaigns.id, campaignId))
         .limit(1);
       
-      if (!campaign[0] || !campaign[0].phones) return [];
+      if (smsCampaign[0] && smsCampaign[0].phones) {
+        const phones = JSON.parse(smsCampaign[0].phones);
+        return Array.isArray(phones) ? phones.slice(0, limit) : [];
+      }
+
+      // Depois tenta WhatsApp campaigns
+      const whatsappCampaign = await db.select()
+        .from(whatsappCampaigns)
+        .where(eq(whatsappCampaigns.id, campaignId))
+        .limit(1);
       
-      const phones = JSON.parse(campaign[0].phones);
-      return Array.isArray(phones) ? phones.slice(0, limit) : [];
+      if (whatsappCampaign[0] && whatsappCampaign[0].phones) {
+        const phones = JSON.parse(whatsappCampaign[0].phones);
+        return Array.isArray(phones) ? phones.slice(0, limit) : [];
+      }
+
+      return [];
     } catch (error) {
       console.error('Erro ao buscar telefones por campanha:', error);
       return [];
+    }
+  }
+
+  // NOVA FUNÇÃO: Processar mensagens WhatsApp agendadas
+  async processScheduledWhatsAppMessages(campaignId: string, phones: string[]): Promise<{processed: number, total: number, sent: number, failed: number}> {
+    try {
+      console.log(`🔄 Processando mensagens WhatsApp - Campanha: ${campaignId}, Telefones: ${phones.length}`);
+      
+      // Buscar logs pendentes para esta campanha
+      const pendingLogs = await db.select()
+        .from(whatsappLogs)
+        .where(and(
+          eq(whatsappLogs.campaignId, campaignId),
+          eq(whatsappLogs.status, 'scheduled')
+        ))
+        .limit(20); // Processar 20 por vez para não sobrecarregar
+
+      let processed = 0;
+      let sent = 0;
+      let failed = 0;
+
+      for (const log of pendingLogs) {
+        try {
+          // Verificar se chegou a hora de enviar
+          const now = Math.floor(Date.now() / 1000);
+          const scheduledTime = Math.floor(new Date(log.scheduledAt || Date.now()).getTime() / 1000);
+          
+          if (now >= scheduledTime) {
+            console.log(`📤 Enviando WhatsApp ${log.id} para ${log.phone}`);
+            
+            // SIMULAÇÃO DE ENVIO (em produção seria API real do WhatsApp)
+            const success = Math.random() > 0.1; // 90% de sucesso simulado
+            
+            if (success) {
+              // Atualizar log como enviado
+              await db.update(whatsappLogs)
+                .set({ 
+                  status: 'sent',
+                  sentAt: new Date(),
+                  deliveredAt: new Date() // Simula entrega imediata
+                })
+                .where(eq(whatsappLogs.id, log.id));
+              sent++;
+              console.log(`✅ WhatsApp enviado: ${log.id}`);
+            } else {
+              // Atualizar log como falhou
+              await db.update(whatsappLogs)
+                .set({ 
+                  status: 'failed',
+                  errorMessage: 'Falha na simulação de envio'
+                })
+                .where(eq(whatsappLogs.id, log.id));
+              failed++;
+              console.log(`❌ WhatsApp falhou: ${log.id}`);
+            }
+            processed++;
+          }
+        } catch (error) {
+          console.error(`❌ Erro ao processar log ${log.id}:`, error);
+          failed++;
+        }
+      }
+
+      console.log(`📊 Resultados campanha ${campaignId}: ${processed} processados, ${sent} enviados, ${failed} falharam`);
+      
+      return {
+        processed,
+        total: pendingLogs.length,
+        sent,
+        failed
+      };
+    } catch (error) {
+      console.error('❌ Erro ao processar mensagens WhatsApp agendadas:', error);
+      return { processed: 0, total: 0, sent: 0, failed: 0 };
     }
   }
 

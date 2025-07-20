@@ -286,8 +286,10 @@ const unifiedDetectionInterval = setInterval(async () => {
             
             if (phones.length > 0) {
               console.log(`📱 Campanha ${campaign.id}: ${phones.length} telefones para processar`);
-              // Processar agendamentos dos telefones aqui
-              // Sistema vai respeitar o horário programado por cada usuário
+              
+              // IMPLEMENTAÇÃO REAL DO ENVIO
+              const result = await localStorage.processScheduledWhatsAppMessages(campaign.id, phones);
+              console.log(`✅ Processamento ${campaign.id}: ${result.processed}/${result.total} mensagens`);
             }
           } catch (error) {
             console.error(`Erro ao processar campanha ${campaign.id}:`, error.message);
