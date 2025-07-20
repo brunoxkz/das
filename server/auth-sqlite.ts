@@ -81,6 +81,7 @@ export const verifyJWT: RequestHandler = async (req: any, res, next) => {
 };
 
 export function setupSQLiteAuth(app: Express) {
+
   // Login endpoint
   app.post('/api/auth/login', async (req: Request, res: Response) => {
     try {
@@ -105,10 +106,16 @@ export function setupSQLiteAuth(app: Express) {
 
       const user = await storage.getUserByEmail(cleanEmail);
       if (!user || !user.password) {
+        console.log('❌ LOGIN FAILED: User not found or no password:', { 
+          userExists: !!user, 
+          hasPassword: !!user?.password,
+          email: cleanEmail 
+        });
         return res.status(401).json({ message: "Invalid credentials" });
       }
 
       const isValidPassword = await bcrypt.compare(password, user.password);
+      
       if (!isValidPassword) {
         return res.status(401).json({ message: "Invalid credentials" });
       }

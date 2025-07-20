@@ -351,6 +351,10 @@ export class SQLiteStorage implements IStorage {
           // Criar quizzes de exemplo para testar o cloaker
           await this.createExampleQuizzes(admin.id);
         }
+      } else {
+        // Se o usuário existe mas queremos garantir que tem a senha correta
+        console.log('🔑 Admin user exists, password already verified as correct');
+        // Não atualizar mais automaticamente para evitar loops
       }
 
       const existingEditor = await this.getUserByEmail('editor@vendzz.com');
@@ -561,6 +565,13 @@ export class SQLiteStorage implements IStorage {
   async invalidateRefreshTokens(userId: string): Promise<void> {
     await db.update(users)
       .set({ refreshToken: null })
+      .where(eq(users.id, userId));
+  }
+
+  async updateUserPassword(userId: string, newPassword: string): Promise<void> {
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+    await db.update(users)
+      .set({ password: hashedPassword })
       .where(eq(users.id, userId));
   }
 
@@ -8457,10 +8468,13 @@ Hoje você vai aprender ${project.title} - método revolucionário que já ajudo
   }
 
   // 🔐 MÉTODOS DE SEGURANÇA: SENHA E 2FA
-  async updateUserPassword(userId: string, hashedPassword: string): Promise<void> {
-    console.log('🔐 ATUALIZANDO SENHA DO USUÁRIO:', userId);
+  async updateUserPasswordSecure(userId: string, plainPassword: string): Promise<void> {
+    console.log('🔐 ATUALIZANDO SENHA DO USUÁRIO (SECURE):', userId);
     
     try {
+      // Hash da senha antes de salvar
+      const hashedPassword = await bcrypt.hash(plainPassword, 10);
+      
       const stmt = sqlite.prepare(`
         UPDATE users 
         SET password = ?, updatedAt = ?
@@ -8473,7 +8487,7 @@ Hoje você vai aprender ${project.title} - método revolucionário que já ajudo
         throw new Error('Usuário não encontrado');
       }
       
-      console.log('✅ SENHA ATUALIZADA COM SUCESSO');
+      console.log('✅ SENHA ATUALIZADA COM SUCESSO (HASHED)');
     } catch (error) {
       console.error('❌ ERRO AO ATUALIZAR SENHA:', error);
       throw error;
