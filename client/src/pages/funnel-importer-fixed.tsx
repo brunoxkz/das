@@ -260,7 +260,7 @@ export default function FunnelImporter() {
                 Importador de Funis Inteligente
               </h1>
               <p className="text-gray-600 dark:text-gray-300">
-                Importe funis de Cakto, XQuiz e outras plataformas preservando design e estrutura
+                Importe funis de Cakto, XQuiz, Effecto e outras plataformas preservando design e estrutura
               </p>
             </div>
           </div>
@@ -297,6 +297,19 @@ export default function FunnelImporter() {
                       <span className="font-medium text-green-900 dark:text-green-100">XQuiz</span>
                       <p className="text-sm text-green-700 dark:text-green-300">
                         *.xquiz.io - Sistema inteligente 18-45 páginas
+                      </p>
+                    </div>
+                  </div>
+                  <Badge className="bg-green-100 text-green-800">Avançado</Badge>
+                </div>
+
+                <div className="flex items-center justify-between p-3 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-200">
+                  <div className="flex items-center gap-3">
+                    <CheckCircle className="h-5 w-5 text-green-600" />
+                    <div>
+                      <span className="font-medium text-green-900 dark:text-green-100">Effecto</span>
+                      <p className="text-sm text-green-700 dark:text-green-300">
+                        effectoapp.com - Quiz de produtividade personalizada
                       </p>
                     </div>
                   </div>

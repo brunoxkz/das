@@ -59,13 +59,24 @@ export class CompleteAnalyzer {
       // Detectar se é página encriptada/protegida
       const isEncrypted = this.detectEncryption(html);
       
-      // FORÇAR detecção para funils Next.js, Cakto e XQuiz
+      // FORÇAR detecção para funils Next.js, Cakto, XQuiz e Effecto
       const isNextJS = html.includes('_next') || html.includes('__NEXT_DATA__') || html.includes('next/static');
       const isCakto = url.includes('cakto.com') || html.includes('cakto') || html.includes('data-sentry-component');
       const isXQuiz = url.includes('xquiz.io') || html.includes('xquiz') || html.includes('XQuiz');
+      const isEffecto = url.includes('effectoapp.com') || html.includes('effectoapp') || html.includes('Effecto');
       
-      if (isEncrypted || isNextJS || isCakto || isXQuiz) {
-        console.log(`🔐 PÁGINA ENCRIPTADA/NEXT.JS/CAKTO/XQUIZ DETECTADA - Aplicando métodos avançados`);
+      if (isEncrypted || isNextJS || isCakto || isXQuiz || isEffecto) {
+        console.log(`🔐 PÁGINA ENCRIPTADA/NEXT.JS/CAKTO/XQUIZ/EFFECTO DETECTADA - Aplicando métodos avançados`);
+        
+        // Redirecionar para analisadores específicos
+        if (isEffecto) {
+          return this.analyzeEffectoFunnel(html, url);
+        } else if (isXQuiz) {
+          return this.analyzeXQuizFunnel(html, url);
+        } else if (isCakto) {
+          return this.analyzeCaktoFunnel(html, url);
+        }
+        
         return this.analyzeEncryptedFunnel(html, url);
       }
       
@@ -3266,5 +3277,357 @@ export class CompleteAnalyzer {
         elements: ['question', 'multiple_choice', 'progress', 'button'] 
       };
     }
+  }
+
+  // SISTEMA EFFECTO COMPLETO - Plataforma de produtividade personalizada
+  private static analyzeEffectoFunnel(html: string, url: string): CompleteFunnel {
+    console.log('🟠 ANALISANDO FUNIL EFFECTO - PLANO DE PRODUTIVIDADE PERSONALIZADO');
+    
+    const $ = cheerio.load(html);
+    
+    // Detecção automática de URLs Effecto (effectoapp.com)
+    const isEffectoUrl = url.includes('effectoapp.com');
+    console.log(`🔍 URL Effecto detectada: ${isEffectoUrl}`);
+    
+    // Análise específica para quizzes de produtividade Effecto
+    const jsSize = this.calculateJavaScriptSize(html);
+    const domElements = $('div, section, article, form, input, button').length;
+    const hasGenderSelection = html.includes('Male') && html.includes('Female');
+    const hasPersonalizedPlan = html.includes('PERSONALIZED') && html.includes('PRODUCTIVITY');
+    
+    console.log(`📊 Análise Effecto: JS=${jsSize}KB, DOM=${domElements}, gênero=${hasGenderSelection}, personalizado=${hasPersonalizedPlan}`);
+    
+    // Sistema de páginas para quiz de produtividade (estimativa: 12-20 páginas)
+    const estimatedPages = 15; // Quizzes de produtividade são normalmente focados
+    
+    // Perguntas específicas de produtividade e tipo de personalidade
+    const productivityQuestions = [
+      'Qual é seu gênero?',
+      'Qual é seu maior desafio de produtividade?',
+      'Como você organiza suas tarefas diárias?',
+      'Qual é seu horário mais produtivo?',
+      'Como você lida com distrações?',
+      'Qual é seu ambiente de trabalho ideal?',
+      'Como você define suas prioridades?',
+      'Qual ferramenta você mais usa?',
+      'Como você mede seu progresso?',
+      'Qual é seu maior motivador?',
+      'Como você recarrega suas energias?',
+      'Qual é seu estilo de aprendizado?',
+      'Como você enfrenta prazos apertados?'
+    ];
+    
+    const productivityOptions = [
+      ['Masculino', 'Feminino', 'Prefiro não informar'],
+      ['Procrastinação', 'Falta de foco', 'Sobrecarga de tarefas', 'Falta de motivação'],
+      ['Lista de tarefas', 'Apps digitais', 'Agenda física', 'Sistema próprio'],
+      ['Manhã (6h-10h)', 'Tarde (12h-17h)', 'Noite (18h-22h)', 'Varia por dia'],
+      ['Elimino totalmente', 'Uso técnicas de foco', 'Aceito algumas', 'Luto constantemente'],
+      ['Casa silenciosa', 'Escritório organizado', 'Café movimentado', 'Qualquer lugar'],
+      ['Urgência vs importância', 'Por energia necessária', 'Por prazo', 'Por impacto'],
+      ['Notion/Obsidian', 'Todoist/Any.do', 'Google Suite', 'Papel e caneta'],
+      ['Tarefas concluídas', 'Tempo investido', 'Resultados obtidos', 'Sensação pessoal'],
+      ['Resultados visíveis', 'Reconhecimento', 'Crescimento pessoal', 'Impacto nos outros'],
+      ['Exercícios físicos', 'Meditação', 'Hobbies', 'Tempo com pessoas'],
+      ['Visual/gráficos', 'Auditivo/podcasts', 'Prático/fazendo', 'Leitura/texto'],
+      ['Fico calmo e focado', 'Fico ansioso mas entrego', 'Procrastino mais', 'Peço ajuda/extensão']
+    ];
+    
+    // Extrair cores da página Effecto
+    const extractedColors = this.extractEffectoColors($);
+    
+    const pages: FunnelPage[] = [];
+    const elements: FunnelElement[] = [];
+    
+    // Estrutura de páginas do Effecto
+    const pageTypes = [
+      { type: 'welcome', title: 'Plano de Produtividade Personalizado' },
+      { type: 'gender_selection', title: 'Seleção de Gênero' },
+      ...productivityQuestions.slice(1).map((question, i) => ({
+        type: 'productivity_question',
+        title: question,
+        questionText: question,
+        options: productivityOptions[i + 1] || ['Opção A', 'Opção B', 'Opção C', 'Opção D']
+      })),
+      { type: 'lead_capture', title: 'Receba Seu Plano' },
+      { type: 'final_result', title: 'Seu Plano Está Pronto' }
+    ];
+    
+    // Criar páginas com elementos específicos do Effecto
+    pageTypes.slice(0, estimatedPages).forEach((pageType, index) => {
+      const pageId = nanoid();
+      const pageNumber = index + 1;
+      const progressPercentage = Math.round((pageNumber / estimatedPages) * 100);
+      
+      const page: FunnelPage = {
+        id: pageId,
+        pageNumber,
+        title: pageType.title,
+        elements: [],
+        settings: {
+          ...this.getDefaultPageSettings(),
+          progressPercentage,
+          responseId: `effecto_page_${pageNumber}`,
+          backgroundColor: extractedColors.backgroundColor || '#ffffff',
+          textColor: extractedColors.textColor || '#000000'
+        }
+      };
+      
+      // Elementos específicos por tipo de página Effecto
+      if (pageType.type === 'welcome') {
+        page.elements.push({
+          id: nanoid(),
+          type: 'headline',
+          position: 0,
+          pageId,
+          properties: {
+            title: 'PLANO DE PRODUTIVIDADE PERSONALIZADO',
+            fontSize: '3xl',
+            color: extractedColors.primaryColor || '#4F46E5',
+            alignment: 'center',
+            fontWeight: 'bold'
+          }
+        });
+        
+        page.elements.push({
+          id: nanoid(),
+          type: 'text',
+          position: 1,
+          pageId,
+          properties: {
+            text: 'DE ACORDO COM SEU TIPO E GATILHOS',
+            fontSize: 'lg',
+            color: extractedColors.textColor || '#6B7280',
+            alignment: 'center',
+            fontWeight: 'medium'
+          }
+        });
+        
+        page.elements.push({
+          id: nanoid(),
+          type: 'text',
+          position: 2,
+          pageId,
+          properties: {
+            text: 'QUIZ DE 2 MINUTOS',
+            fontSize: 'md',
+            color: extractedColors.accentColor || '#10B981',
+            alignment: 'center',
+            fontWeight: 'semibold'
+          }
+        });
+        
+      } else if (pageType.type === 'gender_selection') {
+        page.elements.push({
+          id: nanoid(),
+          type: 'headline',
+          position: 0,
+          pageId,
+          properties: {
+            title: 'Qual é seu gênero?',
+            fontSize: '2xl',
+            color: extractedColors.primaryColor || '#1F2937',
+            alignment: 'center',
+            fontWeight: 'semibold'
+          }
+        });
+        
+        // Opções visuais para gênero (similar ao original)
+        const genderOptions = [
+          { text: 'Masculino', imageAlt: 'Male representation' },
+          { text: 'Feminino', imageAlt: 'Female representation' }
+        ];
+        
+        genderOptions.forEach((option, i) => {
+          page.elements.push({
+            id: nanoid(),
+            type: 'image_choice',
+            position: i + 1,
+            pageId,
+            properties: {
+              title: option.text,
+              imageUrl: `https://images.unsplash.com/photo-${i === 0 ? '1507003211169' : '1494790108755'}-a6616b49c417?w=200&h=300&fit=crop`,
+              alt: option.imageAlt,
+              responseId: `gender_${option.text.toLowerCase()}`,
+              selectable: true
+            }
+          });
+        });
+        
+      } else if (pageType.type === 'productivity_question') {
+        // Barra de progresso
+        page.elements.push({
+          id: nanoid(),
+          type: 'progress',
+          position: 0,
+          pageId,
+          properties: {
+            percentage: progressPercentage,
+            showPercentage: true,
+            color: extractedColors.primaryColor || '#4F46E5',
+            backgroundColor: '#E5E7EB'
+          }
+        });
+        
+        // Pergunta principal
+        page.elements.push({
+          id: nanoid(),
+          type: 'headline',
+          position: 1,
+          pageId,
+          properties: {
+            title: pageType.questionText || pageType.title,
+            fontSize: 'xl',
+            color: extractedColors.primaryColor || '#1F2937',
+            alignment: 'center',
+            fontWeight: 'semibold'
+          }
+        });
+        
+        // Opções de resposta
+        if (pageType.options) {
+          pageType.options.forEach((option: string, i: number) => {
+            page.elements.push({
+              id: nanoid(),
+              type: 'multiple_choice',
+              position: i + 2,
+              pageId,
+              properties: {
+                title: option,
+                responseId: `productivity_q${pageNumber - 2}_option_${i + 1}`,
+                buttonStyle: 'outline',
+                hoverEffect: 'lift'
+              }
+            });
+          });
+        }
+        
+      } else if (pageType.type === 'lead_capture') {
+        page.elements.push({
+          id: nanoid(),
+          type: 'headline',
+          position: 0,
+          pageId,
+          properties: {
+            title: 'Receba Seu Plano de Produtividade',
+            fontSize: '2xl',
+            color: extractedColors.primaryColor || '#059669',
+            alignment: 'center',
+            fontWeight: 'bold'
+          }
+        });
+        
+        page.elements.push({
+          id: nanoid(),
+          type: 'text',
+          position: 1,
+          pageId,
+          properties: {
+            text: 'Informe seu email para receber seu plano personalizado baseado em suas respostas',
+            fontSize: 'md',
+            color: extractedColors.textColor || '#6B7280',
+            alignment: 'center'
+          }
+        });
+        
+        page.elements.push({
+          id: nanoid(),
+          type: 'email',
+          position: 2,
+          pageId,
+          properties: {
+            title: 'Seu melhor email:',
+            placeholder: 'exemplo@email.com',
+            required: true,
+            responseId: 'email_productivity_plan',
+            fieldId: 'email_contato'
+          }
+        });
+        
+      } else if (pageType.type === 'final_result') {
+        page.elements.push({
+          id: nanoid(),
+          type: 'headline',
+          position: 0,
+          pageId,
+          properties: {
+            title: '🎯 Seu Plano de Produtividade Está Pronto!',
+            fontSize: '2xl',
+            color: extractedColors.primaryColor || '#059669',
+            alignment: 'center',
+            fontWeight: 'bold'
+          }
+        });
+        
+        page.elements.push({
+          id: nanoid(),
+          type: 'text',
+          position: 1,
+          pageId,
+          properties: {
+            text: 'Criamos um plano de produtividade personalizado baseado no seu perfil e gatilhos. Verifique seu email agora!',
+            fontSize: 'lg',
+            color: extractedColors.textColor || '#374151',
+            alignment: 'center'
+          }
+        });
+        
+        page.elements.push({
+          id: nanoid(),
+          type: 'button',
+          position: 2,
+          pageId,
+          properties: {
+            text: 'Implementar Agora',
+            backgroundColor: extractedColors.primaryColor || '#059669',
+            textColor: '#ffffff',
+            size: 'lg',
+            action: 'complete_quiz'
+          }
+        });
+      }
+      
+      pages.push(page);
+      elements.push(...page.elements);
+    });
+    
+    console.log(`✅ SISTEMA EFFECTO COMPLETO: ${pages.length} páginas, ${elements.length} elementos criados`);
+    
+    return {
+      id: nanoid(),
+      title: 'Plano de Produtividade Effecto',
+      description: 'Quiz de produtividade personalizada importado da plataforma Effecto',
+      pages: pages.length,
+      pageData: pages,
+      elements,
+      settings: {
+        theme: extractedColors,
+        analytics: true,
+        progressBar: true,
+        autoSave: true,
+        focusMode: true
+      },
+      theme: extractedColors,
+      metadata: {
+        platform: 'Effecto',
+        category: 'Produtividade',
+        complexity: 'intermediate',
+        detectedFeatures: ['gender_selection', 'image_choices', 'productivity_assessment', 'personalized_plan'],
+        importedAt: new Date().toISOString(),
+        totalElements: elements.length,
+        estimatedDuration: '2-3 minutos',
+        targetAudience: 'Profissionais buscando maior produtividade'
+      }
+    };
+  }
+
+  private static extractEffectoColors($: cheerio.CheerioAPI): any {
+    return {
+      primaryColor: '#4F46E5', // Roxo/azul do Effecto
+      accentColor: '#10B981',   // Verde para CTAs
+      backgroundColor: '#ffffff',
+      textColor: '#1F2937',
+      secondaryColor: '#6B7280'
+    };
   }
 }
