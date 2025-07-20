@@ -13,6 +13,7 @@ import { useToast } from '@/hooks/use-toast';
 import { apiRequest } from '@/lib/queryClient';
 import { useAuth } from '@/hooks/useAuth';
 import logoVendzz from '@assets/logo-vendzz-white_1753041219534.png';
+import PWAInstallModal from '@/components/PWAInstallModal';
 
 export default function AppPWAVendzz() {
   const { user, isLoading, isAuthenticated } = useAuth();
@@ -30,46 +31,45 @@ export default function AppPWAVendzz() {
   });
 
   // Estados PWA
-  const [showIOSInstallPrompt, setShowIOSInstallPrompt] = useState(false);
+  const [showInstallModal, setShowInstallModal] = useState(false);
+  const [installPromptShown, setInstallPromptShown] = useState(false);
   const [notificationPermission, setNotificationPermission] = useState('default');
   const [deferredPrompt, setDeferredPrompt] = useState(null);
 
-  // Verificação de login obrigatório
+  // Mostrar modal de instalação primeiro, depois verificar login
   useEffect(() => {
-    if (!isLoading && !isAuthenticated) {
-      // Redirecionar para login se não autenticado
+    // Verificar se o modal já foi mostrado nesta sessão
+    const hasShownInstallPrompt = sessionStorage.getItem('vendzz_install_prompt_shown');
+    
+    if (!hasShownInstallPrompt && !installPromptShown) {
+      // Mostrar modal após 2 segundos
+      setTimeout(() => {
+        setShowInstallModal(true);
+        setInstallPromptShown(true);
+      }, 2000);
+    }
+  }, [installPromptShown]);
+
+  // Verificação de login obrigatório (só depois do modal de instalação ser fechado)
+  useEffect(() => {
+    const hasShownInstallPrompt = sessionStorage.getItem('vendzz_install_prompt_shown');
+    
+    if (!isLoading && !isAuthenticated && hasShownInstallPrompt && !showInstallModal) {
+      // Redirecionar para login se não autenticado e modal já foi tratado
       window.location.href = '/login';
       return;
     }
-  }, [isLoading, isAuthenticated]);
+  }, [isLoading, isAuthenticated, showInstallModal]);
 
   // PWA Install Prompt e Notificações
   useEffect(() => {
-    // 1. Detectar iOS e mostrar prompt de instalação
-    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
-    const isInStandaloneMode = window.matchMedia('(display-mode: standalone)').matches;
-    
-    if (isIOS && !isInStandaloneMode) {
-      // Mostrar prompt iOS após 3 segundos
-      setTimeout(() => setShowIOSInstallPrompt(true), 3000);
-    }
-
-    // 2. Capturar evento beforeinstallprompt (Android/Desktop)
+    // 1. Capturar evento beforeinstallprompt (Android/Desktop)
     const handleBeforeInstallPrompt = (e) => {
       e.preventDefault();
       setDeferredPrompt(e);
-      // Mostrar botão de instalação customizado
-      toast({
-        title: "📱 Instalar App",
-        description: "Adicione o Vendzz à sua tela inicial para acesso rápido!",
-        action: {
-          label: "Instalar",
-          onClick: () => handleInstallClick()
-        }
-      });
     };
 
-    // 3. Solicitar permissão de notificação na primeira visita
+    // 2. Solicitar permissão de notificação após instalação
     const requestNotificationPermission = async () => {
       if ('Notification' in window && Notification.permission === 'default') {
         try {
@@ -122,6 +122,28 @@ export default function AppPWAVendzz() {
       window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
     };
   }, []);
+
+  // Funções do Modal de Instalação
+  const handleInstallModalClose = () => {
+    setShowInstallModal(false);
+    sessionStorage.setItem('vendzz_install_prompt_shown', 'true');
+    
+    // Após fechar o modal, verificar login
+    if (!isLoading && !isAuthenticated) {
+      window.location.href = '/login';
+    }
+  };
+
+  const handleInstallFromModal = async () => {
+    if (deferredPrompt) {
+      deferredPrompt.prompt();
+      const { outcome } = await deferredPrompt.userChoice;
+      if (outcome === 'accepted') {
+        setDeferredPrompt(null);
+      }
+    }
+    handleInstallModalClose();
+  };
 
   // Registrar para notificações push
   const registerForPushNotifications = async () => {
@@ -525,42 +547,12 @@ export default function AppPWAVendzz() {
         </div>
       </div>
 
-      {/* Modal iOS Install Prompt */}
-      {showIOSInstallPrompt && (
-        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <Card className="bg-black/90 border border-white/20 rounded-3xl max-w-sm w-full">
-            <CardContent className="p-6 text-center">
-              <div className="w-16 h-16 bg-green-500 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                <Download className="h-8 w-8 text-white" />
-              </div>
-              <h3 className="text-xl font-bold text-white mb-2">Instalar Vendzz</h3>
-              <p className="text-gray-400 mb-6">
-                Adicione o Vendzz aos seus favoritos para acesso rápido como um app nativo
-              </p>
-              <div className="space-y-3 text-left mb-6">
-                <div className="flex items-center gap-3 text-sm text-gray-300">
-                  <div className="w-6 h-6 bg-blue-500 rounded flex items-center justify-center text-xs font-bold">1</div>
-                  <span>Toque no botão "Compartilhar" {Share2 && <Share2 className="inline h-4 w-4" />}</span>
-                </div>
-                <div className="flex items-center gap-3 text-sm text-gray-300">
-                  <div className="w-6 h-6 bg-blue-500 rounded flex items-center justify-center text-xs font-bold">2</div>
-                  <span>Selecione "Adicionar à Tela de Início"</span>
-                </div>
-                <div className="flex items-center gap-3 text-sm text-gray-300">
-                  <div className="w-6 h-6 bg-blue-500 rounded flex items-center justify-center text-xs font-bold">3</div>
-                  <span>Confirme "Adicionar"</span>
-                </div>
-              </div>
-              <Button 
-                onClick={() => setShowIOSInstallPrompt(false)}
-                className="w-full bg-green-500 hover:bg-green-600 text-white"
-              >
-                Entendi
-              </Button>
-            </CardContent>
-          </Card>
-        </div>
-      )}
+      {/* Modal PWA Install */}
+      <PWAInstallModal
+        isOpen={showInstallModal}
+        onClose={handleInstallModalClose}
+        onInstall={handleInstallFromModal}
+      />
     </div>
   );
 }
