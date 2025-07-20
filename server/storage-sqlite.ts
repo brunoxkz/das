@@ -5377,6 +5377,91 @@ export class SQLiteStorage implements IStorage {
   // Cache estático para projetos de vídeo
   private static videoProjectsCache = new Map<string, any[]>();
 
+  // ===== PUSH NOTIFICATION METHODS =====
+  
+  async savePushSubscription(subscriptionData: any): Promise<boolean> {
+    try {
+      const stmt = sqlite.prepare(`
+        INSERT OR REPLACE INTO push_subscriptions 
+        (user_id, endpoint, p256dh_key, auth_key, is_active, created_at, updated_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?)
+      `);
+      
+      const now = new Date().toISOString();
+      stmt.run(
+        subscriptionData.userId,
+        subscriptionData.endpoint,
+        subscriptionData.p256dhKey,
+        subscriptionData.authKey,
+        subscriptionData.isActive ? 1 : 0,
+        now,
+        now
+      );
+
+      console.log('✅ Push subscription salva:', subscriptionData.userId);
+      return true;
+    } catch (error) {
+      console.error('❌ ERRO ao salvar push subscription:', error);
+      return false;
+    }
+  }
+
+  async getActivePushSubscriptions(userId: string): Promise<any[]> {
+    try {
+      const stmt = sqlite.prepare(`
+        SELECT * FROM push_subscriptions 
+        WHERE user_id = ? AND is_active = 1
+      `);
+      
+      const subscriptions = stmt.all(userId);
+      return subscriptions;
+    } catch (error) {
+      console.error('❌ ERRO ao buscar subscriptions ativas:', error);
+      return [];
+    }
+  }
+
+  async getAllActivePushSubscriptions(): Promise<any[]> {
+    try {
+      const stmt = sqlite.prepare(`
+        SELECT * FROM push_subscriptions 
+        WHERE is_active = 1
+      `);
+      
+      const subscriptions = stmt.all();
+      return subscriptions;
+    } catch (error) {
+      console.error('❌ ERRO ao buscar todas as subscriptions:', error);
+      return [];
+    }
+  }
+
+  async savePushNotificationLog(logData: any): Promise<boolean> {
+    try {
+      const stmt = sqlite.prepare(`
+        INSERT INTO push_notification_logs 
+        (user_id, title, body, status, sent_at, created_at)
+        VALUES (?, ?, ?, ?, ?, ?)
+      `);
+      
+      const now = new Date().toISOString();
+      stmt.run(
+        logData.userId,
+        logData.title,
+        logData.body,
+        logData.status,
+        logData.sentAt ? logData.sentAt.toISOString() : now,
+        now
+      );
+
+      console.log('✅ Push notification log salvo:', logData.userId);
+      return true;
+    } catch (error) {
+      console.error('❌ ERRO ao salvar notification log:', error);
+      return false;
+    }
+  }
+
   // Métodos para Video Projects
   async getVideoProjects(userId: string): Promise<any[]> {
     try {

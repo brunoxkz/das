@@ -26,7 +26,7 @@ import {
   SelectTrigger, 
   SelectValue 
 } from "@/components/ui/select";
-import { Shield, Users, Settings, Crown, Bell, Send, Smartphone } from "lucide-react";
+import { Shield, Users, Settings, Crown, Bell, Send, Smartphone, Zap } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
