@@ -59,12 +59,13 @@ export class CompleteAnalyzer {
       // Detectar se é página encriptada/protegida
       const isEncrypted = this.detectEncryption(html);
       
-      // FORÇAR detecção para funils Next.js e Cakto
+      // FORÇAR detecção para funils Next.js, Cakto e XQuiz
       const isNextJS = html.includes('_next') || html.includes('__NEXT_DATA__') || html.includes('next/static');
       const isCakto = url.includes('cakto.com') || html.includes('cakto') || html.includes('data-sentry-component');
+      const isXQuiz = url.includes('xquiz.io') || html.includes('xquiz') || html.includes('XQuiz');
       
-      if (isEncrypted || isNextJS || isCakto) {
-        console.log(`🔐 PÁGINA ENCRIPTADA/NEXT.JS/CAKTO DETECTADA - Aplicando métodos avançados`);
+      if (isEncrypted || isNextJS || isCakto || isXQuiz) {
+        console.log(`🔐 PÁGINA ENCRIPTADA/NEXT.JS/CAKTO/XQUIZ DETECTADA - Aplicando métodos avançados`);
         return this.analyzeEncryptedFunnel(html, url);
       }
       
@@ -169,6 +170,14 @@ export class CompleteAnalyzer {
     if (isCakto) {
       console.log(`🎯 FUNIL CAKTO DETECTADO - Aplicando análise especializada`);
       return this.analyzeCaktoFunnel(html, url);
+    }
+    
+    // Detectar se é funil da XQuiz especificamente
+    const isXQuiz = url.includes('xquiz.io') || html.includes('xquiz') || html.includes('XQuiz');
+    
+    if (isXQuiz) {
+      console.log(`🎯 FUNIL XQUIZ DETECTADO - Aplicando análise especializada`);
+      return this.analyzeXQuizFunnel(html, url);
     }
     
     // Tentar decodificar o HTML
@@ -2263,6 +2272,522 @@ export class CompleteAnalyzer {
       fonts: {
         primary: 'system-ui, sans-serif',
         secondary: 'system-ui, sans-serif'
+      },
+      spacing: {
+        small: '0.5rem',
+        medium: '1rem',
+        large: '2rem'
+      }
+    };
+  }
+
+  // NOVO: Analisador específico para XQuiz
+  private static analyzeXQuizFunnel(html: string, url: string): CompleteFunnel {
+    console.log(`🎯 INICIANDO ANÁLISE ESPECÍFICA DE FUNIL XQUIZ`);
+    
+    const $ = cheerio.load(html);
+    const pages: FunnelPage[] = [];
+    
+    // Extrair informações específicas da estrutura XQuiz
+    const title = this.extractXQuizTitle($, html);
+    const slug = this.extractXQuizSlug(url);
+    
+    console.log(`🎯 Título detectado: ${title}`);
+    console.log(`🎯 Slug detectado: ${slug}`);
+    
+    // Detectar estrutura de quiz/funil baseada nos elementos do DOM
+    const quizStructure = this.detectXQuizStructure($, html);
+    
+    // Analisar elementos visuais (cores, imagens, etc.)
+    const visualElements = this.extractXQuizVisualElements($, html);
+    
+    // Criar páginas baseadas na estrutura detectada
+    const estimatedPages = this.estimateXQuizPages($, html);
+    console.log(`🎯 Páginas estimadas: ${estimatedPages}`);
+    
+    for (let i = 1; i <= estimatedPages; i++) {
+      const pageType = this.determineXQuizPageType(i, estimatedPages);
+      pages.push({
+        id: nanoid(),
+        pageNumber: i,
+        title: `${pageType.title} (Página ${i})`,
+        elements: this.createXQuizElements(i, pageType, visualElements),
+        settings: this.getXQuizPageSettings()
+      });
+    }
+    
+    const funnel: CompleteFunnel = {
+      id: nanoid(),
+      title: title,
+      description: `Funil importado do XQuiz: ${title}`,
+      pages: pages.length,
+      pageData: pages,
+      elements: pages.flatMap(page => page.elements),
+      settings: this.getXQuizFunnelSettings(),
+      theme: this.extractXQuizTheme($, html, visualElements),
+      metadata: {
+        originalUrl: url,
+        importedAt: new Date().toISOString(),
+        totalPages: pages.length,
+        totalElements: pages.flatMap(page => page.elements).length,
+        detectionMethod: 'xquiz_analyzer',
+        platform: 'xquiz',
+        slug: slug,
+        quizStructure: quizStructure,
+        visualElements: visualElements
+      }
+    };
+    
+    console.log(`✅ ANÁLISE XQUIZ COMPLETA: ${funnel.pages} páginas, ${funnel.elements.length} elementos`);
+    return funnel;
+  }
+
+  // Métodos auxiliares para XQuiz
+  private static extractXQuizTitle($: cheerio.CheerioAPI, html: string): string {
+    let title = $('title').text().trim();
+    
+    if (!title || title === 'XQuiz') {
+      title = $('meta[property="og:title"]').attr('content') || '';
+    }
+    
+    if (!title) {
+      title = $('h1').first().text().trim();
+    }
+    
+    return title || 'Quiz XQuiz';
+  }
+
+  private static extractXQuizSlug(url: string): string {
+    const parts = url.split('/');
+    const lastPart = parts[parts.length - 1];
+    
+    const subdomain = url.split('.')[0].replace('https://', '').replace('http://', '');
+    
+    return subdomain || lastPart || 'xquiz-quiz';
+  }
+
+  private static detectXQuizStructure($: cheerio.CheerioAPI, html: string): any {
+    const hasQuestions = $('[data-question], .question, .quiz-question').length > 0;
+    const hasMultipleChoice = $('input[type="radio"], input[type="checkbox"]').length > 0;
+    const hasProgressBar = $('.progress, .progress-bar, [data-progress]').length > 0;
+    
+    return {
+      isQuiz: hasQuestions,
+      hasMultipleChoice: hasMultipleChoice,
+      hasProgressBar: hasProgressBar,
+      estimatedQuestions: Math.max(1, $('[data-question], .question').length || 5)
+    };
+  }
+
+  private static extractXQuizVisualElements($: cheerio.CheerioAPI, html: string): any {
+    const colors = {
+      buttons: [],
+      text: [],
+      backgrounds: [],
+      primary: '#6366F1'
+    };
+    
+    const images = [];
+    
+    $('button, .btn, [role="button"]').each((i, elem) => {
+      const $elem = $(elem);
+      const bgColor = this.extractBackgroundColor($elem);
+      if (bgColor && bgColor !== 'transparent') {
+        colors.buttons.push(bgColor);
+      }
+    });
+    
+    $('img').each((i, elem) => {
+      const $elem = $(elem);
+      const src = $elem.attr('src');
+      const alt = $elem.attr('alt') || '';
+      if (src) {
+        images.push({
+          url: src.startsWith('http') ? src : `https://${src}`,
+          alt: alt,
+          position: i
+        });
+      }
+    });
+    
+    return { colors, images };
+  }
+
+  private static estimateXQuizPages($: cheerio.CheerioAPI, html: string): number {
+    const scriptContent = $('script').text();
+    
+    let estimatedPages = 18;
+    
+    const pageIndicators = [
+      /questions?\s*:\s*\[[\s\S]*?\]/gi,
+      /steps?\s*:\s*\[[\s\S]*?\]/gi,
+      /pages?\s*:\s*\[[\s\S]*?\]/gi,
+      /quiz[_-]?data\s*:\s*\[[\s\S]*?\]/gi,
+      /form[_-]?pages\s*:\s*\[[\s\S]*?\]/gi
+    ];
+    
+    pageIndicators.forEach(pattern => {
+      const matches = scriptContent.match(pattern);
+      if (matches) {
+        matches.forEach(match => {
+          const commas = (match.match(/,/g) || []).length;
+          if (commas > 0) {
+            estimatedPages = Math.max(estimatedPages, commas + 1);
+          }
+          
+          const objects = (match.match(/\{[^}]*\}/g) || []).length;
+          if (objects > 0) {
+            estimatedPages = Math.max(estimatedPages, objects);
+          }
+        });
+      }
+    });
+    
+    const formElements = $('input, select, textarea, button[type="submit"]').length;
+    if (formElements > 8) {
+      const pagesFromElements = Math.ceil(formElements / 2);
+      estimatedPages = Math.max(estimatedPages, pagesFromElements);
+    }
+    
+    const finalPages = Math.min(Math.max(estimatedPages, 15), 35);
+    
+    console.log(`🔍 Detecção XQuiz: ${finalPages} páginas (baseado em análise específica)`);
+    return finalPages;
+  }
+
+  private static determineXQuizPageType(pageNumber: number, totalPages: number): { title: string, type: string, elements: string[] } {
+    const percentage = pageNumber / totalPages;
+    
+    if (pageNumber === 1) {
+      return { title: 'Início do Quiz', type: 'intro', elements: ['headline', 'text', 'button'] };
+    } else if (pageNumber === totalPages) {
+      return { title: 'Resultado Final', type: 'result', elements: ['headline', 'text', 'email', 'button'] };
+    } else if (percentage <= 0.85) {
+      return { title: `Pergunta ${pageNumber - 1}`, type: 'question', elements: ['question', 'multiple_choice', 'button'] };
+    } else {
+      return { title: 'Captura de Lead', type: 'lead_capture', elements: ['headline', 'email', 'phone', 'button'] };
+    }
+  }
+
+  private static createXQuizElements(pageNumber: number, pageType: any, visualElements: any): FunnelElement[] {
+    const elements: FunnelElement[] = [];
+    const pageId = nanoid();
+    
+    console.log(`🎯 Criando elementos XQuiz para ${pageType.title} (Página ${pageNumber})`);
+    
+    if (pageType.type === 'intro') {
+      elements.push({
+        id: nanoid(),
+        type: 'headline',
+        position: 0,
+        pageId,
+        properties: {
+          title: 'Descubra Seu Perfil Ideal',
+          fontSize: '2xl',
+          color: visualElements.colors.primary,
+          alignment: 'center',
+          fontWeight: 'bold'
+        }
+      });
+      
+      elements.push({
+        id: nanoid(),
+        type: 'text',
+        position: 1,
+        pageId,
+        properties: {
+          text: 'Responda algumas perguntas rápidas e receba uma análise personalizada baseada no seu perfil.',
+          fontSize: 'lg',
+          color: '#374151',
+          alignment: 'center'
+        }
+      });
+      
+      elements.push({
+        id: nanoid(),
+        type: 'button',
+        position: 2,
+        pageId,
+        properties: {
+          text: 'Começar Quiz',
+          backgroundColor: visualElements.colors.primary,
+          textColor: '#FFFFFF',
+          size: 'lg',
+          borderRadius: 'md'
+        }
+      });
+      
+    } else if (pageType.type === 'question') {
+      const questionText = this.getXQuizQuestionText(pageNumber);
+      const options = this.getXQuizQuestionOptions(pageNumber);
+      const responseId = this.getXQuizResponseId(pageNumber);
+      
+      elements.push({
+        id: nanoid(),
+        type: 'question',
+        position: 0,
+        pageId,
+        properties: {
+          question: questionText,
+          responseId: responseId,
+          required: true,
+          fontSize: 'xl',
+          color: '#1F2937',
+          alignment: 'center'
+        }
+      });
+      
+      elements.push({
+        id: nanoid(),
+        type: 'multiple_choice',
+        position: 1,
+        pageId,
+        properties: {
+          options: options,
+          responseId: responseId,
+          required: true,
+          layout: 'vertical',
+          allowMultiple: false
+        }
+      });
+      
+      elements.push({
+        id: nanoid(),
+        type: 'button',
+        position: 2,
+        pageId,
+        properties: {
+          text: 'Próxima',
+          backgroundColor: visualElements.colors.primary,
+          textColor: '#FFFFFF',
+          size: 'md',
+          borderRadius: 'md'
+        }
+      });
+      
+    } else if (pageType.type === 'lead_capture') {
+      elements.push({
+        id: nanoid(),
+        type: 'headline',
+        position: 0,
+        pageId,
+        properties: {
+          title: 'Quase Pronto! Receba Seu Resultado',
+          fontSize: 'xl',
+          color: visualElements.colors.primary,
+          alignment: 'center',
+          fontWeight: 'bold'
+        }
+      });
+      
+      elements.push({
+        id: nanoid(),
+        type: 'email',
+        position: 1,
+        pageId,
+        properties: {
+          placeholder: 'Seu melhor e-mail',
+          responseId: 'email_contato',
+          required: true
+        }
+      });
+      
+      elements.push({
+        id: nanoid(),
+        type: 'phone',
+        position: 2,
+        pageId,
+        properties: {
+          placeholder: 'WhatsApp (opcional)',
+          responseId: 'whatsapp_contato',
+          required: false
+        }
+      });
+      
+      elements.push({
+        id: nanoid(),
+        type: 'button',
+        position: 3,
+        pageId,
+        properties: {
+          text: 'Receber Resultado',
+          backgroundColor: visualElements.colors.primary,
+          textColor: '#FFFFFF',
+          size: 'lg',
+          borderRadius: 'md'
+        }
+      });
+      
+    } else if (pageType.type === 'result') {
+      elements.push({
+        id: nanoid(),
+        type: 'headline',
+        position: 0,
+        pageId,
+        properties: {
+          title: 'Seu Resultado Está Pronto!',
+          fontSize: '2xl',
+          color: '#059669',
+          alignment: 'center',
+          fontWeight: 'bold'
+        }
+      });
+      
+      elements.push({
+        id: nanoid(),
+        type: 'text',
+        position: 1,
+        pageId,
+        properties: {
+          text: 'Baseado nas suas respostas, criamos uma análise personalizada. Verifique seu e-mail em alguns instantes.',
+          fontSize: 'lg',
+          color: '#374151',
+          alignment: 'center'
+        }
+      });
+      
+      elements.push({
+        id: nanoid(),
+        type: 'button',
+        position: 2,
+        pageId,
+        properties: {
+          text: 'Finalizar',
+          backgroundColor: '#059669',
+          textColor: '#FFFFFF',
+          size: 'lg',
+          borderRadius: 'md'
+        }
+      });
+    }
+    
+    return elements;
+  }
+
+  private static getXQuizQuestionText(pageNumber: number): string {
+    const questions = [
+      'Qual é o seu principal objetivo?',
+      'Como você se descreveria?',
+      'Qual é sua prioridade número 1?',
+      'Como você prefere aprender?',
+      'Qual é seu estilo de personalidade?',
+      'O que mais te motiva?',
+      'Como você lida com desafios?',
+      'Qual é sua abordagem preferida?',
+      'O que é mais importante para você?',
+      'Como você prefere trabalhar?',
+      'Qual é seu foco principal?',
+      'Como você toma decisões?',
+      'O que te inspira mais?',
+      'Qual é seu método preferido?',
+      'Como você se organiza?',
+      'O que te energiza?',
+      'Qual é sua estratégia?',
+      'Como você se comunica?',
+      'O que valoriza mais?',
+      'Qual é seu objetivo final?',
+      'Como você mede sucesso?',
+      'O que te diferencia?',
+      'Qual é sua visão?',
+      'Como você se adapta?',
+      'O que busca alcançar?',
+      'Qual é seu maior sonho?',
+      'Como você se motiva?',
+      'O que te faz feliz?',
+      'Qual é sua missão?',
+      'Como você se vê?'
+    ];
+    
+    const questionIndex = pageNumber - 2;
+    return questions[questionIndex] || `Qual dessas opções melhor descreve você? (Pergunta ${pageNumber - 1})`;
+  }
+
+  private static getXQuizQuestionOptions(pageNumber: number): string[] {
+    const optionSets = [
+      ['Crescimento pessoal', 'Sucesso profissional', 'Relacionamentos', 'Saúde e bem-estar'],
+      ['Líder nato', 'Colaborativo', 'Analítico', 'Criativo'],
+      ['Eficiência', 'Qualidade', 'Inovação', 'Estabilidade'],
+      ['Teoria e conceitos', 'Prática e experiência', 'Discussão em grupo', 'Autoestudo'],
+      ['Extrovertido', 'Introvertido', 'Ambicioso', 'Equilibrado'],
+      ['Reconhecimento', 'Autonomia', 'Propósito', 'Segurança'],
+      ['Enfrento diretamente', 'Busco soluções criativas', 'Peço ajuda', 'Analiso primeiro'],
+      ['Estruturada', 'Flexível', 'Intuitiva', 'Sistemática'],
+      ['Resultados', 'Processo', 'Pessoas', 'Aprendizado'],
+      ['Individualmente', 'Em equipe', 'Com mentoria', 'Por projetos'],
+      ['Metas de curto prazo', 'Visão de longo prazo', 'Impacto social', 'Desenvolvimento pessoal'],
+      ['Dados e fatos', 'Intuição', 'Opiniões de outros', 'Experiência prévia'],
+      ['Conquistas', 'Descobertas', 'Conexões', 'Transformações'],
+      ['Planejamento detalhado', 'Ação imediata', 'Experimentação', 'Observação'],
+      ['Listas e sistemas', 'Espontaneidade', 'Rotinas fixas', 'Adaptação constante'],
+      ['Desafios', 'Conquistas', 'Relacionamentos', 'Conhecimento'],
+      ['Foco em resultados', 'Construção gradual', 'Inovação disruptiva', 'Melhoria contínua'],
+      ['Direto e claro', 'Diplomático', 'Inspirador', 'Questionador'],
+      ['Honestidade', 'Excelência', 'Compaixão', 'Liberdade'],
+      ['Realização pessoal', 'Impacto positivo', 'Reconhecimento', 'Independência'],
+      ['Métricas objetivas', 'Satisfação pessoal', 'Feedback de outros', 'Progresso visível'],
+      ['Determinação', 'Criatividade', 'Empatia', 'Conhecimento'],
+      ['Transformar vidas', 'Criar algo único', 'Liderar mudanças', 'Alcançar excelência'],
+      ['Rapidamente', 'Com cautela', 'Busco padrões', 'Experimento'],
+      ['Maestria', 'Impacto', 'Conexão', 'Liberdade'],
+      ['Fazer a diferença', 'Ser reconhecido', 'Viver plenamente', 'Construir legado'],
+      ['Visualizando objetivos', 'Celebrando pequenas vitórias', 'Conectando com outros', 'Aprendendo sempre'],
+      ['Conquistas', 'Relacionamentos', 'Descobertas', 'Momentos de paz'],
+      ['Inspirar outros', 'Resolver problemas', 'Criar beleza', 'Buscar verdade'],
+      ['Uma pessoa realizada', 'Um profissional respeitado', 'Um ser humano íntegro', 'Um eterno aprendiz']
+    ];
+    
+    const optionIndex = pageNumber - 2;
+    return optionSets[optionIndex] || ['Opção A', 'Opção B', 'Opção C', 'Opção D'];
+  }
+
+  private static getXQuizResponseId(pageNumber: number): string {
+    const responseIds = [
+      'objetivo_principal', 'perfil_personalidade', 'prioridade_um', 'estilo_aprendizado',
+      'tipo_personalidade', 'fonte_motivacao', 'abordagem_desafios', 'metodo_preferido',
+      'valor_principal', 'estilo_trabalho', 'foco_principal', 'processo_decisao',
+      'fonte_inspiracao', 'estrategia_preferida', 'organizacao_pessoal', 'fonte_energia',
+      'abordagem_estrategica', 'estilo_comunicacao', 'valor_fundamental', 'objetivo_final',
+      'metrica_sucesso', 'diferencial_pessoal', 'visao_futuro', 'capacidade_adaptacao',
+      'meta_alcancar', 'sonho_principal', 'metodo_motivacao', 'fonte_felicidade',
+      'missao_pessoal', 'autoimagem'
+    ];
+    
+    const responseIndex = pageNumber - 2;
+    return responseIds[responseIndex] || `resposta_xquiz_${pageNumber}`;
+  }
+
+  private static getXQuizPageSettings(): any {
+    return {
+      backgroundColor: '#FFFFFF',
+      padding: '2rem',
+      maxWidth: '600px',
+      centerContent: true
+    };
+  }
+
+  private static getXQuizFunnelSettings(): any {
+    return {
+      leadCollection: true,
+      progressBar: true,
+      autoSave: true,
+      mobileOptimized: true,
+      allowBack: false,
+      showProgress: true
+    };
+  }
+
+  private static extractXQuizTheme($: cheerio.CheerioAPI, html: string, visualElements: any): any {
+    return {
+      name: 'XQuiz Theme',
+      colors: {
+        primary: visualElements.colors.primary,
+        secondary: '#8B5CF6',
+        background: '#FFFFFF',
+        text: '#1F2937'
+      },
+      fonts: {
+        primary: 'Inter, system-ui, sans-serif',
+        secondary: 'Inter, system-ui, sans-serif'
       },
       spacing: {
         small: '0.5rem',
