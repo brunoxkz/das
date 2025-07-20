@@ -53,6 +53,7 @@ import { BrevoEmailService } from "./email-brevo";
 import { handleSecureUpload, uploadMiddleware } from "./upload-secure";
 import { sanitizeAllScripts, sanitizeUTMCode, sanitizeCustomScript } from './script-sanitizer-new';
 import { intelligentRateLimiter } from './intelligent-rate-limiter';
+import webpush from 'web-push';
 import { PushNotificationSystem } from './push-notifications';
 import { isUserBlocked, canCreateQuiz, getPlanLimits } from './rbac';
 import { 
@@ -15305,39 +15306,77 @@ app.get("/api/whatsapp-extension/pending", verifyJWT, async (req: any, res: Resp
       const allSubscriptions = await storage.getAllActivePushSubscriptions();
       console.log(`📱 Subscriptions encontradas: ${allSubscriptions.length}`);
       
-      // Para demo, simular 5 dispositivos conectados
-      const mockDevices = 5;
-      const mockUsers = 3;
+      // Enviar notificações reais para dispositivos
+      let successCount = 0;
+      let failureCount = 0;
+      
+      const notificationPayload = JSON.stringify({
+        title,
+        body,
+        icon: '/vendzz-logo-official.png',
+        badge: '/vendzz-logo-official.png',
+        url: url || '/app-pwa-vendzz',
+        tag: tag || 'global',
+        timestamp: Date.now(),
+        actions: [
+          { action: 'open', title: 'Abrir' },
+          { action: 'close', title: 'Fechar' }
+        ]
+      });
 
-      // Simular envio de notificação global
-      console.log(`🌍 [MOCK] Simulando envio para ${mockDevices} dispositivos de ${mockUsers} usuários`);
-      console.log(`✅ [MOCK] Notificação global "simulada" com sucesso`);
+      console.log(`📡 Enviando para ${allSubscriptions.length} subscriptions reais`);
 
-      // Salvar logs simulados para estatísticas
-      try {
-        const mockUserIds = ['admin-user-id', '1EaY6vE0rYAkTXv5vHClm', 'mock-user-3'];
-        for (const userId of mockUserIds) {
-          const logSaved = await storage.savePushNotificationLog({
-            userId,
+      // Enviar para cada subscription
+      for (const subscription of allSubscriptions) {
+        try {
+          const pushSubscription = {
+            endpoint: subscription.endpoint,
+            keys: {
+              p256dh: subscription.p256dh_key,
+              auth: subscription.auth_key
+            }
+          };
+
+          console.log(`📱 Enviando para: ${subscription.endpoint.substring(0, 50)}...`);
+          
+          // ENVIO REAL da notificação
+          await webpush.sendNotification(pushSubscription, notificationPayload);
+          
+          successCount++;
+          console.log(`✅ Notificação enviada com sucesso para user ${subscription.user_id}`);
+          
+          // Salvar log de sucesso
+          await storage.savePushNotificationLog({
+            userId: subscription.user_id,
             title,
             body,
             status: 'sent',
             sentAt: new Date()
           });
-          console.log(`📝 Log salvo para ${userId}: ${logSaved ? 'Sucesso' : 'Falhou'}`);
+          
+        } catch (error) {
+          failureCount++;
+          console.error(`❌ Erro ao enviar para ${subscription.user_id}:`, error.message);
+          
+          // Salvar log de erro
+          await storage.savePushNotificationLog({
+            userId: subscription.user_id,
+            title,
+            body,
+            status: 'failed',
+            sentAt: new Date()
+          });
         }
-      } catch (logError) {
-        console.error('❌ Erro ao salvar logs (não crítico):', logError);
       }
 
-      console.log('✅ [GLOBAL PUSH] Notificação processada com sucesso');
+      console.log(`✅ [REAL PUSH] Enviado: ${successCount}, Falharam: ${failureCount}`);
 
       res.json({
         success: true,
-        message: 'Notificação global enviada com sucesso',
-        sentCount: mockDevices,
-        uniqueUsers: mockUsers,
-        info: 'Sistema funcionando em modo simulação'
+        message: 'Notificação global enviada com Web Push real',
+        sentCount: successCount,
+        failedCount: failureCount,
+        totalSubscriptions: allSubscriptions.length
       });
     } catch (error) {
       console.error('❌ ERRO CRÍTICO na notificação global:', error);
@@ -15352,8 +15391,21 @@ app.get("/api/whatsapp-extension/pending", verifyJWT, async (req: any, res: Resp
 
 
   
-  // VAPID para push notifications (chaves de exemplo - substitua por chaves reais)
-  const VAPID_PUBLIC_KEY = 'BKxL8iRIrwm1YUlx7zIFJyI5Y5F3K_XQQp3mMm1Fq8QGzJ2vK7kKz_8eF5lOm1Kp3mMm1Fq8QGzJ2vK7kKz_8e';
+  // VAPID para push notifications - Web Push Real (chaves válidas geradas)
+  const VAPID_PUBLIC_KEY = 'BC9uiP1uG8jN942_SoN4ThXQ5X8TotmwYKiLbfXO8HO35yQTvTE9Hn7S9Yccrr5rULgnvjQ0Bl4IdYFaZXQ1L48';
+  const VAPID_PRIVATE_KEY = '9lYaeSUM8VpGODyfb49z9ct-6fo6JIiu7760ixftrEo';
+  
+  // Configurar VAPID
+  try {
+    webpush.setVapidDetails(
+      'mailto:admin@vendzz.com',
+      VAPID_PUBLIC_KEY,
+      VAPID_PRIVATE_KEY
+    );
+    console.log('✅ VAPID configurado para Web Push Real');
+  } catch (vapidError) {
+    console.error('❌ Erro ao configurar VAPID:', vapidError);
+  }
 
   // Obter chave pública VAPID para o frontend
   app.get("/api/push-notifications/vapid-key", (req: any, res: Response) => {
