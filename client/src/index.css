@@ -858,21 +858,42 @@ body {
   text-transform: uppercase;
   letter-spacing: 0.05em;
   transition: all 0.2s ease-in-out;
+  border-radius: 0.375rem;
 }
 
+/* Category header hover effect - GREEN BACKGROUND */
 .vendzz-sidebar .category-header:hover {
   background: hsl(142, 76%, 36%) !important;
   color: white !important;
 }
 
-/* Navigation items hover effect */
+/* Navigation items base style */
+.vendzz-sidebar .nav-item {
+  transition: all 0.2s ease-in-out;
+  border-radius: 0.375rem;
+  margin: 0.125rem 0;
+}
+
+/* Navigation items hover effect - GREEN BACKGROUND */
 .vendzz-sidebar .nav-item:hover {
   background: hsl(142, 76%, 36%) !important;
   color: white !important;
 }
 
-/* Navigation items hover effect - prevent text disappearing */
-.vendzz-sidebar .nav-item:hover span {
+/* Navigation items hover effect - ensure all text turns white */
+.vendzz-sidebar .nav-item:hover span,
+.vendzz-sidebar .nav-item:hover .text-sm,
+.vendzz-sidebar .nav-item:hover .text-xs,
+.vendzz-sidebar .nav-item:hover * {
+  color: white !important;
+  opacity: 1 !important;
+}
+
+/* Category header hover effect - ensure all text turns white */
+.vendzz-sidebar .category-header:hover span,
+.vendzz-sidebar .category-header:hover .text-sm,
+.vendzz-sidebar .category-header:hover .text-xs,
+.vendzz-sidebar .category-header:hover * {
   color: white !important;
   opacity: 1 !important;
 }
@@ -883,12 +904,6 @@ body {
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.05em;
-}
-
-/* Category header hover effect - prevent text disappearing */
-.vendzz-sidebar .category-header:hover span {
-  color: white !important;
-  opacity: 1 !important;
 }
 
 /* Standardize font style for category headers */
@@ -920,10 +935,7 @@ body {
   color: white !important;
 }
 
-.vendzz-sidebar .category-header:hover {
-  background: hsl(var(--muted)) !important;
-  color: hsl(var(--foreground)) !important;
-}
+
 
 /* Category items indentation */
 .vendzz-sidebar .category-items {
@@ -932,17 +944,63 @@ body {
   margin-left: 1rem;
 }
 
-/* Navigation items clean styling */
+/* Navigation items clean styling - merged with previous styles */
 .vendzz-sidebar .nav-item {
   border: none !important;
   background: transparent !important;
-  margin: 0 !important;
   padding: 0.5rem 0.75rem !important;
-  transition: all 0.2s ease-in-out;
 }
 
-.vendzz-sidebar .nav-item:hover {
-  background: hsl(var(--muted)) !important;
+/* Additional specific hover styles for all sidebar buttons and items */
+.vendzz-sidebar button:hover,
+.vendzz-sidebar .nav-link:hover,
+.vendzz-sidebar .sidebar-item:hover,
+.vendzz-sidebar [role="button"]:hover {
+  background: hsl(142, 76%, 36%) !important;
+  color: white !important;
+}
+
+/* Ensure all text elements inside hovered items turn white */
+.vendzz-sidebar button:hover *,
+.vendzz-sidebar .nav-link:hover *,
+.vendzz-sidebar .sidebar-item:hover *,
+.vendzz-sidebar [role="button"]:hover *,
+.vendzz-sidebar .nav-item:hover .lucide,
+.vendzz-sidebar .category-header:hover .lucide {
+  color: white !important;
+  fill: white !important;
+  stroke: white !important;
+}
+
+/* Badge styling on hover */
+.vendzz-sidebar .nav-item:hover .badge,
+.vendzz-sidebar .category-header:hover .badge {
+  background: rgba(255, 255, 255, 0.2) !important;
+  color: white !important;
+  border-color: rgba(255, 255, 255, 0.3) !important;
+}
+
+/* Force green hover for any clickable element in sidebar */
+.vendzz-sidebar .cursor-pointer:hover,
+.vendzz-sidebar .hover\\:bg-gray-100:hover,
+.vendzz-sidebar .hover\\:bg-muted:hover,
+.vendzz-sidebar .hover\\:bg-accent:hover,
+.vendzz-sidebar .collapsible-trigger:hover {
+  background: hsl(142, 76%, 36%) !important;
+  color: white !important;
+}
+
+/* Override any Tailwind hover classes in sidebar */
+.vendzz-sidebar *:hover {
+  --tw-bg-opacity: 1 !important;
+}
+
+/* Ensure rounded corners for hover effect */
+.vendzz-sidebar .nav-item,
+.vendzz-sidebar .category-header,
+.vendzz-sidebar button,
+.vendzz-sidebar .cursor-pointer {
+  border-radius: 0.375rem !important;
 }
 
 .vendzz-sidebar .nav-item.active {
