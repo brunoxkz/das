@@ -6,7 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Eye, EyeOff, Lock, Mail } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
-import logoVendzz from '@assets/logo-vendzz-white_1753041219534.png';
+import logoVendzz from '@assets/logo-vendzz-white-ezgif.com-crop_1753045147057.png';
 import PWAInstallModal from '@/components/PWAInstallModal';
 
 export default function LoginPWA() {
@@ -14,50 +14,150 @@ export default function LoginPWA() {
 
   // Função para solicitar permissão de notificação automaticamente
   const requestNotificationPermission = async () => {
+    console.log('🔔 [DEBUG] Iniciando solicitação de notificação');
+    console.log('🔔 [DEBUG] User Agent:', navigator.userAgent);
+    console.log('🔔 [DEBUG] Platform:', navigator.platform);
+    console.log('🔔 [DEBUG] PWA Mode:', window.matchMedia('(display-mode: standalone)').matches);
+    
     if (!('Notification' in window)) {
-      console.log('🔔 Notificações não suportadas neste dispositivo');
+      console.log('🔔 [ERROR] Notificações não suportadas neste dispositivo');
+      toast({
+        title: "Notificações não suportadas",
+        description: "Seu dispositivo não suporta notificações web",
+        variant: "destructive"
+      });
       return;
     }
 
+    console.log('🔔 [DEBUG] Permissão atual:', Notification.permission);
+
     if (Notification.permission === 'granted') {
-      console.log('🔔 Permissão já concedida');
+      console.log('🔔 [SUCCESS] Permissão já concedida');
+      
+      try {
+        // Testar notificação
+        const notification = new Notification('Vendzz - Notificações Ativas!', {
+          body: 'Sistema funcionando perfeitamente.',
+          icon: '/vendzz-logo-official.png',
+          tag: 'test'
+        });
+        
+        console.log('🔔 [SUCCESS] Notificação de teste enviada');
+        
+        // Fechar após 3 segundos
+        setTimeout(() => {
+          notification.close();
+        }, 3000);
+        
+      } catch (notError) {
+        console.error('🔔 [ERROR] Erro ao criar notificação de teste:', notError);
+      }
+      return;
+    }
+
+    if (Notification.permission === 'denied') {
+      console.log('🔔 [WARNING] Permissão negada pelo usuário anteriormente');
+      toast({
+        title: "Notificações bloqueadas",
+        description: "Permissão foi negada. Ative nas configurações do navegador.",
+        variant: "destructive"
+      });
       return;
     }
 
     if (Notification.permission === 'default') {
+      console.log('🔔 [DEBUG] Solicitando permissão...');
+      
       try {
         let permission: NotificationPermission;
+        
+        console.log('🔔 [DEBUG] Tipo de requestPermission:', typeof Notification.requestPermission);
+        console.log('🔔 [DEBUG] Length de requestPermission:', Notification.requestPermission.length);
         
         // Método específico para iOS Safari/PWA
         if (typeof Notification.requestPermission === 'function') {
           if (Notification.requestPermission.length) {
+            console.log('🔔 [DEBUG] Usando método callback (iOS)');
             // Versão callback (iOS Safari)
             permission = await new Promise((resolve) => {
               Notification.requestPermission((result) => {
+                console.log('🔔 [DEBUG] Callback result:', result);
                 resolve(result);
               });
             });
           } else {
+            console.log('🔔 [DEBUG] Usando método Promise (moderno)');
             // Versão Promise (navegadores modernos)
             permission = await Notification.requestPermission();
           }
 
+          console.log('🔔 [DEBUG] Permissão resultado:', permission);
+
           if (permission === 'granted') {
-            console.log('🔔 Permissão de notificação concedida automaticamente');
+            console.log('🔔 [SUCCESS] Permissão concedida!');
             
-            // Mostrar notificação de boas-vindas
-            new Notification('Vendzz - Bem-vindo!', {
-              body: 'Notificações ativadas com sucesso. Você receberá updates importantes.',
-              icon: '/vendzz-logo-official.png',
-              badge: '/vendzz-logo-official.png',
-              tag: 'welcome'
+            toast({
+              title: "Notificações ativadas!",
+              description: "Você receberá atualizações importantes.",
+            });
+            
+            try {
+              // Mostrar notificação de boas-vindas
+              const welcomeNotification = new Notification('Vendzz - Bem-vindo!', {
+                body: 'Notificações ativadas com sucesso. Você receberá updates importantes.',
+                icon: '/vendzz-logo-official.png',
+                badge: '/vendzz-logo-official.png',
+                tag: 'welcome',
+                requireInteraction: false
+              });
+              
+              console.log('🔔 [SUCCESS] Notificação de boas-vindas criada');
+              
+              // Fechar após 5 segundos
+              setTimeout(() => {
+                welcomeNotification.close();
+              }, 5000);
+              
+            } catch (notError: any) {
+              console.error('🔔 [ERROR] Erro ao criar notificação de boas-vindas:', notError);
+              toast({
+                title: "Erro ao enviar notificação",
+                description: `Detalhes: ${notError?.message || 'Erro desconhecido'}`,
+                variant: "destructive"
+              });
+            }
+            
+          } else if (permission === 'denied') {
+            console.log('🔔 [WARNING] Permissão negada pelo usuário');
+            toast({
+              title: "Notificações negadas",
+              description: "Você optou por não receber notificações.",
+              variant: "destructive"
             });
           } else {
-            console.log('🔔 Permissão de notificação negada');
+            console.log('🔔 [WARNING] Permissão padrão mantida');
+            toast({
+              title: "Notificações não configuradas",
+              description: "Permissão não foi concedida.",
+              variant: "destructive"
+            });
           }
+        } else {
+          console.error('🔔 [ERROR] Função requestPermission não disponível');
+          toast({
+            title: "Erro de compatibilidade",
+            description: "Função de notificação não está disponível neste navegador.",
+            variant: "destructive"
+          });
         }
-      } catch (error) {
-        console.error('🔔 Erro ao solicitar permissão:', error);
+      } catch (error: any) {
+        console.error('🔔 [ERROR] Erro ao solicitar permissão:', error);
+        console.error('🔔 [ERROR] Stack trace:', error?.stack);
+        toast({
+          title: "Erro ao ativar notificações",
+          description: `Detalhes técnicos: ${error?.message || 'Erro desconhecido'}`,
+          variant: "destructive"
+        });
       }
     }
   };
@@ -190,9 +290,11 @@ export default function LoginPWA() {
         });
 
         // Solicitar permissão de notificação automaticamente após login bem-sucedido
+        console.log('🔔 [LOGIN] Agendando solicitação de notificação em 1 segundo...');
         setTimeout(() => {
+          console.log('🔔 [LOGIN] Executando solicitação de notificação...');
           requestNotificationPermission();
-        }, 500);
+        }, 1000);
 
         // Redirecionar para o PWA
         setTimeout(() => {
@@ -299,7 +401,7 @@ export default function LoginPWA() {
         isOpen={showInstallModal}
         onClose={handleInstallModalClose}
         onInstall={handleInstallFromModal}
-        deferredPrompt={deferredPrompt}
+
         isMobile={isMobile}
       />
       
