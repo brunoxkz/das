@@ -194,6 +194,7 @@ function App() {
         <Route path="/payment-cancel" component={PaymentSuccess} />
         <Route path="/stripe-checkout-link/:linkId" component={StripeCheckoutLink} />
         <Route path="/test" component={TestPage} />
+        <Route path="/login-test-complete" component={() => import('@/pages/login-test-complete')} />
 
         {/* Authenticated routes with sidebar */}
         <Route path="/dashboard">

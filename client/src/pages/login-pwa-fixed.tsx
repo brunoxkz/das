@@ -5,11 +5,63 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Eye, EyeOff, Lock, Mail } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/hooks/useAuth';
 import logoVendzz from '@assets/logo-vendzz-white_1753041219534.png';
 import PWAInstallModal from '@/components/PWAInstallModal';
 
 export default function LoginPWA() {
   const { toast } = useToast();
+
+  // Função para solicitar permissão de notificação automaticamente
+  const requestNotificationPermission = async () => {
+    if (!('Notification' in window)) {
+      console.log('🔔 Notificações não suportadas neste dispositivo');
+      return;
+    }
+
+    if (Notification.permission === 'granted') {
+      console.log('🔔 Permissão já concedida');
+      return;
+    }
+
+    if (Notification.permission === 'default') {
+      try {
+        let permission: NotificationPermission;
+        
+        // Método específico para iOS Safari/PWA
+        if (typeof Notification.requestPermission === 'function') {
+          if (Notification.requestPermission.length) {
+            // Versão callback (iOS Safari)
+            permission = await new Promise((resolve) => {
+              Notification.requestPermission((result) => {
+                resolve(result);
+              });
+            });
+          } else {
+            // Versão Promise (navegadores modernos)
+            permission = await Notification.requestPermission();
+          }
+
+          if (permission === 'granted') {
+            console.log('🔔 Permissão de notificação concedida automaticamente');
+            
+            // Mostrar notificação de boas-vindas
+            new Notification('Vendzz - Bem-vindo!', {
+              body: 'Notificações ativadas com sucesso. Você receberá updates importantes.',
+              icon: '/vendzz-logo-official.png',
+              badge: '/vendzz-logo-official.png',
+              tag: 'welcome'
+            });
+          } else {
+            console.log('🔔 Permissão de notificação negada');
+          }
+        }
+      } catch (error) {
+        console.error('🔔 Erro ao solicitar permissão:', error);
+      }
+    }
+  };
+  const { isAuthenticated } = useAuth();
   
   // Estados do login
   const [email, setEmail] = useState('');
@@ -52,6 +104,13 @@ export default function LoginPWA() {
       }, 1000);
     }
   }, [installPromptShown]);
+
+  // Redirecionar se já autenticado
+  useEffect(() => {
+    if (isAuthenticated) {
+      window.location.href = '/app-pwa-vendzz';
+    }
+  }, [isAuthenticated]);
 
   // Capturar evento beforeinstallprompt
   useEffect(() => {
@@ -129,6 +188,11 @@ export default function LoginPWA() {
           title: "Login realizado com sucesso!",
           description: "Redirecionando para o app...",
         });
+
+        // Solicitar permissão de notificação automaticamente após login bem-sucedido
+        setTimeout(() => {
+          requestNotificationPermission();
+        }, 500);
 
         // Redirecionar para o PWA
         setTimeout(() => {
@@ -229,7 +293,7 @@ export default function LoginPWA() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-600 via-green-700 to-green-800 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-black flex items-center justify-center p-4">
       {/* Modal de Instalação PWA */}
       <PWAInstallModal
         isOpen={showInstallModal}
@@ -241,94 +305,96 @@ export default function LoginPWA() {
       
       <div className="w-full max-w-md">
         {/* Logo */}
-        <div className="flex justify-center mb-8">
+        <div className="text-center mb-8">
           <img 
             src={logoVendzz} 
             alt="Vendzz" 
-            className="h-16 w-auto object-contain"
+            className="h-16 w-auto mx-auto mb-4"
           />
+          <p className="text-gray-400 text-sm">
+            {isMobile ? 'Acesso Mobile' : 'Plataforma de Quiz e Marketing'}
+          </p>
         </div>
 
-        <Card className="shadow-2xl border-0 bg-white/95 backdrop-blur-sm">
-          <CardHeader className="text-center pb-6">
-            <CardTitle className="text-2xl font-bold text-gray-800">
-              {isRegisterMode ? 'Criar Conta' : 'Entrar no Vendzz'}
+        {/* Card de Login/Cadastro */}
+        <Card className="bg-gray-900/50 border-green-500/20 backdrop-blur-sm">
+          <CardHeader>
+            <CardTitle className="text-center text-green-400">
+              {isRegisterMode ? 'Criar Conta' : 'Entrar no App'}
             </CardTitle>
-            <p className="text-gray-600 text-sm mt-2">
-              {isRegisterMode 
-                ? 'Crie sua conta e comece a vender hoje'
-                : 'Acesse sua conta e continue vendendo'
-              }
-            </p>
           </CardHeader>
           
           <CardContent>
             <form onSubmit={isRegisterMode ? handleRegister : handleLogin} className="space-y-4">
-              {/* Campos de cadastro */}
+              {/* Campos do cadastro */}
               {isRegisterMode && (
-                <>
-                  <div className="grid grid-cols-2 gap-2">
-                    <div>
-                      <Label htmlFor="firstName">Nome</Label>
-                      <Input
-                        id="firstName"
-                        type="text"
-                        value={firstName}
-                        onChange={(e) => setFirstName(e.target.value)}
-                        placeholder="Seu nome"
-                        required
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="lastName">Sobrenome</Label>
-                      <Input
-                        id="lastName"
-                        type="text"
-                        value={lastName}
-                        onChange={(e) => setLastName(e.target.value)}
-                        placeholder="Sobrenome"
-                        required
-                      />
-                    </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-2">
+                    <Label htmlFor="firstName" className="text-gray-300 text-sm">Nome</Label>
+                    <Input
+                      id="firstName"
+                      type="text"
+                      value={firstName}
+                      onChange={(e) => setFirstName(e.target.value)}
+                      className="bg-gray-800 border-gray-600 text-white placeholder-gray-400 focus:border-green-500"
+                      placeholder="Nome"
+                      required
+                    />
                   </div>
-                </>
+                  <div className="space-y-2">
+                    <Label htmlFor="lastName" className="text-gray-300 text-sm">Sobrenome</Label>
+                    <Input
+                      id="lastName"
+                      type="text"
+                      value={lastName}
+                      onChange={(e) => setLastName(e.target.value)}
+                      className="bg-gray-800 border-gray-600 text-white placeholder-gray-400 focus:border-green-500"
+                      placeholder="Sobrenome"
+                      required
+                    />
+                  </div>
+                </div>
               )}
 
               {/* Email */}
-              <div>
-                <Label htmlFor="email">Email</Label>
+              <div className="space-y-2">
+                <Label htmlFor="email" className="text-gray-300">
+                  Email
+                </Label>
                 <div className="relative">
-                  <Mail className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                  <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
                   <Input
                     id="email"
                     type="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="seu@email.com"
-                    className="pl-10"
+                    className="pl-10 bg-gray-800 border-gray-600 text-white placeholder-gray-400 focus:border-green-500"
                     required
                   />
                 </div>
               </div>
 
               {/* Senha */}
-              <div>
-                <Label htmlFor="password">Senha</Label>
+              <div className="space-y-2">
+                <Label htmlFor="password" className="text-gray-300">
+                  Senha
+                </Label>
                 <div className="relative">
-                  <Lock className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                  <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
                   <Input
                     id="password"
                     type={showPassword ? "text" : "password"}
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder="Sua senha"
-                    className="pl-10 pr-10"
+                    className="pl-10 pr-10 bg-gray-800 border-gray-600 text-white placeholder-gray-400 focus:border-green-500"
                     required
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-3 text-gray-400 hover:text-gray-600"
+                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-green-400 transition-colors"
                   >
                     {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                   </button>
@@ -337,17 +403,17 @@ export default function LoginPWA() {
 
               {/* Confirmar senha (apenas no cadastro) */}
               {isRegisterMode && (
-                <div>
-                  <Label htmlFor="confirmPassword">Confirmar Senha</Label>
+                <div className="space-y-2">
+                  <Label htmlFor="confirmPassword" className="text-gray-300">Confirmar Senha</Label>
                   <div className="relative">
-                    <Lock className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                    <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
                     <Input
                       id="confirmPassword"
                       type="password"
                       value={confirmPassword}
                       onChange={(e) => setConfirmPassword(e.target.value)}
                       placeholder="Confirme sua senha"
-                      className="pl-10"
+                      className="pl-10 bg-gray-800 border-gray-600 text-white placeholder-gray-400 focus:border-green-500"
                       required
                     />
                   </div>
@@ -357,16 +423,16 @@ export default function LoginPWA() {
               {/* Botão de submit */}
               <Button
                 type="submit"
-                className="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-3 text-base"
+                className="w-full bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white font-medium py-3 rounded-lg transition-all duration-200 shadow-lg hover:shadow-green-500/25"
                 disabled={isLoading}
               >
                 {isLoading ? (
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center justify-center gap-2">
                     <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                    {isRegisterMode ? 'Criando conta...' : 'Entrando...'}
+                    <span>{isRegisterMode ? 'Criando conta...' : 'Entrando...'}</span>
                   </div>
                 ) : (
-                  isRegisterMode ? 'Criar Conta' : 'Entrar'
+                  isRegisterMode ? 'Criar Conta' : 'Entrar no App'
                 )}
               </Button>
             </form>
@@ -383,7 +449,7 @@ export default function LoginPWA() {
                   setLastName('');
                   setConfirmPassword('');
                 }}
-                className="text-green-600 hover:text-green-700 font-medium text-sm"
+                className="text-green-400 hover:text-green-300 font-medium text-sm transition-colors"
               >
                 {isRegisterMode 
                   ? 'Já tem uma conta? Clique aqui para entrar'
@@ -392,10 +458,18 @@ export default function LoginPWA() {
               </button>
             </div>
 
+            {/* Credenciais de teste */}
+            {!isRegisterMode && (
+              <div className="mt-4 p-3 bg-gray-800/50 border border-gray-700 rounded-lg">
+                <p className="text-gray-400 text-xs text-center mb-1">Credenciais de teste:</p>
+                <p className="text-green-400 text-xs text-center font-mono">admin@vendzz.com / Btts4381!</p>
+              </div>
+            )}
+
             {/* Informações PWA */}
             {isMobile && (
-              <div className="mt-6 p-3 bg-green-50 border border-green-200 rounded-lg">
-                <p className="text-green-700 text-xs text-center">
+              <div className="mt-4 p-3 bg-green-500/10 border border-green-500/20 rounded-lg">
+                <p className="text-green-400 text-xs text-center">
                   💡 Instale o Vendzz em seu celular para uma experiência completa!
                 </p>
               </div>
@@ -404,8 +478,8 @@ export default function LoginPWA() {
         </Card>
 
         {/* Footer */}
-        <div className="text-center mt-8">
-          <p className="text-white/80 text-sm">
+        <div className="text-center mt-6">
+          <p className="text-gray-500 text-xs">
             © 2025 Vendzz. Todos os direitos reservados.
           </p>
         </div>
