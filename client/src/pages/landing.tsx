@@ -39,13 +39,16 @@ import {
   Package,
   Sun,
   Moon,
-  Quote
+  Quote,
+  Menu,
+  X
 } from "lucide-react";
 import { Link as RouterLink } from "wouter";
 import { useState } from "react";
 
 export default function Landing() {
   const [theme, setTheme] = useState<'dark' | 'light'>('dark');
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const features = [
     {
       icon: <Zap className="w-8 h-8" />,
@@ -224,49 +227,53 @@ export default function Landing() {
       }`}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
-            <div className="flex items-center space-x-8">
-              <div className="flex items-center space-x-3">
-                <img 
-                  src="/logo-vendzz-white-green.png" 
-                  alt="Vendzz" 
-                  className="h-10 w-auto"
-                />
-                <Badge variant="secondary" className="bg-green-500/20 text-green-400 border-green-500/30 font-bold">
-                  #1 MONEY MACHINE
-                </Badge>
-              </div>
-              <nav className="hidden md:flex space-x-8">
-                <a href="#features" className={`transition-colors ${
-                  theme === 'dark' 
-                    ? 'text-gray-300 hover:text-white' 
-                    : 'text-gray-600 hover:text-gray-900'
-                }`}>
-                  Funcionalidades
-                </a>
-                <a href="#pricing" className={`transition-colors ${
-                  theme === 'dark' 
-                    ? 'text-gray-300 hover:text-white' 
-                    : 'text-gray-600 hover:text-gray-900'
-                }`}>
-                  Preços
-                </a>
-                <a href="#tech" className={`transition-colors ${
-                  theme === 'dark' 
-                    ? 'text-gray-300 hover:text-white' 
-                    : 'text-gray-600 hover:text-gray-900'
-                }`}>
-                  Tecnologia
-                </a>
-                <a href="#testimonials" className={`transition-colors ${
-                  theme === 'dark' 
-                    ? 'text-gray-300 hover:text-white' 
-                    : 'text-gray-600 hover:text-gray-900'
-                }`}>
-                  Depoimentos
-                </a>
-              </nav>
+            {/* Logo - Always visible */}
+            <div className="flex items-center">
+              <img 
+                src="/logo-vendzz-white-green.png" 
+                alt="Vendzz" 
+                className="h-8 md:h-10 w-auto"
+              />
+              {/* Badge - Hidden on small screens */}
+              <Badge variant="secondary" className="hidden sm:inline-flex ml-3 bg-green-500/20 text-green-400 border-green-500/30 font-bold text-xs">
+                #1 MONEY MACHINE
+              </Badge>
             </div>
-            <div className="flex items-center space-x-4">
+
+            {/* Desktop Navigation */}
+            <nav className="hidden lg:flex space-x-8">
+              <a href="#features" className={`transition-colors ${
+                theme === 'dark' 
+                  ? 'text-gray-300 hover:text-white' 
+                  : 'text-gray-600 hover:text-gray-900'
+              }`}>
+                Funcionalidades
+              </a>
+              <a href="#pricing" className={`transition-colors ${
+                theme === 'dark' 
+                  ? 'text-gray-300 hover:text-white' 
+                  : 'text-gray-600 hover:text-gray-900'
+              }`}>
+                Preços
+              </a>
+              <a href="#tech" className={`transition-colors ${
+                theme === 'dark' 
+                  ? 'text-gray-300 hover:text-white' 
+                  : 'text-gray-600 hover:text-gray-900'
+              }`}>
+                Tecnologia
+              </a>
+              <a href="#testimonials" className={`transition-colors ${
+                theme === 'dark' 
+                  ? 'text-gray-300 hover:text-white' 
+                  : 'text-gray-600 hover:text-gray-900'
+              }`}>
+                Depoimentos
+              </a>
+            </nav>
+
+            {/* Desktop Actions */}
+            <div className="hidden md:flex items-center space-x-4">
               <Button
                 variant="ghost"
                 size="sm"
@@ -294,7 +301,122 @@ export default function Landing() {
                 </Button>
               </RouterLink>
             </div>
+
+            {/* Mobile menu button */}
+            <div className="md:hidden flex items-center space-x-2">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+                className={`${
+                  theme === 'dark' 
+                    ? 'text-gray-300 hover:text-white hover:bg-gray-800' 
+                    : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+                }`}
+              >
+                {theme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                className={`${
+                  theme === 'dark' 
+                    ? 'text-gray-300 hover:text-white hover:bg-gray-800' 
+                    : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+                }`}
+              >
+                {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+              </Button>
+            </div>
           </div>
+
+          {/* Mobile Menu */}
+          {mobileMenuOpen && (
+            <div className={`md:hidden border-t mt-2 pt-4 pb-4 ${
+              theme === 'dark' ? 'border-gray-800' : 'border-gray-200'
+            }`}>
+              {/* Mobile Badge */}
+              <div className="mb-4 sm:hidden">
+                <Badge variant="secondary" className="bg-green-500/20 text-green-400 border-green-500/30 font-bold text-xs">
+                  #1 MONEY MACHINE
+                </Badge>
+              </div>
+              
+              {/* Mobile Navigation */}
+              <nav className="flex flex-col space-y-4 mb-4">
+                <a 
+                  href="#features" 
+                  onClick={() => setMobileMenuOpen(false)}
+                  className={`transition-colors ${
+                    theme === 'dark' 
+                      ? 'text-gray-300 hover:text-white' 
+                      : 'text-gray-600 hover:text-gray-900'
+                  }`}
+                >
+                  Funcionalidades
+                </a>
+                <a 
+                  href="#pricing" 
+                  onClick={() => setMobileMenuOpen(false)}
+                  className={`transition-colors ${
+                    theme === 'dark' 
+                      ? 'text-gray-300 hover:text-white' 
+                      : 'text-gray-600 hover:text-gray-900'
+                  }`}
+                >
+                  Preços
+                </a>
+                <a 
+                  href="#tech" 
+                  onClick={() => setMobileMenuOpen(false)}
+                  className={`transition-colors ${
+                    theme === 'dark' 
+                      ? 'text-gray-300 hover:text-white' 
+                      : 'text-gray-600 hover:text-gray-900'
+                  }`}
+                >
+                  Tecnologia
+                </a>
+                <a 
+                  href="#testimonials" 
+                  onClick={() => setMobileMenuOpen(false)}
+                  className={`transition-colors ${
+                    theme === 'dark' 
+                      ? 'text-gray-300 hover:text-white' 
+                      : 'text-gray-600 hover:text-gray-900'
+                  }`}
+                >
+                  Depoimentos
+                </a>
+              </nav>
+
+              {/* Mobile Actions */}
+              <div className="flex flex-col space-y-3">
+                <RouterLink href="/login">
+                  <Button 
+                    variant="ghost" 
+                    className={`w-full justify-start ${
+                      theme === 'dark' 
+                        ? 'text-gray-300 hover:text-white' 
+                        : 'text-gray-600 hover:text-gray-900'
+                    }`}
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    Entrar
+                  </Button>
+                </RouterLink>
+                <RouterLink href="/login">
+                  <Button 
+                    className="w-full bg-green-600 hover:bg-green-700"
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    Começar Grátis
+                  </Button>
+                </RouterLink>
+              </div>
+            </div>
+          )}
         </div>
       </header>
 
@@ -334,8 +456,8 @@ export default function Landing() {
               </RouterLink>
               <Button size="lg" variant="outline" className={`text-lg px-8 py-4 ${
                 theme === 'dark' 
-                  ? 'border-gray-600 text-gray-300 hover:bg-gray-800' 
-                  : 'border-gray-300 text-gray-700 hover:bg-gray-50'
+                  ? 'border-gray-600 text-black hover:bg-gray-800' 
+                  : 'border-gray-300 text-black hover:bg-gray-50'
               }`}>
                 <Video className="w-5 h-5 mr-2" />
                 Ver Demo
@@ -438,8 +560,8 @@ export default function Landing() {
               size="lg" 
               className={`text-lg px-8 py-4 ${
                 theme === 'dark' 
-                  ? 'border-gray-600 text-gray-300 hover:bg-gray-800' 
-                  : 'border-gray-300 text-gray-700 hover:bg-gray-50'
+                  ? 'border-gray-600 text-black hover:bg-gray-800' 
+                  : 'border-gray-300 text-black hover:bg-gray-50'
               }`}
             >
               <Sparkles className="w-5 h-5 mr-2" />
@@ -691,8 +813,8 @@ export default function Landing() {
             </RouterLink>
             <Button size="lg" variant="outline" className={`text-lg px-8 py-4 ${
               theme === 'dark' 
-                ? 'border-gray-600 text-gray-300 hover:bg-gray-800' 
-                : 'border-gray-300 text-gray-700 hover:bg-gray-50'
+                ? 'border-gray-600 text-black hover:bg-gray-800' 
+                : 'border-gray-300 text-black hover:bg-gray-50'
             }`}>
               <ExternalLink className="w-5 h-5 mr-2" />
               Agendar Demo
@@ -716,7 +838,7 @@ export default function Landing() {
                 className="h-8 w-auto mb-4"
               />
               <p className={`${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>
-                A plataforma mais avançada de quiz funnels do Brasil.
+                A plataforma mais avançada para ter ROI com segurança.
               </p>
             </div>
             <div>
