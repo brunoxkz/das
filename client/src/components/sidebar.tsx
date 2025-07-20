@@ -471,7 +471,7 @@ export function Sidebar() {
 
       {/* Create Button */}
       <div className={cn("border-b border-border dark:border-gray-700", isCollapsed ? "p-2" : "p-4")}>
-        <div className={cn("space-y-2", isCollapsed && "flex flex-col items-center")}>
+        <div className={cn("space-y-3", isCollapsed && "flex flex-col items-center space-y-2")}>
           <Link href="/quizzes/new">
             <Button className={cn(
               "w-full justify-center",
