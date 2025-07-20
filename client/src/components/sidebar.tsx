@@ -523,7 +523,7 @@ export function Sidebar() {
               className={cn(
                 "nav-item w-full text-foreground hover:bg-accent hover:text-accent-foreground",
                 isCollapsed 
-                  ? "w-10 h-10 p-0 justify-center mx-auto" 
+                  ? "w-10 h-10 p-0 justify-center" 
                   : "justify-start px-3",
                 dashboardItem.active && (isCollapsed 
                   ? "bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-200 border-2 border-green-500 rounded-md"

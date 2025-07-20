@@ -53,6 +53,7 @@ import FunnelImporter from "@/pages/funnel-importer-fixed";
 import BuyComments from "@/pages/buy-comments";
 import SchedulePosts from "@/pages/schedule-posts";
 import Forum from "@/pages/forum";
+import VSLToQuiz from "@/pages/vsl-to-quiz";
 
 import CheckoutAdminPage from "@/pages/checkout-admin";
 import CheckoutBuilder from "@/pages/checkout-builder";
@@ -316,6 +317,12 @@ function App() {
         <Route path="/funnel-importer">
           <Layout>
             <FunnelImporter />
+          </Layout>
+        </Route>
+
+        <Route path="/vsl-to-quiz">
+          <Layout>
+            <VSLToQuiz />
           </Layout>
         </Route>
 

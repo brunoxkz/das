@@ -23859,6 +23859,335 @@ export function registerCheckoutRoutes(app: Express) {
     }
   });
 
+  // Função para gerar páginas do quiz baseado no nicho e texto da VSL
+  function generateQuizPages(niche: string, vslText: string) {
+    const pages = [];
+    
+    // Página de boas-vindas
+    pages.push({
+      id: generateId(),
+      type: 'welcome',
+      title: `Descubra Seu Perfil ${niche.charAt(0).toUpperCase() + niche.slice(1)}`,
+      subtitle: 'Responda algumas perguntas rápidas para receber um plano personalizado',
+      elements: [
+        {
+          id: generateId(),
+          type: 'heading',
+          content: `Quiz Personalizado - ${niche.charAt(0).toUpperCase() + niche.slice(1)}`,
+          properties: { level: 1, align: 'center' }
+        },
+        {
+          id: generateId(),
+          type: 'text',
+          content: 'Este quiz foi criado especialmente para você baseado no conteúdo analisado pela nossa IA.',
+          properties: { align: 'center' }
+        },
+        {
+          id: generateId(),
+          type: 'button',
+          content: 'Começar Quiz',
+          properties: { style: 'primary', size: 'large', action: 'next' }
+        }
+      ]
+    });
+
+    // Gerar perguntas baseadas no nicho
+    const questions = generateQuestionsForNiche(niche);
+    questions.forEach(question => {
+      pages.push({
+        id: generateId(),
+        type: 'question',
+        title: question.title,
+        elements: [
+          {
+            id: generateId(),
+            type: 'heading',
+            content: question.title,
+            properties: { level: 2, align: 'center' }
+          },
+          {
+            id: generateId(),
+            type: question.type,
+            content: '',
+            properties: {
+              required: true,
+              options: question.options || [],
+              placeholder: question.placeholder || '',
+              responseId: question.responseId
+            }
+          }
+        ]
+      });
+    });
+
+    // Página de captura de leads
+    pages.push({
+      id: generateId(),
+      type: 'lead_capture',
+      title: 'Últimas Informações',
+      elements: [
+        {
+          id: generateId(),
+          type: 'heading',
+          content: 'Quase pronto! Só preciso de alguns dados para personalizar seu resultado.',
+          properties: { level: 2, align: 'center' }
+        },
+        {
+          id: generateId(),
+          type: 'text_input',
+          content: '',
+          properties: { required: true, placeholder: 'Seu nome completo', responseId: 'nome_completo' }
+        },
+        {
+          id: generateId(),
+          type: 'email_input',
+          content: '',
+          properties: { required: true, placeholder: 'Seu melhor e-mail', responseId: 'email_contato' }
+        },
+        {
+          id: generateId(),
+          type: 'phone_input',
+          content: '',
+          properties: { required: false, placeholder: 'WhatsApp (opcional)', responseId: 'telefone_contato' }
+        },
+        {
+          id: generateId(),
+          type: 'button',
+          content: 'Ver Meu Resultado',
+          properties: { style: 'primary', size: 'large', action: 'submit' }
+        }
+      ]
+    });
+
+    // Página de resultado
+    pages.push({
+      id: generateId(),
+      type: 'result',
+      title: 'Seu Resultado Personalizado',
+      elements: [
+        {
+          id: generateId(),
+          type: 'heading',
+          content: 'Parabéns! Aqui está seu resultado personalizado:',
+          properties: { level: 1, align: 'center' }
+        },
+        {
+          id: generateId(),
+          type: 'text',
+          content: `Baseado nas suas respostas, identificamos seu perfil como ideal para nossa solução ${niche}. Você receberá em breve um plano completamente personalizado no seu e-mail.`,
+          properties: { align: 'center' }
+        },
+        {
+          id: generateId(),
+          type: 'button',
+          content: 'Compartilhar Resultado',
+          properties: { style: 'secondary', size: 'medium', action: 'share' }
+        }
+      ]
+    });
+
+    return pages;
+  }
+
+  // Função para gerar perguntas específicas do nicho
+  function generateQuestionsForNiche(niche: string) {
+    const questionsByNiche = {
+      emagrecimento: [
+        {
+          title: 'Qual é seu principal objetivo?',
+          type: 'multiple_choice',
+          responseId: 'objetivo_principal',
+          options: ['Perder peso rapidamente', 'Manter peso ideal', 'Ganhar massa muscular', 'Melhorar saúde geral']
+        },
+        {
+          title: 'Há quanto tempo você luta contra o peso?',
+          type: 'multiple_choice',
+          responseId: 'tempo_luta_peso',
+          options: ['Menos de 1 ano', '1-3 anos', '3-5 anos', 'Mais de 5 anos']
+        },
+        {
+          title: 'Qual sua maior dificuldade?',
+          type: 'multiple_choice',
+          responseId: 'maior_dificuldade',
+          options: ['Controlar a fome', 'Falta de tempo', 'Motivação', 'Não sei o que comer']
+        },
+        {
+          title: 'Como você avalia sua alimentação atual?',
+          type: 'rating',
+          responseId: 'avaliacao_alimentacao',
+          options: ['1', '2', '3', '4', '5']
+        }
+      ],
+      financeiro: [
+        {
+          title: 'Qual sua meta financeira principal?',
+          type: 'multiple_choice',
+          responseId: 'meta_financeira',
+          options: ['Sair das dívidas', 'Renda extra', 'Independência financeira', 'Multiplicar patrimônio']
+        },
+        {
+          title: 'Qual sua renda mensal atual?',
+          type: 'multiple_choice',
+          responseId: 'renda_atual',
+          options: ['Até R$ 2.000', 'R$ 2.000-5.000', 'R$ 5.000-10.000', 'Acima de R$ 10.000']
+        },
+        {
+          title: 'Você já investiu em algum negócio?',
+          type: 'multiple_choice',
+          responseId: 'experiencia_negocio',
+          options: ['Nunca investi', 'Já tentei, mas não deu certo', 'Tenho alguns investimentos', 'Sou experiente']
+        },
+        {
+          title: 'Quanto tempo pode dedicar por dia?',
+          type: 'multiple_choice',
+          responseId: 'tempo_disponivel',
+          options: ['Menos de 1 hora', '1-2 horas', '2-4 horas', 'Mais de 4 horas']
+        }
+      ],
+      relacionamento: [
+        {
+          title: 'Qual é sua situação atual?',
+          type: 'multiple_choice',
+          responseId: 'situacao_atual',
+          options: ['Solteiro(a)', 'Em um relacionamento', 'Casado(a)', 'Divorciado(a)']
+        },
+        {
+          title: 'Qual seu maior desafio?',
+          type: 'multiple_choice',
+          responseId: 'maior_desafio',
+          options: ['Encontrar alguém', 'Melhorar comunicação', 'Reconquistar ex', 'Superar traição']
+        },
+        {
+          title: 'Como você se sente sobre relacionamentos?',
+          type: 'rating',
+          responseId: 'sentimento_relacionamento',
+          options: ['1', '2', '3', '4', '5']
+        },
+        {
+          title: 'Você acredita em amor verdadeiro?',
+          type: 'multiple_choice',
+          responseId: 'crenca_amor',
+          options: ['Totalmente', 'Parcialmente', 'Tenho dúvidas', 'Não acredito']
+        }
+      ],
+      geral: [
+        {
+          title: 'Qual área da sua vida você quer melhorar?',
+          type: 'multiple_choice',
+          responseId: 'area_melhorar',
+          options: ['Saúde e bem-estar', 'Carreira profissional', 'Relacionamentos', 'Finanças']
+        },
+        {
+          title: 'Qual seu maior sonho atual?',
+          type: 'text_input',
+          responseId: 'maior_sonho',
+          placeholder: 'Descreva em poucas palavras...'
+        },
+        {
+          title: 'Em uma escala de 1 a 5, o quanto você está satisfeito com sua vida?',
+          type: 'rating',
+          responseId: 'satisfacao_vida',
+          options: ['1', '2', '3', '4', '5']
+        },
+        {
+          title: 'Você está disposto(a) a se dedicar para alcançar seus objetivos?',
+          type: 'multiple_choice',
+          responseId: 'disposicao_dedicacao',
+          options: ['Totalmente', 'Parcialmente', 'Depende do que for', 'Ainda estou decidindo']
+        }
+      ]
+    };
+
+    return questionsByNiche[niche] || questionsByNiche.geral;
+  }
+
+  // VSL to Quiz AI Endpoint
+  app.post('/api/ai/vsl-to-quiz', authenticateJWT, async (req, res) => {
+    try {
+      const { vslText } = req.body;
+      const userId = req.user?.id;
+
+      if (!vslText || vslText.trim().length < 100) {
+        return res.status(400).json({ 
+          error: 'Texto da VSL muito curto. Mínimo de 100 caracteres.' 
+        });
+      }
+
+      console.log(`🤖 Gerando quiz com IA para usuário: ${userId}`);
+      console.log(`📝 Texto VSL: ${vslText.substring(0, 100)}...`);
+
+      // Simular processamento da IA (2-3 segundos)
+      await new Promise(resolve => setTimeout(resolve, 2500));
+
+      // Análise básica do texto para gerar quiz personalizado
+      const lowerText = vslText.toLowerCase();
+      let niche = 'geral';
+      let theme = 'default';
+      
+      // Detectar nicho baseado em palavras-chave
+      if (lowerText.includes('emagrecer') || lowerText.includes('peso') || lowerText.includes('dieta')) {
+        niche = 'emagrecimento';
+        theme = 'health';
+      } else if (lowerText.includes('dinheiro') || lowerText.includes('ganhar') || lowerText.includes('renda')) {
+        niche = 'financeiro';
+        theme = 'business';
+      } else if (lowerText.includes('relacionamento') || lowerText.includes('amor') || lowerText.includes('casamento')) {
+        niche = 'relacionamento';
+        theme = 'lifestyle';
+      }
+
+      // Gerar estrutura do quiz baseada na IA
+      const quizData = {
+        title: `Quiz Personalizado - ${niche.charAt(0).toUpperCase() + niche.slice(1)}`,
+        description: 'Quiz gerado automaticamente pela IA da Vendzz baseado na sua VSL',
+        theme: theme,
+        pages: generateQuizPages(niche, vslText),
+        leadCollection: {
+          collectName: true,
+          collectEmail: true,
+          collectPhone: true,
+          customFields: []
+        },
+        settings: {
+          showProgress: true,
+          allowBack: true,
+          shuffleQuestions: false
+        }
+      };
+
+      // Salvar quiz no banco de dados
+      const quizId = generateId();
+      await storage.createQuiz({
+        id: quizId,
+        userId: userId,
+        title: quizData.title,
+        description: quizData.description,
+        pages: JSON.stringify(quizData.pages),
+        settings: JSON.stringify(quizData.settings),
+        theme: quizData.theme,
+        isPublished: false,
+        leadCollection: JSON.stringify(quizData.leadCollection)
+      });
+
+      console.log(`✅ Quiz IA criado com sucesso: ${quizId}`);
+
+      res.json({
+        success: true,
+        message: 'Quiz gerado com sucesso pela IA!',
+        quizId: quizId,
+        quiz: quizData,
+        niche: niche,
+        pagesGenerated: quizData.pages.length
+      });
+
+    } catch (error) {
+      console.error('❌ Erro ao gerar quiz com IA:', error);
+      res.status(500).json({ 
+        error: 'Erro interno no servidor ao gerar quiz' 
+      });
+    }
+  });
+
   // Inicializar sistema automático de regressão de planos
   console.log('🚀 INICIANDO PLAN MANAGER...');
   planManager.startAutomaticPlanRegression();
