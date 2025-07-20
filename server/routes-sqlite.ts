@@ -20446,6 +20446,49 @@ app.get("/api/whatsapp-extension/pending", verifyJWT, async (req: any, res: Resp
     }
   });
 
+  // Health Check Endpoint para monitoramento de performance
+  app.get('/api/health', (req, res) => {
+    const startTime = Date.now();
+    
+    try {
+      // Testar conexão com o banco
+      const dbTest = sqlite.prepare("SELECT 1 as test").get();
+      const dbLatency = Date.now() - startTime;
+      
+      // Verificar uso de memória
+      const memUsage = process.memoryUsage();
+      
+      // Estatísticas do sistema
+      const stats = {
+        status: 'healthy',
+        timestamp: new Date().toISOString(),
+        uptime: Math.floor(process.uptime()),
+        database: {
+          status: dbTest?.test === 1 ? 'connected' : 'disconnected',
+          latency: `${dbLatency}ms`
+        },
+        memory: {
+          used: `${Math.round(memUsage.heapUsed / 1024 / 1024)}MB`,
+          total: `${Math.round(memUsage.heapTotal / 1024 / 1024)}MB`,
+          external: `${Math.round(memUsage.external / 1024 / 1024)}MB`
+        },
+        performance: {
+          cpuUsage: process.cpuUsage(),
+          nodeVersion: process.version
+        },
+        version: '2.0.0'
+      };
+      
+      res.status(200).json(stats);
+    } catch (error) {
+      res.status(503).json({
+        status: 'unhealthy',
+        error: error.message,
+        timestamp: new Date().toISOString()
+      });
+    }
+  });
+
   return httpServer;
 }
 
