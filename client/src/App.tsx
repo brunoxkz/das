@@ -102,6 +102,7 @@ import AdminDashboard from "@/pages/admin-dashboard";
 import PWADashboard from "@/pages/pwa-dashboard";
 import AppPWAComplete from "@/pages/app-pwa-complete";
 import AppPWAModern2025 from "@/pages/app-pwa-modern-2025";
+import AppPWAVendzz from "@/pages/app-pwa-vendzz-final";
 import AppQuizEditorPWA from "@/pages/app-quiz-editor-pwa";
 
 import { useAuth } from "@/hooks/useAuth-jwt";
@@ -152,6 +153,7 @@ function App() {
         <Route path="/app" component={AppPWAComplete} />
         <Route path="/app-pwa-complete" component={AppPWAComplete} />
         <Route path="/app-pwa-modern-2025" component={AppPWAModern2025} />
+        <Route path="/app-pwa-vendzz" component={AppPWAVendzz} />
         <Route path="/app/quiz-editor/:quizId" component={AppQuizEditorPWA} />
         <Route path="/login" component={LoginPage} />
         <Route path="/quiz/:id" component={QuizPublicPage} />
