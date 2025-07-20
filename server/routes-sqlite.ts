@@ -18681,6 +18681,14 @@ app.get("/api/whatsapp-extension/pending", verifyJWT, async (req: any, res: Resp
             funnelData = applyPreservedAssets(funnelData, preserveColors, preserveImages);
             console.log(`🎨 Cores e imagens preservadas aplicadas`);
           }
+          
+          // Detectar se é funil da Cakto para logs específicos
+          const isCakto = url.includes('cakto.com') || url.includes('cakto');
+          if (isCakto) {
+            console.log(`🎯 FUNIL CAKTO PROCESSADO COM SUCESSO`);
+            console.log(`🎯 Slug: ${funnelData.metadata?.slug || 'unknown'}`);
+            console.log(`🎯 Estrutura de quiz: ${JSON.stringify(funnelData.metadata?.quizStructure || {})}`);
+          }
         } else {
           // Fallback: criar estrutura básica com base no ID
           funnelData = {

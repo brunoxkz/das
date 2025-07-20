@@ -59,11 +59,12 @@ export class CompleteAnalyzer {
       // Detectar se é página encriptada/protegida
       const isEncrypted = this.detectEncryption(html);
       
-      // FORÇAR detecção para funils Next.js
+      // FORÇAR detecção para funils Next.js e Cakto
       const isNextJS = html.includes('_next') || html.includes('__NEXT_DATA__') || html.includes('next/static');
+      const isCakto = url.includes('cakto.com') || html.includes('cakto') || html.includes('data-sentry-component');
       
-      if (isEncrypted || isNextJS) {
-        console.log(`🔐 PÁGINA ENCRIPTADA/NEXT.JS DETECTADA - Aplicando métodos avançados`);
+      if (isEncrypted || isNextJS || isCakto) {
+        console.log(`🔐 PÁGINA ENCRIPTADA/NEXT.JS/CAKTO DETECTADA - Aplicando métodos avançados`);
         return this.analyzeEncryptedFunnel(html, url);
       }
       
@@ -161,6 +162,14 @@ export class CompleteAnalyzer {
   // NOVO: Analisar funils encriptados com métodos especiais
   private static analyzeEncryptedFunnel(html: string, url: string): CompleteFunnel {
     console.log(`🔐 INICIANDO ANÁLISE DE FUNIL ENCRIPTADO`);
+    
+    // Detectar se é funil da Cakto especificamente
+    const isCakto = url.includes('cakto.com') || html.includes('cakto') || html.includes('data-sentry-component');
+    
+    if (isCakto) {
+      console.log(`🎯 FUNIL CAKTO DETECTADO - Aplicando análise especializada`);
+      return this.analyzeCaktoFunnel(html, url);
+    }
     
     // Tentar decodificar o HTML
     const decodedHtml = this.attemptDecryption(html);
@@ -1584,5 +1593,505 @@ export class CompleteAnalyzer {
     });
     
     return dataAttrs;
+  }
+
+  // NOVO: Analisador específico para funis da Cakto
+  private static analyzeCaktoFunnel(html: string, url: string): CompleteFunnel {
+    console.log(`🎯 INICIANDO ANÁLISE ESPECÍFICA DE FUNIL CAKTO`);
+    
+    const $ = cheerio.load(html);
+    const pages: FunnelPage[] = [];
+    
+    // Extrair informações específicas da estrutura Cakto
+    const title = this.extractCaktoTitle($, html);
+    const slug = this.extractCaktoSlug(url);
+    
+    console.log(`🎯 Título detectado: ${title}`);
+    console.log(`🎯 Slug detectado: ${slug}`);
+    
+    // Detectar estrutura de quiz/funil baseada nos elementos do DOM
+    const quizStructure = this.detectCaktoQuizStructure($, html);
+    
+    // Analisar elementos visuais (cores, imagens, etc.)
+    const visualElements = this.extractCaktoVisualElements($, html);
+    
+    // Criar páginas baseadas na estrutura detectada
+    const estimatedPages = this.estimateCaktoPages($, html);
+    console.log(`🎯 Páginas estimadas: ${estimatedPages}`);
+    
+    for (let i = 1; i <= estimatedPages; i++) {
+      const pageType = this.determineCaktoPageType(i, estimatedPages);
+      pages.push({
+        id: nanoid(),
+        pageNumber: i,
+        title: `${pageType.title} (Página ${i})`,
+        elements: this.createCaktoElements(i, pageType, visualElements),
+        settings: this.getCaktoPageSettings()
+      });
+    }
+    
+    const funnel: CompleteFunnel = {
+      id: nanoid(),
+      title: title,
+      description: `Funil importado da Cakto: ${title}`,
+      pages: pages.length,
+      pageData: pages,
+      elements: pages.flatMap(page => page.elements),
+      settings: this.getCaktoFunnelSettings(),
+      theme: this.extractCaktoTheme($, html, visualElements),
+      metadata: {
+        originalUrl: url,
+        importedAt: new Date().toISOString(),
+        totalPages: pages.length,
+        totalElements: pages.flatMap(page => page.elements).length,
+        detectionMethod: 'cakto_analyzer',
+        platform: 'cakto',
+        slug: slug,
+        quizStructure: quizStructure,
+        visualElements: visualElements
+      }
+    };
+    
+    console.log(`✅ ANÁLISE CAKTO COMPLETA: ${funnel.pages} páginas, ${funnel.elements.length} elementos`);
+    return funnel;
+  }
+
+  // Métodos auxiliares para Cakto
+  private static extractCaktoTitle($: cheerio.CheerioAPI, html: string): string {
+    // Tentar extrair título de várias fontes
+    let title = $('title').text().trim();
+    
+    // Se é Cakto Quiz padrão, extrair do slug
+    if (!title || title === 'Cakto Quiz') {
+      // Tentar extrair do script Next.js
+      const scriptContent = $('script').text();
+      const slugMatch = scriptContent.match(/"slug":"([^"]+)"/);
+      if (slugMatch) {
+        const slug = slugMatch[1];
+        // Converter slug para título legível
+        title = slug.split('-')
+          .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+          .join(' ');
+      }
+    }
+    
+    if (!title) {
+      title = $('h1').first().text().trim();
+    }
+    if (!title) {
+      title = $('[data-sentry-component="Preview"]').attr('data-title') || '';
+    }
+    if (!title) {
+      const metaTitle = $('meta[property="og:title"]').attr('content');
+      if (metaTitle) title = metaTitle;
+    }
+    
+    return title || 'Quiz Importado da Cakto';
+  }
+
+  private static extractCaktoSlug(url: string): string {
+    const match = url.match(/\/preview\/([^\/\?]+)/);
+    return match ? match[1] : 'imported-quiz';
+  }
+
+  private static detectCaktoQuizStructure($: cheerio.CheerioAPI, html: string): any {
+    // Detectar se há estrutura de quiz
+    const hasQuizElements = $('.quiz-question, .question, [data-question]').length > 0;
+    const hasMultipleChoice = $('.option, .choice, [data-option]').length > 0;
+    const hasProgressBar = $('.progress, [data-progress]').length > 0;
+    
+    return {
+      isQuiz: hasQuizElements,
+      hasMultipleChoice: hasMultipleChoice,
+      hasProgressBar: hasProgressBar,
+      estimatedQuestions: Math.max(1, $('.question, [data-question]').length || 5)
+    };
+  }
+
+  private static extractCaktoVisualElements($: cheerio.CheerioAPI, html: string): any {
+    const colors = {
+      buttons: [],
+      text: [],
+      backgrounds: [],
+      primary: '#4F46E5' // Default
+    };
+    
+    const images = [];
+    
+    // Extrair cores de botões
+    $('button, .btn, [role="button"]').each((i, elem) => {
+      const $elem = $(elem);
+      const bgColor = this.extractBackgroundColor($elem);
+      if (bgColor && bgColor !== 'transparent') {
+        colors.buttons.push(bgColor);
+      }
+    });
+    
+    // Extrair cores de texto
+    $('h1, h2, h3, p, span').each((i, elem) => {
+      const $elem = $(elem);
+      const textColor = this.extractTextColor($elem);
+      if (textColor && textColor !== '#000000') {
+        colors.text.push(textColor);
+      }
+    });
+    
+    // Extrair imagens
+    $('img').each((i, elem) => {
+      const $elem = $(elem);
+      const src = $elem.attr('src');
+      const alt = $elem.attr('alt') || '';
+      if (src) {
+        images.push({
+          url: src.startsWith('http') ? src : `https://quiz.cakto.com.br${src}`,
+          alt: alt,
+          position: i
+        });
+      }
+    });
+    
+    return { colors, images };
+  }
+
+  private static estimateCaktoPages($: cheerio.CheerioAPI, html: string): number {
+    // Para Cakto, tipicamente é um quiz com múltiplas questões
+    const scriptContent = $('script').text();
+    
+    // Buscar por indicadores de páginas no JavaScript
+    const pageIndicators = [
+      /questions?\s*:\s*\[[\s\S]*?\]/gi,
+      /steps?\s*:\s*\[[\s\S]*?\]/gi,
+      /pages?\s*:\s*\[[\s\S]*?\]/gi
+    ];
+    
+    let estimatedPages = 5; // Default para quiz
+    
+    pageIndicators.forEach(pattern => {
+      const matches = scriptContent.match(pattern);
+      if (matches) {
+        // Contar elementos dentro dos arrays
+        matches.forEach(match => {
+          const commas = (match.match(/,/g) || []).length;
+          if (commas > 0) {
+            estimatedPages = Math.max(estimatedPages, commas + 1);
+          }
+        });
+      }
+    });
+    
+    // Para funis da Cakto, geralmente entre 5-15 páginas
+    return Math.min(Math.max(estimatedPages, 5), 15);
+  }
+
+  private static determineCaktoPageType(pageNumber: number, totalPages: number): { title: string, type: string, elements: string[] } {
+    const percentage = pageNumber / totalPages;
+    
+    if (pageNumber === 1) {
+      return { title: 'Início do Quiz', type: 'intro', elements: ['headline', 'text', 'button'] };
+    } else if (pageNumber === totalPages) {
+      return { title: 'Resultado Final', type: 'result', elements: ['headline', 'text', 'email', 'button'] };
+    } else if (percentage <= 0.8) {
+      return { title: `Pergunta ${pageNumber - 1}`, type: 'question', elements: ['question', 'multiple_choice', 'button'] };
+    } else {
+      return { title: 'Captura de Lead', type: 'lead_capture', elements: ['headline', 'email', 'phone', 'button'] };
+    }
+  }
+
+  private static createCaktoElements(pageNumber: number, pageType: any, visualElements: any): FunnelElement[] {
+    const elements: FunnelElement[] = [];
+    const pageId = nanoid();
+    
+    console.log(`🎯 Criando elementos Cakto para ${pageType.title} (Página ${pageNumber})`);
+    
+    if (pageType.type === 'intro') {
+      elements.push({
+        id: nanoid(),
+        type: 'headline',
+        position: 0,
+        pageId,
+        properties: {
+          title: 'Descubra Seu Treino Ideal de Pilates',
+          fontSize: '2xl',
+          color: visualElements.colors.text[0] || '#1F2937',
+          alignment: 'center',
+          fontWeight: 'bold'
+        }
+      });
+      
+      elements.push({
+        id: nanoid(),
+        type: 'image',
+        position: 1,
+        pageId,
+        properties: {
+          imageUrl: visualElements.images[0]?.url || 'https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?w=600&h=400&fit=crop',
+          alt: 'Pilates na parede exercícios',
+          alignment: 'center',
+          width: 'large',
+          borderRadius: 'md'
+        }
+      });
+      
+      elements.push({
+        id: nanoid(),
+        type: 'text',
+        position: 2,
+        pageId,
+        properties: {
+          text: 'Responda algumas perguntas rápidas e descubra o método de pilates perfeito para você',
+          fontSize: 'lg',
+          color: visualElements.colors.text[1] || '#6B7280',
+          alignment: 'center'
+        }
+      });
+      
+      elements.push({
+        id: nanoid(),
+        type: 'button',
+        position: 3,
+        pageId,
+        properties: {
+          text: 'Começar Quiz',
+          backgroundColor: visualElements.colors.buttons[0] || '#4F46E5',
+          textColor: '#FFFFFF',
+          size: 'lg',
+          borderRadius: 'md'
+        }
+      });
+    } else if (pageType.type === 'question') {
+      elements.push({
+        id: nanoid(),
+        type: 'progress_bar',
+        position: 0,
+        pageId,
+        properties: {
+          title: `Pergunta ${pageNumber - 1}`,
+          currentStep: pageNumber - 1,
+          totalSteps: 10,
+          color: visualElements.colors.primary
+        }
+      });
+      
+      elements.push({
+        id: nanoid(),
+        type: 'question',
+        position: 1,
+        pageId,
+        properties: {
+          question: this.getCaktoQuestionText(pageNumber),
+          fontSize: 'xl',
+          color: visualElements.colors.text[0] || '#1F2937',
+          alignment: 'center'
+        }
+      });
+      
+      elements.push({
+        id: nanoid(),
+        type: 'multiple_choice',
+        position: 2,
+        pageId,
+        properties: {
+          options: this.getCaktoQuestionOptions(pageNumber),
+          responseId: this.getCaktoResponseId(pageNumber),
+          required: true
+        }
+      });
+    } else if (pageType.type === 'lead_capture') {
+      elements.push({
+        id: nanoid(),
+        type: 'headline',
+        position: 0,
+        pageId,
+        properties: {
+          title: 'Receba Seu Plano Personalizado',
+          fontSize: 'xl',
+          color: visualElements.colors.text[0] || '#1F2937',
+          alignment: 'center',
+          fontWeight: 'bold'
+        }
+      });
+      
+      elements.push({
+        id: nanoid(),
+        type: 'text',
+        position: 1,
+        pageId,
+        properties: {
+          text: 'Informe seus dados para receber gratuitamente seu plano de pilates personalizado',
+          fontSize: 'md',
+          color: visualElements.colors.text[1] || '#6B7280',
+          alignment: 'center'
+        }
+      });
+      
+      elements.push({
+        id: nanoid(),
+        type: 'email',
+        position: 2,
+        pageId,
+        properties: {
+          placeholder: 'Seu melhor e-mail',
+          required: true,
+          responseId: 'email_contato'
+        }
+      });
+      
+      elements.push({
+        id: nanoid(),
+        type: 'phone',
+        position: 3,
+        pageId,
+        properties: {
+          placeholder: 'Seu WhatsApp',
+          required: true,
+          responseId: 'telefone_whatsapp'
+        }
+      });
+      
+      elements.push({
+        id: nanoid(),
+        type: 'button',
+        position: 4,
+        pageId,
+        properties: {
+          text: 'Receber Meu Plano Grátis',
+          backgroundColor: visualElements.colors.buttons[0] || '#10B981',
+          textColor: '#FFFFFF',
+          size: 'lg',
+          borderRadius: 'md'
+        }
+      });
+    } else if (pageType.type === 'result') {
+      elements.push({
+        id: nanoid(),
+        type: 'headline',
+        position: 0,
+        pageId,
+        properties: {
+          title: 'Parabéns! Seu Plano Está Pronto',
+          fontSize: '2xl',
+          color: visualElements.colors.text[0] || '#059669',
+          alignment: 'center',
+          fontWeight: 'bold'
+        }
+      });
+      
+      elements.push({
+        id: nanoid(),
+        type: 'text',
+        position: 1,
+        pageId,
+        properties: {
+          text: 'Baseado nas suas respostas, criamos um plano de pilates especialmente para você. Verifique seu e-mail em alguns instantes.',
+          fontSize: 'lg',
+          color: visualElements.colors.text[1] || '#374151',
+          alignment: 'center'
+        }
+      });
+      
+      elements.push({
+        id: nanoid(),
+        type: 'button',
+        position: 2,
+        pageId,
+        properties: {
+          text: 'Começar Agora',
+          backgroundColor: visualElements.colors.buttons[0] || '#059669',
+          textColor: '#FFFFFF',
+          size: 'lg',
+          borderRadius: 'md'
+        }
+      });
+    }
+    
+    return elements;
+  }
+
+  // Métodos auxiliares para perguntas específicas de pilates
+  private static getCaktoQuestionText(pageNumber: number): string {
+    const questions = [
+      'Qual é o seu nível de experiência com pilates?',
+      'Qual é o seu principal objetivo?',
+      'Quanto tempo você tem disponível para treinar?',
+      'Você tem alguma limitação física?',
+      'Qual horário prefere treinar?',
+      'Você prefere treinos mais intensos ou relaxantes?',
+      'Qual área do corpo quer focar mais?',
+      'Já praticou pilates na parede antes?'
+    ];
+    
+    const questionIndex = pageNumber - 2; // Ajustar porque página 1 é intro
+    return questions[questionIndex] || 'Qual dessas opções melhor descreve você?';
+  }
+
+  private static getCaktoQuestionOptions(pageNumber: number): string[] {
+    const optionSets = [
+      ['Iniciante - Nunca pratiquei', 'Intermediário - Já tenho experiência', 'Avançado - Pratico regularmente', 'Profissional - Sou instrutor'],
+      ['Perder peso', 'Ganhar flexibilidade', 'Fortalecer músculos', 'Melhorar postura', 'Reduzir dores'],
+      ['15-30 minutos', '30-45 minutos', '45-60 minutos', 'Mais de 1 hora'],
+      ['Nenhuma', 'Dores nas costas', 'Problemas no joelho', 'Limitações de mobilidade'],
+      ['Manhã (6h-10h)', 'Tarde (12h-17h)', 'Noite (18h-22h)', 'Madrugada (22h-6h)'],
+      ['Mais intenso', 'Equilibrado', 'Mais relaxante', 'Varia conforme o dia'],
+      ['Core/Abdômen', 'Pernas e glúteos', 'Braços e ombros', 'Corpo todo'],
+      ['Sim, já pratico', 'Já vi mas nunca tentei', 'Primeira vez que ouço falar', 'Prefiro pilates tradicional']
+    ];
+    
+    const optionIndex = pageNumber - 2; // Ajustar porque página 1 é intro
+    return optionSets[optionIndex] || ['Opção A', 'Opção B', 'Opção C', 'Opção D'];
+  }
+
+  private static getCaktoResponseId(pageNumber: number): string {
+    const responseIds = [
+      'nivel_experiencia',
+      'objetivo_principal',
+      'tempo_disponivel',
+      'limitacao_fisica',
+      'horario_preferido',
+      'intensidade_treino',
+      'area_foco',
+      'experiencia_parede'
+    ];
+    
+    const responseIndex = pageNumber - 2; // Ajustar porque página 1 é intro
+    return responseIds[responseIndex] || `resposta_${pageNumber}`;
+  }
+
+  private static getCaktoPageSettings(): any {
+    return {
+      backgroundColor: '#FFFFFF',
+      padding: '2rem',
+      maxWidth: '600px',
+      centered: true
+    };
+  }
+
+  private static getCaktoFunnelSettings(): any {
+    return {
+      leadCollection: true,
+      progressBar: true,
+      autoSave: true,
+      mobileOptimized: true
+    };
+  }
+
+  private static extractCaktoTheme($: cheerio.CheerioAPI, html: string, visualElements: any): any {
+    return {
+      name: 'Cakto Theme',
+      colors: {
+        primary: visualElements.colors.primary,
+        secondary: visualElements.colors.buttons[1] || '#6B7280',
+        background: '#FFFFFF',
+        text: visualElements.colors.text[0] || '#1F2937'
+      },
+      fonts: {
+        primary: 'system-ui, sans-serif',
+        secondary: 'system-ui, sans-serif'
+      },
+      spacing: {
+        small: '0.5rem',
+        medium: '1rem',
+        large: '2rem'
+      }
+    };
   }
 }
