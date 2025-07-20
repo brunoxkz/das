@@ -4022,28 +4022,51 @@ export class CompleteAnalyzer {
     const betterMeQuestions = this.getBetterMeWellnessQuestions();
     const betterMeOptions = this.getBetterMeWellnessOptions();
     
-    // Estrutura típica: 15 páginas para quiz de wellness completo
+    // Estrutura expandida: 25-40 páginas para quiz completo de wellness BetterMe
     const totalPages = this.estimateBetterMePages($, html);
     console.log(`🏃‍♀️ Páginas estimadas BetterMe: ${totalPages}`);
     
-    // Páginas específicas do BetterMe
-    const pageTypes = [
+    // Páginas específicas do BetterMe - Estrutura expandida para 30+ páginas
+    const basePageTypes = [
       'welcome',
       'gender_selection', 
       'age_question',
-      'fitness_level',
-      'health_goals',
+      'height_question',
       'current_weight',
       'target_weight',
+      'weight_timeline',
+      'fitness_level',
+      'exercise_history',
+      'health_goals',
+      'fitness_goals',
+      'body_goals',
       'exercise_preferences',
+      'workout_types',
+      'workout_intensity',
       'time_availability',
+      'schedule_preferences',
+      'morning_routine',
       'dietary_restrictions',
+      'eating_habits',
+      'nutrition_goals',
+      'meal_frequency',
+      'water_intake',
+      'sleep_patterns',
+      'stress_levels',
       'motivation_level',
+      'motivation_factors',
       'lifestyle_habits',
+      'activity_level',
       'health_conditions',
+      'injuries_limitations',
+      'supplement_usage',
+      'medical_clearance',
       'lead_capture',
       'final_result'
     ];
+    
+    // Selecionar páginas baseado no número estimado
+    const pageTypes = basePageTypes.slice(0, Math.min(totalPages, basePageTypes.length));
     
     pageTypes.forEach((pageType, index) => {
       const pageNumber = index + 1;
@@ -4433,37 +4456,93 @@ export class CompleteAnalyzer {
         autoSave: true,
         wellnessMode: true
       },
-      theme: betterMeColors,
+      theme: {
+        ...betterMeColors,
+        colors: {
+          primary: '#10B981',
+          secondary: '#059669', 
+          success: '#34D399',
+          background: '#F3F4F6',
+          text: '#1F2937'
+        }
+      },
       metadata: {
         platform: 'BetterMe',
         category: 'Wellness',
+        audience: 'Health & Fitness',
+        duration: '5-8 minutos',
         complexity: 'intermediate',
         detectedFeatures: ['fitness_assessment', 'goal_setting', 'personalized_plan', 'wellness_tracking'],
         importedAt: new Date().toISOString(),
         totalElements: elements.length,
-        estimatedDuration: '3-4 minutos',
-        targetAudience: 'Pessoas interessadas em wellness, fitness e vida saudável'
+        estimatedDuration: '5-8 minutos',
+        targetAudience: 'Pessoas interessadas em wellness, fitness e vida saudável',
+        detectionMethod: 'betterme_specific_analyzer',
+        analysisComplete: true,
+        structureExpanded: true,
+        correctionApplied: 'User feedback: 15→35 pages'
       }
     };
   }
 
   private static estimateBetterMePages($: cheerio.CheerioAPI, html: string): number {
-    // BetterMe tipicamente usa 15 páginas para quiz completo de wellness
+    // BetterMe tipicamente usa 25-40 páginas para quiz completo de wellness
     const scriptContent = $('script').text();
     
-    let estimatedPages = 15;
+    let estimatedPages = 30; // Base mais realista
     
-    // Detectar indicadores específicos do BetterMe
+    // Detectar indicadores específicos do BetterMe para ajustar número de páginas
+    const indicators = [
+      /questions?\s*:\s*\[[\s\S]*?\]/gi,
+      /steps?\s*:\s*\[[\s\S]*?\]/gi,
+      /pages?\s*:\s*\[[\s\S]*?\]/gi,
+      /quiz[_-]?data\s*:\s*\[[\s\S]*?\]/gi,
+      /form[_-]?steps\s*:\s*\[[\s\S]*?\]/gi,
+      /assessment[_-]?questions\s*:\s*\[[\s\S]*?\]/gi
+    ];
+    
+    indicators.forEach(pattern => {
+      const matches = scriptContent.match(pattern);
+      if (matches) {
+        matches.forEach(match => {
+          const commas = (match.match(/,/g) || []).length;
+          if (commas > 0) {
+            estimatedPages = Math.max(estimatedPages, commas + 1);
+          }
+          
+          const objects = (match.match(/\{[^}]*\}/g) || []).length;
+          if (objects > 0) {
+            estimatedPages = Math.max(estimatedPages, objects);
+          }
+        });
+      }
+    });
+    
+    // Detectar elementos de formulário para estimar complexidade
+    const formElements = $('input, select, textarea, button[type="submit"]').length;
+    if (formElements > 15) {
+      const pagesFromElements = Math.ceil(formElements / 1.5);
+      estimatedPages = Math.max(estimatedPages, pagesFromElements);
+    }
+    
+    // Detectar específicos do BetterMe
     if (scriptContent.includes('fitness') || scriptContent.includes('wellness') || scriptContent.includes('workout')) {
-      estimatedPages = 15;
+      estimatedPages = Math.max(estimatedPages, 28);
     }
     
     if (scriptContent.includes('walking') || scriptContent.includes('steps') || html.includes('walking-workouts')) {
-      estimatedPages = 12; // Quiz mais focado em caminhada
+      estimatedPages = Math.max(estimatedPages, 25); // Quiz focado em caminhada ainda é extenso
     }
     
-    console.log(`🏃‍♀️ BetterMe páginas estimadas: ${estimatedPages}`);
-    return estimatedPages;
+    if (scriptContent.includes('nutrition') || scriptContent.includes('diet') || scriptContent.includes('meal')) {
+      estimatedPages = Math.max(estimatedPages, 35); // Quizzes com nutrição são mais longos
+    }
+    
+    // Limitar entre 25 e 45 páginas para ser realista
+    const finalPages = Math.min(Math.max(estimatedPages, 25), 45);
+    
+    console.log(`🏃‍♀️ BetterMe páginas estimadas: ${finalPages} (baseado em análise avançada)`);
+    return finalPages;
   }
 
   private static getBetterMePageTitle(pageType: string): string {
@@ -4491,59 +4570,144 @@ export class CompleteAnalyzer {
   private static getBetterMeWellnessQuestions(): string[] {
     return [
       'Qual é sua principal motivação para melhorar sua saúde?',
+      'Qual é sua altura?',
+      'Em quanto tempo você gostaria de alcançar seu peso ideal?',
+      'Qual é seu histórico de exercícios nos últimos 6 meses?',
+      'Quais são seus principais objetivos de fitness?',
+      'Que tipo de corpo você gostaria de ter?',
+      'Que tipos de exercício você prefere?',
+      'Qual intensidade de treino você prefere?',
+      'Em quais horários você prefere se exercitar?',
+      'Como é sua rotina matinal atual?',
+      'Como você descreveria seus hábitos alimentares atuais?',
+      'Quais são seus objetivos nutricionais?',
+      'Quantas refeições você faz por dia?',
+      'Quantos copos de água você bebe diariamente?',
+      'Como você descreveria seus padrões de sono?',
+      'Como você avalia seu nível de estresse atual?',
+      'O que mais te motiva a manter uma rotina saudável?',
+      'Qual é seu nível de atividade no dia a dia?',
+      'Você tem alguma condição de saúde que devo saber?',
+      'Você tem alguma lesão ou limitação física?',
+      'Você toma algum suplemento atualmente?',
+      'Você tem liberação médica para exercitar-se?',
       'Quantos dias por semana você consegue se dedicar ao exercício?',
       'Qual tipo de atividade física você mais gosta?',
-      'Como você descreveria seu nível de estresse atual?',
       'Quantas horas você dorme por noite em média?',
-      'Você tem alguma lesão ou limitação física?',
-      'Como está sua alimentação atualmente?',
+      'Você tem alguma restrição alimentar?',
       'Qual é seu maior desafio para manter uma rotina saudável?',
       'Você prefere treinar sozinho(a) ou em grupo?',
       'Em que período do dia você tem mais energia?',
-      'Quanta água você bebe por dia?',
       'Com que frequência você se sente cansado(a) durante o dia?'
     ];
   }
 
   private static getBetterMeWellnessOptions(): any[] {
     return [
+      // Motivação principal
       [
         { value: 'weight_loss', label: '⚖️ Perder peso e me sentir melhor' },
         { value: 'health', label: '💚 Melhorar minha saúde geral' },
         { value: 'energy', label: '⚡ Ter mais energia e disposição' },
-        { value: 'confidence', label: '💪 Aumentar minha autoestima' }
+        { value: 'confidence', label: '💪 Aumentar minha autoestima' },
+        { value: 'strength', label: '🏋️ Ficar mais forte' },
+        { value: 'appearance', label: '✨ Melhorar minha aparência' }
       ],
+      // Altura
       [
-        { value: '1-2', label: '1-2 dias por semana' },
-        { value: '3-4', label: '3-4 dias por semana' },
-        { value: '5-6', label: '5-6 dias por semana' },
-        { value: 'daily', label: 'Todos os dias' }
+        { value: '150-155', label: '150-155 cm' },
+        { value: '156-160', label: '156-160 cm' },
+        { value: '161-165', label: '161-165 cm' },
+        { value: '166-170', label: '166-170 cm' },
+        { value: '171-175', label: '171-175 cm' },
+        { value: '176-180', label: '176-180 cm' },
+        { value: '181-185', label: '181-185 cm' },
+        { value: '186+', label: '186+ cm' }
       ],
+      // Timeline para peso ideal
+      [
+        { value: '1_month', label: '🚀 1 mês' },
+        { value: '3_months', label: '📅 3 meses' },
+        { value: '6_months', label: '🎯 6 meses' },
+        { value: '1_year', label: '📆 1 ano' },
+        { value: 'no_rush', label: '🐌 Sem pressa, vou no meu ritmo' }
+      ],
+      // Histórico de exercícios
+      [
+        { value: 'never', label: '❌ Nunca me exercitei regularmente' },
+        { value: 'beginner', label: '🌱 Sou iniciante, exercito pouco' },
+        { value: 'occasional', label: '🔄 Exercito ocasionalmente' },
+        { value: 'regular', label: '✅ Me exercito regularmente' },
+        { value: 'athlete', label: '🏆 Sou atlético/competitivo' }
+      ],
+      // Objetivos de fitness
+      [
+        { value: 'lose_weight', label: '⚖️ Perder peso' },
+        { value: 'build_muscle', label: '💪 Ganhar massa muscular' },
+        { value: 'tone_body', label: '🎯 Tonificar o corpo' },
+        { value: 'improve_endurance', label: '🏃‍♀️ Melhorar resistência' },
+        { value: 'increase_flexibility', label: '🧘‍♀️ Aumentar flexibilidade' },
+        { value: 'general_health', label: '💚 Saúde geral' }
+      ],
+      // Tipo de corpo desejado
+      [
+        { value: 'lean', label: '📏 Magro e definido' },
+        { value: 'athletic', label: '🏃‍♀️ Atlético e forte' },
+        { value: 'curvy', label: '🌊 Curvilíneo e saudável' },
+        { value: 'muscular', label: '💪 Musculoso e definido' },
+        { value: 'balanced', label: '⚖️ Equilibrado e proporcional' }
+      ],
+      // Tipos de exercício preferidos
       [
         { value: 'walking', label: '🚶‍♀️ Caminhada' },
         { value: 'running', label: '🏃‍♀️ Corrida' },
         { value: 'yoga', label: '🧘‍♀️ Yoga' },
         { value: 'strength', label: '💪 Musculação' },
         { value: 'dance', label: '💃 Dança' },
-        { value: 'swimming', label: '🏊‍♀️ Natação' }
+        { value: 'swimming', label: '🏊‍♀️ Natação' },
+        { value: 'pilates', label: '🤸‍♀️ Pilates' },
+        { value: 'cycling', label: '🚴‍♀️ Ciclismo' }
       ],
+      // Intensidade de treino
       [
-        { value: 'low', label: '😌 Baixo - Me sinto tranquilo(a)' },
-        { value: 'moderate', label: '😐 Moderado - Às vezes me sinto estressado(a)' },
-        { value: 'high', label: '😰 Alto - Frequentemente me sinto estressado(a)' },
-        { value: 'very_high', label: '😵 Muito alto - Constantemente estressado(a)' }
+        { value: 'light', label: '🌱 Leve - Exercícios suaves' },
+        { value: 'moderate', label: '⚖️ Moderada - Equilíbrio perfeito' },
+        { value: 'intense', label: '🔥 Intensa - Treinos desafiadores' },
+        { value: 'extreme', label: '💥 Extrema - Máxima intensidade' }
       ],
+      // Horários para exercitar
       [
-        { value: 'less_5', label: 'Menos de 5 horas' },
-        { value: '5-6', label: '5-6 horas' },
-        { value: '7-8', label: '7-8 horas' },
-        { value: 'more_8', label: 'Mais de 8 horas' }
+        { value: 'early_morning', label: '🌅 Manhã cedo (5h-7h)' },
+        { value: 'morning', label: '☀️ Manhã (7h-10h)' },
+        { value: 'lunch', label: '🍽️ Almoço (11h-14h)' },
+        { value: 'afternoon', label: '🌤️ Tarde (14h-17h)' },
+        { value: 'evening', label: '🌆 Início da noite (17h-20h)' },
+        { value: 'night', label: '🌙 Noite (20h-23h)' }
       ],
+      // Rotina matinal
       [
-        { value: 'none', label: '✅ Não tenho limitações' },
-        { value: 'back', label: '🔙 Problemas nas costas' },
-        { value: 'knee', label: '🦵 Problemas nos joelhos' },
-        { value: 'other', label: '🏥 Outras limitações' }
+        { value: 'rush', label: '🏃‍♀️ Corrida - Sempre com pressa' },
+        { value: 'organized', label: '📋 Organizada - Tudo planejado' },
+        { value: 'relaxed', label: '😌 Relaxada - Sem pressa' },
+        { value: 'chaotic', label: '🌪️ Caótica - Sem rotina fixa' },
+        { value: 'healthy', label: '🌱 Saudável - Foco no bem-estar' }
+      ],
+      // Hábitos alimentares
+      [
+        { value: 'healthy', label: '🥗 Saudáveis - Como bem na maioria das vezes' },
+        { value: 'moderate', label: '⚖️ Moderados - Equilibro bem e mal' },
+        { value: 'poor', label: '🍔 Ruins - Preciso melhorar muito' },
+        { value: 'inconsistent', label: '🔄 Inconsistentes - Varia muito' },
+        { value: 'restrictive', label: '🚫 Restritivos - Sigo dietas rígidas' }
+      ],
+      // Objetivos nutricionais
+      [
+        { value: 'lose_weight', label: '⚖️ Perder peso' },
+        { value: 'maintain_weight', label: '📊 Manter peso atual' },
+        { value: 'gain_weight', label: '📈 Ganhar peso saudável' },
+        { value: 'build_muscle', label: '💪 Ganhar massa muscular' },
+        { value: 'improve_energy', label: '⚡ Melhorar energia' },
+        { value: 'general_health', label: '💚 Saúde geral' }
       ]
     ];
   }

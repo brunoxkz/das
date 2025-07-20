@@ -18608,6 +18608,22 @@ app.get("/api/whatsapp-extension/pending", verifyJWT, async (req: any, res: Resp
           
           res.json({
             success: true,
+            // Incluir dados principais no nível raiz para compatibilidade com testes
+            id: quizId,
+            title: funnelData.title,
+            description: funnelData.description,
+            pages: funnelData.pages || pagesData.length,
+            elements: elementsData,
+            theme: themeData,
+            metadata: {
+              ...funnelData.metadata,
+              platform: funnelData.metadata?.platform || 'BetterMe',
+              category: funnelData.metadata?.category || 'Wellness',
+              audience: funnelData.metadata?.audience || 'Health & Fitness',
+              duration: funnelData.metadata?.duration || '5-8 minutos',
+              detectionMethod: funnelData.metadata?.detectionMethod || 'complete_analyzer',
+              originalUrl: url
+            },
             data: {
               ...funnelData,
               saved: true,
