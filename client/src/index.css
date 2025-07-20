@@ -1140,6 +1140,45 @@ body {
 .vendzz-sidebar {
   background: linear-gradient(180deg, rgba(255,255,255,0.98) 0%, rgba(142, 181, 165, 0.02) 100%);
   border-right: 1px solid rgba(142, 181, 165, 0.15);
+  width: 280px;
+  transition: width 0.3s ease-in-out;
+}
+
+.vendzz-sidebar.collapsed {
+  width: 72px;
+}
+
+/* Collapsed sidebar button improvements */
+.vendzz-sidebar.collapsed .nav-item {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 40px;
+  width: 40px;
+  margin: 0 auto;
+}
+
+/* Icon centering for collapsed buttons */
+.vendzz-sidebar.collapsed button {
+  border-radius: 8px;
+  transition: all 0.2s ease;
+}
+
+/* Hover improvements for collapsed state */
+.vendzz-sidebar.collapsed button:hover {
+  transform: scale(1.05);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Ensure icons are properly centered */
+.vendzz-sidebar.collapsed button svg {
+  margin: 0 !important;
+}
+
+/* Color adjustments for collapsed active state */
+.vendzz-sidebar.collapsed button.bg-green-100 {
+  border: 2px solid #10b981;
+  background-color: rgba(16, 185, 129, 0.1);
 }
 
 /* Futuristic animations */

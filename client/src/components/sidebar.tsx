@@ -470,12 +470,13 @@ export function Sidebar() {
       </div>
 
       {/* Create Button */}
-      <div className="p-4 border-b border-border dark:border-gray-700">
-        <div className="space-y-2">
+      <div className={cn("border-b border-border dark:border-gray-700", isCollapsed ? "p-2" : "p-4")}>
+        <div className={cn("space-y-2", isCollapsed && "flex flex-col items-center")}>
           <Link href="/quizzes/new">
             <Button className={cn(
-              "w-full",
-              isCollapsed ? "px-0" : "px-4"
+              "w-full justify-center",
+              isCollapsed ? "w-10 h-10 p-0" : "px-4",
+              !isCollapsed && "justify-start"
             )}>
               <Plus className="w-4 h-4" />
               {!isCollapsed && <span className="ml-2">Criar Quiz</span>}
@@ -484,8 +485,9 @@ export function Sidebar() {
           
           <Link href="/funnel-importer">
             <Button className={cn(
-              "w-full bg-blue-600 hover:bg-blue-700 text-white",
-              isCollapsed ? "px-0" : "px-4"
+              "w-full bg-blue-600 hover:bg-blue-700 text-white justify-center",
+              isCollapsed ? "w-10 h-10 p-0" : "px-4",
+              !isCollapsed && "justify-start"
             )}>
               <Copy className="w-4 h-4" />
               {!isCollapsed && <span className="ml-2">Clonar Quiz</span>}
@@ -494,8 +496,9 @@ export function Sidebar() {
           
           <Link href="/vsl-to-quiz">
             <Button className={cn(
-              "w-full bg-purple-600 hover:bg-purple-700 text-white",
-              isCollapsed ? "px-0" : "px-4"
+              "w-full bg-purple-600 hover:bg-purple-700 text-white justify-center",
+              isCollapsed ? "w-10 h-10 p-0" : "px-4",
+              !isCollapsed && "justify-start"
             )}>
               <Play className="w-4 h-4" />
               {!isCollapsed && <span className="ml-2">VSL para Quiz</span>}
@@ -512,10 +515,16 @@ export function Sidebar() {
             <Button
               variant="ghost"
               className={cn(
-                "nav-item w-full justify-start text-foreground hover:bg-accent hover:text-accent-foreground",
-                isCollapsed ? "px-0" : "px-3",
-                dashboardItem.active && "bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-200 border-l-4 border-green-500"
+                "nav-item w-full text-foreground hover:bg-accent hover:text-accent-foreground",
+                isCollapsed 
+                  ? "w-10 h-10 p-0 justify-center mx-auto" 
+                  : "justify-start px-3",
+                dashboardItem.active && (isCollapsed 
+                  ? "bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-200 border-2 border-green-500 rounded-md"
+                  : "bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-200 border-l-4 border-green-500"
+                )
               )}
+              title={isCollapsed ? dashboardItem.title : undefined}
             >
               {dashboardItem.icon}
               {!isCollapsed && (
@@ -525,132 +534,191 @@ export function Sidebar() {
           </Link>
 
           {/* Categories */}
-          {navCategories.map((category) => (
-            <div key={category.title} className="space-y-1">
-              {/* Category Header Button */}
-              <Button
-                variant="ghost"
-                onClick={() => !isCollapsed && toggleCategory(category.title)}
-                className={cn(
-                  "category-header w-full justify-start text-foreground hover:bg-accent hover:text-accent-foreground",
-                  isCollapsed ? "px-0" : "px-3 py-2",
-                  !isCollapsed && "cursor-pointer"
-                )}
-              >
-                {category.icon}
-                {!isCollapsed && (
-                  <>
-                    <span className="ml-2 flex-1 text-left text-foreground">{category.title}</span>
-                    {expandedCategories.includes(category.title) ? (
-                      <ChevronDown className="w-3 h-3 ml-auto text-foreground" />
-                    ) : (
-                      <ChevronUp className="w-3 h-3 ml-auto text-foreground" />
-                    )}
-                  </>
-                )}
-              </Button>
-              
-              {/* Category Items */}
-              {(isCollapsed || expandedCategories.includes(category.title)) && (
-                <div className={cn("category-items space-y-1", isCollapsed ? "pl-0" : "pl-2")}>
-                  {category.items.map((item) => (
-                    <Link key={item.href} href={item.href}>
-                      <Button
-                        variant="ghost"
-                        className={cn(
-                          "nav-item w-full justify-start text-foreground hover:bg-accent hover:text-accent-foreground",
-                          isCollapsed ? "px-0" : "px-3",
-                          item.active && "bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-200 border-l-4 border-green-500"
-                        )}
-                      >
-                        {item.icon}
-                        {!isCollapsed && (
-                          <>
-                            <span className="ml-2 flex-1 text-left text-foreground">{item.title}</span>
-                            {item.badge && (
-                              <Badge variant="secondary" className="ml-auto">
-                                {item.badge}
-                              </Badge>
-                            )}
-                          </>
-                        )}
-                      </Button>
-                    </Link>
-                  ))}
-                </div>
+          {isCollapsed ? (
+            // Modo Collapsed - Mostra apenas os ícones dos itens individuais
+            <div className="space-y-1 flex flex-col items-center">
+              {navCategories.flatMap((category) => 
+                category.items.map((item) => (
+                  <Link key={item.href} href={item.href}>
+                    <Button
+                      variant="ghost"
+                      className={cn(
+                        "w-10 h-10 p-0 justify-center text-foreground hover:bg-accent hover:text-accent-foreground",
+                        item.active && "bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-200 border-2 border-green-500 rounded-md"
+                      )}
+                      title={item.title} // Tooltip para mostrar o nome
+                    >
+                      {item.icon}
+                    </Button>
+                  </Link>
+                ))
               )}
             </div>
-          ))}
+          ) : (
+            // Modo Expandido - Mostra categorias com itens
+            navCategories.map((category) => (
+              <div key={category.title} className="space-y-1">
+                {/* Category Header Button */}
+                <Button
+                  variant="ghost"
+                  onClick={() => toggleCategory(category.title)}
+                  className={cn(
+                    "category-header w-full justify-start text-foreground hover:bg-accent hover:text-accent-foreground cursor-pointer",
+                    "px-3 py-2"
+                  )}
+                >
+                  {category.icon}
+                  <span className="ml-2 flex-1 text-left text-foreground">{category.title}</span>
+                  {expandedCategories.includes(category.title) ? (
+                    <ChevronDown className="w-3 h-3 ml-auto text-foreground" />
+                  ) : (
+                    <ChevronUp className="w-3 h-3 ml-auto text-foreground" />
+                  )}
+                </Button>
+                
+                {/* Category Items */}
+                {expandedCategories.includes(category.title) && (
+                  <div className="category-items space-y-1 pl-2">
+                    {category.items.map((item) => (
+                      <Link key={item.href} href={item.href}>
+                        <Button
+                          variant="ghost"
+                          className={cn(
+                            "nav-item w-full justify-start text-foreground hover:bg-accent hover:text-accent-foreground px-3",
+                            item.active && "bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-200 border-l-4 border-green-500"
+                          )}
+                        >
+                          {item.icon}
+                          <span className="ml-2 flex-1 text-left text-foreground">{item.title}</span>
+                          {item.badge && (
+                            <Badge variant="secondary" className="ml-auto">
+                              {item.badge}
+                            </Badge>
+                          )}
+                        </Button>
+                      </Link>
+                    ))}
+                  </div>
+                )}
+              </div>
+            ))
+          )}
 
-          {/* Tutoriais - Standalone */}
-          <Link href={tutorialsItem.href}>
-            <Button
-              variant="ghost"
-              className={cn(
-                "nav-item w-full justify-start text-foreground hover:bg-accent hover:text-accent-foreground",
-                isCollapsed ? "px-0" : "px-3",
-                tutorialsItem.active && "bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-200 border-l-4 border-green-500"
-              )}
-            >
-              {tutorialsItem.icon}
-              {!isCollapsed && (
-                <span className="ml-2 flex-1 text-left text-foreground">{tutorialsItem.title}</span>
-              )}
-            </Button>
-          </Link>
+          {/* Itens Standalone */}
+          {isCollapsed ? (
+            <div className="flex flex-col items-center space-y-1">
+              {/* Tutoriais - Collapsed */}
+              <Link href={tutorialsItem.href}>
+                <Button
+                  variant="ghost"
+                  className={cn(
+                    "w-10 h-10 p-0 justify-center text-foreground hover:bg-accent hover:text-accent-foreground",
+                    tutorialsItem.active && "bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-200 border-2 border-green-500 rounded-md"
+                  )}
+                  title={tutorialsItem.title}
+                >
+                  {tutorialsItem.icon}
+                </Button>
+              </Link>
 
-          {/* Planos - Standalone */}
-          <Link href={planosItem.href}>
-            <Button
-              variant="ghost"
-              className={cn(
-                "nav-item w-full justify-start text-foreground hover:bg-accent hover:text-accent-foreground",
-                isCollapsed ? "px-0" : "px-3",
-                planosItem.active && "bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-200 border-l-4 border-green-500"
-              )}
-            >
-              {planosItem.icon}
-              {!isCollapsed && (
-                <span className="ml-2 flex-1 text-left text-foreground">{planosItem.title}</span>
-              )}
-            </Button>
-          </Link>
+              {/* Planos - Collapsed */}
+              <Link href={planosItem.href}>
+                <Button
+                  variant="ghost"
+                  className={cn(
+                    "w-10 h-10 p-0 justify-center text-foreground hover:bg-accent hover:text-accent-foreground",
+                    planosItem.active && "bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-200 border-2 border-green-500 rounded-md"
+                  )}
+                  title={planosItem.title}
+                >
+                  {planosItem.icon}
+                </Button>
+              </Link>
 
-          {/* Créditos - Standalone */}
-          <Link href={creditosItem.href}>
-            <Button
-              variant="ghost"
-              className={cn(
-                "nav-item w-full justify-start text-foreground hover:bg-accent hover:text-accent-foreground",
-                isCollapsed ? "px-0" : "px-3",
-                creditosItem.active && "bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-200 border-l-4 border-green-500"
-              )}
-            >
-              {creditosItem.icon}
-              {!isCollapsed && (
-                <span className="ml-2 flex-1 text-left text-foreground">{creditosItem.title}</span>
-              )}
-            </Button>
-          </Link>
+              {/* Créditos - Collapsed */}
+              <Link href={creditosItem.href}>
+                <Button
+                  variant="ghost"
+                  className={cn(
+                    "w-10 h-10 p-0 justify-center text-foreground hover:bg-accent hover:text-accent-foreground",
+                    creditosItem.active && "bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-200 border-2 border-green-500 rounded-md"
+                  )}
+                  title={creditosItem.title}
+                >
+                  {creditosItem.icon}
+                </Button>
+              </Link>
+            </div>
+          ) : (
+            <>
+              {/* Tutoriais - Expanded */}
+              <Link href={tutorialsItem.href}>
+                <Button
+                  variant="ghost"
+                  className={cn(
+                    "nav-item w-full justify-start text-foreground hover:bg-accent hover:text-accent-foreground px-3",
+                    tutorialsItem.active && "bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-200 border-l-4 border-green-500"
+                  )}
+                >
+                  {tutorialsItem.icon}
+                  <span className="ml-2 flex-1 text-left text-foreground">{tutorialsItem.title}</span>
+                </Button>
+              </Link>
+
+              {/* Planos - Expanded */}
+              <Link href={planosItem.href}>
+                <Button
+                  variant="ghost"
+                  className={cn(
+                    "nav-item w-full justify-start text-foreground hover:bg-accent hover:text-accent-foreground px-3",
+                    planosItem.active && "bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-200 border-l-4 border-green-500"
+                  )}
+                >
+                  {planosItem.icon}
+                  <span className="ml-2 flex-1 text-left text-foreground">{planosItem.title}</span>
+                </Button>
+              </Link>
+
+              {/* Créditos - Expanded */}
+              <Link href={creditosItem.href}>
+                <Button
+                  variant="ghost"
+                  className={cn(
+                    "nav-item w-full justify-start text-foreground hover:bg-accent hover:text-accent-foreground px-3",
+                    creditosItem.active && "bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-200 border-l-4 border-green-500"
+                  )}
+                >
+                  {creditosItem.icon}
+                  <span className="ml-2 flex-1 text-left text-foreground">{creditosItem.title}</span>
+                </Button>
+              </Link>
+            </>
+          )}
 
 
         </div>
       </nav>
 
       {/* Bottom Items */}
-      <div className="p-4 border-t border-border dark:border-gray-700">
-        <div className="space-y-1">
+      <div className={cn("border-t border-border dark:border-gray-700", isCollapsed ? "p-2" : "p-4")}>
+        <div className={cn("space-y-1", isCollapsed && "flex flex-col items-center space-y-2")}>
           {bottomItems.map((item) => (
             <Link key={item.href} href={item.href}>
               <Button
                 variant="ghost"
                 className={cn(
-                  "w-full justify-start text-foreground hover:bg-accent hover:text-accent-foreground",
-                  isCollapsed ? "px-0" : "px-3",
-                  item.active && "bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-200 border-l-4 border-green-500",
+                  "text-foreground hover:bg-accent hover:text-accent-foreground",
+                  isCollapsed 
+                    ? "w-10 h-10 p-0 justify-center" 
+                    : "w-full justify-start px-3",
+                  item.active && (isCollapsed
+                    ? "bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-200 border-2 border-green-500 rounded-md"
+                    : "bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-200 border-l-4 border-green-500"
+                  ),
                   // Aplicar classes específicas apenas quando NÃO estiver ativo
                   !item.active && item.className
                 )}
+                title={isCollapsed ? item.title : undefined}
               >
                 {item.icon}
                 {!isCollapsed && (
