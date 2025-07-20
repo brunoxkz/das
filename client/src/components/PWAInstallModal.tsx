@@ -1,7 +1,8 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
+import { X, Smartphone, Download, Share, Plus } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { X, Share, Plus, Download, Smartphone, Monitor } from 'lucide-react';
+// @ts-ignore
 import logoVendzz from '@assets/logo-vendzz-white_1753041219534.png';
 
 interface PWAInstallModalProps {
@@ -17,11 +18,11 @@ export default function PWAInstallModal({ isOpen, onClose, onInstall }: PWAInsta
 
   useEffect(() => {
     const userAgent = navigator.userAgent;
-    const iOS = /iPad|iPhone|iPod/.test(userAgent);
+    const ios = /iPad|iPhone|iPod/.test(userAgent);
     const android = /Android/.test(userAgent);
-    const desktop = !iOS && !android;
-
-    setIsIOS(iOS);
+    const desktop = !ios && !android;
+    
+    setIsIOS(ios);
     setIsAndroid(android);
     setIsDesktop(desktop);
   }, []);
@@ -29,234 +30,152 @@ export default function PWAInstallModal({ isOpen, onClose, onInstall }: PWAInsta
   if (!isOpen) return null;
 
   const renderIOSInstructions = () => (
-    <div className="space-y-4">
+    <div className="space-y-3">
       <div className="text-center">
-        <div className="w-16 h-16 bg-green-600 rounded-full flex items-center justify-center mx-auto mb-4">
-          <Share className="w-8 h-8 text-white" />
+        <div className="w-10 h-10 bg-green-600 rounded-full flex items-center justify-center mx-auto mb-2">
+          <Smartphone className="w-5 h-5 text-white" />
         </div>
-        <h3 className="text-lg font-semibold text-white mb-2">
-          Instalar no iPhone/iPad
+        <h3 className="text-sm font-semibold text-white mb-1">
+          Instalar no iPhone
         </h3>
-        <p className="text-gray-300 text-sm mb-4">
-          Siga os passos abaixo para adicionar o Vendzz à sua tela inicial
+        <p className="text-gray-300 text-xs mb-3">
+          Siga os passos da animação
         </p>
       </div>
 
-      <div className="space-y-3">
-        <div className="flex items-start gap-3 p-3 bg-gray-800 rounded-lg">
-          <div className="w-6 h-6 bg-green-600 rounded-full flex items-center justify-center text-white text-sm font-bold">
-            1
-          </div>
-          <div>
-            <p className="text-white font-medium">Toque no botão de compartilhar</p>
-            <p className="text-gray-400 text-sm">Encontre o ícone <Share className="w-4 h-4 inline mx-1" /> na parte inferior do Safari</p>
-          </div>
-        </div>
-
-        <div className="flex items-start gap-3 p-3 bg-gray-800 rounded-lg">
-          <div className="w-6 h-6 bg-green-600 rounded-full flex items-center justify-center text-white text-sm font-bold">
-            2
-          </div>
-          <div>
-            <p className="text-white font-medium">Selecione "Adicionar à Tela de Início"</p>
-            <p className="text-gray-400 text-sm">Procure pela opção <Plus className="w-4 h-4 inline mx-1" /> "Adicionar à Tela de Início"</p>
+      {/* Área do GIF - Animação visual */}
+      <div className="bg-gray-800 rounded-lg p-2 mb-3">
+        <div className="aspect-video bg-gradient-to-br from-gray-700 to-gray-600 rounded-lg flex items-center justify-center relative overflow-hidden">
+          <div className="absolute inset-0 bg-gradient-to-br from-blue-500/10 to-green-500/10 rounded-lg"></div>
+          <div className="text-white text-center z-10">
+            <div className="flex items-center justify-center space-x-2 mb-1">
+              <Smartphone className="w-6 h-6 animate-pulse" />
+              <Share className="w-4 h-4 animate-bounce" />
+              <Plus className="w-4 h-4 animate-pulse" />
+            </div>
+            <p className="text-xs opacity-75">Safari → Compartilhar → Adicionar</p>
           </div>
         </div>
+      </div>
 
-        <div className="flex items-start gap-3 p-3 bg-gray-800 rounded-lg">
-          <div className="w-6 h-6 bg-green-600 rounded-full flex items-center justify-center text-white text-sm font-bold">
-            3
-          </div>
-          <div>
-            <p className="text-white font-medium">Confirme a instalação</p>
-            <p className="text-gray-400 text-sm">Toque em "Adicionar" para finalizar</p>
-          </div>
+      <div className="space-y-1.5">
+        <div className="flex items-center gap-2 text-xs">
+          <div className="w-4 h-4 bg-green-600 rounded-full flex items-center justify-center text-white text-xs font-bold">1</div>
+          <span className="text-white">Toque no botão <Share className="w-3 h-3 inline mx-1" /></span>
+        </div>
+        <div className="flex items-center gap-2 text-xs">
+          <div className="w-4 h-4 bg-green-600 rounded-full flex items-center justify-center text-white text-xs font-bold">2</div>
+          <span className="text-white">Selecione "Adicionar à Tela de Início" <Plus className="w-3 h-3 inline mx-1" /></span>
+        </div>
+        <div className="flex items-center gap-2 text-xs">
+          <div className="w-4 h-4 bg-green-600 rounded-full flex items-center justify-center text-white text-xs font-bold">3</div>
+          <span className="text-white">Confirme tocando em "Adicionar"</span>
         </div>
       </div>
     </div>
   );
 
   const renderAndroidInstructions = () => (
-    <div className="space-y-4">
+    <div className="space-y-3">
       <div className="text-center">
-        <div className="w-16 h-16 bg-green-600 rounded-full flex items-center justify-center mx-auto mb-4">
-          <Download className="w-8 h-8 text-white" />
+        <div className="w-10 h-10 bg-green-600 rounded-full flex items-center justify-center mx-auto mb-2">
+          <Download className="w-5 h-5 text-white" />
         </div>
-        <h3 className="text-lg font-semibold text-white mb-2">
+        <h3 className="text-sm font-semibold text-white mb-1">
           Instalar no Android
         </h3>
-        <p className="text-gray-300 text-sm mb-4">
-          Adicione o Vendzz como um aplicativo nativo
+        <p className="text-gray-300 text-xs mb-3">
+          Adicione como aplicativo nativo
         </p>
       </div>
 
-      <div className="space-y-3">
-        <div className="flex items-start gap-3 p-3 bg-gray-800 rounded-lg">
-          <div className="w-6 h-6 bg-green-600 rounded-full flex items-center justify-center text-white text-sm font-bold">
-            1
-          </div>
-          <div>
-            <p className="text-white font-medium">Toque no menu do navegador</p>
-            <p className="text-gray-400 text-sm">Encontre os três pontos (⋮) no canto superior direito</p>
-          </div>
+      <div className="space-y-1.5">
+        <div className="flex items-center gap-2 text-xs">
+          <div className="w-4 h-4 bg-green-600 rounded-full flex items-center justify-center text-white text-xs font-bold">1</div>
+          <span className="text-white">Menu do navegador (⋮)</span>
         </div>
-
-        <div className="flex items-start gap-3 p-3 bg-gray-800 rounded-lg">
-          <div className="w-6 h-6 bg-green-600 rounded-full flex items-center justify-center text-white text-sm font-bold">
-            2
-          </div>
-          <div>
-            <p className="text-white font-medium">Selecione "Instalar app" ou "Adicionar à tela inicial"</p>
-            <p className="text-gray-400 text-sm">Procure pela opção de instalação no menu</p>
-          </div>
+        <div className="flex items-center gap-2 text-xs">
+          <div className="w-4 h-4 bg-green-600 rounded-full flex items-center justify-center text-white text-xs font-bold">2</div>
+          <span className="text-white">"Instalar app" ou "Adicionar à tela inicial"</span>
         </div>
-
-        <div className="flex items-start gap-3 p-3 bg-gray-800 rounded-lg">
-          <div className="w-6 h-6 bg-green-600 rounded-full flex items-center justify-center text-white text-sm font-bold">
-            3
-          </div>
-          <div>
-            <p className="text-white font-medium">Confirme a instalação</p>
-            <p className="text-gray-400 text-sm">Toque em "Instalar" para adicionar o app</p>
-          </div>
+        <div className="flex items-center gap-2 text-xs">
+          <div className="w-4 h-4 bg-green-600 rounded-full flex items-center justify-center text-white text-xs font-bold">3</div>
+          <span className="text-white">Confirme a instalação</span>
         </div>
       </div>
     </div>
   );
 
   const renderDesktopInstructions = () => (
-    <div className="space-y-4">
+    <div className="space-y-3">
       <div className="text-center">
-        <div className="w-16 h-16 bg-green-600 rounded-full flex items-center justify-center mx-auto mb-4">
-          <Smartphone className="w-8 h-8 text-white" />
+        <div className="w-10 h-10 bg-green-600 rounded-full flex items-center justify-center mx-auto mb-2">
+          <Smartphone className="w-5 h-5 text-white" />
         </div>
-        <h3 className="text-lg font-semibold text-white mb-2">
-          Instalar no iPhone
+        <h3 className="text-sm font-semibold text-white mb-1">
+          Acesse pelo iPhone
         </h3>
-        <p className="text-gray-300 text-sm mb-4">
-          Para a melhor experiência, acesse pelo Safari no iPhone
+        <p className="text-gray-300 text-xs mb-3">
+          Para melhor experiência, use o Safari no iPhone
         </p>
       </div>
 
-      <div className="space-y-3">
-        <div className="flex items-start gap-3 p-3 bg-gray-800 rounded-lg">
-          <div className="w-6 h-6 bg-green-600 rounded-full flex items-center justify-center text-white text-sm font-bold">
-            1
-          </div>
-          <div>
-            <p className="text-white font-medium">Abra no Safari (iPhone)</p>
-            <p className="text-gray-400 text-sm">Use o navegador Safari para acessar esta página</p>
-          </div>
+      <div className="space-y-1.5">
+        <div className="flex items-center gap-2 text-xs">
+          <div className="w-4 h-4 bg-green-600 rounded-full flex items-center justify-center text-white text-xs font-bold">1</div>
+          <span className="text-white">Abra esta página no Safari (iPhone)</span>
         </div>
-
-        <div className="flex items-start gap-3 p-3 bg-gray-800 rounded-lg">
-          <div className="w-6 h-6 bg-green-600 rounded-full flex items-center justify-center text-white text-sm font-bold">
-            2
-          </div>
-          <div>
-            <p className="text-white font-medium">Toque no botão compartilhar</p>
-            <p className="text-gray-400 text-sm">Encontre o ícone <Share className="w-4 h-4 inline mx-1" /> na parte inferior</p>
-          </div>
+        <div className="flex items-center gap-2 text-xs">
+          <div className="w-4 h-4 bg-green-600 rounded-full flex items-center justify-center text-white text-xs font-bold">2</div>
+          <span className="text-white">Toque no botão <Share className="w-3 h-3 inline mx-1" /></span>
         </div>
-
-        <div className="flex items-start gap-3 p-3 bg-gray-800 rounded-lg">
-          <div className="w-6 h-6 bg-green-600 rounded-full flex items-center justify-center text-white text-sm font-bold">
-            3
-          </div>
-          <div>
-            <p className="text-white font-medium">Adicionar à Tela de Início</p>
-            <p className="text-gray-400 text-sm">Selecione "Adicionar à Tela de Início" <Plus className="w-4 h-4 inline mx-1" /></p>
-          </div>
+        <div className="flex items-center gap-2 text-xs">
+          <div className="w-4 h-4 bg-green-600 rounded-full flex items-center justify-center text-white text-xs font-bold">3</div>
+          <span className="text-white">Adicionar à Tela de Início <Plus className="w-3 h-3 inline mx-1" /></span>
         </div>
       </div>
     </div>
   );
 
   return (
-    <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-      <Card className="w-full max-w-md bg-gray-900 border-green-500/20 shadow-2xl">
-        <CardHeader className="text-center pb-4">
-          <div className="flex items-center justify-between mb-4">
-            <div className="w-6"></div>
+    <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-3 z-50">
+      <Card className="w-full max-w-sm bg-gray-900/95 border-gray-700 relative">
+        <CardHeader className="relative pb-2">
+          <Button
+            onClick={onClose}
+            variant="ghost"
+            size="sm"
+            className="absolute right-0 top-0 text-gray-400 hover:text-white hover:bg-gray-800 w-8 h-8"
+          >
+            <X className="w-3 h-3" />
+          </Button>
+          <div className="text-center">
             <img 
               src={logoVendzz} 
               alt="Vendzz" 
-              className="h-12 w-auto"
+              className="h-6 w-auto mx-auto mb-2"
             />
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={onClose}
-              className="text-gray-400 hover:text-white p-1"
-            >
-              <X className="w-5 h-5" />
-            </Button>
-          </div>
-          
-          <CardTitle className="text-2xl font-bold text-green-400 mb-2">
-            Instalar Aplicativo
-          </CardTitle>
-          
-          <p className="text-gray-300 text-sm">
-            Seja Bem-Vindo ao Vendzz!
-          </p>
-          
-          <div className="my-4 p-4 bg-green-600/10 border border-green-500/20 rounded-lg">
-            <div className="flex items-center gap-2 text-green-400 text-sm font-medium mb-2">
-              <Smartphone className="w-4 h-4" />
-              O que é melhor em ter um app próprio?
-            </div>
-            <div className="space-y-2 text-xs text-gray-300">
-              <div className="flex items-center gap-2">
-                <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                <span>Agregar valor aos seus produtos</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                <span>Diminuir os reembolsos</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                <span>Produtos bloqueados dentro do App</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                <span>Enviar Notificações Push</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                <span>Aumentar a conversão da sua oferta</span>
-              </div>
-            </div>
+            <CardTitle className="text-base text-white">
+              Instalar Vendzz
+            </CardTitle>
+            <p className="text-gray-400 text-xs mt-1">
+              Acesso rápido em qualquer lugar
+            </p>
           </div>
         </CardHeader>
-
-        <CardContent className="space-y-4">
+        
+        <CardContent className="pt-0 pb-4">
           {isIOS && renderIOSInstructions()}
           {isAndroid && renderAndroidInstructions()}
           {isDesktop && renderDesktopInstructions()}
-
-          <div className="space-y-3 pt-4 border-t border-gray-700">
+          
+          <div className="flex gap-2 mt-4">
             <Button
-              onClick={onInstall || onClose}
-              className="w-full bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white font-semibold py-3"
-            >
-              {isIOS ? 'Entendi, vou instalar!' : 'Instalar Agora'}
-            </Button>
-            
-            <Button
-              variant="outline"
               onClick={onClose}
-              className="w-full border-gray-600 text-gray-300 hover:bg-gray-800"
+              className="flex-1 bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white text-sm py-2"
             >
-              Continuar no Navegador
+              Entendi
             </Button>
-          </div>
-
-          <div className="text-center pt-2">
-            <p className="text-xs text-gray-500">
-              Para melhor experiência, recomendamos instalar o aplicativo
-            </p>
           </div>
         </CardContent>
       </Card>
