@@ -53,6 +53,7 @@ import { BrevoEmailService } from "./email-brevo";
 import { handleSecureUpload, uploadMiddleware } from "./upload-secure";
 import { sanitizeAllScripts, sanitizeUTMCode, sanitizeCustomScript } from './script-sanitizer-new';
 import { intelligentRateLimiter } from './intelligent-rate-limiter';
+import { isUserBlocked, canCreateQuiz, getPlanLimits } from './rbac';
 import { 
   antiDdosMiddleware, 
   antiInvasionMiddleware, 
@@ -72,14 +73,38 @@ import HealthCheckSystem from './health-check-system.js';
 import WhatsAppBusinessAPI from './whatsapp-business-api';
 import { registerFacelessVideoRoutes } from './faceless-video-routes';
 import { StripeCheckoutLinkGenerator } from './stripe-checkout-link-generator';
+import { planManager } from './plan-manager';
 
 // JWT Secret para validação de tokens
 const JWT_SECRET = process.env.JWT_SECRET || 'vendzz-jwt-secret-key-2024';
 
+// Middleware para verificação rápida de plano expirado (adicional ao sistema existente)
+const quickPlanCheckMiddleware = async (req: any, res: any, next: any) => {
+  try {
+    if (req.user && req.user.id) {
+      const userId = req.user.id;
+      
+      if (await isUserBlocked(userId)) {
+        console.log(`🔒 ACESSO BLOQUEADO: Usuário ${userId} com plano expirado`);
+        return res.status(402).json({ 
+          success: false,
+          blocked: true,
+          message: "Seu plano expirou. Renove para continuar usando o sistema.",
+          action: "renewal_required"
+        });
+      }
+    }
+    next();
+  } catch (error) {
+    console.error('Erro na verificação de plano:', error);
+    next(); // Permitir prosseguir em caso de erro na verificação
+  }
+};
+
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Middleware para verificar expiração de plano
+// Middleware para verificar expiração de plano (agora usando PlanManager)
 async function checkPlanExpiration(req: any, res: any, next: any) {
   try {
     // Pular verificação para rotas públicas e admin
@@ -95,35 +120,25 @@ async function checkPlanExpiration(req: any, res: any, next: any) {
       return next();
     }
 
+    // Usar PlanManager para verificar e atualizar status do usuário
+    if (req.user) {
+      await planManager.checkAndUpdateUserPlan(req.user);
+      
+      // Re-buscar usuário atualizado para ter dados mais recentes
+      const updatedUser = await storage.getUserById(req.user.id);
+      if (updatedUser) {
+        req.user = updatedUser;
+      }
+    }
+
     // Verificar se o usuário está bloqueado
     if (req.user && req.user.isBlocked) {
       return res.status(403).json({ 
         error: 'Conta bloqueada',
-        message: req.user.blockReason || 'Sua conta foi bloqueada. Entre em contato com o suporte.',
-        renewalRequired: true
+        message: req.user.blockReason || 'Plano expirado - Renovação necessária',
+        renewalRequired: true,
+        planStatus: await planManager.getPlanStatus(req.user.id)
       });
-    }
-
-    // Verificar se o plano expirou
-    if (req.user && req.user.planExpiresAt) {
-      const now = new Date();
-      const expirationDate = new Date(req.user.planExpiresAt);
-      
-      if (now > expirationDate) {
-        // Bloquear usuário se plano expirou
-        await storage.updateUser(req.user.id, {
-          isBlocked: true,
-          planRenewalRequired: true,
-          blockReason: 'Plano expirado - Renovação necessária'
-        });
-        
-        return res.status(402).json({
-          error: 'Plano expirado',
-          message: 'Seu plano expirou. Renove para continuar usando o sistema.',
-          renewalRequired: true,
-          expirationDate: expirationDate.toISOString()
-        });
-      }
     }
 
     next();
@@ -3463,6 +3478,33 @@ export function registerSQLiteRoutes(app: Express): Server {
     try {
       const userId = req.user.id;
       console.log(`🔄 CRIANDO NOVO QUIZ - User: ${userId}`);
+      
+      // VERIFICAÇÃO CRÍTICA: PLANO EXPIRADO BLOQUEIA CRIAÇÃO DE QUIZ
+      if (await isUserBlocked(userId)) {
+        console.log(`🔒 CRIAÇÃO BLOQUEADA: Usuário ${userId} com plano expirado`);
+        return res.status(402).json({ 
+          success: false,
+          blocked: true,
+          message: "Seu plano expirou. Renove para continuar criando quizzes.",
+          action: "renewal_required"
+        });
+      }
+
+      // Verificar limites de plano
+      const userQuizzes = await storage.getUserQuizzes(userId);
+      const canCreate = await canCreateQuiz(userId, userQuizzes.length, req.user.plan);
+      
+      if (!canCreate) {
+        console.log(`❌ LIMITE DE QUIZ ATINGIDO: Usuário ${userId} - Plano: ${req.user.plan} - Count: ${userQuizzes.length}`);
+        return res.status(402).json({ 
+          success: false,
+          message: "Limite de quizzes atingido para seu plano atual. Faça upgrade para continuar.",
+          action: "upgrade_required",
+          currentCount: userQuizzes.length,
+          limit: getPlanLimits(req.user.plan).maxQuizzes
+        });
+      }
+
       console.log(`📝 REQ.BODY COMPLETO:`, JSON.stringify(req.body, null, 2));
       console.log(`📝 DADOS RECEBIDOS:`, {
         title: req.body.title,
@@ -4598,13 +4640,26 @@ export function registerSQLiteRoutes(app: Express): Server {
   // Publish quiz
   app.post("/api/quizzes/:id/publish", verifyJWT, async (req: any, res) => {
     try {
+      const userId = req.user.id;
+      
+      // VERIFICAÇÃO CRÍTICA: PLANO EXPIRADO BLOQUEIA PUBLICAÇÃO
+      if (await isUserBlocked(userId)) {
+        console.log(`🔒 PUBLICAÇÃO BLOQUEADA: Usuário ${userId} com plano expirado`);
+        return res.status(402).json({ 
+          success: false,
+          blocked: true,
+          message: "Seu plano expirou. Renove para continuar publicando quizzes.",
+          action: "renewal_required"
+        });
+      }
+      
       const existingQuiz = await storage.getQuiz(req.params.id);
       
       if (!existingQuiz) {
         return res.status(404).json({ message: "Quiz not found" });
       }
 
-      if (existingQuiz.userId !== req.user.id) {
+      if (existingQuiz.userId !== userId) {
         return res.status(403).json({ message: "Access denied" });
       }
 
@@ -10392,6 +10447,18 @@ console.log('Vendzz Checkout Embed carregado para plano: ${planId}');
   app.post("/api/sms-campaigns", verifyJWT, async (req: any, res: Response) => {
     try {
       const userId = req.user.id;
+      
+      // VERIFICAÇÃO CRÍTICA: PLANO EXPIRADO BLOQUEIA CRIAÇÃO DE CAMPANHAS
+      if (await isUserBlocked(userId)) {
+        console.log(`🔒 CAMPANHA SMS BLOQUEADA: Usuário ${userId} com plano expirado`);
+        return res.status(402).json({ 
+          success: false,
+          blocked: true,
+          message: "Seu plano expirou. Renove para continuar criando campanhas SMS.",
+          action: "renewal_required"
+        });
+      }
+      
       console.log("📱 SMS CAMPAIGN CREATE - Body recebido:", JSON.stringify(req.body, null, 2));
       
       const { name, quizId, message, triggerType, scheduledDateTime, targetAudience, triggerDelay, triggerUnit, fromDate, campaignType, conditionalRules } = req.body;
@@ -14942,6 +15009,19 @@ app.get("/api/whatsapp-extension/pending", verifyJWT, async (req: any, res: Resp
   // Criar campanha de email
   app.post("/api/email-campaigns", verifyJWT, async (req: any, res) => {
     try {
+      const userId = req.user.id;
+      
+      // VERIFICAÇÃO CRÍTICA: PLANO EXPIRADO BLOQUEIA CRIAÇÃO DE CAMPANHAS
+      if (await isUserBlocked(userId)) {
+        console.log(`🔒 CAMPANHA EMAIL BLOQUEADA: Usuário ${userId} com plano expirado`);
+        return res.status(402).json({ 
+          success: false,
+          blocked: true,
+          message: "Seu plano expirou. Renove para continuar criando campanhas de email.",
+          action: "renewal_required"
+        });
+      }
+      
       const { 
         name, 
         quizId, 
@@ -23469,6 +23549,144 @@ export function registerCheckoutRoutes(app: Express) {
       res.status(500).json({ success: false, message: 'Erro interno do servidor' });
     }
   });
+
+  // ===============================
+  // PLAN MANAGEMENT ROUTES
+  // ===============================
+  
+  // Obter status do plano do usuário
+  app.get("/api/plan/status", verifyJWT, async (req: any, res) => {
+    try {
+      const planStatus = await planManager.getPlanStatus(req.user.id);
+      
+      if (!planStatus) {
+        return res.status(404).json({ error: "Usuário não encontrado" });
+      }
+      
+      res.json({
+        success: true,
+        ...planStatus
+      });
+    } catch (error) {
+      console.error("Erro ao obter status do plano:", error);
+      res.status(500).json({ error: "Erro interno do servidor" });
+    }
+  });
+
+  // Renovar plano do usuário
+  app.post("/api/plan/renew", verifyJWT, async (req: any, res) => {
+    try {
+      const { days = 30 } = req.body;
+      
+      // Verificar se é admin ou o próprio usuário
+      if (req.user.role !== 'admin') {
+        return res.status(403).json({ error: "Apenas administradores podem renovar planos" });
+      }
+      
+      const result = await planManager.renewUserPlan(req.user.id, days);
+      
+      res.json({
+        success: true,
+        message: `Plano renovado por ${days} dias`,
+        ...result
+      });
+    } catch (error) {
+      console.error("Erro ao renovar plano:", error);
+      res.status(500).json({ error: "Erro interno do servidor" });
+    }
+  });
+
+  // Renovar plano de outro usuário (apenas admin)
+  app.post("/api/plan/renew/:userId", verifyJWT, async (req: any, res) => {
+    try {
+      if (req.user.role !== 'admin') {
+        return res.status(403).json({ error: "Apenas administradores podem renovar planos de outros usuários" });
+      }
+      
+      const { userId } = req.params;
+      const { days = 30 } = req.body;
+      
+      const result = await planManager.renewUserPlan(userId, days);
+      
+      res.json({
+        success: true,
+        message: `Plano do usuário ${userId} renovado por ${days} dias`,
+        ...result
+      });
+    } catch (error) {
+      console.error("Erro ao renovar plano do usuário:", error);
+      res.status(500).json({ error: "Erro interno do servidor" });
+    }
+  });
+
+  // Verificar e atualizar plano de um usuário específico
+  app.post("/api/plan/check/:userId", verifyJWT, async (req: any, res) => {
+    try {
+      if (req.user.role !== 'admin') {
+        return res.status(403).json({ error: "Apenas administradores podem verificar planos de outros usuários" });
+      }
+      
+      const { userId } = req.params;
+      const user = await storage.getUserById(userId);
+      
+      if (!user) {
+        return res.status(404).json({ error: "Usuário não encontrado" });
+      }
+      
+      await planManager.checkAndUpdateUserPlan(user);
+      const planStatus = await planManager.getPlanStatus(userId);
+      
+      res.json({
+        success: true,
+        message: "Plano verificado e atualizado",
+        ...planStatus
+      });
+    } catch (error) {
+      console.error("Erro ao verificar plano do usuário:", error);
+      res.status(500).json({ error: "Erro interno do servidor" });
+    }
+  });
+
+  // Listar todos os usuários com seus status de plano (apenas admin)
+  app.get("/api/plan/all-users", verifyJWT, async (req: any, res) => {
+    try {
+      if (req.user.role !== 'admin') {
+        return res.status(403).json({ error: "Apenas administradores podem ver todos os planos" });
+      }
+      
+      const allUsers = await db.select().from(users);
+      const userPlans = [];
+      
+      for (const user of allUsers) {
+        if (user.role === 'admin') continue;
+        
+        const daysRemaining = planManager.getDaysRemaining(user.planExpiresAt);
+        userPlans.push({
+          id: user.id,
+          email: user.email,
+          plan: user.plan || 'free',
+          daysRemaining,
+          isBlocked: user.isBlocked,
+          planRenewalRequired: user.planRenewalRequired,
+          planExpiresAt: user.planExpiresAt?.toISOString() || null,
+          blockReason: user.blockReason
+        });
+      }
+      
+      res.json({
+        success: true,
+        totalUsers: userPlans.length,
+        users: userPlans
+      });
+    } catch (error) {
+      console.error("Erro ao listar planos de usuários:", error);
+      res.status(500).json({ error: "Erro interno do servidor" });
+    }
+  });
+
+  // Inicializar sistema automático de regressão de planos
+  console.log('🚀 INICIANDO PLAN MANAGER...');
+  planManager.startAutomaticPlanRegression();
 
   // System routes registration complete
 }

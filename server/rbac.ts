@@ -1,4 +1,5 @@
 import { RequestHandler } from "express";
+import { planManager } from './plan-manager';
 
 // Define roles hierarchy
 export const ROLES = {
@@ -102,8 +103,25 @@ export function requirePlan(feature: keyof typeof PLANS.FREE): RequestHandler {
   };
 }
 
+// VERIFICAÇÃO CENTRAL DE BLOQUEIO POR PLANO EXPIRADO
+export async function isUserBlocked(userId: string): Promise<boolean> {
+  try {
+    const planStatus = await planManager.getPlanStatus(userId);
+    return planStatus?.isBlocked || false;
+  } catch (error) {
+    console.error('Erro ao verificar bloqueio do usuário:', error);
+    return false;
+  }
+}
+
 // Check if user can create more quizzes
 export async function canCreateQuiz(userId: string, currentCount: number, userPlan: string): Promise<boolean> {
+  // Verificar se o usuário está bloqueado primeiro
+  if (await isUserBlocked(userId)) {
+    console.log(`❌ QUIZ BLOQUEADO: Usuário ${userId} com plano expirado`);
+    return false;
+  }
+
   const limits = getPlanLimits(userPlan);
   
   if (limits.maxQuizzes === -1) return true; // unlimited
@@ -112,6 +130,12 @@ export async function canCreateQuiz(userId: string, currentCount: number, userPl
 
 // Check if user can receive more responses
 export async function canReceiveResponse(userId: string, currentCount: number, userPlan: string): Promise<boolean> {
+  // Verificar se o usuário está bloqueado primeiro
+  if (await isUserBlocked(userId)) {
+    console.log(`❌ RESPOSTAS BLOQUEADAS: Usuário ${userId} com plano expirado`);
+    return false;
+  }
+
   const limits = getPlanLimits(userPlan);
   
   if (limits.maxResponses === -1) return true; // unlimited

@@ -68,6 +68,14 @@ export default function Dashboard() {
     retry: false,
   });
 
+  // Buscar status do plano em tempo real
+  const { data: planStatus, isLoading: planLoading } = useQuery({
+    queryKey: ["/api/plan/status"],
+    enabled: isAuthenticated,
+    retry: false,
+    refetchInterval: 60000, // Atualizar a cada minuto
+  });
+
   // Buscar dados de campanhas
   const { data: smsCount } = useQuery({
     queryKey: ["/api/sms-campaigns/count"],
@@ -103,37 +111,13 @@ export default function Dashboard() {
 
   const dashboardLoading = quizzesLoading || analyticsLoading;
 
-  // Verificar plano e calcular dias restantes
-  const userPlan = userData?.user?.plan || 'free';
-  const planExpirationDate = userData?.user?.planExpirationDate;
-  
-  // Calcular dias restantes baseado no plano
-  const calculateDaysLeft = () => {
-    if (planExpirationDate) {
-      const expDate = new Date(planExpirationDate);
-      const today = new Date();
-      const diffTime = expDate.getTime() - today.getTime();
-      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-      return diffDays > 0 ? diffDays : 0;
-    }
-    
-    // Valores padrão para demonstração
-    switch (userPlan) {
-      case 'trial':
-        return 3;
-      case 'free':
-        return 7; // 7 dias gratuitos
-      case 'premium':
-        return 30; // 30 dias premium
-      case 'enterprise':
-        return 365; // 365 dias enterprise
-      default:
-        return 7;
-    }
-  };
-  
-  const daysLeft = calculateDaysLeft();
-  const showPlanBanner = true; // Sempre mostrar banner para demonstração
+  // Usar dados do sistema de planos em tempo real
+  const userPlan = planStatus?.plan || userData?.user?.plan || 'free';
+  const daysLeft = planStatus?.daysRemaining || 0;
+  const isBlocked = planStatus?.isBlocked || false;
+  const renewalRequired = planStatus?.planRenewalRequired || false;
+  const blockReason = planStatus?.blockReason;
+  const showPlanBanner = userPlan !== 'enterprise' && (daysLeft < 15 || isBlocked || renewalRequired);
 
   // Criar mapa de analytics por quiz
   const quizAnalyticsMap = React.useMemo(() => {
@@ -277,24 +261,44 @@ export default function Dashboard() {
 
   return (
     <div className="min-h-screen bg-background dashboard-background">
-      {/* Faixa de Plano - Verde Vendzz */}
+      {/* Faixa de Plano - Sistema de Regressão Automática */}
       {showPlanBanner && showTrialBanner && (
-        <div className="bg-gradient-to-r from-green-600 to-emerald-600 text-white p-4 shadow-lg">
+        <div className={`${isBlocked || renewalRequired ? 'bg-gradient-to-r from-red-600 to-red-700' : 'bg-gradient-to-r from-green-600 to-emerald-600'} text-white p-4 shadow-lg`}>
           <div className="max-w-7xl mx-auto flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <Clock className="w-5 h-5" />
+              {isBlocked || renewalRequired ? (
+                <Shield className="w-5 h-5 animate-pulse" />
+              ) : (
+                <Clock className="w-5 h-5" />
+              )}
               <div>
                 <span className="font-semibold">
-                  Plano Atual {userPlan === 'enterprise' ? 'Enterprise' : 
-                   userPlan === 'premium' ? 'Premium' : 
-                   userPlan === 'basic' ? 'Básico' : 
-                   userPlan === 'trial' ? 'Trial' : 
-                   'Gratuito'}: {daysLeft} dias restantes
+                  {isBlocked ? (
+                    '🔒 CONTA BLOQUEADA - Renovação Obrigatória'
+                  ) : renewalRequired ? (
+                    '⚠️ RENOVAÇÃO NECESSÁRIA'
+                  ) : (
+                    `Plano ${userPlan === 'enterprise' ? 'Enterprise' : 
+                     userPlan === 'premium' ? 'Premium' : 
+                     userPlan === 'basic' ? 'Básico' : 
+                     userPlan === 'trial' ? 'Trial' : 
+                     'Gratuito'}: ${daysLeft} dias restantes`
+                  )}
                 </span>
-                <p className="text-sm text-green-100">
-                  {userPlan === 'trial' ? 'Teste grátis por tempo limitado! Upgrade para continuar.' : 
-                   userPlan === 'free' ? 'Upgrade para acesso ilimitado e recursos premium.' :
-                   'Renove seu plano para continuar aproveitando todos os recursos.'}
+                <p className="text-sm opacity-90">
+                  {isBlocked ? (
+                    `${blockReason || 'Plano expirado'} - Todas as funcionalidades foram bloqueadas`
+                  ) : renewalRequired ? (
+                    'Seu plano expirou. Renove para reativar todas as funcionalidades.'
+                  ) : daysLeft <= 3 ? (
+                    '🚨 URGENTE: Renove agora para evitar bloqueio da conta!'
+                  ) : daysLeft <= 7 ? (
+                    '⚡ Últimos dias! Renove para continuar com todos os recursos.'
+                  ) : userPlan === 'free' ? (
+                    'Upgrade para acesso ilimitado e recursos premium.'
+                  ) : (
+                    'Renove seu plano para continuar aproveitando todos os recursos.'
+                  )}
                 </p>
               </div>
             </div>
@@ -302,21 +306,23 @@ export default function Dashboard() {
               <Link href="/planos">
                 <Button 
                   variant="outline" 
-                  className="bg-white text-green-600 hover:bg-green-50 border-white"
+                  className={`${isBlocked || renewalRequired ? 'bg-white text-red-600 hover:bg-red-50 border-white animate-pulse' : 'bg-white text-green-600 hover:bg-green-50 border-white'}`}
                 >
                   <CreditCard className="w-4 h-4 mr-2" />
-                  {userPlan === 'trial' || userPlan === 'free' ? 'Upgrade' : 'Renovar'}
+                  {isBlocked || renewalRequired ? 'RENOVAR AGORA' : userPlan === 'trial' || userPlan === 'free' ? 'Upgrade' : 'Renovar'}
                 </Button>
               </Link>
-              <Link href="/credits">
-                <Button 
-                  variant="outline" 
-                  className="bg-white text-blue-600 hover:bg-blue-50 border-white"
-                >
-                  <Coins className="w-4 h-4 mr-2" />
-                  Comprar Créditos
-                </Button>
-              </Link>
+              {!isBlocked && (
+                <Link href="/credits">
+                  <Button 
+                    variant="outline" 
+                    className="bg-white text-blue-600 hover:bg-blue-50 border-white"
+                  >
+                    <Coins className="w-4 h-4 mr-2" />
+                    Comprar Créditos
+                  </Button>
+                </Link>
+              )}
               <Button
                 variant="ghost"
                 size="sm"
