@@ -74,6 +74,7 @@ import WhatsAppBusinessAPI from './whatsapp-business-api';
 import { registerFacelessVideoRoutes } from './faceless-video-routes';
 import { StripeCheckoutLinkGenerator } from './stripe-checkout-link-generator';
 import { planManager } from './plan-manager';
+import { webPushService } from './web-push';
 
 // JWT Secret para validação de tokens
 const JWT_SECRET = process.env.JWT_SECRET || 'vendzz-jwt-secret-key-2024';
@@ -24375,6 +24376,188 @@ export function registerCheckoutRoutes(app: Express) {
       res.json({ onlineUsers: 42 }); // Fallback
     }
   });
+
+  // ============================================================================
+  // WEB PUSH NOTIFICATIONS ENDPOINTS - PWA SUPPORT
+  // ============================================================================
+
+  // Obter chave pública VAPID
+  app.get('/api/push/vapid-key', (req, res) => {
+    try {
+      const publicKey = webPushService.getVapidPublicKey();
+      res.json({ publicKey });
+    } catch (error) {
+      console.error('Erro ao obter VAPID key:', error);
+      res.status(500).json({ error: 'Erro ao obter chave VAPID' });
+    }
+  });
+
+  // Inscrever para notificações push
+  app.post('/api/push/subscribe', verifyJWT, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const { subscription } = req.body;
+
+      if (!subscription || !subscription.endpoint) {
+        return res.status(400).json({ error: 'Subscription inválida' });
+      }
+
+      await webPushService.addSubscription(userId, subscription);
+
+      // Enviar notificação de teste (opcional)
+      setTimeout(() => {
+        webPushService.sendTestNotification(userId).catch(console.error);
+      }, 2000);
+
+      res.json({ 
+        success: true, 
+        message: 'Inscrito para notificações com sucesso!' 
+      });
+    } catch (error) {
+      console.error('Erro ao inscrever push:', error);
+      res.status(500).json({ error: 'Erro ao processar inscrição' });
+    }
+  });
+
+  // Cancelar inscrição de notificações
+  app.post('/api/push/unsubscribe', verifyJWT, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      await webPushService.removeSubscription(userId);
+
+      res.json({ 
+        success: true, 
+        message: 'Inscrição cancelada com sucesso!' 
+      });
+    } catch (error) {
+      console.error('Erro ao cancelar inscrição push:', error);
+      res.status(500).json({ error: 'Erro ao cancelar inscrição' });
+    }
+  });
+
+  // Enviar notificação de teste
+  app.post('/api/push/test', verifyJWT, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const success = await webPushService.sendTestNotification(userId);
+
+      if (success) {
+        res.json({ 
+          success: true, 
+          message: 'Notificação de teste enviada!' 
+        });
+      } else {
+        res.status(400).json({ 
+          success: false, 
+          error: 'Usuário não está inscrito para notificações' 
+        });
+      }
+    } catch (error) {
+      console.error('Erro ao enviar notificação de teste:', error);
+      res.status(500).json({ error: 'Erro ao enviar notificação de teste' });
+    }
+  });
+
+  // Endpoint para dashboard PWA com dados otimizados
+  app.get('/api/dashboard/stats', verifyJWT, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      
+      // Stats básicas (otimizadas para mobile)
+      const stats = {
+        totalLeads: 0, // await storage.getUserLeadsCount(userId) || 0,
+        totalCampaigns: 0, // await storage.getUserCampaignsCount(userId) || 0,
+        leadsToday: 0, // await storage.getUserLeadsTodayCount(userId) || 0,
+        conversionRate: '0%', // await storage.getUserConversionRate(userId) || '0%',
+        smsToday: 0 // await storage.getUserSMSTodayCount(userId) || 0
+      };
+
+      res.json(stats);
+    } catch (error) {
+      console.error('Erro ao buscar stats dashboard:', error);
+      res.status(500).json({ 
+        totalLeads: 0,
+        totalCampaigns: 0,
+        leadsToday: 0,
+        conversionRate: '0%',
+        smsToday: 0
+      });
+    }
+  });
+
+  // Campanhas ativas para PWA
+  app.get('/api/campaigns/active', verifyJWT, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      
+      // Buscar campanhas ativas de todos os tipos
+      const smsCampaigns = await storage.getSMSCampaignsByUser(userId) || [];
+      const emailCampaigns = await storage.getEmailCampaignsByUser(userId) || [];
+      const whatsappCampaigns = await storage.getWhatsAppCampaignsByUser(userId) || [];
+
+      const activeCampaigns = [
+        ...smsCampaigns.filter((c: any) => c.status === 'active').map((c: any) => ({
+          ...c,
+          type: 'sms',
+          sent: c.messagesSent || 0,
+          deliveryRate: c.deliveryRate || '0%'
+        })),
+        ...emailCampaigns.filter((c: any) => c.status === 'active').map((c: any) => ({
+          ...c,
+          type: 'email',
+          sent: c.emailsSent || 0,
+          deliveryRate: c.deliveryRate || '0%'
+        })),
+        ...whatsappCampaigns.filter((c: any) => c.status === 'active').map((c: any) => ({
+          ...c,
+          type: 'whatsapp',
+          sent: c.messagesSent || 0,
+          deliveryRate: c.deliveryRate || '0%'
+        }))
+      ].slice(0, 10); // Limite para performance mobile
+
+      res.json(activeCampaigns);
+    } catch (error) {
+      console.error('Erro ao buscar campanhas ativas:', error);
+      res.status(500).json([]);
+    }
+  });
+
+  // Leads recentes para PWA
+  app.get('/api/leads/recent', verifyJWT, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      
+      // Buscar respostas recentes dos quizzes do usuário
+      const userQuizzes = await storage.getQuizzesByUser(userId);
+      let recentLeads: any[] = [];
+
+      for (const quiz of userQuizzes.slice(0, 5)) { // Limite para performance
+        const responses = await storage.getQuizResponses(quiz.id);
+        
+        recentLeads.push(...responses.slice(0, 20).map((response: any) => ({
+          id: response.id,
+          name: response.responses?.nome || response.responses?.name || 'Anônimo',
+          email: response.responses?.email || '',
+          phone: response.responses?.telefone || response.responses?.phone || '',
+          source: quiz.title,
+          status: response.metadata?.isComplete ? 'completed' : 'partial',
+          createdAt: response.submittedAt,
+          quizId: quiz.id
+        })));
+      }
+
+      // Ordenar por data mais recente e limitar
+      recentLeads.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+      
+      res.json(recentLeads.slice(0, 20));
+    } catch (error) {
+      console.error('Erro ao buscar leads recentes:', error);
+      res.status(500).json([]);
+    }
+  });
+
+  console.log('🔔 PWA WEB PUSH ENDPOINTS REGISTRADOS');
 
   // Inicializar sistema automático de regressão de planos
   console.log('🚀 INICIANDO PLAN MANAGER...');

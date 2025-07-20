@@ -99,6 +99,7 @@ import PaymentVerification from "@/pages/payment-verification";
 import MembersAreaNetflix from "@/pages/members-area-netflix";
 import MembersArea from "@/pages/members-area";
 import AdminDashboard from "@/pages/admin-dashboard";
+import PWADashboard from "@/pages/pwa-dashboard";
 
 import { useAuth } from "@/hooks/useAuth-jwt";
 import { isUnauthorizedError } from "@/lib/authUtils";
@@ -163,6 +164,9 @@ function App() {
             <Dashboard />
           </Layout>
         </Route>
+        
+        {/* PWA Dashboard - Mobile optimized */}
+        <Route path="/pwa" component={PWADashboard} />
 
         {/* Quiz builder routes without sidebar for full-screen editing */}
         <Route path="/quiz-builder" component={QuizBuilder} />
