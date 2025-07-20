@@ -257,13 +257,137 @@ export default function FunnelImporter() {
             </div>
             <div>
               <h1 className="text-3xl font-bold bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">
-                Importador de Funis InLead
+                Importador de Funis Inteligente
               </h1>
               <p className="text-gray-600 dark:text-gray-300">
-                Sistema completo de detecção e importação de todos os elementos
+                Importe funis de Cakto, XQuiz e outras plataformas preservando design e estrutura
               </p>
             </div>
           </div>
+        </div>
+
+        {/* Plataformas Suportadas e Tutorial */}
+        <div className="grid lg:grid-cols-2 gap-6 mb-8">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Globe className="h-5 w-5 text-green-600" />
+                Plataformas Suportadas
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3">
+                <div className="flex items-center justify-between p-3 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-200">
+                  <div className="flex items-center gap-3">
+                    <CheckCircle className="h-5 w-5 text-green-600" />
+                    <div>
+                      <span className="font-medium text-green-900 dark:text-green-100">Cakto</span>
+                      <p className="text-sm text-green-700 dark:text-green-300">
+                        app.cakto.com.br - Detecção avançada até 50 páginas
+                      </p>
+                    </div>
+                  </div>
+                  <Badge className="bg-green-100 text-green-800">Avançado</Badge>
+                </div>
+                
+                <div className="flex items-center justify-between p-3 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-200">
+                  <div className="flex items-center gap-3">
+                    <CheckCircle className="h-5 w-5 text-green-600" />
+                    <div>
+                      <span className="font-medium text-green-900 dark:text-green-100">XQuiz</span>
+                      <p className="text-sm text-green-700 dark:text-green-300">
+                        *.xquiz.io - Sistema inteligente 18-45 páginas
+                      </p>
+                    </div>
+                  </div>
+                  <Badge className="bg-green-100 text-green-800">Avançado</Badge>
+                </div>
+                
+                <div className="flex items-center justify-between p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200">
+                  <div className="flex items-center gap-3">
+                    <CheckCircle className="h-5 w-5 text-blue-600" />
+                    <div>
+                      <span className="font-medium text-blue-900 dark:text-blue-100">ClickFunnels</span>
+                      <p className="text-sm text-blue-700 dark:text-blue-300">
+                        clickfunnels.com - Importação básica
+                      </p>
+                    </div>
+                  </div>
+                  <Badge className="bg-blue-100 text-blue-800">Básico</Badge>
+                </div>
+                
+                <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200">
+                  <div className="flex items-center gap-3">
+                    <PlayCircle className="h-5 w-5 text-gray-500" />
+                    <div>
+                      <span className="font-medium text-gray-700 dark:text-gray-300">LeadPages & Outros</span>
+                      <p className="text-sm text-gray-600 dark:text-gray-400">
+                        Em desenvolvimento - Solicite sua plataforma
+                      </p>
+                    </div>
+                  </div>
+                  <Badge variant="secondary">Em Breve</Badge>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+          
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <PlayCircle className="h-5 w-5 text-purple-600" />
+                Como Usar - Tutorial Rápido
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <div className="flex gap-3">
+                  <div className="w-8 h-8 bg-purple-100 dark:bg-purple-900/30 rounded-full flex items-center justify-center flex-shrink-0">
+                    <span className="text-sm font-bold text-purple-700 dark:text-purple-300">1</span>
+                  </div>
+                  <div>
+                    <h4 className="font-medium text-gray-900 dark:text-gray-100">Copie a URL do funil</h4>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                      Acesse o funil que deseja importar e copie a URL completa
+                    </p>
+                  </div>
+                </div>
+                
+                <div className="flex gap-3">
+                  <div className="w-8 h-8 bg-purple-100 dark:bg-purple-900/30 rounded-full flex items-center justify-center flex-shrink-0">
+                    <span className="text-sm font-bold text-purple-700 dark:text-purple-300">2</span>
+                  </div>
+                  <div>
+                    <h4 className="font-medium text-gray-900 dark:text-gray-100">Cole e analise</h4>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                      Cole a URL no campo abaixo e clique em "Analisar e Importar"
+                    </p>
+                  </div>
+                </div>
+                
+                <div className="flex gap-3">
+                  <div className="w-8 h-8 bg-purple-100 dark:bg-purple-900/30 rounded-full flex items-center justify-center flex-shrink-0">
+                    <span className="text-sm font-bold text-purple-700 dark:text-purple-300">3</span>
+                  </div>
+                  <div>
+                    <h4 className="font-medium text-gray-900 dark:text-gray-100">Importe e customize</h4>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                      Revise os elementos detectados e importe para sua conta
+                    </p>
+                  </div>
+                </div>
+                
+                <div className="mt-4 p-3 bg-purple-50 dark:bg-purple-900/20 rounded-lg">
+                  <p className="text-sm text-purple-700 dark:text-purple-300 font-medium">
+                    💡 Preservação Visual Automática
+                  </p>
+                  <p className="text-xs text-purple-600 dark:text-purple-400 mt-1">
+                    Cores, imagens e estilos são preservados automaticamente durante a importação
+                  </p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
         </div>
 
         <div className="space-y-6">
@@ -278,7 +402,7 @@ export default function FunnelImporter() {
             <CardContent className="space-y-4">
               <div className="flex gap-4">
                 <Input
-                  placeholder="https://inlead.digital/seu-funil-exemplo/"
+                  placeholder="Cole a URL do funil aqui (ex: https://app.cakto.com.br/quiz/exemplo)"
                   value={url}
                   onChange={(e) => setUrl(e.target.value)}
                   className="flex-1"
@@ -305,17 +429,28 @@ export default function FunnelImporter() {
               {/* Exemplo rápido */}
               <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
                 <p className="text-sm text-blue-800 dark:text-blue-200 mb-2 font-medium">
-                  💡 Teste rápido com exemplo funcional:
+                  💡 Teste com exemplos das plataformas suportadas:
                 </p>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setUrl("https://inlead.digital/formulas-virais-cosmeticos-artesanais/")}
-                  className="text-blue-600 border-blue-200 hover:bg-blue-100"
-                >
-                  <PlayCircle className="w-4 h-4 mr-2" />
-                  Usar Exemplo InLead
-                </Button>
+                <div className="flex gap-2 flex-wrap">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setUrl("https://app.cakto.com.br/quiz/pilates-na-parede-VsvLBF")}
+                    className="text-green-600 border-green-200 hover:bg-green-100"
+                  >
+                    <PlayCircle className="w-4 h-4 mr-2" />
+                    Exemplo Cakto
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setUrl("https://test.xquiz.io/exemplo")}
+                    className="text-purple-600 border-purple-200 hover:bg-purple-100"
+                  >
+                    <PlayCircle className="w-4 h-4 mr-2" />
+                    Exemplo XQuiz
+                  </Button>
+                </div>
               </div>
             </CardContent>
           </Card>
@@ -389,34 +524,40 @@ export default function FunnelImporter() {
                         Adicione este funil aos seus quizzes e customize como desejar
                       </p>
                     </div>
-                    <Button
-                      onClick={() => {
-                        if (!checkPlanLimits()) {
-                          const planInfo = getPlanInfo();
-                          toast({
-                            title: "Limite de quizzes atingido",
-                            description: `Plano ${planInfo.plan}: ${planInfo.current}/${planInfo.limit === Infinity ? '∞' : planInfo.limit} quizzes. Faça upgrade para criar mais quizzes.`,
-                            variant: "destructive"
-                          });
-                          return;
-                        }
-                        setShowImportConfirm(true);
-                      }}
-                      disabled={importing}
-                      className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700"
-                    >
-                      {importing ? (
-                        <>
-                          <div className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full mr-2" />
-                          Importando...
-                        </>
-                      ) : (
-                        <>
+                    {!checkPlanLimits() ? (
+                      <div className="flex flex-col gap-2">
+                        <div className="text-right">
+                          <Badge variant="destructive" className="mb-2">
+                            Limite Atingido: {getPlanInfo().current}/{getPlanInfo().limit} quizzes
+                          </Badge>
+                        </div>
+                        <Button
+                          onClick={() => window.location.href = '/checkout-perfect'}
+                          className="bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700"
+                        >
                           <Plus className="w-4 h-4 mr-2" />
-                          IMPORTAR FUNIL
-                        </>
-                      )}
-                    </Button>
+                          UPGRADE - R$1,00
+                        </Button>
+                      </div>
+                    ) : (
+                      <Button
+                        onClick={() => setShowImportConfirm(true)}
+                        disabled={importing}
+                        className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700"
+                      >
+                        {importing ? (
+                          <>
+                            <div className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full mr-2" />
+                            Importando...
+                          </>
+                        ) : (
+                          <>
+                            <Plus className="w-4 h-4 mr-2" />
+                            IMPORTAR FUNIL
+                          </>
+                        )}
+                      </Button>
+                    )}
                   </div>
                 </div>
 
@@ -441,28 +582,7 @@ export default function FunnelImporter() {
             </Card>
           )}
 
-          {/* Elementos Suportados */}
-          <Card>
-            <CardHeader>
-              <CardTitle>✅ Elementos InLead Suportados</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-2 text-sm">
-                {[
-                  "formulário", "campo", "e-mail", "telefone", "botão", "número",
-                  "textarea", "data", "altura", "peso", "quiz", "escolha única",
-                  "múltipla escolha", "sim/não", "texto", "imagem", "vídeo", "áudio",
-                  "timer", "loading", "depoimentos", "antes/depois", "FAQ", "preço",
-                  "gráficos", "métricas", "personalização", "argumentação", "argumentos",
-                  "carrossel", "atenção", "alerta", "notificação", "nível", "espaço", "script"
-                ].map((element) => (
-                  <Badge key={element} variant="outline" className="text-xs">
-                    {element}
-                  </Badge>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
+
         </div>
 
         {/* Quiz Full Preview */}
