@@ -260,7 +260,7 @@ export default function FunnelImporter() {
                 Importador de Funis Inteligente
               </h1>
               <p className="text-gray-600 dark:text-gray-300">
-                Importe funis de Cakto, XQuiz, Effecto e outras plataformas preservando design e estrutura
+                Importe funis de Cakto, XQuiz, Effecto, NordAstro e outras plataformas preservando design e estrutura
               </p>
             </div>
           </div>
@@ -314,6 +314,19 @@ export default function FunnelImporter() {
                     </div>
                   </div>
                   <Badge className="bg-green-100 text-green-800">Avançado</Badge>
+                </div>
+
+                <div className="flex items-center justify-between p-3 bg-purple-50 dark:bg-purple-900/20 rounded-lg border border-purple-200">
+                  <div className="flex items-center gap-3">
+                    <CheckCircle className="h-5 w-5 text-purple-600" />
+                    <div>
+                      <span className="font-medium text-purple-900 dark:text-purple-100">NordAstro</span>
+                      <p className="text-sm text-purple-700 dark:text-purple-300">
+                        nordastro.com - Quiz de astrologia e crescimento pessoal
+                      </p>
+                    </div>
+                  </div>
+                  <Badge className="bg-purple-100 text-purple-800">Avançado</Badge>
                 </div>
                 
                 <div className="flex items-center justify-between p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200">

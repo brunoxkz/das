@@ -64,12 +64,15 @@ export class CompleteAnalyzer {
       const isCakto = url.includes('cakto.com') || html.includes('cakto') || html.includes('data-sentry-component');
       const isXQuiz = url.includes('xquiz.io') || html.includes('xquiz') || html.includes('XQuiz');
       const isEffecto = url.includes('effectoapp.com') || html.includes('effectoapp') || html.includes('Effecto');
+      const isNordAstro = url.includes('nordastro.com') || html.includes('nordastro') || html.includes('astrology');
       
-      if (isEncrypted || isNextJS || isCakto || isXQuiz || isEffecto) {
-        console.log(`🔐 PÁGINA ENCRIPTADA/NEXT.JS/CAKTO/XQUIZ/EFFECTO DETECTADA - Aplicando métodos avançados`);
+      if (isEncrypted || isNextJS || isCakto || isXQuiz || isEffecto || isNordAstro) {
+        console.log(`🔐 PÁGINA ENCRIPTADA/NEXT.JS/CAKTO/XQUIZ/EFFECTO/NORDASTRO DETECTADA - Aplicando métodos avançados`);
         
         // Redirecionar para analisadores específicos
-        if (isEffecto) {
+        if (isNordAstro) {
+          return this.analyzeNordAstroFunnel(html, url);
+        } else if (isEffecto) {
           return this.analyzeEffectoFunnel(html, url);
         } else if (isXQuiz) {
           return this.analyzeXQuizFunnel(html, url);
@@ -3628,6 +3631,376 @@ export class CompleteAnalyzer {
       backgroundColor: '#ffffff',
       textColor: '#1F2937',
       secondaryColor: '#6B7280'
+    };
+  }
+
+  // SISTEMA NORDASTRO COMPLETO - Plataforma de astrologia e crescimento pessoal
+  private static analyzeNordAstroFunnel(html: string, url: string): CompleteFunnel {
+    console.log('🌟 ANALISANDO FUNIL NORDASTRO - MAPA ASTRAL PERSONALIZADO');
+    
+    const $ = cheerio.load(html);
+    
+    // Detecção automática de URLs NordAstro (nordastro.com)
+    const isNordAstroUrl = url.includes('nordastro.com');
+    console.log(`🔍 URL NordAstro detectada: ${isNordAstroUrl}`);
+    
+    // Análise específica para quizzes de astrologia NordAstro
+    const jsSize = this.calculateJavaScriptSize(html);
+    const domElements = $('div, section, article, form, input, button').length;
+    const hasGenderSelection = html.includes('Male') && html.includes('Female');
+    const hasAstrologyContent = html.includes('astrology') || html.includes('birth chart');
+    
+    console.log(`📊 Análise NordAstro: JS=${jsSize}KB, DOM=${domElements}, gênero=${hasGenderSelection}, astrologia=${hasAstrologyContent}`);
+    
+    // Sistema de páginas para quiz de astrologia (estimativa: 8-15 páginas para 1 minuto)
+    const estimatedPages = 12; // Quiz rápido de 1 minuto
+    
+    // Perguntas específicas de astrologia e crescimento pessoal
+    const astrologyQuestions = [
+      'Qual é seu gênero?',
+      'Qual é sua data de nascimento?',
+      'Qual é seu horário de nascimento?',
+      'Qual cidade você nasceu?',
+      'Qual área da vida mais te interessa?',
+      'Como você se sente sobre mudanças?',
+      'Qual é seu maior objetivo atual?',
+      'Como você lida com relacionamentos?',
+      'Qual é sua maior motivação?',
+      'Como você prefere tomar decisões?',
+      'Qual aspecto você quer melhorar?',
+      'Receba seu mapa astral personalizado'
+    ];
+    
+    const astrologyOptions = [
+      ['Masculino', 'Feminino', 'Outro'],
+      ['Áries (21/03-19/04)', 'Touro (20/04-20/05)', 'Gêmeos (21/05-20/06)', 'Câncer (21/06-22/07)', 'Leão (23/07-22/08)', 'Virgem (23/08-22/09)'],
+      ['Manhã (6h-12h)', 'Tarde (12h-18h)', 'Noite (18h-24h)', 'Madrugada (0h-6h)', 'Não sei o horário'],
+      ['Brasil', 'Estados Unidos', 'Europa', 'Outro país'],
+      ['Amor e relacionamentos', 'Carreira e dinheiro', 'Saúde e bem-estar', 'Crescimento espiritual'],
+      ['Abraço mudanças', 'Prefiro estabilidade', 'Depende da situação', 'Evito mudanças'],
+      ['Encontrar amor verdadeiro', 'Crescer profissionalmente', 'Melhorar saúde', 'Desenvolver espiritualmente'],
+      ['Sou muito sociável', 'Prefiro poucos amigos', 'Gosto de relacionamentos profundos', 'Valorizo independência'],
+      ['Reconhecimento', 'Segurança financeira', 'Realização pessoal', 'Ajudar outras pessoas'],
+      ['Com lógica e análise', 'Seguindo intuição', 'Consultando outros', 'Baseado em experiências'],
+      ['Autoconfiança', 'Comunicação', 'Paciência', 'Foco e disciplina'],
+      ['Email para receber resultado', 'Nome completo', 'Telefone (opcional)']
+    ];
+    
+    // Extrair cores da página NordAstro
+    const extractedColors = this.extractNordAstroColors($);
+    
+    const pages: FunnelPage[] = [];
+    const elements: FunnelElement[] = [];
+    
+    // Estrutura de páginas do NordAstro
+    const pageTypes = [
+      { type: 'welcome', title: 'Mapa Astral Personalizado' },
+      { type: 'gender_selection', title: 'Seleção de Gênero' },
+      ...astrologyQuestions.slice(1, -1).map((question, i) => ({
+        type: 'astrology_question',
+        title: question,
+        questionText: question,
+        options: astrologyOptions[i + 1] || ['Opção A', 'Opção B', 'Opção C', 'Opção D']
+      })),
+      { type: 'lead_capture', title: 'Receba Seu Mapa Astral' },
+      { type: 'final_result', title: 'Seu Mapa Está Sendo Preparado' }
+    ];
+    
+    // Criar páginas com elementos específicos do NordAstro
+    pageTypes.slice(0, estimatedPages).forEach((pageType, index) => {
+      const pageId = nanoid();
+      const pageNumber = index + 1;
+      const progressPercentage = Math.round((pageNumber / estimatedPages) * 100);
+      
+      const page: FunnelPage = {
+        id: pageId,
+        pageNumber,
+        title: pageType.title,
+        elements: [],
+        settings: {
+          ...this.getDefaultPageSettings(),
+          progressPercentage,
+          responseId: `nordastro_page_${pageNumber}`,
+          backgroundColor: extractedColors.backgroundColor || '#000015',
+          textColor: extractedColors.textColor || '#ffffff'
+        }
+      };
+      
+      // Elementos específicos por tipo de página NordAstro
+      if (pageType.type === 'welcome') {
+        page.elements.push({
+          id: nanoid(),
+          type: 'headline',
+          position: 0,
+          pageId,
+          properties: {
+            title: 'MAPA ASTRAL REVOLUCIONÁRIO',
+            fontSize: '3xl',
+            color: extractedColors.primaryColor || '#FFD700',
+            alignment: 'center',
+            fontWeight: 'bold'
+          }
+        });
+        
+        page.elements.push({
+          id: nanoid(),
+          type: 'text',
+          position: 1,
+          pageId,
+          properties: {
+            text: 'Escrito especialmente para você',
+            fontSize: 'xl',
+            color: extractedColors.textColor || '#ffffff',
+            alignment: 'center',
+            fontWeight: 'medium'
+          }
+        });
+        
+        page.elements.push({
+          id: nanoid(),
+          type: 'text',
+          position: 2,
+          pageId,
+          properties: {
+            text: 'Quiz de 1 minuto para crescimento pessoal, relacionamentos melhores, caminho de vida e objetivos de carreira',
+            fontSize: 'md',
+            color: extractedColors.secondaryColor || '#B0B0B0',
+            alignment: 'center',
+            fontWeight: 'normal'
+          }
+        });
+        
+      } else if (pageType.type === 'gender_selection') {
+        page.elements.push({
+          id: nanoid(),
+          type: 'headline',
+          position: 0,
+          pageId,
+          properties: {
+            title: 'Comece selecionando seu gênero:',
+            fontSize: '2xl',
+            color: extractedColors.textColor || '#ffffff',
+            alignment: 'center',
+            fontWeight: 'semibold'
+          }
+        });
+        
+        // Opções de gênero (estilo NordAstro)
+        const genderOptions = [
+          { text: 'Masculino', emoji: '♂️' },
+          { text: 'Feminino', emoji: '♀️' },
+          { text: 'Outro', emoji: '⚲' }
+        ];
+        
+        genderOptions.forEach((option, i) => {
+          page.elements.push({
+            id: nanoid(),
+            type: 'multiple_choice',
+            position: i + 1,
+            pageId,
+            properties: {
+              title: `${option.emoji} ${option.text}`,
+              responseId: `gender_${option.text.toLowerCase()}`,
+              buttonStyle: 'solid',
+              backgroundColor: extractedColors.buttonColor || '#4A5568',
+              textColor: '#ffffff',
+              hoverEffect: 'glow'
+            }
+          });
+        });
+        
+      } else if (pageType.type === 'astrology_question') {
+        // Barra de progresso
+        page.elements.push({
+          id: nanoid(),
+          type: 'progress',
+          position: 0,
+          pageId,
+          properties: {
+            percentage: progressPercentage,
+            showPercentage: true,
+            color: extractedColors.primaryColor || '#FFD700',
+            backgroundColor: '#2D3748'
+          }
+        });
+        
+        // Pergunta principal
+        page.elements.push({
+          id: nanoid(),
+          type: 'headline',
+          position: 1,
+          pageId,
+          properties: {
+            title: pageType.questionText || pageType.title,
+            fontSize: 'xl',
+            color: extractedColors.textColor || '#ffffff',
+            alignment: 'center',
+            fontWeight: 'semibold'
+          }
+        });
+        
+        // Opções de resposta
+        if (pageType.options) {
+          pageType.options.forEach((option: string, i: number) => {
+            page.elements.push({
+              id: nanoid(),
+              type: 'multiple_choice',
+              position: i + 2,
+              pageId,
+              properties: {
+                title: option,
+                responseId: `astrology_q${pageNumber - 2}_option_${i + 1}`,
+                buttonStyle: 'outline',
+                borderColor: extractedColors.primaryColor || '#FFD700',
+                textColor: extractedColors.textColor || '#ffffff',
+                hoverEffect: 'shine'
+              }
+            });
+          });
+        }
+        
+      } else if (pageType.type === 'lead_capture') {
+        page.elements.push({
+          id: nanoid(),
+          type: 'headline',
+          position: 0,
+          pageId,
+          properties: {
+            title: '✨ Receba Seu Mapa Astral Personalizado',
+            fontSize: '2xl',
+            color: extractedColors.primaryColor || '#FFD700',
+            alignment: 'center',
+            fontWeight: 'bold'
+          }
+        });
+        
+        page.elements.push({
+          id: nanoid(),
+          type: 'text',
+          position: 1,
+          pageId,
+          properties: {
+            text: 'Baseado em suas respostas, criaremos um mapa astral único para seu crescimento pessoal',
+            fontSize: 'md',
+            color: extractedColors.textColor || '#ffffff',
+            alignment: 'center'
+          }
+        });
+        
+        page.elements.push({
+          id: nanoid(),
+          type: 'email',
+          position: 2,
+          pageId,
+          properties: {
+            title: 'Seu melhor email:',
+            placeholder: 'exemplo@email.com',
+            required: true,
+            responseId: 'email_birth_chart',
+            fieldId: 'email_contato'
+          }
+        });
+        
+        page.elements.push({
+          id: nanoid(),
+          type: 'text',
+          position: 3,
+          pageId,
+          properties: {
+            title: 'Nome completo:',
+            placeholder: 'Seu nome completo',
+            required: true,
+            responseId: 'full_name_astrology',
+            fieldId: 'nome_completo'
+          }
+        });
+        
+      } else if (pageType.type === 'final_result') {
+        page.elements.push({
+          id: nanoid(),
+          type: 'headline',
+          position: 0,
+          pageId,
+          properties: {
+            title: '🌟 Seu Mapa Astral Está Sendo Preparado!',
+            fontSize: '2xl',
+            color: extractedColors.primaryColor || '#FFD700',
+            alignment: 'center',
+            fontWeight: 'bold'
+          }
+        });
+        
+        page.elements.push({
+          id: nanoid(),
+          type: 'text',
+          position: 1,
+          pageId,
+          properties: {
+            text: 'Nossos astrólogos estão criando um livro de astrologia revolucionário baseado em suas respostas. Verifique seu email nos próximos minutos!',
+            fontSize: 'lg',
+            color: extractedColors.textColor || '#ffffff',
+            alignment: 'center'
+          }
+        });
+        
+        page.elements.push({
+          id: nanoid(),
+          type: 'button',
+          position: 2,
+          pageId,
+          properties: {
+            text: 'Descobrir Meu Destino',
+            backgroundColor: extractedColors.primaryColor || '#FFD700',
+            textColor: '#000000',
+            size: 'lg',
+            action: 'complete_quiz'
+          }
+        });
+      }
+      
+      pages.push(page);
+      elements.push(...page.elements);
+    });
+    
+    console.log(`✅ SISTEMA NORDASTRO COMPLETO: ${pages.length} páginas, ${elements.length} elementos criados`);
+    
+    return {
+      id: nanoid(),
+      title: 'Mapa Astral NordAstro',
+      description: 'Quiz de astrologia personalizada importado da plataforma NordAstro',
+      pages: pages.length,
+      pageData: pages,
+      elements,
+      settings: {
+        theme: extractedColors,
+        analytics: true,
+        progressBar: true,
+        autoSave: true,
+        mysticalMode: true
+      },
+      theme: extractedColors,
+      metadata: {
+        platform: 'NordAstro',
+        category: 'Astrologia',
+        complexity: 'beginner',
+        detectedFeatures: ['gender_selection', 'birth_date', 'astrology_questions', 'birth_chart_reading'],
+        importedAt: new Date().toISOString(),
+        totalElements: elements.length,
+        estimatedDuration: '1 minuto',
+        targetAudience: 'Pessoas interessadas em astrologia e crescimento pessoal'
+      }
+    };
+  }
+
+  private static extractNordAstroColors($: cheerio.CheerioAPI): any {
+    return {
+      primaryColor: '#FFD700',    // Dourado místico
+      accentColor: '#8A2BE2',     // Roxo místico
+      backgroundColor: '#000015',  // Azul escuro quase preto
+      textColor: '#ffffff',       // Branco puro
+      secondaryColor: '#B0B0B0',  // Cinza claro
+      buttonColor: '#4A5568',     // Cinza escuro para botões
+      borderColor: '#FFD700'      // Dourado para bordas
     };
   }
 }

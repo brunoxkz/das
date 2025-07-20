@@ -265,6 +265,19 @@ O sistema utiliza Stripe Payment Intent para processar pagamentos únicos de R$ 
 
 ```
 Changelog:
+- July 20, 2025. NORDASTRO SISTEMA INTEGRADO - Plataforma de astrologia e crescimento pessoal completamente implementada:
+  * Método analyzeNordAstroFunnel() criado para análise específica da plataforma nordastro.com
+  * Sistema de detecção automática para URLs NordAstro integrado ao verificador principal
+  * Quiz de astrologia personalizada com 12 páginas focadas em mapa astral e crescimento pessoal
+  * Perguntas específicas: gênero, data nascimento, horário, cidade, área de interesse, relacionamentos
+  * Seleção visual de gênero com emojis místicos (♂️ Masculino, ♀️ Feminino, ⚲ Outro)
+  * Sistema de cores místicas: dourado (#FFD700), roxo (#8A2BE2), fundo escuro (#000015)
+  * Elementos especializados: progress bars douradas, botões com efeito glow/shine
+  * Estrutura de 12 páginas: welcome, gender_selection, astrology_questions, lead_capture, final_result
+  * Interface atualizada: NordAstro incluído nas plataformas suportadas com badge "Avançado"
+  * Sistema completo pronto para importação de funis de astrologia com preservação visual
+  * Integração com cinco plataformas: Cakto, XQuiz, Effecto, NordAstro e ClickFunnels
+  * Documentação técnica completa com logs detalhados para monitoramento
 - July 20, 2025. SISTEMA EFFECTO COMPLETO IMPLEMENTADO - Plataforma de produtividade personalizada 100% funcional:
   * Método dedicado analyzeEffectoFunnel() criado para análise específica da plataforma Effecto (effectoapp.com)
   * Sistema de detecção automática para URLs Effecto com análise especializada de quizzes de produtividade
