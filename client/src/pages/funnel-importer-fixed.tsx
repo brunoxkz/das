@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -8,7 +8,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useQuery } from "@tanstack/react-query";
 import { 
   Download, Globe, Link, Eye, CheckCircle, PlayCircle, 
-  Upload, Code, Copy, Plus
+  Upload, Code, Copy, Plus, Clock
 } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
 import QuizFullPreview from "@/components/QuizFullPreview";
@@ -21,6 +21,8 @@ export default function FunnelImporter() {
   const [previewQuiz, setPreviewQuiz] = useState<any>(null);
   const [showImportConfirm, setShowImportConfirm] = useState(false);
   const [importing, setImporting] = useState(false);
+  const [exportCountdown, setExportCountdown] = useState(0);
+  const [isExporting, setIsExporting] = useState(false);
   const { toast } = useToast();
 
   // Buscar dados do usuário e limites do plano
@@ -67,21 +69,50 @@ export default function FunnelImporter() {
     return { current: currentQuizCount, limit, plan: currentPlan };
   };
 
-  const importFunnel = async () => {
-    if (!analysisResult || !checkPlanLimits()) return;
+  // Gerar título único para o funil importado
+  const generateUniqueTitle = (originalTitle: string) => {
+    const timestamp = Date.now();
+    const randomId = Math.random().toString(36).substring(2, 8);
+    return `${originalTitle} - Importado ${randomId}`;
+  };
+
+  // Sistema de exportação automática com countdown
+  const startExportCountdown = () => {
+    setIsExporting(true);
+    setExportCountdown(10);
+    
+    const countdownInterval = setInterval(() => {
+      setExportCountdown((prev) => {
+        if (prev <= 1) {
+          clearInterval(countdownInterval);
+          executeImport();
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+  };
+
+  const executeImport = async () => {
+    if (!analysisResult || !checkPlanLimits()) {
+      setIsExporting(false);
+      return;
+    }
     
     setImporting(true);
-    setShowImportConfirm(false);
     
     try {
       // Extrair cores e imagens dos elementos do funil
       const extractedColors = extractColorsFromFunnel(analysisResult.data);
       const extractedImages = extractImagesFromFunnel(analysisResult.data);
       
+      // Gerar título único
+      const uniqueTitle = generateUniqueTitle(analysisResult.data.title);
+      
       // Criar quiz importado na conta do usuário
       const response = await apiRequest("POST", "/api/funnel/import", {
         funnelId: analysisResult.data.id,
-        title: `${analysisResult.data.title} (Importado)`,
+        title: uniqueTitle,
         url: url.trim(),
         preserveColors: extractedColors,
         preserveImages: extractedImages
@@ -92,8 +123,8 @@ export default function FunnelImporter() {
         const aiSuggestion = generateAISuggestion(analysisResult.data);
         
         toast({
-          title: "🎉 Funil importado com sucesso!",
-          description: `Quiz "${response.data.title}" foi criado na sua conta.`,
+          title: "🎉 Funil exportado com sucesso!",
+          description: `Quiz "${uniqueTitle}" foi criado e salvo na sua conta.`,
         });
 
         // Mostrar sugestão de IA
@@ -105,21 +136,31 @@ export default function FunnelImporter() {
           });
         }, 2000);
         
-        // Redirecionar para edição do quiz importado
-        window.location.href = `/quiz-builder?edit=${response.data.id}`;
+        // Redirecionar para edição do quiz importado após confirmar que foi exportado
+        setTimeout(() => {
+          window.location.href = `/quiz-builder?edit=${response.data.id}`;
+        }, 1000);
       } else {
-        throw new Error(response.error || "Erro na importação");
+        throw new Error(response.error || "Erro na exportação");
       }
     } catch (error: any) {
-      console.error("❌ ERRO NA IMPORTAÇÃO:", error);
+      console.error("❌ ERRO NA EXPORTAÇÃO:", error);
       toast({
-        title: "Erro na importação",
-        description: error.message || "Não foi possível importar este funil.",
+        title: "Erro na exportação",
+        description: error.message || "Não foi possível exportar este funil.",
         variant: "destructive"
       });
     } finally {
       setImporting(false);
+      setIsExporting(false);
     }
+  };
+
+  const importFunnel = async () => {
+    if (!analysisResult || !checkPlanLimits()) return;
+    
+    setShowImportConfirm(false);
+    startExportCountdown();
   };
 
   // Extrair cores dos elementos do funil
@@ -266,220 +307,102 @@ export default function FunnelImporter() {
           </div>
         </div>
 
-        {/* Plataformas Suportadas e Tutorial */}
-        <div className="grid lg:grid-cols-2 gap-6 mb-8">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Globe className="h-5 w-5 text-green-600" />
-                Plataformas Suportadas
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-3">
-                <div className="flex items-center justify-between p-3 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-200">
-                  <div className="flex items-center gap-3">
-                    <CheckCircle className="h-5 w-5 text-green-600" />
-                    <div>
-                      <span className="font-medium text-green-900 dark:text-green-100">Cakto</span>
-                      <p className="text-sm text-green-700 dark:text-green-300">
-                        app.cakto.com.br - Detecção avançada até 50 páginas
-                      </p>
-                    </div>
-                  </div>
-                  <Badge className="bg-green-100 text-green-800">Avançado</Badge>
-                </div>
-                
-                <div className="flex items-center justify-between p-3 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-200">
-                  <div className="flex items-center gap-3">
-                    <CheckCircle className="h-5 w-5 text-green-600" />
-                    <div>
-                      <span className="font-medium text-green-900 dark:text-green-100">XQuiz</span>
-                      <p className="text-sm text-green-700 dark:text-green-300">
-                        *.xquiz.io - Sistema inteligente 18-45 páginas
-                      </p>
-                    </div>
-                  </div>
-                  <Badge className="bg-green-100 text-green-800">Avançado</Badge>
-                </div>
+        {/* Plataformas Suportadas - Layout Horizontal */}
+        <Card className="mb-6">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Globe className="h-5 w-5 text-green-600" />
+              Plataformas Suportadas
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex flex-wrap gap-3 justify-center">
+              <Badge className="bg-green-100 text-green-800 px-3 py-2 text-sm">
+                <CheckCircle className="h-4 w-4 mr-1" />
+                Cakto
+              </Badge>
+              <Badge className="bg-green-100 text-green-800 px-3 py-2 text-sm">
+                <CheckCircle className="h-4 w-4 mr-1" />
+                XQuiz
+              </Badge>
+              <Badge className="bg-green-100 text-green-800 px-3 py-2 text-sm">
+                <CheckCircle className="h-4 w-4 mr-1" />
+                Effecto
+              </Badge>
+              <Badge className="bg-purple-100 text-purple-800 px-3 py-2 text-sm">
+                <CheckCircle className="h-4 w-4 mr-1" />
+                NordAstro
+              </Badge>
+              <Badge className="bg-emerald-100 text-emerald-800 px-3 py-2 text-sm">
+                <CheckCircle className="h-4 w-4 mr-1" />
+                BetterMe
+              </Badge>
+              <Badge className="bg-blue-100 text-blue-800 px-3 py-2 text-sm">
+                <CheckCircle className="h-4 w-4 mr-1" />
+                ClickFunnels
+              </Badge>
+              <Badge className="bg-indigo-100 text-indigo-800 px-3 py-2 text-sm">
+                <CheckCircle className="h-4 w-4 mr-1" />
+                InLead
+              </Badge>
+              <Badge className="bg-teal-100 text-teal-800 px-3 py-2 text-sm">
+                <CheckCircle className="h-4 w-4 mr-1" />
+                LeadPages
+              </Badge>
+              <Badge className="bg-orange-100 text-orange-800 px-3 py-2 text-sm">
+                <CheckCircle className="h-4 w-4 mr-1" />
+                TryInteract
+              </Badge>
+              <Badge className="bg-pink-100 text-pink-800 px-3 py-2 text-sm">
+                <CheckCircle className="h-4 w-4 mr-1" />
+                Biblioteca de Anúncios
+              </Badge>
+            </div>
+          </CardContent>
+        </Card>
 
-                <div className="flex items-center justify-between p-3 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-200">
-                  <div className="flex items-center gap-3">
-                    <CheckCircle className="h-5 w-5 text-green-600" />
-                    <div>
-                      <span className="font-medium text-green-900 dark:text-green-100">Effecto</span>
-                      <p className="text-sm text-green-700 dark:text-green-300">
-                        effectoapp.com - Quiz de produtividade personalizada
-                      </p>
-                    </div>
-                  </div>
-                  <Badge className="bg-green-100 text-green-800">Avançado</Badge>
+        {/* Tutorial Horizontal Compacto */}
+        <Card className="mb-6">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <PlayCircle className="h-5 w-5 text-purple-600" />
+              Tutorial Rápido
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-center justify-center gap-8">
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 bg-purple-100 dark:bg-purple-900/30 rounded-full flex items-center justify-center">
+                  <span className="text-sm font-bold text-purple-700 dark:text-purple-300">1</span>
                 </div>
-
-                <div className="flex items-center justify-between p-3 bg-purple-50 dark:bg-purple-900/20 rounded-lg border border-purple-200">
-                  <div className="flex items-center gap-3">
-                    <CheckCircle className="h-5 w-5 text-purple-600" />
-                    <div>
-                      <span className="font-medium text-purple-900 dark:text-purple-100">NordAstro</span>
-                      <p className="text-sm text-purple-700 dark:text-purple-300">
-                        nordastro.com - Quiz de astrologia e crescimento pessoal
-                      </p>
-                    </div>
-                  </div>
-                  <Badge className="bg-purple-100 text-purple-800">Avançado</Badge>
-                </div>
-
-                <div className="flex items-center justify-between p-3 bg-emerald-50 dark:bg-emerald-900/20 rounded-lg border border-emerald-200">
-                  <div className="flex items-center gap-3">
-                    <CheckCircle className="h-5 w-5 text-emerald-600" />
-                    <div>
-                      <span className="font-medium text-emerald-900 dark:text-emerald-100">BetterMe</span>
-                      <p className="text-sm text-emerald-700 dark:text-emerald-300">
-                        betterme-walking-workouts.com - Quiz de wellness e fitness
-                      </p>
-                    </div>
-                  </div>
-                  <Badge className="bg-emerald-100 text-emerald-800">Avançado</Badge>
-                </div>
-                
-                <div className="flex items-center justify-between p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200">
-                  <div className="flex items-center gap-3">
-                    <CheckCircle className="h-5 w-5 text-blue-600" />
-                    <div>
-                      <span className="font-medium text-blue-900 dark:text-blue-100">ClickFunnels</span>
-                      <p className="text-sm text-blue-700 dark:text-blue-300">
-                        clickfunnels.com - Detecção automática de funis
-                      </p>
-                    </div>
-                  </div>
-                  <Badge className="bg-blue-100 text-blue-800">Suportado</Badge>
-                </div>
-
-                <div className="flex items-center justify-between p-3 bg-indigo-50 dark:bg-indigo-900/20 rounded-lg border border-indigo-200">
-                  <div className="flex items-center gap-3">
-                    <CheckCircle className="h-5 w-5 text-indigo-600" />
-                    <div>
-                      <span className="font-medium text-indigo-900 dark:text-indigo-100">InLead</span>
-                      <p className="text-sm text-indigo-700 dark:text-indigo-300">
-                        app.inlead.com.br - Quiz de captura de leads
-                      </p>
-                    </div>
-                  </div>
-                  <Badge className="bg-indigo-100 text-indigo-800">Suportado</Badge>
-                </div>
-
-                <div className="flex items-center justify-between p-3 bg-teal-50 dark:bg-teal-900/20 rounded-lg border border-teal-200">
-                  <div className="flex items-center gap-3">
-                    <CheckCircle className="h-5 w-5 text-teal-600" />
-                    <div>
-                      <span className="font-medium text-teal-900 dark:text-teal-100">LeadPages</span>
-                      <p className="text-sm text-teal-700 dark:text-teal-300">
-                        leadpages.net - Landing pages e quiz funnels
-                      </p>
-                    </div>
-                  </div>
-                  <Badge className="bg-teal-100 text-teal-800">Suportado</Badge>
-                </div>
-
-                <div className="flex items-center justify-between p-3 bg-orange-50 dark:bg-orange-900/20 rounded-lg border border-orange-200">
-                  <div className="flex items-center gap-3">
-                    <CheckCircle className="h-5 w-5 text-orange-600" />
-                    <div>
-                      <span className="font-medium text-orange-900 dark:text-orange-100">TryInteract</span>
-                      <p className="text-sm text-orange-700 dark:text-orange-300">
-                        tryinteract.com - Quiz interativos e personalizados
-                      </p>
-                    </div>
-                  </div>
-                  <Badge className="bg-orange-100 text-orange-800">Suportado</Badge>
-                </div>
-
-                <div className="flex items-center justify-between p-3 bg-gradient-to-r from-pink-50 to-rose-50 dark:from-pink-900/20 dark:to-rose-900/20 rounded-lg border border-pink-200">
-                  <div className="flex items-center gap-3">
-                    <CheckCircle className="h-5 w-5 text-pink-600" />
-                    <div>
-                      <span className="font-medium text-pink-900 dark:text-pink-100">Biblioteca de Anúncios</span>
-                      <p className="text-sm text-pink-700 dark:text-pink-300">
-                        Quizzes do Facebook, Instagram, TikTok e maioria das plataformas
-                      </p>
-                    </div>
-                  </div>
-                  <Badge className="bg-pink-100 text-pink-800">Universal</Badge>
-                </div>
-                
-                <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200">
-                  <div className="flex items-center gap-3">
-                    <Plus className="h-5 w-5 text-gray-500" />
-                    <div>
-                      <span className="font-medium text-gray-700 dark:text-gray-300">Outras Plataformas</span>
-                      <p className="text-sm text-gray-600 dark:text-gray-400">
-                        Adicione sua plataforma via solicitação - suporte expandindo
-                      </p>
-                    </div>
-                  </div>
-                  <Badge variant="secondary">Solicitar</Badge>
+                <div>
+                  <h4 className="font-medium text-gray-900 dark:text-gray-100">Cole a URL</h4>
+                  <p className="text-xs text-gray-600 dark:text-gray-400">Copie o link do funil</p>
                 </div>
               </div>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <PlayCircle className="h-5 w-5 text-purple-600" />
-                Como Usar - Tutorial Rápido
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                <div className="flex gap-3">
-                  <div className="w-8 h-8 bg-purple-100 dark:bg-purple-900/30 rounded-full flex items-center justify-center flex-shrink-0">
-                    <span className="text-sm font-bold text-purple-700 dark:text-purple-300">1</span>
-                  </div>
-                  <div>
-                    <h4 className="font-medium text-gray-900 dark:text-gray-100">Copie a URL do funil</h4>
-                    <p className="text-sm text-gray-600 dark:text-gray-400">
-                      Acesse o funil que deseja importar e copie a URL completa
-                    </p>
-                  </div>
+              
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 bg-purple-100 dark:bg-purple-900/30 rounded-full flex items-center justify-center">
+                  <span className="text-sm font-bold text-purple-700 dark:text-purple-300">2</span>
                 </div>
-                
-                <div className="flex gap-3">
-                  <div className="w-8 h-8 bg-purple-100 dark:bg-purple-900/30 rounded-full flex items-center justify-center flex-shrink-0">
-                    <span className="text-sm font-bold text-purple-700 dark:text-purple-300">2</span>
-                  </div>
-                  <div>
-                    <h4 className="font-medium text-gray-900 dark:text-gray-100">Cole e analise</h4>
-                    <p className="text-sm text-gray-600 dark:text-gray-400">
-                      Cole a URL no campo abaixo e clique em "Analisar e Importar"
-                    </p>
-                  </div>
-                </div>
-                
-                <div className="flex gap-3">
-                  <div className="w-8 h-8 bg-purple-100 dark:bg-purple-900/30 rounded-full flex items-center justify-center flex-shrink-0">
-                    <span className="text-sm font-bold text-purple-700 dark:text-purple-300">3</span>
-                  </div>
-                  <div>
-                    <h4 className="font-medium text-gray-900 dark:text-gray-100">Importe e customize</h4>
-                    <p className="text-sm text-gray-600 dark:text-gray-400">
-                      Revise os elementos detectados e importe para sua conta
-                    </p>
-                  </div>
-                </div>
-                
-                <div className="mt-4 p-3 bg-purple-50 dark:bg-purple-900/20 rounded-lg">
-                  <p className="text-sm text-purple-700 dark:text-purple-300 font-medium">
-                    💡 Preservação Visual Automática
-                  </p>
-                  <p className="text-xs text-purple-600 dark:text-purple-400 mt-1">
-                    Cores, imagens e estilos são preservados automaticamente durante a importação
-                  </p>
+                <div>
+                  <h4 className="font-medium text-gray-900 dark:text-gray-100">Analise</h4>
+                  <p className="text-xs text-gray-600 dark:text-gray-400">Clique em analisar</p>
                 </div>
               </div>
-            </CardContent>
-          </Card>
-        </div>
+              
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 bg-purple-100 dark:bg-purple-900/30 rounded-full flex items-center justify-center">
+                  <span className="text-sm font-bold text-purple-700 dark:text-purple-300">3</span>
+                </div>
+                <div>
+                  <h4 className="font-medium text-gray-900 dark:text-gray-100">Exporte</h4>
+                  <p className="text-xs text-gray-600 dark:text-gray-400">Importa automaticamente</p>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
 
         <div className="space-y-6">
           {/* URL Input */}
@@ -633,18 +556,23 @@ export default function FunnelImporter() {
                     ) : (
                       <Button
                         onClick={() => setShowImportConfirm(true)}
-                        disabled={importing}
+                        disabled={importing || isExporting}
                         className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700"
                       >
-                        {importing ? (
+                        {isExporting ? (
+                          <>
+                            <Clock className="w-4 h-4 mr-2 animate-pulse" />
+                            Exportando em {exportCountdown}s...
+                          </>
+                        ) : importing ? (
                           <>
                             <div className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full mr-2" />
-                            Importando...
+                            Salvando...
                           </>
                         ) : (
                           <>
                             <Plus className="w-4 h-4 mr-2" />
-                            IMPORTAR FUNIL
+                            EXPORTAR FUNIL
                           </>
                         )}
                       </Button>
@@ -652,19 +580,39 @@ export default function FunnelImporter() {
                   </div>
                 </div>
 
+                {/* Countdown Visual quando está exportando */}
+                {isExporting && (
+                  <div className="mb-4 p-6 bg-gradient-to-r from-yellow-50 to-orange-50 dark:from-yellow-900/20 dark:to-orange-900/20 rounded-lg border border-yellow-200 dark:border-yellow-700">
+                    <div className="text-center">
+                      <div className="w-16 h-16 mx-auto mb-4 bg-gradient-to-r from-yellow-400 to-orange-400 rounded-full flex items-center justify-center text-white text-2xl font-bold animate-pulse">
+                        {exportCountdown}
+                      </div>
+                      <h3 className="text-lg font-semibold text-yellow-800 dark:text-yellow-200 mb-2">
+                        🚀 Exportando Funil Automaticamente
+                      </h3>
+                      <p className="text-sm text-yellow-700 dark:text-yellow-300">
+                        Título único sendo gerado... Redirecionamento em {exportCountdown} segundos
+                      </p>
+                      <div className="mt-4">
+                        <div className="w-full bg-yellow-200 dark:bg-yellow-800 rounded-full h-2">
+                          <div 
+                            className="bg-gradient-to-r from-yellow-400 to-orange-400 h-2 rounded-full transition-all duration-1000"
+                            style={{ width: `${((10 - exportCountdown) / 10) * 100}%` }}
+                          ></div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
                 <div className="flex gap-4 pt-4 border-t">
-                  <a
-                    href={`/quiz-builder?edit=${analysisResult.data.quizId || analysisResult.data.id}`}
-                    className="flex-1 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white py-2 px-4 rounded-lg transition-colors text-center"
-                  >
-                    🎨 Editar no Quiz Builder
-                  </a>
                   <Button
                     onClick={() => {
                       setPreviewQuiz(analysisResult.data);
                       setShowQuizPreview(true);
                     }}
                     className="flex-1 bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700"
+                    variant="outline"
                   >
                     👁️ Visualizar Quiz
                   </Button>
@@ -686,15 +634,15 @@ export default function FunnelImporter() {
           }}
         />
 
-        {/* Modal de Confirmação de Importação */}
+        {/* Modal de Confirmação de Exportação */}
         {showImportConfirm && (
           <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
             <div className="bg-white dark:bg-gray-800 rounded-lg p-6 max-w-md w-full mx-4">
-              <h3 className="text-lg font-semibold mb-4">Confirmar Importação</h3>
+              <h3 className="text-lg font-semibold mb-4">🚀 Confirmar Exportação</h3>
               
               <div className="mb-6">
                 <p className="text-gray-600 dark:text-gray-300 mb-4">
-                  Tem certeza que deseja importar este funil para sua conta?
+                  Pronto para exportar este funil? Será criado automaticamente com título único e salvo na sua conta.
                 </p>
                 
                 {analysisResult && (
@@ -715,7 +663,7 @@ export default function FunnelImporter() {
                     {/* Mostrar o que será preservado */}
                     <div className="pt-2 border-t">
                       <div className="text-sm font-medium text-green-600 dark:text-green-400 mb-2">
-                        ✨ Será preservado na importação:
+                        ✨ Será preservado na exportação:
                       </div>
                       <div className="grid grid-cols-2 gap-2 text-xs">
                         <div className="flex items-center gap-1">
@@ -734,6 +682,12 @@ export default function FunnelImporter() {
                           <div className="w-3 h-3 bg-orange-500 rounded-full"></div>
                           <span>Tema visual</span>
                         </div>
+                      </div>
+                      
+                      <div className="mt-3 p-2 bg-yellow-50 dark:bg-yellow-900/20 rounded border border-yellow-200">
+                        <p className="text-xs text-yellow-700 dark:text-yellow-300 font-medium">
+                          ⏱️ Após confirmação: Contagem de 10 segundos → Exportação automática → Redirecionamento para o Quiz Builder
+                        </p>
                       </div>
                     </div>
                     
@@ -768,7 +722,7 @@ export default function FunnelImporter() {
                   className="flex-1 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700"
                 >
                   <Plus className="w-4 h-4 mr-2" />
-                  Importar Agora
+                  Confirmar Exportação
                 </Button>
               </div>
             </div>
