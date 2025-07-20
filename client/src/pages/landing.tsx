@@ -236,7 +236,7 @@ export default function Landing() {
               />
               {/* Badge - Hidden on small screens */}
               <Badge variant="secondary" className="hidden sm:inline-flex ml-3 bg-green-500/20 text-green-400 border-green-500/30 font-bold text-xs">
-                #1 MONEY MACHINE
+                #1 R.O.I BOOSTER
               </Badge>
             </div>
 
@@ -339,7 +339,7 @@ export default function Landing() {
               {/* Mobile Badge */}
               <div className="mb-4 sm:hidden">
                 <Badge variant="secondary" className="bg-green-500/20 text-green-400 border-green-500/30 font-bold text-xs">
-                  #1 MONEY MACHINE
+                  #1 R.O.I BOOSTER
                 </Badge>
               </div>
               
