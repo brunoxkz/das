@@ -260,7 +260,7 @@ export default function FunnelImporter() {
                 Importador de Funis Inteligente
               </h1>
               <p className="text-gray-600 dark:text-gray-300">
-                Importe funis de Cakto, XQuiz, Effecto, NordAstro e outras plataformas preservando design e estrutura
+                Importe funis de Cakto, XQuiz, InLead, ClickFunnels, LeadPages, TryInteract e da maioria dos quizzes da biblioteca de anúncios
               </p>
             </div>
           </div>
@@ -348,24 +348,76 @@ export default function FunnelImporter() {
                     <div>
                       <span className="font-medium text-blue-900 dark:text-blue-100">ClickFunnels</span>
                       <p className="text-sm text-blue-700 dark:text-blue-300">
-                        clickfunnels.com - Importação básica
+                        clickfunnels.com - Detecção automática de funis
                       </p>
                     </div>
                   </div>
-                  <Badge className="bg-blue-100 text-blue-800">Básico</Badge>
+                  <Badge className="bg-blue-100 text-blue-800">Suportado</Badge>
+                </div>
+
+                <div className="flex items-center justify-between p-3 bg-indigo-50 dark:bg-indigo-900/20 rounded-lg border border-indigo-200">
+                  <div className="flex items-center gap-3">
+                    <CheckCircle className="h-5 w-5 text-indigo-600" />
+                    <div>
+                      <span className="font-medium text-indigo-900 dark:text-indigo-100">InLead</span>
+                      <p className="text-sm text-indigo-700 dark:text-indigo-300">
+                        app.inlead.com.br - Quiz de captura de leads
+                      </p>
+                    </div>
+                  </div>
+                  <Badge className="bg-indigo-100 text-indigo-800">Suportado</Badge>
+                </div>
+
+                <div className="flex items-center justify-between p-3 bg-teal-50 dark:bg-teal-900/20 rounded-lg border border-teal-200">
+                  <div className="flex items-center gap-3">
+                    <CheckCircle className="h-5 w-5 text-teal-600" />
+                    <div>
+                      <span className="font-medium text-teal-900 dark:text-teal-100">LeadPages</span>
+                      <p className="text-sm text-teal-700 dark:text-teal-300">
+                        leadpages.net - Landing pages e quiz funnels
+                      </p>
+                    </div>
+                  </div>
+                  <Badge className="bg-teal-100 text-teal-800">Suportado</Badge>
+                </div>
+
+                <div className="flex items-center justify-between p-3 bg-orange-50 dark:bg-orange-900/20 rounded-lg border border-orange-200">
+                  <div className="flex items-center gap-3">
+                    <CheckCircle className="h-5 w-5 text-orange-600" />
+                    <div>
+                      <span className="font-medium text-orange-900 dark:text-orange-100">TryInteract</span>
+                      <p className="text-sm text-orange-700 dark:text-orange-300">
+                        tryinteract.com - Quiz interativos e personalizados
+                      </p>
+                    </div>
+                  </div>
+                  <Badge className="bg-orange-100 text-orange-800">Suportado</Badge>
+                </div>
+
+                <div className="flex items-center justify-between p-3 bg-gradient-to-r from-pink-50 to-rose-50 dark:from-pink-900/20 dark:to-rose-900/20 rounded-lg border border-pink-200">
+                  <div className="flex items-center gap-3">
+                    <CheckCircle className="h-5 w-5 text-pink-600" />
+                    <div>
+                      <span className="font-medium text-pink-900 dark:text-pink-100">Biblioteca de Anúncios</span>
+                      <p className="text-sm text-pink-700 dark:text-pink-300">
+                        Quizzes do Facebook, Instagram, TikTok e maioria das plataformas
+                      </p>
+                    </div>
+                  </div>
+                  <Badge className="bg-pink-100 text-pink-800">Universal</Badge>
                 </div>
                 
                 <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200">
                   <div className="flex items-center gap-3">
-                    <PlayCircle className="h-5 w-5 text-gray-500" />
+                    <Plus className="h-5 w-5 text-gray-500" />
                     <div>
-                      <span className="font-medium text-gray-700 dark:text-gray-300">LeadPages & Outros</span>
+                      <span className="font-medium text-gray-700 dark:text-gray-300">Outras Plataformas</span>
                       <p className="text-sm text-gray-600 dark:text-gray-400">
-                        Em desenvolvimento - Solicite sua plataforma
+                        Adicione sua plataforma via solicitação - suporte expandindo
                       </p>
                     </div>
                   </div>
-                  <Badge variant="secondary">Em Breve</Badge>
+                  <Badge variant="secondary">Solicitar</Badge>
                 </div>
               </div>
             </CardContent>

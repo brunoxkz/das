@@ -153,20 +153,7 @@ export function Sidebar() {
           icon: <BarChart className="w-4 h-4" />,
           active: location === "/teste-ab"
         },
-        {
-          title: "Área de Membros",
-          href: "/members-area",
-          icon: <GraduationCap className="w-4 h-4" />,
-          active: location === "/members-area",
-          badge: <span className="text-xs text-purple-500 font-medium">ADMIN</span>
-        },
-        {
-          title: "Importar Funis",
-          href: "/funnel-importer",
-          icon: <Download className="w-4 h-4" />,
-          active: location === "/funnel-importer",
-          badge: <span className="text-xs text-purple-500 font-medium">NOVO</span>
-        },
+
 
       ]
     },
@@ -407,7 +394,7 @@ export function Sidebar() {
             </Button>
           </Link>
           
-          <Link href="/quiz-cloner">
+          <Link href="/funnel-importer">
             <Button className={cn(
               "w-full bg-blue-600 hover:bg-blue-700 text-white",
               isCollapsed ? "px-0" : "px-4"
@@ -439,7 +426,7 @@ export function Sidebar() {
               className={cn(
                 "nav-item w-full justify-start text-foreground hover:bg-accent hover:text-accent-foreground",
                 isCollapsed ? "px-0" : "px-3",
-                dashboardItem.active && "bg-accent text-accent-foreground"
+                dashboardItem.active && "bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-200 border-l-4 border-green-500"
               )}
             >
               {dashboardItem.icon}
@@ -485,7 +472,7 @@ export function Sidebar() {
                         className={cn(
                           "nav-item w-full justify-start text-foreground hover:bg-accent hover:text-accent-foreground",
                           isCollapsed ? "px-0" : "px-3",
-                          item.active && "bg-accent text-accent-foreground"
+                          item.active && "bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-200 border-l-4 border-green-500"
                         )}
                       >
                         {item.icon}
@@ -514,7 +501,7 @@ export function Sidebar() {
               className={cn(
                 "nav-item w-full justify-start text-foreground hover:bg-accent hover:text-accent-foreground",
                 isCollapsed ? "px-0" : "px-3",
-                tutorialsItem.active && "bg-accent text-accent-foreground"
+                tutorialsItem.active && "bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-200 border-l-4 border-green-500"
               )}
             >
               {tutorialsItem.icon}
@@ -531,7 +518,7 @@ export function Sidebar() {
               className={cn(
                 "nav-item w-full justify-start text-foreground hover:bg-accent hover:text-accent-foreground",
                 isCollapsed ? "px-0" : "px-3",
-                planosItem.active && "bg-accent text-accent-foreground"
+                planosItem.active && "bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-200 border-l-4 border-green-500"
               )}
             >
               {planosItem.icon}
@@ -548,7 +535,7 @@ export function Sidebar() {
               className={cn(
                 "nav-item w-full justify-start text-foreground hover:bg-accent hover:text-accent-foreground",
                 isCollapsed ? "px-0" : "px-3",
-                creditosItem.active && "bg-accent text-accent-foreground"
+                creditosItem.active && "bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-200 border-l-4 border-green-500"
               )}
             >
               {creditosItem.icon}
@@ -572,7 +559,7 @@ export function Sidebar() {
                 className={cn(
                   "w-full justify-start text-foreground hover:bg-accent hover:text-accent-foreground",
                   isCollapsed ? "px-0" : "px-3",
-                  item.active && "bg-accent text-accent-foreground"
+                  item.active && "bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-200 border-l-4 border-green-500"
                 )}
               >
                 {item.icon}
