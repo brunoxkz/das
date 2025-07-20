@@ -15121,6 +15121,112 @@ app.get("/api/whatsapp-extension/pending", verifyJWT, async (req: any, res: Resp
     return extracted;
   }
 
+  // ==================== PUSH NOTIFICATIONS PWA PERSISTENTE ====================
+  
+  // VAPID para push notifications (chaves de exemplo - substitua por chaves reais)
+  const VAPID_PUBLIC_KEY = 'BKxL8iRIrwm1YUlx7zIFJyI5Y5F3K_XQQp3mMm1Fq8QGzJ2vK7kKz_8eF5lOm1Kp3mMm1Fq8QGzJ2vK7kKz_8e';
+
+  // Obter chave pública VAPID para o frontend
+  app.get("/api/push-notifications/vapid-key", (req: any, res: Response) => {
+    try {
+      res.json({ vapidPublicKey: VAPID_PUBLIC_KEY });
+    } catch (error) {
+      console.error('❌ Erro ao obter chave VAPID:', error);
+      res.status(500).json({ error: 'Erro interno do servidor' });
+    }
+  });
+
+  // Endpoint para salvar subscription de push notification
+  app.post("/api/push-notifications/subscribe", verifyJWT, async (req: any, res: Response) => {
+    try {
+      const userId = req.user.id;
+      const { subscription } = req.body;
+      
+      console.log('🔔 [Routes] Salvando subscription para usuário:', userId);
+      
+      if (!subscription || !subscription.endpoint) {
+        return res.status(400).json({ error: 'Subscription inválida' });
+      }
+
+      // Salvar subscription no banco
+      const pushSubscriptionData = {
+        userId: userId,
+        endpoint: subscription.endpoint,
+        p256dhKey: subscription.keys?.p256dh || '',
+        authKey: subscription.keys?.auth || '',
+        isActive: true
+      };
+
+      await storage.savePushSubscription(pushSubscriptionData);
+      
+      res.json({ 
+        success: true, 
+        message: 'Subscription salva com sucesso',
+        userId: userId 
+      });
+    } catch (error) {
+      console.error('❌ Erro ao processar subscription:', error);
+      res.status(500).json({ error: 'Erro interno do servidor' });
+    }
+  });
+
+  // Endpoint para enviar notificação de teste
+  app.post("/api/push-notifications/test", verifyJWT, async (req: any, res: Response) => {
+    try {
+      const userId = req.user.id;
+      const { title, body } = req.body;
+      
+      console.log('🧪 [Routes] Enviando notificação de teste para:', userId);
+      
+      // Buscar subscriptions do usuário
+      const subscriptions = await storage.getActivePushSubscriptions(userId);
+      
+      if (subscriptions.length === 0) {
+        return res.status(404).json({ error: 'Nenhuma subscription ativa encontrada' });
+      }
+
+      // Simular envio de notificação
+      const testNotification = {
+        userId: userId,
+        title: title || '🧪 Vendzz - Teste PWA',
+        body: body || 'Notificação de teste! Sistema PWA funcionando.',
+        status: 'sent',
+        sentAt: new Date()
+      };
+
+      await storage.savePushNotificationLog(testNotification);
+      
+      res.json({ 
+        success: true, 
+        message: 'Notificação de teste simulada com sucesso!',
+        subscriptions: subscriptions.length
+      });
+    } catch (error) {
+      console.error('❌ Erro ao enviar notificação de teste:', error);
+      res.status(500).json({ error: 'Erro interno do servidor' });
+    }
+  });
+
+  // Endpoint para obter estatísticas de push notifications
+  app.get("/api/push-notifications/stats", verifyJWT, async (req: any, res: Response) => {
+    try {
+      const allSubscriptions = await storage.getAllActivePushSubscriptions();
+      const uniqueUsers = new Set(allSubscriptions.map(sub => sub.userId));
+      
+      res.json({
+        success: true,
+        stats: {
+          totalSubscriptions: allSubscriptions.length,
+          activeUsers: uniqueUsers.size,
+          timestamp: Date.now()
+        }
+      });
+    } catch (error) {
+      console.error('❌ Erro ao obter estatísticas:', error);
+      res.status(500).json({ error: 'Erro interno do servidor' });
+    }
+  });
+
   // ==================== NOTIFICATIONS ROUTES ====================
   
   // Subscribe to push notifications
