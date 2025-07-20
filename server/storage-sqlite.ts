@@ -5520,8 +5520,8 @@ export class SQLiteStorage implements IStorage {
     try {
       const stmt = sqlite.prepare(`
         INSERT INTO push_notification_logs 
-        (user_id, title, body, status, sent_at, created_at)
-        VALUES (?, ?, ?, ?, ?, ?)
+        (user_id, title, body, status, sent_at)
+        VALUES (?, ?, ?, ?, ?)
       `);
       
       const now = new Date().toISOString();
@@ -5529,16 +5529,57 @@ export class SQLiteStorage implements IStorage {
         logData.userId,
         logData.title,
         logData.body,
-        logData.status,
-        logData.sentAt ? logData.sentAt.toISOString() : now,
-        now
+        logData.status || 'sent',
+        logData.sentAt ? logData.sentAt.toISOString() : now
       );
 
       console.log('✅ Push notification log salvo:', logData.userId);
       return true;
     } catch (error) {
       console.error('❌ ERRO ao salvar notification log:', error);
-      return false;
+      // Criar tabela se não existir
+      try {
+        console.log('🔧 Criando tabela push_notification_logs...');
+        sqlite.exec(`
+          CREATE TABLE IF NOT EXISTS push_notification_logs (
+            id TEXT PRIMARY KEY DEFAULT (lower(hex(randomblob(16)))),
+            user_id TEXT NOT NULL,
+            title TEXT NOT NULL,
+            body TEXT NOT NULL,
+            url TEXT,
+            campaign_id TEXT,
+            lead_id TEXT,
+            status TEXT DEFAULT 'sent',
+            error_message TEXT,
+            sent_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (user_id) REFERENCES users(id)
+          )
+        `);
+        
+        console.log('✅ Tabela push_notification_logs criada');
+        
+        // Tentar novamente
+        const stmt = sqlite.prepare(`
+          INSERT INTO push_notification_logs 
+          (user_id, title, body, status, sent_at)
+          VALUES (?, ?, ?, ?, ?)
+        `);
+        
+        const now = new Date().toISOString();
+        stmt.run(
+          logData.userId,
+          logData.title,
+          logData.body,
+          logData.status || 'sent',
+          logData.sentAt ? logData.sentAt.toISOString() : now
+        );
+
+        console.log('✅ Push notification log salvo após criar tabela:', logData.userId);
+        return true;
+      } catch (createError) {
+        console.error('❌ ERRO ao criar tabela notification logs:', createError);
+        return false;
+      }
     }
   }
 
