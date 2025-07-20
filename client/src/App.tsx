@@ -6,6 +6,7 @@ import LandingPage from "@/pages/landing";
 import DarkLandingPage from "@/pages/dark-landing";
 import ModernHomePage from "@/pages/modern-home";
 import LoginPage from "@/pages/login";
+import LoginPWA from "@/pages/login-pwa";
 import Dashboard from "@/pages/dashboard";
 import QuizBuilder from "@/pages/quiz-builder";
 import AnalyticsPage from "@/pages/analytics";
@@ -126,7 +127,7 @@ function App() {
   }
 
   // Public routes that don't require authentication
-  const publicRoutes = ["/", "/dark", "/modern", "/login", "/payment-success", "/payment-cancel"];
+  const publicRoutes = ["/", "/dark", "/modern", "/login", "/login-pwa", "/payment-success", "/payment-cancel"];
   const isQuizRoute = location.startsWith("/quiz/");
   const isCheckoutRoute = location.startsWith("/checkout/");
   const isStripeCheckoutLink = location.startsWith("/stripe-checkout-link/");
@@ -157,6 +158,7 @@ function App() {
         <Route path="/app-pwa-vendzz" component={AppPWAVendzz} />
         <Route path="/app/quiz-editor/:quizId" component={AppQuizEditorPWA} />
         <Route path="/login" component={LoginPage} />
+        <Route path="/login-pwa" component={LoginPWA} />
         <Route path="/quiz/:id" component={QuizPublicPage} />
         <Route path="/checkout/:planId" component={PublicCheckout} />
         <Route path="/checkout/success" component={CheckoutSuccess} />
