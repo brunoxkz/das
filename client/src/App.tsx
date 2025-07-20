@@ -7,7 +7,7 @@ import LandingPage from "@/pages/landing";
 import DarkLandingPage from "@/pages/dark-landing";
 import ModernHomePage from "@/pages/modern-home";
 import LoginPage from "@/pages/login";
-import LoginPWA from "@/pages/login-pwa";
+import LoginPWAFixed from "@/pages/login-pwa-fixed";
 import Dashboard from "@/pages/dashboard";
 import QuizBuilder from "@/pages/quiz-builder";
 import AnalyticsPage from "@/pages/analytics";
@@ -183,7 +183,7 @@ function App() {
         <Route path="/app-pwa-vendzz" component={AppPWAVendzz} />
         <Route path="/app/quiz-editor/:quizId" component={AppQuizEditorPWA} />
         <Route path="/login" component={LoginPage} />
-        <Route path="/login-pwa" component={LoginPWA} />
+        <Route path="/login-pwa" component={LoginPWAFixed} />
         <Route path="/quiz/:id" component={QuizPublicPage} />
         <Route path="/checkout/:planId" component={PublicCheckout} />
         <Route path="/checkout/success" component={CheckoutSuccess} />

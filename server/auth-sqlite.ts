@@ -81,6 +81,34 @@ export const verifyJWT: RequestHandler = async (req: any, res, next) => {
 };
 
 export function setupSQLiteAuth(app: Express) {
+  // Token verification endpoint
+  app.get('/api/auth/verify', verifyJWT, async (req: Request, res: Response) => {
+    try {
+      const userId = (req as any).user?.id;
+      if (!userId) {
+        return res.status(401).json({ message: 'Invalid token' });
+      }
+      
+      const user = await storage.getUserById(userId);
+      if (!user) {
+        return res.status(401).json({ message: 'User not found' });
+      }
+      
+      res.json({ 
+        user: {
+          id: user.id,
+          email: user.email,
+          firstName: user.firstName,
+          lastName: user.lastName,
+          role: user.role,
+          plan: user.plan
+        }
+      });
+    } catch (error) {
+      console.error('Token verification error:', error);
+      res.status(401).json({ message: 'Token verification failed' });
+    }
+  });
 
   // Login endpoint
   app.post('/api/auth/login', async (req: Request, res: Response) => {
