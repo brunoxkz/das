@@ -5094,17 +5094,17 @@ const gameElementCategories = [
                         {renderElementPreview(element)}
                         
                         {/* Controles modernos do elemento */}
-                        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity duration-150">
+                        <div className="absolute -top-3 right-1 opacity-0 group-hover:opacity-100 transition-opacity duration-150 z-10">
                           <ModernButton
                             size="icon"
                             variant="ghost"
-                            className="h-7 w-7 bg-white/90 hover:bg-white shadow-sm"
+                            className="h-6 w-6 bg-red-50 hover:bg-red-100 shadow-md border border-red-200"
                             onClick={(e) => {
                               e.stopPropagation();
                               deleteElement(element.id);
                             }}
                           >
-                            <Trash2 className="w-3 h-3 text-red-500" />
+                            <Trash2 className="w-3 h-3 text-red-600" />
                           </ModernButton>
                         </div>
                       </div>
