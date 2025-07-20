@@ -1003,6 +1003,20 @@ body {
   border-radius: 0.375rem !important;
 }
 
+/* Animação personalizada para efeito de luz girando */
+@keyframes spin-slow {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.animate-spin-slow {
+  animation: spin-slow 3s linear infinite;
+}
+
 .vendzz-sidebar .nav-item.active {
   background: hsl(var(--primary) / 0.1) !important;
   color: hsl(var(--primary)) !important;

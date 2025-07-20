@@ -57,9 +57,15 @@ import {
   Download,
   Calendar,
   MessageCircle,
-  Languages
+  Languages,
+  Loader2
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+
+// Componente de Spinner animado
+const SpinnerIcon = ({ className }: { className?: string }) => (
+  <Loader2 className={cn("animate-spin", className)} />
+);
 
 export function Sidebar() {
   const [location] = useLocation();
@@ -471,15 +477,25 @@ export function Sidebar() {
 
       {/* Create Button */}
       <div className={cn("border-b border-border dark:border-gray-700", isCollapsed ? "p-2" : "p-4")}>
-        <div className={cn("space-y-3", isCollapsed && "flex flex-col items-center space-y-2")}>
+        <div className={cn("space-y-4", isCollapsed && "flex flex-col items-center space-y-3")}>
           <Link href="/quizzes/new">
             <Button className={cn(
-              "w-full justify-center",
+              "w-full justify-center group relative overflow-visible border-2 border-transparent",
               isCollapsed ? "w-10 h-10 p-0" : "px-4",
               !isCollapsed && "justify-start"
             )}>
-              <Plus className="w-4 h-4" />
-              {!isCollapsed && <span className="ml-2">Criar Quiz</span>}
+              <div className="flex items-center relative z-10">
+                <Plus className="w-4 h-4" />
+                {!isCollapsed && <span className="ml-2">Criar Quiz</span>}
+              </div>
+              {/* Efeito de feixe de luz girando */}
+              <div className="absolute -inset-1 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300 animate-spin-slow"
+                   style={{
+                     background: 'conic-gradient(from 0deg, transparent, #3b82f6, transparent, #10b981, transparent, #8b5cf6, transparent)',
+                     filter: 'blur(1px)',
+                     zIndex: -1
+                   }}>
+              </div>
             </Button>
           </Link>
           
@@ -496,12 +512,22 @@ export function Sidebar() {
           
           <Link href="/vsl-to-quiz">
             <Button className={cn(
-              "w-full bg-purple-600 hover:bg-purple-700 text-white justify-center",
+              "w-full bg-purple-600 hover:bg-purple-700 text-white justify-center group relative overflow-visible border-2 border-transparent",
               isCollapsed ? "w-10 h-10 p-0" : "px-4",
               !isCollapsed && "justify-start"
             )}>
-              <Play className="w-4 h-4" />
-              {!isCollapsed && <span className="ml-2">VSL para Quiz</span>}
+              <div className="flex items-center relative z-10">
+                <Play className="w-4 h-4" />
+                {!isCollapsed && <span className="ml-2">Converter VSL → Quiz</span>}
+              </div>
+              {/* Efeito de feixe de luz girando */}
+              <div className="absolute -inset-1 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300 animate-spin-slow"
+                   style={{
+                     background: 'conic-gradient(from 0deg, transparent, #8b5cf6, transparent, #06b6d4, transparent, #10b981, transparent)',
+                     filter: 'blur(1px)',
+                     zIndex: -1
+                   }}>
+              </div>
             </Button>
           </Link>
         </div>
