@@ -200,7 +200,7 @@ export default function Landing() {
     {
       name: "Ana Santos",
       role: "Marketing Manager, BeautyPro",
-      image: "https://images.unsplash.com/photo-1494790108755-2616b612b8f5?w=80&h=80&fit=crop&crop=face",
+      image: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=120&h=120&fit=crop&crop=face&auto=format",
       content: "O WhatsApp Remarketing gratuito da Vendzz nos trouxe R$ 50k em vendas extras no primeiro mês. Ferramenta essencial!",
       rating: 5
     },
