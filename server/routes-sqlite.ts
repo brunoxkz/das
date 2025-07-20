@@ -15124,102 +15124,12 @@ app.get("/api/whatsapp-extension/pending", verifyJWT, async (req: any, res: Resp
 
   // ==================== PUSH NOTIFICATIONS PWA PERSISTENTE ====================
 
-  // Obter chave VAPID pública
-  app.get('/api/push-notifications/vapid-key', async (req: any, res) => {
-    res.json({
-      success: true,
-      vapidPublicKey: 'BKxL8iRIrwm1YUlx7zIFJyI5Y5F3K_XQQp3mMm1Fq8QGzJ2vK7kKz_8eF5lOm1Kp3mMm1Fq8QGzJ2vK7kKz_8e'
-    });
-  });
-
-  // Salvar subscription de push notification
-  app.post('/api/push-notifications/subscribe', verifyJWT, async (req: any, res) => {
-    try {
-      const { subscription } = req.body;
-      const userId = req.user.id;
-
-      if (!subscription || !subscription.endpoint) {
-        return res.status(400).json({ success: false, message: 'Subscription inválida' });
-      }
-
-      // Salvar subscription no banco
-      const subscriptionData = {
-        userId,
-        endpoint: subscription.endpoint,
-        p256dhKey: subscription.keys?.p256dh || '',
-        authKey: subscription.keys?.auth || '',
-        isActive: true
-      };
-
-      const saved = await storage.savePushSubscription(subscriptionData);
-      
-      if (saved) {
-        res.json({ 
-          success: true, 
-          message: 'Subscription salva com sucesso',
-          subscriptionId: subscription.endpoint
-        });
-      } else {
-        res.status(500).json({ success: false, message: 'Erro ao salvar subscription' });
-      }
-    } catch (error) {
-      console.error('❌ Erro ao salvar subscription:', error);
-      res.status(500).json({ success: false, message: 'Erro interno do servidor' });
-    }
-  });
-
-  // Enviar notificação de teste
-  app.post('/api/push-notifications/test', verifyJWT, async (req: any, res) => {
-    try {
-      const { title, body } = req.body;
-      const userId = req.user.id;
-
-      if (!title || !body) {
-        return res.status(400).json({ success: false, message: 'Título e corpo são obrigatórios' });
-      }
-
-      // Buscar subscriptions ativas do usuário
-      const subscriptions = await storage.getActivePushSubscriptions(userId);
-      
-      if (subscriptions.length === 0) {
-        return res.status(404).json({ 
-          success: false, 
-          message: 'Nenhuma subscription ativa encontrada' 
-        });
-      }
-
-      // Simular envio de notificação (aqui você integraria com web-push)
-      console.log(`🔔 [PUSH TEST] Enviando para ${subscriptions.length} dispositivos:`);
-      console.log(`📱 Título: ${title}`);
-      console.log(`📝 Corpo: ${body}`);
-      console.log(`👤 Usuário: ${userId}`);
-
-      // Salvar log da notificação
-      await storage.savePushNotificationLog({
-        userId,
-        title,
-        body,
-        status: 'sent',
-        sentAt: new Date()
-      });
-
-      res.json({
-        success: true,
-        message: 'Notificação de teste enviada',
-        sentTo: subscriptions.length
-      });
-    } catch (error) {
-      console.error('❌ Erro ao enviar notificação de teste:', error);
-      res.status(500).json({ success: false, message: 'Erro interno do servidor' });
-    }
-  });
-
   // Enviar notificação individual (admin)
   app.post('/api/push-notifications/send', verifyJWT, async (req: any, res) => {
     try {
       const { targetUserId, title, body, url, icon, tag } = req.body;
       const adminUserId = req.user.id;
-      const isAdmin = req.user.email === 'admin@vendzz.com' || req.user.email === 'bruno@vendzz.com';
+      const isAdmin = req.user.email === 'admin@admin.com' || req.user.email === 'admin@vendzz.com' || req.user.email === 'bruno@vendzz.com';
 
       if (!isAdmin) {
         return res.status(403).json({ success: false, message: 'Acesso negado - apenas admins' });
@@ -15278,7 +15188,7 @@ app.get("/api/whatsapp-extension/pending", verifyJWT, async (req: any, res: Resp
       
       const { title, body, url, icon, tag } = req.body;
       const adminUserId = req.user.id;
-      const isAdmin = req.user.email === 'admin@vendzz.com' || req.user.email === 'bruno@vendzz.com';
+      const isAdmin = req.user.email === 'admin@admin.com' || req.user.email === 'admin@vendzz.com' || req.user.email === 'bruno@vendzz.com';
 
       console.log(`👤 Admin ID: ${adminUserId}`);
       console.log(`📧 Admin Email: ${req.user.email}`);
@@ -15511,7 +15421,7 @@ app.get("/api/whatsapp-extension/pending", verifyJWT, async (req: any, res: Resp
     try {
       const { title, body, url, icon, tag } = req.body;
       const adminUserId = req.user.id;
-      const isAdmin = req.user.email === 'admin@vendzz.com' || req.user.email === 'bruno@vendzz.com';
+      const isAdmin = req.user.email === 'admin@admin.com' || req.user.email === 'admin@vendzz.com' || req.user.email === 'bruno@vendzz.com';
 
       if (!isAdmin) {
         return res.status(403).json({ success: false, message: 'Acesso negado - apenas admins' });
@@ -15550,7 +15460,7 @@ app.get("/api/whatsapp-extension/pending", verifyJWT, async (req: any, res: Resp
   // Endpoint para buscar usuários (admin)
   app.get("/api/admin/users", verifyJWT, async (req: any, res: Response) => {
     try {
-      const isAdmin = req.user.email === 'admin@vendzz.com' || req.user.email === 'bruno@vendzz.com';
+      const isAdmin = req.user.email === 'admin@admin.com' || req.user.email === 'admin@vendzz.com' || req.user.email === 'bruno@vendzz.com';
 
       if (!isAdmin) {
         return res.status(403).json({ success: false, message: 'Acesso negado - apenas admins' });
