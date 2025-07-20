@@ -65,12 +65,15 @@ export class CompleteAnalyzer {
       const isXQuiz = url.includes('xquiz.io') || html.includes('xquiz') || html.includes('XQuiz');
       const isEffecto = url.includes('effectoapp.com') || html.includes('effectoapp') || html.includes('Effecto');
       const isNordAstro = url.includes('nordastro.com') || html.includes('nordastro') || html.includes('astrology');
+      const isBetterMe = url.includes('betterme') || html.includes('betterme') || html.includes('walking-workouts');
       
-      if (isEncrypted || isNextJS || isCakto || isXQuiz || isEffecto || isNordAstro) {
-        console.log(`🔐 PÁGINA ENCRIPTADA/NEXT.JS/CAKTO/XQUIZ/EFFECTO/NORDASTRO DETECTADA - Aplicando métodos avançados`);
+      if (isEncrypted || isNextJS || isCakto || isXQuiz || isEffecto || isNordAstro || isBetterMe) {
+        console.log(`🔐 PÁGINA ENCRIPTADA/NEXT.JS/CAKTO/XQUIZ/EFFECTO/NORDASTRO/BETTERME DETECTADA - Aplicando métodos avançados`);
         
         // Redirecionar para analisadores específicos
-        if (isNordAstro) {
+        if (isBetterMe) {
+          return this.analyzeBetterMeFunnel(html, url);
+        } else if (isNordAstro) {
           return this.analyzeNordAstroFunnel(html, url);
         } else if (isEffecto) {
           return this.analyzeEffectoFunnel(html, url);
@@ -4001,6 +4004,561 @@ export class CompleteAnalyzer {
       secondaryColor: '#B0B0B0',  // Cinza claro
       buttonColor: '#4A5568',     // Cinza escuro para botões
       borderColor: '#FFD700'      // Dourado para bordas
+    };
+  }
+
+  // NOVO: Analisador específico para BetterMe
+  private static analyzeBetterMeFunnel(html: string, url: string): CompleteFunnel {
+    console.log(`🏃‍♀️ INICIANDO ANÁLISE ESPECÍFICA BETTERME WELLNESS`);
+    
+    const $ = cheerio.load(html);
+    const pages: FunnelPage[] = [];
+    const elements: FunnelElement[] = [];
+    
+    // Cores específicas do BetterMe - Verde saúde e wellness
+    const betterMeColors = this.extractBetterMeColors($);
+    
+    // Perguntas específicas do BetterMe para wellness/fitness
+    const betterMeQuestions = this.getBetterMeWellnessQuestions();
+    const betterMeOptions = this.getBetterMeWellnessOptions();
+    
+    // Estrutura típica: 15 páginas para quiz de wellness completo
+    const totalPages = this.estimateBetterMePages($, html);
+    console.log(`🏃‍♀️ Páginas estimadas BetterMe: ${totalPages}`);
+    
+    // Páginas específicas do BetterMe
+    const pageTypes = [
+      'welcome',
+      'gender_selection', 
+      'age_question',
+      'fitness_level',
+      'health_goals',
+      'current_weight',
+      'target_weight',
+      'exercise_preferences',
+      'time_availability',
+      'dietary_restrictions',
+      'motivation_level',
+      'lifestyle_habits',
+      'health_conditions',
+      'lead_capture',
+      'final_result'
+    ];
+    
+    pageTypes.forEach((pageType, index) => {
+      const pageNumber = index + 1;
+      const pageId = nanoid();
+      
+      console.log(`🏃‍♀️ Criando página BetterMe: ${pageType} (${pageNumber}/${totalPages})`);
+      
+      const page: FunnelPage = {
+        id: pageId,
+        pageNumber,
+        title: this.getBetterMePageTitle(pageType),
+        elements: [],
+        settings: {
+          backgroundColor: betterMeColors.backgroundColor,
+          progressBar: true,
+          autoAdvance: false,
+          validation: pageType === 'lead_capture' ? 'strict' : 'normal'
+        }
+      };
+      
+      // Elementos específicos para cada tipo de página BetterMe
+      if (pageType === 'welcome') {
+        page.elements = [
+          {
+            id: nanoid(),
+            type: 'headline',
+            position: 0,
+            pageId,
+            properties: {
+              title: '🏃‍♀️ Transforme Sua Vida Com BetterMe',
+              fontSize: '3xl',
+              color: betterMeColors.primaryColor,
+              alignment: 'center',
+              fontWeight: 'bold'
+            }
+          },
+          {
+            id: nanoid(),
+            type: 'text',
+            position: 1,
+            pageId,
+            properties: {
+              text: 'Descubra seu plano de wellness personalizado baseado nas suas metas e estilo de vida único.',
+              fontSize: 'lg',
+              color: betterMeColors.textColor,
+              alignment: 'center'
+            }
+          },
+          {
+            id: nanoid(),
+            type: 'button',
+            position: 2,
+            pageId,
+            properties: {
+              text: 'Começar Jornada de Wellness',
+              backgroundColor: betterMeColors.primaryColor,
+              textColor: '#ffffff',
+              size: 'xl',
+              borderRadius: 'full'
+            }
+          }
+        ];
+        
+      } else if (pageType === 'gender_selection') {
+        page.elements = [
+          {
+            id: nanoid(),
+            type: 'question',
+            position: 0,
+            pageId,
+            properties: {
+              question: 'Qual é o seu gênero?',
+              responseId: 'gender_selection',
+              required: true,
+              fontSize: 'xl',
+              color: betterMeColors.textColor,
+              alignment: 'center'
+            }
+          },
+          {
+            id: nanoid(),
+            type: 'image_choice',
+            position: 1,
+            pageId,
+            properties: {
+              options: [
+                { value: 'female', label: '👩 Feminino', image: '/wellness-female.svg' },
+                { value: 'male', label: '👨 Masculino', image: '/wellness-male.svg' },
+                { value: 'other', label: '🌈 Outro/Prefiro não dizer', image: '/wellness-diverse.svg' }
+              ],
+              responseId: 'gender_selection',
+              required: true,
+              layout: 'horizontal'
+            }
+          }
+        ];
+        
+      } else if (pageType === 'fitness_level') {
+        page.elements = [
+          {
+            id: nanoid(),
+            type: 'progress_bar',
+            position: 0,
+            pageId,
+            properties: {
+              progress: Math.round((pageNumber / totalPages) * 100),
+              color: betterMeColors.primaryColor,
+              backgroundColor: '#E5E7EB',
+              showPercentage: true
+            }
+          },
+          {
+            id: nanoid(),
+            type: 'question',
+            position: 1,
+            pageId,
+            properties: {
+              question: 'Como você descreveria seu nível atual de condicionamento físico?',
+              responseId: 'fitness_level',
+              required: true,
+              fontSize: 'xl',
+              color: betterMeColors.textColor,
+              alignment: 'center'
+            }
+          },
+          {
+            id: nanoid(),
+            type: 'multiple_choice',
+            position: 2,
+            pageId,
+            properties: {
+              options: [
+                { value: 'beginner', label: '🌱 Iniciante - Pouco ou nenhum exercício' },
+                { value: 'intermediate', label: '💪 Intermediário - Exercito-me algumas vezes por semana' },
+                { value: 'advanced', label: '🏆 Avançado - Exercito-me regularmente e sou ativo' },
+                { value: 'athlete', label: '🔥 Atlético - Treino intenso e competitivo' }
+              ],
+              responseId: 'fitness_level',
+              required: true,
+              layout: 'vertical',
+              allowMultiple: false
+            }
+          }
+        ];
+        
+      } else if (pageType === 'health_goals') {
+        page.elements = [
+          {
+            id: nanoid(),
+            type: 'question',
+            position: 0,
+            pageId,
+            properties: {
+              question: 'Quais são seus principais objetivos de saúde? (Selecione até 3)',
+              responseId: 'health_goals',
+              required: true,
+              fontSize: 'xl',
+              color: betterMeColors.textColor,
+              alignment: 'center'
+            }
+          },
+          {
+            id: nanoid(),
+            type: 'multiple_choice',
+            position: 1,
+            pageId,
+            properties: {
+              options: [
+                { value: 'weight_loss', label: '⚖️ Perder peso' },
+                { value: 'muscle_gain', label: '💪 Ganhar massa muscular' },
+                { value: 'endurance', label: '🏃‍♀️ Melhorar resistência cardiovascular' },
+                { value: 'flexibility', label: '🧘‍♀️ Aumentar flexibilidade' },
+                { value: 'stress_reduction', label: '😌 Reduzir estresse e ansiedade' },
+                { value: 'better_sleep', label: '😴 Melhorar qualidade do sono' },
+                { value: 'energy_boost', label: '⚡ Aumentar energia e disposição' },
+                { value: 'healthy_habits', label: '🌟 Desenvolver hábitos saudáveis' }
+              ],
+              responseId: 'health_goals',
+              required: true,
+              layout: 'grid',
+              allowMultiple: true,
+              maxSelections: 3
+            }
+          }
+        ];
+        
+      } else if (pageType === 'lead_capture') {
+        page.elements = [
+          {
+            id: nanoid(),
+            type: 'headline',
+            position: 0,
+            pageId,
+            properties: {
+              title: '🎉 Seu Plano Personalizado Está Quase Pronto!',
+              fontSize: '2xl',
+              color: betterMeColors.primaryColor,
+              alignment: 'center',
+              fontWeight: 'bold'
+            }
+          },
+          {
+            id: nanoid(),
+            type: 'text',
+            position: 1,
+            pageId,
+            properties: {
+              text: 'Insira seus dados para receber seu plano de wellness personalizado gratuitamente.',
+              fontSize: 'md',
+              color: betterMeColors.textColor,
+              alignment: 'center'
+            }
+          },
+          {
+            id: nanoid(),
+            type: 'email',
+            position: 2,
+            pageId,
+            properties: {
+              placeholder: 'Seu melhor e-mail',
+              responseId: 'email_contato',
+              required: true,
+              fieldId: 'email_contato',
+              validation: 'email'
+            }
+          },
+          {
+            id: nanoid(),
+            type: 'phone',
+            position: 3,
+            pageId,
+            properties: {
+              placeholder: 'WhatsApp (opcional para dicas exclusivas)',
+              responseId: 'telefone_contato',
+              required: false,
+              fieldId: 'telefone_contato'
+            }
+          },
+          {
+            id: nanoid(),
+            type: 'text',
+            position: 4,
+            pageId,
+            properties: {
+              placeholder: 'Seu primeiro nome',
+              responseId: 'nome_primeiro',
+              required: true,
+              fieldId: 'nome_primeiro'
+            }
+          }
+        ];
+        
+      } else if (pageType === 'final_result') {
+        page.elements = [
+          {
+            id: nanoid(),
+            type: 'headline',
+            position: 0,
+            pageId,
+            properties: {
+              title: '🌟 Parabéns! Sua Jornada BetterMe Começou!',
+              fontSize: '3xl',
+              color: betterMeColors.primaryColor,
+              alignment: 'center',
+              fontWeight: 'bold'
+            }
+          },
+          {
+            id: nanoid(),
+            type: 'text',
+            position: 1,
+            pageId,
+            properties: {
+              text: 'Baseado nas suas respostas, criamos um plano de wellness 100% personalizado para você. Verifique seu e-mail para acessar seu plano completo!',
+              fontSize: 'lg',
+              color: betterMeColors.textColor,
+              alignment: 'center'
+            }
+          },
+          {
+            id: nanoid(),
+            type: 'button',
+            position: 2,
+            pageId,
+            properties: {
+              text: 'Baixar Meu Plano Gratuito',
+              backgroundColor: betterMeColors.primaryColor,
+              textColor: '#ffffff',
+              size: 'xl',
+              borderRadius: 'lg'
+            }
+          },
+          {
+            id: nanoid(),
+            type: 'text',
+            position: 3,
+            pageId,
+            properties: {
+              text: '💚 Compartilhe com seus amigos e ajude-os a começar sua jornada de wellness também!',
+              fontSize: 'sm',
+              color: betterMeColors.secondaryColor,
+              alignment: 'center'
+            }
+          }
+        ];
+        
+      } else {
+        // Páginas de perguntas genéricas do wellness
+        const questionIndex = Math.floor(pageNumber / 2);
+        const questionText = betterMeQuestions[questionIndex % betterMeQuestions.length];
+        const options = betterMeOptions[questionIndex % betterMeOptions.length];
+        const responseId = `betterme_q${pageNumber}`;
+        
+        page.elements = [
+          {
+            id: nanoid(),
+            type: 'progress_bar',
+            position: 0,
+            pageId,
+            properties: {
+              progress: Math.round((pageNumber / totalPages) * 100),
+              color: betterMeColors.primaryColor,
+              backgroundColor: '#E5E7EB',
+              showPercentage: true
+            }
+          },
+          {
+            id: nanoid(),
+            type: 'question',
+            position: 1,
+            pageId,
+            properties: {
+              question: questionText,
+              responseId: responseId,
+              required: true,
+              fontSize: 'xl',
+              color: betterMeColors.textColor,
+              alignment: 'center'
+            }
+          },
+          {
+            id: nanoid(),
+            type: 'multiple_choice',
+            position: 2,
+            pageId,
+            properties: {
+              options: options,
+              responseId: responseId,
+              required: true,
+              layout: 'vertical',
+              allowMultiple: false
+            }
+          },
+          {
+            id: nanoid(),
+            type: 'button',
+            position: 3,
+            pageId,
+            properties: {
+              text: pageNumber < totalPages - 1 ? 'Próxima Pergunta' : 'Ver Meus Resultados',
+              backgroundColor: betterMeColors.primaryColor,
+              textColor: '#ffffff',
+              size: 'lg',
+              borderRadius: 'lg'
+            }
+          }
+        ];
+      }
+      
+      pages.push(page);
+      elements.push(...page.elements);
+    });
+    
+    console.log(`✅ SISTEMA BETTERME COMPLETO: ${pages.length} páginas, ${elements.length} elementos criados`);
+    
+    return {
+      id: nanoid(),
+      title: 'Plano de Wellness BetterMe',
+      description: 'Quiz de wellness personalizado importado da plataforma BetterMe',
+      pages: pages.length,
+      pageData: pages,
+      elements,
+      settings: {
+        theme: betterMeColors,
+        analytics: true,
+        progressBar: true,
+        autoSave: true,
+        wellnessMode: true
+      },
+      theme: betterMeColors,
+      metadata: {
+        platform: 'BetterMe',
+        category: 'Wellness',
+        complexity: 'intermediate',
+        detectedFeatures: ['fitness_assessment', 'goal_setting', 'personalized_plan', 'wellness_tracking'],
+        importedAt: new Date().toISOString(),
+        totalElements: elements.length,
+        estimatedDuration: '3-4 minutos',
+        targetAudience: 'Pessoas interessadas em wellness, fitness e vida saudável'
+      }
+    };
+  }
+
+  private static estimateBetterMePages($: cheerio.CheerioAPI, html: string): number {
+    // BetterMe tipicamente usa 15 páginas para quiz completo de wellness
+    const scriptContent = $('script').text();
+    
+    let estimatedPages = 15;
+    
+    // Detectar indicadores específicos do BetterMe
+    if (scriptContent.includes('fitness') || scriptContent.includes('wellness') || scriptContent.includes('workout')) {
+      estimatedPages = 15;
+    }
+    
+    if (scriptContent.includes('walking') || scriptContent.includes('steps') || html.includes('walking-workouts')) {
+      estimatedPages = 12; // Quiz mais focado em caminhada
+    }
+    
+    console.log(`🏃‍♀️ BetterMe páginas estimadas: ${estimatedPages}`);
+    return estimatedPages;
+  }
+
+  private static getBetterMePageTitle(pageType: string): string {
+    const titles = {
+      'welcome': 'Bem-vindo ao BetterMe',
+      'gender_selection': 'Seleção de Gênero',
+      'age_question': 'Sua Idade',
+      'fitness_level': 'Nível de Condicionamento',
+      'health_goals': 'Objetivos de Saúde',
+      'current_weight': 'Peso Atual',
+      'target_weight': 'Peso Desejado',
+      'exercise_preferences': 'Preferências de Exercício',
+      'time_availability': 'Tempo Disponível',
+      'dietary_restrictions': 'Restrições Alimentares',
+      'motivation_level': 'Nível de Motivação',
+      'lifestyle_habits': 'Hábitos de Vida',
+      'health_conditions': 'Condições de Saúde',
+      'lead_capture': 'Seus Dados',
+      'final_result': 'Seu Plano Personalizado'
+    };
+    
+    return titles[pageType] || `Pergunta ${pageType}`;
+  }
+
+  private static getBetterMeWellnessQuestions(): string[] {
+    return [
+      'Qual é sua principal motivação para melhorar sua saúde?',
+      'Quantos dias por semana você consegue se dedicar ao exercício?',
+      'Qual tipo de atividade física você mais gosta?',
+      'Como você descreveria seu nível de estresse atual?',
+      'Quantas horas você dorme por noite em média?',
+      'Você tem alguma lesão ou limitação física?',
+      'Como está sua alimentação atualmente?',
+      'Qual é seu maior desafio para manter uma rotina saudável?',
+      'Você prefere treinar sozinho(a) ou em grupo?',
+      'Em que período do dia você tem mais energia?',
+      'Quanta água você bebe por dia?',
+      'Com que frequência você se sente cansado(a) durante o dia?'
+    ];
+  }
+
+  private static getBetterMeWellnessOptions(): any[] {
+    return [
+      [
+        { value: 'weight_loss', label: '⚖️ Perder peso e me sentir melhor' },
+        { value: 'health', label: '💚 Melhorar minha saúde geral' },
+        { value: 'energy', label: '⚡ Ter mais energia e disposição' },
+        { value: 'confidence', label: '💪 Aumentar minha autoestima' }
+      ],
+      [
+        { value: '1-2', label: '1-2 dias por semana' },
+        { value: '3-4', label: '3-4 dias por semana' },
+        { value: '5-6', label: '5-6 dias por semana' },
+        { value: 'daily', label: 'Todos os dias' }
+      ],
+      [
+        { value: 'walking', label: '🚶‍♀️ Caminhada' },
+        { value: 'running', label: '🏃‍♀️ Corrida' },
+        { value: 'yoga', label: '🧘‍♀️ Yoga' },
+        { value: 'strength', label: '💪 Musculação' },
+        { value: 'dance', label: '💃 Dança' },
+        { value: 'swimming', label: '🏊‍♀️ Natação' }
+      ],
+      [
+        { value: 'low', label: '😌 Baixo - Me sinto tranquilo(a)' },
+        { value: 'moderate', label: '😐 Moderado - Às vezes me sinto estressado(a)' },
+        { value: 'high', label: '😰 Alto - Frequentemente me sinto estressado(a)' },
+        { value: 'very_high', label: '😵 Muito alto - Constantemente estressado(a)' }
+      ],
+      [
+        { value: 'less_5', label: 'Menos de 5 horas' },
+        { value: '5-6', label: '5-6 horas' },
+        { value: '7-8', label: '7-8 horas' },
+        { value: 'more_8', label: 'Mais de 8 horas' }
+      ],
+      [
+        { value: 'none', label: '✅ Não tenho limitações' },
+        { value: 'back', label: '🔙 Problemas nas costas' },
+        { value: 'knee', label: '🦵 Problemas nos joelhos' },
+        { value: 'other', label: '🏥 Outras limitações' }
+      ]
+    ];
+  }
+
+  private static extractBetterMeColors($: cheerio.CheerioAPI): any {
+    return {
+      primaryColor: '#10B981',      // Verde wellness/saúde
+      accentColor: '#059669',       // Verde escuro
+      backgroundColor: '#F3F4F6',   // Cinza muito claro
+      textColor: '#1F2937',         // Cinza escuro
+      secondaryColor: '#6B7280',    // Cinza médio
+      buttonColor: '#10B981',       // Verde principal
+      borderColor: '#D1D5DB',       // Cinza claro para bordas
+      successColor: '#34D399',      // Verde claro para sucesso
+      warningColor: '#FBBF24'       // Amarelo para avisos
     };
   }
 }

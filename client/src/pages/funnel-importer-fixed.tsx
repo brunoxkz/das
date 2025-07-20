@@ -328,6 +328,19 @@ export default function FunnelImporter() {
                   </div>
                   <Badge className="bg-purple-100 text-purple-800">Avançado</Badge>
                 </div>
+
+                <div className="flex items-center justify-between p-3 bg-emerald-50 dark:bg-emerald-900/20 rounded-lg border border-emerald-200">
+                  <div className="flex items-center gap-3">
+                    <CheckCircle className="h-5 w-5 text-emerald-600" />
+                    <div>
+                      <span className="font-medium text-emerald-900 dark:text-emerald-100">BetterMe</span>
+                      <p className="text-sm text-emerald-700 dark:text-emerald-300">
+                        betterme-walking-workouts.com - Quiz de wellness e fitness
+                      </p>
+                    </div>
+                  </div>
+                  <Badge className="bg-emerald-100 text-emerald-800">Avançado</Badge>
+                </div>
                 
                 <div className="flex items-center justify-between p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200">
                   <div className="flex items-center gap-3">
