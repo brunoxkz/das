@@ -5078,6 +5078,37 @@ export function registerSQLiteRoutes(app: Express): Server {
       // Invalidar caches para atualizar estatísticas
       cache.invalidateQuizCaches(quizId, quiz.userId);
 
+      // 🔔 ENVIAR NOTIFICAÇÃO PUSH PARA O DONO DO QUIZ
+      try {
+        const { webPushService } = await import('./web-push');
+        
+        // Buscar owner do quiz para notificar
+        const quizOwner = await storage.getUser(quiz.userId);
+        if (quizOwner) {
+          console.log(`🔔 Enviando notificação push para ${quizOwner.email}`);
+          
+          // Usar o webPushService para notificar o usuário
+          const notificationSent = await webPushService.sendNotificationToUser(quiz.userId, {
+            title: '💸 Novo lead completou seu funil',
+            body: `Um lead acabou de finalizar o quiz "${quiz.name}". ${Object.keys(finalResponseData).length} campos preenchidos.`,
+            icon: '/icon-192x192.svg',
+            url: '/pwa',
+            leadId: finalResponse.id,
+            priority: 'high',
+            tag: 'quiz-completion'
+          });
+          
+          if (notificationSent) {
+            console.log(`✅ Notificação enviada com sucesso para ${quizOwner.email}`);
+          } else {
+            console.log(`⚠️ Usuário ${quizOwner.email} não tem subscription ativa para notificações`);
+          }
+        }
+      } catch (error) {
+        console.error('❌ Erro no sistema de notificação push:', error);
+        // Não falhar a submissão por causa de erro de notificação
+      }
+
       console.log(`✅ Submissão completa realizada com sucesso!`);
       
       res.status(201).json({ 
