@@ -72,6 +72,22 @@ export function Sidebar() {
   const [showLanguageDropdown, setShowLanguageDropdown] = useState(false);
   const [currentLanguage, setCurrentLanguage] = useState("pt-BR");
   const languageDropdownRef = useRef<HTMLDivElement>(null);
+  const [forumMode, setForumMode] = useState(false);
+  const [isCompactForced, setIsCompactForced] = useState(false);
+
+  // Escutar eventos de modo fórum
+  useEffect(() => {
+    const handleForumModeToggle = (event: CustomEvent) => {
+      setForumMode(event.detail.forumMode);
+      setIsCompactForced(event.detail.compactSidebar);
+    };
+
+    window.addEventListener('toggleForumMode', handleForumModeToggle as EventListener);
+    
+    return () => {
+      window.removeEventListener('toggleForumMode', handleForumModeToggle as EventListener);
+    };
+  }, []);
 
   // Buscar dados dos quizzes em tempo real
   const { data: quizzes } = useQuery({

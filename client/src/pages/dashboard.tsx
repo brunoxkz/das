@@ -35,6 +35,7 @@ import { useToast } from "@/hooks/use-toast";
 import { TutorialTour, dashboardTutorialSteps } from "@/components/tutorial-tour";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import QuizFullPreview from "@/components/QuizFullPreview";
+import { cn } from "@/lib/utils";
 // import { useLanguage } from "@/hooks/useLanguage";
 
 export default function Dashboard() {
@@ -45,7 +46,41 @@ export default function Dashboard() {
   const [previewQuiz, setPreviewQuiz] = useState(null);
   const [showQuizPreview, setShowQuizPreview] = useState(false);
   const [forumMode, setForumMode] = useState(false);
+
+  // Função para alternar modo fórum
+  const toggleForumMode = () => {
+    const newForumMode = !forumMode;
+    setForumMode(newForumMode);
+    
+    // Enviar evento para sidebar detectar mudança
+    const event = new CustomEvent('toggleForumMode', {
+      detail: {
+        forumMode: newForumMode,
+        compactSidebar: newForumMode
+      }
+    });
+    window.dispatchEvent(event);
+  };
   // const { t } = useLanguage();
+
+  // Dados do fórum
+  const { data: forumCategories = [], isLoading: forumLoading } = useQuery({
+    queryKey: ["/api/forum/categories"],
+    enabled: forumMode,
+    retry: false,
+  });
+
+  const { data: recentTopics = [] } = useQuery({
+    queryKey: ["/api/forum/recent"],
+    enabled: forumMode,
+    retry: false,
+  });
+
+  const { data: forumStats = {} } = useQuery({
+    queryKey: ["/api/forum/stats"],
+    enabled: forumMode,
+    retry: false,
+  });
 
   // Buscar dados do usuário
   const { data: userData } = useQuery({
@@ -259,8 +294,13 @@ export default function Dashboard() {
     );
   }
 
+  // Aplicar tema do modo fórum
+  const dashboardClasses = forumMode 
+    ? "min-h-screen bg-black text-white" 
+    : "min-h-screen bg-background dashboard-background";
+
   return (
-    <div className="min-h-screen bg-background dashboard-background">
+    <div className={dashboardClasses}>
       {/* Faixa de Plano - Sistema de Regressão Automática */}
       {showPlanBanner && showTrialBanner && (
         <div className={`${isBlocked || renewalRequired ? 'bg-gradient-to-r from-red-600 to-red-700' : 'bg-gradient-to-r from-green-600 to-emerald-600'} text-white p-4 shadow-lg`}>
@@ -341,11 +381,20 @@ export default function Dashboard() {
           {/* Header */}
           <div className="flex items-center justify-between mb-8">
             <div>
-              <h1 className="text-3xl font-bold text-green-600">
-                Dashboard
+              <h1 className={cn(
+                "text-3xl font-bold",
+                forumMode ? "text-white" : "text-green-600"
+              )}>
+                {forumMode ? "Vendzz Fórum" : "Dashboard"}
               </h1>
-              <p className="dashboard-text-secondary mt-2">
-                Bem-vindo de volta, {userData?.user?.firstName || "Admin"}!
+              <p className={cn(
+                "mt-2",
+                forumMode ? "text-gray-300" : "dashboard-text-secondary"
+              )}>
+                {forumMode 
+                  ? "Central de discussões e comunidade" 
+                  : `Bem-vindo de volta, ${userData?.user?.firstName || "Admin"}!`
+                }
               </p>
             </div>
             <div className="flex items-center gap-4">
@@ -362,12 +411,13 @@ export default function Dashboard() {
                 onClick={() => setShowTutorial(true)}
                 className="border-gray-300 text-black hover:bg-gray-50 transition-all duration-300"
               >
+                <BookOpen className="w-4 h-4 mr-2" />
                 Tutorial
               </Button>
               {!forumMode && (
                 <Button
                   variant="outline"
-                  onClick={() => setForumMode(true)}
+                  onClick={toggleForumMode}
                   className="border-purple-200 text-purple-700 hover:bg-purple-50 mr-2"
                 >
                   <Users className="w-4 h-4 mr-2" />
@@ -377,7 +427,7 @@ export default function Dashboard() {
               {forumMode && (
                 <Button
                   variant="outline"
-                  onClick={() => setForumMode(false)}
+                  onClick={toggleForumMode}
                   className="border-blue-200 text-blue-700 hover:bg-blue-50 mr-2"
                 >
                   Voltar Dashboard
@@ -392,7 +442,7 @@ export default function Dashboard() {
             </div>
           </div>
 
-          {/* Stats Grid - Minimalista no modo fórum */}
+          {/* Stats Grid - Conteúdo do fórum quando ativo */}
           {!forumMode ? (
             <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
               {dashboardStats.map((stat, index) => (
@@ -412,16 +462,102 @@ export default function Dashboard() {
               ))}
             </div>
           ) : (
-            <div className="flex gap-4 mb-6 overflow-x-auto">
-              {dashboardStats.map((stat, index) => (
-                <div key={index} className="flex items-center gap-2 bg-gray-100 px-4 py-2 rounded-lg min-w-fit">
-                  <div className={`w-6 h-6 rounded ${stat.color} flex items-center justify-center`}>
-                    {React.cloneElement(stat.icon, { className: "w-3 h-3 text-white" })}
+            // MODO FÓRUM - Conteúdo preto versão completa
+            <div className="bg-black text-white min-h-screen">
+              {/* Campanhas em linha minimalista */}
+              <div className="flex gap-4 mb-6 overflow-x-auto p-4 bg-gray-900 rounded-lg">
+                {dashboardStats.map((stat, index) => (
+                  <div key={index} className="flex items-center gap-2 bg-gray-800 px-3 py-2 rounded-lg min-w-fit">
+                    <div className={`w-6 h-6 rounded ${stat.color} flex items-center justify-center`}>
+                      {React.cloneElement(stat.icon, { className: "w-3 h-3 text-white" })}
+                    </div>
+                    <span className="text-sm font-medium text-white">{stat.value}</span>
+                    <span className="text-xs text-gray-400">{stat.title}</span>
                   </div>
-                  <span className="text-sm font-medium">{stat.value}</span>
-                  <span className="text-xs text-gray-600">{stat.title}</span>
+                ))}
+              </div>
+
+              {/* Conteúdo do Fórum */}
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                {/* Categorias do Fórum */}
+                <div className="lg:col-span-2">
+                  <h2 className="text-xl font-bold text-white mb-4">Categorias do Fórum</h2>
+                  <div className="space-y-4">
+                    {[
+                      { 
+                        title: "📈 Marketing Digital", 
+                        description: "Estratégias, campanhas e cases de sucesso",
+                        topics: 127,
+                        posts: 489,
+                        lastActivity: "2h atrás"
+                      },
+                      { 
+                        title: "🧩 Quiz Builder", 
+                        description: "Dicas e tutoriais para criar quizzes eficazes",
+                        topics: 89,
+                        posts: 312,
+                        lastActivity: "1h atrás"
+                      },
+                      { 
+                        title: "💼 Empreendedorismo", 
+                        description: "Discussões sobre negócios e crescimento",
+                        topics: 156,
+                        posts: 623,
+                        lastActivity: "30min atrás"
+                      }
+                    ].map((category, index) => (
+                      <Card key={index} className="bg-gray-900 border-gray-700 hover:bg-gray-800 transition-colors">
+                        <CardContent className="p-6">
+                          <div className="flex items-start justify-between">
+                            <div className="flex-1">
+                              <h3 className="font-semibold text-white mb-2">{category.title}</h3>
+                              <p className="text-gray-400 text-sm mb-3">{category.description}</p>
+                              <div className="flex items-center gap-4 text-xs text-gray-500">
+                                <span>{category.topics} tópicos</span>
+                                <span>{category.posts} posts</span>
+                                <span>Última atividade: {category.lastActivity}</span>
+                              </div>
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
                 </div>
-              ))}
+
+                {/* Sidebar do Fórum */}
+                <div>
+                  <h3 className="text-lg font-semibold text-white mb-4">Criar Nova Discussão</h3>
+                  <Card className="bg-gray-900 border-gray-700 mb-6">
+                    <CardContent className="p-4">
+                      <Button className="w-full bg-green-600 hover:bg-green-700 text-white">
+                        <Plus className="w-4 h-4 mr-2" />
+                        Nova Discussão
+                      </Button>
+                    </CardContent>
+                  </Card>
+
+                  <h3 className="text-lg font-semibold text-white mb-4">Discussões Recentes</h3>
+                  <div className="space-y-3">
+                    {[
+                      { title: "Como aumentar conversão em 200%", author: "João Silva", time: "2h" },
+                      { title: "Melhores práticas para SMS", author: "Maria Santos", time: "4h" },
+                      { title: "Quiz para e-commerce", author: "Pedro Costa", time: "6h" },
+                      { title: "Automação de WhatsApp", author: "Ana Paula", time: "1d" }
+                    ].map((topic, index) => (
+                      <Card key={index} className="bg-gray-900 border-gray-700 hover:bg-gray-800 transition-colors">
+                        <CardContent className="p-3">
+                          <h4 className="text-sm font-medium text-white mb-1">{topic.title}</h4>
+                          <div className="flex items-center justify-between text-xs text-gray-400">
+                            <span>por {topic.author}</span>
+                            <span>{topic.time}</span>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                </div>
+              </div>
             </div>
           )}
 
@@ -600,7 +736,7 @@ export default function Dashboard() {
                             <span>{analytics.views} visualizações</span>
                             <span>{analytics.leads} leads</span>
                           </div>
-                          <div className="flex gap-2">
+                          <div className="flex gap-1">
                             <Link href={`/quizzes/${quiz.id}/edit`}>
                               <Button size="sm" variant="outline" className="dashboard-button">
                                 <Edit className="w-3 h-3 mr-1" />
@@ -639,7 +775,7 @@ export default function Dashboard() {
               ) : (
                 <div className="text-center py-8">
                   <p className="dashboard-text-muted mb-4">Você ainda não criou nenhum quiz.</p>
-                  <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                  <div className="flex flex-col sm:flex-row gap-2 justify-center">
                     <Link href="/quizzes/new">
                       <Button>
                         <Plus className="w-4 h-4 mr-2" />
@@ -667,7 +803,7 @@ export default function Dashboard() {
           </Card>
 
           {/* Ações Rápidas */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
             <Link href="/analytics">
               <Card className="dashboard-card hover:shadow-lg transition-shadow cursor-pointer">
                 <CardContent className="p-4 text-center">

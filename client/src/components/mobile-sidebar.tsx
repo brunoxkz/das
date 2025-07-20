@@ -112,7 +112,7 @@ export function MobileSidebar({ isOpen, onClose }: MobileSidebarProps) {
                         : "hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300"
                     )}
                   >
-                    <item.icon className="w-5 h-5" />
+                    <item.icon className="w-5 h-5 flex-shrink-0" />
                     <span className="font-medium">{item.title}</span>
                     {item.badge && (
                       <Badge 
@@ -148,7 +148,7 @@ export function MobileSidebar({ isOpen, onClose }: MobileSidebarProps) {
                         : "hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300"
                     )}
                   >
-                    <item.icon className="w-5 h-5" />
+                    <item.icon className="w-5 h-5 flex-shrink-0" />
                     <span className="font-medium">{item.title}</span>
                   </div>
                 </Link>
@@ -173,7 +173,7 @@ export function MobileSidebar({ isOpen, onClose }: MobileSidebarProps) {
                         : "hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300"
                     )}
                   >
-                    <item.icon className="w-5 h-5" />
+                    <item.icon className="w-5 h-5 flex-shrink-0" />
                     <span className="font-medium">{item.title}</span>
                   </div>
                 </Link>
