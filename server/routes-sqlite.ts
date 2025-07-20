@@ -10209,33 +10209,47 @@ console.log('Vendzz Checkout Embed carregado para plano: ${planId}');
     }
   });
 
-  // NOVOS ENDPOINTS PARA SINCRONIZAÇÃO COM EXTENSÃO (carregamento dinâmico)
+  // NOVOS ENDPOINTS PARA SINCRONIZAÇÃO COM EXTENSÃO - TODOS OS 5 TIPOS
   
-  // Sync apenas novos leads (reduz 90% do tráfego)
+  // Sync unificado para todos os tipos (WhatsApp, SMS, Email, Telegram, Voice)
+  app.post("/api/extension/sync-all-types", verifyJWT, async (req, res) => {
+    const { allTypesSyncEndpoints } = await import('./extension-sync-all-types');
+    return allTypesSyncEndpoints.syncCampaignLeads(req, res);
+  });
+  
+  // Configurações por tipo de campanha
+  app.get("/api/extension/campaign/:campaignId/:type", verifyJWT, async (req, res) => {
+    const { allTypesSyncEndpoints } = await import('./extension-sync-all-types');
+    return allTypesSyncEndpoints.getCampaignConfigByType(req, res);
+  });
+  
+  // Status do usuário com todos os tipos de créditos
+  app.get("/api/extension/user-status-all", verifyJWT, async (req, res) => {
+    const { allTypesSyncEndpoints } = await import('./extension-sync-all-types');
+    return allTypesSyncEndpoints.getAllTypesUserStatus(req, res);
+  });
+
+  // ENDPOINTS LEGADOS (compatibilidade)
   app.post("/api/extension/sync-leads", verifyJWT, async (req, res) => {
     const { extensionSyncEndpoints } = await import('./extension-sync-endpoints');
     return extensionSyncEndpoints.syncNewLeads(req, res);
   });
   
-  // Configurações leves da campanha
   app.get("/api/extension/campaign/:campaignId", verifyJWT, async (req, res) => {
     const { extensionSyncEndpoints } = await import('./extension-sync-endpoints');
     return extensionSyncEndpoints.getCampaignConfig(req, res);
   });
   
-  // Atualizar estatísticas em tempo real
   app.post("/api/extension/campaign/:campaignId/stats", verifyJWT, async (req, res) => {
     const { extensionSyncEndpoints } = await import('./extension-sync-endpoints');
     return extensionSyncEndpoints.updateCampaignStats(req, res);
   });
   
-  // Status do usuário (créditos, plano)
   app.get("/api/extension/user-status", verifyJWT, async (req, res) => {
     const { extensionSyncEndpoints } = await import('./extension-sync-endpoints');
     return extensionSyncEndpoints.getUserStatus(req, res);
   });
   
-  // Marcar telefones como processados
   app.post("/api/extension/mark-processed", verifyJWT, async (req, res) => {
     const { extensionSyncEndpoints } = await import('./extension-sync-endpoints');
     return extensionSyncEndpoints.markPhonesAsProcessed(req, res);

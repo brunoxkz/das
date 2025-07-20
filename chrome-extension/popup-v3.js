@@ -64,8 +64,8 @@ class PopupManager {
 
   async getLocalCampaigns() {
     return new Promise((resolve) => {
-      chrome.storage.local.get(['vendzz_campaigns'], (result) => {
-        const campaigns = result.vendzz_campaigns || [];
+      chrome.storage.local.get(['vendzz_all_campaigns'], (result) => {
+        const campaigns = result.vendzz_all_campaigns || [];
         resolve(campaigns);
       });
     });
@@ -121,21 +121,73 @@ class PopupManager {
       return;
     }
 
-    const campaignsHtml = campaigns.map(campaign => `
-      <div class="campaign-item">
-        <div>
-          <div class="campaign-name">${campaign.name}</div>
-          <div style="font-size: 12px; opacity: 0.7;">
-            ${campaign.stats?.sent || 0} enviados | ${campaign.stats?.failed || 0} falharam
+    // Agrupar campanhas por tipo
+    const campaignsByType = this.groupCampaignsByType(campaigns);
+
+    const campaignsHtml = Object.keys(campaignsByType).map(type => {
+      const typeCampaigns = campaignsByType[type];
+      const typeIcon = this.getTypeIcon(type);
+      const typeLabel = this.getTypeLabel(type);
+      
+      const campaignsList = typeCampaigns.map(campaign => `
+        <div class="campaign-item">
+          <div>
+            <div class="campaign-name">${campaign.name}</div>
+            <div style="font-size: 12px; opacity: 0.7;">
+              ${campaign.stats?.sent || 0} enviados | ${campaign.stats?.failed || 0} falharam
+            </div>
+          </div>
+          <div class="campaign-status ${campaign.isActive ? 'active' : 'paused'}">
+            ${campaign.isActive ? 'Ativa' : 'Pausada'}
           </div>
         </div>
-        <div class="campaign-status ${campaign.isActive ? 'active' : 'paused'}">
-          ${campaign.isActive ? 'Ativa' : 'Pausada'}
+      `).join('');
+
+      return `
+        <div class="campaign-type-group">
+          <div class="campaign-type-header">
+            ${typeIcon} ${typeLabel} (${typeCampaigns.length})
+          </div>
+          ${campaignsList}
         </div>
-      </div>
-    `).join('');
+      `;
+    }).join('');
 
     this.campaignsList.innerHTML = campaignsHtml;
+  }
+
+  groupCampaignsByType(campaigns) {
+    const grouped = {};
+    campaigns.forEach(campaign => {
+      const type = campaign.type || 'whatsapp'; // fallback para compatibilidade
+      if (!grouped[type]) {
+        grouped[type] = [];
+      }
+      grouped[type].push(campaign);
+    });
+    return grouped;
+  }
+
+  getTypeIcon(type) {
+    const icons = {
+      whatsapp: '💬',
+      sms: '📱',
+      email: '📧',
+      telegram: '✈️',
+      voice: '📞'
+    };
+    return icons[type] || '❓';
+  }
+
+  getTypeLabel(type) {
+    const labels = {
+      whatsapp: 'WhatsApp',
+      sms: 'SMS',
+      email: 'Email',
+      telegram: 'Telegram',
+      voice: 'Voice'
+    };
+    return labels[type] || type.toUpperCase();
   }
 
   showOfflineMessage() {
@@ -184,7 +236,7 @@ class PopupManager {
       }
 
       // Salvar campanhas atualizadas
-      chrome.storage.local.set({ vendzz_campaigns: campaigns });
+      chrome.storage.local.set({ vendzz_all_campaigns: campaigns });
 
       // Mostrar resultado
       this.showSyncResult(totalLeadsSynced);
