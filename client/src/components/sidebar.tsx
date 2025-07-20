@@ -475,7 +475,7 @@ export function Sidebar() {
           <div className="mb-3">
             <Link href="/quizzes/new">
               <Button className={cn(
-                "w-full justify-center btn-criar-quiz",
+                "w-full justify-center bg-green-600 hover:bg-green-700 text-white shock-green shadow-lg",
                 isCollapsed ? "w-10 h-10 p-0" : "px-4",
                 !isCollapsed && "justify-start"
               )}>

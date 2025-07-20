@@ -341,7 +341,7 @@ export default function Dashboard() {
           {/* Header */}
           <div className="flex items-center justify-between mb-8">
             <div>
-              <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+              <h1 className="text-3xl font-bold text-green-600">
                 Dashboard
               </h1>
               <p className="dashboard-text-secondary mt-2">
@@ -360,13 +360,13 @@ export default function Dashboard() {
               <Button
                 variant="outline"
                 onClick={() => setShowTutorial(true)}
-                className="dashboard-button"
+                className="bg-gradient-to-r from-green-50 to-emerald-50 border-green-200 text-green-700 hover:from-green-100 hover:to-emerald-100 hover:border-green-300 transition-all duration-300 shadow-sm font-semibold"
               >
                 <BookOpen className="w-4 h-4 mr-2" />
-                Tutorial
+                🎯 Tutorial Completo
               </Button>
               <Link href="/quizzes/new">
-                <Button className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 shadow-lg">
+                <Button className="bg-green-600 hover:bg-green-700 shadow-lg text-white shock-green">
                   <Plus className="w-4 h-4 mr-2" />
                   Criar Quiz
                 </Button>

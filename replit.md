@@ -265,6 +265,17 @@ O sistema utiliza Stripe Payment Intent para processar pagamentos únicos de R$ 
 
 ```
 Changelog:
+- July 20, 2025. VERDE VENDZZ BRANDING COMPLETO DASHBOARD E SIDEBAR - Atualização visual completa com consistência de marca:
+  * Título "Dashboard" atualizado para cor verde Vendzz (#16a34a) removendo gradiente azul/roxo
+  * Botão "Criar Quiz" no dashboard com fundo verde sólido e efeito shock-green
+  * Botão "Criar Quiz" na sidebar atualizado para verde Vendzz consistente com shadow
+  * Botão "Tutorial" melhorado com gradiente verde claro e emoji 🎯 "Tutorial Completo"
+  * Cores padronizadas: bg-green-600 hover:bg-green-700 para todos os botões principais
+  * Efeito shock-green mantido em todos os botões de ação primária
+  * Interface consistente entre dashboard e sidebar com identidade visual unificada
+  * Sistema de cores Vendzz aplicado: verde primário para ações principais, gradientes suaves para secundárias
+  * Experiência visual aprimorada: botões com contraste adequado e feedback hover otimizado
+Changelog:
 - July 20, 2025. SISTEMA UPLOAD .TXT 100% FUNCIONAL - Sistema completo de upload de arquivos .txt para campanhas SMS e WhatsApp implementado com sucesso:
   * Handler seguro txt-upload-handler.ts criado com validação completa e sanitização automática
   * Endpoints integrados: POST /api/sms-campaigns/upload-txt e POST /api/whatsapp-campaigns/upload-txt
