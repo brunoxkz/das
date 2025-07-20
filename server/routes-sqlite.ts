@@ -3456,16 +3456,20 @@ export function registerSQLiteRoutes(app: Express): Server {
     }
   });
 
-  // Get specific quiz
+  // Get specific quiz - CORREÇÃO CRÍTICA para funcionar com schema real
   app.get("/api/quizzes/:id", verifyJWT, async (req: any, res) => {
     try {
-      const quiz = await storage.getQuiz(req.params.id);
+      console.log(`🔍 ENDPOINT getQuiz: Buscando quiz ID = ${req.params.id}`);
+      
+      // Usar storage direto com correção
+      const quiz = await storage.getQuizById(req.params.id);
       
       if (!quiz) {
+        console.log(`❌ ENDPOINT getQuiz: Quiz ${req.params.id} não encontrado`);
         return res.status(404).json({ message: "Quiz not found" });
       }
 
-      // Always allow access to own quizzes (admin@vendzz.com is an admin)
+      console.log(`✅ ENDPOINT getQuiz: Quiz encontrado - ID: ${quiz.id}, Title: ${quiz.title}, Owner: ${quiz.userId}`);
       res.json(quiz);
     } catch (error) {
       console.error("Get quiz error:", error);

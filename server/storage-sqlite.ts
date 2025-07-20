@@ -1009,9 +1009,144 @@ export class SQLiteStorage implements IStorage {
     }
   }
 
+  // Método funcional direto para quiz lookup
+  async getQuizById(id: string): Promise<any> {
+    try {
+      console.log(`🔍 STORAGE getQuizById: Buscando quiz ID = ${id}`);
+      
+      // Usar query SQL direta com schema REAL da database
+      const result = sqlite.prepare(`
+        SELECT * FROM quizzes WHERE id = ?
+      `).get(id);
+      
+      console.log(`📊 STORAGE getQuizById: Resultado =`, result ? 'ENCONTRADO' : 'VAZIO');
+      
+      if (result) {
+        const rawQuiz = result as any;
+        
+        // Converter para formato esperado pelo código
+        const quiz = {
+          id: rawQuiz.id,
+          title: rawQuiz.title || 'Quiz Importado',
+          description: rawQuiz.description || '',
+          userId: rawQuiz.userId,
+          structure: {
+            pages: rawQuiz.elements ? JSON.parse(rawQuiz.elements) : [],
+            settings: rawQuiz.settings ? JSON.parse(rawQuiz.settings) : {}
+          },
+          isPublished: true,
+          settings: rawQuiz.settings ? JSON.parse(rawQuiz.settings) : {},
+          createdAt: rawQuiz.created_at ? new Date(rawQuiz.created_at) : new Date(),
+          updatedAt: rawQuiz.updated_at ? new Date(rawQuiz.updated_at) : new Date()
+        };
+        
+        console.log(`✅ STORAGE getQuizById: Quiz convertido - ID: ${quiz.id}, Title: ${quiz.title}, Owner: ${quiz.userId}`);
+        return quiz;
+      } else {
+        console.log(`❌ STORAGE getQuizById: Quiz ${id} não encontrado no banco`);
+        return undefined;
+      }
+    } catch (error) {
+      console.error(`💥 STORAGE getQuizById: Erro ao buscar quiz ${id}:`, error);
+      return undefined;
+    }
+  }
+
   async getQuiz(id: string): Promise<Quiz | undefined> {
-    const [quiz] = await db.select().from(quizzes).where(eq(quizzes.id, id));
-    return quiz || undefined;
+    try {
+      console.log(`🔍 STORAGE getQuiz: Buscando quiz ID = ${id}`);
+      
+      // Usar query SQL direta usando instância sqlite
+      const result = sqlite.prepare(`
+        SELECT id, title, description, userId, elements, pages, theme, settings, status, 
+               created_at, updated_at, variables, page_data, original_url, imported_at
+        FROM quizzes 
+        WHERE id = ?
+      `).get(id);
+      
+      console.log(`📊 STORAGE getQuiz: Resultado =`, result ? 'ENCONTRADO' : 'VAZIO');
+      
+      if (result) {
+        const rawQuiz = result as any;
+        
+        // Converter para formato esperado pelo código com fields obrigatórios
+        const quiz = {
+          id: rawQuiz.id,
+          title: rawQuiz.title || 'Quiz Importado',
+          description: rawQuiz.description || '',
+          userId: rawQuiz.userId,
+          structure: {
+            pages: rawQuiz.elements ? JSON.parse(rawQuiz.elements) : [],
+            settings: rawQuiz.settings ? JSON.parse(rawQuiz.settings) : {}
+          },
+          isPublished: true,
+          isSuperAffiliate: false,
+          settings: rawQuiz.settings ? JSON.parse(rawQuiz.settings) : {},
+          design: null,
+          designConfig: null,
+          logoUrl: null,
+          faviconUrl: null,
+          facebookPixel: null,
+          googlePixel: null,
+          ga4Pixel: null,
+          taboolaPixel: null,
+          pinterestPixel: null,
+          linkedinPixel: null,
+          outbrainPixel: null,
+          mgidPixel: null,
+          customHeadScript: null,
+          utmTrackingCode: null,
+          pixelEmailMarketing: false,
+          pixelSMS: false,
+          pixelDelay: false,
+          trackingPixels: null,
+          enableWhatsappAutomation: false,
+          antiWebViewEnabled: false,
+          detectInstagram: false,
+          detectFacebook: false,
+          detectTikTok: false,
+          detectOthers: false,
+          enableIOS17: false,
+          enableOlderIOS: false,
+          enableAndroid: false,
+          safeMode: true,
+          redirectDelay: 0,
+          debugMode: false,
+          enableBackRedirect: false,
+          backRedirectUrl: null,
+          backRedirectMessage: null,
+          backRedirectDelay: 0,
+          enableGeoLocation: false,
+          allowedCountries: null,
+          blockedCountries: null,
+          geoRedirectUrl: null,
+          enableVariableCapture: false,
+          captureVariables: null,
+          enablePixelDelay: false,
+          pixelDelayTime: 0,
+          pixelDelayConditions: null,
+          enableABTesting: false,
+          abTestingRules: null,
+          enableConditionalLogic: false,
+          conditionalRules: null,
+          enableAdvancedTracking: false,
+          advancedTrackingConfig: null,
+          enableSmartRedirection: false,
+          smartRedirectionRules: null,
+          createdAt: rawQuiz.created_at ? new Date(rawQuiz.created_at) : new Date(),
+          updatedAt: rawQuiz.updated_at ? new Date(rawQuiz.updated_at) : new Date()
+        };
+        
+        console.log(`✅ STORAGE getQuiz: Quiz convertido - ID: ${quiz.id}, Title: ${quiz.title}, Owner: ${quiz.userId}`);
+        return quiz as Quiz;
+      } else {
+        console.log(`❌ STORAGE getQuiz: Quiz ${id} não encontrado no banco`);
+        return undefined;
+      }
+    } catch (error) {
+      console.error(`💥 STORAGE getQuiz: Erro ao buscar quiz ${id}:`, error);
+      return undefined;
+    }
   }
 
   async createQuiz(quiz: InsertQuiz): Promise<Quiz> {
