@@ -191,9 +191,11 @@ export default function LoginPage() {
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
           <div className="flex justify-center mb-4">
-            <div className="text-3xl font-bold text-black">
-              VENDZZ
-            </div>
+            <img 
+              src="https://vendzz.com.br/wp-content/uploads/2024/12/logo-vendzz.png" 
+              alt="Vendzz" 
+              className="h-16 w-auto"
+            />
           </div>
           <CardDescription>
             Plataforma de Quiz Marketing para Captação de Leads

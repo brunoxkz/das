@@ -227,10 +227,10 @@ export default function Landing() {
       }`}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
-            {/* Logo - Always visible */}
+            {/* Logo - Changes based on theme */}
             <div className="flex items-center">
               <img 
-                src="/logo-vendzz-white-green.png" 
+                src={theme === 'dark' ? "/logo-vendzz-white-green.png" : "https://vendzz.com.br/wp-content/uploads/2024/12/logo-vendzz.png"} 
                 alt="Vendzz" 
                 className="h-8 md:h-10 w-auto"
               />
