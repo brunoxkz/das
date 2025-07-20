@@ -5383,11 +5383,11 @@ export class SQLiteStorage implements IStorage {
     try {
       const stmt = sqlite.prepare(`
         INSERT OR REPLACE INTO push_subscriptions 
-        (user_id, endpoint, p256dh_key, auth_key, is_active, created_at, updated_at)
+        (userId, endpoint, p256dhKey, authKey, isActive, createdAt, updatedAt)
         VALUES (?, ?, ?, ?, ?, ?, ?)
       `);
       
-      const now = new Date().toISOString();
+      const now = Math.floor(Date.now() / 1000);
       stmt.run(
         subscriptionData.userId,
         subscriptionData.endpoint,

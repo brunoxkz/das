@@ -1106,6 +1106,8 @@ export interface TypebotResult {
   timestamp: Date;
 }
 
+
+
 export interface TypebotMessageContent {
   text?: string;
   richText?: any;
