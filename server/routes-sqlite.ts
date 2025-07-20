@@ -18390,7 +18390,7 @@ app.get("/api/whatsapp-extension/pending", verifyJWT, async (req: any, res: Resp
           
           const currentTime = new Date().toISOString();
           
-          db.prepare(insertQuery).run(
+          sqlite.prepare(insertQuery).run(
             quizId,
             userId, 
             funnelData.title,

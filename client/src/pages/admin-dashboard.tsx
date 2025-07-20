@@ -67,7 +67,7 @@ export default function AdminDashboard() {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
   // Check admin access
-  if (user?.email !== "bruno@vendzz.com") {
+  if (user?.email !== "bruno@vendzz.com" && user?.email !== "admin@vendzz.com") {
     return (
       <div className="flex items-center justify-center h-screen">
         <div className="text-center">

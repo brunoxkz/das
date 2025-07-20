@@ -9,6 +9,7 @@ import { ThemeToggle } from "@/components/theme-toggle";
 // import { useLanguage } from "@/hooks/useLanguage";
 import { useSidebar } from "@/hooks/useSidebar";
 import { useState } from "react";
+import { MobileSidebar, FloatingMobileMenu } from "@/components/mobile-sidebar";
 
 import { 
   BarChart3, 
@@ -64,6 +65,7 @@ export function Sidebar() {
 
   const { isCollapsed, toggleSidebar } = useSidebar();
   const [expandedCategories, setExpandedCategories] = useState<string[]>(["Principal"]);
+  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
 
   // Buscar dados dos quizzes em tempo real
   const { data: quizzes } = useQuery({
@@ -583,6 +585,21 @@ export function Sidebar() {
           </div>
         )}
       </div>
+      
+      {/* Mobile Components */}
+      <MobileSidebar 
+        isOpen={isMobileSidebarOpen} 
+        onClose={() => setIsMobileSidebarOpen(false)} 
+      />
+      <FloatingMobileMenu />
+      
+      {/* Mobile Toggle Button */}
+      <button
+        onClick={() => setIsMobileSidebarOpen(!isMobileSidebarOpen)}
+        className="fixed top-4 left-4 z-50 bg-gradient-to-r from-green-500 to-blue-500 text-white p-3 rounded-lg shadow-lg md:hidden hover:from-green-600 hover:to-blue-600 transition-all duration-200"
+      >
+        <Menu className="w-5 h-5" />
+      </button>
     </aside>
   );
 }
