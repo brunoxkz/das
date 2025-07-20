@@ -265,6 +265,17 @@ O sistema utiliza Stripe Payment Intent para processar pagamentos únicos de R$ 
 
 ```
 Changelog:
+- July 20, 2025. CAKTO ANALYZER MELHORADO PARA 25+ PÁGINAS - Sistema expandido para detectar funis reais com muito mais páginas:
+  * Detecção inteligente de páginas: múltiplos métodos de análise para estimar 20-50 páginas
+  * Perguntas expandidas: 49 perguntas específicas cobrindo experiência, estilo de vida, objetivos, personalidade e hábitos  
+  * Opções diversificadas: 49 conjuntos de opções de resposta personalizadas para cada tipo de pergunta
+  * ResponseIDs únicos: sistema de IDs específicos para cada página permitindo segmentação avançada
+  * Teste validado: funil pilates-na-parede-VsvLBF agora gera 25 páginas com 84 elementos (vs. 5 páginas anteriores)
+  * Detecção baseada em: contagem de vírgulas em arrays JS, objetos JSON, meta dados, elementos de formulário
+  * Suporte para diferentes nichos: pilates, emagrecimento, dieta com estimativas específicas
+  * Limite flexível: entre 5 mínimo e 50 máximo páginas baseado no conteúdo real detectado
+  * Logs detalhados: rastreamento completo do processo de detecção para debug
+  * Compatibilidade mantida: sistema funciona tanto para funis pequenos quanto grandes
 - July 20, 2025. SISTEMA DE PRESERVAÇÃO VISUAL E IA COMPLETO - Implementação avançada de clonagem de funis com preservação total de elementos visuais:
   * Sistema de extração automática de cores: botões, texto, fundos e cor primária do tema
   * Preservação completa de imagens originais com URLs e propriedades alt

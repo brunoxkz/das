@@ -1754,33 +1754,90 @@ export class CompleteAnalyzer {
   }
 
   private static estimateCaktoPages($: cheerio.CheerioAPI, html: string): number {
-    // Para Cakto, tipicamente é um quiz com múltiplas questões
     const scriptContent = $('script').text();
     
-    // Buscar por indicadores de páginas no JavaScript
+    // Múltiplos métodos de detecção para páginas Cakto
+    let estimatedPages = 20; // Padrão mais alto baseado no feedback do usuário
+    
+    // Método 1: Buscar por indicadores de páginas no JavaScript
     const pageIndicators = [
       /questions?\s*:\s*\[[\s\S]*?\]/gi,
       /steps?\s*:\s*\[[\s\S]*?\]/gi,
-      /pages?\s*:\s*\[[\s\S]*?\]/gi
+      /pages?\s*:\s*\[[\s\S]*?\]/gi,
+      /quiz[_-]?data\s*:\s*\[[\s\S]*?\]/gi,
+      /form[_-]?pages\s*:\s*\[[\s\S]*?\]/gi
     ];
-    
-    let estimatedPages = 5; // Default para quiz
     
     pageIndicators.forEach(pattern => {
       const matches = scriptContent.match(pattern);
       if (matches) {
-        // Contar elementos dentro dos arrays
         matches.forEach(match => {
+          // Contar vírgulas para estimar elementos em arrays
           const commas = (match.match(/,/g) || []).length;
           if (commas > 0) {
             estimatedPages = Math.max(estimatedPages, commas + 1);
+          }
+          
+          // Contar objetos JSON dentro do match
+          const objects = (match.match(/\{[^}]*\}/g) || []).length;
+          if (objects > 0) {
+            estimatedPages = Math.max(estimatedPages, objects);
           }
         });
       }
     });
     
-    // Para funis da Cakto, geralmente entre 5-15 páginas
-    return Math.min(Math.max(estimatedPages, 5), 15);
+    // Método 2: Buscar por números específicos no código
+    const numberMatches = scriptContent.match(/\b\d{1,2}\b/g);
+    if (numberMatches) {
+      const numbers = numberMatches.map(n => parseInt(n)).filter(n => n >= 10 && n <= 50);
+      if (numbers.length > 0) {
+        estimatedPages = Math.max(estimatedPages, Math.max(...numbers));
+      }
+    }
+    
+    // Método 3: Buscar por meta dados ou configurações
+    const metaIndicators = [
+      /total[_-]?pages?\s*[=:]\s*(\d+)/gi,
+      /page[_-]?count\s*[=:]\s*(\d+)/gi,
+      /quiz[_-]?length\s*[=:]\s*(\d+)/gi,
+      /step[_-]?count\s*[=:]\s*(\d+)/gi
+    ];
+    
+    metaIndicators.forEach(pattern => {
+      const matches = scriptContent.match(pattern);
+      if (matches) {
+        matches.forEach(match => {
+          const numberMatch = match.match(/(\d+)/);
+          if (numberMatch) {
+            const count = parseInt(numberMatch[1]);
+            if (count >= 5 && count <= 50) {
+              estimatedPages = Math.max(estimatedPages, count);
+            }
+          }
+        });
+      }
+    });
+    
+    // Método 4: Análise do HTML por elementos de formulário
+    const formElements = $('input, select, textarea, button[type="submit"]').length;
+    if (formElements > 10) {
+      // Estimar 2-3 elementos por página
+      const pagesFromElements = Math.ceil(formElements / 2.5);
+      estimatedPages = Math.max(estimatedPages, pagesFromElements);
+    }
+    
+    // Método 5: Para URLs específicas conhecidas (pilates, etc.)
+    const url = html.toLowerCase();
+    if (url.includes('pilates') || url.includes('emagrecimento') || url.includes('dieta')) {
+      estimatedPages = Math.max(estimatedPages, 25); // Quizzes de nicho são mais longos
+    }
+    
+    // Limitar entre 5 e 50 páginas, mas padrão mais alto
+    const finalPages = Math.min(Math.max(estimatedPages, 20), 50);
+    
+    console.log(`🔍 Detecção avançada: ${finalPages} páginas (baseado em múltiplos métodos)`);
+    return finalPages;
   }
 
   private static determineCaktoPageType(pageNumber: number, totalPages: number): { title: string, type: string, elements: string[] } {
@@ -2007,25 +2064,78 @@ export class CompleteAnalyzer {
     return elements;
   }
 
-  // Métodos auxiliares para perguntas específicas de pilates
+  // Métodos auxiliares para perguntas expandidas (suporte para 50+ páginas)
   private static getCaktoQuestionText(pageNumber: number): string {
     const questions = [
-      'Qual é o seu nível de experiência com pilates?',
+      // Páginas 2-9: Perguntas básicas
+      'Qual é o seu nível de experiência?',
       'Qual é o seu principal objetivo?',
-      'Quanto tempo você tem disponível para treinar?',
+      'Quanto tempo você tem disponível?',
       'Você tem alguma limitação física?',
-      'Qual horário prefere treinar?',
+      'Qual horário prefere?',
       'Você prefere treinos mais intensos ou relaxantes?',
       'Qual área do corpo quer focar mais?',
-      'Já praticou pilates na parede antes?'
+      'Já praticou este método antes?',
+      
+      // Páginas 10-17: Perguntas sobre estilo de vida
+      'Como está seu nível de estresse atualmente?',
+      'Qual é sua experiência com exercícios?',
+      'Você prefere treinar sozinho ou em grupo?',
+      'Qual é sua motivação principal?',
+      'Como você avalia sua flexibilidade atual?',
+      'Você tem preferência por equipamentos?',
+      'Qual é seu nível de energia pela manhã?',
+      'Como você se sente em relação ao seu corpo?',
+      
+      // Páginas 18-25: Perguntas sobre objetivos específicos
+      'Qual resultado você quer ver primeiro?',
+      'Em quanto tempo quer ver resultados?',
+      'Você já tentou outros métodos?',
+      'O que mais te motiva a começar?',
+      'Qual é sua maior dificuldade atual?',
+      'Você prefere treinos variados ou rotina?',
+      'Como você lida com desafios?',
+      'Qual é sua prioridade número 1?',
+      
+      // Páginas 26-33: Perguntas sobre personalidade
+      'Você se considera uma pessoa disciplinada?',
+      'Como você prefere receber orientações?',
+      'Você gosta de acompanhar progresso?',
+      'Qual tipo de feedback te motiva mais?',
+      'Você prefere começar gradualmente?',
+      'Como você reage a mudanças na rotina?',
+      'Você se considera competitivo?',
+      'Qual ambiente de treino prefere?',
+      
+      // Páginas 34-41: Perguntas sobre hábitos
+      'Qual é sua rotina de sono?',
+      'Como está sua alimentação atualmente?',
+      'Você costuma se exercitar regularmente?',
+      'Qual é seu maior obstáculo para exercitar?',
+      'Você prefere treinos curtos ou longos?',
+      'Como você se mantém motivado?',
+      'Você tem apoio familiar para treinar?',
+      'Qual é seu momento favorito do dia?',
+      
+      // Páginas 42-50: Perguntas finais e específicas
+      'O que mais te preocupa ao começar?',
+      'Você tem alguma condição médica?',
+      'Qual é sua expectativa realista?',
+      'Você está pronto para se comprometer?',
+      'O que te faria desistir?',
+      'Como você celebra suas conquistas?',
+      'Você prefere acompanhamento personalizado?',
+      'Qual é seu sonho de transformação?',
+      'Está pronto para começar hoje mesmo?'
     ];
     
     const questionIndex = pageNumber - 2; // Ajustar porque página 1 é intro
-    return questions[questionIndex] || 'Qual dessas opções melhor descreve você?';
+    return questions[questionIndex] || `Qual dessas opções melhor descreve você? (Pergunta ${pageNumber - 1})`;
   }
 
   private static getCaktoQuestionOptions(pageNumber: number): string[] {
     const optionSets = [
+      // Básicas (2-9)
       ['Iniciante - Nunca pratiquei', 'Intermediário - Já tenho experiência', 'Avançado - Pratico regularmente', 'Profissional - Sou instrutor'],
       ['Perder peso', 'Ganhar flexibilidade', 'Fortalecer músculos', 'Melhorar postura', 'Reduzir dores'],
       ['15-30 minutos', '30-45 minutos', '45-60 minutos', 'Mais de 1 hora'],
@@ -2033,7 +2143,58 @@ export class CompleteAnalyzer {
       ['Manhã (6h-10h)', 'Tarde (12h-17h)', 'Noite (18h-22h)', 'Madrugada (22h-6h)'],
       ['Mais intenso', 'Equilibrado', 'Mais relaxante', 'Varia conforme o dia'],
       ['Core/Abdômen', 'Pernas e glúteos', 'Braços e ombros', 'Corpo todo'],
-      ['Sim, já pratico', 'Já vi mas nunca tentei', 'Primeira vez que ouço falar', 'Prefiro pilates tradicional']
+      ['Sim, já pratico', 'Já vi mas nunca tentei', 'Primeira vez que ouço falar', 'Prefiro outros métodos'],
+      
+      // Estilo de vida (10-17)
+      ['Muito alto', 'Alto', 'Moderado', 'Baixo'],
+      ['Sedentário', 'Pouco ativo', 'Moderadamente ativo', 'Muito ativo'],
+      ['Prefiro sozinho', 'Em dupla', 'Pequenos grupos', 'Grandes grupos'],
+      ['Saúde', 'Estética', 'Performance', 'Bem-estar mental'],
+      ['Muito rígido', 'Pouco flexível', 'Moderado', 'Muito flexível'],
+      ['Sem equipamentos', 'Equipamentos básicos', 'Academia completa', 'Tanto faz'],
+      ['Muito alto', 'Alto', 'Médio', 'Baixo'],
+      ['Muito satisfeito', 'Satisfeito', 'Insatisfeito', 'Muito insatisfeito'],
+      
+      // Objetivos específicos (18-25)
+      ['Perda de peso', 'Ganho de força', 'Mais flexibilidade', 'Menos dor'],
+      ['1 mês', '3 meses', '6 meses', '1 ano'],
+      ['Sim, vários', 'Sim, alguns', 'Sim, poucos', 'Não, é o primeiro'],
+      ['Saúde', 'Aparência', 'Autoestima', 'Desafio pessoal'],
+      ['Falta de tempo', 'Falta de motivação', 'Falta de conhecimento', 'Limitações físicas'],
+      ['Variados sempre', 'Variados às vezes', 'Rotina fixa', 'Tanto faz'],
+      ['Encaro de frente', 'Vou devagar', 'Preciso de apoio', 'Evito quando possível'],
+      ['Saúde física', 'Saúde mental', 'Aparência', 'Performance'],
+      
+      // Personalidade (26-33)
+      ['Muito disciplinado', 'Disciplinado', 'Pouco disciplinado', 'Nada disciplinado'],
+      ['Instruções detalhadas', 'Explicações simples', 'Demonstrações visuais', 'Acompanhamento prático'],
+      ['Sim, sempre', 'Sim, às vezes', 'Raramente', 'Nunca'],
+      ['Elogios', 'Resultados visuais', 'Números/dados', 'Desafios'],
+      ['Sim, sempre gradual', 'Prefiro gradual', 'Gosto de intensidade', 'Vou com tudo'],
+      ['Me adapto bem', 'Me adapto devagar', 'Tenho dificuldade', 'Resisto muito'],
+      ['Muito competitivo', 'Um pouco', 'Pouco competitivo', 'Nada competitivo'],
+      ['Casa', 'Academia', 'Parque/ar livre', 'Online'],
+      
+      // Hábitos (34-41)
+      ['7-8h regulares', '6-7h regulares', 'Irregular', 'Menos de 6h'],
+      ['Muito boa', 'Boa', 'Regular', 'Precisa melhorar'],
+      ['Sim, regularmente', 'Às vezes', 'Raramente', 'Nunca'],
+      ['Falta de tempo', 'Falta de energia', 'Falta de motivação', 'Não sei como começar'],
+      ['Curtos (15-30min)', 'Médios (30-45min)', 'Longos (45-60min)', 'Muito longos (60min+)'],
+      ['Resultados visíveis', 'Sentir-me bem', 'Rotina estabelecida', 'Apoio de outros'],
+      ['Total apoio', 'Algum apoio', 'Pouco apoio', 'Nenhum apoio'],
+      ['Manhã cedo', 'Meio da manhã', 'Tarde', 'Noite'],
+      
+      // Finais (42-50)
+      ['Não conseguir', 'Me machucar', 'Não ver resultados', 'Não ter tempo'],
+      ['Sim, várias', 'Sim, algumas', 'Apenas uma', 'Nenhuma'],
+      ['Resultados rápidos', 'Resultados graduais', 'Resultados duradouros', 'Processo de aprendizado'],
+      ['Totalmente pronto', 'Pronto', 'Quase pronto', 'Ainda pensando'],
+      ['Falta de tempo', 'Não ver resultados', 'Dificuldade', 'Custo'],
+      ['Compartilho com outros', 'Celebro sozinho', 'Me dou presentes', 'Já penso no próximo objetivo'],
+      ['Sim, essencial', 'Sim, prefiro', 'Tanto faz', 'Prefiro autonomia'],
+      ['Corpo dos sonhos', 'Saúde perfeita', 'Autoconfiança total', 'Energia infinita'],
+      ['Sim, agora mesmo!', 'Sim, esta semana', 'Sim, este mês', 'Ainda estou decidindo']
     ];
     
     const optionIndex = pageNumber - 2; // Ajustar porque página 1 é intro
@@ -2042,18 +2203,34 @@ export class CompleteAnalyzer {
 
   private static getCaktoResponseId(pageNumber: number): string {
     const responseIds = [
-      'nivel_experiencia',
-      'objetivo_principal',
-      'tempo_disponivel',
-      'limitacao_fisica',
-      'horario_preferido',
-      'intensidade_treino',
-      'area_foco',
-      'experiencia_parede'
+      // Básicas (2-9)
+      'nivel_experiencia', 'objetivo_principal', 'tempo_disponivel', 'limitacao_fisica',
+      'horario_preferido', 'intensidade_treino', 'area_foco', 'experiencia_anterior',
+      
+      // Estilo de vida (10-17)
+      'nivel_estresse', 'experiencia_exercicios', 'preferencia_grupo', 'motivacao_principal',
+      'flexibilidade_atual', 'preferencia_equipamentos', 'energia_manha', 'satisfacao_corpo',
+      
+      // Objetivos específicos (18-25)
+      'resultado_prioritario', 'prazo_resultados', 'metodos_anteriores', 'maior_motivacao',
+      'maior_dificuldade', 'preferencia_variedade', 'reacao_desafios', 'prioridade_um',
+      
+      // Personalidade (26-33)
+      'nivel_disciplina', 'estilo_orientacao', 'acompanhar_progresso', 'tipo_feedback',
+      'abordagem_gradual', 'adaptacao_mudancas', 'competitividade', 'ambiente_treino',
+      
+      // Hábitos (34-41)
+      'rotina_sono', 'qualidade_alimentacao', 'frequencia_exercicio', 'maior_obstaculo',
+      'duracao_treino', 'fonte_motivacao', 'apoio_familiar', 'momento_favorito',
+      
+      // Finais (42-50)
+      'maior_preocupacao', 'condicoes_medicas', 'expectativa_realista', 'nivel_comprometimento',
+      'motivo_desistencia', 'forma_celebracao', 'acompanhamento_personalizado', 'sonho_transformacao',
+      'prontidao_inicio'
     ];
     
     const responseIndex = pageNumber - 2; // Ajustar porque página 1 é intro
-    return responseIds[responseIndex] || `resposta_${pageNumber}`;
+    return responseIds[responseIndex] || `resposta_pagina_${pageNumber}`;
   }
 
   private static getCaktoPageSettings(): any {
