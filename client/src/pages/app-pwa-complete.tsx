@@ -22,7 +22,11 @@ import {
   Home,
   PlusCircle,
   Settings,
-  Users
+  Users,
+  Send,
+  Clock,
+  Star,
+  Loader2
 } from 'lucide-react';
 import { useLocation } from 'wouter';
 import { useAuth } from '@/hooks/useAuth-jwt';
@@ -77,6 +81,110 @@ export default function AppPWAComplete() {
   const totalViews = analytics?.totalViews || 0;
   const totalLeads = analytics?.totalResponses || 0;
   const conversionRate = totalViews > 0 ? ((totalLeads / totalViews) * 100).toFixed(1) : '0.0';
+
+  // Estado para notificações
+  const [notificationPermission, setNotificationPermission] = useState<NotificationPermission>('default');
+  const [subscribed, setSubscribed] = useState(false);
+  const [notificationForm, setNotificationForm] = useState({
+    title: '',
+    message: '',
+    targetAudience: 'all', // all, quiz-users, active-users
+    urgency: 'normal', // low, normal, high
+    scheduledTime: '',
+  });
+
+  // Buscar notificações enviadas
+  const { data: notifications = [], isLoading: notificationsLoading } = useQuery({
+    queryKey: ['/api/notifications'],
+    enabled: isAuthenticated,
+  });
+
+  // Verificar permissão de notificação
+  useEffect(() => {
+    if ('Notification' in window) {
+      setNotificationPermission(Notification.permission);
+    }
+    
+    // Verificar se já está inscrito
+    if ('serviceWorker' in navigator && 'PushManager' in window) {
+      navigator.serviceWorker.ready.then(registration => {
+        return registration.pushManager.getSubscription();
+      }).then(subscription => {
+        setSubscribed(!!subscription);
+      });
+    }
+  }, []);
+
+  // Mutation para criar notificação
+  const createNotificationMutation = useMutation({
+    mutationFn: async (notificationData: typeof notificationForm) => {
+      return apiRequest('POST', '/api/notifications/send', notificationData);
+    },
+    onSuccess: () => {
+      toast({
+        title: "Notificação enviada!",
+        description: "Notificação enviada com sucesso para os usuários",
+      });
+      setNotificationForm({
+        title: '',
+        message: '',
+        targetAudience: 'all',
+        urgency: 'normal',
+        scheduledTime: '',
+      });
+      queryClient.invalidateQueries(['/api/notifications']);
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Erro ao enviar",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  });
+
+  // Solicitar permissão para notificações
+  const requestNotificationPermission = async () => {
+    if ('Notification' in window) {
+      const permission = await Notification.requestPermission();
+      setNotificationPermission(permission);
+      
+      if (permission === 'granted') {
+        // Inscrever para push notifications
+        if ('serviceWorker' in navigator && 'PushManager' in window) {
+          try {
+            const registration = await navigator.serviceWorker.ready;
+            const vapidKey = 'BCVWkiq3UCyK5i4FLCAVZfoSpn_hCMvVlorOo41tBJKWUpNLXioHup_NghaBWnaaqREmEF81HP5HW2GEHrg2zxM';
+            
+            const subscription = await registration.pushManager.subscribe({
+              userVisibleOnly: true,
+              applicationServerKey: vapidKey
+            });
+
+            // Enviar subscription para o servidor
+            await apiRequest('POST', '/api/push/subscribe', {
+              subscription: subscription.toJSON()
+            });
+
+            setSubscribed(true);
+            toast({
+              title: "Notificações ativadas!",
+              description: "Você receberá notificações em tempo real",
+            });
+          } catch (error) {
+            console.error('Erro ao inscrever para push notifications:', error);
+          }
+        }
+      }
+    }
+  };
+
+  const handleSendNotification = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (notificationForm.title && notificationForm.message) {
+      createNotificationMutation.mutate(notificationForm);
+    }
+  };
 
   // Detectar se pode instalar como PWA
   useEffect(() => {
@@ -331,6 +439,7 @@ export default function AppPWAComplete() {
               { id: 'home', label: 'Início', icon: Home },
               { id: 'quizzes', label: 'Meus Quizzes', icon: BarChart3 },
               { id: 'analytics', label: 'Analytics', icon: TrendingUp },
+              { id: 'notifications', label: 'Notificações', icon: Bell },
               { id: 'forum', label: 'Fórum', icon: MessageCircle },
               { id: 'create', label: 'Criar', icon: PlusCircle },
             ].map(tab => (
@@ -637,6 +746,252 @@ export default function AppPWAComplete() {
                   <PlusCircle className="w-4 h-4 mr-2" />
                   Nova Discussão
                 </Button>
+              </CardContent>
+            </Card>
+          </div>
+        )}
+
+        {/* Notifications Tab */}
+        {activeTab === 'notifications' && (
+          <div className="space-y-6">
+            <div className="text-center">
+              <h2 className="text-2xl font-bold text-gray-800 mb-2">Central de Notificações</h2>
+              <p className="text-gray-600">
+                Envie notificações push em tempo real para seus usuários
+              </p>
+            </div>
+
+            {/* Status de Permissões */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center space-x-2">
+                  <Bell className="w-5 h-5" />
+                  <span>Status das Notificações</span>
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="font-medium text-gray-800">
+                      Permissão: {notificationPermission === 'granted' ? 'Ativada' : 'Desativada'}
+                    </p>
+                    <p className="text-sm text-gray-600">
+                      Push Subscription: {subscribed ? 'Inscrito' : 'Não inscrito'}
+                    </p>
+                  </div>
+                  
+                  {notificationPermission !== 'granted' && (
+                    <Button
+                      onClick={requestNotificationPermission}
+                      className="bg-green-600 hover:bg-green-700"
+                    >
+                      <Bell className="w-4 h-4 mr-2" />
+                      Ativar Notificações
+                    </Button>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Formulário para Criar Notificação */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Criar Nova Notificação</CardTitle>
+                <CardDescription>
+                  Envie notificações personalizadas para seus usuários
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <form onSubmit={handleSendNotification} className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="title">Título da Notificação</Label>
+                      <Input
+                        id="title"
+                        value={notificationForm.title}
+                        onChange={(e) => setNotificationForm(prev => ({ ...prev, title: e.target.value }))}
+                        placeholder="Ex: Nova resposta no seu quiz"
+                        required
+                      />
+                    </div>
+                    
+                    <div>
+                      <Label htmlFor="urgency">Urgência</Label>
+                      <Select
+                        value={notificationForm.urgency}
+                        onValueChange={(value) => setNotificationForm(prev => ({ ...prev, urgency: value }))}
+                      >
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="low">Baixa</SelectItem>
+                          <SelectItem value="normal">Normal</SelectItem>
+                          <SelectItem value="high">Alta</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                  
+                  <div>
+                    <Label htmlFor="message">Mensagem</Label>
+                    <Textarea
+                      id="message"
+                      value={notificationForm.message}
+                      onChange={(e) => setNotificationForm(prev => ({ ...prev, message: e.target.value }))}
+                      placeholder="Descreva sua notificação..."
+                      required
+                    />
+                  </div>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="audience">Público Alvo</Label>
+                      <Select
+                        value={notificationForm.targetAudience}
+                        onValueChange={(value) => setNotificationForm(prev => ({ ...prev, targetAudience: value }))}
+                      >
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="all">Todos os usuários</SelectItem>
+                          <SelectItem value="quiz-users">Usuários com quizzes</SelectItem>
+                          <SelectItem value="active-users">Usuários ativos (últimos 7 dias)</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    
+                    <div>
+                      <Label htmlFor="scheduled">Agendar (opcional)</Label>
+                      <Input
+                        id="scheduled"
+                        type="datetime-local"
+                        value={notificationForm.scheduledTime}
+                        onChange={(e) => setNotificationForm(prev => ({ ...prev, scheduledTime: e.target.value }))}
+                      />
+                    </div>
+                  </div>
+                  
+                  <Button
+                    type="submit"
+                    className="w-full bg-green-600 hover:bg-green-700"
+                    disabled={createNotificationMutation.isPending || notificationPermission !== 'granted'}
+                  >
+                    {createNotificationMutation.isPending ? (
+                      <div className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full mr-2" />
+                    ) : (
+                      <Bell className="w-4 h-4 mr-2" />
+                    )}
+                    {notificationForm.scheduledTime ? 'Agendar Notificação' : 'Enviar Agora'}
+                  </Button>
+                </form>
+              </CardContent>
+            </Card>
+
+            {/* Templates de Notificação */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Templates Rápidos</CardTitle>
+                <CardDescription>
+                  Use templates pré-definidos para notificações comuns
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  <Button
+                    variant="outline"
+                    className="h-auto p-4 text-left"
+                    onClick={() => setNotificationForm({
+                      title: 'Nova resposta no quiz!',
+                      message: 'Alguém acabou de responder seu quiz. Veja os resultados agora!',
+                      targetAudience: 'quiz-users',
+                      urgency: 'normal',
+                      scheduledTime: '',
+                    })}
+                  >
+                    <div>
+                      <h4 className="font-medium">Nova Resposta</h4>
+                      <p className="text-sm text-gray-600">Para criadores de quiz</p>
+                    </div>
+                  </Button>
+                  
+                  <Button
+                    variant="outline"
+                    className="h-auto p-4 text-left"
+                    onClick={() => setNotificationForm({
+                      title: 'Sistema atualizado!',
+                      message: 'Confira as novidades e melhorias da plataforma.',
+                      targetAudience: 'all',
+                      urgency: 'low',
+                      scheduledTime: '',
+                    })}
+                  >
+                    <div>
+                      <h4 className="font-medium">Atualização</h4>
+                      <p className="text-sm text-gray-600">Para todos os usuários</p>
+                    </div>
+                  </Button>
+                  
+                  <Button
+                    variant="outline"
+                    className="h-auto p-4 text-left"
+                    onClick={() => setNotificationForm({
+                      title: 'Promoção especial!',
+                      message: '50% de desconto em planos premium por tempo limitado!',
+                      targetAudience: 'active-users',
+                      urgency: 'high',
+                      scheduledTime: '',
+                    })}
+                  >
+                    <div>
+                      <h4 className="font-medium">Promoção</h4>
+                      <p className="text-sm text-gray-600">Para usuários ativos</p>
+                    </div>
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Histórico de Notificações */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Histórico de Notificações</CardTitle>
+                <CardDescription>
+                  Notificações enviadas recentemente
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                {notificationsLoading ? (
+                  <div className="text-center py-4">
+                    <div className="animate-spin w-6 h-6 border-2 border-green-600 border-t-transparent rounded-full mx-auto"></div>
+                  </div>
+                ) : notifications.length > 0 ? (
+                  <div className="space-y-3">
+                    {notifications.slice(0, 10).map((notification: any, index) => (
+                      <div key={index} className="flex items-start space-x-3 p-3 border rounded-lg">
+                        <div className={`flex-shrink-0 w-2 h-2 rounded-full mt-2 ${
+                          notification.urgency === 'high' ? 'bg-red-500' :
+                          notification.urgency === 'normal' ? 'bg-blue-500' : 'bg-gray-400'
+                        }`} />
+                        <div className="flex-1">
+                          <h4 className="font-medium text-gray-800">{notification.title}</h4>
+                          <p className="text-sm text-gray-600">{notification.message}</p>
+                          <div className="flex items-center space-x-4 mt-2 text-xs text-gray-500">
+                            <span>Público: {notification.targetAudience}</span>
+                            <span>Enviado: {new Date(notification.createdAt).toLocaleDateString('pt-BR')}</span>
+                            <span>Status: Entregue</span>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-8 text-gray-500">
+                    <Bell className="w-12 h-12 mx-auto mb-4 opacity-50" />
+                    <p>Nenhuma notificação enviada ainda</p>
+                  </div>
+                )}
               </CardContent>
             </Card>
           </div>

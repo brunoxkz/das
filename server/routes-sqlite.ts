@@ -73,8 +73,8 @@ import HealthCheckSystem from './health-check-system.js';
 import WhatsAppBusinessAPI from './whatsapp-business-api';
 import { registerFacelessVideoRoutes } from './faceless-video-routes';
 import { StripeCheckoutLinkGenerator } from './stripe-checkout-link-generator';
-import { planManager } from './plan-manager';
 import { webPushService } from './web-push';
+import { planManager } from './plan-manager';
 
 // JWT Secret para validação de tokens
 const JWT_SECRET = process.env.JWT_SECRET || 'vendzz-jwt-secret-key-2024';
@@ -20650,6 +20650,179 @@ app.get("/api/whatsapp-extension/pending", verifyJWT, async (req: any, res: Resp
         error: error.message,
         timestamp: new Date().toISOString()
       });
+    }
+  });
+
+  // =============================================
+  // PWA NOTIFICATION ENDPOINTS
+  // Sistema completo de notificações push
+  // =============================================
+
+  // Subscrever usuário para notificações push
+  app.post('/api/notifications/subscribe', verifyJWT, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const { subscription } = req.body;
+
+      if (!subscription) {
+        return res.status(400).json({ error: 'Subscription é obrigatória' });
+      }
+
+      const success = await webPushService.subscribeUser(userId, subscription);
+      
+      if (success) {
+        res.json({ success: true, message: 'Usuário subscrito com sucesso' });
+      } else {
+        res.status(500).json({ error: 'Erro ao subscrever usuário' });
+      }
+    } catch (error) {
+      console.error('Erro ao subscrever para notificações:', error);
+      res.status(500).json({ error: 'Erro interno do servidor' });
+    }
+  });
+
+  // Enviar notificação para usuário específico
+  app.post('/api/notifications/send', verifyJWT, async (req: any, res) => {
+    try {
+      const { title, body, icon, url, targetUserId } = req.body;
+      const senderId = req.user.id;
+
+      if (!title || !body) {
+        return res.status(400).json({ error: 'Título e corpo são obrigatórios' });
+      }
+
+      // Se targetUserId não fornecido, enviar para o próprio usuário
+      const userId = targetUserId || senderId;
+
+      const payload = {
+        title,
+        body,
+        icon: icon || '/icon-192x192.png',
+        url: url || '/pwa-dashboard',
+        priority: 'normal' as const,
+        tag: 'custom-notification'
+      };
+
+      const success = await webPushService.sendNotificationToUser(userId, payload);
+      
+      if (success) {
+        res.json({ 
+          success: true, 
+          message: 'Notificação enviada com sucesso',
+          userId 
+        });
+      } else {
+        res.status(500).json({ error: 'Erro ao enviar notificação' });
+      }
+    } catch (error) {
+      console.error('Erro ao enviar notificação:', error);
+      res.status(500).json({ error: 'Erro interno do servidor' });
+    }
+  });
+
+  // Enviar notificação em lote para múltiplos usuários
+  app.post('/api/notifications/send-bulk', verifyJWT, async (req: any, res) => {
+    try {
+      const { title, body, icon, url, userIds } = req.body;
+
+      if (!title || !body || !userIds || !Array.isArray(userIds)) {
+        return res.status(400).json({ 
+          error: 'Título, corpo e lista de usuários são obrigatórios' 
+        });
+      }
+
+      const payload = {
+        title,
+        body,
+        icon: icon || '/icon-192x192.png',
+        url: url || '/pwa-dashboard',
+        priority: 'normal' as const,
+        tag: 'bulk-notification'
+      };
+
+      const result = await webPushService.sendBulkNotifications(userIds, payload);
+      
+      res.json({ 
+        success: true, 
+        message: 'Notificações enviadas',
+        results: result
+      });
+    } catch (error) {
+      console.error('Erro ao enviar notificações em lote:', error);
+      res.status(500).json({ error: 'Erro interno do servidor' });
+    }
+  });
+
+  // Enviar notificação de teste
+  app.post('/api/notifications/test', verifyJWT, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      
+      const success = await webPushService.sendTestNotification(userId);
+      
+      if (success) {
+        res.json({ 
+          success: true, 
+          message: 'Notificação de teste enviada com sucesso' 
+        });
+      } else {
+        res.status(500).json({ error: 'Erro ao enviar notificação de teste' });
+      }
+    } catch (error) {
+      console.error('Erro ao enviar notificação de teste:', error);
+      res.status(500).json({ error: 'Erro interno do servidor' });
+    }
+  });
+
+  // Obter estatísticas de notificações
+  app.get('/api/notifications/stats', verifyJWT, async (req: any, res) => {
+    try {
+      const stats = webPushService.getStats();
+      
+      res.json({
+        success: true,
+        ...stats,
+        vapidPublicKey: webPushService.getVapidPublicKey()
+      });
+    } catch (error) {
+      console.error('Erro ao obter estatísticas de notificações:', error);
+      res.status(500).json({ error: 'Erro interno do servidor' });
+    }
+  });
+
+  // Desinscrever usuário das notificações
+  app.delete('/api/notifications/unsubscribe', verifyJWT, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      
+      const success = await webPushService.unsubscribeUser(userId);
+      
+      if (success) {
+        res.json({ 
+          success: true, 
+          message: 'Usuário desinscrito com sucesso' 
+        });
+      } else {
+        res.status(500).json({ error: 'Erro ao desinscrever usuário' });
+      }
+    } catch (error) {
+      console.error('Erro ao desinscrever usuário:', error);
+      res.status(500).json({ error: 'Erro interno do servidor' });
+    }
+  });
+
+  // Obter chave pública VAPID para configuração do cliente
+  app.get('/api/notifications/vapid-key', async (req, res) => {
+    try {
+      const vapidPublicKey = webPushService.getVapidPublicKey();
+      
+      res.json({ 
+        success: true, 
+        vapidPublicKey 
+      });
+    } catch (error) {
+      console.error('Erro ao obter chave VAPID:', error);
+      res.status(500).json({ error: 'Erro interno do servidor' });
     }
   });
 
