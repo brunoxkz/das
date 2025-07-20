@@ -1,3 +1,4 @@
+import React from "react";
 import { Switch, Route, useLocation, Redirect } from "wouter";
 import "./index.css";
 import { Toaster } from "@/components/ui/toaster";
@@ -117,6 +118,30 @@ function App() {
   const { isAuthenticated, isLoading } = useAuth();
   const [location] = useLocation();
   const { theme } = useTheme();
+
+  // Detectar PWA standalone e redirecionar automaticamente para login-pwa
+  React.useEffect(() => {
+    const isPWAStandalone = window.matchMedia('(display-mode: standalone)').matches || 
+                            (window.navigator as any).standalone === true;
+    
+    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    
+    // Se for PWA standalone, mobile e estiver na landing page
+    if (isPWAStandalone && isMobile && location === '/') {
+      console.log('🔧 PWA Standalone detectado - redirecionando para /login-pwa');
+      window.location.href = '/login-pwa';
+      return;
+    }
+
+    // Debug para verificar detecção
+    if (isMobile) {
+      console.log('🔧 Mobile detectado:', {
+        isPWAStandalone,
+        currentLocation: location,
+        userAgent: navigator.userAgent
+      });
+    }
+  }, [location]);
 
   if (isLoading) {
     return (
