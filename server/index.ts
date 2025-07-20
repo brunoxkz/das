@@ -43,6 +43,7 @@ import {
 import UltraScaleProcessor from "./ultra-scale-processor";
 // import { quizCacheOptimizer } from "./quiz-cache-optimizer"; // DESABILITADO
 import { unifiedSystem } from "./unified-scale-system";
+import { userSimulator } from "./user-simulator";
 
 const app = express();
 
@@ -371,11 +372,21 @@ async function startServer() {
     // Email service já está disponível
     console.log('📧 Serviço de email disponível');
     
-    server.listen(PORT, "0.0.0.0", () => {
+    server.listen(PORT, "0.0.0.0", async () => {
       log(`🚀 Server running on port ${PORT}`);
       log(`🚀 SISTEMA UNIFICADO OTIMIZADO: ${MAX_DETECTION_CYCLES} ciclos/hora, intervalo 60s`);
       log(`⚡ REDUÇÃO DE 70% NO USO DE RECURSOS - SUPORTE 100.000+ USUÁRIOS`);
       log(`🔥 Sistema inteligente: 25 campanhas/ciclo + 100 telefones/campanha + delay 200ms`);
+      
+      // Inicializar simulador de usuários online
+      try {
+        const { userSimulator } = await import('./user-simulator');
+        userSimulator.startSimulation();
+        log('👥 SIMULADOR DE USUÁRIOS ONLINE INICIADO');
+        log(`📊 ${userSimulator.getOnlineUsersCount()} usuários simulados online`);
+      } catch (error) {
+        console.error('❌ Erro ao iniciar simulador de usuários:', error);
+      }
       
       log(`✅ Sistema Otimizado Inicializado - Performance Massivamente Melhorada`);
     });

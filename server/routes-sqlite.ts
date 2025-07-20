@@ -24344,6 +24344,38 @@ export function registerCheckoutRoutes(app: Express) {
     }
   });
 
+  // SIMULADOR DE USUÁRIOS ONLINE - Endpoints para estatísticas em tempo real
+  app.get('/api/users/online-stats', async (req, res) => {
+    try {
+      const userSimulator = await import('./user-simulator').then(m => m.userSimulator);
+      
+      const stats = {
+        onlineCount: userSimulator.getOnlineUsersCount(),
+        recentActivities: userSimulator.getRecentActivities(8),
+        planDistribution: userSimulator.getOnlineUsersByPlan(),
+        growth: userSimulator.getUsersGrowthStats(),
+        topCities: userSimulator.getTopCities()
+      };
+      
+      res.json(stats);
+    } catch (error) {
+      console.error('Erro ao buscar estatísticas de usuários:', error);
+      res.status(500).json({ error: 'Erro interno do servidor' });
+    }
+  });
+
+  // Endpoint para apenas usuários online (mais leve)
+  app.get('/api/users/online-count', async (req, res) => {
+    try {
+      const userSimulator = await import('./user-simulator').then(m => m.userSimulator);
+      const count = userSimulator.getOnlineUsersCount();
+      res.json({ onlineUsers: count });
+    } catch (error) {
+      console.error('Erro ao buscar contagem de usuários:', error);
+      res.json({ onlineUsers: 42 }); // Fallback
+    }
+  });
+
   // Inicializar sistema automático de regressão de planos
   console.log('🚀 INICIANDO PLAN MANAGER...');
   planManager.startAutomaticPlanRegression();
