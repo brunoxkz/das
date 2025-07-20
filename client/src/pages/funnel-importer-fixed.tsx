@@ -10,11 +10,14 @@ import {
   Upload, Code, Copy
 } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
+import QuizFullPreview from "@/components/QuizFullPreview";
 
 export default function FunnelImporter() {
   const [url, setUrl] = useState("");
   const [analyzing, setAnalyzing] = useState(false);
   const [analysisResult, setAnalysisResult] = useState<any>(null);
+  const [showQuizPreview, setShowQuizPreview] = useState(false);
+  const [previewQuiz, setPreviewQuiz] = useState<any>(null);
   const { toast } = useToast();
 
   const analyzeUrl = async () => {
@@ -197,14 +200,15 @@ export default function FunnelImporter() {
                   >
                     🎨 Editar no Quiz Builder
                   </a>
-                  <a
-                    href={`/quiz-public/${analysisResult.data.quizId || analysisResult.data.id}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex-1 bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700 text-white py-2 px-4 rounded-lg transition-colors text-center"
+                  <Button
+                    onClick={() => {
+                      setPreviewQuiz(analysisResult.data);
+                      setShowQuizPreview(true);
+                    }}
+                    className="flex-1 bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700"
                   >
                     👁️ Visualizar Quiz
-                  </a>
+                  </Button>
                 </div>
               </CardContent>
             </Card>
@@ -233,6 +237,16 @@ export default function FunnelImporter() {
             </CardContent>
           </Card>
         </div>
+
+        {/* Quiz Full Preview */}
+        <QuizFullPreview
+          quiz={previewQuiz}
+          isOpen={showQuizPreview}
+          onClose={() => {
+            setShowQuizPreview(false);
+            setPreviewQuiz(null);
+          }}
+        />
       </div>
     </div>
   );
