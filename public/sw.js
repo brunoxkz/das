@@ -186,7 +186,7 @@ async function staleWhileRevalidateStrategy(request) {
   return cachedResponse || fetchPromise;
 }
 
-// WEB PUSH NOTIFICATIONS
+// WEB PUSH NOTIFICATIONS COM VENDZZ BRANDING
 self.addEventListener('push', event => {
   console.log('🔔 Push notification recebida:', event);
   
@@ -197,26 +197,32 @@ self.addEventListener('push', event => {
   const data = event.data.json();
   
   const options = {
-    title: data.title || 'Vendzz',
+    title: data.title || '🎯 Vendzz',
     body: data.body || 'Nova notificação',
-    icon: '/icon-192x192.png',
-    badge: '/icon-72x72.png',
+    icon: data.icon || '/vendzz-icon-192.png',
+    badge: '/vendzz-icon-192.png',
     image: data.image,
     data: {
-      url: data.url || '/pwa-dashboard',
+      url: data.url || '/app-pwa-modern-2025',
       campaignId: data.campaignId,
       leadId: data.leadId,
-      timestamp: Date.now()
+      timestamp: Date.now(),
+      source: 'vendzz-pwa'
     },
     actions: [
       {
         action: 'view',
-        title: 'Ver Detalhes',
-        icon: '/icon-72x72.png'
+        title: '🚀 Abrir App',
+        icon: '/vendzz-icon-192.png'
+      },
+      {
+        action: 'dashboard',
+        title: '📊 Dashboard',
+        icon: '/vendzz-icon-192.png'
       },
       {
         action: 'dismiss',
-        title: 'Dispensar'
+        title: '❌ Fechar'
       }
     ],
     requireInteraction: data.priority === 'high',
