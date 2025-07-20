@@ -25,9 +25,9 @@ interface NotificationPayload {
 
 // Configuração Web Push (VAPID keys geradas pelo web-push)
 const VAPID_PUBLIC_KEY = process.env.VAPID_PUBLIC_KEY || 
-  'BCVWkiq3UCyK5i4FLCAVZfoSpn_hCMvVlorOo41tBJKWUpNLXioHup_NghaBWnaaqREmEF81HP5HW2GEHrg2zxM';
+  'BD9rGJpT_TjBs2r6-n3papXI9-jF_cUrvLNINWFGh5lOCzrt4XdKb0UU_Lf2vb9aowjLasXKv7Sk368muvNAVJo';
 const VAPID_PRIVATE_KEY = process.env.VAPID_PRIVATE_KEY || 
-  '6fcHIVhucJ0d1GBJ-azjpl9A9GTcse2gVbucFHsj8s4';
+  'tIbwRMUu2f-xyF50rHzme-CAmQwf-AxmvpYtkKaq2xY';
 
 const CONTACT_EMAIL = process.env.CONTACT_EMAIL || 'admin@vendzz.com';
 

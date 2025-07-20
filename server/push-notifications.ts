@@ -21,8 +21,8 @@ export interface NotificationData {
 
 export class PushNotificationSystem {
   private static vapidKeys = {
-    publicKey: 'BCqD8tXs2kU9pZjYP5vMQQzGcOIe4R9oKq6gNe3TcF1qW7aZMxPST2hJ8KnL5oQa',
-    privateKey: 'vHI3JBf5NPzYjP-QkUP7R8iStKj5I2DxB4aEjkz9C8Q'
+    publicKey: 'BD9rGJpT_TjBs2r6-n3papXI9-jF_cUrvLNINWFGh5lOCzrt4XdKb0UU_Lf2vb9aowjLasXKv7Sk368muvNAVJo',
+    privateKey: 'tIbwRMUu2f-xyF50rHzme-CAmQwf-AxmvpYtkKaq2xY'
   };
 
   static initialize() {
