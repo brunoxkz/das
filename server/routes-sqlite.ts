@@ -10490,6 +10490,49 @@ console.log('Vendzz Checkout Embed carregado para plano: ${planId}');
     }
   });
 
+  // UPLOAD .TXT PARA SMS - Disparo em massa seguro
+  app.post("/api/sms-campaigns/upload-txt", verifyJWT, async (req: any, res: Response) => {
+    const { txtUpload, TxtFileProcessor } = await import('./txt-upload-handler');
+    
+    txtUpload.single('txtFile')(req, res, async (err) => {
+      if (err) {
+        console.error('❌ Erro no upload SMS:', err);
+        return res.status(400).json({ error: err.message });
+      }
+      
+      if (!req.file) {
+        return res.status(400).json({ error: 'Nenhum arquivo enviado' });
+      }
+      
+      try {
+        // Validar arquivo
+        const validation = TxtFileProcessor.validateFileContent(req.file.path);
+        if (!validation.isValid) {
+          TxtFileProcessor.cleanupFile(req.file.path);
+          return res.status(400).json({ error: validation.error });
+        }
+        
+        // Processar arquivo
+        const result = await TxtFileProcessor.processSMSFile(req.file.path);
+        const detailedStats = TxtFileProcessor.getDetailedStats(result.phones);
+        
+        console.log(`✅ Upload SMS processado: ${result.phones.length} telefones válidos`);
+        
+        res.json({
+          success: true,
+          phones: result.phones,
+          stats: result.stats,
+          detailedStats: detailedStats,
+          message: `${result.phones.length} telefones válidos carregados`
+        });
+        
+      } catch (error) {
+        console.error('❌ Erro ao processar arquivo SMS:', error);
+        res.status(500).json({ error: 'Erro ao processar arquivo' });
+      }
+    });
+  });
+
   app.post("/api/sms-campaigns", verifyJWT, async (req: any, res: Response) => {
     try {
       const userId = req.user.id;
@@ -13089,6 +13132,49 @@ app.get("/api/whatsapp-campaigns", verifyJWT, async (req: any, res: Response) =>
     console.error('❌ ERRO ao buscar campanhas WhatsApp:', error);
     res.status(500).json({ error: 'Erro interno do servidor' });
   }
+});
+
+// UPLOAD .TXT PARA WHATSAPP - Disparo em massa seguro
+app.post("/api/whatsapp-campaigns/upload-txt", verifyJWT, async (req: any, res: Response) => {
+  const { txtUpload, TxtFileProcessor } = await import('./txt-upload-handler');
+  
+  txtUpload.single('txtFile')(req, res, async (err) => {
+    if (err) {
+      console.error('❌ Erro no upload WhatsApp:', err);
+      return res.status(400).json({ error: err.message });
+    }
+    
+    if (!req.file) {
+      return res.status(400).json({ error: 'Nenhum arquivo enviado' });
+    }
+    
+    try {
+      // Validar arquivo
+      const validation = TxtFileProcessor.validateFileContent(req.file.path);
+      if (!validation.isValid) {
+        TxtFileProcessor.cleanupFile(req.file.path);
+        return res.status(400).json({ error: validation.error });
+      }
+      
+      // Processar arquivo para WhatsApp
+      const result = await TxtFileProcessor.processWhatsAppFile(req.file.path);
+      const detailedStats = TxtFileProcessor.getDetailedStats(result.phones);
+      
+      console.log(`✅ Upload WhatsApp processado: ${result.phones.length} telefones válidos`);
+      
+      res.json({
+        success: true,
+        phones: result.phones,
+        stats: result.stats,
+        detailedStats: detailedStats,
+        message: `${result.phones.length} telefones válidos carregados para WhatsApp`
+      });
+      
+    } catch (error) {
+      console.error('❌ Erro ao processar arquivo WhatsApp:', error);
+      res.status(500).json({ error: 'Erro ao processar arquivo' });
+    }
+  });
 });
 
 // Create WhatsApp campaign
