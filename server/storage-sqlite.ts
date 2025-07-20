@@ -5402,7 +5402,65 @@ export class SQLiteStorage implements IStorage {
       return true;
     } catch (error) {
       console.error('❌ ERRO ao salvar push subscription:', error);
-      return false;
+      // Criar tabelas se não existirem
+      try {
+        console.log('🔧 Criando tabelas de push notifications...');
+        sqlite.exec(`
+          CREATE TABLE IF NOT EXISTS push_subscriptions (
+            id TEXT PRIMARY KEY DEFAULT (lower(hex(randomblob(16)))),
+            user_id TEXT NOT NULL,
+            endpoint TEXT NOT NULL,
+            p256dh_key TEXT NOT NULL,
+            auth_key TEXT NOT NULL,
+            is_active INTEGER DEFAULT 1,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+          )
+        `);
+
+        sqlite.exec(`
+          CREATE TABLE IF NOT EXISTS push_notification_logs (
+            id TEXT PRIMARY KEY DEFAULT (lower(hex(randomblob(16)))),
+            user_id TEXT NOT NULL,
+            title TEXT NOT NULL,
+            body TEXT NOT NULL,
+            url TEXT,
+            campaign_id TEXT,
+            lead_id TEXT,
+            status TEXT DEFAULT 'sent',
+            error_message TEXT,
+            sent_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (user_id) REFERENCES users(id)
+          )
+        `);
+        
+        console.log('✅ Tabelas de push notifications criadas com sucesso');
+        
+        // Tentar novamente após criar tabelas
+        const stmt = sqlite.prepare(`
+          INSERT OR REPLACE INTO push_subscriptions 
+          (user_id, endpoint, p256dh_key, auth_key, is_active, created_at, updated_at)
+          VALUES (?, ?, ?, ?, ?, ?, ?)
+        `);
+        
+        const now = new Date().toISOString();
+        stmt.run(
+          subscriptionData.userId,
+          subscriptionData.endpoint,
+          subscriptionData.p256dhKey,
+          subscriptionData.authKey,
+          subscriptionData.isActive ? 1 : 0,
+          now,
+          now
+        );
+
+        console.log('✅ Push subscription salva após criar tabela:', subscriptionData.userId);
+        return true;
+      } catch (createError) {
+        console.error('❌ ERRO ao criar tabelas push notifications:', createError);
+        return false;
+      }
     }
   }
 
@@ -5429,10 +5487,32 @@ export class SQLiteStorage implements IStorage {
       `);
       
       const subscriptions = stmt.all();
+      console.log(`📱 Encontradas ${subscriptions.length} subscriptions ativas`);
       return subscriptions;
     } catch (error) {
       console.error('❌ ERRO ao buscar todas as subscriptions:', error);
-      return [];
+      // Se tabela não existir, criar e retornar array vazio
+      try {
+        console.log('🔧 Criando tabela push_subscriptions...');
+        sqlite.exec(`
+          CREATE TABLE IF NOT EXISTS push_subscriptions (
+            id TEXT PRIMARY KEY DEFAULT (lower(hex(randomblob(16)))),
+            user_id TEXT NOT NULL,
+            endpoint TEXT NOT NULL,
+            p256dh_key TEXT NOT NULL,
+            auth_key TEXT NOT NULL,
+            is_active INTEGER DEFAULT 1,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+          )
+        `);
+        console.log('✅ Tabela push_subscriptions criada');
+        return [];
+      } catch (createError) {
+        console.error('❌ ERRO ao criar tabela:', createError);
+        return [];
+      }
     }
   }
 
