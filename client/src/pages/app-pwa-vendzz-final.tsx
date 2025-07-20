@@ -171,25 +171,60 @@ export default function AppPWAVendzz() {
 
   const loadUserData = async () => {
     try {
+      console.log('🔄 PWA: Carregando dados do usuário...');
+      
       // Carregar quizzes do usuário
+      console.log('📊 PWA: Buscando quizzes...');
       const quizzesResponse = await apiRequest('GET', '/api/quizzes');
+      console.log('📊 PWA: Resposta quizzes:', quizzesResponse.status);
+      
       if (quizzesResponse.ok) {
         const quizzesData = await quizzesResponse.json();
+        console.log('📊 PWA: Dados quizzes recebidos:', quizzesData.length, 'quizzes');
         setQuizzes(quizzesData.slice(0, 6)); // Últimos 6 quizzes
+        
+        // Atualizar analytics com contagem real
+        setAnalytics(prev => ({
+          ...prev,
+          totalQuizzes: quizzesData.length
+        }));
+      } else {
+        console.error('❌ PWA: Erro ao carregar quizzes:', quizzesResponse.status);
       }
 
-      // Carregar campanhas
+      // Carregar campanhas SMS
+      console.log('📱 PWA: Buscando campanhas SMS...');
       const campaignsResponse = await apiRequest('GET', '/api/sms-campaigns');
+      console.log('📱 PWA: Resposta campanhas:', campaignsResponse.status);
+      
       if (campaignsResponse.ok) {
         const campaignsData = await campaignsResponse.json();
+        console.log('📱 PWA: Dados campanhas recebidos:', campaignsData.length, 'campanhas');
         setCampaigns(campaignsData.slice(0, 4)); // Últimas 4 campanhas
+        
+        // Atualizar analytics com contagem real
+        setAnalytics(prev => ({
+          ...prev,
+          totalCampaigns: campaignsData.length
+        }));
+      } else {
+        console.error('❌ PWA: Erro ao carregar campanhas:', campaignsResponse.status);
       }
 
-      // Carregar analytics
+      // Carregar analytics completos
+      console.log('📈 PWA: Buscando analytics...');
       const analyticsResponse = await apiRequest('GET', '/api/dashboard/stats');
+      console.log('📈 PWA: Resposta analytics:', analyticsResponse.status);
+      
       if (analyticsResponse.ok) {
         const analyticsData = await analyticsResponse.json();
-        setAnalytics(analyticsData);
+        console.log('📈 PWA: Dados analytics recebidos:', analyticsData);
+        setAnalytics(prev => ({
+          ...prev,
+          ...analyticsData
+        }));
+      } else {
+        console.error('❌ PWA: Erro ao carregar analytics:', analyticsResponse.status);
       }
 
       // Dados do fórum simulados
@@ -199,12 +234,14 @@ export default function AppPWAVendzz() {
         { id: 3, title: 'Problemas com integração WhatsApp', category: 'Suporte da Comunidade', replies: 12, author: 'João Santos', time: '6h' },
         { id: 4, title: 'Melhores práticas para campanhas SMS', category: 'Dicas e Truques', replies: 22, author: 'Ana Costa', time: '1d' }
       ]);
+      
+      console.log('✅ PWA: Dados carregados com sucesso');
 
     } catch (error) {
-      console.error('Erro ao carregar dados:', error);
+      console.error('❌ PWA: Erro ao carregar dados:', error);
       toast({
-        title: "Erro",
-        description: "Falha ao carregar dados do usuário",
+        title: "Erro de Sincronização",
+        description: "Falha ao carregar dados do usuário. Verifique sua conexão.",
         variant: "destructive"
       });
     }

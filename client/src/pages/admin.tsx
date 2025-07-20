@@ -26,7 +26,7 @@ import {
   SelectTrigger, 
   SelectValue 
 } from "@/components/ui/select";
-import { Shield, Users, Settings, Crown, Bell, Send } from "lucide-react";
+import { Shield, Users, Settings, Crown, Bell, Send, Smartphone } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -121,10 +121,7 @@ export default function AdminPage() {
   // Send notification mutation
   const sendNotificationMutation = useMutation({
     mutationFn: async (notificationData: any) => {
-      return await apiRequest('POST', '/api/notifications', {
-        body: JSON.stringify(notificationData),
-        headers: { 'Content-Type': 'application/json' }
-      });
+      return await apiRequest('POST', '/api/notifications/send-push', notificationData);
     },
     onSuccess: () => {
       toast({
