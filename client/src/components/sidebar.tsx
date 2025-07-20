@@ -471,39 +471,45 @@ export function Sidebar() {
 
       {/* Create Button */}
       <div className={cn("border-b border-border dark:border-gray-700", isCollapsed ? "p-2" : "p-4")}>
-        <div className={cn("space-y-6", isCollapsed && "flex flex-col items-center space-y-4")}>
-          <Link href="/quizzes/new">
-            <Button className={cn(
-              "w-full justify-center btn-criar-quiz",
-              isCollapsed ? "w-10 h-10 p-0" : "px-4",
-              !isCollapsed && "justify-start"
-            )}>
-              <Plus className="w-4 h-4" />
-              {!isCollapsed && <span className="ml-2">Criar Quiz</span>}
-            </Button>
-          </Link>
+        <div className={cn("space-y-3", isCollapsed && "flex flex-col items-center space-y-3")}>
+          <div className="mb-3">
+            <Link href="/quizzes/new">
+              <Button className={cn(
+                "w-full justify-center btn-criar-quiz",
+                isCollapsed ? "w-10 h-10 p-0" : "px-4",
+                !isCollapsed && "justify-start"
+              )}>
+                <Plus className="w-4 h-4" />
+                {!isCollapsed && <span className="ml-2">Criar Quiz</span>}
+              </Button>
+            </Link>
+          </div>
           
-          <Link href="/funnel-importer">
-            <Button className={cn(
-              "w-full bg-blue-600 hover:bg-blue-700 text-white justify-center",
-              isCollapsed ? "w-10 h-10 p-0" : "px-4",
-              !isCollapsed && "justify-start"
-            )}>
-              <Copy className="w-4 h-4" />
-              {!isCollapsed && <span className="ml-2">Clonar Quiz</span>}
-            </Button>
-          </Link>
+          <div className="mb-3">
+            <Link href="/funnel-importer">
+              <Button className={cn(
+                "w-full bg-blue-600 hover:bg-blue-700 text-white justify-center",
+                isCollapsed ? "w-10 h-10 p-0" : "px-4",
+                !isCollapsed && "justify-start"
+              )}>
+                <Copy className="w-4 h-4" />
+                {!isCollapsed && <span className="ml-2">Clonar Quiz</span>}
+              </Button>
+            </Link>
+          </div>
           
-          <Link href="/vsl-to-quiz">
-            <Button className={cn(
-              "w-full bg-purple-600 hover:bg-purple-700 text-white justify-center",
-              isCollapsed ? "w-10 h-10 p-0" : "px-4",
-              !isCollapsed && "justify-start"
-            )}>
-              <Play className="w-4 h-4" />
-              {!isCollapsed && <span className="ml-2">Converter VSL → Quiz</span>}
-            </Button>
-          </Link>
+          <div>
+            <Link href="/vsl-to-quiz">
+              <Button className={cn(
+                "w-full bg-purple-600 hover:bg-purple-700 text-white justify-center",
+                isCollapsed ? "w-10 h-10 p-0" : "px-4",
+                !isCollapsed && "justify-start"
+              )}>
+                <Play className="w-4 h-4" />
+                {!isCollapsed && <span className="ml-2">Converter VSL → Quiz</span>}
+              </Button>
+            </Link>
+          </div>
         </div>
       </div>
 

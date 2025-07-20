@@ -1003,39 +1003,33 @@ body {
   border-radius: 0.375rem !important;
 }
 
-/* Efeito de borda luminosa moderna para botão criar quiz */
-@keyframes glowing-border {
+/* Efeito de shock azul sempre ativo para botão criar quiz */
+@keyframes electric-shock {
   0% {
-    box-shadow: 0 0 5px rgba(59, 130, 246, 0.5), 0 0 10px rgba(59, 130, 246, 0.3), 0 0 15px rgba(59, 130, 246, 0.1);
-    border-color: rgba(59, 130, 246, 0.6);
-  }
-  25% {
-    box-shadow: 0 0 5px rgba(16, 185, 129, 0.5), 0 0 10px rgba(16, 185, 129, 0.3), 0 0 15px rgba(16, 185, 129, 0.1);
-    border-color: rgba(16, 185, 129, 0.6);
+    box-shadow: 0 0 8px rgba(59, 130, 246, 0.8), 0 0 15px rgba(59, 130, 246, 0.6), 0 0 25px rgba(59, 130, 246, 0.4);
+    border-color: rgba(59, 130, 246, 0.9);
   }
   50% {
-    box-shadow: 0 0 5px rgba(139, 92, 246, 0.5), 0 0 10px rgba(139, 92, 246, 0.3), 0 0 15px rgba(139, 92, 246, 0.1);
-    border-color: rgba(139, 92, 246, 0.6);
-  }
-  75% {
-    box-shadow: 0 0 5px rgba(236, 72, 153, 0.5), 0 0 10px rgba(236, 72, 153, 0.3), 0 0 15px rgba(236, 72, 153, 0.1);
-    border-color: rgba(236, 72, 153, 0.6);
+    box-shadow: 0 0 12px rgba(96, 165, 250, 1), 0 0 20px rgba(96, 165, 250, 0.8), 0 0 35px rgba(96, 165, 250, 0.6);
+    border-color: rgba(96, 165, 250, 1);
   }
   100% {
-    box-shadow: 0 0 5px rgba(59, 130, 246, 0.5), 0 0 10px rgba(59, 130, 246, 0.3), 0 0 15px rgba(59, 130, 246, 0.1);
-    border-color: rgba(59, 130, 246, 0.6);
+    box-shadow: 0 0 8px rgba(59, 130, 246, 0.8), 0 0 15px rgba(59, 130, 246, 0.6), 0 0 25px rgba(59, 130, 246, 0.4);
+    border-color: rgba(59, 130, 246, 0.9);
   }
 }
 
 .btn-criar-quiz {
   position: relative;
-  border: 2px solid transparent;
-  transition: all 0.3s ease;
+  border: 2px solid rgba(59, 130, 246, 0.7);
+  animation: electric-shock 0.8s ease-in-out infinite;
+  background: linear-gradient(45deg, #1e40af, #3b82f6) !important;
+  color: white !important;
 }
 
 .btn-criar-quiz:hover {
-  animation: glowing-border 2s ease-in-out infinite;
-  background: linear-gradient(45deg, #1e293b, #334155) !important;
+  animation-duration: 0.4s;
+  box-shadow: 0 0 15px rgba(96, 165, 250, 1), 0 0 25px rgba(96, 165, 250, 0.8), 0 0 40px rgba(96, 165, 250, 0.6) !important;
 }
 
 
