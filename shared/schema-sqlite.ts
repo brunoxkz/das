@@ -1507,3 +1507,77 @@ export type InsertCourseDiscussion = z.infer<typeof insertCourseDiscussionSchema
 export type CourseDiscussion = typeof courseDiscussions.$inferSelect;
 export type InsertMembersAreaAnalytics = z.infer<typeof insertMembersAreaAnalyticsSchema>;
 export type MembersAreaAnalytics = typeof membersAreaAnalytics.$inferSelect;
+
+// =============================================
+// FORUM SYSTEM TABLES
+// =============================================
+
+// Forum Categories
+export const forumCategoriesTable = sqliteTable("forum_categories", {
+  id: text("id").primaryKey().$defaultFn(() => nanoid()),
+  name: text("name").notNull(),
+  description: text("description"),
+  icon: text("icon"),
+  color: text("color"),
+  isRestricted: integer("is_restricted", { mode: "boolean" }).default(false),
+  moderators: text("moderators", { mode: "json" }).$type<string[]>().default([]),
+  createdAt: integer("created_at", { mode: "timestamp" }).notNull().$defaultFn(() => new Date()),
+});
+
+// Forum Topics
+export const forumTopicsTable = sqliteTable("forum_topics", {
+  id: text("id").primaryKey().$defaultFn(() => nanoid()),
+  title: text("title").notNull(),
+  content: text("content").notNull(),
+  categoryId: text("category_id").notNull().references(() => forumCategoriesTable.id),
+  authorId: text("author_id").notNull().references(() => users.id),
+  isPinned: integer("is_pinned", { mode: "boolean" }).default(false),
+  isLocked: integer("is_locked", { mode: "boolean" }).default(false),
+  views: integer("views").default(0),
+  likes: integer("likes").default(0),
+  dislikes: integer("dislikes").default(0),
+  tags: text("tags", { mode: "json" }).$type<string[]>().default([]),
+  status: text("status").notNull().default("active"), // active, closed, resolved
+  createdAt: integer("created_at", { mode: "timestamp" }).notNull().$defaultFn(() => new Date()),
+  updatedAt: integer("updated_at", { mode: "timestamp" }).notNull().$defaultFn(() => new Date()),
+});
+
+// Forum Replies
+export const forumRepliesTable = sqliteTable("forum_replies", {
+  id: text("id").primaryKey().$defaultFn(() => nanoid()),
+  topicId: text("topic_id").notNull().references(() => forumTopicsTable.id),
+  authorId: text("author_id").notNull().references(() => users.id),
+  content: text("content").notNull(),
+  parentReplyId: text("parent_reply_id").references(() => forumRepliesTable.id),
+  likes: integer("likes").default(0),
+  dislikes: integer("dislikes").default(0),
+  isModerated: integer("is_moderated", { mode: "boolean" }).default(false),
+  createdAt: integer("created_at", { mode: "timestamp" }).notNull().$defaultFn(() => new Date()),
+  updatedAt: integer("updated_at", { mode: "timestamp" }).notNull().$defaultFn(() => new Date()),
+});
+
+// Forum Likes
+export const forumLikesTable = sqliteTable("forum_likes", {
+  id: text("id").primaryKey().$defaultFn(() => nanoid()),
+  userId: text("user_id").notNull().references(() => users.id),
+  targetId: text("target_id").notNull(), // topic_id or reply_id
+  targetType: text("target_type").notNull(), // 'topic' or 'reply'
+  isLike: integer("is_like", { mode: "boolean" }).notNull(), // true for like, false for dislike
+  createdAt: integer("created_at", { mode: "timestamp" }).notNull().$defaultFn(() => new Date()),
+});
+
+// Forum Zod Schemas
+export const insertForumCategorySchema = createInsertSchema(forumCategoriesTable);
+export const insertForumTopicSchema = createInsertSchema(forumTopicsTable);
+export const insertForumReplySchema = createInsertSchema(forumRepliesTable);
+export const insertForumLikeSchema = createInsertSchema(forumLikesTable);
+
+// Forum Types
+export type ForumCategory = typeof forumCategoriesTable.$inferSelect;
+export type InsertForumCategory = typeof forumCategoriesTable.$inferInsert;
+export type ForumTopic = typeof forumTopicsTable.$inferSelect;
+export type InsertForumTopic = typeof forumTopicsTable.$inferInsert;
+export type ForumReply = typeof forumRepliesTable.$inferSelect;
+export type InsertForumReply = typeof forumRepliesTable.$inferInsert;
+export type ForumLike = typeof forumLikesTable.$inferSelect;
+export type InsertForumLike = typeof forumLikesTable.$inferInsert;

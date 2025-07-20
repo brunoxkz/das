@@ -24188,6 +24188,162 @@ export function registerCheckoutRoutes(app: Express) {
     }
   });
 
+  // =============================================
+  // FORUM SYSTEM ENDPOINTS
+  // =============================================
+
+  // Buscar categorias do fórum
+  app.get("/api/forum/categories", verifyJWT, async (req: any, res) => {
+    try {
+      const categories = await storage.getForumCategories();
+      res.json(categories);
+    } catch (error) {
+      console.error("Error fetching forum categories:", error);
+      res.status(500).json({ error: "Erro ao buscar categorias do fórum" });
+    }
+  });
+
+  // Buscar tópicos de uma categoria
+  app.get("/api/forum/categories/:categoryId/topics", verifyJWT, async (req: any, res) => {
+    try {
+      const { categoryId } = req.params;
+      const { page = 1, limit = 10, sort = 'recent' } = req.query;
+      const topics = await storage.getForumTopics(categoryId, {
+        page: parseInt(page as string),
+        limit: parseInt(limit as string),
+        sort: sort as string
+      });
+      res.json(topics);
+    } catch (error) {
+      console.error("Error fetching forum topics:", error);
+      res.status(500).json({ error: "Erro ao buscar tópicos do fórum" });
+    }
+  });
+
+  // Buscar um tópico específico com respostas
+  app.get("/api/forum/topics/:topicId", verifyJWT, async (req: any, res) => {
+    try {
+      const { topicId } = req.params;
+      const userId = req.user.id;
+      
+      // Incrementar visualizações
+      await storage.incrementTopicViews(topicId);
+      
+      const topic = await storage.getForumTopicWithReplies(topicId);
+      if (!topic) {
+        return res.status(404).json({ error: "Tópico não encontrado" });
+      }
+      
+      res.json(topic);
+    } catch (error) {
+      console.error("Error fetching forum topic:", error);
+      res.status(500).json({ error: "Erro ao buscar tópico do fórum" });
+    }
+  });
+
+  // Criar novo tópico
+  app.post("/api/forum/topics", verifyJWT, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const { title, content, categoryId, tags } = req.body;
+
+      if (!title || !content || !categoryId) {
+        return res.status(400).json({ 
+          error: "Título, conteúdo e categoria são obrigatórios" 
+        });
+      }
+
+      const topicData = {
+        title,
+        content,
+        categoryId,
+        authorId: userId,
+        tags: tags || []
+      };
+
+      const topic = await storage.createForumTopic(topicData);
+      res.status(201).json(topic);
+    } catch (error) {
+      console.error("Error creating forum topic:", error);
+      res.status(500).json({ error: "Erro ao criar tópico do fórum" });
+    }
+  });
+
+  // Responder a um tópico
+  app.post("/api/forum/topics/:topicId/replies", verifyJWT, async (req: any, res) => {
+    try {
+      const { topicId } = req.params;
+      const userId = req.user.id;
+      const { content, parentReplyId } = req.body;
+
+      if (!content) {
+        return res.status(400).json({ error: "Conteúdo da resposta é obrigatório" });
+      }
+
+      const replyData = {
+        topicId,
+        authorId: userId,
+        content,
+        parentReplyId: parentReplyId || null
+      };
+
+      const reply = await storage.createForumReply(replyData);
+      res.status(201).json(reply);
+    } catch (error) {
+      console.error("Error creating forum reply:", error);
+      res.status(500).json({ error: "Erro ao criar resposta do fórum" });
+    }
+  });
+
+  // Curtir/Descurtir tópico ou resposta
+  app.post("/api/forum/like", verifyJWT, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const { targetId, targetType, isLike } = req.body;
+
+      if (!targetId || !targetType || typeof isLike !== 'boolean') {
+        return res.status(400).json({ 
+          error: "targetId, targetType e isLike são obrigatórios" 
+        });
+      }
+
+      if (!['topic', 'reply'].includes(targetType)) {
+        return res.status(400).json({ 
+          error: "targetType deve ser 'topic' ou 'reply'" 
+        });
+      }
+
+      const result = await storage.toggleForumLike(userId, targetId, targetType, isLike);
+      res.json(result);
+    } catch (error) {
+      console.error("Error toggling forum like:", error);
+      res.status(500).json({ error: "Erro ao curtir/descurtir" });
+    }
+  });
+
+  // Buscar tópicos recentes (feed geral)
+  app.get("/api/forum/recent", verifyJWT, async (req: any, res) => {
+    try {
+      const { limit = 20 } = req.query;
+      const topics = await storage.getRecentForumTopics(parseInt(limit as string));
+      res.json(topics);
+    } catch (error) {
+      console.error("Error fetching recent forum topics:", error);
+      res.status(500).json({ error: "Erro ao buscar tópicos recentes" });
+    }
+  });
+
+  // Buscar estatísticas do fórum
+  app.get("/api/forum/stats", verifyJWT, async (req: any, res) => {
+    try {
+      const stats = await storage.getForumStats();
+      res.json(stats);
+    } catch (error) {
+      console.error("Error fetching forum stats:", error);
+      res.status(500).json({ error: "Erro ao buscar estatísticas do fórum" });
+    }
+  });
+
   // Inicializar sistema automático de regressão de planos
   console.log('🚀 INICIANDO PLAN MANAGER...');
   planManager.startAutomaticPlanRegression();

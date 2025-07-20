@@ -8683,6 +8683,407 @@ Hoje você vai aprender ${project.title} - método revolucionário que já ajudo
       creatorName: `${funnel.creatorFirstName || ''} ${funnel.creatorLastName || ''}`.trim() || 'Usuário Anônimo'
     }));
   }
+
+  // =============================================
+  // FORUM METHODS
+  // =============================================
+
+  async getForumCategories(): Promise<any[]> {
+    try {
+      const query = `
+        SELECT 
+          fc.id, fc.name, fc.description, fc.icon, fc.color,
+          fc.is_restricted as isRestricted,
+          fc.moderators,
+          fc.created_at as createdAt,
+          COUNT(ft.id) as topicCount,
+          COUNT(DISTINCT ft.author_id) as memberCount
+        FROM forum_categories fc
+        LEFT JOIN forum_topics ft ON fc.id = ft.category_id
+        GROUP BY fc.id
+        ORDER BY fc.created_at ASC
+      `;
+      
+      const categories = sqlite.prepare(query).all();
+      
+      // Se não há categorias, criar categorias padrão
+      if (categories.length === 0) {
+        const defaultCategories = [
+          {
+            id: nanoid(),
+            name: 'Marketing Digital',
+            description: 'Discussões sobre estratégias de marketing digital, conversão e vendas',
+            icon: '💼',
+            color: '#10B981',
+            isRestricted: false,
+            moderators: JSON.stringify([]),
+            createdAt: new Date().getTime()
+          },
+          {
+            id: nanoid(),
+            name: 'Quiz Builder',
+            description: 'Dúvidas, dicas e truques sobre criação de quizzes',
+            icon: '📝',
+            color: '#3B82F6',
+            isRestricted: false,
+            moderators: JSON.stringify([]),
+            createdAt: new Date().getTime()
+          },
+          {
+            id: nanoid(),
+            name: 'Empreendedorismo',
+            description: 'Compartilhe experiências sobre empreendedorismo e negócios',
+            icon: '🚀',
+            color: '#8B5CF6',
+            isRestricted: false,
+            moderators: JSON.stringify([]),
+            createdAt: new Date().getTime()
+          }
+        ];
+
+        const insertCategory = sqlite.prepare(`
+          INSERT INTO forum_categories (id, name, description, icon, color, is_restricted, moderators, created_at)
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        `);
+
+        for (const category of defaultCategories) {
+          insertCategory.run(
+            category.id,
+            category.name,
+            category.description,
+            category.icon,
+            category.color,
+            category.isRestricted ? 1 : 0,
+            category.moderators,
+            category.createdAt
+          );
+        }
+
+        return defaultCategories.map(cat => ({
+          ...cat,
+          topicCount: 0,
+          memberCount: 0
+        }));
+      }
+
+      return categories.map(cat => ({
+        ...cat,
+        moderators: typeof cat.moderators === 'string' ? JSON.parse(cat.moderators) : [],
+        isRestricted: Boolean(cat.isRestricted)
+      }));
+    } catch (error) {
+      console.error('Error fetching forum categories:', error);
+      return [];
+    }
+  }
+
+  async getForumTopics(categoryId: string, options: any = {}): Promise<any[]> {
+    try {
+      const { page = 1, limit = 10, sort = 'recent' } = options;
+      const offset = (page - 1) * limit;
+
+      let orderBy = 'ft.created_at DESC';
+      if (sort === 'popular') orderBy = 'ft.views DESC, ft.likes DESC';
+      if (sort === 'oldest') orderBy = 'ft.created_at ASC';
+
+      const query = `
+        SELECT 
+          ft.id, ft.title, ft.content, ft.category_id as categoryId,
+          ft.author_id as authorId, ft.is_pinned as isPinned,
+          ft.is_locked as isLocked, ft.views, ft.likes, ft.dislikes,
+          ft.tags, ft.status, ft.created_at as createdAt,
+          ft.updated_at as updatedAt,
+          u.firstName, u.lastName, u.profileImageUrl,
+          COUNT(fr.id) as replyCount,
+          MAX(fr.created_at) as lastReplyAt
+        FROM forum_topics ft
+        LEFT JOIN users u ON ft.author_id = u.id
+        LEFT JOIN forum_replies fr ON ft.id = fr.topic_id
+        WHERE ft.category_id = ?
+        GROUP BY ft.id
+        ORDER BY ft.is_pinned DESC, ${orderBy}
+        LIMIT ? OFFSET ?
+      `;
+
+      const topics = sqlite.prepare(query).all(categoryId, limit, offset);
+      
+      return topics.map(topic => ({
+        ...topic,
+        author: {
+          id: topic.authorId,
+          firstName: topic.firstName,
+          lastName: topic.lastName,
+          profileImageUrl: topic.profileImageUrl
+        },
+        tags: typeof topic.tags === 'string' ? JSON.parse(topic.tags) : [],
+        isPinned: Boolean(topic.isPinned),
+        isLocked: Boolean(topic.isLocked)
+      }));
+    } catch (error) {
+      console.error('Error fetching forum topics:', error);
+      return [];
+    }
+  }
+
+  async getForumTopicWithReplies(topicId: string): Promise<any | null> {
+    try {
+      const topicQuery = `
+        SELECT 
+          ft.id, ft.title, ft.content, ft.category_id as categoryId,
+          ft.author_id as authorId, ft.is_pinned as isPinned,
+          ft.is_locked as isLocked, ft.views, ft.likes, ft.dislikes,
+          ft.tags, ft.status, ft.created_at as createdAt,
+          ft.updated_at as updatedAt,
+          u.firstName, u.lastName, u.profileImageUrl,
+          fc.name as categoryName
+        FROM forum_topics ft
+        LEFT JOIN users u ON ft.author_id = u.id
+        LEFT JOIN forum_categories fc ON ft.category_id = fc.id
+        WHERE ft.id = ?
+      `;
+
+      const topic = sqlite.prepare(topicQuery).get(topicId);
+      
+      if (!topic) return null;
+
+      const repliesQuery = `
+        SELECT 
+          fr.id, fr.topic_id as topicId, fr.author_id as authorId,
+          fr.content, fr.parent_reply_id as parentReplyId,
+          fr.likes, fr.dislikes, fr.is_moderated as isModerated,
+          fr.created_at as createdAt, fr.updated_at as updatedAt,
+          u.firstName, u.lastName, u.profileImageUrl
+        FROM forum_replies fr
+        LEFT JOIN users u ON fr.author_id = u.id
+        WHERE fr.topic_id = ?
+        ORDER BY fr.created_at ASC
+      `;
+
+      const replies = sqlite.prepare(repliesQuery).all(topicId);
+
+      return {
+        ...topic,
+        author: {
+          id: topic.authorId,
+          firstName: topic.firstName,
+          lastName: topic.lastName,
+          profileImageUrl: topic.profileImageUrl
+        },
+        category: {
+          id: topic.categoryId,
+          name: topic.categoryName
+        },
+        tags: typeof topic.tags === 'string' ? JSON.parse(topic.tags) : [],
+        isPinned: Boolean(topic.isPinned),
+        isLocked: Boolean(topic.isLocked),
+        replies: replies.map(reply => ({
+          ...reply,
+          author: {
+            id: reply.authorId,
+            firstName: reply.firstName,
+            lastName: reply.lastName,
+            profileImageUrl: reply.profileImageUrl
+          },
+          isModerated: Boolean(reply.isModerated)
+        }))
+      };
+    } catch (error) {
+      console.error('Error fetching forum topic with replies:', error);
+      return null;
+    }
+  }
+
+  async createForumTopic(topicData: any): Promise<any> {
+    try {
+      const topicId = nanoid();
+      const now = new Date().getTime();
+
+      const query = `
+        INSERT INTO forum_topics (
+          id, title, content, category_id, author_id, tags, created_at, updated_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+      `;
+
+      sqlite.prepare(query).run(
+        topicId,
+        topicData.title,
+        topicData.content,
+        topicData.categoryId,
+        topicData.authorId,
+        JSON.stringify(topicData.tags || []),
+        now,
+        now
+      );
+
+      return {
+        id: topicId,
+        ...topicData,
+        views: 0,
+        likes: 0,
+        dislikes: 0,
+        isPinned: false,
+        isLocked: false,
+        status: 'active',
+        createdAt: now,
+        updatedAt: now
+      };
+    } catch (error) {
+      console.error('Error creating forum topic:', error);
+      throw error;
+    }
+  }
+
+  async createForumReply(replyData: any): Promise<any> {
+    try {
+      const replyId = nanoid();
+      const now = new Date().getTime();
+
+      const query = `
+        INSERT INTO forum_replies (
+          id, topic_id, author_id, content, parent_reply_id, created_at, updated_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?)
+      `;
+
+      sqlite.prepare(query).run(
+        replyId,
+        replyData.topicId,
+        replyData.authorId,
+        replyData.content,
+        replyData.parentReplyId,
+        now,
+        now
+      );
+
+      return {
+        id: replyId,
+        ...replyData,
+        likes: 0,
+        dislikes: 0,
+        isModerated: false,
+        createdAt: now,
+        updatedAt: now
+      };
+    } catch (error) {
+      console.error('Error creating forum reply:', error);
+      throw error;
+    }
+  }
+
+  async incrementTopicViews(topicId: string): Promise<void> {
+    try {
+      const query = `UPDATE forum_topics SET views = views + 1 WHERE id = ?`;
+      sqlite.prepare(query).run(topicId);
+    } catch (error) {
+      console.error('Error incrementing topic views:', error);
+    }
+  }
+
+  async toggleForumLike(userId: string, targetId: string, targetType: string, isLike: boolean): Promise<any> {
+    try {
+      // Verificar se já existe like/dislike
+      const existingLike = sqlite.prepare(`
+        SELECT * FROM forum_likes WHERE user_id = ? AND target_id = ? AND target_type = ?
+      `).get(userId, targetId, targetType);
+
+      if (existingLike) {
+        // Remover like existente
+        sqlite.prepare(`
+          DELETE FROM forum_likes WHERE user_id = ? AND target_id = ? AND target_type = ?
+        `).run(userId, targetId, targetType);
+
+        // Atualizar contador na tabela principal
+        const updateField = existingLike.is_like ? 'likes = likes - 1' : 'dislikes = dislikes - 1';
+        const tableName = targetType === 'topic' ? 'forum_topics' : 'forum_replies';
+        
+        sqlite.prepare(`UPDATE ${tableName} SET ${updateField} WHERE id = ?`).run(targetId);
+      }
+
+      // Adicionar novo like/dislike se diferente do existente ou se não existia
+      if (!existingLike || existingLike.is_like !== (isLike ? 1 : 0)) {
+        const likeId = nanoid();
+        sqlite.prepare(`
+          INSERT INTO forum_likes (id, user_id, target_id, target_type, is_like, created_at)
+          VALUES (?, ?, ?, ?, ?, ?)
+        `).run(likeId, userId, targetId, targetType, isLike ? 1 : 0, new Date().getTime());
+
+        // Atualizar contador na tabela principal
+        const updateField = isLike ? 'likes = likes + 1' : 'dislikes = dislikes + 1';
+        const tableName = targetType === 'topic' ? 'forum_topics' : 'forum_replies';
+        
+        sqlite.prepare(`UPDATE ${tableName} SET ${updateField} WHERE id = ?`).run(targetId);
+      }
+
+      return { success: true };
+    } catch (error) {
+      console.error('Error toggling forum like:', error);
+      throw error;
+    }
+  }
+
+  async getRecentForumTopics(limit: number = 20): Promise<any[]> {
+    try {
+      const query = `
+        SELECT 
+          ft.id, ft.title, ft.content, ft.category_id as categoryId,
+          ft.author_id as authorId, ft.views, ft.likes,
+          ft.created_at as createdAt,
+          u.firstName, u.lastName, u.profileImageUrl,
+          fc.name as categoryName, fc.color as categoryColor,
+          COUNT(fr.id) as replyCount
+        FROM forum_topics ft
+        LEFT JOIN users u ON ft.author_id = u.id
+        LEFT JOIN forum_categories fc ON ft.category_id = fc.id
+        LEFT JOIN forum_replies fr ON ft.id = fr.topic_id
+        WHERE ft.status = 'active'
+        GROUP BY ft.id
+        ORDER BY ft.created_at DESC
+        LIMIT ?
+      `;
+
+      const topics = sqlite.prepare(query).all(limit);
+      
+      return topics.map(topic => ({
+        ...topic,
+        author: {
+          id: topic.authorId,
+          firstName: topic.firstName,
+          lastName: topic.lastName,
+          profileImageUrl: topic.profileImageUrl
+        },
+        category: {
+          id: topic.categoryId,
+          name: topic.categoryName,
+          color: topic.categoryColor
+        }
+      }));
+    } catch (error) {
+      console.error('Error fetching recent forum topics:', error);
+      return [];
+    }
+  }
+
+  async getForumStats(): Promise<any> {
+    try {
+      const stats = {
+        totalTopics: sqlite.prepare('SELECT COUNT(*) as count FROM forum_topics').get()?.count || 0,
+        totalReplies: sqlite.prepare('SELECT COUNT(*) as count FROM forum_replies').get()?.count || 0,
+        totalCategories: sqlite.prepare('SELECT COUNT(*) as count FROM forum_categories').get()?.count || 0,
+        totalViews: sqlite.prepare('SELECT SUM(views) as sum FROM forum_topics').get()?.sum || 0,
+        totalLikes: sqlite.prepare('SELECT SUM(likes) as sum FROM forum_topics').get()?.sum || 0
+      };
+
+      return stats;
+    } catch (error) {
+      console.error('Error fetching forum stats:', error);
+      return {
+        totalTopics: 0,
+        totalReplies: 0,
+        totalCategories: 0,
+        totalViews: 0,
+        totalLikes: 0
+      };
+    }
+  }
 }
 
 export const storage = new SQLiteStorage();
