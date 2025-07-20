@@ -50,6 +50,9 @@ import VoiceCallingPage from "@/pages/voice-calling";
 import ConditionalCampaignsPage from "@/pages/conditional-campaigns";
 import FacelessVideosPage from "@/pages/faceless-videos";
 import FunnelImporter from "@/pages/funnel-importer-fixed";
+import BuyComments from "@/pages/buy-comments";
+import SchedulePosts from "@/pages/schedule-posts";
+import Forum from "@/pages/forum";
 
 import CheckoutAdminPage from "@/pages/checkout-admin";
 import CheckoutBuilder from "@/pages/checkout-builder";
@@ -313,6 +316,24 @@ function App() {
         <Route path="/funnel-importer">
           <Layout>
             <FunnelImporter />
+          </Layout>
+        </Route>
+
+        <Route path="/buy-comments">
+          <Layout>
+            <BuyComments />
+          </Layout>
+        </Route>
+
+        <Route path="/schedule-posts">
+          <Layout>
+            <SchedulePosts />
+          </Layout>
+        </Route>
+
+        <Route path="/forum">
+          <Layout>
+            <Forum />
           </Layout>
         </Route>
 

@@ -54,7 +54,9 @@ import {
   GraduationCap,
   Copy,
   Play,
-  Download
+  Download,
+  Calendar,
+  MessageCircle
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -230,6 +232,33 @@ export function Sidebar() {
           badge: <span className="text-xs text-orange-500 font-medium">SE → ENTÃO</span>
         },
 
+      ]
+    },
+    {
+      title: "SOCIAL MEDIA",
+      icon: <Users className="w-3 h-3" />,
+      items: [
+        {
+          title: "Comprar Comentários",
+          href: "/buy-comments",
+          icon: <MessageCircle className="w-4 h-4" />,
+          active: location === "/buy-comments",
+          badge: <span className="text-xs text-green-500 font-medium">BOOST</span>
+        },
+        {
+          title: "Agendar Postagens",
+          href: "/schedule-posts",
+          icon: <Calendar className="w-4 h-4" />,
+          active: location === "/schedule-posts",
+          badge: <span className="text-xs text-blue-500 font-medium">AUTO</span>
+        },
+        {
+          title: "Fórum",
+          href: "/forum",
+          icon: <Users className="w-4 h-4" />,
+          active: location === "/forum",
+          badge: <span className="text-xs text-purple-500 font-medium">COMUNIDADE</span>
+        },
       ]
     },
     {
