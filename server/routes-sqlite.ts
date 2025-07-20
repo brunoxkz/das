@@ -18445,6 +18445,31 @@ app.get("/api/whatsapp-extension/pending", verifyJWT, async (req: any, res: Resp
           const quizId = funnelData.id;
           const userId = req.user.id;
           
+          // Criar tabela quizzes se não existir
+          try {
+            sqlite.exec(`
+              CREATE TABLE IF NOT EXISTS quizzes (
+                id TEXT PRIMARY KEY,
+                user_id TEXT NOT NULL,
+                title TEXT NOT NULL,
+                description TEXT DEFAULT '',
+                elements TEXT DEFAULT '[]',
+                pages INTEGER DEFAULT 1,
+                theme TEXT DEFAULT '{}',
+                settings TEXT DEFAULT '{}',
+                status TEXT DEFAULT 'draft',
+                created_at TEXT NOT NULL,
+                updated_at TEXT NOT NULL,
+                variables TEXT DEFAULT '[]',
+                page_data TEXT DEFAULT '[]',
+                original_url TEXT,
+                imported_at TEXT
+              )
+            `);
+          } catch (e) {
+            console.log(`⚠️ Erro ao criar tabela quizzes: ${e}`);
+          }
+          
           // Adicionar colunas se não existirem
           try {
             sqlite.exec(`ALTER TABLE quizzes ADD COLUMN page_data TEXT DEFAULT '[]'`);
@@ -18490,7 +18515,7 @@ app.get("/api/whatsapp-extension/pending", verifyJWT, async (req: any, res: Resp
 
           console.log(`✅ FUNIL COMPLETO SALVO: ${quizId}`);
           console.log(`📄 Páginas: ${pagesData.length} | Elementos: ${elementsData.length}`);
-          console.log(`🎨 Tema: ${JSON.stringify(themeData.colors)}`);
+          console.log(`🎨 Tema: ${JSON.stringify(themeData.colors || {})}`);
           
           res.json({
             success: true,
@@ -18506,7 +18531,7 @@ app.get("/api/whatsapp-extension/pending", verifyJWT, async (req: any, res: Resp
             details: {
               pages: pagesData.length,
               elements: elementsData.length,
-              theme: themeData.colors.primary,
+              theme: themeData.colors?.primary || '#3b82f6',
               detectionMethod: funnelData.metadata?.detectionMethod || 'complete_analyzer'
             }
           });
