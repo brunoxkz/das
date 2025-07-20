@@ -20,6 +20,12 @@ export default function LoginPWA() {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   
+  // Estados do cadastro
+  const [isRegisterMode, setIsRegisterMode] = useState(false);
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  
   // Estados PWA
   const [showInstallModal, setShowInstallModal] = useState(false);
   const [installPromptShown, setInstallPromptShown] = useState(false);
@@ -149,6 +155,93 @@ export default function LoginPWA() {
     }
   };
 
+  // Função de cadastro
+  const handleRegister = async (e) => {
+    e.preventDefault();
+    
+    if (!firstName || !lastName || !email || !password || !confirmPassword) {
+      toast({
+        title: "Erro",
+        description: "Por favor, preencha todos os campos",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    if (password !== confirmPassword) {
+      toast({
+        title: "Erro",
+        description: "As senhas não coincidem",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    if (password.length < 6) {
+      toast({
+        title: "Erro",
+        description: "A senha deve ter pelo menos 6 caracteres",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setIsLoading(true);
+
+    try {
+      const response = await apiRequest('POST', '/api/auth/register', {
+        firstName,
+        lastName,
+        email,
+        password
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        
+        // Salvar tokens
+        localStorage.setItem('access_token', data.access_token);
+        localStorage.setItem('refresh_token', data.refresh_token);
+        
+        toast({
+          title: "Cadastro realizado com sucesso!",
+          description: "Bem-vindo ao Vendzz! Redirecionando...",
+        });
+
+        // Redirecionar para o PWA
+        setTimeout(() => {
+          window.location.href = '/app-pwa-vendzz';
+        }, 1000);
+      } else {
+        const errorData = await response.json();
+        toast({
+          title: "Erro no cadastro",
+          description: errorData.message || "Erro ao criar conta",
+          variant: "destructive"
+        });
+      }
+    } catch (error) {
+      console.error('Erro no cadastro:', error);
+      toast({
+        title: "Erro de conexão",
+        description: "Não foi possível conectar ao servidor",
+        variant: "destructive"
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Limpar campos ao trocar modo
+  const toggleMode = () => {
+    setIsRegisterMode(!isRegisterMode);
+    setEmail('');
+    setPassword('');
+    setConfirmPassword('');
+    setFirstName('');
+    setLastName('');
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-black flex items-center justify-center p-4">
       <div className="w-full max-w-md">
@@ -164,15 +257,45 @@ export default function LoginPWA() {
           </p>
         </div>
 
-        {/* Card de Login */}
+        {/* Card de Login/Cadastro */}
         <Card className="bg-gray-900/50 border-green-500/20 backdrop-blur-sm">
           <CardHeader>
             <CardTitle className="text-center text-green-400">
-              Entrar no App
+              {isRegisterMode ? 'Criar Conta' : 'Entrar no App'}
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <form onSubmit={handleLogin} className="space-y-6">
+            <form onSubmit={isRegisterMode ? handleRegister : handleLogin} className="space-y-4">
+              {/* Campos do cadastro */}
+              {isRegisterMode && (
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-2">
+                    <Label htmlFor="firstName" className="text-gray-300 text-sm">Nome</Label>
+                    <Input
+                      id="firstName"
+                      type="text"
+                      value={firstName}
+                      onChange={(e) => setFirstName(e.target.value)}
+                      className="bg-gray-800 border-gray-600 text-white placeholder-gray-400 focus:border-green-500"
+                      placeholder="Nome"
+                      required
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="lastName" className="text-gray-300 text-sm">Sobrenome</Label>
+                    <Input
+                      id="lastName"
+                      type="text"
+                      value={lastName}
+                      onChange={(e) => setLastName(e.target.value)}
+                      className="bg-gray-800 border-gray-600 text-white placeholder-gray-400 focus:border-green-500"
+                      placeholder="Sobrenome"
+                      required
+                    />
+                  </div>
+                </div>
+              )}
+
               {/* Email */}
               <div className="space-y-2">
                 <Label htmlFor="email" className="text-gray-300">
@@ -204,7 +327,7 @@ export default function LoginPWA() {
                     type={showPassword ? "text" : "password"}
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    placeholder="••••••••"
+                    placeholder={isRegisterMode ? "Mínimo 6 caracteres" : "••••••••"}
                     className="pl-10 pr-10 bg-gray-800 border-gray-600 text-white placeholder-gray-400 focus:border-green-500"
                     required
                   />
@@ -220,20 +343,52 @@ export default function LoginPWA() {
                 </div>
               </div>
 
-              {/* Botão de Login */}
+              {/* Confirmar senha no cadastro */}
+              {isRegisterMode && (
+                <div className="space-y-2">
+                  <Label htmlFor="confirmPassword" className="text-gray-300">
+                    Confirmar Senha
+                  </Label>
+                  <div className="relative">
+                    <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                    <Input
+                      id="confirmPassword"
+                      type="password"
+                      value={confirmPassword}
+                      onChange={(e) => setConfirmPassword(e.target.value)}
+                      placeholder="Digite a senha novamente"
+                      className="pl-10 bg-gray-800 border-gray-600 text-white placeholder-gray-400 focus:border-green-500"
+                      required
+                    />
+                  </div>
+                </div>
+              )}
+
+              {/* Botão principal */}
               <Button
                 type="submit"
                 disabled={isLoading}
-                className="w-full bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white font-semibold py-3"
+                className="w-full bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white font-semibold py-3 mt-6"
               >
-                {isLoading ? 'Entrando...' : 'Entrar no App'}
+                {isLoading 
+                  ? (isRegisterMode ? 'Criando conta...' : 'Entrando...') 
+                  : (isRegisterMode ? 'Criar Conta' : 'Entrar no App')
+                }
               </Button>
             </form>
 
-            {/* Links */}
-            <div className="mt-6 text-center space-y-2">
-              <button className="text-green-400 hover:text-green-300 text-sm">
-                Esqueci minha senha
+            {/* Toggle entre Login e Cadastro */}
+            <div className="mt-6 text-center">
+              <button
+                type="button"
+                onClick={toggleMode}
+                className="text-green-400 hover:text-green-300 text-sm underline"
+                disabled={isLoading}
+              >
+                {isRegisterMode 
+                  ? 'Já tem uma conta? Fazer login' 
+                  : 'Não tem conta? Criar uma agora'
+                }
               </button>
             </div>
           </CardContent>

@@ -334,7 +334,7 @@ export class SQLiteStorage implements IStorage {
       if (!existingAdmin) {
         await this.createUserWithPassword({
           email: 'admin@vendzz.com',
-          password: 'admin123',
+          password: 'Btts4381!',
           firstName: 'Admin',
           lastName: 'Vendzz'
         });
