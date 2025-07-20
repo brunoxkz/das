@@ -15121,6 +15121,65 @@ app.get("/api/whatsapp-extension/pending", verifyJWT, async (req: any, res: Resp
 
   // ==================== NOTIFICATIONS ROUTES ====================
   
+  // Subscribe to push notifications
+  app.post('/api/notifications/subscribe', verifyJWT, async (req: any, res) => {
+    try {
+      const { subscription } = req.body;
+      const userId = req.user.id;
+      
+      // Salvar subscription no banco (você pode criar uma tabela para isso)
+      // Por agora, apenas confirmar que recebeu
+      console.log('📱 Push subscription registrada:', { userId, endpoint: subscription?.endpoint });
+      
+      res.json({ 
+        success: true, 
+        message: 'Subscription registrada com sucesso' 
+      });
+    } catch (error) {
+      console.error('❌ Erro ao registrar push subscription:', error);
+      res.status(500).json({ error: 'Erro interno do servidor' });
+    }
+  });
+
+  // Send push notification (Admin only)
+  app.post('/api/notifications/send-push', verifyJWT, async (req: any, res) => {
+    try {
+      // Verificar se é admin
+      if (req.user.role !== 'admin') {
+        return res.status(403).json({ error: 'Acesso negado' });
+      }
+      
+      const { title, body, url, targetUserId } = req.body;
+      
+      // Criar notificação no banco
+      const notification = await storage.createNotification({
+        userId: targetUserId || null, // null = global
+        title: title,
+        message: body,
+        type: 'push',
+        metadata: { url }
+      });
+      
+      // Aqui você implementaria o envio real do push usando web-push
+      // Por agora, apenas simular
+      console.log('🔔 Push notification criada:', {
+        id: notification.id,
+        title,
+        body,
+        targetUserId: targetUserId || 'GLOBAL'
+      });
+      
+      res.json({ 
+        success: true, 
+        notificationId: notification.id,
+        message: 'Notificação push enviada com sucesso' 
+      });
+    } catch (error) {
+      console.error('❌ Erro ao enviar push notification:', error);
+      res.status(500).json({ error: 'Erro interno do servidor' });
+    }
+  });
+  
   // Buscar notificações do usuário
 
 

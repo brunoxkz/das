@@ -29,6 +29,11 @@ export default function AppPWAVendzz() {
     conversionRate: 0
   });
 
+  // Estados PWA
+  const [showIOSInstallPrompt, setShowIOSInstallPrompt] = useState(false);
+  const [notificationPermission, setNotificationPermission] = useState('default');
+  const [deferredPrompt, setDeferredPrompt] = useState(null);
+
   // Verificação de login obrigatório
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
@@ -37,6 +42,125 @@ export default function AppPWAVendzz() {
       return;
     }
   }, [isLoading, isAuthenticated]);
+
+  // PWA Install Prompt e Notificações
+  useEffect(() => {
+    // 1. Detectar iOS e mostrar prompt de instalação
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+    const isInStandaloneMode = window.matchMedia('(display-mode: standalone)').matches;
+    
+    if (isIOS && !isInStandaloneMode) {
+      // Mostrar prompt iOS após 3 segundos
+      setTimeout(() => setShowIOSInstallPrompt(true), 3000);
+    }
+
+    // 2. Capturar evento beforeinstallprompt (Android/Desktop)
+    const handleBeforeInstallPrompt = (e) => {
+      e.preventDefault();
+      setDeferredPrompt(e);
+      // Mostrar botão de instalação customizado
+      toast({
+        title: "📱 Instalar App",
+        description: "Adicione o Vendzz à sua tela inicial para acesso rápido!",
+        action: {
+          label: "Instalar",
+          onClick: () => handleInstallClick()
+        }
+      });
+    };
+
+    // 3. Solicitar permissão de notificação na primeira visita
+    const requestNotificationPermission = async () => {
+      if ('Notification' in window && Notification.permission === 'default') {
+        try {
+          const permission = await Notification.requestPermission();
+          setNotificationPermission(permission);
+          
+          if (permission === 'granted') {
+            toast({
+              title: "🔔 Notificações Ativadas",
+              description: "Você receberá notificações em tempo real sobre suas campanhas",
+              variant: "default"
+            });
+            
+            // Registrar para notificações push
+            registerForPushNotifications();
+          }
+        } catch (error) {
+          console.error('Erro ao solicitar permissão de notificação:', error);
+        }
+      } else {
+        setNotificationPermission(Notification.permission);
+      }
+    };
+
+    // 4. Registrar Service Worker para notificações
+    const registerServiceWorker = async () => {
+      if ('serviceWorker' in navigator) {
+        try {
+          const registration = await navigator.serviceWorker.register('/sw.js');
+          console.log('🔧 Service Worker registrado:', registration);
+        } catch (error) {
+          console.error('❌ Erro ao registrar Service Worker:', error);
+        }
+      }
+    };
+
+    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+    registerServiceWorker();
+    
+    // Solicitar notificação após 5 segundos (primeira visita)
+    const hasAskedNotification = localStorage.getItem('vendzz_notification_asked');
+    if (!hasAskedNotification) {
+      setTimeout(() => {
+        requestNotificationPermission();
+        localStorage.setItem('vendzz_notification_asked', 'true');
+      }, 5000);
+    }
+
+    return () => {
+      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+    };
+  }, []);
+
+  // Registrar para notificações push
+  const registerForPushNotifications = async () => {
+    if ('serviceWorker' in navigator && 'PushManager' in window) {
+      try {
+        const registration = await navigator.serviceWorker.ready;
+        const subscription = await registration.pushManager.subscribe({
+          userVisibleOnly: true,
+          applicationServerKey: 'BEl62iUYgUivxIkv69yViEuiBIa40HI4QGAH8VjqMCoEuDbQyAB9V1YGrWTrfXFhbTT3kILXG1lYIqsA7R_KTnk' // VAPID key
+        });
+
+        // Enviar subscription para o servidor
+        await apiRequest('POST', '/api/notifications/subscribe', {
+          subscription: subscription
+        });
+
+        console.log('📱 Inscrito para notificações push');
+      } catch (error) {
+        console.error('❌ Erro ao registrar para push:', error);
+      }
+    }
+  };
+
+  // Instalar PWA (Android/Desktop)
+  const handleInstallClick = () => {
+    if (deferredPrompt) {
+      deferredPrompt.prompt();
+      deferredPrompt.userChoice.then((choiceResult) => {
+        if (choiceResult.outcome === 'accepted') {
+          toast({
+            title: "✅ App Instalado",
+            description: "Vendzz foi adicionado à sua tela inicial!",
+            variant: "default"
+          });
+        }
+        setDeferredPrompt(null);
+      });
+    }
+  };
 
   // Carregar dados do usuário
   useEffect(() => {
@@ -363,6 +487,43 @@ export default function AppPWAVendzz() {
           </div>
         </div>
       </div>
+
+      {/* Modal iOS Install Prompt */}
+      {showIOSInstallPrompt && (
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <Card className="bg-black/90 border border-white/20 rounded-3xl max-w-sm w-full">
+            <CardContent className="p-6 text-center">
+              <div className="w-16 h-16 bg-green-500 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                <Download className="h-8 w-8 text-white" />
+              </div>
+              <h3 className="text-xl font-bold text-white mb-2">Instalar Vendzz</h3>
+              <p className="text-gray-400 mb-6">
+                Adicione o Vendzz aos seus favoritos para acesso rápido como um app nativo
+              </p>
+              <div className="space-y-3 text-left mb-6">
+                <div className="flex items-center gap-3 text-sm text-gray-300">
+                  <div className="w-6 h-6 bg-blue-500 rounded flex items-center justify-center text-xs font-bold">1</div>
+                  <span>Toque no botão "Compartilhar" {Share2 && <Share2 className="inline h-4 w-4" />}</span>
+                </div>
+                <div className="flex items-center gap-3 text-sm text-gray-300">
+                  <div className="w-6 h-6 bg-blue-500 rounded flex items-center justify-center text-xs font-bold">2</div>
+                  <span>Selecione "Adicionar à Tela de Início"</span>
+                </div>
+                <div className="flex items-center gap-3 text-sm text-gray-300">
+                  <div className="w-6 h-6 bg-blue-500 rounded flex items-center justify-center text-xs font-bold">3</div>
+                  <span>Confirme "Adicionar"</span>
+                </div>
+              </div>
+              <Button 
+                onClick={() => setShowIOSInstallPrompt(false)}
+                className="w-full bg-green-500 hover:bg-green-600 text-white"
+              >
+                Entendi
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+      )}
     </div>
   );
 }

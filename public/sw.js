@@ -10,7 +10,7 @@ const DYNAMIC_CACHE = 'vendzz-dynamic-v1.2.0';
 
 // Cache estratégico - apenas recursos essenciais
 const ESSENTIAL_URLS = [
-  '/pwa-dashboard',
+  '/app-pwa-vendzz',
   '/api/auth/user',
   '/api/dashboard/stats',
   '/',
@@ -20,8 +20,9 @@ const ESSENTIAL_URLS = [
 // Recursos estáticos para cache agressivo
 const STATIC_RESOURCES = [
   '/',
-  '/pwa-dashboard',
+  '/app-pwa-vendzz',
   '/manifest.json',
+  '/logo-vendzz-white.png',
   '/icon-192x192.png',
   '/icon-512x512.png'
 ];
@@ -203,7 +204,7 @@ self.addEventListener('push', event => {
     badge: '/vendzz-icon-192.png',
     image: data.image,
     data: {
-      url: data.url || '/app-pwa-modern-2025',
+      url: data.url || '/app-pwa-vendzz',
       campaignId: data.campaignId,
       leadId: data.leadId,
       timestamp: Date.now(),
@@ -243,7 +244,7 @@ self.addEventListener('notificationclick', event => {
   event.notification.close();
   
   const { action, data } = event;
-  let urlToOpen = data?.url || '/pwa-dashboard';
+  let urlToOpen = data?.url || '/app-pwa-vendzz';
   
   if (action === 'view') {
     if (data?.campaignId) {
@@ -261,7 +262,7 @@ self.addEventListener('notificationclick', event => {
       .then(clientList => {
         // Se já tem uma janela aberta, usar ela
         const existingClient = clientList.find(client => 
-          client.url.includes('/pwa-dashboard') && 'focus' in client
+          client.url.includes('/app-pwa-vendzz') && 'focus' in client
         );
         
         if (existingClient) {

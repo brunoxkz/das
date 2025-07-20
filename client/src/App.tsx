@@ -16,6 +16,7 @@ import SubscribePage from "@/pages/subscribe";
 import SettingsPage from "@/pages/settings";
 import AdminPage from "@/pages/admin";
 import AdminSecurityPage from "@/pages/admin-security";
+import AdminNotifications from "@/pages/admin-notifications";
 import LeadsPage from "@/pages/leads";
 import NotFoundPage from "@/pages/not-found";
 import TutoriaisPage from "@/pages/tutoriais";
@@ -222,6 +223,11 @@ function App() {
         <Route path="/admin/security">
           <Layout>
             <AdminSecurityPage />
+          </Layout>
+        </Route>
+        <Route path="/admin/notifications">
+          <Layout>
+            <AdminNotifications />
           </Layout>
         </Route>
         <Route path="/leads">
