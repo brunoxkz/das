@@ -2,14 +2,14 @@
   "name": "VENDZZ",
   "short_name": "VENDZZ", 
   "description": "Plataforma completa de marketing digital com funis, quizzes e campanhas automatizadas",
-  "start_url": "/?v=2025",
+  "start_url": "/?v=hd2025",
   "display": "standalone",
   "theme_color": "#10b981",
   "background_color": "#ffffff",
   "orientation": "portrait-primary",
   "scope": "/",
   "lang": "pt-BR",
-  "version": "2025.1",
+  "version": "2025.1.hd",
   "icons": [
     {
       "src": "/images/icons/maskable/maskable_icon_x48.png",

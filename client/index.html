@@ -7,16 +7,29 @@
     <meta http-equiv="Pragma" content="no-cache" />
     <meta http-equiv="Expires" content="0" />
     
-    <!-- Force PWA Cache Clear -->
-    <meta name="pwa-version" content="2025.01.21" />
+    <!-- Force PWA Cache Clear - HD Icons Version -->
+    <meta name="pwa-version" content="2025.01.21.hd" />
     <script>
-      // Força limpeza do cache PWA
+      // Força limpeza completa do cache para ícones HD
       if ('serviceWorker' in navigator) {
         navigator.serviceWorker.getRegistrations().then(function(registrations) {
           for(let registration of registrations) {
             registration.unregister();
           }
         });
+      }
+      // Clear all caches for HD icons
+      if ('caches' in window) {
+        caches.keys().then(function(names) {
+          for (let name of names) {
+            caches.delete(name);
+          }
+        });
+      }
+      // Force reload favicon
+      const link = document.querySelector("link[rel~='icon']");
+      if (link) {
+        link.href = link.href.split('?')[0] + '?v=hd' + Date.now();
       }
     </script>
     <title>VENDZZ - Plataforma de Marketing Digital e Quiz Funnels</title>
@@ -37,17 +50,17 @@
     <!-- PWA Meta Tags -->
     <meta name="format-detection" content="telephone=no" />
     
-    <!-- Favicon VENDZZ - Todos os formatos e tamanhos -->
-    <link rel="icon" href="/favicon.ico?v=vendzz2025" />
-    <link rel="icon" type="image/png" sizes="16x16" href="/images/icons/ios/Icon-Light-16x16.png?v=vendzz2025" />
-    <link rel="icon" type="image/png" sizes="32x32" href="/images/icons/ios/Icon-Light-32x32.png?v=vendzz2025" />
-    <link rel="icon" type="image/png" sizes="48x48" href="/images/icons/maskable/maskable_icon_x48.png?v=vendzz2025" />
-    <link rel="icon" type="image/png" sizes="96x96" href="/images/icons/maskable/maskable_icon_x96.png?v=vendzz2025" />
-    <link rel="icon" type="image/png" sizes="192x192" href="/images/icons/maskable/maskable_icon_x192.png?v=vendzz2025" />
-    <link rel="shortcut icon" href="/favicon.ico?v=vendzz2025" />
+    <!-- Favicon VENDZZ - Alta Qualidade -->
+    <link rel="icon" href="/favicon.ico?v=hd2025" />
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png?v=hd2025" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png?v=hd2025" />
+    <link rel="icon" type="image/png" sizes="192x192" href="/icon-192x192.png?v=hd2025" />
+    <link rel="icon" type="image/png" sizes="512x512" href="/icon-512x512.png?v=hd2025" />
+    <link rel="shortcut icon" href="/favicon.ico?v=hd2025" />
     
-    <!-- Apple Touch Icons VENDZZ para iOS -->
-    <link rel="apple-touch-icon" href="/images/icons/ios/Icon-Light-180x180.png?v=2025" />
+    <!-- Apple Touch Icons VENDZZ HD para iOS -->
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png?v=hd2025" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png?v=hd2025" />
     <link rel="apple-touch-icon" sizes="40x40" href="/images/icons/ios/Icon-Light-40x40.png?v=2025" />
     <link rel="apple-touch-icon" sizes="58x58" href="/images/icons/ios/Icon-Light-58x58.png?v=2025" />
     <link rel="apple-touch-icon" sizes="60x60" href="/images/icons/ios/Icon-Light-60x60.png?v=2025" />

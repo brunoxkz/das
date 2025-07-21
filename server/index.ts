@@ -187,25 +187,95 @@ app.use((req, res, next) => {
 
 // Health check endpoints now integrated in routes-sqlite.ts
 
-// FAVICON FORÇADO - INTERCEPTAÇÃO CRÍTICA ANTES DE TUDO
+// FAVICON HD FORÇADO - INTERCEPTAÇÃO CRÍTICA ANTES DE TUDO
 app.get('/favicon.ico', (req, res) => {
   try {
     const faviconPath = path.join(process.cwd(), 'public/favicon.ico');
-    console.log('🔥 FORÇA FAVICON ICO:', faviconPath);
+    console.log('🔥 SERVINDO FAVICON HD:', faviconPath);
     
     if (fs.existsSync(faviconPath)) {
       const iconBuffer = fs.readFileSync(faviconPath);
-      res.setHeader('Content-Type', 'image/x-icon');
-      res.setHeader('Cache-Control', 'public, max-age=86400');
-      res.setHeader('Content-Length', iconBuffer.length.toString());
-      res.status(200).end(iconBuffer);
-      console.log('✅ FAVICON SERVIDO COM SUCESSO');
+      res.writeHead(200, {
+        'Content-Type': 'image/x-icon',
+        'Content-Length': iconBuffer.length,
+        'Cache-Control': 'public, max-age=86400'
+      });
+      res.end(iconBuffer);
+      console.log('✅ FAVICON HD SERVIDO - TAMANHO:', iconBuffer.length);
     } else {
-      console.log('❌ FAVICON NÃO ENCONTRADO:', faviconPath);
+      console.log('❌ FAVICON HD NÃO ENCONTRADO:', faviconPath);
       res.status(404).end();
     }
   } catch (error) {
-    console.error('❌ ERRO CRÍTICO FAVICON:', error);
+    console.error('❌ ERRO CRÍTICO FAVICON HD:', error);
+    res.status(500).end();
+  }
+});
+
+// Apple Touch Icon HD
+app.get('/apple-touch-icon.png', (req, res) => {
+  try {
+    const iconPath = path.join(process.cwd(), 'public/apple-touch-icon.png');
+    console.log('🍎 SERVINDO APPLE TOUCH ICON HD:', iconPath);
+    
+    if (fs.existsSync(iconPath)) {
+      const iconBuffer = fs.readFileSync(iconPath);
+      res.setHeader('Content-Type', 'image/png');
+      res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+      res.setHeader('Content-Length', iconBuffer.length.toString());
+      res.status(200).end(iconBuffer);
+      console.log('✅ APPLE TOUCH ICON HD SERVIDO - TAMANHO:', iconBuffer.length);
+    } else {
+      console.log('❌ APPLE TOUCH ICON HD NÃO ENCONTRADO:', iconPath);
+      res.status(404).end();
+    }
+  } catch (error) {
+    console.error('❌ ERRO CRÍTICO APPLE TOUCH ICON HD:', error);
+    res.status(500).end();
+  }
+});
+
+// PWA Icons HD
+app.get('/icon-192x192.png', (req, res) => {
+  try {
+    const iconPath = path.join(process.cwd(), 'public/icon-192x192.png');
+    console.log('🚀 SERVINDO PWA ICON 192x192 HD:', iconPath);
+    
+    if (fs.existsSync(iconPath)) {
+      const iconBuffer = fs.readFileSync(iconPath);
+      res.setHeader('Content-Type', 'image/png');
+      res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+      res.setHeader('Content-Length', iconBuffer.length.toString());
+      res.status(200).end(iconBuffer);
+      console.log('✅ PWA ICON 192 HD SERVIDO - TAMANHO:', iconBuffer.length);
+    } else {
+      console.log('❌ PWA ICON 192 HD NÃO ENCONTRADO:', iconPath);
+      res.status(404).end();
+    }
+  } catch (error) {
+    console.error('❌ ERRO CRÍTICO PWA ICON 192 HD:', error);
+    res.status(500).end();
+  }
+});
+
+app.get('/icon-512x512.png', (req, res) => {
+  try {
+    const iconPath = path.join(process.cwd(), 'public/icon-512x512.png');
+    console.log('🚀 SERVINDO PWA ICON 512x512 HD:', iconPath);
+    
+    if (fs.existsSync(iconPath)) {
+      const iconBuffer = fs.readFileSync(iconPath);
+      res.setHeader('Content-Type', 'image/png');
+      res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+      res.setHeader('Content-Length', iconBuffer.length.toString());
+      res.status(200).end(iconBuffer);
+      console.log('✅ PWA ICON 512 HD SERVIDO - TAMANHO:', iconBuffer.length);
+    } else {
+      console.log('❌ PWA ICON 512 HD NÃO ENCONTRADO:', iconPath);
+      res.status(404).end();
+    }
+  } catch (error) {
+    console.error('❌ ERRO CRÍTICO PWA ICON 512 HD:', error);
     res.status(500).end();
   }
 });
