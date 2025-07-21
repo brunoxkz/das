@@ -12,7 +12,7 @@ const https = require('https');
  * - Sistema simplificado de armazenamento
  */
 
-const SERVER_URL = 'https://97b0b4b9-39e3-4b54-a7f0-80bc726398d9-00-1f2swtmrzz8qa.janeway.replit.dev';
+const SERVER_URL = 'https://51f74588-7b5b-4e89-adab-b70610c96e0b-00-zr6ug9hu0yss.janeway.replit.dev';
 
 // Dados de teste
 const ADMIN_LOGIN = {
@@ -100,8 +100,8 @@ async function testAuthentication() {
   try {
     const response = await makeRequest('POST', '/api/auth/login', ADMIN_LOGIN);
     
-    if (response.status === 200 && response.data.token) {
-      authToken = response.data.token;
+    if (response.status === 200 && (response.data.token || response.data.accessToken)) {
+      authToken = response.data.token || response.data.accessToken;
       console.log('✅ Login realizado com sucesso');
       console.log(`🔑 Token obtido: ${authToken.substring(0, 20)}...`);
       return true;
