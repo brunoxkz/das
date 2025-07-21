@@ -82,12 +82,19 @@ app.use(express.json({
 
 // Removemos express.urlencoded() para evitar interceptação das requisições JSON do fetch()
 
-// CORS e Headers EXTREMAMENTE SIMPLIFICADOS para resolver ERR_BLOCKED_BY_RESPONSE
+// CORS e Headers COMPLETOS reativados - apenas real-time push desabilitado
 app.use((req, res, next) => {
-  // Apenas CORS básico
+  // CORS completo
   res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS, PATCH');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept, Origin, Cache-Control, Pragma');
+  res.setHeader('Access-Control-Allow-Credentials', 'true');
+  
+  // Security headers reativados
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('X-Frame-Options', 'DENY');
+  res.setHeader('X-XSS-Protection', '1; mode=block');
+  res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
   
   // Handle preflight requests
   if (req.method === 'OPTIONS') {
@@ -98,15 +105,15 @@ app.use((req, res, next) => {
   next();
 });
 
-// Apply security middleware que funciona com Express 4.x - TEMPORARIAMENTE DESABILITADO
-// app.use(honeypotMiddleware);
-// app.use(timingAttackProtection);
-// app.use(attackSignatureAnalyzer);
-// app.use(blacklistMiddleware);
+// Apply security middleware que funciona com Express 4.x - REATIVADO
+app.use(honeypotMiddleware);
+app.use(timingAttackProtection);
+app.use(attackSignatureAnalyzer);
+app.use(blacklistMiddleware);
 
 // Health check endpoints now integrated in routes-sqlite.ts
 
-// Service Workers desabilitados temporariamente para resolver ERR_BLOCKED_BY_RESPONSE
+// Service Workers reativados - apenas real-time push desabilitado
 
 // Initialize auth ANTES das rotas
 setupHybridAuth(app);
@@ -119,7 +126,7 @@ console.log('✅ PUSH NOTIFICATIONS BÁSICO REATIVADO (real-time desabilitado)')
 // Register all routes DEPOIS dos endpoints de push
 const server = registerHybridRoutes(app);
 
-// SERVICE WORKER INTERCEPTOR DESABILITADO PARA RESOLVER ERR_BLOCKED_BY_RESPONSE
+// SERVICE WORKER INTERCEPTOR REATIVADO - apenas real-time push desabilitado
 
 // Setup Vite middleware for dev and production APÓS todas as rotas
 setupVite(app, server);
