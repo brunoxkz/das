@@ -700,6 +700,12 @@ export default function Dashboard() {
                 <Bell className="w-4 h-4 mr-2" />
                 Testar Push
               </Button>
+              <Link href="/push-admin">
+                <Button className="bg-purple-600 hover:bg-purple-700 shadow-lg text-white">
+                  <Bell className="w-4 h-4 mr-2" />
+                  Enviar Push
+                </Button>
+              </Link>
               <Link href="/quizzes/new">
                 <Button className="bg-green-600 hover:bg-green-700 shadow-lg text-white shock-green">
                   <Plus className="w-4 h-4 mr-2" />
