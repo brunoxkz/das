@@ -57,20 +57,23 @@ export default function Dashboard() {
     showAutoPrompt: false
   });
 
-  // Detecção automática de iOS PWA e configuração de push notifications
+  // Detecção automática de PWA/Desktop e configuração de push notifications
   useEffect(() => {
-    const checkiOSPWAAndSetupPush = async () => {
+    const checkDeviceAndSetupPush = async () => {
       try {
         // Detectar iOS
         const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
         
-        // Detectar PWA mode
+        // Detectar PWA mode (também funciona no desktop)
         const isPWA = window.matchMedia('(display-mode: standalone)').matches ||
                       window.matchMedia('(display-mode: fullscreen)').matches ||
                       (window.navigator as any).standalone;
         
         // Verificar suporte a notificações
         const isSupported = 'serviceWorker' in navigator && 'PushManager' in window;
+        
+        // Detectar desktop (Chrome, Firefox, Edge, Safari)
+        const isDesktop = !(/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent));
         
         // Atualizar estado
         setPushNotificationState(prev => ({
@@ -79,12 +82,13 @@ export default function Dashboard() {
           isPWA,
           isSupported,
           hasPermission: Notification.permission === 'granted',
-          showAutoPrompt: isIOS && isPWA && isSupported && Notification.permission === 'default'
+          showAutoPrompt: (isIOS && isPWA || isDesktop) && isSupported && Notification.permission === 'default'
         }));
 
-        // Se for iOS PWA e ainda não tem permissão, solicitar automaticamente
-        if (isIOS && isPWA && isSupported && Notification.permission === 'default') {
-          console.log('🔔 iOS PWA detectado - Solicitando permissões automaticamente');
+        // Se for iOS PWA OU Desktop e ainda não tem permissão, solicitar automaticamente
+        if ((isIOS && isPWA || isDesktop) && isSupported && Notification.permission === 'default') {
+          console.log('🔔 Dispositivo compatível detectado - Solicitando permissões automaticamente');
+          console.log('📱 Tipo:', isIOS ? 'iOS PWA' : isDesktop ? 'Desktop' : 'Outro');
           
           // Registrar service worker primeiro
           const registration = await navigator.serviceWorker.register('/sw-simple.js');
@@ -137,7 +141,7 @@ export default function Dashboard() {
 
     // Executar apenas uma vez quando o componente montar
     if (isAuthenticated) {
-      checkiOSPWAAndSetupPush();
+      checkDeviceAndSetupPush();
     }
   }, [isAuthenticated, toast]);
 

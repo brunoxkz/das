@@ -146,13 +146,16 @@ export const subscribeToPush = async (req: Request, res: Response) => {
 
 export const sendPushToAll = async (req: Request, res: Response) => {
   try {
-    const { title, body, url } = req.body;
+    const { title, body, message, url } = req.body;
+    
+    // Aceitar tanto 'body' quanto 'message'
+    const messageText = body || message;
 
-    if (!title || !body) {
-      return res.status(400).json({ error: 'Title e body são obrigatórios' });
+    if (!title || !messageText) {
+      return res.status(400).json({ error: 'Title e message são obrigatórios' });
     }
 
-    const result = await pushService.sendToAll(title, body, url);
+    const result = await pushService.sendToAll(title, messageText, url);
     
     res.json({
       success: true,
