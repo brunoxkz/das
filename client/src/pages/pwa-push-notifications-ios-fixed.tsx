@@ -52,13 +52,20 @@ export default function PWANotificationsiOSFixed({}: PWANotificationsiOSFixedPro
     console.log('🔍 [FIXED] Ambiente detectado:', env);
     setDebugInfo(`iOS: ${env.isIOS}, Standalone: ${env.isStandalone}, PWA: ${env.isPWAInstalled}`);
     
-    // Verificar suporte básico
+    // Verificar suporte básico com segurança
     const hasSupport = 'serviceWorker' in navigator && 
                       'PushManager' in window && 
+                      typeof Notification !== 'undefined' && 
                       'Notification' in window;
     
     setIsSupported(hasSupport);
-    setPermission(Notification.permission);
+    
+    // Verificar permissão de forma segura
+    if (hasSupport && typeof Notification !== 'undefined') {
+      setPermission(Notification.permission || 'default');
+    } else {
+      setPermission('denied');
+    }
     
     if (hasSupport) {
       initializeServiceWorker();
@@ -91,9 +98,9 @@ export default function PWANotificationsiOSFixed({}: PWANotificationsiOSFixedPro
       
       console.log('✅ [FIXED] Service Worker pronto:', registration.scope);
       
-    } catch (error) {
+    } catch (error: any) {
       console.error('❌ [FIXED] Erro no Service Worker:', error);
-      setLastError(`Service Worker: ${error.message}`);
+      setLastError(`Service Worker: ${error?.message || 'Erro desconhecido'}`);
     }
   };
 
@@ -109,6 +116,11 @@ export default function PWANotificationsiOSFixed({}: PWANotificationsiOSFixedPro
       
       // ETAPA 1: Verificar permissões de forma robusta
       console.log('🔔 [FIXED] Verificando permissões...');
+      
+      // Verificar se Notification está disponível
+      if (typeof Notification === 'undefined') {
+        throw new Error('Notificações não suportadas neste dispositivo/navegador');
+      }
       
       if (Notification.permission !== 'granted') {
         console.log('🔔 [FIXED] Solicitando permissão...');

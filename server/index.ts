@@ -117,6 +117,22 @@ app.use(blacklistMiddleware);
 
 // Health check endpoints now integrated in routes-sqlite.ts
 
+// Rota específica para Service Worker com MIME type correto
+app.get('/vendzz-notification-sw.js', (req, res) => {
+  const path = require('path');
+  const fs = require('fs');
+  
+  const swPath = path.join(process.cwd(), 'public', 'vendzz-notification-sw.js');
+  
+  if (fs.existsSync(swPath)) {
+    res.setHeader('Content-Type', 'application/javascript; charset=utf-8');
+    res.setHeader('Service-Worker-Allowed', '/');
+    res.sendFile(swPath);
+  } else {
+    res.status(404).send('Service Worker não encontrado');
+  }
+});
+
 // Initialize auth ANTES das rotas
 setupHybridAuth(app);
 
