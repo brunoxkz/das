@@ -4185,7 +4185,8 @@ export function registerSQLiteRoutes(app: Express): Server {
               };
               
               // Usar o mesmo sistema do sendPushToAll mas filtrado para o dono do quiz
-              const { sendPushToSpecificUser } = require('./push-simple');
+              const pushSimple = await import('./push-simple.js');
+              const { sendPushToSpecificUser } = pushSimple;
               if (sendPushToSpecificUser) {
                 await sendPushToSpecificUser(quizOwner.id, payload);
                 console.log(`✅ Push notification enviada para ${quizOwner.email}: "${selectedMessage.title}"`);
