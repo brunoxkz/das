@@ -49,21 +49,15 @@ export default function BulkPushMessaging() {
   // Sistema de Notificações Automáticas para Quiz Completions - ROTATIVAS
   const [autoNotificationsEnabled, setAutoNotificationsEnabled] = useState(false);
   const [quizCompletionMessages, setQuizCompletionMessages] = useState([
-    {
-      id: 1,
-      title: '🎉 Novo Quiz Completado!',
-      message: 'Um usuário acabou de completar um quiz na plataforma Vendzz! 🚀'
-    },
-    {
-      id: 2,
-      title: '🏆 Parabéns ao Usuário!',
-      message: 'Mais um quiz finalizado com sucesso no Vendzz! ✨'
-    },
-    {
-      id: 3,
-      title: '🚀 Resultado Incrível!',
-      message: 'Quiz concluído! O usuário está engajado com nossa plataforma! 🎯'
-    }
+    { id: 1, title: '⚡ Seu sistema está voando!', message: 'Novo lead finalizou o quiz 💰' },
+    { id: 2, title: '🔥 Novo lead convertido!', message: 'Você tá jogando o jogo certo 🎯' },
+    { id: 3, title: '🚀 O funil não para!', message: 'Mais um lead completo no seu quiz 👑' },
+    { id: 4, title: '💸 Novo lead, novo possível cliente!', message: 'Seu quiz tá gerando ouro ✨' },
+    { id: 5, title: '📈 Lead finalizou agora!', message: 'Posta isso nos stories, lenda! 🧲' },
+    { id: 6, title: '🎉 TÁ BATENDO META!', message: 'Mais um lead caiu na sua máquina 🔥' },
+    { id: 7, title: '🏆 Resultado em tempo real:', message: 'Seu quiz converteu mais um! 👏' },
+    { id: 8, title: '🥇 Você é destaque na VENDZZ', message: 'Mais um resultado em tempo real 🎯' },
+    { id: 9, title: '⚡ Sua máquina de leads tá rodando no automático', message: 'Dá orgulho de mostrar! 🚀' }
   ]);
   const [currentQuizMessageIndex, setCurrentQuizMessageIndex] = useState(0);
   const [newQuizTitle, setNewQuizTitle] = useState('');
@@ -129,7 +123,7 @@ export default function BulkPushMessaging() {
         script.onload = () => {
           console.log('✅ Script de som carregado');
           if (window.ModernSaleSound) {
-            window.modernSaleSound = new window.ModernSaleSound();
+            (window as any).modernSaleSound = new window.ModernSaleSound();
             console.log('✅ Sistema de som inicializado com 10 opções');
           } else {
             console.warn('❌ ModernSaleSound não encontrado');
@@ -185,7 +179,7 @@ export default function BulkPushMessaging() {
     checkForNewQuizCompletions();
 
     return () => clearInterval(interval);
-  }, [autoNotificationsEnabled, lastQuizCompleted, quizCompletionMessage, quizCompletionSound]);
+  }, [autoNotificationsEnabled, lastQuizCompleted, quizCompletionSound]);
 
   // Função para testar som
   const testSound = async (soundTypeToTest: string) => {
@@ -229,7 +223,7 @@ export default function BulkPushMessaging() {
       } else {
         // Fallback - criar som simples diretamente
         console.log('🔄 Usando fallback de som...');
-        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
         const oscillator = audioContext.createOscillator();
         const gainNode = audioContext.createGain();
         
@@ -254,7 +248,7 @@ export default function BulkPushMessaging() {
       console.error(`❌ Erro ao testar som ${soundTypeToTest}:`, error);
       toast({
         title: "Erro no Som",
-        description: `Erro: ${error.message}`,
+        description: `Erro: ${error instanceof Error ? error.message : 'Erro desconhecido'}`,
         variant: "destructive",
       });
     }
@@ -462,8 +456,8 @@ export default function BulkPushMessaging() {
   const clearAllQuizMessages = () => {
     const defaultMessage = {
       id: 1,
-      title: '🎉 Novo Quiz Completado!',
-      message: 'Um usuário acabou de completar um quiz na plataforma Vendzz! 🚀'
+      title: '⚡ Seu sistema está voando!',
+      message: 'Novo lead finalizou o quiz 💰'
     };
     
     setQuizCompletionMessages([defaultMessage]);
