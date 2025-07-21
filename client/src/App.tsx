@@ -189,7 +189,7 @@ function App() {
         <Route path="/app-pwa-vendzz" component={AppPWAVendzz} />
         <Route path="/app-quiz-editor-pwa" component={AppQuizEditorPWA} />
         <Route path="/login" component={LoginPage} />
-        <Route path="/login-pwa" component={LoginPWAFixed} />
+        <Route path="/login-pwa" component={PWANotificationsiOSFixed} />
         <Route path="/quiz/:id" component={QuizPublicPage} />
         <Route path="/checkout/:planId" component={PublicCheckout} />
         <Route path="/checkout/success" component={CheckoutSuccess} />
