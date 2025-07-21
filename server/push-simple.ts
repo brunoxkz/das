@@ -1,16 +1,24 @@
-// Sistema Push Notifications Extremamente Simples para iOS PWA
+// Sistema Push Notifications REAL para iOS PWA
 import fs from 'fs/promises';
 import path from 'path';
 import { Request, Response } from 'express';
+import webpush from 'web-push';
 
 // Arquivo para armazenar subscriptions
 const SUBSCRIPTIONS_FILE = path.join(process.cwd(), 'push-subscriptions.json');
 
-// VAPID Keys (em produção, usar variáveis de ambiente)
+// VAPID Keys válidas geradas pelo web-push  
 const VAPID_KEYS = {
-  publicKey: 'BEqS9Zx3Tp9U4Yfs8n6vK4L4Ft7wXz1kJ2mRvN8gQ3hW5cP6dE7yI9uA5rO3vE8nM2xS4vW6yB1cF9eH7jK5lP8q',
-  privateKey: 'r2d2c3po-4e5f-6a7b-8c9d-0e1f2g3h4i5j'
+  publicKey: 'BKVRmJs10mOKMM_5r5ulr2lwK7874bDfO2xKcJstwEKo2zH-IovON2BG8_847MbQnzo_75QqRAEkjC_BwzwiccQ',
+  privateKey: 'xdoMPGbXwmuimTCk-Rn-6Nh474zq8PciCWWTp_WbBZg'
 };
+
+// Configurar web-push com VAPID keys
+webpush.setVapidDetails(
+  'mailto:admin@vendzz.com',
+  VAPID_KEYS.publicKey,
+  VAPID_KEYS.privateKey
+);
 
 interface PushSubscription {
   endpoint: string;
@@ -70,33 +78,56 @@ class SimplePushService {
     }
   }
 
-  // Enviar push para todas as subscriptions (simulação para desenvolvimento)
+  // Enviar push REAL para todas as subscriptions
   async sendToAll(title: string, body: string, url?: string): Promise<{ success: number, failed: number }> {
     const subscriptions = await this.loadSubscriptions();
     let success = 0;
     let failed = 0;
 
-    console.log(`📨 Simulando envio push para ${subscriptions.length} subscriptions...`);
+    console.log(`📨 Enviando push REAL para ${subscriptions.length} subscriptions...`);
+
+    const payload = JSON.stringify({
+      title: title,
+      body: body,
+      icon: '/favicon.ico',
+      badge: '/favicon.ico',
+      url: url || '/',
+      requireInteraction: true,
+      vibrate: [200, 100, 200],
+      actions: [
+        {
+          action: 'open',
+          title: 'Abrir',
+          icon: '/favicon.ico'
+        }
+      ]
+    });
 
     for (const subscription of subscriptions) {
       try {
-        // Log da simulação de envio
-        console.log('📤 [SIMULAÇÃO] Enviando para:', subscription.endpoint.substring(0, 50) + '...');
-        console.log('📤 [SIMULAÇÃO] Título:', title);
-        console.log('📤 [SIMULAÇÃO] Corpo:', body);
+        console.log('📤 [REAL] Enviando para:', subscription.endpoint.substring(0, 50) + '...');
+        console.log('📤 [REAL] Título:', title);
+        console.log('📤 [REAL] Corpo:', body);
         
-        // Simular pequeno delay
-        await new Promise(resolve => setTimeout(resolve, 100));
+        // Envio REAL usando web-push
+        await webpush.sendNotification(
+          {
+            endpoint: subscription.endpoint,
+            keys: subscription.keys
+          },
+          payload
+        );
         
         success++;
+        console.log('✅ Push enviado com sucesso!');
       } catch (error) {
-        console.error('❌ Falha na simulação:', error);
+        console.error('❌ Falha no envio real:', error.message);
         failed++;
       }
     }
 
-    console.log(`✅ Simulação completa - Sucesso: ${success}, Falhas: ${failed}`);
-    console.log(`📱 Em produção, estas notificações apareceriam na tela de bloqueio dos ${success} dispositivos`);
+    console.log(`✅ Envio completo - Sucesso: ${success}, Falhas: ${failed}`);
+    console.log(`📱 ${success} notificações REAIS foram enviadas para dispositivos`);
     return { success, failed };
   }
 
@@ -119,6 +150,7 @@ const pushService = new SimplePushService();
 // Endpoints para as rotas
 
 export const getVapidPublicKey = async (req: Request, res: Response) => {
+  console.log('🔧 Endpoint /push/vapid chamado');
   res.json({ publicKey: VAPID_KEYS.publicKey });
 };
 

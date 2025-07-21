@@ -198,7 +198,7 @@ console.log('✅ PUSH NOTIFICATIONS ENDPOINTS REGISTRADOS COM PREFIXO /push/');
 // CORREÇÃO OPERA: Serve Service Workers com MIME type correto
 app.use((req, res, next) => {
   // Interceptar especificamente arquivos Service Worker
-  if (req.path === '/sw-simple.js' || req.path === '/vendzz-notification-sw.js' || req.path.includes('service-worker')) {
+  if (req.path === '/sw-simple.js' || req.path === '/vendzz-notification-sw.js' || req.path.includes('service-worker') || req.path === '/sw.js') {
     const swPath = path.join(process.cwd(), 'public', req.path.substring(1));
     console.log('🔧 INTERCEPTANDO SERVICE WORKER:', req.path, '→', swPath);
     
