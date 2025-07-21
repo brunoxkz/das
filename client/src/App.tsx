@@ -189,7 +189,14 @@ function App() {
         <Route path="/app-pwa-vendzz" component={AppPWAVendzz} />
         <Route path="/app-quiz-editor-pwa" component={AppQuizEditorPWA} />
         <Route path="/login" component={LoginPage} />
-        <Route path="/login-pwa" component={PWANotificationsiOSFixed} />
+        <Route path="/login-pwa" component={() => {
+          if (!isAuthenticated) {
+            // Salvar a URL de destino no localStorage para redirecionar após login
+            localStorage.setItem('loginRedirect', '/pwa-push-notifications');
+            return <Redirect to="/login" />;
+          }
+          return <Redirect to="/pwa-push-notifications" />;
+        }} />
         <Route path="/quiz/:id" component={QuizPublicPage} />
         <Route path="/checkout/:planId" component={PublicCheckout} />
         <Route path="/checkout/success" component={CheckoutSuccess} />
@@ -270,6 +277,11 @@ function App() {
         <Route path="/admin/notifications">
           <Layout>
             <AdminNotifications />
+          </Layout>
+        </Route>
+        <Route path="/pwa-push-notifications">
+          <Layout>
+            <PWANotificationsiOSFixed />
           </Layout>
         </Route>
         <Route path="/admin-push-notifications">

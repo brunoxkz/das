@@ -104,10 +104,17 @@ export default function LoginPage() {
       
       toast({
         title: "Login realizado com sucesso!",
-        description: "Redirecionando para dashboard...",
+        description: "Redirecionando...",
       });
       
-      // Redirecionamento agora é feito automaticamente pelo hook de autenticação
+      // Verificar se há redirecionamento salvo
+      const redirectUrl = localStorage.getItem('loginRedirect');
+      if (redirectUrl) {
+        localStorage.removeItem('loginRedirect');
+        setTimeout(() => setLocation(redirectUrl), 100);
+      } else {
+        setTimeout(() => setLocation('/dashboard'), 100);
+      }
       
     } catch (error: any) {
       console.error("Login error:", error);
