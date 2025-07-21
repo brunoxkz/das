@@ -666,6 +666,11 @@ function App() {
         </Route>
         <Route path="/admin-push-notifications">
           <Layout>
+            <BulkPushMessaging key="admin-push-redirect" />
+          </Layout>
+        </Route>
+        <Route path="/admin-push-notifications">
+          <Layout>
             <BulkPushMessaging />
           </Layout>
         </Route>

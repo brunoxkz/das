@@ -50,7 +50,7 @@ export default function BulkPushMessaging() {
   useEffect(() => {
     const loadAudioSystem = async () => {
       try {
-        if (window.soundSystem) {
+        if (window.playNotificationSound) {
           console.log('🔊 Sistema de som já carregado');
           return;
         }
@@ -63,7 +63,7 @@ export default function BulkPushMessaging() {
         script.onload = () => {
           console.log('✅ Script de som carregado');
           if (window.ModernSaleSound) {
-            window.soundSystem = new window.ModernSaleSound();
+            window.modernSaleSound = new window.ModernSaleSound();
             console.log('✅ Sistema de som inicializado com 10 opções');
           } else {
             console.warn('❌ ModernSaleSound não encontrado');
@@ -100,8 +100,25 @@ export default function BulkPushMessaging() {
 
       console.log(`🔊 Testando som: ${soundTypeToTest}`);
       
-      if (window.soundSystem && window.soundSystem.playSound) {
-        await window.soundSystem.playSound(soundTypeToTest);
+      // Tentar carregar o sistema de som se não estiver disponível
+      if (!window.playNotificationSound) {
+        console.log('🔄 Sistema de som não encontrado, recarregando...');
+        const script = document.createElement('script');
+        script.src = '/sounds/sale-notification.js';
+        script.async = true;
+        
+        await new Promise((resolve, reject) => {
+          script.onload = resolve;
+          script.onerror = reject;
+          document.head.appendChild(script);
+        });
+        
+        // Aguardar um pouco para o sistema inicializar
+        await new Promise(resolve => setTimeout(resolve, 500));
+      }
+      
+      if (window.playNotificationSound) {
+        await window.playNotificationSound(soundTypeToTest);
         console.log(`✅ Som ${soundTypeToTest} reproduzido com sucesso`);
         
         toast({
@@ -109,13 +126,34 @@ export default function BulkPushMessaging() {
           description: "Som reproduzido com sucesso!",
         });
       } else {
-        throw new Error('Sistema de som não inicializado');
+        // Fallback - criar som simples diretamente
+        console.log('🔄 Usando fallback de som...');
+        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        const oscillator = audioContext.createOscillator();
+        const gainNode = audioContext.createGain();
+        
+        oscillator.connect(gainNode);
+        gainNode.connect(audioContext.destination);
+        
+        oscillator.frequency.setValueAtTime(440, audioContext.currentTime); // A4
+        oscillator.type = 'sine';
+        
+        gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5);
+        
+        oscillator.start();
+        oscillator.stop(audioContext.currentTime + 0.5);
+        
+        toast({
+          title: `🎵 Som ${getSoundTypeText(soundTypeToTest)}`,
+          description: "Som teste reproduzido (fallback)!",
+        });
       }
     } catch (error) {
       console.error(`❌ Erro ao testar som ${soundTypeToTest}:`, error);
       toast({
         title: "Erro no Som",
-        description: `Não foi possível reproduzir o som ${getSoundTypeText(soundTypeToTest)}`,
+        description: `Erro: ${error.message}`,
         variant: "destructive",
       });
     }
@@ -203,7 +241,7 @@ export default function BulkPushMessaging() {
         });
         
         // Reproduzir som de sucesso se estiver habilitado
-        if (soundEnabled && window.soundSystem) {
+        if (soundEnabled && window.playNotificationSound) {
           try {
             const selectedSoundType = messageType === 'unique' ? uniqueSoundType : 
                                       messageType === 'rotating' ? rotativeSoundType : soundType;
