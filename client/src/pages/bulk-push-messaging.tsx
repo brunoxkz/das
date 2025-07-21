@@ -28,6 +28,7 @@ export default function BulkPushMessaging() {
   const [isLoading, setIsLoading] = useState(false);
   const [soundEnabled, setSoundEnabled] = useState(true);
   const [soundType, setSoundType] = useState('sale');
+  const [messageType, setMessageType] = useState('unique'); // 'unique', 'rotating', 'priority'
   const [stats, setStats] = useState<BulkMessageStats>({
     totalUsers: 0,
     messagesSent: 0,
@@ -38,20 +39,46 @@ export default function BulkPushMessaging() {
 
   // Carregar sistema de áudio moderno
   useEffect(() => {
-    const loadAudioSystem = () => {
-      const script = document.createElement('script');
-      script.src = '/sounds/sale-notification.js';
-      script.onload = () => {
-        console.log('🔊 Sistema de áudio moderno carregado');
-        // Criar uma instância global do sistema de som
-        if (window.ModernSaleSound) {
-          window.soundSystem = new window.ModernSaleSound();
+    const loadAudioSystem = async () => {
+      try {
+        // Verificar se já existe
+        if (window.soundSystem) {
+          console.log('🔊 Sistema de som já carregado');
+          return;
         }
-      };
-      script.onerror = () => {
-        console.warn('❌ Erro ao carregar sistema de áudio');
-      };
-      document.head.appendChild(script);
+
+        console.log('🔊 Carregando sistema de som...');
+        const script = document.createElement('script');
+        script.src = '/sounds/sale-notification.js';
+        script.async = true;
+        
+        script.onload = () => {
+          console.log('✅ Script de som carregado');
+          if (window.ModernSaleSound) {
+            window.soundSystem = new window.ModernSaleSound();
+            console.log('✅ Sistema de som inicializado');
+          } else {
+            console.warn('❌ ModernSaleSound não encontrado');
+          }
+        };
+        
+        script.onerror = (error) => {
+          console.error('❌ Erro ao carregar script de som:', error);
+        };
+        
+        document.head.appendChild(script);
+        
+        // Timeout como fallback
+        setTimeout(() => {
+          if (!window.soundSystem && window.ModernSaleSound) {
+            window.soundSystem = new window.ModernSaleSound();
+            console.log('✅ Sistema de som inicializado via timeout');
+          }
+        }, 2000);
+        
+      } catch (error) {
+        console.error('❌ Erro geral no carregamento de som:', error);
+      }
     };
 
     loadAudioSystem();
@@ -205,15 +232,36 @@ export default function BulkPushMessaging() {
           const subscribeResult = await subscribeResponse.json();
           console.log('💾 Resultado subscribe:', subscribeResult);
           
-          // ENVIAR MENSAGEM CUSTOMIZADA - MESMO ENDPOINT
-          console.log('📤 Enviando primeira push após permissão...');
+          // ENVIAR MENSAGEM BASEADA NO TIPO
+          console.log(`📤 Enviando mensagem ${messageType}...`);
+          
+          let requestBody;
+          if (messageType === 'rotating') {
+            // Mensagens rotativas predefinidas
+            const rotatingMessages = [
+              { title: '🔥 Promoção Especial!', message: 'Oferta limitada disponível agora - não perca!' },
+              { title: '📱 Nova Atualização', message: 'Sistema atualizado com novas funcionalidades' },
+              { title: '✨ Descubra Novidades', message: 'Explore as últimas funcionalidades do Vendzz' },
+              { title: '🚀 Performance Melhorada', message: 'Sistema 3x mais rápido e eficiente' }
+            ];
+            const randomMessage = rotatingMessages[Math.floor(Math.random() * rotatingMessages.length)];
+            requestBody = { 
+              title: randomMessage.title, 
+              message: randomMessage.message,
+              type: 'rotating'
+            };
+          } else {
+            requestBody = { 
+              title: title, 
+              message: message,
+              type: messageType
+            };
+          }
+          
           const response = await fetch('/api/push-simple/send', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ 
-              title: title, 
-              message: message 
-            })
+            body: JSON.stringify(requestBody)
           });
           const result = await response.json();
           console.log('📤 Resultado final:', result);
@@ -234,9 +282,14 @@ export default function BulkPushMessaging() {
             }
           }
           
+          const messageTypeText = messageType === 'unique' ? 'Única' : 
+                                messageType === 'rotating' ? 'Rotativa' : 'Prioritária';
+          const soundTypeText = soundType === 'sale' ? 'Venda Moderna' : 
+                               soundType === 'subtle' ? 'Suave' : 'Energético';
+
           toast({
-            title: soundEnabled ? "🔥 Push + Som Enviado!" : "Mensagem Bulk Enviada!",
-            description: `Permissão concedida e enviado para ${result.stats?.success || 0} dispositivos${soundEnabled ? ` (Som ${soundType === 'sale' ? 'Venda Moderna' : soundType === 'subtle' ? 'Suave' : 'Energético'})` : ''}`,
+            title: soundEnabled ? `🔥 Mensagem ${messageTypeText} + Som Enviado!` : `Mensagem ${messageTypeText} Enviada!`,
+            description: `Enviado para ${result.stats?.success || 0} dispositivos${soundEnabled ? ` (Som ${soundTypeText})` : ''}`,
           });
         } else {
           console.log('❌ Permissão negada');
@@ -432,61 +485,166 @@ export default function BulkPushMessaging() {
           <CardHeader>
             <CardTitle>Compor Mensagem para Todos os Usuários</CardTitle>
             <CardDescription>
-              Use a mesma lógica funcional do botão "Testar Push" para envio em massa
+              Escolha o tipo de mensagem e configure o conteúdo
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
+            {/* Tipo de Mensagem */}
             <div>
-              <label className="text-sm font-medium mb-2 block">Título da Mensagem</label>
-              <Input 
-                value={title} 
-                onChange={(e) => setTitle(e.target.value)}
-                placeholder="🔥 Título da sua mensagem..."
-                className="font-medium"
-              />
-            </div>
-            
-            <div>
-              <label className="text-sm font-medium mb-2 block">Conteúdo da Mensagem</label>
-              <Textarea 
-                value={message} 
-                onChange={(e) => setMessage(e.target.value)}
-                placeholder="Digite sua mensagem aqui..."
-                rows={4}
-                className="resize-none"
-              />
-            </div>
-            
-            <div className="bg-yellow-50 dark:bg-yellow-900/20 p-4 rounded-lg border border-yellow-200 dark:border-yellow-800">
-              <div className="flex items-start gap-3">
-                <Bell className="w-5 h-5 text-yellow-600 mt-0.5" />
-                <div>
-                  <h4 className="font-semibold text-yellow-800 dark:text-yellow-200">Preview da Notificação</h4>
-                  <p className="text-sm text-yellow-700 dark:text-yellow-300 mt-1">
-                    <strong>{title}</strong>
-                  </p>
-                  <p className="text-sm text-yellow-600 dark:text-yellow-400">
-                    {message}
-                  </p>
-                </div>
+              <label className="text-sm font-medium mb-3 block">Tipo de Mensagem</label>
+              <div className="flex gap-2 flex-wrap">
+                <Button
+                  variant={messageType === 'unique' ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setMessageType('unique')}
+                  className={messageType === 'unique' ? "bg-blue-600 hover:bg-blue-700" : ""}
+                >
+                  📝 Mensagem Única
+                </Button>
+                <Button
+                  variant={messageType === 'rotating' ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setMessageType('rotating')}
+                  className={messageType === 'rotating' ? "bg-green-600 hover:bg-green-700" : ""}
+                >
+                  🔄 Mensagem Rotativa
+                </Button>
+                <Button
+                  variant={messageType === 'priority' ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setMessageType('priority')}
+                  className={messageType === 'priority' ? "bg-purple-600 hover:bg-purple-700" : ""}
+                >
+                  ⚡ Mensagem Prioritária
+                </Button>
               </div>
             </div>
+
+            {messageType === 'unique' && (
+              <>
+                <div>
+                  <label className="text-sm font-medium mb-2 block">Título da Mensagem</label>
+                  <Input 
+                    value={title} 
+                    onChange={(e) => setTitle(e.target.value)}
+                    placeholder="🔥 Título da sua mensagem..."
+                    className="font-medium"
+                  />
+                </div>
+                
+                <div>
+                  <label className="text-sm font-medium mb-2 block">Conteúdo da Mensagem</label>
+                  <Textarea 
+                    value={message} 
+                    onChange={(e) => setMessage(e.target.value)}
+                    placeholder="Digite sua mensagem aqui..."
+                    rows={4}
+                    className="resize-none"
+                  />
+                </div>
+              </>
+            )}
+
+            {messageType === 'rotating' && (
+              <div className="bg-green-50 dark:bg-green-900/20 p-4 rounded-lg border border-green-200 dark:border-green-800">
+                <h4 className="font-semibold text-green-800 dark:text-green-200 mb-2">🔄 Sistema de Mensagem Rotativa</h4>
+                <p className="text-sm text-green-700 dark:text-green-300">
+                  O sistema enviará mensagens diferentes alternadamente para maximizar engagement. 
+                  Mensagens pré-configuradas: Promoções, Updates, Novidades, Alertas.
+                </p>
+                <div className="mt-3 p-3 bg-white dark:bg-gray-800 rounded border">
+                  <p className="text-xs text-gray-600 dark:text-gray-400"><strong>Exemplo:</strong></p>
+                  <p className="text-sm">🔥 Promoção especial disponível!</p>
+                  <p className="text-sm">📱 Nova atualização do sistema</p>
+                  <p className="text-sm">✨ Descubra as novidades</p>
+                </div>
+              </div>
+            )}
+
+            {messageType === 'priority' && (
+              <div className="bg-purple-50 dark:bg-purple-900/20 p-4 rounded-lg border border-purple-200 dark:border-purple-800">
+                <h4 className="font-semibold text-purple-800 dark:text-purple-200 mb-2">⚡ Sistema de Mensagem Prioritária</h4>
+                <p className="text-sm text-purple-700 dark:text-purple-300 mb-3">
+                  Mensagens urgentes com som diferenciado e visual destacado. Ideal para comunicações críticas.
+                </p>
+                <div>
+                  <label className="text-sm font-medium mb-2 block text-purple-700 dark:text-purple-300">Título Prioritário</label>
+                  <Input 
+                    value={title} 
+                    onChange={(e) => setTitle(e.target.value)}
+                    placeholder="🚨 URGENTE: Título da mensagem prioritária..."
+                    className="font-medium border-purple-300 focus:border-purple-500"
+                  />
+                </div>
+                <div className="mt-3">
+                  <label className="text-sm font-medium mb-2 block text-purple-700 dark:text-purple-300">Conteúdo Prioritário</label>
+                  <Textarea 
+                    value={message} 
+                    onChange={(e) => setMessage(e.target.value)}
+                    placeholder="Mensagem crítica que requer atenção imediata dos usuários..."
+                    rows={3}
+                    className="resize-none border-purple-300 focus:border-purple-500"
+                  />
+                </div>
+              </div>
+            )}
+            
+            {/* Preview da Notificação */}
+            {messageType === 'unique' && (
+              <div className="bg-yellow-50 dark:bg-yellow-900/20 p-4 rounded-lg border border-yellow-200 dark:border-yellow-800">
+                <div className="flex items-start gap-3">
+                  <Bell className="w-5 h-5 text-yellow-600 mt-0.5" />
+                  <div>
+                    <h4 className="font-semibold text-yellow-800 dark:text-yellow-200">Preview da Notificação</h4>
+                    <p className="text-sm text-yellow-700 dark:text-yellow-300 mt-1">
+                      <strong>{title}</strong>
+                    </p>
+                    <p className="text-sm text-yellow-600 dark:text-yellow-400">
+                      {message}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {messageType === 'priority' && (
+              <div className="bg-red-50 dark:bg-red-900/20 p-4 rounded-lg border border-red-200 dark:border-red-800">
+                <div className="flex items-start gap-3">
+                  <Bell className="w-5 h-5 text-red-600 mt-0.5" />
+                  <div>
+                    <h4 className="font-semibold text-red-800 dark:text-red-200">🚨 Preview - Notificação Prioritária</h4>
+                    <p className="text-sm text-red-700 dark:text-red-300 mt-1">
+                      <strong>{title}</strong>
+                    </p>
+                    <p className="text-sm text-red-600 dark:text-red-400">
+                      {message}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
             
             <Button 
               onClick={sendBulkPushMessage} 
-              disabled={isLoading || !title.trim() || !message.trim()}
-              className="w-full bg-green-600 hover:bg-green-700 text-white"
+              disabled={isLoading || (messageType !== 'rotating' && (!title.trim() || !message.trim()))}
+              className={`w-full text-white ${
+                messageType === 'unique' ? 'bg-blue-600 hover:bg-blue-700' :
+                messageType === 'rotating' ? 'bg-green-600 hover:bg-green-700' :
+                'bg-purple-600 hover:bg-purple-700'
+              }`}
               size="lg"
             >
               {isLoading ? (
                 <>
                   <Zap className="w-4 h-4 mr-2 animate-spin" />
-                  Enviando para Todos...
+                  {messageType === 'rotating' ? 'Ativando Rotativas...' : 'Enviando...'}
                 </>
               ) : (
                 <>
                   <Send className="w-4 h-4 mr-2" />
-                  Enviar para Todos os Usuários
+                  {messageType === 'unique' ? 'Enviar Mensagem Única' :
+                   messageType === 'rotating' ? 'Ativar Mensagens Rotativas' :
+                   'Enviar Mensagem Prioritária'}
                 </>
               )}
             </Button>
