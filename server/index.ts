@@ -106,8 +106,16 @@ app.use((req, res, next) => {
     }
   }
   
-  // Cache para assets estáticos (exceto JS que já foi tratado acima)
-  if (req.url.match(/\.(css|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot)$/)) {
+  // INTERCEPTAÇÃO ESPECÍFICA PARA ÍCONES PWA - NO CACHE PARA FORÇAR ATUALIZAÇÃO
+  if (req.url.match(/\/(apple-touch-icon|android-chrome-|favicon-|favicon\.ico|icon-)/)) {
+    res.setHeader('Content-Type', 'image/png');
+    res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+    res.setHeader('Pragma', 'no-cache');
+    res.setHeader('Expires', '0');
+    console.log(`🍎 INTERCEPTANDO ÍCONE PWA: ${req.url}`);
+  }
+  // Cache para outros assets estáticos (exceto ícones PWA e JS)
+  else if (req.url.match(/\.(css|png|jpg|jpeg|gif|svg|woff|woff2|ttf|eot)$/)) {
     res.setHeader('Cache-Control', 'public, max-age=31536000'); // 1 ano
   }
   

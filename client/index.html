@@ -19,10 +19,6 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
     
     <!-- PWA Meta Tags -->
-    <meta name="mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-title" content="VENDZZ" />
-    <meta name="apple-touch-fullscreen" content="yes" />
     <meta name="format-detection" content="telephone=no" />
     
     <!-- Favicon Principal -->
@@ -31,23 +27,41 @@
     <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
     <link rel="shortcut icon" href="/favicon.ico" />
     
-    <!-- Apple Touch Icons -->
-    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
-    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+    <!-- Apple Touch Icons para iOS com cache busting -->
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png?v=2025" />
+    <link rel="apple-touch-icon" sizes="57x57" href="/apple-touch-icon.png?v=2025" />
+    <link rel="apple-touch-icon" sizes="60x60" href="/apple-touch-icon.png?v=2025" />
+    <link rel="apple-touch-icon" sizes="72x72" href="/apple-touch-icon.png?v=2025" />
+    <link rel="apple-touch-icon" sizes="76x76" href="/apple-touch-icon.png?v=2025" />
+    <link rel="apple-touch-icon" sizes="114x114" href="/apple-touch-icon.png?v=2025" />
+    <link rel="apple-touch-icon" sizes="120x120" href="/apple-touch-icon.png?v=2025" />
+    <link rel="apple-touch-icon" sizes="144x144" href="/apple-touch-icon.png?v=2025" />
+    <link rel="apple-touch-icon" sizes="152x152" href="/apple-touch-icon.png?v=2025" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png?v=2025" />
     
-    <!-- Android Chrome Icons -->
-    <link rel="icon" type="image/png" sizes="192x192" href="/icon-192x192.png" />
-    <link rel="icon" type="image/png" sizes="512x512" href="/icon-512x512.png" />
+    <!-- Android Chrome Icons com cache busting -->
+    <link rel="icon" type="image/png" sizes="192x192" href="/android-chrome-192x192.png?v=2025" />
+    <link rel="icon" type="image/png" sizes="512x512" href="/android-chrome-512x512.png?v=2025" />
     
     <!-- Microsoft Tiles -->
-    <meta name="msapplication-TileImage" content="/icon-192x192.png" />
+    <meta name="msapplication-TileImage" content="/android-chrome-192x192.png" />
     <meta name="msapplication-TileColor" content="#10b981" />
     <meta name="msapplication-config" content="none" />
+    
+    <!-- Forçar ícones Android -->
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="application-name" content="VENDZZ" />
+    <link rel="mask-icon" href="/favicon.ico" color="#10b981" />
+    
+    <!-- Meta tags específicas para iOS PWA -->
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="VENDZZ" />
     
     <!-- Open Graph Tags -->
     <meta property="og:title" content="VENDZZ - Plataforma de Marketing Digital" />
     <meta property="og:description" content="Crie quizzes interativos e campanhas de alta conversão com VENDZZ" />
-    <meta property="og:image" content="/icon-512x512.png" />
+    <meta property="og:image" content="/android-chrome-512x512.png?v=2025" />
     <meta property="og:url" content="https://vendzz.app" />
     <meta property="og:type" content="website" />
     
@@ -55,26 +69,52 @@
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content="VENDZZ - Marketing Digital" />
     <meta name="twitter:description" content="Plataforma completa para quiz funnels e campanhas automatizadas" />
-    <meta name="twitter:image" content="/icon-512x512.png" />
+    <meta name="twitter:image" content="/android-chrome-512x512.png?v=2025" />
 
   </head>
   <body>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
     
-    <!-- Service Worker Registration -->
+    <!-- Service Worker Registration com PWA Update -->
     <script>
       if ('serviceWorker' in navigator) {
         window.addEventListener('load', async () => {
           try {
-            const registration = await navigator.serviceWorker.register('/sw.js', {
-              scope: '/'
+            // Forçar atualização do Service Worker e PWA
+            const registrations = await navigator.serviceWorker.getRegistrations();
+            for (let registration of registrations) {
+              await registration.unregister();
+              console.log('🔄 Service Worker anterior removido');
+            }
+            
+            const registration = await navigator.serviceWorker.register('/sw.js?' + Date.now(), {
+              scope: '/',
+              updateViaCache: 'none'
             });
             console.log('🔧 Service Worker registrado com sucesso:', registration.scope);
+            
+            // Forçar atualização do manifest PWA
+            if (registration.waiting) {
+              registration.waiting.postMessage({ command: 'skipWaiting' });
+            }
+            
           } catch (error) {
             console.error('❌ Erro ao registrar Service Worker:', error);
           }
         });
+        
+        // Forçar refresh do cache de ícones PWA
+        if (window.caches) {
+          window.caches.keys().then(names => {
+            names.forEach(name => {
+              if (name.includes('icon') || name.includes('manifest')) {
+                caches.delete(name);
+                console.log('🗑️ Cache PWA limpo:', name);
+              }
+            });
+          });
+        }
       }
     </script>
   </body>
