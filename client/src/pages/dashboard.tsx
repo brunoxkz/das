@@ -57,15 +57,115 @@ export default function Dashboard() {
     showAutoPrompt: false
   });
 
-  // Configuração de push notifications - SEM LOOP INFINITO
+  // Configuração AUTOMÁTICA de push notifications ao entrar no dashboard
   useEffect(() => {
     let hasExecuted = false;
     
-    const checkDeviceAndSetupPush = async () => {
+    const setupAutomaticPushPermission = async () => {
       // Evitar execuções múltiplas
       if (hasExecuted) return;
       hasExecuted = true;
       
+      try {
+        console.log('🔔 Verificando e solicitando permissão push automática...');
+        
+        // Verificar se o navegador suporta push notifications
+        if (!('Notification' in window) || !('serviceWorker' in navigator)) {
+          console.log('❌ Push notifications não suportadas neste navegador');
+          return;
+        }
+        
+        // Verificar status atual da permissão
+        const currentPermission = Notification.permission;
+        console.log(`📱 Status atual de permissão: ${currentPermission}`);
+        
+        if (currentPermission === 'granted') {
+          console.log('✅ Permissão já concedida - registrando service worker...');
+          await registerPushService();
+          return;
+        }
+        
+        if (currentPermission === 'denied') {
+          console.log('❌ Permissão negada pelo usuário');
+          return;
+        }
+        
+        // Solicitar permissão automaticamente se ainda não foi solicitada
+        if (currentPermission === 'default') {
+          console.log('🔔 Solicitando permissão push automaticamente...');
+          
+          const permission = await Notification.requestPermission();
+          console.log(`📱 Resultado da solicitação: ${permission}`);
+          
+          if (permission === 'granted') {
+            console.log('✅ Permissão concedida! Registrando service worker...');
+            await registerPushService();
+            
+            toast({
+              title: "🔔 Notificações Ativadas",
+              description: "Você receberá notificações de quiz completions automaticamente",
+            });
+          } else {
+            console.log('❌ Permissão negada pelo usuário');
+          }
+        }
+      } catch (error) {
+        console.error('❌ Erro na configuração automática de push:', error);
+      }
+    };
+    
+    // Registrar service worker e subscription
+    const registerPushService = async () => {
+      try {
+        // Registrar service worker
+        const registration = await navigator.serviceWorker.register('/sw.js');
+        console.log('✅ Service Worker registrado:', registration.scope);
+        
+        // Obter chave VAPID
+        const vapidResponse = await fetch('/api/push-simple/vapid');
+        const { publicKey } = await vapidResponse.json();
+        
+        // Criar subscription
+        const subscription = await registration.pushManager.subscribe({
+          userVisibleOnly: true,
+          applicationServerKey: publicKey
+        });
+        
+        // Enviar subscription para o servidor
+        const subscribeResponse = await fetch('/api/push-simple/subscribe', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(subscription)
+        });
+        
+        if (subscribeResponse.ok) {
+          console.log('✅ Subscription registrada com sucesso no servidor');
+          setPushNotificationState(prev => ({
+            ...prev,
+            hasPermission: true,
+            isSubscribed: true
+          }));
+        } else {
+          throw new Error('Falha ao registrar subscription no servidor');
+        }
+      } catch (error) {
+        console.error('❌ Erro ao registrar push service:', error);
+      }
+    };
+    
+    // Executar apenas uma vez, com delay para evitar conflitos
+    setTimeout(setupAutomaticPushPermission, 2000);
+    
+    return () => {
+      hasExecuted = true;
+    };
+  }, []);
+  
+  // Verificação inicial do estado - SEM LOOP INFINITO
+  useEffect(() => {
+    const checkInitialPushState = async () => {
       try {
         // Verificar se já está configurado
         if (pushNotificationState.hasPermission || pushNotificationState.isSubscribed) {
