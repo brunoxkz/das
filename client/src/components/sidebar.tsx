@@ -337,9 +337,9 @@ export function Sidebar() {
     },
     {
       title: "Admin Push",
-      href: "/admin-push-notifications",
+      href: "/admin/bulk-push-messaging",
       icon: <Bell className="w-4 h-4" />,
-      active: location === "/admin-push-notifications",
+      active: location === "/admin/bulk-push-messaging",
       className: "text-purple-600 border-purple-600/20 bg-purple-600/5 hover:bg-purple-600/10"
     },
     {
