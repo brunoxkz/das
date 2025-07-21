@@ -308,6 +308,15 @@ Changelog:
   * Integração total com sistema de push notifications já funcional
   * Interface moderna com cores específicas por tipo de som (azul, verde, roxo)
   * Sistema pronto para produção com audio feedback em vendas e conversões
+- July 21, 2025. SISTEMA DE SOM 2025 RESTAURADO APÓS CORREÇÃO VITE - Problema de interceptação crítico resolvido completamente:
+  * CORREÇÃO CRÍTICA: Movida rota `/sounds/sale-notification.js` para ANTES do middleware Vite no server/index.ts
+  * Sistema de interceptação implementado para servir arquivo de som com MIME type application/javascript
+  * CORS habilitado para compatibilidade total, cache de 24h configurado para performance
+  * Botão "Testar Som" agora funciona 100% com 3 tipos: Venda Moderna, Suave, Energético
+  * Som reproduzido automaticamente após envio bem-sucedido de push notifications
+  * Rota administrativa atualizada para `/admin/bulk-push-messaging` conforme padrão do sistema
+  * Sistema Web Audio API nativo carregando dinamicamente sem conflitos com Vite
+  * Status: SISTEMA DE SOM 100% FUNCIONAL para conversões e feedback de vendas
 Changelog:
 - July 21, 2025. FAVICON E ÍCONES PWA ATUALIZADOS COM LOGO OFICIAL - Sistema completo de ícones configurado para instalação PWA:
   * Favicon atualizado: favicon.png com logo oficial Vendzz
