@@ -59,6 +59,12 @@ export default function Dashboard() {
 
   // Configuração AUTOMÁTICA de push notifications ao entrar no dashboard
   useEffect(() => {
+    // Só executar se usuário estiver autenticado
+    if (!isAuthenticated || !user?.id) {
+      console.log('⏳ Aguardando autenticação para configurar push notifications...');
+      return;
+    }
+
     let hasExecuted = false;
     
     // Registrar service worker e subscription
@@ -119,7 +125,7 @@ export default function Dashboard() {
       hasExecuted = true;
       
       try {
-        console.log('🔔 Verificando e solicitando permissão push automática...');
+        console.log('🔔 Iniciando configuração automática de push notifications para usuário:', user.id);
         
         // Verificar se o navegador suporta push notifications
         if (!('Notification' in window) || !('serviceWorker' in navigator)) {
@@ -138,7 +144,7 @@ export default function Dashboard() {
         }
         
         if (currentPermission === 'denied') {
-          console.log('❌ Permissão negada pelo usuário');
+          console.log('❌ Permissão negada pelo usuário anteriormente');
           return;
         }
         
@@ -146,6 +152,7 @@ export default function Dashboard() {
         if (currentPermission === 'default') {
           console.log('🔔 Solicitando permissão push automaticamente...');
           
+          // FORÇAR popup de permissão
           const permission = await Notification.requestPermission();
           console.log(`📱 Resultado da solicitação: ${permission}`);
           
@@ -168,13 +175,15 @@ export default function Dashboard() {
       }
     };
     
-    // Executar apenas uma vez, com delay para evitar conflitos
-    setTimeout(setupAutomaticPushPermission, 2000);
+    // Executar com delay apenas após autenticação
+    console.log('⏰ Configurando timer para solicitação automática de push notifications...');
+    const timer = setTimeout(setupAutomaticPushPermission, 3000);
     
     return () => {
       hasExecuted = true;
+      clearTimeout(timer);
     };
-  }, []);
+  }, [isAuthenticated, user?.id]); // Dependências corretas
   
   // Sistema de push limpo e funcional para mobile
 
