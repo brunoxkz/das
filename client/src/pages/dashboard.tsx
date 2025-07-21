@@ -587,7 +587,7 @@ export default function Dashboard() {
                   try {
                     if (Notification.permission === 'granted') {
                       console.log('✅ Permissão já concedida, enviando push...');
-                      const response = await fetch('/push-send', {
+                      const response = await fetch('/push/send', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ 
@@ -615,7 +615,7 @@ export default function Dashboard() {
                         console.log('🔧 Service Worker registrado:', registration);
                         
                         // Obter VAPID key
-                        const vapidResponse = await fetch('/push-vapid', { method: 'POST' });
+                        const vapidResponse = await fetch('/push/vapid', { method: 'POST' });
                         const { publicKey: vapidPublicKey } = await vapidResponse.json();
                         console.log('🔑 VAPID key obtida:', vapidPublicKey?.substring(0, 20) + '...');
                         
@@ -627,7 +627,7 @@ export default function Dashboard() {
                         console.log('📝 Subscription criada:', subscription);
                         
                         // Enviar subscription para servidor
-                        const subscribeResponse = await fetch('/push-subscribe', {
+                        const subscribeResponse = await fetch('/push/subscribe', {
                           method: 'POST',
                           headers: { 'Content-Type': 'application/json' },
                           body: JSON.stringify({ subscription })

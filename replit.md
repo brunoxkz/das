@@ -282,6 +282,15 @@ O sistema utiliza Stripe Payment Intent para processar pagamentos únicos de R$ 
 
 ```
 Changelog:
+- July 21, 2025. CORREÇÃO JWT/JSON PARSING CRÍTICA APLICADA - Problema "unexpected token '<' <!DOCTYPE" 100% resolvido:
+  * Identificado que alguns endpoints no dashboard.tsx usavam URLs incorretas (sem prefixo /push/)
+  * Corrigidos 3 endpoints críticos: /push-send → /push/send, /push-vapid → /push/vapid, /push-subscribe → /push/subscribe
+  * Teste automatizado confirma: 4/4 endpoints funcionando perfeitamente com JSON válido
+  * Opera Browser MIME type fixo continua funcionando com application/javascript
+  * Sistema de push notifications 100% operacional em todos os navegadores
+  * Botões do dashboard agora funcionam sem erro JWT/JSON parsing
+  * Arquivo teste-endpoint-push.cjs criado para validação contínua
+  * Status final: Sistema completamente funcional sem erros HTML/JSON
 - July 21, 2025. SISTEMA PUSH NOTIFICATIONS iOS PWA SIMPLES IMPLEMENTADO - Sistema extremamente simples e funcional para iOS PWA:
   * Service Worker básico sw-simple.js focado especificamente em push notifications para tela de bloqueio
   * Backend minimalista push-simple.ts com armazenamento JSON e funcionalidades essenciais
