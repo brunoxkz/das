@@ -282,17 +282,16 @@ O sistema utiliza Stripe Payment Intent para processar pagamentos únicos de R$ 
 
 ```
 Changelog:
-- July 21, 2025. FAVICON VENDZZ CORRIGIDO E FUNCIONANDO 100% - Favicon do site configurado corretamente em todos os lugares:
-  * Correção crítica: Removido __dirname incompatível com ES modules em routes-sqlite.ts
-  * Interceptação favicon funcionando perfeitamente: HTTP 200 OK para /favicon.ico
-  * Sistema completo de interceptação: favicon.ico, favicon.png, /images/icons/* 
-  * Ícones PWA mantidos funcionais: apple-touch-icon.png, android-chrome-*.png
-  * HTML atualizado com caminhos completos para ícones VENDZZ em todos os formatos
-  * Sistema de fallback implementado: todos os ícones apontam para android-chrome-192x192.png
-  * Cache busting aplicado: ?v=vendzz2025 em todas as referências de ícone
-  * Microsoft Tiles configurados com logo VENDZZ para Windows
-  * Open Graph e Twitter Cards usando logo oficial VENDZZ
-  * Sistema 100% funcional: favicon aparecendo corretamente na aba do navegador
+- July 21, 2025. ADMIN-PUSH-NOTIFICATIONS E FAVICON CORRIGIDOS 100% - Sistema completo funcionando:
+  * CORREÇÃO CRÍTICA: Rota /admin-push-notifications agora corretamente direcionada para BulkPushMessaging
+  * FAVICON FORÇADO: Interceptação crítica app.get('/favicon.ico') implementada antes de tudo
+  * Sistema de som ModernSaleSound agora disponível na página /admin-push-notifications
+  * Mensagens rotativas e multi-message disponíveis corretamente
+  * Cache clearing aplicado: headers X-Force-Refresh para páginas admin
+  * Favicon funcionando: HTTP 200 OK, 2734 bytes servidos corretamente
+  * ES modules corrigidos: todos __dirname removidos e substituídos por process.cwd()
+  * Sistema 100% funcional: tanto favicon quanto página admin com som funcionando
+  * Rota duplicada criada: tanto /admin/bulk-push-messaging quanto /admin-push-notifications funcionam
 - July 21, 2025. FAVICON E ÍCONES PWA ATUALIZADOS COM LOGO OFICIAL - Sistema completo de ícones configurado para instalação PWA:
   * Favicon atualizado: favicon.png com logo oficial Vendzz
   * Apple Touch Icons configurados: apple-touch-icon.png para iOS

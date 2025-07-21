@@ -157,11 +157,12 @@ app.use((req, res, next) => {
   }
   
   // INTERCEPTAÇÃO PARA PÁGINAS ADMIN - FORÇAR RELOAD PARA MOSTRAR NOVAS FUNCIONALIDADES
-  if (req.url.includes('/admin/bulk-push-messaging')) {
+  if (req.url.includes('/admin/bulk-push-messaging') || req.url.includes('/admin-push-notifications')) {
     res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
     res.setHeader('Pragma', 'no-cache');
     res.setHeader('Expires', '0');
     res.setHeader('X-Admin-Version', Date.now().toString());
+    res.setHeader('X-Force-Refresh', 'true');
     console.log(`🔄 FORÇANDO CACHE RELOAD ADMIN: ${req.url}`);
   }
   // Cache para outros assets estáticos (exceto ícones PWA e JS)
@@ -185,6 +186,29 @@ app.use((req, res, next) => {
 // app.use(blacklistMiddleware);
 
 // Health check endpoints now integrated in routes-sqlite.ts
+
+// FAVICON FORÇADO - INTERCEPTAÇÃO CRÍTICA ANTES DE TUDO
+app.get('/favicon.ico', (req, res) => {
+  try {
+    const faviconPath = path.join(process.cwd(), 'public/favicon.ico');
+    console.log('🔥 FORÇA FAVICON ICO:', faviconPath);
+    
+    if (fs.existsSync(faviconPath)) {
+      const iconBuffer = fs.readFileSync(faviconPath);
+      res.setHeader('Content-Type', 'image/x-icon');
+      res.setHeader('Cache-Control', 'public, max-age=86400');
+      res.setHeader('Content-Length', iconBuffer.length.toString());
+      res.status(200).end(iconBuffer);
+      console.log('✅ FAVICON SERVIDO COM SUCESSO');
+    } else {
+      console.log('❌ FAVICON NÃO ENCONTRADO:', faviconPath);
+      res.status(404).end();
+    }
+  } catch (error) {
+    console.error('❌ ERRO CRÍTICO FAVICON:', error);
+    res.status(500).end();
+  }
+});
 
 // Rotas específicas para Service Workers com MIME type correto
 app.get('/vendzz-notification-sw.js', (req, res) => {

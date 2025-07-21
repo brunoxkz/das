@@ -19,6 +19,7 @@ import SettingsPage from "@/pages/settings";
 import AdminPage from "@/pages/admin";
 import AdminSecurityPage from "@/pages/admin-security";
 import AdminNotifications from "@/pages/admin-notifications";
+import BulkPushMessaging from "@/pages/bulk-push-messaging";
 
 
 import LeadsPage from "@/pages/leads";
@@ -110,7 +111,7 @@ import AdminPushSimple from "@/pages/admin-push-simple";
 import PushDemo from "@/pages/push-demo";
 import AdminPush from "@/pages/admin-push";
 import PushAdmin from "@/pages/push-admin";
-import BulkPushMessaging from "@/pages/bulk-push-messaging";
+// BulkPushMessaging já importado anteriormente
 
 import { useAuth } from "@/hooks/useAuth-jwt";
 import { isUnauthorizedError } from "@/lib/authUtils";
@@ -659,6 +660,11 @@ function App() {
         </Route>
 
         <Route path="/admin/bulk-push-messaging">
+          <Layout>
+            <BulkPushMessaging />
+          </Layout>
+        </Route>
+        <Route path="/admin-push-notifications">
           <Layout>
             <BulkPushMessaging />
           </Layout>
