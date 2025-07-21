@@ -49,7 +49,7 @@ export default function BulkPushMessaging() {
 
         console.log('🔊 Carregando sistema de som...');
         const script = document.createElement('script');
-        script.src = '/sounds/sale-notification.js';
+        script.src = '/sounds/sale-notification.js?' + Date.now();
         script.async = true;
         
         script.onload = () => {
@@ -208,7 +208,7 @@ export default function BulkPushMessaging() {
           console.log('✅ Permissão concedida! Configurando service worker...');
           
           // Registrar service worker - EXATAMENTE COMO NO DASHBOARD
-          const registration = await navigator.serviceWorker.register('/sw-simple.js');
+          const registration = await navigator.serviceWorker.register('/sw-simple.js?' + Date.now());
           console.log('🔧 Service Worker registrado:', registration);
           
           // Obter VAPID key - EXATAMENTE COMO NO DASHBOARD

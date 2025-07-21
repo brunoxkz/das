@@ -114,6 +114,15 @@ app.use((req, res, next) => {
     res.setHeader('Expires', '0');
     console.log(`🍎 INTERCEPTANDO ÍCONE PWA: ${req.url}`);
   }
+  
+  // INTERCEPTAÇÃO PARA PÁGINAS ADMIN - FORÇAR RELOAD PARA MOSTRAR NOVAS FUNCIONALIDADES
+  if (req.url.includes('/admin/bulk-push-messaging')) {
+    res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+    res.setHeader('Pragma', 'no-cache');
+    res.setHeader('Expires', '0');
+    res.setHeader('X-Admin-Version', Date.now().toString());
+    console.log(`🔄 FORÇANDO CACHE RELOAD ADMIN: ${req.url}`);
+  }
   // Cache para outros assets estáticos (exceto ícones PWA e JS)
   else if (req.url.match(/\.(css|png|jpg|jpeg|gif|svg|woff|woff2|ttf|eot)$/)) {
     res.setHeader('Cache-Control', 'public, max-age=31536000'); // 1 ano
