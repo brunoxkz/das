@@ -78,6 +78,7 @@ import { StripeCheckoutLinkGenerator } from './stripe-checkout-link-generator';
 import { planManager } from './plan-manager';
 import { getVapidPublicKey, subscribeToPush, sendPushToAll, getPushStats } from './push-simple';
 import { realTimePushSystem } from './real-time-push-notifications';
+import webpush from 'web-push';
 
 // JWT Secret para validação de tokens
 const JWT_SECRET = process.env.JWT_SECRET || 'vendzz-jwt-secret-key-2024';
@@ -15124,6 +15125,248 @@ app.get("/api/whatsapp-extension/pending", verifyJWT, async (req: any, res: Resp
 
   // ==================== PUSH NOTIFICATIONS PWA PERSISTENTE ====================
   
+  // ==================== SISTEMA PORTAL iOS SOM NATIVO ====================
+  
+  // Endpoint para configurar som Portal nas notificações
+  app.post('/api/push-portal/configure', verifyJWT, async (req, res) => {
+    try {
+      const { soundType = 'portal', vibration = [300, 100, 300], persistent = true } = req.body;
+      
+      // Configurações válidas de som iOS
+      const validSounds = ['portal', 'default', 'alert', 'chime', 'ding', 'bell'];
+      
+      if (!validSounds.includes(soundType)) {
+        return res.status(400).json({ 
+          success: false, 
+          error: 'Som inválido. Use: portal, default, alert, chime, ding, bell' 
+        });
+      }
+      
+      // Salva configuração no "banco" (arquivo JSON)
+      const configPath = path.join(process.cwd(), 'push-portal-config.json');
+      const config = {
+        soundType,
+        vibration,
+        persistent,
+        updatedAt: new Date().toISOString(),
+        userId: req.user.id
+      };
+      
+      fs.writeFileSync(configPath, JSON.stringify(config, null, 2));
+      
+      res.json({ 
+        success: true, 
+        message: `Som ${soundType} configurado para iOS PWA`,
+        config 
+      });
+      
+    } catch (error) {
+      console.error('Erro ao configurar som Portal:', error);
+      res.status(500).json({ success: false, error: 'Erro interno do servidor' });
+    }
+  });
+
+  // Endpoint aprimorado para envio com Som Portal
+  app.post('/api/push-portal/send', verifyJWT, async (req, res) => {
+    try {
+      const { title, message, soundType = 'portal', targetType = 'all' } = req.body;
+      
+      if (!title || !message) {
+        return res.status(400).json({ 
+          success: false, 
+          error: 'Título e mensagem são obrigatórios' 
+        });
+      }
+
+      // Carrega subscriptions ativas
+      const subscriptionsPath = path.join(process.cwd(), 'push-subscriptions.json');
+      let subscriptions = [];
+      
+      try {
+        const data = fs.readFileSync(subscriptionsPath, 'utf8');
+        subscriptions = JSON.parse(data);
+      } catch (error) {
+        console.log('📝 Arquivo de subscriptions não encontrado, criando novo');
+        subscriptions = [];
+      }
+
+      if (subscriptions.length === 0) {
+        return res.json({ 
+          success: true, 
+          message: 'Nenhuma subscription ativa encontrada',
+          sent: 0 
+        });
+      }
+
+      let sentCount = 0;
+      let failedCount = 0;
+      const results = [];
+
+      // Payload aprimorado com som Portal
+      const notificationPayload = {
+        title: title,
+        message: message,
+        body: message,
+        sound: soundType, // Som Portal nativo do iOS
+        icon: '/icon-192x192.png',
+        badge: '/favicon.ico',
+        url: '/',
+        timestamp: Date.now(),
+        tag: `vendzz-${Date.now()}`,
+        data: {
+          soundType: soundType,
+          platform: 'ios-pwa',
+          persistent: true,
+          source: 'vendzz-portal'
+        }
+      };
+
+      console.log('🔊 Enviando notificações com som Portal:', soundType);
+
+      // Envio para todas as subscriptions
+      for (const subscription of subscriptions) {
+        try {
+          await webpush.sendNotification(subscription, JSON.stringify(notificationPayload));
+          sentCount++;
+          
+          results.push({
+            endpoint: subscription.endpoint.substring(0, 50) + '...',
+            status: 'success',
+            sound: soundType
+          });
+          
+        } catch (error) {
+          failedCount++;
+          console.error('❌ Erro ao enviar para subscription:', error.message);
+          
+          results.push({
+            endpoint: subscription.endpoint.substring(0, 50) + '...',
+            status: 'failed',
+            error: error.message
+          });
+        }
+      }
+
+      // Log de analytics
+      console.log('📊 Portal Push Analytics:', {
+        sent: sentCount,
+        failed: failedCount,
+        sound: soundType,
+        timestamp: new Date().toISOString()
+      });
+
+      res.json({ 
+        success: true, 
+        message: `Notificações enviadas com som ${soundType}`,
+        sent: sentCount,
+        failed: failedCount,
+        sound: soundType,
+        results: results.slice(0, 5) // Apenas primeiros 5 para não sobrecarregar
+      });
+
+    } catch (error) {
+      console.error('Erro ao enviar push Portal:', error);
+      res.status(500).json({ success: false, error: 'Erro interno do servidor' });
+    }
+  });
+
+  // Endpoint para registrar Service Worker iOS
+  app.post('/api/push-portal/register-sw', verifyJWT, async (req, res) => {
+    try {
+      const { userAgent, swVersion = '1.0' } = req.body;
+      const userId = req.user.id;
+      
+      // Salva informação do SW registrado
+      const swPath = path.join(process.cwd(), 'sw-registrations.json');
+      let registrations = [];
+      
+      try {
+        const data = fs.readFileSync(swPath, 'utf8');
+        registrations = JSON.parse(data);
+      } catch (error) {
+        registrations = [];
+      }
+      
+      // Adiciona nova registração
+      const registration = {
+        userId,
+        userAgent,
+        swVersion,
+        registeredAt: new Date().toISOString(),
+        platform: userAgent?.includes('iPhone') ? 'ios' : 'other'
+      };
+      
+      registrations.push(registration);
+      
+      // Mantém apenas últimas 100 registrações
+      if (registrations.length > 100) {
+        registrations = registrations.slice(-100);
+      }
+      
+      fs.writeFileSync(swPath, JSON.stringify(registrations, null, 2));
+      
+      res.json({ 
+        success: true, 
+        message: 'Service Worker iOS registrado',
+        platform: registration.platform
+      });
+      
+    } catch (error) {
+      console.error('Erro ao registrar SW iOS:', error);
+      res.status(500).json({ success: false, error: 'Erro interno do servidor' });
+    }
+  });
+
+  // Endpoint para estatísticas iOS
+  app.get('/api/push-portal/stats', verifyJWT, async (req, res) => {
+    try {
+      // Carrega subscriptions
+      const subscriptionsPath = path.join(process.cwd(), 'push-subscriptions.json');
+      let subscriptions = [];
+      
+      try {
+        const data = fs.readFileSync(subscriptionsPath, 'utf8');
+        subscriptions = JSON.parse(data);
+      } catch (error) {
+        subscriptions = [];
+      }
+
+      // Carrega registrações SW
+      const swPath = path.join(process.cwd(), 'sw-registrations.json');
+      let registrations = [];
+      
+      try {
+        const data = fs.readFileSync(swPath, 'utf8');
+        registrations = JSON.parse(data);
+      } catch (error) {
+        registrations = [];
+      }
+
+      // Filtra registrações iOS das últimas 24h
+      const last24h = new Date(Date.now() - 24 * 60 * 60 * 1000);
+      const recentiOS = registrations.filter(reg => 
+        reg.platform === 'ios' && new Date(reg.registeredAt) > last24h
+      );
+
+      res.json({
+        success: true,
+        stats: {
+          totalSubscriptions: subscriptions.length,
+          totalSWRegistrations: registrations.length,
+          iOSRegistrationsLast24h: recentiOS.length,
+          supportedSounds: ['portal', 'default', 'alert', 'chime', 'ding', 'bell'],
+          portalSoundCompatible: true
+        }
+      });
+      
+    } catch (error) {
+      console.error('Erro ao buscar stats Portal:', error);
+      res.status(500).json({ success: false, error: 'Erro interno do servidor' });
+    }
+  });
+  
+  // ==================== FIM SISTEMA PORTAL iOS ====================
+  
   // ===== ADMIN PUSH NOTIFICATIONS COMPLETO =====
   
   // Estatísticas admin
@@ -25249,7 +25492,7 @@ export function registerCheckoutRoutes(app: Express) {
   }
 
   // VSL to Quiz AI Endpoint
-  app.post('/api/ai/vsl-to-quiz', authenticateJWT, async (req, res) => {
+  app.post('/api/ai/vsl-to-quiz', verifyJWT, async (req, res) => {
     try {
       const { vslText } = req.body;
       const userId = req.user?.id;

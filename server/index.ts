@@ -106,6 +106,16 @@ app.use((req, res, next) => {
     }
   }
   
+  // INTERCEPTAÇÃO ESPECÍFICA PARA SERVICE WORKER iOS
+  if (req.path === '/sw-persistent-ios.js') {
+    res.setHeader('Content-Type', 'application/javascript; charset=utf-8');
+    res.setHeader('Service-Worker-Allowed', '/');
+    res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+    res.setHeader('Pragma', 'no-cache');
+    res.setHeader('Expires', '0');
+    console.log('🍎 SERVINDO SERVICE WORKER iOS PERSISTENTE');
+  }
+  
   // INTERCEPTAÇÃO ESPECÍFICA PARA ÍCONES PWA - NO CACHE PARA FORÇAR ATUALIZAÇÃO
   if (req.url.match(/\/(apple-touch-icon|android-chrome-|favicon-|favicon\.ico|icon-|images\/icons)/)) {
     res.setHeader('Content-Type', 'image/png');

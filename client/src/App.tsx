@@ -53,6 +53,7 @@ import IntegracoesPage from "@/pages/integracoes";
 import ExtensoesPage from "@/pages/extensoes";
 import VoiceCallingPage from "@/pages/voice-calling";
 import ConditionalCampaignsPage from "@/pages/conditional-campaigns";
+import IOSPWAPortal from "@/pages/ios-pwa-portal";
 import FacelessVideosPage from "@/pages/faceless-videos";
 import FunnelImporter from "@/pages/funnel-importer-fixed";
 import BuyComments from "@/pages/buy-comments";
@@ -322,6 +323,12 @@ function App() {
         <Route path="/voice-calling">
           <Layout>
             <VoiceCallingPage />
+          </Layout>
+        </Route>
+
+        <Route path="/ios-pwa-portal">
+          <Layout>
+            <IOSPWAPortal />
           </Layout>
         </Route>
 
@@ -667,6 +674,11 @@ function App() {
           </Layout>
         </Route>
 
+        <Route path="/ios-pwa-portal">
+          <Layout>
+            <IOSPWAPortal />
+          </Layout>
+        </Route>
 
         <Route component={NotFoundPage} />
         </Switch>
