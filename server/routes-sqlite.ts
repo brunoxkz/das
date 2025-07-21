@@ -15180,7 +15180,7 @@ app.get("/api/whatsapp-extension/pending", verifyJWT, async (req: any, res: Resp
         ORDER BY created_at DESC
       `).all();
 
-      res.json(subscriptions);
+      res.json({ success: true, subscriptions });
 
     } catch (error) {
       console.error('❌ Erro ao buscar subscriptions:', error);
@@ -15683,6 +15683,37 @@ app.get("/api/whatsapp-extension/pending", verifyJWT, async (req: any, res: Resp
 
       const subscription = { endpoint, keys };
       const success = await SimplePushNotificationSystem.saveUserSubscription(userId, subscription);
+      
+      // TAMBÉM salvar no SQLite para consultas admin
+      if (success) {
+        try {
+          const subscriptionId = `${userId}-${Date.now()}`;
+          
+          // Remover subscription antiga do mesmo usuário
+          sqlite.prepare('DELETE FROM push_subscriptions WHERE user_id = ?').run(userId);
+          
+          // Inserir nova subscription
+          sqlite.prepare(`
+            INSERT INTO push_subscriptions (
+              id, user_id, endpoint, keys_p256dh, keys_auth, 
+              user_agent, device_type, is_active
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+          `).run(
+            subscriptionId,
+            userId,
+            endpoint,
+            keys.p256dh,
+            keys.auth,
+            req.headers['user-agent'] || 'Unknown',
+            'web',
+            1
+          );
+          
+          console.log(`📱 Subscription salva no SQLite para usuário ${userId}`);
+        } catch (sqlError) {
+          console.error('⚠️ Erro ao salvar no SQLite (não crítico):', sqlError);
+        }
+      }
       
       if (success) {
         res.json({ 
