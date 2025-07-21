@@ -203,34 +203,94 @@ export default function Dashboard() {
     };
   }, [isAuthenticated, user?.id]);
 
-  // Função para ativar push notifications no iOS (chamada por clique do usuário)
+  // Função para ativar push notifications no iOS (baseada no botão "Testar Push" que funciona)
   const handleIOSPushActivation = async () => {
+    console.log('🔵 iOS PUSH ACTIVATION CLICADO');
+    console.log('📍 Status atual:', {
+      permission: Notification.permission,
+      hasServiceWorker: 'serviceWorker' in navigator,
+      hasPushManager: 'PushManager' in window
+    });
+    
     try {
-      console.log('🔔 Usuário iOS solicitou ativação de push notifications');
-      
-      const permission = await Notification.requestPermission();
-      console.log(`📱 Resultado da solicitação iOS: ${permission}`);
-      
-      if (permission === 'granted') {
-        console.log('✅ Permissão concedida no iOS! Registrando service worker...');
+      if (Notification.permission === 'granted') {
+        console.log('✅ Permissão já concedida, verificando/configurando subscription...');
         
-        // Registrar service worker
-        const registration = await navigator.serviceWorker.register('/sw.js');
+        // Registrar service worker se necessário
+        const registration = await navigator.serviceWorker.register('/sw-simple.js');
+        console.log('🔧 Service Worker verificado/registrado');
+        
+        // Obter VAPID key
         const vapidResponse = await fetch('/api/push-simple/vapid');
-        const { publicKey } = await vapidResponse.json();
+        const { publicKey: vapidPublicKey } = await vapidResponse.json();
+        console.log('🔑 VAPID key obtida para subscription');
         
+        // Criar subscription REAL
         const subscription = await registration.pushManager.subscribe({
           userVisibleOnly: true,
-          applicationServerKey: publicKey
+          applicationServerKey: vapidPublicKey
+        });
+        console.log('📝 Subscription REAL criada:', {
+          endpoint: subscription.endpoint.substring(0, 50) + '...',
+          keys: subscription.toJSON().keys
         });
         
+        // Salvar subscription no servidor
         const subscribeResponse = await fetch('/api/push-simple/subscribe', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(subscription)
+          body: JSON.stringify({ subscription: subscription.toJSON() })
+        });
+        const subscribeResult = await subscribeResponse.json();
+        console.log('💾 Subscription salva no servidor:', subscribeResult);
+        
+        setPushNotificationState(prev => ({
+          ...prev,
+          hasPermission: true,
+          isSubscribed: true,
+          showIOSPrompt: false
+        }));
+        
+        toast({
+          title: "✅ Notificações Ativadas no iOS!",
+          description: "Você receberá notificações na tela de bloqueio do iPhone",
         });
         
-        if (subscribeResponse.ok) {
+      } else if (Notification.permission === 'default') {
+        console.log('❓ Solicitando permissões...');
+        const permission = await Notification.requestPermission();
+        console.log('📱 Resultado da permissão:', permission);
+        
+        if (permission === 'granted') {
+          console.log('✅ Permissão concedida! Configurando service worker...');
+          
+          // Registrar service worker
+          const registration = await navigator.serviceWorker.register('/sw-simple.js');
+          console.log('🔧 Service Worker registrado:', registration);
+          
+          // Obter VAPID key
+          const vapidResponse = await fetch('/api/push-simple/vapid');
+          const { publicKey: vapidPublicKey } = await vapidResponse.json();
+          console.log('🔑 VAPID key obtida:', vapidPublicKey?.substring(0, 20) + '...');
+          
+          // Criar subscription
+          const subscription = await registration.pushManager.subscribe({
+            userVisibleOnly: true,
+            applicationServerKey: vapidPublicKey
+          });
+          console.log('📝 Subscription criada:', subscription);
+          console.log('📝 Endpoint:', subscription.endpoint);
+          console.log('📝 Keys:', subscription.toJSON().keys);
+          
+          // Enviar subscription para servidor
+          const subscribeResponse = await fetch('/api/push-simple/subscribe', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ subscription: subscription.toJSON() })
+          });
+          const subscribeResult = await subscribeResponse.json();
+          console.log('💾 Subscription salva:', subscribeResult);
+          
           setPushNotificationState(prev => ({
             ...prev,
             hasPermission: true,
@@ -239,19 +299,40 @@ export default function Dashboard() {
           }));
           
           toast({
-            title: "🔔 Notificações Ativadas no iOS",
-            description: "Você receberá notificações na tela de bloqueio do iPhone",
+            title: "✅ Permissões Concedidas no iOS!",
+            description: "Push notifications configuradas com sucesso!",
+          });
+        } else {
+          console.log('❌ Permissão negada pelo usuário iOS');
+          setPushNotificationState(prev => ({
+            ...prev,
+            showIOSPrompt: false
+          }));
+          toast({
+            title: "Permissões Negadas",
+            description: "Não é possível enviar notificações",
+            variant: "destructive"
           });
         }
       } else {
-        console.log('❌ Permissão negada pelo usuário iOS');
+        console.log('❌ Permissões já negadas anteriormente');
         setPushNotificationState(prev => ({
           ...prev,
           showIOSPrompt: false
         }));
+        toast({
+          title: "Permissões Negadas",
+          description: "Notificações foram bloqueadas pelo usuário",
+          variant: "destructive"
+        });
       }
     } catch (error) {
-      console.error('❌ Erro na ativação iOS:', error);
+      console.error('❌ Erro no iOS push activation:', error);
+      toast({
+        title: "Erro",
+        description: `Falha: ${error.message}`,
+        variant: "destructive"
+      });
     }
   };
   

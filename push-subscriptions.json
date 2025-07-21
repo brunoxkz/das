@@ -1,1 +1,11 @@
-[]
+[
+  {
+    "endpoint": "https://web.push.apple.com/QPCUiceqocrhUAwYlS7Ay9HHn4wFo6C4TON2TrWjObJZwgvIyZce1CxEYvWkQ-F3nAUrl_54aMJcNbrQvjPFHjcs832Ty1U_Obnsd40F6mODCIyyTN4jb7nAoFy_sdlAPl6hDvZK1fHaEmubVXndsiKFzOS6tR3KUAwHgAynQ58",
+    "keys": {
+      "p256dh": "BBum3hAdjmWlW0YY5nJhoiFu2FrxDo545oIs_P4Hsx8_WQoAUcssO3AhoteJ25RaWp9MmiEU13mVoDtICiaeOps",
+      "auth": "mY9lmJ9ovUSt_PaaqYdMFA"
+    },
+    "userId": "ios-pwa-user",
+    "createdAt": "2025-07-21T21:42:27.505Z"
+  }
+]
