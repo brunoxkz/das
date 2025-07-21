@@ -586,13 +586,44 @@ export default function Dashboard() {
                   
                   try {
                     if (Notification.permission === 'granted') {
-                      console.log('✅ Permissão já concedida, enviando push...');
+                      console.log('✅ Permissão já concedida, verificando/configurando subscription...');
+                      
+                      // Registrar service worker se necessário
+                      const registration = await navigator.serviceWorker.register('/sw-simple.js');
+                      console.log('🔧 Service Worker verificado/registrado');
+                      
+                      // Obter VAPID key
+                      const vapidResponse = await fetch('/api/push-simple/vapid');
+                      const { publicKey: vapidPublicKey } = await vapidResponse.json();
+                      console.log('🔑 VAPID key obtida para subscription');
+                      
+                      // Criar subscription REAL
+                      const subscription = await registration.pushManager.subscribe({
+                        userVisibleOnly: true,
+                        applicationServerKey: vapidPublicKey
+                      });
+                      console.log('📝 Subscription REAL criada:', {
+                        endpoint: subscription.endpoint.substring(0, 50) + '...',
+                        keys: subscription.toJSON().keys
+                      });
+                      
+                      // Salvar subscription no servidor
+                      const subscribeResponse = await fetch('/api/push-simple/subscribe', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ subscription: subscription.toJSON() })
+                      });
+                      const subscribeResult = await subscribeResponse.json();
+                      console.log('💾 Subscription salva no servidor:', subscribeResult);
+                      
+                      // Agora enviar push notification
+                      console.log('📤 Enviando push notification...');
                       const response = await fetch('/api/push-simple/send', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ 
-                          title: "Teste Push Notification", 
-                          message: "Sistema funcionando perfeitamente!" 
+                          title: "🔥 Teste Push Vendzz", 
+                          message: "Sistema funcionando! Notificação na tela de bloqueio 📱" 
                         })
                       });
                       const result = await response.json();

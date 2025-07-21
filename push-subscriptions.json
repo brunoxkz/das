@@ -1,11 +1,11 @@
 [
   {
-    "endpoint": "test",
+    "endpoint": "https://fcm.googleapis.com/fcm/send/test-endpoint-ios-pwa-real",
     "keys": {
-      "p256dh": "test",
-      "auth": "test"
+      "p256dh": "BKVRmJs10mOKMM_5r5ulr2lwK7874bDfO2xKcJstwEKo2zH-IovON2BG8_847MbQnzo_75QqRAEkjC_BwzwiccQ",
+      "auth": "xdoMPGbXwmuimTCk-Rn-6Nh474zq8PciCWWTp_WbBZg"
     },
     "userId": "ios-pwa-user",
-    "createdAt": "2025-07-21T04:57:15.019Z"
+    "createdAt": "2025-07-21T05:33:12.784Z"
   }
 ]
