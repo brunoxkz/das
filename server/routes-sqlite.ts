@@ -4514,9 +4514,28 @@ export function registerSQLiteRoutes(app: Express): Server {
           // Importar o serviço de push notifications
           const { sendPushToSpecificUser } = await import('./push-simple');
           
+          // Buscar mensagens rotativas configuradas ou usar mensagens padrão
+          const rotativeMessages = [
+            { title: '⚡ Seu sistema está voando!', message: 'Novo lead finalizou o quiz 💰' },
+            { title: '🔥 Novo lead convertido!', message: 'Você tá jogando o jogo certo 🎯' },
+            { title: '🚀 O funil não para!', message: 'Mais um lead completo no seu quiz 👑' },
+            { title: '💸 Novo lead, novo possível cliente!', message: 'Seu quiz tá gerando ouro ✨' },
+            { title: '📈 Lead finalizou agora!', message: 'Posta isso nos stories, lenda! 🧲' },
+            { title: '🎉 TÁ BATENDO META!', message: 'Mais um lead caiu na sua máquina 🔥' },
+            { title: '🏆 Resultado em tempo real:', message: 'Seu quiz converteu mais um! 👏' },
+            { title: '🥇 Você é destaque na VENDZZ', message: 'Mais um resultado em tempo real 🎯' },
+            { title: '⚡ Sua máquina de leads tá rodando no automático', message: 'Dá orgulho de mostrar! 🚀' }
+          ];
+          
+          // Pegar índice atual de forma rotativa (baseado no timestamp para distribuição)
+          const messageIndex = Math.floor(Date.now() / 1000) % rotativeMessages.length;
+          const selectedMessage = rotativeMessages[messageIndex];
+          
+          console.log(`🔄 Usando mensagem rotativa ${messageIndex + 1}/${rotativeMessages.length}: "${selectedMessage.title}"`);
+          
           const pushPayload = {
-            title: `🎯 Novo Quiz Finalizado!`,
-            message: `${quizTitle || 'Quiz'} - Lead Score: ${leadScore || 'N/A'} 💰`,
+            title: selectedMessage.title,
+            message: selectedMessage.message,
             completionId: completionId,
             userEmail: userEmail,
             timestamp: new Date().toISOString()
