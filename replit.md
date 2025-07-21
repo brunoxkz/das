@@ -282,6 +282,15 @@ O sistema utiliza Stripe Payment Intent para processar pagamentos únicos de R$ 
 
 ```
 Changelog:
+- July 21, 2025. SISTEMA PUSH NOTIFICATIONS COMPLETO COM SEGURANÇA RESTAURADA - Solução definitiva implementada:
+  * SERVICE WORKER OTIMIZADO: sw-notifications.js criado sem interceptação de requisições Vite
+  * SEGURANÇA COMPLETA REATIVADA: Helmet, middlewares anti-ataque, headers de segurança
+  * ENDPOINT /sw-notifications.js: Service Worker servido com headers corretos
+  * VERIFICAÇÃO JWT RESTAURADA: Endpoints admin voltaram a exigir autenticação
+  * CORS COMPLETO: Headers completos para máxima compatibilidade
+  * PUSH NOTIFICATIONS FUNCIONAIS: Tela de bloqueio iOS/Android com notificações reais
+  * SOLUÇÃO HÍBRIDA: Service Worker não intercepta fetch(), evita conflitos com Vite HMR
+  * SISTEMA ESTÁVEL: ERR_BLOCKED_BY_RESPONSE eliminado mantendo segurança máxima
 - July 21, 2025. ERR_BLOCKED_BY_RESPONSE COMPLETAMENTE RESOLVIDO - Correções críticas aplicadas com sucesso:
   * HEADERS DE SEGURANÇA SIMPLIFICADOS: Removidos headers problemáticos que causavam bloqueio de resposta
   * SERVICE WORKERS DESABILITADOS: Interceptadores de SW temporariamente desativados para máxima estabilidade

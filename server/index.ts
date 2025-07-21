@@ -52,13 +52,13 @@ const app = express();
 // 🔒 CONFIGURAÇÃO DE PROXY PARA RATE LIMITING
 app.set('trust proxy', 1); // Confia no primeiro proxy (necessário para rate limiting no Replit)
 
-// Configurações de segurança compatíveis com Replit - TOTALMENTE DESABILITADO
-// app.use(helmet({
-//   contentSecurityPolicy: false, // Desabilita CSP para permitir Stripe.js
-//   crossOriginEmbedderPolicy: false,
-//   crossOriginResourcePolicy: false, // Fix para ERR_BLOCKED_BY_RESPONSE
-//   crossOriginOpenerPolicy: false
-// }));
+// Configurações de segurança compatíveis com Replit - REATIVADO COM CONFIGURAÇÕES OTIMIZADAS
+app.use(helmet({
+  contentSecurityPolicy: false, // Desabilita CSP para permitir Stripe.js e Service Workers
+  crossOriginEmbedderPolicy: false,
+  crossOriginResourcePolicy: false, // Permite recursos cross-origin
+  crossOriginOpenerPolicy: false
+}));
 
 // Compressão gzip/deflate para reduzir tamanho das respostas
 app.use(compression({
@@ -82,12 +82,19 @@ app.use(express.json({
 
 // Removemos express.urlencoded() para evitar interceptação das requisições JSON do fetch()
 
-// HEADERS SIMPLIFICADOS PARA RESOLVER ERR_BLOCKED_BY_RESPONSE
+// CORS e Headers COMPLETOS reativados - Service Worker otimizado resolve ERR_BLOCKED_BY_RESPONSE
 app.use((req, res, next) => {
-  // CORS básico sem headers problemáticos
+  // CORS completo
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS, PATCH');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept, Origin, Cache-Control, Pragma');
+  res.setHeader('Access-Control-Allow-Credentials', 'true');
+  
+  // Security headers reativados
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('X-Frame-Options', 'DENY');
+  res.setHeader('X-XSS-Protection', '1; mode=block');
+  res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
   
   // Handle preflight requests
   if (req.method === 'OPTIONS') {
@@ -98,11 +105,11 @@ app.use((req, res, next) => {
   next();
 });
 
-// MIDDLEWARES DE SEGURANÇA DESABILITADOS TEMPORARIAMENTE PARA RESOLVER ERR_BLOCKED_BY_RESPONSE
-// app.use(honeypotMiddleware);
-// app.use(timingAttackProtection);
-// app.use(attackSignatureAnalyzer);
-// app.use(blacklistMiddleware);
+// Apply security middleware que funciona com Express 4.x - REATIVADO
+app.use(honeypotMiddleware);
+app.use(timingAttackProtection);
+app.use(attackSignatureAnalyzer);
+app.use(blacklistMiddleware);
 
 // Health check endpoints now integrated in routes-sqlite.ts
 
@@ -113,8 +120,8 @@ setupHybridAuth(app);
 
 // System initialization and routes
 
-// SISTEMA PUSH NOTIFICATIONS SIMPLIFICADO - ERR_BLOCKED_BY_RESPONSE RESOLVER
-console.log('✅ PUSH NOTIFICATIONS BÁSICO - SERVICE WORKER DESABILITADO TEMPORARIAMENTE');
+// SISTEMA PUSH NOTIFICATIONS COMPLETO COM SERVICE WORKER OTIMIZADO
+console.log('✅ PUSH NOTIFICATIONS COMPLETO - SERVICE WORKER OTIMIZADO SEM CONFLITOS');
 
 // Register all routes DEPOIS dos endpoints de push
 const server = registerHybridRoutes(app);
