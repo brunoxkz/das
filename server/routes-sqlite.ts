@@ -15233,6 +15233,10 @@ app.get("/api/whatsapp-extension/pending", verifyJWT, async (req: any, res: Resp
         });
       }
 
+      // LIMPEZA PRÉVIA DE SUBSCRIPTIONS INVÁLIDAS
+      console.log('🧹 [UNIFICADO] Executando limpeza de subscriptions inválidas...');
+      await SimplePushNotificationSystem.cleanInvalidSubscriptions();
+      
       // BUSCAR TODAS AS SUBSCRIPTIONS - SISTEMA UNIFICADO
       console.log('🔍 [UNIFICADO] Buscando dispositivos em AMBOS os sistemas...');
       
@@ -15242,7 +15246,7 @@ app.get("/api/whatsapp-extension/pending", verifyJWT, async (req: any, res: Resp
         WHERE is_active = 1
       `).all();
 
-      // 2. Buscar subscriptions PWA iOS (sistema SimplePushNotificationSystem)
+      // 2. Buscar subscriptions PWA iOS (sistema SimplePushNotificationSystem) - APÓS LIMPEZA
       const pwaSubscriptions = await SimplePushNotificationSystem.getAllActiveSubscriptions();
 
       console.log(`📊 [UNIFICADO] SQLite: ${sqliteSubscriptions.length}, PWA: ${pwaSubscriptions.length} dispositivos`);

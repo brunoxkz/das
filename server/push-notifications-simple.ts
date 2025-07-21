@@ -52,6 +52,12 @@ export class SimplePushNotificationSystem {
       // Carregar subscriptions do arquivo
       await this.loadSubscriptions();
       
+      // Limpeza automática de subscriptions inválidas
+      const removedCount = await this.cleanInvalidSubscriptions();
+      if (removedCount > 0) {
+        console.log(`🧹 [SimplePWA] ${removedCount} subscriptions inválidas foram removidas na inicialização`);
+      }
+      
       console.log('✅ VAPID configurado para Web Push Real');
     } catch (error) {
       console.error('❌ Erro ao configurar VAPID keys:', error);
@@ -89,11 +95,69 @@ export class SimplePushNotificationSystem {
   }
 
   /**
-   * Registra subscription de um usuário
+   * Validar dados p256dh da subscription
+   */
+  static validateP256dh(p256dh: string): boolean {
+    try {
+      // p256dh deve ser uma string base64url de exatamente 65 bytes
+      const buffer = Buffer.from(p256dh, 'base64url');
+      return buffer.length === 65;
+    } catch {
+      return false;
+    }
+  }
+
+  /**
+   * Sanitizar e validar subscription
+   */
+  static sanitizeSubscription(subscription: any): any | null {
+    try {
+      if (!subscription || !subscription.keys) {
+        console.log('❌ [SimplePWA] Subscription inválida - sem keys');
+        return null;
+      }
+
+      const { p256dh, auth } = subscription.keys;
+      
+      // Validar p256dh
+      if (!this.validateP256dh(p256dh)) {
+        console.log(`❌ [SimplePWA] p256dh inválido: ${p256dh?.length || 0} bytes`);
+        return null;
+      }
+
+      // Validar auth
+      if (!auth || typeof auth !== 'string') {
+        console.log('❌ [SimplePWA] auth inválido');
+        return null;
+      }
+
+      // Retornar subscription sanitizada
+      return {
+        endpoint: subscription.endpoint,
+        keys: {
+          p256dh: p256dh,
+          auth: auth
+        }
+      };
+    } catch (error) {
+      console.error('❌ [SimplePWA] Erro ao sanitizar subscription:', error);
+      return null;
+    }
+  }
+
+  /**
+   * Registra subscription de um usuário COM VALIDAÇÃO
    */
   static async saveUserSubscription(userId: string, subscription: any): Promise<boolean> {
     try {
-      console.log(`💾 Salvando subscription para usuário ${userId}`);
+      console.log(`💾 [SimplePWA] Validando subscription para usuário ${userId}`);
+      
+      // Sanitizar e validar subscription
+      const sanitizedSubscription = this.sanitizeSubscription(subscription);
+      if (!sanitizedSubscription) {
+        console.log(`❌ [SimplePWA] Subscription rejeitada para ${userId} - dados inválidos`);
+        return false;
+      }
       
       // Criar ID único baseado no userId e timestamp
       const subscriptionId = `${userId}-${Date.now()}`;
@@ -105,22 +169,52 @@ export class SimplePushNotificationSystem {
         }
       });
       
-      // Adicionar nova subscription
+      // Adicionar nova subscription VALIDADA
       this.subscriptionsById[subscriptionId] = {
         id: subscriptionId,
         userId: userId,
-        pushSubscription: subscription,
+        pushSubscription: sanitizedSubscription,
         isActive: true,
         createdAt: new Date()
       };
 
       await this.saveSubscriptions();
-      console.log(`✅ Subscription registrada com sucesso para ${userId}`);
+      console.log(`✅ [SimplePWA] Subscription VALIDADA e registrada para ${userId}`);
       return true;
     } catch (error) {
-      console.error('❌ Erro ao salvar subscription:', error);
+      console.error('❌ [SimplePWA] Erro ao salvar subscription:', error);
       return false;
     }
+  }
+
+  /**
+   * Limpeza de subscriptions inválidas
+   */
+  static async cleanInvalidSubscriptions(): Promise<number> {
+    let removedCount = 0;
+    const subscriptionsToRemove: string[] = [];
+    
+    for (const [id, subscription] of Object.entries(this.subscriptionsById)) {
+      // Verificar se a subscription tem dados p256dh válidos
+      if (!subscription.pushSubscription?.keys?.p256dh || 
+          !this.validateP256dh(subscription.pushSubscription.keys.p256dh)) {
+        console.log(`🗑️ [SimplePWA] Marcando subscription inválida para remoção: ${subscription.userId}`);
+        subscriptionsToRemove.push(id);
+      }
+    }
+    
+    // Remover subscriptions inválidas
+    subscriptionsToRemove.forEach(id => {
+      delete this.subscriptionsById[id];
+      removedCount++;
+    });
+    
+    if (removedCount > 0) {
+      await this.saveSubscriptions();
+      console.log(`✅ [SimplePWA] ${removedCount} subscriptions inválidas removidas`);
+    }
+    
+    return removedCount;
   }
 
   /**
@@ -148,19 +242,28 @@ export class SimplePushNotificationSystem {
 
     for (const subscription of subscriptions) {
       try {
-        console.log(`📤 Enviando para usuário ${subscription.userId}`);
+        console.log(`📤 [SimplePWA] Enviando para usuário ${subscription.userId}`);
+        
+        // VALIDAÇÃO CRÍTICA P256DH ANTES DO ENVIO
+        if (!subscription.pushSubscription?.keys?.p256dh || 
+            !this.validateP256dh(subscription.pushSubscription.keys.p256dh)) {
+          console.log(`❌ [SimplePWA] Subscription com p256dh inválido para ${subscription.userId} - removendo...`);
+          delete this.subscriptionsById[subscription.id];
+          failedCount++;
+          continue;
+        }
         
         await webpush.sendNotification(subscription.pushSubscription, payload);
         sentCount++;
-        console.log(`✅ Notificação enviada com sucesso para ${subscription.userId}`);
+        console.log(`✅ [SimplePWA] Notificação enviada com sucesso para ${subscription.userId}`);
       } catch (error: any) {
         failedCount++;
-        console.error(`❌ Erro ao enviar para ${subscription.userId}:`, error.message);
+        console.error(`❌ [SimplePWA] Erro ao enviar para ${subscription.userId}:`, error.message);
         
-        // Se erro 410 (subscription inválida), remover
-        if (error.statusCode === 410) {
+        // Se erro relacionado ao p256dh ou erro 410, remover subscription
+        if (error.statusCode === 410 || error.message?.includes('p256dh') || error.message?.includes('65 bytes')) {
+          console.log(`🗑️ [SimplePWA] Removendo subscription inválida para ${subscription.userId}: ${error.message}`);
           delete this.subscriptionsById[subscription.id];
-          console.log(`🗑️ Subscription inválida removida: ${subscription.userId}`);
         }
       }
     }
@@ -185,7 +288,7 @@ export class SimplePushNotificationSystem {
       .filter(sub => sub.userId === userId && sub.isActive);
 
     if (userSubscriptions.length === 0) {
-      console.log(`⚠️ Usuário ${userId} não tem subscriptions ativas`);
+      console.log(`⚠️ [SimplePWA] Usuário ${userId} não tem subscriptions ativas`);
       return false;
     }
 
@@ -205,14 +308,23 @@ export class SimplePushNotificationSystem {
     let success = false;
     for (const subscription of userSubscriptions) {
       try {
+        // VALIDAÇÃO CRÍTICA P256DH ANTES DO ENVIO
+        if (!subscription.pushSubscription?.keys?.p256dh || 
+            !this.validateP256dh(subscription.pushSubscription.keys.p256dh)) {
+          console.log(`❌ [SimplePWA] Subscription com p256dh inválido para ${userId} - removendo...`);
+          delete this.subscriptionsById[subscription.id];
+          continue;
+        }
+        
         await webpush.sendNotification(subscription.pushSubscription, payload);
-        console.log(`✅ Notificação enviada para ${userId}`);
+        console.log(`✅ [SimplePWA] Notificação enviada para ${userId}`);
         success = true;
       } catch (error: any) {
-        console.error(`❌ Erro ao enviar para ${userId}:`, error.message);
+        console.error(`❌ [SimplePWA] Erro ao enviar para ${userId}:`, error.message);
         
-        // Se erro 410, remover subscription inválida
-        if (error.statusCode === 410) {
+        // Se erro relacionado ao p256dh ou erro 410, remover subscription
+        if (error.statusCode === 410 || error.message?.includes('p256dh') || error.message?.includes('65 bytes')) {
+          console.log(`🗑️ [SimplePWA] Removendo subscription inválida para ${userId}: ${error.message}`);
           delete this.subscriptionsById[subscription.id];
         }
       }

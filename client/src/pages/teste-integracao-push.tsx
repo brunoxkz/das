@@ -44,30 +44,39 @@ export default function TesteIntegracaoPush() {
       // 1. TESTE BROADCAST UNIFICADO
       updateTest(1, { status: 'pending', message: 'Executando broadcast unificado...' });
       
-      const broadcastResponse = await apiRequest('POST', '/api/push-notifications/admin/broadcast', {
-        title: 'TESTE INTEGRAÇÃO ADMIN → PWA iOS',
-        body: 'Verificando se admin consegue enviar para TODOS os dispositivos',
-        url: '/app-pwa-vendzz',
-        icon: '/logo-vendzz-white.png',
-        badge: '/logo-vendzz-white.png',
-        requireInteraction: true,
-        silent: false
-      });
-
-      if (broadcastResponse.ok) {
-        const data = await broadcastResponse.json();
-        updateTest(1, { 
-          status: 'success', 
-          message: `Broadcast enviado para ${data.total} dispositivos`,
-          details: data
+      try {
+        const broadcastResponse = await apiRequest('POST', '/api/push-notifications/admin/broadcast', {
+          title: 'TESTE INTEGRAÇÃO ADMIN → PWA iOS',
+          body: 'Verificando se admin consegue enviar para TODOS os dispositivos',
+          url: '/app-pwa-vendzz',
+          icon: '/logo-vendzz-white.png',
+          badge: '/logo-vendzz-white.png',
+          requireInteraction: true,
+          silent: false
         });
-        setResults(data);
-      } else {
-        const error = await broadcastResponse.text();
+
+        if (broadcastResponse.ok) {
+          const data = await broadcastResponse.json();
+          updateTest(1, { 
+            status: 'success', 
+            message: `Broadcast enviado para ${data.total || 0} dispositivos`,
+            details: data
+          });
+          setResults(data);
+        } else {
+          const error = await broadcastResponse.text();
+          updateTest(1, { 
+            status: 'error', 
+            message: `Erro no broadcast: ${broadcastResponse.status}`,
+            details: error
+          });
+        }
+      } catch (broadcastError) {
+        console.error('Erro no broadcast:', broadcastError);
         updateTest(1, { 
           status: 'error', 
-          message: `Erro no broadcast: ${broadcastResponse.status}`,
-          details: error
+          message: `Erro de comunicação: ${broadcastError.message}`,
+          details: broadcastError
         });
       }
 
