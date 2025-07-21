@@ -362,6 +362,15 @@ const server = registerHybridRoutes(app);
 
 // INTERCEPTADOR CRÍTICO para arquivos especiais - ANTES do Vite
 app.use((req, res, next) => {
+  // FORÇA CACHE CLEAR para páginas admin
+  if (req.path.includes('bulk-push-messaging') || req.path.includes('admin-push-notifications')) {
+    console.log('🔄 FORÇANDO CACHE RELOAD ADMIN:', req.path);
+    res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+    res.setHeader('Pragma', 'no-cache');
+    res.setHeader('Expires', '0');
+    res.setHeader('X-Force-Refresh', Date.now().toString());
+  }
+  
   // Sistema de som - interceptar antes do Vite
   if (req.path === '/sounds/sale-notification.js') {
     const soundPath = path.join(process.cwd(), 'public', 'sounds', 'sale-notification.js');

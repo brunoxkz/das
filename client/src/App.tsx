@@ -18,7 +18,6 @@ import SubscribePage from "@/pages/subscribe";
 import SettingsPage from "@/pages/settings";
 import AdminPage from "@/pages/admin";
 import AdminSecurityPage from "@/pages/admin-security";
-import AdminNotifications from "@/pages/admin-notifications";
 import BulkPushMessaging from "@/pages/bulk-push-messaging";
 
 
@@ -228,11 +227,7 @@ function App() {
             <AdminSecurityPage />
           </Layout>
         </Route>
-        <Route path="/admin/notifications">
-          <Layout>
-            <AdminNotifications />
-          </Layout>
-        </Route>
+
         <Route path="/admin/push-admin">
           <Layout>
             <PushAdmin />
@@ -661,17 +656,12 @@ function App() {
 
         <Route path="/admin/bulk-push-messaging">
           <Layout>
-            <BulkPushMessaging key="bulk-push-v2025-clear" />
+            <BulkPushMessaging key="bulk-push-v2025-clear-final" />
           </Layout>
         </Route>
         <Route path="/admin-push-notifications">
           <Layout>
-            <BulkPushMessaging key="admin-push-redirect" />
-          </Layout>
-        </Route>
-        <Route path="/admin-push-notifications">
-          <Layout>
-            <BulkPushMessaging />
+            <BulkPushMessaging key="admin-push-redirect-final" />
           </Layout>
         </Route>
         
