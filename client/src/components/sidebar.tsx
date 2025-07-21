@@ -335,13 +335,7 @@ export function Sidebar() {
       icon: <Settings className="w-4 h-4" />,
       active: location === "/settings"
     },
-    {
-      title: "Admin Push",
-      href: "/admin-push-notifications",
-      icon: <Bell className="w-4 h-4" />,
-      active: location === "/admin-push-notifications" || location === "/admin/bulk-push-messaging",
-      className: "text-purple-600 border-purple-600/20 bg-purple-600/5 hover:bg-purple-600/10"
-    },
+
     {
       title: "Admin Área",
       href: "/members-admin",
@@ -355,6 +349,13 @@ export function Sidebar() {
       icon: <Users className="w-4 h-4" />,
       active: location === "/admin-dashboard",
       className: "text-red-500 border-red-500/20 bg-red-500/5 hover:bg-red-500/10"
+    },
+    {
+      title: "Config Push",
+      href: "/admin/bulk-push-messaging",
+      icon: <Bell className="w-4 h-4" />,
+      active: location === "/admin/bulk-push-messaging",
+      className: "text-purple-600 border-purple-600/20 bg-purple-600/5 hover:bg-purple-600/10"
     }
   ];
 
