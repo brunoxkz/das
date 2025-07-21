@@ -15141,7 +15141,7 @@ app.get("/api/whatsapp-extension/pending", verifyJWT, async (req: any, res: Resp
       const activeSubscriptions = sqlite.prepare('SELECT COUNT(*) as count FROM push_subscriptions WHERE is_active = 1').get().count;
       const totalSent = sqlite.prepare('SELECT COUNT(*) as count FROM push_notification_logs').get().count;
       
-      const successfulSent = sqlite.prepare('SELECT COUNT(*) as count FROM push_notification_logs WHERE status = "success"').get().count;
+      const successfulSent = sqlite.prepare("SELECT COUNT(*) as count FROM push_notification_logs WHERE status = ?").get('sent').count;
       const successRate = totalSent > 0 ? Math.round((successfulSent / totalSent) * 100) : 0;
       
       const lastSentResult = sqlite.prepare('SELECT sent_at FROM push_notification_logs ORDER BY sent_at DESC LIMIT 1').get();
