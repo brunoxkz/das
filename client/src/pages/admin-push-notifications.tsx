@@ -1,91 +1,116 @@
 import React, { useState, useEffect } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Bell, Send, Users, Smartphone, Zap, AlertCircle, CheckCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest } from '@/lib/queryClient';
-import { useAuth } from '@/hooks/useAuth-jwt';
-
-interface User {
-  id: string;
-  email: string;
-  firstName?: string;
-  lastName?: string;
-}
+import { 
+  Bell, 
+  Send, 
+  Users, 
+  Activity, 
+  Smartphone, 
+  CheckCircle, 
+  XCircle, 
+  Clock,
+  Globe,
+  BarChart3,
+  Zap,
+  Settings
+} from 'lucide-react';
 
 interface NotificationStats {
   totalSubscriptions: number;
-  activeUsers: number;
-  timestamp: number;
+  activeSubscriptions: number;
+  totalSent: number;
+  successRate: number;
+  lastSent: string | null;
 }
 
-const AdminPushNotifications: React.FC = () => {
-  const { user } = useAuth();
-  const { toast } = useToast();
-  
-  // Estados
-  const [users, setUsers] = useState<User[]>([]);
+interface Subscription {
+  id: string;
+  userId: string;
+  endpoint: string;
+  isActive: boolean;
+  createdAt: string;
+  userAgent: string;
+  deviceType: string;
+}
+
+interface NotificationLog {
+  id: string;
+  userId: string;
+  title: string;
+  body: string;
+  status: string;
+  sentAt: string;
+  deliveredAt: string | null;
+}
+
+export default function AdminPushNotifications() {
   const [stats, setStats] = useState<NotificationStats | null>(null);
+  const [subscriptions, setSubscriptions] = useState<Subscription[]>([]);
+  const [logs, setLogs] = useState<NotificationLog[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isSending, setIsSending] = useState(false);
-  
-  // Estados do formulário
-  const [selectedUserId, setSelectedUserId] = useState<string>('');
-  const [notificationTitle, setNotificationTitle] = useState('🔔 Vendzz - Notificação Importante');
-  const [notificationBody, setNotificationBody] = useState('');
-  const [notificationType, setNotificationType] = useState<'individual' | 'global'>('individual');
+  const { toast } = useToast();
 
-  // Verificar se é admin
-  const isAdmin = user?.email === 'admin@vendzz.com' || user?.email === 'bruno@vendzz.com';
+  // Formulário de notificação
+  const [notificationForm, setNotificationForm] = useState({
+    title: '',
+    body: '',
+    url: '/app-pwa-vendzz',
+    icon: '/logo-vendzz-white.png',
+    badge: '/logo-vendzz-white.png',
+    requireInteraction: true,
+    silent: false
+  });
 
   useEffect(() => {
-    if (isAdmin) {
-      fetchUsers();
-      fetchStats();
-    }
-  }, [isAdmin]);
+    loadDashboardData();
+  }, []);
 
-  // Buscar usuários
-  const fetchUsers = async () => {
+  const loadDashboardData = async () => {
+    setIsLoading(true);
     try {
-      const response = await apiRequest('GET', '/api/admin/users');
-      if (response.success && Array.isArray(response.users)) {
-        setUsers(response.users);
-      }
-    } catch (error) {
-      console.error('❌ Erro ao buscar usuários:', error);
-      toast({
-        title: "Erro",
-        description: "Não foi possível carregar a lista de usuários.",
-        variant: "destructive"
+      // Carregar estatísticas, subscriptions e logs em paralelo
+      const [statsResponse, subscriptionsResponse, logsResponse] = await Promise.all([
+        apiRequest('GET', '/api/push-notifications/admin/stats'),
+        apiRequest('GET', '/api/push-notifications/admin/subscriptions'),
+        apiRequest('GET', '/api/push-notifications/admin/logs')
+      ]);
+
+      setStats(statsResponse);
+      setSubscriptions(subscriptionsResponse);
+      setLogs(logsResponse);
+
+      console.log('📊 Dashboard data loaded:', {
+        stats: statsResponse,
+        subscriptions: subscriptionsResponse.length,
+        logs: logsResponse.length
       });
-    }
-  };
 
-  // Buscar estatísticas
-  const fetchStats = async () => {
-    try {
-      const response = await apiRequest('GET', '/api/push-notifications/stats');
-      if (response.success) {
-        setStats(response.stats);
-      }
-    } catch (error) {
-      console.error('❌ Erro ao buscar estatísticas:', error);
-    }
-  };
-
-  // Enviar notificação individual
-  const sendIndividualNotification = async () => {
-    if (!selectedUserId || !notificationBody.trim()) {
+    } catch (error: any) {
+      console.error('❌ Erro ao carregar dashboard:', error);
       toast({
-        title: "Campos obrigatórios",
-        description: "Selecione um usuário e digite a mensagem.",
-        variant: "destructive"
+        title: "❌ Erro ao Carregar",
+        description: "Erro ao carregar dados do dashboard",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const sendBroadcastNotification = async () => {
+    if (!notificationForm.title || !notificationForm.body) {
+      toast({
+        title: "❌ Campos Obrigatórios",
+        description: "Título e mensagem são obrigatórios",
+        variant: "destructive",
       });
       return;
     }
@@ -93,281 +118,365 @@ const AdminPushNotifications: React.FC = () => {
     setIsSending(true);
 
     try {
-      const response = await apiRequest('POST', '/api/push-notifications/send', {
-        targetUserId: selectedUserId,
-        title: notificationTitle,
-        body: notificationBody,
-        url: '/app-pwa-vendzz',
-        icon: '/vendzz-logo-official.png',
-        tag: 'admin-notification'
+      const response = await apiRequest('POST', '/api/push-notifications/admin/broadcast', {
+        title: notificationForm.title,
+        body: notificationForm.body,
+        url: notificationForm.url,
+        icon: notificationForm.icon,
+        badge: notificationForm.badge,
+        requireInteraction: notificationForm.requireInteraction,
+        silent: notificationForm.silent
       });
 
-      if (response.success) {
-        toast({
-          title: "✅ Notificação enviada!",
-          description: `Notificação push enviada para o usuário. Aparecerá na tela de bloqueio.`,
-        });
-        
-        // Limpar formulário
-        setNotificationBody('');
-        setSelectedUserId('');
-        
-        // Atualizar estatísticas
-        await fetchStats();
-      }
-    } catch (error) {
+      toast({
+        title: "✅ Notificação Enviada!",
+        description: `Enviada para ${response.sentTo} dispositivos`,
+        variant: "default",
+      });
+
+      // Limpar formulário
+      setNotificationForm({
+        title: '',
+        body: '',
+        url: '/app-pwa-vendzz',
+        icon: '/logo-vendzz-white.png',
+        badge: '/logo-vendzz-white.png',
+        requireInteraction: true,
+        silent: false
+      });
+
+      // Recarregar dados
+      setTimeout(() => {
+        loadDashboardData();
+      }, 1000);
+
+    } catch (error: any) {
       console.error('❌ Erro ao enviar notificação:', error);
       toast({
-        title: "Erro",
-        description: "Não foi possível enviar a notificação.",
-        variant: "destructive"
+        title: "❌ Erro no Envio",
+        description: error.message || "Erro ao enviar notificação",
+        variant: "destructive",
       });
     } finally {
       setIsSending(false);
     }
   };
 
-  // Enviar notificação global
-  const sendGlobalNotification = async () => {
-    if (!notificationBody.trim()) {
-      toast({
-        title: "Campo obrigatório",
-        description: "Digite a mensagem da notificação.",
-        variant: "destructive"
-      });
-      return;
-    }
-
-    setIsSending(true);
-
-    try {
-      const response = await apiRequest('POST', '/api/push-notifications/global', {
-        title: notificationTitle,
-        body: notificationBody,
-        url: '/app-pwa-vendzz',
-        icon: '/vendzz-logo-official.png',
-        tag: 'global-announcement'
-      });
-
-      if (response.success) {
-        toast({
-          title: "🌍 Notificação global enviada!",
-          description: `Enviada para ${response.sentCount} usuários. Aparecerá na tela de bloqueio.`,
-        });
-        
-        // Limpar formulário
-        setNotificationBody('');
-        
-        // Atualizar estatísticas
-        await fetchStats();
-      }
-    } catch (error) {
-      console.error('❌ Erro ao enviar notificação global:', error);
-      toast({
-        title: "Erro",
-        description: "Não foi possível enviar a notificação global.",
-        variant: "destructive"
-      });
-    } finally {
-      setIsSending(false);
-    }
+  const sendTestNotification = () => {
+    setNotificationForm({
+      title: '🧪 Teste Admin - Vendzz PWA',
+      body: 'Esta é uma notificação de teste enviada pelo admin. Sistema funcionando perfeitamente!',
+      url: '/app-pwa-vendzz',
+      icon: '/logo-vendzz-white.png',
+      badge: '/logo-vendzz-white.png',
+      requireInteraction: true,
+      silent: false
+    });
   };
 
-  // Renderizar se não for admin
-  if (!isAdmin) {
+  const formatDate = (dateString: string) => {
+    if (!dateString) return 'N/A';
+    return new Date(dateString).toLocaleString('pt-BR');
+  };
+
+  const formatEndpoint = (endpoint: string) => {
+    if (!endpoint) return 'N/A';
+    return endpoint.length > 50 ? endpoint.substring(0, 50) + '...' : endpoint;
+  };
+
+  if (isLoading) {
     return (
-      <div className="min-h-screen bg-gray-900 text-white p-6">
-        <Card className="bg-red-900/50 border border-red-500/20">
-          <CardContent className="p-6">
-            <div className="flex items-center gap-3">
-              <AlertCircle className="h-8 w-8 text-red-400" />
-              <div>
-                <h3 className="text-xl font-bold text-red-400">Acesso Negado</h3>
-                <p className="text-red-300">Apenas administradores podem acessar esta página.</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full mx-auto mb-4"></div>
+          <p className="text-blue-600 font-medium">Carregando dashboard...</p>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-900 text-white p-6">
-      <div className="max-w-4xl mx-auto space-y-6">
-        {/* Header */}
-        <div className="text-center space-y-2">
-          <h1 className="text-3xl font-bold text-green-400 flex items-center justify-center gap-3">
-            <Bell className="h-8 w-8" />
-            Admin - Push Notifications PWA
-          </h1>
-          <p className="text-gray-300">
-            Envie notificações que aparecem na tela de bloqueio mesmo com app fechado
-          </p>
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
+      {/* Header */}
+      <div className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white p-6 shadow-lg">
+        <div className="max-w-7xl mx-auto">
+          <h1 className="text-3xl font-bold mb-2">🔔 Admin Push Notifications</h1>
+          <p className="text-blue-100">Painel administrativo para notificações push em tempo real</p>
         </div>
+      </div>
 
+      <div className="max-w-7xl mx-auto p-6 space-y-6">
         {/* Estatísticas */}
-        {stats && (
-          <Card className="bg-gray-900/50 border border-blue-500/20">
-            <CardHeader>
-              <CardTitle className="text-blue-400 flex items-center">
-                <Users className="h-5 w-5 mr-2" />
-                Estatísticas em Tempo Real
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-2 gap-6">
-                <div className="text-center">
-                  <div className="text-3xl font-bold text-blue-400">{stats.totalSubscriptions}</div>
-                  <div className="text-gray-400">Dispositivos Conectados</div>
-                  <div className="text-xs text-gray-500 mt-1">Recebem notificações push</div>
-                </div>
-                <div className="text-center">
-                  <div className="text-3xl font-bold text-green-400">{stats.activeUsers}</div>
-                  <div className="text-gray-400">Usuários Ativos</div>
-                  <div className="text-xs text-gray-500 mt-1">Com notificações habilitadas</div>
-                </div>
-              </div>
+        <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+          <Card className="shadow-lg">
+            <CardContent className="p-4 text-center">
+              <Users className="h-8 w-8 text-blue-600 mx-auto mb-2" />
+              <div className="text-2xl font-bold text-gray-900">{stats?.totalSubscriptions || 0}</div>
+              <div className="text-sm text-gray-600">Total Devices</div>
             </CardContent>
           </Card>
-        )}
 
-        {/* Selector de Tipo */}
-        <Card className="bg-gray-900/50 border border-purple-500/20">
-          <CardHeader>
-            <CardTitle className="text-purple-400">Tipo de Notificação</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-2 gap-4">
-              <Button
-                variant={notificationType === 'individual' ? 'default' : 'outline'}
-                onClick={() => setNotificationType('individual')}
-                className={notificationType === 'individual' ? 'bg-purple-600 hover:bg-purple-700' : 'border-purple-500 text-purple-400'}
-              >
-                <Smartphone className="h-4 w-4 mr-2" />
-                Individual
-              </Button>
-              <Button
-                variant={notificationType === 'global' ? 'default' : 'outline'}
-                onClick={() => setNotificationType('global')}
-                className={notificationType === 'global' ? 'bg-purple-600 hover:bg-purple-700' : 'border-purple-500 text-purple-400'}
-              >
-                <Users className="h-4 w-4 mr-2" />
-                Global
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
+          <Card className="shadow-lg">
+            <CardContent className="p-4 text-center">
+              <Smartphone className="h-8 w-8 text-green-600 mx-auto mb-2" />
+              <div className="text-2xl font-bold text-gray-900">{stats?.activeSubscriptions || 0}</div>
+              <div className="text-sm text-gray-600">Ativos</div>
+            </CardContent>
+          </Card>
 
-        {/* Formulário de Notificação */}
-        <Card className="bg-gray-900/50 border border-green-500/20">
-          <CardHeader>
-            <CardTitle className="text-green-400 flex items-center">
-              <Send className="h-5 w-5 mr-2" />
-              {notificationType === 'individual' ? 'Enviar Notificação Individual' : 'Enviar Notificação Global'}
-            </CardTitle>
-            <CardDescription className="text-gray-300">
-              {notificationType === 'individual' 
-                ? 'Notificação aparecerá na tela de bloqueio do usuário selecionado'
-                : 'Notificação será enviada para todos os usuários com PWA ativo'
-              }
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {/* Seletor de usuário (apenas para individual) */}
-            {notificationType === 'individual' && (
-              <div className="space-y-2">
-                <Label htmlFor="user-select" className="text-gray-300">Usuário Destinatário</Label>
-                <Select value={selectedUserId} onValueChange={setSelectedUserId}>
-                  <SelectTrigger className="bg-gray-800 border-gray-600 text-white">
-                    <SelectValue placeholder="Selecione um usuário..." />
-                  </SelectTrigger>
-                  <SelectContent className="bg-gray-800 border-gray-600">
-                    {users.map((user) => (
-                      <SelectItem key={user.id} value={user.id} className="text-white">
-                        {user.email} {user.firstName && `(${user.firstName})`}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+          <Card className="shadow-lg">
+            <CardContent className="p-4 text-center">
+              <Send className="h-8 w-8 text-purple-600 mx-auto mb-2" />
+              <div className="text-2xl font-bold text-gray-900">{stats?.totalSent || 0}</div>
+              <div className="text-sm text-gray-600">Enviadas</div>
+            </CardContent>
+          </Card>
+
+          <Card className="shadow-lg">
+            <CardContent className="p-4 text-center">
+              <BarChart3 className="h-8 w-8 text-orange-600 mx-auto mb-2" />
+              <div className="text-2xl font-bold text-gray-900">{stats?.successRate || 0}%</div>
+              <div className="text-sm text-gray-600">Taxa Sucesso</div>
+            </CardContent>
+          </Card>
+
+          <Card className="shadow-lg">
+            <CardContent className="p-4 text-center">
+              <Clock className="h-8 w-8 text-red-600 mx-auto mb-2" />
+              <div className="text-xs font-medium text-gray-900">
+                {stats?.lastSent ? formatDate(stats.lastSent) : 'Nunca'}
               </div>
-            )}
+              <div className="text-sm text-gray-600">Último Envio</div>
+            </CardContent>
+          </Card>
+        </div>
 
-            {/* Título da notificação */}
-            <div className="space-y-2">
-              <Label htmlFor="title" className="text-gray-300">Título da Notificação</Label>
-              <Input
-                id="title"
-                value={notificationTitle}
-                onChange={(e) => setNotificationTitle(e.target.value)}
-                className="bg-gray-800 border-gray-600 text-white"
-                placeholder="Título que aparecerá na notificação"
-              />
+        {/* Enviar Notificação */}
+        <Card className="shadow-lg">
+          <CardHeader className="bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-t-lg">
+            <CardTitle className="flex items-center">
+              <Globe className="mr-2 h-6 w-6" />
+              Enviar Notificação Global
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="p-6 space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="title">Título *</Label>
+                <Input
+                  id="title"
+                  value={notificationForm.title}
+                  onChange={(e) => setNotificationForm({...notificationForm, title: e.target.value})}
+                  placeholder="Ex: 🔔 Nova funcionalidade disponível!"
+                />
+              </div>
+              <div>
+                <Label htmlFor="url">URL de Destino</Label>
+                <Input
+                  id="url"
+                  value={notificationForm.url}
+                  onChange={(e) => setNotificationForm({...notificationForm, url: e.target.value})}
+                  placeholder="/app-pwa-vendzz"
+                />
+              </div>
             </div>
 
-            {/* Corpo da notificação */}
-            <div className="space-y-2">
-              <Label htmlFor="body" className="text-gray-300">Mensagem da Notificação</Label>
+            <div>
+              <Label htmlFor="body">Mensagem *</Label>
               <Textarea
                 id="body"
-                value={notificationBody}
-                onChange={(e) => setNotificationBody(e.target.value)}
-                className="bg-gray-800 border-gray-600 text-white"
-                placeholder="Mensagem que aparecerá na notificação push..."
-                rows={4}
+                value={notificationForm.body}
+                onChange={(e) => setNotificationForm({...notificationForm, body: e.target.value})}
+                placeholder="Descreva sua mensagem aqui..."
+                rows={3}
               />
             </div>
 
-            {/* Preview */}
-            {notificationTitle && notificationBody && (
-              <div className="bg-gray-800 p-4 rounded-lg border border-gray-600">
-                <h4 className="text-gray-300 text-sm mb-2">Preview da Notificação:</h4>
-                <div className="bg-gray-700 p-3 rounded border-l-4 border-green-500">
-                  <div className="flex items-start gap-3">
-                    <div className="bg-green-500 p-1 rounded">
-                      <Bell className="h-4 w-4 text-white" />
-                    </div>
-                    <div className="flex-1">
-                      <div className="font-semibold text-white text-sm">{notificationTitle}</div>
-                      <div className="text-gray-300 text-sm mt-1">{notificationBody}</div>
-                    </div>
-                  </div>
-                </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="icon">Ícone URL</Label>
+                <Input
+                  id="icon"
+                  value={notificationForm.icon}
+                  onChange={(e) => setNotificationForm({...notificationForm, icon: e.target.value})}
+                  placeholder="/logo-vendzz-white.png"
+                />
               </div>
-            )}
-
-            {/* Botão de envio */}
-            <Button
-              onClick={notificationType === 'individual' ? sendIndividualNotification : sendGlobalNotification}
-              disabled={isSending || (notificationType === 'individual' && !selectedUserId) || !notificationBody.trim()}
-              className="w-full bg-green-600 hover:bg-green-700"
-            >
-              <Zap className="h-4 w-4 mr-2" />
-              {isSending ? 'Enviando...' : 
-               notificationType === 'individual' ? 'Enviar Notificação Individual' : 'Enviar Notificação Global'}
-            </Button>
-
-            {/* Informações importantes */}
-            <div className="bg-blue-900/30 p-4 rounded-lg border border-blue-500/20">
-              <div className="flex items-start gap-3">
-                <CheckCircle className="h-5 w-5 text-blue-400 mt-0.5" />
-                <div className="text-sm text-blue-300">
-                  <p className="font-semibold mb-1">Como funciona:</p>
-                  <ul className="space-y-1 text-xs">
-                    <li>• Notificação aparece na tela de bloqueio</li>
-                    <li>• Funciona mesmo com app fechado</li>
-                    <li>• Persiste após reinicialização do dispositivo</li>
-                    <li>• Compatível com Android, iOS 16.4+ e Desktop</li>
-                    <li>• Usuário precisa ter ativado as notificações no PWA</li>
-                  </ul>
-                </div>
+              <div>
+                <Label htmlFor="badge">Badge URL</Label>
+                <Input
+                  id="badge"
+                  value={notificationForm.badge}
+                  onChange={(e) => setNotificationForm({...notificationForm, badge: e.target.value})}
+                  placeholder="/logo-vendzz-white.png"
+                />
               </div>
+            </div>
+
+            <div className="flex flex-wrap gap-4">
+              <label className="flex items-center space-x-2">
+                <input
+                  type="checkbox"
+                  checked={notificationForm.requireInteraction}
+                  onChange={(e) => setNotificationForm({...notificationForm, requireInteraction: e.target.checked})}
+                  className="rounded"
+                />
+                <span className="text-sm">Requer interação</span>
+              </label>
+              
+              <label className="flex items-center space-x-2">
+                <input
+                  type="checkbox"
+                  checked={notificationForm.silent}
+                  onChange={(e) => setNotificationForm({...notificationForm, silent: e.target.checked})}
+                  className="rounded"
+                />
+                <span className="text-sm">Silenciosa</span>
+              </label>
+            </div>
+
+            <div className="flex gap-3">
+              <Button 
+                onClick={sendBroadcastNotification}
+                disabled={isSending}
+                className="bg-green-600 hover:bg-green-700"
+              >
+                {isSending ? (
+                  <>
+                    <Zap className="mr-2 h-4 w-4 animate-spin" />
+                    Enviando...
+                  </>
+                ) : (
+                  <>
+                    <Send className="mr-2 h-4 w-4" />
+                    Enviar para Todos
+                  </>
+                )}
+              </Button>
+
+              <Button 
+                onClick={sendTestNotification}
+                variant="outline"
+                className="border-blue-500 text-blue-600 hover:bg-blue-50"
+              >
+                <Zap className="mr-2 h-4 w-4" />
+                Preencher Teste
+              </Button>
+
+              <Button 
+                onClick={loadDashboardData}
+                variant="outline"
+                className="border-gray-500 text-gray-600 hover:bg-gray-50"
+              >
+                <Activity className="mr-2 h-4 w-4" />
+                Atualizar
+              </Button>
             </div>
           </CardContent>
         </Card>
+
+        {/* Dispositivos Conectados */}
+        <Card className="shadow-lg">
+          <CardHeader className="bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-t-lg">
+            <CardTitle className="flex items-center">
+              <Smartphone className="mr-2 h-6 w-6" />
+              Dispositivos Conectados ({subscriptions.length})
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="p-6">
+            {subscriptions.length === 0 ? (
+              <div className="text-center py-8 text-gray-500">
+                <Smartphone className="h-12 w-12 mx-auto mb-4 text-gray-300" />
+                <p>Nenhum dispositivo conectado ainda</p>
+                <p className="text-sm">Os usuários precisam acessar /app-pwa-vendzz e ativar notificações</p>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {subscriptions.slice(0, 10).map((sub) => (
+                  <div key={sub.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                    <div className="flex items-center space-x-3">
+                      <div className={`w-3 h-3 rounded-full ${sub.isActive ? 'bg-green-500' : 'bg-red-500'}`}></div>
+                      <div>
+                        <p className="font-medium text-sm">User: {sub.userId}</p>
+                        <p className="text-xs text-gray-600">{formatEndpoint(sub.endpoint)}</p>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <Badge variant={sub.deviceType === 'mobile' ? 'default' : 'secondary'}>
+                        {sub.deviceType}
+                      </Badge>
+                      <p className="text-xs text-gray-500 mt-1">{formatDate(sub.createdAt)}</p>
+                    </div>
+                  </div>
+                ))}
+                {subscriptions.length > 10 && (
+                  <p className="text-center text-sm text-gray-500">
+                    ... e mais {subscriptions.length - 10} dispositivos
+                  </p>
+                )}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Logs Recentes */}
+        <Card className="shadow-lg">
+          <CardHeader className="bg-gradient-to-r from-orange-600 to-red-600 text-white rounded-t-lg">
+            <CardTitle className="flex items-center">
+              <Activity className="mr-2 h-6 w-6" />
+              Logs Recentes ({logs.length})
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="p-6">
+            {logs.length === 0 ? (
+              <div className="text-center py-8 text-gray-500">
+                <Activity className="h-12 w-12 mx-auto mb-4 text-gray-300" />
+                <p>Nenhum log de notificação ainda</p>
+                <p className="text-sm">Os logs aparecerão aqui quando notificações forem enviadas</p>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {logs.slice(0, 10).map((log) => (
+                  <div key={log.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                    <div className="flex items-center space-x-3">
+                      {log.status === 'sent' ? (
+                        <CheckCircle className="h-5 w-5 text-green-600" />
+                      ) : (
+                        <XCircle className="h-5 w-5 text-red-600" />
+                      )}
+                      <div>
+                        <p className="font-medium text-sm">{log.title}</p>
+                        <p className="text-xs text-gray-600">{log.body}</p>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <Badge variant={log.status === 'sent' ? 'default' : 'destructive'}>
+                        {log.status}
+                      </Badge>
+                      <p className="text-xs text-gray-500 mt-1">{formatDate(log.sentAt)}</p>
+                    </div>
+                  </div>
+                ))}
+                {logs.length > 10 && (
+                  <p className="text-center text-sm text-gray-500">
+                    ... e mais {logs.length - 10} logs
+                  </p>
+                )}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Footer */}
+        <div className="text-center py-6">
+          <p className="text-gray-600">
+            <strong>Vendzz Admin</strong> - Sistema de Push Notifications
+          </p>
+          <p className="text-sm text-gray-500 mt-2">
+            Versão 2.0 - Monitoramento em tempo real
+          </p>
+        </div>
       </div>
     </div>
   );
-};
-
-export default AdminPushNotifications;
+}
