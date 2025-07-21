@@ -54,8 +54,47 @@ export default function BulkPushMessaging() {
   });
   const [quizCompletionSound, setQuizCompletionSound] = useState('achievement');
   const [lastQuizCompleted, setLastQuizCompleted] = useState<string | null>(null);
+  const [monitoringActive, setMonitoringActive] = useState(false);
   
   const { toast } = useToast();
+
+  // Sistema de monitoramento automático de quiz completions
+  useEffect(() => {
+    let pollingInterval: NodeJS.Timeout;
+    
+    const monitorQuizCompletions = async () => {
+      if (!autoNotificationsEnabled || !monitoringActive) return;
+      
+      try {
+        const response = await fetch('/api/quiz-completions/latest');
+        const data = await response.json();
+        
+        if (data.latestCompletion && data.latestCompletion.id !== lastQuizCompleted) {
+          // Novo quiz completion detectado!
+          setLastQuizCompleted(data.latestCompletion.id);
+          
+          // Enviar notificação push automática
+          await sendAutoNotification(data.latestCompletion);
+          
+          console.log('🎉 Novo quiz completion detectado e notificação enviada:', data.latestCompletion.id);
+        }
+      } catch (error) {
+        console.error('❌ Erro no monitoramento de quiz completions:', error);
+      }
+    };
+    
+    if (autoNotificationsEnabled && monitoringActive) {
+      pollingInterval = setInterval(monitorQuizCompletions, 10000); // Verificar a cada 10 segundos
+      console.log('🚀 Monitoramento automático de quiz completions iniciado');
+    }
+    
+    return () => {
+      if (pollingInterval) {
+        clearInterval(pollingInterval);
+        console.log('⏹️ Monitoramento automático parado');
+      }
+    };
+  }, [autoNotificationsEnabled, monitoringActive, lastQuizCompleted]);
 
   // Carregar sistema de áudio moderno com 10 sons
   useEffect(() => {
@@ -274,7 +313,7 @@ export default function BulkPushMessaging() {
   };
 
   // Enviar notificação automática de quiz completion
-  const sendQuizCompletionNotification = async (quizCompletion: any) => {
+  const sendAutoNotification = async (quizCompletion: any) => {
     try {
       console.log('📤 Enviando notificação automática de quiz completion...');
 
@@ -286,10 +325,11 @@ export default function BulkPushMessaging() {
           `Usuário (${quizCompletion.userEmail || 'anônimo'})`
         ).replace(
           'um quiz',
-          `o quiz "${quizCompletion.quizTitle || 'sem título'}"`
+          `o quiz "${quizCompletion.quizTitle}"`
         )
       };
 
+      // Enviar push notification
       const response = await fetch('/api/push-simple/send', {
         method: 'POST',
         headers: {
@@ -298,37 +338,44 @@ export default function BulkPushMessaging() {
         body: JSON.stringify({
           title: personalizedMessage.title,
           message: personalizedMessage.message,
-          type: 'quiz-completion-auto',
-          quizData: quizCompletion
+          icon: '/android-chrome-192x192.png',
+          badge: '/android-chrome-192x192.png',
+          actions: [
+            { action: 'view', title: 'Ver Quiz' },
+            { action: 'close', title: 'Fechar' }
+          ]
         })
       });
 
-      const result = await response.json();
-
       if (response.ok) {
-        console.log('✅ Notificação automática enviada:', result);
-
-        // Reproduzir som se habilitado
+        const result = await response.json();
+        
+        // Reproduzir som de sucesso
         if (soundEnabled && window.playNotificationSound) {
-          try {
-            await testSound(quizCompletionSound);
-          } catch (error) {
-            console.warn('❌ Erro ao reproduzir som automático:', error);
-          }
+          await window.playNotificationSound(quizCompletionSound);
         }
-
+        
         toast({
           title: "🎉 Notificação Automática Enviada!",
-          description: `Quiz completion notificado automaticamente para ${result.stats?.success || 0} usuários`,
+          description: `Notificação sobre "${quizCompletion.quizTitle}" enviada com sucesso`,
         });
-
-        // Atualizar estatísticas
-        await fetchStats();
+        
+        console.log('✅ Notificação automática enviada com sucesso:', result);
+      } else {
+        throw new Error('Falha ao enviar notificação');
       }
     } catch (error) {
       console.error('❌ Erro ao enviar notificação automática:', error);
+      toast({
+        title: "❌ Erro na Notificação Automática",
+        description: "Não foi possível enviar a notificação automática",
+        variant: "destructive",
+      });
     }
   };
+
+  // Enviar notificação automática de quiz completion (alias para compatibilidade)
+  const sendQuizCompletionNotification = sendAutoNotification;
 
   // Enviar mensagem push
   const handleSendMessage = async () => {
@@ -687,32 +734,68 @@ export default function BulkPushMessaging() {
                 />
               </div>
 
-              {/* Botão Salvar Configurações */}
-              <div className="flex justify-center">
+              {/* Controles do Sistema */}
+              <div className="flex gap-3 justify-center">
                 <Button
                   onClick={saveAutoNotificationSettings}
                   className="bg-yellow-600 hover:bg-yellow-700 text-white"
                 >
-                  💾 Salvar Configurações de Quiz Completions
+                  💾 Salvar Configurações
                 </Button>
+                
+                {autoNotificationsEnabled && (
+                  <Button
+                    variant={monitoringActive ? "destructive" : "default"}
+                    onClick={() => setMonitoringActive(!monitoringActive)}
+                    className={monitoringActive ? "" : "bg-green-600 hover:bg-green-700"}
+                  >
+                    {monitoringActive ? "⏹️ Parar Monitoramento" : "▶️ Iniciar Monitoramento"}
+                  </Button>
+                )}
               </div>
             </div>
 
             {/* Status do Sistema */}
             {autoNotificationsEnabled && (
-              <div className="bg-green-50 dark:bg-green-900/20 p-4 rounded-lg border border-green-200 dark:border-green-800">
+              <div className={`p-4 rounded-lg border ${
+                monitoringActive 
+                  ? 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800' 
+                  : 'bg-gray-50 dark:bg-gray-900/20 border-gray-200 dark:border-gray-800'
+              }`}>
                 <div className="flex items-center gap-2 mb-2">
-                  <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-                  <span className="font-semibold text-green-800 dark:text-green-200">
-                    Sistema Ativo e Monitorando
+                  <div className={`w-2 h-2 rounded-full ${
+                    monitoringActive 
+                      ? 'bg-green-500 animate-pulse' 
+                      : 'bg-gray-400'
+                  }`}></div>
+                  <span className={`font-semibold ${
+                    monitoringActive 
+                      ? 'text-green-800 dark:text-green-200' 
+                      : 'text-gray-600 dark:text-gray-400'
+                  }`}>
+                    {monitoringActive ? 'Sistema Ativo e Monitorando' : 'Sistema Configurado (Parado)'}
                   </span>
                 </div>
-                <p className="text-sm text-green-700 dark:text-green-300">
-                  ✅ Verificação automática a cada 10 segundos<br/>
-                  ✅ Notificação instantânea quando quiz for completado<br/>
-                  ✅ Som automático: {getSoundTypeText(quizCompletionSound)}<br/>
-                  {lastQuizCompleted && (
-                    <>✅ Último quiz detectado: ID {lastQuizCompleted.substring(0, 8)}...</>
+                <p className={`text-sm ${
+                  monitoringActive 
+                    ? 'text-green-700 dark:text-green-300' 
+                    : 'text-gray-600 dark:text-gray-400'
+                }`}>
+                  {monitoringActive ? (
+                    <>
+                      ✅ Verificação automática a cada 10 segundos<br/>
+                      ✅ Notificação instantânea quando quiz for completado<br/>
+                      ✅ Som automático: {getSoundTypeText(quizCompletionSound)}<br/>
+                      {lastQuizCompleted && (
+                        <>✅ Último quiz detectado: ID {lastQuizCompleted.substring(0, 8)}...</>
+                      )}
+                    </>
+                  ) : (
+                    <>
+                      ⏸️ Monitoramento pausado - clique "Iniciar Monitoramento" para ativar<br/>
+                      ℹ️ Sistema configurado e pronto para detectar quiz completions<br/>
+                      ℹ️ Som configurado: {getSoundTypeText(quizCompletionSound)}
+                    </>
                   )}
                 </p>
               </div>

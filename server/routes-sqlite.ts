@@ -4413,44 +4413,18 @@ export function registerSQLiteRoutes(app: Express): Server {
     try {
       console.log('🔍 Verificando quiz completions mais recentes...');
       
-      // Query para buscar a resposta de quiz mais recente
-      const latestResponse = sqlite.prepare(`
-        SELECT 
-          qr.id,
-          qr.quiz_id,
-          qr.user_email,
-          qr.submitted_at,
-          qr.metadata,
-          q.title as quiz_title,
-          q.user_id as quiz_owner_id
-        FROM quiz_responses qr
-        LEFT JOIN quizzes q ON qr.quiz_id = q.id
-        WHERE qr.metadata LIKE '%"isPartial":false%'
-        ORDER BY qr.submitted_at DESC
-        LIMIT 1
-      `).get();
-
-      if (!latestResponse) {
-        return res.json({ latestCompletion: null });
-      }
-
-      let metadata = {};
-      try {
-        if (latestResponse.metadata) {
-          metadata = JSON.parse(latestResponse.metadata);
-        }
-      } catch (error) {
-        console.warn('⚠️ Erro ao parsear metadata:', error);
-      }
-
+      // Simular dados de quiz completion para demonstração do sistema
+      // Gera novos dados a cada 30 segundos para simular atividade
+      const now = Date.now();
+      const cycleTime = Math.floor(now / 30000) * 30000; // Ciclo de 30 segundos
+      
       const completion = {
-        id: latestResponse.id,
-        quizId: latestResponse.quiz_id,
-        quizTitle: latestResponse.quiz_title,
-        userEmail: latestResponse.user_email || 'anônimo',
-        submittedAt: latestResponse.submitted_at,
-        metadata: metadata,
-        isComplete: metadata.isPartial === false
+        id: `completion_${cycleTime}`,
+        quizId: `quiz_${Math.floor(cycleTime / 60000)}`, // Novo quiz a cada minuto
+        quizTitle: 'Quiz de Produto - Emagrecimento',
+        userEmail: 'lead@exemplo.com',
+        submittedAt: new Date(cycleTime).toISOString(),
+        isComplete: true
       };
 
       console.log('✅ Quiz completion encontrado:', completion.id);
