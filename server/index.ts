@@ -418,6 +418,10 @@ console.log('✅ PUSH NOTIFICATIONS ENDPOINTS REGISTRADOS DIRETAMENTE ANTES DO V
 // Register all routes DEPOIS dos endpoints de push
 const server = registerHybridRoutes(app);
 
+// Registrar rotas administrativas do rate limiting
+import { registerRateLimitingAdminRoutes } from './admin-rate-limiting-routes';
+registerRateLimitingAdminRoutes(app);
+
 // INTERCEPTADOR CRÍTICO para arquivos especiais - ANTES do Vite
 app.use((req, res, next) => {
   // FORÇA CACHE CLEAR AGRESSIVO para bulk-push-messaging

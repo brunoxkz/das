@@ -1,6 +1,7 @@
 import rateLimit from 'express-rate-limit';
 import helmet from 'helmet';
 import { Request, Response, NextFunction } from 'express';
+import { logRateLimitAttempt } from './rate-limiting-monitor';
 
 // Intelligent rate limiting configuration with context awareness
 export const createIntelligentRateLimit = (config: {
@@ -41,6 +42,10 @@ export const createIntelligentRateLimit = (config: {
     legacyHeaders: false,
     handler: (req, res) => {
       const requestType = getRequestType(req);
+      const limit = calculateLimitForRequest(req, config.baseMax, config);
+      
+      // Log the rate limit attempt for monitoring
+      logRateLimitAttempt(req, requestType, true, limit, limit + 1);
       
       // Only log non-asset rate limits to avoid spam
       if (requestType !== 'asset') {
@@ -53,6 +58,13 @@ export const createIntelligentRateLimit = (config: {
         type: requestType,
         path: req.path
       });
+    },
+    skip: (req) => {
+      // Log successful requests for monitoring
+      const requestType = getRequestType(req);
+      const limit = calculateLimitForRequest(req, config.baseMax, config);
+      logRateLimitAttempt(req, requestType, false, limit, 0);
+      return false; // Don't actually skip
     }
   });
 };
@@ -123,11 +135,28 @@ function hasValidUserSession(req: any): boolean {
 }
 
 function getRequestType(req: any): string {
-  if (isAssetRequest(req)) return 'asset';
+  if (isAssetRequest(req)) return 'assets';
   if (isAutomaticRequest(req)) return 'automatic';
-  if (isComplexQuizWork(req)) return 'complex';
+  if (isComplexQuizWork(req)) return 'quiz-complex';
   if (hasValidUserSession(req)) return 'authenticated';
-  return 'standard';
+  return 'default';
+}
+
+// Helper function to calculate limit for a request (for monitoring)
+function calculateLimitForRequest(req: any, baseMax: number, config: any): number {
+  if (config.allowAssets && isAssetRequest(req)) {
+    return baseMax * 50;
+  }
+  if (config.allowAutomatic && isAutomaticRequest(req)) {
+    return baseMax * 20;
+  }
+  if (config.isFlexible && isComplexQuizWork(req)) {
+    return baseMax * 10;
+  }
+  if (hasValidUserSession(req)) {
+    return baseMax * 3;
+  }
+  return baseMax;
 }
 
 // Different rate limits for different operations using intelligent rate limiting

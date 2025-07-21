@@ -18,6 +18,7 @@ import SubscribePage from "@/pages/subscribe";
 import SettingsPage from "@/pages/settings";
 import AdminPage from "@/pages/admin";
 import AdminSecurityPage from "@/pages/admin-security";
+import AdminRateLimiting from "@/pages/admin-rate-limiting";
 import BulkPushMessaging from "@/pages/bulk-push-messaging";
 
 
@@ -226,6 +227,11 @@ function App() {
         <Route path="/admin/security">
           <Layout>
             <AdminSecurityPage />
+          </Layout>
+        </Route>
+        <Route path="/admin/rate-limiting">
+          <Layout>
+            <AdminRateLimiting />
           </Layout>
         </Route>
 
