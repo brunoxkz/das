@@ -7,10 +7,10 @@ import webpush from 'web-push';
 // Arquivo para armazenar subscriptions
 const SUBSCRIPTIONS_FILE = path.join(process.cwd(), 'push-subscriptions.json');
 
-// VAPID Keys válidas geradas pelo web-push  
+// VAPID Keys sincronizadas com routes-sqlite.ts  
 const VAPID_KEYS = {
-  publicKey: 'BKVRmJs10mOKMM_5r5ulr2lwK7874bDfO2xKcJstwEKo2zH-IovON2BG8_847MbQnzo_75QqRAEkjC_BwzwiccQ',
-  privateKey: 'xdoMPGbXwmuimTCk-Rn-6Nh474zq8PciCWWTp_WbBZg'
+  publicKey: 'BC9uiP1uG8jN942_SoN4ThXQ5X8TotmwYKiLbfXO8HO35yQTvTE9Hn7S9Yccrr5rULgnvjQ0Bl4IdYFaZXQ1L48',
+  privateKey: 'iJXO-FMBB4HhPLpqFyQHfnBP7rEwqNpKVVvRWRLLCjo'
 };
 
 // Configurar web-push com VAPID keys
