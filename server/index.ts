@@ -172,6 +172,8 @@ app.get('/sw-simple.js', (req, res) => {
   }
 });
 
+
+
 // Initialize auth ANTES das rotas
 setupHybridAuth(app);
 
@@ -206,10 +208,23 @@ console.log('✅ PUSH NOTIFICATIONS ENDPOINTS REGISTRADOS DIRETAMENTE ANTES DO V
 // Register all routes DEPOIS dos endpoints de push
 const server = registerHybridRoutes(app);
 
-// INTERCEPTADOR CRÍTICO para Service Workers - ANTES do Vite
-// CORREÇÃO OPERA: Serve Service Workers com MIME type correto
+// INTERCEPTADOR CRÍTICO para arquivos especiais - ANTES do Vite
 app.use((req, res, next) => {
-  // Interceptar especificamente arquivos Service Worker
+  // Sistema de som - interceptar antes do Vite
+  if (req.path === '/sounds/sale-notification.js') {
+    const soundPath = path.join(process.cwd(), 'public', 'sounds', 'sale-notification.js');
+    console.log('🔊 INTERCEPTANDO SISTEMA DE SOM:', req.path, '→', soundPath);
+    
+    if (fs.existsSync(soundPath)) {
+      res.setHeader('Content-Type', 'application/javascript; charset=utf-8');
+      res.setHeader('Cache-Control', 'public, max-age=86400');
+      res.setHeader('Access-Control-Allow-Origin', '*');
+      res.sendFile(soundPath);
+      return;
+    }
+  }
+  
+  // Service Workers - interceptar especificamente
   if (req.path === '/sw-simple.js' || req.path === '/vendzz-notification-sw.js' || req.path.includes('service-worker') || req.path === '/sw.js') {
     const swPath = path.join(process.cwd(), 'public', req.path.substring(1));
     console.log('🔧 INTERCEPTANDO SERVICE WORKER:', req.path, '→', swPath);

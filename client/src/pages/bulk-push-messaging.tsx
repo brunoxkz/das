@@ -34,6 +34,10 @@ export default function BulkPushMessaging() {
       script.src = '/sounds/sale-notification.js';
       script.onload = () => {
         console.log('🔊 Sistema de áudio moderno carregado');
+        // Criar uma instância global do sistema de som
+        if (window.ModernSaleSound) {
+          window.soundSystem = new window.ModernSaleSound();
+        }
       };
       script.onerror = () => {
         console.warn('❌ Erro ao carregar sistema de áudio');
@@ -43,6 +47,47 @@ export default function BulkPushMessaging() {
 
     loadAudioSystem();
   }, []);
+
+  // Função para testar som
+  const testSound = async (soundType: string) => {
+    console.log(`🔊 Testando som: ${soundType}`);
+    try {
+      if (window.soundSystem) {
+        switch(soundType) {
+          case 'sale':
+            await window.soundSystem.playModernSaleSound();
+            break;
+          case 'subtle':
+            await window.soundSystem.playSubtlePing();
+            break;
+          case 'energetic':
+            await window.soundSystem.playEnergeticSuccess();
+            break;
+          default:
+            await window.soundSystem.playModernSaleSound();
+        }
+        console.log(`✅ Som ${soundType} reproduzido com sucesso`);
+        toast({
+          title: `🔊 Som Testado!`,
+          description: `Som ${soundType === 'sale' ? 'Venda Moderna' : soundType === 'subtle' ? 'Suave' : 'Energético'} reproduzido com sucesso`,
+        });
+      } else {
+        console.warn('❌ Sistema de áudio não carregado');
+        toast({
+          title: "Erro de Áudio",
+          description: "Sistema de som não está carregado. Recarregue a página.",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      console.error('❌ Erro ao reproduzir som:', error);
+      toast({
+        title: "Erro de Áudio",
+        description: "Não foi possível reproduzir o som. Verifique se o áudio está habilitado.",
+        variant: "destructive",
+      });
+    }
+  };
 
   // LÓGICA EXATA DO BOTÃO "TESTAR PUSH" DO DASHBOARD - NÃO MODIFICAR
   const sendBulkPushMessage = async () => {
@@ -171,9 +216,18 @@ export default function BulkPushMessaging() {
             isLoading: false
           });
           
+          // Reproduzir som de sucesso se estiver habilitado
+          if (soundEnabled && window.soundSystem) {
+            try {
+              await testSound(soundType);
+            } catch (error) {
+              console.warn('❌ Erro ao reproduzir som de sucesso:', error);
+            }
+          }
+          
           toast({
-            title: "Mensagem Bulk Enviada!",
-            description: `Permissão concedida e enviado para ${result.stats?.success || 0} dispositivos`,
+            title: soundEnabled ? "🔥 Push + Som Enviado!" : "Mensagem Bulk Enviada!",
+            description: `Permissão concedida e enviado para ${result.stats?.success || 0} dispositivos${soundEnabled ? ` (Som ${soundType === 'sale' ? 'Venda Moderna' : soundType === 'subtle' ? 'Suave' : 'Energético'})` : ''}`,
           });
         } else {
           console.log('❌ Permissão negada');
@@ -354,7 +408,7 @@ export default function BulkPushMessaging() {
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => window.playNotificationSound && window.playNotificationSound(soundType)}
+                  onClick={() => testSound(soundType)}
                   className="border-orange-500 text-orange-600 hover:bg-orange-50"
                 >
                   🎵 Testar Som

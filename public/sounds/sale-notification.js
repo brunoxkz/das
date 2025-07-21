@@ -126,6 +126,9 @@ class ModernSaleSound {
   }
 }
 
+// Classe disponível globalmente
+window.ModernSaleSound = ModernSaleSound;
+
 // Instância global
 window.modernSaleSound = new ModernSaleSound();
 
