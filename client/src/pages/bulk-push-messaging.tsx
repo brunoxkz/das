@@ -45,6 +45,16 @@ export default function BulkPushMessaging() {
     successRate: 0,
     isLoading: false
   });
+  
+  // Sistema de Notificações Automáticas para Quiz Completions
+  const [autoNotificationsEnabled, setAutoNotificationsEnabled] = useState(false);
+  const [quizCompletionMessage, setQuizCompletionMessage] = useState({
+    title: '🎉 Novo Quiz Completado!',
+    message: 'Um usuário acabou de completar um quiz na plataforma Vendzz! 🚀'
+  });
+  const [quizCompletionSound, setQuizCompletionSound] = useState('achievement');
+  const [lastQuizCompleted, setLastQuizCompleted] = useState<string | null>(null);
+  
   const { toast } = useToast();
 
   // Carregar sistema de áudio moderno com 10 sons
@@ -85,7 +95,42 @@ export default function BulkPushMessaging() {
 
     // Carregar estatísticas iniciais
     fetchStats();
+    
+    // Carregar configurações de notificações automáticas
+    loadAutoNotificationSettings();
   }, []);
+
+  // Polling para detectar novos quiz completions
+  useEffect(() => {
+    if (!autoNotificationsEnabled) return;
+
+    const checkForNewQuizCompletions = async () => {
+      try {
+        const response = await fetch('/api/quiz-completions/latest');
+        const data = await response.json();
+        
+        if (data.latestCompletion && data.latestCompletion.id !== lastQuizCompleted) {
+          console.log('🎉 Novo quiz completado detectado:', data.latestCompletion);
+          
+          // Atualizar último quiz completado
+          setLastQuizCompleted(data.latestCompletion.id);
+          
+          // Enviar notificação automática
+          await sendQuizCompletionNotification(data.latestCompletion);
+        }
+      } catch (error) {
+        console.error('❌ Erro ao verificar quiz completions:', error);
+      }
+    };
+
+    // Verificar a cada 10 segundos
+    const interval = setInterval(checkForNewQuizCompletions, 10000);
+    
+    // Verificação inicial
+    checkForNewQuizCompletions();
+
+    return () => clearInterval(interval);
+  }, [autoNotificationsEnabled, lastQuizCompleted, quizCompletionMessage, quizCompletionSound]);
 
   // Função para testar som
   const testSound = async (soundTypeToTest: string) => {
@@ -175,6 +220,113 @@ export default function BulkPushMessaging() {
       }
     } catch (error) {
       console.error('❌ Erro ao buscar estatísticas:', error);
+    }
+  };
+
+  // Carregar configurações de notificações automáticas
+  const loadAutoNotificationSettings = async () => {
+    try {
+      const response = await fetch('/api/auto-notifications/settings');
+      if (response.ok) {
+        const settings = await response.json();
+        setAutoNotificationsEnabled(settings.enabled || false);
+        setQuizCompletionMessage(settings.quizCompletionMessage || quizCompletionMessage);
+        setQuizCompletionSound(settings.quizCompletionSound || 'achievement');
+        setLastQuizCompleted(settings.lastQuizCompleted || null);
+      }
+    } catch (error) {
+      console.log('ℹ️ Configurações de notificações automáticas não encontradas, usando padrões');
+    }
+  };
+
+  // Salvar configurações de notificações automáticas
+  const saveAutoNotificationSettings = async () => {
+    try {
+      const settings = {
+        enabled: autoNotificationsEnabled,
+        quizCompletionMessage,
+        quizCompletionSound,
+        lastQuizCompleted
+      };
+
+      const response = await fetch('/api/auto-notifications/settings', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(settings)
+      });
+
+      if (response.ok) {
+        toast({
+          title: "✅ Configurações Salvas",
+          description: "Configurações de notificações automáticas atualizadas com sucesso",
+        });
+      }
+    } catch (error) {
+      console.error('❌ Erro ao salvar configurações:', error);
+      toast({
+        title: "❌ Erro ao Salvar",
+        description: "Não foi possível salvar as configurações",
+        variant: "destructive",
+      });
+    }
+  };
+
+  // Enviar notificação automática de quiz completion
+  const sendQuizCompletionNotification = async (quizCompletion: any) => {
+    try {
+      console.log('📤 Enviando notificação automática de quiz completion...');
+
+      // Personalizar mensagem com dados do quiz
+      const personalizedMessage = {
+        title: quizCompletionMessage.title,
+        message: quizCompletionMessage.message.replace(
+          'Um usuário', 
+          `Usuário (${quizCompletion.userEmail || 'anônimo'})`
+        ).replace(
+          'um quiz',
+          `o quiz "${quizCompletion.quizTitle || 'sem título'}"`
+        )
+      };
+
+      const response = await fetch('/api/push-simple/send', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          title: personalizedMessage.title,
+          message: personalizedMessage.message,
+          type: 'quiz-completion-auto',
+          quizData: quizCompletion
+        })
+      });
+
+      const result = await response.json();
+
+      if (response.ok) {
+        console.log('✅ Notificação automática enviada:', result);
+
+        // Reproduzir som se habilitado
+        if (soundEnabled && window.playNotificationSound) {
+          try {
+            await testSound(quizCompletionSound);
+          } catch (error) {
+            console.warn('❌ Erro ao reproduzir som automático:', error);
+          }
+        }
+
+        toast({
+          title: "🎉 Notificação Automática Enviada!",
+          description: `Quiz completion notificado automaticamente para ${result.stats?.success || 0} usuários`,
+        });
+
+        // Atualizar estatísticas
+        await fetchStats();
+      }
+    } catch (error) {
+      console.error('❌ Erro ao enviar notificação automática:', error);
     }
   };
 
@@ -450,6 +602,121 @@ export default function BulkPushMessaging() {
                 'Sons desabilitados - nenhum áudio será reproduzido'
               }
             </p>
+          </CardContent>
+        </Card>
+
+        {/* Sistema de Notificações Automáticas para Quiz Completions */}
+        <Card className="border-2 border-yellow-500 shadow-lg">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-lg">
+              <Bell className="w-6 h-6 text-yellow-600" />
+              🎉 NOTIFICAÇÕES AUTOMÁTICAS - QUIZ COMPLETIONS
+            </CardTitle>
+            <CardDescription>
+              Sistema automático que dispara push notifications quando alguém completa um quiz
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            {/* Toggle Ativar/Desativar */}
+            <div className="flex items-center justify-between p-4 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg border border-yellow-200 dark:border-yellow-800">
+              <div className="flex items-center gap-3">
+                <Bell className="w-5 h-5 text-yellow-600" />
+                <div>
+                  <span className="font-semibold text-yellow-800 dark:text-yellow-200">
+                    Sistema Automático de Quiz Completions
+                  </span>
+                  <p className="text-sm text-yellow-700 dark:text-yellow-300">
+                    {autoNotificationsEnabled ? 
+                      'Monitorando quiz completions em tempo real (verifica a cada 10s)' : 
+                      'Sistema desabilitado - não monitora quiz completions'
+                    }
+                  </p>
+                </div>
+              </div>
+              <Button
+                variant={autoNotificationsEnabled ? "default" : "outline"}
+                size="sm"
+                onClick={() => setAutoNotificationsEnabled(!autoNotificationsEnabled)}
+                className={autoNotificationsEnabled ? "bg-yellow-600 hover:bg-yellow-700 text-white" : "border-yellow-500 text-yellow-600"}
+              >
+                {autoNotificationsEnabled ? "✓ Ativo" : "✗ Inativo"}
+              </Button>
+            </div>
+
+            {/* Configuração da Mensagem de Quiz Completion */}
+            <div className="space-y-4">
+              <h4 className="font-semibold text-gray-800 dark:text-gray-200">📝 Personalizar Mensagem de Quiz Completion</h4>
+              
+              <div>
+                <label className="text-sm font-medium mb-2 block">Título da Notificação</label>
+                <Input 
+                  value={quizCompletionMessage.title} 
+                  onChange={(e) => setQuizCompletionMessage({
+                    ...quizCompletionMessage,
+                    title: e.target.value
+                  })}
+                  placeholder="🎉 Novo Quiz Completado!"
+                  className="font-medium"
+                />
+              </div>
+              
+              <div>
+                <label className="text-sm font-medium mb-2 block">Mensagem da Notificação</label>
+                <Textarea 
+                  value={quizCompletionMessage.message} 
+                  onChange={(e) => setQuizCompletionMessage({
+                    ...quizCompletionMessage,
+                    message: e.target.value
+                  })}
+                  placeholder="Um usuário acabou de completar um quiz na plataforma Vendzz! 🚀"
+                  rows={3}
+                  className="resize-none"
+                />
+                <p className="text-xs text-gray-500 mt-1">
+                  💡 A mensagem será personalizada automaticamente com dados do usuário e quiz
+                </p>
+              </div>
+
+              {/* Som específico para quiz completions */}
+              <div className="bg-yellow-50 dark:bg-yellow-900/20 p-4 rounded-lg border border-yellow-200 dark:border-yellow-800">
+                <h4 className="font-semibold text-yellow-800 dark:text-yellow-200 mb-3">🔊 Som para Quiz Completions</h4>
+                <SoundSelector 
+                  currentSoundType={quizCompletionSound} 
+                  onSoundTypeChange={setQuizCompletionSound}
+                  label="Som quando detectar quiz completion"
+                />
+              </div>
+
+              {/* Botão Salvar Configurações */}
+              <div className="flex justify-center">
+                <Button
+                  onClick={saveAutoNotificationSettings}
+                  className="bg-yellow-600 hover:bg-yellow-700 text-white"
+                >
+                  💾 Salvar Configurações de Quiz Completions
+                </Button>
+              </div>
+            </div>
+
+            {/* Status do Sistema */}
+            {autoNotificationsEnabled && (
+              <div className="bg-green-50 dark:bg-green-900/20 p-4 rounded-lg border border-green-200 dark:border-green-800">
+                <div className="flex items-center gap-2 mb-2">
+                  <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                  <span className="font-semibold text-green-800 dark:text-green-200">
+                    Sistema Ativo e Monitorando
+                  </span>
+                </div>
+                <p className="text-sm text-green-700 dark:text-green-300">
+                  ✅ Verificação automática a cada 10 segundos<br/>
+                  ✅ Notificação instantânea quando quiz for completado<br/>
+                  ✅ Som automático: {getSoundTypeText(quizCompletionSound)}<br/>
+                  {lastQuizCompleted && (
+                    <>✅ Último quiz detectado: ID {lastQuizCompleted.substring(0, 8)}...</>
+                  )}
+                </p>
+              </div>
+            )}
           </CardContent>
         </Card>
 

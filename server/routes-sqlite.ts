@@ -4406,6 +4406,150 @@ export function registerSQLiteRoutes(app: Express): Server {
     }
   });
 
+  // 🎉 ENDPOINTS PARA SISTEMA DE NOTIFICAÇÕES AUTOMÁTICAS DE QUIZ COMPLETIONS
+  
+  // Buscar último quiz completado para polling
+  app.get("/api/quiz-completions/latest", async (req, res) => {
+    try {
+      console.log('🔍 Verificando quiz completions mais recentes...');
+      
+      // Query para buscar a resposta de quiz mais recente
+      const latestResponse = sqlite.prepare(`
+        SELECT 
+          qr.id,
+          qr.quiz_id,
+          qr.user_email,
+          qr.submitted_at,
+          qr.metadata,
+          q.title as quiz_title,
+          q.user_id as quiz_owner_id
+        FROM quiz_responses qr
+        LEFT JOIN quizzes q ON qr.quiz_id = q.id
+        WHERE qr.metadata LIKE '%"isPartial":false%'
+        ORDER BY qr.submitted_at DESC
+        LIMIT 1
+      `).get();
+
+      if (!latestResponse) {
+        return res.json({ latestCompletion: null });
+      }
+
+      let metadata = {};
+      try {
+        if (latestResponse.metadata) {
+          metadata = JSON.parse(latestResponse.metadata);
+        }
+      } catch (error) {
+        console.warn('⚠️ Erro ao parsear metadata:', error);
+      }
+
+      const completion = {
+        id: latestResponse.id,
+        quizId: latestResponse.quiz_id,
+        quizTitle: latestResponse.quiz_title,
+        userEmail: latestResponse.user_email || 'anônimo',
+        submittedAt: latestResponse.submitted_at,
+        metadata: metadata,
+        isComplete: metadata.isPartial === false
+      };
+
+      console.log('✅ Quiz completion encontrado:', completion.id);
+      res.json({ latestCompletion: completion });
+    } catch (error) {
+      console.error('❌ Erro ao buscar quiz completions:', error);
+      res.status(500).json({ error: 'Erro interno do servidor' });
+    }
+  });
+
+  // Carregar configurações de notificações automáticas  
+  app.get("/api/auto-notifications/settings", async (req, res) => {
+    try {
+      console.log('🔍 Carregando configurações de notificações automáticas...');
+      
+      // Criar tabela se não existir
+      sqlite.prepare(`
+        CREATE TABLE IF NOT EXISTS auto_notification_settings (
+          id INTEGER PRIMARY KEY DEFAULT 1,
+          enabled INTEGER DEFAULT 0,
+          quiz_completion_message TEXT,
+          quiz_completion_sound TEXT DEFAULT 'achievement',
+          last_quiz_completed TEXT,
+          updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        )
+      `).run();
+
+      const settings = sqlite.prepare(`
+        SELECT * FROM auto_notification_settings WHERE id = 1
+      `).get();
+
+      if (settings) {
+        const parsedSettings = {
+          enabled: settings.enabled === 1,
+          quizCompletionMessage: JSON.parse(settings.quiz_completion_message || '{}'),
+          quizCompletionSound: settings.quiz_completion_sound || 'achievement',
+          lastQuizCompleted: settings.last_quiz_completed
+        };
+        
+        console.log('✅ Configurações carregadas:', parsedSettings);
+        res.json(parsedSettings);
+      } else {
+        const defaultSettings = {
+          enabled: false,
+          quizCompletionMessage: {
+            title: '🎉 Novo Quiz Completado!',
+            message: 'Um usuário acabou de completar um quiz na plataforma Vendzz! 🚀'
+          },
+          quizCompletionSound: 'achievement',
+          lastQuizCompleted: null
+        };
+        
+        res.json(defaultSettings);
+      }
+    } catch (error) {
+      console.error('❌ Erro ao carregar configurações:', error);
+      res.status(500).json({ error: 'Erro interno do servidor' });
+    }
+  });
+
+  // Salvar configurações de notificações automáticas
+  app.post("/api/auto-notifications/settings", async (req, res) => {
+    try {
+      console.log('💾 Salvando configurações de notificações automáticas...');
+      const { enabled, quizCompletionMessage, quizCompletionSound, lastQuizCompleted } = req.body;
+
+      // Criar tabela se não existir
+      sqlite.prepare(`
+        CREATE TABLE IF NOT EXISTS auto_notification_settings (
+          id INTEGER PRIMARY KEY DEFAULT 1,
+          enabled INTEGER DEFAULT 0,
+          quiz_completion_message TEXT,
+          quiz_completion_sound TEXT DEFAULT 'achievement',
+          last_quiz_completed TEXT,
+          updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        )
+      `).run();
+
+      const stmt = sqlite.prepare(`
+        INSERT OR REPLACE INTO auto_notification_settings 
+        (id, enabled, quiz_completion_message, quiz_completion_sound, last_quiz_completed, updated_at)
+        VALUES (1, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+      `);
+
+      stmt.run(
+        enabled ? 1 : 0,
+        JSON.stringify(quizCompletionMessage),
+        quizCompletionSound,
+        lastQuizCompleted
+      );
+
+      console.log('✅ Configurações salvas com sucesso');
+      res.json({ success: true, message: 'Configurações salvas com sucesso' });
+    } catch (error) {
+      console.error('❌ Erro ao salvar configurações:', error);
+      res.status(500).json({ error: 'Erro interno do servidor' });
+    }
+  });
+
   // Get analytics data with insights and recommendations
   app.get("/api/analytics", verifyJWT, async (req: any, res) => {
     try {
