@@ -4495,6 +4495,61 @@ export function registerSQLiteRoutes(app: Express): Server {
   // 🎉 ENDPOINTS PARA SISTEMA DE NOTIFICAÇÕES AUTOMÁTICAS DE QUIZ COMPLETIONS
   
   // Buscar último quiz completado para polling
+  // Endpoint para processar quiz completions e enviar notificações automáticas
+  app.post("/api/quiz-completions", async (req, res) => {
+    try {
+      console.log('🎯 QUIZ COMPLETION RECEBIDO:', req.body);
+      
+      const { completionId, userEmail, userId, quizId, quizTitle, responses, leadScore } = req.body;
+      
+      if (!completionId || !userEmail) {
+        return res.status(400).json({ error: 'Dados incompletos para quiz completion' });
+      }
+      
+      // Verificar se é admin@vendzz.com para enviar notificação
+      if (userEmail === 'admin@vendzz.com') {
+        console.log('🎯 QUIZ COMPLETION PARA ADMIN DETECTADO - Enviando push notification');
+        
+        try {
+          // Importar o serviço de push notifications
+          const { sendPushToSpecificUser } = await import('./push-simple');
+          
+          const pushPayload = {
+            title: `🎯 Novo Quiz Finalizado!`,
+            message: `${quizTitle || 'Quiz'} - Lead Score: ${leadScore || 'N/A'} 💰`,
+            completionId: completionId,
+            userEmail: userEmail,
+            timestamp: new Date().toISOString()
+          };
+          
+          console.log('📤 Enviando push notification para admin...');
+          const pushResult = await sendPushToSpecificUser('admin-user-id', pushPayload);
+          
+          if (pushResult) {
+            console.log('✅ Push notification enviada com sucesso para admin');
+          } else {
+            console.log('❌ Falha ao enviar push notification para admin');
+          }
+          
+        } catch (pushError) {
+          console.error('❌ Erro ao enviar push notification:', pushError);
+        }
+      }
+      
+      // Retornar sucesso
+      res.json({ 
+        success: true, 
+        message: 'Quiz completion processado com sucesso',
+        completionId: completionId,
+        pushNotificationSent: userEmail === 'admin@vendzz.com'
+      });
+      
+    } catch (error) {
+      console.error('❌ Erro ao processar quiz completion:', error);
+      res.status(500).json({ error: 'Erro interno do servidor' });
+    }
+  });
+
   app.get("/api/quiz-completions/latest", async (req, res) => {
     try {
       console.log('🔍 Verificando quiz completions mais recentes...');
