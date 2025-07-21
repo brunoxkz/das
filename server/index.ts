@@ -107,12 +107,29 @@ app.use((req, res, next) => {
   }
   
   // INTERCEPTAÇÃO ESPECÍFICA PARA ÍCONES PWA - NO CACHE PARA FORÇAR ATUALIZAÇÃO
-  if (req.url.match(/\/(apple-touch-icon|android-chrome-|favicon-|favicon\.ico|icon-)/)) {
+  if (req.url.match(/\/(apple-touch-icon|android-chrome-|favicon-|favicon\.ico|icon-|images\/icons)/)) {
     res.setHeader('Content-Type', 'image/png');
     res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
     res.setHeader('Pragma', 'no-cache');
     res.setHeader('Expires', '0');
     console.log(`🍎 INTERCEPTANDO ÍCONE PWA: ${req.url}`);
+  }
+  
+  // INTERCEPTAÇÃO PARA ÍCONES VENDZZ NOS NOVOS CAMINHOS
+  if (req.url.match(/\/images\/icons\/(ios|maskable)/)) {
+    const iconSize = req.url.match(/(\d+)x\d+/)?.[1] || '192';
+    const iconPath = path.join(__dirname, '../public/android-chrome-192x192.png');
+    
+    if (fs.existsSync(iconPath)) {
+      const iconBuffer = fs.readFileSync(iconPath);
+      res.setHeader('Content-Type', 'image/png');
+      res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+      res.setHeader('Pragma', 'no-cache');
+      res.setHeader('Expires', '0');
+      res.end(iconBuffer);
+      console.log(`🔥 SERVINDO ÍCONE VENDZZ: ${req.url} → android-chrome-192x192.png`);
+      return;
+    }
   }
   
   // INTERCEPTAÇÃO PARA PÁGINAS ADMIN - FORÇAR RELOAD PARA MOSTRAR NOVAS FUNCIONALIDADES
