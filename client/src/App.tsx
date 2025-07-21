@@ -159,7 +159,7 @@ function App() {
   }
 
   // Public routes that don't require authentication
-  const publicRoutes = ["/", "/dark", "/modern", "/login", "/login-pwa", "/payment-success", "/payment-cancel"];
+  const publicRoutes = ["/", "/dark", "/modern", "/login", "/login-pwa", "/login-pwa-ios", "/payment-success", "/payment-cancel"];
   const isQuizRoute = location.startsWith("/quiz/");
   const isCheckoutRoute = location.startsWith("/checkout/");
   const isStripeCheckoutLink = location.startsWith("/stripe-checkout-link/");
