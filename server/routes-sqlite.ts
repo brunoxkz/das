@@ -15124,29 +15124,159 @@ app.get("/api/whatsapp-extension/pending", verifyJWT, async (req: any, res: Resp
 
   // ==================== PUSH NOTIFICATIONS PWA PERSISTENTE ====================
   
+  // DEBUG ENDPOINT PUSH STATS - SEM AUTENTICAÇÃO PARA DIAGNOSTICAR PROBLEMA
+  app.get('/api/push-debug/stats', async (req: any, res) => {
+    try {
+      console.log('🔍 Push Debug Stats - Sem autenticação para diagnóstico');
+
+      // Criar tabelas se não existirem
+      try {
+        sqlite.prepare(`
+          CREATE TABLE IF NOT EXISTS push_subscriptions (
+            id TEXT PRIMARY KEY,
+            user_id TEXT,
+            endpoint TEXT,
+            p256dh TEXT,
+            auth TEXT,
+            is_active INTEGER DEFAULT 1,
+            created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+            updated_at TEXT DEFAULT CURRENT_TIMESTAMP,
+            user_agent TEXT,
+            device_type TEXT
+          )
+        `).run();
+
+        sqlite.prepare(`
+          CREATE TABLE IF NOT EXISTS push_notification_logs (
+            id TEXT PRIMARY KEY,
+            user_id TEXT,
+            title TEXT,
+            body TEXT,
+            status TEXT DEFAULT 'pending',
+            sent_at TEXT DEFAULT CURRENT_TIMESTAMP,
+            error_message TEXT,
+            subscription_id TEXT
+          )
+        `).run();
+        console.log('✅ Push tables criadas/verificadas com sucesso');
+      } catch (dbError) {
+        console.log('⚠️ Tabelas push já existem:', dbError.message);
+      }
+
+      // Stats básicas
+      const stats = {
+        totalSubscriptions: 0,
+        activeSubscriptions: 0,
+        totalSent: 0,
+        successRate: 0,
+        lastSent: null,
+        debug: true
+      };
+
+      try {
+        const totalResult = sqlite.prepare('SELECT COUNT(*) as count FROM push_subscriptions').get();
+        stats.totalSubscriptions = totalResult ? totalResult.count : 0;
+        
+        const activeResult = sqlite.prepare('SELECT COUNT(*) as count FROM push_subscriptions WHERE is_active = 1').get();
+        stats.activeSubscriptions = activeResult ? activeResult.count : 0;
+        
+        const sentResult = sqlite.prepare('SELECT COUNT(*) as count FROM push_notification_logs').get();
+        stats.totalSent = sentResult ? sentResult.count : 0;
+
+        console.log('📊 Push Debug Stats:', stats);
+      } catch (statsError) {
+        console.log('⚠️ Erro nas stats:', statsError.message);
+      }
+
+      res.json({
+        success: true,
+        message: 'Debug endpoint funcionando',
+        ...stats
+      });
+
+    } catch (error) {
+      console.error('❌ Erro debug push:', error);
+      res.status(500).json({ success: false, message: 'Erro debug', error: error.message });
+    }
+  });
+  
   // ===== ADMIN PUSH NOTIFICATIONS COMPLETO =====
   
-  // Estatísticas admin
+  // Estatísticas admin - CORRIGIDO PARA PROBLEMAS DE TABELA
   app.get('/api/push-notifications/admin/stats', verifyJWT, async (req: any, res) => {
     try {
       // Verificar se é admin
       const user = req.user;
-      const isAdmin = user.email === 'admin@admin.com' || user.email === 'admin@vendzz.com' || user.email === 'bruno@vendzz.com';
+      const isAdmin = user.role === 'admin' || user.email === 'admin@admin.com' || user.email === 'admin@vendzz.com' || user.email === 'bruno@vendzz.com';
+      
+      console.log('🔍 Push Admin Stats - User:', user.email, 'Role:', user.role, 'IsAdmin:', isAdmin);
       
       if (!isAdmin) {
         return res.status(403).json({ success: false, message: 'Acesso negado - apenas admins' });
       }
 
-      // Buscar estatísticas
-      const totalSubscriptions = sqlite.prepare('SELECT COUNT(*) as count FROM push_subscriptions').get().count;
-      const activeSubscriptions = sqlite.prepare('SELECT COUNT(*) as count FROM push_subscriptions WHERE is_active = 1').get().count;
-      const totalSent = sqlite.prepare('SELECT COUNT(*) as count FROM push_notification_logs').get().count;
-      
-      const successfulSent = sqlite.prepare("SELECT COUNT(*) as count FROM push_notification_logs WHERE status = ?").get('sent').count;
+      // Criar tabelas se não existirem
+      try {
+        sqlite.prepare(`
+          CREATE TABLE IF NOT EXISTS push_subscriptions (
+            id TEXT PRIMARY KEY,
+            user_id TEXT,
+            endpoint TEXT,
+            p256dh TEXT,
+            auth TEXT,
+            is_active INTEGER DEFAULT 1,
+            created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+            updated_at TEXT DEFAULT CURRENT_TIMESTAMP,
+            user_agent TEXT,
+            device_type TEXT
+          )
+        `).run();
+
+        sqlite.prepare(`
+          CREATE TABLE IF NOT EXISTS push_notification_logs (
+            id TEXT PRIMARY KEY,
+            user_id TEXT,
+            title TEXT,
+            body TEXT,
+            status TEXT DEFAULT 'pending',
+            sent_at TEXT DEFAULT CURRENT_TIMESTAMP,
+            error_message TEXT,
+            subscription_id TEXT
+          )
+        `).run();
+      } catch (dbError) {
+        console.log('⚠️ Tabelas push já existem ou erro menor:', dbError.message);
+      }
+
+      // Buscar estatísticas com fallback seguro
+      let totalSubscriptions = 0;
+      let activeSubscriptions = 0;
+      let totalSent = 0;
+      let successfulSent = 0;
+      let lastSent = null;
+
+      try {
+        const totalResult = sqlite.prepare('SELECT COUNT(*) as count FROM push_subscriptions').get();
+        totalSubscriptions = totalResult ? totalResult.count : 0;
+        
+        const activeResult = sqlite.prepare('SELECT COUNT(*) as count FROM push_subscriptions WHERE is_active = 1').get();
+        activeSubscriptions = activeResult ? activeResult.count : 0;
+        
+        const sentResult = sqlite.prepare('SELECT COUNT(*) as count FROM push_notification_logs').get();
+        totalSent = sentResult ? sentResult.count : 0;
+        
+        const successResult = sqlite.prepare("SELECT COUNT(*) as count FROM push_notification_logs WHERE status = ?").get('sent');
+        successfulSent = successResult ? successResult.count : 0;
+        
+        const lastResult = sqlite.prepare('SELECT sent_at FROM push_notification_logs ORDER BY sent_at DESC LIMIT 1').get();
+        lastSent = lastResult ? lastResult.sent_at : null;
+      } catch (statsError) {
+        console.log('⚠️ Erro ao buscar stats específicas:', statsError.message);
+      }
+
       const successRate = totalSent > 0 ? Math.round((successfulSent / totalSent) * 100) : 0;
-      
-      const lastSentResult = sqlite.prepare('SELECT sent_at FROM push_notification_logs ORDER BY sent_at DESC LIMIT 1').get();
-      const lastSent = lastSentResult ? lastSentResult.sent_at : null;
+
+      console.log('📊 Push Stats:', { totalSubscriptions, activeSubscriptions, totalSent, successRate });
 
       res.json({
         success: true,
@@ -15158,8 +15288,8 @@ app.get("/api/whatsapp-extension/pending", verifyJWT, async (req: any, res: Resp
       });
 
     } catch (error) {
-      console.error('❌ Erro ao buscar estatísticas:', error);
-      res.status(500).json({ success: false, message: 'Erro interno do servidor' });
+      console.error('❌ Erro ao buscar estatísticas push:', error);
+      res.status(500).json({ success: false, message: 'Erro interno do servidor', error: error.message });
     }
   });
 

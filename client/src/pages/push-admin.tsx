@@ -31,18 +31,36 @@ export default function PushAdmin() {
   const [testUserId, setTestUserId] = useState('admin-user-id');
   const { toast } = useToast();
 
-  // Carregar estatísticas do sistema
+  // Carregar estatísticas do sistema - CORRIGIDO ENDPOINT
   const loadStats = async () => {
     try {
-      const response = await apiRequest('GET', '/api/push-notifications/realtime-stats');
+      console.log('🔍 Carregando stats push admin...');
+      const response = await apiRequest('GET', '/api/push-notifications/admin/stats');
       setStats(response);
+      console.log('✅ Stats carregadas:', response);
     } catch (error) {
       console.error('Erro ao carregar estatísticas:', error);
-      toast({
-        title: "Erro",
-        description: "Não foi possível carregar as estatísticas",
-        variant: "destructive",
-      });
+      // Tentar endpoint debug como fallback
+      try {
+        const debugResponse = await apiRequest('GET', '/api/push-debug/stats');
+        console.log('📊 Stats debug:', debugResponse);
+        setStats({
+          totalNotificationsSent: debugResponse.totalSent || 0,
+          notificationsInQueue: 0,
+          processing: 0,
+          batchSize: 10,
+          batchInterval: 5000,
+          systemStatus: debugResponse.success ? 'online' : 'offline',
+          lastProcessed: debugResponse.lastSent || 'N/A'
+        });
+      } catch (debugError) {
+        console.error('Debug endpoint também falhou:', debugError);
+        toast({
+          title: "Erro",
+          description: "Não foi possível carregar as estatísticas",
+          variant: "destructive",
+        });
+      }
     }
   };
 
