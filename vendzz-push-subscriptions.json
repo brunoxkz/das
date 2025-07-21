@@ -1,6 +1,6 @@
 {
-  "admin-user-id-1753060593809": {
-    "id": "admin-user-id-1753060593809",
+  "admin-user-id-1753060802506": {
+    "id": "admin-user-id-1753060802506",
     "userId": "admin-user-id",
     "pushSubscription": {
       "endpoint": "https://test.com/push-test",
@@ -10,6 +10,6 @@
       }
     },
     "isActive": true,
-    "createdAt": "2025-07-21T01:16:33.809Z"
+    "createdAt": "2025-07-21T01:20:02.506Z"
   }
 }

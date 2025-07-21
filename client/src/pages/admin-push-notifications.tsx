@@ -84,13 +84,18 @@ export default function AdminPushNotifications() {
       ]);
 
       setStats(statsResponse);
-      setSubscriptions(subscriptionsResponse);
-      setLogs(logsResponse);
+      
+      // Garantir que subscriptions seja sempre um array
+      const subscriptionsData = subscriptionsResponse?.subscriptions || subscriptionsResponse || [];
+      setSubscriptions(Array.isArray(subscriptionsData) ? subscriptionsData : []);
+      
+      // Garantir que logs seja sempre um array
+      const logsData = logsResponse?.logs || logsResponse || [];
+      setLogs(Array.isArray(logsData) ? logsData : []);
 
       console.log('📊 Dashboard data loaded:', {
         stats: statsResponse,
-        subscriptions: subscriptionsResponse.length,
-        logs: logsResponse.length
+        logs: Array.isArray(logsData) ? logsData.length : 0
       });
 
     } catch (error: any) {
@@ -380,11 +385,11 @@ export default function AdminPushNotifications() {
           <CardHeader className="bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-t-lg">
             <CardTitle className="flex items-center">
               <Smartphone className="mr-2 h-6 w-6" />
-              Dispositivos Conectados ({subscriptions.length})
+              Dispositivos Conectados ({Array.isArray(subscriptions) ? subscriptions.length : 0})
             </CardTitle>
           </CardHeader>
           <CardContent className="p-6">
-            {subscriptions.length === 0 ? (
+            {!Array.isArray(subscriptions) || subscriptions.length === 0 ? (
               <div className="text-center py-8 text-gray-500">
                 <Smartphone className="h-12 w-12 mx-auto mb-4 text-gray-300" />
                 <p>Nenhum dispositivo conectado ainda</p>
@@ -409,7 +414,7 @@ export default function AdminPushNotifications() {
                     </div>
                   </div>
                 ))}
-                {subscriptions.length > 10 && (
+                {Array.isArray(subscriptions) && subscriptions.length > 10 && (
                   <p className="text-center text-sm text-gray-500">
                     ... e mais {subscriptions.length - 10} dispositivos
                   </p>
@@ -424,11 +429,11 @@ export default function AdminPushNotifications() {
           <CardHeader className="bg-gradient-to-r from-orange-600 to-red-600 text-white rounded-t-lg">
             <CardTitle className="flex items-center">
               <Activity className="mr-2 h-6 w-6" />
-              Logs Recentes ({logs.length})
+              Logs Recentes ({Array.isArray(logs) ? logs.length : 0})
             </CardTitle>
           </CardHeader>
           <CardContent className="p-6">
-            {logs.length === 0 ? (
+            {!Array.isArray(logs) || logs.length === 0 ? (
               <div className="text-center py-8 text-gray-500">
                 <Activity className="h-12 w-12 mx-auto mb-4 text-gray-300" />
                 <p>Nenhum log de notificação ainda</p>
@@ -436,7 +441,7 @@ export default function AdminPushNotifications() {
               </div>
             ) : (
               <div className="space-y-3">
-                {logs.slice(0, 10).map((log) => (
+                {Array.isArray(logs) && logs.slice(0, 10).map((log) => (
                   <div key={log.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
                     <div className="flex items-center space-x-3">
                       {log.status === 'sent' ? (
@@ -457,7 +462,7 @@ export default function AdminPushNotifications() {
                     </div>
                   </div>
                 ))}
-                {logs.length > 10 && (
+                {Array.isArray(logs) && logs.length > 10 && (
                   <p className="text-center text-sm text-gray-500">
                     ... e mais {logs.length - 10} logs
                   </p>
