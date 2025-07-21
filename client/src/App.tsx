@@ -105,6 +105,8 @@ import MembersAreaNetflix from "@/pages/members-area-netflix";
 import MembersArea from "@/pages/members-area";
 import AdminDashboard from "@/pages/admin-dashboard";
 
+import PushSimple from "@/pages/push-simple";
+import AdminPushSimple from "@/pages/admin-push-simple";
 
 import { useAuth } from "@/hooks/useAuth-jwt";
 import { isUnauthorizedError } from "@/lib/authUtils";
@@ -624,6 +626,17 @@ function App() {
           </Layout>
         </Route>
         
+        <Route path="/push-simple">
+          <Layout>
+            <PushSimple />
+          </Layout>
+        </Route>
+        
+        <Route path="/admin/push-simple">
+          <Layout>
+            <AdminPushSimple />
+          </Layout>
+        </Route>
 
 
         <Route component={NotFoundPage} />

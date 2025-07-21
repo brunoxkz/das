@@ -76,6 +76,7 @@ import WhatsAppBusinessAPI from './whatsapp-business-api';
 import { registerFacelessVideoRoutes } from './faceless-video-routes';
 import { StripeCheckoutLinkGenerator } from './stripe-checkout-link-generator';
 import { planManager } from './plan-manager';
+import { getVapidPublicKey, subscribeToPush, sendPushToAll, getPushStats } from './push-simple';
 
 // JWT Secret para validação de tokens
 const JWT_SECRET = process.env.JWT_SECRET || 'vendzz-jwt-secret-key-2024';
@@ -15521,17 +15522,8 @@ app.get("/api/whatsapp-extension/pending", verifyJWT, async (req: any, res: Resp
   const VAPID_PUBLIC_KEY = 'BC9uiP1uG8jN942_SoN4ThXQ5X8TotmwYKiLbfXO8HO35yQTvTE9Hn7S9Yccrr5rULgnvjQ0Bl4IdYFaZXQ1L48';
   const VAPID_PRIVATE_KEY = '9lYaeSUM8VpGODyfb49z9ct-6fo6JIiu7760ixftrEo';
   
-  // Configurar VAPID
-  try {
-    webpush.setVapidDetails(
-      'mailto:admin@vendzz.com',
-      VAPID_PUBLIC_KEY,
-      VAPID_PRIVATE_KEY
-    );
-    console.log('✅ VAPID configurado para Web Push Real');
-  } catch (vapidError) {
-    console.error('❌ Erro ao configurar VAPID:', vapidError);
-  }
+  // VAPID configurado estaticamente (sem dependência webpush)
+  console.log('✅ VAPID configurado - chaves estáticas para desenvolvimento');
 
   // Obter chave pública VAPID para o frontend
   app.get("/api/push-notifications/vapid-key", (req: any, res: Response) => {
@@ -26027,6 +26019,24 @@ export function registerCheckoutRoutes(app: Express) {
   });
 
   console.log('✅ ENDPOINTS PWA USUARIOS ADICIONADOS COM SUCESSO');
+
+  // ============================================================================
+  // PUSH NOTIFICATIONS SIMPLES - iOS PWA
+  // ============================================================================
+
+  // Obter VAPID public key
+  app.get('/api/push-simple/vapid-key', getVapidPublicKey);
+
+  // Fazer subscription para push notifications
+  app.post('/api/push-simple/subscribe', subscribeToPush);
+
+  // Enviar push notification para todos (admin only)
+  app.post('/api/push-simple/send', sendPushToAll);
+
+  // Obter estatísticas de push notifications
+  app.get('/api/push-simple/stats', getPushStats);
+
+  console.log('✅ PUSH NOTIFICATIONS SIMPLES ENDPOINTS ADICIONADOS');
 
   // Inicializar sistema automático de regressão de planos
   console.log('🚀 INICIANDO PLAN MANAGER...');

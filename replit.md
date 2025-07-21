@@ -282,6 +282,21 @@ O sistema utiliza Stripe Payment Intent para processar pagamentos únicos de R$ 
 
 ```
 Changelog:
+- July 21, 2025. SISTEMA PUSH NOTIFICATIONS iOS PWA SIMPLES IMPLEMENTADO - Sistema extremamente simples e funcional para iOS PWA:
+  * Service Worker básico sw-simple.js focado especificamente em push notifications para tela de bloqueio
+  * Backend minimalista push-simple.ts com armazenamento JSON e funcionalidades essenciais
+  * Página /push-simple para usuários ativarem notificações com detecção automática de iOS PWA
+  * Página /admin/push-simple para admins enviarem push notifications para todos os usuários
+  * Sistema de estatísticas simples: total de subscriptions e subscriptions recentes (24h)
+  * Endpoints: /api/push-simple/vapid-key, /api/push-simple/subscribe, /api/push-simple/send, /api/push-simple/stats
+  * Interface iOS-friendly com instruções específicas para adicionar à tela inicial
+  * Preview de notificação mostrando como aparecerá na tela de bloqueio
+  * Sistema completamente independente, sem conflitos com sistemas existentes
+  * Configurações específicas para iOS: requireInteraction, vibração, persistent
+  * Templates de mensagens rápidas para facilitar o uso administrativo
+  * Armazenamento em push-subscriptions.json para máxima simplicidade e confiabilidade
+  * Sistema pronto para teste real em dispositivos iOS PWA
+Changelog:
 - July 21, 2025. SISTEMA PWA E PUSH NOTIFICATIONS COMPLETAMENTE REMOVIDO - Limpeza completa de todos os componentes PWA devido a bugs persistentes:
   * Todos os arquivos PWA removidos: server/push-notifications.ts, server/push-notifications-simple.ts, server/web-push.ts
   * Todas as rotas PWA removidas do client/src/App.tsx: /pwa, /test-push-pwa, /pwa-push-notifications, etc.
