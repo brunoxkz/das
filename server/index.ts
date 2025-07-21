@@ -130,33 +130,45 @@ app.use(blacklistMiddleware);
 
 // Rotas específicas para Service Workers com MIME type correto
 app.get('/vendzz-notification-sw.js', (req, res) => {
-  const path = require('path');
-  const fs = require('fs');
-  
-  const swPath = path.join(process.cwd(), 'public', 'vendzz-notification-sw.js');
-  
-  if (fs.existsSync(swPath)) {
-    res.setHeader('Content-Type', 'application/javascript; charset=utf-8');
-    res.setHeader('Service-Worker-Allowed', '/');
-    res.sendFile(swPath);
-  } else {
-    res.status(404).send('Service Worker não encontrado');
+  try {
+    const swPath = path.join(process.cwd(), 'public', 'vendzz-notification-sw.js');
+    
+    if (fs.existsSync(swPath)) {
+      const content = fs.readFileSync(swPath, 'utf-8');
+      res.setHeader('Content-Type', 'application/javascript; charset=utf-8');
+      res.setHeader('Service-Worker-Allowed', '/');
+      res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+      res.send(content);
+    } else {
+      res.status(404).send('Service Worker não encontrado');
+    }
+  } catch (err) {
+    console.error('❌ Erro ao ler vendzz-notification-sw.js:', err);
+    res.status(500).send('Erro interno do servidor');
   }
 });
 
-// Rota específica para sw-simple.js (usado no dashboard)
+// Rota específica para sw-simple.js (usado no dashboard) - CORRIGIDA
 app.get('/sw-simple.js', (req, res) => {
-  const path = require('path');
-  const fs = require('fs');
-  
-  const swPath = path.join(process.cwd(), 'public', 'sw-simple.js');
-  
-  if (fs.existsSync(swPath)) {
-    res.setHeader('Content-Type', 'application/javascript; charset=utf-8');
-    res.setHeader('Service-Worker-Allowed', '/');
-    res.sendFile(swPath);
-  } else {
-    res.status(404).send('Service Worker não encontrado');
+  try {
+    const swPath = path.join(process.cwd(), 'public', 'sw-simple.js');
+    console.log('🔧 Tentando carregar Service Worker de:', swPath);
+    
+    if (fs.existsSync(swPath)) {
+      const content = fs.readFileSync(swPath, 'utf-8');
+      console.log('✅ Service Worker carregado com sucesso, tamanho:', content.length);
+      
+      res.setHeader('Content-Type', 'application/javascript; charset=utf-8');
+      res.setHeader('Service-Worker-Allowed', '/');
+      res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+      res.send(content);
+    } else {
+      console.error('❌ Service Worker não encontrado em:', swPath);
+      res.status(404).send('Service Worker não encontrado');
+    }
+  } catch (err) {
+    console.error('❌ Erro crítico ao carregar sw-simple.js:', err);
+    res.status(500).json({ error: 'Erro interno do servidor', message: err.message });
   }
 });
 
