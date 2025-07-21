@@ -54,7 +54,7 @@ import { handleSecureUpload, uploadMiddleware } from "./upload-secure";
 import { sanitizeAllScripts, sanitizeUTMCode, sanitizeCustomScript } from './script-sanitizer-new';
 import { intelligentRateLimiter } from './intelligent-rate-limiter';
 import webpush from 'web-push';
-import { PushNotificationSystem } from './push-notifications';
+import { SimplePushNotificationSystem } from './push-notifications-simple';
 import { isUserBlocked, canCreateQuiz, getPlanLimits } from './rbac';
 import { 
   antiDdosMiddleware, 
@@ -75,7 +75,6 @@ import HealthCheckSystem from './health-check-system.js';
 import WhatsAppBusinessAPI from './whatsapp-business-api';
 import { registerFacelessVideoRoutes } from './faceless-video-routes';
 import { StripeCheckoutLinkGenerator } from './stripe-checkout-link-generator';
-import { PushNotificationSystem } from './push-notifications';
 import { webPushService } from './web-push';
 import { planManager } from './plan-manager';
 
@@ -15660,12 +15659,12 @@ app.get("/api/whatsapp-extension/pending", verifyJWT, async (req: any, res: Resp
     }
   });
 
-  // ==================== PUSH NOTIFICATIONS API ====================
+  // ==================== PUSH NOTIFICATIONS API - SIMPLIFIED ====================
   
   // VAPID Public Key
   app.get('/api/push-vapid-key', (req, res) => {
     res.json({ 
-      publicKey: PushNotificationSystem.getVapidPublicKey() 
+      publicKey: SimplePushNotificationSystem.getVapidPublicKey() 
     });
   });
 
@@ -15683,13 +15682,13 @@ app.get("/api/whatsapp-extension/pending", verifyJWT, async (req: any, res: Resp
       }
 
       const subscription = { endpoint, keys };
-      const success = await PushNotificationSystem.saveUserSubscription(userId, subscription);
+      const success = await SimplePushNotificationSystem.saveUserSubscription(userId, subscription);
       
       if (success) {
         res.json({ 
           success: true, 
           message: 'Subscription registrada com sucesso',
-          vapidPublicKey: PushNotificationSystem.getVapidPublicKey()
+          vapidPublicKey: SimplePushNotificationSystem.getVapidPublicKey()
         });
       } else {
         res.status(500).json({
@@ -15731,14 +15730,14 @@ app.get("/api/whatsapp-extension/pending", verifyJWT, async (req: any, res: Resp
       const notificationData = {
         title,
         body,
-        url: url || 'https://vendzz.com',
+        url: url || '/app-pwa-vendzz',
         icon: icon || '/vendzz-logo-official.png',
         image,
         tag: tag || 'broadcast',
         priority: 'high' as const
       };
 
-      const result = await PushNotificationSystem.sendBroadcastNotification(notificationData);
+      const result = await SimplePushNotificationSystem.sendBroadcastNotification(notificationData);
       
       res.json({
         success: true,

@@ -372,6 +372,11 @@ async function startServer() {
     // Email service já está disponível
     console.log('📧 Serviço de email disponível');
     
+    // Inicializar sistema de push notifications simplificado
+    const { SimplePushNotificationSystem } = await import('./push-notifications-simple');
+    await SimplePushNotificationSystem.initialize();
+    console.log('🔔 Sistema de push notifications simplificado inicializado');
+    
     server.listen(PORT, "0.0.0.0", async () => {
       log(`🚀 Server running on port ${PORT}`);
       log(`🚀 SISTEMA UNIFICADO OTIMIZADO: ${MAX_DETECTION_CYCLES} ciclos/hora, intervalo 60s`);
