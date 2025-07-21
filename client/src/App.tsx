@@ -108,6 +108,7 @@ import AdminDashboard from "@/pages/admin-dashboard";
 import PushSimple from "@/pages/push-simple";
 import AdminPushSimple from "@/pages/admin-push-simple";
 import PushDemo from "@/pages/push-demo";
+import AdminPush from "@/pages/admin-push";
 
 import { useAuth } from "@/hooks/useAuth-jwt";
 import { isUnauthorizedError } from "@/lib/authUtils";
@@ -636,6 +637,11 @@ function App() {
         <Route path="/admin/push-simple">
           <Layout>
             <AdminPushSimple />
+          </Layout>
+        </Route>
+        <Route path="/admin-push">
+          <Layout>
+            <AdminPush />
           </Layout>
         </Route>
         
