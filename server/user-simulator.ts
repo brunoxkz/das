@@ -80,8 +80,11 @@ export class UserSimulator {
   }
 
   private startSimulation() {
-    console.log('🚀 Iniciando simulador de usuários online...');
+    console.log('🚀 Simulador de usuários DESABILITADO por solicitação do usuário');
     
+    // SIMULADOR DESABILITADO - não inicializar usuários ou intervalos
+    // Código comentado para possível reativação futura:
+    /*
     // Adicionar usuários iniciais
     for (let i = 0; i < 25; i++) {
       const user = this.generateRandomUser();
@@ -100,6 +103,7 @@ export class UserSimulator {
     }, 30000); // 30 segundos
 
     console.log(`✅ Simulador iniciado com ${this.onlineUsers.size} usuários online`);
+    */
   }
 
   private addNewUsers() {

@@ -103,7 +103,7 @@ export default function Dashboard() {
           if (permission === 'granted') {
             try {
               // Obter VAPID key do servidor
-              const vapidResponse = await fetch('/push/vapid', { method: 'POST' });
+              const vapidResponse = await fetch('/api/push-simple/vapid');
               if (!vapidResponse.ok) {
                 throw new Error('Falha ao obter VAPID key');
               }
@@ -116,7 +116,7 @@ export default function Dashboard() {
               });
               
               // Salvar subscription no servidor
-              const response = await fetch('/push/subscribe', {
+              const response = await fetch('/api/push-simple/subscribe', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ subscription })

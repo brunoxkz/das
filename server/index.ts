@@ -470,15 +470,16 @@ async function startServer() {
       log(`⚡ REDUÇÃO DE 70% NO USO DE RECURSOS - SUPORTE 100.000+ USUÁRIOS`);
       log(`🔥 Sistema inteligente: 25 campanhas/ciclo + 100 telefones/campanha + delay 200ms`);
       
-      // Inicializar simulador de usuários online
-      try {
-        const { userSimulator } = await import('./user-simulator');
-        userSimulator.startSimulation();
-        log('👥 SIMULADOR DE USUÁRIOS ONLINE INICIADO');
-        log(`📊 ${userSimulator.getOnlineUsersCount()} usuários simulados online`);
-      } catch (error) {
-        console.error('❌ Erro ao iniciar simulador de usuários:', error);
-      }
+      // SIMULADOR DE USUÁRIOS DESABILITADO por solicitação do usuário
+      // try {
+      //   const { userSimulator } = await import('./user-simulator');
+      //   userSimulator.startSimulation();
+      //   log('👥 SIMULADOR DE USUÁRIOS ONLINE INICIADO');
+      //   log(`📊 ${userSimulator.getOnlineUsersCount()} usuários simulados online`);
+      // } catch (error) {
+      //   console.error('❌ Erro ao iniciar simulador de usuários:', error);
+      // }
+      log('👥 SIMULADOR DE USUÁRIOS DESABILITADO por solicitação do usuário');
       
       log(`✅ Sistema Otimizado Inicializado - Performance Massivamente Melhorada`);
     });
