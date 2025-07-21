@@ -138,23 +138,36 @@ setupHybridAuth(app);
 
 // System initialization and routes
 
-// ============================================================================
-// PUSH NOTIFICATIONS SIMPLES - DIRETO NO INDEX ANTES DO VITE
-// ============================================================================
-import { getVapidPublicKey, subscribeToPush, getPushStats, sendPushToAll } from "./push-simple";
-
-// Endpoints push-simple registrados ANTES do Vite para evitar interceptação
-app.post('/push-vapid', getVapidPublicKey);
-app.post('/push-subscribe', subscribeToPush);
-app.post('/push-stats', getPushStats);
-app.post('/push-send', sendPushToAll);
-
-console.log('✅ PUSH NOTIFICATIONS ENDPOINTS REGISTRADOS NO INDEX.TS');
-
-// Register all routes ANTES do Vite middleware
+// Register all routes PRIMEIRO
 const server = registerHybridRoutes(app);
 
-// Setup Vite middleware for dev and production APÓS as rotas
+// PUSH NOTIFICATIONS ENDPOINTS - REGISTRADOS APÓS AS ROTAS PRINCIPAIS
+import { getVapidPublicKey, subscribeToPush, getPushStats, sendPushToAll } from "./push-simple";
+
+// Usar prefixo diferente para evitar conflito com Vite
+app.post('/push/vapid', (req: any, res: any) => {
+  console.log('🔧 Endpoint /push/vapid chamado');
+  getVapidPublicKey(req, res);
+});
+
+app.post('/push/subscribe', (req: any, res: any) => {
+  console.log('🔧 Endpoint /push/subscribe chamado');
+  subscribeToPush(req, res);
+});
+
+app.post('/push/stats', (req: any, res: any) => {
+  console.log('🔧 Endpoint /push/stats chamado');
+  getPushStats(req, res);
+});
+
+app.post('/push/send', (req: any, res: any) => {
+  console.log('🔧 Endpoint /push/send chamado');
+  sendPushToAll(req, res);
+});
+
+console.log('✅ PUSH NOTIFICATIONS ENDPOINTS REGISTRADOS COM PREFIXO /push/');
+
+// Setup Vite middleware for dev and production APÓS todas as rotas
 setupVite(app, server);
 
 // Sistema de debug avançado

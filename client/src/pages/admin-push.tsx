@@ -13,9 +13,9 @@ export default function AdminPush() {
 
   // Buscar estatísticas
   const { data: stats } = useQuery({
-    queryKey: ['/push-stats'],
+    queryKey: ['/push/stats'],
     queryFn: async () => {
-      const response = await fetch('/push-stats', { method: 'POST' });
+      const response = await fetch('/push/stats', { method: 'POST' });
       return response.json();
     },
     refetchInterval: 5000
@@ -24,7 +24,7 @@ export default function AdminPush() {
   // Mutation para enviar push
   const sendPushMutation = useMutation({
     mutationFn: async ({ title, message }: { title: string; message: string }) => {
-      const response = await fetch('/push-send', {
+      const response = await fetch('/push/send', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ title, message })

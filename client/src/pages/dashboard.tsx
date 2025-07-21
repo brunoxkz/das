@@ -57,109 +57,110 @@ export default function Dashboard() {
     showAutoPrompt: false
   });
 
-  // Detecção automática de PWA/Desktop e configuração de push notifications
+  // Configuração de push notifications - SEM LOOP INFINITO
   useEffect(() => {
+    let hasExecuted = false;
+    
     const checkDeviceAndSetupPush = async () => {
+      // Evitar execuções múltiplas
+      if (hasExecuted) return;
+      hasExecuted = true;
+      
       try {
-        // Detectar iOS
-        const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+        // Verificar se já está configurado
+        if (pushNotificationState.hasPermission || pushNotificationState.isSubscribed) {
+          console.log('✅ Push já configurado');
+          return;
+        }
         
-        // Detectar PWA mode (também funciona no desktop)
-        const isPWA = window.matchMedia('(display-mode: standalone)').matches ||
-                      window.matchMedia('(display-mode: fullscreen)').matches ||
-                      (window.navigator as any).standalone;
-        
-        // Verificar suporte a notificações
+        // Verificar suporte básico
         const isSupported = 'serviceWorker' in navigator && 'PushManager' in window;
+        if (!isSupported) {
+          console.log('❌ Navegador não suporta push notifications');
+          return;
+        }
         
-        // Detectar desktop (Chrome, Firefox, Edge, Safari, Opera)
-        const isDesktop = !(/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile/i.test(navigator.userAgent));
+        // Verificar se usuário está logado
+        if (!user?.id) {
+          console.log('❌ Usuário não autenticado');
+          return;
+        }
         
-        // Debug logs para ver o que está sendo detectado
-        console.log('🔍 Debug detecção:', {
-          userAgent: navigator.userAgent,
-          isIOS,
-          isPWA,
-          isDesktop,
-          isSupported,
-          notificationPermission: Notification.permission,
-          isAuthenticated: !!user
-        });
+        console.log('🔍 Iniciando configuração push para usuário:', user.id);
         
-        // Atualizar estado
-        setPushNotificationState(prev => ({
-          ...prev,
-          isIOS,
-          isPWA,
-          isSupported,
-          hasPermission: Notification.permission === 'granted',
-          showAutoPrompt: (isIOS && isPWA || isDesktop) && isSupported && Notification.permission === 'default'
-        }));
-
-        // SOLICITAR IMEDIATAMENTE: Para qualquer desktop/dispositivo com suporte
-        // Não dependemos de PWA, só de suporte a push notifications
-        if (isSupported && Notification.permission === 'default' && user) {
-          console.log('🚨 SOLICITANDO PERMISSÕES IMEDIATAMENTE para qualquer dispositivo com suporte');
-          console.log('🔔 DISPOSITIVO COM SUPORTE - Solicitando permissões automaticamente');
-          console.log('📱 UserAgent:', navigator.userAgent);
-          console.log('🔧 PushManager:', 'PushManager' in window);
-          console.log('⚙️ ServiceWorker:', 'serviceWorker' in navigator);
-          console.log('👤 Usuário logado:', user?.email || user?.username || 'Sim');
+        // Só tentar se permissão ainda não foi solicitada
+        if (Notification.permission === 'default') {
+          console.log('🔔 Solicitando permissões...');
           
           // Registrar service worker primeiro
           const registration = await navigator.serviceWorker.register('/sw-simple.js');
-          console.log('🔧 Service Worker registrado automaticamente:', registration);
+          console.log('🔧 Service Worker registrado');
           
-          // Solicitar permissão
+          // Solicitar permissão de forma não bloqueante
           const permission = await Notification.requestPermission();
-          console.log('📱 Permissão de notificação:', permission);
+          console.log('📱 Resultado permissão:', permission);
           
           if (permission === 'granted') {
-            // Obter VAPID key
-            const vapidResponse = await fetch('/push-vapid', { method: 'POST' });
-            const { publicKey: vapidPublicKey } = await vapidResponse.json();
-            
-            // Criar subscription
-            const subscription = await registration.pushManager.subscribe({
-              userVisibleOnly: true,
-              applicationServerKey: vapidPublicKey
-            });
-            
-            // Enviar subscription para o servidor
-            const response = await fetch('/push-subscribe', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ subscription })
-            });
-            
-            if (response.ok) {
-              console.log('✅ Push notifications configuradas automaticamente!');
+            try {
+              // Obter VAPID key do servidor
+              const vapidResponse = await fetch('/push/vapid', { method: 'POST' });
+              if (!vapidResponse.ok) {
+                throw new Error('Falha ao obter VAPID key');
+              }
+              const { publicKey } = await vapidResponse.json();
               
-              setPushNotificationState(prev => ({
-                ...prev,
-                hasPermission: true,
-                isSubscribed: true,
-                showAutoPrompt: false
-              }));
-              
-              toast({
-                title: "📱 Push Notifications Ativadas!",
-                description: "Você receberá notificações na tela de bloqueio mesmo fora do app",
-                duration: 5000
+              // Criar subscription
+              const subscription = await registration.pushManager.subscribe({
+                userVisibleOnly: true,
+                applicationServerKey: publicKey
               });
+              
+              // Salvar subscription no servidor
+              const response = await fetch('/push/subscribe', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ subscription })
+              });
+              
+              if (response.ok) {
+                console.log('✅ Push notifications configuradas!');
+                
+                // Atualizar estado sem causar re-render infinito
+                setPushNotificationState(prev => ({
+                  ...prev,
+                  hasPermission: true,
+                  isSubscribed: true,
+                  showAutoPrompt: false
+                }));
+                
+                // Toast de sucesso (sem dependência no useEffect)
+                toast({
+                  title: "Push Notifications Ativadas!",
+                  description: "Você receberá notificações na tela de bloqueio",
+                  duration: 3000
+                });
+              }
+            } catch (error) {
+              console.error('❌ Erro ao configurar subscription:', error);
             }
+          } else {
+            console.log('❌ Permissão negada pelo usuário');
           }
+        } else {
+          console.log(`ℹ️ Permissão já definida: ${Notification.permission}`);
         }
       } catch (error) {
-        console.error('❌ Erro na configuração automática de push:', error);
+        console.error('❌ Erro na configuração de push:', error);
       }
     };
 
-    // Executar apenas uma vez quando o componente montar
-    if (isAuthenticated) {
-      checkDeviceAndSetupPush();
+    // Executar apenas se autenticado e ainda não executou
+    if (isAuthenticated && user) {
+      // Delay para evitar conflitos de renderização
+      const timeoutId = setTimeout(checkDeviceAndSetupPush, 1500);
+      return () => clearTimeout(timeoutId);
     }
-  }, [isAuthenticated, toast]);
+  }, [isAuthenticated, user?.id]); // Dependências mínimas e estáveis
 
   // Função para alternar modo fórum
   const toggleForumMode = () => {
@@ -576,9 +577,17 @@ export default function Dashboard() {
               )}
               <Button
                 onClick={async () => {
+                  console.log('🔵 BOTÃO TESTE PUSH CLICADO');
+                  console.log('📍 Status atual:', {
+                    permission: Notification.permission,
+                    hasServiceWorker: 'serviceWorker' in navigator,
+                    hasPushManager: 'PushManager' in window
+                  });
+                  
                   try {
                     if (Notification.permission === 'granted') {
-                      await fetch('/push-send', {
+                      console.log('✅ Permissão já concedida, enviando push...');
+                      const response = await fetch('/push-send', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ 
@@ -586,23 +595,69 @@ export default function Dashboard() {
                           message: "Sistema funcionando perfeitamente!" 
                         })
                       });
+                      const result = await response.json();
+                      console.log('📤 Resposta do servidor:', result);
+                      
                       toast({
                         title: "Push Notification Enviada!",
-                        description: "Verifique a tela de bloqueio do seu dispositivo",
+                        description: `Enviado para ${result.stats?.success || 0} dispositivos`,
                       });
-                    } else {
+                    } else if (Notification.permission === 'default') {
+                      console.log('❓ Solicitando permissões...');
                       const permission = await Notification.requestPermission();
+                      console.log('📱 Resultado da permissão:', permission);
+                      
                       if (permission === 'granted') {
+                        console.log('✅ Permissão concedida! Configurando service worker...');
+                        
+                        // Registrar service worker
+                        const registration = await navigator.serviceWorker.register('/sw-simple.js');
+                        console.log('🔧 Service Worker registrado:', registration);
+                        
+                        // Obter VAPID key
+                        const vapidResponse = await fetch('/push-vapid', { method: 'POST' });
+                        const { publicKey: vapidPublicKey } = await vapidResponse.json();
+                        console.log('🔑 VAPID key obtida:', vapidPublicKey?.substring(0, 20) + '...');
+                        
+                        // Criar subscription
+                        const subscription = await registration.pushManager.subscribe({
+                          userVisibleOnly: true,
+                          applicationServerKey: vapidPublicKey
+                        });
+                        console.log('📝 Subscription criada:', subscription);
+                        
+                        // Enviar subscription para servidor
+                        const subscribeResponse = await fetch('/push-subscribe', {
+                          method: 'POST',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({ subscription })
+                        });
+                        const subscribeResult = await subscribeResponse.json();
+                        console.log('💾 Subscription salva:', subscribeResult);
+                        
                         toast({
                           title: "Permissões Concedidas!",
-                          description: "Agora você pode receber notificações",
+                          description: "Push notifications configuradas com sucesso!",
+                        });
+                      } else {
+                        toast({
+                          title: "Permissões Negadas",
+                          description: "Não é possível enviar notificações",
+                          variant: "destructive"
                         });
                       }
+                    } else {
+                      toast({
+                        title: "Permissões Negadas",
+                        description: "Notificações foram bloqueadas pelo usuário",
+                        variant: "destructive"
+                      });
                     }
                   } catch (error) {
+                    console.error('❌ Erro no teste push:', error);
                     toast({
                       title: "Erro",
-                      description: "Falha ao configurar notificações",
+                      description: `Falha: ${error.message}`,
                       variant: "destructive"
                     });
                   }
