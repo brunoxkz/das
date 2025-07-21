@@ -282,6 +282,22 @@ O sistema utiliza Stripe Payment Intent para processar pagamentos únicos de R$ 
 
 ```
 Changelog:
+- July 21, 2025. SISTEMA DE SOM MODERNO 2025 INTEGRADO COM BULK PUSH MESSAGING - Som de venda estilo 2025 completamente funcional:
+  * Sistema de áudio moderno criado: public/sounds/sale-notification.js com Web Audio API
+  * 3 tipos de som implementados: "Venda Moderna" (harmonia C5-E5-G5), "Suave" (ping discreto), "Energético" (sequência ascendente)  
+  * Integração completa no componente bulk-push-messaging.tsx com controles de som
+  * Interface de seleção de som: botões para alternar entre tipos e testar som
+  * Toggle ativar/desativar som com estado persistente durante sessão
+  * Som reproduzido automaticamente após envio bem-sucedido de push notifications
+  * Sistema usa Web Audio API nativa para máxima compatibilidade e qualidade
+  * Feedback visual nos toasts: "🔥 Push + Som Enviado!" com tipo de som especificado
+  * Botão "🎵 Testar Som" para preview antes do envio
+  * 3 estilos sonoros: harmônico moderno, discreto profissional, energético motivacional
+  * Sistema carregado dinamicamente via script injection para otimização
+  * Integração total com sistema de push notifications já funcional
+  * Interface moderna com cores específicas por tipo de som (azul, verde, roxo)
+  * Sistema pronto para produção com audio feedback em vendas e conversões
+Changelog:
 - July 21, 2025. FAVICON E ÍCONES PWA ATUALIZADOS COM LOGO OFICIAL - Sistema completo de ícones configurado para instalação PWA:
   * Favicon atualizado: favicon.png com logo oficial Vendzz
   * Apple Touch Icons configurados: apple-touch-icon.png para iOS

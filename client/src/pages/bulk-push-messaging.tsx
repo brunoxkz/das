@@ -1,10 +1,10 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
-import { Send, Users, Bell, MessageSquare, Zap, ArrowLeft } from 'lucide-react';
+import { Send, Users, Bell, MessageSquare, Zap, ArrowLeft, Music, Volume2 } from 'lucide-react';
 
 interface BulkMessageStats {
   totalUsers: number;
@@ -17,6 +17,8 @@ export default function BulkPushMessaging() {
   const [title, setTitle] = useState('🔥 Mensagem do Sistema Vendzz');
   const [message, setMessage] = useState('Nova funcionalidade disponível! Acesse agora o sistema 📱');
   const [isLoading, setIsLoading] = useState(false);
+  const [soundEnabled, setSoundEnabled] = useState(true);
+  const [soundType, setSoundType] = useState('sale');
   const [stats, setStats] = useState<BulkMessageStats>({
     totalUsers: 0,
     messagesSent: 0,
@@ -24,6 +26,23 @@ export default function BulkPushMessaging() {
     isLoading: false
   });
   const { toast } = useToast();
+
+  // Carregar sistema de áudio moderno
+  useEffect(() => {
+    const loadAudioSystem = () => {
+      const script = document.createElement('script');
+      script.src = '/sounds/sale-notification.js';
+      script.onload = () => {
+        console.log('🔊 Sistema de áudio moderno carregado');
+      };
+      script.onerror = () => {
+        console.warn('❌ Erro ao carregar sistema de áudio');
+      };
+      document.head.appendChild(script);
+    };
+
+    loadAudioSystem();
+  }, []);
 
   // LÓGICA EXATA DO BOTÃO "TESTAR PUSH" DO DASHBOARD - NÃO MODIFICAR
   const sendBulkPushMessage = async () => {
@@ -88,9 +107,15 @@ export default function BulkPushMessaging() {
           isLoading: false
         });
         
+        // REPRODUZIR SOM MODERNO DE VENDA 2025
+        if (soundEnabled && window.playNotificationSound) {
+          await window.playNotificationSound(soundType);
+          console.log('🔊 Som de venda reproduzido:', soundType);
+        }
+        
         toast({
-          title: "Mensagem Bulk Enviada!",
-          description: `Enviado para ${result.stats?.success || 0} dispositivos de ${result.stats?.total || 0} usuários`,
+          title: "🔥 Push + Som Enviado!",
+          description: `Enviado para ${result.stats?.success || 0} dispositivos com som ${soundType}`,
         });
         
       } else if (Notification.permission === 'default') {
@@ -269,6 +294,75 @@ export default function BulkPushMessaging() {
             </CardContent>
           </Card>
         </div>
+
+        {/* Sound Controls */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Music className="w-5 h-5 text-purple-600" />
+              🔊 Configurações de Som Moderno 2025
+            </CardTitle>
+            <CardDescription>
+              Configure o som que será reproduzido junto com as notificações push
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Volume2 className="w-4 h-4 text-green-600" />
+                <span className="font-medium">Som de Venda Ativado</span>
+              </div>
+              <Button
+                variant={soundEnabled ? "default" : "outline"}
+                size="sm"
+                onClick={() => setSoundEnabled(!soundEnabled)}
+                className={soundEnabled ? "bg-green-600 hover:bg-green-700" : ""}
+              >
+                {soundEnabled ? "✓ Ativo" : "✗ Inativo"}
+              </Button>
+            </div>
+            
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                Tipo de Som Moderno:
+              </label>
+              <div className="flex gap-2 flex-wrap">
+                <Button
+                  variant={soundType === 'sale' ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setSoundType('sale')}
+                  className={soundType === 'sale' ? "bg-blue-600 hover:bg-blue-700" : ""}
+                >
+                  🔥 Venda Moderna
+                </Button>
+                <Button
+                  variant={soundType === 'subtle' ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setSoundType('subtle')}
+                  className={soundType === 'subtle' ? "bg-green-600 hover:bg-green-700" : ""}
+                >
+                  🔔 Suave
+                </Button>
+                <Button
+                  variant={soundType === 'energetic' ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setSoundType('energetic')}
+                  className={soundType === 'energetic' ? "bg-purple-600 hover:bg-purple-700" : ""}
+                >
+                  ⚡ Energético
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => window.playNotificationSound && window.playNotificationSound(soundType)}
+                  className="border-orange-500 text-orange-600 hover:bg-orange-50"
+                >
+                  🎵 Testar Som
+                </Button>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
 
         {/* Message Composer */}
         <Card>

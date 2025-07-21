@@ -16,5 +16,14 @@
     },
     "userId": "ios-pwa-user",
     "createdAt": "2025-07-21T17:28:34.594Z"
+  },
+  {
+    "endpoint": "https://fcm.googleapis.com/fcm/send/d1ppXWbl1eA:APA91bFgkjmKWyxGUjsiP8Erojm_lc-O_Y-h_WgPOzvTfoA3dZ_KaCA8oUvEKxVlFXRhZY2OVskLs5ihOh_WYfZeYjayw2SwZP6687F3UDEoWwHH_tOOvyAhWvaBRZ6yAaDP9YPyb0_9",
+    "keys": {
+      "p256dh": "BGPeyTopWK9jPtskhPngWWmfIuHJOd0Cg_3pAZhro0Dt1vhHcSKMTMGffdkUp1fX-xv40DY3T4twk9_z4zt1XbI",
+      "auth": "70YsNZ89Gqu3z8eM-rKyWQ"
+    },
+    "userId": "ios-pwa-user",
+    "createdAt": "2025-07-21T17:43:13.197Z"
   }
 ]
