@@ -115,20 +115,44 @@ app.use((req, res, next) => {
     console.log(`🍎 INTERCEPTANDO ÍCONE PWA: ${req.url}`);
   }
   
-  // INTERCEPTAÇÃO PARA ÍCONES VENDZZ NOS NOVOS CAMINHOS
-  if (req.url.match(/\/images\/icons\/(ios|maskable)/)) {
-    const iconSize = req.url.match(/(\d+)x\d+/)?.[1] || '192';
-    const iconPath = path.join(__dirname, '../public/android-chrome-192x192.png');
-    
-    if (fs.existsSync(iconPath)) {
-      const iconBuffer = fs.readFileSync(iconPath);
-      res.setHeader('Content-Type', 'image/png');
-      res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
-      res.setHeader('Pragma', 'no-cache');
-      res.setHeader('Expires', '0');
-      res.end(iconBuffer);
-      console.log(`🔥 SERVINDO ÍCONE VENDZZ: ${req.url} → android-chrome-192x192.png`);
-      return;
+  // INTERCEPTAÇÃO COMPLETA PARA ÍCONES VENDZZ
+  if (req.url.includes('/favicon') || req.url.includes('/images/icons/')) {
+    try {
+      let iconPath;
+      let contentType = 'image/png';
+      
+      // Favicon específico
+      if (req.url.includes('/favicon.ico')) {
+        iconPath = path.join(process.cwd(), 'public/favicon.ico');
+        contentType = 'image/x-icon';
+      }
+      // Outros favicons png
+      else if (req.url.includes('/favicon')) {
+        iconPath = path.join(process.cwd(), 'public/favicon-16x16.png');
+      }
+      // Ícones iOS e maskable - usar android-chrome-192x192.png como base
+      else {
+        iconPath = path.join(process.cwd(), 'public/android-chrome-192x192.png');
+      }
+      
+      // Fallback para android-chrome-192x192.png se não encontrar
+      if (!fs.existsSync(iconPath)) {
+        iconPath = path.join(process.cwd(), 'public/android-chrome-192x192.png');
+        contentType = 'image/png';
+      }
+      
+      if (fs.existsSync(iconPath)) {
+        const iconBuffer = fs.readFileSync(iconPath);
+        res.setHeader('Content-Type', contentType);
+        res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+        res.setHeader('Pragma', 'no-cache');
+        res.setHeader('Expires', '0');
+        res.end(iconBuffer);
+        console.log(`🔥 SERVINDO ÍCONE VENDZZ: ${req.url} → ${iconPath.split('/').pop()}`);
+        return;
+      }
+    } catch (error) {
+      console.error('❌ ERRO AO SERVIR ÍCONE VENDZZ:', error);
     }
   }
   

@@ -282,6 +282,17 @@ O sistema utiliza Stripe Payment Intent para processar pagamentos únicos de R$ 
 
 ```
 Changelog:
+- July 21, 2025. FAVICON VENDZZ CORRIGIDO E FUNCIONANDO 100% - Favicon do site configurado corretamente em todos os lugares:
+  * Correção crítica: Removido __dirname incompatível com ES modules em routes-sqlite.ts
+  * Interceptação favicon funcionando perfeitamente: HTTP 200 OK para /favicon.ico
+  * Sistema completo de interceptação: favicon.ico, favicon.png, /images/icons/* 
+  * Ícones PWA mantidos funcionais: apple-touch-icon.png, android-chrome-*.png
+  * HTML atualizado com caminhos completos para ícones VENDZZ em todos os formatos
+  * Sistema de fallback implementado: todos os ícones apontam para android-chrome-192x192.png
+  * Cache busting aplicado: ?v=vendzz2025 em todas as referências de ícone
+  * Microsoft Tiles configurados com logo VENDZZ para Windows
+  * Open Graph e Twitter Cards usando logo oficial VENDZZ
+  * Sistema 100% funcional: favicon aparecendo corretamente na aba do navegador
 - July 21, 2025. FAVICON E ÍCONES PWA ATUALIZADOS COM LOGO OFICIAL - Sistema completo de ícones configurado para instalação PWA:
   * Favicon atualizado: favicon.png com logo oficial Vendzz
   * Apple Touch Icons configurados: apple-touch-icon.png para iOS

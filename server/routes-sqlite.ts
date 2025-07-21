@@ -106,7 +106,7 @@ const quickPlanCheckMiddleware = async (req: any, res: any, next: any) => {
 };
 
 const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+// __dirname não disponível em ES modules, usar process.cwd()
 
 // Middleware para verificar expiração de plano (agora usando PlanManager)
 async function checkPlanExpiration(req: any, res: any, next: any) {
@@ -12456,7 +12456,7 @@ console.log('Vendzz Checkout Embed carregado para plano: ${planId}');
         return res.status(403).json({ error: "Acesso negado" });
       }
       
-      const filePath = path.join(__dirname, '../uploads', userId, fileName);
+      const filePath = path.join(process.cwd(), 'uploads', userId, fileName);
       
       // Verificar se arquivo existe
       if (!fs.existsSync(filePath)) {
@@ -12476,7 +12476,7 @@ console.log('Vendzz Checkout Embed carregado para plano: ${planId}');
   });
 
   // Middleware para servir arquivos estáticos de upload (público)
-  app.use('/uploads', express.static(path.join(__dirname, '../uploads'), {
+  app.use('/uploads', express.static(path.join(process.cwd(), 'uploads'), {
     setHeaders: (res, filePath) => {
       res.setHeader('Content-Security-Policy', "default-src 'none'");
       res.setHeader('X-Content-Type-Options', 'nosniff');
