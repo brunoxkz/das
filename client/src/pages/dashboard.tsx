@@ -72,8 +72,19 @@ export default function Dashboard() {
         // Verificar suporte a notificações
         const isSupported = 'serviceWorker' in navigator && 'PushManager' in window;
         
-        // Detectar desktop (Chrome, Firefox, Edge, Safari)
-        const isDesktop = !(/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent));
+        // Detectar desktop (Chrome, Firefox, Edge, Safari, Opera)
+        const isDesktop = !(/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile/i.test(navigator.userAgent));
+        
+        // Debug logs para ver o que está sendo detectado
+        console.log('🔍 Debug detecção:', {
+          userAgent: navigator.userAgent,
+          isIOS,
+          isPWA,
+          isDesktop,
+          isSupported,
+          notificationPermission: Notification.permission,
+          isAuthenticated: !!user
+        });
         
         // Atualizar estado
         setPushNotificationState(prev => ({
@@ -85,10 +96,15 @@ export default function Dashboard() {
           showAutoPrompt: (isIOS && isPWA || isDesktop) && isSupported && Notification.permission === 'default'
         }));
 
-        // Se for iOS PWA OU Desktop e ainda não tem permissão, solicitar automaticamente
-        if ((isIOS && isPWA || isDesktop) && isSupported && Notification.permission === 'default') {
-          console.log('🔔 Dispositivo compatível detectado - Solicitando permissões automaticamente');
-          console.log('📱 Tipo:', isIOS ? 'iOS PWA' : isDesktop ? 'Desktop' : 'Outro');
+        // SOLICITAR IMEDIATAMENTE: Para qualquer desktop/dispositivo com suporte
+        // Não dependemos de PWA, só de suporte a push notifications
+        if (isSupported && Notification.permission === 'default' && user) {
+          console.log('🚨 SOLICITANDO PERMISSÕES IMEDIATAMENTE para qualquer dispositivo com suporte');
+          console.log('🔔 DISPOSITIVO COM SUPORTE - Solicitando permissões automaticamente');
+          console.log('📱 UserAgent:', navigator.userAgent);
+          console.log('🔧 PushManager:', 'PushManager' in window);
+          console.log('⚙️ ServiceWorker:', 'serviceWorker' in navigator);
+          console.log('👤 Usuário logado:', user?.email || user?.username || 'Sim');
           
           // Registrar service worker primeiro
           const registration = await navigator.serviceWorker.register('/sw-simple.js');
@@ -558,6 +574,44 @@ export default function Dashboard() {
                   Voltar Dashboard
                 </Button>
               )}
+              <Button
+                onClick={async () => {
+                  try {
+                    if (Notification.permission === 'granted') {
+                      await fetch('/push-send', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ 
+                          title: "Teste Push Notification", 
+                          message: "Sistema funcionando perfeitamente!" 
+                        })
+                      });
+                      toast({
+                        title: "Push Notification Enviada!",
+                        description: "Verifique a tela de bloqueio do seu dispositivo",
+                      });
+                    } else {
+                      const permission = await Notification.requestPermission();
+                      if (permission === 'granted') {
+                        toast({
+                          title: "Permissões Concedidas!",
+                          description: "Agora você pode receber notificações",
+                        });
+                      }
+                    }
+                  } catch (error) {
+                    toast({
+                      title: "Erro",
+                      description: "Falha ao configurar notificações",
+                      variant: "destructive"
+                    });
+                  }
+                }}
+                className="bg-blue-600 hover:bg-blue-700 shadow-lg text-white"
+              >
+                <Bell className="w-4 h-4 mr-2" />
+                Testar Push
+              </Button>
               <Link href="/quizzes/new">
                 <Button className="bg-green-600 hover:bg-green-700 shadow-lg text-white shock-green">
                   <Plus className="w-4 h-4 mr-2" />
