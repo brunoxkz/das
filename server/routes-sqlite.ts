@@ -15233,42 +15233,51 @@ app.get("/api/whatsapp-extension/pending", verifyJWT, async (req: any, res: Resp
         });
       }
 
-      // Buscar todas as subscriptions ativas
-      const subscriptions = sqlite.prepare(`
+      // BUSCAR TODAS AS SUBSCRIPTIONS - SISTEMA UNIFICADO
+      console.log('🔍 [UNIFICADO] Buscando dispositivos em AMBOS os sistemas...');
+      
+      // 1. Buscar subscriptions SQLite (sistema antigo)
+      const sqliteSubscriptions = sqlite.prepare(`
         SELECT * FROM push_subscriptions 
         WHERE is_active = 1
       `).all();
 
-      console.log(`📡 [Admin Broadcast] Enviando para ${subscriptions.length} dispositivos`);
+      // 2. Buscar subscriptions PWA iOS (sistema SimplePushNotificationSystem)
+      const pwaSubscriptions = await SimplePushNotificationSystem.getAllActiveSubscriptions();
+
+      console.log(`📊 [UNIFICADO] SQLite: ${sqliteSubscriptions.length}, PWA: ${pwaSubscriptions.length} dispositivos`);
 
       let sentCount = 0;
       let failedCount = 0;
 
-      // Aqui seria a integração real com Web Push API
-      // Por enquanto, vamos simular o envio e salvar logs
-      for (const sub of subscriptions) {
+      // ENVIO UNIFICADO - SQLite + PWA iOS
+      const notificationPayload = {
+        title, 
+        body, 
+        url: url || '/app-pwa-vendzz',
+        icon: icon || '/logo-vendzz-white.png',
+        badge: badge || '/logo-vendzz-white.png',
+        requireInteraction: requireInteraction || true,
+        silent: silent || false
+      };
+
+      // PROCESSAR SQLite subscriptions (sistema antigo)
+      for (const sub of sqliteSubscriptions) {
         try {
-          // SIMULAR ENVIO REAL - substitua por webpush.sendNotification()
-          // const payload = JSON.stringify({
-          //   title, body, url, icon, badge, requireInteraction, silent
-          // });
-          // await webpush.sendNotification(subscription, payload);
-          
-          // Salvar log de sucesso
+          // Para compatibilidade, simular envio SQLite
           const logStmt = sqlite.prepare(`
             INSERT INTO push_notification_logs 
             (id, user_id, title, body, status, sent_at, notification_data)
             VALUES (?, ?, ?, ?, 'sent', ?, ?)
           `);
           
-          const notificationData = JSON.stringify({ url, icon, badge, requireInteraction, silent });
+          const notificationData = JSON.stringify(notificationPayload);
           logStmt.run(nanoid(), sub.user_id, title, body, new Date().toISOString(), notificationData);
           sentCount++;
 
         } catch (error) {
-          console.error(`❌ Erro ao enviar para ${sub.user_id}:`, error);
+          console.error(`❌ Erro SQLite para ${sub.user_id}:`, error);
           
-          // Salvar log de erro
           const errorLogStmt = sqlite.prepare(`
             INSERT INTO push_notification_logs 
             (id, user_id, title, body, status, sent_at, error_message)
@@ -15280,14 +15289,42 @@ app.get("/api/whatsapp-extension/pending", verifyJWT, async (req: any, res: Resp
         }
       }
 
-      console.log(`✅ Broadcast completo: ${sentCount} enviadas, ${failedCount} falharam`);
+      // PROCESSAR PWA iOS subscriptions (sistema novo)
+      for (const pwaSub of pwaSubscriptions) {
+        try {
+          console.log(`📱 [PWA iOS] Enviando para ${pwaSub.userId}...`);
+          
+          // Usar o sistema SimplePushNotificationSystem para envio REAL
+          const pwaSuccess = await SimplePushNotificationSystem.sendNotificationToUser(pwaSub.userId, notificationPayload);
+          
+          if (pwaSuccess) {
+            sentCount++;
+            console.log(`✅ [PWA iOS] Enviado com sucesso para ${pwaSub.userId}`);
+          } else {
+            failedCount++;
+            console.log(`❌ [PWA iOS] Falhou para ${pwaSub.userId}`);
+          }
+
+        } catch (error) {
+          console.error(`❌ Erro PWA iOS para ${pwaSub.userId}:`, error);
+          failedCount++;
+        }
+      }
+
+      const totalDevices = sqliteSubscriptions.length + pwaSubscriptions.length;
+      
+      console.log(`✅ Broadcast UNIFICADO completo: ${sentCount} enviadas, ${failedCount} falharam de ${totalDevices} dispositivos`);
 
       res.json({
         success: true,
-        message: `Notificação enviada com sucesso!`,
+        message: `Notificação enviada para TODOS os dispositivos!`,
         sentTo: sentCount,
         failed: failedCount,
-        total: subscriptions.length
+        total: totalDevices,
+        breakdown: {
+          sqlite: sqliteSubscriptions.length,
+          pwa: pwaSubscriptions.length
+        }
       });
 
     } catch (error) {

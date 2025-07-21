@@ -226,6 +226,21 @@ export class SimplePushNotificationSystem {
   }
 
   /**
+   * Buscar todas as subscriptions ativas (para integração com sistema admin)
+   */
+  static async getAllActiveSubscriptions(): Promise<Array<{ userId: string; subscription: any }>> {
+    const activeSubscriptions = Object.values(this.subscriptionsById)
+      .filter(sub => sub.isActive)
+      .map(sub => ({
+        userId: sub.userId,
+        subscription: sub.pushSubscription
+      }));
+    
+    console.log(`📊 [SimplePWA] Retornando ${activeSubscriptions.length} subscriptions ativas`);
+    return activeSubscriptions;
+  }
+
+  /**
    * Obtém estatísticas das subscriptions
    */
   static getStats() {
