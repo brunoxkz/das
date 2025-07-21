@@ -77,7 +77,7 @@ import { registerFacelessVideoRoutes } from './faceless-video-routes';
 import { StripeCheckoutLinkGenerator } from './stripe-checkout-link-generator';
 import { planManager } from './plan-manager';
 import { getVapidPublicKey, subscribeToPush, sendPushToAll, getPushStats } from './push-simple';
-// import { realTimePushSystem } from './real-time-push-notifications'; // DESABILITADO PARA RESOLVER ERR_BLOCKED_BY_RESPONSE
+import { realTimePushSystem } from './real-time-push-notifications'; // REATIVADO - sistema seguro sem interceptadores
 
 // JWT Secret para validação de tokens
 const JWT_SECRET = process.env.JWT_SECRET || 'vendzz-jwt-secret-key-2024';

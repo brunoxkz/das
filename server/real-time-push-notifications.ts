@@ -22,6 +22,7 @@ class RealTimePushNotificationSystem {
   private batchSize = 50; // Processa 50 notificações por vez
   private batchInterval = 2000; // 2 segundos entre batches
   private pendingNotifications: PushNotificationPayload[] = [];
+  private totalNotificationsSent = 0;
 
   constructor() {
     // Iniciar processamento em batch
@@ -144,6 +145,9 @@ class RealTimePushNotificationSystem {
       // Simular envio para subscriptions ativas
       console.log(`📱 Enviando push notification: ${notification.title}`);
       console.log(`📄 Conteúdo: ${notification.body}`);
+      
+      // Incrementar contador
+      this.totalNotificationsSent++;
       
       // Em produção, aqui seria integrado com o sistema de push existente
       // Por enquanto, apenas log para desenvolvimento
