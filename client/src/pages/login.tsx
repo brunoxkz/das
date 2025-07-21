@@ -32,6 +32,17 @@ export default function LoginPage() {
   const { login, register } = useAuth();
   // const { t } = useLanguage();
 
+  // Detectar iOS e PWA para redirecionar automaticamente
+  useEffect(() => {
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+    const isPWA = window.matchMedia('(display-mode: standalone)').matches || (window.navigator as any).standalone;
+    
+    // Se estiver no iOS e for PWA, redirecionar para login específico iOS
+    if (isIOS && isPWA) {
+      setLocation('/login-pwa-ios');
+    }
+  }, [setLocation]);
+
   // Gerar captcha simples
   const generateCaptcha = () => {
     const num1 = Math.floor(Math.random() * 10) + 1;
@@ -395,7 +406,7 @@ export default function LoginPage() {
                     <Checkbox 
                       id="human-check"
                       checked={isHuman}
-                      onCheckedChange={setIsHuman}
+                      onCheckedChange={(checked) => setIsHuman(checked === true)}
                     />
                     <Label htmlFor="human-check" className="text-sm font-medium">
                       Não sou um robô

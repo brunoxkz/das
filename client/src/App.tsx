@@ -21,6 +21,7 @@ import AdminSecurityPage from "@/pages/admin-security";
 import AdminNotifications from "@/pages/admin-notifications";
 import AdminPushNotifications from "@/pages/admin-push-notifications";
 import PWANotificationsiOSFixed from "@/pages/pwa-push-notifications-ios-fixed";
+import LoginPWAiOS from "@/pages/login-pwa-ios";
 import TesteIntegracaoPush from "@/pages/teste-integracao-push";
 import TesteSimplesPush from "@/pages/teste-push-simples";
 import TestPushPWA from "@/pages/test-push-pwa";
@@ -189,11 +190,16 @@ function App() {
         <Route path="/app-pwa-vendzz" component={AppPWAVendzz} />
         <Route path="/app-quiz-editor-pwa" component={AppQuizEditorPWA} />
         <Route path="/login" component={LoginPage} />
+        <Route path="/login-pwa-ios" component={LoginPWAiOS} />
         <Route path="/login-pwa" component={() => {
+          // Detectar iOS
+          const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+          
           if (!isAuthenticated) {
             // Salvar a URL de destino no localStorage para redirecionar após login
             localStorage.setItem('loginRedirect', '/pwa-push-notifications');
-            return <Redirect to="/login" />;
+            // Redirecionar para login iOS específico se estiver no iOS
+            return <Redirect to={isIOS ? "/login-pwa-ios" : "/login"} />;
           }
           return <Redirect to="/pwa-push-notifications" />;
         }} />
