@@ -92,74 +92,120 @@ export default function PWANotificationsiOS({}: PWANotificationsProps) {
 
   const subscribeToNotifications = async () => {
     try {
+      // LOG DETALHADO PARA DEBUG
+      console.log('🔍 [DEBUG] === INICIANDO ANÁLISE DETALHADA ===');
+      console.log('🔍 [DEBUG] navigator.userAgent:', navigator.userAgent);
+      console.log('🔍 [DEBUG] window.navigator.standalone:', window.navigator.standalone);
+      console.log('🔍 [DEBUG] display-mode standalone:', window.matchMedia('(display-mode: standalone)').matches);
+      console.log('🔍 [DEBUG] ServiceWorker support:', 'serviceWorker' in navigator);
+      console.log('🔍 [DEBUG] PushManager support:', 'PushManager' in window);
+      console.log('🔍 [DEBUG] Notification support:', 'Notification' in window);
+      console.log('🔍 [DEBUG] Current permission:', Notification.permission);
+      console.log('🔍 [DEBUG] serviceWorkerRegistration state:', serviceWorkerRegistration?.state || 'null');
+      console.log('🔍 [DEBUG] VAPID key exists:', !!vapidPublicKey);
+      
       console.log('🚀 [PWA iOS] Iniciando subscription para app adicionado aos favoritos...');
       
-      // Detectar ambiente iOS PWA
+      // Detectar ambiente iOS PWA com logs detalhados
       const iosPWA = isIOSPWA();
       const ios = isIOS();
       
-      console.log('📲 [PWA iOS] Ambiente:', { iosPWA, ios, standalone: window.navigator.standalone });
+      console.log('📲 [PWA iOS] Detecção de ambiente:');
+      console.log('  - isIOSPWA():', iosPWA);
+      console.log('  - isIOS():', ios);
+      console.log('  - standalone:', window.navigator.standalone);
+      console.log('  - matchMedia standalone:', window.matchMedia('(display-mode: standalone)').matches);
       
-      // Para PWA iOS, usar abordagem específica
-      if (iosPWA || (ios && window.matchMedia('(display-mode: standalone)').matches)) {
-        console.log('📱 [iOS PWA] App instalado via "Adicionar aos Favoritos" detectado');
+      // STEP 1: Verificar permissões com logs detalhados
+      console.log('🔔 [STEP 1] Verificando permissões...');
+      console.log('  - Notification.permission atual:', Notification.permission);
+      
+      if (Notification.permission === 'default') {
+        console.log('🔔 [PWA iOS] Solicitando permissão de notificação...');
+        console.log('🔔 [DEBUG] Método requestPermission disponível:', typeof Notification.requestPermission);
         
-        // Solicitar permissão explicitamente
-        if (Notification.permission === 'default') {
-          console.log('🔔 [iOS PWA] Solicitando permissão de notificação...');
-          
-          // Usar Promise para iOS compatibility
-          const permission = await new Promise<NotificationPermission>((resolve) => {
-            if ('requestPermission' in Notification) {
-              Notification.requestPermission().then(resolve);
-            } else {
-              // Fallback para versões antigas
-              const result = (Notification as any).requestPermission();
-              resolve(result);
-            }
-          });
-          
-          setPermission(permission);
-          
-          if (permission !== 'granted') {
-            throw new Error('Para PWA iOS funcionar, é necessário permitir notificações. Vá em Configurações > Safari > Notificações');
+        let permission: NotificationPermission;
+        
+        try {
+          if (typeof Notification.requestPermission === 'function') {
+            console.log('🔔 [DEBUG] Chamando Notification.requestPermission()...');
+            permission = await Notification.requestPermission();
+            console.log('🔔 [DEBUG] Resultado da permissão:', permission);
+          } else {
+            console.log('🔔 [DEBUG] Usando método legado...');
+            permission = (Notification as any).requestPermission();
+            console.log('🔔 [DEBUG] Resultado método legado:', permission);
           }
+        } catch (permissionError) {
+          console.error('❌ [DEBUG] Erro ao solicitar permissão:', permissionError);
+          throw new Error(`Erro ao solicitar permissão: ${permissionError.message}`);
         }
-      } else {
-        // Browser normal
-        const permission = await Notification.requestPermission();
+        
         setPermission(permission);
         
         if (permission !== 'granted') {
-          toast({
-            title: "Permissão negada",
-            description: "É necessário permitir notificações",
-            variant: "destructive",
-          });
-          return;
+          console.error('❌ [DEBUG] Permissão negada:', permission);
+          throw new Error(`Permissão negada (${permission}). Para PWA iOS funcionar, é necessário permitir notificações nas configurações do Safari.`);
         }
       }
       
-      console.log('✅ [PWA iOS] Permissão concedida');
+      console.log('✅ [STEP 1] Permissão validada:', Notification.permission);
 
-      // Aguardar Service Worker
-      const registration = serviceWorkerRegistration || await navigator.serviceWorker.ready;
+      // STEP 2: Verificar Service Worker com logs detalhados
+      console.log('🔧 [STEP 2] Verificando Service Worker...');
+      console.log('  - serviceWorkerRegistration exists:', !!serviceWorkerRegistration);
+      console.log('  - navigator.serviceWorker.ready available:', !!navigator.serviceWorker.ready);
+      
+      let registration = serviceWorkerRegistration;
       
       if (!registration) {
-        throw new Error('Service Worker não disponível');
+        console.log('🔧 [DEBUG] Service Worker não encontrado, aguardando ready...');
+        try {
+          registration = await navigator.serviceWorker.ready;
+          console.log('🔧 [DEBUG] Service Worker ready obtido:', registration.scope);
+        } catch (swError) {
+          console.error('❌ [DEBUG] Erro ao obter Service Worker:', swError);
+          throw new Error(`Service Worker não disponível: ${swError.message}`);
+        }
+      }
+      
+      console.log('✅ [STEP 2] Service Worker validado');
+
+      // STEP 3: Verificar PushManager com logs detalhados
+      console.log('📱 [STEP 3] Verificando PushManager...');
+      console.log('  - registration.pushManager exists:', !!registration.pushManager);
+      console.log('  - VAPID key length:', vapidPublicKey ? vapidPublicKey.length : 0);
+      
+      if (!registration.pushManager) {
+        throw new Error('PushManager não disponível no Service Worker');
+      }
+      
+      if (!vapidPublicKey) {
+        throw new Error('VAPID key não disponível');
       }
 
       console.log('🔧 [PWA iOS] Criando push subscription...');
       
-      // Criar subscription
-      const subscription = await registration.pushManager.subscribe({
-        userVisibleOnly: true,
-        applicationServerKey: vapidPublicKey
-      });
+      // STEP 4: Criar subscription com logs detalhados
+      let subscription;
+      try {
+        console.log('📱 [DEBUG] Chamando pushManager.subscribe...');
+        subscription = await registration.pushManager.subscribe({
+          userVisibleOnly: true,
+          applicationServerKey: vapidPublicKey
+        });
+        console.log('📱 [DEBUG] Subscription criada com sucesso');
+        console.log('  - endpoint:', subscription.endpoint.substring(0, 50) + '...');
+        console.log('  - keys p256dh exists:', !!subscription.getKey('p256dh'));
+        console.log('  - keys auth exists:', !!subscription.getKey('auth'));
+      } catch (subscriptionError) {
+        console.error('❌ [DEBUG] Erro ao criar subscription:', subscriptionError);
+        throw new Error(`Falha ao criar subscription: ${subscriptionError.message}`);
+      }
 
-      console.log('📱 [PWA iOS] Subscription criada');
-
-      // Preparar dados para envio
+      // STEP 5: Preparar dados com logs detalhados
+      console.log('📤 [STEP 5] Preparando dados...');
+      
       const subscriptionData = {
         endpoint: subscription.endpoint,
         keys: {
@@ -171,15 +217,29 @@ export default function PWANotificationsiOS({}: PWANotificationsProps) {
         pwaType: iosPWA ? 'ios-favorites' : 'browser',
         timestamp: new Date().toISOString()
       };
+      
+      console.log('📤 [DEBUG] Dados preparados:');
+      console.log('  - userId:', subscriptionData.userId);
+      console.log('  - pwaType:', subscriptionData.pwaType);
+      console.log('  - keys preparadas:', !!subscriptionData.keys.p256dh && !!subscriptionData.keys.auth);
 
-      console.log('📤 [PWA iOS] Enviando subscription...');
-
-      // Usar endpoint público (sem JWT para PWA iOS)
-      const response = await fetch('/api/push-subscribe-public', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(subscriptionData)
-      });
+      // STEP 6: Enviar para servidor com logs detalhados
+      console.log('📤 [STEP 6] Enviando para servidor...');
+      
+      let response;
+      try {
+        console.log('📤 [DEBUG] Fazendo request para /api/push-subscribe-public...');
+        response = await fetch('/api/push-subscribe-public', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(subscriptionData)
+        });
+        console.log('📤 [DEBUG] Response status:', response.status);
+        console.log('📤 [DEBUG] Response ok:', response.ok);
+      } catch (fetchError) {
+        console.error('❌ [DEBUG] Erro no fetch:', fetchError);
+        throw new Error(`Erro de conexão: ${fetchError.message}`);
+      }
       
       if (response.ok) {
         const data = await response.json();
@@ -190,12 +250,17 @@ export default function PWANotificationsiOS({}: PWANotificationsProps) {
         // Notificação de teste local
         if (iosPWA) {
           console.log('🧪 [iOS PWA] Testando notificação local...');
-          new Notification('🎉 Vendzz PWA iOS Ativo!', {
-            body: 'Notificações configuradas! Funcionará na tela de bloqueio.',
-            icon: '/vendzz-logo-official.png',
-            tag: 'ios-pwa-test',
-            requireInteraction: true
-          });
+          try {
+            new Notification('🎉 Vendzz PWA iOS Ativo!', {
+              body: 'Notificações configuradas! Funcionará na tela de bloqueio.',
+              icon: '/vendzz-logo-official.png',
+              tag: 'ios-pwa-test',
+              requireInteraction: true
+            });
+            console.log('✅ [DEBUG] Notificação local criada com sucesso');
+          } catch (notifError) {
+            console.warn('⚠️ [DEBUG] Erro na notificação local:', notifError);
+          }
         }
         
         toast({
@@ -205,19 +270,35 @@ export default function PWANotificationsiOS({}: PWANotificationsProps) {
         
       } else {
         const errorText = await response.text();
+        console.error('❌ [DEBUG] Erro do servidor:', errorText);
         throw new Error(`Erro no servidor: ${response.status} - ${errorText}`);
       }
 
     } catch (error: any) {
-      console.error('❌ [PWA iOS] Erro:', error);
+      console.error('❌ [PWA iOS] ERRO COMPLETO:', error);
+      console.error('❌ [DEBUG] Error stack:', error.stack);
+      console.error('❌ [DEBUG] Error name:', error.name);
+      console.error('❌ [DEBUG] Error message:', error.message);
       
       let message = error.message;
-      if (message.includes('Safari')) {
-        message = 'Para PWA iOS: Configurações > Safari > Notificações > Permitir para este site';
+      
+      // Mensagens específicas para diferentes tipos de erro
+      if (message.includes('Permission')) {
+        message = '🔔 Erro de permissão: Vá em Configurações > Safari > Notificações e permita para este site';
+      } else if (message.includes('Service Worker')) {
+        message = '🔧 Erro do Service Worker: Tente recarregar a página e tentar novamente';
+      } else if (message.includes('PushManager')) {
+        message = '📱 Push notifications não suportadas neste dispositivo/browser';
+      } else if (message.includes('VAPID')) {
+        message = '🔑 Erro de configuração do servidor - VAPID key inválida';
+      } else if (message.includes('subscription')) {
+        message = '📡 Erro ao criar subscription - Verifique sua conexão';
+      } else if (message.includes('servidor')) {
+        message = '🌐 Erro de conexão com servidor - Tente novamente';
       }
       
       toast({
-        title: "Erro PWA iOS",
+        title: "❌ Erro detalhado PWA iOS",
         description: message,
         variant: "destructive",
       });

@@ -24,5 +24,18 @@
     },
     "isActive": true,
     "createdAt": "2025-07-21T02:12:03.808Z"
+  },
+  "ios-fixed-1753064442679-1753064442684": {
+    "id": "ios-fixed-1753064442679-1753064442684",
+    "userId": "ios-fixed-1753064442679",
+    "pushSubscription": {
+      "endpoint": "https://fcm.googleapis.com/fcm/send/ios-fixed-1753064442679",
+      "keys": {
+        "p256dh": "BOptimizedKeyForIOSFixedSystemThatShouldWorkWithoutAnyIssues123456789",
+        "auth": "OptimizedAuthKeyForBetterCompatibility"
+      }
+    },
+    "isActive": true,
+    "createdAt": "2025-07-21T02:20:42.684Z"
   }
 }

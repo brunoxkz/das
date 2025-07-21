@@ -20,6 +20,7 @@ import AdminPage from "@/pages/admin";
 import AdminSecurityPage from "@/pages/admin-security";
 import AdminNotifications from "@/pages/admin-notifications";
 import AdminPushNotifications from "@/pages/admin-push-notifications";
+import PWANotificationsiOSFixed from "@/pages/pwa-push-notifications-ios-fixed";
 import TestPushPWA from "@/pages/test-push-pwa";
 import TestPushReal from "@/pages/test-push-real";
 import LeadsPage from "@/pages/leads";
@@ -203,6 +204,7 @@ function App() {
         }} />
         <Route path="/test-push-pwa" component={TestPushPWA} />
         <Route path="/test-push-real" component={TestPushReal} />
+        <Route path="/pwa-ios-fixed" component={PWANotificationsiOSFixed} />
         <Route path="/login-test-complete" component={() => import('@/pages/login-test-complete')} />
 
         {/* Authenticated routes with sidebar */}
@@ -269,6 +271,9 @@ function App() {
         </Route>
         <Route path="/admin-push-notifications">
           <AdminPushNotifications />
+        </Route>
+        <Route path="/pwa-push-notifications-ios-fixed">
+          <PWANotificationsiOSFixed />
         </Route>
         <Route path="/leads">
           <Layout>
