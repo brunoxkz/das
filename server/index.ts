@@ -113,8 +113,8 @@ setupHybridAuth(app);
 
 // System initialization and routes
 
-// PUSH NOTIFICATIONS TEMPORARIAMENTE DESABILITADOS PARA RESOLVER ERR_BLOCKED_BY_RESPONSE
-console.log('✅ PUSH NOTIFICATIONS DESABILITADOS TEMPORARIAMENTE');
+// PUSH NOTIFICATIONS BÁSICO REATIVADO - apenas real-time desabilitado para resolver ERR_BLOCKED_BY_RESPONSE
+console.log('✅ PUSH NOTIFICATIONS BÁSICO REATIVADO (real-time desabilitado)');
 
 // Register all routes DEPOIS dos endpoints de push
 const server = registerHybridRoutes(app);
