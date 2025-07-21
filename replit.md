@@ -282,16 +282,17 @@ O sistema utiliza Stripe Payment Intent para processar pagamentos únicos de R$ 
 
 ```
 Changelog:
-- July 21, 2025. SISTEMA QUIZ COMPLETIONS COM VERIFICAÇÃO DE SUBSCRIPTION IMPLEMENTADO - Otimização para 100k+ usuários:
-  * VERIFICAÇÃO INTELIGENTE: Sistema só processa quiz completions para usuários com subscription ativa no Stripe
-  * ECONOMIA DE RECURSOS: Evita sobrecarga com 100k+ usuários gratuitos tentando usar push notifications
+- July 21, 2025. SISTEMA QUIZ COMPLETIONS COM VERIFICAÇÃO DE PUSH NOTIFICATIONS IMPLEMENTADO - Otimização para 100k+ usuários:
+  * VERIFICAÇÃO INTELIGENTE: Sistema só processa quiz completions para usuários que ativaram push notifications no dispositivo
+  * ECONOMIA DE RECURSOS: Evita sobrecarga com 100k+ usuários que não querem/ativaram notificações push
   * ADMIN OVERRIDE: Admin user (admin-user-id) sempre tem permissão para testes e configuração
-  * VERIFICAÇÃO DUPLA: Checa tanto currentPlan === 'PRO' quanto subscriptions ativas no Stripe
-  * LOGS DETALHADOS: Sistema registra todas as verificações para monitoramento
-  * INTERFACE ATUALIZADA: Bulk messaging agora mostra que verificação de subscription está ativa
+  * VERIFICAÇÃO VIA JSON: Checa arquivo push-subscriptions.json para validar usuários com notificações ativas
+  * LOGS DETALHADOS: Sistema registra todas as verificações para monitoramento de performance
+  * INTERFACE ATUALIZADA: Bulk messaging agora mostra que verificação de push notifications está ativa
   * MENSAGENS ROTATIVAS: Sistema de múltiplas mensagens implementado com rotação automática
   * ESCALABILIDADE: Performance otimizada para suportar 100k+ usuários sem degradação
-  * SISTEMA GLOBAL: Admin ativa para todos os usuários, mas só processa pagantes
+  * SISTEMA GLOBAL: Admin ativa para todos os usuários, mas só processa quem tem push notifications ativas
+  * TRIAL FRIENDLY: Usuários em trial que ativaram notificações também recebem quiz completions
   * Arquivos modificados: server/real-time-push-notifications.ts, client/src/pages/bulk-push-messaging.tsx
 - July 21, 2025. ADMIN-PUSH-NOTIFICATIONS E FAVICON CORRIGIDOS 100% - Sistema completo funcionando:
   * CORREÇÃO CRÍTICA: Rota /admin-push-notifications agora corretamente direcionada para BulkPushMessaging

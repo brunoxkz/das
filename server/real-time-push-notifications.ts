@@ -3,12 +3,6 @@ import { quizResponses, users } from '../shared/schema-sqlite';
 import { eq, and } from 'drizzle-orm';
 import fs from 'fs';
 import path from 'path';
-import Stripe from 'stripe';
-
-// Inicializar Stripe para verificação de subscription
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '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', {
-  apiVersion: '2024-09-30.acacia',
-});
 
 interface PushNotificationPayload {
   title: string;
@@ -28,6 +22,7 @@ class RealTimePushNotificationSystem {
   private batchSize = 50; // Processa 50 notificações por vez
   private batchInterval = 2000; // 2 segundos entre batches
   private pendingNotifications: PushNotificationPayload[] = [];
+  private totalNotificationsSent = 0;
 
   constructor() {
     // Iniciar processamento em batch
@@ -35,53 +30,43 @@ class RealTimePushNotificationSystem {
   }
 
   /**
-   * Verifica se o usuário tem subscription ativa no Stripe
-   * Para 100k+ usuários, só processa quiz completions de usuários pagantes
+   * Verifica se o usuário tem permissão de push notifications ativa no dispositivo
+   * Para 100k+ usuários, só processa quiz completions de usuários que aceitaram notificações
    * ADMIN OVERRIDE: Admin user sempre tem permissão
    */
-  private async hasActiveSubscription(userId: string): Promise<boolean> {
+  private async hasActiveNotificationPermission(userId: string): Promise<boolean> {
     // Admin sempre tem permissão (para testes e configuração)
     if (userId === 'admin-user-id') {
-      console.log(`👑 ADMIN OVERRIDE: Usuário ${userId} é admin - subscription: true`);
+      console.log(`👑 ADMIN OVERRIDE: Usuário ${userId} é admin - notification permission: true`);
       return true;
     }
-    try {
-      // Buscar dados do usuário no banco
-      const [user] = await db
-        .select({
-          email: users.email,
-          stripeCustomerId: users.stripeCustomerId,
-          currentPlan: users.currentPlan
-        })
-        .from(users)
-        .where(eq(users.id, userId))
-        .limit(1);
 
-      if (!user || !user.stripeCustomerId) {
-        console.log(`📊 Usuário ${userId} não tem Stripe Customer ID - subscription: false`);
+    try {
+      // Verificar se o usuário tem subscription push ativa via arquivo JSON
+      const subscriptionsPath = path.join(process.cwd(), 'push-subscriptions.json');
+      
+      if (!fs.existsSync(subscriptionsPath)) {
+        console.log(`📋 Arquivo push-subscriptions.json não existe - criando vazio`);
+        fs.writeFileSync(subscriptionsPath, JSON.stringify([]), 'utf8');
         return false;
       }
 
-      // Se já tem plano PRO, assumir que tem subscription ativa
-      if (user.currentPlan === 'PRO') {
-        console.log(`✅ Usuário ${userId} tem plano PRO - subscription: true`);
-        return true;
+      const subscriptionsData = fs.readFileSync(subscriptionsPath, 'utf8');
+      const subscriptions = JSON.parse(subscriptionsData);
+
+      // Buscar subscription ativa para este usuário
+      const userSubscription = subscriptions.find((sub: any) => sub.userId === userId);
+      
+      if (!userSubscription) {
+        console.log(`📱 Usuário ${userId} não tem push notification ativa - permission: false`);
+        return false;
       }
 
-      // Verificar subscription ativa no Stripe
-      const subscriptions = await stripe.subscriptions.list({
-        customer: user.stripeCustomerId,
-        status: 'active',
-        limit: 1
-      });
-
-      const hasActiveSubscription = subscriptions.data.length > 0;
-      console.log(`🔍 Verificação Stripe - Usuário ${userId}: ${hasActiveSubscription ? 'SUBSCRIPTION ATIVA' : 'SEM SUBSCRIPTION'}`);
-      
-      return hasActiveSubscription;
+      console.log(`✅ Usuário ${userId} tem push notification ativa - permission: true`);
+      return true;
 
     } catch (error) {
-      console.error(`❌ Erro ao verificar subscription do usuário ${userId}:`, error);
+      console.error(`❌ Erro ao verificar notification permission do usuário ${userId}:`, error);
       // Em caso de erro, bloquear por segurança (evitar sobrecarga)
       return false;
     }
@@ -118,16 +103,16 @@ class RealTimePushNotificationSystem {
         return;
       }
 
-      // 🔒 VERIFICAÇÃO CRÍTICA: Só processar para usuários com subscription ativa
-      // Para evitar sobrecarga com 100k+ usuários gratuitos
-      const hasSubscription = await this.hasActiveSubscription(quizOwner.ownerId);
-      if (!hasSubscription) {
-        console.log(`🔒 BLOCKED: Usuário ${quizOwner.ownerId} sem subscription ativa - quiz completion não processado (economia de recursos)`);
+      // 🔒 VERIFICAÇÃO CRÍTICA: Só processar para usuários que ativaram push notifications
+      // Para evitar sobrecarga com 100k+ usuários que não querem notificações
+      const hasNotificationPermission = await this.hasActiveNotificationPermission(quizOwner.ownerId);
+      if (!hasNotificationPermission) {
+        console.log(`🔒 BLOCKED: Usuário ${quizOwner.ownerId} sem push notification ativa - quiz completion não processado (economia de recursos)`);
         this.processingQueue.delete(completionKey);
         return;
       }
 
-      console.log(`✅ AUTHORIZED: Usuário ${quizOwner.ownerId} com subscription ativa - processando quiz completion`);
+      console.log(`✅ AUTHORIZED: Usuário ${quizOwner.ownerId} com push notification ativa - processando quiz completion`);
 
       // Verificar se o dono tem subscription push ativa via arquivo JSON
       const subscriptionsPath = path.join(process.cwd(), 'push-subscriptions.json');
@@ -215,6 +200,9 @@ class RealTimePushNotificationSystem {
       // Simular envio para subscriptions ativas
       console.log(`📱 Enviando push notification: ${notification.title}`);
       console.log(`📄 Conteúdo: ${notification.body}`);
+      
+      // Incrementar contador
+      this.totalNotificationsSent++;
       
       // Em produção, aqui seria integrado com o sistema de push existente
       // Por enquanto, apenas log para desenvolvimento
