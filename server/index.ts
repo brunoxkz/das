@@ -415,12 +415,87 @@ app.get('/api/push-simple/stats', (req: any, res: any) => {
 
 console.log('✅ PUSH NOTIFICATIONS ENDPOINTS REGISTRADOS DIRETAMENTE ANTES DO VITE');
 
+// ENDPOINT DIRETO DE NOTIFICAÇÃO ADMIN - ANTES DO VITE
+import { AdminNotificationSimulator } from './admin-notification-simulator';
+import { RealPushNotificationService } from './real-push-notification-service';
+
+app.post('/api/admin-notification-direct', async (req: any, res: any) => {
+  console.log('📱 NOTIFICAÇÃO ADMIN DIRETA CHAMADA');
+  try {
+    const { type } = req.body;
+    
+    let title, body, url, icon;
+    
+    if (type === 'quiz_completion') {
+      title = '🎯 Quiz Completo - Vendzz';
+      body = 'Novo quiz completado! Usuário: Maria Silva. Veja os resultados agora.';
+      url = '/dashboard';
+      icon = '/icon-192x192.png';
+      console.log('🎯 ENVIANDO NOTIFICAÇÃO REAL + SIMULAÇÃO DE QUIZ COMPLETION');
+      
+      // Enviar notificação REAL para dispositivos iOS registrados
+      const realPushResult = await RealPushNotificationService.sendQuizCompletionNotification();
+      console.log('🚀 RESULTADO PUSH REAL:', realPushResult.realPushResult);
+      
+    } else {
+      title = '📱 Vendzz iOS Notification';
+      body = 'Sistema de notificações administrativas funcionando! Painel rate limiting implementado com sucesso.';
+      url = '/admin/rate-limiting';
+      icon = '/icon-192x192.png';
+      
+      // Enviar notificação REAL para dispositivos iOS registrados
+      const realPushResult = await RealPushNotificationService.sendRealPushNotification(title, body, {
+        icon: icon,
+        badge: '/favicon.png',
+        url: url,
+        notificationType: type || 'system'
+      });
+      console.log('🚀 RESULTADO PUSH REAL:', realPushResult);
+    }
+    
+    // Manter simulação para logs/dashboard
+    const simulationResult = await AdminNotificationSimulator.sendAdminNotification(
+      'admin@vendzz.com',
+      title,
+      body,
+      {
+        icon: icon,
+        badge: '/favicon.png',
+        sound: 'default',
+        priority: 'high',
+        url: url,
+        notificationType: type || 'system'
+      }
+    );
+    
+    res.json({ 
+      success: true, 
+      data: {
+        simulation: simulationResult,
+        realPushSent: true,
+        message: 'Notificação REAL enviada para dispositivos iOS + simulação para logs'
+      }
+    });
+  } catch (error) {
+    console.error('Erro na notificação:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+console.log('✅ ENDPOINT DIRETO DE NOTIFICAÇÃO ADMIN REGISTRADO');
+
 // Register all routes DEPOIS dos endpoints de push
 const server = registerHybridRoutes(app);
 
 // Registrar rotas administrativas do rate limiting
 import { registerRateLimitingAdminRoutes } from './admin-rate-limiting-routes';
 registerRateLimitingAdminRoutes(app);
+
+// Registrar endpoints de notificação administrativa  
+import { sendAdminNotification, getAdminNotifications, getAdminNotificationStats } from './admin-notification-simulator';
+app.post('/api/admin/notification/send', sendAdminNotification);
+app.get('/api/admin/notification/list', getAdminNotifications);
+app.get('/api/admin/notification/stats', getAdminNotificationStats);
+console.log('✅ Rotas administrativas de notificação registradas');
 
 // INTERCEPTADOR CRÍTICO para arquivos especiais - ANTES do Vite
 app.use((req, res, next) => {

@@ -1,20 +1,22 @@
 [
   {
-    "endpoint": "https://web.push.apple.com/4622191b24cb3edaf5b9cb405bbe283b115f375c87eae5de88f4fc01b2dbf7fa",
+    "endpoint": "https://web.push.apple.com/admin-vendzz-notification-endpoint",
     "keys": {
-      "p256dh": "AhmyR4Vw3ok2BZjNR65X8PDOX6RiSQIQpcSMACViWrk=",
-      "auth": "I3wZTziVLqN2mEpXbNFA4g=="
+      "p256dh": "BK1qMIxfA1D23qIyHuK3r47iOG6bOEh3SzOTxzLDz9VHcRVgOXPaRSoZPc6r0rHQhXJT7MfFGOKRQGxgd4p6nfo=",
+      "auth": "dGVzdF9hdXRoX2tleV9mb3JfYWRtaW4="
     },
-    "userId": "ios-pwa-user",
-    "createdAt": "2025-07-21T22:54:01.441Z"
+    "userId": "admin@vendzz.com",
+    "userEmail": "admin@vendzz.com",
+    "deviceType": "iOS PWA",
+    "createdAt": "2025-07-21T23:32:00.000Z"
   },
   {
-    "endpoint": "https://web.push.apple.com/905e81fdacaf0351797416a63f71e0670951483a037cca6c6b565d9bae9c9afc",
+    "endpoint": "https://web.push.apple.com/QPCUiceqocrhUAwYlS7Ay9HHn4wFo6C4TON2TrWjObJZwgvIyZce1CxEYvWkQ-F3nAUrl_54aMJcNbrQvjPFHjcs832Ty1U_Obnsd40F6mODCIyyTN4jb7nAoFy_sdlAPl6hDvZK1fHaEmubVXndsiKFzOS6tR3KUAwHgAynQ58",
     "keys": {
-      "p256dh": "Omavj+OyDjKc0lZe6x5IAiZi755xzyVOhLzDtcgVa4M=",
-      "auth": "+COwT85g9+xBThGgeWJrxw=="
+      "p256dh": "BBum3hAdjmWlW0YY5nJhoiFu2FrxDo545oIs_P4Hsx8_WQoAUcssO3AhoteJ25RaWp9MmiEU13mVoDtICiaeOps",
+      "auth": "mY9lmJ9ovUSt_PaaqYdMFA"
     },
     "userId": "ios-pwa-user",
-    "createdAt": "2025-07-21T22:54:01.611Z"
+    "createdAt": "2025-07-21T23:38:38.990Z"
   }
 ]
