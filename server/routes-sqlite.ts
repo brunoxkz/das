@@ -15668,7 +15668,45 @@ app.get("/api/whatsapp-extension/pending", verifyJWT, async (req: any, res: Resp
     });
   });
 
-  // Subscribe to push notifications
+  // Subscribe to push notifications (public endpoint without JWT)
+  app.post('/api/push-subscribe-public', async (req: any, res) => {
+    try {
+      const { endpoint, keys, userId, userAgent } = req.body;
+      
+      console.log('📱 [PUBLIC] Registrando subscription sem auth:', { userId, hasEndpoint: !!endpoint });
+      
+      if (!endpoint || !keys?.p256dh || !keys?.auth) {
+        return res.status(400).json({ 
+          success: false, 
+          message: 'Dados de subscription inválidos' 
+        });
+      }
+
+      const subscription = { endpoint, keys };
+      const success = await SimplePushNotificationSystem.saveUserSubscription(userId || 'anonymous', subscription);
+      
+      if (success) {
+        res.json({ 
+          success: true, 
+          message: 'Subscription registrada com sucesso (público)',
+          userId: userId || 'anonymous'
+        });
+      } else {
+        res.status(500).json({
+          success: false,
+          message: 'Erro ao salvar subscription'
+        });
+      }
+    } catch (error) {
+      console.error('❌ Erro no endpoint público:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Erro interno do servidor'
+      });
+    }
+  });
+
+  // Subscribe to push notifications (with JWT)
   app.post('/api/push-subscribe', verifyJWT, async (req: any, res) => {
     try {
       const { endpoint, keys } = req.body;

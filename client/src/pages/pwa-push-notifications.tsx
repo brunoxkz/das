@@ -167,8 +167,34 @@ export default function VendzzPWANotifications({}: VendzzPWANotificationsProps) 
       });
 
       // Enviar subscription para o servidor
-      const token = localStorage.getItem('token');
-      console.log('🔐 Token encontrado:', !!token);
+      let token = localStorage.getItem('token');
+      console.log('🔐 Token inicial encontrado:', !!token);
+
+      // Se não há token, tentar fazer login automático como guest user
+      if (!token) {
+        console.log('🔐 Sem token - tentando login automático...');
+        try {
+          const loginResponse = await fetch('/api/auth/guest-token', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              deviceId: browserId,
+              userAgent: navigator.userAgent
+            })
+          });
+          
+          if (loginResponse.ok) {
+            const loginData = await loginResponse.json();
+            token = loginData.token;
+            if (token) {
+              localStorage.setItem('token', token);
+              console.log('🔐 Token guest criado com sucesso');
+            }
+          }
+        } catch (loginError) {
+          console.warn('⚠️ Não foi possível criar token guest, continuando sem autenticação');
+        }
+      }
 
       const subscriptionData = {
         endpoint: subscription.endpoint,
@@ -183,14 +209,15 @@ export default function VendzzPWANotifications({}: VendzzPWANotificationsProps) 
 
       console.log('📤 Enviando subscription para servidor...', {
         endpoint: subscriptionData.endpoint.substring(0, 50) + '...',
-        userId: subscriptionData.userId
+        userId: subscriptionData.userId,
+        hasToken: !!token
       });
 
       const response = await fetch('/api/push-subscribe', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': token ? `Bearer ${token}` : ''
+          ...(token ? { 'Authorization': `Bearer ${token}` } : {})
         },
         body: JSON.stringify({
           endpoint: subscriptionData.endpoint,
@@ -214,6 +241,35 @@ export default function VendzzPWANotifications({}: VendzzPWANotificationsProps) 
       } else {
         const errorText = await response.text();
         console.error('❌ Erro do servidor:', errorText);
+        
+        // Se erro 401, tentar sem autenticação
+        if (response.status === 401) {
+          console.log('🔄 Tentando registrar subscription sem autenticação...');
+          
+          const retryResponse = await fetch('/api/push-subscribe-public', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              endpoint: subscriptionData.endpoint,
+              keys: subscriptionData.keys,
+              userId: subscriptionData.userId,
+              userAgent: subscriptionData.userAgent
+            })
+          });
+          
+          if (retryResponse.ok) {
+            const retryData = await retryResponse.json();
+            console.log('✅ Subscription registrada sem auth:', retryData);
+            
+            setIsSubscribed(true);
+            toast({
+              title: "✅ Notificações ativadas!",
+              description: "Você receberá notificações push do Vendzz",
+            });
+            return;
+          }
+        }
+        
         throw new Error(`Erro ao registrar subscription: ${response.status} - ${errorText}`);
       }
 
@@ -246,7 +302,7 @@ export default function VendzzPWANotifications({}: VendzzPWANotificationsProps) 
             Notificações PWA Vendzz
           </h1>
           <p className="text-gray-600 mt-2">
-            Sistema simplificado baseado no GitHub umpordez/browser-notification
+            Sistema PWA para notificações na tela de bloqueio - Funciona com app fechado
           </p>
         </div>
 
