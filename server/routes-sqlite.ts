@@ -83,9 +83,9 @@ import webpush from 'web-push';
 // JWT Secret para validação de tokens
 const JWT_SECRET = process.env.JWT_SECRET || 'vendzz-jwt-secret-key-2024';
 
-// VAPID Keys para Push Notifications
-const VAPID_PUBLIC_KEY = 'BKVRmJs10mOKMM_5r5ulr2lwK7874bDfO2xKcJstwEKo2zH-IovON2BG8_847MbQnzo_75QqRAEkjC_BwzwiccQ';
-const VAPID_PRIVATE_KEY = '4DZUNksGlk8MoUKEt5qv6YqjrzTIDLLXgd7QK_xdEOU';
+// VAPID Keys para Push Notifications - SINCRONIZADAS COM A API
+const VAPID_PUBLIC_KEY = 'BC9uiP1uG8jN942_SoN4ThXQ5X8TotmwYKiLbfXO8HO35yQTvTE9Hn7S9Yccrr5rULgnvjQ0Bl4IdYFaZXQ1L48';
+const VAPID_PRIVATE_KEY = 'iJXO-FMBB4HhPLpqFyQHfnBP7rEwqNpKVVvRWRLLCjo';
 
 // Configure VAPID details for web-push
 webpush.setVapidDetails(
