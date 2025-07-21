@@ -126,7 +126,27 @@ console.log('✅ PUSH NOTIFICATIONS COMPLETO REATIVADO (basic + real-time)');
 // Register all routes DEPOIS dos endpoints de push
 const server = registerHybridRoutes(app);
 
-// SERVICE WORKER INTERCEPTOR REATIVADO - apenas real-time push desabilitado
+// SERVICE WORKER INTERCEPTOR CRÍTICO - MIME type correto para iOS PWA
+app.get('/sw.js', (req: any, res: any) => {
+  res.setHeader('Content-Type', 'application/javascript');
+  res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+  res.setHeader('Service-Worker-Allowed', '/');
+  res.sendFile(path.join(process.cwd(), 'public', 'sw.js'));
+});
+
+app.get('/sw-simple.js', (req: any, res: any) => {
+  res.setHeader('Content-Type', 'application/javascript');
+  res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+  res.setHeader('Service-Worker-Allowed', '/');
+  res.sendFile(path.join(process.cwd(), 'public', 'sw-simple.js'));
+});
+
+app.get('/vendzz-notification-sw.js', (req: any, res: any) => {
+  res.setHeader('Content-Type', 'application/javascript');
+  res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+  res.setHeader('Service-Worker-Allowed', '/');
+  res.sendFile(path.join(process.cwd(), 'public', 'vendzz-notification-sw.js'));
+});
 
 // Setup Vite middleware for dev and production APÓS todas as rotas
 setupVite(app, server);
