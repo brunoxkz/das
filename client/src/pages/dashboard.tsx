@@ -26,6 +26,7 @@ import {
 } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { cn } from '@/lib/utils';
+// Removido import que estava causando problema
 
 interface UserData {
   user?: {
@@ -65,6 +66,16 @@ interface DashboardStats {
   };
 }
 
+interface Quiz {
+  id: string;
+  title: string;
+  description?: string;
+  isPublished: boolean;
+  views?: number;
+  responses?: number;
+  createdAt?: string;
+}
+
 export default function Dashboard() {
   const [forumMode, setForumMode] = useState(false);
   const [showTutorial, setShowTutorial] = useState(false);
@@ -82,6 +93,11 @@ export default function Dashboard() {
 
   const { data: stats, isLoading: statsLoading } = useQuery<DashboardStats>({
     queryKey: ['/api/dashboard/stats'],
+    retry: false,
+  });
+
+  const { data: quizzes, isLoading: quizzesLoading } = useQuery<Quiz[]>({
+    queryKey: ['/api/quizzes'],
     retry: false,
   });
 
@@ -533,6 +549,102 @@ export default function Dashboard() {
                     </span>
                     <Badge>{stats?.campaignStats?.whatsapp || 0} ativas</Badge>
                   </div>
+                </CardContent>
+              </Card>
+            </div>
+          )}
+
+          {/* Seus Quizzes Section */}
+          {!forumMode && (
+            <div className="mb-8">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <BookOpen className="w-5 h-5" />
+                    Seus Quizzes
+                  </CardTitle>
+                  <CardDescription>Gerencie e monitore seus quizzes</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  {quizzesLoading ? (
+                    <div className="space-y-4">
+                      {Array.from({ length: 3 }).map((_, i) => (
+                        <div key={i} className="animate-pulse">
+                          <div className="h-6 bg-gray-200 rounded w-3/4 mb-2"></div>
+                          <div className="h-4 bg-gray-200 rounded w-1/2 mb-4"></div>
+                          <div className="flex gap-2">
+                            <div className="h-8 bg-gray-200 rounded w-20"></div>
+                            <div className="h-8 bg-gray-200 rounded w-20"></div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : !quizzes || quizzes.length === 0 ? (
+                    <div className="text-center py-8">
+                      <BookOpen className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                      <p className="text-gray-500 mb-4">Nenhum quiz encontrado</p>
+                      <Link href="/quiz-builder">
+                        <Button className="bg-green-600 hover:bg-green-700">
+                          <PlusCircle className="w-4 h-4 mr-2" />
+                          Criar Primeiro Quiz
+                        </Button>
+                      </Link>
+                    </div>
+                  ) : (
+                    <div className="space-y-4 max-h-96 overflow-y-auto">
+                      {quizzes.slice(0, 10).map((quiz) => (
+                        <div key={quiz.id} className="border rounded-lg p-4 hover:bg-gray-50 transition-colors">
+                          <div className="flex justify-between items-start">
+                            <div className="flex-1">
+                              <h3 className="font-semibold text-gray-900 mb-1">{quiz.title}</h3>
+                              {quiz.description && (
+                                <p className="text-sm text-gray-600 mb-2">{quiz.description}</p>
+                              )}
+                              <div className="flex items-center gap-4 text-sm text-gray-500">
+                                <div className="flex items-center gap-1">
+                                  <Eye className="w-4 h-4" />
+                                  {quiz.views || 0} visualizações
+                                </div>
+                                <div className="flex items-center gap-1">
+                                  <Users className="w-4 h-4" />
+                                  {quiz.responses || 0} respostas
+                                </div>
+                                <Badge variant={quiz.isPublished ? "default" : "secondary"}>
+                                  {quiz.isPublished ? "Publicado" : "Rascunho"}
+                                </Badge>
+                              </div>
+                            </div>
+                            <div className="flex gap-2 ml-4">
+                              <Link href={`/quiz-builder?id=${quiz.id}`}>
+                                <Button size="sm" variant="outline">
+                                  <Edit className="w-4 h-4 mr-1" />
+                                  Editar
+                                </Button>
+                              </Link>
+                              {quiz.isPublished && (
+                                <Link href={`/quiz/${quiz.id}`}>
+                                  <Button size="sm" variant="outline">
+                                    <ExternalLink className="w-4 h-4 mr-1" />
+                                    Ver
+                                  </Button>
+                                </Link>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                      {quizzes.length > 10 && (
+                        <div className="text-center py-4">
+                          <Link href="/quiz-list">
+                            <Button variant="outline">
+                              Ver todos os {quizzes.length} quizzes
+                              <ArrowRight className="w-4 h-4 ml-2" />
+                            </Button>
+                          </Link>
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             </div>

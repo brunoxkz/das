@@ -224,3 +224,6 @@ export function useOptimizedQuizList(quizzes: Quiz[]) {
     stats
   };
 }
+
+// Export default para compatibilidade
+export default MemoryOptimizedQuizList;
