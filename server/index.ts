@@ -46,19 +46,67 @@ import UltraScaleProcessor from "./ultra-scale-processor";
 // import { quizCacheOptimizer } from "./quiz-cache-optimizer"; // DESABILITADO
 import { unifiedSystem } from "./unified-scale-system";
 import { userSimulator } from "./user-simulator";
+// 🔒 IMPORTAÇÃO DO NOVO SISTEMA DE SEGURANÇA
+import {
+  generalRateLimit,
+  quizSubmissionRateLimit,
+  pushNotificationRateLimit,
+  authRateLimit,
+  assetRateLimit,
+  sanitizeInput,
+  validateRequest,
+  validateHeaders,
+  securityHeaders,
+  checkBlockedIP,
+  detectSQLInjection
+} from "./security-middleware";
 
 const app = express();
 
 // 🔒 CONFIGURAÇÃO DE PROXY PARA RATE LIMITING
 app.set('trust proxy', 1); // Confia no primeiro proxy (necessário para rate limiting no Replit)
 
-// Configurações de segurança compatíveis com Replit - TOTALMENTE DESABILITADO
-// app.use(helmet({
-//   contentSecurityPolicy: false, // Desabilita CSP para permitir Stripe.js
-//   crossOriginEmbedderPolicy: false,
-//   crossOriginResourcePolicy: false, // Fix para ERR_BLOCKED_BY_RESPONSE
-//   crossOriginOpenerPolicy: false
-// }));
+// 🔒 APLICANDO CAMADAS DE SEGURANÇA CRÍTICAS
+console.log('🔒 Inicializando Sistema de Segurança de Produção...');
+
+// 1. Headers de segurança otimizados para Replit
+app.use(securityHeaders);
+
+// 2. Verificação de IPs bloqueados
+app.use(checkBlockedIP);
+
+// 3. Validação de headers maliciosos
+app.use(validateHeaders);
+
+// 4. Rate limiting inteligente por tipo de requisição
+app.use((req, res, next) => {
+  // Assets get special treatment with higher limits
+  if (req.path.includes('/src/') || 
+      req.path.includes('/@fs/') || 
+      req.path.includes('/node_modules/') ||
+      req.path.includes('.js') || 
+      req.path.includes('.css') || 
+      req.path.includes('.tsx') || 
+      req.path.includes('.ts') ||
+      req.path === '/sw.js' ||
+      req.path === '/manifest.json' ||
+      req.path === '/favicon.ico') {
+    return assetRateLimit(req, res, next);
+  }
+  // All other requests use general rate limiting
+  return generalRateLimit(req, res, next);
+});
+
+// 5. Sanitização de inputs (SQL injection protection)
+app.use(sanitizeInput);
+
+// 6. Detecção avançada de SQL injection
+app.use(detectSQLInjection);
+
+// 7. Validação de estrutura e tamanho da requisição
+app.use(validateRequest);
+
+console.log('✅ Sistema de Segurança de Produção ativado!');
 
 // Compressão gzip/deflate para reduzir tamanho das respostas
 app.use(compression({
@@ -350,12 +398,12 @@ app.get('/api/push-simple/vapid', (req: any, res: any) => {
   getVapidPublicKey(req, res);
 });
 
-app.post('/api/push-simple/subscribe', (req: any, res: any) => {
+app.post('/api/push-simple/subscribe', pushNotificationRateLimit, (req: any, res: any) => {
   console.log('🔧 Endpoint /api/push-simple/subscribe chamado diretamente');
   subscribeToPush(req, res);
 });
 
-app.post('/api/push-simple/send', (req: any, res: any) => {
+app.post('/api/push-simple/send', pushNotificationRateLimit, (req: any, res: any) => {
   console.log('🔧 Endpoint /api/push-simple/send chamado diretamente');
   sendPushToAll(req, res);
 });

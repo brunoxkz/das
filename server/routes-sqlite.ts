@@ -8,6 +8,12 @@ import { z } from "zod";
 import { verifyJWT } from "./auth-sqlite";
 import { creditProtection } from "./credit-protection";
 import { db } from "./db-sqlite";
+// 🔒 IMPORTAÇÃO DOS RATE LIMITS ESPECÍFICOS
+import {
+  quizSubmissionRateLimit,
+  pushNotificationRateLimit,
+  authRateLimit
+} from "./security-middleware";
 import Database from 'better-sqlite3';
 
 // Instância do banco SQLite para queries diretas
@@ -1600,7 +1606,7 @@ export function registerSQLiteRoutes(app: Express): Server {
   });
 
   // 🔐 ENDPOINT PARA ALTERAR SENHA
-  app.post("/api/auth/change-password", verifyJWT, async (req: any, res) => {
+  app.post("/api/auth/change-password", authRateLimit, verifyJWT, async (req: any, res) => {
     try {
       const { currentPassword, newPassword } = req.body;
       const userId = req.user.id;
@@ -1643,7 +1649,7 @@ export function registerSQLiteRoutes(app: Express): Server {
   });
 
   // 🔐 ENDPOINT PARA HABILITAR 2FA
-  app.post("/api/auth/enable-2fa", verifyJWT, async (req: any, res) => {
+  app.post("/api/auth/enable-2fa", authRateLimit, verifyJWT, async (req: any, res) => {
     try {
       const userId = req.user.id;
 
@@ -1678,7 +1684,7 @@ export function registerSQLiteRoutes(app: Express): Server {
   });
 
   // 🔐 ENDPOINT PARA VERIFICAR E ATIVAR 2FA
-  app.post("/api/auth/verify-2fa", verifyJWT, async (req: any, res) => {
+  app.post("/api/auth/verify-2fa", authRateLimit, verifyJWT, async (req: any, res) => {
     try {
       const { secret, token } = req.body;
       const userId = req.user.id;
@@ -1713,7 +1719,7 @@ export function registerSQLiteRoutes(app: Express): Server {
   });
 
   // 🔐 ENDPOINT PARA DESABILITAR 2FA
-  app.post("/api/auth/disable-2fa", verifyJWT, async (req: any, res) => {
+  app.post("/api/auth/disable-2fa", authRateLimit, verifyJWT, async (req: any, res) => {
     try {
       const userId = req.user.id;
 
@@ -2682,7 +2688,7 @@ export function registerSQLiteRoutes(app: Express): Server {
   });
 
   // JWT REFRESH ENDPOINT - CORREÇÃO CRÍTICA
-  app.post('/api/auth/refresh', async (req, res) => {
+  app.post('/api/auth/refresh', authRateLimit, async (req, res) => {
     try {
       const { refreshToken } = req.body;
 
@@ -4066,7 +4072,8 @@ export function registerSQLiteRoutes(app: Express): Server {
 
   // Submit final quiz response (ULTRA-OTIMIZADO para alto volume)
   app.post("/api/quizzes/:id/submit", 
-    // Rate limiting inteligente - TEMPORARIAMENTE DESATIVADO
+    // 🔒 RATE LIMITING ESPECÍFICO PARA QUIZ SUBMISSIONS (ATIVADO PARA PRODUÇÃO)
+    quizSubmissionRateLimit,
     async (req, res, next) => {
       const startTime = Date.now();
       

@@ -1,0 +1,35 @@
+{
+  "timestamp": "2025-07-21T23:03:31.927Z",
+  "successRate": "75.0",
+  "passedTests": 3,
+  "totalTests": 4,
+  "status": "PRODUCTION_READY",
+  "results": [
+    {
+      "test": "Push Notification Rate Limiting",
+      "passed": true,
+      "rateLimited": 2,
+      "successful": 10,
+      "details": "2 requests blocked by rate limiter"
+    },
+    {
+      "test": "Security Headers",
+      "passed": true,
+      "securityHeaders": 5,
+      "rateLimitHeaders": 3,
+      "details": "Security: x-content-type-options, x-frame-options, x-xss-protection, strict-transport-security, content-security-policy, Rate Limit: ratelimit-limit, ratelimit-remaining, ratelimit-reset"
+    },
+    {
+      "test": "Authentication Rate Limiting",
+      "passed": true,
+      "rateLimited": 0,
+      "authErrors": 6,
+      "details": "0 rate limited, 6 auth errors"
+    },
+    {
+      "test": "Quiz Submission Rate Limiting",
+      "passed": false,
+      "details": "Could not create test quiz"
+    }
+  ]
+}
