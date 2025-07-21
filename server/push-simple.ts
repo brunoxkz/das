@@ -47,16 +47,35 @@ class SimplePushService {
     await fs.writeFile(SUBSCRIPTIONS_FILE, JSON.stringify(subscriptions, null, 2));
   }
 
-  // Adicionar nova subscription
+  // Adicionar nova subscription com debug completo para iOS
   async addSubscription(subscription: any, userId?: string): Promise<boolean> {
     try {
+      console.log('🔧 RECEBENDO SUBSCRIPTION iOS:', {
+        endpoint: subscription.endpoint?.substring(0, 50) + '...',
+        keys: subscription.keys ? Object.keys(subscription.keys) : 'sem keys',
+        userId: userId || 'anonymous',
+        fullSubscription: JSON.stringify(subscription, null, 2)
+      });
+
       const subscriptions = await this.loadSubscriptions();
       
       // Verificar se já existe
       const exists = subscriptions.find(sub => sub.endpoint === subscription.endpoint);
       if (exists) {
-        console.log('📱 Subscription já existe');
+        console.log('📱 Subscription já existe para endpoint:', subscription.endpoint?.substring(0, 30) + '...');
         return true;
+      }
+
+      // Validar dados obrigatórios
+      if (!subscription.endpoint || !subscription.keys || !subscription.keys.p256dh || !subscription.keys.auth) {
+        console.error('❌ SUBSCRIPTION INVÁLIDA - dados faltando:', {
+          hasEndpoint: !!subscription.endpoint,
+          hasKeys: !!subscription.keys,
+          hasP256dh: !!(subscription.keys && subscription.keys.p256dh),
+          hasAuth: !!(subscription.keys && subscription.keys.auth),
+          receivedData: subscription
+        });
+        return false;
       }
 
       // Adicionar nova
@@ -70,10 +89,15 @@ class SimplePushService {
       subscriptions.push(newSub);
       await this.saveSubscriptions(subscriptions);
       
-      console.log('✅ Nova subscription salva:', subscription.endpoint.substring(0, 50) + '...');
+      console.log('✅ SUBSCRIPTION SALVA COM SUCESSO! 🎉');
+      console.log('📱 Endpoint:', subscription.endpoint.substring(0, 50) + '...');
+      console.log('🔑 Keys p256dh:', subscription.keys.p256dh.substring(0, 20) + '...');
+      console.log('🔑 Keys auth:', subscription.keys.auth.substring(0, 20) + '...');
+      console.log('📊 Total subscriptions ativas:', subscriptions.length);
+      
       return true;
     } catch (error) {
-      console.error('❌ Erro ao salvar subscription:', error);
+      console.error('❌ ERRO CRÍTICO ao salvar subscription:', error);
       return false;
     }
   }
@@ -156,22 +180,28 @@ export const getVapidPublicKey = async (req: Request, res: Response) => {
 
 export const subscribeToPush = async (req: Request, res: Response) => {
   try {
+    console.log('🔧 Endpoint /push/subscribe chamado');
+    console.log('📨 Body recebido:', JSON.stringify(req.body, null, 2));
+    
     const { subscription } = req.body;
-    const userId = (req as any).user?.id || 'anonymous';
+    const userId = (req as any).user?.id || 'ios-pwa-user';
 
     if (!subscription || !subscription.endpoint) {
+      console.error('❌ Subscription inválida:', { subscription });
       return res.status(400).json({ error: 'Subscription inválida' });
     }
 
     const success = await pushService.addSubscription(subscription, userId);
     
     if (success) {
+      console.log('✅ Subscription registrada com sucesso no servidor!');
       res.json({ success: true, message: 'Subscription salva com sucesso' });
     } else {
+      console.error('❌ Falha ao registrar subscription no servidor');
       res.status(500).json({ error: 'Erro ao salvar subscription' });
     }
   } catch (error) {
-    console.error('❌ Erro no endpoint subscribe:', error);
+    console.error('❌ Erro crítico no endpoint subscribe:', error);
     res.status(500).json({ error: 'Erro interno' });
   }
 };

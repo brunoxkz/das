@@ -26021,26 +26021,10 @@ export function registerCheckoutRoutes(app: Express) {
   console.log('✅ ENDPOINTS PWA USUARIOS ADICIONADOS COM SUCESSO');
 
   // ============================================================================
-  // PUSH NOTIFICATIONS SIMPLES - iOS PWA (endpoints com prefixo /push/)
+  // PUSH NOTIFICATIONS REMOVIDOS DESTA LOCALIZAÇÃO - REGISTRADOS NO INDEX.TS
   // ============================================================================
-
-  // Obter VAPID public key
-  app.get('/push/vapid', getVapidPublicKey);
-  app.post('/push/vapid', getVapidPublicKey);
-
-  // Fazer subscription para push notifications
-  app.get('/push/subscribe', subscribeToPush);
-  app.post('/push/subscribe', subscribeToPush);
-
-  // Enviar push notification para todos (admin only)
-  app.get('/push/send', sendPushToAll);
-  app.post('/push/send', sendPushToAll);
-
-  // Obter estatísticas de push notifications
-  app.get('/push/stats', getPushStats);
-  app.post('/push/stats', getPushStats);
-
-  console.log('✅ PUSH NOTIFICATIONS ENDPOINTS ADICIONADOS COM PREFIXO /push/ E MÉTODOS GET/POST');
+  
+  console.log('ℹ️  PUSH NOTIFICATIONS ENDPOINTS já registrados no index.ts antes do Vite');
 
   // Inicializar sistema automático de regressão de planos
   console.log('🚀 INICIANDO PLAN MANAGER...');

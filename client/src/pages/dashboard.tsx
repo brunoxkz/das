@@ -587,7 +587,7 @@ export default function Dashboard() {
                   try {
                     if (Notification.permission === 'granted') {
                       console.log('✅ Permissão já concedida, enviando push...');
-                      const response = await fetch('/push/send', {
+                      const response = await fetch('/api/push-simple/send', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ 
@@ -615,7 +615,7 @@ export default function Dashboard() {
                         console.log('🔧 Service Worker registrado:', registration);
                         
                         // Obter VAPID key
-                        const vapidResponse = await fetch('/push/vapid', { method: 'POST' });
+                        const vapidResponse = await fetch('/api/push-simple/vapid');
                         const { publicKey: vapidPublicKey } = await vapidResponse.json();
                         console.log('🔑 VAPID key obtida:', vapidPublicKey?.substring(0, 20) + '...');
                         
@@ -625,12 +625,14 @@ export default function Dashboard() {
                           applicationServerKey: vapidPublicKey
                         });
                         console.log('📝 Subscription criada:', subscription);
+                        console.log('📝 Endpoint:', subscription.endpoint);
+                        console.log('📝 Keys:', subscription.toJSON().keys);
                         
                         // Enviar subscription para servidor
-                        const subscribeResponse = await fetch('/push/subscribe', {
+                        const subscribeResponse = await fetch('/api/push-simple/subscribe', {
                           method: 'POST',
                           headers: { 'Content-Type': 'application/json' },
-                          body: JSON.stringify({ subscription })
+                          body: JSON.stringify({ subscription: subscription.toJSON() })
                         });
                         const subscribeResult = await subscribeResponse.json();
                         console.log('💾 Subscription salva:', subscribeResult);
