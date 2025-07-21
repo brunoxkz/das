@@ -54,10 +54,11 @@ export default function Dashboard() {
     isSupported: false,
     hasPermission: false,
     isSubscribed: false,
-    showAutoPrompt: false
+    showAutoPrompt: false,
+    showIOSPrompt: false
   });
 
-  // Configuração AUTOMÁTICA de push notifications ao entrar no dashboard
+  // Configuração AUTOMÁTICA de push notifications com detecção iOS
   useEffect(() => {
     // Só executar se usuário estiver autenticado
     if (!isAuthenticated || !user?.id) {
@@ -66,6 +67,10 @@ export default function Dashboard() {
     }
 
     let hasExecuted = false;
+    
+    // Detectar se é iOS
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || 
+                  (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
     
     // Registrar service worker e subscription
     const registerPushService = async () => {
@@ -107,7 +112,8 @@ export default function Dashboard() {
           setPushNotificationState(prev => ({
             ...prev,
             hasPermission: true,
-            isSubscribed: true
+            isSubscribed: true,
+            showIOSPrompt: false
           }));
           return true;
         } else {
@@ -119,13 +125,14 @@ export default function Dashboard() {
       }
     };
     
-    const setupAutomaticPushPermission = async () => {
+    const setupPushPermission = async () => {
       // Evitar execuções múltiplas
       if (hasExecuted) return;
       hasExecuted = true;
       
       try {
-        console.log('🔔 Iniciando configuração automática de push notifications para usuário:', user.id);
+        console.log('🔔 Iniciando configuração de push notifications para usuário:', user.id);
+        console.log('📱 Dispositivo iOS detectado:', isIOS);
         
         // Verificar se o navegador suporta push notifications
         if (!('Notification' in window) || !('serviceWorker' in navigator)) {
@@ -148,11 +155,22 @@ export default function Dashboard() {
           return;
         }
         
-        // Solicitar permissão automaticamente se ainda não foi solicitada
+        // Para iOS: mostrar prompt visual em vez de solicitar automaticamente
+        if (isIOS && currentPermission === 'default') {
+          console.log('📱 iOS detectado - mostrando prompt visual para o usuário');
+          setPushNotificationState(prev => ({
+            ...prev,
+            isIOS: true,
+            showIOSPrompt: true,
+            isSupported: true
+          }));
+          return;
+        }
+        
+        // Para outros dispositivos: solicitar automaticamente
         if (currentPermission === 'default') {
           console.log('🔔 Solicitando permissão push automaticamente...');
           
-          // FORÇAR popup de permissão
           const permission = await Notification.requestPermission();
           console.log(`📱 Resultado da solicitação: ${permission}`);
           
@@ -171,19 +189,71 @@ export default function Dashboard() {
           }
         }
       } catch (error) {
-        console.error('❌ Erro na configuração automática de push:', error);
+        console.error('❌ Erro na configuração de push:', error);
       }
     };
     
     // Executar com delay apenas após autenticação
-    console.log('⏰ Configurando timer para solicitação automática de push notifications...');
-    const timer = setTimeout(setupAutomaticPushPermission, 3000);
+    console.log('⏰ Configurando timer para configuração de push notifications...');
+    const timer = setTimeout(setupPushPermission, 2000);
     
     return () => {
       hasExecuted = true;
       clearTimeout(timer);
     };
-  }, [isAuthenticated, user?.id]); // Dependências corretas
+  }, [isAuthenticated, user?.id]);
+
+  // Função para ativar push notifications no iOS (chamada por clique do usuário)
+  const handleIOSPushActivation = async () => {
+    try {
+      console.log('🔔 Usuário iOS solicitou ativação de push notifications');
+      
+      const permission = await Notification.requestPermission();
+      console.log(`📱 Resultado da solicitação iOS: ${permission}`);
+      
+      if (permission === 'granted') {
+        console.log('✅ Permissão concedida no iOS! Registrando service worker...');
+        
+        // Registrar service worker
+        const registration = await navigator.serviceWorker.register('/sw.js');
+        const vapidResponse = await fetch('/api/push-simple/vapid');
+        const { publicKey } = await vapidResponse.json();
+        
+        const subscription = await registration.pushManager.subscribe({
+          userVisibleOnly: true,
+          applicationServerKey: publicKey
+        });
+        
+        const subscribeResponse = await fetch('/api/push-simple/subscribe', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(subscription)
+        });
+        
+        if (subscribeResponse.ok) {
+          setPushNotificationState(prev => ({
+            ...prev,
+            hasPermission: true,
+            isSubscribed: true,
+            showIOSPrompt: false
+          }));
+          
+          toast({
+            title: "🔔 Notificações Ativadas no iOS",
+            description: "Você receberá notificações na tela de bloqueio do iPhone",
+          });
+        }
+      } else {
+        console.log('❌ Permissão negada pelo usuário iOS');
+        setPushNotificationState(prev => ({
+          ...prev,
+          showIOSPrompt: false
+        }));
+      }
+    } catch (error) {
+      console.error('❌ Erro na ativação iOS:', error);
+    }
+  };
   
   // Sistema de push limpo e funcional para mobile
 
@@ -523,21 +593,59 @@ export default function Dashboard() {
         </div>
       )}
 
-      {/* Banner de Push Notifications iOS PWA */}
-      {pushNotificationState.isIOS && pushNotificationState.isPWA && pushNotificationState.hasPermission && (
-        <div className="bg-gradient-to-r from-blue-600 to-blue-700 text-white p-3 shadow-md">
+      {/* Prompt iOS para Push Notifications */}
+      {pushNotificationState.showIOSPrompt && (
+        <div className="bg-gradient-to-r from-blue-500 to-purple-600 text-white p-4 shadow-lg">
           <div className="max-w-7xl mx-auto flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <Bell className="w-5 h-5 animate-bounce" />
+            <div className="flex items-center gap-4">
+              <div className="bg-white/20 p-3 rounded-full">
+                <Bell className="w-6 h-6 animate-bounce" />
+              </div>
               <div>
-                <span className="font-semibold">📱 Push Notifications Ativas</span>
-                <p className="text-sm opacity-90">
-                  Você receberá notificações na tela de bloqueio mesmo fora do app
+                <h3 className="font-bold text-lg">📱 Ativar Notificações no iPhone</h3>
+                <p className="text-sm opacity-90 mt-1">
+                  Receba notificações na tela de bloqueio quando alguém completar seus quizzes
                 </p>
               </div>
             </div>
-            <div className="text-sm bg-white/20 px-3 py-1 rounded-full">
-              iOS PWA
+            <div className="flex items-center gap-3">
+              <Button
+                onClick={handleIOSPushActivation}
+                className="bg-white text-blue-600 hover:bg-blue-50 font-semibold px-6 py-2"
+              >
+                <Bell className="w-4 h-4 mr-2" />
+                Ativar Agora
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setPushNotificationState(prev => ({ ...prev, showIOSPrompt: false }))}
+                className="text-white hover:bg-white/20"
+              >
+                <X className="w-4 h-4" />
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Banner de Push Notifications iOS Ativas */}
+      {pushNotificationState.isIOS && pushNotificationState.hasPermission && pushNotificationState.isSubscribed && (
+        <div className="bg-gradient-to-r from-green-500 to-green-600 text-white p-3 shadow-md">
+          <div className="max-w-7xl mx-auto flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="bg-white/20 p-2 rounded-full">
+                <Bell className="w-4 h-4" />
+              </div>
+              <div>
+                <span className="font-semibold">✅ Notificações Ativadas no iPhone</span>
+                <p className="text-xs opacity-90">
+                  Você receberá notificações na tela de bloqueio quando houver novos quiz completions
+                </p>
+              </div>
+            </div>
+            <div className="text-xs bg-white/20 px-2 py-1 rounded-full">
+              iOS Safari
             </div>
           </div>
         </div>
