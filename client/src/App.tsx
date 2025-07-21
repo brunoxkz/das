@@ -22,6 +22,7 @@ import AdminNotifications from "@/pages/admin-notifications";
 import AdminPushNotifications from "@/pages/admin-push-notifications";
 import PWANotificationsiOSFixed from "@/pages/pwa-push-notifications-ios-fixed";
 import TesteIntegracaoPush from "@/pages/teste-integracao-push";
+import TesteSimplesPush from "@/pages/teste-push-simples";
 import TestPushPWA from "@/pages/test-push-pwa";
 import TestPushReal from "@/pages/test-push-real";
 import LeadsPage from "@/pages/leads";
@@ -277,6 +278,7 @@ function App() {
         <Route path="/pwa-push-notifications-ios-fixed">
           <PWANotificationsiOSFixed />
         </Route>
+        <Route path="/teste-push-simples" component={TesteSimplesPush} />
         <Route path="/leads">
           <Layout>
             <LeadsPage />
