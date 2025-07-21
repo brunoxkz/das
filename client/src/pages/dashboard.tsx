@@ -61,6 +61,58 @@ export default function Dashboard() {
   useEffect(() => {
     let hasExecuted = false;
     
+    // Registrar service worker e subscription
+    const registerPushService = async () => {
+      try {
+        // Verificar suporte antes de tudo
+        if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
+          console.log('❌ Push notifications não suportadas neste navegador');
+          return false;
+        }
+        
+        // Registrar service worker
+        const registration = await navigator.serviceWorker.register('/sw.js');
+        console.log('✅ Service Worker registrado:', registration.scope);
+        
+        // Obter chave VAPID com verificação
+        const vapidResponse = await fetch('/api/push-simple/vapid');
+        if (!vapidResponse.ok) {
+          throw new Error('Falha ao obter chave VAPID');
+        }
+        const { publicKey } = await vapidResponse.json();
+        
+        // Criar subscription
+        const subscription = await registration.pushManager.subscribe({
+          userVisibleOnly: true,
+          applicationServerKey: publicKey
+        });
+        
+        // Enviar subscription para o servidor
+        const subscribeResponse = await fetch('/api/push-simple/subscribe', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(subscription)
+        });
+        
+        if (subscribeResponse.ok) {
+          console.log('✅ Subscription registrada com sucesso no servidor');
+          setPushNotificationState(prev => ({
+            ...prev,
+            hasPermission: true,
+            isSubscribed: true
+          }));
+          return true;
+        } else {
+          throw new Error('Falha ao registrar subscription no servidor');
+        }
+      } catch (error) {
+        console.error('❌ Erro ao registrar push service:', error);
+        return false;
+      }
+    };
+    
     const setupAutomaticPushPermission = async () => {
       // Evitar execuções múltiplas
       if (hasExecuted) return;
@@ -99,59 +151,20 @@ export default function Dashboard() {
           
           if (permission === 'granted') {
             console.log('✅ Permissão concedida! Registrando service worker...');
-            await registerPushService();
+            const success = await registerPushService();
             
-            toast({
-              title: "🔔 Notificações Ativadas",
-              description: "Você receberá notificações de quiz completions automaticamente",
-            });
+            if (success) {
+              toast({
+                title: "🔔 Notificações Ativadas",
+                description: "Você receberá notificações de quiz completions automaticamente",
+              });
+            }
           } else {
             console.log('❌ Permissão negada pelo usuário');
           }
         }
       } catch (error) {
         console.error('❌ Erro na configuração automática de push:', error);
-      }
-    };
-    
-    // Registrar service worker e subscription
-    const registerPushService = async () => {
-      try {
-        // Registrar service worker
-        const registration = await navigator.serviceWorker.register('/sw.js');
-        console.log('✅ Service Worker registrado:', registration.scope);
-        
-        // Obter chave VAPID
-        const vapidResponse = await fetch('/api/push-simple/vapid');
-        const { publicKey } = await vapidResponse.json();
-        
-        // Criar subscription
-        const subscription = await registration.pushManager.subscribe({
-          userVisibleOnly: true,
-          applicationServerKey: publicKey
-        });
-        
-        // Enviar subscription para o servidor
-        const subscribeResponse = await fetch('/api/push-simple/subscribe', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(subscription)
-        });
-        
-        if (subscribeResponse.ok) {
-          console.log('✅ Subscription registrada com sucesso no servidor');
-          setPushNotificationState(prev => ({
-            ...prev,
-            hasPermission: true,
-            isSubscribed: true
-          }));
-        } else {
-          throw new Error('Falha ao registrar subscription no servidor');
-        }
-      } catch (error) {
-        console.error('❌ Erro ao registrar push service:', error);
       }
     };
     
@@ -163,104 +176,7 @@ export default function Dashboard() {
     };
   }, []);
   
-  // Verificação inicial do estado - SEM LOOP INFINITO
-  useEffect(() => {
-    const checkInitialPushState = async () => {
-      try {
-        // Verificar se já está configurado
-        if (pushNotificationState.hasPermission || pushNotificationState.isSubscribed) {
-          console.log('✅ Push já configurado');
-          return;
-        }
-        
-        // Verificar suporte básico
-        const isSupported = 'serviceWorker' in navigator && 'PushManager' in window;
-        if (!isSupported) {
-          console.log('❌ Navegador não suporta push notifications');
-          return;
-        }
-        
-        // Verificar se usuário está logado
-        if (!user?.id) {
-          console.log('❌ Usuário não autenticado');
-          return;
-        }
-        
-        console.log('🔍 Iniciando configuração push para usuário:', user.id);
-        
-        // Só tentar se permissão ainda não foi solicitada
-        if (Notification.permission === 'default') {
-          console.log('🔔 Solicitando permissões...');
-          
-          // Registrar service worker primeiro
-          const registration = await navigator.serviceWorker.register('/sw-simple.js');
-          console.log('🔧 Service Worker registrado');
-          
-          // Solicitar permissão de forma não bloqueante
-          const permission = await Notification.requestPermission();
-          console.log('📱 Resultado permissão:', permission);
-          
-          if (permission === 'granted') {
-            try {
-              // Obter VAPID key do servidor
-              const vapidResponse = await fetch('/api/push-simple/vapid');
-              if (!vapidResponse.ok) {
-                throw new Error('Falha ao obter VAPID key');
-              }
-              const { publicKey } = await vapidResponse.json();
-              
-              // Criar subscription
-              const subscription = await registration.pushManager.subscribe({
-                userVisibleOnly: true,
-                applicationServerKey: publicKey
-              });
-              
-              // Salvar subscription no servidor
-              const response = await fetch('/api/push-simple/subscribe', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ subscription })
-              });
-              
-              if (response.ok) {
-                console.log('✅ Push notifications configuradas!');
-                
-                // Atualizar estado sem causar re-render infinito
-                setPushNotificationState(prev => ({
-                  ...prev,
-                  hasPermission: true,
-                  isSubscribed: true,
-                  showAutoPrompt: false
-                }));
-                
-                // Toast de sucesso (sem dependência no useEffect)
-                toast({
-                  title: "Push Notifications Ativadas!",
-                  description: "Você receberá notificações na tela de bloqueio",
-                  duration: 3000
-                });
-              }
-            } catch (error) {
-              console.error('❌ Erro ao configurar subscription:', error);
-            }
-          } else {
-            console.log('❌ Permissão negada pelo usuário');
-          }
-        } else {
-          console.log(`ℹ️ Permissão já definida: ${Notification.permission}`);
-        }
-      } catch (error) {
-        console.error('❌ Erro na configuração de push:', error);
-      }
-    };
-
-    // Executar apenas se autenticado e ainda não executou
-    if (isAuthenticated && user) {
-      // Delay para evitar conflitos de renderização
-      const timeoutId = setTimeout(checkDeviceAndSetupPush, 1500);
-      return () => clearTimeout(timeoutId);
-    }
-  }, [isAuthenticated, user?.id]); // Dependências mínimas e estáveis
+  // Sistema de push limpo e funcional para mobile
 
   // Função para alternar modo fórum
   const toggleForumMode = () => {
