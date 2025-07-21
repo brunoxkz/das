@@ -77,7 +77,7 @@ import { registerFacelessVideoRoutes } from './faceless-video-routes';
 import { StripeCheckoutLinkGenerator } from './stripe-checkout-link-generator';
 import { planManager } from './plan-manager';
 import { getVapidPublicKey, subscribeToPush, sendPushToAll, getPushStats } from './push-simple';
-import { realTimePushSystem } from './real-time-push-notifications';
+// import { realTimePushSystem } from './real-time-push-notifications'; // DESABILITADO PARA RESOLVER ERR_BLOCKED_BY_RESPONSE
 
 // JWT Secret para validação de tokens
 const JWT_SECRET = process.env.JWT_SECRET || 'vendzz-jwt-secret-key-2024';
@@ -26036,12 +26036,12 @@ export function registerCheckoutRoutes(app: Express) {
       console.log(`🧪 TESTE PUSH NOTIFICATION: Quiz ${quizId || 'test'}, Usuário ${userId || 'test'}`);
       
       // Testar sistema de push
-      await realTimePushSystem.testNotification(quizId || 'test-quiz', userId || 'test-user');
+      // await realTimePushSystem.testNotification(quizId || 'test-quiz', userId || 'test-user'); // DESABILITADO
       
       res.json({
         success: true,
         message: 'Push notification de teste enviada',
-        stats: realTimePushSystem.getStats()
+        stats: {} // realTimePushSystem.getStats() // DESABILITADO
       });
     } catch (error) {
       console.error('❌ Erro no teste de push notification:', error);
@@ -26057,7 +26057,7 @@ export function registerCheckoutRoutes(app: Express) {
         return res.status(403).json({ error: 'Acesso negado - apenas admins' });
       }
       
-      const stats = realTimePushSystem.getStats();
+      const stats = {}; // realTimePushSystem.getStats(); // DESABILITADO
       
       res.json({
         ...stats,

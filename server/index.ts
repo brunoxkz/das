@@ -82,34 +82,12 @@ app.use(express.json({
 
 // Removemos express.urlencoded() para evitar interceptação das requisições JSON do fetch()
 
-// CORS e Headers configurados para Replit
+// CORS e Headers EXTREMAMENTE SIMPLIFICADOS para resolver ERR_BLOCKED_BY_RESPONSE
 app.use((req, res, next) => {
-  // CORS para extensão Chrome e Replit
+  // Apenas CORS básico
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With');
-  res.setHeader('Access-Control-Allow-Credentials', 'true');
-  
-  // Headers compatíveis com Replit - SIMPLIFICADO
-  res.setHeader('X-Powered-By', 'Vendzz');
-  // res.setHeader('X-Content-Type-Options', 'nosniff');
-  res.setHeader('X-Frame-Options', 'SAMEORIGIN'); // Permite embedding no Replit
-  // res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin'); // REMOVIDO para testar
-  // res.setHeader('Cross-Origin-Embedder-Policy', 'unsafe-none');
-  
-  // CORREÇÃO CRÍTICA OPERA: MIME type correto para arquivos JS
-  if (req.path.endsWith('.js')) {
-    res.setHeader('Content-Type', 'application/javascript; charset=utf-8');
-    if (req.path.includes('sw') || req.path.includes('service-worker')) {
-      res.setHeader('Service-Worker-Allowed', '/');
-      res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
-    }
-  }
-  
-  // Cache para assets estáticos (exceto JS que já foi tratado acima)
-  if (req.url.match(/\.(css|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot)$/)) {
-    res.setHeader('Cache-Control', 'public, max-age=31536000'); // 1 ano
-  }
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
   
   // Handle preflight requests
   if (req.method === 'OPTIONS') {
@@ -128,104 +106,20 @@ app.use((req, res, next) => {
 
 // Health check endpoints now integrated in routes-sqlite.ts
 
-// Rotas específicas para Service Workers com MIME type correto
-app.get('/vendzz-notification-sw.js', (req, res) => {
-  try {
-    const swPath = path.join(process.cwd(), 'public', 'vendzz-notification-sw.js');
-    
-    if (fs.existsSync(swPath)) {
-      const content = fs.readFileSync(swPath, 'utf-8');
-      res.setHeader('Content-Type', 'application/javascript; charset=utf-8');
-      res.setHeader('Service-Worker-Allowed', '/');
-      res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
-      res.send(content);
-    } else {
-      res.status(404).send('Service Worker não encontrado');
-    }
-  } catch (err) {
-    console.error('❌ Erro ao ler vendzz-notification-sw.js:', err);
-    res.status(500).send('Erro interno do servidor');
-  }
-});
-
-// Rota específica para sw-simple.js (usado no dashboard) - CORRIGIDA
-app.get('/sw-simple.js', (req, res) => {
-  try {
-    const swPath = path.join(process.cwd(), 'public', 'sw-simple.js');
-    console.log('🔧 Tentando carregar Service Worker de:', swPath);
-    
-    if (fs.existsSync(swPath)) {
-      const content = fs.readFileSync(swPath, 'utf-8');
-      console.log('✅ Service Worker carregado com sucesso, tamanho:', content.length);
-      
-      res.setHeader('Content-Type', 'application/javascript; charset=utf-8');
-      res.setHeader('Service-Worker-Allowed', '/');
-      res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
-      res.send(content);
-    } else {
-      console.error('❌ Service Worker não encontrado em:', swPath);
-      res.status(404).send('Service Worker não encontrado');
-    }
-  } catch (err) {
-    console.error('❌ Erro crítico ao carregar sw-simple.js:', err);
-    res.status(500).json({ error: 'Erro interno do servidor', message: err.message });
-  }
-});
+// Service Workers desabilitados temporariamente para resolver ERR_BLOCKED_BY_RESPONSE
 
 // Initialize auth ANTES das rotas
 setupHybridAuth(app);
 
 // System initialization and routes
 
-// PUSH NOTIFICATIONS ENDPOINTS REGISTRADOS ANTES DE TUDO
-import { getVapidPublicKey, subscribeToPush, getPushStats, sendPushToAll } from "./push-simple";
-
-// Registrar endpoints de push ANTES do Vite para evitar interceptação
-app.get('/api/push-simple/vapid', (req: any, res: any) => {
-  console.log('🔧 Endpoint /api/push-simple/vapid chamado diretamente');
-  getVapidPublicKey(req, res);
-});
-
-app.post('/api/push-simple/subscribe', (req: any, res: any) => {
-  console.log('🔧 Endpoint /api/push-simple/subscribe chamado diretamente');
-  subscribeToPush(req, res);
-});
-
-app.post('/api/push-simple/send', (req: any, res: any) => {
-  console.log('🔧 Endpoint /api/push-simple/send chamado diretamente');
-  sendPushToAll(req, res);
-});
-
-app.get('/api/push-simple/stats', (req: any, res: any) => {
-  console.log('🔧 Endpoint /api/push-simple/stats chamado diretamente');
-  getPushStats(req, res);
-});
-
-console.log('✅ PUSH NOTIFICATIONS ENDPOINTS REGISTRADOS DIRETAMENTE ANTES DO VITE');
+// PUSH NOTIFICATIONS TEMPORARIAMENTE DESABILITADOS PARA RESOLVER ERR_BLOCKED_BY_RESPONSE
+console.log('✅ PUSH NOTIFICATIONS DESABILITADOS TEMPORARIAMENTE');
 
 // Register all routes DEPOIS dos endpoints de push
 const server = registerHybridRoutes(app);
 
-// INTERCEPTADOR CRÍTICO para Service Workers - ANTES do Vite
-// CORREÇÃO OPERA: Serve Service Workers com MIME type correto
-app.use((req, res, next) => {
-  // Interceptar especificamente arquivos Service Worker
-  if (req.path === '/sw-simple.js' || req.path === '/vendzz-notification-sw.js' || req.path.includes('service-worker') || req.path === '/sw.js') {
-    const swPath = path.join(process.cwd(), 'public', req.path.substring(1));
-    console.log('🔧 INTERCEPTANDO SERVICE WORKER:', req.path, '→', swPath);
-    
-    if (fs.existsSync(swPath)) {
-      // Headers CORRETOS para Opera
-      res.setHeader('Content-Type', 'application/javascript; charset=utf-8');
-      res.setHeader('Service-Worker-Allowed', '/');
-      res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
-      res.setHeader('Access-Control-Allow-Origin', '*');
-      res.sendFile(swPath);
-      return; // IMPORTANTE: não chamar next()
-    }
-  }
-  next();
-});
+// SERVICE WORKER INTERCEPTOR DESABILITADO PARA RESOLVER ERR_BLOCKED_BY_RESPONSE
 
 // Setup Vite middleware for dev and production APÓS todas as rotas
 setupVite(app, server);
