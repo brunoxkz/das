@@ -53,8 +53,8 @@ import { BrevoEmailService } from "./email-brevo";
 import { handleSecureUpload, uploadMiddleware } from "./upload-secure";
 import { sanitizeAllScripts, sanitizeUTMCode, sanitizeCustomScript } from './script-sanitizer-new';
 import { intelligentRateLimiter } from './intelligent-rate-limiter';
-import webpush from 'web-push';
-import { SimplePushNotificationSystem } from './push-notifications-simple';
+
+
 import { isUserBlocked, canCreateQuiz, getPlanLimits } from './rbac';
 import { 
   antiDdosMiddleware, 
@@ -75,7 +75,6 @@ import HealthCheckSystem from './health-check-system.js';
 import WhatsAppBusinessAPI from './whatsapp-business-api';
 import { registerFacelessVideoRoutes } from './faceless-video-routes';
 import { StripeCheckoutLinkGenerator } from './stripe-checkout-link-generator';
-import { webPushService } from './web-push';
 import { planManager } from './plan-manager';
 
 // JWT Secret para validação de tokens

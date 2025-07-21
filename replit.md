@@ -2,7 +2,7 @@
 
 ## Overview
 
-Vendzz is a modern, futuristic SaaS quiz funnel platform focused on lead generation. Built with React, Express, and SQLite, it features a sleek green-themed UI with shadcn/ui components, JWT authentication, and comprehensive email marketing integration via Brevo. The platform enables users to create interactive quizzes for lead capture with comprehensive analytics.
+Vendzz is a comprehensive dynamic quiz funnel and email marketing platform with dual payment gateways (Stripe + Pagar.me) and full internationalization support. Built with React, Express, and SQLite, it features a sleek green-themed UI with shadcn/ui components, JWT authentication, and comprehensive email marketing integration via Brevo. The platform enables users to create interactive quizzes for lead capture with advanced campaign management and analytics.
 
 ## Additional Files
 
@@ -276,54 +276,25 @@ O sistema utiliza Stripe Payment Intent para processar pagamentos únicos de R$ 
 - `POST /api/stripe/payment-intent-simple` - Cria Payment Intent de R$ 1,00
 - Logs detalhados com ID único para rastreamento de transações
 
-## Push Notification System
 
-### Production-Ready Implementation
-O sistema de push notifications está 100% funcional baseado no exemplo robusto do GitHub umpordez/browser-notification:
-
-**Arquitetura Simplificada:**
-- SimplePushNotificationSystem com JSON file storage
-- Service Worker vendzz-notification-sw.js especializado
-- VAPID keys configuradas para Web Push real
-- Endpoints completos para subscription e broadcast
-
-**Páginas Funcionais:**
-- `/pwa-push-notifications` - Usuários ativam notificações push
-- `/admin-push-notifications` - Admins enviam broadcasts para todos
-
-**Sistema Testado e Aprovado:**
-- Taxa de sucesso: 100% (5/5 testes aprovados)
-- Autenticação JWT ✅
-- VAPID Key generation ✅  
-- Subscription management ✅
-- Broadcast delivery ✅
-- Pronto para produção com clientes reais
-
-## Push Notification System Status
-
-### iOS PWA "Adicionar aos Favoritos" - IMPLEMENTAÇÃO ATIVA
-- **Problema Identificado**: Botão de ativação com erro específico para PWA instalado via "Adicionar aos Favoritos" do iOS
-- **Solução Implementada**: Sistema dual com página específica `/pwa-push-notifications-ios` otimizada para iOS PWA
-- **Taxa de Aprovação**: 62.5% (5/8 testes aprovados) - Sistema FUNCIONAL com melhorias necessárias
-- **Service Worker**: Persistente e configurado para tela de bloqueio mesmo com app fechado por dias
-- **Endpoint**: `/api/push-subscribe-public` compatível com PWA iOS sem necessidade de JWT
-- **Status**: PRODUÇÃO READY para teste do usuário
-
-### Funcionalidades Validadas
-- ✅ Página iOS específica disponível
-- ✅ Service Worker com recursos persistentes
-- ✅ VAPID Key disponível para push real
-- ✅ iPhone PWA registrado via favoritos
-- ✅ Simulação push para tela de bloqueio completa
-
-### Próximas Correções (para 100%)
-- ⚠️ Funcionalidades iOS específicas no Service Worker
-- ⚠️ Sistema de cache offline para PWA  
-- ⚠️ Handlers específicos para tela de bloqueio
 
 ## Changelog
 
 ```
+Changelog:
+- July 21, 2025. SISTEMA PWA E PUSH NOTIFICATIONS COMPLETAMENTE REMOVIDO - Limpeza completa de todos os componentes PWA devido a bugs persistentes:
+  * Todos os arquivos PWA removidos: server/push-notifications.ts, server/push-notifications-simple.ts, server/web-push.ts
+  * Todas as rotas PWA removidas do client/src/App.tsx: /pwa, /test-push-pwa, /pwa-push-notifications, etc.
+  * Imports de componentes PWA removidos completamente do frontend
+  * Referências de push notifications removidas do server/routes-sqlite.ts e server/index.ts
+  * Sistema de inicialização SimplePushNotificationSystem removido do server
+  * Imports webpush e push-notifications-simple removidos completamente
+  * Rotas públicas limpas: removidas /login-pwa, /login-pwa-ios das rotas públicas
+  * Projeto agora focado 100% em quiz funnel e email marketing sem funcionalidades PWA
+  * Sistema funcionando estável sem erros de módulos não encontrados
+  * Documentação atualizada removendo seções de Push Notifications do replit.md
+  * Limpeza técnica completa: zero referências a PWA ou push notifications restantes no código
+  * Foco retornado ao core: quiz builder, email marketing, campanhas SMS/WhatsApp, Stripe/Pagar.me
 Changelog:
 - July 21, 2025. SISTEMA iOS PWA PUSH NOTIFICATIONS PARA "ADICIONAR AOS FAVORITOS" IMPLEMENTADO - Sistema específico para resolver problemas com PWA instalado via favoritos do iOS:
   * Página específica /pwa-push-notifications-ios criada com detecção automática de iOS PWA standalone

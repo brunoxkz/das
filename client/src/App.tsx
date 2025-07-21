@@ -19,13 +19,8 @@ import SettingsPage from "@/pages/settings";
 import AdminPage from "@/pages/admin";
 import AdminSecurityPage from "@/pages/admin-security";
 import AdminNotifications from "@/pages/admin-notifications";
-import AdminPushNotifications from "@/pages/admin-push-notifications";
-import PWANotificationsiOSFixed from "@/pages/pwa-push-notifications-ios-fixed";
-import LoginPWAiOS from "@/pages/login-pwa-ios";
-import TesteIntegracaoPush from "@/pages/teste-integracao-push";
-import TesteSimplesPush from "@/pages/teste-push-simples";
-import TestPushPWA from "@/pages/test-push-pwa";
-import TestPushReal from "@/pages/test-push-real";
+
+
 import LeadsPage from "@/pages/leads";
 import NotFoundPage from "@/pages/not-found";
 import TutoriaisPage from "@/pages/tutoriais";
@@ -109,11 +104,7 @@ import PaymentVerification from "@/pages/payment-verification";
 import MembersAreaNetflix from "@/pages/members-area-netflix";
 import MembersArea from "@/pages/members-area";
 import AdminDashboard from "@/pages/admin-dashboard";
-import PWADashboard from "@/pages/pwa-dashboard";
-import AppPWAComplete from "@/pages/app-pwa-complete";
-import AppPWAModern2025 from "@/pages/app-pwa-modern-2025";
-import AppPWAVendzz from "@/pages/app-pwa-vendzz";
-import AppQuizEditorPWA from "@/pages/app-quiz-editor-pwa";
+
 
 import { useAuth } from "@/hooks/useAuth-jwt";
 import { isUnauthorizedError } from "@/lib/authUtils";
@@ -126,29 +117,7 @@ function App() {
   const [location] = useLocation();
   const { theme } = useTheme();
 
-  // Detectar PWA standalone e redirecionar automaticamente para login-pwa
-  React.useEffect(() => {
-    const isPWAStandalone = window.matchMedia('(display-mode: standalone)').matches || 
-                            (window.navigator as any).standalone === true;
-    
-    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-    
-    // Se for PWA standalone, mobile e estiver na landing page
-    if (isPWAStandalone && isMobile && location === '/') {
-      console.log('🔧 PWA Standalone detectado - redirecionando para /login-pwa');
-      window.location.href = '/login-pwa';
-      return;
-    }
 
-    // Debug para verificar detecção
-    if (isMobile) {
-      console.log('🔧 Mobile detectado:', {
-        isPWAStandalone,
-        currentLocation: location,
-        userAgent: navigator.userAgent
-      });
-    }
-  }, [location]);
 
   if (isLoading) {
     return (
@@ -159,7 +128,7 @@ function App() {
   }
 
   // Public routes that don't require authentication
-  const publicRoutes = ["/", "/dark", "/modern", "/login", "/login-pwa", "/login-pwa-ios", "/payment-success", "/payment-cancel"];
+  const publicRoutes = ["/", "/dark", "/modern", "/login", "/payment-success", "/payment-cancel"];
   const isQuizRoute = location.startsWith("/quiz/");
   const isCheckoutRoute = location.startsWith("/checkout/");
   const isStripeCheckoutLink = location.startsWith("/stripe-checkout-link/");
@@ -184,25 +153,7 @@ function App() {
         <Route path="/" component={LandingPage} />
         <Route path="/dark" component={DarkLandingPage} />
         <Route path="/modern" component={ModernHomePage} />
-        <Route path="/app" component={AppPWAComplete} />
-        <Route path="/app-pwa-complete" component={AppPWAComplete} />
-        <Route path="/app-pwa-modern-2025" component={AppPWAModern2025} />
-        <Route path="/app-pwa-vendzz" component={AppPWAVendzz} />
-        <Route path="/app-quiz-editor-pwa" component={AppQuizEditorPWA} />
         <Route path="/login" component={LoginPage} />
-        <Route path="/login-pwa-ios" component={LoginPWAiOS} />
-        <Route path="/login-pwa" component={() => {
-          // Detectar iOS
-          const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
-          
-          if (!isAuthenticated) {
-            // Salvar a URL de destino no localStorage para redirecionar após login
-            localStorage.setItem('loginRedirect', '/pwa-push-notifications');
-            // Redirecionar para login iOS específico se estiver no iOS
-            return <Redirect to={isIOS ? "/login-pwa-ios" : "/login"} />;
-          }
-          return <Redirect to="/pwa-push-notifications" />;
-        }} />
         <Route path="/quiz/:id" component={QuizPublicPage} />
         <Route path="/checkout/:planId" component={PublicCheckout} />
         <Route path="/checkout/success" component={CheckoutSuccess} />
@@ -213,15 +164,7 @@ function App() {
         <Route path="/payment-cancel" component={PaymentSuccess} />
         <Route path="/stripe-checkout-link/:linkId" component={StripeCheckoutLink} />
         <Route path="/test" component={TestPage} />
-        <Route path="/teste-notificacao" component={() => {
-          window.location.href = '/teste-notificacao-completo.html';
-          return null;
-        }} />
-        <Route path="/test-push-pwa" component={TestPushPWA} />
-        <Route path="/test-push-real" component={TestPushReal} />
-        <Route path="/pwa-ios-fixed" component={PWANotificationsiOSFixed} />
-        <Route path="/teste-integracao-push" component={TesteIntegracaoPush} />
-        <Route path="/login-test-complete" component={() => import('@/pages/login-test-complete')} />
+
 
         {/* Authenticated routes with sidebar */}
         <Route path="/dashboard">
@@ -229,9 +172,7 @@ function App() {
             <Dashboard />
           </Layout>
         </Route>
-        
-        {/* PWA Dashboard - Mobile optimized */}
-        <Route path="/pwa" component={PWADashboard} />
+
 
         {/* Quiz builder routes without sidebar for full-screen editing */}
         <Route path="/quiz-builder" component={QuizBuilder} />
@@ -285,18 +226,7 @@ function App() {
             <AdminNotifications />
           </Layout>
         </Route>
-        <Route path="/pwa-push-notifications">
-          <Layout>
-            <PWANotificationsiOSFixed />
-          </Layout>
-        </Route>
-        <Route path="/admin-push-notifications">
-          <AdminPushNotifications />
-        </Route>
-        <Route path="/pwa-push-notifications-ios-fixed">
-          <PWANotificationsiOSFixed />
-        </Route>
-        <Route path="/teste-push-simples" component={TesteSimplesPush} />
+
         <Route path="/leads">
           <Layout>
             <LeadsPage />
