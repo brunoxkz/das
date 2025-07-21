@@ -28,6 +28,8 @@ import express, { type Request, Response, NextFunction } from "express";
 import compression from "compression";
 import helmet from "helmet";
 import crypto from "crypto";
+import path from "path";
+import fs from "fs";
 import { registerHybridRoutes } from "./routes-hybrid";
 import { setupVite, serveStatic, log } from "./vite";
 import { setupHybridAuth, verifyJWT } from "./auth-hybrid";
@@ -95,8 +97,17 @@ app.use((req, res, next) => {
   res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin'); // Fix ERR_BLOCKED_BY_RESPONSE
   res.setHeader('Cross-Origin-Embedder-Policy', 'unsafe-none');
   
-  // Cache para assets estáticos
-  if (req.url.match(/\.(css|js|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot)$/)) {
+  // CORREÇÃO CRÍTICA OPERA: MIME type correto para arquivos JS
+  if (req.path.endsWith('.js')) {
+    res.setHeader('Content-Type', 'application/javascript; charset=utf-8');
+    if (req.path.includes('sw') || req.path.includes('service-worker')) {
+      res.setHeader('Service-Worker-Allowed', '/');
+      res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+    }
+  }
+  
+  // Cache para assets estáticos (exceto JS que já foi tratado acima)
+  if (req.url.match(/\.(css|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot)$/)) {
     res.setHeader('Cache-Control', 'public, max-age=31536000'); // 1 ano
   }
   
@@ -117,12 +128,28 @@ app.use(blacklistMiddleware);
 
 // Health check endpoints now integrated in routes-sqlite.ts
 
-// Rota específica para Service Worker com MIME type correto
+// Rotas específicas para Service Workers com MIME type correto
 app.get('/vendzz-notification-sw.js', (req, res) => {
   const path = require('path');
   const fs = require('fs');
   
   const swPath = path.join(process.cwd(), 'public', 'vendzz-notification-sw.js');
+  
+  if (fs.existsSync(swPath)) {
+    res.setHeader('Content-Type', 'application/javascript; charset=utf-8');
+    res.setHeader('Service-Worker-Allowed', '/');
+    res.sendFile(swPath);
+  } else {
+    res.status(404).send('Service Worker não encontrado');
+  }
+});
+
+// Rota específica para sw-simple.js (usado no dashboard)
+app.get('/sw-simple.js', (req, res) => {
+  const path = require('path');
+  const fs = require('fs');
+  
+  const swPath = path.join(process.cwd(), 'public', 'sw-simple.js');
   
   if (fs.existsSync(swPath)) {
     res.setHeader('Content-Type', 'application/javascript; charset=utf-8');
@@ -166,6 +193,27 @@ app.post('/push/send', (req: any, res: any) => {
 });
 
 console.log('✅ PUSH NOTIFICATIONS ENDPOINTS REGISTRADOS COM PREFIXO /push/');
+
+// INTERCEPTADOR CRÍTICO para Service Workers - ANTES do Vite
+// CORREÇÃO OPERA: Serve Service Workers com MIME type correto
+app.use((req, res, next) => {
+  // Interceptar especificamente arquivos Service Worker
+  if (req.path === '/sw-simple.js' || req.path === '/vendzz-notification-sw.js' || req.path.includes('service-worker')) {
+    const swPath = path.join(process.cwd(), 'public', req.path.substring(1));
+    console.log('🔧 INTERCEPTANDO SERVICE WORKER:', req.path, '→', swPath);
+    
+    if (fs.existsSync(swPath)) {
+      // Headers CORRETOS para Opera
+      res.setHeader('Content-Type', 'application/javascript; charset=utf-8');
+      res.setHeader('Service-Worker-Allowed', '/');
+      res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+      res.setHeader('Access-Control-Allow-Origin', '*');
+      res.sendFile(swPath);
+      return; // IMPORTANTE: não chamar next()
+    }
+  }
+  next();
+});
 
 // Setup Vite middleware for dev and production APÓS todas as rotas
 setupVite(app, server);
