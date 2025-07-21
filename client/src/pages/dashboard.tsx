@@ -594,11 +594,11 @@ export default function Dashboard() {
                       console.log('✅ Permissão já concedida, verificando/configurando subscription...');
                       
                       // Registrar service worker se necessário
-                      const registration = await navigator.serviceWorker.register('/sw-simple.js');
+                      const registration = await navigator.serviceWorker.register('/sw-notifications.js');
                       console.log('🔧 Service Worker verificado/registrado');
                       
                       // Obter VAPID key
-                      const vapidResponse = await fetch('/api/push-simple/vapid');
+                      const vapidResponse = await fetch('/api/push-vapid-key');
                       const { publicKey: vapidPublicKey } = await vapidResponse.json();
                       console.log('🔑 VAPID key obtida para subscription');
                       
@@ -613,22 +613,31 @@ export default function Dashboard() {
                       });
                       
                       // Salvar subscription no servidor
-                      const subscribeResponse = await fetch('/api/push-simple/subscribe', {
+                      const subscribeResponse = await fetch('/api/push-subscribe', {
                         method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ subscription: subscription.toJSON() })
+                        headers: { 
+                          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+                          'Content-Type': 'application/json' 
+                        },
+                        body: JSON.stringify({
+                          endpoint: subscription.endpoint,
+                          keys: subscription.toJSON().keys
+                        })
                       });
                       const subscribeResult = await subscribeResponse.json();
                       console.log('💾 Subscription salva no servidor:', subscribeResult);
                       
                       // Agora enviar push notification
                       console.log('📤 Enviando push notification...');
-                      const response = await fetch('/api/push-simple/send', {
+                      const response = await fetch('/api/push-broadcast', {
                         method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
+                        headers: {
+                          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+                          'Content-Type': 'application/json'
+                        },
                         body: JSON.stringify({ 
                           title: "🔥 Teste Push Vendzz", 
-                          message: "Sistema funcionando! Notificação na tela de bloqueio 📱" 
+                          body: "Sistema funcionando! Notificação na tela de bloqueio 📱" 
                         })
                       });
                       const result = await response.json();
@@ -647,11 +656,11 @@ export default function Dashboard() {
                         console.log('✅ Permissão concedida! Configurando service worker...');
                         
                         // Registrar service worker
-                        const registration = await navigator.serviceWorker.register('/sw-simple.js');
+                        const registration = await navigator.serviceWorker.register('/sw-notifications.js');
                         console.log('🔧 Service Worker registrado:', registration);
                         
                         // Obter VAPID key
-                        const vapidResponse = await fetch('/api/push-simple/vapid');
+                        const vapidResponse = await fetch('/api/push-vapid-key');
                         const { publicKey: vapidPublicKey } = await vapidResponse.json();
                         console.log('🔑 VAPID key obtida:', vapidPublicKey?.substring(0, 20) + '...');
                         
@@ -664,11 +673,17 @@ export default function Dashboard() {
                         console.log('📝 Endpoint:', subscription.endpoint);
                         console.log('📝 Keys:', subscription.toJSON().keys);
                         
-                        // Enviar subscription para servidor
-                        const subscribeResponse = await fetch('/api/push-simple/subscribe', {
+                        // Enviar subscription para servidor  
+                        const subscribeResponse = await fetch('/api/push-subscribe', {
                           method: 'POST',
-                          headers: { 'Content-Type': 'application/json' },
-                          body: JSON.stringify({ subscription: subscription.toJSON() })
+                          headers: { 
+                            'Authorization': `Bearer ${localStorage.getItem('token')}`,
+                            'Content-Type': 'application/json' 
+                          },
+                          body: JSON.stringify({
+                            endpoint: subscription.endpoint,
+                            keys: subscription.toJSON().keys
+                          })
                         });
                         const subscribeResult = await subscribeResponse.json();
                         console.log('💾 Subscription salva:', subscribeResult);
