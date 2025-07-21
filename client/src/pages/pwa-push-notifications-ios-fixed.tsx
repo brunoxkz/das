@@ -379,8 +379,8 @@ export default function PWANotificationsiOSFixed({}: PWANotificationsiOSFixedPro
               <CardTitle>Configuração PWA iOS</CardTitle>
               <CardDescription>
                 {env.isPWAInstalled 
-                  ? '✅ App PWA detectado - Otimizado para tela de bloqueio'
-                  : '⚠️ Para melhor experiência, adicione aos favoritos primeiro'
+                  ? '✅ PWA instalado detectado - Notificações funcionarão na tela de bloqueio'
+                  : '⚠️ Para notificações na tela de bloqueio, você DEVE usar "Adicionar à Tela de Início" (não favoritos)'
                 }
               </CardDescription>
             </CardHeader>
@@ -434,6 +434,17 @@ export default function PWANotificationsiOSFixed({}: PWANotificationsiOSFixedPro
                 </div>
               )}
 
+              {!env.isPWAInstalled && env.isIOS && (
+                <div className="bg-orange-50 border border-orange-200 p-4 rounded-lg">
+                  <strong className="text-orange-700">⚠️ Limitação Safari:</strong>
+                  <p className="text-orange-600 text-sm mt-1">
+                    Safari comum só permite notificações básicas. Para notificações persistentes 
+                    na tela de bloqueio (mesmo com app fechado), você deve instalar como PWA usando 
+                    "Adicionar à Tela de Início".
+                  </p>
+                </div>
+              )}
+
               {(!isSupported || !env.isIOS) && (
                 <div className="bg-yellow-50 border border-yellow-200 p-4 rounded-lg">
                   <strong className="text-yellow-700">⚠️ Aviso:</strong>
@@ -448,20 +459,60 @@ export default function PWANotificationsiOSFixed({}: PWANotificationsiOSFixedPro
             </CardContent>
           </Card>
 
-          {/* Instruções */}
-          {env.isIOS && !env.isPWAInstalled && (
-            <Card>
+          {/* Instruções Críticas */}
+          {env.isIOS && (
+            <Card className="border-amber-200 bg-amber-50">
               <CardHeader>
-                <CardTitle>📱 Como Instalar no iPhone</CardTitle>
+                <CardTitle className="text-amber-800">
+                  ⚠️ IMPORTANTE: Para notificações na tela de bloqueio
+                </CardTitle>
               </CardHeader>
-              <CardContent>
-                <ol className="list-decimal list-inside space-y-2 text-sm">
-                  <li>No Safari, toque no botão de compartilhamento (quadrado com seta ↗️)</li>
-                  <li>Role para baixo e toque em "Adicionar à Tela de Início"</li>
-                  <li>Toque em "Adicionar" no canto superior direito</li>
-                  <li>Feche o Safari e abra o app da tela de início</li>
-                  <li>Retorne a esta página e ative as notificações</li>
-                </ol>
+              <CardContent className="space-y-4">
+                <div className="bg-white p-4 rounded-lg border">
+                  <h3 className="font-semibold text-green-700 mb-2">
+                    ✅ CORRETO: "Adicionar à Tela de Início" (PWA)
+                  </h3>
+                  <ol className="list-decimal list-inside space-y-1 text-sm">
+                    <li>No Safari, toque no botão compartilhar (quadrado com seta ↗️)</li>
+                    <li>Role para baixo e toque em <strong>"Adicionar à Tela de Início"</strong></li>
+                    <li>Toque em "Adicionar" no canto superior direito</li>
+                    <li>Feche o Safari e abra o ícone que apareceu na tela de início</li>
+                    <li>Retorne a esta página e ative as notificações</li>
+                  </ol>
+                  <p className="text-green-600 text-xs mt-2">
+                    ✅ Cria um app real que recebe notificações na tela de bloqueio
+                  </p>
+                </div>
+
+                <div className="bg-red-50 p-4 rounded-lg border border-red-200">
+                  <h3 className="font-semibold text-red-700 mb-2">
+                    ❌ NÃO FUNCIONA: "Adicionar aos Favoritos" (Bookmark)
+                  </h3>
+                  <p className="text-sm text-red-600">
+                    Apenas salva um link nos favoritos. NÃO permite notificações push na tela de bloqueio.
+                    Funciona apenas como página web normal no Safari.
+                  </p>
+                </div>
+
+                {!env.isPWAInstalled && (
+                  <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
+                    <strong className="text-blue-700">📍 Status atual:</strong>
+                    <p className="text-blue-600 text-sm">
+                      Você está acessando via Safari (não PWA instalado). 
+                      Para notificações na tela de bloqueio, siga as instruções acima.
+                    </p>
+                  </div>
+                )}
+
+                {env.isPWAInstalled && (
+                  <div className="bg-green-50 p-4 rounded-lg border border-green-200">
+                    <strong className="text-green-700">🎉 Perfeito!</strong>
+                    <p className="text-green-600 text-sm">
+                      PWA detectado! Você está no app instalado. 
+                      Notificações funcionarão na tela de bloqueio.
+                    </p>
+                  </div>
+                )}
               </CardContent>
             </Card>
           )}
