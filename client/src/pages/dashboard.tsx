@@ -22,7 +22,9 @@ import {
   X,
   ArrowRight,
   MessageCircle,
-  Send
+  Send,
+  Edit,
+  ExternalLink
 } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { cn } from '@/lib/utils';
