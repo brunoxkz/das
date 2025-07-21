@@ -22,7 +22,7 @@ interface BulkMessageStats {
   isLoading: boolean;
 }
 
-// SISTEMA COMPLETO COM 10 SONS E EDIÇÃO ROTATIVA
+// SISTEMA COMPLETO COM 10 SONS E EDIÇÃO ROTATIVA - CACHE CLEAR V3
 export default function BulkPushMessaging() {
   const [title, setTitle] = useState('🔥 Mensagem do Sistema Vendzz');
   const [message, setMessage] = useState('Nova funcionalidade disponível! Acesse agora o sistema 📱');
@@ -307,15 +307,15 @@ export default function BulkPushMessaging() {
   );
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-4" key="bulk-push-v2025">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-4" key="bulk-push-v2025-final">
       <div className="max-w-4xl mx-auto space-y-6">
         {/* Header - SISTEMA DE PUSH NOTIFICATIONS AVANÇADO */}
-        <div className="text-center bg-gradient-to-r from-blue-600 to-purple-600 text-white p-6 rounded-lg shadow-lg">
-          <h1 className="text-3xl font-bold mb-2">
-            🚀 SISTEMA PUSH NOTIFICATIONS VENDZZ 2025
+        <div className="text-center bg-gradient-to-r from-green-600 to-blue-600 text-white p-6 rounded-lg shadow-lg">
+          <h1 className="text-4xl font-bold mb-2">
+            🔥 SISTEMA PUSH NOTIFICATIONS VENDZZ 2025 🔥
           </h1>
-          <p className="text-blue-100">
-            Sistema completo de notificações push com 10 sons diferentes para iOS e Android
+          <p className="text-green-100 text-lg">
+            Sistema completo de notificações push com 10 sons diferentes + Edição rotativa funcional
           </p>
         </div>
 

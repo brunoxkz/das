@@ -157,7 +157,7 @@ app.use((req, res, next) => {
   }
   
   // INTERCEPTAÇÃO PARA PÁGINAS ADMIN - FORÇAR RELOAD PARA MOSTRAR NOVAS FUNCIONALIDADES
-  if (req.url.includes('/admin/bulk-push-messaging') || req.url.includes('/admin-push-notifications')) {
+  if (req.url.includes('/admin/bulk-push-messaging') || req.url.includes('/admin-push-notifications') || req.url.includes('/bulk-push-messaging')) {
     res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
     res.setHeader('Pragma', 'no-cache');
     res.setHeader('Expires', '0');
