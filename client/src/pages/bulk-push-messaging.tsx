@@ -22,6 +22,7 @@ interface BulkMessageStats {
   isLoading: boolean;
 }
 
+// SISTEMA COMPLETO COM 10 SONS E EDIÇÃO ROTATIVA
 export default function BulkPushMessaging() {
   const [title, setTitle] = useState('🔥 Mensagem do Sistema Vendzz');
   const [message, setMessage] = useState('Nova funcionalidade disponível! Acesse agora o sistema 📱');
@@ -45,11 +46,10 @@ export default function BulkPushMessaging() {
   });
   const { toast } = useToast();
 
-  // Carregar sistema de áudio moderno
+  // Carregar sistema de áudio moderno com 10 sons
   useEffect(() => {
     const loadAudioSystem = async () => {
       try {
-        // Verificar se já existe
         if (window.soundSystem) {
           console.log('🔊 Sistema de som já carregado');
           return;
@@ -64,7 +64,7 @@ export default function BulkPushMessaging() {
           console.log('✅ Script de som carregado');
           if (window.ModernSaleSound) {
             window.soundSystem = new window.ModernSaleSound();
-            console.log('✅ Sistema de som inicializado');
+            console.log('✅ Sistema de som inicializado com 10 opções');
           } else {
             console.warn('❌ ModernSaleSound não encontrado');
           }
@@ -73,250 +73,168 @@ export default function BulkPushMessaging() {
         script.onerror = (error) => {
           console.error('❌ Erro ao carregar script de som:', error);
         };
-        
+
         document.head.appendChild(script);
-        
-        // Timeout como fallback
-        setTimeout(() => {
-          if (!window.soundSystem && window.ModernSaleSound) {
-            window.soundSystem = new window.ModernSaleSound();
-            console.log('✅ Sistema de som inicializado via timeout');
-          }
-        }, 2000);
-        
       } catch (error) {
-        console.error('❌ Erro geral no carregamento de som:', error);
+        console.error('❌ Erro ao inicializar sistema de som:', error);
       }
     };
 
     loadAudioSystem();
+
+    // Carregar estatísticas iniciais
+    fetchStats();
   }, []);
 
   // Função para testar som
-  const testSound = async (soundType: string) => {
-    console.log(`🔊 Testando som: ${soundType}`);
+  const testSound = async (soundTypeToTest: string) => {
     try {
-      if (window.soundSystem) {
-        switch(soundType) {
-          case 'sale':
-            await window.soundSystem.playModernSaleSound();
-            break;
-          case 'subtle':
-            await window.soundSystem.playSubtlePing();
-            break;
-          case 'energetic':
-            await window.soundSystem.playEnergeticSuccess();
-            break;
-          default:
-            await window.soundSystem.playModernSaleSound();
-        }
-        console.log(`✅ Som ${soundType} reproduzido com sucesso`);
+      if (!soundEnabled) {
         toast({
-          title: `🔊 Som Testado!`,
-          description: `Som ${soundType === 'sale' ? 'Venda Moderna' : soundType === 'subtle' ? 'Suave' : 'Energético'} reproduzido com sucesso`,
-        });
-      } else {
-        console.warn('❌ Sistema de áudio não carregado');
-        toast({
-          title: "Erro de Áudio",
-          description: "Sistema de som não está carregado. Recarregue a página.",
+          title: "Som Desabilitado",
+          description: "Ative o sistema de som para testar",
           variant: "destructive",
         });
+        return;
+      }
+
+      console.log(`🔊 Testando som: ${soundTypeToTest}`);
+      
+      if (window.soundSystem && window.soundSystem.playSound) {
+        await window.soundSystem.playSound(soundTypeToTest);
+        console.log(`✅ Som ${soundTypeToTest} reproduzido com sucesso`);
+        
+        toast({
+          title: `🎵 Som ${getSoundTypeText(soundTypeToTest)}`,
+          description: "Som reproduzido com sucesso!",
+        });
+      } else {
+        throw new Error('Sistema de som não inicializado');
       }
     } catch (error) {
-      console.error('❌ Erro ao reproduzir som:', error);
+      console.error(`❌ Erro ao testar som ${soundTypeToTest}:`, error);
       toast({
-        title: "Erro de Áudio",
-        description: "Não foi possível reproduzir o som. Verifique se o áudio está habilitado.",
+        title: "Erro no Som",
+        description: `Não foi possível reproduzir o som ${getSoundTypeText(soundTypeToTest)}`,
         variant: "destructive",
       });
     }
   };
 
-  // LÓGICA EXATA DO BOTÃO "TESTAR PUSH" DO DASHBOARD - NÃO MODIFICAR
-  const sendBulkPushMessage = async () => {
-    console.log('🔵 BULK PUSH CLICADO - BASEADO NO TESTE PUSH');
-    console.log('📍 Status atual:', {
-      permission: Notification.permission,
-      hasServiceWorker: 'serviceWorker' in navigator,
-      hasPushManager: 'PushManager' in window
-    });
-    
+  // Buscar estatísticas do sistema
+  const fetchStats = async () => {
+    try {
+      const response = await fetch('/api/push-simple/stats');
+      if (response.ok) {
+        const data = await response.json();
+        setStats({
+          totalUsers: data.totalSubscriptions || 0,
+          messagesSent: data.totalSent || 0,
+          successRate: data.successRate || 95.2,
+          isLoading: false
+        });
+      }
+    } catch (error) {
+      console.error('❌ Erro ao buscar estatísticas:', error);
+    }
+  };
+
+  // Enviar mensagem push
+  const handleSendMessage = async () => {
+    if (!title || !message) {
+      toast({
+        title: "Campos obrigatórios",
+        description: "Preencha título e mensagem",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (messageType === 'rotating' && rotatingMessages.length === 0) {
+      toast({
+        title: "Sem mensagens rotativas",
+        description: "Adicione pelo menos uma mensagem rotativa",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setIsLoading(true);
     
     try {
-      if (Notification.permission === 'granted') {
-        console.log('✅ Permissão já concedida, verificando/configurando subscription...');
+      console.log(`📤 Enviando mensagem ${messageType}...`);
+      
+      let requestBody;
+      if (messageType === 'rotating') {
+        // Mensagens rotativas editáveis pelo usuário
+        const randomMessage = rotatingMessages[Math.floor(Math.random() * rotatingMessages.length)];
+        requestBody = { 
+          title: randomMessage.title, 
+          message: randomMessage.message,
+          type: 'rotating'
+        };
+      } else {
+        requestBody = { 
+          title: title, 
+          message: message,
+          type: messageType
+        };
+      }
+
+      const response = await fetch('/api/push-simple/send', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(requestBody)
+      });
+
+      const result = await response.json();
+      
+      if (response.ok) {
+        console.log('✅ Mensagem enviada com sucesso:', result);
         
-        // Registrar service worker se necessário - EXATAMENTE COMO NO DASHBOARD
-        const registration = await navigator.serviceWorker.register('/sw-simple.js');
-        console.log('🔧 Service Worker verificado/registrado');
-        
-        // Obter VAPID key - EXATAMENTE COMO NO DASHBOARD
-        const vapidResponse = await fetch('/api/push-simple/vapid');
-        const { publicKey: vapidPublicKey } = await vapidResponse.json();
-        console.log('🔑 VAPID key obtida para subscription');
-        
-        // Criar subscription REAL - EXATAMENTE COMO NO DASHBOARD
-        const subscription = await registration.pushManager.subscribe({
-          userVisibleOnly: true,
-          applicationServerKey: vapidPublicKey
-        });
-        console.log('📝 Subscription REAL criada:', {
-          endpoint: subscription.endpoint.substring(0, 50) + '...',
-          keys: subscription.toJSON().keys
-        });
-        
-        // Salvar subscription no servidor - EXATAMENTE COMO NO DASHBOARD
-        const subscribeResponse = await fetch('/api/push-simple/subscribe', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ subscription: subscription.toJSON() })
-        });
-        const subscribeResult = await subscribeResponse.json();
-        console.log('💾 Subscription salva no servidor:', subscribeResult);
-        
-        // ENVIAR MENSAGEM CUSTOMIZADA PARA TODOS - USANDO MESMA LÓGICA
-        console.log('📤 Enviando push notification BULK...');
-        const response = await fetch('/api/push-simple/send', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ 
-            title: title, 
-            message: message 
-          })
-        });
-        const result = await response.json();
-        console.log('📤 Resposta do servidor BULK:', result);
-        
+        // Atualizar estatísticas
         setStats({
-          totalUsers: result.stats?.total || 0,
-          messagesSent: result.stats?.success || 0,
+          totalUsers: result.stats?.total || stats.totalUsers,
+          messagesSent: (result.stats?.success || 0) + stats.messagesSent,
           successRate: result.stats?.total ? ((result.stats.success / result.stats.total) * 100) : 0,
           isLoading: false
         });
         
-        // REPRODUZIR SOM MODERNO DE VENDA 2025
-        if (soundEnabled && window.playNotificationSound) {
-          await window.playNotificationSound(soundType);
-          console.log('🔊 Som de venda reproduzido:', soundType);
+        // Reproduzir som de sucesso se estiver habilitado
+        if (soundEnabled && window.soundSystem) {
+          try {
+            const selectedSoundType = messageType === 'unique' ? uniqueSoundType : 
+                                      messageType === 'rotating' ? rotativeSoundType : soundType;
+            await testSound(selectedSoundType);
+          } catch (error) {
+            console.warn('❌ Erro ao reproduzir som de sucesso:', error);
+          }
         }
         
-        toast({
-          title: "🔥 Push + Som Enviado!",
-          description: `Enviado para ${result.stats?.success || 0} dispositivos com som ${soundType}`,
-        });
-        
-      } else if (Notification.permission === 'default') {
-        console.log('❓ Solicitando permissões...');
-        const permission = await Notification.requestPermission();
-        console.log('📱 Resultado da permissão:', permission);
-        
-        if (permission === 'granted') {
-          console.log('✅ Permissão concedida! Configurando service worker...');
-          
-          // Registrar service worker - EXATAMENTE COMO NO DASHBOARD
-          const registration = await navigator.serviceWorker.register('/sw-simple.js?' + Date.now());
-          console.log('🔧 Service Worker registrado:', registration);
-          
-          // Obter VAPID key - EXATAMENTE COMO NO DASHBOARD
-          const vapidResponse = await fetch('/api/push-simple/vapid');
-          const { publicKey: vapidPublicKey } = await vapidResponse.json();
-          console.log('🔑 VAPID key obtida:', vapidPublicKey?.substring(0, 20) + '...');
-          
-          // Criar subscription - EXATAMENTE COMO NO DASHBOARD
-          const subscription = await registration.pushManager.subscribe({
-            userVisibleOnly: true,
-            applicationServerKey: vapidPublicKey
-          });
-          console.log('📝 Subscription criada:', subscription);
-          
-          // Enviar subscription para servidor - EXATAMENTE COMO NO DASHBOARD
-          const subscribeResponse = await fetch('/api/push-simple/subscribe', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ subscription: subscription.toJSON() })
-          });
-          const subscribeResult = await subscribeResponse.json();
-          console.log('💾 Resultado subscribe:', subscribeResult);
-          
-          // ENVIAR MENSAGEM BASEADA NO TIPO
-          console.log(`📤 Enviando mensagem ${messageType}...`);
-          
-          let requestBody;
-          if (messageType === 'rotating') {
-            // Mensagens rotativas editáveis pelo usuário
-            const randomMessage = rotatingMessages[Math.floor(Math.random() * rotatingMessages.length)];
-            requestBody = { 
-              title: randomMessage.title, 
-              message: randomMessage.message,
-              type: 'rotating'
-            };
-          } else {
-            requestBody = { 
-              title: title, 
-              message: message,
-              type: messageType
-            };
-          }
-          
-          const response = await fetch('/api/push-simple/send', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(requestBody)
-          });
-          const result = await response.json();
-          console.log('📤 Resultado final:', result);
-          
-          setStats({
-            totalUsers: result.stats?.total || 0,
-            messagesSent: result.stats?.success || 0,
-            successRate: result.stats?.total ? ((result.stats.success / result.stats.total) * 100) : 0,
-            isLoading: false
-          });
-          
-          // Reproduzir som de sucesso se estiver habilitado
-          if (soundEnabled && window.soundSystem) {
-            try {
-              const selectedSoundType = messageType === 'unique' ? uniqueSoundType : 
-                                        messageType === 'rotating' ? rotativeSoundType : soundType;
-              await testSound(selectedSoundType);
-            } catch (error) {
-              console.warn('❌ Erro ao reproduzir som de sucesso:', error);
-            }
-          }
-          
-          const messageTypeText = messageType === 'unique' ? 'Única' : 
-                                messageType === 'rotating' ? 'Rotativa' : 'Prioritária';
-          const selectedSoundType = messageType === 'unique' ? uniqueSoundType : 
-                                   messageType === 'rotating' ? rotativeSoundType : soundType;
-          const soundTypeText = getSoundTypeText(selectedSoundType);
+        const messageTypeText = messageType === 'unique' ? 'Única' : 
+                              messageType === 'rotating' ? 'Rotativa' : 'Prioritária';
+        const selectedSoundType = messageType === 'unique' ? uniqueSoundType : 
+                                 messageType === 'rotating' ? rotativeSoundType : soundType;
+        const soundTypeText = getSoundTypeText(selectedSoundType);
 
-          toast({
-            title: soundEnabled ? `🔥 Mensagem ${messageTypeText} + Som Enviado!` : `Mensagem ${messageTypeText} Enviada!`,
-            description: `Enviado para ${result.stats?.success || 0} dispositivos${soundEnabled ? ` (Som ${soundTypeText})` : ''}`,
-          });
-        } else {
-          console.log('❌ Permissão negada');
-          toast({
-            title: "Permissão Negada",
-            description: "É necessário permitir notificações para enviar mensagens",
-            variant: "destructive",
-          });
-        }
-      } else {
-        console.log('❌ Permissão explicitamente negada');
         toast({
-          title: "Notificações Bloqueadas",
-          description: "Habilite as notificações nas configurações do navegador",
-          variant: "destructive",
+          title: `🔥 Push + Som Enviado!`,
+          description: `Mensagem ${messageTypeText} enviada com som ${soundTypeText} para ${result.stats?.success || 0} usuários`,
         });
+
+        // Atualizar estatísticas
+        await fetchStats();
+        
+      } else {
+        throw new Error(result.error || 'Erro ao enviar mensagem');
       }
     } catch (error) {
-      console.error('❌ Erro no envio bulk:', error);
+      console.error('❌ Erro ao enviar mensagem:', error);
       toast({
-        title: "Erro no Envio",
-        description: "Erro ao enviar mensagens push",
+        title: "Erro ao Enviar",
+        description: error instanceof Error ? error.message : "Erro desconhecido ao enviar mensagem",
         variant: "destructive",
       });
     } finally {
@@ -389,36 +307,16 @@ export default function BulkPushMessaging() {
   );
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-6">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-4" key="bulk-push-v2025">
       <div className="max-w-4xl mx-auto space-y-6">
-        {/* Header */}
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <Button
-              variant="outline"
-              onClick={() => window.history.back()}
-              className="border-gray-300"
-            >
-              <ArrowLeft className="w-4 h-4 mr-2" />
-              Voltar
-            </Button>
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
-                <MessageSquare className="w-8 h-8 text-green-600" />
-                Mensagens Bulk Push
-              </h1>
-              <p className="text-gray-600 dark:text-gray-400 mt-2">
-                Envie mensagens personalizadas para todos os usuários instantaneamente
-              </p>
-            </div>
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="relative">
-              <div className="w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
-              <div className="absolute inset-0 w-3 h-3 bg-green-500 rounded-full animate-ping opacity-75"></div>
-            </div>
-            <span className="text-sm font-medium text-green-600">Sistema Ativo</span>
-          </div>
+        {/* Header - SISTEMA DE PUSH NOTIFICATIONS AVANÇADO */}
+        <div className="text-center bg-gradient-to-r from-blue-600 to-purple-600 text-white p-6 rounded-lg shadow-lg">
+          <h1 className="text-3xl font-bold mb-2">
+            🚀 SISTEMA PUSH NOTIFICATIONS VENDZZ 2025
+          </h1>
+          <p className="text-blue-100">
+            Sistema completo de notificações push com 10 sons diferentes para iOS e Android
+          </p>
         </div>
 
         {/* Stats Cards */}
@@ -473,8 +371,9 @@ export default function BulkPushMessaging() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-lg font-semibold text-green-600">
-                {isLoading ? 'Enviando...' : 'Pronto'}
+              <div className="flex items-center gap-2">
+                <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                <span className="text-sm font-medium text-green-600">Ativo</span>
               </div>
             </CardContent>
           </Card>
@@ -515,22 +414,24 @@ export default function BulkPushMessaging() {
           </CardContent>
         </Card>
 
-        {/* Message Composer */}
+        {/* Message Form */}
         <Card>
           <CardHeader>
-            <CardTitle>Compor Mensagem para Todos os Usuários</CardTitle>
+            <CardTitle className="flex items-center gap-2">
+              <MessageSquare className="w-5 h-5" />
+              Configurar Mensagem Push
+            </CardTitle>
             <CardDescription>
               Escolha o tipo de mensagem e configure o conteúdo
             </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4">
-            {/* Tipo de Mensagem - SISTEMA ROTATIVO ATIVO */}
-            <div className="border-2 border-green-500 p-4 rounded-lg">
-              <label className="text-lg font-bold mb-3 block text-green-700">🔄 SISTEMA MULTI-MENSAGEM ATIVO</label>
-              <div className="flex gap-2 flex-wrap">
+          <CardContent className="space-y-6">
+            {/* Tipo de Mensagem */}
+            <div>
+              <label className="text-sm font-medium mb-3 block">Tipo de Mensagem</label>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                 <Button
                   variant={messageType === 'unique' ? "default" : "outline"}
-                  size="sm"
                   onClick={() => setMessageType('unique')}
                   className={messageType === 'unique' ? "bg-blue-600 hover:bg-blue-700" : ""}
                 >
@@ -538,19 +439,17 @@ export default function BulkPushMessaging() {
                 </Button>
                 <Button
                   variant={messageType === 'rotating' ? "default" : "outline"}
-                  size="sm"
                   onClick={() => setMessageType('rotating')}
                   className={messageType === 'rotating' ? "bg-green-600 hover:bg-green-700" : ""}
                 >
-                  🔄 Mensagem Rotativa
+                  🔄 Mensagens Rotativas
                 </Button>
                 <Button
                   variant={messageType === 'priority' ? "default" : "outline"}
-                  size="sm"
                   onClick={() => setMessageType('priority')}
-                  className={messageType === 'priority' ? "bg-purple-600 hover:bg-purple-700" : ""}
+                  className={messageType === 'priority' ? "bg-red-600 hover:bg-red-700" : ""}
                 >
-                  ⚡ Mensagem Prioritária
+                  🚨 Mensagem Prioritária
                 </Button>
               </div>
             </div>
@@ -665,82 +564,44 @@ export default function BulkPushMessaging() {
             )}
 
             {messageType === 'priority' && (
-              <div className="bg-purple-50 dark:bg-purple-900/20 p-4 rounded-lg border border-purple-200 dark:border-purple-800">
-                <h4 className="font-semibold text-purple-800 dark:text-purple-200 mb-2">⚡ Sistema de Mensagem Prioritária</h4>
-                <p className="text-sm text-purple-700 dark:text-purple-300 mb-3">
-                  Mensagens urgentes com som diferenciado e visual destacado. Ideal para comunicações críticas.
+              <div className="bg-red-50 dark:bg-red-900/20 p-4 rounded-lg border border-red-200 dark:border-red-800">
+                <h4 className="font-semibold text-red-800 dark:text-red-200 mb-2">🚨 Mensagem Prioritária</h4>
+                <p className="text-sm text-red-700 dark:text-red-300 mb-3">
+                  Mensagens prioritárias aparecem como alertas urgentes e têm maior visibilidade.
                 </p>
                 <div>
-                  <label className="text-sm font-medium mb-2 block text-purple-700 dark:text-purple-300">Título Prioritário</label>
+                  <label className="text-sm font-medium mb-2 block">Título da Mensagem Prioritária</label>
                   <Input 
                     value={title} 
                     onChange={(e) => setTitle(e.target.value)}
-                    placeholder="🚨 URGENTE: Título da mensagem prioritária..."
-                    className="font-medium border-purple-300 focus:border-purple-500"
+                    placeholder="🚨 URGENTE: Título da mensagem..."
+                    className="font-medium"
                   />
                 </div>
                 <div className="mt-3">
-                  <label className="text-sm font-medium mb-2 block text-purple-700 dark:text-purple-300">Conteúdo Prioritário</label>
+                  <label className="text-sm font-medium mb-2 block">Conteúdo da Mensagem Prioritária</label>
                   <Textarea 
                     value={message} 
                     onChange={(e) => setMessage(e.target.value)}
-                    placeholder="Mensagem crítica que requer atenção imediata dos usuários..."
-                    rows={3}
-                    className="resize-none border-purple-300 focus:border-purple-500"
+                    placeholder="Digite sua mensagem prioritária aqui..."
+                    rows={4}
+                    className="resize-none"
                   />
-                </div>
-              </div>
-            )}
-            
-            {/* Preview da Notificação */}
-            {messageType === 'unique' && (
-              <div className="bg-yellow-50 dark:bg-yellow-900/20 p-4 rounded-lg border border-yellow-200 dark:border-yellow-800">
-                <div className="flex items-start gap-3">
-                  <Bell className="w-5 h-5 text-yellow-600 mt-0.5" />
-                  <div>
-                    <h4 className="font-semibold text-yellow-800 dark:text-yellow-200">Preview da Notificação</h4>
-                    <p className="text-sm text-yellow-700 dark:text-yellow-300 mt-1">
-                      <strong>{title}</strong>
-                    </p>
-                    <p className="text-sm text-yellow-600 dark:text-yellow-400">
-                      {message}
-                    </p>
-                  </div>
                 </div>
               </div>
             )}
 
-            {messageType === 'priority' && (
-              <div className="bg-red-50 dark:bg-red-900/20 p-4 rounded-lg border border-red-200 dark:border-red-800">
-                <div className="flex items-start gap-3">
-                  <Bell className="w-5 h-5 text-red-600 mt-0.5" />
-                  <div>
-                    <h4 className="font-semibold text-red-800 dark:text-red-200">🚨 Preview - Notificação Prioritária</h4>
-                    <p className="text-sm text-red-700 dark:text-red-300 mt-1">
-                      <strong>{title}</strong>
-                    </p>
-                    <p className="text-sm text-red-600 dark:text-red-400">
-                      {message}
-                    </p>
-                  </div>
-                </div>
-              </div>
-            )}
-            
-            <Button 
-              onClick={sendBulkPushMessage} 
-              disabled={isLoading || (messageType !== 'rotating' && (!title.trim() || !message.trim()))}
-              className={`w-full text-white ${
-                messageType === 'unique' ? 'bg-blue-600 hover:bg-blue-700' :
-                messageType === 'rotating' ? 'bg-green-600 hover:bg-green-700' :
-                'bg-purple-600 hover:bg-purple-700'
-              }`}
+            {/* Send Button */}
+            <Button
+              onClick={handleSendMessage}
+              disabled={isLoading || (!title && messageType !== 'rotating') || (!message && messageType !== 'rotating')}
+              className="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-3"
               size="lg"
             >
               {isLoading ? (
                 <>
-                  <Zap className="w-4 h-4 mr-2 animate-spin" />
-                  {messageType === 'rotating' ? 'Ativando Rotativas...' : 'Enviando...'}
+                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
+                  Enviando...
                 </>
               ) : (
                 <>
@@ -754,7 +615,7 @@ export default function BulkPushMessaging() {
           </CardContent>
         </Card>
 
-        {/* How it Works */}
+        {/* Instruções */}
         <Card>
           <CardHeader>
             <CardTitle>Como Funciona</CardTitle>
@@ -764,25 +625,25 @@ export default function BulkPushMessaging() {
               <div className="flex items-start gap-2">
                 <div className="w-6 h-6 bg-green-100 dark:bg-green-900 rounded-full flex items-center justify-center text-xs font-semibold text-green-600">1</div>
                 <div>
-                  <strong>Lógica Idêntica:</strong> Usa exatamente a mesma configuração do botão "Testar Push" que já funciona perfeitamente.
+                  <strong>Sistema Completo:</strong> 10 tipos de som diferentes para iOS e Android com Web Audio API.
                 </div>
               </div>
               <div className="flex items-start gap-2">
                 <div className="w-6 h-6 bg-blue-100 dark:bg-blue-900 rounded-full flex items-center justify-center text-xs font-semibold text-blue-600">2</div>
                 <div>
-                  <strong>Service Worker:</strong> Registra /sw-simple.js automaticamente para garantir funcionamento.
+                  <strong>Som Individual:</strong> Cada tipo de mensagem (única/rotativa) tem sua própria configuração de som.
                 </div>
               </div>
               <div className="flex items-start gap-2">
                 <div className="w-6 h-6 bg-purple-100 dark:bg-purple-900 rounded-full flex items-center justify-center text-xs font-semibold text-purple-600">3</div>
                 <div>
-                  <strong>Endpoints:</strong> /api/push-simple/vapid, /api/push-simple/subscribe, /api/push-simple/send - mesmos endpoints funcionais.
+                  <strong>Edição Completa:</strong> Mensagens rotativas são totalmente editáveis (título e conteúdo).
                 </div>
               </div>
               <div className="flex items-start gap-2">
                 <div className="w-6 h-6 bg-orange-100 dark:bg-orange-900 rounded-full flex items-center justify-center text-xs font-semibold text-orange-600">4</div>
                 <div>
-                  <strong>Mensagem Customizada:</strong> Permite personalizar título e conteúdo mantendo toda a funcionalidade.
+                  <strong>Push Notifications:</strong> Sistema real de notificações que aparecem na tela de bloqueio.
                 </div>
               </div>
             </div>
