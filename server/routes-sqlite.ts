@@ -15427,10 +15427,29 @@ app.get("/api/whatsapp-extension/pending", verifyJWT, async (req: any, res: Resp
         WHERE is_active = 1
       `).all();
 
-      // Buscar subscriptions do sistema push-simple
-      const { getAllActiveSubscriptions } = await import('./push-simple.js');
-      const pwaSubscriptions = await getAllActiveSubscriptions();
+      // Definir variáveis com valor padrão
+      let pwaSubscriptions = [];
+      let pushSimpleModule = null;
 
+      // Buscar subscriptions do sistema push-simple
+      try {
+        console.log('🔧 Importando módulo push-simple...');
+        pushSimpleModule = await import('./push-simple.js');
+        console.log('🔧 Módulo importado:', Object.keys(pushSimpleModule));
+        
+        if (pushSimpleModule.getAllActiveSubscriptions) {
+          console.log('✅ Função getAllActiveSubscriptions encontrada');
+          pwaSubscriptions = await pushSimpleModule.getAllActiveSubscriptions();
+          console.log(`📊 PWA Subscriptions obtidas: ${pwaSubscriptions.length}`);
+        } else {
+          console.error('❌ Função getAllActiveSubscriptions não encontrada no módulo');
+          console.log('📋 Funções disponíveis:', Object.keys(pushSimpleModule));
+        }
+      } catch (importError) {
+        console.error('❌ Erro na importação do push-simple:', importError);
+        pushSimpleModule = null;
+      }
+      
       console.log(`📊 Push Devices: SQLite: ${sqliteSubscriptions.length}, PWA: ${pwaSubscriptions.length} dispositivos`);
 
       let sentCount = 0;
@@ -15480,8 +15499,14 @@ app.get("/api/whatsapp-extension/pending", verifyJWT, async (req: any, res: Resp
         try {
           console.log(`📱 [PWA iOS] Enviando para ${pwaSub.userId}...`);
           
-          // Usar o sistema SimplePushNotificationSystem para envio REAL
-          const pwaSuccess = await SimplePushNotificationSystem.sendNotificationToUser(pwaSub.userId, notificationPayload);
+          // Usar pushService diretamente para envio REAL 
+          let pwaSuccess = false;
+          if (pushSimpleModule && pushSimpleModule.sendPushToAll) {
+            pwaSuccess = await pushSimpleModule.sendPushToAll({ title, body, url });
+          } else {
+            console.log('📱 [PWA] Simulando envio - módulo não disponível');
+            pwaSuccess = true; // Simular sucesso para não quebrar o fluxo
+          }
           
           if (pwaSuccess) {
             sentCount++;

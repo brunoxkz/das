@@ -240,4 +240,18 @@ export const getPushStats = async (req: Request, res: Response) => {
   }
 };
 
+// FUNÇÃO CRÍTICA PARA BROADCAST: Exportar função que retorna subscriptions ativas
+export const getAllActiveSubscriptions = async (): Promise<PushSubscription[]> => {
+  console.log('🔍 [PUSH-SIMPLE] Buscando todas as subscriptions ativas...');
+  
+  try {
+    const subscriptions = await pushService.loadSubscriptions();
+    console.log(`📊 [PUSH-SIMPLE] Encontradas ${subscriptions.length} subscriptions`);
+    return subscriptions;
+  } catch (error) {
+    console.error('❌ [PUSH-SIMPLE] Erro ao buscar subscriptions:', error);
+    return [];
+  }
+};
+
 export { pushService };

@@ -10,17 +10,24 @@
   - `server/push-simple.ts` → VAPID_KEYS.publicKey sincronizada
 - **Chave unificada**: `BC9uiP1uG8jN942_SoN4ThXQ5X8TotmwYKiLbfXO8HO35yQTvTE9Hn7S9Yccrr5rULgnvjQ0Bl4IdYFaZXQ1L48`
 
-### 2. "SimplePushNotificationSystem is not defined"
-- **Causa**: Sistema referenciando classe inexistente
-- **Solução**: Substituição por importação dinâmica do push-simple.ts
+### 2. "getAllActiveSubscriptions is not a function"
+- **Causa**: Função não exportada do módulo push-simple.ts
+- **Solução**: Exportação correta da função getAllActiveSubscriptions
 - **Correção aplicada**:
 ```javascript
-// Antes (erro):
-await SimplePushNotificationSystem.cleanInvalidSubscriptions();
-
-// Depois (corrigido):
-const { getAllActiveSubscriptions } = await import('./push-simple.js');
-const pwaSubscriptions = await getAllActiveSubscriptions();
+// Adicionado ao push-simple.ts:
+export const getAllActiveSubscriptions = async (): Promise<PushSubscription[]> => {
+  console.log('🔍 [PUSH-SIMPLE] Buscando todas as subscriptions ativas...');
+  
+  try {
+    const subscriptions = await pushService.loadSubscriptions();
+    console.log(`📊 [PUSH-SIMPLE] Encontradas ${subscriptions.length} subscriptions`);
+    return subscriptions;
+  } catch (error) {
+    console.error('❌ [PUSH-SIMPLE] Erro ao buscar subscriptions:', error);
+    return [];
+  }
+};
 ```
 
 ## ✅ TESTES DE VALIDAÇÃO
