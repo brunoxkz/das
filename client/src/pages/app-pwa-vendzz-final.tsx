@@ -67,8 +67,7 @@ export default function AppPWAVendzz() {
     const hasShownInstallPrompt = sessionStorage.getItem('vendzz_install_prompt_shown');
     
     if (!isLoading && !isAuthenticated && hasShownInstallPrompt && !showInstallModal) {
-      // Redirecionar para login PWA se não autenticado e modal já foi tratado
-      window.location.href = '/login-pwa';
+      // Manter na página atual - login será tratado normalmente via /login
       return;
     }
   }, [isLoading, isAuthenticated, showInstallModal]);
@@ -163,10 +162,7 @@ export default function AppPWAVendzz() {
     setShowInstallModal(false);
     sessionStorage.setItem('vendzz_install_prompt_shown', 'true');
     
-    // Após fechar o modal, verificar login
-    if (!isLoading && !isAuthenticated) {
-      window.location.href = '/login-pwa';
-    }
+    // Login será tratado normalmente via /login - sem redirecionamento forçado
   };
 
   // Solicitar permissão de notificação quando entrar no PWA (após login)

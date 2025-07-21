@@ -32,16 +32,8 @@ export default function LoginPage() {
   const { login, register } = useAuth();
   // const { t } = useLanguage();
 
-  // Detectar iOS e PWA para redirecionar automaticamente
-  useEffect(() => {
-    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
-    const isPWA = window.matchMedia('(display-mode: standalone)').matches || (window.navigator as any).standalone;
-    
-    // Se estiver no iOS e for PWA, redirecionar para login específico iOS
-    if (isIOS && isPWA) {
-      setLocation('/login-pwa-ios');
-    }
-  }, [setLocation]);
+  // Login normal - sem redirecionamentos automáticos para PWA
+  // Removido o redirecionamento automático para permitir login normal em todos os dispositivos
 
   // Gerar captcha simples
   const generateCaptcha = () => {
