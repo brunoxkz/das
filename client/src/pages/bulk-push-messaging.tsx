@@ -28,6 +28,14 @@ export default function BulkPushMessaging() {
   const [isLoading, setIsLoading] = useState(false);
   const [soundEnabled, setSoundEnabled] = useState(true);
   const [soundType, setSoundType] = useState('sale');
+  const [uniqueSoundType, setUniqueSoundType] = useState('sale');
+  const [rotativeSoundType, setRotativeSoundType] = useState('cash');
+  const [rotatingMessages, setRotatingMessages] = useState([
+    { title: '🔥 Promoção Especial!', message: 'Oferta limitada disponível agora - não perca!' },
+    { title: '📱 Nova Atualização', message: 'Sistema atualizado com novas funcionalidades' },
+    { title: '✨ Descubra Novidades', message: 'Explore as últimas funcionalidades do Vendzz' },
+    { title: '🚀 Performance Melhorada', message: 'Sistema 3x mais rápido e eficiente' }
+  ]);
   const [messageType, setMessageType] = useState('unique'); // 'unique', 'rotating', 'priority'
   const [stats, setStats] = useState<BulkMessageStats>({
     totalUsers: 0,
@@ -237,13 +245,7 @@ export default function BulkPushMessaging() {
           
           let requestBody;
           if (messageType === 'rotating') {
-            // Mensagens rotativas predefinidas
-            const rotatingMessages = [
-              { title: '🔥 Promoção Especial!', message: 'Oferta limitada disponível agora - não perca!' },
-              { title: '📱 Nova Atualização', message: 'Sistema atualizado com novas funcionalidades' },
-              { title: '✨ Descubra Novidades', message: 'Explore as últimas funcionalidades do Vendzz' },
-              { title: '🚀 Performance Melhorada', message: 'Sistema 3x mais rápido e eficiente' }
-            ];
+            // Mensagens rotativas editáveis pelo usuário
             const randomMessage = rotatingMessages[Math.floor(Math.random() * rotatingMessages.length)];
             requestBody = { 
               title: randomMessage.title, 
@@ -276,7 +278,9 @@ export default function BulkPushMessaging() {
           // Reproduzir som de sucesso se estiver habilitado
           if (soundEnabled && window.soundSystem) {
             try {
-              await testSound(soundType);
+              const selectedSoundType = messageType === 'unique' ? uniqueSoundType : 
+                                        messageType === 'rotating' ? rotativeSoundType : soundType;
+              await testSound(selectedSoundType);
             } catch (error) {
               console.warn('❌ Erro ao reproduzir som de sucesso:', error);
             }
@@ -284,8 +288,9 @@ export default function BulkPushMessaging() {
           
           const messageTypeText = messageType === 'unique' ? 'Única' : 
                                 messageType === 'rotating' ? 'Rotativa' : 'Prioritária';
-          const soundTypeText = soundType === 'sale' ? 'Venda Moderna' : 
-                               soundType === 'subtle' ? 'Suave' : 'Energético';
+          const selectedSoundType = messageType === 'unique' ? uniqueSoundType : 
+                                   messageType === 'rotating' ? rotativeSoundType : soundType;
+          const soundTypeText = getSoundTypeText(selectedSoundType);
 
           toast({
             title: soundEnabled ? `🔥 Mensagem ${messageTypeText} + Som Enviado!` : `Mensagem ${messageTypeText} Enviada!`,
@@ -318,6 +323,70 @@ export default function BulkPushMessaging() {
       setIsLoading(false);
     }
   };
+
+  // Função auxiliar para obter texto do tipo de som
+  const getSoundTypeText = (type: string) => {
+    const soundNames: { [key: string]: string } = {
+      'sale': 'Venda Moderna',
+      'subtle': 'Suave',
+      'energetic': 'Energético',
+      'ios': 'iPhone',
+      'android': 'Android',
+      'messenger': 'WhatsApp',
+      'cash': 'Cash Register',
+      'jackpot': 'Jackpot',
+      'ding': 'Ding',
+      'game': 'Game Success'
+    };
+    return soundNames[type] || 'Desconhecido';
+  };
+
+  // Componente para seleção de som reutilizável
+  const SoundSelector = ({ currentSoundType, onSoundTypeChange, label }: { 
+    currentSoundType: string, 
+    onSoundTypeChange: (type: string) => void,
+    label: string 
+  }) => (
+    <div className="space-y-2">
+      <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+        {label}:
+      </label>
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-1">
+        {[
+          { key: 'sale', label: '🔥 Venda Moderna', color: 'bg-blue-600 hover:bg-blue-700' },
+          { key: 'subtle', label: '🔔 Suave', color: 'bg-green-600 hover:bg-green-700' },
+          { key: 'energetic', label: '⚡ Energético', color: 'bg-purple-600 hover:bg-purple-700' },
+          { key: 'ios', label: '📱 iPhone', color: 'bg-gray-600 hover:bg-gray-700' },
+          { key: 'android', label: '🤖 Android', color: 'bg-green-500 hover:bg-green-600' },
+          { key: 'messenger', label: '💬 WhatsApp', color: 'bg-blue-500 hover:bg-blue-600' },
+          { key: 'cash', label: '💰 Cash Register', color: 'bg-yellow-600 hover:bg-yellow-700' },
+          { key: 'jackpot', label: '🎰 Jackpot', color: 'bg-red-600 hover:bg-red-700' },
+          { key: 'ding', label: '🔔 Ding', color: 'bg-indigo-600 hover:bg-indigo-700' },
+          { key: 'game', label: '🎮 Game Success', color: 'bg-pink-600 hover:bg-pink-700' }
+        ].map(sound => (
+          <Button
+            key={sound.key}
+            variant={currentSoundType === sound.key ? "default" : "outline"}
+            size="sm"
+            onClick={() => onSoundTypeChange(sound.key)}
+            className={currentSoundType === sound.key ? sound.color : "text-xs"}
+          >
+            {sound.label}
+          </Button>
+        ))}
+      </div>
+      <div className="flex justify-center">
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => testSound(currentSoundType)}
+          className="border-orange-500 text-orange-600 hover:bg-orange-50 font-semibold px-4"
+        >
+          🎵 Testar {getSoundTypeText(currentSoundType)}
+        </Button>
+      </div>
+    </div>
+  );
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-6">
@@ -411,22 +480,22 @@ export default function BulkPushMessaging() {
           </Card>
         </div>
 
-        {/* Sound Controls - FORÇANDO RELOAD DE CACHE */}
+        {/* Configurações Globais de Som */}
         <Card className="border-2 border-purple-500 shadow-lg">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-lg">
               <Music className="w-6 h-6 text-purple-600" />
-              🔊 SISTEMA DE SOM 2025 - ATIVO
+              🔊 CONTROLE GLOBAL DE SOM - ATIVO
             </CardTitle>
             <CardDescription>
-              Configure o som que será reproduzido junto com as notificações push
+              Ativar ou desativar reprodução de som para todas as notificações push
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <Volume2 className="w-4 h-4 text-green-600" />
-                <span className="font-medium">Som de Venda Ativado</span>
+                <span className="font-medium">Sistema de Som</span>
               </div>
               <Button
                 variant={soundEnabled ? "default" : "outline"}
@@ -437,46 +506,12 @@ export default function BulkPushMessaging() {
                 {soundEnabled ? "✓ Ativo" : "✗ Inativo"}
               </Button>
             </div>
-            
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                Tipo de Som Moderno:
-              </label>
-              <div className="flex gap-2 flex-wrap">
-                <Button
-                  variant={soundType === 'sale' ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => setSoundType('sale')}
-                  className={soundType === 'sale' ? "bg-blue-600 hover:bg-blue-700" : ""}
-                >
-                  🔥 Venda Moderna
-                </Button>
-                <Button
-                  variant={soundType === 'subtle' ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => setSoundType('subtle')}
-                  className={soundType === 'subtle' ? "bg-green-600 hover:bg-green-700" : ""}
-                >
-                  🔔 Suave
-                </Button>
-                <Button
-                  variant={soundType === 'energetic' ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => setSoundType('energetic')}
-                  className={soundType === 'energetic' ? "bg-purple-600 hover:bg-purple-700" : ""}
-                >
-                  ⚡ Energético
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => testSound(soundType)}
-                  className="border-orange-500 text-orange-600 hover:bg-orange-50"
-                >
-                  🎵 Testar Som
-                </Button>
-              </div>
-            </div>
+            <p className="text-sm text-gray-600 dark:text-gray-400">
+              {soundEnabled ? 
+                'Sons serão reproduzidos automaticamente após envio das notificações (configuração individual por tipo de mensagem abaixo)' : 
+                'Sons desabilitados - nenhum áudio será reproduzido'
+              }
+            </p>
           </CardContent>
         </Card>
 
@@ -542,21 +577,89 @@ export default function BulkPushMessaging() {
                     className="resize-none"
                   />
                 </div>
+
+                {/* Som específico para mensagem única */}
+                <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg border border-blue-200 dark:border-blue-800">
+                  <h4 className="font-semibold text-blue-800 dark:text-blue-200 mb-3">🔊 Som para Mensagem Única</h4>
+                  <SoundSelector 
+                    currentSoundType={uniqueSoundType} 
+                    onSoundTypeChange={setUniqueSoundType}
+                    label="Som quando enviar mensagem única"
+                  />
+                </div>
               </>
             )}
 
             {messageType === 'rotating' && (
               <div className="bg-green-50 dark:bg-green-900/20 p-4 rounded-lg border border-green-200 dark:border-green-800">
-                <h4 className="font-semibold text-green-800 dark:text-green-200 mb-2">🔄 Sistema de Mensagem Rotativa</h4>
-                <p className="text-sm text-green-700 dark:text-green-300">
-                  O sistema enviará mensagens diferentes alternadamente para maximizar engagement. 
-                  Mensagens pré-configuradas: Promoções, Updates, Novidades, Alertas.
+                <h4 className="font-semibold text-green-800 dark:text-green-200 mb-3">🔄 Sistema de Mensagem Rotativa Editável</h4>
+                <p className="text-sm text-green-700 dark:text-green-300 mb-4">
+                  Configure suas mensagens rotativas personalizadas. O sistema enviará uma aleatoriamente a cada envio:
                 </p>
-                <div className="mt-3 p-3 bg-white dark:bg-gray-800 rounded border">
-                  <p className="text-xs text-gray-600 dark:text-gray-400"><strong>Exemplo:</strong></p>
-                  <p className="text-sm">🔥 Promoção especial disponível!</p>
-                  <p className="text-sm">📱 Nova atualização do sistema</p>
-                  <p className="text-sm">✨ Descubra as novidades</p>
+                
+                {/* Editor de mensagens rotativas */}
+                <div className="space-y-3">
+                  {rotatingMessages.map((msg, index) => (
+                    <div key={index} className="bg-white dark:bg-gray-800 p-3 rounded-lg border border-gray-200 dark:border-gray-700">
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Mensagem {index + 1}</span>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            const newMessages = rotatingMessages.filter((_, i) => i !== index);
+                            setRotatingMessages(newMessages);
+                          }}
+                          className="text-red-600 hover:bg-red-50 border-red-300"
+                        >
+                          🗑️ Remover
+                        </Button>
+                      </div>
+                      <div className="space-y-2">
+                        <Input
+                          value={msg.title}
+                          onChange={(e) => {
+                            const newMessages = [...rotatingMessages];
+                            newMessages[index].title = e.target.value;
+                            setRotatingMessages(newMessages);
+                          }}
+                          placeholder="Título da mensagem rotativa..."
+                          className="font-medium"
+                        />
+                        <Textarea
+                          value={msg.message}
+                          onChange={(e) => {
+                            const newMessages = [...rotatingMessages];
+                            newMessages[index].message = e.target.value;
+                            setRotatingMessages(newMessages);
+                          }}
+                          placeholder="Conteúdo da mensagem rotativa..."
+                          rows={2}
+                          className="resize-none"
+                        />
+                      </div>
+                    </div>
+                  ))}
+                  
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      setRotatingMessages([...rotatingMessages, { title: '', message: '' }]);
+                    }}
+                    className="w-full border-dashed border-2 border-green-300 text-green-700 hover:bg-green-50"
+                  >
+                    ➕ Adicionar Nova Mensagem Rotativa
+                  </Button>
+                </div>
+
+                {/* Som específico para mensagem rotativa */}
+                <div className="mt-4 p-3 bg-green-100 dark:bg-green-800/30 rounded-lg">
+                  <h5 className="font-semibold text-green-800 dark:text-green-200 mb-3">🔊 Som para Mensagens Rotativas</h5>
+                  <SoundSelector 
+                    currentSoundType={rotativeSoundType} 
+                    onSoundTypeChange={setRotativeSoundType}
+                    label="Som quando enviar mensagem rotativa"
+                  />
                 </div>
               </div>
             )}
