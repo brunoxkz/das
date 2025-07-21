@@ -411,12 +411,12 @@ export default function BulkPushMessaging() {
           </Card>
         </div>
 
-        {/* Sound Controls */}
-        <Card>
+        {/* Sound Controls - FORÇANDO RELOAD DE CACHE */}
+        <Card className="border-2 border-purple-500 shadow-lg">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Music className="w-5 h-5 text-purple-600" />
-              🔊 Configurações de Som Moderno 2025
+            <CardTitle className="flex items-center gap-2 text-lg">
+              <Music className="w-6 h-6 text-purple-600" />
+              🔊 SISTEMA DE SOM 2025 - ATIVO
             </CardTitle>
             <CardDescription>
               Configure o som que será reproduzido junto com as notificações push
@@ -489,9 +489,9 @@ export default function BulkPushMessaging() {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            {/* Tipo de Mensagem */}
-            <div>
-              <label className="text-sm font-medium mb-3 block">Tipo de Mensagem</label>
+            {/* Tipo de Mensagem - SISTEMA ROTATIVO ATIVO */}
+            <div className="border-2 border-green-500 p-4 rounded-lg">
+              <label className="text-lg font-bold mb-3 block text-green-700">🔄 SISTEMA MULTI-MENSAGEM ATIVO</label>
               <div className="flex gap-2 flex-wrap">
                 <Button
                   variant={messageType === 'unique' ? "default" : "outline"}
