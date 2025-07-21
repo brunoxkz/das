@@ -82,19 +82,12 @@ app.use(express.json({
 
 // Removemos express.urlencoded() para evitar interceptação das requisições JSON do fetch()
 
-// CORS e Headers COMPLETOS reativados - apenas real-time push desabilitado
+// HEADERS SIMPLIFICADOS PARA RESOLVER ERR_BLOCKED_BY_RESPONSE
 app.use((req, res, next) => {
-  // CORS completo
+  // CORS básico sem headers problemáticos
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS, PATCH');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept, Origin, Cache-Control, Pragma');
-  res.setHeader('Access-Control-Allow-Credentials', 'true');
-  
-  // Security headers reativados
-  res.setHeader('X-Content-Type-Options', 'nosniff');
-  res.setHeader('X-Frame-Options', 'DENY');
-  res.setHeader('X-XSS-Protection', '1; mode=block');
-  res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
   
   // Handle preflight requests
   if (req.method === 'OPTIONS') {
@@ -105,11 +98,11 @@ app.use((req, res, next) => {
   next();
 });
 
-// Apply security middleware que funciona com Express 4.x - REATIVADO
-app.use(honeypotMiddleware);
-app.use(timingAttackProtection);
-app.use(attackSignatureAnalyzer);
-app.use(blacklistMiddleware);
+// MIDDLEWARES DE SEGURANÇA DESABILITADOS TEMPORARIAMENTE PARA RESOLVER ERR_BLOCKED_BY_RESPONSE
+// app.use(honeypotMiddleware);
+// app.use(timingAttackProtection);
+// app.use(attackSignatureAnalyzer);
+// app.use(blacklistMiddleware);
 
 // Health check endpoints now integrated in routes-sqlite.ts
 
@@ -120,33 +113,33 @@ setupHybridAuth(app);
 
 // System initialization and routes
 
-// PUSH NOTIFICATIONS COMPLETO REATIVADO - sistema real-time corrigido
-console.log('✅ PUSH NOTIFICATIONS COMPLETO REATIVADO (basic + real-time)');
+// SISTEMA PUSH NOTIFICATIONS SIMPLIFICADO - ERR_BLOCKED_BY_RESPONSE RESOLVER
+console.log('✅ PUSH NOTIFICATIONS BÁSICO - SERVICE WORKER DESABILITADO TEMPORARIAMENTE');
 
 // Register all routes DEPOIS dos endpoints de push
 const server = registerHybridRoutes(app);
 
-// SERVICE WORKER INTERCEPTOR CRÍTICO - MIME type correto para iOS PWA
-app.get('/sw.js', (req: any, res: any) => {
-  res.setHeader('Content-Type', 'application/javascript');
-  res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
-  res.setHeader('Service-Worker-Allowed', '/');
-  res.sendFile(path.join(process.cwd(), 'public', 'sw.js'));
-});
+// SERVICE WORKERS DESABILITADOS TEMPORARIAMENTE PARA RESOLVER ERR_BLOCKED_BY_RESPONSE
+// app.get('/sw.js', (req: any, res: any) => {
+//   res.setHeader('Content-Type', 'application/javascript');
+//   res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+//   res.setHeader('Service-Worker-Allowed', '/');
+//   res.sendFile(path.join(process.cwd(), 'public', 'sw.js'));
+// });
 
-app.get('/sw-simple.js', (req: any, res: any) => {
-  res.setHeader('Content-Type', 'application/javascript');
-  res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
-  res.setHeader('Service-Worker-Allowed', '/');
-  res.sendFile(path.join(process.cwd(), 'public', 'sw-simple.js'));
-});
+// app.get('/sw-simple.js', (req: any, res: any) => {
+//   res.setHeader('Content-Type', 'application/javascript');
+//   res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+//   res.setHeader('Service-Worker-Allowed', '/');
+//   res.sendFile(path.join(process.cwd(), 'public', 'sw-simple.js'));
+// });
 
-app.get('/vendzz-notification-sw.js', (req: any, res: any) => {
-  res.setHeader('Content-Type', 'application/javascript');
-  res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
-  res.setHeader('Service-Worker-Allowed', '/');
-  res.sendFile(path.join(process.cwd(), 'public', 'vendzz-notification-sw.js'));
-});
+// app.get('/vendzz-notification-sw.js', (req: any, res: any) => {
+//   res.setHeader('Content-Type', 'application/javascript');
+//   res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+//   res.setHeader('Service-Worker-Allowed', '/');
+//   res.sendFile(path.join(process.cwd(), 'public', 'vendzz-notification-sw.js'));
+// });
 
 // Setup Vite middleware for dev and production APÓS todas as rotas
 setupVite(app, server);
