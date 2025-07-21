@@ -6,6 +6,15 @@ import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { Send, Users, Bell, MessageSquare, Zap, ArrowLeft, Music, Volume2 } from 'lucide-react';
 
+// Declarações TypeScript globais para sistema de áudio
+declare global {
+  interface Window {
+    ModernSaleSound: any;
+    soundSystem: any;
+    playNotificationSound: any;
+  }
+}
+
 interface BulkMessageStats {
   totalUsers: number;
   messagesSent: number;
