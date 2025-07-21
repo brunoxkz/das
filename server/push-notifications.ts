@@ -264,6 +264,62 @@ export class PushNotificationSystem {
   }
 
   /**
+   * Envia broadcast para todos os usuários (método principal usado pela API)
+   */
+  static async sendBroadcastNotification(notification: NotificationData): Promise<{
+    sentCount: number;
+    failedCount: number;
+    totalSubscriptions: number;
+  }> {
+    try {
+      const allSubscriptions = await storage.getAllActivePushSubscriptions();
+      const totalSubscriptions = allSubscriptions?.length || 0;
+      
+      if (totalSubscriptions === 0) {
+        console.log('⚠️ Nenhuma subscription ativa encontrada para broadcast');
+        return {
+          sentCount: 0,
+          failedCount: 0,
+          totalSubscriptions: 0
+        };
+      }
+
+      console.log(`📢 Iniciando broadcast para ${totalSubscriptions} subscriptions`);
+
+      const uniqueUsers = [...new Set(allSubscriptions.map(s => s.userId))];
+      let sentCount = 0;
+      let failedCount = 0;
+
+      for (const userId of uniqueUsers) {
+        const success = await this.sendNotificationToUser(userId, notification);
+        if (success) {
+          sentCount++;
+        } else {
+          failedCount++;
+        }
+        
+        // Pequeno delay para evitar spam
+        await new Promise(resolve => setTimeout(resolve, 50));
+      }
+
+      console.log(`✅ Broadcast completo: ${sentCount} enviados, ${failedCount} falharam de ${uniqueUsers.length} usuários`);
+      
+      return {
+        sentCount,
+        failedCount,
+        totalSubscriptions: uniqueUsers.length
+      };
+    } catch (error) {
+      console.error('❌ Erro ao enviar broadcast:', error);
+      return {
+        sentCount: 0,
+        failedCount: 1,
+        totalSubscriptions: 0
+      };
+    }
+  }
+
+  /**
    * Envia notificação quando uma campanha é finalizada
    */
   static async notifyCampaignComplete(

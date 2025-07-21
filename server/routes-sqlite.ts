@@ -15138,14 +15138,14 @@ app.get("/api/whatsapp-extension/pending", verifyJWT, async (req: any, res: Resp
       }
 
       // Buscar estatísticas
-      const totalSubscriptions = db.prepare('SELECT COUNT(*) as count FROM push_subscriptions').get().count;
-      const activeSubscriptions = db.prepare('SELECT COUNT(*) as count FROM push_subscriptions WHERE is_active = 1').get().count;
-      const totalSent = db.prepare('SELECT COUNT(*) as count FROM push_notification_logs').get().count;
+      const totalSubscriptions = sqlite.prepare('SELECT COUNT(*) as count FROM push_subscriptions').get().count;
+      const activeSubscriptions = sqlite.prepare('SELECT COUNT(*) as count FROM push_subscriptions WHERE is_active = 1').get().count;
+      const totalSent = sqlite.prepare('SELECT COUNT(*) as count FROM push_notification_logs').get().count;
       
-      const successfulSent = db.prepare('SELECT COUNT(*) as count FROM push_notification_logs WHERE status = "sent"').get().count;
+      const successfulSent = sqlite.prepare('SELECT COUNT(*) as count FROM push_notification_logs WHERE status = "sent"').get().count;
       const successRate = totalSent > 0 ? Math.round((successfulSent / totalSent) * 100) : 0;
       
-      const lastSentResult = db.prepare('SELECT sent_at FROM push_notification_logs ORDER BY sent_at DESC LIMIT 1').get();
+      const lastSentResult = sqlite.prepare('SELECT sent_at FROM push_notification_logs ORDER BY sent_at DESC LIMIT 1').get();
       const lastSent = lastSentResult ? lastSentResult.sent_at : null;
 
       res.json({
@@ -15173,7 +15173,7 @@ app.get("/api/whatsapp-extension/pending", verifyJWT, async (req: any, res: Resp
         return res.status(403).json({ success: false, message: 'Acesso negado - apenas admins' });
       }
 
-      const subscriptions = db.prepare(`
+      const subscriptions = sqlite.prepare(`
         SELECT id, user_id as userId, endpoint, is_active as isActive, 
                created_at as createdAt, user_agent as userAgent, device_type as deviceType
         FROM push_subscriptions 
@@ -15199,7 +15199,7 @@ app.get("/api/whatsapp-extension/pending", verifyJWT, async (req: any, res: Resp
         return res.status(403).json({ success: false, message: 'Acesso negado - apenas admins' });
       }
 
-      const logs = db.prepare(`
+      const logs = sqlite.prepare(`
         SELECT id, user_id as userId, title, body, status, 
                sent_at as sentAt, delivered_at as deliveredAt
         FROM push_notification_logs 
@@ -15235,7 +15235,7 @@ app.get("/api/whatsapp-extension/pending", verifyJWT, async (req: any, res: Resp
       }
 
       // Buscar todas as subscriptions ativas
-      const subscriptions = db.prepare(`
+      const subscriptions = sqlite.prepare(`
         SELECT * FROM push_subscriptions 
         WHERE is_active = 1
       `).all();
@@ -15256,27 +15256,27 @@ app.get("/api/whatsapp-extension/pending", verifyJWT, async (req: any, res: Resp
           // await webpush.sendNotification(subscription, payload);
           
           // Salvar log de sucesso
-          const logStmt = db.prepare(`
+          const logStmt = sqlite.prepare(`
             INSERT INTO push_notification_logs 
-            (user_id, title, body, status, sent_at, notification_data)
-            VALUES (?, ?, ?, 'sent', ?, ?)
+            (id, user_id, title, body, status, sent_at, notification_data)
+            VALUES (?, ?, ?, ?, 'sent', ?, ?)
           `);
           
           const notificationData = JSON.stringify({ url, icon, badge, requireInteraction, silent });
-          logStmt.run(sub.user_id, title, body, new Date().toISOString(), notificationData);
+          logStmt.run(nanoid(), sub.user_id, title, body, new Date().toISOString(), notificationData);
           sentCount++;
 
         } catch (error) {
           console.error(`❌ Erro ao enviar para ${sub.user_id}:`, error);
           
           // Salvar log de erro
-          const errorLogStmt = db.prepare(`
+          const errorLogStmt = sqlite.prepare(`
             INSERT INTO push_notification_logs 
-            (user_id, title, body, status, sent_at, error_message)
-            VALUES (?, ?, ?, 'failed', ?, ?)
+            (id, user_id, title, body, status, sent_at, error_message)
+            VALUES (?, ?, ?, ?, 'failed', ?, ?)
           `);
           
-          errorLogStmt.run(sub.user_id, title, body, new Date().toISOString(), error.message);
+          errorLogStmt.run(nanoid(), sub.user_id, title, body, new Date().toISOString(), error.message);
           failedCount++;
         }
       }
@@ -15386,7 +15386,11 @@ app.get("/api/whatsapp-extension/pending", verifyJWT, async (req: any, res: Resp
 
       // Buscar todas as subscriptions ativas
       console.log('📡 Buscando subscriptions ativas...');
-      const allSubscriptions = await storage.getAllActivePushSubscriptions();
+      const allSubscriptions = sqlite.prepare(`
+        SELECT id, user_id, endpoint, keys_p256dh as p256dh_key, keys_auth as auth_key 
+        FROM push_subscriptions 
+        WHERE is_active = 1
+      `).all();
       console.log(`📱 Subscriptions encontradas: ${allSubscriptions.length}`);
       
       // Enviar notificações reais para dispositivos
@@ -15656,9 +15660,103 @@ app.get("/api/whatsapp-extension/pending", verifyJWT, async (req: any, res: Resp
     }
   });
 
-  // ==================== NOTIFICATIONS ROUTES ====================
+  // ==================== PUSH NOTIFICATIONS API ====================
   
+  // VAPID Public Key
+  app.get('/api/push-vapid-key', (req, res) => {
+    res.json({ 
+      publicKey: PushNotificationSystem.getVapidPublicKey() 
+    });
+  });
+
   // Subscribe to push notifications
+  app.post('/api/push-subscribe', verifyJWT, async (req: any, res) => {
+    try {
+      const { endpoint, keys } = req.body;
+      const userId = req.user.id;
+      
+      if (!endpoint || !keys?.p256dh || !keys?.auth) {
+        return res.status(400).json({ 
+          success: false, 
+          message: 'Dados de subscription inválidos' 
+        });
+      }
+
+      const subscription = { endpoint, keys };
+      const success = await PushNotificationSystem.saveUserSubscription(userId, subscription);
+      
+      if (success) {
+        res.json({ 
+          success: true, 
+          message: 'Subscription registrada com sucesso',
+          vapidPublicKey: PushNotificationSystem.getVapidPublicKey()
+        });
+      } else {
+        res.status(500).json({
+          success: false,
+          message: 'Erro ao salvar subscription'
+        });
+      }
+    } catch (error) {
+      console.error('❌ Erro ao registrar push subscription:', error);
+      res.status(500).json({ 
+        success: false, 
+        message: 'Erro interno do servidor' 
+      });
+    }
+  });
+
+  // Broadcast push notification to all users
+  app.post('/api/push-broadcast', verifyJWT, async (req: any, res) => {
+    try {
+      // Verificar se é admin
+      const isAdmin = req.user.email === 'admin@admin.com' || req.user.email === 'admin@vendzz.com' || req.user.email === 'bruno@vendzz.com';
+      
+      if (!isAdmin) {
+        return res.status(403).json({ 
+          success: false, 
+          message: 'Acesso negado - apenas admins podem enviar broadcasts' 
+        });
+      }
+
+      const { title, body, url, icon, image, tag } = req.body;
+      
+      if (!title || !body) {
+        return res.status(400).json({ 
+          success: false, 
+          message: 'Título e corpo são obrigatórios' 
+        });
+      }
+
+      const notificationData = {
+        title,
+        body,
+        url: url || 'https://vendzz.com',
+        icon: icon || '/vendzz-logo-official.png',
+        image,
+        tag: tag || 'broadcast',
+        priority: 'high' as const
+      };
+
+      const result = await PushNotificationSystem.sendBroadcastNotification(notificationData);
+      
+      res.json({
+        success: true,
+        message: 'Broadcast enviado com sucesso',
+        sentCount: result.sentCount,
+        failedCount: result.failedCount,
+        totalSubscriptions: result.totalSubscriptions
+      });
+    } catch (error) {
+      console.error('❌ Erro ao enviar broadcast:', error);
+      res.status(500).json({ 
+        success: false, 
+        message: 'Erro interno do servidor' 
+      });
+    }
+  });
+
+  // Subscribe to push notifications (legacy)
   app.post('/api/notifications/subscribe', verifyJWT, async (req: any, res) => {
     try {
       const { subscription } = req.body;
@@ -25654,7 +25752,7 @@ export function registerCheckoutRoutes(app: Express) {
       }
 
       // Inserir ou atualizar subscription
-      const stmt = db.prepare(`
+      const stmt = sqlite.prepare(`
         INSERT OR REPLACE INTO push_subscriptions 
         (id, user_id, endpoint, keys_p256dh, keys_auth, user_agent, device_type, is_active, created_at, updated_at)
         VALUES (?, ?, ?, ?, ?, ?, ?, 1, datetime('now'), datetime('now'))
@@ -25696,7 +25794,7 @@ export function registerCheckoutRoutes(app: Express) {
       }
 
       // Desativar subscription
-      const stmt = db.prepare(`
+      const stmt = sqlite.prepare(`
         UPDATE push_subscriptions 
         SET is_active = 0, updated_at = datetime('now')
         WHERE user_id = ? AND endpoint = ?
@@ -25728,7 +25826,7 @@ export function registerCheckoutRoutes(app: Express) {
       }
 
       // Buscar subscriptions do usuário
-      const subscriptions = db.prepare(`
+      const subscriptions = sqlite.prepare(`
         SELECT * FROM push_subscriptions 
         WHERE user_id = ? AND is_active = 1
       `).all(userId);
@@ -25766,7 +25864,7 @@ export function registerCheckoutRoutes(app: Express) {
           sentCount++;
 
           // Log da notificação
-          const logStmt = db.prepare(`
+          const logStmt = sqlite.prepare(`
             INSERT INTO push_notification_logs 
             (id, user_id, title, body, status, sent_at)
             VALUES (?, ?, ?, ?, 'sent', datetime('now'))
@@ -25798,12 +25896,12 @@ export function registerCheckoutRoutes(app: Express) {
       const userId = req.user.id;
 
       // Buscar estatísticas do usuário
-      const totalQuizzes = db.prepare('SELECT COUNT(*) as count FROM quizzes WHERE user_id = ?').get(userId)?.count || 0;
-      const totalResponses = db.prepare('SELECT COUNT(*) as count FROM quiz_responses WHERE quiz_id IN (SELECT id FROM quizzes WHERE user_id = ?)').get(userId)?.count || 0;
+      const totalQuizzes = sqlite.prepare('SELECT COUNT(*) as count FROM quizzes WHERE user_id = ?').get(userId)?.count || 0;
+      const totalResponses = sqlite.prepare('SELECT COUNT(*) as count FROM quiz_responses WHERE quiz_id IN (SELECT id FROM quizzes WHERE user_id = ?)').get(userId)?.count || 0;
       
       const conversionRate = totalQuizzes > 0 ? Math.round((totalResponses / totalQuizzes) * 100) : 0;
       
-      const lastActivityResult = db.prepare('SELECT updated_at FROM quizzes WHERE user_id = ? ORDER BY updated_at DESC LIMIT 1').get(userId);
+      const lastActivityResult = sqlite.prepare('SELECT updated_at FROM quizzes WHERE user_id = ? ORDER BY updated_at DESC LIMIT 1').get(userId);
       const lastActivity = lastActivityResult ? lastActivityResult.updated_at : null;
 
       res.json({
