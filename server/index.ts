@@ -52,13 +52,13 @@ const app = express();
 // 🔒 CONFIGURAÇÃO DE PROXY PARA RATE LIMITING
 app.set('trust proxy', 1); // Confia no primeiro proxy (necessário para rate limiting no Replit)
 
-// Configurações de segurança compatíveis com Replit e Stripe (CSP desabilitado temporariamente)
-app.use(helmet({
-  contentSecurityPolicy: false, // Desabilita CSP para permitir Stripe.js
-  crossOriginEmbedderPolicy: false,
-  crossOriginResourcePolicy: false, // Fix para ERR_BLOCKED_BY_RESPONSE
-  crossOriginOpenerPolicy: false
-}));
+// Configurações de segurança compatíveis com Replit - TOTALMENTE DESABILITADO
+// app.use(helmet({
+//   contentSecurityPolicy: false, // Desabilita CSP para permitir Stripe.js
+//   crossOriginEmbedderPolicy: false,
+//   crossOriginResourcePolicy: false, // Fix para ERR_BLOCKED_BY_RESPONSE
+//   crossOriginOpenerPolicy: false
+// }));
 
 // Compressão gzip/deflate para reduzir tamanho das respostas
 app.use(compression({
@@ -90,12 +90,12 @@ app.use((req, res, next) => {
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With');
   res.setHeader('Access-Control-Allow-Credentials', 'true');
   
-  // Headers compatíveis com Replit
+  // Headers compatíveis com Replit - SIMPLIFICADO
   res.setHeader('X-Powered-By', 'Vendzz');
-  res.setHeader('X-Content-Type-Options', 'nosniff');
-  res.setHeader('X-Frame-Options', 'ALLOWALL'); // Permite embedding no Replit
-  res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin'); // Fix ERR_BLOCKED_BY_RESPONSE
-  res.setHeader('Cross-Origin-Embedder-Policy', 'unsafe-none');
+  // res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('X-Frame-Options', 'SAMEORIGIN'); // Permite embedding no Replit
+  // res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin'); // REMOVIDO para testar
+  // res.setHeader('Cross-Origin-Embedder-Policy', 'unsafe-none');
   
   // CORREÇÃO CRÍTICA OPERA: MIME type correto para arquivos JS
   if (req.path.endsWith('.js')) {
@@ -120,11 +120,11 @@ app.use((req, res, next) => {
   next();
 });
 
-// Apply security middleware que funciona com Express 4.x
-app.use(honeypotMiddleware);
-app.use(timingAttackProtection);
-app.use(attackSignatureAnalyzer);
-app.use(blacklistMiddleware);
+// Apply security middleware que funciona com Express 4.x - TEMPORARIAMENTE DESABILITADO
+// app.use(honeypotMiddleware);
+// app.use(timingAttackProtection);
+// app.use(attackSignatureAnalyzer);
+// app.use(blacklistMiddleware);
 
 // Health check endpoints now integrated in routes-sqlite.ts
 
