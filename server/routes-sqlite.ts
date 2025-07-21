@@ -15199,6 +15199,48 @@ app.get("/api/whatsapp-extension/pending", verifyJWT, async (req: any, res: Resp
       res.status(500).json({ success: false, message: 'Erro debug', error: error.message });
     }
   });
+
+  // DEBUG ENDPOINT PARA TESTAR PUSH NOTIFICATIONS
+  app.post('/api/push-debug/send-test', async (req: any, res) => {
+    try {
+      console.log('🔍 Push Debug Send Test - Enviando notificação de teste');
+      
+      const { title, body, quizId, userId } = req.body;
+      
+      // Simular envio de notificação para subscriptions ativas
+      const subscriptions = sqlite.prepare('SELECT * FROM push_subscriptions WHERE is_active = 1').all();
+      
+      if (subscriptions.length === 0) {
+        return res.json({
+          success: false,
+          message: 'Nenhuma subscription ativa encontrada. Registre o Service Worker primeiro.',
+          subscriptions: 0
+        });
+      }
+
+      // Log da notificação enviada
+      const logId = `test-${Date.now()}`;
+      sqlite.prepare(`
+        INSERT INTO push_notification_logs (id, user_id, title, body, status, sent_at)
+        VALUES (?, ?, ?, ?, 'sent', datetime('now'))
+      `).run(logId, userId || 'test-user', title, body);
+
+      console.log('📱 Notificação de teste logada:', { title, body, subscriptions: subscriptions.length });
+
+      res.json({
+        success: true,
+        message: `Notificação de teste enviada para ${subscriptions.length} subscription(s)`,
+        title,
+        body,
+        subscriptions: subscriptions.length,
+        logId
+      });
+
+    } catch (error) {
+      console.error('❌ Erro ao enviar push de teste:', error);
+      res.status(500).json({ success: false, message: 'Erro ao enviar notificação', error: error.message });
+    }
+  });
   
   // ===== ADMIN PUSH NOTIFICATIONS COMPLETO =====
   

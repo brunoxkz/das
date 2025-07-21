@@ -119,27 +119,13 @@ console.log('✅ PUSH NOTIFICATIONS BÁSICO - SERVICE WORKER DESABILITADO TEMPOR
 // Register all routes DEPOIS dos endpoints de push
 const server = registerHybridRoutes(app);
 
-// SERVICE WORKERS DESABILITADOS TEMPORARIAMENTE PARA RESOLVER ERR_BLOCKED_BY_RESPONSE
-// app.get('/sw.js', (req: any, res: any) => {
-//   res.setHeader('Content-Type', 'application/javascript');
-//   res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
-//   res.setHeader('Service-Worker-Allowed', '/');
-//   res.sendFile(path.join(process.cwd(), 'public', 'sw.js'));
-// });
-
-// app.get('/sw-simple.js', (req: any, res: any) => {
-//   res.setHeader('Content-Type', 'application/javascript');
-//   res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
-//   res.setHeader('Service-Worker-Allowed', '/');
-//   res.sendFile(path.join(process.cwd(), 'public', 'sw-simple.js'));
-// });
-
-// app.get('/vendzz-notification-sw.js', (req: any, res: any) => {
-//   res.setHeader('Content-Type', 'application/javascript');
-//   res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
-//   res.setHeader('Service-Worker-Allowed', '/');
-//   res.sendFile(path.join(process.cwd(), 'public', 'vendzz-notification-sw.js'));
-// });
+// SERVICE WORKER OTIMIZADO PARA PUSH NOTIFICATIONS SEM CONFLITOS
+app.get('/sw-notifications.js', (req: any, res: any) => {
+  res.setHeader('Content-Type', 'application/javascript');
+  res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+  res.setHeader('Service-Worker-Allowed', '/');
+  res.sendFile(path.join(process.cwd(), 'public', 'sw-notifications.js'));
+});
 
 // Setup Vite middleware for dev and production APÓS todas as rotas
 setupVite(app, server);

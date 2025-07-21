@@ -64,11 +64,43 @@ export default function PushAdmin() {
     }
   };
 
+  // Registrar Service Worker para Push Notifications
+  const registerServiceWorker = async () => {
+    if ('serviceWorker' in navigator) {
+      try {
+        const registration = await navigator.serviceWorker.register('/sw-notifications.js', {
+          scope: '/'
+        });
+        console.log('🔧 Service Worker registrado:', registration.scope);
+        
+        toast({
+          title: "Sucesso",
+          description: "Service Worker registrado com sucesso",
+        });
+        
+        return registration;
+      } catch (error) {
+        console.error('❌ Erro ao registrar Service Worker:', error);
+        toast({
+          title: "Erro",
+          description: "Erro ao registrar Service Worker",
+          variant: "destructive",
+        });
+        return null;
+      }
+    }
+  };
+
   // Testar notificação push
   const testPushNotification = async () => {
     setIsLoading(true);
     try {
-      const response = await apiRequest('POST', '/api/push-notifications/test-realtime', {
+      // Registrar SW primeiro se necessário
+      await registerServiceWorker();
+      
+      const response = await apiRequest('POST', '/api/push-debug/send-test', {
+        title: 'Teste Vendzz',
+        body: 'Esta é uma notificação de teste do sistema push!',
         quizId: testQuizId,
         userId: testUserId
       });
