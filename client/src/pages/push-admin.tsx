@@ -1,249 +1,296 @@
-import { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
-import { Bell, Send, Users, TrendingUp, Smartphone } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { apiRequest } from "@/lib/queryClient";
+import { useState, useEffect } from 'react';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Badge } from '@/components/ui/badge';
+import { useToast } from '@/hooks/use-toast';
+import { apiRequest } from '@/lib/queryClient';
+import { Bell, Send, BarChart3, Clock, Users, Zap } from 'lucide-react';
+
+interface PushStats {
+  totalNotificationsSent: number;
+  notificationsInQueue: number;
+  processing: number;
+  batchSize: number;
+  batchInterval: number;
+  systemStatus: string;
+  lastProcessed: string;
+  optimizedFor?: string;
+  performance?: {
+    batchProcessing: boolean;
+    nonBlocking: boolean;
+    realTime: boolean;
+  };
+}
 
 export default function PushAdmin() {
-  const [title, setTitle] = useState("");
-  const [body, setBody] = useState("");
+  const [stats, setStats] = useState<PushStats | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [testQuizId, setTestQuizId] = useState('test-quiz-123');
+  const [testUserId, setTestUserId] = useState('admin-user-id');
   const { toast } = useToast();
-  const queryClient = useQueryClient();
 
-  // Buscar estatísticas
-  const { data: stats } = useQuery({
-    queryKey: ["/api/push-simple/stats"],
-    refetchInterval: 30000, // Atualiza a cada 30 segundos
-  });
-
-  // Mutação para enviar push
-  const sendPushMutation = useMutation({
-    mutationFn: async (data: { title: string; body: string }) => {
-      return await apiRequest("POST", "/api/push-simple/send", data);
-    },
-    onSuccess: (response) => {
+  // Carregar estatísticas do sistema
+  const loadStats = async () => {
+    try {
+      const response = await apiRequest('GET', '/api/push-notifications/realtime-stats');
+      setStats(response);
+    } catch (error) {
+      console.error('Erro ao carregar estatísticas:', error);
       toast({
-        title: "✅ Push Enviado!",
-        description: `${response.message}`,
-      });
-      setTitle("");
-      setBody("");
-      queryClient.invalidateQueries({ queryKey: ["/api/push-simple/stats"] });
-    },
-    onError: (error) => {
-      toast({
-        title: "❌ Erro ao enviar",
-        description: error.message || "Falha no envio do push",
+        title: "Erro",
+        description: "Não foi possível carregar as estatísticas",
         variant: "destructive",
       });
-    },
-  });
+    }
+  };
 
-  const handleSend = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!title.trim() || !body.trim()) {
+  // Testar notificação push
+  const testPushNotification = async () => {
+    setIsLoading(true);
+    try {
+      const response = await apiRequest('POST', '/api/push-notifications/test-realtime', {
+        quizId: testQuizId,
+        userId: testUserId
+      });
+      
       toast({
-        title: "Campos obrigatórios",
-        description: "Preencha título e mensagem",
+        title: "Sucesso",
+        description: response.message || "Notificação de teste enviada com sucesso",
+      });
+      
+      // Recarregar estatísticas
+      await loadStats();
+    } catch (error) {
+      console.error('Erro no teste:', error);
+      toast({
+        title: "Erro",
+        description: "Erro ao enviar notificação de teste",
         variant: "destructive",
       });
-      return;
+    } finally {
+      setIsLoading(false);
     }
-    sendPushMutation.mutate({ title: title.trim(), body: body.trim() });
   };
 
-  // Templates de mensagem rápida
-  const quickTemplates = [
-    {
-      title: "🎉 Promoção Especial",
-      body: "Não perca! 50% OFF em todos os planos Vendzz por tempo limitado!"
-    },
-    {
-      title: "📊 Relatório Semanal",
-      body: "Seus resultados da semana estão prontos. Confira suas campanhas!"
-    },
-    {
-      title: "🚀 Nova Funcionalidade",
-      body: "Acabamos de lançar o Quiz Builder com IA. Teste agora!"
-    },
-    {
-      title: "💡 Dica do Dia",
-      body: "Use variáveis personalizadas para aumentar em 300% sua conversão!"
-    }
-  ];
-
-  const useTemplate = (template: { title: string; body: string }) => {
-    setTitle(template.title);
-    setBody(template.body);
-  };
+  useEffect(() => {
+    loadStats();
+    
+    // Atualizar estatísticas a cada 5 segundos
+    const interval = setInterval(loadStats, 5000);
+    return () => clearInterval(interval);
+  }, []);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 p-4">
-      <div className="max-w-4xl mx-auto space-y-6">
-        
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-6">
+      <div className="max-w-6xl mx-auto space-y-6">
         {/* Header */}
-        <Card className="border-green-200 dark:border-green-800">
-          <CardHeader className="text-center">
-            <div className="flex items-center justify-center gap-2 mb-2">
-              <Bell className="h-8 w-8 text-green-600" />
-              <CardTitle className="text-2xl font-bold text-green-700 dark:text-green-400">
-                Push Notifications Admin
-              </CardTitle>
-            </div>
-            <CardDescription>
-              Envie notificações push personalizadas para todos os usuários conectados
-            </CardDescription>
-          </CardHeader>
-        </Card>
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
+              <Bell className="w-8 h-8 text-green-600" />
+              Administração Push Notifications
+            </h1>
+            <p className="text-gray-600 dark:text-gray-400 mt-2">
+              Sistema automatizado de notificações em tempo real para completamento de quizzes
+            </p>
+          </div>
+          <Button onClick={loadStats} variant="outline">
+            <BarChart3 className="w-4 h-4 mr-2" />
+            Atualizar Stats
+          </Button>
+        </div>
 
-        <div className="grid md:grid-cols-2 gap-6">
-          
-          {/* Estatísticas */}
+        {/* Sistema de Status */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <TrendingUp className="h-5 w-5 text-blue-600" />
-                Estatísticas
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm text-gray-600 dark:text-gray-400 flex items-center gap-2">
+                <Zap className="w-4 h-4" />
+                Status do Sistema
               </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="text-center p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
-                  <Users className="h-8 w-8 mx-auto text-blue-600 mb-2" />
-                  <div className="text-2xl font-bold text-blue-700 dark:text-blue-400">
-                    {stats?.total || 0}
-                  </div>
-                  <div className="text-sm text-gray-600 dark:text-gray-400">
-                    Total Conectados
-                  </div>
-                </div>
-                <div className="text-center p-4 bg-green-50 dark:bg-green-900/20 rounded-lg">
-                  <Smartphone className="h-8 w-8 mx-auto text-green-600 mb-2" />
-                  <div className="text-2xl font-bold text-green-700 dark:text-green-400">
-                    {stats?.recent || 0}
-                  </div>
-                  <div className="text-sm text-gray-600 dark:text-gray-400">
-                    Recentes (24h)
-                  </div>
-                </div>
-              </div>
-              
-              <div className="text-center">
-                <Badge variant="outline" className="bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800">
-                  Sistema Ativo
+            <CardContent>
+              <div className="flex items-center gap-2">
+                <Badge variant={stats?.systemStatus === 'active' ? 'default' : 'destructive'}>
+                  {stats?.systemStatus || 'Carregando...'}
                 </Badge>
+                {stats?.optimizedFor && (
+                  <span className="text-xs text-gray-500">{stats.optimizedFor}</span>
+                )}
               </div>
             </CardContent>
           </Card>
 
-          {/* Formulário de Envio */}
           <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Send className="h-5 w-5 text-green-600" />
-                Enviar Notificação
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm text-gray-600 dark:text-gray-400 flex items-center gap-2">
+                <Send className="w-4 h-4" />
+                Total Enviadas
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <form onSubmit={handleSend} className="space-y-4">
-                <div>
-                  <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                    Título *
-                  </label>
-                  <Input
-                    value={title}
-                    onChange={(e) => setTitle(e.target.value)}
-                    placeholder="Ex: 🎉 Promoção Especial"
-                    maxLength={50}
-                    className="mt-1"
-                  />
-                  <div className="text-xs text-gray-500 mt-1">
-                    {title.length}/50 caracteres
-                  </div>
-                </div>
+              <div className="text-2xl font-bold text-green-600">
+                {stats?.totalNotificationsSent || 0}
+              </div>
+            </CardContent>
+          </Card>
 
-                <div>
-                  <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                    Mensagem *
-                  </label>
-                  <Textarea
-                    value={body}
-                    onChange={(e) => setBody(e.target.value)}
-                    placeholder="Digite sua mensagem aqui..."
-                    maxLength={120}
-                    rows={3}
-                    className="mt-1"
-                  />
-                  <div className="text-xs text-gray-500 mt-1">
-                    {body.length}/120 caracteres
-                  </div>
-                </div>
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm text-gray-600 dark:text-gray-400 flex items-center gap-2">
+                <Clock className="w-4 h-4" />
+                Na Fila
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-blue-600">
+                {stats?.notificationsInQueue || 0}
+              </div>
+            </CardContent>
+          </Card>
 
-                <Button 
-                  type="submit" 
-                  className="w-full bg-green-600 hover:bg-green-700"
-                  disabled={sendPushMutation.isPending || !title.trim() || !body.trim()}
-                >
-                  {sendPushMutation.isPending ? (
-                    <div className="flex items-center gap-2">
-                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                      Enviando...
-                    </div>
-                  ) : (
-                    <div className="flex items-center gap-2">
-                      <Send className="h-4 w-4" />
-                      Enviar Push
-                    </div>
-                  )}
-                </Button>
-              </form>
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm text-gray-600 dark:text-gray-400 flex items-center gap-2">
+                <Users className="w-4 h-4" />
+                Processando
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-orange-600">
+                {stats?.processing || 0}
+              </div>
             </CardContent>
           </Card>
         </div>
 
-        {/* Templates Rápidos */}
-        <Card>
-          <CardHeader>
-            <CardTitle>📝 Templates Rápidos</CardTitle>
-            <CardDescription>
-              Clique em um template para usar como base
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="grid md:grid-cols-2 gap-4">
-              {quickTemplates.map((template, index) => (
-                <div key={index} className="border border-gray-200 dark:border-gray-700 rounded-lg p-4 hover:bg-gray-50 dark:hover:bg-gray-800 cursor-pointer transition-colors"
-                     onClick={() => useTemplate(template)}>
-                  <div className="font-medium text-gray-900 dark:text-gray-100 mb-1">
-                    {template.title}
-                  </div>
-                  <div className="text-sm text-gray-600 dark:text-gray-400">
-                    {template.body}
+        {/* Configurações do Sistema */}
+        {stats && (
+          <Card>
+            <CardHeader>
+              <CardTitle>Configurações de Performance</CardTitle>
+              <CardDescription>
+                Sistema otimizado para alta escala com processamento em batch
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div>
+                  <label className="text-sm text-gray-600 dark:text-gray-400">Batch Size</label>
+                  <div className="text-lg font-semibold">{stats.batchSize}</div>
+                </div>
+                <div>
+                  <label className="text-sm text-gray-600 dark:text-gray-400">Intervalo (ms)</label>
+                  <div className="text-lg font-semibold">{stats.batchInterval}</div>
+                </div>
+                <div>
+                  <label className="text-sm text-gray-600 dark:text-gray-400">Última Atualização</label>
+                  <div className="text-sm text-gray-500">
+                    {new Date(stats.lastProcessed).toLocaleTimeString()}
                   </div>
                 </div>
-              ))}
+                <div>
+                  <label className="text-sm text-gray-600 dark:text-gray-400">Performance</label>
+                  <div className="flex flex-wrap gap-1">
+                    {stats.performance?.batchProcessing && (
+                      <Badge variant="secondary" className="text-xs">Batch</Badge>
+                    )}
+                    {stats.performance?.nonBlocking && (
+                      <Badge variant="secondary" className="text-xs">Non-blocking</Badge>
+                    )}
+                    {stats.performance?.realTime && (
+                      <Badge variant="secondary" className="text-xs">Real-time</Badge>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Teste de Notificação */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Teste de Notificação Push</CardTitle>
+            <CardDescription>
+              Simular completamento de quiz para testar o sistema automático
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="text-sm font-medium">Quiz ID</label>
+                <Input 
+                  value={testQuizId} 
+                  onChange={(e) => setTestQuizId(e.target.value)}
+                  placeholder="ID do quiz para testar"
+                />
+              </div>
+              <div>
+                <label className="text-sm font-medium">User ID</label>
+                <Input 
+                  value={testUserId} 
+                  onChange={(e) => setTestUserId(e.target.value)}
+                  placeholder="ID do usuário para notificar"
+                />
+              </div>
             </div>
+            
+            <Button 
+              onClick={testPushNotification} 
+              disabled={isLoading}
+              className="w-full"
+              size="lg"
+            >
+              {isLoading ? (
+                <>
+                  <Clock className="w-4 h-4 mr-2 animate-spin" />
+                  Enviando Teste...
+                </>
+              ) : (
+                <>
+                  <Send className="w-4 h-4 mr-2" />
+                  Enviar Notificação de Teste
+                </>
+              )}
+            </Button>
           </CardContent>
         </Card>
 
-        {/* Instruções */}
-        <Card className="border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-900/20">
+        {/* Como Funciona */}
+        <Card>
           <CardHeader>
-            <CardTitle className="text-amber-800 dark:text-amber-400">
-              💡 Como funciona
-            </CardTitle>
+            <CardTitle>Como Funciona o Sistema</CardTitle>
           </CardHeader>
-          <CardContent className="text-amber-700 dark:text-amber-300 space-y-2">
-            <p>• <strong>Usuários conectados:</strong> Apenas dispositivos que ativaram as notificações receberão</p>
-            <p>• <strong>Tempo real:</strong> As notificações aparecem imediatamente na tela de bloqueio</p>
-            <p>• <strong>Limite de caracteres:</strong> Título (50) e mensagem (120) para melhor visualização</p>
-            <p>• <strong>Emojis permitidos:</strong> Use emojis para tornar as mensagens mais atrativas</p>
+          <CardContent>
+            <div className="space-y-3 text-sm text-gray-600 dark:text-gray-400">
+              <div className="flex items-start gap-2">
+                <div className="w-6 h-6 bg-green-100 dark:bg-green-900 rounded-full flex items-center justify-center text-xs font-semibold text-green-600">1</div>
+                <div>
+                  <strong>Detecção Automática:</strong> Quando um quiz é completado (isComplete=true ou completionPercentage=100), o sistema detecta automaticamente.
+                </div>
+              </div>
+              <div className="flex items-start gap-2">
+                <div className="w-6 h-6 bg-blue-100 dark:bg-blue-900 rounded-full flex items-center justify-center text-xs font-semibold text-blue-600">2</div>
+                <div>
+                  <strong>Processamento em Batch:</strong> Notificações são agrupadas em lotes de {stats?.batchSize || 50} para otimizar performance.
+                </div>
+              </div>
+              <div className="flex items-start gap-2">
+                <div className="w-6 h-6 bg-orange-100 dark:bg-orange-900 rounded-full flex items-center justify-center text-xs font-semibold text-orange-600">3</div>
+                <div>
+                  <strong>Envio Inteligente:</strong> Sistema verifica se o dono do quiz tem push subscription ativa antes de enviar.
+                </div>
+              </div>
+              <div className="flex items-start gap-2">
+                <div className="w-6 h-6 bg-purple-100 dark:bg-purple-900 rounded-full flex items-center justify-center text-xs font-semibold text-purple-600">4</div>
+                <div>
+                  <strong>Alta Escala:</strong> Otimizado para 100k usuários ativos com processamento não-bloqueante.
+                </div>
+              </div>
+            </div>
           </CardContent>
         </Card>
       </div>

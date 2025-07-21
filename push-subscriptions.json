@@ -1,20 +1,11 @@
 [
   {
-    "endpoint": "https://fcm.googleapis.com/fcm/send/test-endpoint-ios-pwa-real",
+    "endpoint": "https://web.push.apple.com/QHksqZCPAxy3c0ghDicmYkgJWyXWWbLc1mrqhAP0i1yBiBwg8sp6kxEuFcQjOp4IMkaLQLUnZ3KEKiYNG4ATUnk2SwaqTZTpwR00wi4gxF1GeawLN-bH_oojmOPk5atMYI4BmibxzR38tIXlXWx3YtQ-SwFwOIeQOgpKfapbcho",
     "keys": {
-      "p256dh": "BKVRmJs10mOKMM_5r5ulr2lwK7874bDfO2xKcJstwEKo2zH-IovON2BG8_847MbQnzo_75QqRAEkjC_BwzwiccQ",
-      "auth": "xdoMPGbXwmuimTCk-Rn-6Nh474zq8PciCWWTp_WbBZg"
+      "p256dh": "BF3l9Z7OqvwPaiWEQcGx5m7lGufKVe81Ncgbf-hiqeaZ0DJinn90npCHmsWJ8rDWoUb0VlzZ2QNPyzLWHaIpfgo",
+      "auth": "AdxQeZapsPH0R7Fk7Vtk-w"
     },
     "userId": "ios-pwa-user",
-    "createdAt": "2025-07-21T05:33:12.784Z"
-  },
-  {
-    "endpoint": "https://web.push.apple.com/QIFeNlID9o4AKf2GlFU1_JJmzaN8n4Cf-lOfxZ5BqXv_o-3W2LgVz-Gbi7B-JOeNPbnpn-SqXjTsBulr6F7vDOvJVz4lzJkBLiUrbTCHjV8bB_fG_GHtlz8z9lU452QO-Zdatbaa0heN90ZARfOIoGDg7V_TkYOSMZRmxbB00GM",
-    "keys": {
-      "p256dh": "BP5AAm0e5vPUFRB_y2-k7OLW7zEZ1QW6fTkH2pM_XU5efRgzZTvM6ruUqWMgqwJa4apyysIp6-gg-2wErBMSrCY",
-      "auth": "L6Us0x7gOFEL8HepM53Trw"
-    },
-    "userId": "ios-pwa-user",
-    "createdAt": "2025-07-21T05:53:25.848Z"
+    "createdAt": "2025-07-21T06:17:53.512Z"
   }
 ]

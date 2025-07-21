@@ -77,6 +77,7 @@ import { registerFacelessVideoRoutes } from './faceless-video-routes';
 import { StripeCheckoutLinkGenerator } from './stripe-checkout-link-generator';
 import { planManager } from './plan-manager';
 import { getVapidPublicKey, subscribeToPush, sendPushToAll, getPushStats } from './push-simple';
+import { realTimePushSystem } from './real-time-push-notifications';
 
 // JWT Secret para validação de tokens
 const JWT_SECRET = process.env.JWT_SECRET || 'vendzz-jwt-secret-key-2024';
@@ -26019,6 +26020,60 @@ export function registerCheckoutRoutes(app: Express) {
   });
 
   console.log('✅ ENDPOINTS PWA USUARIOS ADICIONADOS COM SUCESSO');
+
+  // ==================== PUSH NOTIFICATIONS EM TEMPO REAL ====================
+  
+  // Endpoint para testar push notifications automáticas
+  app.post('/api/push-notifications/test-realtime', verifyJWT, async (req: any, res) => {
+    try {
+      // Verificar se é admin
+      if (req.user.role !== 'admin') {
+        return res.status(403).json({ error: 'Acesso negado - apenas admins' });
+      }
+      
+      const { quizId, userId } = req.body;
+      
+      console.log(`🧪 TESTE PUSH NOTIFICATION: Quiz ${quizId || 'test'}, Usuário ${userId || 'test'}`);
+      
+      // Testar sistema de push
+      await realTimePushSystem.testNotification(quizId || 'test-quiz', userId || 'test-user');
+      
+      res.json({
+        success: true,
+        message: 'Push notification de teste enviada',
+        stats: realTimePushSystem.getStats()
+      });
+    } catch (error) {
+      console.error('❌ Erro no teste de push notification:', error);
+      res.status(500).json({ error: 'Erro no teste de push notification' });
+    }
+  });
+
+  // Endpoint para obter estatísticas do sistema de push em tempo real
+  app.get('/api/push-notifications/realtime-stats', verifyJWT, async (req: any, res) => {
+    try {
+      // Verificar se é admin
+      if (req.user.role !== 'admin') {
+        return res.status(403).json({ error: 'Acesso negado - apenas admins' });
+      }
+      
+      const stats = realTimePushSystem.getStats();
+      
+      res.json({
+        ...stats,
+        systemStatus: 'active',
+        optimizedFor: '100k active users',
+        performance: {
+          batchProcessing: true,
+          nonBlocking: true,
+          realTime: true
+        }
+      });
+    } catch (error) {
+      console.error('❌ Erro ao buscar stats de push:', error);
+      res.status(500).json({ error: 'Erro ao buscar estatísticas' });
+    }
+  });
 
   // ============================================================================
   // PUSH NOTIFICATIONS REMOVIDOS DESTA LOCALIZAÇÃO - REGISTRADOS NO INDEX.TS

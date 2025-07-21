@@ -231,6 +231,11 @@ function App() {
             <AdminNotifications />
           </Layout>
         </Route>
+        <Route path="/admin/push-admin">
+          <Layout>
+            <PushAdmin />
+          </Layout>
+        </Route>
 
         <Route path="/leads">
           <Layout>

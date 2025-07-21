@@ -575,6 +575,16 @@ export default function Dashboard() {
                   Voltar Dashboard
                 </Button>
               )}
+              {userData?.user?.role === 'admin' && (
+                <Button
+                  variant="outline"
+                  onClick={() => window.location.href = '/admin/push-admin'}
+                  className="border-blue-200 text-blue-700 hover:bg-blue-50"
+                >
+                  <Bell className="w-4 h-4 mr-2" />
+                  Push Admin
+                </Button>
+              )}
               <Button
                 onClick={async () => {
                   console.log('🔵 BOTÃO TESTE PUSH CLICADO');

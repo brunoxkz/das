@@ -1305,6 +1305,21 @@ export class SQLiteStorage implements IStorage {
             completions: 1,
             conversionRate: 0 // Será recalculado no update
           });
+
+          // 🚀 SISTEMA PUSH NOTIFICATIONS EM TEMPO REAL: Notificar dono do quiz
+          try {
+            // Importar dinamicamente para evitar dependências circulares
+            const { realTimePushSystem } = await import('./real-time-push-notifications');
+            
+            // Buscar dono do quiz para notificar
+            const quiz = await this.getQuiz(response.quizId);
+            if (quiz && quiz.userId) {
+              console.log(`🔔 PUSH NOTIFICATION: Quiz ${response.quizId} completado, notificando usuário ${quiz.userId}`);
+              await realTimePushSystem.onQuizCompleted(response.quizId, quiz.userId);
+            }
+          } catch (error) {
+            console.error('❌ ERRO ao enviar push notification em tempo real:', error);
+          }
         }
       }
     } catch (error) {
