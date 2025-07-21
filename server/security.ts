@@ -32,13 +32,13 @@ const blockedIPs: Map<string, BlockedIP> = new Map();
 const failedAttempts: Map<string, number> = new Map();
 const suspiciousIPs: Map<string, number> = new Map();
 
-// Limpar listas de bloqueio a cada 30 segundos para desenvolvimento
+// Limpar listas de bloqueio a cada 5 minutos
 setInterval(() => {
   blockedIPs.clear();
   failedAttempts.clear();
   suspiciousIPs.clear();
-  console.log('🔄 Sistema de segurança: Listas de bloqueio limpas (desenvolvimento)');
-}, 30 * 1000);
+  console.log('🔄 Sistema de segurança: Listas de bloqueio limpas');
+}, 5 * 60 * 1000);
 
 // Configurações de segurança
 const SECURITY_CONFIG = {

@@ -17,7 +17,7 @@ if (existsSync(".env")) {
     
     console.log("✅ Variáveis de ambiente carregadas do .env");
     console.log("🔍 STRIPE_SECRET_KEY:", process.env.STRIPE_SECRET_KEY ? process.env.STRIPE_SECRET_KEY.substring(0, 10) + "..." : "undefined");
-  } catch (error: any) {
+  } catch (error) {
     console.error("❌ Erro ao carregar .env:", error.message);
   }
 } else {
@@ -60,17 +60,17 @@ app.set('trust proxy', 1); // Confia no primeiro proxy (necessário para rate li
 //   crossOriginOpenerPolicy: false
 // }));
 
-// Compressão gzip/deflate DESABILITADA PARA DEBUG
-// app.use(compression({
-//   filter: (req, res) => {
-//     if (req.headers['x-no-compression']) {
-//       return false;
-//     }
-//     return compression.filter(req, res);
-//   },
-//   level: 6, // Nível de compressão balanceado
-//   threshold: 1024 // Só comprime se > 1KB
-// }));
+// Compressão gzip/deflate para reduzir tamanho das respostas
+app.use(compression({
+  filter: (req, res) => {
+    if (req.headers['x-no-compression']) {
+      return false;
+    }
+    return compression.filter(req, res);
+  },
+  level: 6, // Nível de compressão balanceado
+  threshold: 1024 // Só comprime se > 1KB
+}));
 
 // SOLUÇÃO CRÍTICA: JSON parser robusto que funciona com fetch() do Node.js
 app.use(express.json({ 
@@ -90,10 +90,10 @@ app.use((req, res, next) => {
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With');
   res.setHeader('Access-Control-Allow-Credentials', 'true');
   
-  // Headers compatíveis com Replit - COMPLETAMENTE DESABILITADO PARA DEBUG
-  // res.setHeader('X-Powered-By', 'Vendzz');
+  // Headers compatíveis com Replit - SIMPLIFICADO
+  res.setHeader('X-Powered-By', 'Vendzz');
   // res.setHeader('X-Content-Type-Options', 'nosniff');
-  // res.setHeader('X-Frame-Options', 'SAMEORIGIN'); // Permite embedding no Replit
+  res.setHeader('X-Frame-Options', 'SAMEORIGIN'); // Permite embedding no Replit
   // res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin'); // REMOVIDO para testar
   // res.setHeader('Cross-Origin-Embedder-Policy', 'unsafe-none');
   
@@ -166,7 +166,7 @@ app.get('/sw-simple.js', (req, res) => {
       console.error('❌ Service Worker não encontrado em:', swPath);
       res.status(404).send('Service Worker não encontrado');
     }
-  } catch (err: any) {
+  } catch (err) {
     console.error('❌ Erro crítico ao carregar sw-simple.js:', err);
     res.status(500).json({ error: 'Erro interno do servidor', message: err.message });
   }
@@ -258,11 +258,11 @@ const debugAuthenticatedSMSLogs = async () => {
       const smsLogs = await smsResponse.json();
       console.log(`✅ SMS Logs encontrados: ${smsLogs.length}`);
       
-      const pendingLogs = smsLogs.filter((log: any) => log.status === 'scheduled');
+      const pendingLogs = smsLogs.filter(log => log.status === 'scheduled');
       console.log(`📱 SMS Agendados: ${pendingLogs.length}`);
     }
 
-  } catch (error: any) {
+  } catch (error) {
     console.log('❌ Erro no debug SMS:', error.message);
   }
 };
@@ -271,9 +271,8 @@ const debugAuthenticatedSMSLogs = async () => {
 async function processSMSSystem() {
   try {
     const { storage } = await import('./storage-sqlite');
-    // Funções temporariamente removidas para corrigir erros TypeScript
-    // const { sendSMS } = await import('./twilio');
-    // const { debitCredits } = await import('./storage-sqlite');
+    const { sendSMS } = await import('./twilio');
+    const { debitCredits } = await import('./storage-sqlite');
 
     const scheduledSMSLogs = await storage.getScheduledSMSLogs();
     
@@ -311,7 +310,7 @@ async function processSMSSystem() {
             });
             console.log(`❌ SMS FALHOU: ${smsLog.id} - ${smsLog.phone} - ${result.error}`);
           }
-        } catch (error: any) {
+        } catch (error) {
           console.error(`❌ Erro ao processar SMS ${smsLog.id}:`, error);
           await storage.updateSMSLog(smsLog.id, {
             status: 'failed',
@@ -320,7 +319,7 @@ async function processSMSSystem() {
         }
       }
     }
-  } catch (error: any) {
+  } catch (error) {
     console.error('❌ Erro no sistema de SMS agendados:', error);
   }
 }
@@ -338,15 +337,9 @@ let detectionCount = 0;
 const MAX_DETECTION_CYCLES = 100; // 100 ciclos por hora (vs 3600)
 const DETECTION_INTERVAL = 60000; // 60 segundos (vs 1 segundo) - 60x menos agressivo
 
-// Inicializar sistema de pause automático - async wrapper para evitar top-level await
-(async () => {
-  try {
-    const { campaignAutoPauseSystem } = await import('./campaign-auto-pause-system');
-    campaignAutoPauseSystem.startMonitoring();
-  } catch (error: any) {
-    console.error('❌ Erro ao inicializar sistema de pause automático:', error);
-  }
-})();
+// Inicializar sistema de pause automático
+const { campaignAutoPauseSystem } = await import('./campaign-auto-pause-system');
+campaignAutoPauseSystem.startMonitoring();
 
 const unifiedDetectionInterval = setInterval(async () => {
   detectionCount++;
@@ -464,9 +457,9 @@ const PORT = Number(process.env.PORT) || 5000;
 
 async function startServer() {
   try {
-    // Initialize security system primeiro - DESABILITADO PARA DESENVOLVIMENTO
-    // await initAdvancedSecurity();
-    console.log('🔒 Sistema de segurança avançado DESABILITADO para resolução de ERR_BLOCKED_BY_RESPONSE');
+    // Initialize security system primeiro
+    await initAdvancedSecurity();
+    console.log('🔒 Sistema de segurança avançado inicializado');
     
     // Cache optimizer DESABILITADO para economia de memória
     // await quizCacheOptimizer.initialize();
