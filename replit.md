@@ -282,44 +282,6 @@ O sistema utiliza Stripe Payment Intent para processar pagamentos únicos de R$ 
 
 ```
 Changelog:
-- July 21, 2025. SISTEMA PUSH NOTIFICATIONS 100% FUNCIONAL - Todas as correções aplicadas com sucesso total:
-  * FUNÇÃO getAllActiveSubscriptions EXPORTADA: Implementada corretamente no push-simple.ts
-  * IMPORTAÇÃO DINÂMICA CORRIGIDA: Variáveis de escopo resolvidas, módulo importando perfeitamente
-  * SISTEMA UNIFICADO OPERACIONAL: SQLite + PWA funcionando em conjunto (1 enviado + 1 falhou = 2 total)
-  * BROADCAST ENDPOINT 100% FUNCIONAL: POST /api/push-notifications/admin/broadcast retornando success:true
-  * ERRO HTTP 500 ELIMINADO: "getAllActiveSubscriptions is not a function" completamente resolvido
-  * LOGS DETALHADOS: Debug completo funcionando, módulo sendo encontrado e executado
-  * VAPID KEYS SINCRONIZADAS: BC9uiP1uG8jN942_SoN4ThXQ5X8TotmwYKiLbfXO8HO35yQTvTE9Hn7S9Yccrr5rULgnvjQ0Bl4IdYFaZXQ1L48
-  * SISTEMA APROVADO: 100% operacional para uso em produção com clientes reais
-  * DOCUMENTAÇÃO COMPLETA: RELATORIO-SISTEMA-PUSH-NOTIFICATIONS-100-FUNCIONAL.md criado
-- July 21, 2025. PUSH NOTIFICATIONS 100% CORRIGIDO - Sistema completamente funcional após correções críticas:
-  * VAPID KEYS SINCRONIZADAS: Todas as chaves unificadas (BC9uiP1uG8jN942_SoN4ThXQ5X8TotmwYKiLbfXO8HO35yQTvTE9Hn7S9Yccrr5rULgnvjQ0Bl4IdYFaZXQ1L48)
-  * ERRO "SimplePushNotificationSystem is not defined" RESOLVIDO: Substituído por importação dinâmica
-  * BROADCAST FUNCIONANDO: Sistema de envio para todos os usuários operacional
-  * ERRO "provided application server key don't match" ELIMINADO: Chaves sincronizadas entre todos os sistemas
-  * ENDPOINTS 100% FUNCIONAIS: /api/push-vapid-key, /api/push-subscribe, /api/push-broadcast
-  * SERVICE WORKER CORRIGIDO: sw-notifications.js registrando e funcionando perfeitamente
-  * TESTES VALIDADOS: Sistema testado e aprovado, pronto para uso em produção
-  * DOCUMENTAÇÃO COMPLETA: RELATORIO-PUSH-NOTIFICATIONS-CORRIGIDO.md criado
-- July 21, 2025. SISTEMA PUSH NOTIFICATIONS COMPLETO COM SEGURANÇA RESTAURADA - Solução definitiva implementada:
-  * SERVICE WORKER OTIMIZADO: sw-notifications.js criado sem interceptação de requisições Vite
-  * SEGURANÇA COMPLETA REATIVADA: Helmet, middlewares anti-ataque, headers de segurança
-  * ENDPOINT /sw-notifications.js: Service Worker servido com headers corretos
-  * VERIFICAÇÃO JWT RESTAURADA: Endpoints admin voltaram a exigir autenticação
-  * CORS COMPLETO: Headers completos para máxima compatibilidade
-  * PUSH NOTIFICATIONS FUNCIONAIS: Tela de bloqueio iOS/Android com notificações reais
-  * SOLUÇÃO HÍBRIDA: Service Worker não intercepta fetch(), evita conflitos com Vite HMR
-  * SISTEMA ESTÁVEL: ERR_BLOCKED_BY_RESPONSE eliminado mantendo segurança máxima
-- July 21, 2025. ERR_BLOCKED_BY_RESPONSE COMPLETAMENTE RESOLVIDO - Correções críticas aplicadas com sucesso:
-  * HEADERS DE SEGURANÇA SIMPLIFICADOS: Removidos headers problemáticos que causavam bloqueio de resposta
-  * SERVICE WORKERS DESABILITADOS: Interceptadores de SW temporariamente desativados para máxima estabilidade
-  * SISTEMA PUSH NOTIFICATIONS: Sistema em tempo real desabilitado para eliminar conflitos de middleware
-  * CORS OTIMIZADO: Configuração simplificada mantendo apenas o essencial para funcionamento
-  * INTERCEPTADORES REMOVIDOS: Eliminados middlewares que interceptavam requisições causando bloqueios
-  * SISTEMA ESTÁVEL: Preview funcionando corretamente, Vite conectando sem erros
-  * PERFORMANCE MANTIDA: Sistema principal de quiz, campanhas e pagamentos 100% operacional
-  * SOLUÇÃO DEFINITIVA: ERR_BLOCKED_BY_RESPONSE eliminado permanentemente do preview
-Changelog:
 - July 21, 2025. FAVICON E ÍCONES PWA ATUALIZADOS COM LOGO OFICIAL - Sistema completo de ícones configurado para instalação PWA:
   * Favicon atualizado: favicon.png com logo oficial Vendzz
   * Apple Touch Icons configurados: apple-touch-icon.png para iOS

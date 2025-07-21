@@ -52,13 +52,13 @@ const app = express();
 // 🔒 CONFIGURAÇÃO DE PROXY PARA RATE LIMITING
 app.set('trust proxy', 1); // Confia no primeiro proxy (necessário para rate limiting no Replit)
 
-// Configurações de segurança compatíveis com Replit - REATIVADO COM CONFIGURAÇÕES OTIMIZADAS
-app.use(helmet({
-  contentSecurityPolicy: false, // Desabilita CSP para permitir Stripe.js e Service Workers
-  crossOriginEmbedderPolicy: false,
-  crossOriginResourcePolicy: false, // Permite recursos cross-origin
-  crossOriginOpenerPolicy: false
-}));
+// Configurações de segurança compatíveis com Replit - TOTALMENTE DESABILITADO
+// app.use(helmet({
+//   contentSecurityPolicy: false, // Desabilita CSP para permitir Stripe.js
+//   crossOriginEmbedderPolicy: false,
+//   crossOriginResourcePolicy: false, // Fix para ERR_BLOCKED_BY_RESPONSE
+//   crossOriginOpenerPolicy: false
+// }));
 
 // Compressão gzip/deflate para reduzir tamanho das respostas
 app.use(compression({
@@ -82,19 +82,34 @@ app.use(express.json({
 
 // Removemos express.urlencoded() para evitar interceptação das requisições JSON do fetch()
 
-// CORS e Headers COMPLETOS reativados - Service Worker otimizado resolve ERR_BLOCKED_BY_RESPONSE
+// CORS e Headers configurados para Replit
 app.use((req, res, next) => {
-  // CORS completo
+  // CORS para extensão Chrome e Replit
   res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS, PATCH');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept, Origin, Cache-Control, Pragma');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With');
   res.setHeader('Access-Control-Allow-Credentials', 'true');
   
-  // Security headers reativados
-  res.setHeader('X-Content-Type-Options', 'nosniff');
-  res.setHeader('X-Frame-Options', 'DENY');
-  res.setHeader('X-XSS-Protection', '1; mode=block');
-  res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+  // Headers compatíveis com Replit - SIMPLIFICADO
+  res.setHeader('X-Powered-By', 'Vendzz');
+  // res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('X-Frame-Options', 'SAMEORIGIN'); // Permite embedding no Replit
+  // res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin'); // REMOVIDO para testar
+  // res.setHeader('Cross-Origin-Embedder-Policy', 'unsafe-none');
+  
+  // CORREÇÃO CRÍTICA OPERA: MIME type correto para arquivos JS
+  if (req.path.endsWith('.js')) {
+    res.setHeader('Content-Type', 'application/javascript; charset=utf-8');
+    if (req.path.includes('sw') || req.path.includes('service-worker')) {
+      res.setHeader('Service-Worker-Allowed', '/');
+      res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+    }
+  }
+  
+  // Cache para assets estáticos (exceto JS que já foi tratado acima)
+  if (req.url.match(/\.(css|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot)$/)) {
+    res.setHeader('Cache-Control', 'public, max-age=31536000'); // 1 ano
+  }
   
   // Handle preflight requests
   if (req.method === 'OPTIONS') {
@@ -105,33 +120,111 @@ app.use((req, res, next) => {
   next();
 });
 
-// Apply security middleware que funciona com Express 4.x - REATIVADO
-app.use(honeypotMiddleware);
-app.use(timingAttackProtection);
-app.use(attackSignatureAnalyzer);
-app.use(blacklistMiddleware);
+// Apply security middleware que funciona com Express 4.x - TEMPORARIAMENTE DESABILITADO
+// app.use(honeypotMiddleware);
+// app.use(timingAttackProtection);
+// app.use(attackSignatureAnalyzer);
+// app.use(blacklistMiddleware);
 
 // Health check endpoints now integrated in routes-sqlite.ts
 
-// Service Workers reativados - apenas real-time push desabilitado
+// Rotas específicas para Service Workers com MIME type correto
+app.get('/vendzz-notification-sw.js', (req, res) => {
+  try {
+    const swPath = path.join(process.cwd(), 'public', 'vendzz-notification-sw.js');
+    
+    if (fs.existsSync(swPath)) {
+      const content = fs.readFileSync(swPath, 'utf-8');
+      res.setHeader('Content-Type', 'application/javascript; charset=utf-8');
+      res.setHeader('Service-Worker-Allowed', '/');
+      res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+      res.send(content);
+    } else {
+      res.status(404).send('Service Worker não encontrado');
+    }
+  } catch (err) {
+    console.error('❌ Erro ao ler vendzz-notification-sw.js:', err);
+    res.status(500).send('Erro interno do servidor');
+  }
+});
+
+// Rota específica para sw-simple.js (usado no dashboard) - CORRIGIDA
+app.get('/sw-simple.js', (req, res) => {
+  try {
+    const swPath = path.join(process.cwd(), 'public', 'sw-simple.js');
+    console.log('🔧 Tentando carregar Service Worker de:', swPath);
+    
+    if (fs.existsSync(swPath)) {
+      const content = fs.readFileSync(swPath, 'utf-8');
+      console.log('✅ Service Worker carregado com sucesso, tamanho:', content.length);
+      
+      res.setHeader('Content-Type', 'application/javascript; charset=utf-8');
+      res.setHeader('Service-Worker-Allowed', '/');
+      res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+      res.send(content);
+    } else {
+      console.error('❌ Service Worker não encontrado em:', swPath);
+      res.status(404).send('Service Worker não encontrado');
+    }
+  } catch (err) {
+    console.error('❌ Erro crítico ao carregar sw-simple.js:', err);
+    res.status(500).json({ error: 'Erro interno do servidor', message: err.message });
+  }
+});
 
 // Initialize auth ANTES das rotas
 setupHybridAuth(app);
 
 // System initialization and routes
 
-// SISTEMA PUSH NOTIFICATIONS COMPLETO COM SERVICE WORKER OTIMIZADO
-console.log('✅ PUSH NOTIFICATIONS COMPLETO - SERVICE WORKER OTIMIZADO SEM CONFLITOS');
+// PUSH NOTIFICATIONS ENDPOINTS REGISTRADOS ANTES DE TUDO
+import { getVapidPublicKey, subscribeToPush, getPushStats, sendPushToAll } from "./push-simple";
+
+// Registrar endpoints de push ANTES do Vite para evitar interceptação
+app.get('/api/push-simple/vapid', (req: any, res: any) => {
+  console.log('🔧 Endpoint /api/push-simple/vapid chamado diretamente');
+  getVapidPublicKey(req, res);
+});
+
+app.post('/api/push-simple/subscribe', (req: any, res: any) => {
+  console.log('🔧 Endpoint /api/push-simple/subscribe chamado diretamente');
+  subscribeToPush(req, res);
+});
+
+app.post('/api/push-simple/send', (req: any, res: any) => {
+  console.log('🔧 Endpoint /api/push-simple/send chamado diretamente');
+  sendPushToAll(req, res);
+});
+
+app.get('/api/push-simple/stats', (req: any, res: any) => {
+  console.log('🔧 Endpoint /api/push-simple/stats chamado diretamente');
+  getPushStats(req, res);
+});
+
+console.log('✅ PUSH NOTIFICATIONS ENDPOINTS REGISTRADOS DIRETAMENTE ANTES DO VITE');
 
 // Register all routes DEPOIS dos endpoints de push
 const server = registerHybridRoutes(app);
 
-// SERVICE WORKER OTIMIZADO PARA PUSH NOTIFICATIONS SEM CONFLITOS
-app.get('/sw-notifications.js', (req: any, res: any) => {
-  res.setHeader('Content-Type', 'application/javascript');
-  res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
-  res.setHeader('Service-Worker-Allowed', '/');
-  res.sendFile(path.join(process.cwd(), 'public', 'sw-notifications.js'));
+// INTERCEPTADOR CRÍTICO para Service Workers - ANTES do Vite
+// CORREÇÃO OPERA: Serve Service Workers com MIME type correto
+app.use((req, res, next) => {
+  // Interceptar especificamente arquivos Service Worker
+  if (req.path === '/sw-simple.js' || req.path === '/vendzz-notification-sw.js' || req.path.includes('service-worker') || req.path === '/sw.js') {
+    const swPath = path.join(process.cwd(), 'public', req.path.substring(1));
+    console.log('🔧 INTERCEPTANDO SERVICE WORKER:', req.path, '→', swPath);
+    
+    if (fs.existsSync(swPath)) {
+      // Headers CORRETOS para Opera
+      res.setHeader('Content-Type', 'application/javascript; charset=utf-8');
+      res.setHeader('Service-Worker-Allowed', '/');
+      res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+      res.setHeader('Access-Control-Allow-Origin', '*');
+      res.sendFile(swPath);
+      return; // IMPORTANTE: não chamar next()
+    }
+  }
+  next();
 });
 
 // Setup Vite middleware for dev and production APÓS todas as rotas

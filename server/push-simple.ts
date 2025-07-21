@@ -7,10 +7,10 @@ import webpush from 'web-push';
 // Arquivo para armazenar subscriptions
 const SUBSCRIPTIONS_FILE = path.join(process.cwd(), 'push-subscriptions.json');
 
-// VAPID Keys sincronizadas com routes-sqlite.ts  
+// VAPID Keys válidas geradas pelo web-push  
 const VAPID_KEYS = {
-  publicKey: 'BC9uiP1uG8jN942_SoN4ThXQ5X8TotmwYKiLbfXO8HO35yQTvTE9Hn7S9Yccrr5rULgnvjQ0Bl4IdYFaZXQ1L48',
-  privateKey: 'iJXO-FMBB4HhPLpqFyQHfnBP7rEwqNpKVVvRWRLLCjo'
+  publicKey: 'BKVRmJs10mOKMM_5r5ulr2lwK7874bDfO2xKcJstwEKo2zH-IovON2BG8_847MbQnzo_75QqRAEkjC_BwzwiccQ',
+  privateKey: 'xdoMPGbXwmuimTCk-Rn-6Nh474zq8PciCWWTp_WbBZg'
 };
 
 // Configurar web-push com VAPID keys
@@ -237,34 +237,6 @@ export const getPushStats = async (req: Request, res: Response) => {
   } catch (error) {
     console.error('❌ Erro ao obter stats:', error);
     res.status(500).json({ error: 'Erro ao obter estatísticas' });
-  }
-};
-
-// FUNÇÃO CRÍTICA PARA BROADCAST: Exportar função que retorna subscriptions ativas
-export const getAllActiveSubscriptions = async (): Promise<PushSubscription[]> => {
-  console.log('🔍 [PUSH-SIMPLE] Buscando todas as subscriptions ativas...');
-  
-  try {
-    const subscriptions = await pushService.loadSubscriptions();
-    console.log(`📊 [PUSH-SIMPLE] Encontradas ${subscriptions.length} subscriptions`);
-    return subscriptions;
-  } catch (error) {
-    console.error('❌ [PUSH-SIMPLE] Erro ao buscar subscriptions:', error);
-    return [];
-  }
-};
-
-// FUNÇÃO DIRETA DE ENVIO PARA BROADCAST: Sem req/res, apenas dados
-export const sendDirectPush = async (title: string, body: string, url?: string): Promise<{ success: number; failed: number }> => {
-  console.log('🔧 [PUSH-SIMPLE] sendDirectPush chamada:', { title, body, url });
-  
-  try {
-    const result = await pushService.sendToAll(title, body, url);
-    console.log('✅ [PUSH-SIMPLE] Push enviado:', result);
-    return result;
-  } catch (error) {
-    console.error('❌ [PUSH-SIMPLE] Erro no sendDirectPush:', error);
-    return { success: 0, failed: 0 };
   }
 };
 

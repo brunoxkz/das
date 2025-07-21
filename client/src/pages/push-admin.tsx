@@ -29,84 +29,20 @@ export default function PushAdmin() {
   const [isLoading, setIsLoading] = useState(false);
   const [testQuizId, setTestQuizId] = useState('test-quiz-123');
   const [testUserId, setTestUserId] = useState('admin-user-id');
-  const [customTitle, setCustomTitle] = useState('');
-  const [customMessage, setCustomMessage] = useState('');
   const { toast } = useToast();
 
-  // Carregar estatísticas do sistema - CORRIGIDO INTERFACE
+  // Carregar estatísticas do sistema
   const loadStats = async () => {
     try {
-      console.log('🔍 Carregando stats push admin...');
-      const response = await apiRequest('GET', '/api/push-notifications/admin/stats');
-      console.log('✅ Stats carregadas:', response);
-      
-      if (response.success) {
-        setStats({
-          totalNotificationsSent: response.totalSent || 0,
-          notificationsInQueue: 0,
-          processing: 0,
-          batchSize: 10,
-          batchInterval: 5000,
-          systemStatus: 'active',
-          lastProcessed: response.lastSent || 'N/A',
-          optimizedFor: 'Push Notifications iOS/Android'
-        });
-      }
+      const response = await apiRequest('GET', '/api/push-notifications/realtime-stats');
+      setStats(response);
     } catch (error) {
       console.error('Erro ao carregar estatísticas:', error);
-      // Tentar endpoint debug como fallback
-      try {
-        const debugResponse = await apiRequest('GET', '/api/push-debug/stats');
-        console.log('📊 Stats debug:', debugResponse);
-        setStats({
-          totalNotificationsSent: debugResponse.totalSent || 0,
-          notificationsInQueue: 0,
-          processing: 0,
-          batchSize: 10,
-          batchInterval: 5000,
-          systemStatus: debugResponse.success ? 'online' : 'offline',
-          lastProcessed: debugResponse.lastSent || 'N/A'
-        });
-      } catch (debugError) {
-        console.error('Debug endpoint também falhou:', debugError);
-        // Definir stats padrão para evitar loading infinito
-        setStats({
-          totalNotificationsSent: 0,
-          notificationsInQueue: 0,
-          processing: 0,
-          batchSize: 10,
-          batchInterval: 5000,
-          systemStatus: 'error',
-          lastProcessed: 'N/A'
-        });
-      }
-    }
-  };
-
-  // Registrar Service Worker para Push Notifications
-  const registerServiceWorker = async () => {
-    if ('serviceWorker' in navigator) {
-      try {
-        const registration = await navigator.serviceWorker.register('/sw-notifications.js', {
-          scope: '/'
-        });
-        console.log('🔧 Service Worker registrado:', registration.scope);
-        
-        toast({
-          title: "Sucesso",
-          description: "Service Worker registrado com sucesso",
-        });
-        
-        return registration;
-      } catch (error) {
-        console.error('❌ Erro ao registrar Service Worker:', error);
-        toast({
-          title: "Erro",
-          description: "Erro ao registrar Service Worker",
-          variant: "destructive",
-        });
-        return null;
-      }
+      toast({
+        title: "Erro",
+        description: "Não foi possível carregar as estatísticas",
+        variant: "destructive",
+      });
     }
   };
 
@@ -114,12 +50,7 @@ export default function PushAdmin() {
   const testPushNotification = async () => {
     setIsLoading(true);
     try {
-      // Registrar SW primeiro se necessário
-      await registerServiceWorker();
-      
-      const response = await apiRequest('POST', '/api/push-debug/send-test', {
-        title: 'Teste Vendzz',
-        body: 'Esta é uma notificação de teste do sistema push!',
+      const response = await apiRequest('POST', '/api/push-notifications/test-realtime', {
         quizId: testQuizId,
         userId: testUserId
       });
@@ -136,52 +67,6 @@ export default function PushAdmin() {
       toast({
         title: "Erro",
         description: "Erro ao enviar notificação de teste",
-        variant: "destructive",
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  // Enviar mensagem customizada para todos os usuários
-  const sendCustomMessage = async () => {
-    if (!customTitle.trim() || !customMessage.trim()) {
-      toast({
-        title: "Erro",
-        description: "Por favor, preencha título e mensagem",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    setIsLoading(true);
-    try {
-      // Registrar SW primeiro se necessário
-      await registerServiceWorker();
-      
-      const response = await apiRequest('POST', '/api/push-notifications/admin/broadcast', {
-        title: customTitle,
-        body: customMessage,
-        url: '/',
-        sendToAll: true
-      });
-      
-      toast({
-        title: "Sucesso",
-        description: `Mensagem enviada para ${response.sentCount || 0} usuários`,
-      });
-      
-      // Limpar campos
-      setCustomTitle('');
-      setCustomMessage('');
-      
-      // Recarregar estatísticas
-      await loadStats();
-    } catch (error) {
-      console.error('Erro no envio broadcast:', error);
-      toast({
-        title: "Erro",
-        description: "Erro ao enviar mensagem para todos os usuários",
         variant: "destructive",
       });
     } finally {
@@ -324,62 +209,6 @@ export default function PushAdmin() {
             </CardContent>
           </Card>
         )}
-
-        {/* Mensagem Customizada para Todos */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Broadcast - Mensagem para Todos os Usuários</CardTitle>
-            <CardDescription>
-              Enviar notificação push personalizada para todos os usuários ativos
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div>
-              <label className="text-sm font-medium">Título da Notificação</label>
-              <Input 
-                value={customTitle} 
-                onChange={(e) => setCustomTitle(e.target.value)}
-                placeholder="Ex: Nova Funcionalidade Disponível!"
-                maxLength={50}
-              />
-              <div className="text-xs text-gray-500 mt-1">
-                {customTitle.length}/50 caracteres
-              </div>
-            </div>
-            <div>
-              <label className="text-sm font-medium">Mensagem</label>
-              <Textarea 
-                value={customMessage} 
-                onChange={(e) => setCustomMessage(e.target.value)}
-                placeholder="Ex: Confira as novas funcionalidades do Vendzz! Acesse agora e descubra tudo o que preparamos para você."
-                maxLength={120}
-                rows={3}
-              />
-              <div className="text-xs text-gray-500 mt-1">
-                {customMessage.length}/120 caracteres
-              </div>
-            </div>
-            
-            <Button 
-              onClick={sendCustomMessage} 
-              disabled={isLoading || !customTitle.trim() || !customMessage.trim()}
-              className="w-full bg-green-600 hover:bg-green-700"
-              size="lg"
-            >
-              {isLoading ? (
-                <>
-                  <Clock className="w-4 h-4 mr-2 animate-spin" />
-                  Enviando Broadcast...
-                </>
-              ) : (
-                <>
-                  <Users className="w-4 h-4 mr-2" />
-                  Enviar para Todos os Usuários
-                </>
-              )}
-            </Button>
-          </CardContent>
-        </Card>
 
         {/* Teste de Notificação */}
         <Card>
