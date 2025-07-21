@@ -3,6 +3,12 @@ import { quizResponses, users } from '../shared/schema-sqlite';
 import { eq, and } from 'drizzle-orm';
 import fs from 'fs';
 import path from 'path';
+import Stripe from 'stripe';
+
+// Inicializar Stripe para verificação de subscription
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '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', {
+  apiVersion: '2024-09-30.acacia',
+});
 
 interface PushNotificationPayload {
   title: string;
@@ -29,7 +35,61 @@ class RealTimePushNotificationSystem {
   }
 
   /**
+   * Verifica se o usuário tem subscription ativa no Stripe
+   * Para 100k+ usuários, só processa quiz completions de usuários pagantes
+   * ADMIN OVERRIDE: Admin user sempre tem permissão
+   */
+  private async hasActiveSubscription(userId: string): Promise<boolean> {
+    // Admin sempre tem permissão (para testes e configuração)
+    if (userId === 'admin-user-id') {
+      console.log(`👑 ADMIN OVERRIDE: Usuário ${userId} é admin - subscription: true`);
+      return true;
+    }
+    try {
+      // Buscar dados do usuário no banco
+      const [user] = await db
+        .select({
+          email: users.email,
+          stripeCustomerId: users.stripeCustomerId,
+          currentPlan: users.currentPlan
+        })
+        .from(users)
+        .where(eq(users.id, userId))
+        .limit(1);
+
+      if (!user || !user.stripeCustomerId) {
+        console.log(`📊 Usuário ${userId} não tem Stripe Customer ID - subscription: false`);
+        return false;
+      }
+
+      // Se já tem plano PRO, assumir que tem subscription ativa
+      if (user.currentPlan === 'PRO') {
+        console.log(`✅ Usuário ${userId} tem plano PRO - subscription: true`);
+        return true;
+      }
+
+      // Verificar subscription ativa no Stripe
+      const subscriptions = await stripe.subscriptions.list({
+        customer: user.stripeCustomerId,
+        status: 'active',
+        limit: 1
+      });
+
+      const hasActiveSubscription = subscriptions.data.length > 0;
+      console.log(`🔍 Verificação Stripe - Usuário ${userId}: ${hasActiveSubscription ? 'SUBSCRIPTION ATIVA' : 'SEM SUBSCRIPTION'}`);
+      
+      return hasActiveSubscription;
+
+    } catch (error) {
+      console.error(`❌ Erro ao verificar subscription do usuário ${userId}:`, error);
+      // Em caso de erro, bloquear por segurança (evitar sobrecarga)
+      return false;
+    }
+  }
+
+  /**
    * Detecta quando um quiz foi completado e envia notificação em tempo real
+   * IMPORTANTE: Só processa para usuários com subscription ativa (para 100k+ usuários)
    */
   async onQuizCompleted(quizId: string, userId: string): Promise<void> {
     try {
@@ -57,6 +117,17 @@ class RealTimePushNotificationSystem {
         this.processingQueue.delete(completionKey);
         return;
       }
+
+      // 🔒 VERIFICAÇÃO CRÍTICA: Só processar para usuários com subscription ativa
+      // Para evitar sobrecarga com 100k+ usuários gratuitos
+      const hasSubscription = await this.hasActiveSubscription(quizOwner.ownerId);
+      if (!hasSubscription) {
+        console.log(`🔒 BLOCKED: Usuário ${quizOwner.ownerId} sem subscription ativa - quiz completion não processado (economia de recursos)`);
+        this.processingQueue.delete(completionKey);
+        return;
+      }
+
+      console.log(`✅ AUTHORIZED: Usuário ${quizOwner.ownerId} com subscription ativa - processando quiz completion`);
 
       // Verificar se o dono tem subscription push ativa via arquivo JSON
       const subscriptionsPath = path.join(process.cwd(), 'push-subscriptions.json');

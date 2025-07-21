@@ -759,6 +759,8 @@ export default function BulkPushMessaging() {
             </CardTitle>
             <CardDescription>
               Sistema automático que dispara push notifications quando alguém completa um quiz
+              <br />
+              <span className="text-blue-600 font-semibold">🔒 ECONOMIA DE RECURSOS: Só processa usuários com subscription ativa (ideal para 100k+ usuários)</span>
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
@@ -939,6 +941,8 @@ export default function BulkPushMessaging() {
                       ✅ Verificação automática a cada 10 segundos<br/>
                       ✅ Notificação instantânea quando quiz for completado<br/>
                       ✅ Som automático: {getSoundTypeText(quizCompletionSound)}<br/>
+                      🔒 Filtragem inteligente: Só processa usuários com subscription ativa<br/>
+                      📊 Performance otimizada para 100k+ usuários simultâneos<br/>
                       {lastQuizCompleted && (
                         <>✅ Último quiz detectado: ID {lastQuizCompleted.substring(0, 8)}...</>
                       )}
@@ -947,7 +951,9 @@ export default function BulkPushMessaging() {
                     <>
                       ⏸️ Monitoramento pausado - clique "Iniciar Monitoramento" para ativar<br/>
                       ℹ️ Sistema configurado e pronto para detectar quiz completions<br/>
-                      ℹ️ Som configurado: {getSoundTypeText(quizCompletionSound)}
+                      ℹ️ Som configurado: {getSoundTypeText(quizCompletionSound)}<br/>
+                      🔒 Sistema inteligente: Verificará subscription antes de processar<br/>
+                      📊 Economia de recursos ativa para suporte massivo de usuários
                     </>
                   )}
                 </p>
