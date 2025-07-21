@@ -354,6 +354,7 @@ export default function BulkPushMessaging() {
       };
 
       // Enviar push notification
+      // Usar formato igual ao dashboard que funciona
       const response = await fetch('/api/push-simple/send', {
         method: 'POST',
         headers: {
@@ -361,13 +362,7 @@ export default function BulkPushMessaging() {
         },
         body: JSON.stringify({
           title: personalizedMessage.title,
-          message: personalizedMessage.message,
-          icon: '/android-chrome-192x192.png',
-          badge: '/android-chrome-192x192.png',
-          actions: [
-            { action: 'view', title: 'Ver Quiz' },
-            { action: 'close', title: 'Fechar' }
-          ]
+          message: personalizedMessage.message
         })
       });
 
@@ -511,12 +506,20 @@ export default function BulkPushMessaging() {
         };
       }
 
+      // Usar o mesmo formato exato que funciona no dashboard
+      const pushPayload = {
+        title: requestBody.title,
+        message: requestBody.message || requestBody.body // compatibilidade com ambos os campos
+      };
+
+      console.log('📤 BULK PUSH - Enviando payload igual ao dashboard:', pushPayload);
+
       const response = await fetch('/api/push-simple/send', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(requestBody)
+        body: JSON.stringify(pushPayload)
       });
 
       const result = await response.json();

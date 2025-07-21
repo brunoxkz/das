@@ -1,15 +1,5 @@
 [
-  {
-    "endpoint": "https://web.push.apple.com/admin-vendzz-notification-endpoint",
-    "keys": {
-      "p256dh": "BK1qMIxfA1D23qIyHuK3r47iOG6bOEh3SzOTxzLDz9VHcRVgOXPaRSoZPc6r0rHQhXJT7MfFGOKRQGxgd4p6nfo=",
-      "auth": "dGVzdF9hdXRoX2tleV9mb3JfYWRtaW4="
-    },
-    "userId": "admin@vendzz.com",
-    "userEmail": "admin@vendzz.com",
-    "deviceType": "iOS PWA",
-    "createdAt": "2025-07-21T23:32:00.000Z"
-  },
+
   {
     "endpoint": "https://web.push.apple.com/QPCUiceqocrhUAwYlS7Ay9HHn4wFo6C4TON2TrWjObJZwgvIyZce1CxEYvWkQ-F3nAUrl_54aMJcNbrQvjPFHjcs832Ty1U_Obnsd40F6mODCIyyTN4jb7nAoFy_sdlAPl6hDvZK1fHaEmubVXndsiKFzOS6tR3KUAwHgAynQ58",
     "keys": {
