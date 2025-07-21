@@ -46,12 +46,28 @@ export default function BulkPushMessaging() {
     isLoading: false
   });
   
-  // Sistema de Notificações Automáticas para Quiz Completions
+  // Sistema de Notificações Automáticas para Quiz Completions - ROTATIVAS
   const [autoNotificationsEnabled, setAutoNotificationsEnabled] = useState(false);
-  const [quizCompletionMessage, setQuizCompletionMessage] = useState({
-    title: '🎉 Novo Quiz Completado!',
-    message: 'Um usuário acabou de completar um quiz na plataforma Vendzz! 🚀'
-  });
+  const [quizCompletionMessages, setQuizCompletionMessages] = useState([
+    {
+      id: 1,
+      title: '🎉 Novo Quiz Completado!',
+      message: 'Um usuário acabou de completar um quiz na plataforma Vendzz! 🚀'
+    },
+    {
+      id: 2,
+      title: '🏆 Parabéns ao Usuário!',
+      message: 'Mais um quiz finalizado com sucesso no Vendzz! ✨'
+    },
+    {
+      id: 3,
+      title: '🚀 Resultado Incrível!',
+      message: 'Quiz concluído! O usuário está engajado com nossa plataforma! 🎯'
+    }
+  ]);
+  const [currentQuizMessageIndex, setCurrentQuizMessageIndex] = useState(0);
+  const [newQuizTitle, setNewQuizTitle] = useState('');
+  const [newQuizMessage, setNewQuizMessage] = useState('');
   const [quizCompletionSound, setQuizCompletionSound] = useState('achievement');
   const [lastQuizCompleted, setLastQuizCompleted] = useState<string | null>(null);
   const [monitoringActive, setMonitoringActive] = useState(false);
@@ -269,7 +285,10 @@ export default function BulkPushMessaging() {
       if (response.ok) {
         const settings = await response.json();
         setAutoNotificationsEnabled(settings.enabled || false);
-        setQuizCompletionMessage(settings.quizCompletionMessage || quizCompletionMessage);
+        if (settings.quizCompletionMessages && settings.quizCompletionMessages.length > 0) {
+          setQuizCompletionMessages(settings.quizCompletionMessages);
+        }
+        setCurrentQuizMessageIndex(settings.currentQuizMessageIndex || 0);
         setQuizCompletionSound(settings.quizCompletionSound || 'achievement');
         setLastQuizCompleted(settings.lastQuizCompleted || null);
       }
@@ -283,7 +302,8 @@ export default function BulkPushMessaging() {
     try {
       const settings = {
         enabled: autoNotificationsEnabled,
-        quizCompletionMessage,
+        quizCompletionMessages,
+        currentQuizMessageIndex,
         quizCompletionSound,
         lastQuizCompleted
       };
@@ -312,15 +332,25 @@ export default function BulkPushMessaging() {
     }
   };
 
-  // Enviar notificação automática de quiz completion
+  // Enviar notificação automática de quiz completion COM ROTAÇÃO
   const sendAutoNotification = async (quizCompletion: any) => {
     try {
       console.log('📤 Enviando notificação automática de quiz completion...');
 
+      // Pegar mensagem atual do sistema rotativo
+      const currentMessage = quizCompletionMessages[currentQuizMessageIndex];
+      
+      // Avançar para próxima mensagem (rotação)
+      const nextIndex = (currentQuizMessageIndex + 1) % quizCompletionMessages.length;
+      setCurrentQuizMessageIndex(nextIndex);
+      
+      console.log(`🔄 Usando mensagem ${currentQuizMessageIndex + 1}/${quizCompletionMessages.length}: "${currentMessage.title}"`);
+      console.log(`🔄 Próxima mensagem será: ${nextIndex + 1}/${quizCompletionMessages.length}`);
+
       // Personalizar mensagem com dados do quiz
       const personalizedMessage = {
-        title: quizCompletionMessage.title,
-        message: quizCompletionMessage.message.replace(
+        title: currentMessage.title,
+        message: currentMessage.message.replace(
           'Um usuário', 
           `Usuário (${quizCompletion.userEmail || 'anônimo'})`
         ).replace(
@@ -376,6 +406,74 @@ export default function BulkPushMessaging() {
 
   // Enviar notificação automática de quiz completion (alias para compatibilidade)
   const sendQuizCompletionNotification = sendAutoNotification;
+
+  // FUNÇÕES PARA GERENCIAR MENSAGENS ROTATIVAS DE QUIZ
+  const addQuizMessage = () => {
+    if (!newQuizTitle.trim() || !newQuizMessage.trim()) {
+      toast({
+        title: "Campos obrigatórios",
+        description: "Preencha título e mensagem",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const newMessage = {
+      id: Date.now(),
+      title: newQuizTitle.trim(),
+      message: newQuizMessage.trim()
+    };
+
+    setQuizCompletionMessages([...quizCompletionMessages, newMessage]);
+    setNewQuizTitle('');
+    setNewQuizMessage('');
+    
+    toast({
+      title: "✅ Mensagem Adicionada",
+      description: `Nova mensagem rotativa criada: "${newMessage.title}"`,
+    });
+
+    console.log('✅ Nova mensagem quiz adicionada:', newMessage);
+  };
+
+  const removeQuizMessage = (messageId: number) => {
+    if (quizCompletionMessages.length <= 1) {
+      toast({
+        title: "Não é possível remover",
+        description: "Deve ter pelo menos 1 mensagem rotativa",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setQuizCompletionMessages(quizCompletionMessages.filter(msg => msg.id !== messageId));
+    
+    // Reajustar índice se necessário
+    if (currentQuizMessageIndex >= quizCompletionMessages.length - 1) {
+      setCurrentQuizMessageIndex(0);
+    }
+
+    toast({
+      title: "🗑️ Mensagem Removida",
+      description: "Mensagem rotativa removida com sucesso",
+    });
+  };
+
+  const clearAllQuizMessages = () => {
+    const defaultMessage = {
+      id: 1,
+      title: '🎉 Novo Quiz Completado!',
+      message: 'Um usuário acabou de completar um quiz na plataforma Vendzz! 🚀'
+    };
+    
+    setQuizCompletionMessages([defaultMessage]);
+    setCurrentQuizMessageIndex(0);
+    
+    toast({
+      title: "🔄 Mensagens Resetadas",
+      description: "Todas as mensagens foram limpas e resetadas para o padrão",
+    });
+  };
 
   // Enviar mensagem push
   const handleSendMessage = async () => {
@@ -692,90 +790,145 @@ export default function BulkPushMessaging() {
 
             {/* Configuração da Mensagem de Quiz Completion */}
             <div className="space-y-4">
-              <h4 className="font-semibold text-gray-800 dark:text-gray-200">📝 Personalizar Mensagem de Quiz Completion</h4>
+              <h4 className="font-semibold text-gray-800 dark:text-gray-200">🔄 Sistema de Mensagens Rotativas para Quiz Completion</h4>
+              <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                Configure múltiplas mensagens que serão enviadas automaticamente em rotação a cada quiz completado. Cole suas mensagens todas de uma vez:
+              </p>
               
-              <div>
-                <label className="text-sm font-medium mb-2 block">Título da Notificação</label>
-                <Input 
-                  value={quizCompletionMessage.title} 
-                  onChange={(e) => setQuizCompletionMessage({
-                    ...quizCompletionMessage,
-                    title: e.target.value
-                  })}
-                  placeholder="🎉 Novo Quiz Completado!"
-                  className="font-medium"
-                />
-              </div>
-              
-              <div>
-                <label className="text-sm font-medium mb-2 block">Mensagem da Notificação</label>
-                <Textarea 
-                  value={quizCompletionMessage.message} 
-                  onChange={(e) => setQuizCompletionMessage({
-                    ...quizCompletionMessage,
-                    message: e.target.value
-                  })}
-                  placeholder="Um usuário acabou de completar um quiz na plataforma Vendzz! 🚀"
-                  rows={3}
-                  className="resize-none"
-                />
-                <p className="text-xs text-gray-500 mt-1">
-                  💡 A mensagem será personalizada automaticamente com dados do usuário e quiz
-                </p>
+              {/* Lista de mensagens rotativas atuais */}
+              <div className="space-y-3 max-h-64 overflow-y-auto">
+                {quizCompletionMessages.map((msg, index) => (
+                  <div key={msg.id} className="bg-white dark:bg-gray-800 p-3 rounded-lg border border-gray-200 dark:border-gray-700">
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                        Mensagem {index + 1} {index === currentQuizMessageIndex && <span className="text-green-600 font-bold">(Próxima)</span>}
+                      </span>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => removeQuizMessage(msg.id)}
+                        className="text-red-600 hover:bg-red-50 border-red-300"
+                      >
+                        🗑️
+                      </Button>
+                    </div>
+                    <div className="space-y-2">
+                      <div className="text-xs text-gray-500 font-medium">Título:</div>
+                      <div className="text-sm bg-gray-50 dark:bg-gray-700 p-2 rounded">{msg.title}</div>
+                      <div className="text-xs text-gray-500 font-medium">Mensagem:</div>
+                      <div className="text-sm bg-gray-50 dark:bg-gray-700 p-2 rounded">{msg.message}</div>
+                    </div>
+                  </div>
+                ))}
               </div>
 
-              {/* Som específico para quiz completions */}
-              <div className="bg-yellow-50 dark:bg-yellow-900/20 p-4 rounded-lg border border-yellow-200 dark:border-yellow-800">
-                <h4 className="font-semibold text-yellow-800 dark:text-yellow-200 mb-3">🔊 Som para Quiz Completions</h4>
-                <SoundSelector 
-                  currentSoundType={quizCompletionSound} 
-                  onSoundTypeChange={setQuizCompletionSound}
-                  label="Som quando detectar quiz completion"
-                />
-              </div>
+              {/* Adicionar nova mensagem */}
+              <div className="bg-green-50 dark:bg-green-900/20 p-4 rounded-lg border border-green-200 dark:border-green-800">
+                <h5 className="font-semibold text-green-800 dark:text-green-200 mb-3">➕ Adicionar Nova Mensagem</h5>
+                <div className="space-y-3">
+                  <div>
+                    <label className="text-sm font-medium mb-2 block text-green-700 dark:text-green-300">Título da Notificação</label>
+                    <Input 
+                      value={newQuizTitle} 
+                      onChange={(e) => setNewQuizTitle(e.target.value)}
+                      placeholder="🎉 Novo Quiz Completado!"
+                      className="font-medium"
+                    />
+                  </div>
+                  
+                  <div>
+                    <label className="text-sm font-medium mb-2 block text-green-700 dark:text-green-300">Mensagem da Notificação</label>
+                    <Textarea 
+                      value={newQuizMessage} 
+                      onChange={(e) => setNewQuizMessage(e.target.value)}
+                      placeholder="Um usuário acabou de completar um quiz na plataforma Vendzz! 🚀"
+                      rows={3}
+                      className="resize-none"
+                    />
+                  </div>
 
-              {/* Controles do Sistema */}
-              <div className="flex gap-3 justify-center">
-                <Button
-                  onClick={saveAutoNotificationSettings}
-                  className="bg-yellow-600 hover:bg-yellow-700 text-white"
-                >
-                  💾 Salvar Configurações
-                </Button>
-                
-                {autoNotificationsEnabled && (
                   <Button
-                    variant={monitoringActive ? "destructive" : "default"}
-                    onClick={() => setMonitoringActive(!monitoringActive)}
-                    className={monitoringActive ? "" : "bg-green-600 hover:bg-green-700"}
+                    onClick={addQuizMessage}
+                    className="w-full bg-green-600 hover:bg-green-700 text-white"
                   >
-                    {monitoringActive ? "⏹️ Parar Monitoramento" : "▶️ Iniciar Monitoramento"}
+                    ✅ Adicionar à Lista Rotativa
                   </Button>
-                )}
+                </div>
+              </div>
+
+              {/* Botões de controle */}
+              <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  onClick={clearAllQuizMessages}
+                  className="flex-1 border-orange-300 text-orange-700 hover:bg-orange-50"
+                >
+                  🔄 Resetar Lista
+                </Button>
+                <div className="bg-blue-50 dark:bg-blue-900/20 p-2 rounded flex-1 text-center">
+                  <div className="text-xs text-blue-700 dark:text-blue-300 font-medium">Total de Mensagens</div>
+                  <div className="text-lg font-bold text-blue-800 dark:text-blue-200">{quizCompletionMessages.length}</div>
+                </div>
+              </div>
+
+              <div className="bg-gray-50 dark:bg-gray-800 p-3 rounded-lg">
+                <p className="text-xs text-gray-600 dark:text-gray-400">
+                  💡 As mensagens serão enviadas em rotação automática. Você pode colar várias mensagens de uma vez adicionando uma por uma à lista.
+                </p>
               </div>
             </div>
 
-            {/* Status do Sistema */}
-            {autoNotificationsEnabled && (
+            {/* Som específico para quiz completions */}
+            <div className="bg-yellow-50 dark:bg-yellow-900/20 p-4 rounded-lg border border-yellow-200 dark:border-yellow-800">
+              <h4 className="font-semibold text-yellow-800 dark:text-yellow-200 mb-3">🔊 Som para Quiz Completions</h4>
+              <SoundSelector 
+                currentSoundType={quizCompletionSound} 
+                onSoundTypeChange={setQuizCompletionSound}
+                label="Som quando detectar quiz completion"
+              />
+            </div>
+
+            {/* Controles do Sistema */}
+            <div className="flex gap-3 justify-center">
+              <Button
+                onClick={saveAutoNotificationSettings}
+                className="bg-yellow-600 hover:bg-yellow-700 text-white"
+              >
+                💾 Salvar Configurações
+              </Button>
+              
+              {autoNotificationsEnabled && (
+                <Button
+                  variant={monitoringActive ? "destructive" : "default"}
+                  onClick={() => setMonitoringActive(!monitoringActive)}
+                  className={monitoringActive ? "" : "bg-green-600 hover:bg-green-700"}
+                >
+                  {monitoringActive ? "⏹️ Parar Monitoramento" : "▶️ Iniciar Monitoramento"}
+                </Button>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Status do Sistema */}
+        {autoNotificationsEnabled && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <div className={`w-3 h-3 rounded-full ${
+                  monitoringActive 
+                    ? 'bg-green-500 animate-pulse' 
+                    : 'bg-gray-400'
+                }`}></div>
+                {monitoringActive ? 'Sistema Ativo e Monitorando' : 'Sistema Configurado (Parado)'}
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
               <div className={`p-4 rounded-lg border ${
                 monitoringActive 
                   ? 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800' 
                   : 'bg-gray-50 dark:bg-gray-900/20 border-gray-200 dark:border-gray-800'
               }`}>
-                <div className="flex items-center gap-2 mb-2">
-                  <div className={`w-2 h-2 rounded-full ${
-                    monitoringActive 
-                      ? 'bg-green-500 animate-pulse' 
-                      : 'bg-gray-400'
-                  }`}></div>
-                  <span className={`font-semibold ${
-                    monitoringActive 
-                      ? 'text-green-800 dark:text-green-200' 
-                      : 'text-gray-600 dark:text-gray-400'
-                  }`}>
-                    {monitoringActive ? 'Sistema Ativo e Monitorando' : 'Sistema Configurado (Parado)'}
-                  </span>
-                </div>
                 <p className={`text-sm ${
                   monitoringActive 
                     ? 'text-green-700 dark:text-green-300' 
@@ -799,9 +952,9 @@ export default function BulkPushMessaging() {
                   )}
                 </p>
               </div>
-            )}
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Message Form */}
         <Card>
