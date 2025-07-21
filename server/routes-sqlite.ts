@@ -15979,7 +15979,64 @@ app.get("/api/whatsapp-extension/pending", verifyJWT, async (req: any, res: Resp
     }
   });
 
-  // Broadcast push notification to all users
+  // Broadcast push notification to all users (alias para compatibilidade)
+  app.post('/api/push-notifications/admin/broadcast', verifyJWT, async (req: any, res) => {
+    try {
+      // Verificar se é admin
+      const user = req.user;
+      const isAdmin = user.role === 'admin' || user.email === 'admin@admin.com' || user.email === 'admin@vendzz.com' || user.email === 'bruno@vendzz.com';
+      
+      console.log('🔍 Push Broadcast Admin - User:', user.email, 'Role:', user.role, 'IsAdmin:', isAdmin);
+      
+      if (!isAdmin) {
+        return res.status(403).json({ 
+          success: false, 
+          message: 'Acesso negado - apenas admins podem enviar broadcasts' 
+        });
+      }
+
+      const { title, body, url, icon, image, tag, sendToAll } = req.body;
+      
+      if (!title || !body) {
+        return res.status(400).json({ 
+          success: false, 
+          message: 'Título e corpo são obrigatórios' 
+        });
+      }
+
+      console.log('📱 Enviando broadcast:', { title, body, sendToAll });
+
+      const notificationData = {
+        title,
+        body,
+        url: url || '/',
+        icon: icon || '/favicon.png',
+        image,
+        tag: tag || 'admin-broadcast',
+        priority: 'high' as const
+      };
+
+      const result = await SimplePushNotificationSystem.sendBroadcastNotification(notificationData);
+      
+      console.log('✅ Broadcast enviado:', result);
+      
+      res.json({
+        success: true,
+        message: 'Broadcast enviado com sucesso',
+        sentCount: result.sentCount,
+        failedCount: result.failedCount,
+        totalSubscriptions: result.totalSubscriptions
+      });
+    } catch (error) {
+      console.error('❌ Erro ao enviar broadcast admin:', error);
+      res.status(500).json({ 
+        success: false, 
+        message: 'Erro interno do servidor' 
+      });
+    }
+  });
+
+  // Broadcast push notification to all users (endpoint original)
   app.post('/api/push-broadcast', verifyJWT, async (req: any, res) => {
     try {
       // Verificar se é admin
