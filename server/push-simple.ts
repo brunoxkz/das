@@ -254,4 +254,18 @@ export const getAllActiveSubscriptions = async (): Promise<PushSubscription[]> =
   }
 };
 
+// FUNÇÃO DIRETA DE ENVIO PARA BROADCAST: Sem req/res, apenas dados
+export const sendDirectPush = async (title: string, body: string, url?: string): Promise<{ success: number; failed: number }> => {
+  console.log('🔧 [PUSH-SIMPLE] sendDirectPush chamada:', { title, body, url });
+  
+  try {
+    const result = await pushService.sendToAll(title, body, url);
+    console.log('✅ [PUSH-SIMPLE] Push enviado:', result);
+    return result;
+  } catch (error) {
+    console.error('❌ [PUSH-SIMPLE] Erro no sendDirectPush:', error);
+    return { success: 0, failed: 0 };
+  }
+};
+
 export { pushService };

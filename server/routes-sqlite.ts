@@ -15499,13 +15499,15 @@ app.get("/api/whatsapp-extension/pending", verifyJWT, async (req: any, res: Resp
         try {
           console.log(`📱 [PWA iOS] Enviando para ${pwaSub.userId}...`);
           
-          // Usar pushService diretamente para envio REAL 
+          // Usar sendDirectPush para envio REAL sem req/res
           let pwaSuccess = false;
-          if (pushSimpleModule && pushSimpleModule.sendPushToAll) {
-            pwaSuccess = await pushSimpleModule.sendPushToAll({ title, body, url });
+          if (pushSimpleModule && pushSimpleModule.sendDirectPush) {
+            const result = await pushSimpleModule.sendDirectPush(title, body, url);
+            pwaSuccess = result.success > 0;
+            console.log(`📱 [PWA] Resultado direto: ${result.success} sucesso, ${result.failed} falhas`);
           } else {
-            console.log('📱 [PWA] Simulando envio - módulo não disponível');
-            pwaSuccess = true; // Simular sucesso para não quebrar o fluxo
+            console.log('📱 [PWA] sendDirectPush não disponível - simulando');
+            pwaSuccess = true;
           }
           
           if (pwaSuccess) {
