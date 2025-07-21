@@ -252,12 +252,7 @@ export default function Dashboard() {
     retry: false,
   });
 
-  // Query para buscar estatísticas de usuários online
-  const { data: onlineStats, isLoading: onlineStatsLoading } = useQuery({
-    queryKey: ['/api/users/online-stats'],
-    enabled: !!user,
-    refetchInterval: 15000 // Atualiza a cada 15 segundos para dados em tempo real
-  });
+
 
   // Calcular estatísticas reais
   const totalQuizzes = userQuizzes?.length || 0;
@@ -1085,113 +1080,7 @@ export default function Dashboard() {
             </CardContent>
           </Card>
 
-          {/* Usuários Online */}
-          <Card className="dashboard-card shadow-xl mb-6">
-            <CardHeader className="dashboard-header border-b">
-              <CardTitle className="text-xl dashboard-text-primary flex items-center gap-2">
-                <Users className="w-5 h-5 text-green-600" />
-                Usuários Online
-                <Badge variant="secondary" className="bg-green-100 text-green-700 border-green-200">
-                  {onlineStats?.onlineCount || 42} pessoas
-                </Badge>
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="p-6">
-              {onlineStatsLoading ? (
-                <div className="animate-pulse space-y-3">
-                  <div className="h-4 bg-gray-200 rounded w-3/4"></div>
-                  <div className="h-4 bg-gray-200 rounded w-1/2"></div>
-                  <div className="h-4 bg-gray-200 rounded w-5/6"></div>
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  {/* Atividades Recentes */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <h4 className="font-semibold text-sm text-gray-700 mb-3 flex items-center gap-2">
-                        <Clock className="w-4 h-4" />
-                        Atividades Recentes
-                      </h4>
-                      <div className="space-y-2">
-                        {onlineStats?.recentActivities?.slice(0, 5)?.map((activity: any, index: number) => (
-                          <div key={index} className="flex items-center justify-between text-sm p-2 bg-gray-50 rounded">
-                            <div className="flex items-center gap-2">
-                              <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                              <span className="font-medium">{activity.userName}</span>
-                              <span className="text-gray-600">{activity.description}</span>
-                            </div>
-                            <div className="flex items-center gap-1 text-xs text-gray-500">
-                              <MapPin className="w-3 h-3" />
-                              {activity.city}
-                            </div>
-                          </div>
-                        )) || [
-                          <div key="1" className="flex items-center justify-between text-sm p-2 bg-gray-50 rounded">
-                            <div className="flex items-center gap-2">
-                              <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                              <span className="font-medium">Maria Silva</span>
-                              <span className="text-gray-600">criou um novo quiz</span>
-                            </div>
-                            <div className="flex items-center gap-1 text-xs text-gray-500">
-                              <MapPin className="w-3 h-3" />
-                              São Paulo
-                            </div>
-                          </div>,
-                          <div key="2" className="flex items-center justify-between text-sm p-2 bg-gray-50 rounded">
-                            <div className="flex items-center gap-2">
-                              <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                              <span className="font-medium">João Santos</span>
-                              <span className="text-gray-600">capturou novos leads</span>
-                            </div>
-                            <div className="flex items-center gap-1 text-xs text-gray-500">
-                              <MapPin className="w-3 h-3" />
-                              Rio de Janeiro
-                            </div>
-                          </div>,
-                          <div key="3" className="flex items-center justify-between text-sm p-2 bg-gray-50 rounded">
-                            <div className="flex items-center gap-2">
-                              <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                              <span className="font-medium">Ana Costa</span>
-                              <span className="text-gray-600">enviou uma campanha SMS</span>
-                            </div>
-                            <div className="flex items-center gap-1 text-xs text-gray-500">
-                              <MapPin className="w-3 h-3" />
-                              Belo Horizonte
-                            </div>
-                          </div>
-                        ]}
-                      </div>
-                    </div>
-                    
-                    {/* Estatísticas */}
-                    <div>
-                      <h4 className="font-semibold text-sm text-gray-700 mb-3">Estatísticas em Tempo Real</h4>
-                      <div className="space-y-3">
-                        <div className="flex justify-between items-center">
-                          <span className="text-sm text-gray-600">Crescimento por Hora</span>
-                          <Badge variant="secondary" className="bg-blue-100 text-blue-700">
-                            +{onlineStats?.growth?.hourly || 5} usuários
-                          </Badge>
-                        </div>
-                        <div className="flex justify-between items-center">
-                          <span className="text-sm text-gray-600">Top Cidade</span>
-                          <span className="text-sm font-medium">
-                            {onlineStats?.topCities?.[0]?.city || 'São Paulo'} ({onlineStats?.topCities?.[0]?.users || 12})
-                          </span>
-                        </div>
-                        <div className="flex justify-between items-center">
-                          <span className="text-sm text-gray-600">Planos Premium</span>
-                          <span className="text-sm font-medium text-green-600">
-                            {onlineStats?.planDistribution?.premium || 8} usuários
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              )}
-            </CardContent>
-          </Card>
+
 
           {/* Ações Rápidas */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
