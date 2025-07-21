@@ -15,7 +15,9 @@ self.addEventListener('activate', (event) => {
 
 // Handler principal para push notifications
 self.addEventListener('push', (event) => {
-  console.log('SW: Push recebido', event.data?.text());
+  const timestamp = new Date().toISOString();
+  console.log(`🔔 SW RECEBIMENTO: Push notification RECEBIDA às ${timestamp}`);
+  console.log('📱 SW DADOS RAW:', event.data?.text());
   
   let notificationData = {
     title: 'Vendzz',
@@ -29,6 +31,8 @@ self.addEventListener('push', (event) => {
   if (event.data) {
     try {
       const data = event.data.json();
+      console.log('📋 SW DADOS PARSEADOS:', data);
+      
       notificationData = {
         title: data.title || 'Vendzz',
         body: data.body || 'Nova notificação',
@@ -39,8 +43,10 @@ self.addEventListener('push', (event) => {
         silent: false,
         vibrate: [200, 100, 200] // Para dispositivos que suportam
       };
+      
+      console.log(`✅ SW PROCESSAMENTO: Notificação "${data.title}" processada com sucesso`);
     } catch (e) {
-      console.log('SW: Erro ao parsear dados push:', e);
+      console.error('❌ SW ERRO: Falha ao parsear dados push:', e);
     }
   }
 

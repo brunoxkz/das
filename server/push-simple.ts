@@ -183,11 +183,24 @@ export const subscribeToPush = async (req: Request, res: Response) => {
     console.log('🔧 Endpoint /push/subscribe chamado');
     console.log('📨 Body recebido:', JSON.stringify(req.body, null, 2));
     
-    const { subscription } = req.body;
+    // Tratar tanto { subscription: ... } quanto subscription direta
+    let subscription = req.body.subscription || req.body;
     const userId = (req as any).user?.id || 'ios-pwa-user';
 
+    console.log('🔍 Subscription processada:', {
+      hasEndpoint: !!subscription?.endpoint,
+      hasKeys: !!subscription?.keys,
+      userId: userId,
+      endpoint: subscription?.endpoint?.substring(0, 50) + '...'
+    });
+
     if (!subscription || !subscription.endpoint) {
-      console.error('❌ Subscription inválida:', { subscription });
+      console.error('❌ Subscription inválida:', { 
+        bodyKeys: Object.keys(req.body),
+        hasSubscription: !!req.body.subscription,
+        hasEndpoint: !!subscription?.endpoint,
+        subscription: subscription 
+      });
       return res.status(400).json({ error: 'Subscription inválida' });
     }
 
@@ -195,6 +208,7 @@ export const subscribeToPush = async (req: Request, res: Response) => {
     
     if (success) {
       console.log('✅ Subscription registrada com sucesso no servidor!');
+      console.log('📱 iOS Push Notifications ATIVADAS para user:', userId);
       res.json({ success: true, message: 'Subscription salva com sucesso' });
     } else {
       console.error('❌ Falha ao registrar subscription no servidor');
@@ -242,16 +256,43 @@ export const getPushStats = async (req: Request, res: Response) => {
 
 // 🎯 FUNÇÃO ESPECÍFICA PARA QUIZ COMPLETION NOTIFICATIONS
 export const sendPushToSpecificUser = async (userId: string, payload: any): Promise<boolean> => {
+  const timestamp = new Date().toISOString();
+  console.log(`🎯 ENVIO ESPECÍFICO INICIADO: ${timestamp}`);
+  console.log(`👤 User ID: ${userId}`);
+  console.log(`📋 Payload:`, JSON.stringify(payload, null, 2));
+  
   try {
     console.log(`🎯 Enviando push notification para usuário específico: ${userId}`);
     
     const subscriptions = await pushService.loadSubscriptions();
+    console.log(`📊 Total de subscriptions no sistema: ${subscriptions.length}`);
+    
+    // Log todas as subscriptions para debug
+    subscriptions.forEach((sub, index) => {
+      console.log(`📋 Subscription ${index + 1}: userId="${sub.userId}", endpoint="${sub.endpoint.substring(0, 30)}..."`);
+    });
     
     // Filtrar subscriptions do usuário específico
     const userSubscriptions = subscriptions.filter(sub => sub.userId === userId);
+    console.log(`🔍 Filtrando por userId="${userId}": ${userSubscriptions.length} matches encontrados`);
+    
+    // Se não encontrou por userId exato, tentar buscar por "ios-pwa-user" (fallback comum)
+    if (userSubscriptions.length === 0 && userId === 'admin-user-id') {
+      console.log(`🔄 Tentando fallback para "ios-pwa-user"...`);
+      const fallbackSubscriptions = subscriptions.filter(sub => sub.userId === 'ios-pwa-user');
+      console.log(`🎯 Fallback encontrou: ${fallbackSubscriptions.length} subscriptions`);
+      
+      if (fallbackSubscriptions.length > 0) {
+        // Usar as subscriptions do fallback
+        userSubscriptions.push(...fallbackSubscriptions);
+        console.log(`✅ Usando ${fallbackSubscriptions.length} subscriptions do fallback`);
+      }
+    }
     
     if (userSubscriptions.length === 0) {
-      console.log(`📱 Nenhuma subscription encontrada para usuário: ${userId}`);
+      console.log(`❌ NENHUMA SUBSCRIPTION ENCONTRADA!`);
+      console.log(`📊 UserId procurado: "${userId}"`);
+      console.log(`📊 UserIds disponíveis:`, subscriptions.map(s => s.userId));
       return false;
     }
     
