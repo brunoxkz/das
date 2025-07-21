@@ -635,6 +635,35 @@ export class SQLiteStorage implements IStorage {
     return user || undefined;
   }
 
+  // 🎯 MÉTODO PARA QUIZ COMPLETION PUSH NOTIFICATIONS
+  async getUserByQuizId(quizId: string): Promise<User | undefined> {
+    try {
+      console.log(`🔍 Buscando dono do quiz: ${quizId}`);
+      
+      // Buscar o quiz primeiro para pegar o userId
+      const [quiz] = await db.select({ userId: quizzes.userId }).from(quizzes).where(eq(quizzes.id, quizId));
+      
+      if (!quiz || !quiz.userId) {
+        console.log(`❌ Quiz ${quizId} não encontrado ou sem dono`);
+        return undefined;
+      }
+      
+      // Buscar o usuário pelo userId do quiz
+      const [user] = await db.select().from(users).where(eq(users.id, quiz.userId));
+      
+      if (user) {
+        console.log(`✅ Dono do quiz encontrado: ${user.email} (ID: ${user.id})`);
+      } else {
+        console.log(`❌ Usuário ${quiz.userId} não encontrado`);
+      }
+      
+      return user || undefined;
+    } catch (error) {
+      console.error(`❌ Erro ao buscar dono do quiz ${quizId}:`, error);
+      return undefined;
+    }
+  }
+
   async logCreditTransaction(transaction: any): Promise<void> {
     await db.insert(creditTransactions).values({
       id: transaction.id,

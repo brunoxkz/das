@@ -145,7 +145,7 @@ class SimplePushService {
         success++;
         console.log('✅ Push enviado com sucesso!');
       } catch (error) {
-        console.error('❌ Falha no envio real:', error.message);
+        console.error('❌ Falha no envio real:', error instanceof Error ? error.message : error);
         failed++;
       }
     }
@@ -237,6 +237,46 @@ export const getPushStats = async (req: Request, res: Response) => {
   } catch (error) {
     console.error('❌ Erro ao obter stats:', error);
     res.status(500).json({ error: 'Erro ao obter estatísticas' });
+  }
+};
+
+// 🎯 FUNÇÃO ESPECÍFICA PARA QUIZ COMPLETION NOTIFICATIONS
+export const sendPushToSpecificUser = async (userId: string, payload: any): Promise<boolean> => {
+  try {
+    console.log(`🎯 Enviando push notification para usuário específico: ${userId}`);
+    
+    const subscriptions = await pushService.loadSubscriptions();
+    
+    // Filtrar subscriptions do usuário específico
+    const userSubscriptions = subscriptions.filter(sub => sub.userId === userId);
+    
+    if (userSubscriptions.length === 0) {
+      console.log(`📱 Nenhuma subscription encontrada para usuário: ${userId}`);
+      return false;
+    }
+    
+    console.log(`📱 Encontradas ${userSubscriptions.length} subscriptions para ${userId}`);
+    
+    let successCount = 0;
+    
+    for (const subscription of userSubscriptions) {
+      try {
+        console.log(`📤 Enviando para subscription: ${subscription.endpoint.substring(0, 30)}...`);
+        
+        await webpush.sendNotification(subscription, JSON.stringify(payload));
+        successCount++;
+        
+        console.log(`✅ Push enviado com sucesso para ${userId}`);
+      } catch (error) {
+        console.error(`❌ Erro ao enviar push para subscription específica:`, error);
+        // Continuar tentando outras subscriptions
+      }
+    }
+    
+    return successCount > 0;
+  } catch (error) {
+    console.error(`❌ Erro crítico ao enviar push para usuário ${userId}:`, error);
+    return false;
   }
 };
 
