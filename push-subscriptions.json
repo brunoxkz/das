@@ -1,11 +1,20 @@
 [
   {
-    "endpoint": "https://web.push.apple.com/QPCUiceqocrhUAwYlS7Ay9HHn4wFo6C4TON2TrWjObJZwgvIyZce1CxEYvWkQ-F3nAUrl_54aMJcNbrQvjPFHjcs832Ty1U_Obnsd40F6mODCIyyTN4jb7nAoFy_sdlAPl6hDvZK1fHaEmubVXndsiKFzOS6tR3KUAwHgAynQ58",
+    "endpoint": "https://web.push.apple.com/4622191b24cb3edaf5b9cb405bbe283b115f375c87eae5de88f4fc01b2dbf7fa",
     "keys": {
-      "p256dh": "BBum3hAdjmWlW0YY5nJhoiFu2FrxDo545oIs_P4Hsx8_WQoAUcssO3AhoteJ25RaWp9MmiEU13mVoDtICiaeOps",
-      "auth": "mY9lmJ9ovUSt_PaaqYdMFA"
+      "p256dh": "AhmyR4Vw3ok2BZjNR65X8PDOX6RiSQIQpcSMACViWrk=",
+      "auth": "I3wZTziVLqN2mEpXbNFA4g=="
     },
     "userId": "ios-pwa-user",
-    "createdAt": "2025-07-21T21:42:27.505Z"
+    "createdAt": "2025-07-21T22:54:01.441Z"
+  },
+  {
+    "endpoint": "https://web.push.apple.com/905e81fdacaf0351797416a63f71e0670951483a037cca6c6b565d9bae9c9afc",
+    "keys": {
+      "p256dh": "Omavj+OyDjKc0lZe6x5IAiZi755xzyVOhLzDtcgVa4M=",
+      "auth": "+COwT85g9+xBThGgeWJrxw=="
+    },
+    "userId": "ios-pwa-user",
+    "createdAt": "2025-07-21T22:54:01.611Z"
   }
 ]
