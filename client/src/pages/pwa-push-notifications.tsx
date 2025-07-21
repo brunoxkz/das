@@ -30,6 +30,19 @@ export default function VendzzPWANotifications({}: VendzzPWANotificationsProps) 
     if (supported) {
       initializeServiceWorker();
       fetchVapidKey();
+      
+      // Auto-solicitar permissão se ainda não foi concedida
+      if (Notification.permission === 'default') {
+        console.log('🔔 Solicitando permissão automaticamente...');
+        setTimeout(() => {
+          Notification.requestPermission().then((permission) => {
+            console.log('📋 Permissão automática resultado:', permission);
+            if (permission === 'granted') {
+              console.log('✅ Permissão concedida automaticamente');
+            }
+          });
+        }, 2000); // Aguardar 2 segundos para melhor UX
+      }
     }
   }, []);
 
@@ -77,59 +90,131 @@ export default function VendzzPWANotifications({}: VendzzPWANotificationsProps) 
   };
 
   const subscribeToNotifications = async () => {
+    console.log('🔄 Iniciando processo de subscription...');
+    console.log('Service Worker disponível:', !!notificationServiceWorker);
+    console.log('VAPID Key disponível:', !!vapidPublicKey);
+
     if (!notificationServiceWorker) {
+      console.error('❌ Service Worker não disponível');
       toast({
-        title: "Service Worker não disponível",
-        description: "Por favor, recarregue a página",
+        title: "Service Worker não disponível", 
+        description: "Tentando recarregar o service worker...",
         variant: "destructive",
       });
+      
+      // Tentar recarregar o service worker
+      await initializeServiceWorker();
+      if (!notificationServiceWorker) {
+        return;
+      }
+    }
+
+    if (!vapidPublicKey) {
+      console.error('❌ VAPID Key não disponível');
+      toast({
+        title: "Erro de configuração",
+        description: "Chave VAPID não encontrada. Recarregando...",
+        variant: "destructive", 
+      });
+      await fetchVapidKey();
       return;
     }
 
     try {
+      console.log('🔐 Solicitando permissão para notificações...');
+      
       // Solicitar permissão
       const result = await Notification.requestPermission();
+      
+      console.log('📋 Resultado da permissão:', result);
 
       if (result !== 'granted') {
         toast({
           title: "Permissão negada",
-          description: `Status da permissão: ${result}`,
+          description: `Status da permissão: ${result}. Por favor, permita notificações nas configurações do navegador.`,
           variant: "destructive",
         });
         return;
       }
 
+      console.log('✅ Permissão concedida! Criando subscription...');
+
+      // Converter VAPID key de base64 para Uint8Array  
+      let vapidKeyUint8Array;
+      try {
+        vapidKeyUint8Array = new Uint8Array(
+          atob(vapidPublicKey.replace(/-/g, '+').replace(/_/g, '/'))
+            .split('')
+            .map(char => char.charCodeAt(0))
+        );
+        console.log('🔑 VAPID Key convertida para Uint8Array');
+      } catch (error) {
+        console.error('❌ Erro ao converter VAPID key:', error);
+        // Tentar usar a chave diretamente
+        vapidKeyUint8Array = vapidPublicKey;
+      }
+
       // Criar subscription
       const subscription = await notificationServiceWorker.pushManager.subscribe({
-        applicationServerKey: vapidPublicKey,
+        applicationServerKey: vapidKeyUint8Array,
         userVisibleOnly: true
+      });
+
+      console.log('📱 Subscription criada:', {
+        endpoint: subscription.endpoint.substring(0, 50) + '...',
+        hasP256dh: !!subscription.getKey('p256dh'),
+        hasAuth: !!subscription.getKey('auth')
       });
 
       // Enviar subscription para o servidor
       const token = localStorage.getItem('token');
+      console.log('🔐 Token encontrado:', !!token);
+
+      const subscriptionData = {
+        endpoint: subscription.endpoint,
+        keys: {
+          p256dh: subscription.getKey('p256dh') ? btoa(String.fromCharCode(...new Uint8Array(subscription.getKey('p256dh')!))) : null,
+          auth: subscription.getKey('auth') ? btoa(String.fromCharCode(...new Uint8Array(subscription.getKey('auth')!))) : null
+        },
+        userId: 'pwa-user-' + browserId,
+        userAgent: navigator.userAgent,
+        timestamp: new Date().toISOString()
+      };
+
+      console.log('📤 Enviando subscription para servidor...', {
+        endpoint: subscriptionData.endpoint.substring(0, 50) + '...',
+        userId: subscriptionData.userId
+      });
+
       const response = await fetch('/api/push-subscribe', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
+          'Authorization': token ? `Bearer ${token}` : ''
         },
         body: JSON.stringify({
-          endpoint: subscription.endpoint,
-          keys: {
-            p256dh: subscription.getKey('p256dh') ? btoa(String.fromCharCode(...new Uint8Array(subscription.getKey('p256dh')!))) : null,
-            auth: subscription.getKey('auth') ? btoa(String.fromCharCode(...new Uint8Array(subscription.getKey('auth')!))) : null
-          }
+          endpoint: subscriptionData.endpoint,
+          keys: subscriptionData.keys,
+          userId: subscriptionData.userId,
+          userAgent: subscriptionData.userAgent
         })
       });
 
+      console.log('📋 Resposta do servidor:', response.status, response.statusText);
+
       if (response.ok) {
+        const responseData = await response.json();
+        console.log('✅ Subscription registrada com sucesso:', responseData);
+        
         setIsSubscribed(true);
         toast({
           title: "✅ Notificações ativadas!",
           description: "Você receberá notificações push do Vendzz",
         });
       } else {
-        throw new Error('Erro ao registrar subscription no servidor');
+        const errorText = await response.text();
+        console.error('❌ Erro do servidor:', errorText);
+        throw new Error(`Erro ao registrar subscription: ${response.status} - ${errorText}`);
       }
 
     } catch (error: any) {
