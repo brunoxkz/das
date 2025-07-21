@@ -110,6 +110,7 @@ import AdminPushSimple from "@/pages/admin-push-simple";
 import PushDemo from "@/pages/push-demo";
 import AdminPush from "@/pages/admin-push";
 import PushAdmin from "@/pages/push-admin";
+import BulkPushMessaging from "@/pages/bulk-push-messaging";
 
 import { useAuth } from "@/hooks/useAuth-jwt";
 import { isUnauthorizedError } from "@/lib/authUtils";
@@ -654,6 +655,12 @@ function App() {
         <Route path="/push-admin">
           <Layout>
             <PushAdmin />
+          </Layout>
+        </Route>
+
+        <Route path="/admin/bulk-push-messaging">
+          <Layout>
+            <BulkPushMessaging />
           </Layout>
         </Route>
         
