@@ -22,8 +22,9 @@ interface BulkMessageStats {
   isLoading: boolean;
 }
 
-// SISTEMA COMPLETO COM 10 SONS E EDIÇÃO ROTATIVA - CACHE CLEAR V3
+// SISTEMA COMPLETO COM 10 SONS E EDIÇÃO ROTATIVA - CACHE CLEAR V5 - FORCE REBUILD TOTAL
 export default function BulkPushMessaging() {
+  console.log('🔥 BULK PUSH MESSAGING COMPONENTE CARREGANDO - V5');
   const [title, setTitle] = useState('🔥 Mensagem do Sistema Vendzz');
   const [message, setMessage] = useState('Nova funcionalidade disponível! Acesse agora o sistema 📱');
   const [isLoading, setIsLoading] = useState(false);

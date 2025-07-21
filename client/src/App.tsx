@@ -656,14 +656,10 @@ function App() {
 
         <Route path="/admin/bulk-push-messaging">
           <Layout>
-            <BulkPushMessaging key="bulk-push-v2025-clear-final" />
+            <BulkPushMessaging />
           </Layout>
         </Route>
-        <Route path="/admin-push-notifications">
-          <Layout>
-            <BulkPushMessaging key="admin-push-redirect-final" />
-          </Layout>
-        </Route>
+
         
         <Route path="/push-demo">
           <Layout>
