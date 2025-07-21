@@ -138,6 +138,19 @@ setupHybridAuth(app);
 
 // System initialization and routes
 
+// ============================================================================
+// PUSH NOTIFICATIONS SIMPLES - DIRETO NO INDEX ANTES DO VITE
+// ============================================================================
+import { getVapidPublicKey, subscribeToPush, getPushStats, sendPushToAll } from "./push-simple";
+
+// Endpoints push-simple registrados ANTES do Vite para evitar interceptação
+app.post('/push-vapid', getVapidPublicKey);
+app.post('/push-subscribe', subscribeToPush);
+app.post('/push-stats', getPushStats);
+app.post('/push-send', sendPushToAll);
+
+console.log('✅ PUSH NOTIFICATIONS ENDPOINTS REGISTRADOS NO INDEX.TS');
+
 // Register all routes ANTES do Vite middleware
 const server = registerHybridRoutes(app);
 

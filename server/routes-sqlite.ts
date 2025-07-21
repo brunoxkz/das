@@ -26021,20 +26021,20 @@ export function registerCheckoutRoutes(app: Express) {
   console.log('✅ ENDPOINTS PWA USUARIOS ADICIONADOS COM SUCESSO');
 
   // ============================================================================
-  // PUSH NOTIFICATIONS SIMPLES - iOS PWA
+  // PUSH NOTIFICATIONS SIMPLES - iOS PWA (endpoints específicos para evitar Vite)
   // ============================================================================
 
   // Obter VAPID public key
-  app.get('/api/push-simple/vapid-key', getVapidPublicKey);
+  app.post('/push-vapid', getVapidPublicKey);
 
   // Fazer subscription para push notifications
-  app.post('/api/push-simple/subscribe', subscribeToPush);
+  app.post('/push-subscribe', subscribeToPush);
 
   // Enviar push notification para todos (admin only)
-  app.post('/api/push-simple/send', sendPushToAll);
+  app.post('/push-send', sendPushToAll);
 
   // Obter estatísticas de push notifications
-  app.get('/api/push-simple/stats', getPushStats);
+  app.post('/push-stats', getPushStats);
 
   console.log('✅ PUSH NOTIFICATIONS SIMPLES ENDPOINTS ADICIONADOS');
 

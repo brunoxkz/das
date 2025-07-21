@@ -28,7 +28,8 @@ import {
   CreditCard,
   X,
   Zap,
-  MapPin
+  MapPin,
+  Bell
 } from "lucide-react";
 import { Link } from "wouter";
 import { useAuth } from "@/hooks/useAuth-jwt";
@@ -47,6 +48,98 @@ export default function Dashboard() {
   const [previewQuiz, setPreviewQuiz] = useState(null);
   const [showQuizPreview, setShowQuizPreview] = useState(false);
   const [forumMode, setForumMode] = useState(false);
+  const [pushNotificationState, setPushNotificationState] = useState({
+    isIOS: false,
+    isPWA: false,
+    isSupported: false,
+    hasPermission: false,
+    isSubscribed: false,
+    showAutoPrompt: false
+  });
+
+  // Detecção automática de iOS PWA e configuração de push notifications
+  useEffect(() => {
+    const checkiOSPWAAndSetupPush = async () => {
+      try {
+        // Detectar iOS
+        const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+        
+        // Detectar PWA mode
+        const isPWA = window.matchMedia('(display-mode: standalone)').matches ||
+                      window.matchMedia('(display-mode: fullscreen)').matches ||
+                      (window.navigator as any).standalone;
+        
+        // Verificar suporte a notificações
+        const isSupported = 'serviceWorker' in navigator && 'PushManager' in window;
+        
+        // Atualizar estado
+        setPushNotificationState(prev => ({
+          ...prev,
+          isIOS,
+          isPWA,
+          isSupported,
+          hasPermission: Notification.permission === 'granted',
+          showAutoPrompt: isIOS && isPWA && isSupported && Notification.permission === 'default'
+        }));
+
+        // Se for iOS PWA e ainda não tem permissão, solicitar automaticamente
+        if (isIOS && isPWA && isSupported && Notification.permission === 'default') {
+          console.log('🔔 iOS PWA detectado - Solicitando permissões automaticamente');
+          
+          // Registrar service worker primeiro
+          const registration = await navigator.serviceWorker.register('/sw-simple.js');
+          console.log('🔧 Service Worker registrado automaticamente:', registration);
+          
+          // Solicitar permissão
+          const permission = await Notification.requestPermission();
+          console.log('📱 Permissão de notificação:', permission);
+          
+          if (permission === 'granted') {
+            // Obter VAPID key
+            const vapidResponse = await fetch('/push-vapid', { method: 'POST' });
+            const { publicKey: vapidPublicKey } = await vapidResponse.json();
+            
+            // Criar subscription
+            const subscription = await registration.pushManager.subscribe({
+              userVisibleOnly: true,
+              applicationServerKey: vapidPublicKey
+            });
+            
+            // Enviar subscription para o servidor
+            const response = await fetch('/push-subscribe', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ subscription })
+            });
+            
+            if (response.ok) {
+              console.log('✅ Push notifications configuradas automaticamente!');
+              
+              setPushNotificationState(prev => ({
+                ...prev,
+                hasPermission: true,
+                isSubscribed: true,
+                showAutoPrompt: false
+              }));
+              
+              toast({
+                title: "📱 Push Notifications Ativadas!",
+                description: "Você receberá notificações na tela de bloqueio mesmo fora do app",
+                duration: 5000
+              });
+            }
+          }
+        }
+      } catch (error) {
+        console.error('❌ Erro na configuração automática de push:', error);
+      }
+    };
+
+    // Executar apenas uma vez quando o componente montar
+    if (isAuthenticated) {
+      checkiOSPWAAndSetupPush();
+    }
+  }, [isAuthenticated, toast]);
 
   // Função para alternar modo fórum
   const toggleForumMode = () => {
@@ -379,6 +472,26 @@ export default function Dashboard() {
               >
                 <X className="w-4 h-4" />
               </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Banner de Push Notifications iOS PWA */}
+      {pushNotificationState.isIOS && pushNotificationState.isPWA && pushNotificationState.hasPermission && (
+        <div className="bg-gradient-to-r from-blue-600 to-blue-700 text-white p-3 shadow-md">
+          <div className="max-w-7xl mx-auto flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <Bell className="w-5 h-5 animate-bounce" />
+              <div>
+                <span className="font-semibold">📱 Push Notifications Ativas</span>
+                <p className="text-sm opacity-90">
+                  Você receberá notificações na tela de bloqueio mesmo fora do app
+                </p>
+              </div>
+            </div>
+            <div className="text-sm bg-white/20 px-3 py-1 rounded-full">
+              iOS PWA
             </div>
           </div>
         </div>
