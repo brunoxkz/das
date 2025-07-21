@@ -292,6 +292,8 @@ Changelog:
   * Testes realizados: favicon.png, apple-touch-icon.png e manifest.json respondendo 200 OK
   * PWA agora exibe identidade visual Vendzz correta em todas as plataformas
   * Configurações de segurança relaxadas temporariamente para resolver ERR_BLOCKED_BY_RESPONSE
+  * Sistema avançado de segurança temporariamente desabilitado para garantir acesso ao preview
+  * Listas de IP bloqueados automaticamente limpas a cada 30 segundos
   * Sistema 100% funcional para instalação como PWA com branding correto
 Changelog:
 - July 21, 2025. SISTEMA PUSH NOTIFICATIONS iOS PWA 100% FUNCIONAL + SIMULADOR DESABILITADO - Correções críticas finais aplicadas com sucesso:

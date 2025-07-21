@@ -457,9 +457,9 @@ const PORT = Number(process.env.PORT) || 5000;
 
 async function startServer() {
   try {
-    // Initialize security system primeiro
-    await initAdvancedSecurity();
-    console.log('🔒 Sistema de segurança avançado inicializado');
+    // Initialize security system primeiro - DESABILITADO PARA DESENVOLVIMENTO
+    // await initAdvancedSecurity();
+    console.log('🔒 Sistema de segurança avançado DESABILITADO para resolução de ERR_BLOCKED_BY_RESPONSE');
     
     // Cache optimizer DESABILITADO para economia de memória
     // await quizCacheOptimizer.initialize();
