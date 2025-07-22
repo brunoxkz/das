@@ -47,7 +47,7 @@ export const quizzes = sqliteTable("quizzes", {
   title: text("title").notNull(),
   description: text("description"),
   structure: text("structure", { mode: 'json' }).notNull(),
-  user_id: text("user_id").notNull().references(() => users.id),
+  userId: text("user_id").notNull().references(() => users.id),
   isPublished: integer("isPublished", { mode: 'boolean' }).default(false),
   isSuperAffiliate: integer("isSuperAffiliate", { mode: 'boolean' }).default(false),
   settings: text("settings", { mode: 'json' }),
@@ -113,8 +113,8 @@ export const quizTemplates = sqliteTable("quiz_templates", {
 
 export const quizResponses = sqliteTable("quiz_responses", {
   id: text("id").primaryKey(),
-  quiz_id: text("quiz_id").notNull().references(() => quizzes.id),
-  user_id: text("user_id").references(() => users.id), // Campo opcional para respostas de usuários logados
+  quizId: text("quiz_id").notNull().references(() => quizzes.id),
+  userId: text("user_id").references(() => users.id), // Campo opcional para respostas de usuários logados
   responses: text("responses", { mode: 'json' }).notNull(),
   metadata: text("metadata", { mode: 'json' }),
   submittedAt: integer("submittedAt", { mode: 'timestamp' }).notNull().$defaultFn(() => new Date()),

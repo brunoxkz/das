@@ -795,6 +795,10 @@ export class SQLiteStorage implements IStorage {
       .from(users)
       .where(sql`
         EXISTS (
+          SELECT 1 FROM sms_campaigns WHERE userId = ${users.id} AND status = 'active'
+        ) OR EXISTS (
+          SELECT 1 FROM email_campaigns WHERE userId = ${users.id} AND status = 'active'
+        ) OR EXISTS (
           SELECT 1 FROM whatsapp_campaigns WHERE user_id = ${users.id} AND status = 'active'
         )
       `);
@@ -813,14 +817,14 @@ export class SQLiteStorage implements IStorage {
           return await db.select()
             .from(smsCampaigns)
             .where(and(
-              eq(smsCampaigns.user_id, userId),
+              eq(smsCampaigns.userId, userId),
               eq(smsCampaigns.status, 'active')
             ));
         case 'email':
           return await db.select()
             .from(emailCampaigns)
             .where(and(
-              eq(emailCampaigns.user_id, userId),
+              eq(emailCampaigns.userId, userId),
               eq(emailCampaigns.status, 'active')
             ));
         case 'whatsapp':
@@ -846,14 +850,14 @@ export class SQLiteStorage implements IStorage {
           return await db.select()
             .from(smsCampaigns)
             .where(and(
-              eq(smsCampaigns.user_id, userId),
+              eq(smsCampaigns.userId, userId),
               eq(smsCampaigns.status, 'paused')
             ));
         case 'email':
           return await db.select()
             .from(emailCampaigns)
             .where(and(
-              eq(emailCampaigns.user_id, userId),
+              eq(emailCampaigns.userId, userId),
               eq(emailCampaigns.status, 'paused')
             ));
         case 'whatsapp':
@@ -1033,7 +1037,7 @@ export class SQLiteStorage implements IStorage {
   async getUserQuizzes(userId: string): Promise<Quiz[]> {
     return await db.select()
       .from(quizzes)
-      .where(eq(quizzes.user_id, userId))
+      .where(eq(quizzes.userId, userId))
       .orderBy(desc(quizzes.updatedAt));
   }
 
@@ -1528,7 +1532,7 @@ export class SQLiteStorage implements IStorage {
   // Get all analytics for user quizzes
   async getAllQuizAnalytics(userId: string) {
     try {
-      const userQuizzes = await db.select().from(quizzes).where(eq(quizzes.user_id, userId));
+      const userQuizzes = await db.select().from(quizzes).where(eq(quizzes.userId, userId));
       const quizIds = userQuizzes.map(q => q.id);
       
       if (quizIds.length === 0) {

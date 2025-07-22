@@ -282,7 +282,7 @@ export class DatabaseStorage implements IStorage {
     return await db
       .select()
       .from(quizzes)
-      .where(eq(quizzes.user_id, userId))
+      .where(eq(quizzes.userId, userId))
       .orderBy(desc(quizzes.createdAt));
   }
 
@@ -394,14 +394,14 @@ export class DatabaseStorage implements IStorage {
     const [quizCount] = await db
       .select({ count: sql<number>`count(*)` })
       .from(quizzes)
-      .where(eq(quizzes.user_id, userId));
+      .where(eq(quizzes.userId, userId));
 
     // Get total leads from user's quizzes
     const [leadCount] = await db
       .select({ count: sql<number>`count(*)` })
       .from(quizResponses)
       .innerJoin(quizzes, eq(quizResponses.quizId, quizzes.id))
-      .where(eq(quizzes.user_id, userId));
+      .where(eq(quizzes.userId, userId));
 
     // Get total views and conversion rate
     const [analytics] = await db
@@ -411,7 +411,7 @@ export class DatabaseStorage implements IStorage {
       })
       .from(quizAnalytics)
       .innerJoin(quizzes, eq(quizAnalytics.quizId, quizzes.id))
-      .where(eq(quizzes.user_id, userId));
+      .where(eq(quizzes.userId, userId));
 
     const totalViews = analytics?.totalViews || 0;
     const totalCompletions = analytics?.totalCompletions || 0;
