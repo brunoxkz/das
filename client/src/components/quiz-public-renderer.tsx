@@ -475,6 +475,7 @@ export function QuizPublicRenderer({ quiz }: QuizPublicRendererProps) {
   const [answers, setAnswers] = useState<Record<string, any>>({});
   const [quizResponses, setQuizResponses] = useState<QuizResponse[]>([]);
   const [sessionId] = useState(() => nanoid());
+  const [startTime] = useState(Date.now());
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showResults, setShowResults] = useState(false);
   const [autoSaveEnabled] = useState(true);
@@ -782,8 +783,8 @@ export function QuizPublicRenderer({ quiz }: QuizPublicRendererProps) {
     setIsSubmitting(true);
     
     try {
-      // Salvar resposta completa
-      const finalResponse = await fetch(`/api/quizzes/${quiz.id}/submit`, {
+      // 1. FORMATO ORIGINAL: Para sistemas de autodetecção (mantido)
+      const originalResponse = await fetch(`/api/quizzes/${quiz.id}/submit`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -795,8 +796,52 @@ export function QuizPublicRenderer({ quiz }: QuizPublicRendererProps) {
         })
       });
 
-      if (finalResponse.ok) {
-        console.log('Quiz completado com sucesso!');
+      // 2. FORMATO PARA NOTIFICAÇÕES PUSH: Compatível com backend esperado
+      // Extrair leadData das respostas
+      const leadData: any = {};
+      
+      quizResponses.forEach((response) => {
+        // Se tem fieldId, é lead data
+        if (response.elementFieldId) {
+          leadData[response.elementFieldId] = response.answer;
+        }
+      });
+
+      // Aguardar primeira resposta antes de enviar formato de notificação
+      if (originalResponse.ok) {
+        console.log('Quiz completado com sucesso (formato original)!');
+        
+        // 🔔 ENVIO ADICIONAL: Formato específico para disparar notificações push
+        try {
+          const notificationResponse = await fetch(`/api/quizzes/${quiz.id}/submit`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              responses: quizResponses, // Formato array esperado pelo backend
+              metadata: {
+                sessionId,
+                completedAt: new Date().toISOString(),
+                userAgent: navigator.userAgent,
+                totalPages: pages.length,
+                completionPercentage: 100,
+                timeSpent: Date.now() - startTime,
+                isComplete: true
+              },
+              leadData
+            })
+          });
+
+          if (notificationResponse.ok) {
+            console.log('🔔 Notificação push disparada com sucesso!');
+          } else {
+            console.log('⚠️ Notificação push falhou (não crítico)');
+          }
+        } catch (notificationError) {
+          console.log('⚠️ Erro ao enviar notificação push (não crítico):', notificationError);
+        }
+        
         setShowResults(true);
       } else {
         console.error('Erro ao finalizar quiz');
