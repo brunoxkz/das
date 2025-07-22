@@ -312,7 +312,13 @@ export default function SMSCampaignsAdvanced() {
   // Queries
   const { data: quizzes = [], isLoading: loadingQuizzes } = useQuery({
     queryKey: ['/api/quizzes'],
-    enabled: !!user
+    enabled: !!user,
+    onSuccess: (data) => {
+      console.log('🎯 Quizzes carregados:', data?.length, 'publicados:', data?.filter((q: Quiz) => q.published)?.length);
+    },
+    onError: (error) => {
+      console.error('❌ Erro ao carregar quizzes:', error);
+    }
   });
   
   const { data: credits = { remaining: 0 } } = useQuery({
@@ -2265,14 +2271,29 @@ export default function SMSCampaignsAdvanced() {
                       onValueChange={(value) => setPopupForm(prev => ({ ...prev, funnelId: value }))}
                     >
                       <SelectTrigger className={openPopup?.includes('quantum') ? 'border-purple-200 focus:ring-purple-500' : ''}>
-                        <SelectValue placeholder="Selecione um quiz" />
+                        <SelectValue placeholder={loadingQuizzes ? "Carregando quizzes..." : "Selecione um quiz"} />
                       </SelectTrigger>
                       <SelectContent>
-                        {quizzes.filter((quiz: Quiz) => quiz.published).map((quiz: Quiz) => (
-                          <SelectItem key={quiz.id} value={quiz.id}>
-                            {quiz.title} ({quiz.responses} respostas)
+                        {loadingQuizzes ? (
+                          <SelectItem value="" disabled>
+                            <div className="flex items-center gap-2">
+                              <div className="w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+                              Carregando...
+                            </div>
                           </SelectItem>
-                        ))}
+                        ) : quizzes.filter((quiz: Quiz) => quiz.published).length > 0 ? (
+                          quizzes.filter((quiz: Quiz) => quiz.published).map((quiz: Quiz) => (
+                            <SelectItem key={quiz.id} value={quiz.id}>
+                              {quiz.title} ({quiz.responses || 0} respostas)
+                            </SelectItem>
+                          ))
+                        ) : (
+                          <SelectItem value="" disabled>
+                            <div className="text-gray-500 text-center py-2">
+                              Nenhum quiz publicado encontrado
+                            </div>
+                          </SelectItem>
+                        )}
                       </SelectContent>
                     </Select>
                   </div>
@@ -2307,38 +2328,40 @@ export default function SMSCampaignsAdvanced() {
                   </div>
                 )}
 
-                {/* Quantum Filters - Advanced Features */}
-                {openPopup?.includes('quantum') && (
+                {/* Filtros Avançados - Remarketing Básico e Quantum */}
+                {(openPopup === 'remarketing' || openPopup?.includes('quantum')) && (
                   <div className="space-y-4 border-t pt-4">
-                    <Alert className="bg-gradient-to-r from-purple-50 to-blue-50 border-purple-200">
-                      <Sparkles className="h-4 w-4 text-purple-600" />
-                      <AlertDescription className="text-purple-800">
-                        <strong>Sistema Quantum Ativado!</strong> Configure filtros ultra-específicos para segmentação granular de leads.
+                    <Alert className="bg-gradient-to-r from-blue-50 to-purple-50 border-blue-200">
+                      <Sparkles className="h-4 w-4 text-blue-600" />
+                      <AlertDescription className="text-blue-800">
+                        <strong>Filtros Avançados {openPopup?.includes('quantum') ? 'Quantum' : 'de Remarketing'} Ativados!</strong> {' '}
+                        Configure filtros de data e timing para {openPopup?.includes('quantum') ? 'segmentação ultra-específica' : 'campanhas direcionadas'}.
                       </AlertDescription>
                     </Alert>
 
-                    {openPopup === 'quantum_remarketing' && (
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                          <Label>Filtro de Data (De)</Label>
-                          <Input 
-                            type="date"
-                            value={popupForm.dateFrom || ''}
-                            onChange={(e) => setPopupForm(prev => ({ ...prev, dateFrom: e.target.value }))}
-                            className="border-purple-200 focus:ring-purple-500"
-                          />
-                        </div>
-                        <div>
-                          <Label>Filtro de Data (Até)</Label>
-                          <Input 
-                            type="date"
-                            value={popupForm.dateTo || ''}
-                            onChange={(e) => setPopupForm(prev => ({ ...prev, dateTo: e.target.value }))}
-                            className="border-purple-200 focus:ring-purple-500"
-                          />
-                        </div>
+                    {/* Filtros de Data para Remarketing e Quantum */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <Label>Filtro de Data (De)</Label>
+                        <Input 
+                          type="date"
+                          value={popupForm.dateFrom || ''}
+                          onChange={(e) => setPopupForm(prev => ({ ...prev, dateFrom: e.target.value }))}
+                          className={openPopup?.includes('quantum') ? 'border-purple-200 focus:ring-purple-500' : 'border-blue-200 focus:ring-blue-500'}
+                        />
+                        <div className="text-xs text-gray-500 mt-1">Leads a partir desta data</div>
                       </div>
-                    )}
+                      <div>
+                        <Label>Filtro de Data (Até)</Label>
+                        <Input 
+                          type="date"
+                          value={popupForm.dateTo || ''}
+                          onChange={(e) => setPopupForm(prev => ({ ...prev, dateTo: e.target.value }))}
+                          className={openPopup?.includes('quantum') ? 'border-purple-200 focus:ring-purple-500' : 'border-blue-200 focus:ring-blue-500'}
+                        />
+                        <div className="text-xs text-gray-500 mt-1">Leads até esta data</div>
+                      </div>
+                    </div>
 
                     <div>
                       <Label>Timing de Disparo</Label>
@@ -2346,7 +2369,7 @@ export default function SMSCampaignsAdvanced() {
                         value={popupForm.dispatchTiming || 'immediate'} 
                         onValueChange={(value) => setPopupForm(prev => ({ ...prev, dispatchTiming: value }))}
                       >
-                        <SelectTrigger className="border-purple-200 focus:ring-purple-500">
+                        <SelectTrigger className={openPopup?.includes('quantum') ? 'border-purple-200 focus:ring-purple-500' : 'border-blue-200 focus:ring-blue-500'}>
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
@@ -2365,7 +2388,7 @@ export default function SMSCampaignsAdvanced() {
                             value={popupForm.dispatchDelayValue || ''}
                             onChange={(e) => setPopupForm(prev => ({ ...prev, dispatchDelayValue: e.target.value }))}
                             placeholder="30"
-                            className="border-purple-200 focus:ring-purple-500"
+                            className={openPopup?.includes('quantum') ? 'border-purple-200 focus:ring-purple-500' : 'border-blue-200 focus:ring-blue-500'}
                           />
                         </div>
                         <div>
@@ -2374,7 +2397,7 @@ export default function SMSCampaignsAdvanced() {
                             value={popupForm.dispatchDelayUnit || 'minutes'} 
                             onValueChange={(value) => setPopupForm(prev => ({ ...prev, dispatchDelayUnit: value }))}
                           >
-                            <SelectTrigger className="border-purple-200">
+                            <SelectTrigger className={openPopup?.includes('quantum') ? 'border-purple-200' : 'border-blue-200'}>
                               <SelectValue />
                             </SelectTrigger>
                             <SelectContent>
