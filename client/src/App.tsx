@@ -21,8 +21,7 @@ import AdminPage from "@/pages/admin";
 import AdminSecurityPage from "@/pages/admin-security";
 import AdminRateLimiting from "@/pages/admin-rate-limiting";
 import BulkPushMessaging from "@/pages/bulk-push-messaging";
-
-
+import AdminPush from "@/pages/admin-push";
 import LeadsPage from "@/pages/leads";
 import NotFoundPage from "@/pages/not-found";
 import TutoriaisPage from "@/pages/tutoriais";
@@ -111,7 +110,6 @@ import AdminDashboard from "@/pages/admin-dashboard";
 import PushSimple from "@/pages/push-simple";
 import AdminPushSimple from "@/pages/admin-push-simple";
 import PushDemo from "@/pages/push-demo";
-import AdminPush from "@/pages/admin-push";
 import PushAdmin from "@/pages/push-admin";
 // BulkPushMessaging já importado anteriormente
 
@@ -672,6 +670,11 @@ function App() {
         <Route path="/admin/bulk-push-messaging">
           <Layout>
             <BulkPushMessaging />
+          </Layout>
+        </Route>
+        <Route path="/admin/push">
+          <Layout>
+            <AdminPush />
           </Layout>
         </Route>
 

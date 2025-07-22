@@ -488,7 +488,11 @@ const server = registerHybridRoutes(app);
 
 // Registrar rotas administrativas do rate limiting
 import { registerRateLimitingAdminRoutes } from './admin-rate-limiting-routes';
+import adminPushRoutes from './admin-push-routes';
 registerRateLimitingAdminRoutes(app);
+
+console.log('✅ Rotas administrativas de Push Notifications registradas');
+app.use('/api/admin', adminPushRoutes);
 
 // Registrar endpoints de notificação administrativa  
 import { sendAdminNotification, getAdminNotifications, getAdminNotificationStats } from './admin-notification-simulator';

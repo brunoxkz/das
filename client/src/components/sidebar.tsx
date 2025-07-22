@@ -330,6 +330,13 @@ export function Sidebar() {
       className: "text-primary border-primary/20 bg-primary/5 hover:bg-primary/10"
     },
     {
+      title: "Adm Push",
+      href: "/admin/push",
+      icon: <Bell className="w-4 h-4" />,
+      active: location === "/admin/push",
+      className: "text-blue-600 border-blue-600/20 bg-blue-600/5 hover:bg-blue-600/10"
+    },
+    {
       title: "Configurações",
       href: "/settings",
       icon: <Settings className="w-4 h-4" />,
