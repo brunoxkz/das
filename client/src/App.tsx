@@ -61,7 +61,7 @@ import BuyComments from "@/pages/buy-comments";
 import SchedulePosts from "@/pages/schedule-posts";
 import Forum from "@/pages/forum";
 import VSLToQuiz from "@/pages/vsl-to-quiz";
-import QuizIA from "@/pages/quiz-ia-interactive";
+import QuizIA from "@/pages/quiz-ia-interactive-clean";
 import SeusAfiliados from "@/pages/seus-afiliados";
 
 import CheckoutAdminPage from "@/pages/checkout-admin";

@@ -433,8 +433,7 @@ export default function QuizIAInteractive() {
   }
 
   return (
-    <>
-      <div className="min-h-screen relative overflow-hidden">
+    <div className="min-h-screen relative overflow-hidden">
       {/* Background animado com gradientes */}
       <div className="absolute inset-0 bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900">
         <div className="absolute inset-0 bg-gradient-to-r from-green-400/20 via-blue-500/20 to-purple-600/20 animate-pulse"></div>
@@ -640,46 +639,45 @@ export default function QuizIAInteractive() {
           {/* Modal de Sugestões I.A. */}
           <Dialog open={showSuggestions} onOpenChange={setShowSuggestions}>
             <DialogContent className="sm:max-w-lg bg-black/90 backdrop-blur-lg border border-white/20 text-white">
-                <DialogHeader>
-                  <DialogTitle className="flex items-center gap-3 text-xl">
-                    <div className="bg-gradient-to-r from-yellow-400 to-orange-500 p-2 rounded-full">
-                      <Lightbulb className="w-5 h-5 text-black" />
-                    </div>
-                    Sugestões da I.A. 2025
-                  </DialogTitle>
-                  <DialogDescription className="text-white/80">
-                    Clique em uma sugestão para usar ou se inspire para criar a sua própria resposta
-                  </DialogDescription>
-                </DialogHeader>
-                <div className="space-y-3 max-h-80 overflow-y-auto">
-                  {currentStepConfig?.suggestions.map((suggestion, index) => (
-                    <Button
-                      key={index}
-                      variant="ghost"
-                      className="w-full justify-start h-auto p-4 text-left bg-white/5 hover:bg-white/10 border border-white/10 transition-all duration-300 transform hover:scale-[1.02]"
-                      onClick={() => selectSuggestion(suggestion)}
-                    >
-                      <div className="flex items-center gap-3">
-                        <div className="bg-gradient-to-r from-yellow-400 to-orange-500 p-1 rounded-full">
-                          <Sparkles className="w-3 h-3 text-black" />
-                        </div>
-                        <span className="text-white">{suggestion}</span>
-                      </div>
-                    </Button>
-                  ))}
-                </div>
-                <DialogFooter>
-                  <Button 
-                    variant="outline" 
-                    onClick={() => setShowSuggestions(false)}
-                    className="bg-white/10 border-white/20 text-white hover:bg-white/20"
+              <DialogHeader>
+                <DialogTitle className="flex items-center gap-3 text-xl">
+                  <div className="bg-gradient-to-r from-yellow-400 to-orange-500 p-2 rounded-full">
+                    <Lightbulb className="w-5 h-5 text-black" />
+                  </div>
+                  Sugestões da I.A. 2025
+                </DialogTitle>
+                <DialogDescription className="text-white/80">
+                  Clique em uma sugestão para usar ou se inspire para criar a sua própria resposta
+                </DialogDescription>
+              </DialogHeader>
+              <div className="space-y-3 max-h-80 overflow-y-auto">
+                {currentStepConfig?.suggestions.map((suggestion, index) => (
+                  <Button
+                    key={index}
+                    variant="ghost"
+                    className="w-full justify-start h-auto p-4 text-left bg-white/5 hover:bg-white/10 border border-white/10 transition-all duration-300 transform hover:scale-[1.02]"
+                    onClick={() => selectSuggestion(suggestion)}
                   >
-                    Fechar
+                    <div className="flex items-center gap-3">
+                      <div className="bg-gradient-to-r from-yellow-400 to-orange-500 p-1 rounded-full">
+                        <Sparkles className="w-3 h-3 text-black" />
+                      </div>
+                      <span className="text-white">{suggestion}</span>
+                    </div>
                   </Button>
-                </DialogFooter>
-              </DialogContent>
-            </Dialog>
-      </div>
-    </>
+                ))}
+              </div>
+              <DialogFooter>
+                <Button 
+                  variant="outline" 
+                  onClick={() => setShowSuggestions(false)}
+                  className="bg-white/10 border-white/20 text-white hover:bg-white/20"
+                >
+                  Fechar
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+        </div>
   );
 }
