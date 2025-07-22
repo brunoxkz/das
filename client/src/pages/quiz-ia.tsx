@@ -380,65 +380,190 @@ export default function QuizIA() {
       </div>
 
       {generatedContent && (
-        <Card className="border-green-200 bg-green-50">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-green-800">
-              <CheckCircle className="w-5 h-5" />
-              Preview do Quiz Gerado
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              <div>
-                <h4 className="font-semibold text-green-800 mb-2">Perguntas criadas:</h4>
-                <Badge variant="secondary">{generatedContent.questions.length} perguntas inteligentes</Badge>
+        <div className="space-y-6">
+          <Card className="border-green-200 bg-green-50">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-green-800">
+                <CheckCircle className="w-5 h-5" />
+                Preview Completo do Quiz Gerado
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-6">
+                {/* Resumo */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="text-center p-3 bg-white rounded-lg border">
+                    <div className="text-2xl font-bold text-green-600">{generatedContent.questions.length}</div>
+                    <div className="text-sm text-gray-600">Perguntas</div>
+                  </div>
+                  <div className="text-center p-3 bg-white rounded-lg border">
+                    <div className="text-2xl font-bold text-blue-600">3</div>
+                    <div className="text-sm text-gray-600">Transições</div>
+                  </div>
+                  <div className="text-center p-3 bg-white rounded-lg border">
+                    <div className="text-2xl font-bold text-purple-600">1</div>
+                    <div className="text-sm text-gray-600">Checkout</div>
+                  </div>
+                </div>
+
+                {/* Preview detalhado das perguntas */}
+                <div>
+                  <h4 className="font-semibold text-green-800 mb-3 flex items-center gap-2">
+                    <Target className="w-4 h-4" />
+                    Todas as Perguntas Criadas:
+                  </h4>
+                  <div className="space-y-3">
+                    {generatedContent.questions.map((question: any, index: number) => (
+                      <div key={question.id} className="bg-white p-4 rounded-lg border">
+                        <div className="flex items-start gap-3">
+                          <div className="w-6 h-6 bg-green-600 text-white rounded-full flex items-center justify-center text-sm font-bold">
+                            {index + 1}
+                          </div>
+                          <div className="flex-1">
+                            <p className="font-medium text-gray-900 mb-2">{question.question}</p>
+                            {question.type === 'multiple_choice' && question.options && (
+                              <div className="grid grid-cols-1 gap-2">
+                                {question.options.map((option: string, optIndex: number) => (
+                                  <div key={optIndex} className="flex items-center gap-2 text-sm text-gray-600">
+                                    <div className="w-2 h-2 bg-gray-300 rounded-full"></div>
+                                    {option}
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+                            {(question.type === 'text' || question.type === 'email') && (
+                              <div className="text-sm text-gray-500 italic">
+                                Campo de entrada: {question.placeholder}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Preview das transições */}
+                <div>
+                  <h4 className="font-semibold text-blue-800 mb-3 flex items-center gap-2">
+                    <Lightbulb className="w-4 h-4" />
+                    Transições Inteligentes:
+                  </h4>
+                  <div className="space-y-3">
+                    <div className="bg-white p-4 rounded-lg border border-green-200">
+                      <div className="font-medium text-green-700 mb-2">✅ Boa Notícia:</div>
+                      <p className="text-sm text-gray-700">{generatedContent.transitions.goodNews}</p>
+                    </div>
+                    <div className="bg-white p-4 rounded-lg border border-orange-200">
+                      <div className="font-medium text-orange-700 mb-2">⚠️ Má Notícia:</div>
+                      <p className="text-sm text-gray-700">{generatedContent.transitions.badNews}</p>
+                    </div>
+                    <div className="bg-white p-4 rounded-lg border border-purple-200">
+                      <div className="font-medium text-purple-700 mb-2">🚀 Pitch de Vendas:</div>
+                      <p className="text-sm text-gray-700">{generatedContent.transitions.pitch}</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Preview do checkout */}
+                <div>
+                  <h4 className="font-semibold text-purple-800 mb-3 flex items-center gap-2">
+                    <Coins className="w-4 h-4" />
+                    Página de Checkout:
+                  </h4>
+                  <div className="bg-white p-4 rounded-lg border border-purple-200">
+                    <div className="text-center mb-4">
+                      <h3 className="text-xl font-bold text-gray-900">{generatedContent.checkout.headline}</h3>
+                      <p className="text-gray-600">{generatedContent.checkout.description}</p>
+                      <div className="text-2xl font-bold text-green-600 mt-2">R$ {quizData.productPrice}</div>
+                    </div>
+                    <div className="space-y-2">
+                      <div className="font-medium text-gray-800">✨ Você vai receber:</div>
+                      {generatedContent.checkout.features.map((feature: string, index: number) => (
+                        <div key={index} className="flex items-center gap-2 text-sm text-gray-600">
+                          <CheckCircle className="w-4 h-4 text-green-500" />
+                          {feature}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+
+                <Alert className="border-blue-200 bg-blue-50">
+                  <Sparkles className="h-4 w-4 text-blue-600" />
+                  <AlertDescription className="text-blue-800">
+                    <strong>🎯 Quiz Completo!</strong> Sua I.A. criou um funil de vendas completo com {generatedContent.questions.length} perguntas estratégicas, transições persuasivas e checkout otimizado para conversão.
+                  </AlertDescription>
+                </Alert>
               </div>
-              <div>
-                <h4 className="font-semibold text-green-800 mb-2">Exemplo de pergunta:</h4>
-                <p className="text-sm bg-white p-3 rounded border">
-                  {generatedContent.questions[0]?.question || "Pergunta exemplo"}
-                </p>
-              </div>
-              <div>
-                <h4 className="font-semibold text-green-800 mb-2">Pitch gerado:</h4>
-                <p className="text-sm bg-white p-3 rounded border">
-                  {generatedContent.transitions.pitch.substring(0, 100)}...
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+        </div>
       )}
 
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Coins className="w-5 h-5 text-green-600" />
-            Configuração PIX
+            Configuração PIX - Receba Direto na Sua Conta
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Sua chave PIX (onde receberá os pagamentos)
+              Sua chave PIX (onde receberá os pagamentos) *
             </label>
             <Input
               placeholder="Digite sua chave PIX (CPF, telefone, email ou chave aleatória)"
               value={quizData.pixKey}
               onChange={(e) => setQuizData(prev => ({ ...prev, pixKey: e.target.value }))}
-              className="text-base"
+              className={`text-base ${quizData.pixKey ? 'border-green-500 bg-green-50' : ''}`}
             />
+            {quizData.pixKey && (
+              <div className="mt-2 flex items-center gap-2 text-green-600 text-sm">
+                <CheckCircle className="w-4 h-4" />
+                Chave PIX configurada
+              </div>
+            )}
             <p className="text-sm text-gray-500 mt-1">
               Esta chave será usada para gerar QR codes de pagamento automaticamente
             </p>
           </div>
 
+          <Alert className="border-blue-200 bg-blue-50">
+            <Lightbulb className="h-4 w-4 text-blue-600" />
+            <AlertDescription className="text-blue-800">
+              <strong>🔐 Não tem chave PIX?</strong> Abra o app do seu banco → PIX → Minhas Chaves → Criar nova chave. Use seu CPF, email ou telefone como chave.
+            </AlertDescription>
+          </Alert>
+
           <Alert>
             <QrCode className="h-4 w-4" />
             <AlertDescription>
-              <strong>Como funciona:</strong> Quando alguém completar seu quiz, será direcionado para um checkout com QR code PIX usando sua chave. O pagamento cai direto na sua conta!
+              <strong>💰 Como funciona:</strong> Quando alguém completar seu quiz, será direcionado para checkout com QR code PIX. O pagamento de R$ {quizData.productPrice} cai direto na sua conta instantaneamente!
             </AlertDescription>
           </Alert>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="p-3 bg-gray-50 rounded-lg">
+              <div className="font-medium text-gray-800 mb-1">Tipos aceitos:</div>
+              <div className="text-sm text-gray-600 space-y-1">
+                <div>• CPF: 123.456.789-00</div>
+                <div>• Email: seu@email.com</div>
+                <div>• Telefone: +5511999887766</div>
+                <div>• Chave aleatória: código do banco</div>
+              </div>
+            </div>
+            <div className="p-3 bg-green-50 rounded-lg">
+              <div className="font-medium text-green-800 mb-1">Vantagens:</div>
+              <div className="text-sm text-green-600 space-y-1">
+                <div>• Pagamento instantâneo</div>
+                <div>• Sem taxas para você</div>
+                <div>• QR code automático</div>
+                <div>• Confirmação em tempo real</div>
+              </div>
+            </div>
+          </div>
         </CardContent>
       </Card>
     </div>

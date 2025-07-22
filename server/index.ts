@@ -428,26 +428,17 @@ app.post('/api/quiz-ia/generate', verifyJWT, async (req: any, res: any) => {
       return res.status(401).json({ success: false, error: "Unauthorized" });
     }
 
-    const { niche, targetAudience, goal, productName, productPrice } = req.body;
+    const { niche, targetAudience, painPoint, solution, productName, productPrice } = req.body;
 
     // Validar dados
-    if (!niche || !targetAudience || !goal || !productName || !productPrice) {
+    if (!niche || !targetAudience || !painPoint || !solution || !productName || !productPrice) {
       return res.status(400).json({ 
         success: false, 
-        error: "Dados incompletos para gerar o quiz" 
+        error: "Dados incompletos para gerar o quiz. Campos obrigatórios: niche, targetAudience, painPoint, solution, productName, productPrice" 
       });
     }
 
     console.log(`🎯 Gerando quiz para ${niche} - ${targetAudience}`);
-
-    // Gerar solução personalizada baseada no nicho
-    const solution = niche.toLowerCase().includes('fitness') || niche.toLowerCase().includes('saúde')
-      ? "transformação física completa com acompanhamento personalizado"
-      : niche.toLowerCase().includes('negócio') || niche.toLowerCase().includes('empreend')
-      ? "estratégia de negócios proven que multiplica resultados"
-      : niche.toLowerCase().includes('relacionamento')
-      ? "método revolucionário para relacionamentos duradouros"
-      : `solução inovadora especializada em ${niche.toLowerCase()}`;
 
     // Gerar perguntas personalizadas baseadas no nicho
     const questions = [];
@@ -469,7 +460,7 @@ app.post('/api/quiz-ia/generate', verifyJWT, async (req: any, res: any) => {
     questions.push({
       id: "principal_desafio",
       type: "multiple_choice",
-      question: `Qual é seu maior desafio para ${goal.toLowerCase()}?`,
+      question: `Qual é seu maior desafio relacionado a: ${painPoint.toLowerCase()}?`,
       options: [
         "Falta de conhecimento específico",
         "Falta de tempo para aplicar",
@@ -552,6 +543,103 @@ app.post('/api/quiz-ia/generate', verifyJWT, async (req: any, res: any) => {
 
   } catch (error) {
     console.error("❌ ERRO QUIZ I.A. DIRETO:", error);
+    res.status(500).json({ 
+      success: false, 
+      error: error.message || "Erro interno do servidor" 
+    });
+  }
+});
+
+app.post('/api/quiz-ia/create', verifyJWT, async (req: any, res: any) => {
+  console.log('🚀 QUIZ I.A. CRIAR: Criando quiz final...');
+  console.log('📝 Dados recebidos:', req.body);
+  console.log('👤 Usuário autenticado:', req.user?.id);
+  
+  try {
+    if (!req.user) {
+      return res.status(401).json({ success: false, error: "Unauthorized" });
+    }
+
+    const { niche, targetAudience, painPoint, solution, productName, productPrice, generatedContent, pixKey } = req.body;
+
+    // Debug dos campos recebidos
+    console.log('🔍 DEBUG CAMPOS:', {
+      niche: !!niche,
+      targetAudience: !!targetAudience,
+      painPoint: !!painPoint,
+      solution: !!solution,
+      productName: !!productName,
+      productPrice: !!productPrice,
+      generatedContent: !!generatedContent,
+      pixKey: !!pixKey
+    });
+
+    // Validar dados
+    if (!niche || !targetAudience || !painPoint || !solution || !productName || !productPrice || !generatedContent || !pixKey) {
+      return res.status(400).json({ 
+        success: false, 
+        error: "Dados incompletos para criar o quiz. Campos obrigatórios: niche, targetAudience, painPoint, solution, productName, productPrice, generatedContent, pixKey" 
+      });
+    }
+
+    console.log(`🎯 Criando quiz: ${productName} para ${req.user.id}`);
+
+    // Importar funções necessárias
+    const { storage } = await import('./storage-sqlite');
+
+    // Criar estrutura do quiz para salvar no banco
+    const quizStructure = {
+      pages: generatedContent.questions.map((question: any, index: number) => ({
+        id: `page_${index + 1}`,
+        title: `Pergunta ${index + 1}`,
+        elements: [{
+          id: question.id,
+          type: question.type,
+          question: question.question,
+          options: question.options || undefined,
+          placeholder: question.placeholder || undefined,
+          required: true
+        }]
+      })),
+      settings: {
+        resultTitle: generatedContent.checkout.headline,
+        resultDescription: generatedContent.checkout.description,
+        transitions: generatedContent.transitions,
+        checkout: generatedContent.checkout,
+        pixKey: pixKey,
+        productPrice: parseFloat(productPrice),
+        productName: productName
+      }
+    };
+
+    // Salvar quiz no banco de dados
+    const quiz = await storage.createQuiz({
+      title: productName,
+      description: `Quiz I.A. - ${niche}`,
+      userId: req.user.id,
+      structure: quizStructure
+    });
+
+    // Usar o ID retornado pelo banco de dados
+    const quizId = quiz.id;
+
+    // Gerar URL final do quiz
+    const quizUrl = `${req.protocol}://${req.get('host')}/quiz/${quizId}`;
+
+    console.log(`✅ QUIZ I.A. CRIAR: Quiz criado com sucesso - ID: ${quizId}`);
+    
+    const responseData = { 
+      success: true, 
+      quizId: quizId,
+      quizUrl: quizUrl,
+      quiz: quiz,
+      message: "Quiz criado com sucesso e salvo no banco de dados!"
+    };
+    
+    res.json(responseData);
+
+  } catch (error) {
+    console.error("❌ ERRO QUIZ I.A. CRIAR:", error);
     res.status(500).json({ 
       success: false, 
       error: error.message || "Erro interno do servidor" 
