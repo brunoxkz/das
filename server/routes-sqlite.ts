@@ -4147,26 +4147,22 @@ export function registerSQLiteRoutes(app: Express): Server {
           if (quizOwner) {
             console.log(`📧 Quiz Owner encontrado: ${quizOwner.email} (ID: ${quiz.user_id})`);
             
-            // Chamar sistema de push notifications diretamente
+            // Sistema de notificação automática - ÚNICA notificação por quiz completion
+            console.log(`📧 ENVIANDO NOTIFICAÇÃO AUTOMÁTICA para quiz: "${quiz.title}"`);
+            
             const pushResponse = await fetch('http://localhost:5000/api/push-simple/send', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({
                 title: '🎉 Novo Quiz Completado!',
                 message: `Um usuário acabou de finalizar seu quiz: "${quiz.title}"`,
-                icon: '/icon-192x192.png',
-                data: {
-                  type: 'quiz_completion',
-                  quizId: req.params.id,
-                  quizTitle: quiz.title,
-                  timestamp: Date.now()
-                }
+                icon: '/icon-192x192.png'
               })
             });
             
             if (pushResponse.ok) {
               const result = await pushResponse.json();
-              console.log(`✅ Notificação automática enviada: ${result.stats?.success || 0} dispositivos`);
+              console.log(`✅ NOTIFICAÇÃO AUTOMÁTICA ENVIADA: ${result.stats?.success || 0} dispositivos notificados`);
             } else {
               console.error('❌ Falha ao enviar notificação automática:', await pushResponse.text());
             }
