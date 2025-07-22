@@ -304,6 +304,11 @@ export default function SMSCampaignsAdvanced() {
   const [uniqueResponses, setUniqueResponses] = useState<string[]>([]);
   const [loadingResponses, setLoadingResponses] = useState(false);
   
+  // Estados para popups específicas de cada tipo
+  const [openPopup, setOpenPopup] = useState<string | null>(null);
+  const [popupForm, setPopupForm] = useState<any>({});
+  const [popupStep, setPopupStep] = useState(1);
+  
   // Queries
   const { data: quizzes = [], isLoading: loadingQuizzes } = useQuery({
     queryKey: ['/api/quizzes'],
@@ -456,17 +461,7 @@ export default function SMSCampaignsAdvanced() {
     }
   };
   
-  const canProceedToNext = () => {
-    switch (currentStep) {
-      case 1: return form.type;
-      case 2: return form.type === 'mass' ? form.csvFile : form.funnelId;
-      case 3: return form.message.trim() && form.message.length <= 160;
-      case 4: return form.scheduleType === 'now' || 
-                    (form.scheduleType === 'scheduled' && form.scheduledDate && form.scheduledTime) ||
-                    (form.scheduleType === 'delayed' && form.delayMinutes);
-      default: return true;
-    }
-  };
+  // canProceedToNext removida - usar apenas popups
   
   const createCampaign = async () => {
     setIsCreating(true);
@@ -517,7 +512,7 @@ export default function SMSCampaignsAdvanced() {
       // Atualizar queries
       queryClient.invalidateQueries({ queryKey: ['/api/sms-campaigns'] });
       
-      // Reset form
+      // Reset form (sem currentStep)
       setForm({
         type: '',
         name: '',
@@ -526,7 +521,61 @@ export default function SMSCampaignsAdvanced() {
         message: '',
         scheduleType: 'now'
       });
-      setCurrentStep(1);
+      
+    } catch (error: any) {
+      toast({
+        title: "Erro ao criar campanha",
+        description: error.message || "Verifique os dados e tente novamente.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsCreating(false);
+    }
+  };
+
+  // Função para criar campanha via popup
+  const createPopupCampaign = async () => {
+    setIsCreating(true);
+    try {
+      if (credits.remaining <= 0) {
+        toast({
+          title: "Créditos insuficientes",
+          description: "Você não possui créditos SMS suficientes para criar esta campanha.",
+          variant: "destructive"
+        });
+        setIsCreating(false);
+        return;
+      }
+
+      const response = await fetch('/api/sms-campaigns', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        },
+        body: JSON.stringify({
+          ...popupForm,
+          delayMinutes: scheduleUnit === 'hours' ? (popupForm.delayMinutes || 0) * 60 : popupForm.delayMinutes
+        })
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Erro ao criar campanha');
+      }
+      
+      toast({
+        title: "Campanha criada com sucesso!",
+        description: "Sua campanha SMS foi criada e está sendo processada.",
+      });
+      
+      // Atualizar queries
+      queryClient.invalidateQueries({ queryKey: ['/api/sms-campaigns'] });
+      
+      // Fechar popup e resetar
+      setOpenPopup(null);
+      setPopupForm({});
+      setPopupStep(1);
       
     } catch (error: any) {
       toast({
@@ -547,15 +596,7 @@ export default function SMSCampaignsAdvanced() {
           <h1 className="text-3xl font-bold">Criar Campanha SMS</h1>
         </div>
         
-        {/* Progress Bar */}
-        <div className="flex items-center gap-4 mb-6">
-          <div className="flex-1">
-            <Progress value={(currentStep / 5) * 100} className="h-2" />
-          </div>
-          <span className="text-sm text-gray-500 font-medium">
-            Passo {currentStep} de 5
-          </span>
-        </div>
+        {/* Progress Bar removido - usar apenas popups */}
         
         {/* Credits Info */}
         <div className="bg-gradient-to-r from-green-50 to-blue-50 p-4 rounded-lg border border-green-200">
@@ -578,16 +619,15 @@ export default function SMSCampaignsAdvanced() {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Target className="w-5 h-5" />
-                {currentStep === 1 && "Selecionar Tipo de Campanha"}
-                {currentStep === 2 && "Segmentação de Leads"}
-                {currentStep === 3 && "Criação da Mensagem"}
-                {currentStep === 4 && "Agendamento"}
-                {currentStep === 5 && "Resumo da Campanha"}
+                Selecionar Tipo de Campanha SMS
               </CardTitle>
+              <CardDescription>
+                Escolha o tipo de campanha que melhor atende aos seus objetivos. Configure tudo através dos popups de criação rápida.
+              </CardDescription>
             </CardHeader>
             <CardContent>
-              {/* Step 1: Tipo de Campanha */}
-              {currentStep === 1 && (
+              {/* Seleção de Tipo de Campanha - sempre visível */}
+              {true && (
                 <div className="space-y-4">
                   <div className="text-center mb-8">
                     <h3 className="text-xl font-bold mb-3">Escolha o Tipo de Campanha SMS</h3>
@@ -619,7 +659,18 @@ export default function SMSCampaignsAdvanced() {
                                     ? 'ring-2 ring-blue-500 bg-gradient-to-br from-blue-50 to-indigo-50 shadow-lg' 
                                     : 'hover:bg-gray-50'
                                 } ${isQuantum ? 'relative overflow-hidden border-purple-200' : ''}`}
-                                onClick={() => setForm(prev => ({ ...prev, type: type.id }))}
+                                onClick={() => {
+                                  setOpenPopup(type.id);
+                                  setPopupForm({
+                                    type: type.id,
+                                    name: '',
+                                    funnelId: '',
+                                    segment: 'all',
+                                    message: '',
+                                    scheduleType: 'now'
+                                  });
+                                  setPopupStep(1);
+                                }}
                               >
                                 <CardContent className="p-3 h-full xl:p-2">
                                   {isQuantum && (
@@ -712,8 +763,8 @@ export default function SMSCampaignsAdvanced() {
                 </div>
               )}
               
-              {/* Step 2: Segmentação */}
-              {currentStep === 2 && (
+              {/* Steps desabilitados - usar apenas popups */}
+              {false && currentStep === 2 && (
                 <div className="space-y-6">
                   {form.type !== 'mass' ? (
                     <>
@@ -1314,8 +1365,8 @@ export default function SMSCampaignsAdvanced() {
                 </div>
               )}
               
-              {/* Step 3: Mensagem Quantum */}
-              {currentStep === 3 && (
+              {/* Step 3 desabilitado - usar apenas popups */}
+              {false && currentStep === 3 && (
                 <div className="space-y-6">
                   {/* Tutorial Webhook Integration */}
                   {form.type === 'webhook_integration' && (
@@ -1765,8 +1816,8 @@ export default function SMSCampaignsAdvanced() {
                 </div>
               )}
               
-              {/* Step 5: Resumo Quantum */}
-              {currentStep === 5 && (
+              {/* Step 5 desabilitado - usar apenas popups */}
+              {false && currentStep === 5 && (
                 <div className="space-y-6">
                   {form.type?.includes('quantum') && (
                     <Alert className="border-purple-200 bg-gradient-to-r from-purple-50 to-blue-50">
@@ -1866,44 +1917,7 @@ export default function SMSCampaignsAdvanced() {
                 </div>
               )}
               
-              {/* Navigation Buttons */}
-              <div className="flex justify-end gap-2 mt-8">
-                <Button 
-                  variant="outline" 
-                  onClick={() => setCurrentStep(Math.max(1, currentStep - 1))}
-                  disabled={currentStep === 1}
-                >
-                  Voltar
-                </Button>
-                
-                {currentStep < 5 ? (
-                  <Button 
-                    onClick={() => setCurrentStep(currentStep + 1)}
-                    disabled={!canProceedToNext()}
-                  >
-                    Próximo
-                    <ArrowRight className="w-4 h-4 ml-2" />
-                  </Button>
-                ) : (
-                  <Button 
-                    onClick={createCampaign}
-                    disabled={isCreating}
-                    className="bg-green-600 hover:bg-green-700"
-                  >
-                    {isCreating ? (
-                      <>
-                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
-                        Criando...
-                      </>
-                    ) : (
-                      <>
-                        <Send className="w-4 h-4 mr-2" />
-                        Criar Campanha
-                      </>
-                    )}
-                  </Button>
-                )}
-              </div>
+              {/* Navigation Buttons removidos - usar apenas popups */}
             </CardContent>
           </Card>
         </div>
@@ -1931,8 +1945,8 @@ export default function SMSCampaignsAdvanced() {
             </Card>
           )}
           
-          {/* Variáveis Disponíveis */}
-          {currentStep === 3 && (
+          {/* Variáveis Disponíveis - sempre visível */}
+          {form.message && (
             <Card>
               <CardHeader>
                 <CardTitle className="text-lg">Variáveis Disponíveis</CardTitle>
@@ -2203,6 +2217,324 @@ export default function SMSCampaignsAdvanced() {
             </CardContent>
           </Card>
         </div>
+      )}
+
+      {/* Popups Específicas para cada Tipo de Campanha */}
+      {openPopup && (
+        <Dialog open={!!openPopup} onOpenChange={() => setOpenPopup(null)}>
+          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                {(() => {
+                  const type = CAMPAIGN_TYPES[openPopup as keyof typeof CAMPAIGN_TYPES];
+                  if (type) {
+                    const Icon = type.icon;
+                    return (
+                      <>
+                        <Icon className="w-5 h-5" />
+                        Criar {type.name}
+                        {type.isQuantum && <Badge className="bg-gradient-to-r from-purple-600 to-blue-600 text-white ml-2">QUANTUM</Badge>}
+                      </>
+                    );
+                  }
+                  return 'Criar Campanha SMS';
+                })()}
+              </DialogTitle>
+            </DialogHeader>
+            
+            <div className="space-y-6">
+              {/* Formulário Básico para Todos os Tipos */}
+              <div className="space-y-4">
+                <div>
+                  <Label htmlFor="popup-name">Nome da Campanha</Label>
+                  <Input 
+                    id="popup-name"
+                    value={popupForm.name || ''}
+                    onChange={(e) => setPopupForm(prev => ({ ...prev, name: e.target.value }))}
+                    placeholder="Ex: Remarketing Fitness - Janeiro 2025"
+                    className={openPopup?.includes('quantum') ? 'border-purple-200 focus:ring-purple-500' : ''}
+                  />
+                </div>
+
+                {/* Seleção de Quiz (para todos exceto mass e webhook_integration) */}
+                {openPopup !== 'mass' && openPopup !== 'webhook_integration' && (
+                  <div>
+                    <Label htmlFor="popup-funnel">Quiz/Funil</Label>
+                    <Select 
+                      value={popupForm.funnelId || ''} 
+                      onValueChange={(value) => setPopupForm(prev => ({ ...prev, funnelId: value }))}
+                    >
+                      <SelectTrigger className={openPopup?.includes('quantum') ? 'border-purple-200 focus:ring-purple-500' : ''}>
+                        <SelectValue placeholder="Selecione um quiz" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {quizzes.filter((quiz: Quiz) => quiz.published).map((quiz: Quiz) => (
+                          <SelectItem key={quiz.id} value={quiz.id}>
+                            {quiz.title} ({quiz.responses} respostas)
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
+
+                {/* Segmentação (para tipos de remarketing) */}
+                {(openPopup?.includes('remarketing') || openPopup?.includes('live')) && (
+                  <div>
+                    <Label>Segmento de Leads</Label>
+                    <div className="grid grid-cols-3 gap-3">
+                      {[
+                        { value: 'completed', label: '✅ Completou Quiz', desc: 'Leads que finalizaram' },
+                        { value: 'abandoned', label: '⏸️ Abandonou Quiz', desc: 'Leads que pararam no meio' },
+                        { value: 'all', label: '📊 Todos os Leads', desc: 'Todos os leads do quiz' }
+                      ].map((option) => (
+                        <Card 
+                          key={option.value}
+                          className={`cursor-pointer transition-all ${
+                            popupForm.segment === option.value 
+                              ? 'ring-2 ring-blue-500 bg-blue-50' 
+                              : 'hover:bg-gray-50'
+                          }`}
+                          onClick={() => setPopupForm(prev => ({ ...prev, segment: option.value }))}
+                        >
+                          <CardContent className="p-3 text-center">
+                            <div className="text-sm font-medium">{option.label}</div>
+                            <div className="text-xs text-gray-500 mt-1">{option.desc}</div>
+                          </CardContent>
+                        </Card>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Quantum Filters - Advanced Features */}
+                {openPopup?.includes('quantum') && (
+                  <div className="space-y-4 border-t pt-4">
+                    <Alert className="bg-gradient-to-r from-purple-50 to-blue-50 border-purple-200">
+                      <Sparkles className="h-4 w-4 text-purple-600" />
+                      <AlertDescription className="text-purple-800">
+                        <strong>Sistema Quantum Ativado!</strong> Configure filtros ultra-específicos para segmentação granular de leads.
+                      </AlertDescription>
+                    </Alert>
+
+                    {openPopup === 'quantum_remarketing' && (
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                          <Label>Filtro de Data (De)</Label>
+                          <Input 
+                            type="date"
+                            value={popupForm.dateFrom || ''}
+                            onChange={(e) => setPopupForm(prev => ({ ...prev, dateFrom: e.target.value }))}
+                            className="border-purple-200 focus:ring-purple-500"
+                          />
+                        </div>
+                        <div>
+                          <Label>Filtro de Data (Até)</Label>
+                          <Input 
+                            type="date"
+                            value={popupForm.dateTo || ''}
+                            onChange={(e) => setPopupForm(prev => ({ ...prev, dateTo: e.target.value }))}
+                            className="border-purple-200 focus:ring-purple-500"
+                          />
+                        </div>
+                      </div>
+                    )}
+
+                    <div>
+                      <Label>Timing de Disparo</Label>
+                      <Select 
+                        value={popupForm.dispatchTiming || 'immediate'} 
+                        onValueChange={(value) => setPopupForm(prev => ({ ...prev, dispatchTiming: value }))}
+                      >
+                        <SelectTrigger className="border-purple-200 focus:ring-purple-500">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="immediate">⚡ Disparar Imediatamente</SelectItem>
+                          <SelectItem value="delayed">⏱️ Disparar Daqui X Tempo</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    {popupForm.dispatchTiming === 'delayed' && (
+                      <div className="grid grid-cols-2 gap-3">
+                        <div>
+                          <Label>Valor do Atraso</Label>
+                          <Input 
+                            type="number"
+                            value={popupForm.dispatchDelayValue || ''}
+                            onChange={(e) => setPopupForm(prev => ({ ...prev, dispatchDelayValue: e.target.value }))}
+                            placeholder="30"
+                            className="border-purple-200 focus:ring-purple-500"
+                          />
+                        </div>
+                        <div>
+                          <Label>Unidade</Label>
+                          <Select 
+                            value={popupForm.dispatchDelayUnit || 'minutes'} 
+                            onValueChange={(value) => setPopupForm(prev => ({ ...prev, dispatchDelayUnit: value }))}
+                          >
+                            <SelectTrigger className="border-purple-200">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="minutes">Minutos</SelectItem>
+                              <SelectItem value="hours">Horas</SelectItem>
+                              <SelectItem value="days">Dias</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Mensagem SMS */}
+                <div>
+                  <div className="flex items-center justify-between mb-2">
+                    <Label htmlFor="popup-message" className="flex items-center gap-2">
+                      <MessageSquare className="w-4 h-4" />
+                      Mensagem SMS
+                      {openPopup?.includes('quantum') && <Badge className="bg-gradient-to-r from-purple-600 to-blue-600 text-white">ULTRA</Badge>}
+                    </Label>
+                    <Badge variant={messageCount > 160 ? "destructive" : "outline"}>
+                      {popupForm.message?.length || 0}/160
+                    </Badge>
+                  </div>
+                  <Textarea 
+                    id="popup-message"
+                    value={popupForm.message || ''}
+                    onChange={(e) => setPopupForm(prev => ({ ...prev, message: e.target.value }))}
+                    placeholder={openPopup?.includes('quantum')
+                      ? "Oi {{nome}}! Vi que seu objetivo é {{p1_objetivo_fitness}} e sua dor é {{p4_dor_problema}}. Tenho uma solução ultra-específica pra você! 🎯"
+                      : "Olá {{nome}}, vimos que você respondeu ao nosso quiz. Temos algo especial pra você."
+                    }
+                    className={`min-h-[120px] ${openPopup?.includes('quantum') ? 'border-purple-200 focus:ring-purple-500' : ''}`}
+                    maxLength={160}
+                  />
+                </div>
+
+                {/* Upload CSV - apenas para mass */}
+                {openPopup === 'mass' && (
+                  <div>
+                    <Label>Upload de Lista CSV</Label>
+                    <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
+                      <Upload className="w-8 h-8 mx-auto mb-2 text-gray-400" />
+                      <p className="text-sm text-gray-600">
+                        Arraste seu arquivo CSV aqui ou clique para selecionar
+                      </p>
+                      <Input 
+                        type="file" 
+                        accept=".csv" 
+                        className="mt-3"
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          if (file) {
+                            setPopupForm(prev => ({ ...prev, csvFile: file }));
+                          }
+                        }}
+                      />
+                    </div>
+                  </div>
+                )}
+
+                {/* Webhook Integration - apenas para webhook_integration */}
+                {openPopup === 'webhook_integration' && (
+                  <div className="space-y-4">
+                    <Alert className="bg-indigo-50 border-indigo-200">
+                      <CheckSquare className="h-4 w-4 text-indigo-600" />
+                      <AlertDescription className="text-indigo-800">
+                        <strong>Webhook Configurado!</strong> Sua plataforma pode disparar SMS usando a URL abaixo.
+                      </AlertDescription>
+                    </Alert>
+                    
+                    <div>
+                      <Label>URL do Webhook</Label>
+                      <div className="flex gap-2">
+                        <Input 
+                          value={`${window.location.origin}/api/webhook/sms-trigger/${user?.id || 'USER_ID'}`}
+                          readOnly
+                          className="bg-gray-50"
+                        />
+                        <Button 
+                          variant="outline"
+                          onClick={() => {
+                            navigator.clipboard.writeText(`${window.location.origin}/api/webhook/sms-trigger/${user?.id || 'USER_ID'}`);
+                            toast({ title: "URL copiada!", description: "URL do webhook copiada para a área de transferência." });
+                          }}
+                        >
+                          Copiar
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Variáveis Disponíveis */}
+                {openPopup?.includes('quantum') && (
+                  <div className="border-t pt-4">
+                    <h4 className="font-medium flex items-center gap-2 mb-3 text-purple-600">
+                      <Zap className="w-4 h-4" />
+                      Variáveis Quantum Ultra-Específicas
+                    </h4>
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                      {[
+                        { key: '{{nome}}', desc: 'Nome do lead', color: 'bg-green-100 text-green-800' },
+                        { key: '{{p1_objetivo_fitness}}', desc: 'Objetivo específico', color: 'bg-purple-100 text-purple-800' },
+                        { key: '{{p4_dor_problema}}', desc: 'Dor/problema exato', color: 'bg-red-100 text-red-800' },
+                        { key: '{{p2_nivel_experiencia}}', desc: 'Nível de experiência', color: 'bg-blue-100 text-blue-800' },
+                        { key: '{{peso}}', desc: 'Peso atual', color: 'bg-orange-100 text-orange-800' },
+                        { key: '{{telefone}}', desc: 'Telefone do lead', color: 'bg-gray-100 text-gray-800' }
+                      ].map((variable) => (
+                        <div 
+                          key={variable.key}
+                          className={`p-2 rounded text-xs font-mono cursor-pointer hover:shadow-sm transition-all ${variable.color}`}
+                          onClick={() => {
+                            const currentMessage = popupForm.message || '';
+                            setPopupForm(prev => ({ 
+                              ...prev, 
+                              message: currentMessage + variable.key 
+                            }));
+                          }}
+                        >
+                          <div className="font-bold">{variable.key}</div>
+                          <div className="text-[10px] opacity-80">{variable.desc}</div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Botões de Ação */}
+              <div className="flex justify-between items-center pt-4 border-t">
+                <Button variant="outline" onClick={() => setOpenPopup(null)}>
+                  Cancelar
+                </Button>
+                
+                <div className="flex gap-2">
+                  <Button 
+                    onClick={createPopupCampaign}
+                    disabled={isCreating || !popupForm.name || (!popupForm.funnelId && openPopup !== 'mass' && openPopup !== 'webhook_integration')}
+                    className={openPopup?.includes('quantum') ? 'bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700' : ''}
+                  >
+                    {isCreating ? (
+                      <>
+                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
+                        Criando...
+                      </>
+                    ) : (
+                      <>
+                        <Send className="w-4 h-4 mr-2" />
+                        Criar {openPopup?.includes('quantum') ? 'Quantum' : ''} Campanha
+                      </>
+                    )}
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
       )}
     </div>
   );
