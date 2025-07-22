@@ -14,7 +14,7 @@ import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth-jwt";
 import { isUnauthorizedError } from "@/lib/authUtils";
-import { useLanguage } from "@/hooks/useLanguage";
+
 import { 
   Save, 
   Play, 
@@ -49,7 +49,7 @@ export default function QuizBuilder() {
   const { toast } = useToast();
   const { isAuthenticated, isLoading: authLoading } = useAuth();
   const queryClient = useQueryClient();
-  const { t } = useLanguage();
+
 
   const [quizData, setQuizData] = useState({
     title: "",
@@ -382,15 +382,15 @@ export default function QuizBuilder() {
       queryClient.invalidateQueries({ queryKey: ["/api/quizzes"] });
       
       toast({
-        title: t('quizBuilder.messages.quizSaved'),
-        description: t('quizBuilder.messages.quizSaved'),
+        title: "Quiz Salvo",
+        description: "Seu quiz foi salvo com sucesso!",
       });
     },
     onError: (error) => {
       if (isUnauthorizedError(error)) {
         toast({
-          title: t('quizBuilder.messages.unauthorized'),
-          description: t('quizBuilder.messages.unauthorizedDesc'),
+          title: "Acesso Negado",
+          description: "Você não tem autorização para realizar esta ação. Faça login novamente.",
           variant: "destructive",
         });
         setTimeout(() => {
@@ -400,8 +400,8 @@ export default function QuizBuilder() {
       }
       
       toast({
-        title: t('quizBuilder.messages.errorSaving'),
-        description: t('quizBuilder.messages.errorSaving'),
+        title: "Erro ao Salvar",
+        description: "Não foi possível salvar o quiz. Tente novamente.",
         variant: "destructive",
       });
     },
@@ -598,8 +598,8 @@ export default function QuizBuilder() {
   useEffect(() => {
     if (!authLoading && !isAuthenticated) {
       toast({
-        title: t('quizBuilder.messages.accessDenied'),
-        description: t('quizBuilder.messages.accessDeniedDesc'),
+        title: "Acesso Negado",
+        description: "Você precisa estar logado para acessar esta página.",
         variant: "destructive",
       });
       setTimeout(() => {
@@ -611,8 +611,8 @@ export default function QuizBuilder() {
   const handleSave = (isPublishing = false) => {
     if (!quizData.title?.trim()) {
       toast({
-        title: t('quizBuilder.messages.titleRequired'),
-        description: t('quizBuilder.messages.titleRequiredDesc'),
+        title: "Título Obrigatório",
+        description: "Por favor, insira um título para o quiz antes de salvar.",
         variant: "destructive",
       });
       setActiveTab("settings"); // Redireciona para a aba de configurações
@@ -919,7 +919,7 @@ export default function QuizBuilder() {
               onClick={handlePreview}
             >
               <Eye className="w-4 h-4 mr-2" />
-              {t('quizBuilder.preview')}
+              Visualizar
             </Button>
             <Button
               variant="outline"
@@ -928,7 +928,7 @@ export default function QuizBuilder() {
               disabled={saveMutation.isPending}
             >
               <Save className="w-4 h-4 mr-2" />
-              {saveMutation.isPending ? t('quizBuilder.saving') : t('quizBuilder.save')}
+              {saveMutation.isPending ? 'Salvando...' : 'Salvar'}
             </Button>
             <Button
               size="sm"
@@ -936,7 +936,7 @@ export default function QuizBuilder() {
               disabled={saveMutation.isPending || !quizData.title?.trim()}
             >
               <Globe className="w-4 h-4 mr-2" />
-              {t('quizBuilder.publish')}
+              Publicar
             </Button>
           </div>
         </div>
@@ -946,14 +946,14 @@ export default function QuizBuilder() {
       <div className="bg-white border-b border-gray-200 px-6">
         <div className="flex space-x-8">
           {[
-            { id: "editor", label: t('quizBuilder.tabs.editor'), icon: <Settings className="w-4 h-4" /> },
-            { id: "preview", label: t('quizBuilder.tabs.preview'), icon: <Play className="w-4 h-4" /> },
-            { id: "fluxo", label: t('quizBuilder.tabs.flow'), icon: <Network className="w-4 h-4" /> },
-            { id: "design", label: t('quizBuilder.tabs.design'), icon: <Palette className="w-4 h-4" /> },
-            { id: "settings", label: t('quizBuilder.tabs.settings'), icon: <Settings className="w-4 h-4" /> },
-            { id: "teste-ab", label: t('quizBuilder.tabs.abTest'), icon: <BarChart className="w-4 h-4" /> },
-            { id: "pixels", label: t('quizBuilder.tabs.pixels'), icon: <Target className="w-4 h-4" /> },
-            { id: "blackhat", label: t('quizBuilder.tabs.blackhat'), icon: <Target className="w-4 h-4" /> },
+            { id: "editor", label: "Editor", icon: <Settings className="w-4 h-4" /> },
+            { id: "preview", label: "Visualizar", icon: <Play className="w-4 h-4" /> },
+            { id: "fluxo", label: "Fluxo", icon: <Network className="w-4 h-4" /> },
+            { id: "design", label: "Design", icon: <Palette className="w-4 h-4" /> },
+            { id: "settings", label: "Configurações", icon: <Settings className="w-4 h-4" /> },
+            { id: "teste-ab", label: "Teste A/B", icon: <BarChart className="w-4 h-4" /> },
+            { id: "pixels", label: "Pixels", icon: <Target className="w-4 h-4" /> },
+            { id: "blackhat", label: "Black Hat", icon: <Target className="w-4 h-4" /> },
 
           ].map((tab) => (
             <button
