@@ -1715,6 +1715,24 @@ const gameElementCategories = [
     onPagesChange(updatedPages);
   };
 
+  // 🚀 FUNÇÃO PARA ATUALIZAR PROPRIEDADES DO ELEMENTO SELECIONADO
+  const updateElementProperty = (property: string, value: any) => {
+    if (!selectedElement) return;
+    
+    const updatedPages = pages.map((page, index) => {
+      if (index === activePage) {
+        return {
+          ...page,
+          elements: page.elements.map(el => 
+            el.id === selectedElement ? { ...el, [property]: value } : el
+          )
+        };
+      }
+      return page;
+    });
+    onPagesChange(updatedPages);
+  };
+
   const deleteElement = (elementId: number) => {
     const updatedPages = pages.map((page, index) => {
       if (index === activePage) {
@@ -5211,11 +5229,130 @@ const gameElementCategories = [
         <div className="flex-1 overflow-y-auto p-4" style={{maxHeight: 'calc(100vh - 73px)'}}>
           {selectedElementData ? (
             <div className={cn("space-y-4", animations.slideInUp)}>
-              {/* Todo o conteúdo do elemento será implementado aqui */}
-              <div className="text-center text-gray-500">
-                <Settings className="w-8 h-8 mx-auto mb-2 opacity-50" />
-                <p className="text-sm">Elemento selecionado: {getElementTypeName(selectedElementData.type)}</p>
-              </div>
+              {/* 🚀 PAINEL DE PROPRIEDADES COMPLETO - MÚLTIPLA ESCOLHA */}
+              {selectedElementData.type === 'multiple_choice' && (
+                <div className="space-y-4">
+                  {/* Pergunta */}
+                  <div>
+                    <Label>Pergunta</Label>
+                    <Input 
+                      value={selectedElementData.content || ""} 
+                      onChange={(e) => updateElementProperty('content', e.target.value)}
+                      placeholder="Digite sua pergunta aqui..."
+                    />
+                  </div>
+
+                  {/* Opções */}
+                  <div>
+                    <Label>Opções de Resposta</Label>
+                    {(selectedElementData.options || ['Opção 1', 'Opção 2']).map((option, index) => (
+                      <div key={index} className="flex gap-2 mb-2">
+                        <Input 
+                          value={option}
+                          onChange={(e) => {
+                            const newOptions = [...(selectedElementData.options || [])];
+                            newOptions[index] = e.target.value;
+                            updateElementProperty('options', newOptions);
+                          }}
+                          placeholder={`Opção ${index + 1}`}
+                        />
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            const newOptions = [...(selectedElementData.options || [])];
+                            newOptions.splice(index, 1);
+                            updateElementProperty('options', newOptions);
+                          }}
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    ))}
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        const newOptions = [...(selectedElementData.options || []), `Nova opção`];
+                        updateElementProperty('options', newOptions);
+                      }}
+                    >
+                      <Plus className="w-4 h-4 mr-2" />
+                      Adicionar Opção
+                    </Button>
+                  </div>
+
+                  {/* Field ID */}
+                  <div>
+                    <Label>ID do Campo (para captura)</Label>
+                    <Input 
+                      value={selectedElementData.fieldId || ""} 
+                      onChange={(e) => updateElementProperty('fieldId', e.target.value)}
+                      placeholder="Ex: pergunta_idade, produto_interesse..."
+                    />
+                  </div>
+
+                  {/* Layout */}
+                  <div>
+                    <Label>Layout das Opções</Label>
+                    <Select 
+                      value={selectedElementData.layout || 'vertical'} 
+                      onValueChange={(value) => updateElementProperty('layout', value)}
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="vertical">Vertical</SelectItem>
+                        <SelectItem value="horizontal">Horizontal</SelectItem>
+                        <SelectItem value="grid">Grade</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  {/* Cores */}
+                  <div>
+                    <Label>Cor dos Checkboxes</Label>
+                    <Input 
+                      type="color"
+                      value={selectedElementData.checkboxColor || "#16a34a"} 
+                      onChange={(e) => updateElementProperty('checkboxColor', e.target.value)}
+                    />
+                  </div>
+
+                  {/* Configurações Avançadas */}
+                  <div className="border-t pt-4">
+                    <Label className="text-sm font-medium text-gray-600">Configurações Avançadas</Label>
+                    
+                    <div className="flex items-center space-x-2 mt-2">
+                      <input
+                        type="checkbox"
+                        checked={selectedElementData.multipleSelection || false}
+                        onChange={(e) => updateElementProperty('multipleSelection', e.target.checked)}
+                      />
+                      <span className="text-sm">Permitir seleção múltipla</span>
+                    </div>
+
+                    <div className="flex items-center space-x-2 mt-2">
+                      <input
+                        type="checkbox"
+                        checked={selectedElementData.required || false}
+                        onChange={(e) => updateElementProperty('required', e.target.checked)}
+                      />
+                      <span className="text-sm">Campo obrigatório</span>
+                    </div>
+                  </div>
+                </div>
+              )}
+              
+              {/* 🚀 OUTROS TIPOS DE ELEMENTOS */}
+              {selectedElementData.type !== 'multiple_choice' && (
+                <div className="text-center text-gray-500">
+                  <Settings className="w-8 h-8 mx-auto mb-2 opacity-50" />
+                  <p className="text-sm">Elemento selecionado: {getElementTypeName(selectedElementData.type)}</p>
+                  <p className="text-xs text-gray-400 mt-1">Propriedades para este elemento em desenvolvimento</p>
+                </div>
+              )}
             </div>
           ) : (
             <div className="flex items-center justify-center h-full text-gray-500">
