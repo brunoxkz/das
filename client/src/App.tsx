@@ -61,6 +61,7 @@ import BuyComments from "@/pages/buy-comments";
 import SchedulePosts from "@/pages/schedule-posts";
 import Forum from "@/pages/forum";
 import VSLToQuiz from "@/pages/vsl-to-quiz";
+import QuizIA from "@/pages/quiz-ia";
 
 import CheckoutAdminPage from "@/pages/checkout-admin";
 import CheckoutBuilder from "@/pages/checkout-builder";
@@ -207,6 +208,11 @@ function App() {
         <Route path="/templates">
           <Layout>
             <TemplatesPage />
+          </Layout>
+        </Route>
+        <Route path="/quiz-ia">
+          <Layout>
+            <QuizIA />
           </Layout>
         </Route>
         <Route path="/subscribe">

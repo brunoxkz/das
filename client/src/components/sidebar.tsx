@@ -187,6 +187,13 @@ export function Sidebar() {
           icon: <BarChart className="w-4 h-4" />,
           active: location === "/teste-ab"
         },
+        {
+          title: "Quiz I.A.",
+          href: "/quiz-ia",
+          icon: <Sparkles className="w-4 h-4" />,
+          active: location === "/quiz-ia",
+          badge: "NEW"
+        },
 
 
       ]
