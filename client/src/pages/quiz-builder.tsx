@@ -981,6 +981,7 @@ export default function QuizBuilder() {
               onPagesChange={handlePageChange}
               globalTheme={globalTheme}
               customBackgroundColor={customBackgroundColor}
+              activePageIndex={currentPageIndex}
               onThemeChange={(theme, customColor) => {
                 setGlobalTheme(theme);
                 setCustomBackgroundColor(customColor || "#ffffff");

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
@@ -674,6 +674,7 @@ interface PageEditorProps {
   customBackgroundColor?: string;
   onThemeChange?: (theme: "light" | "dark" | "custom", customColor?: string) => void;
   onActivePageChange?: (pageIndex: number) => void;
+  activePageIndex?: number;
 }
 
 export function PageEditorHorizontal({ 
@@ -682,10 +683,16 @@ export function PageEditorHorizontal({
   globalTheme: initialGlobalTheme = "light",
   customBackgroundColor: initialCustomBackgroundColor = "#ffffff",
   onThemeChange,
-  onActivePageChange 
+  onActivePageChange,
+  activePageIndex = 0
 }: PageEditorProps) {
 
-  const [activePage, setActivePage] = useState(0);
+  const [activePage, setActivePage] = useState(activePageIndex);
+
+  // Sincronizar estado interno com prop externa
+  useEffect(() => {
+    setActivePage(activePageIndex);
+  }, [activePageIndex]);
 
   // Notificar mudança de página ativa
   const handleActivePageChange = (pageIndex: number) => {

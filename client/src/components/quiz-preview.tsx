@@ -2308,8 +2308,6 @@ export default function QuizPreview({ quiz, onClose, onSave, initialPage = 0 }: 
                   <div className="flex items-center justify-between text-sm text-gray-600 mb-2">
                     <span>Pergunta {currentStep + 1} de {totalSteps}</span>
                     <span>{Math.round(((currentStep + 1) / totalSteps) * 100)}%</span>
-                    {/* Debug temporário */}
-                    <span className="text-xs text-blue-500 ml-2">Debug: currentStep={currentStep}, initialPage={initialPage}</span>
                   </div>
                   <div 
                     className={`w-full overflow-hidden ${
