@@ -148,58 +148,96 @@ const CampaignAnalytics = ({ campaignId }: { campaignId: string }) => {
   );
 };
 
-// Tipos de campanha conforme especificação
-const CAMPAIGN_TYPES = {
+// Categorias organizadas de campanhas SMS
+const CAMPAIGN_CATEGORIES = {
   remarketing: {
-    id: 'remarketing',
-    name: 'Remarketing',
-    icon: Package,
-    description: 'Envie SMS para quem já respondeu ou abandonou o quiz',
-    color: 'bg-blue-500'
+    title: 'Remarketing & Reativação',
+    description: 'Reconquiste leads que já interagiram com seus quizzes',
+    campaigns: {
+      remarketing: {
+        id: 'remarketing',
+        name: 'Remarketing Básico',
+        icon: Package,
+        description: 'Reative leads que abandonaram ou completaram o quiz com mensagens direcionadas',
+        features: ['Filtro por status', 'Mensagens personalizadas', 'Agendamento flexível'],
+        color: 'bg-blue-500'
+      },
+      remarketing_custom: {
+        id: 'remarketing_custom',
+        name: 'Remarketing Inteligente',
+        icon: Brain,
+        description: 'Segmentação avançada por idade, gênero e respostas específicas do quiz',
+        features: ['Filtros demográficos', 'Segmentação por respostas', 'Targeting preciso'],
+        color: 'bg-purple-500'
+      },
+      quantum_remarketing: {
+        id: 'quantum_remarketing',
+        name: 'Quantum Remarketing',
+        icon: Zap,
+        description: 'Sistema ultra-granular com filtros de data e timing personalizado',
+        features: ['Filtros de período', 'Disparo programado', 'Segmentação quantum'],
+        color: 'bg-gradient-to-r from-purple-600 to-blue-600',
+        isQuantum: true
+      }
+    }
   },
-  remarketing_custom: {
-    id: 'remarketing_custom',
-    name: 'Remarketing Avançado',
-    icon: Brain,
-    description: 'Envie SMS ultra segmentado (idade, gênero, respostas)',
-    color: 'bg-purple-500'
+  automation: {
+    title: 'Automação & Tempo Real',
+    description: 'Capture leads no momento exato em que completam seus quizzes',
+    campaigns: {
+      live: {
+        id: 'live',
+        name: 'Disparo Automático',
+        icon: Layers,
+        description: 'Envio automático imediato quando um novo lead completa o quiz',
+        features: ['Disparo instantâneo', 'Zero configuração', 'Alta conversão'],
+        color: 'bg-green-500'
+      },
+      live_custom: {
+        id: 'live_custom',
+        name: 'Automação Inteligente',
+        icon: Flame,
+        description: 'Automação com segmentação por resposta específica do quiz em tempo real',
+        features: ['Segmentação automática', 'Respostas específicas', 'Targeting dinâmico'],
+        color: 'bg-orange-500'
+      },
+      quantum_live: {
+        id: 'quantum_live',
+        name: 'Quantum Live',
+        icon: Sparkles,
+        description: 'Monitoramento quantum em tempo real com segmentação ultra-precisa',
+        features: ['Tempo real', 'Segmentação quantum', 'Máxima eficiência'],
+        color: 'bg-gradient-to-r from-emerald-500 to-teal-500',
+        isQuantum: true
+      }
+    }
   },
-  quantum_remarketing: {
-    id: 'quantum_remarketing',
-    name: 'Quantum Remarketing',
-    icon: Zap,
-    description: 'Sistema ultra-granular para remarketing avançado por resposta específica',
-    color: 'bg-gradient-to-r from-purple-600 to-blue-600'
-  },
-  live: {
-    id: 'live',
-    name: 'Ao Vivo',
-    icon: Layers,
-    description: 'Envie automaticamente após novos leads responderem o quiz',
-    color: 'bg-green-500'
-  },
-  live_custom: {
-    id: 'live_custom',
-    name: 'Ao Vivo Avançado',
-    icon: Flame,
-    description: 'Envie para novos leads com segmentação por resposta do quiz',
-    color: 'bg-orange-500'
-  },
-  quantum_live: {
-    id: 'quantum_live',
-    name: 'Ao Vivo Quantum',
-    icon: Sparkles,
-    description: 'Monitoramento em tempo real com segmentação quantum automática',
-    color: 'bg-gradient-to-r from-emerald-500 to-teal-500'
-  },
-  mass: {
-    id: 'mass',
-    name: 'Disparo em Massa',
-    icon: FolderOpen,
-    description: 'Suba um CSV e envie SMS em lote com variáveis simples',
-    color: 'bg-gray-500'
+  bulk: {
+    title: 'Envio em Massa',
+    description: 'Campanhas para grandes volumes usando listas personalizadas',
+    campaigns: {
+      mass: {
+        id: 'mass',
+        name: 'Disparo em Massa',
+        icon: FolderOpen,
+        description: 'Upload de CSV para envio em lote com personalização por variáveis',
+        features: ['Upload CSV', 'Variáveis personalizadas', 'Processamento em lote'],
+        color: 'bg-gray-500'
+      }
+    }
   }
 };
+
+// Função para obter todos os tipos de campanha em formato flat
+const getAllCampaignTypes = () => {
+  const allTypes = {};
+  Object.values(CAMPAIGN_CATEGORIES).forEach(category => {
+    Object.assign(allTypes, category.campaigns);
+  });
+  return allTypes;
+};
+
+const CAMPAIGN_TYPES = getAllCampaignTypes();
 
 interface Quiz {
   id: string;
@@ -544,88 +582,111 @@ export default function SMSCampaignsAdvanced() {
               {/* Step 1: Tipo de Campanha */}
               {currentStep === 1 && (
                 <div className="space-y-4">
-                  <div className="text-center mb-6">
-                    <h3 className="text-lg font-semibold mb-2">Escolha o Tipo de Campanha SMS</h3>
-                    <p className="text-gray-600">Selecione o tipo de campanha que deseja criar. Cada tipo possui suas próprias configurações específicas.</p>
+                  <div className="text-center mb-8">
+                    <h3 className="text-xl font-bold mb-3">Escolha o Tipo de Campanha SMS</h3>
+                    <p className="text-gray-600">Selecione a categoria e tipo de campanha que melhor atende aos seus objetivos de marketing.</p>
                   </div>
                   
-                  {/* Layout responsivo otimizado para 7 itens - todos visíveis */}
-                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-7 gap-4 md:gap-3">
-                    {Object.values(CAMPAIGN_TYPES).map((type) => {
-                      const Icon = type.icon;
-                      const isQuantum = type.id.includes('quantum');
-                      const isSelected = form.type === type.id;
-                      
-                      return (
-                        <Card 
-                          key={type.id}
-                          className={`cursor-pointer transition-all duration-300 hover:shadow-xl hover:-translate-y-1 transform ${
-                            isSelected 
-                              ? 'ring-2 ring-blue-500 bg-gradient-to-br from-blue-50 to-indigo-50 shadow-lg' 
-                              : 'hover:bg-gray-50'
-                          } ${isQuantum ? 'relative overflow-hidden border-purple-200' : ''}`}
-                          onClick={() => setForm(prev => ({ ...prev, type: type.id }))}
-                        >
-                          <CardContent className="p-3 h-full xl:p-2">
-                            {isQuantum && (
-                              <div className="absolute top-0 right-0 bg-gradient-to-l from-purple-600 to-blue-600 text-white text-xs px-2 py-1 rounded-bl-lg font-medium">
-                                QUANTUM
-                              </div>
-                            )}
+                  {/* Exibição por categorias */}
+                  <div className="space-y-8">
+                    {Object.entries(CAMPAIGN_CATEGORIES).map(([categoryKey, category]) => (
+                      <div key={categoryKey} className="space-y-4">
+                        {/* Header da categoria */}
+                        <div className="text-center">
+                          <h4 className="text-lg font-semibold text-gray-800 mb-1">{category.title}</h4>
+                          <p className="text-sm text-gray-600 mb-4">{category.description}</p>
+                        </div>
+                        
+                        {/* Grid de campanhas da categoria */}
+                        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                          {Object.values(category.campaigns).map((type) => {
+                            const Icon = type.icon;
+                            const isQuantum = type.isQuantum || type.id.includes('quantum');
+                            const isSelected = form.type === type.id;
                             
-                            {/* Indicador de seleção */}
-                            {isSelected && (
-                              <div className="absolute top-2 left-2 w-3 h-3 bg-blue-500 rounded-full flex items-center justify-center">
-                                <CheckSquare className="w-2 h-2 text-white" />
-                              </div>
-                            )}
-                            
-                            <div className="flex flex-col items-center text-center space-y-2 xl:space-y-1 mt-2">
-                              {/* Ícone centralizado e responsivo */}
-                              <div className={`p-3 xl:p-2 rounded-xl ${
-                                isQuantum 
-                                  ? type.color + ' shadow-lg' 
-                                  : type.color + ' text-white shadow-md'
-                              } ${isSelected ? 'scale-110' : ''} transition-transform duration-300`}>
-                                <Icon className={`w-6 h-6 xl:w-5 xl:h-5 ${isQuantum ? 'text-white' : ''}`} />
-                              </div>
-                              
-                              {/* Nome e badge quantum */}
-                              <div className="space-y-1">
-                                <div className="flex items-center justify-center gap-1">
-                                  <h3 className={`font-semibold text-sm xl:text-xs ${
-                                    isSelected ? 'text-blue-700' : 'text-gray-800'
-                                  }`}>
-                                    {type.name}
-                                  </h3>
-                                  {isQuantum && <Sparkles className="w-3 h-3 xl:w-2 xl:h-2 text-purple-600" />}
-                                </div>
-                                
-                                {isQuantum && (
-                                  <div className="text-xs xl:text-[10px] text-purple-600 font-medium bg-purple-100 px-2 py-1 xl:px-1 xl:py-0.5 rounded-full">
-                                    Ultra-Granular ⚡
+                            return (
+                              <Card 
+                                key={type.id}
+                                className={`cursor-pointer transition-all duration-300 hover:shadow-xl hover:-translate-y-1 transform ${
+                                  isSelected 
+                                    ? 'ring-2 ring-blue-500 bg-gradient-to-br from-blue-50 to-indigo-50 shadow-lg' 
+                                    : 'hover:bg-gray-50'
+                                } ${isQuantum ? 'relative overflow-hidden border-purple-200' : ''}`}
+                                onClick={() => setForm(prev => ({ ...prev, type: type.id }))}
+                              >
+                                <CardContent className="p-3 h-full xl:p-2">
+                                  {isQuantum && (
+                                    <div className="absolute top-0 right-0 bg-gradient-to-l from-purple-600 to-blue-600 text-white text-xs px-2 py-1 rounded-bl-lg font-medium">
+                                      QUANTUM
+                                    </div>
+                                  )}
+                                  
+                                  {/* Indicador de seleção */}
+                                  {isSelected && (
+                                    <div className="absolute top-2 left-2 w-3 h-3 bg-blue-500 rounded-full flex items-center justify-center">
+                                      <CheckSquare className="w-2 h-2 text-white" />
+                                    </div>
+                                  )}
+                                  
+                                  <div className="flex flex-col items-center text-center space-y-2 xl:space-y-1 mt-2">
+                                    {/* Ícone centralizado e responsivo */}
+                                    <div className={`p-3 xl:p-2 rounded-xl ${
+                                      isQuantum 
+                                        ? type.color + ' shadow-lg' 
+                                        : type.color + ' text-white shadow-md'
+                                    } ${isSelected ? 'scale-110' : ''} transition-transform duration-300`}>
+                                      <Icon className={`w-6 h-6 xl:w-5 xl:h-5 ${isQuantum ? 'text-white' : ''}`} />
+                                    </div>
+                                    
+                                    {/* Nome e badge quantum */}
+                                    <div className="space-y-1">
+                                      <div className="flex items-center justify-center gap-1">
+                                        <h3 className={`font-semibold text-sm xl:text-xs ${
+                                          isSelected ? 'text-blue-700' : 'text-gray-800'
+                                        }`}>
+                                          {type.name}
+                                        </h3>
+                                        {isQuantum && <Sparkles className="w-3 h-3 xl:w-2 xl:h-2 text-purple-600" />}
+                                      </div>
+                                      
+                                      {isQuantum && (
+                                        <div className="text-xs xl:text-[10px] text-purple-600 font-medium bg-purple-100 px-2 py-1 xl:px-1 xl:py-0.5 rounded-full">
+                                          Ultra-Granular ⚡
+                                        </div>
+                                      )}
+                                    </div>
+                                    
+                                    {/* Descrição compacta */}
+                                    <p className="text-xs xl:text-[10px] text-gray-600 leading-tight h-9 xl:h-6 overflow-hidden">
+                                      {type.description}
+                                    </p>
+                                    
+                                    {/* Features em lista */}
+                                    <div className="text-[10px] text-gray-500 space-y-0.5">
+                                      {type.features?.slice(0, 2).map((feature, idx) => (
+                                        <div key={idx} className="flex items-center justify-center gap-1">
+                                          <div className="w-1 h-1 bg-blue-400 rounded-full"></div>
+                                          <span>{feature}</span>
+                                        </div>
+                                      ))}
+                                    </div>
+                                    
+                                    {/* Botão visual de seleção */}
+                                    <div className={`w-full py-2 xl:py-1 px-3 xl:px-2 rounded-lg text-xs xl:text-[10px] font-medium transition-all ${
+                                      isSelected 
+                                        ? 'bg-blue-500 text-white' 
+                                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                                    }`}>
+                                      {isSelected ? '✓ Selecionado' : 'Selecionar'}
+                                    </div>
                                   </div>
-                                )}
-                              </div>
-                              
-                              {/* Descrição compacta */}
-                              <p className="text-xs xl:text-[10px] text-gray-600 leading-tight h-9 xl:h-6 overflow-hidden">
-                                {type.description}
-                              </p>
-                              
-                              {/* Botão visual de seleção */}
-                              <div className={`w-full py-2 xl:py-1 px-3 xl:px-2 rounded-lg text-xs xl:text-[10px] font-medium transition-all ${
-                                isSelected 
-                                  ? 'bg-blue-500 text-white' 
-                                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                              }`}>
-                                {isSelected ? '✓ Selecionado' : 'Selecionar'}
-                              </div>
-                            </div>
-                          </CardContent>
-                        </Card>
-                      );
-                    })}
+                                </CardContent>
+                              </Card>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    ))}
                   </div>
                   
                   {/* Quantum Info Alert */}
