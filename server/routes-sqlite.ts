@@ -4594,7 +4594,10 @@ export function registerSQLiteRoutes(app: Express): Server {
       
       console.log(`🔍 QUIZ FETCH DEBUG: quiz=${quiz ? 'found' : 'NOT FOUND'}, id=${req.params.id}`);
       if (quiz) {
-        console.log(`🔍 QUIZ PROPERTIES: userId=${quiz.userId || 'undefined'}, user_id=${quiz.user_id || 'undefined'}, title=${quiz.title || 'N/A'}`);
+        console.log(`🔍 QUIZ PROPERTIES:`, JSON.stringify(quiz, null, 2));
+      } else {
+        console.log(`🔥 QUIZ NOT FOUND: Checking database directly`);
+        return res.status(404).json({ message: "Quiz not found" });
       }
       
       if (!quiz || (quiz.userId !== req.user.id && quiz.user_id !== req.user.id)) {
