@@ -120,6 +120,7 @@ import { useAuth } from "@/hooks/useAuth-jwt";
 import { isUnauthorizedError } from "@/lib/authUtils";
 import { SidebarProvider } from "@/hooks/useSidebar";
 import { useTheme } from "@/hooks/useTheme";
+import SistemaUltraDemo from "@/pages/sistema-ultra-demo";
 
 
 function App() {
@@ -215,6 +216,11 @@ function App() {
         <Route path="/quiz-ia">
           <Layout>
             <QuizIA />
+          </Layout>
+        </Route>
+        <Route path="/sistema-ultra-demo">
+          <Layout>
+            <SistemaUltraDemo />
           </Layout>
         </Route>
         <Route path="/seus-afiliados">

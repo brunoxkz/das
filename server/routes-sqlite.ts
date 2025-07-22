@@ -4493,6 +4493,268 @@ export function registerSQLiteRoutes(app: Express): Server {
     }
   });
 
+  // 🎯 MODO ULTRA: Get quiz variables with all possible response values
+  app.get("/api/quizzes/:id/variables-ultra", verifyJWT, async (req: any, res) => {
+    try {
+      if (!req.user) {
+        return res.status(401).json({ message: "Unauthorized" });
+      }
+
+      const quiz = await storage.getQuiz(req.params.id);
+      
+      if (!quiz || quiz.userId !== req.user.id) {
+        return res.status(403).json({ message: "Access denied" });
+      }
+
+      // Buscar TODAS as respostas do quiz
+      const responses = await storage.getQuizResponses(req.params.id);
+      
+      console.log(`🔥 MODO ULTRA: Analisando ${responses.length} respostas para extração ultra-granular`);
+      
+      // Mapa para agrupar respostas por variável
+      const variableResponsesMap = new Map<string, Set<string>>();
+      const variableTypeMap = new Map<string, string>();
+      const variableLeadsMap = new Map<string, Map<string, any[]>>();
+      
+      // Processar cada resposta
+      responses.forEach(response => {
+        if (!response.responses || typeof response.responses !== 'object') return;
+        
+        const metadata = response.metadata && typeof response.metadata === 'object' ? response.metadata as any : {};
+        const extractedData = extractLeadDataFromResponses(response.responses, metadata.leadData || {});
+        
+        // Analisar cada campo da resposta
+        Object.keys(response.responses).forEach(fieldId => {
+          const answer = response.responses[fieldId];
+          if (!answer || answer.toString().trim() === '') return;
+          
+          const answerStr = answer.toString().trim();
+          
+          // Inicializar estruturas se não existirem
+          if (!variableResponsesMap.has(fieldId)) {
+            variableResponsesMap.set(fieldId, new Set());
+            variableLeadsMap.set(fieldId, new Map());
+          }
+          
+          // Adicionar resposta ao conjunto
+          variableResponsesMap.get(fieldId)!.add(answerStr);
+          
+          // Agrupar leads por resposta específica
+          const fieldLeadsMap = variableLeadsMap.get(fieldId)!;
+          if (!fieldLeadsMap.has(answerStr)) {
+            fieldLeadsMap.set(answerStr, []);
+          }
+          
+          // Criar lead info completo
+          const leadInfo = {
+            responseId: response.id,
+            submittedAt: response.submittedAt,
+            isComplete: metadata.isPartial === false,
+            completionPercentage: metadata.completionPercentage || 0,
+            ip: metadata.ip,
+            userAgent: metadata.userAgent,
+            ...extractedData
+          };
+          
+          fieldLeadsMap.get(answerStr)!.push(leadInfo);
+          
+          // Detectar tipo de elemento (heurística melhorada)
+          if (fieldId.includes('email')) {
+            variableTypeMap.set(fieldId, 'email');
+          } else if (fieldId.includes('telefone') || fieldId.includes('phone') || fieldId.includes('celular')) {
+            variableTypeMap.set(fieldId, 'phone');
+          } else if (fieldId.includes('multiple_choice') || fieldId.includes('radio') || fieldId.includes('select')) {
+            variableTypeMap.set(fieldId, 'multiple_choice');
+          } else if (fieldId.includes('checkbox')) {
+            variableTypeMap.set(fieldId, 'checkbox');
+          } else if (fieldId.includes('rating') || fieldId.includes('scale')) {
+            variableTypeMap.set(fieldId, 'rating');
+          } else {
+            variableTypeMap.set(fieldId, 'text');
+          }
+        });
+      });
+      
+      // Construir resposta ultra-detalhada
+      const ultraVariables = Array.from(variableResponsesMap.entries()).map(([fieldId, responseSet]) => {
+        const possibleValues = Array.from(responseSet);
+        const fieldLeadsMap = variableLeadsMap.get(fieldId)!;
+        
+        // Estatísticas por resposta
+        const responseStats = possibleValues.map(value => ({
+          value,
+          leadsCount: fieldLeadsMap.get(value)?.length || 0,
+          leads: fieldLeadsMap.get(value) || []
+        })).sort((a, b) => b.leadsCount - a.leadsCount);
+        
+        return {
+          fieldId,
+          name: fieldId,
+          type: variableTypeMap.get(fieldId) || 'text',
+          totalResponses: possibleValues.length,
+          totalLeads: responseStats.reduce((sum, stat) => sum + stat.leadsCount, 0),
+          possibleValues,
+          responseStats,
+          description: `Campo ${fieldId} com ${possibleValues.length} respostas diferentes`
+        };
+      });
+      
+      console.log(`🎯 MODO ULTRA PROCESSADO:`);
+      ultraVariables.forEach(v => {
+        console.log(`   📊 ${v.fieldId}: ${v.totalLeads} leads em ${v.totalResponses} respostas diferentes`);
+        v.responseStats.forEach(stat => {
+          console.log(`      ➡️ "${stat.value}": ${stat.leadsCount} leads`);
+        });
+      });
+      
+      const ultraResponse = {
+        mode: 'ultra',
+        totalVariables: ultraVariables.length,
+        totalResponses: responses.length,
+        variables: ultraVariables,
+        // Variáveis padrão sempre disponíveis
+        standardVariables: [
+          { name: "nome", description: "Nome do respondente", type: "text" },
+          { name: "email", description: "Email do respondente", type: "email" },
+          { name: "telefone", description: "Telefone do respondente", type: "phone" },
+          { name: "quiz_titulo", description: "Título do quiz", type: "text" }
+        ]
+      };
+      
+      res.json(ultraResponse);
+    } catch (error) {
+      console.error("🔥 MODO ULTRA ERROR:", error);
+      res.status(500).json({ message: "Error in ultra mode variables extraction" });
+    }
+  });
+
+  // 🎯 MODO ULTRA: Filter leads by specific response value
+  app.post("/api/quizzes/:id/leads-by-response", verifyJWT, async (req: any, res) => {
+    try {
+      if (!req.user) {
+        return res.status(401).json({ message: "Unauthorized" });
+      }
+
+      const quiz = await storage.getQuiz(req.params.id);
+      
+      if (!quiz || quiz.userId !== req.user.id) {
+        return res.status(403).json({ message: "Access denied" });
+      }
+
+      const { fieldId, responseValue, includePartial = false, format = 'leads' } = req.body;
+      
+      if (!fieldId || !responseValue) {
+        return res.status(400).json({ 
+          error: "fieldId and responseValue are required",
+          example: { fieldId: "p1_quizfitness", responseValue: "Emagrecer" }
+        });
+      }
+
+      // Buscar TODAS as respostas do quiz
+      const allResponses = await storage.getQuizResponses(req.params.id);
+      
+      console.log(`🔥 FILTRO ULTRA: Procurando leads que responderam "${responseValue}" para pergunta "${fieldId}" em ${allResponses.length} respostas`);
+      
+      // Filtrar leads com a resposta específica
+      const matchingLeads = [];
+      
+      for (const response of allResponses) {
+        if (!response.responses || typeof response.responses !== 'object') continue;
+        
+        const metadata = response.metadata && typeof response.metadata === 'object' ? response.metadata as any : {};
+        
+        // Verificar se é parcial e se deve incluir
+        if (!includePartial && metadata.isPartial !== false) continue;
+        
+        // Verificar se tem a resposta específica
+        const actualAnswer = response.responses[fieldId];
+        if (!actualAnswer || actualAnswer.toString().trim() !== responseValue) continue;
+        
+        // Extrair dados do lead
+        const extractedData = extractLeadDataFromResponses(response.responses, metadata.leadData || {});
+        
+        const leadInfo = {
+          responseId: response.id,
+          submittedAt: response.submittedAt,
+          isComplete: metadata.isPartial === false,
+          completionPercentage: metadata.completionPercentage || 0,
+          timeSpent: metadata.timeSpent || 0,
+          ip: metadata.ip,
+          userAgent: metadata.userAgent,
+          matchingField: fieldId,
+          matchingValue: responseValue,
+          allResponses: response.responses,
+          ...extractedData
+        };
+        
+        matchingLeads.push(leadInfo);
+      }
+      
+      console.log(`🎯 FILTRO ULTRA RESULTADO: ${matchingLeads.length} leads encontrados com resposta "${responseValue}"`);
+      
+      // Diferentes formatos de retorno
+      let result;
+      
+      if (format === 'phones') {
+        // Formato para campanhas SMS/WhatsApp
+        const phones = matchingLeads
+          .filter(lead => lead.telefone || lead.phone || lead.celular)
+          .map(lead => ({
+            phone: (lead.telefone || lead.phone || lead.celular).toString().trim(),
+            name: lead.nome || lead.name || lead.firstName || 'Lead',
+            responseId: lead.responseId,
+            submittedAt: lead.submittedAt,
+            isComplete: lead.isComplete,
+            matchingValue: responseValue,
+            responses: lead.allResponses
+          }));
+          
+        result = {
+          mode: 'ultra-phone-filter',
+          filter: { fieldId, responseValue },
+          totalMatches: matchingLeads.length,
+          phonesFound: phones.length,
+          phones
+        };
+      } else if (format === 'emails') {
+        // Formato para campanhas de email
+        const emails = matchingLeads
+          .filter(lead => lead.email)
+          .map(lead => ({
+            email: lead.email.toString().trim(),
+            name: lead.nome || lead.name || lead.firstName || 'Lead',
+            responseId: lead.responseId,
+            submittedAt: lead.submittedAt,
+            isComplete: lead.isComplete,
+            matchingValue: responseValue,
+            responses: lead.allResponses
+          }));
+          
+        result = {
+          mode: 'ultra-email-filter',
+          filter: { fieldId, responseValue },
+          totalMatches: matchingLeads.length,
+          emailsFound: emails.length,
+          emails
+        };
+      } else {
+        // Formato completo padrão
+        result = {
+          mode: 'ultra-leads-filter',
+          filter: { fieldId, responseValue, includePartial },
+          totalScanned: allResponses.length,
+          totalMatches: matchingLeads.length,
+          leads: matchingLeads
+        };
+      }
+      
+      res.json(result);
+    } catch (error) {
+      console.error("🔥 FILTRO ULTRA ERROR:", error);
+      res.status(500).json({ message: "Error filtering leads by response value" });
+    }
+  });
+
   // 🎉 ENDPOINTS PARA SISTEMA DE NOTIFICAÇÕES AUTOMÁTICAS DE QUIZ COMPLETIONS
   
   // Buscar último quiz completado para polling
