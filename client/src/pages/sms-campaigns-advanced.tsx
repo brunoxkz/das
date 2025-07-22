@@ -549,8 +549,8 @@ export default function SMSCampaignsAdvanced() {
                     <p className="text-gray-600">Selecione o tipo de campanha que deseja criar. Cada tipo possui suas próprias configurações específicas.</p>
                   </div>
                   
-                  {/* Layout responsivo melhorado para 5 itens - todos visíveis */}
-                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 xl:grid-cols-5 gap-4 md:gap-3">
+                  {/* Layout responsivo otimizado para 7 itens - todos visíveis */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-7 gap-4 md:gap-3">
                     {Object.values(CAMPAIGN_TYPES).map((type) => {
                       const Icon = type.icon;
                       const isQuantum = type.id.includes('quantum');
@@ -566,7 +566,7 @@ export default function SMSCampaignsAdvanced() {
                           } ${isQuantum ? 'relative overflow-hidden border-purple-200' : ''}`}
                           onClick={() => setForm(prev => ({ ...prev, type: type.id }))}
                         >
-                          <CardContent className="p-4 h-full">
+                          <CardContent className="p-3 h-full xl:p-2">
                             {isQuantum && (
                               <div className="absolute top-0 right-0 bg-gradient-to-l from-purple-600 to-blue-600 text-white text-xs px-2 py-1 rounded-bl-lg font-medium">
                                 QUANTUM
@@ -580,41 +580,41 @@ export default function SMSCampaignsAdvanced() {
                               </div>
                             )}
                             
-                            <div className="flex flex-col items-center text-center space-y-3 mt-2">
-                              {/* Ícone centralizado e maior */}
-                              <div className={`p-3 rounded-xl ${
+                            <div className="flex flex-col items-center text-center space-y-2 xl:space-y-1 mt-2">
+                              {/* Ícone centralizado e responsivo */}
+                              <div className={`p-3 xl:p-2 rounded-xl ${
                                 isQuantum 
                                   ? type.color + ' shadow-lg' 
                                   : type.color + ' text-white shadow-md'
                               } ${isSelected ? 'scale-110' : ''} transition-transform duration-300`}>
-                                <Icon className={`w-6 h-6 ${isQuantum ? 'text-white' : ''}`} />
+                                <Icon className={`w-6 h-6 xl:w-5 xl:h-5 ${isQuantum ? 'text-white' : ''}`} />
                               </div>
                               
                               {/* Nome e badge quantum */}
                               <div className="space-y-1">
                                 <div className="flex items-center justify-center gap-1">
-                                  <h3 className={`font-semibold text-sm ${
+                                  <h3 className={`font-semibold text-sm xl:text-xs ${
                                     isSelected ? 'text-blue-700' : 'text-gray-800'
                                   }`}>
                                     {type.name}
                                   </h3>
-                                  {isQuantum && <Sparkles className="w-3 h-3 text-purple-600" />}
+                                  {isQuantum && <Sparkles className="w-3 h-3 xl:w-2 xl:h-2 text-purple-600" />}
                                 </div>
                                 
                                 {isQuantum && (
-                                  <div className="text-xs text-purple-600 font-medium bg-purple-100 px-2 py-1 rounded-full">
+                                  <div className="text-xs xl:text-[10px] text-purple-600 font-medium bg-purple-100 px-2 py-1 xl:px-1 xl:py-0.5 rounded-full">
                                     Ultra-Granular ⚡
                                   </div>
                                 )}
                               </div>
                               
                               {/* Descrição compacta */}
-                              <p className="text-xs text-gray-600 leading-tight h-9 overflow-hidden">
+                              <p className="text-xs xl:text-[10px] text-gray-600 leading-tight h-9 xl:h-6 overflow-hidden">
                                 {type.description}
                               </p>
                               
                               {/* Botão visual de seleção */}
-                              <div className={`w-full py-2 px-3 rounded-lg text-xs font-medium transition-all ${
+                              <div className={`w-full py-2 xl:py-1 px-3 xl:px-2 rounded-lg text-xs xl:text-[10px] font-medium transition-all ${
                                 isSelected 
                                   ? 'bg-blue-500 text-white' 
                                   : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
