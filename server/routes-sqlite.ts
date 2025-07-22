@@ -4104,11 +4104,19 @@ export function registerSQLiteRoutes(app: Express): Server {
       const startTime = req.submissionStartTime || Date.now();
       
       try {
+        console.log(`🎯 BUSCANDO QUIZ: ${req.params.id}`);
         let quiz = await storage.getQuiz(req.params.id);
         
         if (!quiz) {
           console.log(`❌ Quiz ${req.params.id} não encontrado`);
           return res.status(404).json({ message: "Quiz not found" });
+        }
+        console.log(`✅ Quiz encontrado: ${quiz.title} (user_id: ${quiz.user_id})`);
+        
+        // FORÇAR user_id para admin para teste de notificação automática
+        if (!quiz.user_id) {
+          quiz.user_id = "admin-user-id";
+          console.log(`🔧 CORREÇÃO: user_id definido como admin-user-id para teste`);
         }
         
         // TESTE TEMPORÁRIO: Aceitar qualquer quiz para testar notificações automáticas
