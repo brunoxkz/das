@@ -223,6 +223,14 @@ const CAMPAIGN_CATEGORIES = {
         description: 'Upload de CSV para envio em lote com personalização por variáveis',
         features: ['Upload CSV', 'Variáveis personalizadas', 'Processamento em lote'],
         color: 'bg-gray-500'
+      },
+      webhook_integration: {
+        id: 'webhook_integration',
+        name: 'Conectar Outra Plataforma',
+        icon: CheckSquare,
+        description: 'Integre sua plataforma via webhook para disparos automáticos de SMS',
+        features: ['Integração webhook', 'API personalizada', 'Disparos externos'],
+        color: 'bg-indigo-500'
       }
     }
   }
@@ -1309,23 +1317,193 @@ export default function SMSCampaignsAdvanced() {
               {/* Step 3: Mensagem Quantum */}
               {currentStep === 3 && (
                 <div className="space-y-6">
-                  <div>
-                    <Label htmlFor="name">
-                      {form.type?.includes('quantum') ? 'Nome da Campanha Quantum' : 'Nome da Campanha'}
-                    </Label>
-                    <Input 
-                      id="name"
-                      value={form.name}
-                      onChange={(e) => setForm(prev => ({ ...prev, name: e.target.value }))}
-                      placeholder={form.type?.includes('quantum') 
-                        ? "Ex: Quantum Remarketing - Emagrecer Ultra-Específico" 
-                        : "Ex: Remarketing Dor nas Costas"
-                      }
-                      className={form.type?.includes('quantum') ? 'border-purple-200 focus:ring-purple-500' : ''}
-                    />
-                  </div>
+                  {/* Tutorial Webhook Integration */}
+                  {form.type === 'webhook_integration' && (
+                    <div className="space-y-6">
+                      <Alert className="border-indigo-200 bg-gradient-to-r from-indigo-50 to-blue-50">
+                        <CheckSquare className="h-4 w-4 text-indigo-600" />
+                        <AlertDescription className="text-indigo-800">
+                          <strong>Integração com Plataformas Externas Ativada!</strong> Configure webhooks para disparos automáticos de SMS quando eventos ocorrerem em sua plataforma.
+                        </AlertDescription>
+                      </Alert>
+
+                      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        {/* Tutorial Webhook */}
+                        <Card className="border-indigo-200">
+                          <CardHeader>
+                            <CardTitle className="flex items-center gap-2 text-indigo-700">
+                              <CheckSquare className="w-5 h-5" />
+                              Como Conectar Sua Plataforma
+                            </CardTitle>
+                          </CardHeader>
+                          <CardContent className="space-y-4">
+                            <div className="space-y-3">
+                              <h4 className="font-medium text-gray-800">1. URL do Webhook:</h4>
+                              <div className="p-3 bg-gray-100 rounded-lg border">
+                                <code className="text-sm font-mono">
+                                  https://vendzz.com/api/webhook/sms-trigger/{user?.id || 'USER_ID'}
+                                </code>
+                              </div>
+                              <Button 
+                                variant="outline" 
+                                size="sm"
+                                onClick={() => {
+                                  navigator.clipboard.writeText(`https://vendzz.com/api/webhook/sms-trigger/${user?.id || 'USER_ID'}`);
+                                  toast({
+                                    title: "URL copiada!",
+                                    description: "URL do webhook foi copiada para o clipboard."
+                                  });
+                                }}
+                                className="w-full"
+                              >
+                                📋 Copiar URL
+                              </Button>
+                            </div>
+
+                            <div className="space-y-3">
+                              <h4 className="font-medium text-gray-800">2. Método HTTP:</h4>
+                              <div className="p-2 bg-green-100 text-green-800 rounded text-center font-bold">
+                                POST
+                              </div>
+                            </div>
+
+                            <div className="space-y-3">
+                              <h4 className="font-medium text-gray-800">3. Headers Obrigatórios:</h4>
+                              <div className="p-3 bg-gray-100 rounded-lg space-y-1 text-sm font-mono">
+                                <div>Content-Type: application/json</div>
+                                <div>Authorization: Bearer SEU_TOKEN_JWT</div>
+                              </div>
+                            </div>
+                          </CardContent>
+                        </Card>
+
+                        {/* Exemplo Payload */}
+                        <Card className="border-indigo-200">
+                          <CardHeader>
+                            <CardTitle className="flex items-center gap-2 text-indigo-700">
+                              <MessageSquare className="w-5 h-5" />
+                              Exemplo de Payload
+                            </CardTitle>
+                          </CardHeader>
+                          <CardContent className="space-y-4">
+                            <div className="space-y-3">
+                              <h4 className="font-medium text-gray-800">Body JSON:</h4>
+                              <div className="p-3 bg-gray-900 text-green-400 rounded-lg text-xs font-mono overflow-x-auto">
+                                <pre>{JSON.stringify({
+                                  "phone": "+5511999999999",
+                                  "name": "João Silva", 
+                                  "message": "Parabéns! Sua compra foi aprovada.",
+                                  "variables": {
+                                    "nome": "João Silva",
+                                    "produto": "Curso de Marketing",
+                                    "valor": "R$ 297,00"
+                                  }
+                                }, null, 2)}</pre>
+                              </div>
+                            </div>
+
+                            <div className="space-y-2">
+                              <h4 className="font-medium text-gray-800">Campos Opcionais:</h4>
+                              <div className="text-sm space-y-1">
+                                <div><strong>delay:</strong> Atraso em minutos (ex: 30)</div>
+                                <div><strong>scheduled_at:</strong> Data/hora específica</div>
+                                <div><strong>campaign_id:</strong> ID de campanha existente</div>
+                              </div>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      </div>
+
+                      {/* Exemplos de Integração */}
+                      <Card className="border-indigo-200">
+                        <CardHeader>
+                          <CardTitle className="flex items-center gap-2 text-indigo-700">
+                            <Target className="w-5 h-5" />
+                            Exemplos de Integração
+                          </CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                            {[
+                              {
+                                platform: "WordPress",
+                                trigger: "Novo lead capturado",
+                                message: "Obrigado {{nome}} por se inscrever! Acesse seu conteúdo agora.",
+                                color: "bg-blue-100 text-blue-800"
+                              },
+                              {
+                                platform: "Shopify",
+                                trigger: "Compra aprovada",
+                                message: "{{nome}}, parabéns! Seu pedido {{produto}} foi aprovado. Valor: {{valor}}",
+                                color: "bg-green-100 text-green-800"
+                              },
+                              {
+                                platform: "Hotmart",
+                                trigger: "Venda realizada",
+                                message: "Bem-vindo {{nome}}! Seu acesso ao {{produto}} está liberado.",
+                                color: "bg-orange-100 text-orange-800"
+                              },
+                              {
+                                platform: "Custom API",
+                                trigger: "Evento personalizado",
+                                message: "{{nome}}, evento {{evento}} detectado. Próximos passos: {{acao}}",
+                                color: "bg-purple-100 text-purple-800"
+                              }
+                            ].map((example, index) => (
+                              <div key={index} className={`p-4 rounded-lg ${example.color}`}>
+                                <div className="space-y-2">
+                                  <h5 className="font-bold">{example.platform}</h5>
+                                  <div className="text-sm">
+                                    <div><strong>Trigger:</strong> {example.trigger}</div>
+                                  </div>
+                                  <div className="text-xs bg-white/50 p-2 rounded">
+                                    <strong>SMS:</strong> "{example.message}"
+                                  </div>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </CardContent>
+                      </Card>
+
+                      {/* Status da Configuração */}
+                      <Card className="border-green-200 bg-green-50">
+                        <CardContent className="pt-6">
+                          <div className="flex items-center gap-3">
+                            <div className="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center">
+                              <CheckCircle className="w-5 h-5 text-white" />
+                            </div>
+                            <div>
+                              <h4 className="font-medium text-green-800">Webhook Configurado com Sucesso!</h4>
+                              <p className="text-sm text-green-600">
+                                Sua plataforma agora pode disparar SMS automaticamente. Configure os webhooks usando a URL e exemplos acima.
+                              </p>
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    </div>
+                  )}
                   
-                  {form.type?.includes('quantum') && (
+                  {form.type !== 'webhook_integration' && (
+                    <>
+                      <div>
+                        <Label htmlFor="name">
+                          {form.type?.includes('quantum') ? 'Nome da Campanha Quantum' : 'Nome da Campanha'}
+                        </Label>
+                        <Input 
+                          id="name"
+                          value={form.name}
+                          onChange={(e) => setForm(prev => ({ ...prev, name: e.target.value }))}
+                          placeholder={form.type?.includes('quantum') 
+                            ? "Ex: Quantum Remarketing - Emagrecer Ultra-Específico" 
+                            : "Ex: Remarketing Dor nas Costas"
+                          }
+                          className={form.type?.includes('quantum') ? 'border-purple-200 focus:ring-purple-500' : ''}
+                        />
+                      </div>
+                      
+                      {form.type?.includes('quantum') && (
                     <Alert className="border-purple-200 bg-gradient-to-r from-purple-50 to-blue-50">
                       <Sparkles className="h-4 w-4 text-purple-600" />
                       <AlertDescription className="text-purple-800">
@@ -1406,20 +1584,22 @@ export default function SMSCampaignsAdvanced() {
                     </div>
                   )}
                   
-                  {/* Variáveis Tradicionais para outras campanhas */}
-                  {!form.type?.includes('quantum') && (
-                    <div className="flex flex-wrap gap-2">
-                      {availableVariables.map((variable) => (
-                        <Button 
-                          key={variable.key}
-                          variant="outline" 
-                          size="sm"
-                          onClick={() => insertVariable(variable.key)}
-                        >
-                          {variable.key}
-                        </Button>
-                      ))}
-                    </div>
+                      {/* Variáveis Tradicionais para outras campanhas */}
+                      {!form.type?.includes('quantum') && (
+                        <div className="flex flex-wrap gap-2">
+                          {availableVariables.map((variable) => (
+                            <Button 
+                              key={variable.key}
+                              variant="outline" 
+                              size="sm"
+                              onClick={() => insertVariable(variable.key)}
+                            >
+                              {variable.key}
+                            </Button>
+                          ))}
+                        </div>
+                      )}
+                    </>
                   )}
                 </div>
               )}

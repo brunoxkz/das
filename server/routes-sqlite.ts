@@ -25044,6 +25044,213 @@ export function registerCheckoutRoutes(app: Express) {
     }
   });
 
+  // === ENDPOINT WEBHOOK INTEGRATION - CONECTAR OUTRAS PLATAFORMAS ===
+  console.log('🔗 REGISTRANDO ROTA: POST /api/webhook/sms-trigger/:userId');
+  
+  // Endpoint webhook para disparos externos de SMS
+  app.post('/api/webhook/sms-trigger/:userId', verifyJWT, async (req: any, res) => {
+    try {
+      const { userId } = req.params;
+      const { phone, name, message, variables, delay, scheduled_at, campaign_id } = req.body;
+      
+      console.log('🔗 WEBHOOK SMS TRIGGER RECEBIDO:', { userId, phone, name, message, variables, delay, scheduled_at, campaign_id });
+
+      // Validação de dados obrigatórios
+      if (!phone || !message) {
+        return res.status(400).json({ 
+          error: "Campos obrigatórios: phone e message",
+          received: { phone: !!phone, message: !!message }
+        });
+      }
+
+      // Normalizar telefone
+      const normalizedPhone = phone.replace(/[^\d+]/g, '');
+      if (normalizedPhone.length < 10) {
+        return res.status(400).json({ 
+          error: "Número de telefone inválido",
+          phone: normalizedPhone
+        });
+      }
+
+      // Preparar variáveis para personalização
+      const messageVariables = {
+        nome: name || 'Cliente',
+        ...variables
+      };
+
+      // Personalizar mensagem com variáveis
+      let personalizedMessage = message;
+      Object.keys(messageVariables).forEach(key => {
+        const regex = new RegExp(`{{${key}}}`, 'g');
+        personalizedMessage = personalizedMessage.replace(regex, messageVariables[key] || '');
+      });
+
+      // Criar estrutura de campanha webhook
+      const webhookCampaign = {
+        id: `webhook_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+        name: `Webhook Integration - ${new Date().toLocaleString()}`,
+        type: 'webhook_integration',
+        message: personalizedMessage,
+        status: 'active',
+        phones: [{ phone: normalizedPhone, name: name || 'Cliente' }],
+        user_id: userId,
+        created_at: new Date().toISOString(),
+        metadata: {
+          source: 'webhook_external',
+          original_message: message,
+          variables: messageVariables,
+          delay: delay,
+          scheduled_at: scheduled_at,
+          campaign_id: campaign_id,
+          webhook_received_at: new Date().toISOString()
+        }
+      };
+
+      // Se há delay, agendar para envio posterior
+      if (delay && delay > 0) {
+        const sendAt = new Date(Date.now() + (delay * 60 * 1000)); // delay em minutos
+        webhookCampaign.metadata.scheduled_for = sendAt.toISOString();
+        
+        console.log(`⏱️ SMS via webhook agendado para: ${sendAt.toISOString()}`);
+        
+        // Salvar campanha agendada diretamente no banco
+        const insertStmt = db.prepare(`
+          INSERT INTO sms_campaigns (
+            id, user_id, name, type, message, status, phones, schedule_type, 
+            scheduled_date, scheduled_time, delay_minutes, metadata, created_at
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        `);
+        
+        insertStmt.run([
+          webhookCampaign.id,
+          webhookCampaign.user_id,
+          webhookCampaign.name,
+          webhookCampaign.type,
+          webhookCampaign.message,
+          webhookCampaign.status,
+          JSON.stringify(webhookCampaign.phones),
+          'scheduled',
+          new Date(sendAt).toISOString().split('T')[0],
+          new Date(sendAt).toISOString().split('T')[1].split('.')[0],
+          delay,
+          JSON.stringify(webhookCampaign.metadata),
+          webhookCampaign.created_at
+        ]);
+        
+        res.json({
+          success: true,
+          message: "SMS via webhook agendado com sucesso",
+          scheduled_for: sendAt.toISOString(),
+          campaign_id: webhookCampaign.id,
+          phone: normalizedPhone,
+          personalized_message: personalizedMessage
+        });
+        return;
+      }
+
+      // Se há agendamento específico, usar a data fornecida
+      if (scheduled_at) {
+        const scheduledDate = new Date(scheduled_at);
+        webhookCampaign.metadata.scheduled_for = scheduledDate.toISOString();
+        
+        console.log(`📅 SMS via webhook agendado para data específica: ${scheduledDate.toISOString()}`);
+        
+        // Salvar campanha agendada diretamente no banco
+        const insertStmt2 = db.prepare(`
+          INSERT INTO sms_campaigns (
+            id, user_id, name, type, message, status, phones, schedule_type, 
+            scheduled_date, scheduled_time, delay_minutes, metadata, created_at
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        `);
+        
+        insertStmt2.run([
+          webhookCampaign.id,
+          webhookCampaign.user_id,
+          webhookCampaign.name,
+          webhookCampaign.type,
+          webhookCampaign.message,
+          webhookCampaign.status,
+          JSON.stringify(webhookCampaign.phones),
+          'scheduled',
+          scheduledDate.toISOString().split('T')[0],
+          scheduledDate.toISOString().split('T')[1].split('.')[0],
+          0,
+          JSON.stringify(webhookCampaign.metadata),
+          webhookCampaign.created_at
+        ]);
+        
+        res.json({
+          success: true,
+          message: "SMS via webhook agendado com sucesso",
+          scheduled_for: scheduledDate.toISOString(),
+          campaign_id: webhookCampaign.id,
+          phone: normalizedPhone,
+          personalized_message: personalizedMessage
+        });
+        return;
+      }
+
+      // Envio imediato via webhook
+      console.log('⚡ ENVIANDO SMS IMEDIATAMENTE VIA WEBHOOK...');
+      
+      const smsResult = await sendSMSTwilio(normalizedPhone, personalizedMessage);
+      
+      if (smsResult.success) {
+        // Registrar envio bem-sucedido diretamente no banco
+        const logStmt = db.prepare(`
+          INSERT INTO sms_webhook_logs (
+            id, user_id, phone, message, variables, webhook_metadata, 
+            twilio_sid, status, sent_at, created_at
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        `);
+        
+        try {
+          logStmt.run([
+            `webhook_log_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+            userId,
+            normalizedPhone,
+            personalizedMessage,
+            JSON.stringify(messageVariables),
+            JSON.stringify(webhookCampaign.metadata),
+            smsResult.sid,
+            'success',
+            new Date().toISOString(),
+            new Date().toISOString()
+          ]);
+        } catch (dbError) {
+          console.log('⚠️ Aviso: Tabela de logs de webhook pode não existir ainda:', dbError.message);
+        }
+
+        console.log('✅ SMS via webhook enviado com sucesso:', smsResult.sid);
+        
+        res.json({
+          success: true,
+          message: "SMS enviado com sucesso via webhook",
+          sid: smsResult.sid,
+          phone: normalizedPhone,
+          personalized_message: personalizedMessage,
+          sent_at: new Date().toISOString()
+        });
+      } else {
+        console.error('❌ Erro ao enviar SMS via webhook:', smsResult.error);
+        
+        res.status(500).json({
+          success: false,
+          error: "Erro ao enviar SMS via webhook",
+          details: smsResult.error,
+          phone: normalizedPhone
+        });
+      }
+
+    } catch (error) {
+      console.error('❌ ERRO NO WEBHOOK SMS TRIGGER:', error);
+      res.status(500).json({ 
+        error: "Erro interno no webhook SMS trigger",
+        details: error.message 
+      });
+    }
+  });
+
   // === ENDPOINTS STRIPE CUSTOM PLANS ===
   console.log('📋 REGISTRANDO ROTA: POST /api/custom-plans/create');
   
