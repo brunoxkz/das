@@ -1150,7 +1150,7 @@ const gameElementCategories = [
     // Criar uma cópia profunda da página
     const duplicatedPage: QuizPage = {
       id: timestamp,
-      title: `${originalPage.title} (${t('quiz.copy')})`,
+      title: `${originalPage.title} (Cópia)`,
       elements: originalPage.elements.map((element, elementIndex) => {
         const newElement = {
           ...element,
@@ -1287,7 +1287,7 @@ const gameElementCategories = [
     const baseElement: Element = {
       id: timestamp,
       type,
-      content: type === "heading" ? t('quiz.labels.newTitle') : type === "paragraph" ? t('quiz.labels.newParagraph') : type === "continue_button" ? t('quiz.buttons.continue') : "",
+      content: type === "heading" ? "Novo Título" : type === "paragraph" ? "Novo Parágrafo" : type === "continue_button" ? "Continuar" : "",
       question: undefined,
       options: type === "multiple_choice" ? ["Opção 1", "Opção 2"] : undefined,
       required: false,
@@ -1316,7 +1316,7 @@ const gameElementCategories = [
         spacerSize: "medium" as const
       }),
       ...(type === "continue_button" && {
-        buttonText: t('quiz.buttons.continue'),
+        buttonText: "Continuar",
         buttonAction: "next_page" as const,
         buttonSize: "medium" as const,
         buttonBorderRadius: "medium" as const,
@@ -1328,15 +1328,15 @@ const gameElementCategories = [
       // 🔥 NOVA FUNCIONALIDADE: Configurações padrão para classificadores ultra personalizados
       ...(type === "body_type_classifier" && {
         classifierType: "body_type",
-        classifierTitle: t('quiz.classifiers.bodyType.title'),
-        classifierDescription: t('quiz.classifiers.bodyType.description'),
+        classifierTitle: "Qual é o seu tipo corporal?",
+        classifierDescription: "Escolha a opção que melhor descreve seu corpo atual:",
         classifierRequired: true,
         classifierMultipleSelect: false,
         fieldId: "tipo_corpo",
         classifierOptions: [
           {
             id: "magra",
-            label: t('quiz.classifiers.bodyType.options.thin'),
+            label: "Magro/Ectomorfo",
             description: "Corpo naturalmente magro, dificuldade para ganhar peso",
             icon: "👤",
             color: "#3b82f6",
@@ -1348,7 +1348,7 @@ const gameElementCategories = [
           },
           {
             id: "com_volume",
-            label: t('quiz.classifiers.bodyType.options.withVolume'),
+            label: "Com Volume/Endomorfo",
             description: "Corpo com mais volume, foco na definição muscular",
             icon: "💪",
             color: "#f59e0b",
@@ -1360,7 +1360,7 @@ const gameElementCategories = [
           },
           {
             id: "tonifica",
-            label: t('quiz.classifiers.bodyType.options.toTone'),
+            label: "Para Tonificar/Mesomorfo",
             description: "Corpo que precisa de tonificação e fortalecimento",
             icon: "⚡",
             color: "#10b981",
@@ -1372,7 +1372,7 @@ const gameElementCategories = [
           },
           {
             id: "equilibrado",
-            label: t('quiz.classifiers.bodyType.options.balanced'),
+            label: "Equilibrado/Atlético",
             description: "Corpo com proporções equilibradas, manutenção e melhoria",
             icon: "⚖️",
             color: "#8b5cf6",
@@ -1387,15 +1387,15 @@ const gameElementCategories = [
       
       ...(type === "age_classifier" && {
         classifierType: "age_group",
-        classifierTitle: t('quiz.classifiers.ageGroup.title'),
-        classifierDescription: t('quiz.classifiers.ageGroup.description'),
+        classifierTitle: "Qual é a sua faixa etária?",
+        classifierDescription: "Isso nos ajuda a personalizar seu treino:",
         classifierRequired: true,
         classifierMultipleSelect: false,
         fieldId: "faixa_etaria",
         classifierOptions: [
           {
             id: "18-25",
-            label: t('quiz.classifiers.ageGroup.options.18-25'),
+            label: "18-25 anos",
             description: "Metabolismo acelerado, alta capacidade de recuperação",
             icon: "🚀",
             color: "#3b82f6",
@@ -1407,7 +1407,7 @@ const gameElementCategories = [
           },
           {
             id: "26-35",
-            label: t('quiz.classifiers.ageGroup.options.26-35'),
+            label: "26-35 anos",
             description: "Pico de performance, equilibrio ideal para resultados",
             icon: "💪",
             color: "#10b981",
@@ -1419,7 +1419,7 @@ const gameElementCategories = [
           },
           {
             id: "36-45",
-            label: t('quiz.classifiers.ageGroup.options.36-45'),
+            label: "36-45 anos",
             description: "Maturidade e experiência, foco em eficiência",
             icon: "🎯",
             color: "#f59e0b",
@@ -1431,7 +1431,7 @@ const gameElementCategories = [
           },
           {
             id: "46+",
-            label: t('quiz.classifiers.ageGroup.options.46+'),
+            label: "46+ anos",
             description: "Sabedoria e determinação, foco em saúde e vitalidade",
             icon: "🌟",
             color: "#8b5cf6",
@@ -1446,15 +1446,15 @@ const gameElementCategories = [
       
       ...(type === "fitness_goal_classifier" && {
         classifierType: "fitness_goal",
-        classifierTitle: t('quiz.classifiers.fitnessGoal.title'),
-        classifierDescription: t('quiz.classifiers.fitnessGoal.description'),
+        classifierTitle: "Qual é o seu objetivo fitness?",
+        classifierDescription: "Vamos personalizar seu programa:",
         classifierRequired: true,
         classifierMultipleSelect: false,
         fieldId: "objetivo_fitness",
         classifierOptions: [
           {
             id: "perder_peso",
-            label: t('quiz.classifiers.fitnessGoal.options.loseWeight'),
+            label: "Perder Peso",
             description: "Reduzir gordura corporal e alcançar peso ideal",
             icon: "📉",
             color: "#ef4444",
@@ -1466,7 +1466,7 @@ const gameElementCategories = [
           },
           {
             id: "ganhar_massa",
-            label: t('quiz.classifiers.fitnessGoal.options.gainMass'),
+            label: "Ganhar Massa",
             description: "Aumentar massa muscular e definição",
             icon: "💪",
             color: "#10b981",
@@ -1478,7 +1478,7 @@ const gameElementCategories = [
           },
           {
             id: "tonificar",
-            label: t('quiz.classifiers.fitnessGoal.options.tone'),
+            label: "Tonificar",
             description: "Definir músculos e melhorar forma física",
             icon: "⚡",
             color: "#f59e0b",
@@ -1490,7 +1490,7 @@ const gameElementCategories = [
           },
           {
             id: "manter_forma",
-            label: t('quiz.classifiers.fitnessGoal.options.maintain'),
+            label: "Manter Forma",
             description: "Manutenção da forma física atual",
             icon: "⚖️",
             color: "#8b5cf6",
@@ -1505,15 +1505,15 @@ const gameElementCategories = [
       
       ...(type === "experience_classifier" && {
         classifierType: "experience_level",
-        classifierTitle: t('quiz.classifiers.experience.title'),
-        classifierDescription: t('quiz.classifiers.experience.description'),
+        classifierTitle: "Qual é o seu nível de experiência?",
+        classifierDescription: "Nos ajude a adequar o programa ao seu nível:",
         classifierRequired: true,
         classifierMultipleSelect: false,
         fieldId: "nivel_experiencia",
         classifierOptions: [
           {
             id: "iniciante",
-            label: t('quiz.classifiers.experience.options.beginner'),
+            label: "Iniciante",
             description: "Pouca ou nenhuma experiência com exercícios",
             icon: "🌱",
             color: "#10b981",
@@ -1525,7 +1525,7 @@ const gameElementCategories = [
           },
           {
             id: "intermediario",
-            label: t('quiz.classifiers.experience.options.intermediate'),
+            label: "Intermediário",
             description: "Alguns meses de experiência, conhecimento básico",
             icon: "🔥",
             color: "#f59e0b",
@@ -1537,7 +1537,7 @@ const gameElementCategories = [
           },
           {
             id: "avancado",
-            label: t('quiz.classifiers.experience.options.advanced'),
+            label: "Avançado",
             description: "Experiência sólida, busca por otimização",
             icon: "⚡",
             color: "#8b5cf6",
@@ -1549,7 +1549,7 @@ const gameElementCategories = [
           },
           {
             id: "expert",
-            label: t('quiz.classifiers.experience.options.expert'),
+            label: "Expert",
             description: "Experiência extensa, conhecimento profundo",
             icon: "👑",
             color: "#6366f1",
@@ -1941,7 +1941,7 @@ const gameElementCategories = [
               
               <input
                 type={element.type === "email" ? "email" : element.type === "phone" ? "tel" : element.type === "number" ? "number" : "text"}
-                placeholder={element.placeholder || `${t('quiz.placeholders.typeHere')} ${element.type === "email" ? t('quiz.placeholders.yourEmail') : element.type === "phone" ? t('quiz.placeholders.yourPhone') : ""}`}
+                placeholder={element.placeholder || `Digite aqui ${element.type === "email" ? "seu email" : element.type === "phone" ? "seu telefone" : ""}`}
                 className={`w-full px-3 py-3 ${element.showInlineIcon ? "pl-10" : ""} ${inputStyle} transition-all duration-200`}
                 {...(element.type === "email" && element.emailValidation && {
                   pattern: "[a-z0-9._%+-]+@[a-z0-9.-]+\\.[a-z]{2,}$"
@@ -2100,8 +2100,8 @@ const gameElementCategories = [
               <div className="w-full h-32 border-2 border-dashed border-gray-300 rounded-lg flex items-center justify-center bg-gray-50 cursor-pointer hover:bg-gray-100">
                 <div className="text-center">
                   <Upload className="w-8 h-8 mx-auto text-gray-400 mb-2" />
-                  <p className="text-sm text-gray-500 mb-1">{t('quiz.labels.clickUploadImage')}</p>
-                  <p className="text-xs text-gray-400">{t('quiz.labels.maxFileSize')}</p>
+                  <p className="text-sm text-gray-500 mb-1">Clique para fazer upload de imagem</p>
+                  <p className="text-xs text-gray-400">Máximo 5MB</p>
                 </div>
               </div>
             )}
@@ -2126,10 +2126,10 @@ const gameElementCategories = [
                 <div className="text-center">
                   <Video className="w-12 h-12 mx-auto text-gray-400 mb-2" />
                   <p className="text-sm text-gray-500 mb-1">
-                    {element.content ? t('quiz.labels.invalidVideoUrl') : t('quiz.placeholders.addVideo')}
+                    {element.content ? "URL de vídeo inválida" : "Adicionar vídeo"}
                   </p>
                   <p className="text-xs text-gray-400">
-                    {t('quiz.labels.videoSupport')}
+                    Suporte para YouTube, Vimeo e outros
                   </p>
                 </div>
               </div>
