@@ -173,7 +173,10 @@ export default function AdminPush() {
 
     setLoading(true);
     try {
-      const response = await apiRequest('POST', '/api/admin/push-messages', newMessage);
+      const response = await apiRequest('/api/admin/push-messages', {
+        method: 'POST',
+        body: JSON.stringify(newMessage)
+      });
       if (response.success) {
         toast({
           title: "Mensagem adicionada",
@@ -199,7 +202,9 @@ export default function AdminPush() {
   const deleteMessage = async (messageId) => {
     setLoading(true);
     try {
-      const response = await apiRequest('DELETE', `/api/admin/push-messages/${messageId}`);
+      const response = await apiRequest(`/api/admin/push-messages/${messageId}`, {
+        method: 'DELETE'
+      });
       if (response.success) {
         toast({
           title: "Mensagem removida",
@@ -224,7 +229,10 @@ export default function AdminPush() {
   const updateMessage = async (messageId, updates) => {
     setLoading(true);
     try {
-      const response = await apiRequest('PUT', `/api/admin/push-messages/${messageId}`, updates);
+      const response = await apiRequest(`/api/admin/push-messages/${messageId}`, {
+        method: 'PUT',
+        body: JSON.stringify(updates)
+      });
       if (response.success) {
         toast({
           title: "Mensagem atualizada",
@@ -614,6 +622,53 @@ export default function AdminPush() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Modal de Edição */}
+      {editingMessage && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 w-full max-w-md">
+            <h3 className="text-lg font-semibold mb-4">Editar Mensagem</h3>
+            <div className="space-y-4">
+              <div>
+                <Label htmlFor="edit-title">Título</Label>
+                <Input
+                  id="edit-title"
+                  value={editingMessage.title}
+                  onChange={(e) => setEditingMessage(prev => ({ ...prev, title: e.target.value }))}
+                  placeholder="Título da mensagem"
+                />
+              </div>
+              <div>
+                <Label htmlFor="edit-message">Mensagem</Label>
+                <Textarea
+                  id="edit-message"
+                  value={editingMessage.message}
+                  onChange={(e) => setEditingMessage(prev => ({ ...prev, message: e.target.value }))}
+                  placeholder="Conteúdo da mensagem"
+                  rows={3}
+                />
+              </div>
+              <div className="flex gap-2 justify-end">
+                <Button
+                  variant="outline"
+                  onClick={() => setEditingMessage(null)}
+                >
+                  Cancelar
+                </Button>
+                <Button
+                  onClick={() => updateMessage(editingMessage.id, {
+                    title: editingMessage.title,
+                    message: editingMessage.message
+                  })}
+                  disabled={loading}
+                >
+                  {loading ? 'Salvando...' : 'Salvar'}
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Status do Sistema */}
       <Card>

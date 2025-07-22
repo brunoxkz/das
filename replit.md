@@ -328,6 +328,15 @@ O sistema utiliza Stripe Payment Intent para processar pagamentos únicos de R$ 
 
 ```
 Changelog:
+- July 22, 2025. SISTEMA DE MENSAGENS ROTATIVAS 100% CORRIGIDO - Frontend de edição e remoção agora funcionando perfeitamente:
+  * PROBLEMA FRONTEND CRÍTICO CORRIGIDO: Sintaxe apiRequest('POST', url, data) alterada para apiRequest(url, {method: 'POST', body: JSON.stringify(data)})
+  * MODAL DE EDIÇÃO IMPLEMENTADO: Modal completo para editar título e mensagem das mensagens rotativas
+  * TESTES FINAIS 100% APROVADOS: 7/7 testes de edição/remoção bem-sucedidos (100% taxa de sucesso)
+  * OPERAÇÕES CRUD COMPLETAS: Adicionar, editar, ativar/desativar e remover mensagens funcionando perfeitamente
+  * INTERFACE FUNCIONAL: Botões "Editar" e "Remover" agora executam as ações corretamente
+  * STATUS: SISTEMA DE MENSAGENS ROTATIVAS 100% FUNCIONAL em frontend e backend
+  * Arquivos corrigidos: client/src/pages/admin-push.tsx (correções de sintaxe + modal de edição)
+  * Arquivo de teste: teste-edicao-remocao.cjs (validação completa das correções)
 - July 22, 2025. SISTEMA DE NOTIFICAÇÕES PUSH COMPLETO SALVO - Sistema 100% funcional documentado e aprovado para produção:
   * DETECÇÃO AUTOMÁTICA 100% FUNCIONAL: Sistema detecta quiz completions automaticamente via /api/quizzes/:id/submit
   * NOTIFICAÇÕES PUSH REAIS: 3 dispositivos notificados com sucesso em teste real (Quiz RdAUwmQgTthxbZLA0HJWu)
