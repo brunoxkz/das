@@ -161,6 +161,8 @@ async function checkPlanExpiration(req: any, res: any, next: any) {
 }
 
 export function registerSQLiteRoutes(app: Express): Server {
+  console.log('🚀 INICIANDO REGISTRAÇÃO DE ROTAS SQLITE - INCLUINDO QUIZ I.A.');
+  console.log('📋 Rotas Quiz I.A. serão registradas: /api/quiz-ia/generate e /api/quiz-ia/create');
   // API Routes initialization
 
   // 🔓 ROTAS PÚBLICAS - SEM MIDDLEWARES DE SEGURANÇA
@@ -26486,9 +26488,15 @@ export function registerCheckoutRoutes(app: Express) {
   // ============================================================================
   
   // Gerar conteúdo do quiz com I.A.
+  console.log('📝 REGISTRANDO ROTA: POST /api/quiz-ia/generate com middleware verifyJWT');
   app.post("/api/quiz-ia/generate", verifyJWT, async (req: any, res) => {
     try {
+      console.log('🚀 QUIZ I.A.: Iniciando geração de quiz...');
+      console.log('📝 Dados recebidos:', req.body);
+      console.log('👤 Usuário autenticado:', req.user?.id);
+      
       if (!req.user) {
+        console.log('❌ QUIZ I.A.: Usuário não autenticado');
         return res.status(401).json({ success: false, error: "Unauthorized" });
       }
 
@@ -26496,6 +26504,8 @@ export function registerCheckoutRoutes(app: Express) {
 
       // Validar dados de entrada
       if (!niche || !targetAudience || !painPoint || !solution || !productName || !productPrice) {
+        console.log('❌ QUIZ I.A.: Campos obrigatórios em falta');
+        console.log('📋 Campos recebidos:', { niche, targetAudience, painPoint, solution, productName, productPrice });
         return res.status(400).json({ 
           success: false, 
           error: "Todos os campos são obrigatórios" 
@@ -26503,6 +26513,8 @@ export function registerCheckoutRoutes(app: Express) {
       }
 
       console.log(`🤖 QUIZ I.A.: Gerando conteúdo para nicho "${niche}"`);
+      console.log('🎯 Público-alvo:', targetAudience);
+      console.log('⚡ Iniciando simulação de I.A...');
 
       // Simular geração de conteúdo com I.A. (posteriormente integrar com OpenAI)
       const generatedContent = {
@@ -26572,23 +26584,32 @@ export function registerCheckoutRoutes(app: Express) {
       };
 
       console.log(`✅ QUIZ I.A.: Conteúdo gerado com sucesso - ${generatedContent.questions.length} perguntas`);
+      console.log('📊 Estrutura do conteúdo gerado:', JSON.stringify(generatedContent, null, 2));
+      console.log('🎉 Enviando resposta de sucesso para o frontend...');
       
-      res.json({ 
+      const responseData = { 
         success: true, 
         content: generatedContent,
         message: "Quiz gerado com sucesso pela I.A.!"
-      });
+      };
+      
+      console.log('📤 Dados da resposta:', JSON.stringify(responseData, null, 2));
+      
+      res.json(responseData);
 
     } catch (error) {
-      console.error("❌ Erro ao gerar quiz I.A.:", error);
+      console.error("❌ ERRO COMPLETO ao gerar quiz I.A.:", error);
+      console.error("❌ Stack trace:", error.stack);
+      console.error("❌ Mensagem do erro:", error.message);
       res.status(500).json({ 
         success: false, 
-        error: "Erro interno do servidor" 
+        error: error.message || "Erro interno do servidor" 
       });
     }
   });
 
   // Criar quiz final com PIX
+  console.log('📝 REGISTRANDO ROTA: POST /api/quiz-ia/create com middleware verifyJWT');
   app.post("/api/quiz-ia/create", verifyJWT, async (req: any, res) => {
     try {
       if (!req.user) {

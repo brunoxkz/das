@@ -415,6 +415,152 @@ app.get('/api/push-simple/stats', (req: any, res: any) => {
 
 console.log('✅ PUSH NOTIFICATIONS ENDPOINTS REGISTRADOS DIRETAMENTE ANTES DO VITE');
 
+// QUIZ I.A. ENDPOINTS REGISTRADOS DIRETAMENTE ANTES DO VITE
+import { verifyJWT } from "./auth-hybrid";
+
+app.post('/api/quiz-ia/generate', verifyJWT, async (req: any, res: any) => {
+  console.log('🚀 QUIZ I.A. DIRETO: Iniciando geração de quiz...');
+  console.log('📝 Dados recebidos:', req.body);
+  console.log('👤 Usuário autenticado:', req.user?.id);
+  
+  try {
+    if (!req.user) {
+      return res.status(401).json({ success: false, error: "Unauthorized" });
+    }
+
+    const { niche, targetAudience, goal, productName, productPrice } = req.body;
+
+    // Validar dados
+    if (!niche || !targetAudience || !goal || !productName || !productPrice) {
+      return res.status(400).json({ 
+        success: false, 
+        error: "Dados incompletos para gerar o quiz" 
+      });
+    }
+
+    console.log(`🎯 Gerando quiz para ${niche} - ${targetAudience}`);
+
+    // Gerar solução personalizada baseada no nicho
+    const solution = niche.toLowerCase().includes('fitness') || niche.toLowerCase().includes('saúde')
+      ? "transformação física completa com acompanhamento personalizado"
+      : niche.toLowerCase().includes('negócio') || niche.toLowerCase().includes('empreend')
+      ? "estratégia de negócios proven que multiplica resultados"
+      : niche.toLowerCase().includes('relacionamento')
+      ? "método revolucionário para relacionamentos duradouros"
+      : `solução inovadora especializada em ${niche.toLowerCase()}`;
+
+    // Gerar perguntas personalizadas baseadas no nicho
+    const questions = [];
+    
+    // Pergunta 1: Situação atual
+    questions.push({
+      id: "situacao_atual",
+      type: "multiple_choice",
+      question: `Qual melhor descreve sua situação atual em ${niche.toLowerCase()}?`,
+      options: [
+        "Iniciante - ainda estou começando",
+        "Intermediário - já tentei algumas coisas",
+        "Avançado - mas não consigo resultados",
+        "Experiente - quero otimizar resultados"
+      ]
+    });
+
+    // Pergunta 2: Principal desafio
+    questions.push({
+      id: "principal_desafio",
+      type: "multiple_choice",
+      question: `Qual é seu maior desafio para ${goal.toLowerCase()}?`,
+      options: [
+        "Falta de conhecimento específico",
+        "Falta de tempo para aplicar",
+        "Dificuldade em manter consistência",
+        "Métodos que não funcionam para mim"
+      ]
+    });
+
+    // Pergunta 3: Objetivo específico
+    questions.push({
+      id: "objetivo_especifico",
+      type: "multiple_choice",
+      question: "Em quanto tempo você gostaria de ver os primeiros resultados?",
+      options: [
+        "Em 7 dias",
+        "Em 30 dias",
+        "Em 90 dias",
+        "Não tenho pressa"
+      ]
+    });
+
+    // Pergunta 4: Investimento
+    questions.push({
+      id: "investimento_disponivel",
+      type: "multiple_choice",
+      question: "Quanto você investiria em uma solução comprovada?",
+      options: [
+        "Até R$ 50",
+        "Até R$ 100",
+        "Até R$ 200",
+        "Valor não é problema"
+      ]
+    });
+
+    // Pergunta 5: Coleta de nome
+    questions.push({
+      id: "nome_completo",
+      type: "text",
+      question: "Qual é o seu nome completo?",
+      placeholder: "Digite seu nome completo"
+    });
+
+    // Pergunta 6: Coleta de email
+    questions.push({
+      id: "email_contato",
+      type: "email",
+      question: "E qual é o seu melhor e-mail para contato?",
+      placeholder: "seuemail@exemplo.com"
+    });
+
+    const generatedContent = {
+      questions: questions,
+      transitions: {
+        goodNews: `Ótima notícia! Baseado nas suas respostas, você tem o perfil perfeito para ${solution}. Pessoas como você obtiveram resultados incríveis em poucos dias!`,
+        badNews: `Infelizmente, muitas pessoas em ${niche.toLowerCase()} falham porque tentam métodos genéricos. Mas existe uma solução específica para o seu caso...`,
+        pitch: `Apresento o ${productName}! Um método exclusivo desenvolvido especialmente para pessoas como você que querem resultados rápidos em ${niche.toLowerCase()}. Por apenas R$ ${productPrice}, você terá acesso ao sistema completo que já transformou a vida de centenas de pessoas. ${solution} Este é o momento de tomar a decisão que vai mudar tudo para você!`
+      },
+      checkout: {
+        headline: `🚀 ${productName} - Garante Já o Seu!`,
+        description: `Método exclusivo para ${niche.toLowerCase()} por apenas R$ ${productPrice}`,
+        features: [
+          "Acesso imediato após o pagamento",
+          "Método comprovado e testado",
+          "Suporte especializado",
+          "Garantia de 7 dias",
+          "Bônus exclusivos inclusos"
+        ]
+      }
+    };
+
+    console.log(`✅ QUIZ I.A. DIRETO: Conteúdo gerado com sucesso - ${generatedContent.questions.length} perguntas`);
+    
+    const responseData = { 
+      success: true, 
+      content: generatedContent,
+      message: "Quiz gerado com sucesso pela I.A.!"
+    };
+    
+    res.json(responseData);
+
+  } catch (error) {
+    console.error("❌ ERRO QUIZ I.A. DIRETO:", error);
+    res.status(500).json({ 
+      success: false, 
+      error: error.message || "Erro interno do servidor" 
+    });
+  }
+});
+
+console.log('✅ QUIZ I.A. ENDPOINTS REGISTRADOS DIRETAMENTE ANTES DO VITE');
+
 // ENDPOINT DIRETO DE NOTIFICAÇÃO ADMIN - ANTES DO VITE
 import { AdminNotificationSimulator } from './admin-notification-simulator';
 // Sistema de push notifications integrado diretamente no routes-sqlite.ts
@@ -537,6 +683,13 @@ app.use((req, res, next) => {
     }
   }
   next();
+});
+
+// INTERCEPTAÇÃO CRÍTICA PARA ROTAS QUIZ I.A. - ANTES DO VITE
+app.use('/api/quiz-ia', (req, res, next) => {
+  console.log(`🎯 INTERCEPTANDO QUIZ I.A.: ${req.method} ${req.url}`);
+  console.log('🔒 Rota Quiz I.A. interceptada - NÃO deve chegar ao Vite');
+  next(); // Permite que continue para as rotas Express
 });
 
 // Setup Vite middleware for dev and production APÓS todas as rotas
