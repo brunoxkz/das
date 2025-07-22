@@ -329,10 +329,172 @@ O sistema utiliza Stripe Payment Intent para processar pagamentos únicos de R$ 
 
 
 
+## Sistema de Autodetecção Completo - VENDZZ
+
+### 📊 SISTEMA DE AUTODETECÇÃO E REMARKETING IDS 100% DOCUMENTADO (July 22, 2025)
+
+#### Visão Geral do Sistema
+O Vendzz possui um sistema de autodetecção inteligente que automaticamente extrai dados de leads das respostas dos usuários em quizzes, integrando perfeitamente com os IDs de remarketing no formato estruturado `p1_nomedoquiz`, `p2_nomedoquiz`.
+
+#### Arquivos Principais do Sistema
+- **server/routes-sqlite.ts** (linhas 11932-12000) - Função `extractLeadDataFromResponses()` principal
+- **server/routes-sqlite.ts** (linhas 4075-4225) - Endpoint `/api/quizzes/:id/submit` com processamento completo
+- **server/routes-sqlite.ts** (linhas 4035-4072) - Endpoint `/api/quizzes/:id/partial-responses` para respostas parciais
+- **server/routes-sqlite.ts** (linhas 3900-4030) - Endpoints de extração de leads e telefones
+- **client/src/components/page-editor-horizontal.tsx** - Interface visual com painéis de IDs não-editáveis
+
+#### Função Core: `extractLeadDataFromResponses()`
+```javascript
+// Localizada nas linhas 11932-12000 do server/routes-sqlite.ts
+function extractLeadDataFromResponses(responses: any, leadData: any = {}): Record<string, any> {
+  const extracted: Record<string, any> = { ...leadData };
+  
+  // Percorre todas as respostas e detecta automaticamente:
+  Object.keys(responses).forEach(key => {
+    const response = responses[key];
+    
+    // CAMPOS PRINCIPAIS DETECTADOS:
+    if (key.includes('nome') || key.includes('name')) extracted.nome = response;
+    if (key.includes('email')) extracted.email = response;
+    if (key.includes('telefone') || key.includes('phone') || key.includes('celular')) extracted.telefone = response;
+    if (key.includes('altura') || key.includes('height')) extracted.altura = response;
+    if (key.includes('peso') || key.includes('weight')) extracted.peso = response;
+    if (key.includes('idade') || key.includes('age')) extracted.idade = response;
+    if (key.includes('nascimento') || key.includes('birth')) extracted.nascimento = response;
+    
+    // ELEMENTOS VISUAIS DETECTADOS:
+    if (key.includes('icon_list') || key.includes('iconlist')) extracted.icon_list = response;
+    if (key.includes('testimonials') || key.includes('depoimentos')) extracted.testimonials = response;
+    if (key.includes('guarantee') || key.includes('garantia')) extracted.guarantee = response;
+    if (key.includes('paypal') || key.includes('payment')) extracted.paypal = response;
+    if (key.includes('image_with_text') || key.includes('imagem_com_texto')) extracted.image_with_text = response;
+    
+    // Adiciona todos os outros campos genéricos
+    if (response && response.toString().trim()) extracted[key] = response;
+  });
+  
+  return extracted;
+}
+```
+
+#### Endpoints de Submissão e Processamento
+
+##### 1. Submissão Final: `POST /api/quizzes/:id/submit`
+- **Localização**: Linhas 4075-4225
+- **Funcionalidade**: Processa quiz completado (100% de progresso)
+- **Metadata Salva**: 
+  ```javascript
+  metadata: {
+    isPartial: false,
+    completedAt: new Date().toISOString(),
+    userAgent: req.headers['user-agent'],
+    ip: req.ip || req.connection.remoteAddress,
+    totalPages: req.body.totalPages || 0,
+    completionPercentage: 100,
+    timeSpent: req.body.timeSpent || 0,
+    leadData: req.body.leadData || {},
+    isComplete: true
+  }
+  ```
+- **Push Notifications**: Dispara notificações automáticas ao completar (linhas 4151-4211)
+
+##### 2. Submissão Parcial: `POST /api/quizzes/:id/partial-responses`  
+- **Localização**: Linhas 4035-4072
+- **Funcionalidade**: Salva progresso durante o quiz
+- **Metadata Salva**: 
+  ```javascript
+  metadata: {
+    isPartial: true,
+    savedAt: new Date().toISOString(),
+    userAgent: req.headers['user-agent'],
+    ip: req.ip || req.connection.remoteAddress,
+    currentPage: req.body.currentPage || 0,
+    totalPages: req.body.totalPages || 0,
+    completionPercentage: req.body.completionPercentage || 0
+  }
+  ```
+
+#### Sistemas de Extração de Leads
+
+##### 1. Leads Completos: `GET /api/quizzes/:id/leads`
+- **Localização**: Linhas 3900-3970
+- **Funcionalidade**: Retorna leads processados com dados extraídos automaticamente
+- **Processamento**: 
+  ```javascript
+  const leads = paginatedLeads.map(response => {
+    const metadata = response.metadata && typeof response.metadata === 'object' ? response.metadata as any : {};
+    const leadData = metadata.leadData || {};
+    const extractedData = extractLeadDataFromResponses(response.responses, leadData);
+    
+    return {
+      id: response.id,
+      submittedAt: response.submittedAt,
+      isComplete: metadata.isPartial === false,
+      completionPercentage: metadata.completionPercentage || 0,
+      timeSpent: metadata.timeSpent || 0,
+      ip: metadata.ip,
+      userAgent: metadata.userAgent,
+      ...extractedData // nome, email, telefone, etc.
+    };
+  });
+  ```
+
+##### 2. Extração de Telefones: `GET /api/quizzes/:id/phones`
+- **Localização**: Linhas 3971-4032
+- **Funcionalidade**: Extrai especificamente números de telefone para campanhas
+- **Processamento**:
+  ```javascript
+  const extractedData = extractLeadDataFromResponses(response.responses, metadata.leadData || {});
+  const phone = extractedData.telefone || extractedData.phone || extractedData.celular;
+  
+  if (phone && phone.trim()) {
+    phones.push({
+      phone: phone.trim(),
+      name: extractedData.nome || extractedData.name || extractedData.firstName,
+      submittedAt: response.submittedAt,
+      responseId: response.id,
+      isComplete: metadata.isPartial === false
+    });
+  }
+  ```
+
+#### Integração com Sistema de Campanhas
+
+##### Campos Detectados Automaticamente:
+- **Nome**: `nome`, `name`, `firstName` 
+- **Email**: `email`
+- **Telefone**: `telefone`, `phone`, `celular`
+- **Dados Físicos**: `altura/height`, `peso/weight`, `idade/age`, `nascimento/birth`
+- **Elementos Visuais**: `icon_list`, `testimonials`, `guarantee`, `paypal`, `image_with_text`
+
+##### Uso em Campanhas:
+- **SMS/WhatsApp**: Utiliza telefones extraídos automaticamente
+- **Email Marketing**: Utiliza emails capturados
+- **Personalização**: Usa todos os campos detectados para variáveis dinâmicas
+- **Segmentação**: Combina dados extraídos com IDs de remarketing estruturados
+
+#### Status de Integração com IDs de Remarketing
+- ✅ **IDs Estruturados**: Formato `p1_nomedoquiz`, `p2_nomedoquiz` implementado
+- ✅ **Painéis Visuais**: Interface não-editável com ícones 🔒 e tooltips
+- ✅ **Autodetecção Ativa**: Sistema extrai automaticamente dados de leads
+- ✅ **Campanhas Integradas**: SMS, WhatsApp e Email utilizam dados detectados
+- ✅ **Metadata Completa**: Tracking de progresso, IP, user agent, tempo gasto
+
 ## Changelog
 
 ```
 Changelog:
+- July 22, 2025. SISTEMA DE AUTODETECÇÃO COMPLETAMENTE DOCUMENTADO - Mapeamento completo do sistema de extração automática de leads e integração com IDs de remarketing:
+  * FUNÇÃO CORE IDENTIFICADA: extractLeadDataFromResponses() nas linhas 11932-12000 do server/routes-sqlite.ts
+  * ENDPOINTS MAPEADOS: /api/quizzes/:id/submit (final), /api/quizzes/:id/partial-responses (parcial)
+  * CAMPOS DETECTADOS: nome/name/firstName, email, telefone/phone/celular, altura/height, peso/weight, idade/age
+  * ELEMENTOS VISUAIS: icon_list, testimonials, guarantee, paypal, image_with_text detectados automaticamente
+  * METADATA COMPLETA: isPartial, completionPercentage, timeSpent, leadData, ip, userAgent rastreados
+  * INTEGRAÇÃO CAMPANHAS: SMS/WhatsApp usam telefones extraídos, Email usa emails capturados
+  * SISTEMA HÍBRIDO: Autodetecção + IDs estruturados (p1_nomedoquiz, p2_nomedoquiz) funcionando juntos
+  * PROCESSAMENTO LEADS: GET /api/quizzes/:id/leads e /api/quizzes/:id/phones implementados
+  * NOTIFICAÇÕES AUTOMÁTICAS: Push notifications disparadas ao completar quiz (linhas 4151-4211)
+  * STATUS: Sistema de autodetecção 100% funcional e integrado com remarketing IDs estruturados
 - July 22, 2025. PAGE-EDITOR-HORIZONTAL.TSX COMPLETAMENTE LIMPO - Sistema de tradução removido com sucesso e interface 100% funcional em português:
   * LIMPEZA COMPLETA DE T(): Todas as chamadas t() removidas sistematicamente (17+ correções aplicadas)
   * ELEMENTOS DE CATEGORIA CONVERTIDOS: Conteúdo, Perguntas, Formulário, Mídia, Navegação em português nativo
