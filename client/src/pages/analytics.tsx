@@ -1,367 +1,262 @@
 import { useQuery } from "@tanstack/react-query";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { StatsCard } from "@/components/stats-card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { 
   BarChart3, 
-  Users, 
+  TrendingUp, 
   Eye, 
-  TrendingUp,
+  MousePointer, 
+  Users, 
   Calendar,
-  Download,
-  Filter,
-  RefreshCw,
-  ChevronRight,
-  ArrowLeft
+  Target,
+  Award
 } from "lucide-react";
-import { useAuth } from "@/hooks/useAuth-jwt";
-import { useToast } from "@/hooks/use-toast";
-import { useEffect } from "react";
-import React from "react";
-import { Link, useLocation } from "wouter";
-import { useLanguage } from "@/hooks/useLanguage";
 
-export default function Analytics() {
-  const { toast } = useToast();
-  const { isAuthenticated, isLoading: authLoading } = useAuth();
-  const [location, navigate] = useLocation();
-  const { t } = useLanguage();
-
-  // Get quiz data from URL params  
-  const params = new URLSearchParams(window.location.search);
-  const selectedQuizId = params.get('quiz');
-
-  // Fetch dashboard stats for general view
-  const { data: dashboardStats, isLoading: statsLoading } = useQuery({
-    queryKey: ["/api/dashboard/stats"],
-    enabled: isAuthenticated && !selectedQuizId,
-    retry: false,
-  });
-
-  // Fetch user's quizzes for general view
-  const { data: userQuizzes, isLoading: quizzesLoading, error: quizzesError } = useQuery({
-    queryKey: ["/api/quizzes"],
-    enabled: isAuthenticated,
-    retry: false,
-  });
-
-
-
-  // Fetch specific quiz analytics if quiz is selected
-  const { data: quizAnalytics, isLoading: quizAnalyticsLoading } = useQuery({
-    queryKey: ["/api/analytics", selectedQuizId],
-    enabled: isAuthenticated && !!selectedQuizId,
-    retry: false,
-  });
-
-  // Fetch all analytics data
-  const { data: allAnalytics } = useQuery({
+export default function AnalyticsPage() {
+  // Buscar dados de analytics
+  const { data: analytics, isLoading } = useQuery({
     queryKey: ["/api/analytics"],
-    enabled: isAuthenticated && !selectedQuizId,
-    retry: false,
   });
 
-  // Create map of quiz analytics for displaying real data
-  const quizAnalyticsMap = React.useMemo(() => {
-    const map = new Map();
-    if (userQuizzes && Array.isArray(userQuizzes) && allAnalytics) {
-      userQuizzes.forEach((quiz: any) => {
-        const quizAnalytic = Array.isArray(allAnalytics) ? allAnalytics.find((a: any) => a.quizId === quiz.id) : null;
-        
-        // Use the correct field names from backend response
-        const totalViews = quizAnalytic?.totalViews || 0;
-        const leadsWithContact = quizAnalytic?.leadsWithContact || 0; // NEW: Real leads with email/phone
-        const conversionRate = quizAnalytic?.conversionRate || 0;
-        
-        map.set(quiz.id, {
-          views: totalViews,
-          leads: leadsWithContact, // Real leads with contact info
-          conversions: Math.round(conversionRate)
-        });
-      });
-    }
-    return map;
-  }, [userQuizzes, allAnalytics]);
+  // Buscar quizzes para analytics
+  const { data: quizzes } = useQuery({
+    queryKey: ["/api/quizzes"],
+  });
 
-  // Auth check
-  useEffect(() => {
-    if (!authLoading && !isAuthenticated) {
-      toast({
-        title: "Acesso negado",
-        description: "Você precisa estar logado para acessar os analytics.",
-        variant: "destructive",
-      });
-      setTimeout(() => {
-        window.location.href = "/login";
-      }, 500);
-    }
-  }, [isAuthenticated, authLoading, toast]);
+  const safeAnalytics = analytics || {
+    totalViews: 0,
+    totalResponses: 0,
+    conversionRate: 0,
+    topQuizzes: [],
+    weeklyStats: []
+  };
 
-  if (authLoading || (selectedQuizId ? quizAnalyticsLoading : (statsLoading || quizzesLoading))) {
+  const safeQuizzes = quizzes || [];
+
+  if (isLoading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full" />
-      </div>
-    );
-  }
-
-  // If specific quiz is selected, show quiz-specific analytics
-  if (selectedQuizId) {
-    return (
-      <div className="min-h-screen bg-gray-50 p-6">
-        <div className="max-w-6xl mx-auto">
-          <div className="flex items-center gap-4 mb-6">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => navigate("/analytics")}
-              className="flex items-center gap-2"
-            >
-              <ArrowLeft className="w-4 h-4" />
-              Voltar para Analytics Geral
-            </Button>
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900">
-                Analytics do Quiz: {quizAnalytics?.quiz?.title || "Carregando..."}
-              </h1>
-              <p className="text-gray-600">Análise detalhada do desempenho</p>
-            </div>
+      <div className="container mx-auto p-6">
+        <div className="animate-pulse space-y-6">
+          <div className="h-8 bg-gray-200 rounded w-1/3"></div>
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+            {[1, 2, 3, 4].map(i => (
+              <div key={i} className="h-32 bg-gray-200 rounded"></div>
+            ))}
           </div>
-
-          {quizAnalytics ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-              <StatsCard
-                title="Visualizações"
-                value={quizAnalytics.totalViews || 0}
-                icon={<Eye className="w-5 h-5 text-blue-600" />}
-                color="blue"
-                change="+12%"
-                changeType="positive"
-              />
-              <StatsCard
-                title="Leads Gerados"
-                value={quizAnalytics.leadsWithContact || 0}
-                icon={<Users className="w-5 h-5 text-green-600" />}
-                color="green"
-                change="+8%"
-                changeType="positive"
-              />
-              <div className="text-xs text-gray-500 mt-1">Leads = Email ou telefone capturado</div>
-              <StatsCard
-                title="Taxa de Conversão"
-                value={`${quizAnalytics.conversionRate || 0}%`}
-                icon={<TrendingUp className="w-5 h-5 text-purple-600" />}
-                color="purple"
-                change="+5%"
-                changeType="positive"
-              />
-              <div className="text-xs text-gray-500 mt-1">Conversão = Chegaram até a última página do quiz</div>
-              <StatsCard
-                title="Completados"
-                value={quizAnalytics.completedCount || 0}
-                icon={<BarChart3 className="w-5 h-5 text-orange-600" />}
-                color="orange"
-                change="+3%"
-                changeType="positive"
-              />
-            </div>
-          ) : (
-            <div className="text-center py-12">
-              <BarChart3 className="w-12 h-12 mx-auto text-gray-400 mb-4" />
-              <p className="text-gray-500">Nenhum dado disponível para este quiz</p>
-            </div>
-          )}
         </div>
       </div>
     );
   }
 
-  // General analytics view
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-gray-100">
-      <div className="p-4 md:p-6 max-w-7xl mx-auto">
-        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-8">
-          <div className="space-y-1">
-            <h1 className="text-3xl font-bold bg-gradient-to-r from-gray-900 to-gray-600 bg-clip-text text-transparent">
-              Analytics
-            </h1>
-            <p className="text-gray-600">Performance dos seus quizzes</p>
-          </div>
-          <div className="flex items-center gap-3">
-            <Button variant="outline" className="bg-white shadow-sm hover:shadow-md transition-shadow">
-              <Download className="w-4 h-4 mr-2" />
-              Exportar
-            </Button>
-            <Button variant="outline" className="bg-white shadow-sm hover:shadow-md transition-shadow">
-              <Filter className="w-4 h-4 mr-2" />
-              Filtros
-            </Button>
-            <Button className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 shadow-lg">
-              <RefreshCw className="w-4 h-4 mr-2" />
-              Atualizar
-            </Button>
-          </div>
-        </div>
+    <div className="container mx-auto p-6 space-y-6">
+      {/* Header */}
+      <div>
+        <h1 className="text-3xl font-bold">Analytics</h1>
+        <p className="text-muted-foreground">
+          Acompanhe o desempenho dos seus quizzes
+        </p>
+      </div>
 
-        {/* Stats Cards Modernos */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          <Card className="bg-gradient-to-r from-blue-500 to-blue-600 text-white border-0 shadow-lg">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-blue-100 text-sm font-medium">Total de Quizzes</p>
-                  <p className="text-3xl font-bold">{dashboardStats?.quizzes?.length || 0}</p>
-                  <p className="text-blue-100 text-xs">quizzes criados</p>
-                </div>
-                <BarChart3 className="w-12 h-12 text-blue-200" />
-              </div>
-            </CardContent>
-          </Card>
-          
-          <Card className="bg-gradient-to-r from-green-500 to-green-600 text-white border-0 shadow-lg">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-green-100 text-sm font-medium">Total de Leads</p>
-                  <p className="text-3xl font-bold">{allAnalytics ? allAnalytics.reduce((sum: number, a: any) => sum + (a.leadsWithContact || 0), 0) : 0}</p>
-                  <p className="text-green-100 text-xs">com contato capturado</p>
-                </div>
-                <Users className="w-12 h-12 text-green-200" />
-              </div>
-            </CardContent>
-          </Card>
-          
-          <Card className="bg-gradient-to-r from-purple-500 to-purple-600 text-white border-0 shadow-lg">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-purple-100 text-sm font-medium">Visualizações</p>
-                  <p className="text-3xl font-bold">{allAnalytics ? allAnalytics.reduce((sum: number, a: any) => sum + (a.totalViews || 0), 0) : 0}</p>
-                  <p className="text-purple-100 text-xs">acessos únicos</p>
-                </div>
-                <Eye className="w-12 h-12 text-purple-200" />
-              </div>
-            </CardContent>
-          </Card>
-          
-          <Card className="bg-gradient-to-r from-orange-500 to-orange-600 text-white border-0 shadow-lg">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-orange-100 text-sm font-medium">Conversão</p>
-                  <p className="text-3xl font-bold">{allAnalytics && allAnalytics.length > 0 ? Math.round(allAnalytics.reduce((sum: number, a: any) => sum + (a.conversionRate || 0), 0) / allAnalytics.length) : 0}%</p>
-                  <p className="text-orange-100 text-xs">média geral</p>
-                </div>
-                <TrendingUp className="w-12 h-12 text-orange-200" />
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Definições dos Dados */}
-        <div className="bg-gradient-to-r from-blue-50 to-green-50 rounded-lg p-4 mb-8 border border-blue-200">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
-            <div className="flex items-center gap-2">
-              <Users className="w-4 h-4 text-green-600" />
-              <span className="font-medium text-gray-700">Leads:</span>
-              <span className="text-gray-600">Respostas com email/telefone</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <TrendingUp className="w-4 h-4 text-purple-600" />
-              <span className="font-medium text-gray-700">Conversões:</span>
-              <span className="text-gray-600">Chegaram na última página</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <Eye className="w-4 h-4 text-blue-600" />
-              <span className="font-medium text-gray-700">Views:</span>
-              <span className="text-gray-600">Acessos ao quiz público</span>
-            </div>
-          </div>
-        </div>
-
-        {/* Quiz List with Analytics - Otimizado para Performance */}
-        <Card className="bg-white shadow-lg border-0">
-          <CardHeader className="bg-gradient-to-r from-gray-50 to-gray-100 border-b">
-            <CardTitle className="flex items-center gap-2 text-gray-900">
-              <BarChart3 className="w-5 h-5 text-blue-600" />
-              Desempenho por Quiz
-              <Badge variant="secondary" className="ml-auto bg-blue-100 text-blue-800">
-                {(userQuizzes || dashboardStats?.quizzes || []).length} quizzes
-              </Badge>
-            </CardTitle>
+      {/* Estatísticas Principais */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Total de Visualizações</CardTitle>
+            <Eye className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
-          <CardContent className="p-0">
-            {(userQuizzes || dashboardStats?.quizzes) && (userQuizzes?.length > 0 || dashboardStats?.quizzes?.length > 0) ? (
-              <div className="divide-y divide-gray-100">
-                {(userQuizzes || dashboardStats?.quizzes || []).map((quiz: any, index: number) => (
-                  <div
-                    key={quiz.id}
-                    className={`flex items-center justify-between p-6 hover:bg-gray-50 transition-colors ${
-                      index === 0 ? 'rounded-t-lg' : ''
-                    } ${
-                      index === (userQuizzes || dashboardStats?.quizzes || []).length - 1 ? 'rounded-b-lg' : ''
-                    }`}
-                  >
-                    <div className="flex items-center gap-4 flex-1">
-                      <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-blue-600 rounded-lg flex items-center justify-center text-white font-bold text-lg">
-                        {quiz.title.charAt(0).toUpperCase()}
-                      </div>
-                      <div className="flex-1">
-                        <h3 className="font-semibold text-gray-900 text-lg">{quiz.title}</h3>
-                        <p className="text-sm text-gray-500 mt-1">
-                          Criado em {new Date(quiz.createdAt).toLocaleDateString('pt-BR')}
-                        </p>
-                      </div>
-                    </div>
-                    
-                    <div className="flex items-center gap-6">
-                      <div className="text-center">
-                        <div className="text-2xl font-bold text-blue-600">
-                          {quizAnalyticsMap.get(quiz.id)?.views || 0}
-                        </div>
-                        <div className="text-xs text-gray-500 uppercase tracking-wide">Visualizações</div>
-                      </div>
-                      <div className="text-center">
-                        <div className="text-2xl font-bold text-green-600">
-                          {quizAnalyticsMap.get(quiz.id)?.leads || 0}
-                        </div>
-                        <div className="text-xs text-gray-500 uppercase tracking-wide">Leads</div>
-                      </div>
-                      <div className="text-center">
-                        <div className="text-2xl font-bold text-orange-600">
-                          {quizAnalyticsMap.get(quiz.id)?.conversions || 0}%
-                        </div>
-                        <div className="text-xs text-gray-500 uppercase tracking-wide">Conversão</div>
-                      </div>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => navigate(`/super-analytics?quiz=${quiz.id}`)}
-                        className="flex items-center gap-2 bg-blue-50 hover:bg-blue-100 border-blue-200 text-blue-700"
-                      >
-                        Ver Detalhes
-                        <ChevronRight className="w-4 h-4" />
-                      </Button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className="text-center py-12">
-                <BarChart3 className="w-12 h-12 mx-auto text-gray-400 mb-4" />
-                <p className="text-gray-500">Nenhum quiz encontrado</p>
-                <p className="text-sm text-gray-400 mt-2">
-                  Crie seu primeiro quiz para começar a ver analytics
-                </p>
-                <Button className="mt-4" onClick={() => navigate("/quiz-builder")}>
-                  Criar Primeiro Quiz
-                </Button>
-              </div>
-            )}
+          <CardContent>
+            <div className="text-2xl font-bold">{safeAnalytics.totalViews.toLocaleString()}</div>
+            <p className="text-xs text-muted-foreground">
+              Visualizações dos seus quizzes
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Total de Respostas</CardTitle>
+            <MousePointer className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{safeAnalytics.totalResponses.toLocaleString()}</div>
+            <p className="text-xs text-muted-foreground">
+              Respostas completas
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Taxa de Conversão</CardTitle>
+            <TrendingUp className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{safeAnalytics.conversionRate.toFixed(1)}%</div>
+            <p className="text-xs text-muted-foreground">
+              Taxa média de conclusão
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Quizzes Ativos</CardTitle>
+            <Target className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{safeQuizzes.length}</div>
+            <p className="text-xs text-muted-foreground">
+              Quizzes criados
+            </p>
           </CardContent>
         </Card>
       </div>
+
+      <Tabs defaultValue="overview" className="w-full">
+        <TabsList className="grid w-full grid-cols-3">
+          <TabsTrigger value="overview">Visão Geral</TabsTrigger>
+          <TabsTrigger value="quizzes">Por Quiz</TabsTrigger>
+          <TabsTrigger value="trends">Tendências</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="overview" className="space-y-4">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Quizzes com Melhor Performance</CardTitle>
+                <CardDescription>
+                  Seus quizzes com maior taxa de conversão
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                {safeAnalytics.topQuizzes.length > 0 ? (
+                  <div className="space-y-4">
+                    {safeAnalytics.topQuizzes.map((quiz: any, index: number) => (
+                      <div key={quiz.id} className="flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                          <div className="w-8 h-8 bg-gradient-to-r from-green-500 to-blue-500 rounded-full flex items-center justify-center text-white text-sm font-bold">
+                            {index + 1}
+                          </div>
+                          <div>
+                            <p className="font-medium">{quiz.title}</p>
+                            <p className="text-sm text-muted-foreground">
+                              {quiz.views} visualizações
+                            </p>
+                          </div>
+                        </div>
+                        <Badge variant="outline">
+                          {quiz.conversionRate}% conversão
+                        </Badge>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-8">
+                    <Award className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+                    <p className="text-muted-foreground">
+                      Dados de performance aparecerão aqui conforme seus quizzes recebem respostas
+                    </p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Resumo Semanal</CardTitle>
+                <CardDescription>
+                  Performance dos últimos 7 dias
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium">Visualizações</span>
+                    <span className="text-sm">{safeAnalytics.weeklyViews || 0}</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium">Respostas</span>
+                    <span className="text-sm">{safeAnalytics.weeklyResponses || 0}</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium">Taxa de Conversão</span>
+                    <span className="text-sm">{(safeAnalytics.weeklyConversion || 0).toFixed(1)}%</span>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </TabsContent>
+
+        <TabsContent value="quizzes" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>Performance por Quiz</CardTitle>
+              <CardDescription>
+                Detalhes de performance de cada quiz
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {safeQuizzes.length > 0 ? (
+                <div className="space-y-4">
+                  {safeQuizzes.map((quiz: any) => (
+                    <div key={quiz.id} className="flex items-center justify-between p-4 border rounded-lg">
+                      <div className="flex-1">
+                        <h3 className="font-medium">{quiz.title}</h3>
+                        <p className="text-sm text-muted-foreground">
+                          Criado em {new Date(quiz.created_at).toLocaleDateString()}
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-4 text-sm">
+                        <div className="text-center">
+                          <p className="font-medium">{quiz.views || 0}</p>
+                          <p className="text-muted-foreground">Visualizações</p>
+                        </div>
+                        <div className="text-center">
+                          <p className="font-medium">{quiz.responses || 0}</p>
+                          <p className="text-muted-foreground">Respostas</p>
+                        </div>
+                        <div className="text-center">
+                          <p className="font-medium">{((quiz.responses || 0) / (quiz.views || 1) * 100).toFixed(1)}%</p>
+                          <p className="text-muted-foreground">Conversão</p>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-8">
+                  <BarChart3 className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+                  <p className="text-muted-foreground mb-4">
+                    Você ainda não criou nenhum quiz
+                  </p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="trends" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>Tendências</CardTitle>
+              <CardDescription>
+                Análise de tendências e padrões
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="text-center py-8">
+                <Calendar className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+                <p className="text-muted-foreground">
+                  Dados de tendências estarão disponíveis conforme você acumula mais dados
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }

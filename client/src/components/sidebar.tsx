@@ -4,9 +4,8 @@ import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { NotificationSystem } from "@/components/notification-system";
-// import { LanguageSelector } from "@/components/language-selector"; // Removido - usando World Icon
 import { ThemeToggle } from "@/components/theme-toggle";
-// import { useLanguage } from "@/hooks/useLanguage";
+import { GoogleTranslateWidget } from "@/components/google-translate-widget";
 import { useSidebar } from "@/hooks/useSidebar";
 import { useState, useEffect, useRef } from "react";
 import { MobileSidebar, FloatingMobileMenu } from "@/components/mobile-sidebar";
@@ -69,9 +68,7 @@ export function Sidebar() {
   const { isCollapsed, toggleSidebar } = useSidebar();
   const [expandedCategories, setExpandedCategories] = useState<string[]>(["Principal"]);
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
-  const [showLanguageDropdown, setShowLanguageDropdown] = useState(false);
-  const [currentLanguage, setCurrentLanguage] = useState("pt-BR");
-  const languageDropdownRef = useRef<HTMLDivElement>(null);
+  // Sistema de tradução removido - apenas português nativo
   const [forumMode, setForumMode] = useState(false);
   const [isCompactForced, setIsCompactForced] = useState(false);
 
@@ -805,6 +802,13 @@ export function Sidebar() {
                 </div>
               </>
             )}
+          </div>
+        )}
+
+        {/* Google Translate Widget */}
+        {!isCollapsed && (
+          <div className="mt-4 p-3 bg-muted dark:bg-muted rounded-lg">
+            <GoogleTranslateWidget />
           </div>
         )}
       </div>

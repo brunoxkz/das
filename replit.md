@@ -333,15 +333,17 @@ O sistema utiliza Stripe Payment Intent para processar pagamentos únicos de R$ 
 
 ```
 Changelog:
-- July 22, 2025. SISTEMA MULTILÍNGUE COMPLETAMENTE ELIMINADO 100% - Interface Quiz Builder restaurada para português nativo:
-  * LIMPEZA MASSIVA CONCLUÍDA: Todas as funções t() de tradução removidas do page-editor-horizontal.tsx 
-  * FUNÇÃO getElementTypeName CRIADA: Mapeamento direto de 67 tipos de elementos em português nativo
-  * TEXTOS ESPECÍFICOS CORRIGIDOS: "Texto em Português" genérico substituído por textos corretos
-  * PROPRIEDADES TRADUZIDAS: "Conteúdo do Título", "Estilo do Texto", "Cor Personalizada", etc.
-  * CATEGORIAS NATIVAS: Conteúdo, Perguntas, Formulário, Mídia, Conteúdo Avançado, Navegação, etc.
-  * INTERFACE COMPLETA: Quiz Builder funcionando 100% em português sem dependências multilíngues
-  * PERFORMANCE OTIMIZADA: Sistema mais rápido sem overhead de tradução
-  * STATUS: Quiz Editor 100% português nativo - zero funções de tradução restantes
+- July 22, 2025. GOOGLE TRANSLATOR-STYLE SYSTEM IMPLEMENTADO - Sistema tipo Google Tradutor que preserva português nativo:
+  * SISTEMA ANTIGO ELIMINADO: Removidos completamente useLanguage.ts, i18n/index.ts, language-selector.tsx
+  * GOOGLE TRANSLATE WIDGET CRIADO: Componente que funciona como Google Tradutor sem afetar interface portuguesa
+  * PORTUGUÊS PRESERVADO: Interface mantém português nativo 100% intocado como base
+  * TRADUÇÃO OPCIONAL: Widget permite traduzir conteúdo específico quando usuário solicita
+  * ARQUIVOS REMOVIDOS: client/src/hooks/useLanguage.ts, client/src/i18n/, client/src/components/language-selector.tsx
+  * WIDGET INTEGRADO: GoogleTranslateWidget.tsx adicionado na sidebar para acesso fácil
+  * SISTEMA OVERLAY: Tradução funciona como camada sobre o português, não substituição
+  * PERFORMANCE MÁXIMA: Zero overhead de sistema multilíngue, apenas português nativo
+  * INTERFACE INTACTA: Quiz Builder, dashboard, sidebar mantém português original
+  * STATUS: Sistema Google Tradutor implementado - português base preservado 100%
 - July 22, 2025. TRANSLATION SYSTEM COMPLETELY ELIMINATED 100% - Sistema de tradução completamente removido, plataforma agora em português nativo:
   * ELEMENTO MAPPING SYSTEM 100% CORRIGIDO: Função getElementTypeName substituída por mapeamento direto em português
   * CATEGORIAS DE ELEMENTOS TRADUZIDAS: Todas as categorias (Conteúdo, Perguntas, Formulário, Mídia, Conteúdo Avançado, Navegação, Visualizações, Vendas, Ultra Personalização) agora em português
