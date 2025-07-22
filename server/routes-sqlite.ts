@@ -4526,7 +4526,17 @@ export function registerSQLiteRoutes(app: Express): Server {
         // Analisar cada campo da resposta
         Object.keys(response.responses).forEach(fieldId => {
           const answer = response.responses[fieldId];
-          if (!answer || answer.toString().trim() === '') return;
+          
+          // Filtrar campos inválidos (índices numéricos ou objetos mal formatados)
+          if (typeof fieldId === 'string' && !isNaN(parseInt(fieldId))) {
+            return; // Skip campos com índices numéricos como "0", "1", etc
+          }
+          
+          if (!answer || (typeof answer === 'object' && answer.toString() === '[object Object]')) {
+            return; // Skip objetos não serializáveis
+          }
+          
+          if (answer.toString().trim() === '') return; // Skip respostas vazias
           
           const answerStr = answer.toString().trim();
           
@@ -4641,7 +4651,7 @@ export function registerSQLiteRoutes(app: Express): Server {
         return res.status(403).json({ message: "Access denied" });
       }
 
-      const { fieldId, responseValue, includePartial = false, format = 'leads' } = req.body;
+      const { fieldId, responseValue, includePartial = true, format = 'leads' } = req.body;
       
       if (!fieldId || !responseValue) {
         return res.status(400).json({ 
@@ -4655,8 +4665,9 @@ export function registerSQLiteRoutes(app: Express): Server {
       
       console.log(`🔥 FILTRO ULTRA: Procurando leads que responderam "${responseValue}" para pergunta "${fieldId}" em ${allResponses.length} respostas`);
       
-      // Filtrar leads com a resposta específica
+      // Filtrar leads com a resposta específica (evitar duplicatas por IP/userAgent)
       const matchingLeads = [];
+      const seenLeads = new Set();
       
       for (const response of allResponses) {
         if (!response.responses || typeof response.responses !== 'object') continue;
@@ -4666,12 +4677,27 @@ export function registerSQLiteRoutes(app: Express): Server {
         // Verificar se é parcial e se deve incluir
         if (!includePartial && metadata.isPartial !== false) continue;
         
-        // Verificar se tem a resposta específica
+        // Verificar se tem a resposta específica - busca mais flexível
         const actualAnswer = response.responses[fieldId];
-        if (!actualAnswer || actualAnswer.toString().trim() !== responseValue) continue;
+        if (!actualAnswer) continue;
+        
+        const actualAnswerStr = actualAnswer.toString().trim();
+        const targetValueStr = responseValue.toString().trim();
+        
+        // Comparação exata ou flexível (inclui case insensitive)
+        if (actualAnswerStr !== targetValueStr && actualAnswerStr.toLowerCase() !== targetValueStr.toLowerCase()) {
+          continue;
+        }
         
         // Extrair dados do lead
         const extractedData = extractLeadDataFromResponses(response.responses, metadata.leadData || {});
+        
+        // Criar chave única para identificar lead único (evita duplicatas)
+        const leadKey = `${extractedData.email || ''}_${extractedData.telefone || ''}_${metadata.ip || ''}_${extractedData.nome || ''}`;
+        
+        // Se já processamos este lead, pular
+        if (seenLeads.has(leadKey)) continue;
+        seenLeads.add(leadKey);
         
         const leadInfo = {
           responseId: response.id,
@@ -11949,7 +11975,7 @@ console.log('Vendzz Checkout Embed carregado para plano: ${planId}');
           }
         } else if (typeof responseData === 'object' && responseData !== null) {
           for (const [key, value] of Object.entries(responseData)) {
-            if (key.includes('telefone') && value) {
+            if ((key.includes('telefone') || key.includes('phone') || key.includes('whatsapp')) && value) {
               phoneNumber = value;
               break;
             }
@@ -12211,7 +12237,7 @@ console.log('Vendzz Checkout Embed carregado para plano: ${planId}');
         extracted.email = response;
       }
       
-      if (key.includes('telefone') || key.includes('phone') || key.includes('celular')) {
+      if (key.includes('telefone') || key.includes('phone') || key.includes('celular') || key.includes('whatsapp')) {
         extracted.telefone = response;
       }
       
@@ -13408,7 +13434,7 @@ app.get("/api/whatsapp-automation-file/:userId/:quizId/sync", verifyJWT, async (
         
         // Extrair telefones
         Object.keys(allResponses).forEach(key => {
-          if (key.includes('telefone') || key.includes('phone') || key.includes('celular')) {
+          if (key.includes('telefone') || key.includes('phone') || key.includes('celular') || key.includes('whatsapp')) {
             const phoneValue = allResponses[key];
             if (phoneValue && phoneValue.toString().trim()) {
               phoneNumbers.push(phoneValue.toString().trim());
@@ -15500,7 +15526,7 @@ app.get("/api/whatsapp-extension/pending", verifyJWT, async (req: any, res: Resp
         extracted.email = response;
       }
       
-      if (key.includes('telefone') || key.includes('phone') || key.includes('celular')) {
+      if (key.includes('telefone') || key.includes('phone') || key.includes('celular') || key.includes('whatsapp')) {
         extracted.telefone = response;
       }
       
