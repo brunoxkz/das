@@ -38,10 +38,7 @@ import { TutorialTour, dashboardTutorialSteps } from "@/components/tutorial-tour
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import QuizFullPreview from "@/components/QuizFullPreview";
 import { cn } from "@/lib/utils";
-import { useTranslation } from "react-i18next";
-
 export default function Dashboard() {
-  const { t } = useTranslation();
   const { toast } = useToast();
   const { isAuthenticated, user } = useAuth();
   const [showTutorial, setShowTutorial] = useState(false);
@@ -446,11 +443,11 @@ export default function Dashboard() {
   const dashboardLoading = quizzesLoading || analyticsLoading;
 
   // Usar dados do sistema de planos em tempo real
-  const userPlan = planStatus?.plan || userData?.user?.plan || 'free';
-  const daysLeft = planStatus?.daysRemaining || 0;
-  const isBlocked = planStatus?.isBlocked || false;
-  const renewalRequired = planStatus?.planRenewalRequired || false;
-  const blockReason = planStatus?.blockReason;
+  const userPlan = (planStatus as any)?.plan || (userData as any)?.user?.plan || 'free';
+  const daysLeft = (planStatus as any)?.daysRemaining || 0;
+  const isBlocked = (planStatus as any)?.isBlocked || false;
+  const renewalRequired = (planStatus as any)?.planRenewalRequired || false;
+  const blockReason = (planStatus as any)?.blockReason;
   const showPlanBanner = userPlan !== 'enterprise' && (daysLeft < 15 || isBlocked || renewalRequired);
 
   // Criar mapa de analytics por quiz
@@ -749,8 +746,8 @@ export default function Dashboard() {
                 forumMode ? "text-gray-300" : "dashboard-text-secondary"
               )}>
                 {forumMode 
-                  ? t('dashboard.discussionPlatform') 
-                  : `${t('dashboard.subtitle')}, ${userData?.user?.firstName || "Admin"}!`
+                  ? "Plataforma de Discussão" 
+                  : `Dashboard, ${(userData as any)?.user?.firstName || "Admin"}!`
                 }
               </p>
             </div>
@@ -761,7 +758,7 @@ export default function Dashboard() {
                   <div className="w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
                   <div className="absolute inset-0 w-3 h-3 bg-green-500 rounded-full animate-ping opacity-75"></div>
                 </div>
-                <span className="text-sm font-medium text-green-600">{t('dashboard.systemActive')}</span>
+                <span className="text-sm font-medium text-green-600">Sistema Ativo</span>
               </div>
               <Button
                 variant="outline"
@@ -778,7 +775,7 @@ export default function Dashboard() {
                   className="border-purple-200 text-purple-700 hover:bg-purple-50 mr-2"
                 >
                   <Users className="w-4 h-4 mr-2" />
-                  {t('dashboard.forumMode')}
+                  Modo Fórum
                 </Button>
               )}
               {forumMode && (
@@ -787,7 +784,7 @@ export default function Dashboard() {
                   onClick={toggleForumMode}
                   className="border-blue-200 text-blue-700 hover:bg-blue-50 mr-2"
                 >
-                  {t('dashboard.welcomeBack')}
+                  Voltar Dashboard
                 </Button>
               )}
               <Button
@@ -904,8 +901,8 @@ export default function Dashboard() {
                   } catch (error) {
                     console.error('❌ Erro no teste push:', error);
                     toast({
-                      title: t('dashboard.error'),
-                      description: `${t('dashboard.failure')}: ${error.message}`,
+                      title: "Erro",
+                      description: `Falha: ${error.message}`,
                       variant: "destructive"
                     });
                   }
@@ -913,12 +910,12 @@ export default function Dashboard() {
                 className="bg-blue-600 hover:bg-blue-700 shadow-lg text-white"
               >
                 <Bell className="w-4 h-4 mr-2" />
-                {t('dashboard.testPush')}
+                Testar Push
               </Button>
               <Link href="/quizzes/new">
                 <Button className="bg-green-600 hover:bg-green-700 shadow-lg text-white shock-green">
                   <Plus className="w-4 h-4 mr-2" />
-                  {t('dashboard.createQuiz')}
+                  Criar Quiz
                 </Button>
               </Link>
             </div>
@@ -1051,7 +1048,7 @@ export default function Dashboard() {
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm dashboard-text-muted mb-1 text-gray-600 dark:text-gray-300">Campanhas SMS</p>
-                    <p className="text-2xl font-bold dashboard-text-primary text-gray-900 dark:text-white">{smsCount?.count || 0}</p>
+                    <p className="text-2xl font-bold dashboard-text-primary text-gray-900 dark:text-white">{(smsCount as any)?.count || 0}</p>
                   </div>
                   <div className="w-12 h-12 rounded-lg bg-cyan-500 flex items-center justify-center text-white">
                     <MessageSquare className="w-5 h-5" />
@@ -1065,7 +1062,7 @@ export default function Dashboard() {
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm dashboard-text-muted mb-1 text-gray-600 dark:text-gray-300">Campanhas WhatsApp</p>
-                    <p className="text-2xl font-bold dashboard-text-primary text-gray-900 dark:text-white">{whatsappCount?.count || 0}</p>
+                    <p className="text-2xl font-bold dashboard-text-primary text-gray-900 dark:text-white">{(whatsappCount as any)?.count || 0}</p>
                   </div>
                   <div className="w-12 h-12 rounded-lg bg-green-500 flex items-center justify-center text-white">
                     <MessageCircle className="w-5 h-5" />
@@ -1079,7 +1076,7 @@ export default function Dashboard() {
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm dashboard-text-muted mb-1 text-gray-600 dark:text-gray-300">Campanhas Email</p>
-                    <p className="text-2xl font-bold dashboard-text-primary text-gray-900 dark:text-white">{emailCount?.count || 0}</p>
+                    <p className="text-2xl font-bold dashboard-text-primary text-gray-900 dark:text-white">{(emailCount as any)?.count || 0}</p>
                   </div>
                   <div className="w-12 h-12 rounded-lg bg-blue-500 flex items-center justify-center text-white">
                     <Mail className="w-5 h-5" />
@@ -1093,7 +1090,7 @@ export default function Dashboard() {
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm dashboard-text-muted mb-1 text-gray-600 dark:text-gray-300">Créditos Email</p>
-                    <p className="text-2xl font-bold dashboard-text-primary text-gray-900 dark:text-white">{userCredits?.breakdown?.email || 0}</p>
+                    <p className="text-2xl font-bold dashboard-text-primary text-gray-900 dark:text-white">{(userCredits as any)?.breakdown?.email || 0}</p>
                   </div>
                   <div className="w-12 h-12 rounded-lg bg-purple-500 flex items-center justify-center text-white">
                     <Coins className="w-5 h-5" />
@@ -1187,12 +1184,12 @@ export default function Dashboard() {
           <Card className="dashboard-card shadow-xl mb-8">
             <CardHeader className="dashboard-header border-b">
               <div className="flex items-center justify-between">
-                <CardTitle className="text-xl dashboard-text-primary">{t('dashboard.yourQuizzes')}</CardTitle>
+                <CardTitle className="text-xl dashboard-text-primary">Seus Quizzes</CardTitle>
                 {userQuizzes && userQuizzes.length > 6 && (
                   <Link href="/quizzes">
                     <Button variant="outline" size="sm" className="dashboard-button">
                       <Eye className="w-4 h-4 mr-2" />
-                      {t('dashboard.viewAll')} ({userQuizzes.length})
+                      Ver Todos ({userQuizzes.length})
                     </Button>
                   </Link>
                 )}
@@ -1215,14 +1212,14 @@ export default function Dashboard() {
                         </CardHeader>
                         <CardContent className="pt-0">
                           <div className="flex justify-between text-sm dashboard-text-muted mb-3">
-                            <span>{analytics.views} {t('dashboard.views')}</span>
-                            <span>{analytics.leads} {t('dashboard.leads')}</span>
+                            <span>{analytics.views} visualizações</span>
+                            <span>{analytics.leads} leads</span>
                           </div>
                           <div className="flex gap-1">
                             <Link href={`/quizzes/${quiz.id}/edit`}>
                               <Button size="sm" variant="outline" className="dashboard-button">
                                 <Edit className="w-3 h-3 mr-1" />
-                                {t('dashboard.edit')}
+                                Editar
                               </Button>
                             </Link>
                             <Button 
@@ -1232,7 +1229,7 @@ export default function Dashboard() {
                               onClick={() => handlePreviewQuiz(quiz)}
                             >
                               <ExternalLink className="w-3 h-3 mr-1" />
-                              {t('dashboard.preview')}
+                              Visualizar
                             </Button>
                             <Button 
                               size="sm" 
@@ -1240,13 +1237,13 @@ export default function Dashboard() {
                               className="dashboard-button bg-blue-50 hover:bg-blue-100 text-blue-600"
                               onClick={() => {
                                 toast({
-                                  title: t('dashboard.cloneQuiz'),
-                                  description: `${t('dashboard.quizWillBeCloned')} "${quiz.title}"`,
+                                  title: "Clonar Quiz",
+                                  description: `Quiz será clonado "${quiz.title}"`,
                                 });
                               }}
                             >
                               <Copy className="w-3 h-3 mr-1" />
-                              {t('dashboard.clone')}
+                              Clonar
                             </Button>
                           </div>
                         </CardContent>
@@ -1256,12 +1253,12 @@ export default function Dashboard() {
                 </div>
               ) : (
                 <div className="text-center py-8">
-                  <p className="dashboard-text-muted mb-4">{t('dashboard.noQuizzesYet')}</p>
+                  <p className="dashboard-text-muted mb-4">Você ainda não criou nenhum quiz</p>
                   <div className="flex flex-col sm:flex-row gap-2 justify-center">
                     <Link href="/quizzes/new">
                       <Button>
                         <Plus className="w-4 h-4 mr-2" />
-                        {t('dashboard.createFirstQuiz')}
+                        Criar Primeiro Quiz
                       </Button>
                     </Link>
                     <Button 
@@ -1276,7 +1273,7 @@ export default function Dashboard() {
                       }}
                     >
                       <Zap className="w-4 h-4 mr-2" />
-                      {t('dashboard.transformVSL')}
+                      Transformar em VSL
                     </Button>
                   </div>
                 </div>
@@ -1289,9 +1286,9 @@ export default function Dashboard() {
             <CardHeader className="dashboard-header border-b">
               <CardTitle className="text-xl dashboard-text-primary flex items-center gap-2">
                 <Users className="w-5 h-5 text-green-600" />
-                {t('dashboard.onlineUsers')}
+                Usuários Online
                 <Badge variant="secondary" className="bg-green-100 text-green-700 border-green-200">
-                  {onlineStats?.onlineCount || 42} {t('dashboard.people')}
+                  {(onlineStats as any)?.onlineCount || 42} pessoas
                 </Badge>
               </CardTitle>
             </CardHeader>
@@ -1309,10 +1306,10 @@ export default function Dashboard() {
                     <div>
                       <h4 className="font-semibold text-sm text-gray-700 mb-3 flex items-center gap-2">
                         <Clock className="w-4 h-4" />
-                        {t('dashboard.recentActivities')}
+                        Atividades Recentes
                       </h4>
                       <div className="space-y-2">
-                        {onlineStats?.recentActivities?.slice(0, 5)?.map((activity: any, index: number) => (
+                        {(onlineStats as any)?.recentActivities?.slice(0, 5)?.map((activity: any, index: number) => (
                           <div key={index} className="flex items-center justify-between text-sm p-2 bg-gray-50 rounded">
                             <div className="flex items-center gap-2">
                               <div className="w-2 h-2 bg-green-500 rounded-full"></div>
