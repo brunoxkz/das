@@ -29,7 +29,8 @@ import {
   X,
   Zap,
   MapPin,
-  Bell
+  Bell,
+  Sparkles
 } from "lucide-react";
 import { Link } from "wouter";
 import { useAuth } from "@/hooks/useAuth-jwt";
@@ -434,7 +435,7 @@ export default function Dashboard() {
   });
 
   // Calcular estatísticas reais
-  const totalQuizzes = userQuizzes?.length || 0;
+  const totalQuizzes = (userQuizzes as any)?.length || 0;
   const totalLeads = (allAnalytics && Array.isArray(allAnalytics)) ? allAnalytics.reduce((sum: number, a: any) => sum + (a.leadsWithContact || 0), 0) : 0;
   const totalViews = (allAnalytics && Array.isArray(allAnalytics)) ? allAnalytics.reduce((sum: number, a: any) => sum + (a.totalViews || 0), 0) : 0;
   const avgConversionRate = (allAnalytics && Array.isArray(allAnalytics) && allAnalytics.length > 0) ? 
@@ -557,25 +558,25 @@ export default function Dashboard() {
 
   const dashboardStats = [
     {
-      title: t('dashboard.quizzes'),
+      title: "Quizzes",
       value: totalQuizzes,
       icon: <BarChart3 className="w-5 h-5" />,
       color: "bg-blue-500"
     },
     {
-      title: t('dashboard.leadsCaptured'),
+      title: "Leads Capturados",
       value: totalLeads,
       icon: <Users className="w-5 h-5" />,
       color: "bg-purple-500"
     },
     {
-      title: t('dashboard.views'),
+      title: "Visualizações",
       value: totalViews,
       icon: <Eye className="w-5 h-5" />,
       color: "bg-green-500"
     },
     {
-      title: t('dashboard.conversationRate'),
+      title: "Taxa de Conversão",
       value: `${avgConversionRate}%`,
       icon: <TrendingUp className="w-5 h-5" />,
       color: "bg-orange-500"
@@ -739,7 +740,7 @@ export default function Dashboard() {
                 "text-3xl font-bold",
                 forumMode ? "text-white" : "text-green-600"
               )}>
-                {forumMode ? t('dashboard.forumMode') : t('dashboard.title')}
+                {forumMode ? "Modo Fórum" : "Dashboard Vendzz"}
               </h1>
               <p className={cn(
                 "mt-2",
@@ -881,20 +882,20 @@ export default function Dashboard() {
                         console.log('💾 Subscription salva:', subscribeResult);
                         
                         toast({
-                          title: t('dashboard.permissionsGranted'),
-                          description: t('dashboard.pushConfiguredSuccess'),
+                          title: "Permissões Concedidas",
+                          description: "Push notifications configuradas com sucesso",
                         });
                       } else {
                         toast({
-                          title: t('dashboard.permissionsDenied'),
-                          description: t('dashboard.cannotSendNotifications'),
+                          title: "Permissões Negadas",
+                          description: "Não é possível enviar notificações",
                           variant: "destructive"
                         });
                       }
                     } else {
                       toast({
-                        title: t('dashboard.permissionsDenied'),
-                        description: t('dashboard.notificationsBlocked'),
+                        title: "Permissões Negadas",
+                        description: "Notificações bloqueadas",
                         variant: "destructive"
                       });
                     }
@@ -912,6 +913,12 @@ export default function Dashboard() {
                 <Bell className="w-4 h-4 mr-2" />
                 Testar Push
               </Button>
+              <Link href="/quiz-ia">
+                <Button className="bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600 shadow-lg text-white mr-3">
+                  <Sparkles className="w-4 h-4 mr-2" />
+                  Quiz I.A.
+                </Button>
+              </Link>
               <Link href="/quizzes/new">
                 <Button className="bg-green-600 hover:bg-green-700 shadow-lg text-white shock-green">
                   <Plus className="w-4 h-4 mr-2" />
@@ -1185,20 +1192,20 @@ export default function Dashboard() {
             <CardHeader className="dashboard-header border-b">
               <div className="flex items-center justify-between">
                 <CardTitle className="text-xl dashboard-text-primary">Seus Quizzes</CardTitle>
-                {userQuizzes && userQuizzes.length > 6 && (
+                {userQuizzes && (userQuizzes as any[]).length > 6 && (
                   <Link href="/quizzes">
                     <Button variant="outline" size="sm" className="dashboard-button">
                       <Eye className="w-4 h-4 mr-2" />
-                      Ver Todos ({userQuizzes.length})
+                      Ver Todos ({(userQuizzes as any[]).length})
                     </Button>
                   </Link>
                 )}
               </div>
             </CardHeader>
             <CardContent className="p-6">
-              {userQuizzes && userQuizzes.length > 0 ? (
+              {userQuizzes && (userQuizzes as any[]).length > 0 ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {userQuizzes.slice(0, 6).map((quiz: any) => {
+                  {(userQuizzes as any[]).slice(0, 6).map((quiz: any) => {
                     const analytics = quizAnalyticsMap.get(quiz.id) || { views: 0, leads: 0, conversions: 0 };
                     return (
                       <Card key={quiz.id} className="dashboard-quiz-card hover:shadow-lg transition-shadow">
@@ -1206,7 +1213,7 @@ export default function Dashboard() {
                           <div className="flex items-center justify-between">
                             <h3 className="font-semibold dashboard-text-primary truncate">{quiz.title}</h3>
                             <Badge variant={quiz.isPublished ? "default" : "secondary"} className="dashboard-badge">
-                              {quiz.isPublished ? t('dashboard.published') : t('dashboard.draft')}
+                              {quiz.isPublished ? "Publicado" : "Rascunho"}
                             </Badge>
                           </div>
                         </CardHeader>
@@ -1266,8 +1273,8 @@ export default function Dashboard() {
                       className="bg-gradient-to-r from-purple-50 to-blue-50 hover:from-purple-100 hover:to-blue-100 border-purple-200 text-purple-700 font-semibold"
                       onClick={() => {
                         toast({
-                          title: t('dashboard.transformVSL'),
-                          description: t('dashboard.conversionFeatureSoon'),
+                          title: "Transformar em VSL",
+                          description: "Funcionalidade de conversão em breve",
                           duration: 3000,
                         });
                       }}
