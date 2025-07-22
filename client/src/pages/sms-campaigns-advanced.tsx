@@ -256,6 +256,8 @@ export default function SMSCampaignsAdvanced() {
   const [showLeadsList, setShowLeadsList] = useState(false);
   const [leadsCount, setLeadsCount] = useState({ completed: 0, abandoned: 0, all: 0 });
   const [scheduleUnit, setScheduleUnit] = useState<'minutes' | 'hours'>('minutes');
+  const [uniqueResponses, setUniqueResponses] = useState<string[]>([]);
+  const [loadingResponses, setLoadingResponses] = useState(false);
   
   // Queries
   const { data: quizzes = [], isLoading: loadingQuizzes } = useQuery({
@@ -310,6 +312,15 @@ export default function SMSCampaignsAdvanced() {
     setMessageCount(form.message.length);
     generatePreview();
   }, [form.message]);
+
+  // Buscar respostas únicas quando o campo for selecionado (Sistema Ultra)
+  useEffect(() => {
+    if (form.type?.includes('quantum') && form.responseFilter?.field) {
+      fetchUniqueResponses(form.responseFilter.field);
+    } else {
+      setUniqueResponses([]);
+    }
+  }, [form.responseFilter?.field, form.funnelId]);
   
   // Funções auxiliares
   const generatePreview = () => {
@@ -364,6 +375,40 @@ export default function SMSCampaignsAdvanced() {
   
   const isAdvancedType = () => {
     return form.type === 'remarketing_custom' || form.type === 'live_custom';
+  };
+
+  // Função para buscar respostas únicas de um campo específico (Sistema Ultra)
+  const fetchUniqueResponses = async (fieldName: string) => {
+    if (!form.funnelId || !fieldName) {
+      setUniqueResponses([]);
+      return;
+    }
+
+    setLoadingResponses(true);
+    try {
+      const response = await fetch(`/api/quizzes/${form.funnelId}/variables-ultra`, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        const fieldData = data.variables.find((v: any) => v.field === fieldName);
+        if (fieldData && fieldData.values) {
+          setUniqueResponses(fieldData.values);
+        } else {
+          setUniqueResponses([]);
+        }
+      } else {
+        setUniqueResponses([]);
+      }
+    } catch (error) {
+      console.error('Erro ao buscar respostas únicas:', error);
+      setUniqueResponses([]);
+    } finally {
+      setLoadingResponses(false);
+    }
   };
   
   const canProceedToNext = () => {
@@ -989,17 +1034,49 @@ export default function SMSCampaignsAdvanced() {
                               <div>
                                 <Label className="flex items-center gap-2">
                                   <Layers className="w-4 h-4 text-purple-600" />
-                                  Valor Ultra-Específico
+                                  Resposta Ultra-Específica
+                                  {loadingResponses && (
+                                    <div className="w-4 h-4 border-2 border-purple-500 border-t-transparent rounded-full animate-spin"></div>
+                                  )}
                                 </Label>
-                                <Input 
-                                  placeholder="Ex: Emagrecer, Ganhar Massa, etc." 
-                                  value={form.responseFilter?.value || ''}
-                                  onChange={(e) => setForm(prev => ({ 
-                                    ...prev, 
-                                    responseFilter: { ...prev.responseFilter, value: e.target.value } 
-                                  }))}
-                                  className="border-purple-200 focus:ring-purple-500"
-                                />
+                                {form.responseFilter?.field ? (
+                                  <Select 
+                                    value={form.responseFilter?.value || ''}
+                                    onValueChange={(value) => setForm(prev => ({ 
+                                      ...prev, 
+                                      responseFilter: { ...prev.responseFilter, value } 
+                                    }))}
+                                    disabled={loadingResponses || uniqueResponses.length === 0}
+                                  >
+                                    <SelectTrigger className="border-purple-200 focus:ring-purple-500">
+                                      <SelectValue placeholder={
+                                        loadingResponses 
+                                          ? "Carregando respostas..." 
+                                          : uniqueResponses.length === 0 
+                                            ? "Nenhuma resposta encontrada"
+                                            : "Selecione uma resposta específica"
+                                      } />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                      {uniqueResponses.map((response, index) => (
+                                        <SelectItem key={index} value={response}>
+                                          <div className="flex items-center gap-2">
+                                            <span className="font-medium">"{response}"</span>
+                                            <Badge variant="outline" className="text-xs">
+                                              Ultra
+                                            </Badge>
+                                          </div>
+                                        </SelectItem>
+                                      ))}
+                                    </SelectContent>
+                                  </Select>
+                                ) : (
+                                  <div className="p-3 border border-dashed border-purple-300 rounded-lg bg-purple-50">
+                                    <p className="text-purple-600 text-sm">
+                                      Primeiro selecione um campo para ver as respostas específicas disponíveis
+                                    </p>
+                                  </div>
+                                )}
                               </div>
                             </div>
                             
@@ -1007,13 +1084,28 @@ export default function SMSCampaignsAdvanced() {
                               <div className="p-4 bg-gradient-to-r from-purple-50 to-blue-50 rounded-lg border border-purple-200">
                                 <div className="flex items-center gap-2 mb-2">
                                   <CheckCircle className="w-4 h-4 text-green-600" />
-                                  <span className="font-medium text-purple-800">Filtro Quantum Configurado</span>
+                                  <span className="font-medium text-purple-800">Filtro Ultra Configurado</span>
+                                  <Badge className="bg-gradient-to-r from-purple-600 to-blue-600 text-white text-xs">
+                                    ULTRA PRECISÃO
+                                  </Badge>
                                 </div>
-                                <p className="text-purple-700 text-sm">
-                                  Leads que responderam "<strong>{form.responseFilter.value}</strong>" no campo "<strong>{form.responseFilter.field}</strong>" serão segmentados automaticamente.
-                                </p>
-                                <div className="mt-2 text-xs text-purple-600">
-                                  ⚡ Ultra-precisão ativada para máximo engajamento
+                                <div className="space-y-2">
+                                  <p className="text-purple-700 text-sm">
+                                    <span className="font-medium">Campo:</span> {form.responseFilter.field}
+                                  </p>
+                                  <p className="text-purple-700 text-sm">
+                                    <span className="font-medium">Resposta Ultra-específica:</span> 
+                                    <span className="ml-2 px-2 py-1 bg-purple-100 rounded-md font-bold">
+                                      "{form.responseFilter.value}"
+                                    </span>
+                                  </p>
+                                  <p className="text-purple-600 text-xs mt-2">
+                                    Apenas leads que responderam EXATAMENTE isso serão segmentados
+                                  </p>
+                                </div>
+                                <div className="mt-3 flex items-center gap-2 text-xs text-purple-600">
+                                  <Zap className="w-3 h-3" />
+                                  <span>Sistema Ultra ativo - Segmentação ultra-granular</span>
                                 </div>
                               </div>
                             )}

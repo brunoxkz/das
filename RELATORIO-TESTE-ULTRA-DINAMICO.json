@@ -1,0 +1,22 @@
+{
+  "timestamp": "2025-07-22T20:57:08.972Z",
+  "quiz_testado": "RdAUwmQgTthxbZLA0HJWu",
+  "taxa_sucesso": 0,
+  "testes_aprovados": 0,
+  "total_testes": 2,
+  "resultados": [
+    {
+      "teste": "Variables Ultra",
+      "status": "ERRO",
+      "detalhes": "HTTP 401: Unauthorized",
+      "tempo": 0
+    },
+    {
+      "teste": "Performance Simultânea",
+      "status": "FALHOU",
+      "detalhes": "0/5 sucessos, 6.0ms médio",
+      "tempo": 30
+    }
+  ],
+  "status_geral": "REPROVADO"
+}
