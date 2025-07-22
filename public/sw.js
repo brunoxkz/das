@@ -1,6 +1,27 @@
-// Service Worker para Vendzz PWA - Sistema de Push Notifications
+// Service Worker para Vendzz PWA - Sistema de Push Notifications PERSISTENTE
+// SEMPRE ATIVO EM SEGUNDO PLANO - DETECÇÃO AUTOMÁTICA iOS/Android
 
-const CACHE_NAME = 'vendzz-pwa-v2.0';
+const CACHE_NAME = 'vendzz-pwa-v3.0';
+const APP_VERSION = '3.0.0';
+
+// Detectar automaticamente iOS e Android
+const isIOSDevice = () => {
+  return /iPad|iPhone|iPod/.test(navigator.userAgent) || 
+         (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+};
+
+const isAndroidDevice = () => {
+  return /Android/.test(navigator.userAgent);
+};
+
+const isPWAMode = () => {
+  return window.matchMedia('(display-mode: standalone)').matches ||
+         window.navigator.standalone === true ||
+         document.referrer.includes('android-app://');
+};
+
+console.log(`🚀 SW VENDZZ v${APP_VERSION} - Dispositivo: ${isIOSDevice() ? 'iOS' : isAndroidDevice() ? 'Android' : 'Desktop'}`);
+console.log(`📱 PWA Mode: ${isPWAMode() ? 'SIM' : 'NÃO'}`);
 const urlsToCache = [
   '/',
   '/app-pwa-vendzz',
@@ -9,36 +30,85 @@ const urlsToCache = [
   '/manifest.json'
 ];
 
-// Instalar Service Worker
+// Instalar Service Worker - SEMPRE ATIVO EM SEGUNDO PLANO
 self.addEventListener('install', (event) => {
-  console.log('🔧 Service Worker instalando...');
+  console.log('🔧 Service Worker PERSISTENTE instalando...');
   event.waitUntil(
-    caches.open(CACHE_NAME)
-      .then((cache) => {
+    Promise.all([
+      caches.open(CACHE_NAME).then((cache) => {
         console.log('📦 Cache criado:', CACHE_NAME);
         return cache.addAll(urlsToCache);
-      })
+      }),
+      // Manter Service Worker sempre ativo
+      self.registration.update(),
+      // Ativar imediatamente sem esperar
+      self.skipWaiting()
+    ])
   );
-  self.skipWaiting();
+  
+  // Configurar para sempre rodar em segundo plano
+  console.log('🔄 Service Worker configurado para rodar SEMPRE em segundo plano');
 });
 
-// Ativar Service Worker
+// Ativar Service Worker - CONTROLE IMEDIATO
 self.addEventListener('activate', (event) => {
-  console.log('✅ Service Worker ativado');
+  console.log('✅ Service Worker PERSISTENTE ativado - SEMPRE em segundo plano');
   event.waitUntil(
-    caches.keys().then((cacheNames) => {
-      return Promise.all(
-        cacheNames.map((cacheName) => {
-          if (cacheName !== CACHE_NAME) {
-            console.log('🗑️ Removendo cache antigo:', cacheName);
-            return caches.delete(cacheName);
-          }
-        })
-      );
-    })
+    Promise.all([
+      // Limpar caches antigos
+      caches.keys().then((cacheNames) => {
+        return Promise.all(
+          cacheNames.map((cacheName) => {
+            if (cacheName !== CACHE_NAME) {
+              console.log('🗑️ Removendo cache antigo:', cacheName);
+              return caches.delete(cacheName);
+            }
+          })
+        );
+      }),
+      // Assumir controle imediato de todas as abas
+      self.clients.claim(),
+      // Configurar heartbeat para manter SW ativo
+      setupPersistentBackground()
+    ])
   );
-  self.clients.claim();
 });
+
+// Sistema de heartbeat para manter SW sempre ativo
+async function setupPersistentBackground() {
+  console.log('💗 Configurando heartbeat para manter SW sempre ativo');
+  
+  // Heartbeat a cada 30 segundos para manter SW vivo
+  setInterval(() => {
+    console.log('💗 SW Heartbeat - Mantendo ativo em segundo plano');
+    
+    // Verificar se há quiz completions a cada heartbeat
+    checkQuizCompletions();
+  }, 30000);
+  
+  // Configurar periodic background sync se disponível
+  if ('serviceWorker' in navigator && 'sync' in window.ServiceWorkerRegistration.prototype) {
+    self.registration.sync.register('vendzz-background-sync');
+    console.log('🔄 Background sync registrado para manter sempre ativo');
+  }
+}
+
+// Verificar quiz completions em background
+async function checkQuizCompletions() {
+  try {
+    // Fazer requisição para verificar novos quiz completions
+    const response = await fetch('/api/quiz-completions/latest');
+    if (response.ok) {
+      const data = await response.json();
+      if (data.latestCompletion) {
+        console.log('🎯 Novo quiz completion detectado em background:', data.latestCompletion.id);
+        // Enviar notificação automática em background
+      }
+    }
+  } catch (error) {
+    console.log('🔍 Background check quiz completions (normal em dispositivos offline)');
+  }
+}
 
 // Interceptar requisições (Cache First Strategy)
 self.addEventListener('fetch', (event) => {

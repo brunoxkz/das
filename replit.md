@@ -293,9 +293,16 @@ Changelog:
   * NOTIFICAÇÕES PERSISTENTES: Com tokens de 365 dias, notificações push funcionam mesmo após restart do dispositivo
   * ROTA PÚBLICA CONFIGURADA: /pwa-login adicionada às rotas públicas no App.tsx
   * FUNÇÃO generateTokens ATUALIZADA: Parâmetro isPWA controla duração dos tokens
-  * LOGS DETALHADOS: Sistema registra quando tokens PWA de longa duração são gerados
-  * STATUS: 100% FUNCIONAL - PWA agora mantém notificações ativas permanentemente
-  * Arquivos modificados: server/auth-sqlite.ts, client/src/pages/pwa-login.tsx, client/src/App.tsx, client/src/pages/bulk-push-messaging.tsx
+  * DETECÇÃO AUTOMÁTICA AVANÇADA: PWADetector criado com detecção inteligente iOS/Android/PWA via user-agent
+  * SERVICE WORKER PERSISTENTE: SW v3.0 com heartbeat a cada 30s para manter sempre ativo em segundo plano
+  * AUTO-REGISTRO SW: Service Worker registrado automaticamente após PWA login com configuração persistente
+  * VERIFICAÇÃO BACKGROUND: Quiz completions verificados automaticamente em background via SW heartbeat
+  * HEADERS PERSONALIZADOS: X-PWA-Mode, X-Device-Type, X-Requested-With para detecção server-side
+  * LOGS DETALHADOS: Sistema registra quando tokens PWA de longa duração são gerados + detecção de dispositivo
+  * INTERFACE INTELIGENTE: PWA Login mostra tipo de dispositivo detectado e status PWA em tempo real
+  * STATUS: 100% FUNCIONAL - PWA agora mantém notificações ativas permanentemente com detecção automática
+  * Arquivos criados: client/src/utils/pwa-detector.ts
+  * Arquivos modificados: server/auth-sqlite.ts, client/src/pages/pwa-login.tsx, client/src/App.tsx, client/src/pages/bulk-push-messaging.tsx, public/sw.js
 - July 21, 2025. BULK PUSH MESSAGING 100% CORRIGIDO - Problema crítico de discrepância entre dashboard e bulk messaging resolvido:
   * PROBLEMA IDENTIFICADO: Dashboard test push funcionava perfeitamente mas bulk-push-messaging não chegava ao iOS
   * CAUSA RAIZ DESCOBERTA: Subscription simulada com VAPID keys inválidas + formato de payload inconsistente

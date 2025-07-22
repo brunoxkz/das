@@ -153,9 +153,18 @@ export function setupSQLiteAuth(app: Express) {
         return res.status(401).json({ message: "Invalid credentials" });
       }
 
-      // Detectar se é PWA via user-agent ou header
+      // Detecção avançada de PWA para iOS e Android
       const userAgent = req.headers['user-agent'] || '';
-      const isPWA = userAgent.includes('Mobile') || req.headers['sec-fetch-dest'] === 'document' || req.headers['x-pwa-mode'] === 'true';
+      const isPWA = 
+        req.headers['x-pwa-mode'] === 'true' || // Header específico PWA
+        userAgent.includes('iPhone') || // iOS Safari/PWA
+        userAgent.includes('iPad') || // iPad Safari/PWA
+        userAgent.includes('Mobile') || // Android mobile
+        userAgent.includes('Android') || // Android específico
+        req.headers['sec-fetch-dest'] === 'document' || // Navegador PWA
+        req.headers['x-requested-with'] === 'PWA'; // Header PWA customizado
+      
+      console.log(`🔍 DETECÇÃO PWA: ${isPWA ? 'SIM' : 'NÃO'} - User-Agent: ${userAgent.substring(0, 50)}...`);
       
       const { accessToken, refreshToken } = generateTokens(user, isPWA);
       
@@ -211,6 +220,16 @@ export function setupSQLiteAuth(app: Express) {
         return res.status(401).json({ message: "Invalid credentials" });
       }
 
+      // Detecção avançada de PWA para endpoint específico
+      const userAgent = req.headers['user-agent'] || '';
+      const isPWADevice = 
+        userAgent.includes('iPhone') || 
+        userAgent.includes('iPad') || 
+        userAgent.includes('Mobile') || 
+        userAgent.includes('Android');
+      
+      console.log(`📱 PWA LOGIN ENDPOINT: Device=${isPWADevice ? 'iOS/Android' : 'Desktop'} - UA: ${userAgent.substring(0, 50)}...`);
+      
       // FORÇAR PWA = true para token de longa duração
       const { accessToken, refreshToken } = generateTokens(user, true);
       
