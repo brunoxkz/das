@@ -1,6 +1,7 @@
 import React from "react";
 import { Switch, Route, useLocation, Redirect } from "wouter";
 import "./index.css";
+import "./i18n"; // CORREÇÃO CRÍTICA: Inicializar sistema multilíngua
 import { Toaster } from "@/components/ui/toaster";
 import { Layout } from "@/components/layout";
 import LandingPage from "@/pages/landing";

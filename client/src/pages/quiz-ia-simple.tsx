@@ -9,10 +9,12 @@ import { Sparkles, Rocket, Brain, Lightbulb, ArrowLeft, Zap } from "lucide-react
 import { useToast } from "@/hooks/use-toast";
 import { useLocation } from "wouter";
 import { apiRequest } from "@/lib/queryClient";
+import { useTranslation } from "react-i18next";
 
 export default function QuizIASimple() {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
+  const { t } = useTranslation();
   const [isGenerating, setIsGenerating] = useState(false);
   
   const [formData, setFormData] = useState({
@@ -30,8 +32,8 @@ export default function QuizIASimple() {
   const generateQuiz = async () => {
     if (!formData.niche || !formData.problem || !formData.transformation) {
       toast({
-        title: "Campos Obrigatórios",
-        description: "Preencha pelo menos nicho, problema e transformação",
+        title: t('quizIA.validation.requiredFields'),
+        description: t('quizIA.validation.requiredFieldsMessage'),
         variant: "destructive"
       });
       return;
@@ -72,8 +74,8 @@ export default function QuizIASimple() {
       const result = await createResponse.json();
 
       toast({
-        title: "🎉 Quiz I.A. Criado com Sucesso!",
-        description: `Quiz "${result.title}" foi gerado e salvo automaticamente`,
+        title: t('quizIA.success'),
+        description: t('quizIA.successMessage'),
         duration: 4000
       });
 
@@ -85,8 +87,8 @@ export default function QuizIASimple() {
     } catch (error) {
       console.error("Erro na criação do Quiz I.A.:", error);
       toast({
-        title: "Erro na Criação",
-        description: "Não foi possível gerar o quiz. Tente novamente.",
+        title: t('quizIA.error'),
+        description: t('quizIA.errorMessage'),
         variant: "destructive"
       });
     } finally {
@@ -112,7 +114,7 @@ export default function QuizIASimple() {
             className="absolute top-0 left-0 text-white hover:bg-white/10"
           >
             <ArrowLeft className="w-4 h-4 mr-2" />
-            Voltar ao Dashboard
+            {t('quizIA.backToDashboard')}
           </Button>
           
           <div className="flex items-center justify-center mb-6">
@@ -120,11 +122,11 @@ export default function QuizIASimple() {
               <Brain className="w-8 h-8 text-white" />
             </div>
             <h1 className="text-4xl font-bold text-white bg-gradient-to-r from-yellow-400 to-orange-500 bg-clip-text text-transparent">
-              Quiz I.A. Simples
+              {t('quizIA.title')}
             </h1>
           </div>
           <p className="text-xl text-blue-100 max-w-2xl mx-auto">
-            Crie seu quiz personalizado em minutos com inteligência artificial
+            {t('quizIA.subtitle')}
           </p>
         </div>
 
@@ -141,9 +143,9 @@ export default function QuizIASimple() {
               {/* Coluna Esquerda */}
               <div className="space-y-4">
                 <div>
-                  <Label className="text-gray-700 font-medium">Seu Nicho *</Label>
+                  <Label className="text-gray-700 font-medium">{t('quizIA.niche')} *</Label>
                   <Input
-                    placeholder="Ex: Emagrecimento para mulheres 40+"
+                    placeholder={t('quizIA.placeholder.niche')}
                     value={formData.niche}
                     onChange={(e) => handleInputChange("niche", e.target.value)}
                     className="mt-1"
@@ -151,9 +153,9 @@ export default function QuizIASimple() {
                 </div>
 
                 <div>
-                  <Label className="text-gray-700 font-medium">Título do Quiz (opcional)</Label>
+                  <Label className="text-gray-700 font-medium">{t('quizIA.customTitle')}</Label>
                   <Input
-                    placeholder="Ex: Qual Dieta Ideal Para Você?"
+                    placeholder={t('quizIA.placeholder.customTitle')}
                     value={formData.title}
                     onChange={(e) => handleInputChange("title", e.target.value)}
                     className="mt-1"
@@ -161,9 +163,9 @@ export default function QuizIASimple() {
                 </div>
 
                 <div>
-                  <Label className="text-gray-700 font-medium">Descrição (opcional)</Label>
+                  <Label className="text-gray-700 font-medium">{t('quizIA.customDescription')}</Label>
                   <Textarea
-                    placeholder="Breve descrição do seu quiz..."
+                    placeholder={t('quizIA.placeholder.customDescription')}
                     value={formData.description}
                     onChange={(e) => handleInputChange("description", e.target.value)}
                     className="mt-1"
@@ -175,9 +177,9 @@ export default function QuizIASimple() {
               {/* Coluna Direita */}
               <div className="space-y-4">
                 <div>
-                  <Label className="text-gray-700 font-medium">Problema Principal *</Label>
+                  <Label className="text-gray-700 font-medium">{t('quizIA.problem')} *</Label>
                   <Textarea
-                    placeholder="Ex: Se sente insegura com o próprio corpo..."
+                    placeholder={t('quizIA.placeholder.problem')}
                     value={formData.problem}
                     onChange={(e) => handleInputChange("problem", e.target.value)}
                     className="mt-1"
@@ -186,9 +188,9 @@ export default function QuizIASimple() {
                 </div>
 
                 <div>
-                  <Label className="text-gray-700 font-medium">Transformação Oferecida *</Label>
+                  <Label className="text-gray-700 font-medium">{t('quizIA.transformation')} *</Label>
                   <Textarea
-                    placeholder="Ex: Conquistar o corpo dos sonhos e autoestima..."
+                    placeholder={t('quizIA.placeholder.transformation')}
                     value={formData.transformation}
                     onChange={(e) => handleInputChange("transformation", e.target.value)}
                     className="mt-1"
@@ -217,12 +219,12 @@ export default function QuizIASimple() {
                 {isGenerating ? (
                   <>
                     <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-3"></div>
-                    Criando Quiz com I.A...
+                    {t('quizIA.processing')}
                   </>
                 ) : (
                   <>
                     <Zap className="w-5 h-5 mr-3" />
-                    Gerar Quiz com Inteligência Artificial
+                    {t('quizIA.generate')}
                   </>
                 )}
               </Button>
