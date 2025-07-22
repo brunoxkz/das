@@ -38,9 +38,10 @@ import { TutorialTour, dashboardTutorialSteps } from "@/components/tutorial-tour
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import QuizFullPreview from "@/components/QuizFullPreview";
 import { cn } from "@/lib/utils";
-// import { useLanguage } from "@/hooks/useLanguage";
+import { useTranslation } from "react-i18next";
 
 export default function Dashboard() {
+  const { t } = useTranslation();
   const { toast } = useToast();
   const { isAuthenticated, user } = useAuth();
   const [showTutorial, setShowTutorial] = useState(false);
@@ -559,25 +560,25 @@ export default function Dashboard() {
 
   const dashboardStats = [
     {
-      title: "Quizzes Criados",
+      title: t('dashboard.quizzes'),
       value: totalQuizzes,
       icon: <BarChart3 className="w-5 h-5" />,
       color: "bg-blue-500"
     },
     {
-      title: "Leads Capturados",
+      title: t('dashboard.leadsCaptured'),
       value: totalLeads,
       icon: <Users className="w-5 h-5" />,
       color: "bg-purple-500"
     },
     {
-      title: "Visualizações",
+      title: t('dashboard.views'),
       value: totalViews,
       icon: <Eye className="w-5 h-5" />,
       color: "bg-green-500"
     },
     {
-      title: "Taxa de Conversão",
+      title: t('dashboard.conversationRate'),
       value: `${avgConversionRate}%`,
       icon: <TrendingUp className="w-5 h-5" />,
       color: "bg-orange-500"
@@ -741,15 +742,15 @@ export default function Dashboard() {
                 "text-3xl font-bold",
                 forumMode ? "text-white" : "text-green-600"
               )}>
-                {forumMode ? "Vendzz Fórum" : "Dashboard"}
+                {forumMode ? t('dashboard.forumMode') : t('dashboard.title')}
               </h1>
               <p className={cn(
                 "mt-2",
                 forumMode ? "text-gray-300" : "dashboard-text-secondary"
               )}>
                 {forumMode 
-                  ? "Central de discussões e comunidade" 
-                  : `Bem-vindo de volta, ${userData?.user?.firstName || "Admin"}!`
+                  ? t('dashboard.discussionPlatform') 
+                  : `${t('dashboard.subtitle')}, ${userData?.user?.firstName || "Admin"}!`
                 }
               </p>
             </div>
@@ -760,7 +761,7 @@ export default function Dashboard() {
                   <div className="w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
                   <div className="absolute inset-0 w-3 h-3 bg-green-500 rounded-full animate-ping opacity-75"></div>
                 </div>
-                <span className="text-sm font-medium text-green-600">Sistema Ativo</span>
+                <span className="text-sm font-medium text-green-600">{t('dashboard.systemActive')}</span>
               </div>
               <Button
                 variant="outline"
@@ -777,7 +778,7 @@ export default function Dashboard() {
                   className="border-purple-200 text-purple-700 hover:bg-purple-50 mr-2"
                 >
                   <Users className="w-4 h-4 mr-2" />
-                  Modo Fórum
+                  {t('dashboard.forumMode')}
                 </Button>
               )}
               {forumMode && (
@@ -786,7 +787,7 @@ export default function Dashboard() {
                   onClick={toggleForumMode}
                   className="border-blue-200 text-blue-700 hover:bg-blue-50 mr-2"
                 >
-                  Voltar Dashboard
+                  {t('dashboard.welcomeBack')}
                 </Button>
               )}
               <Button
@@ -883,28 +884,28 @@ export default function Dashboard() {
                         console.log('💾 Subscription salva:', subscribeResult);
                         
                         toast({
-                          title: "Permissões Concedidas!",
-                          description: "Push notifications configuradas com sucesso!",
+                          title: t('dashboard.permissionsGranted'),
+                          description: t('dashboard.pushConfiguredSuccess'),
                         });
                       } else {
                         toast({
-                          title: "Permissões Negadas",
-                          description: "Não é possível enviar notificações",
+                          title: t('dashboard.permissionsDenied'),
+                          description: t('dashboard.cannotSendNotifications'),
                           variant: "destructive"
                         });
                       }
                     } else {
                       toast({
-                        title: "Permissões Negadas",
-                        description: "Notificações foram bloqueadas pelo usuário",
+                        title: t('dashboard.permissionsDenied'),
+                        description: t('dashboard.notificationsBlocked'),
                         variant: "destructive"
                       });
                     }
                   } catch (error) {
                     console.error('❌ Erro no teste push:', error);
                     toast({
-                      title: "Erro",
-                      description: `Falha: ${error.message}`,
+                      title: t('dashboard.error'),
+                      description: `${t('dashboard.failure')}: ${error.message}`,
                       variant: "destructive"
                     });
                   }
@@ -912,12 +913,12 @@ export default function Dashboard() {
                 className="bg-blue-600 hover:bg-blue-700 shadow-lg text-white"
               >
                 <Bell className="w-4 h-4 mr-2" />
-                Testar Push
+                {t('dashboard.testPush')}
               </Button>
               <Link href="/quizzes/new">
                 <Button className="bg-green-600 hover:bg-green-700 shadow-lg text-white shock-green">
                   <Plus className="w-4 h-4 mr-2" />
-                  Criar Quiz
+                  {t('dashboard.createQuiz')}
                 </Button>
               </Link>
             </div>
@@ -1186,12 +1187,12 @@ export default function Dashboard() {
           <Card className="dashboard-card shadow-xl mb-8">
             <CardHeader className="dashboard-header border-b">
               <div className="flex items-center justify-between">
-                <CardTitle className="text-xl dashboard-text-primary">Seus Quizzes</CardTitle>
+                <CardTitle className="text-xl dashboard-text-primary">{t('dashboard.yourQuizzes')}</CardTitle>
                 {userQuizzes && userQuizzes.length > 6 && (
                   <Link href="/quizzes">
                     <Button variant="outline" size="sm" className="dashboard-button">
                       <Eye className="w-4 h-4 mr-2" />
-                      Ver Todos ({userQuizzes.length})
+                      {t('dashboard.viewAll')} ({userQuizzes.length})
                     </Button>
                   </Link>
                 )}
@@ -1208,20 +1209,20 @@ export default function Dashboard() {
                           <div className="flex items-center justify-between">
                             <h3 className="font-semibold dashboard-text-primary truncate">{quiz.title}</h3>
                             <Badge variant={quiz.isPublished ? "default" : "secondary"} className="dashboard-badge">
-                              {quiz.isPublished ? 'Publicado' : 'Rascunho'}
+                              {quiz.isPublished ? t('dashboard.published') : t('dashboard.draft')}
                             </Badge>
                           </div>
                         </CardHeader>
                         <CardContent className="pt-0">
                           <div className="flex justify-between text-sm dashboard-text-muted mb-3">
-                            <span>{analytics.views} visualizações</span>
-                            <span>{analytics.leads} leads</span>
+                            <span>{analytics.views} {t('dashboard.views')}</span>
+                            <span>{analytics.leads} {t('dashboard.leads')}</span>
                           </div>
                           <div className="flex gap-1">
                             <Link href={`/quizzes/${quiz.id}/edit`}>
                               <Button size="sm" variant="outline" className="dashboard-button">
                                 <Edit className="w-3 h-3 mr-1" />
-                                Editar
+                                {t('dashboard.edit')}
                               </Button>
                             </Link>
                             <Button 
@@ -1231,7 +1232,7 @@ export default function Dashboard() {
                               onClick={() => handlePreviewQuiz(quiz)}
                             >
                               <ExternalLink className="w-3 h-3 mr-1" />
-                              Visualizar
+                              {t('dashboard.preview')}
                             </Button>
                             <Button 
                               size="sm" 
@@ -1239,13 +1240,13 @@ export default function Dashboard() {
                               className="dashboard-button bg-blue-50 hover:bg-blue-100 text-blue-600"
                               onClick={() => {
                                 toast({
-                                  title: "Clonar Quiz",
-                                  description: `Quiz "${quiz.title}" será clonado em breve`,
+                                  title: t('dashboard.cloneQuiz'),
+                                  description: `${t('dashboard.quizWillBeCloned')} "${quiz.title}"`,
                                 });
                               }}
                             >
                               <Copy className="w-3 h-3 mr-1" />
-                              Clonar
+                              {t('dashboard.clone')}
                             </Button>
                           </div>
                         </CardContent>
@@ -1255,12 +1256,12 @@ export default function Dashboard() {
                 </div>
               ) : (
                 <div className="text-center py-8">
-                  <p className="dashboard-text-muted mb-4">Você ainda não criou nenhum quiz.</p>
+                  <p className="dashboard-text-muted mb-4">{t('dashboard.noQuizzesYet')}</p>
                   <div className="flex flex-col sm:flex-row gap-2 justify-center">
                     <Link href="/quizzes/new">
                       <Button>
                         <Plus className="w-4 h-4 mr-2" />
-                        Criar Primeiro Quiz
+                        {t('dashboard.createFirstQuiz')}
                       </Button>
                     </Link>
                     <Button 
@@ -1268,14 +1269,14 @@ export default function Dashboard() {
                       className="bg-gradient-to-r from-purple-50 to-blue-50 hover:from-purple-100 hover:to-blue-100 border-purple-200 text-purple-700 font-semibold"
                       onClick={() => {
                         toast({
-                          title: "Transforme VSL > Quiz",
-                          description: "Funcionalidade de conversão será implementada em breve",
+                          title: t('dashboard.transformVSL'),
+                          description: t('dashboard.conversionFeatureSoon'),
                           duration: 3000,
                         });
                       }}
                     >
                       <Zap className="w-4 h-4 mr-2" />
-                      Transforme VSL &gt; Quiz
+                      {t('dashboard.transformVSL')}
                     </Button>
                   </div>
                 </div>
@@ -1288,9 +1289,9 @@ export default function Dashboard() {
             <CardHeader className="dashboard-header border-b">
               <CardTitle className="text-xl dashboard-text-primary flex items-center gap-2">
                 <Users className="w-5 h-5 text-green-600" />
-                Usuários Online
+                {t('dashboard.onlineUsers')}
                 <Badge variant="secondary" className="bg-green-100 text-green-700 border-green-200">
-                  {onlineStats?.onlineCount || 42} pessoas
+                  {onlineStats?.onlineCount || 42} {t('dashboard.people')}
                 </Badge>
               </CardTitle>
             </CardHeader>
@@ -1308,7 +1309,7 @@ export default function Dashboard() {
                     <div>
                       <h4 className="font-semibold text-sm text-gray-700 mb-3 flex items-center gap-2">
                         <Clock className="w-4 h-4" />
-                        Atividades Recentes
+                        {t('dashboard.recentActivities')}
                       </h4>
                       <div className="space-y-2">
                         {onlineStats?.recentActivities?.slice(0, 5)?.map((activity: any, index: number) => (
