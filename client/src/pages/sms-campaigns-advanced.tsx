@@ -187,7 +187,7 @@ const CAMPAIGN_CATEGORIES = {
     campaigns: {
       live: {
         id: 'live',
-        name: 'Disparo Automático',
+        name: 'Disparo Ao Vivo',
         icon: Layers,
         description: 'Envio automático imediato quando um novo lead completa o quiz',
         features: ['Disparo instantâneo', 'Zero configuração', 'Alta conversão'],
@@ -195,7 +195,7 @@ const CAMPAIGN_CATEGORIES = {
       },
       live_custom: {
         id: 'live_custom',
-        name: 'Automação Inteligente',
+        name: 'Ao Vivo Automático',
         icon: Flame,
         description: 'Automação com segmentação por resposta específica do quiz em tempo real',
         features: ['Segmentação automática', 'Respostas específicas', 'Targeting dinâmico'],
@@ -203,7 +203,7 @@ const CAMPAIGN_CATEGORIES = {
       },
       quantum_live: {
         id: 'quantum_live',
-        name: 'Quantum Live',
+        name: 'Ao Vivo Quantum',
         icon: Sparkles,
         description: 'Monitoramento quantum em tempo real com segmentação ultra-precisa',
         features: ['Tempo real', 'Segmentação quantum', 'Máxima eficiência'],

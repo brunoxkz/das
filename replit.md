@@ -551,6 +551,11 @@ Campo: p1_objetivo_fitness
 ## Changelog
 
 ```
+- July 22, 2025. NOMES DAS CAMPANHAS ATUALIZADOS - Alteração de nomenclatura das campanhas de automação para melhor clareza:
+  * "Disparo Automático" → "Disparo Ao Vivo" 
+  * "Automação Inteligente" → "Ao Vivo Automático"
+  * "Quantum Live" → "Ao Vivo Quantum"
+  * Sistema mantém todas as funcionalidades, apenas com nomes mais intuitivos
 Changelog:
 - July 22, 2025. SISTEMA QUANTUM SMS REMARKETING 100% IMPLEMENTADO - Especificações exatas de filtros implementadas com 100% aprovação em testes:
   * SMS REMARKETING COMPLETO: Lead abandonado/completou quiz/todos os leads + filtros de data (de X até X data) + dispatch timing (imediatamente OU daqui X tempo)
