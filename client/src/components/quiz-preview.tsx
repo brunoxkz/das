@@ -466,7 +466,11 @@ interface QuizPreviewProps {
 }
 
 export default function QuizPreview({ quiz, onClose, onSave, initialPage = 0 }: QuizPreviewProps) {
-  const [currentStep, setCurrentStep] = useState(initialPage);
+  // Garantir que o initialPage seja válido
+  const allPagesForInit = quiz?.structure?.pages || quiz?.pages || [];
+  const validInitialPage = Math.max(0, Math.min(initialPage, allPagesForInit.length - 1));
+  
+  const [currentStep, setCurrentStep] = useState(validInitialPage);
   const [responses, setResponses] = useState<any>({});
   const [leadData, setLeadData] = useState({
     name: '',
@@ -953,12 +957,18 @@ export default function QuizPreview({ quiz, onClose, onSave, initialPage = 0 }: 
 
   const loadFromLocalStorage = () => {
     try {
+      // Para modo de preview, não carregar do localStorage - sempre usar initialPage
+      if (typeof initialPage === 'number' && initialPage >= 0) {
+        return;
+      }
+      
       const saved = localStorage.getItem(`quiz_${quiz.id}_progress`);
       if (saved) {
         const data = JSON.parse(saved);
         setResponses(data.responses || {});
         setLeadData(data.leadData || { name: '', email: '', phone: '' });
-        setCurrentStep(data.currentStep || 0);
+        const savedStep = data.currentStep || 0;
+        setCurrentStep(Math.max(0, Math.min(savedStep, allPages.length - 1)));
         setLastSaved(new Date(data.timestamp));
         setIsDirty(false);
       }
@@ -971,6 +981,13 @@ export default function QuizPreview({ quiz, onClose, onSave, initialPage = 0 }: 
   useEffect(() => {
     loadFromLocalStorage();
   }, [quiz.id]);
+
+  // Sincronizar currentStep com initialPage quando ele mudar (modo preview)
+  useEffect(() => {
+    if (typeof initialPage === 'number' && initialPage >= 0 && initialPage < allPages.length) {
+      setCurrentStep(initialPage);
+    }
+  }, [initialPage, allPages.length]);
 
   useEffect(() => {
     const handleOnline = () => setIsOnline(true);
@@ -2291,6 +2308,8 @@ export default function QuizPreview({ quiz, onClose, onSave, initialPage = 0 }: 
                   <div className="flex items-center justify-between text-sm text-gray-600 mb-2">
                     <span>Pergunta {currentStep + 1} de {totalSteps}</span>
                     <span>{Math.round(((currentStep + 1) / totalSteps) * 100)}%</span>
+                    {/* Debug temporário */}
+                    <span className="text-xs text-blue-500 ml-2">Debug: currentStep={currentStep}, initialPage={initialPage}</span>
                   </div>
                   <div 
                     className={`w-full overflow-hidden ${
