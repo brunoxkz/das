@@ -9,7 +9,7 @@ import { ModernButton } from "@/components/ui/modern-button";
 import { ModernCard, ModernCardContent, ModernCardHeader, ModernCardTitle } from "@/components/ui/modern-card";
 import { animations, microInteractions } from "@/lib/animations";
 import { cn } from "@/lib/utils";
-import { useTranslation } from "react-i18next";
+
 import { 
   FileText, 
   Plus, 
@@ -684,7 +684,7 @@ export function PageEditorHorizontal({
   onThemeChange,
   onActivePageChange 
 }: PageEditorProps) {
-  const { t } = useTranslation();
+
   const [activePage, setActivePage] = useState(0);
 
   // Notificar mudança de página ativa
@@ -738,82 +738,75 @@ export function PageEditorHorizontal({
   };
 
 
-  // Função para traduzir os tipos de elementos usando i18n
+  // Função para obter nomes dos elementos em português
   const getElementTypeName = (type: string) => {
-    // Mapear tipos para chaves de tradução
-    const typeKeyMap: Record<string, string> = {
-      heading: "heading",
-      paragraph: "paragraph", 
-      image: "image",
-      video: "video",
-      divider: "divider",
-      multiple_choice: "multipleChoice",
-      text: "text",
-      email: "email",
-      phone: "phone",
-      number: "number",
-      rating: "rating",
-      animated_transition: "animatedTransition",
-      checkbox: "checkbox",
-      date: "date",
-      birth_date: "birthDate",
-      height: "height",
-      current_weight: "currentWeight",
-      target_weight: "targetWeight",
-      textarea: "textarea",
-      image_upload: "imageUpload",
-      spacer: "spacer",
-      game_wheel: "gameWheel",
-      game_scratch: "gameScratch",
-      game_color_pick: "gameColorPick",
-      game_brick_break: "gameBrickBreak",
-      game_memory_cards: "gameMemoryCards",
-      game_slot_machine: "gameSlotMachine",
-      continue_button: "continueButton",
-      loading_question: "loadingQuestion",
-      body_type_classifier: "bodyTypeClassifier",
-      age_classifier: "ageClassifier", 
-      fitness_goal_classifier: "fitnessGoalClassifier",
-      experience_classifier: "experienceClassifier",
-      share_quiz: "shareQuiz",
-      social_proof: "socialProof",
-      urgency_timer: "urgencyTimer",
-      testimonials: "testimonials",
-      guarantee: "guarantee",
-      icon_list: "iconList",
-      faq: "faq",
-      image_with_text: "imageWithText",
-      image_carousel: "imageCarousel",
-      cta_button: "ctaButton",
-      price_comparison: "priceComparison",
-      metrics: "metrics",
-      plans: "plans",
-      before_after: "beforeAfter",
-      stripe_embed: "stripeEmbed",
-      calculator: "calculator",
-      countdown: "countdown",
-      audio: "audio",
-      progress_bar: "progressBar",
-      chart: "chart",
-      pricing_plans: "pricingPlans",
-      paypal: "paypal",
-      hotmart_upsell: "hotmartUpsell",
-      transition_background: "transitionBackground",
-      transition_text: "transitionText",
-      transition_counter: "transitionCounter",
-      transition_loader: "transitionLoader",
-      transition_button: "transitionButton",
-      transition_redirect: "transitionRedirect",
-      netflix_intro: "netflixIntro"
+    const elementNames: Record<string, string> = {
+      heading: "Título",
+      paragraph: "Parágrafo", 
+      image: "Imagem",
+      video: "Vídeo",
+      divider: "Divisor",
+      multiple_choice: "Múltipla Escolha",
+      text: "Texto",
+      email: "Email",
+      phone: "Telefone",
+      number: "Número",
+      rating: "Avaliação",
+      animated_transition: "Transição Animada",
+      checkbox: "Checkbox",
+      date: "Data",
+      birth_date: "Data de Nascimento",
+      height: "Altura",
+      current_weight: "Peso Atual",
+      target_weight: "Peso Objetivo",
+      textarea: "Área de Texto",
+      image_upload: "Upload de Imagem",
+      spacer: "Espaçador",
+      game_wheel: "Roda da Sorte",
+      game_scratch: "Raspadinha",
+      game_color_pick: "Escolha de Cor",
+      game_brick_break: "Quebra Tijolos",
+      game_memory_cards: "Jogo da Memória",
+      game_slot_machine: "Caça-Níqueis",
+      continue_button: "Botão Continuar",
+      loading_question: "Pergunta com Loading",
+      body_type_classifier: "Classificador de Tipo Corporal",
+      age_classifier: "Classificador de Idade", 
+      fitness_goal_classifier: "Classificador de Objetivo Fitness",
+      experience_classifier: "Classificador de Experiência",
+      share_quiz: "Compartilhar Quiz",
+      social_proof: "Prova Social",
+      urgency_timer: "Timer de Urgência",
+      testimonials: "Depoimentos",
+      guarantee: "Garantia",
+      icon_list: "Lista com Ícones",
+      faq: "Perguntas Frequentes",
+      image_with_text: "Imagem com Texto",
+      image_carousel: "Carrossel de Imagens",
+      cta_button: "Botão de Ação",
+      price_comparison: "Comparação de Preços",
+      metrics: "Métricas",
+      plans: "Planos",
+      before_after: "Antes e Depois",
+      stripe_embed: "Checkout Stripe",
+      calculator: "Calculadora",
+      countdown: "Contagem Regressiva",
+      audio: "Áudio",
+      progress_bar: "Barra de Progresso",
+      chart: "Gráfico",
+      pricing_plans: "Planos de Preços",
+      paypal: "PayPal",
+      hotmart_upsell: "Upsell Hotmart",
+      transition_background: "Fundo de Transição",
+      transition_text: "Texto de Transição",
+      transition_counter: "Contador de Transição",
+      transition_loader: "Carregamento de Transição",
+      transition_button: "Botão de Transição",
+      transition_redirect: "Redirecionamento de Transição",
+      netflix_intro: "Intro Netflix"
     };
     
-    const translationKey = typeKeyMap[type];
-    try {
-      return translationKey ? t(`quiz.elements.${translationKey}`) : type;
-    } catch (error) {
-      console.warn(`Translation not found for element type: ${type}`);
-      return type;
-    }
+    return elementNames[type] || type;
   };
 
   // Função para converter imagem para WebP
@@ -882,7 +875,7 @@ export function PageEditorHorizontal({
 
   const elementCategories = [
     {
-      name: t('quiz.elementCategories.content'),
+      name: "Conteúdo",
       elements: [
         { type: "heading", label: getElementTypeName("heading"), icon: <Type className="w-4 h-4" /> },
         { type: "paragraph", label: getElementTypeName("paragraph"), icon: <AlignLeft className="w-4 h-4" /> },
@@ -891,7 +884,7 @@ export function PageEditorHorizontal({
       ]
     },
     {
-      name: t('quiz.elementCategories.questions'),
+      name: "Perguntas",
       elements: [
         { type: "multiple_choice", label: getElementTypeName("multiple_choice"), icon: <CheckSquare className="w-4 h-4" /> },
         { type: "text", label: getElementTypeName("text"), icon: <FileText className="w-4 h-4" /> },
@@ -906,7 +899,7 @@ export function PageEditorHorizontal({
       ]
     },
     {
-      name: t('quiz.elementCategories.form'),
+      name: "Formulário",
       elements: [
         { type: "birth_date", label: getElementTypeName("birth_date"), icon: <Calendar className="w-4 h-4" /> },
         { type: "height", label: getElementTypeName("height"), icon: <ArrowUpDown className="w-4 h-4" /> },
@@ -915,7 +908,7 @@ export function PageEditorHorizontal({
       ]
     },
     {
-      name: t('quiz.elementCategories.media'),
+      name: "Mídia",
       elements: [
         { type: "image", label: getElementTypeName("image"), icon: <ImageIcon className="w-4 h-4" /> },
         { type: "image_upload", label: getElementTypeName("image_upload"), icon: <Upload className="w-4 h-4" /> },
@@ -924,7 +917,7 @@ export function PageEditorHorizontal({
       ]
     },
     {
-      name: t('quiz.elementCategories.advancedContent'),
+      name: "Conteúdo Avançado",
       elements: [
         { type: "testimonials", label: getElementTypeName("testimonials"), icon: <MessageSquare className="w-4 h-4" /> },
         { type: "guarantee", label: getElementTypeName("guarantee"), icon: <Shield className="w-4 h-4" /> },
@@ -935,7 +928,7 @@ export function PageEditorHorizontal({
       ]
     },
     {
-      name: t('quiz.elementCategories.navigation'),
+      name: "Navegação",
       elements: [
         { type: "continue_button", label: getElementTypeName("continue_button"), icon: <ArrowRight className="w-4 h-4" /> },
         { type: "share_quiz", label: getElementTypeName("share_quiz"), icon: <Share2 className="w-4 h-4" /> },
@@ -944,7 +937,7 @@ export function PageEditorHorizontal({
       ]
     },
     {
-      name: t('quiz.elementCategories.visualizations'),
+      name: "Visualizações",
       elements: [
         { type: "chart", label: getElementTypeName("chart"), icon: <BarChart3 className="w-4 h-4" /> },
         { type: "metrics", label: getElementTypeName("metrics"), icon: <TrendingUp className="w-4 h-4" /> },
@@ -952,7 +945,7 @@ export function PageEditorHorizontal({
       ]
     },
     {
-      name: t('quiz.elementCategories.sales'),
+      name: "Vendas",
       elements: [
         { type: "pricing_plans", label: getElementTypeName("pricing_plans"), icon: <CreditCard className="w-4 h-4" /> },
         { type: "stripe_embed", label: getElementTypeName("stripe_embed"), icon: <Shield className="w-4 h-4" /> },
@@ -961,7 +954,7 @@ export function PageEditorHorizontal({
       ]
     },
     {
-      name: t('quiz.elementCategories.ultraPersonalization'),
+      name: "Ultra Personalização",
       elements: [
         { type: "body_type_classifier", label: getElementTypeName("body_type_classifier"), icon: <Users className="w-4 h-4" /> },
         { type: "age_classifier", label: getElementTypeName("age_classifier"), icon: <Calendar className="w-4 h-4" /> },
@@ -974,7 +967,7 @@ export function PageEditorHorizontal({
 // Elementos específicos para páginas de transição
 const transitionElementCategories = [
   {
-    name: t('quiz.elementCategories.background'),
+    name: "Fundo",
     elements: [
       {
         type: "transition_background",
@@ -984,7 +977,7 @@ const transitionElementCategories = [
     ],
   },
   {
-    name: t('quiz.elementCategories.content'),
+    name: "Conteúdo",
     elements: [
       {
         type: "transition_text",
@@ -999,7 +992,7 @@ const transitionElementCategories = [
     ],
   },
   {
-    name: t('quiz.elementCategories.visualElements'),
+    name: "Elementos Visuais",
     elements: [
       {
         type: "transition_loader",
@@ -1019,7 +1012,7 @@ const transitionElementCategories = [
     ],
   },
   {
-    name: t('quiz.elementCategories.navigation'),
+    name: "Navegação",
     elements: [
       {
         type: "transition_button",
@@ -1039,7 +1032,7 @@ const transitionElementCategories = [
 // Elementos específicos para páginas de jogos
 const gameElementCategories = [
   {
-    name: t('quiz.elementCategories.games') + " 🎰",
+    name: "Jogos 🎰",
     elements: [
       {
         type: "game_wheel",
@@ -1059,7 +1052,7 @@ const gameElementCategories = [
     ],
   },
   {
-    name: t('quiz.elementCategories.games') + " 🎯",
+    name: "Jogos 🎯",
     elements: [
       {
         type: "game_color_pick",
@@ -1088,7 +1081,7 @@ const gameElementCategories = [
   const addPage = () => {
     const newPage: QuizPage = {
       id: Date.now(),
-      title: `${t('quiz.page')} ${pages.length + 1}`,
+      title: `Página ${pages.length + 1}`,
       elements: []
     };
     onPagesChange([...pages, newPage]);
@@ -1097,7 +1090,7 @@ const gameElementCategories = [
   const addTransitionPage = () => {
     const newPage: QuizPage = {
       id: Date.now(),
-      title: `${t('quiz.transition')} ${pages.filter(p => p.isTransition).length + 1}`,
+      title: `Transição ${pages.filter(p => p.isTransition).length + 1}`,
       elements: [],
       isTransition: true
     };
@@ -1107,7 +1100,7 @@ const gameElementCategories = [
   const addGamePage = () => {
     const newPage: QuizPage = {
       id: Date.now(),
-      title: `${t('quiz.game')} ${pages.filter(p => p.isGame).length + 1}`,
+      title: `Jogo ${pages.filter(p => p.isGame).length + 1}`,
       elements: [],
       isGame: true
     };
