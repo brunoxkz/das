@@ -1277,11 +1277,37 @@ export function QuizPublicRenderer({ quiz }: QuizPublicRendererProps) {
         );
 
       case 'heading':
+        const headingSize = properties.fontSize || element.fontSize || 'xl';
+        const headingColor = properties.textColor || element.textColor || '#000000';
+        const isBold = properties.fontWeight === 'bold' || element.fontWeight === 'bold' || true;
+        const isItalic = properties.fontStyle === 'italic' || element.fontStyle === 'italic';
+        const isUnderline = properties.textDecoration === 'underline' || element.textDecoration === 'underline';
+        
+        const sizeClasses = {
+          'sm': 'text-sm',
+          'base': 'text-base', 
+          'lg': 'text-lg',
+          'xl': 'text-xl',
+          '2xl': 'text-2xl',
+          '3xl': 'text-3xl',
+          '4xl': 'text-4xl',
+          '5xl': 'text-5xl'
+        };
+        
         return (
           <div key={id} className="space-y-2">
             <h2 
-              className={`text-2xl font-bold${getElementClasses(properties)}`}
-              style={getElementStyles(properties)}
+              className={`
+                ${sizeClasses[headingSize] || 'text-xl'}
+                ${isBold ? 'font-bold' : 'font-normal'}
+                ${isItalic ? 'italic' : ''}
+                ${isUnderline ? 'underline' : ''}
+                ${getElementClasses(properties)}
+              `}
+              style={{
+                color: headingColor,
+                ...getElementStyles(properties)
+              }}
             >
               {properties.text || properties.content || element.content || 'Título'}
             </h2>
@@ -1382,7 +1408,7 @@ export function QuizPublicRenderer({ quiz }: QuizPublicRendererProps) {
         const buttonStyle = properties.buttonBorderRadius || quiz.design?.buttonStyle || "rounded";
         const isFixedFooter = properties.isFixedFooter || false;
         
-        const sizeClasses = {
+        const buttonSizeClasses = {
           small: "px-4 py-2 text-sm",
           medium: "px-6 py-3 text-base", 
           large: "px-8 py-4 text-lg"
@@ -1399,7 +1425,7 @@ export function QuizPublicRenderer({ quiz }: QuizPublicRendererProps) {
             <Button
               onClick={handleNextPage}
               disabled={isSubmitting}
-              className={`${sizeClasses[buttonSize]} ${styleClasses[buttonStyle]} font-medium shadow-lg transition-all duration-200 hover:shadow-xl`}
+              className={`${buttonSizeClasses[buttonSize]} ${styleClasses[buttonStyle]} font-medium shadow-lg transition-all duration-200 hover:shadow-xl`}
               style={{
                 backgroundColor: buttonBgColor,
                 color: buttonTextColor,
