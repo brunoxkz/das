@@ -716,10 +716,25 @@ export default function QuizPreview({ quiz, onClose, onSave, initialPage = 0 }: 
     return processedText;
   };
 
+  // Função para gerar ID único estruturado para remarketing
+  const generateUniqueId = (pageIndex: number, elementId: string) => {
+    const quizName = quiz?.name || quiz?.title || 'quiz';
+    const cleanQuizName = quizName
+      .toLowerCase()
+      .replace(/[^a-z0-9]/g, '')
+      .substring(0, 10); // máximo 10 caracteres
+    
+    return `p${pageIndex + 1}_r_${cleanQuizName}`;
+  };
+
   const handleAnswer = (elementId: string, answer: any, element?: any) => {
+    // Gerar ID único para remarketing baseado na página atual
+    const remarkingId = generateUniqueId(currentStep, elementId);
+    
     setResponses(prev => ({
       ...prev,
-      [elementId]: answer
+      [remarkingId]: answer, // Usar ID estruturado para remarketing
+      [elementId]: answer    // Manter ID original para funcionamento interno
     }));
     
     setIsDirty(true);
@@ -728,6 +743,9 @@ export default function QuizPreview({ quiz, onClose, onSave, initialPage = 0 }: 
     if (autoSave) {
       saveToLocalStorage();
     }
+
+    // Log para debug do sistema de remarketing
+    console.log('🎯 REMARKETING ID:', remarkingId, '| RESPOSTA:', answer);
 
     // Navegação automática para múltipla escolha
     if (element?.type === 'multiple_choice' && !element?.requireContinueButton) {

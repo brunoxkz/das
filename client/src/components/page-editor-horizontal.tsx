@@ -5769,6 +5769,22 @@ const gameElementCategories = [
                         <Label htmlFor="requireContinue" className="text-xs">Aguardar botão "Continuar"</Label>
                       </div>
 
+                      {/* ID de Remarketing */}
+                      <div className="p-3 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg">
+                        <div className="flex items-center gap-2 mb-2">
+                          <Target className="w-4 h-4 text-blue-600" />
+                          <span className="font-medium text-blue-800 text-xs">ID para Campanhas</span>
+                        </div>
+                        <div className="text-xs text-blue-700 space-y-1">
+                          <div className="font-mono bg-blue-100 px-2 py-1 rounded text-blue-900">
+                            p{activePageIndex + 1}_r_{(quizData?.name || quizData?.title || 'quiz').toLowerCase().replace(/[^a-z0-9]/g, '').substring(0, 10)}
+                          </div>
+                          <p className="text-blue-600">
+                            Este ID será usado automaticamente para segmentação em campanhas de SMS, Email e WhatsApp
+                          </p>
+                        </div>
+                      </div>
+
                       <div>
                         <Label className="text-xs">Opções de Resposta</Label>
                         <div className="space-y-3 mt-2">
@@ -11602,6 +11618,80 @@ const gameElementCategories = [
                         </div>
                       </div>
                     </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Painel de IDs de Remarketing - Elementos com Campo */}
+              {selectedElementData && selectedElementData.fieldId && (
+                <div className="mt-6 p-4 bg-gradient-to-r from-green-50 to-blue-50 rounded-lg border border-green-200">
+                  <div className="flex items-center gap-2 mb-3">
+                    <span className="text-green-600">🎯</span>
+                    <h3 className="text-sm font-bold text-green-800">ID de Remarketing</h3>
+                  </div>
+                  <div className="space-y-3">
+                    <div className="bg-white p-3 rounded border">
+                      <div className="text-xs text-gray-600 mb-1">ID Gerado Automaticamente:</div>
+                      <div className="flex items-center gap-2">
+                        <div className="font-mono text-sm bg-gray-100 p-2 rounded border flex-1">
+                          {generateRemarketingId(currentPageIndex + 1, quiz?.name || 'quiz', selectedElementData.fieldId)}
+                        </div>
+                        <div className="group relative">
+                          <span className="text-gray-400 cursor-help" title="Campo não editável - cite essa variável em outra etapa ou use em suas campanhas de remarketing">
+                            🔒
+                          </span>
+                          <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-black text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-50">
+                            Cite essa variável em outra etapa ou use em suas campanhas de remarketing
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Painel Geral - Todos os IDs do Quiz */}
+              {quiz?.structure?.pages?.length > 0 && (
+                <div className="mt-6 p-4 bg-gradient-to-r from-purple-50 to-pink-50 rounded-lg border border-purple-200">
+                  <div className="flex items-center gap-2 mb-3">
+                    <span className="text-purple-600">📊</span>
+                    <h3 className="text-sm font-bold text-purple-800">IDs Disponíveis para Campanhas</h3>
+                  </div>
+                  <div className="space-y-2 max-h-40 overflow-y-auto">
+                    {quiz.structure.pages.map((page, pageIndex) =>
+                      page.elements
+                        ?.filter(el => el.fieldId)
+                        .map((element, elementIndex) => (
+                          <div key={`${pageIndex}-${elementIndex}`} className="bg-white p-2 rounded border text-xs">
+                            <div className="flex items-center justify-between gap-2">
+                              <div className="font-mono text-purple-700 flex-1">
+                                {generateRemarketingId(pageIndex + 1, quiz.name || 'quiz', element.fieldId)}
+                              </div>
+                              <div className="group relative">
+                                <span className="text-gray-400 cursor-help">🔒</span>
+                                <div className="absolute bottom-full right-0 mb-2 px-2 py-1 bg-black text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-50">
+                                  Cite essa variável em outra etapa ou use em suas campanhas de remarketing
+                                </div>
+                              </div>
+                            </div>
+                            <div className="text-gray-600 mt-1">
+                              Página {pageIndex + 1} - {element.type === 'multiple_choice' ? 'Múltipla Escolha' :
+                               element.type === 'text' ? 'Texto' :
+                               element.type === 'email' ? 'Email' :
+                               element.type === 'rating' ? 'Avaliação' :
+                               element.type === 'number' ? 'Número' :
+                               element.type === 'date' ? 'Data' : 'Campo'}
+                            </div>
+                          </div>
+                        ))
+                    ).flat()}
+                    {!quiz.structure.pages.some(page => page.elements?.some(el => el.fieldId)) && (
+                      <div className="text-center text-gray-500 text-xs py-4">
+                        Nenhum campo de coleta configurado.
+                        <br />
+                        Adicione Field IDs aos elementos para gerar IDs de remarketing.
+                      </div>
+                    )}
                   </div>
                 </div>
               )}
