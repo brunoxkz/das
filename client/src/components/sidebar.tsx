@@ -194,7 +194,12 @@ export function Sidebar() {
           active: location === "/quiz-ia",
           badge: "NEW"
         },
-
+        {
+          title: "Seus Afiliados",
+          href: "/seus-afiliados",
+          icon: <Users className="w-4 h-4" />,
+          active: location === "/seus-afiliados"
+        },
 
       ]
     },
