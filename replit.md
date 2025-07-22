@@ -333,6 +333,17 @@ O sistema utiliza Stripe Payment Intent para processar pagamentos únicos de R$ 
 
 ```
 Changelog:
+- July 22, 2025. SISTEMA MULTILÍNGUE DESABILITADO - Quiz I.A. restaurado para português puro devido a problemas de funcionalidade:
+  * PROBLEMA CRÍTICO: Sistema i18n não funcionava - mudança de idioma não tinha efeito na interface
+  * HOOKS DE TRADUÇÃO REMOVIDOS: useTranslation e todas as chamadas t() eliminadas do quiz-ia-simple.tsx
+  * TEXTO PORTUGUÊS RESTAURADO: Todos os elementos de interface voltaram ao texto em português original
+  * CAMPOS DE FORMULÁRIO CORRIGIDOS: Labels, placeholders e botões agora exibem texto correto em português
+  * MENSAGENS TOAST RESTAURADAS: Notificações de erro e sucesso revertidas para versões em português
+  * DEPENDÊNCIAS LIMPAS: Imports desnecessários de react-i18next removidos completamente
+  * SISTEMA TEMPORARIAMENTE DESABILITADO: i18n precisa ser reimplementado com correções adequadas
+  * INTERFACE FUNCIONAL: Quiz I.A. agora opera 100% em português sem dependências de tradução
+  * EXPERIÊNCIA CONSISTENTE: Usuários veem conteúdo coerente em português nativo
+  * STATUS: PORTUGUÊS NATIVO 100% FUNCIONAL - Sistema i18n aguardando redesign completo
 - July 22, 2025. SISTEMA ÚNICO DE PUSH NOTIFICATIONS 100% LIMPO - Eliminados todos os sistemas duplicados e mantido apenas o sistema funcional integrado:
   * LIMPEZA CRÍTICA CONCLUÍDA: Removidos 3 sistemas duplicados (real-push-notification-service.ts, real-time-push-notifications.ts, push-notifications-persistent.ts)  
   * SISTEMA ÚNICO MANTIDO: server/routes-sqlite.ts (linhas 4148-4208) integrado no fluxo natural de submissão de quiz
