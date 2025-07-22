@@ -5759,6 +5759,16 @@ const gameElementCategories = [
                         </div>
                       </div>
 
+                      <div className="flex items-center space-x-2">
+                        <input
+                          type="checkbox"
+                          id="requireContinue"
+                          checked={selectedElementData.requireContinueButton || false}
+                          onChange={(e) => updateElement(selectedElementData.id, { requireContinueButton: e.target.checked })}
+                        />
+                        <Label htmlFor="requireContinue" className="text-xs">Aguardar botão "Continuar"</Label>
+                      </div>
+
                       <div>
                         <Label className="text-xs">Opções de Resposta</Label>
                         <div className="space-y-3 mt-2">

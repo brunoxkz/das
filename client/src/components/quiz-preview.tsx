@@ -728,6 +728,23 @@ export default function QuizPreview({ quiz, onClose, onSave, initialPage = 0 }: 
     if (autoSave) {
       saveToLocalStorage();
     }
+
+    // Navegação automática para múltipla escolha
+    if (element?.type === 'multiple_choice' && !element?.requireContinueButton) {
+      // Adicionar delay pequeno para feedback visual
+      setTimeout(() => {
+        if (currentStep < totalSteps - 1) {
+          setCurrentStep(currentStep + 1);
+        } else {
+          // Última página - mostrar lead capture se habilitado
+          if (settings.collectLeads && !showLeadCapture) {
+            setShowLeadCapture(true);
+          } else {
+            handleComplete();
+          }
+        }
+      }, 300); // 300ms para feedback visual da seleção
+    }
   };
 
   const handleNext = () => {
