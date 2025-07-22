@@ -1081,15 +1081,24 @@ export class SQLiteStorage implements IStorage {
         }
       };
       
+      // CORREÇÃO CRÍTICA: Auto-publicar quizzes criados pelo Quiz I.A.
+      const shouldAutoPublish = quiz.title?.includes('Quiz I.A.') || quiz.description?.includes('Quiz I.A.');
+      
       const [newQuiz] = await db.insert(quizzes)
         .values({
           id: quizId,
           ...quiz,
           structure: quiz.structure || defaultStructure,
+          isPublished: shouldAutoPublish ? true : (quiz.isPublished || false),
           createdAt: now,
           updatedAt: now
         })
         .returning();
+        
+      if (shouldAutoPublish) {
+        console.log(`🚀 QUIZ I.A. AUTO-PUBLICADO: ${newQuiz.title} (ID: ${quizId})`);
+      }
+        
       return newQuiz;
     } catch (error) {
       console.error('❌ ERRO AO CRIAR QUIZ:', error);

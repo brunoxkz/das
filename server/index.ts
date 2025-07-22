@@ -587,6 +587,29 @@ app.post('/api/quiz-ia/create', verifyJWT, async (req: any, res: any) => {
     // Importar funções necessárias
     const { storage } = await import('./storage-sqlite');
 
+    // Gerar QR Code PIX automaticamente
+    console.log('🔢 Gerando QR Code PIX...');
+    const { PixQRCodeGenerator } = await import('./pix-qrcode-generator');
+    
+    let pixQRCode = null;
+    try {
+      if (PixQRCodeGenerator.validatePixKey(pixKey)) {
+        pixQRCode = await PixQRCodeGenerator.generateQRCodeDataURL({
+          pixKey: pixKey,
+          merchantName: productName,
+          merchantCity: 'São Paulo',
+          amount: parseFloat(productPrice),
+          description: `Pagamento - ${productName}`,
+          txId: `QUIZ${Date.now()}`
+        });
+        console.log('✅ QR Code PIX gerado com sucesso');
+      } else {
+        console.log('⚠️ Chave PIX inválida, QR Code não gerado');
+      }
+    } catch (error) {
+      console.error('❌ Erro ao gerar QR Code PIX:', error);
+    }
+
     // Criar estrutura do quiz para salvar no banco
     const quizStructure = {
       pages: generatedContent.questions.map((question: any, index: number) => ({
@@ -607,6 +630,7 @@ app.post('/api/quiz-ia/create', verifyJWT, async (req: any, res: any) => {
         transitions: generatedContent.transitions,
         checkout: generatedContent.checkout,
         pixKey: pixKey,
+        pixQRCode: pixQRCode,
         productPrice: parseFloat(productPrice),
         productName: productName
       }
