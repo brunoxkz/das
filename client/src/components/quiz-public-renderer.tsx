@@ -1649,12 +1649,12 @@ export function QuizPublicRenderer({ quiz }: QuizPublicRendererProps) {
               <CheckCircle className="w-8 h-8" style={{ color: isDarkMode ? '#10b981' : '#059669' }} />
             </div>
             <CardTitle className="text-2xl" style={{ color: textColor }}>
-              {quiz.structure.settings.resultTitle || 'Obrigado!'}
+              {quiz.structure?.settings?.resultTitle || 'Obrigado!'}
             </CardTitle>
           </CardHeader>
           <CardContent className="text-center space-y-4">
             <p style={{ color: isDarkMode ? '#d1d5db' : '#6b7280' }}>
-              {quiz.structure.settings.resultDescription || 'Suas respostas foram enviadas com sucesso!'}
+              {quiz.structure?.settings?.resultDescription || 'Suas respostas foram enviadas com sucesso!'}
             </p>
             <div className="text-sm" style={{ color: isDarkMode ? '#9ca3af' : '#9ca3af' }}>
               Total de respostas capturadas: {quizResponses.length}
