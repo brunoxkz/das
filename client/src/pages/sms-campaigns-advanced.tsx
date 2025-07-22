@@ -549,44 +549,77 @@ export default function SMSCampaignsAdvanced() {
                     <p className="text-gray-600">Selecione o tipo de campanha que deseja criar. Cada tipo possui suas próprias configurações específicas.</p>
                   </div>
                   
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {/* Layout responsivo melhorado para 5 itens - todos visíveis */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 xl:grid-cols-5 gap-4 md:gap-3">
                     {Object.values(CAMPAIGN_TYPES).map((type) => {
                       const Icon = type.icon;
                       const isQuantum = type.id.includes('quantum');
+                      const isSelected = form.type === type.id;
                       
                       return (
                         <Card 
                           key={type.id}
-                          className={`cursor-pointer transition-all hover:shadow-lg hover:scale-105 ${
-                            form.type === type.id ? 'ring-2 ring-blue-500 bg-blue-50' : ''
-                          } ${isQuantum ? 'relative overflow-hidden' : ''}`}
+                          className={`cursor-pointer transition-all duration-300 hover:shadow-xl hover:-translate-y-1 transform ${
+                            isSelected 
+                              ? 'ring-2 ring-blue-500 bg-gradient-to-br from-blue-50 to-indigo-50 shadow-lg' 
+                              : 'hover:bg-gray-50'
+                          } ${isQuantum ? 'relative overflow-hidden border-purple-200' : ''}`}
                           onClick={() => setForm(prev => ({ ...prev, type: type.id }))}
                         >
-                          <CardContent className="p-4">
+                          <CardContent className="p-4 h-full">
                             {isQuantum && (
-                              <div className="absolute top-0 right-0 bg-gradient-to-l from-purple-600 to-blue-600 text-white text-xs px-2 py-1 rounded-bl-lg">
+                              <div className="absolute top-0 right-0 bg-gradient-to-l from-purple-600 to-blue-600 text-white text-xs px-2 py-1 rounded-bl-lg font-medium">
                                 QUANTUM
                               </div>
                             )}
-                            <div className="flex items-start gap-3">
-                              <div className={`p-2 rounded-lg ${
-                                isQuantum ? type.color : type.color + ' text-white'
-                              }`}>
-                                <Icon className={`w-5 h-5 ${isQuantum ? 'text-white' : ''}`} />
+                            
+                            {/* Indicador de seleção */}
+                            {isSelected && (
+                              <div className="absolute top-2 left-2 w-3 h-3 bg-blue-500 rounded-full flex items-center justify-center">
+                                <CheckSquare className="w-2 h-2 text-white" />
                               </div>
-                              <div className="flex-1">
-                                <div className="flex items-center gap-2">
-                                  <h3 className="font-medium">{type.name}</h3>
-                                  {isQuantum && <Sparkles className="w-4 h-4 text-purple-600" />}
+                            )}
+                            
+                            <div className="flex flex-col items-center text-center space-y-3 mt-2">
+                              {/* Ícone centralizado e maior */}
+                              <div className={`p-3 rounded-xl ${
+                                isQuantum 
+                                  ? type.color + ' shadow-lg' 
+                                  : type.color + ' text-white shadow-md'
+                              } ${isSelected ? 'scale-110' : ''} transition-transform duration-300`}>
+                                <Icon className={`w-6 h-6 ${isQuantum ? 'text-white' : ''}`} />
+                              </div>
+                              
+                              {/* Nome e badge quantum */}
+                              <div className="space-y-1">
+                                <div className="flex items-center justify-center gap-1">
+                                  <h3 className={`font-semibold text-sm ${
+                                    isSelected ? 'text-blue-700' : 'text-gray-800'
+                                  }`}>
+                                    {type.name}
+                                  </h3>
+                                  {isQuantum && <Sparkles className="w-3 h-3 text-purple-600" />}
                                 </div>
-                                <p className="text-sm text-gray-600 mt-1">
-                                  {type.description}
-                                </p>
+                                
                                 {isQuantum && (
-                                  <div className="mt-2 text-xs text-purple-600 font-medium">
-                                    Sistema Ultra-Granular ⚡
+                                  <div className="text-xs text-purple-600 font-medium bg-purple-100 px-2 py-1 rounded-full">
+                                    Ultra-Granular ⚡
                                   </div>
                                 )}
+                              </div>
+                              
+                              {/* Descrição compacta */}
+                              <p className="text-xs text-gray-600 leading-tight h-9 overflow-hidden">
+                                {type.description}
+                              </p>
+                              
+                              {/* Botão visual de seleção */}
+                              <div className={`w-full py-2 px-3 rounded-lg text-xs font-medium transition-all ${
+                                isSelected 
+                                  ? 'bg-blue-500 text-white' 
+                                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                              }`}>
+                                {isSelected ? '✓ Selecionado' : 'Selecionar'}
                               </div>
                             </div>
                           </CardContent>
