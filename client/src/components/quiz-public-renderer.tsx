@@ -1887,6 +1887,39 @@ export function QuizPublicRenderer({ quiz }: QuizPublicRendererProps) {
             )}
             
             {currentPage.elements.map(renderElement)}
+            
+            {/* 🚀 BOTÕES DE NAVEGAÇÃO - SEÇÃO CRÍTICA RESTAURADA */}
+            <div className="mt-8 flex justify-between items-center">
+              {/* Botão Voltar */}
+              {currentPageIndex > 0 && (
+                <Button
+                  onClick={handlePrevPage}
+                  variant="outline"
+                  className="bg-gray-100 hover:bg-gray-200 text-gray-700 border-gray-300"
+                >
+                  ← Voltar
+                </Button>
+              )}
+              
+              {/* Espaçador quando não há botão voltar */}
+              {currentPageIndex === 0 && <div />}
+              
+              {/* Botão Continuar/Finalizar */}
+              {!showResults && (
+                <Button
+                  onClick={handleNextPage}
+                  disabled={isSubmitting}
+                  className="bg-green-600 hover:bg-green-700 text-white px-8 py-3 font-medium rounded-lg shadow-lg transition-all duration-200 hover:shadow-xl"
+                  style={{
+                    backgroundColor: quiz.design?.buttonColor || '#16a34a',
+                    color: quiz.design?.buttonTextColor || '#ffffff'
+                  }}
+                >
+                  {isSubmitting ? 'Processando...' : 
+                   isLastPage ? 'Finalizar Quiz' : 'Continuar'}
+                </Button>
+              )}
+            </div>
           </CardContent>
         </Card>
       </div>
