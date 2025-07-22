@@ -4210,6 +4210,94 @@ export function registerSQLiteRoutes(app: Express): Server {
           console.error('⚠️ Erro no sistema de notificação automática (não crítico):', autoNotifyError);
         }
 
+        // 🔥 SISTEMA AO VIVO QUANTUM - DETECÇÃO E DISPARO AUTOMÁTICO
+        try {
+          console.log(`🔥 VERIFICANDO CAMPANHAS AO VIVO QUANTUM para quiz: ${req.params.id}`);
+          
+          // Buscar campanhas Ao Vivo Quantum ativas para este quiz
+          const quantumCampaigns = await storage.getSmsCampaignsByQuiz(req.params.id);
+          const liveCampaigns = quantumCampaigns.filter(campaign => 
+            campaign.quantumType === 'live' && 
+            campaign.status === 'monitoring'
+          );
+          
+          console.log(`🎯 ENCONTRADAS ${liveCampaigns.length} CAMPANHAS AO VIVO QUANTUM`);
+          
+          for (const campaign of liveCampaigns) {
+            try {
+              // Parse das condições de trigger
+              const triggerConditions = campaign.triggerConditions ? 
+                JSON.parse(campaign.triggerConditions) : null;
+              
+              if (!triggerConditions) continue;
+              
+              console.log(`🔍 VERIFICANDO CONDIÇÃO: ${triggerConditions.fieldId} = ${triggerConditions.responseValue}`);
+              
+              // Verificar se a resposta atende às condições Quantum
+              const userResponse = req.body.responses[triggerConditions.fieldId];
+              
+              if (userResponse === triggerConditions.responseValue) {
+                console.log(`🎯 CONDIÇÃO ATENDIDA! Disparando Ao Vivo Quantum: ${campaign.name}`);
+                
+                // Extrair lead data automaticamente
+                const extractedData = extractLeadDataFromResponses(req.body.responses, req.body.leadData || {});
+                const leadPhone = extractedData.telefone || extractedData.phone || extractedData.celular;
+                
+                if (leadPhone && triggerConditions.targetType === 'lead') {
+                  // Disparar SMS para o lead que completou o quiz
+                  console.log(`📱 ENVIANDO SMS AO VIVO QUANTUM para: ${leadPhone}`);
+                  
+                  // Personalizar mensagem com dados do lead
+                  let personalizedMessage = triggerConditions.message || campaign.message;
+                  personalizedMessage = personalizedMessage
+                    .replace('{nome}', extractedData.nome || extractedData.name || 'Usuário')
+                    .replace('{resposta}', userResponse)
+                    .replace('{quiz}', quiz.title);
+                  
+                  try {
+                    await sendSms(leadPhone, personalizedMessage);
+                    
+                    // Atualizar estatísticas da campanha
+                    await storage.updateSmsCampaign(campaign.id, {
+                      sent: (campaign.sent || 0) + 1
+                    });
+                    
+                    console.log(`✅ SMS AO VIVO QUANTUM ENVIADO: ${campaign.name} → ${leadPhone}`);
+                  } catch (smsError) {
+                    console.error(`❌ ERRO AO ENVIAR SMS AO VIVO QUANTUM:`, smsError);
+                  }
+                }
+                
+                if (triggerConditions.targetType === 'admin') {
+                  // Enviar notificação para o admin/dono do quiz
+                  console.log(`🚀 ENVIANDO NOTIFICAÇÃO ADMIN AO VIVO QUANTUM`);
+                  
+                  const adminMessage = `🔥 AO VIVO: Lead respondeu "${userResponse}" no quiz "${quiz.title}"!`;
+                  
+                  // Buscar telefone do admin se configurado
+                  const quizOwner = await storage.getUser(quiz.user_id);
+                  if (quizOwner?.whatsapp) {
+                    try {
+                      await sendSms(quizOwner.whatsapp, adminMessage);
+                      console.log(`✅ SMS ADMIN AO VIVO QUANTUM ENVIADO para: ${quizOwner.whatsapp}`);
+                    } catch (adminSmsError) {
+                      console.error(`❌ ERRO SMS ADMIN AO VIVO QUANTUM:`, adminSmsError);
+                    }
+                  }
+                }
+              } else {
+                console.log(`⏭️ Condição não atendida: "${userResponse}" ≠ "${triggerConditions.responseValue}"`);
+              }
+              
+            } catch (campaignError) {
+              console.error(`❌ ERRO PROCESSANDO CAMPANHA AO VIVO QUANTUM ${campaign.id}:`, campaignError);
+            }
+          }
+          
+        } catch (quantumError) {
+          console.error('⚠️ Erro no Sistema Ao Vivo Quantum (não crítico):', quantumError);
+        }
+
         // Invalidar caches relacionados APÓS salvar
         Promise.resolve().then(() => {
           cache.del(`responses-${req.params.id}`);
@@ -4672,13 +4760,39 @@ export function registerSQLiteRoutes(app: Express): Server {
       for (const response of allResponses) {
         if (!response.responses || typeof response.responses !== 'object') continue;
         
-        const metadata = response.metadata && typeof response.metadata === 'object' ? response.metadata as any : {};
+        // Parse metadata - pode ser string JSON ou object
+        let metadata = {};
+        if (response.metadata) {
+          if (typeof response.metadata === 'string') {
+            try {
+              metadata = JSON.parse(response.metadata);
+            } catch (e) {
+              metadata = {};
+            }
+          } else if (typeof response.metadata === 'object') {
+            metadata = response.metadata;
+          }
+        }
         
         // Verificar se é parcial e se deve incluir
-        if (!includePartial && metadata.isPartial !== false) continue;
+        // Para leads completos: metadata.isPartial deve ser false OU metadata.completionPercentage deve ser 100
+        if (!includePartial) {
+          const isComplete = metadata.isPartial === false || metadata.completionPercentage === 100 || metadata.isComplete === true;
+          if (!isComplete) continue;
+        }
         
-        // Verificar se tem a resposta específica - busca mais flexível
-        const actualAnswer = response.responses[fieldId];
+        // Verificar se tem a resposta específica - suporte para array e object formats
+        let actualAnswer;
+        
+        if (Array.isArray(response.responses)) {
+          // Formato array: [{elementFieldId: 'p1_...', value: '...'}]
+          const responseItem = response.responses.find(r => r.elementFieldId === fieldId);
+          actualAnswer = responseItem ? responseItem.value : null;
+        } else {
+          // Formato object: {p1_objetivo_fitness: 'Emagrecer'}
+          actualAnswer = response.responses[fieldId];
+        }
+        
         if (!actualAnswer) continue;
         
         const actualAnswerStr = actualAnswer.toString().trim();
@@ -4778,6 +4892,242 @@ export function registerSQLiteRoutes(app: Express): Server {
     } catch (error) {
       console.error("🔥 FILTRO ULTRA ERROR:", error);
       res.status(500).json({ message: "Error filtering leads by response value" });
+    }
+  });
+
+  // 🔥 SISTEMA QUANTUM - REMARKETING E AO VIVO QUANTUM
+  
+  // Criar campanha Remarketing Quantum (segmentada por Sistema Ultra)
+  app.post('/api/sms-quantum/remarketing/create', verifyJWT, async (req, res) => {
+    try {
+      const userId = req.user.id;
+      const { 
+        name, 
+        message, 
+        quizId, 
+        quantumFilters, // Filtros do Sistema Ultra (fieldId + responseValue)
+        scheduleType, 
+        delay,
+        delayUnit 
+      } = req.body;
+
+      console.log('🔥 CRIANDO CAMPANHA REMARKETING QUANTUM:', { name, quizId, quantumFilters });
+
+      // Validar se quiz existe e pertence ao usuário
+      const quiz = await storage.getQuiz(quizId);
+      if (!quiz || quiz.userId !== userId) {
+        return res.status(404).json({ message: "Quiz não encontrado" });
+      }
+
+      // Usar Sistema Ultra para obter leads segmentados
+      const response = await fetch(`${req.protocol}://${req.get('host')}/api/quizzes/${quizId}/leads-by-response`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': req.headers.authorization
+        },
+        body: JSON.stringify({
+          fieldId: quantumFilters.fieldId,
+          responseValue: quantumFilters.responseValue,
+          format: 'phones'
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error('Falha ao obter leads segmentados');
+      }
+
+      const leadData = await response.json();
+      console.log('🔍 REMARKETING DEBUG - leadData recebido:', JSON.stringify(leadData, null, 2));
+      
+      let phones = [];
+      if (leadData.phones && Array.isArray(leadData.phones)) {
+        phones = leadData.phones.map(phoneObj => phoneObj.phone || phoneObj).filter(Boolean);
+      } else if (leadData.leads && Array.isArray(leadData.leads)) {
+        phones = leadData.leads.map(lead => lead.telefone || lead.phone || lead.celular).filter(Boolean);
+      }
+
+      console.log(`🔍 REMARKETING DEBUG - Telefones extraídos: ${phones.length}`, phones);
+      
+      if (phones.length === 0) {
+        return res.status(400).json({ 
+          message: "Nenhum telefone encontrado para os filtros especificados",
+          debug: {
+            leadDataReceived: leadData,
+            filterUsed: { fieldId: quantumFilters.fieldId, responseValue: quantumFilters.responseValue },
+            phonesExtracted: phones
+          }
+        });
+      }
+
+      // Criar campanha SMS Quantum
+      const campaignId = nanoid();
+      const quantumConfig = {
+        filterUsed: quantumFilters,
+        segmentationMethod: 'ultra_granular',
+        automationType: 'remarketing',
+        leadsFound: phones.length
+      };
+
+      const campaign = await storage.createSMSCampaign({
+        name,
+        message,
+        quizId,
+        userId,
+        phones: phones,
+        status: scheduleType === 'immediate' ? 'active' : 'pending',
+        triggerDelay: delay || 0,
+        triggerUnit: delayUnit || 'minutes',
+        campaignType: 'quantum_remarketing',
+        conditionalRules: JSON.stringify({ quantumType: 'remarketing', quantumConfig, quantumFilters })
+      });
+
+      console.log(`✅ CAMPANHA REMARKETING QUANTUM CRIADA: ${campaignId} com ${phones.length} telefones`);
+
+      res.json({
+        success: true,
+        campaign: {
+          id: campaignId,
+          name,
+          quantumType: 'remarketing',
+          phonesCount: phones.length,
+          segmentationUsed: quantumFilters
+        }
+      });
+
+    } catch (error) {
+      console.error('❌ ERRO REMARKETING QUANTUM:', error);
+      res.status(500).json({ message: "Erro ao criar campanha Remarketing Quantum" });
+    }
+  });
+
+  // Criar campanha Ao Vivo Quantum (disparo instantâneo em completions)
+  app.post('/api/sms-quantum/live/create', verifyJWT, async (req, res) => {
+    try {
+      const userId = req.user.id;
+      const { 
+        name, 
+        message, 
+        quizId, 
+        quantumFilters, // Condições para disparo automático
+        targetType // 'lead' (para quem completou) ou 'admin' (notificação)
+      } = req.body;
+
+      console.log('🔥 CRIANDO CAMPANHA AO VIVO QUANTUM:', { name, quizId, quantumFilters, targetType });
+
+      // Validar se quiz existe e pertence ao usuário
+      const quiz = await storage.getQuiz(quizId);
+      if (!quiz || quiz.userId !== userId) {
+        return res.status(404).json({ message: "Quiz não encontrado" });
+      }
+
+      const campaignId = nanoid();
+      const quantumConfig = {
+        automationType: 'live_trigger',
+        targetType,
+        activationMethod: 'quiz_completion',
+        filterConditions: quantumFilters
+      };
+
+      const triggerConditions = {
+        quizId,
+        fieldId: quantumFilters.fieldId,
+        responseValue: quantumFilters.responseValue,
+        targetType,
+        message
+      };
+
+      // Criar campanha com status monitoring (ativa para detectar completions)
+      const campaign = await storage.createSMSCampaign({
+        name,
+        message,
+        quizId,
+        userId,
+        phones: [], // Vazio - será preenchido dinamicamente
+        status: 'monitoring', // Status especial para campanhas ao vivo
+        campaignType: 'quantum_live',
+        conditionalRules: JSON.stringify({ quantumType: 'live', quantumConfig, quantumFilters, triggerConditions })
+      });
+
+      console.log(`✅ CAMPANHA AO VIVO QUANTUM CRIADA: ${campaignId} - monitorando completions`);
+
+      res.json({
+        success: true,
+        campaign: {
+          id: campaignId,
+          name,
+          quantumType: 'live',
+          status: 'monitoring',
+          triggerConditions: quantumFilters
+        }
+      });
+
+    } catch (error) {
+      console.error('❌ ERRO AO VIVO QUANTUM:', error);
+      res.status(500).json({ message: "Erro ao criar campanha Ao Vivo Quantum" });
+    }
+  });
+
+  // Listar campanhas Quantum
+  app.get('/api/sms-quantum/campaigns', verifyJWT, async (req, res) => {
+    try {
+      const userId = req.user.id;
+
+      const campaigns = await storage.getSMSCampaigns(userId);
+      
+      const quantumCampaigns = campaigns
+        .filter(campaign => campaign.quantumType && campaign.quantumType !== 'standard')
+        .map(campaign => ({
+          id: campaign.id,
+          name: campaign.name,
+          quantumType: campaign.quantumType,
+          status: campaign.status,
+          quizId: campaign.quizId,
+          phonesCount: Array.isArray(campaign.phones) ? campaign.phones.length : 0,
+          quantumConfig: campaign.quantumConfig ? JSON.parse(campaign.quantumConfig) : {},
+          quantumFilters: campaign.quantumFilters ? JSON.parse(campaign.quantumFilters) : {},
+          sent: campaign.sent,
+          createdAt: campaign.createdAt
+        }));
+
+      res.json({ campaigns: quantumCampaigns });
+
+    } catch (error) {
+      console.error('❌ ERRO AO LISTAR CAMPANHAS QUANTUM:', error);
+      res.status(500).json({ message: "Erro ao listar campanhas Quantum" });
+    }
+  });
+
+  // Toggle campanha Quantum (ativar/pausar)
+  app.put('/api/sms-quantum/:id/toggle', verifyJWT, async (req, res) => {
+    try {
+      const userId = req.user.id;
+      const campaignId = req.params.id;
+      const { action } = req.body; // 'activate' ou 'pause'
+
+      const campaign = await storage.getSmsCampaign(campaignId);
+      
+      if (!campaign || campaign.userId !== userId) {
+        return res.status(404).json({ message: "Campanha não encontrada" });
+      }
+
+      if (!campaign.quantumType || campaign.quantumType === 'standard') {
+        return res.status(400).json({ message: "Esta não é uma campanha Quantum" });
+      }
+
+      const newStatus = action === 'activate' ? 
+        (campaign.quantumType === 'live' ? 'monitoring' : 'active') : 
+        'paused';
+
+      await storage.updateSmsCampaign(campaignId, { status: newStatus });
+
+      console.log(`🔄 CAMPANHA QUANTUM ${campaignId} ${action === 'activate' ? 'ATIVADA' : 'PAUSADA'}`);
+
+      res.json({ success: true, status: newStatus });
+
+    } catch (error) {
+      console.error('❌ ERRO TOGGLE QUANTUM:', error);
+      res.status(500).json({ message: "Erro ao alterar status da campanha Quantum" });
     }
   });
 
