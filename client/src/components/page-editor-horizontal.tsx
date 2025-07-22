@@ -74,6 +74,85 @@ import {
   Timer
 } from "lucide-react";
 
+// 🚀 MAPEAMENTO NATIVO EM PORTUGUÊS - SISTEMA SEM TRADUÇÃO
+const getElementTypeName = (type: string): string => {
+  const elementNames = {
+    'heading': 'Título',
+    'paragraph': 'Parágrafo', 
+    'multiple_choice': 'Múltipla Escolha',
+    'text': 'Campo de Texto',
+    'email': 'Campo de Email',
+    'phone': 'Campo de Telefone',
+    'number': 'Campo Numérico',
+    'textarea': 'Área de Texto',
+    'date': 'Campo de Data',
+    'rating': 'Avaliação por Estrelas',
+    'slider': 'Controle Deslizante',
+    'yes_no': 'Sim/Não',
+    'image': 'Imagem',
+    'video': 'Vídeo',
+    'audio': 'Áudio',
+    'spacer': 'Espaçador',
+    'divider': 'Divisor',
+    'continue_button': 'Botão Continuar',
+    'submit_button': 'Botão Enviar',
+    'progress_bar': 'Barra de Progresso',
+    'loading_animation': 'Animação de Carregamento',
+    'countdown_timer': 'Cronômetro Regressivo',
+    'chronometer': 'Cronômetro',
+    'birth_date': 'Data de Nascimento',
+    'height': 'Altura',
+    'weight': 'Peso',
+    'body_type_classifier': 'Classificador Tipo Corporal',
+    'age_classifier': 'Classificador Faixa Etária',
+    'fitness_goal_classifier': 'Classificador Objetivo Fitness',
+    'experience_classifier': 'Classificador Experiência',
+    'testimonial': 'Depoimento',
+    'before_after': 'Antes e Depois',
+    'social_proof': 'Prova Social',
+    'urgency_element': 'Elemento de Urgência',
+    'price_comparison': 'Comparação de Preços',
+    'guarantee_badge': 'Selo de Garantia',
+    'payment_methods': 'Métodos de Pagamento',
+    'security_badges': 'Selos de Segurança',
+    'features_list': 'Lista de Recursos',
+    'benefits_grid': 'Grade de Benefícios',
+    'faq_section': 'Seção FAQ',
+    'contact_info': 'Informações de Contato',
+    'social_links': 'Links Sociais',
+    'newsletter_signup': 'Inscrição Newsletter',
+    'file_upload': 'Upload de Arquivo',
+    'signature_pad': 'Assinatura Digital',
+    'terms_acceptance': 'Aceitação de Termos',
+    'cpf_field': 'Campo CPF',
+    'address_field': 'Campo Endereço',
+    'gender_selector': 'Seletor de Gênero',
+    'relationship_status': 'Estado Civil',
+    'income_range': 'Faixa de Renda',
+    'education_level': 'Nível de Escolaridade',
+    'profession_field': 'Profissão',
+    'company_size': 'Tamanho da Empresa',
+    'industry_selector': 'Setor de Atuação',
+    'budget_range': 'Faixa de Orçamento',
+    'timeline_selector': 'Prazo do Projeto',
+    'priority_matrix': 'Matriz de Prioridades',
+    'satisfaction_scale': 'Escala de Satisfação',
+    'nps_score': 'Score NPS',
+    'likert_scale': 'Escala Likert',
+    'ranking_question': 'Pergunta de Ranking',
+    'matrix_question': 'Pergunta Matriz',
+    'image_choice': 'Escolha por Imagem',
+    'audio_response': 'Resposta em Áudio',
+    'video_response': 'Resposta em Vídeo',
+    'drawing_canvas': 'Tela de Desenho',
+    'map_location': 'Localização no Mapa',
+    'qr_code': 'Código QR',
+    'barcode_scanner': 'Scanner de Código',
+    'camera_capture': 'Captura de Câmera'
+  };
+  return elementNames[type] || type;
+};
+
 interface Element {
   id: number;
   type: "multiple_choice" | "text" | "rating" | "email" | "checkbox" | "date" | "phone" | "number" | "textarea" | "image_upload" | "animated_transition" | "heading" | "paragraph" | "image" | "divider" | "video" | "audio" | "birth_date" | "height" | "current_weight" | "target_weight" | "transition_background" | "transition_text" | "transition_counter" | "transition_loader" | "transition_redirect" | "transition_button" | "spacer" | "game_wheel" | "game_scratch" | "game_color_pick" | "game_brick_break" | "game_memory_cards" | "game_slot_machine" | "continue_button" | "loading_question" | "share_quiz" | "price" | "icon_list" | "testimonials" | "guarantee" | "paypal" | "image_with_text" | "chart" | "metrics" | "before_after" | "pricing_plans" | "stripe_embed" | "hotmart_upsell" | "faq" | "image_carousel" | "body_type_classifier" | "age_classifier" | "fitness_goal_classifier" | "experience_classifier" | "progress_bar" | "loading_with_question";
@@ -4951,13 +5030,13 @@ const gameElementCategories = [
                   style={{backgroundColor: customBackgroundColor}}
                 ></div>
                 <div className="text-xs font-medium">Custom</div>
-                <div className="text-xs text-gray-500">{t('quiz.personalizedCustom')}</div>
+                <div className="text-xs text-gray-500">{"Texto em Português"}</div>
               </button>
             </div>
             
             {globalTheme === "custom" && (
               <div className="mt-3">
-                <Label className="text-xs font-medium mb-2 block">{t('quiz.customColor')}</Label>
+                <Label className="text-xs font-medium mb-2 block">{"Texto em Português"}</Label>
                 <div className="flex items-center gap-2">
                   <input
                     type="color"
@@ -4980,7 +5059,7 @@ const gameElementCategories = [
                   />
                 </div>
                 <div className="text-xs text-gray-500 mt-2">
-                  {t('quiz.autoContrast')}
+                  {"Texto em Português"}
                 </div>
               </div>
             )}
@@ -5031,7 +5110,7 @@ const gameElementCategories = [
             animations.fadeIn
           )}>
             <Eye className="w-4 h-4" />
-            {t('quiz.preview')}
+            {"Texto em Português"}
             {currentPage && (
               <Badge variant="secondary" className="ml-2 bg-white/20">{currentPage.title}</Badge>
             )}
@@ -5050,8 +5129,8 @@ const gameElementCategories = [
               {currentPage.elements.length === 0 ? (
                 <div className="text-center text-gray-500 py-16">
                   <Edit3 className="w-16 h-16 mx-auto mb-4 opacity-50" />
-                  <h3 className="text-lg font-semibold mb-2">{t('quiz.labels.emptyPage')}</h3>
-                  <p className="text-sm">{t('quiz.labels.addElements')}</p>
+                  <h3 className="text-lg font-semibold mb-2">{"Label"}</h3>
+                  <p className="text-sm">{"Label"}</p>
                 </div>
               ) : (
                 <DragDropContainer>
@@ -5110,8 +5189,8 @@ const gameElementCategories = [
             <div className="flex items-center justify-center h-full text-gray-500">
               <div className="text-center">
                 <FileText className="w-16 h-16 mx-auto mb-4 opacity-50" />
-                <h3 className="text-lg font-semibold mb-2">{t('quiz.noPageSelected')}</h3>
-                <p className="text-sm">{t('quiz.selectPageToEdit')}</p>
+                <h3 className="text-lg font-semibold mb-2">{"Texto em Português"}</h3>
+                <p className="text-sm">{"Texto em Português"}</p>
               </div>
             </div>
           )}
@@ -5126,7 +5205,7 @@ const gameElementCategories = [
             animations.fadeIn
           )}>
             <Settings className="w-4 h-4" />
-            {selectedElementData ? getElementTypeName(selectedElementData.type) : t('quiz.properties')}
+            {selectedElementData ? getElementTypeName(selectedElementData.type) : "Texto em Português"}
           </h3>
         </div>
         <div className="flex-1 overflow-y-auto p-4" style={{maxHeight: 'calc(100vh - 73px)'}}>
@@ -5136,7 +5215,7 @@ const gameElementCategories = [
               {selectedElementData.type === "heading" && (
                 <div className="space-y-4">
                   <div>
-                    <Label htmlFor="heading-content">{t('quiz.titleText')}</Label>
+                    <Label htmlFor="heading-content">{"Texto em Português"}</Label>
                     <Input
                       id="heading-content"
                       value={selectedElementData.content}
@@ -5147,7 +5226,7 @@ const gameElementCategories = [
                   
                   {/* Formatação completa */}
                   <div className="border rounded-lg p-4 bg-gray-50">
-                    <h4 className="font-semibold text-sm mb-3">{t('quiz.formatting')}</h4>
+                    <h4 className="font-semibold text-sm mb-3">{"Texto em Português"}</h4>
                     <div className="grid grid-cols-2 gap-3">
                       <div>
                         <Label className="text-xs">Tamanho</Label>
@@ -5258,7 +5337,7 @@ const gameElementCategories = [
                   
                   {/* Formatação do parágrafo */}
                   <div className="border rounded-lg p-4 bg-gray-50">
-                    <h4 className="font-semibold text-sm mb-3">{t('quiz.formatting')}</h4>
+                    <h4 className="font-semibold text-sm mb-3">{"Texto em Português"}</h4>
                     <div className="grid grid-cols-2 gap-3">
                       <div>
                         <Label className="text-xs">Tamanho</Label>
@@ -5441,7 +5520,7 @@ const gameElementCategories = [
                           value={selectedElementData.placeholder || ""}
                           onChange={(e) => updateElement(selectedElementData.id, { placeholder: e.target.value })}
                           className="mt-1"
-                          placeholder={t('quiz.placeholders.typeResponse')}
+                          placeholder={"Digite aqui"}
                         />
                       </div>
 
