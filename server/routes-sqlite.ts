@@ -3504,20 +3504,22 @@ export function registerSQLiteRoutes(app: Express): Server {
         });
       }
 
-      // Verificar limites de plano
-      const userQuizzes = await storage.getUserQuizzes(userId);
-      const canCreate = await canCreateQuiz(userId, userQuizzes.length, req.user.plan);
+      // TEMPORARIAMENTE DESABILITADO: Verificar limites de plano (para testes Ultra)
+      // const userQuizzes = await storage.getUserQuizzes(userId);
+      // const canCreate = await canCreateQuiz(userId, userQuizzes.length, req.user.plan);
       
-      if (!canCreate) {
-        console.log(`❌ LIMITE DE QUIZ ATINGIDO: Usuário ${userId} - Plano: ${req.user.plan} - Count: ${userQuizzes.length}`);
-        return res.status(402).json({ 
-          success: false,
-          message: "Limite de quizzes atingido para seu plano atual. Faça upgrade para continuar.",
-          action: "upgrade_required",
-          currentCount: userQuizzes.length,
-          limit: getPlanLimits(req.user.plan).maxQuizzes
-        });
-      }
+      // if (!canCreate) {
+      //   console.log(`❌ LIMITE DE QUIZ ATINGIDO: Usuário ${userId} - Plano: ${req.user.plan} - Count: ${userQuizzes.length}`);
+      //   return res.status(402).json({ 
+      //     success: false,
+      //     message: "Limite de quizzes atingido para seu plano atual. Faça upgrade para continuar.",
+      //     action: "upgrade_required",
+      //     currentCount: userQuizzes.length,
+      //     limit: getPlanLimits(req.user.plan).maxQuizzes
+      //   });
+      // }
+      
+      console.log(`🔓 LIMITE DE QUIZ TEMPORARIAMENTE DESABILITADO PARA DESENVOLVIMENTO SISTEMA ULTRA`);
 
       console.log(`📝 REQ.BODY COMPLETO:`, JSON.stringify(req.body, null, 2));
       console.log(`📝 DADOS RECEBIDOS:`, {
@@ -4590,7 +4592,13 @@ export function registerSQLiteRoutes(app: Express): Server {
 
       const quiz = await storage.getQuiz(req.params.id);
       
-      if (!quiz || quiz.userId !== req.user.id) {
+      console.log(`🔍 QUIZ FETCH DEBUG: quiz=${quiz ? 'found' : 'NOT FOUND'}, id=${req.params.id}`);
+      if (quiz) {
+        console.log(`🔍 QUIZ PROPERTIES: userId=${quiz.userId || 'undefined'}, user_id=${quiz.user_id || 'undefined'}, title=${quiz.title || 'N/A'}`);
+      }
+      
+      if (!quiz || (quiz.userId !== req.user.id && quiz.user_id !== req.user.id)) {
+        console.log(`🔍 ULTRA DEBUG: quiz.userId=${quiz?.userId}, quiz.user_id=${quiz?.user_id}, req.user.id=${req.user.id}`);
         return res.status(403).json({ message: "Access denied" });
       }
 
@@ -4735,7 +4743,8 @@ export function registerSQLiteRoutes(app: Express): Server {
 
       const quiz = await storage.getQuiz(req.params.id);
       
-      if (!quiz || quiz.userId !== req.user.id) {
+      if (!quiz || (quiz.userId !== req.user.id && quiz.user_id !== req.user.id)) {
+        console.log(`🔍 LEADS BY RESPONSE DEBUG: quiz.userId=${quiz.userId}, quiz.user_id=${quiz.user_id}, req.user.id=${req.user.id}`);
         return res.status(403).json({ message: "Access denied" });
       }
 
