@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { MessageSquare, Send, Clock, Users, Target, Upload, FileText, Eye, ArrowRight, CheckCircle, AlertCircle, Calendar, Zap, Crown, Package, Brain, Flame, FolderOpen, ChevronDown, ChevronUp, Play, Pause, Trash2, BarChart3, X, Sparkles, Layers } from "lucide-react";
+import { MessageSquare, Send, Clock, Users, Target, Upload, FileText, Eye, ArrowRight, CheckCircle, AlertCircle, Calendar, Zap, Crown, Package, Brain, Flame, FolderOpen, ChevronDown, ChevronUp, Play, Pause, Trash2, BarChart3, X, Sparkles, Layers, Filter, CheckSquare } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Progress } from "@/components/ui/progress";
 import { useToast } from "@/hooks/use-toast";
@@ -619,103 +619,317 @@ export default function SMSCampaignsAdvanced() {
                         )}
                       </div>
                       
-                      <div>
-                        <Label htmlFor="segment">{t("sms.segment")}</Label>
-                        <Select 
-                          value={form.segment} 
-                          onValueChange={(value: 'completed' | 'abandoned' | 'all') => 
-                            setForm(prev => ({ ...prev, segment: value }))}
-                        >
-                          <SelectTrigger>
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="completed">
-                              ✅ {t("sms.completedQuiz")} 
-                              {leadsBySegment && (
-                                <Badge variant="secondary" className="ml-2">
-                                  {leadsBySegment.counts.completed} leads
-                                </Badge>
-                              )}
-                            </SelectItem>
-                            <SelectItem value="abandoned">
-                              ❌ {t("sms.abandonedQuiz")}
-                              {leadsBySegment && (
-                                <Badge variant="secondary" className="ml-2">
-                                  {leadsBySegment.counts.abandoned} leads
-                                </Badge>
-                              )}
-                            </SelectItem>
-                            <SelectItem value="all">
-                              👥 {t("sms.allLeads")}
-                              {leadsBySegment && (
-                                <Badge variant="secondary" className="ml-2">
-                                  {leadsBySegment.counts.all} leads
-                                </Badge>
-                              )}
-                            </SelectItem>
-                          </SelectContent>
-                        </Select>
-                        
-                        {/* Mostrar contagem e botão para ver lista */}
-                        {leadsBySegment && form.funnelId && (
-                          <div className="mt-3 p-3 bg-gray-50 rounded-lg">
-                            <div className="flex items-center justify-between">
-                              <div className="flex items-center gap-2">
-                                <Users className="w-4 h-4 text-blue-600" />
-                                <span className="text-sm font-medium">
-                                  {leadsBySegment.counts[form.segment]} {t("sms.leadsFound")}
-                                </span>
+                      {/* SMS Remarketing - Filtros Específicos */}
+                      {form.type === 'quantum_remarketing' && (
+                        <div className="space-y-4 border p-4 rounded-lg bg-gradient-to-r from-purple-50 to-white border-purple-200">
+                          <div className="flex items-center gap-2 mb-3">
+                            <Target className="w-5 h-5 text-purple-600" />
+                            <h3 className="font-medium text-purple-800">SMS Remarketing - Filtros de Data</h3>
+                            <Badge className="bg-purple-600 text-white">QUANTUM</Badge>
+                          </div>
+                          
+                          <div>
+                            <Label className="flex items-center gap-2">
+                              <Filter className="w-4 h-4" />
+                              Status do Lead
+                            </Label>
+                            <Select 
+                              value={form.segment} 
+                              onValueChange={(value: 'completed' | 'abandoned' | 'all') => 
+                                setForm(prev => ({ ...prev, segment: value }))}
+                            >
+                              <SelectTrigger>
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="abandoned">⏸️ Lead Abandonou Quiz</SelectItem>
+                                <SelectItem value="completed">✅ Lead Completou Quiz</SelectItem>
+                                <SelectItem value="all">📊 Todos os Leads</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+                          
+                          <div>
+                            <Label className="flex items-center gap-2">
+                              <Calendar className="w-4 h-4" />
+                              Período de Leads (Data X até Data X)
+                            </Label>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                              <Input 
+                                type="date"
+                                value={form.dateFrom || ''} 
+                                onChange={(e) => setForm(prev => ({ ...prev, dateFrom: e.target.value }))}
+                                placeholder="Data inicial"
+                                className="border-purple-200"
+                              />
+                              <Input 
+                                type="date"
+                                value={form.dateTo || ''} 
+                                onChange={(e) => setForm(prev => ({ ...prev, dateTo: e.target.value }))}
+                                placeholder="Data final"
+                                className="border-purple-200"
+                              />
+                            </div>
+                          </div>
+                          
+                          <div>
+                            <Label className="flex items-center gap-2">
+                              <Clock className="w-4 h-4" />
+                              Quando Disparar
+                            </Label>
+                            <Select 
+                              value={form.dispatchTiming || 'immediate'} 
+                              onValueChange={(value: 'immediate' | 'delayed') => 
+                                setForm(prev => ({ ...prev, dispatchTiming: value }))}
+                            >
+                              <SelectTrigger>
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="immediate">⚡ Disparar Imediatamente</SelectItem>
+                                <SelectItem value="delayed">⏱️ Disparar Daqui X Tempo</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+                          
+                          {form.dispatchTiming === 'delayed' && (
+                            <div className="ml-4 p-3 bg-blue-50 rounded border border-blue-200">
+                              <Label className="text-sm">Delay para Disparo</Label>
+                              <div className="flex gap-2 mt-1">
+                                <Input 
+                                  type="number"
+                                  placeholder="30"
+                                  value={form.dispatchDelayValue || ''}
+                                  onChange={(e) => setForm(prev => ({ ...prev, dispatchDelayValue: Number(e.target.value) }))}
+                                  className="w-24"
+                                />
+                                <Select 
+                                  value={form.dispatchDelayUnit || 'minutes'} 
+                                  onValueChange={(value: 'minutes' | 'hours' | 'days') => 
+                                    setForm(prev => ({ ...prev, dispatchDelayUnit: value }))}
+                                >
+                                  <SelectTrigger className="w-32">
+                                    <SelectValue />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="minutes">Minutos</SelectItem>
+                                    <SelectItem value="hours">Horas</SelectItem>
+                                    <SelectItem value="days">Dias</SelectItem>
+                                  </SelectContent>
+                                </Select>
                               </div>
-                              {leadsBySegment.counts[form.segment] > 0 && (
-                                <Dialog>
-                                  <DialogTrigger asChild>
-                                    <Button variant="outline" size="sm">
-                                      <Eye className="w-4 h-4 mr-1" />
-                                      {t("sms.viewList")}
-                                    </Button>
-                                  </DialogTrigger>
-                                  <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
-                                    <DialogHeader>
-                                      <DialogTitle className="flex items-center gap-2">
-                                        <Users className="w-5 h-5" />
-                                        {t("sms.leadsList")} - {form.segment === 'completed' ? t("sms.completed") : form.segment === 'abandoned' ? t("sms.abandoned") : t("sms.all")}
-                                      </DialogTitle>
-                                    </DialogHeader>
-                                    <div className="space-y-2">
-                                      {leadsBySegment[form.segment].slice(0, 100).map((lead: any, index: number) => (
-                                        <div key={index} className="p-3 border rounded-lg bg-white">
-                                          <div className="flex items-start justify-between">
-                                            <div>
-                                              <p className="font-medium">
-                                                {lead.responses?.nome || lead.responses?.email || `Lead ${index + 1}`}
-                                              </p>
-                                              <p className="text-sm text-gray-600">
-                                                {lead.responses?.telefone || lead.responses?.phone || 'Telefone não informado'}
-                                              </p>
-                                              <p className="text-sm text-gray-500">
-                                                {lead.submittedAt ? format(new Date(lead.submittedAt), 'dd/MM/yyyy HH:mm', { locale: ptBR }) : 'Em progresso'}
-                                              </p>
-                                            </div>
-                                            <Badge variant={lead.submittedAt ? 'default' : 'secondary'}>
-                                              {lead.submittedAt ? t("sms.complete") : t("sms.abandoned")}
-                                            </Badge>
-                                          </div>
-                                        </div>
-                                      ))}
-                                      {leadsBySegment[form.segment].length > 100 && (
-                                        <div className="text-center text-gray-500 text-sm">
-                                          Mostrando primeiros 100 leads de {leadsBySegment[form.segment].length} total
-                                        </div>
-                                      )}
-                                    </div>
-                                  </DialogContent>
-                                </Dialog>
+                            </div>
+                          )}
+                        </div>
+                      )}
+                      
+                      {/* Remarketing Avançado - Filtros + Respostas Específicas */}
+                      {form.type === 'quantum_live' && (
+                        <div className="space-y-4 border p-4 rounded-lg bg-gradient-to-r from-blue-50 to-purple-50 border-blue-200">
+                          <div className="flex items-center gap-2 mb-3">
+                            <Layers className="w-5 h-5 text-blue-600" />
+                            <h3 className="font-medium text-blue-800">Remarketing Avançado - Filtros + Respostas</h3>
+                            <Badge className="bg-gradient-to-r from-blue-600 to-purple-600 text-white">ADVANCED</Badge>
+                          </div>
+                          
+                          <div>
+                            <Label className="flex items-center gap-2">
+                              <Filter className="w-4 h-4" />
+                              Status do Lead
+                            </Label>
+                            <Select 
+                              value={form.segment} 
+                              onValueChange={(value: 'completed' | 'abandoned' | 'all') => 
+                                setForm(prev => ({ ...prev, segment: value }))}
+                            >
+                              <SelectTrigger>
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="abandoned">⏸️ Lead Abandonou Quiz</SelectItem>
+                                <SelectItem value="completed">✅ Lead Completou Quiz</SelectItem>
+                                <SelectItem value="all">📊 Todos os Leads</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+                          
+                          <div>
+                            <Label className="flex items-center gap-2">
+                              <Calendar className="w-4 h-4" />
+                              Período de Leads (Data X até Data X)
+                            </Label>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                              <Input 
+                                type="date"
+                                value={form.dateFrom || ''} 
+                                onChange={(e) => setForm(prev => ({ ...prev, dateFrom: e.target.value }))}
+                                placeholder="Data inicial"
+                                className="border-blue-200"
+                              />
+                              <Input 
+                                type="date"
+                                value={form.dateTo || ''} 
+                                onChange={(e) => setForm(prev => ({ ...prev, dateTo: e.target.value }))}
+                                placeholder="Data final"
+                                className="border-blue-200"
+                              />
+                            </div>
+                          </div>
+                          
+                          <div className="border-t pt-4">
+                            <Label className="flex items-center gap-2 mb-3">
+                              <CheckSquare className="w-4 h-4 text-purple-600" />
+                              Respostas Específicas do Quiz (Escolha quantas quiser)
+                            </Label>
+                            
+                            <div className="space-y-3">
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                <div>
+                                  <Label className="text-sm">Campo da Resposta</Label>
+                                  <Select 
+                                    value={form.responseFilter?.field || ''} 
+                                    onValueChange={(value) => setForm(prev => ({ 
+                                      ...prev, 
+                                      responseFilter: { ...prev.responseFilter, field: value } 
+                                    }))}
+                                  >
+                                    <SelectTrigger>
+                                      <SelectValue placeholder="Selecione campo" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                      <SelectItem value="p1_objetivo_fitness">p1_objetivo_fitness</SelectItem>
+                                      <SelectItem value="p2_nivel_experiencia">p2_nivel_experiencia</SelectItem>
+                                      <SelectItem value="p3_disponibilidade">p3_disponibilidade</SelectItem>
+                                      <SelectItem value="p4_dor_problema">p4_dor_problema</SelectItem>
+                                      <SelectItem value="p5_meta_principal">p5_meta_principal</SelectItem>
+                                      <SelectItem value="nome">nome</SelectItem>
+                                      <SelectItem value="email">email</SelectItem>
+                                      <SelectItem value="telefone">telefone</SelectItem>
+                                      <SelectItem value="idade">idade</SelectItem>
+                                      <SelectItem value="peso">peso</SelectItem>
+                                      <SelectItem value="altura">altura</SelectItem>
+                                    </SelectContent>
+                                  </Select>
+                                </div>
+                                
+                                <div>
+                                  <Label className="text-sm">Valor da Resposta</Label>
+                                  <Input 
+                                    placeholder="Ex: Emagrecer, Ganhar Massa, etc." 
+                                    value={form.responseFilter?.value || ''}
+                                    onChange={(e) => setForm(prev => ({ 
+                                      ...prev, 
+                                      responseFilter: { ...prev.responseFilter, value: e.target.value } 
+                                    }))}
+                                  />
+                                </div>
+                              </div>
+                              
+                              {form.responseFilter?.field && form.responseFilter?.value && (
+                                <div className="p-3 bg-green-50 rounded border border-green-200">
+                                  <div className="flex items-center gap-2 text-green-800">
+                                    <CheckCircle className="w-4 h-4" />
+                                    <span className="font-medium text-sm">
+                                      Filtro: {form.responseFilter.field} = "{form.responseFilter.value}"
+                                    </span>
+                                  </div>
+                                </div>
                               )}
                             </div>
                           </div>
-                        )}
-                      </div>
+                          
+                          <div>
+                            <Label className="flex items-center gap-2">
+                              <Clock className="w-4 h-4" />
+                              Quando Disparar
+                            </Label>
+                            <Select 
+                              value={form.dispatchTiming || 'immediate'} 
+                              onValueChange={(value: 'immediate' | 'delayed') => 
+                                setForm(prev => ({ ...prev, dispatchTiming: value }))}
+                            >
+                              <SelectTrigger>
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="immediate">⚡ Disparar Imediatamente</SelectItem>
+                                <SelectItem value="delayed">⏱️ Disparar Daqui X Tempo</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+                          
+                          {form.dispatchTiming === 'delayed' && (
+                            <div className="ml-4 p-3 bg-purple-50 rounded border border-purple-200">
+                              <Label className="text-sm">Delay para Disparo</Label>
+                              <div className="flex gap-2 mt-1">
+                                <Input 
+                                  type="number"
+                                  placeholder="30"
+                                  value={form.dispatchDelayValue || ''}
+                                  onChange={(e) => setForm(prev => ({ ...prev, dispatchDelayValue: Number(e.target.value) }))}
+                                  className="w-24"
+                                />
+                                <Select 
+                                  value={form.dispatchDelayUnit || 'minutes'} 
+                                  onValueChange={(value: 'minutes' | 'hours' | 'days') => 
+                                    setForm(prev => ({ ...prev, dispatchDelayUnit: value }))}
+                                >
+                                  <SelectTrigger className="w-32">
+                                    <SelectValue />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="minutes">Minutos</SelectItem>
+                                    <SelectItem value="hours">Horas</SelectItem>
+                                    <SelectItem value="days">Dias</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      )}
+                      
+                      {/* Campanhas Tradicionais - Filtros Padrão */}
+                      {!form.type?.includes('quantum') && (
+                        <div>
+                          <Label htmlFor="segment">{t("sms.segment")}</Label>
+                          <Select 
+                            value={form.segment} 
+                            onValueChange={(value: 'completed' | 'abandoned' | 'all') => 
+                              setForm(prev => ({ ...prev, segment: value }))}
+                          >
+                            <SelectTrigger>
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="completed">
+                                ✅ {t("sms.completedQuiz")} 
+                                {leadsBySegment && (
+                                  <Badge variant="secondary" className="ml-2">
+                                    {leadsBySegment.counts.completed} leads
+                                  </Badge>
+                                )}
+                              </SelectItem>
+                              <SelectItem value="abandoned">
+                                ❌ {t("sms.abandonedQuiz")}
+                                {leadsBySegment && (
+                                  <Badge variant="secondary" className="ml-2">
+                                    {leadsBySegment.counts.abandoned} leads
+                                  </Badge>
+                                )}
+                              </SelectItem>
+                              <SelectItem value="all">
+                                👥 {t("sms.allLeads")}
+                                {leadsBySegment && (
+                                  <Badge variant="secondary" className="ml-2">
+                                    {leadsBySegment.counts.all} leads
+                                  </Badge>
+                                )}
+                              </SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      )}
                       
                       {/* Filtros Quantum Ultra-Granulares */}
                       {form.type?.includes('quantum') && form.funnelId && (
