@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { MessageSquare, Send, Clock, Users, Target, Upload, FileText, Eye, ArrowRight, CheckCircle, AlertCircle, Calendar, Zap, Crown, Package, Brain, Flame, FolderOpen, ChevronDown, ChevronUp, Play, Pause, Trash2, BarChart3, X } from "lucide-react";
+import { MessageSquare, Send, Clock, Users, Target, Upload, FileText, Eye, ArrowRight, CheckCircle, AlertCircle, Calendar, Zap, Crown, Package, Brain, Flame, FolderOpen, ChevronDown, ChevronUp, Play, Pause, Trash2, BarChart3, X, Sparkles, Layers } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Progress } from "@/components/ui/progress";
 import { useToast } from "@/hooks/use-toast";
@@ -164,10 +164,17 @@ const CAMPAIGN_TYPES = {
     description: 'Envie SMS ultra segmentado (idade, gênero, respostas)',
     color: 'bg-purple-500'
   },
+  quantum_remarketing: {
+    id: 'quantum_remarketing',
+    name: 'Quantum Remarketing',
+    icon: Zap,
+    description: 'Sistema ultra-granular para remarketing avançado por resposta específica',
+    color: 'bg-gradient-to-r from-purple-600 to-blue-600'
+  },
   live: {
     id: 'live',
     name: 'Ao Vivo',
-    icon: Zap,
+    icon: Layers,
     description: 'Envie automaticamente após novos leads responderem o quiz',
     color: 'bg-green-500'
   },
@@ -177,6 +184,13 @@ const CAMPAIGN_TYPES = {
     icon: Flame,
     description: 'Envie para novos leads com segmentação por resposta do quiz',
     color: 'bg-orange-500'
+  },
+  quantum_live: {
+    id: 'quantum_live',
+    name: 'Ao Vivo Quantum',
+    icon: Sparkles,
+    description: 'Monitoramento em tempo real com segmentação quantum automática',
+    color: 'bg-gradient-to-r from-emerald-500 to-teal-500'
   },
   mass: {
     id: 'mass',
@@ -487,42 +501,68 @@ export default function SMSCampaignsAdvanced() {
                 <div className="space-y-4">
                   <div className="text-center mb-6">
                     <h3 className="text-lg font-semibold mb-2">Escolha o Tipo de Campanha SMS</h3>
-                    <p className="text-gray-600">Selecione o tipo de campanha que deseja criar. Cada tipo abrirá um assistente personalizado.</p>
+                    <p className="text-gray-600">Selecione o tipo de campanha que deseja criar. Cada tipo possui suas próprias configurações específicas.</p>
                   </div>
                   
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                     {Object.values(CAMPAIGN_TYPES).map((type) => {
                       const Icon = type.icon;
+                      const isQuantum = type.id.includes('quantum');
+                      
                       return (
-                        <SMSCampaignModal
+                        <Card 
                           key={type.id}
-                          onCampaignCreated={() => {
-                            queryClient.invalidateQueries({ queryKey: ['/api/sms-campaigns'] });
-                            toast({
-                              title: "Campanha Criada",
-                              description: "Sua campanha SMS foi criada com sucesso!",
-                            });
-                          }}
+                          className={`cursor-pointer transition-all hover:shadow-lg hover:scale-105 ${
+                            form.type === type.id ? 'ring-2 ring-blue-500 bg-blue-50' : ''
+                          } ${isQuantum ? 'relative overflow-hidden' : ''}`}
+                          onClick={() => setForm(prev => ({ ...prev, type: type.id }))}
                         >
-                          <Card className="cursor-pointer transition-all hover:shadow-md hover:scale-105">
-                            <CardContent className="p-4">
-                              <div className="flex items-start gap-3">
-                                <div className={`p-2 rounded-lg ${type.color} text-white`}>
-                                  <Icon className="w-5 h-5" />
-                                </div>
-                                <div>
-                                  <h3 className="font-medium">{type.name}</h3>
-                                  <p className="text-sm text-gray-600 mt-1">
-                                    {type.description}
-                                  </p>
-                                </div>
+                          <CardContent className="p-4">
+                            {isQuantum && (
+                              <div className="absolute top-0 right-0 bg-gradient-to-l from-purple-600 to-blue-600 text-white text-xs px-2 py-1 rounded-bl-lg">
+                                QUANTUM
                               </div>
-                            </CardContent>
-                          </Card>
-                        </SMSCampaignModal>
+                            )}
+                            <div className="flex items-start gap-3">
+                              <div className={`p-2 rounded-lg ${
+                                isQuantum ? type.color : type.color + ' text-white'
+                              }`}>
+                                <Icon className={`w-5 h-5 ${isQuantum ? 'text-white' : ''}`} />
+                              </div>
+                              <div className="flex-1">
+                                <div className="flex items-center gap-2">
+                                  <h3 className="font-medium">{type.name}</h3>
+                                  {isQuantum && <Sparkles className="w-4 h-4 text-purple-600" />}
+                                </div>
+                                <p className="text-sm text-gray-600 mt-1">
+                                  {type.description}
+                                </p>
+                                {isQuantum && (
+                                  <div className="mt-2 text-xs text-purple-600 font-medium">
+                                    Sistema Ultra-Granular ⚡
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          </CardContent>
+                        </Card>
                       );
                     })}
                   </div>
+                  
+                  {/* Quantum Info Alert */}
+                  {form.type && (form.type === 'quantum_remarketing' || form.type === 'quantum_live') && (
+                    <Alert className="bg-gradient-to-r from-purple-50 to-blue-50 border-purple-200">
+                      <Sparkles className="h-4 w-4 text-purple-600" />
+                      <AlertDescription className="text-purple-800">
+                        <strong>Sistema Quantum Selecionado!</strong> {' '}
+                        {form.type === 'quantum_remarketing' 
+                          ? 'Este sistema permite segmentação ultra-granular por respostas específicas para remarketing avançado.'
+                          : 'Este sistema monitora leads em tempo real e aplica segmentação quantum automática para máxima eficiência.'
+                        }
+                      </AlertDescription>
+                    </Alert>
+                  )}
                 </div>
               )}
               
@@ -532,22 +572,51 @@ export default function SMSCampaignsAdvanced() {
                   {form.type !== 'mass' ? (
                     <>
                       <div>
-                        <Label htmlFor="funnel">{t("sms.quizFunnel")}</Label>
+                        <Label htmlFor="funnel">
+                          {form.type?.includes('quantum') ? 'Quiz/Funil para Sistema Quantum' : 'Quiz/Funil'}
+                        </Label>
                         <Select 
                           value={form.funnelId} 
                           onValueChange={(value) => setForm(prev => ({ ...prev, funnelId: value }))}
                         >
                           <SelectTrigger>
-                            <SelectValue placeholder={t("sms.selectQuiz")} />
+                            <SelectValue placeholder={
+                              form.type?.includes('quantum') 
+                                ? "Selecione quiz para análise ultra-granular" 
+                                : "Selecione o quiz"
+                            } />
                           </SelectTrigger>
                           <SelectContent>
                             {quizzes.map((quiz: Quiz) => (
                               <SelectItem key={quiz.id} value={quiz.id}>
-                                {quiz.title} ({quiz.responses} respostas)
+                                <div className="flex items-center justify-between w-full">
+                                  <span>{quiz.title}</span>
+                                  <div className="flex items-center gap-2 ml-2">
+                                    <Badge variant="secondary" className="text-xs">
+                                      {quiz.responses} respostas
+                                    </Badge>
+                                    {form.type?.includes('quantum') && quiz.responses > 10 && (
+                                      <Badge variant="outline" className="text-xs bg-purple-50 text-purple-600">
+                                        QUANTUM OK
+                                      </Badge>
+                                    )}
+                                  </div>
+                                </div>
                               </SelectItem>
                             ))}
                           </SelectContent>
                         </Select>
+                        {form.type?.includes('quantum') && form.funnelId && (
+                          <div className="mt-2 p-3 bg-purple-50 rounded-lg border border-purple-200">
+                            <div className="flex items-center gap-2 text-purple-800 text-sm">
+                              <Sparkles className="w-4 h-4" />
+                              <span className="font-medium">Sistema Quantum Ativo</span>
+                            </div>
+                            <p className="text-purple-700 text-xs mt-1">
+                              Este quiz será analisado com segmentação ultra-granular por resposta específica
+                            </p>
+                          </div>
+                        )}
                       </div>
                       
                       <div>
@@ -648,8 +717,98 @@ export default function SMSCampaignsAdvanced() {
                         )}
                       </div>
                       
-                      {/* Filtros Avançados */}
-                      {isAdvancedType() && (
+                      {/* Filtros Quantum Ultra-Granulares */}
+                      {form.type?.includes('quantum') && form.funnelId && (
+                        <div className="border-t pt-6">
+                          <div className="flex items-center gap-2 mb-4">
+                            <Zap className="w-5 h-5 text-purple-600" />
+                            <h3 className="font-medium text-purple-600">Filtros Quantum Ultra-Granulares</h3>
+                            <Badge className="bg-gradient-to-r from-purple-600 to-blue-600 text-white text-xs">
+                              ADVANCED
+                            </Badge>
+                          </div>
+                          
+                          <div className="space-y-4">
+                            <Alert className="border-purple-200 bg-purple-50">
+                              <Sparkles className="h-4 w-4 text-purple-600" />
+                              <AlertDescription className="text-purple-800">
+                                <strong>Sistema Ultra Ativo:</strong> Configure filtros ultra-específicos baseados nas respostas exatas dos leads. 
+                                {form.type === 'quantum_remarketing' 
+                                  ? ' Ideal para remarketing preciso por comportamento.'
+                                  : ' Monitora automaticamente novos leads com estas características.'
+                                }
+                              </AlertDescription>
+                            </Alert>
+                            
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                              <div>
+                                <Label className="flex items-center gap-2">
+                                  <Target className="w-4 h-4 text-purple-600" />
+                                  Campo Ultra-Específico
+                                </Label>
+                                <Select 
+                                  value={form.responseFilter?.field || ''} 
+                                  onValueChange={(value) => setForm(prev => ({ 
+                                    ...prev, 
+                                    responseFilter: { ...prev.responseFilter, field: value } 
+                                  }))}
+                                >
+                                  <SelectTrigger>
+                                    <SelectValue placeholder="Selecione campo para filtro quantum" />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="p1_objetivo_fitness">p1_objetivo_fitness</SelectItem>
+                                    <SelectItem value="p2_nivel_experiencia">p2_nivel_experiencia</SelectItem>
+                                    <SelectItem value="p3_disponibilidade">p3_disponibilidade</SelectItem>
+                                    <SelectItem value="p4_dor_problema">p4_dor_problema</SelectItem>
+                                    <SelectItem value="p5_meta_principal">p5_meta_principal</SelectItem>
+                                    <SelectItem value="nome">nome</SelectItem>
+                                    <SelectItem value="email">email</SelectItem>
+                                    <SelectItem value="telefone">telefone</SelectItem>
+                                    <SelectItem value="idade">idade</SelectItem>
+                                    <SelectItem value="peso">peso</SelectItem>
+                                    <SelectItem value="altura">altura</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                              </div>
+                              
+                              <div>
+                                <Label className="flex items-center gap-2">
+                                  <Layers className="w-4 h-4 text-purple-600" />
+                                  Valor Ultra-Específico
+                                </Label>
+                                <Input 
+                                  placeholder="Ex: Emagrecer, Ganhar Massa, etc." 
+                                  value={form.responseFilter?.value || ''}
+                                  onChange={(e) => setForm(prev => ({ 
+                                    ...prev, 
+                                    responseFilter: { ...prev.responseFilter, value: e.target.value } 
+                                  }))}
+                                  className="border-purple-200 focus:ring-purple-500"
+                                />
+                              </div>
+                            </div>
+                            
+                            {form.responseFilter?.field && form.responseFilter?.value && (
+                              <div className="p-4 bg-gradient-to-r from-purple-50 to-blue-50 rounded-lg border border-purple-200">
+                                <div className="flex items-center gap-2 mb-2">
+                                  <CheckCircle className="w-4 h-4 text-green-600" />
+                                  <span className="font-medium text-purple-800">Filtro Quantum Configurado</span>
+                                </div>
+                                <p className="text-purple-700 text-sm">
+                                  Leads que responderam "<strong>{form.responseFilter.value}</strong>" no campo "<strong>{form.responseFilter.field}</strong>" serão segmentados automaticamente.
+                                </p>
+                                <div className="mt-2 text-xs text-purple-600">
+                                  ⚡ Ultra-precisão ativada para máximo engajamento
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      )}
+                      
+                      {/* Filtros Avançados Tradicionais */}
+                      {(isAdvancedType() && !form.type?.includes('quantum')) && (
                         <div className="border-t pt-4">
                           <h3 className="font-medium mb-4 text-purple-600">Filtros Avançados</h3>
                           
@@ -748,22 +907,42 @@ export default function SMSCampaignsAdvanced() {
                 </div>
               )}
               
-              {/* Step 3: Mensagem */}
+              {/* Step 3: Mensagem Quantum */}
               {currentStep === 3 && (
-                <div className="space-y-4">
+                <div className="space-y-6">
                   <div>
-                    <Label htmlFor="name">Nome da Campanha</Label>
+                    <Label htmlFor="name">
+                      {form.type?.includes('quantum') ? 'Nome da Campanha Quantum' : 'Nome da Campanha'}
+                    </Label>
                     <Input 
                       id="name"
                       value={form.name}
                       onChange={(e) => setForm(prev => ({ ...prev, name: e.target.value }))}
-                      placeholder="Ex: Remarketing Dor nas Costas"
+                      placeholder={form.type?.includes('quantum') 
+                        ? "Ex: Quantum Remarketing - Emagrecer Ultra-Específico" 
+                        : "Ex: Remarketing Dor nas Costas"
+                      }
+                      className={form.type?.includes('quantum') ? 'border-purple-200 focus:ring-purple-500' : ''}
                     />
                   </div>
                   
+                  {form.type?.includes('quantum') && (
+                    <Alert className="border-purple-200 bg-gradient-to-r from-purple-50 to-blue-50">
+                      <Sparkles className="h-4 w-4 text-purple-600" />
+                      <AlertDescription className="text-purple-800">
+                        <strong>Personalização Quantum Ativada!</strong> Use as variáveis ultra-específicas abaixo para criar mensagens com 300% mais engajamento. 
+                        O sistema automaticamente personalizará cada mensagem com as respostas exatas do lead.
+                      </AlertDescription>
+                    </Alert>
+                  )}
+                  
                   <div>
                     <div className="flex items-center justify-between mb-2">
-                      <Label htmlFor="message">Mensagem SMS</Label>
+                      <Label htmlFor="message" className="flex items-center gap-2">
+                        <MessageSquare className="w-4 h-4" />
+                        {form.type?.includes('quantum') ? 'Mensagem Quantum Personalizada' : 'Mensagem SMS'}
+                        {form.type?.includes('quantum') && <Badge className="bg-gradient-to-r from-purple-600 to-blue-600 text-white">ULTRA</Badge>}
+                      </Label>
                       <Badge variant={messageCount > 160 ? "destructive" : "outline"}>
                         {messageCount}/160
                       </Badge>
@@ -772,45 +951,129 @@ export default function SMSCampaignsAdvanced() {
                       id="message"
                       value={form.message}
                       onChange={(e) => setForm(prev => ({ ...prev, message: e.target.value }))}
-                      placeholder="Olá {{nome}}, vimos que você respondeu '{{resposta_dor}}'. Temos algo especial pra você."
-                      className="min-h-[100px]"
+                      placeholder={form.type?.includes('quantum')
+                        ? "Oi {{nome}}! Vi que seu objetivo é {{p1_objetivo_fitness}} e sua dor é {{p4_dor_problema}}. Tenho uma solução ultra-específica pra você! 🎯"
+                        : "Olá {{nome}}, vimos que você respondeu '{{resposta_dor}}'. Temos algo especial pra você."
+                      }
+                      className={`min-h-[120px] ${form.type?.includes('quantum') ? 'border-purple-200 focus:ring-purple-500' : ''}`}
                       maxLength={160}
                     />
                   </div>
                   
-                  <div className="flex flex-wrap gap-2">
-                    {availableVariables.map((variable) => (
-                      <Button 
-                        key={variable.key}
-                        variant="outline" 
-                        size="sm"
-                        onClick={() => insertVariable(variable.key)}
-                      >
-                        {variable.key}
-                      </Button>
-                    ))}
-                  </div>
+                  {/* Variáveis Quantum Ultra-Específicas */}
+                  {form.type?.includes('quantum') && (
+                    <div className="space-y-4">
+                      <div className="border-t pt-4">
+                        <h4 className="font-medium flex items-center gap-2 mb-3 text-purple-600">
+                          <Zap className="w-4 h-4" />
+                          Variáveis Quantum Ultra-Específicas
+                        </h4>
+                        <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                          {[
+                            { key: '{{nome}}', desc: 'Nome do lead', color: 'bg-green-100 text-green-800' },
+                            { key: '{{p1_objetivo_fitness}}', desc: 'Objetivo específico', color: 'bg-purple-100 text-purple-800' },
+                            { key: '{{p4_dor_problema}}', desc: 'Dor/problema exato', color: 'bg-red-100 text-red-800' },
+                            { key: '{{p2_nivel_experiencia}}', desc: 'Nível de experiência', color: 'bg-blue-100 text-blue-800' },
+                            { key: '{{peso}}', desc: 'Peso atual', color: 'bg-orange-100 text-orange-800' },
+                            { key: '{{idade}}', desc: 'Idade', color: 'bg-yellow-100 text-yellow-800' }
+                          ].map((variable) => (
+                            <Button 
+                              key={variable.key}
+                              variant="outline" 
+                              size="sm"
+                              onClick={() => insertVariable(variable.key)}
+                              className={`${variable.color} border-0 hover:scale-105 transition-all`}
+                            >
+                              <div className="text-center">
+                                <div className="font-mono text-xs">{variable.key}</div>
+                                <div className="text-xs opacity-75">{variable.desc}</div>
+                              </div>
+                            </Button>
+                          ))}
+                        </div>
+                      </div>
+                      
+                      <div className="bg-gradient-to-r from-purple-50 to-blue-50 p-4 rounded-lg border border-purple-200">
+                        <h5 className="font-medium text-purple-800 mb-2">💡 Exemplos de Mensagens Quantum:</h5>
+                        <div className="space-y-2 text-sm text-purple-700">
+                          <div className="bg-white p-2 rounded border">
+                            "Oi {{nome}}! Seu objetivo {{p1_objetivo_fitness}} + problema {{p4_dor_problema}} = solução perfeita que criei! 🎯"
+                          </div>
+                          <div className="bg-white p-2 rounded border">
+                            "{{nome}}, {{peso}}kg → meta {{p1_objetivo_fitness}}? Método específico para {{p4_dor_problema}} pronto!"
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                  
+                  {/* Variáveis Tradicionais para outras campanhas */}
+                  {!form.type?.includes('quantum') && (
+                    <div className="flex flex-wrap gap-2">
+                      {availableVariables.map((variable) => (
+                        <Button 
+                          key={variable.key}
+                          variant="outline" 
+                          size="sm"
+                          onClick={() => insertVariable(variable.key)}
+                        >
+                          {variable.key}
+                        </Button>
+                      ))}
+                    </div>
+                  )}
                 </div>
               )}
               
-              {/* Step 4: Agendamento */}
+              {/* Step 4: Agendamento Quantum */}
               {currentStep === 4 && (
-                <div className="space-y-4">
+                <div className="space-y-6">
+                  {form.type?.includes('quantum') && (
+                    <Alert className="border-purple-200 bg-gradient-to-r from-purple-50 to-blue-50">
+                      <Zap className="h-4 w-4 text-purple-600" />
+                      <AlertDescription className="text-purple-800">
+                        <strong>Sistema Quantum de Agendamento Ativo!</strong> {' '}
+                        {form.type === 'quantum_live' 
+                          ? 'Monitoramento automático 24/7 para novos leads com suas características ultra-específicas.'
+                          : 'Remarketing inteligente com timing otimizado por padrões comportamentais.'
+                        }
+                      </AlertDescription>
+                    </Alert>
+                  )}
+                  
                   <div>
-                    <Label>Quando enviar?</Label>
+                    <Label className="flex items-center gap-2">
+                      <Calendar className="w-4 h-4" />
+                      {form.type?.includes('quantum') ? 'Estratégia de Timing Quantum' : 'Quando enviar?'}
+                    </Label>
                     <Select 
                       value={form.scheduleType} 
                       onValueChange={(value: 'now' | 'scheduled' | 'delayed') => 
                         setForm(prev => ({ ...prev, scheduleType: value }))}
                     >
-                      <SelectTrigger>
+                      <SelectTrigger className={form.type?.includes('quantum') ? 'border-purple-200' : ''}>
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="now">⚡ Enviar agora</SelectItem>
-                        <SelectItem value="scheduled">📅 Agendar para data/hora</SelectItem>
-                        {(form.type === 'live' || form.type === 'live_custom') && (
-                          <SelectItem value="delayed">⏱️ Enviar X minutos após lead responder</SelectItem>
+                        <SelectItem value="now">
+                          <div className="flex items-center gap-2">
+                            <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                            <span>⚡ Enviar agora{form.type?.includes('quantum') ? ' (Quantum Imediato)' : ''}</span>
+                          </div>
+                        </SelectItem>
+                        <SelectItem value="scheduled">
+                          <div className="flex items-center gap-2">
+                            <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                            <span>📅 Agendar data/hora{form.type?.includes('quantum') ? ' (Quantum Programado)' : ''}</span>
+                          </div>
+                        </SelectItem>
+                        {(form.type === 'live' || form.type === 'live_custom' || form.type?.includes('quantum')) && (
+                          <SelectItem value="delayed">
+                            <div className="flex items-center gap-2">
+                              <div className="w-2 h-2 bg-orange-500 rounded-full"></div>
+                              <span>⏱️ Delay após resposta{form.type?.includes('quantum') ? ' (Quantum Inteligente)' : ''}</span>
+                            </div>
+                          </SelectItem>
                         )}
                       </SelectContent>
                     </Select>
@@ -839,14 +1102,17 @@ export default function SMSCampaignsAdvanced() {
                   
                   {form.scheduleType === 'delayed' && (
                     <div className="space-y-3">
-                      <Label>Atraso após resposta</Label>
+                      <Label className="flex items-center gap-2">
+                        <Clock className="w-4 h-4" />
+                        {form.type?.includes('quantum') ? 'Delay Quantum Inteligente' : 'Atraso após resposta'}
+                      </Label>
                       <div className="flex gap-2">
                         <Input 
                           type="number"
                           value={form.delayMinutes || ''}
                           onChange={(e) => setForm(prev => ({ ...prev, delayMinutes: Number(e.target.value) }))}
                           placeholder="Ex: 30"
-                          className="flex-1"
+                          className={`flex-1 ${form.type?.includes('quantum') ? 'border-purple-200' : ''}`}
                         />
                         <Select 
                           value={scheduleUnit} 
@@ -861,52 +1127,163 @@ export default function SMSCampaignsAdvanced() {
                           </SelectContent>
                         </Select>
                       </div>
-                      <div className="text-sm text-gray-500 bg-blue-50 p-2 rounded">
-                        <Clock className="w-4 h-4 inline mr-1" />
-                        Será enviado {form.delayMinutes || 0} {scheduleUnit === 'hours' ? 'horas' : 'minutos'} após o lead responder o quiz
+                      <div className={`text-sm p-3 rounded-lg ${
+                        form.type?.includes('quantum') 
+                          ? 'text-purple-700 bg-gradient-to-r from-purple-50 to-blue-50 border border-purple-200' 
+                          : 'text-gray-500 bg-blue-50'
+                      }`}>
+                        <div className="flex items-center gap-2 mb-1">
+                          <Clock className="w-4 h-4" />
+                          <span className="font-medium">
+                            {form.type?.includes('quantum') ? 'Sistema Quantum de Timing:' : 'Agendamento:'}
+                          </span>
+                        </div>
+                        <p>
+                          Será enviado {form.delayMinutes || 0} {scheduleUnit === 'hours' ? 'horas' : 'minutos'} após o lead responder o quiz
+                          {form.type?.includes('quantum') && ' com personalização ultra-específica baseada nas respostas'}
+                        </p>
+                        {form.type?.includes('quantum') && (
+                          <div className="mt-2 flex items-center gap-2 text-purple-600 text-xs">
+                            <Zap className="w-3 h-3" />
+                            <span>Otimização automática por padrões comportamentais</span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                  
+                  {/* Configurações Avançadas Quantum */}
+                  {form.type?.includes('quantum') && (
+                    <div className="border-t pt-4 space-y-4">
+                      <h4 className="font-medium flex items-center gap-2 text-purple-600">
+                        <Settings className="w-4 h-4" />
+                        Configurações Quantum Avançadas
+                      </h4>
+                      
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="bg-gradient-to-r from-purple-50 to-blue-50 p-3 rounded-lg border border-purple-200">
+                          <div className="flex items-center gap-2 mb-2">
+                            <Target className="w-4 h-4 text-purple-600" />
+                            <span className="font-medium text-purple-800">Ultra-Precisão</span>
+                          </div>
+                          <p className="text-purple-700 text-sm">
+                            Apenas leads com características exatas definidas no filtro receberão as mensagens
+                          </p>
+                        </div>
+                        
+                        <div className="bg-gradient-to-r from-blue-50 to-green-50 p-3 rounded-lg border border-blue-200">
+                          <div className="flex items-center gap-2 mb-2">
+                            <BarChart3 className="w-4 h-4 text-blue-600" />
+                            <span className="font-medium text-blue-800">Análise em Tempo Real</span>
+                          </div>
+                          <p className="text-blue-700 text-sm">
+                            Sistema monitora e otimiza automaticamente baseado no engajamento
+                          </p>
+                        </div>
                       </div>
                     </div>
                   )}
                 </div>
               )}
               
-              {/* Step 5: Resumo */}
+              {/* Step 5: Resumo Quantum */}
               {currentStep === 5 && (
                 <div className="space-y-6">
+                  {form.type?.includes('quantum') && (
+                    <Alert className="border-purple-200 bg-gradient-to-r from-purple-50 to-blue-50">
+                      <Sparkles className="h-4 w-4 text-purple-600" />
+                      <AlertDescription className="text-purple-800">
+                        <strong>Campanha Quantum Configurada!</strong> Sistema ultra-granular pronto para ativação com personalização máxima e segmentação por respostas específicas.
+                      </AlertDescription>
+                    </Alert>
+                  )}
+                  
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <h3 className="font-medium mb-2">Tipo de Campanha</h3>
-                      <p className="text-sm text-gray-600">
+                    <div className={form.type?.includes('quantum') ? 'bg-gradient-to-r from-purple-50 to-white p-3 rounded-lg border border-purple-200' : ''}>
+                      <h3 className="font-medium mb-2 flex items-center gap-2">
+                        {form.type?.includes('quantum') && <Zap className="w-4 h-4 text-purple-600" />}
+                        Tipo de Campanha
+                      </h3>
+                      <p className={`text-sm ${form.type?.includes('quantum') ? 'text-purple-800 font-medium' : 'text-gray-600'}`}>
                         {CAMPAIGN_TYPES[form.type as keyof typeof CAMPAIGN_TYPES]?.name}
+                        {form.type?.includes('quantum') && <Badge className="ml-2 bg-purple-600 text-white">QUANTUM</Badge>}
                       </p>
                     </div>
                     <div>
-                      <h3 className="font-medium mb-2">Nome</h3>
+                      <h3 className="font-medium mb-2">Nome da Campanha</h3>
                       <p className="text-sm text-gray-600">{form.name}</p>
                     </div>
                     <div>
-                      <h3 className="font-medium mb-2">Segmento</h3>
+                      <h3 className="font-medium mb-2">Segmentação</h3>
                       <p className="text-sm text-gray-600">
-                        {form.segment === 'completed' ? 'Completou o quiz' : 
-                         form.segment === 'abandoned' ? 'Abandonou o quiz' : 'Todos os leads'}
+                        {form.segment === 'completed' ? 'Leads que completaram o quiz' : 
+                         form.segment === 'abandoned' ? 'Leads que abandonaram o quiz' : 'Todos os leads do quiz'}
                       </p>
+                      {form.type?.includes('quantum') && form.responseFilter?.field && form.responseFilter?.value && (
+                        <div className="mt-2 p-2 bg-purple-50 rounded border border-purple-200">
+                          <p className="text-xs text-purple-700">
+                            <strong>Filtro Quantum:</strong> {form.responseFilter.field} = "{form.responseFilter.value}"
+                          </p>
+                        </div>
+                      )}
                     </div>
                     <div>
-                      <h3 className="font-medium mb-2">Agendamento</h3>
+                      <h3 className="font-medium mb-2">Timing</h3>
                       <p className="text-sm text-gray-600">
-                        {form.scheduleType === 'now' ? 'Enviar agora' : 
+                        {form.scheduleType === 'now' ? (form.type?.includes('quantum') ? 'Quantum Imediato' : 'Enviar agora') : 
                          form.scheduleType === 'scheduled' ? `${form.scheduledDate} às ${form.scheduledTime}` :
-                         `${form.delayMinutes} minutos após resposta`}
+                         `${form.delayMinutes} ${scheduleUnit === 'hours' ? 'horas' : 'minutos'} após resposta`}
                       </p>
+                      {form.type?.includes('quantum') && (
+                        <div className="mt-1 text-xs text-purple-600 flex items-center gap-1">
+                          <Target className="w-3 h-3" />
+                          <span>Com otimização comportamental automática</span>
+                        </div>
+                      )}
                     </div>
                   </div>
                   
                   <div>
-                    <h3 className="font-medium mb-2">Mensagem</h3>
-                    <div className="bg-gray-50 p-3 rounded-lg border">
-                      <p className="text-sm">{form.message}</p>
+                    <h3 className="font-medium mb-2 flex items-center gap-2">
+                      <MessageSquare className="w-4 h-4" />
+                      {form.type?.includes('quantum') ? 'Mensagem Quantum Personalizada' : 'Mensagem'}
+                    </h3>
+                    <div className={`p-4 rounded-lg border ${
+                      form.type?.includes('quantum') 
+                        ? 'bg-gradient-to-r from-purple-50 to-blue-50 border-purple-200' 
+                        : 'bg-gray-50'
+                    }`}>
+                      <p className={`text-sm ${form.type?.includes('quantum') ? 'text-purple-800' : 'text-gray-800'}`}>
+                        {form.message}
+                      </p>
+                      {form.type?.includes('quantum') && (
+                        <div className="mt-3 flex items-center gap-2 text-purple-600 text-xs">
+                          <Sparkles className="w-3 h-3" />
+                          <span>Variáveis será substituídas automaticamente com dados ultra-específicos de cada lead</span>
+                        </div>
+                      )}
                     </div>
                   </div>
+                  
+                  {form.type?.includes('quantum') && (
+                    <div className="border-t pt-4">
+                      <h4 className="font-medium text-purple-600 mb-3">🚀 Recursos Quantum Ativados:</h4>
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                        <div className="bg-green-50 p-3 rounded-lg border border-green-200">
+                          <div className="text-green-800 font-medium text-sm">✓ Ultra-Segmentação</div>
+                          <div className="text-green-600 text-xs">Filtros por resposta específica</div>
+                        </div>
+                        <div className="bg-blue-50 p-3 rounded-lg border border-blue-200">
+                          <div className="text-blue-800 font-medium text-sm">✓ Personalização Max</div>
+                          <div className="text-blue-600 text-xs">Variáveis ultra-específicas</div>
+                        </div>
+                        <div className="bg-purple-50 p-3 rounded-lg border border-purple-200">
+                          <div className="text-purple-800 font-medium text-sm">✓ IA Comportamental</div>
+                          <div className="text-purple-600 text-xs">Otimização automática</div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
               
