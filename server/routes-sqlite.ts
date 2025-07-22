@@ -72,8 +72,6 @@ import {
   getSecurityStats 
 } from './security';
 import express from 'express';
-import path from 'path';
-import fs from 'fs';
 import { fileURLToPath } from 'url';
 import jwt from 'jsonwebtoken';
 import speakeasy from 'speakeasy';
@@ -4131,82 +4129,16 @@ export function registerSQLiteRoutes(app: Express): Server {
 
         // Salvar resposta com prioridade (operação crítica)
         const response = await storage.createQuizResponse(responseData);
+        console.log(`✅ Quiz response salva com sucesso: ${response.id}`);
 
-        // 🔔 INTEGRAÇÃO COM SISTEMA DE PUSH NOTIFICATIONS EXISTENTE
-        // Detectar quiz completion e disparar notificação automática (baseado no sistema "Testar Push")
+        // 🔔 SISTEMA DE NOTIFICAÇÕES AUTOMÁTICAS VENDZZ
+        // Implementação isolada e robusta para quiz completions
         try {
-          console.log(`🎯 QUIZ COMPLETADO: ${req.params.id} - Verificando se deve enviar push notification`);
-          
-          // Verificar se o dono do quiz tem push notifications ativadas
-          const quizOwner = await storage.getUserByQuizId(req.params.id);
-          if (quizOwner) {
-            console.log(`👤 Dono do quiz: ${quizOwner.email} (ID: ${quizOwner.id})`);
-            
-            // Verificar se tem push subscription ativa (mesmo sistema do botão "Testar Push")
-            const subscriptionsPath = path.join(process.cwd(), 'push-subscriptions.json');
-            let hasActiveSubscription = false;
-            
-            if (fs.existsSync(subscriptionsPath)) {
-              const subscriptionsData = fs.readFileSync(subscriptionsPath, 'utf8');
-              const subscriptions = JSON.parse(subscriptionsData);
-              const userSubscriptions = subscriptions.filter((s: any) => s.userId === quizOwner.id);
-              hasActiveSubscription = userSubscriptions.length > 0;
-            }
-            
-            // Admin sempre recebe (para testes)
-            if (quizOwner.id === 'admin-user-id' || quizOwner.email === 'admin@vendzz.com') {
-              hasActiveSubscription = true;
-              console.log(`👑 ADMIN OVERRIDE: Quiz completion notification autorizada`);
-            }
-            
-            if (hasActiveSubscription) {
-              // Usar as 9 mensagens rotativas do sistema bulk-push-messaging
-              const quizCompletionMessages = [
-                { title: '🎉 Novo Lead Capturado!', body: 'Alguém completou seu funil quiz! Confira os detalhes no dashboard.' },
-                { title: '🔥 Quiz Finalizado!', body: 'Um novo prospect acabou de completar sua captura de leads!' },
-                { title: '💰 Potencial Cliente!', body: 'Seu quiz converteu um novo lead qualificado agora mesmo!' },
-                { title: '🚀 Lead Quente Gerado!', body: 'Uma pessoa interessada completou todo o seu quiz de qualificação!' },
-                { title: '✨ Nova Conversão!', body: 'Seu funil de vendas acabou de capturar mais um lead!' },
-                { title: '🎯 Quiz Convertido!', body: 'Mais uma pessoa qualificada entrou no seu funil de vendas!' },
-                { title: '🌟 Lead Capturado!', body: 'Seu quiz está gerando resultados - novo prospect qualificado!' },
-                { title: '📈 Conversão Realizada!', body: 'Parabéns! Seu quiz converteu mais um lead interessado!' },
-                { title: '💎 Prospect Qualificado!', body: 'Uma nova oportunidade de negócio completou seu quiz!' }
-              ];
-              
-              // Rotação baseada no timestamp para variedade
-              const messageIndex = Date.now() % quizCompletionMessages.length;
-              const selectedMessage = quizCompletionMessages[messageIndex];
-              
-              // Enviar push notification usando o sistema existente
-              const payload = {
-                title: selectedMessage.title,
-                body: selectedMessage.body,
-                icon: '/icon-192x192.png',
-                badge: '/favicon.png',
-                data: {
-                  type: 'quiz_completion',
-                  quizId: req.params.id,
-                  timestamp: Date.now(),
-                  url: '/dashboard'
-                }
-              };
-              
-              // Usar o mesmo sistema do sendPushToAll mas filtrado para o dono do quiz
-              const pushSimple = await import('./push-simple.js');
-              const { sendPushToSpecificUser } = pushSimple;
-              if (sendPushToSpecificUser) {
-                await sendPushToSpecificUser(quizOwner.id, payload);
-                console.log(`✅ Push notification enviada para ${quizOwner.email}: "${selectedMessage.title}"`);
-              } else {
-                console.log(`📱 Sistema de push notification não disponível - usando fallback`);
-              }
-            } else {
-              console.log(`🔒 BLOCKED: Usuário ${quizOwner.email} sem push notifications ativas - não enviando (otimização para 100k+ usuários)`);
-            }
-          }
-        } catch (pushError) {
-          // Não bloquear o quiz completion se push notification falhar
-          console.error('⚠️ Erro ao enviar push notification (não crítico):', pushError);
+          console.log(`🎯 QUIZ COMPLETADO: ${req.params.id} - Iniciando notificação automática`);
+          const { automaticPushSystem } = require('../automatic-push-system.js');
+          await automaticPushSystem.processQuizCompletion(req.params.id, storage.getUserByQuizId.bind(storage));
+        } catch (autoNotifyError) {
+          console.error('⚠️ Erro no sistema de notificação automática (não crítico):', autoNotifyError);
         }
 
         // Invalidar caches relacionados APÓS salvar
