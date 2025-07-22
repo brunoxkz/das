@@ -31,7 +31,9 @@ export default function AdminPush() {
     globalTemplate: {
       title: '🎉 Novo Quiz Completado!',
       message: 'Um usuário acabou de finalizar seu quiz: "{quizTitle}"'
-    }
+    },
+    messages: [],
+    rotationEnabled: false
   });
   
   // Estado para mensagem personalizada
@@ -40,6 +42,14 @@ export default function AdminPush() {
     message: '',
     targetUser: 'all'
   });
+  
+  // Estado para nova mensagem rotativa
+  const [newMessage, setNewMessage] = useState({
+    title: '',
+    message: ''
+  });
+  
+  const [editingMessage, setEditingMessage] = useState(null);
 
   // Carregar configurações e estatísticas
   useEffect(() => {
@@ -143,6 +153,93 @@ export default function AdminPush() {
       toast({
         title: "Erro",
         description: "Não foi possível enviar a mensagem. Tente novamente.",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Funções para mensagens rotativas
+  const addMessage = async () => {
+    if (!newMessage.title || !newMessage.message) {
+      toast({
+        title: "Erro",
+        description: "Título e mensagem são obrigatórios",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const response = await apiRequest('POST', '/api/admin/push-messages', newMessage);
+      if (response.success) {
+        toast({
+          title: "Mensagem adicionada",
+          description: "Nova mensagem criada com sucesso!",
+        });
+        setNewMessage({ title: '', message: '' });
+        loadConfig();
+      } else {
+        throw new Error(response.error || 'Erro ao adicionar mensagem');
+      }
+    } catch (error) {
+      console.error('Erro ao adicionar mensagem:', error);
+      toast({
+        title: "Erro",
+        description: "Falha ao adicionar mensagem",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const deleteMessage = async (messageId) => {
+    setLoading(true);
+    try {
+      const response = await apiRequest('DELETE', `/api/admin/push-messages/${messageId}`);
+      if (response.success) {
+        toast({
+          title: "Mensagem removida",
+          description: "Mensagem deletada com sucesso!",
+        });
+        loadConfig();
+      } else {
+        throw new Error(response.error || 'Erro ao remover mensagem');
+      }
+    } catch (error) {
+      console.error('Erro ao remover mensagem:', error);
+      toast({
+        title: "Erro",
+        description: error.message || "Falha ao remover mensagem",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const updateMessage = async (messageId, updates) => {
+    setLoading(true);
+    try {
+      const response = await apiRequest('PUT', `/api/admin/push-messages/${messageId}`, updates);
+      if (response.success) {
+        toast({
+          title: "Mensagem atualizada",
+          description: "Mensagem editada com sucesso!",
+        });
+        setEditingMessage(null);
+        loadConfig();
+      } else {
+        throw new Error(response.error || 'Erro ao atualizar mensagem');
+      }
+    } catch (error) {
+      console.error('Erro ao atualizar mensagem:', error);
+      toast({
+        title: "Erro",
+        description: "Falha ao atualizar mensagem",
         variant: "destructive",
       });
     } finally {
@@ -382,6 +479,137 @@ export default function AdminPush() {
                   </Button>
                 ))}
               </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Mensagens Rotativas */}
+        <Card className="lg:col-span-2">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <RefreshCw className="w-5 h-5" />
+              Mensagens Rotativas
+            </CardTitle>
+            <CardDescription>
+              Configure múltiplas mensagens que serão alternadas automaticamente nos quiz completions
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            {/* Switch de rotação */}
+            <div className="flex items-center justify-between p-4 border rounded-lg">
+              <div className="space-y-1">
+                <Label className="text-sm font-medium">Rotação Automática</Label>
+                <p className="text-xs text-muted-foreground">
+                  Quando ativada, alterna entre as mensagens ativas a cada quiz completion
+                </p>
+              </div>
+              <Switch
+                checked={config.rotationEnabled}
+                onCheckedChange={(enabled) => setConfig(prev => ({ ...prev, rotationEnabled: enabled }))}
+              />
+            </div>
+
+            {/* Lista de mensagens existentes */}
+            <div className="space-y-3">
+              <Label className="text-sm font-medium">Mensagens ({config.messages?.length || 0})</Label>
+              <div className="space-y-2 max-h-60 overflow-y-auto">
+                {config.messages?.map((message, index) => (
+                  <div key={message.id} className="border rounded-lg p-3 space-y-2">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <Badge variant={message.active ? "default" : "secondary"}>
+                          #{index + 1}
+                        </Badge>
+                        <span className="text-sm font-medium">{message.title}</span>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => updateMessage(message.id, { active: !message.active })}
+                        >
+                          {message.active ? "Desativar" : "Ativar"}
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => setEditingMessage(message)}
+                        >
+                          Editar
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => deleteMessage(message.id)}
+                          className="text-red-600 hover:text-red-700"
+                        >
+                          Remover
+                        </Button>
+                      </div>
+                    </div>
+                    <p className="text-xs text-muted-foreground">{message.message}</p>
+                  </div>
+                )) || (
+                  <p className="text-sm text-muted-foreground text-center py-4">
+                    Nenhuma mensagem configurada. Adicione a primeira mensagem abaixo.
+                  </p>
+                )}
+              </div>
+            </div>
+
+            {/* Formulário para nova mensagem */}
+            <div className="border-t pt-4 space-y-4">
+              <Label className="text-sm font-medium">Adicionar Nova Mensagem</Label>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="new-msg-title">Título</Label>
+                  <Input
+                    id="new-msg-title"
+                    value={newMessage.title}
+                    onChange={(e) => setNewMessage(prev => ({ ...prev, title: e.target.value }))}
+                    placeholder="Ex: 🔥 Quiz Finalizado!"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="new-msg-message">Mensagem</Label>
+                  <Input
+                    id="new-msg-message"
+                    value={newMessage.message}
+                    onChange={(e) => setNewMessage(prev => ({ ...prev, message: e.target.value }))}
+                    placeholder="Ex: Mais um funil convertendo!"
+                  />
+                </div>
+              </div>
+              <Button onClick={addMessage} disabled={loading} className="w-full">
+                {loading ? (
+                  <>
+                    <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                    Adicionando...
+                  </>
+                ) : (
+                  <>
+                    <MessageSquare className="w-4 h-4 mr-2" />
+                    Adicionar Mensagem
+                  </>
+                )}
+              </Button>
+            </div>
+
+            {/* Botão para salvar configurações de rotação */}
+            <div className="border-t pt-4">
+              <Button onClick={saveConfig} variant="outline" className="w-full" disabled={loading}>
+                {loading ? (
+                  <>
+                    <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                    Salvando...
+                  </>
+                ) : (
+                  <>
+                    <CheckCircle className="w-4 h-4 mr-2" />
+                    Salvar Configurações de Rotação
+                  </>
+                )}
+              </Button>
             </div>
           </CardContent>
         </Card>

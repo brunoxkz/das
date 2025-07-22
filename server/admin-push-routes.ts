@@ -25,6 +25,16 @@ function loadPushConfig() {
       title: '🎉 Novo Quiz Completado!',
       message: 'Um usuário acabou de finalizar seu quiz: "{quizTitle}"'
     },
+    messages: [
+      {
+        id: 1,
+        title: '🎉 Novo Quiz Completado!',
+        message: 'Um usuário acabou de finalizar seu quiz: "{quizTitle}"',
+        active: true
+      }
+    ],
+    currentMessageIndex: 0,
+    rotationEnabled: false,
     lastUpdated: new Date().toISOString()
   };
 }
@@ -67,7 +77,7 @@ router.get('/push-config', (req: Request, res: Response) => {
 // POST /api/admin/push-config - Salvar configurações do sistema
 router.post('/push-config', (req: Request, res: Response) => {
   try {
-    const { enabled, globalTemplate } = req.body;
+    const { enabled, globalTemplate, messages, rotationEnabled } = req.body;
     
     const config = {
       enabled: Boolean(enabled),
@@ -75,6 +85,16 @@ router.post('/push-config', (req: Request, res: Response) => {
         title: '🎉 Novo Quiz Completado!',
         message: 'Um usuário acabou de finalizar seu quiz: "{quizTitle}"'
       },
+      messages: messages || [
+        {
+          id: 1,
+          title: '🎉 Novo Quiz Completado!',
+          message: 'Um usuário acabou de finalizar seu quiz: "{quizTitle}"',
+          active: true
+        }
+      ],
+      rotationEnabled: Boolean(rotationEnabled),
+      currentMessageIndex: 0,
       lastUpdated: new Date().toISOString()
     };
     
@@ -181,6 +201,154 @@ router.get('/push-stats', (req: Request, res: Response) => {
       enabled: true,
       sentToday: 0 
     });
+  }
+});
+
+// POST /api/admin/push-messages - Adicionar nova mensagem
+router.post('/push-messages', (req: Request, res: Response) => {
+  try {
+    const { title, message } = req.body;
+    
+    if (!title || !message) {
+      return res.status(400).json({ error: 'Título e mensagem são obrigatórios' });
+    }
+
+    const config = loadPushConfig();
+    
+    // Gerar novo ID
+    const newId = (config.messages || []).length + 1;
+    
+    const newMessage = {
+      id: newId,
+      title,
+      message,
+      active: true,
+      createdAt: new Date().toISOString()
+    };
+    
+    if (!config.messages) {
+      config.messages = [];
+    }
+    
+    config.messages.push(newMessage);
+    config.lastUpdated = new Date().toISOString();
+    
+    if (savePushConfig(config)) {
+      console.log('✅ Nova mensagem adicionada:', newMessage);
+      res.json({ success: true, message: newMessage, config });
+    } else {
+      res.status(500).json({ error: 'Erro ao salvar nova mensagem' });
+    }
+  } catch (error) {
+    console.error('Erro ao adicionar mensagem:', error);
+    res.status(500).json({ error: 'Erro interno do servidor' });
+  }
+});
+
+// DELETE /api/admin/push-messages/:id - Remover mensagem
+router.delete('/push-messages/:id', (req: Request, res: Response) => {
+  try {
+    const messageId = parseInt(req.params.id);
+    const config = loadPushConfig();
+    
+    if (!config.messages) {
+      return res.status(404).json({ error: 'Nenhuma mensagem encontrada' });
+    }
+    
+    const messageIndex = config.messages.findIndex(m => m.id === messageId);
+    if (messageIndex === -1) {
+      return res.status(404).json({ error: 'Mensagem não encontrada' });
+    }
+    
+    // Não permitir remover se for a única mensagem
+    if (config.messages.length === 1) {
+      return res.status(400).json({ error: 'Deve haver pelo menos uma mensagem' });
+    }
+    
+    config.messages.splice(messageIndex, 1);
+    config.lastUpdated = new Date().toISOString();
+    
+    if (savePushConfig(config)) {
+      console.log('✅ Mensagem removida:', messageId);
+      res.json({ success: true, config });
+    } else {
+      res.status(500).json({ error: 'Erro ao remover mensagem' });
+    }
+  } catch (error) {
+    console.error('Erro ao remover mensagem:', error);
+    res.status(500).json({ error: 'Erro interno do servidor' });
+  }
+});
+
+// PUT /api/admin/push-messages/:id - Editar mensagem
+router.put('/push-messages/:id', (req: Request, res: Response) => {
+  try {
+    const messageId = parseInt(req.params.id);
+    const { title, message, active } = req.body;
+    const config = loadPushConfig();
+    
+    if (!config.messages) {
+      return res.status(404).json({ error: 'Nenhuma mensagem encontrada' });
+    }
+    
+    const messageIndex = config.messages.findIndex(m => m.id === messageId);
+    if (messageIndex === -1) {
+      return res.status(404).json({ error: 'Mensagem não encontrada' });
+    }
+    
+    // Atualizar mensagem
+    if (title) config.messages[messageIndex].title = title;
+    if (message) config.messages[messageIndex].message = message;
+    if (active !== undefined) config.messages[messageIndex].active = active;
+    config.messages[messageIndex].updatedAt = new Date().toISOString();
+    config.lastUpdated = new Date().toISOString();
+    
+    if (savePushConfig(config)) {
+      console.log('✅ Mensagem atualizada:', config.messages[messageIndex]);
+      res.json({ success: true, message: config.messages[messageIndex], config });
+    } else {
+      res.status(500).json({ error: 'Erro ao atualizar mensagem' });
+    }
+  } catch (error) {
+    console.error('Erro ao atualizar mensagem:', error);
+    res.status(500).json({ error: 'Erro interno do servidor' });
+  }
+});
+
+// GET /api/admin/push-next-message - Obter próxima mensagem na rotação
+router.get('/push-next-message', (req: Request, res: Response) => {
+  try {
+    const config = loadPushConfig();
+    
+    if (!config.messages || config.messages.length === 0) {
+      return res.json(config.globalTemplate);
+    }
+    
+    const activeMessages = config.messages.filter(m => m.active);
+    if (activeMessages.length === 0) {
+      return res.json(config.globalTemplate);
+    }
+    
+    // Se rotação estiver desabilitada, usar sempre a primeira mensagem ativa
+    if (!config.rotationEnabled) {
+      return res.json(activeMessages[0]);
+    }
+    
+    // Rotação ativada - alternar entre mensagens
+    const currentIndex = config.currentMessageIndex || 0;
+    const nextIndex = (currentIndex + 1) % activeMessages.length;
+    
+    // Atualizar índice para próxima chamada
+    config.currentMessageIndex = nextIndex;
+    savePushConfig(config);
+    
+    const nextMessage = activeMessages[currentIndex];
+    console.log(`🔄 Mensagem rotativa ${currentIndex + 1}/${activeMessages.length}:`, nextMessage.title);
+    
+    res.json(nextMessage);
+  } catch (error) {
+    console.error('Erro ao obter próxima mensagem:', error);
+    res.status(500).json({ error: 'Erro interno do servidor' });
   }
 });
 

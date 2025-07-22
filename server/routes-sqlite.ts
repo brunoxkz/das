@@ -4155,17 +4155,43 @@ export function registerSQLiteRoutes(app: Express): Server {
           if (quizOwner) {
             console.log(`📧 Quiz Owner encontrado: ${quizOwner.email} (ID: ${quiz.user_id})`);
             
-            // Sistema de notificação automática - ÚNICA notificação por quiz completion
+            // Sistema de notificação automática - MENSAGEM ROTATIVA por quiz completion
             console.log(`📧 ENVIANDO NOTIFICAÇÃO AUTOMÁTICA para quiz: "${quiz.title}"`);
+            
+            // Buscar próxima mensagem na rotação
+            let messageData = {
+              title: '🎉 Novo Quiz Completado!',
+              message: `Um usuário acabou de finalizar seu quiz: "${quiz.title}"`,
+              icon: '/icon-192x192.png'
+            };
+            
+            try {
+              const nextMessageResponse = await fetch('http://localhost:5000/api/admin/push-next-message', {
+                method: 'GET',
+                headers: { 'Content-Type': 'application/json' }
+              });
+              
+              if (nextMessageResponse.ok) {
+                const nextMessage = await nextMessageResponse.json();
+                console.log(`🔄 MENSAGEM ROTATIVA obtida:`, nextMessage.title);
+                
+                // Substituir placeholder {quizTitle} na mensagem
+                messageData = {
+                  title: nextMessage.title || messageData.title,
+                  message: (nextMessage.message || messageData.message).replace('{quizTitle}', quiz.title),
+                  icon: '/icon-192x192.png'
+                };
+              } else {
+                console.warn('⚠️ Falha ao obter mensagem rotativa, usando padrão');
+              }
+            } catch (rotationError) {
+              console.warn('⚠️ Erro ao buscar mensagem rotativa, usando padrão:', rotationError.message);
+            }
             
             const pushResponse = await fetch('http://localhost:5000/api/push-simple/send', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                title: '🎉 Novo Quiz Completado!',
-                message: `Um usuário acabou de finalizar seu quiz: "${quiz.title}"`,
-                icon: '/icon-192x192.png'
-              })
+              body: JSON.stringify(messageData)
             });
             
             if (pushResponse.ok) {

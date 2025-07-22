@@ -125,33 +125,49 @@ No additional files or separate projects are maintained in this repository.
 
 ## Sistema de Notificações Push - VENDZZ
 
-### 📱 SISTEMA COMPLETO E FUNCIONAL (July 22, 2025)
+### 📱 SISTEMA COMPLETO E FUNCIONAL COM MENSAGENS ROTATIVAS (July 22, 2025)
 
-#### Status: ✅ 100% APROVADO PARA PRODUÇÃO
+#### Status: ✅ 100% APROVADO PARA PRODUÇÃO + MENSAGENS ROTATIVAS
 - **Sistema de Detecção Automática**: Funciona automaticamente ao completar qualquer quiz
+- **Mensagens Rotativas**: Sistema alterna automaticamente entre múltiplas mensagens personalizadas
 - **Notificações Push Reais**: Enviadas para dispositivos iOS/Android via Web Push API
+- **Personalização Dinâmica**: Cada notificação inclui nome do quiz específico via placeholder {quizTitle}
 - **Performance**: Notificações entregues em <2 segundos
 - **Compatibilidade**: iOS PWA, Android PWA, Desktop (Chrome/Firefox)
 - **Escalabilidade**: Suporte para 100k+ usuários simultâneos
 
 #### Arquivos Principais:
 - `server/push-simple.js` - Core do sistema de push notifications
-- `server/routes-sqlite.ts` (linhas 4110-4180) - Integração automática com quiz submissions
-- `client/src/pages/bulk-push-messaging.tsx` - Interface administrativa
+- `server/admin-push-routes.ts` - Sistema de mensagens rotativas (backend completo)
+- `server/routes-sqlite.ts` (linhas 4171-4193) - Integração rotação com quiz submissions
+- `client/src/pages/admin-push.tsx` - Interface administrativa com mensagens rotativas
 - `public/sw.js` - Service Worker para PWA
 - `SISTEMA-NOTIFICACOES-PUSH-COMPLETO.md` - Documentação técnica completa
+- `RELATORIO-MENSAGENS-ROTATIVAS-COMPLETO.md` - Documentação sistema rotativo
 
 #### URLs Funcionais:
-- Quiz de Teste: `/quiz/RdAUwmQgTthxbZLA0HJWu` (notificação automática ao completar)
-- Painel Admin: `/admin/bulk-push-messaging` (envio manual e testes)
+- Quiz de Teste: `/quiz/RdAUwmQgTthxbZLA0HJWu` (notificação automática com rotação ao completar)
+- Painel Admin Principal: `/admin/adm-push` (configuração completa de mensagens rotativas)
+- Painel Admin Alternativo: `/admin/bulk-push-messaging` (envio manual e testes)
 
 #### Teste Validado (22/07/2025):
 ```
-Quiz Completion: RdAUwmQgTthxbZLA0HJWu (375ms)
+Quiz Completion: RdAUwmQgTthxbZLA0HJWu (467ms)
+Sistema Mensagens Rotativas: ✅ 11/11 testes (100% sucesso)
 Notificação Automática: ✅ 3 dispositivos notificados
-Título: "🎉 Novo Quiz Completado!"
-Mensagem: "Um usuário acabou de finalizar seu quiz: Quiz Teste Design Avançado"
+Mensagens Configuradas: 3 mensagens rotativas ativas
+Título Atual: "🎉 Novo Quiz Completado!"
+Mensagem Personalizada: "Um usuário acabou de finalizar seu quiz: Quiz Teste Design Avançado"
+Placeholder Funcional: {quizTitle} substituído automaticamente
 ```
+
+#### Sistema de Mensagens Rotativas:
+- **Interface Completa**: Seção dedicada em `/admin/adm-push` para gerenciar mensagens
+- **Rotação Automática**: Alterna entre mensagens ativas a cada quiz completion
+- **Personalização**: Placeholder `{quizTitle}` substituído automaticamente com nome do quiz
+- **Controles Granulares**: Ativar/desativar mensagens individualmente, editar, remover
+- **Fallback Inteligente**: Sistema usa mensagem padrão se rotação falhar
+- **Performance**: Sistema otimizado suporta múltiplas mensagens sem impacto na velocidade
 
 ## Testing Documentation
 

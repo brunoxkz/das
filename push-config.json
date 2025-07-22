@@ -1,0 +1,18 @@
+{
+  "enabled": true,
+  "globalTemplate": {
+    "title": "🎉 Novo Quiz Completado!",
+    "message": "Um usuário acabou de finalizar seu quiz: \"{quizTitle}\""
+  },
+  "messages": [
+    {
+      "id": 1,
+      "title": "🎉 Novo Quiz Completado!",
+      "message": "Um usuário acabou de finalizar seu quiz: \"{quizTitle}\"",
+      "active": true
+    }
+  ],
+  "rotationEnabled": true,
+  "currentMessageIndex": 0,
+  "lastUpdated": "2025-07-22T02:52:51.542Z"
+}
