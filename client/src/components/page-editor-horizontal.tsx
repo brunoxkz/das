@@ -6044,8 +6044,55 @@ const gameElementCategories = [
                       </div>
                     </div>
                   </div>
-                </div>
-              )}
+
+                  {/* 🚀 NOVA FUNCIONALIDADE: Navegação Automática */}
+                  {selectedElementData.type === "multiple_choice" && (
+                    <div className="border rounded-lg p-4 bg-gradient-to-br from-green-50 to-emerald-50 border-green-200">
+                      <div className="flex items-center gap-2 mb-3">
+                        <span className="text-lg">⚡</span>
+                        <h4 className="font-semibold text-sm text-green-800">Navegação Automática</h4>
+                      </div>
+                      
+                      <div className="flex items-center space-x-2 mb-3">
+                        <input
+                          type="checkbox"
+                          id="disableAutoNavigation"
+                          checked={selectedElementData.disableAutoNavigation || false}
+                          onChange={(e) => updateElement(selectedElementData.id, { disableAutoNavigation: e.target.checked })}
+                        />
+                        <Label htmlFor="disableAutoNavigation" className="text-xs text-green-700 font-medium">
+                          Desabilitar navegação automática
+                        </Label>
+                      </div>
+                      
+                      <div className="space-y-2 text-xs">
+                        <div className={`p-2 rounded border transition-all ${selectedElementData.disableAutoNavigation 
+                          ? 'bg-orange-50 border-orange-200 text-orange-700' 
+                          : 'bg-white border-green-200 text-green-700'
+                        }`}>
+                          {selectedElementData.disableAutoNavigation 
+                            ? "⏸️ Modo Manual: Usuário deve clicar 'Continuar' após selecionar" 
+                            : "⚡ Modo Automático: Avança para próxima página em 300ms após seleção"
+                          }
+                        </div>
+                        
+                        <div className="space-y-1 text-green-600">
+                          <div className="flex items-center gap-1">
+                            <span className={selectedElementData.disableAutoNavigation ? 'opacity-50' : ''}>🚀</span>
+                            <span className={selectedElementData.disableAutoNavigation ? 'opacity-50' : ''}>
+                              Transição suave e rápida
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-1">
+                            <span className={!selectedElementData.disableAutoNavigation ? 'opacity-50' : ''}>🎛️</span>
+                            <span className={!selectedElementData.disableAutoNavigation ? 'opacity-50' : ''}>
+                              Controle total do usuário
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
 
               {(selectedElementData.type === "text" || selectedElementData.type === "email" || selectedElementData.type === "phone" || selectedElementData.type === "number") && (
                 <div className="space-y-4">

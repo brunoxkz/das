@@ -730,7 +730,7 @@ export function QuizPublicRenderer({ quiz }: QuizPublicRendererProps) {
   };
 
   // Função para capturar resposta de qualquer elemento
-  const handleElementAnswer = (elementId: string, elementType: string, answer: any, fieldId?: string) => {
+  const handleElementAnswer = (elementId: string, elementType: string, answer: any, fieldId?: string, element?: any) => {
     const response: QuizResponse = {
       elementId,
       elementType,
@@ -749,6 +749,30 @@ export function QuizPublicRenderer({ quiz }: QuizPublicRendererProps) {
 
     // Salvar automaticamente no servidor
     saveResponseAutomatically(response);
+
+    // 🚀 NOVA FUNCIONALIDADE: Navegação automática para múltipla escolha
+    if (elementType === 'multiple_choice') {
+      // Verificar se a navegação automática está desabilitada
+      const autoNavigationDisabled = element?.disableAutoNavigation || element?.properties?.disableAutoNavigation;
+      
+      if (!autoNavigationDisabled) {
+        // Delay de 300ms para uma transição suave
+        setTimeout(() => {
+          if (currentPageIndex < pages.length - 1) {
+            console.log('🚀 Navegação automática: Avançando para próxima página');
+            setCurrentPageIndex(prev => prev + 1);
+            // Limpar respostas da página anterior
+            setAnswers({});
+          } else {
+            // Se for a última página, finalizar quiz
+            console.log('🏁 Última página alcançada, finalizando quiz');
+            setShowResults(true);
+          }
+        }, 300);
+      } else {
+        console.log('⏸️ Navegação automática desabilitada para este elemento');
+      }
+    }
   };
 
   // Função para finalizar quiz
@@ -827,7 +851,7 @@ export function QuizPublicRenderer({ quiz }: QuizPublicRendererProps) {
             </h3>
             <RadioGroup 
               value={answer} 
-              onValueChange={(value) => handleElementAnswer(id, type, value, element.fieldId || properties?.fieldId)}
+              onValueChange={(value) => handleElementAnswer(id, type, value, element.fieldId || properties?.fieldId, element)}
               className="space-y-2"
             >
               {Array.isArray(multipleChoiceOptions) && multipleChoiceOptions.length > 0 ? (
