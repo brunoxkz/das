@@ -15,7 +15,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { useLanguage } from "@/hooks/useLanguage";
+
 import SMSCampaignModal from "@/components/SMSCampaignModal";
 
 // Componente para exibir logs da campanha
@@ -273,7 +273,6 @@ export default function SMSCampaignsAdvanced() {
   const { user } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const { t } = useLanguage();
   
   // Estados do formulário
   const [currentStep, setCurrentStep] = useState(1);
@@ -571,11 +570,11 @@ export default function SMSCampaignsAdvanced() {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Target className="w-5 h-5" />
-                {currentStep === 1 && t("sms.selectCampaignType")}
-                {currentStep === 2 && t("sms.leadSegmentation")}
-                {currentStep === 3 && t("sms.messageCreation")}
-                {currentStep === 4 && t("sms.scheduling")}
-                {currentStep === 5 && t("sms.campaignSummary")}
+                {currentStep === 1 && "Selecionar Tipo de Campanha"}
+                {currentStep === 2 && "Segmentação de Leads"}
+                {currentStep === 3 && "Criação da Mensagem"}
+                {currentStep === 4 && "Agendamento"}
+                {currentStep === 5 && "Resumo da Campanha"}
               </CardTitle>
             </CardHeader>
             <CardContent>
