@@ -47,7 +47,7 @@ export const quizzes = sqliteTable("quizzes", {
   title: text("title").notNull(),
   description: text("description"),
   structure: text("structure", { mode: 'json' }).notNull(),
-  userId: text("user_id").notNull().references(() => users.id),
+  userId: text("userId").notNull().references(() => users.id),
   isPublished: integer("isPublished", { mode: 'boolean' }).default(false),
   isSuperAffiliate: integer("isSuperAffiliate", { mode: 'boolean' }).default(false),
   settings: text("settings", { mode: 'json' }),

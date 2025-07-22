@@ -882,7 +882,7 @@ export function registerSQLiteRoutes(app: Express): Server {
       const productId = nanoid();
       const productData = {
         id: productId,
-        user_id: user.id,
+        userId: user.id,
         name: req.body.name || '',
         description: req.body.description || '',
         price: req.body.price || 0,
@@ -4116,12 +4116,12 @@ export function registerSQLiteRoutes(app: Express): Server {
           console.log(`❌ Quiz ${req.params.id} não encontrado`);
           return res.status(404).json({ message: "Quiz not found" });
         }
-        console.log(`✅ Quiz encontrado: ${quiz.title} (user_id: ${quiz.user_id})`);
+        console.log(`✅ Quiz encontrado: ${quiz.title} (userId: ${quiz.userId})`);
         
-        // FORÇAR user_id para admin para teste de notificação automática
-        if (!quiz.user_id) {
-          quiz.user_id = "admin-user-id";
-          console.log(`🔧 CORREÇÃO: user_id definido como admin-user-id para teste`);
+        // FORÇAR userId para admin para teste de notificação automática
+        if (!quiz.userId) {
+          quiz.userId = "admin-user-id";
+          console.log(`🔧 CORREÇÃO: userId definido como admin-user-id para teste`);
         }
         
         // TESTE TEMPORÁRIO: Aceitar qualquer quiz para testar notificações automáticas
