@@ -4893,7 +4893,7 @@ const gameElementCategories = [
         {/* Seletor Global de Cor de Fundo */}
         <div className="p-4 border-b bg-gray-50">
           <Label className="text-xs font-semibold text-gray-600 mb-2 block">
-            🎨 {t('quiz.globalBackground')}
+            🎨 Tema Global
           </Label>
           <div className="space-y-3">
             <div className="flex gap-2">
