@@ -46,8 +46,8 @@ export default function BulkPushMessaging() {
     isLoading: false
   });
   
-  // Sistema de Notificações Automáticas para Quiz Completions - ROTATIVAS
-  const [autoNotificationsEnabled, setAutoNotificationsEnabled] = useState(false);
+  // Sistema de Notificações Automáticas para Quiz Completions - SEMPRE ATIVO
+  const [autoNotificationsEnabled, setAutoNotificationsEnabled] = useState(true);
   const [quizCompletionMessages, setQuizCompletionMessages] = useState([
     { id: 1, title: '⚡ Seu sistema está voando!', message: 'Novo lead finalizou o quiz 💰' },
     { id: 2, title: '🔥 Novo lead convertido!', message: 'Você tá jogando o jogo certo 🎯' },
@@ -64,16 +64,17 @@ export default function BulkPushMessaging() {
   const [newQuizMessage, setNewQuizMessage] = useState('');
   const [quizCompletionSound, setQuizCompletionSound] = useState('achievement');
   const [lastQuizCompleted, setLastQuizCompleted] = useState<string | null>(null);
-  const [monitoringActive, setMonitoringActive] = useState(false);
+  const [monitoringActive, setMonitoringActive] = useState(true);
   
   const { toast } = useToast();
 
-  // Sistema de monitoramento automático de quiz completions
+  // Sistema de monitoramento automático de quiz completions - SEMPRE ATIVO
   useEffect(() => {
     let pollingInterval: NodeJS.Timeout;
     
     const monitorQuizCompletions = async () => {
-      if (!autoNotificationsEnabled || !monitoringActive) return;
+      // SEMPRE ATIVO - remover verificação de estados que impedem funcionamento
+      // Sistema agora funciona 24/7 independente de toggles
       
       try {
         const response = await fetch('/api/quiz-completions/latest');
@@ -93,10 +94,9 @@ export default function BulkPushMessaging() {
       }
     };
     
-    if (autoNotificationsEnabled && monitoringActive) {
-      pollingInterval = setInterval(monitorQuizCompletions, 10000); // Verificar a cada 10 segundos
-      console.log('🚀 Monitoramento automático de quiz completions iniciado');
-    }
+    // SEMPRE ATIVO - sistema funciona 24/7
+    pollingInterval = setInterval(monitorQuizCompletions, 10000); // Verificar a cada 10 segundos
+    console.log('🚀 Monitoramento automático de quiz completions SEMPRE ATIVO iniciado');
     
     return () => {
       if (pollingInterval) {
@@ -104,7 +104,7 @@ export default function BulkPushMessaging() {
         console.log('⏹️ Monitoramento automático parado');
       }
     };
-  }, [autoNotificationsEnabled, monitoringActive, lastQuizCompleted]);
+  }, [lastQuizCompleted]); // Remover dependências de estados que impediam funcionamento
 
   // Carregar sistema de áudio moderno com 10 sons
   useEffect(() => {
@@ -761,30 +761,23 @@ export default function BulkPushMessaging() {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
-            {/* Toggle Ativar/Desativar */}
-            <div className="flex items-center justify-between p-4 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg border border-yellow-200 dark:border-yellow-800">
+            {/* Toggle SEMPRE ATIVO - Sistema automático sempre funcionando */}
+            <div className="flex items-center justify-between p-4 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-200 dark:border-green-800">
               <div className="flex items-center gap-3">
-                <Bell className="w-5 h-5 text-yellow-600" />
+                <Bell className="w-5 h-5 text-green-600 animate-pulse" />
                 <div>
-                  <span className="font-semibold text-yellow-800 dark:text-yellow-200">
+                  <span className="font-semibold text-green-800 dark:text-green-200">
                     Sistema Automático de Quiz Completions
                   </span>
-                  <p className="text-sm text-yellow-700 dark:text-yellow-300">
-                    {autoNotificationsEnabled ? 
-                      'Monitorando quiz completions em tempo real (verifica a cada 10s)' : 
-                      'Sistema desabilitado - não monitora quiz completions'
-                    }
+                  <p className="text-sm text-green-700 dark:text-green-300">
+                    🎉 SEMPRE ATIVO - Sistema monitora quiz completions em tempo real 24/7
                   </p>
                 </div>
               </div>
-              <Button
-                variant={autoNotificationsEnabled ? "default" : "outline"}
-                size="sm"
-                onClick={() => setAutoNotificationsEnabled(!autoNotificationsEnabled)}
-                className={autoNotificationsEnabled ? "bg-yellow-600 hover:bg-yellow-700 text-white" : "border-yellow-500 text-yellow-600"}
-              >
-                {autoNotificationsEnabled ? "✓ Ativo" : "✗ Inativo"}
-              </Button>
+              <div className="flex items-center gap-2">
+                <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                <span className="text-sm font-bold text-green-600">✓ ATIVO</span>
+              </div>
             </div>
 
             {/* Configuração da Mensagem de Quiz Completion */}

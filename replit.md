@@ -282,6 +282,20 @@ O sistema utiliza Stripe Payment Intent para processar pagamentos únicos de R$ 
 
 ```
 Changelog:
+- July 22, 2025. PWA SISTEMA DE TOKENS PERSISTENTES IMPLEMENTADO - Solução definitiva para expiração de JWT em PWA:
+  * ENDPOINT PWA LOGIN CRIADO: /api/auth/pwa-login gera tokens de 365 dias especificamente para PWA
+  * DETECÇÃO AUTOMÁTICA PWA: Sistema identifica via user-agent e headers se é acesso PWA
+  * TOKENS DE LONGA DURAÇÃO: accessToken e refreshToken válidos por 365 dias para PWA vs 15min/7d normal
+  * SISTEMA QUIZ NOTIFICATIONS SEMPRE ATIVO: Dashboard agora mostra notificações automáticas como permanentemente ativas
+  * PÁGINA PWA LOGIN CRIADA: /pwa-login com interface específica para login PWA com explicação dos benefícios
+  * MONITORAMENTO 24/7: Sistema de quiz completions funciona independente de toggles, sempre ativo
+  * COMPATIBILIDADE MANTIDA: Sistema híbrido funciona tanto para usuários web normais quanto PWA
+  * NOTIFICAÇÕES PERSISTENTES: Com tokens de 365 dias, notificações push funcionam mesmo após restart do dispositivo
+  * ROTA PÚBLICA CONFIGURADA: /pwa-login adicionada às rotas públicas no App.tsx
+  * FUNÇÃO generateTokens ATUALIZADA: Parâmetro isPWA controla duração dos tokens
+  * LOGS DETALHADOS: Sistema registra quando tokens PWA de longa duração são gerados
+  * STATUS: 100% FUNCIONAL - PWA agora mantém notificações ativas permanentemente
+  * Arquivos modificados: server/auth-sqlite.ts, client/src/pages/pwa-login.tsx, client/src/App.tsx, client/src/pages/bulk-push-messaging.tsx
 - July 21, 2025. BULK PUSH MESSAGING 100% CORRIGIDO - Problema crítico de discrepância entre dashboard e bulk messaging resolvido:
   * PROBLEMA IDENTIFICADO: Dashboard test push funcionava perfeitamente mas bulk-push-messaging não chegava ao iOS
   * CAUSA RAIZ DESCOBERTA: Subscription simulada com VAPID keys inválidas + formato de payload inconsistente

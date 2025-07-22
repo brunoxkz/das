@@ -8,10 +8,13 @@ import { cache } from "./cache";
 const JWT_SECRET = process.env.JWT_SECRET || 'vendzz-jwt-secret-key-2024';
 const JWT_REFRESH_SECRET = process.env.JWT_REFRESH_SECRET || 'vendzz-jwt-refresh-secret-2024';
 
-export function generateTokens(user: any) {
+export function generateTokens(user: any, isPWA = false) {
   const currentTime = Math.floor(Date.now() / 1000);
   // Add a random value to ensure uniqueness
   const randomValue = Math.random().toString(36).substring(7);
+  
+  // Para PWA, criar token que não expira por 1 ano para manter notificações sempre ativas
+  const accessTokenExpiry = isPWA ? "365d" : "15m";
   
   const accessToken = jwt.sign(
     { 
@@ -20,11 +23,12 @@ export function generateTokens(user: any) {
       role: user.role,
       plan: user.plan,
       iat: currentTime,
+      isPWA: isPWA,
       // Add random value to ensure different tokens on refresh
       nonce: randomValue
     },
     JWT_SECRET,
-    { expiresIn: "15m" }
+    { expiresIn: accessTokenExpiry }
   );
 
   const refreshToken = jwt.sign(
@@ -32,12 +36,13 @@ export function generateTokens(user: any) {
       id: user.id, 
       type: "refresh",
       iat: currentTime,
+      isPWA: isPWA,
       // Add timestamp and random to make refresh tokens unique
       timestamp: Date.now(),
       nonce: randomValue
     },
     JWT_REFRESH_SECRET,
-    { expiresIn: "7d" }
+    { expiresIn: isPWA ? "365d" : "7d" }
   );
 
   return { accessToken, refreshToken };
@@ -148,7 +153,11 @@ export function setupSQLiteAuth(app: Express) {
         return res.status(401).json({ message: "Invalid credentials" });
       }
 
-      const { accessToken, refreshToken } = generateTokens(user);
+      // Detectar se é PWA via user-agent ou header
+      const userAgent = req.headers['user-agent'] || '';
+      const isPWA = userAgent.includes('Mobile') || req.headers['sec-fetch-dest'] === 'document' || req.headers['x-pwa-mode'] === 'true';
+      
+      const { accessToken, refreshToken } = generateTokens(user, isPWA);
       
       // Armazenar refresh token
       await storage.storeRefreshToken(user.id, refreshToken);
@@ -168,9 +177,66 @@ export function setupSQLiteAuth(app: Express) {
         },
         accessToken,
         refreshToken,
+        isPWA,
+        tokenExpiry: isPWA ? "365 dias" : "15 minutos",
       });
     } catch (error) {
       console.error("Login error:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  // Endpoint específico para PWA login com token de longa duração
+  app.post('/api/auth/pwa-login', async (req: Request, res: Response) => {
+    try {
+      const { email, password } = req.body;
+
+      if (!email || !password) {
+        return res.status(400).json({ message: "Email and password are required" });
+      }
+
+      const cleanEmail = email.trim();
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(cleanEmail)) {
+        return res.status(400).json({ message: "Invalid email format" });
+      }
+
+      const user = await storage.getUserByEmail(cleanEmail);
+      if (!user || !user.password) {
+        return res.status(401).json({ message: "Invalid credentials" });
+      }
+
+      const isValidPassword = await bcrypt.compare(password, user.password);
+      if (!isValidPassword) {
+        return res.status(401).json({ message: "Invalid credentials" });
+      }
+
+      // FORÇAR PWA = true para token de longa duração
+      const { accessToken, refreshToken } = generateTokens(user, true);
+      
+      await storage.storeRefreshToken(user.id, refreshToken);
+      cache.setUser(user.id, user);
+
+      console.log(`🔒 PWA LOGIN: Token de 365 dias gerado para ${user.email}`);
+
+      res.json({
+        message: "PWA Login successful - Token válido por 365 dias",
+        user: {
+          id: user.id,
+          email: user.email,
+          firstName: user.firstName,
+          lastName: user.lastName,
+          role: user.role,
+          plan: user.plan,
+        },
+        accessToken,
+        refreshToken,
+        isPWA: true,
+        tokenExpiry: "365 dias",
+        notificationSupport: true
+      });
+    } catch (error) {
+      console.error("PWA Login error:", error);
       res.status(500).json({ message: "Internal server error" });
     }
   });
@@ -234,6 +300,8 @@ export function setupSQLiteAuth(app: Express) {
         },
         accessToken,
         refreshToken,
+        isPWA,
+        tokenExpiry: isPWA ? "365 dias" : "15 minutos",
       });
     } catch (error) {
       console.error("Registration error:", error);
