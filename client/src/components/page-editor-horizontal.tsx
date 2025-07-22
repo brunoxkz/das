@@ -5129,8 +5129,8 @@ const gameElementCategories = [
               {currentPage.elements.length === 0 ? (
                 <div className="text-center text-gray-500 py-16">
                   <Edit3 className="w-16 h-16 mx-auto mb-4 opacity-50" />
-                  <h3 className="text-lg font-semibold mb-2">{"Label"}</h3>
-                  <p className="text-sm">{"Label"}</p>
+                  <h3 className="text-lg font-semibold mb-2">Arraste Aqui | Adicione</h3>
+                  <p className="text-sm">Selecione elementos do painel lateral para começar a criar sua página</p>
                 </div>
               ) : (
                 <DragDropContainer>
