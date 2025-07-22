@@ -11,7 +11,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Lightning, Zap, Target, Settings, Play, Pause, Bell, User } from "lucide-react";
+import { Loader2, Zap, Target, Settings, Play, Pause, Bell, User } from "lucide-react";
 
 export default function AoVivoQuantum() {
   const { toast } = useToast();
@@ -148,7 +148,7 @@ export default function AoVivoQuantum() {
       <div className="mb-8">
         <div className="flex items-center gap-3 mb-4">
           <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-xl flex items-center justify-center">
-            <Lightning className="w-6 h-6 text-white" />
+            <Zap className="w-6 h-6 text-white" />
           </div>
           <div>
             <h1 className="text-3xl font-bold">Ao Vivo Quantum</h1>
@@ -160,7 +160,7 @@ export default function AoVivoQuantum() {
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList className="grid w-full grid-cols-2">
           <TabsTrigger value="create-live" className="flex items-center gap-2">
-            <Lightning className="w-4 h-4" />
+            <Zap className="w-4 h-4" />
             Criar Ao Vivo Quantum
           </TabsTrigger>
           <TabsTrigger value="manage-campaigns" className="flex items-center gap-2">
@@ -173,7 +173,7 @@ export default function AoVivoQuantum() {
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <Lightning className="w-5 h-5" />
+                <Zap className="w-5 h-5" />
                 Nova Campanha Ao Vivo Quantum
               </CardTitle>
             </CardHeader>
@@ -317,7 +317,7 @@ export default function AoVivoQuantum() {
                 {createLiveMutation.isPending ? (
                   <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                 ) : (
-                  <Lightning className="w-4 h-4 mr-2" />
+                  <Zap className="w-4 h-4 mr-2" />
                 )}
                 Criar Ao Vivo Quantum
               </Button>
@@ -380,7 +380,7 @@ export default function AoVivoQuantum() {
                   
                   {(!quantumCampaigns?.campaigns || quantumCampaigns.campaigns.length === 0) && (
                     <div className="text-center py-8 text-muted-foreground">
-                      <Lightning className="w-12 h-12 mx-auto mb-4 opacity-50" />
+                      <Zap className="w-12 h-12 mx-auto mb-4 opacity-50" />
                       <p>Nenhuma campanha Ao Vivo Quantum criada ainda</p>
                       <p className="text-sm mt-2">Crie uma para começar a monitorar quiz completions automaticamente</p>
                     </div>
