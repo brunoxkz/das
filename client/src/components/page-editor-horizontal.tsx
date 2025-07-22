@@ -4854,7 +4854,7 @@ const gameElementCategories = [
               className="w-full"
               leftIcon={<Plus className="w-4 h-4" />}
             >
-              {t('quiz.newPage')}
+              Nova Página
             </ModernButton>
             <ModernButton
               onClick={addTransitionPage}
@@ -4863,7 +4863,7 @@ const gameElementCategories = [
               className="w-full bg-gradient-to-r from-purple-50 to-pink-50 border-purple-200 hover:border-purple-300 hover:from-purple-100 hover:to-pink-100"
               leftIcon={<Sparkles className="w-4 h-4" />}
             >
-              {t('quiz.buttons.newTransition')}
+              Nova Transição
             </ModernButton>
             <Button
               onClick={addGamePage}
@@ -4872,7 +4872,7 @@ const gameElementCategories = [
               className="w-full justify-center bg-gradient-to-r from-orange-50 to-red-50 border-orange-200 hover:border-orange-300"
             >
               <BarChart3 className="w-4 h-4 mr-2" />
-              {t('quiz.gamePages')}
+              Página de Jogo
             </Button>
           </div>
         </div>
@@ -4886,7 +4886,7 @@ const gameElementCategories = [
             animations.fadeIn
           )}>
             <Plus className="w-4 h-4" />
-            {t('quiz.elements')}
+            Elementos
           </h3>
         </div>
         
