@@ -1338,14 +1338,12 @@ export class SQLiteStorage implements IStorage {
           // 🚀 SISTEMA PUSH NOTIFICATIONS EM TEMPO REAL: Notificar dono do quiz
           try {
             // Importar dinamicamente para evitar dependências circulares
-            const { realTimePushSystem } = await import('./real-time-push-notifications');
+            // Sistema de push integrado diretamente no routes-sqlite.ts
+            // const { realTimePushSystem } = await import('./real-time-push-notifications');
             
-            // Buscar dono do quiz para notificar
-            const quiz = await this.getQuiz(response.quizId);
-            if (quiz && quiz.userId) {
-              console.log(`🔔 PUSH NOTIFICATION: Quiz ${response.quizId} completado, notificando usuário ${quiz.userId}`);
-              await realTimePushSystem.onQuizCompleted(response.quizId, quiz.userId);
-            }
+            // Sistema de push integrado diretamente no routes-sqlite.ts
+            // Push notifications são enviadas diretamente na rota POST /api/quizzes/:id/submit
+            console.log(`🔔 Sistema de push integrado ativo via routes-sqlite.ts`);
           } catch (error) {
             console.error('❌ ERRO ao enviar push notification em tempo real:', error);
           }

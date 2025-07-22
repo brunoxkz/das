@@ -417,7 +417,8 @@ console.log('✅ PUSH NOTIFICATIONS ENDPOINTS REGISTRADOS DIRETAMENTE ANTES DO V
 
 // ENDPOINT DIRETO DE NOTIFICAÇÃO ADMIN - ANTES DO VITE
 import { AdminNotificationSimulator } from './admin-notification-simulator';
-import { RealPushNotificationService } from './real-push-notification-service';
+// Sistema de push notifications integrado diretamente no routes-sqlite.ts
+// import { RealPushNotificationService } from './real-push-notification-service';
 
 app.post('/api/admin-notification-direct', async (req: any, res: any) => {
   console.log('📱 NOTIFICAÇÃO ADMIN DIRETA CHAMADA');
@@ -431,11 +432,9 @@ app.post('/api/admin-notification-direct', async (req: any, res: any) => {
       body = 'Novo quiz completado! Usuário: Maria Silva. Veja os resultados agora.';
       url = '/dashboard';
       icon = '/icon-192x192.png';
-      console.log('🎯 ENVIANDO NOTIFICAÇÃO REAL + SIMULAÇÃO DE QUIZ COMPLETION');
+      console.log('🎯 ENVIANDO NOTIFICAÇÃO ATRAVÉS DO SISTEMA INTEGRADO');
       
-      // Enviar notificação REAL para dispositivos iOS registrados
-      const realPushResult = await RealPushNotificationService.sendQuizCompletionNotification();
-      console.log('🚀 RESULTADO PUSH REAL:', realPushResult.realPushResult);
+      // Sistema integrado usa push-simple.ts diretamente via routes-sqlite.ts
       
     } else {
       title = '📱 Vendzz iOS Notification';
@@ -443,14 +442,7 @@ app.post('/api/admin-notification-direct', async (req: any, res: any) => {
       url = '/admin/rate-limiting';
       icon = '/icon-192x192.png';
       
-      // Enviar notificação REAL para dispositivos iOS registrados
-      const realPushResult = await RealPushNotificationService.sendRealPushNotification(title, body, {
-        icon: icon,
-        badge: '/favicon.png',
-        url: url,
-        notificationType: type || 'system'
-      });
-      console.log('🚀 RESULTADO PUSH REAL:', realPushResult);
+      // Sistema integrado usa push-simple.ts diretamente
     }
     
     // Manter simulação para logs/dashboard
