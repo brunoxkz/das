@@ -1033,7 +1033,7 @@ const transitionElementCategories = [
 // Elementos específicos para páginas de jogos
 const gameElementCategories = [
   {
-    name: t('quiz.elementCategories.games') + " 🎰",
+    name: "Jogos 🎰",
     elements: [
       {
         type: "game_wheel",
@@ -1053,7 +1053,7 @@ const gameElementCategories = [
     ],
   },
   {
-    name: t('quiz.elementCategories.games') + " 🎯",
+    name: "Jogos 🎯",
     elements: [
       {
         type: "game_color_pick",
@@ -1082,7 +1082,7 @@ const gameElementCategories = [
   const addPage = () => {
     const newPage: QuizPage = {
       id: Date.now(),
-      title: `${t('quiz.page')} ${pages.length + 1}`,
+      title: `Página ${pages.length + 1}`,
       elements: []
     };
     onPagesChange([...pages, newPage]);
@@ -1091,7 +1091,7 @@ const gameElementCategories = [
   const addTransitionPage = () => {
     const newPage: QuizPage = {
       id: Date.now(),
-      title: `${t('quiz.transition')} ${pages.filter(p => p.isTransition).length + 1}`,
+      title: `Transição ${pages.filter(p => p.isTransition).length + 1}`,
       elements: [],
       isTransition: true
     };
@@ -1101,7 +1101,7 @@ const gameElementCategories = [
   const addGamePage = () => {
     const newPage: QuizPage = {
       id: Date.now(),
-      title: `${t('quiz.game')} ${pages.filter(p => p.isGame).length + 1}`,
+      title: `Jogo ${pages.filter(p => p.isGame).length + 1}`,
       elements: [],
       isGame: true
     };
@@ -1151,7 +1151,7 @@ const gameElementCategories = [
     // Criar uma cópia profunda da página
     const duplicatedPage: QuizPage = {
       id: timestamp,
-      title: `${originalPage.title} (${t('quiz.copy')})`,
+      title: `${originalPage.title} (Cópia)`,
       elements: originalPage.elements.map((element, elementIndex) => {
         const newElement = {
           ...element,
@@ -1288,7 +1288,7 @@ const gameElementCategories = [
     const baseElement: Element = {
       id: timestamp,
       type,
-      content: type === "heading" ? t('quiz.labels.newTitle') : type === "paragraph" ? t('quiz.labels.newParagraph') : type === "continue_button" ? t('quiz.buttons.continue') : "",
+      content: type === "heading" ? "Novo Título" : type === "paragraph" ? "Novo Parágrafo" : type === "continue_button" ? "Continuar" : "",
       question: undefined,
       options: type === "multiple_choice" ? ["Opção 1", "Opção 2"] : undefined,
       required: false,
@@ -1317,7 +1317,7 @@ const gameElementCategories = [
         spacerSize: "medium" as const
       }),
       ...(type === "continue_button" && {
-        buttonText: t('quiz.buttons.continue'),
+        buttonText: "Continuar",
         buttonAction: "next_page" as const,
         buttonSize: "medium" as const,
         buttonBorderRadius: "medium" as const,
@@ -1329,15 +1329,15 @@ const gameElementCategories = [
       // 🔥 NOVA FUNCIONALIDADE: Configurações padrão para classificadores ultra personalizados
       ...(type === "body_type_classifier" && {
         classifierType: "body_type",
-        classifierTitle: t('quiz.classifiers.bodyType.title'),
-        classifierDescription: t('quiz.classifiers.bodyType.description'),
+        classifierTitle: "Qual é o seu tipo corporal atual?",
+        classifierDescription: "Selecione a opção que melhor descreve seu corpo:",
         classifierRequired: true,
         classifierMultipleSelect: false,
         fieldId: "tipo_corpo",
         classifierOptions: [
           {
             id: "magra",
-            label: t('quiz.classifiers.bodyType.options.thin'),
+            label: "Magra/Muito magra",
             description: "Corpo naturalmente magro, dificuldade para ganhar peso",
             icon: "👤",
             color: "#3b82f6",
@@ -1349,7 +1349,7 @@ const gameElementCategories = [
           },
           {
             id: "com_volume",
-            label: t('quiz.classifiers.bodyType.options.withVolume'),
+            label: "Com Volume/Sobrepeso",
             description: "Corpo com mais volume, foco na definição muscular",
             icon: "💪",
             color: "#f59e0b",
@@ -1361,7 +1361,7 @@ const gameElementCategories = [
           },
           {
             id: "tonifica",
-            label: t('quiz.classifiers.bodyType.options.toTone'),
+            label: "Para Definir/Tonificar",
             description: "Corpo que precisa de tonificação e fortalecimento",
             icon: "⚡",
             color: "#10b981",
@@ -1373,7 +1373,7 @@ const gameElementCategories = [
           },
           {
             id: "equilibrado",
-            label: t('quiz.classifiers.bodyType.options.balanced'),
+            label: "Equilibrado/Normal",
             description: "Corpo com proporções equilibradas, manutenção e melhoria",
             icon: "⚖️",
             color: "#8b5cf6",
@@ -1388,15 +1388,15 @@ const gameElementCategories = [
       
       ...(type === "age_classifier" && {
         classifierType: "age_group",
-        classifierTitle: t('quiz.classifiers.ageGroup.title'),
-        classifierDescription: t('quiz.classifiers.ageGroup.description'),
+        classifierTitle: "Qual é a sua faixa etária?",
+        classifierDescription: "Selecione sua idade atual:",
         classifierRequired: true,
         classifierMultipleSelect: false,
         fieldId: "faixa_etaria",
         classifierOptions: [
           {
             id: "18-25",
-            label: t('quiz.classifiers.ageGroup.options.18-25'),
+            label: "18-25 anos",
             description: "Metabolismo acelerado, alta capacidade de recuperação",
             icon: "🚀",
             color: "#3b82f6",
@@ -1408,7 +1408,7 @@ const gameElementCategories = [
           },
           {
             id: "26-35",
-            label: t('quiz.classifiers.ageGroup.options.26-35'),
+            label: "26-35 anos",
             description: "Pico de performance, equilibrio ideal para resultados",
             icon: "💪",
             color: "#10b981",
@@ -1420,7 +1420,7 @@ const gameElementCategories = [
           },
           {
             id: "36-45",
-            label: t('quiz.classifiers.ageGroup.options.36-45'),
+            label: "36-45 anos",
             description: "Maturidade e experiência, foco em eficiência",
             icon: "🎯",
             color: "#f59e0b",
@@ -1432,7 +1432,7 @@ const gameElementCategories = [
           },
           {
             id: "46+",
-            label: t('quiz.classifiers.ageGroup.options.46+'),
+            label: "46+ anos",
             description: "Sabedoria e determinação, foco em saúde e vitalidade",
             icon: "🌟",
             color: "#8b5cf6",
@@ -1447,15 +1447,15 @@ const gameElementCategories = [
       
       ...(type === "fitness_goal_classifier" && {
         classifierType: "fitness_goal",
-        classifierTitle: t('quiz.classifiers.fitnessGoal.title'),
-        classifierDescription: t('quiz.classifiers.fitnessGoal.description'),
+        classifierTitle: "Qual é o seu objetivo fitness?",
+        classifierDescription: "Selecione o que você quer alcançar:",
         classifierRequired: true,
         classifierMultipleSelect: false,
         fieldId: "objetivo_fitness",
         classifierOptions: [
           {
             id: "perder_peso",
-            label: t('quiz.classifiers.fitnessGoal.options.loseWeight'),
+            label: "Perder Peso",
             description: "Reduzir gordura corporal e alcançar peso ideal",
             icon: "📉",
             color: "#ef4444",
@@ -1467,7 +1467,7 @@ const gameElementCategories = [
           },
           {
             id: "ganhar_massa",
-            label: t('quiz.classifiers.fitnessGoal.options.gainMass'),
+            label: "Ganhar Massa",
             description: "Aumentar massa muscular e definição",
             icon: "💪",
             color: "#10b981",
@@ -1479,7 +1479,7 @@ const gameElementCategories = [
           },
           {
             id: "tonificar",
-            label: t('quiz.classifiers.fitnessGoal.options.tone'),
+            label: "Tonificar",
             description: "Definir músculos e melhorar forma física",
             icon: "⚡",
             color: "#f59e0b",
@@ -1491,7 +1491,7 @@ const gameElementCategories = [
           },
           {
             id: "manter_forma",
-            label: t('quiz.classifiers.fitnessGoal.options.maintain'),
+            label: "Manter Forma",
             description: "Manutenção da forma física atual",
             icon: "⚖️",
             color: "#8b5cf6",
@@ -1506,15 +1506,15 @@ const gameElementCategories = [
       
       ...(type === "experience_classifier" && {
         classifierType: "experience_level",
-        classifierTitle: t('quiz.classifiers.experience.title'),
-        classifierDescription: t('quiz.classifiers.experience.description'),
+        classifierTitle: "Qual é o seu nível de experiência?",
+        classifierDescription: "Selecione seu nível atual de condicionamento físico:",
         classifierRequired: true,
         classifierMultipleSelect: false,
         fieldId: "nivel_experiencia",
         classifierOptions: [
           {
             id: "iniciante",
-            label: t('quiz.classifiers.experience.options.beginner'),
+            label: "Iniciante",
             description: "Pouca ou nenhuma experiência com exercícios",
             icon: "🌱",
             color: "#10b981",
@@ -1526,7 +1526,7 @@ const gameElementCategories = [
           },
           {
             id: "intermediario",
-            label: t('quiz.classifiers.experience.options.intermediate'),
+            label: "Intermediário",
             description: "Alguns meses de experiência, conhecimento básico",
             icon: "🔥",
             color: "#f59e0b",
@@ -1538,7 +1538,7 @@ const gameElementCategories = [
           },
           {
             id: "avancado",
-            label: t('quiz.classifiers.experience.options.advanced'),
+            label: "Avançado",
             description: "Experiência sólida, busca por otimização",
             icon: "⚡",
             color: "#8b5cf6",
@@ -1550,7 +1550,7 @@ const gameElementCategories = [
           },
           {
             id: "expert",
-            label: t('quiz.classifiers.experience.options.expert'),
+            label: "Especialista",
             description: "Experiência extensa, conhecimento profundo",
             icon: "👑",
             color: "#6366f1",
@@ -1942,7 +1942,7 @@ const gameElementCategories = [
               
               <input
                 type={element.type === "email" ? "email" : element.type === "phone" ? "tel" : element.type === "number" ? "number" : "text"}
-                placeholder={element.placeholder || `${t('quiz.placeholders.typeHere')} ${element.type === "email" ? t('quiz.placeholders.yourEmail') : element.type === "phone" ? t('quiz.placeholders.yourPhone') : ""}`}
+                placeholder={element.placeholder || `Digite aqui ${element.type === "email" ? "seu email" : element.type === "phone" ? "seu telefone" : ""}`}
                 className={`w-full px-3 py-3 ${element.showInlineIcon ? "pl-10" : ""} ${inputStyle} transition-all duration-200`}
                 {...(element.type === "email" && element.emailValidation && {
                   pattern: "[a-z0-9._%+-]+@[a-z0-9.-]+\\.[a-z]{2,}$"
@@ -2101,8 +2101,8 @@ const gameElementCategories = [
               <div className="w-full h-32 border-2 border-dashed border-gray-300 rounded-lg flex items-center justify-center bg-gray-50 cursor-pointer hover:bg-gray-100">
                 <div className="text-center">
                   <Upload className="w-8 h-8 mx-auto text-gray-400 mb-2" />
-                  <p className="text-sm text-gray-500 mb-1">{t('quiz.labels.clickUploadImage')}</p>
-                  <p className="text-xs text-gray-400">{t('quiz.labels.maxFileSize')}</p>
+                  <p className="text-sm text-gray-500 mb-1">Clique para enviar imagem</p>
+                  <p className="text-xs text-gray-400">Max 5MB</p>
                 </div>
               </div>
             )}
@@ -2127,10 +2127,10 @@ const gameElementCategories = [
                 <div className="text-center">
                   <Video className="w-12 h-12 mx-auto text-gray-400 mb-2" />
                   <p className="text-sm text-gray-500 mb-1">
-                    {element.content ? t('quiz.labels.invalidVideoUrl') : t('quiz.placeholders.addVideo')}
+                    {element.content ? "URL de vídeo inválida" : "Adicionar vídeo"}
                   </p>
                   <p className="text-xs text-gray-400">
-                    {t('quiz.labels.videoSupport')}
+                    YouTube, Vimeo, MP4
                   </p>
                 </div>
               </div>
@@ -4855,7 +4855,7 @@ const gameElementCategories = [
               className="w-full"
               leftIcon={<Plus className="w-4 h-4" />}
             >
-              {t('quiz.newPage')}
+              Nova Página
             </ModernButton>
             <ModernButton
               onClick={addTransitionPage}
@@ -4864,7 +4864,7 @@ const gameElementCategories = [
               className="w-full bg-gradient-to-r from-purple-50 to-pink-50 border-purple-200 hover:border-purple-300 hover:from-purple-100 hover:to-pink-100"
               leftIcon={<Sparkles className="w-4 h-4" />}
             >
-              {t('quiz.buttons.newTransition')}
+              Nova Transição
             </ModernButton>
             <Button
               onClick={addGamePage}
@@ -4873,7 +4873,7 @@ const gameElementCategories = [
               className="w-full justify-center bg-gradient-to-r from-orange-50 to-red-50 border-orange-200 hover:border-orange-300"
             >
               <BarChart3 className="w-4 h-4 mr-2" />
-              {t('quiz.gamePages')}
+              Páginas de Jogo
             </Button>
           </div>
         </div>
@@ -4887,14 +4887,14 @@ const gameElementCategories = [
             animations.fadeIn
           )}>
             <Plus className="w-4 h-4" />
-            {t('quiz.elements')}
+            Elementos
           </h3>
         </div>
         
         {/* Seletor Global de Cor de Fundo */}
         <div className="p-4 border-b bg-gray-50">
           <Label className="text-xs font-semibold text-gray-600 mb-2 block">
-            🎨 {t('quiz.globalBackground')}
+            🎨 Fundo Global
           </Label>
           <div className="space-y-3">
             <div className="flex gap-2">
@@ -4952,13 +4952,13 @@ const gameElementCategories = [
                   style={{backgroundColor: customBackgroundColor}}
                 ></div>
                 <div className="text-xs font-medium">Custom</div>
-                <div className="text-xs text-gray-500">{t('quiz.personalizedCustom')}</div>
+                <div className="text-xs text-gray-500">Personalizado</div>
               </button>
             </div>
             
             {globalTheme === "custom" && (
               <div className="mt-3">
-                <Label className="text-xs font-medium mb-2 block">{t('quiz.customColor')}</Label>
+                <Label className="text-xs font-medium mb-2 block">Cor Personalizada</Label>
                 <div className="flex items-center gap-2">
                   <input
                     type="color"
@@ -4981,7 +4981,7 @@ const gameElementCategories = [
                   />
                 </div>
                 <div className="text-xs text-gray-500 mt-2">
-                  {t('quiz.autoContrast')}
+                  Auto Contraste
                 </div>
               </div>
             )}
@@ -5032,7 +5032,7 @@ const gameElementCategories = [
             animations.fadeIn
           )}>
             <Eye className="w-4 h-4" />
-            {t('quiz.preview')}
+            Prévia
             {currentPage && (
               <Badge variant="secondary" className="ml-2 bg-white/20">{currentPage.title}</Badge>
             )}
@@ -5051,8 +5051,8 @@ const gameElementCategories = [
               {currentPage.elements.length === 0 ? (
                 <div className="text-center text-gray-500 py-16">
                   <Edit3 className="w-16 h-16 mx-auto mb-4 opacity-50" />
-                  <h3 className="text-lg font-semibold mb-2">{t('quiz.labels.emptyPage')}</h3>
-                  <p className="text-sm">{t('quiz.labels.addElements')}</p>
+                  <h3 className="text-lg font-semibold mb-2">Página Vazia</h3>
+                  <p className="text-sm">Adicione elementos para começar</p>
                 </div>
               ) : (
                 <DragDropContainer>
@@ -5111,8 +5111,8 @@ const gameElementCategories = [
             <div className="flex items-center justify-center h-full text-gray-500">
               <div className="text-center">
                 <FileText className="w-16 h-16 mx-auto mb-4 opacity-50" />
-                <h3 className="text-lg font-semibold mb-2">{t('quiz.noPageSelected')}</h3>
-                <p className="text-sm">{t('quiz.selectPageToEdit')}</p>
+                <h3 className="text-lg font-semibold mb-2">Nenhuma Página Selecionada</h3>
+                <p className="text-sm">Selecione uma página para editar</p>
               </div>
             </div>
           )}
@@ -5127,7 +5127,7 @@ const gameElementCategories = [
             animations.fadeIn
           )}>
             <Settings className="w-4 h-4" />
-            {selectedElementData ? getElementTypeName(selectedElementData.type) : t('quiz.properties')}
+            {selectedElementData ? getElementTypeName(selectedElementData.type) : "Propriedades"}
           </h3>
         </div>
         <div className="flex-1 overflow-y-auto p-4" style={{maxHeight: 'calc(100vh - 73px)'}}>
@@ -5137,7 +5137,7 @@ const gameElementCategories = [
               {selectedElementData.type === "heading" && (
                 <div className="space-y-4">
                   <div>
-                    <Label htmlFor="heading-content">{t('quiz.titleText')}</Label>
+                    <Label htmlFor="heading-content">Texto do Título</Label>
                     <Input
                       id="heading-content"
                       value={selectedElementData.content}
@@ -5148,7 +5148,7 @@ const gameElementCategories = [
                   
                   {/* Formatação completa */}
                   <div className="border rounded-lg p-4 bg-gray-50">
-                    <h4 className="font-semibold text-sm mb-3">{t('quiz.formatting')}</h4>
+                    <h4 className="font-semibold text-sm mb-3">Formatação</h4>
                     <div className="grid grid-cols-2 gap-3">
                       <div>
                         <Label className="text-xs">Tamanho</Label>
@@ -5259,7 +5259,7 @@ const gameElementCategories = [
                   
                   {/* Formatação do parágrafo */}
                   <div className="border rounded-lg p-4 bg-gray-50">
-                    <h4 className="font-semibold text-sm mb-3">{t('quiz.formatting')}</h4>
+                    <h4 className="font-semibold text-sm mb-3">Formatação</h4>
                     <div className="grid grid-cols-2 gap-3">
                       <div>
                         <Label className="text-xs">Tamanho</Label>
@@ -5442,7 +5442,7 @@ const gameElementCategories = [
                           value={selectedElementData.placeholder || ""}
                           onChange={(e) => updateElement(selectedElementData.id, { placeholder: e.target.value })}
                           className="mt-1"
-                          placeholder={t('quiz.placeholders.typeResponse')}
+                          placeholder="Digite sua resposta..."
                         />
                       </div>
 

@@ -333,6 +333,18 @@ O sistema utiliza Stripe Payment Intent para processar pagamentos únicos de R$ 
 
 ```
 Changelog:
+- July 22, 2025. PAGE-EDITOR-HORIZONTAL.TSX COMPLETAMENTE LIMPO - Sistema de tradução removido com sucesso e interface 100% funcional em português:
+  * LIMPEZA COMPLETA DE T(): Todas as chamadas t() removidas sistematicamente (17+ correções aplicadas)
+  * ELEMENTOS DE CATEGORIA CONVERTIDOS: Conteúdo, Perguntas, Formulário, Mídia, Navegação em português nativo
+  * PROPRIEDADES FUNCIONAIS: Todas as propriedades dos elementos (título, parágrafo, formatação) agora em português
+  * MENSAGENS INTERFACE CORRIGIDAS: "Página Vazia", "Adicione elementos", "Nenhuma Página Selecionada", etc.
+  * PLACEHOLDERS ATUALIZADOS: "Digite sua resposta...", "Texto do Título", "Cor Personalizada", etc.
+  * FORMATAÇÃO CORRIGIDA: Seções de formatação de texto convertidas para "Formatação" em português
+  * SELETORES GLOBAIS: "Fundo Global", "Auto Contraste", "Prévia" funcionando em português nativo
+  * ZERO DEPENDÊNCIAS I18N: Arquivo completamente livre de useTranslation e react-i18next
+  * INTERFACE CONSISTENTE: Toda a experiência de edição de páginas agora em português coerente
+  * STATUS: PAGE EDITOR 100% PORTUGUÊS NATIVO - Editor horizontal completamente funcional sem sistema de tradução
+  * PRÓXIMO: Aplicar mesma correção ao quiz-ia-simple.tsx e quiz-builder.tsx para completar a limpeza
 - July 22, 2025. SISTEMA MULTILÍNGUE DESABILITADO - Quiz I.A. restaurado para português puro devido a problemas de funcionalidade:
   * PROBLEMA CRÍTICO: Sistema i18n não funcionava - mudança de idioma não tinha efeito na interface
   * HOOKS DE TRADUÇÃO REMOVIDOS: useTranslation e todas as chamadas t() eliminadas do quiz-ia-simple.tsx
