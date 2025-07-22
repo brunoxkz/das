@@ -29,6 +29,33 @@ class RealTimePushNotificationSystem {
     this.startBatchProcessor();
   }
 
+  private processedCompletions: Set<string> = new Set();
+  
+  /**
+   * Verifica se esta completion já foi processada para evitar duplicatas
+   */
+  private isCompletionAlreadyProcessed(quizId: string, completionId: string): boolean {
+    const uniqueKey = `${quizId}_${completionId}`;
+    
+    if (this.processedCompletions.has(uniqueKey)) {
+      console.log(`🔄 DUPLICATA DETECTADA: Completion ${uniqueKey} já foi processada - ignorando`);
+      return true;
+    }
+    
+    // Marcar como processada
+    this.processedCompletions.add(uniqueKey);
+    
+    // Limpar cache antigas (manter apenas últimas 1000 para não crescer infinitamente)
+    if (this.processedCompletions.size > 1000) {
+      const firstEntries = Array.from(this.processedCompletions).slice(0, 500);
+      firstEntries.forEach(key => this.processedCompletions.delete(key));
+      console.log(`🧹 Cache limpo: removidas 500 entradas antigas`);
+    }
+    
+    console.log(`✅ NOVA COMPLETION: ${uniqueKey} marcada como processada`);
+    return false;
+  }
+
   /**
    * Verifica se o usuário tem permissão de push notifications ativa no dispositivo
    * Para 100k+ usuários, só processa quiz completions de usuários que aceitaram notificações

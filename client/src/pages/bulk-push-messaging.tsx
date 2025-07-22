@@ -68,43 +68,47 @@ export default function BulkPushMessaging() {
   
   const { toast } = useToast();
 
-  // Sistema de monitoramento automático de quiz completions - SEMPRE ATIVO
+  // Sistema de monitoramento ÚNICO de quiz completions - SEMPRE ATIVO
   useEffect(() => {
     let pollingInterval: NodeJS.Timeout;
     
     const monitorQuizCompletions = async () => {
-      // SEMPRE ATIVO - remover verificação de estados que impedem funcionamento
-      // Sistema agora funciona 24/7 independente de toggles
+      // SISTEMA ÚNICO ANTI-DUPLICATA - funciona 24/7 independente de toggles
       
       try {
         const response = await fetch('/api/quiz-completions/latest');
         const data = await response.json();
         
+        // DEDUPLICAÇÃO: Só processar se for completion nova e válida
         if (data.latestCompletion && data.latestCompletion.id !== lastQuizCompleted) {
-          // Novo quiz completion detectado!
+          console.log('🎯 ÚNICA NOTIFICAÇÃO: Nova quiz completion detectada:', data.latestCompletion.id);
+          
+          // Atualizar último quiz processado
           setLastQuizCompleted(data.latestCompletion.id);
           
-          // Enviar notificação push automática
+          // Enviar APENAS UMA notificação push
           await sendAutoNotification(data.latestCompletion);
           
-          console.log('🎉 Novo quiz completion detectado e notificação enviada:', data.latestCompletion.id);
+          console.log('✅ SUCESSO: Uma única notificação enviada para completion:', data.latestCompletion.id);
+        } else if (data.latestCompletion) {
+          console.log('🔄 DUPLICATA BLOQUEADA: Completion já processada:', data.latestCompletion.id);
         }
       } catch (error) {
-        console.error('❌ Erro no monitoramento de quiz completions:', error);
+        console.error('❌ Erro no monitoramento único:', error);
       }
     };
     
-    // SEMPRE ATIVO - sistema funciona 24/7
-    pollingInterval = setInterval(monitorQuizCompletions, 10000); // Verificar a cada 10 segundos
-    console.log('🚀 Monitoramento automático de quiz completions SEMPRE ATIVO iniciado');
+    // FREQUÊNCIA REDUZIDA: 30 segundos em vez de 10 (menos conflitos)
+    pollingInterval = setInterval(monitorQuizCompletions, 30000);
+    console.log('🚀 Monitoramento ÚNICO de quiz completions iniciado (anti-duplicata)');
     
     return () => {
       if (pollingInterval) {
         clearInterval(pollingInterval);
-        console.log('⏹️ Monitoramento automático parado');
+        console.log('⏹️ Monitoramento único parado');
       }
     };
-  }, [lastQuizCompleted]); // Remover dependências de estados que impediam funcionamento
+  }, [lastQuizCompleted]); // Dependência mínima para evitar conflitos
 
   // Carregar sistema de áudio moderno com 10 sons
   useEffect(() => {
@@ -149,37 +153,9 @@ export default function BulkPushMessaging() {
     loadAutoNotificationSettings();
   }, []);
 
-  // Polling para detectar novos quiz completions
-  useEffect(() => {
-    if (!autoNotificationsEnabled) return;
-
-    const checkForNewQuizCompletions = async () => {
-      try {
-        const response = await fetch('/api/quiz-completions/latest');
-        const data = await response.json();
-        
-        if (data.latestCompletion && data.latestCompletion.id !== lastQuizCompleted) {
-          console.log('🎉 Novo quiz completado detectado:', data.latestCompletion);
-          
-          // Atualizar último quiz completado
-          setLastQuizCompleted(data.latestCompletion.id);
-          
-          // Enviar notificação automática
-          await sendQuizCompletionNotification(data.latestCompletion);
-        }
-      } catch (error) {
-        console.error('❌ Erro ao verificar quiz completions:', error);
-      }
-    };
-
-    // Verificar a cada 10 segundos
-    const interval = setInterval(checkForNewQuizCompletions, 10000);
-    
-    // Verificação inicial
-    checkForNewQuizCompletions();
-
-    return () => clearInterval(interval);
-  }, [autoNotificationsEnabled, lastQuizCompleted, quizCompletionSound]);
+  // ❌ REMOVIDO: Polling duplicado que causava múltiplas notificações
+  // Este useEffect foi removido para eliminar o problema das notificações duplicadas
+  // O monitoramento agora é feito apenas pelo primeiro useEffect que já existe acima
 
   // Função para testar som
   const testSound = async (soundTypeToTest: string) => {

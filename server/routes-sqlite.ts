@@ -4588,6 +4588,17 @@ export function registerSQLiteRoutes(app: Express): Server {
       };
 
       console.log('✅ Quiz completion encontrado:', completion.id);
+      
+      // APLICAR SISTEMA DE DEDUPLICAÇÃO ANTES DE RETORNAR
+      // Isso previne múltiplas notificações para a mesma completion
+      const { QuizCompletionDeduplicator } = await import('./quiz-completion-deduplicator');
+      
+      if (QuizCompletionDeduplicator.isCompletionAlreadyProcessed(completion.quizId, completion.userEmail)) {
+        // Completion já processada - retornar vazio para evitar notificação duplicada
+        console.log('🔄 DUPLICATA BLOQUEADA: Completion já processada, retornando vazio');
+        return res.json({ latestCompletion: null });
+      }
+      
       res.json({ latestCompletion: completion });
     } catch (error) {
       console.error('❌ Erro ao buscar quiz completions:', error);
