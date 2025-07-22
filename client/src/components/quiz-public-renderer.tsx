@@ -475,7 +475,6 @@ export function QuizPublicRenderer({ quiz }: QuizPublicRendererProps) {
   const [answers, setAnswers] = useState<Record<string, any>>({});
   const [quizResponses, setQuizResponses] = useState<QuizResponse[]>([]);
   const [sessionId] = useState(() => nanoid());
-  const [startTime] = useState(Date.now());
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showResults, setShowResults] = useState(false);
   const [autoSaveEnabled] = useState(true);
@@ -731,7 +730,7 @@ export function QuizPublicRenderer({ quiz }: QuizPublicRendererProps) {
   };
 
   // Função para capturar resposta de qualquer elemento
-  const handleElementAnswer = (elementId: string, elementType: string, answer: any, fieldId?: string, element?: any) => {
+  const handleElementAnswer = (elementId: string, elementType: string, answer: any, fieldId?: string) => {
     const response: QuizResponse = {
       elementId,
       elementType,
@@ -750,30 +749,6 @@ export function QuizPublicRenderer({ quiz }: QuizPublicRendererProps) {
 
     // Salvar automaticamente no servidor
     saveResponseAutomatically(response);
-
-    // 🚀 NOVA FUNCIONALIDADE: Navegação automática para múltipla escolha
-    if (elementType === 'multiple_choice') {
-      // Verificar se a navegação automática está desabilitada
-      const autoNavigationDisabled = element?.disableAutoNavigation || element?.properties?.disableAutoNavigation;
-      
-      if (!autoNavigationDisabled) {
-        // Delay de 300ms para uma transição suave
-        setTimeout(() => {
-          if (currentPageIndex < pages.length - 1) {
-            console.log('🚀 Navegação automática: Avançando para próxima página');
-            setCurrentPageIndex(prev => prev + 1);
-            // Limpar respostas da página anterior
-            setAnswers({});
-          } else {
-            // Se for a última página, finalizar quiz
-            console.log('🏁 Última página alcançada, finalizando quiz');
-            setShowResults(true);
-          }
-        }, 300);
-      } else {
-        console.log('⏸️ Navegação automática desabilitada para este elemento');
-      }
-    }
   };
 
   // Função para finalizar quiz
@@ -783,8 +758,8 @@ export function QuizPublicRenderer({ quiz }: QuizPublicRendererProps) {
     setIsSubmitting(true);
     
     try {
-      // 1. FORMATO ORIGINAL: Para sistemas de autodetecção (mantido)
-      const originalResponse = await fetch(`/api/quizzes/${quiz.id}/submit`, {
+      // Salvar resposta completa
+      const finalResponse = await fetch(`/api/quizzes/${quiz.id}/submit`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -796,52 +771,8 @@ export function QuizPublicRenderer({ quiz }: QuizPublicRendererProps) {
         })
       });
 
-      // 2. FORMATO PARA NOTIFICAÇÕES PUSH: Compatível com backend esperado
-      // Extrair leadData das respostas
-      const leadData: any = {};
-      
-      quizResponses.forEach((response) => {
-        // Se tem fieldId, é lead data
-        if (response.elementFieldId) {
-          leadData[response.elementFieldId] = response.answer;
-        }
-      });
-
-      // Aguardar primeira resposta antes de enviar formato de notificação
-      if (originalResponse.ok) {
-        console.log('Quiz completado com sucesso (formato original)!');
-        
-        // 🔔 ENVIO ADICIONAL: Formato específico para disparar notificações push
-        try {
-          const notificationResponse = await fetch(`/api/quizzes/${quiz.id}/submit`, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              responses: quizResponses, // Formato array esperado pelo backend
-              metadata: {
-                sessionId,
-                completedAt: new Date().toISOString(),
-                userAgent: navigator.userAgent,
-                totalPages: pages.length,
-                completionPercentage: 100,
-                timeSpent: Date.now() - startTime,
-                isComplete: true
-              },
-              leadData
-            })
-          });
-
-          if (notificationResponse.ok) {
-            console.log('🔔 Notificação push disparada com sucesso!');
-          } else {
-            console.log('⚠️ Notificação push falhou (não crítico)');
-          }
-        } catch (notificationError) {
-          console.log('⚠️ Erro ao enviar notificação push (não crítico):', notificationError);
-        }
-        
+      if (finalResponse.ok) {
+        console.log('Quiz completado com sucesso!');
         setShowResults(true);
       } else {
         console.error('Erro ao finalizar quiz');
@@ -896,7 +827,7 @@ export function QuizPublicRenderer({ quiz }: QuizPublicRendererProps) {
             </h3>
             <RadioGroup 
               value={answer} 
-              onValueChange={(value) => handleElementAnswer(id, type, value, element.fieldId || properties?.fieldId, element)}
+              onValueChange={(value) => handleElementAnswer(id, type, value, element.fieldId || properties?.fieldId)}
               className="space-y-2"
             >
               {Array.isArray(multipleChoiceOptions) && multipleChoiceOptions.length > 0 ? (
@@ -1322,37 +1253,11 @@ export function QuizPublicRenderer({ quiz }: QuizPublicRendererProps) {
         );
 
       case 'heading':
-        const headingSize = properties.fontSize || element.fontSize || 'xl';
-        const headingColor = properties.textColor || element.textColor || '#000000';
-        const isBold = properties.fontWeight === 'bold' || element.fontWeight === 'bold' || true;
-        const isItalic = properties.fontStyle === 'italic' || element.fontStyle === 'italic';
-        const isUnderline = properties.textDecoration === 'underline' || element.textDecoration === 'underline';
-        
-        const sizeClasses = {
-          'sm': 'text-sm',
-          'base': 'text-base', 
-          'lg': 'text-lg',
-          'xl': 'text-xl',
-          '2xl': 'text-2xl',
-          '3xl': 'text-3xl',
-          '4xl': 'text-4xl',
-          '5xl': 'text-5xl'
-        };
-        
         return (
           <div key={id} className="space-y-2">
             <h2 
-              className={`
-                ${sizeClasses[headingSize] || 'text-xl'}
-                ${isBold ? 'font-bold' : 'font-normal'}
-                ${isItalic ? 'italic' : ''}
-                ${isUnderline ? 'underline' : ''}
-                ${getElementClasses(properties)}
-              `}
-              style={{
-                color: headingColor,
-                ...getElementStyles(properties)
-              }}
+              className={`text-2xl font-bold${getElementClasses(properties)}`}
+              style={getElementStyles(properties)}
             >
               {properties.text || properties.content || element.content || 'Título'}
             </h2>
@@ -1453,7 +1358,7 @@ export function QuizPublicRenderer({ quiz }: QuizPublicRendererProps) {
         const buttonStyle = properties.buttonBorderRadius || quiz.design?.buttonStyle || "rounded";
         const isFixedFooter = properties.isFixedFooter || false;
         
-        const buttonSizeClasses = {
+        const sizeClasses = {
           small: "px-4 py-2 text-sm",
           medium: "px-6 py-3 text-base", 
           large: "px-8 py-4 text-lg"
@@ -1470,7 +1375,7 @@ export function QuizPublicRenderer({ quiz }: QuizPublicRendererProps) {
             <Button
               onClick={handleNextPage}
               disabled={isSubmitting}
-              className={`${buttonSizeClasses[buttonSize]} ${styleClasses[buttonStyle]} font-medium shadow-lg transition-all duration-200 hover:shadow-xl`}
+              className={`${sizeClasses[buttonSize]} ${styleClasses[buttonStyle]} font-medium shadow-lg transition-all duration-200 hover:shadow-xl`}
               style={{
                 backgroundColor: buttonBgColor,
                 color: buttonTextColor,
@@ -1887,39 +1792,6 @@ export function QuizPublicRenderer({ quiz }: QuizPublicRendererProps) {
             )}
             
             {currentPage.elements.map(renderElement)}
-            
-            {/* 🚀 BOTÕES DE NAVEGAÇÃO - SEÇÃO CRÍTICA RESTAURADA */}
-            <div className="mt-8 flex justify-between items-center">
-              {/* Botão Voltar */}
-              {currentPageIndex > 0 && (
-                <Button
-                  onClick={handlePrevPage}
-                  variant="outline"
-                  className="bg-gray-100 hover:bg-gray-200 text-gray-700 border-gray-300"
-                >
-                  ← Voltar
-                </Button>
-              )}
-              
-              {/* Espaçador quando não há botão voltar */}
-              {currentPageIndex === 0 && <div />}
-              
-              {/* Botão Continuar/Finalizar */}
-              {!showResults && (
-                <Button
-                  onClick={handleNextPage}
-                  disabled={isSubmitting}
-                  className="bg-green-600 hover:bg-green-700 text-white px-8 py-3 font-medium rounded-lg shadow-lg transition-all duration-200 hover:shadow-xl"
-                  style={{
-                    backgroundColor: quiz.design?.buttonColor || '#16a34a',
-                    color: quiz.design?.buttonTextColor || '#ffffff'
-                  }}
-                >
-                  {isSubmitting ? 'Processando...' : 
-                   isLastPage ? 'Finalizar Quiz' : 'Continuar'}
-                </Button>
-              )}
-            </div>
           </CardContent>
         </Card>
       </div>
