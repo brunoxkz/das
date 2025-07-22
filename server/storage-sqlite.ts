@@ -640,8 +640,8 @@ export class SQLiteStorage implements IStorage {
     try {
       console.log(`🔍 Buscando dono do quiz: ${quizId}`);
       
-      // Buscar o quiz primeiro para pegar o userId
-      const [quiz] = await db.select({ userId: quizzes.userId }).from(quizzes).where(eq(quizzes.id, quizId));
+      // Buscar o quiz primeiro para pegar o user_id (coluna correta)
+      const [quiz] = await db.select({ userId: quizzes.user_id }).from(quizzes).where(eq(quizzes.id, quizId));
       
       if (!quiz || !quiz.userId) {
         console.log(`❌ Quiz ${quizId} não encontrado ou sem dono`);
