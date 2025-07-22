@@ -146,9 +146,14 @@ export default function QuizIA() {
       const response = await apiRequest("/api/quiz-ia/create", {
         method: "POST",
         body: JSON.stringify({
-          quizData,
-          generatedContent,
-          pixKey: quizData.pixKey
+          niche: quizData.niche,
+          targetAudience: quizData.targetAudience,
+          painPoint: quizData.painPoint,
+          solution: quizData.solution,
+          productName: quizData.productName,
+          productPrice: quizData.productPrice,
+          pixKey: quizData.pixKey,
+          generatedContent
         })
       });
 
