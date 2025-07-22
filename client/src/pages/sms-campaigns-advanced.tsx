@@ -308,6 +308,7 @@ export default function SMSCampaignsAdvanced() {
   const [openPopup, setOpenPopup] = useState<string | null>(null);
   const [popupForm, setPopupForm] = useState<any>({});
   const [popupStep, setPopupStep] = useState(1);
+  const [quizVariables, setQuizVariables] = useState<string[]>([]);
   
   // Queries
   const { data: quizzes = [], isLoading: loadingQuizzes } = useQuery({
@@ -352,6 +353,25 @@ export default function SMSCampaignsAdvanced() {
     queryKey: ['/api/sms-campaigns'],
     enabled: !!user
   });
+
+  // Buscar variáveis do quiz para remarketing inteligente
+  useEffect(() => {
+    if (openPopup === 'remarketing_custom' && popupForm.funnelId) {
+      const fetchQuizVariables = async () => {
+        try {
+          const response = await fetch(`/api/quizzes/${popupForm.funnelId}/variables-ultra`);
+          if (response.ok) {
+            const data = await response.json();
+            const variables = Object.keys(data.variablesByField || {});
+            setQuizVariables(variables);
+          }
+        } catch (error) {
+          console.error('Erro ao carregar variáveis do quiz:', error);
+        }
+      };
+      fetchQuizVariables();
+    }
+  }, [openPopup, popupForm.funnelId]);
   
   // Variáveis disponíveis para personalização
   const availableVariables = [
@@ -2409,6 +2429,41 @@ export default function SMSCampaignsAdvanced() {
                         </div>
                       </div>
                     )}
+                  </div>
+                )}
+
+                {/* Variáveis do Quiz - apenas para remarketing inteligente */}
+                {openPopup === 'remarketing_custom' && popupForm.funnelId && popupForm.segment && quizVariables.length > 0 && (
+                  <div className="border-t pt-4">
+                    <Alert className="bg-gradient-to-r from-purple-50 to-blue-50 border-purple-200 mb-4">
+                      <Brain className="h-4 w-4 text-purple-600" />
+                      <AlertDescription className="text-purple-800">
+                        <strong>Variáveis do Quiz Detectadas!</strong> Use essas variáveis para personalizar sua mensagem com base nas respostas específicas do quiz.
+                      </AlertDescription>
+                    </Alert>
+                    
+                    <div>
+                      <Label className="mb-3 block">Variáveis Disponíveis do Quiz Selecionado</Label>
+                      <div className="grid grid-cols-2 md:grid-cols-3 gap-2 mb-4">
+                        {quizVariables.map((variable) => (
+                          <div 
+                            key={variable}
+                            className="p-2 bg-purple-50 border border-purple-200 rounded-lg cursor-pointer hover:bg-purple-100 transition-colors"
+                            onClick={() => {
+                              const currentMessage = popupForm.message || '';
+                              const variableTag = `{{${variable}}}`;
+                              setPopupForm(prev => ({ 
+                                ...prev, 
+                                message: currentMessage + variableTag 
+                              }));
+                            }}
+                          >
+                            <code className="text-sm font-mono text-purple-700 block">{`{{${variable}}}`}</code>
+                            <div className="text-xs text-purple-600 mt-1">Clique para inserir</div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
                   </div>
                 )}
 
