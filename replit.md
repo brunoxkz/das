@@ -553,7 +553,7 @@ Campo: p1_objetivo_fitness
 ```
 - July 22, 2025. NOMES DAS CAMPANHAS ATUALIZADOS - Alteração de nomenclatura das campanhas de automação para melhor clareza:
   * "Disparo Automático" → "Disparo Ao Vivo" 
-  * "Automação Inteligente" → "Ao Vivo Automático"
+  * "Automação Inteligente" → "Ao Vivo Inteligente"
   * "Quantum Live" → "Ao Vivo Quantum"
   * Sistema mantém todas as funcionalidades, apenas com nomes mais intuitivos
 Changelog:

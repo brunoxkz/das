@@ -195,7 +195,7 @@ const CAMPAIGN_CATEGORIES = {
       },
       live_custom: {
         id: 'live_custom',
-        name: 'Ao Vivo Automático',
+        name: 'Ao Vivo Inteligente',
         icon: Flame,
         description: 'Automação com segmentação por resposta específica do quiz em tempo real',
         features: ['Segmentação automática', 'Respostas específicas', 'Targeting dinâmico'],
