@@ -333,6 +333,15 @@ O sistema utiliza Stripe Payment Intent para processar pagamentos únicos de R$ 
 
 ```
 Changelog:
+- July 22, 2025. SISTEMA MULTILÍNGUE COMPLETAMENTE ELIMINADO 100% - Interface Quiz Builder restaurada para português nativo:
+  * LIMPEZA MASSIVA CONCLUÍDA: Todas as funções t() de tradução removidas do page-editor-horizontal.tsx 
+  * FUNÇÃO getElementTypeName CRIADA: Mapeamento direto de 67 tipos de elementos em português nativo
+  * TEXTOS ESPECÍFICOS CORRIGIDOS: "Texto em Português" genérico substituído por textos corretos
+  * PROPRIEDADES TRADUZIDAS: "Conteúdo do Título", "Estilo do Texto", "Cor Personalizada", etc.
+  * CATEGORIAS NATIVAS: Conteúdo, Perguntas, Formulário, Mídia, Conteúdo Avançado, Navegação, etc.
+  * INTERFACE COMPLETA: Quiz Builder funcionando 100% em português sem dependências multilíngues
+  * PERFORMANCE OTIMIZADA: Sistema mais rápido sem overhead de tradução
+  * STATUS: Quiz Editor 100% português nativo - zero funções de tradução restantes
 - July 22, 2025. TRANSLATION SYSTEM COMPLETELY ELIMINATED 100% - Sistema de tradução completamente removido, plataforma agora em português nativo:
   * ELEMENTO MAPPING SYSTEM 100% CORRIGIDO: Função getElementTypeName substituída por mapeamento direto em português
   * CATEGORIAS DE ELEMENTOS TRADUZIDAS: Todas as categorias (Conteúdo, Perguntas, Formulário, Mídia, Conteúdo Avançado, Navegação, Visualizações, Vendas, Ultra Personalização) agora em português

@@ -5030,13 +5030,13 @@ const gameElementCategories = [
                   style={{backgroundColor: customBackgroundColor}}
                 ></div>
                 <div className="text-xs font-medium">Custom</div>
-                <div className="text-xs text-gray-500">{"Texto em Português"}</div>
+                <div className="text-xs text-gray-500">Personalizado</div>
               </button>
             </div>
             
             {globalTheme === "custom" && (
               <div className="mt-3">
-                <Label className="text-xs font-medium mb-2 block">{"Texto em Português"}</Label>
+                <Label className="text-xs font-medium mb-2 block">Cor Personalizada</Label>
                 <div className="flex items-center gap-2">
                   <input
                     type="color"
@@ -5059,7 +5059,7 @@ const gameElementCategories = [
                   />
                 </div>
                 <div className="text-xs text-gray-500 mt-2">
-                  {"Texto em Português"}
+                  Contraste automático para legibilidade
                 </div>
               </div>
             )}
@@ -5110,7 +5110,7 @@ const gameElementCategories = [
             animations.fadeIn
           )}>
             <Eye className="w-4 h-4" />
-            {"Texto em Português"}
+            Visualizar
             {currentPage && (
               <Badge variant="secondary" className="ml-2 bg-white/20">{currentPage.title}</Badge>
             )}
@@ -5189,8 +5189,8 @@ const gameElementCategories = [
             <div className="flex items-center justify-center h-full text-gray-500">
               <div className="text-center">
                 <FileText className="w-16 h-16 mx-auto mb-4 opacity-50" />
-                <h3 className="text-lg font-semibold mb-2">{"Texto em Português"}</h3>
-                <p className="text-sm">{"Texto em Português"}</p>
+                <h3 className="text-lg font-semibold mb-2">Nenhuma página selecionada</h3>
+                <p className="text-sm">Selecione uma página para editar seus elementos</p>
               </div>
             </div>
           )}
@@ -5205,7 +5205,7 @@ const gameElementCategories = [
             animations.fadeIn
           )}>
             <Settings className="w-4 h-4" />
-            {selectedElementData ? getElementTypeName(selectedElementData.type) : "Texto em Português"}
+            {selectedElementData ? getElementTypeName(selectedElementData.type) : "Propriedades"}
           </h3>
         </div>
         <div className="flex-1 overflow-y-auto p-4" style={{maxHeight: 'calc(100vh - 73px)'}}>
@@ -5215,7 +5215,7 @@ const gameElementCategories = [
               {selectedElementData.type === "heading" && (
                 <div className="space-y-4">
                   <div>
-                    <Label htmlFor="heading-content">{"Texto em Português"}</Label>
+                    <Label htmlFor="heading-content">Conteúdo do Título</Label>
                     <Input
                       id="heading-content"
                       value={selectedElementData.content}
@@ -5226,7 +5226,7 @@ const gameElementCategories = [
                   
                   {/* Formatação completa */}
                   <div className="border rounded-lg p-4 bg-gray-50">
-                    <h4 className="font-semibold text-sm mb-3">{"Texto em Português"}</h4>
+                    <h4 className="font-semibold text-sm mb-3">Estilo do Texto</h4>
                     <div className="grid grid-cols-2 gap-3">
                       <div>
                         <Label className="text-xs">Tamanho</Label>
@@ -5337,7 +5337,7 @@ const gameElementCategories = [
                   
                   {/* Formatação do parágrafo */}
                   <div className="border rounded-lg p-4 bg-gray-50">
-                    <h4 className="font-semibold text-sm mb-3">{"Texto em Português"}</h4>
+                    <h4 className="font-semibold text-sm mb-3">Estilo do Parágrafo</h4>
                     <div className="grid grid-cols-2 gap-3">
                       <div>
                         <Label className="text-xs">Tamanho</Label>
