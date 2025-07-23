@@ -2295,7 +2295,7 @@ export default function SMSCampaignsAdvanced() {
                       </SelectTrigger>
                       <SelectContent>
                         {loadingQuizzes ? (
-                          <SelectItem value="" disabled>
+                          <SelectItem value="loading" disabled>
                             <div className="flex items-center gap-2">
                               <div className="w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
                               Carregando...
@@ -2308,7 +2308,7 @@ export default function SMSCampaignsAdvanced() {
                             </SelectItem>
                           ))
                         ) : (
-                          <SelectItem value="" disabled>
+                          <SelectItem value="no-quizzes" disabled>
                             <div className="text-gray-500 text-center py-2">
                               Nenhum quiz publicado encontrado
                             </div>
