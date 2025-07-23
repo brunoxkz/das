@@ -2419,6 +2419,24 @@ export class SQLiteStorage implements IStorage {
     }
   }
 
+  // SISTEMA QUANTUM: Buscar campanhas SMS por quiz ID
+  async getSmsCampaignsByQuiz(quizId: string): Promise<any[]> {
+    try {
+      const campaigns = await db.select()
+        .from(smsCampaigns)
+        .where(eq(smsCampaigns.quizId, quizId))
+        .orderBy(desc(smsCampaigns.createdAt));
+      
+      return campaigns.map(campaign => ({
+        ...campaign,
+        phones: JSON.parse(campaign.phones || '[]')
+      }));
+    } catch (error) {
+      console.error('Erro ao buscar campanhas SMS por quiz:', error);
+      return [];
+    }
+  }
+
   // NOVA FUNÇÃO: Processar mensagens WhatsApp agendadas
   async processScheduledWhatsAppMessages(campaignId: string, phones: string[]): Promise<{processed: number, total: number, sent: number, failed: number}> {
     try {
