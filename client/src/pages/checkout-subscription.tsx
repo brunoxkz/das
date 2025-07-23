@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useStripe, useElements, CardElement } from '@stripe/react-stripe-js';
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQuery } from '@tanstack/react-query';
 import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -54,6 +54,22 @@ export default function CheckoutSubscription({ onSuccess, onCancel }: CheckoutSu
   });
   const [processing, setProcessing] = useState(false);
   const [currentStep, setCurrentStep] = useState(1);
+
+  // Query para buscar dados do usuário logado
+  const { data: userData, isLoading: userLoading } = useQuery({
+    queryKey: ['/api/auth/user'],
+    retry: false,
+  });
+
+  // Pré-preencher os campos com dados do usuário
+  useEffect(() => {
+    if (userData) {
+      setCustomerData({
+        email: userData.email || '',
+        name: userData.name || userData.firstName || userData.username || '',
+      });
+    }
+  }, [userData]);
 
   // Mutation para processar assinatura paga
   const subscriptionMutation = useMutation({
