@@ -875,21 +875,43 @@ export function QuizPublicRenderer({ quiz }: QuizPublicRendererProps) {
         );
 
       case 'text':
+        // Aplicar estilos de formatação de texto
+        const fieldLabelStyle = {
+          fontSize: properties?.fontSize === "xs" ? "12px" : 
+                   properties?.fontSize === "sm" ? "14px" : 
+                   properties?.fontSize === "lg" ? "18px" : 
+                   properties?.fontSize === "xl" ? "20px" : "16px",
+          fontWeight: properties?.fontWeight || "500",
+          color: properties?.textColor || "#374151",
+          textAlign: (properties?.textAlign || "left") as any,
+        };
+
+        // Largura em porcentagem da tela
+        const widthPercentage = properties?.widthPercentage || 100;
+        const containerWidth = `${Math.min(Math.max(widthPercentage, 10), 100)}%`;
+
         return (
-          <div key={id} className="space-y-4">
-            <h3 
-              className={`text-lg font-semibold${getElementClasses(element)}`}
-              style={getElementStyles(element)}
-            >
-              {properties?.question || 'Texto'}
-            </h3>
-            <Input
-              type="text"
-              placeholder={properties?.placeholder || 'Digite aqui'}
-              value={answer || ''}
-              onChange={(e) => handleElementAnswer(id, type, e.target.value, properties?.fieldId)}
-              required={properties?.required}
-            />
+          <div key={id} className="w-full" style={{ width: containerWidth, maxWidth: containerWidth }}>
+            <div className="space-y-4">
+              <h3 style={fieldLabelStyle}>
+                {properties?.question || 'Texto'}
+                {properties?.required && <span className="text-red-500 ml-1">*</span>}
+              </h3>
+              <Input
+                type="text"
+                placeholder={properties?.placeholder || 'Digite aqui'}
+                value={answer || ''}
+                onChange={(e) => {
+                  const value = e.target.value.slice(0, 200); // Limite de 200 caracteres
+                  handleElementAnswer(id, type, value, properties?.fieldId);
+                }}
+                maxLength={200}
+                required={properties?.required}
+              />
+              <div className="text-xs text-gray-500 text-right">
+                {(answer || '').length}/200 caracteres
+              </div>
+            </div>
           </div>
         );
 

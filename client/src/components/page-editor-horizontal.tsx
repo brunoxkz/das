@@ -1935,6 +1935,21 @@ const gameElementCategories = [
       case "email":
       case "phone":
       case "number":
+        // Aplicar estilos de formatação de texto
+        const fieldLabelStyle = {
+          fontSize: element.fontSize === "xs" ? "12px" : 
+                   element.fontSize === "sm" ? "14px" : 
+                   element.fontSize === "lg" ? "18px" : 
+                   element.fontSize === "xl" ? "20px" : "16px",
+          fontWeight: element.fontWeight || "500",
+          color: element.textColor || "#374151",
+          textAlign: (element.textAlign || "left") as any,
+        };
+
+        // Largura em porcentagem da tela
+        const widthPercentage = element.widthPercentage || 100;
+        const containerWidth = `${Math.min(Math.max(widthPercentage, 10), 100)}%`;
+
         const inputStyle = element.inputStyle === "modern" ? "rounded-lg border-2 border-gray-200 focus:border-vendzz-primary focus:ring-2 focus:ring-vendzz-primary/20" :
                           element.inputStyle === "minimal" ? "border-0 border-b-2 border-gray-200 focus:border-vendzz-primary rounded-none bg-transparent" :
                           element.inputStyle === "filled" ? "bg-gray-50 border border-gray-200 rounded-lg focus:bg-white focus:border-vendzz-primary" :
@@ -1948,76 +1963,71 @@ const gameElementCategories = [
         };
 
         return (
-          <div className="space-y-2">
-            <label className="block text-sm font-medium text-gray-700">
-              {element.question || "Campo"}
+          <div className="w-full" style={{ width: containerWidth, maxWidth: containerWidth }}>
+            <div className="space-y-2">
+              <label className="block font-medium" style={fieldLabelStyle}>
+                {element.question || "Campo"}
+                
+                {element.showFieldIcon && <span className="ml-2">{iconMap[element.type as keyof typeof iconMap]}</span>}
+              </label>
               
-              {element.showFieldIcon && <span className="ml-2">{iconMap[element.type as keyof typeof iconMap]}</span>}
-            </label>
-            
-            {/* 🔥 NOVA FUNCIONALIDADE: Descrição do campo */}
-            {element.fieldDescription && (
-              <p className="text-sm text-gray-500">{element.fieldDescription}</p>
-            )}
-            
-            <div className="relative">
-              {/* 🔥 NOVA FUNCIONALIDADE: Ícone dentro do input */}
-              {element.showInlineIcon && (
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <span className="text-gray-400 text-sm">{iconMap[element.type as keyof typeof iconMap]}</span>
-                </div>
+              {/* Descrição do campo */}
+              {element.fieldDescription && (
+                <p className="text-sm text-gray-500">{element.fieldDescription}</p>
               )}
               
-              <input
-                type={element.type === "email" ? "email" : element.type === "phone" ? "tel" : element.type === "number" ? "number" : "text"}
-                placeholder={element.placeholder || `Digite aqui ${element.type === "email" ? "seu email" : element.type === "phone" ? "seu telefone" : ""}`}
-                className={`w-full px-3 py-3 ${element.showInlineIcon ? "pl-10" : ""} ${inputStyle} transition-all duration-200`}
-                {...(element.type === "email" && element.emailValidation && {
-                  pattern: "[a-z0-9._%+-]+@[a-z0-9.-]+\\.[a-z]{2,}$"
-                })}
-                {...(element.type === "phone" && element.phoneFormat && {
-                  pattern: element.phoneFormat
-                })}
-                {...(element.type === "number" && {
-                  min: element.min,
-                  max: element.max,
-                  step: element.numberStep || 1
-                })}
-              />
-              
-              {/* 🔥 NOVA FUNCIONALIDADE: Validação em tempo real */}
-              {element.type === "email" && element.showValidation && (
-                <div className="absolute inset-y-0 right-0 pr-3 flex items-center">
-                  <div className="w-4 h-4 rounded-full bg-green-100 flex items-center justify-center">
-                    <span className="text-green-600 text-xs">✓</span>
+              <div className="relative">
+                {/* Ícone dentro do input */}
+                {element.showInlineIcon && (
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <span className="text-gray-400 text-sm">{iconMap[element.type as keyof typeof iconMap]}</span>
                   </div>
-                </div>
-              )}
-              
-              {/* 🔥 NOVA FUNCIONALIDADE: Máscara de telefone */}
-              {element.type === "phone" && element.showPhoneMask && (
-                <div className="absolute inset-y-0 right-0 pr-3 flex items-center">
-                  <span className="text-xs text-gray-400 bg-gray-100 px-2 py-1 rounded">
-                    {element.countryCode || "+55"}
-                  </span>
-                </div>
-              )}
-            </div>
-            
-            {/* 🔥 NOVA FUNCIONALIDADE: Contador de caracteres */}
-            {element.showCharCount && element.maxLength && (
-              <div className="flex justify-between text-xs text-gray-500">
-                <span></span>
-                <span>0/{element.maxLength}</span>
+                )}
+                
+                <input
+                  type={element.type === "email" ? "email" : element.type === "phone" ? "tel" : element.type === "number" ? "number" : "text"}
+                  placeholder={element.placeholder || `Digite aqui ${element.type === "email" ? "seu email" : element.type === "phone" ? "seu telefone" : ""}`}
+                  className={`w-full px-3 py-3 ${element.showInlineIcon ? "pl-10" : ""} ${inputStyle} transition-all duration-200`}
+                  maxLength={element.type === "text" ? 200 : undefined}
+                  {...(element.type === "email" && element.emailValidation && {
+                    pattern: "[a-z0-9._%+-]+@[a-z0-9.-]+\\.[a-z]{2,}$"
+                  })}
+                  {...(element.type === "phone" && element.phoneFormat && {
+                    pattern: element.phoneFormat
+                  })}
+                  {...(element.type === "number" && {
+                    min: element.min,
+                    max: element.max,
+                    step: element.numberStep || 1
+                  })}
+                />
+                
+                {/* Contador de caracteres para campo texto */}
+                {element.type === "text" && (
+                  <div className="absolute bottom-1 right-2 text-xs text-gray-400">
+                    200 caracteres máx.
+                  </div>
+                )}
+                
+                {/* Validação em tempo real */}
+                {element.type === "email" && element.showValidation && (
+                  <div className="absolute inset-y-0 right-0 pr-3 flex items-center">
+                    <div className="w-4 h-4 rounded-full bg-green-100 flex items-center justify-center">
+                      <span className="text-green-600 text-xs">✓</span>
+                    </div>
+                  </div>
+                )}
+                
+                {/* Máscara de telefone */}
+                {element.type === "phone" && element.showPhoneMask && (
+                  <div className="absolute inset-y-0 right-0 pr-3 flex items-center">
+                    <span className="text-xs text-gray-400 bg-gray-100 px-2 py-1 rounded">
+                      {element.countryCode || "+55"}
+                    </span>
+                  </div>
+                )}
               </div>
-            )}
-            
-            {/* 🔥 NOVA FUNCIONALIDADE: Dicas contextuais */}
-            {element.fieldHint && (
-              <p className="text-xs text-blue-600 bg-blue-50 p-2 rounded border-l-2 border-blue-200">
-                💡 {element.fieldHint}
-              </p>
-            )}
+            </div>
           </div>
         );
       case "textarea":
@@ -6078,9 +6088,16 @@ const gameElementCategories = [
                     <Input
                       id="question"
                       value={selectedElementData.question || ""}
-                      onChange={(e) => updateElement(selectedElementData.id, { question: e.target.value })}
+                      onChange={(e) => {
+                        const text = e.target.value.slice(0, 200); // Limite de 200 caracteres
+                        updateElement(selectedElementData.id, { question: text });
+                      }}
+                      maxLength={200}
                       className="mt-1"
                     />
+                    <div className="text-xs text-gray-500 mt-1">
+                      {(selectedElementData.question || "").length}/200 caracteres
+                    </div>
                   </div>
                   
                   {/* Formatação de Texto */}
@@ -6136,18 +6153,18 @@ const gameElementCategories = [
                         </select>
                       </div>
 
-                      {/* Largura do Campo */}
+                      {/* Largura do Campo em % */}
                       <div>
-                        <Label className="text-xs">Largura</Label>
+                        <Label className="text-xs">Largura (% da tela)</Label>
                         <select 
                           className="w-full px-2 py-1 border rounded text-xs mt-1"
-                          value={selectedElementData.fieldWidth || "full"}
-                          onChange={(e) => updateElement(selectedElementData.id, { fieldWidth: e.target.value })}
+                          value={selectedElementData.widthPercentage || "100"}
+                          onChange={(e) => updateElement(selectedElementData.id, { widthPercentage: parseInt(e.target.value) })}
                         >
-                          <option value="small">Pequeno</option>
-                          <option value="medium">Médio</option>
-                          <option value="large">Grande</option>
-                          <option value="full">Largura Total</option>
+                          <option value="25">25% da tela</option>
+                          <option value="50">50% da tela</option>
+                          <option value="75">75% da tela</option>
+                          <option value="100">100% da tela</option>
                         </select>
                       </div>
                     </div>
@@ -6169,11 +6186,22 @@ const gameElementCategories = [
                     <Input
                       id="maxLength"
                       type="number"
-                      value={selectedElementData.maxLength || ""}
-                      onChange={(e) => updateElement(selectedElementData.id, { maxLength: e.target.value })}
+                      value={selectedElementData.maxLength || (selectedElementData.type === "text" ? "200" : "")}
+                      onChange={(e) => {
+                        const maxValue = selectedElementData.type === "text" ? 200 : 500;
+                        const value = Math.min(parseInt(e.target.value) || maxValue, maxValue);
+                        updateElement(selectedElementData.id, { maxLength: value });
+                      }}
+                      max={selectedElementData.type === "text" ? "200" : "500"}
+                      min="1"
                       className="mt-1"
-                      placeholder="Ex: 100"
+                      placeholder={selectedElementData.type === "text" ? "Máx: 200" : "Ex: 100"}
                     />
+                    {selectedElementData.type === "text" && (
+                      <p className="text-xs text-orange-600 mt-1">
+                        ⚠️ Campos de texto limitados a 200 caracteres por segurança
+                      </p>
+                    )}
                   </div>
 
                   <div className="flex items-center space-x-2">

@@ -94,12 +94,30 @@ const ElementRenderer = ({ element }: { element: QuizElement }) => {
       );
 
     case 'text':
+      // Aplicar estilos de formatação de texto
+      const textStyle = {
+        fontSize: properties.fontSize === "xs" ? "12px" : 
+                 properties.fontSize === "sm" ? "14px" : 
+                 properties.fontSize === "lg" ? "18px" : 
+                 properties.fontSize === "xl" ? "20px" : "16px",
+        fontWeight: properties.fontWeight || "500",
+        color: properties.textColor || properties.color || "#374151",
+        textAlign: (properties.textAlign || "left") as any,
+      };
+
+      // Largura em porcentagem da tela
+      const widthPercentage = properties.widthPercentage || 100;
+      const containerWidth = `${Math.min(Math.max(widthPercentage, 10), 100)}%`;
+
       return (
         <div 
           className={getElementStyle()}
-          style={{ color: properties.color || '#333333' }}
+          style={{ width: containerWidth, maxWidth: containerWidth }}
         >
-          {properties.text || properties.title || 'Texto do elemento'}
+          <div style={textStyle}>
+            {(properties.question || properties.text || properties.title || 'Campo de texto').slice(0, 200)}
+            {(properties.question || properties.text || properties.title || '').length > 200 && '...'}
+          </div>
         </div>
       );
 

@@ -598,6 +598,17 @@ Campo: p1_objetivo_fitness
 ## Changelog
 
 ```
+- January 23, 2025. ELEMENTO 'TEXTO' COMPLETAMENTE CORRIGIDO - Implementadas todas as funcionalidades solicitadas com limites de segurança:
+  * FORMATAÇÃO FUNCIONAL: Tamanho, peso e alinhamento agora aplicados corretamente no preview e quiz público
+  * LIMITE DE CARACTERES: Implementado limite fixo de 200 caracteres com validação em tempo real
+  * LARGURA EM PORCENTAGEM: Opções alteradas para 25%, 50%, 75%, 100% da tela horizontalmente
+  * SEGURANÇA IMPLEMENTADA: Elementos texto limitados a 200 caracteres, sem upload/JS por design
+  * CONTADOR VISUAL: Exibição "X/200 caracteres" para feedback em tempo real
+  * TRÊS CONTEXTOS CORRIGIDOS: page-editor-horizontal.tsx (editor), QuizFullPreview.tsx (preview), quiz-public-renderer.tsx (público)
+  * FUNCIONALIDADE CONSISTENTE: Estilos aplicados uniformemente em todos os componentes
+  * VALIDAÇÃO INTELIGENTE: Texto cortado automaticamente se exceder limite
+  * INTERFACE MELHORADA: Aviso visual "⚠️ Campos de texto limitados a 200 caracteres por segurança"
+  * STATUS: ELEMENTO TEXTO 100% FUNCIONAL - Preview e público aplicando estilos corretamente
 - January 23, 2025. MAJOR BREAKTHROUGH: CORRUPTED FILE ELIMINATED + TYPESCRIPT ACCELERATION - Massive compilation stability improvement and systematic TypeScript corrections:
   * CRITICAL CORRUPTION ELIMINATED: Removed quiz-preview-backup.tsx (163KB corrupted file) causing 100+ JSX compilation errors
   * CLEAN COMPILATION ACHIEVED: System now compiles without any JSX syntax errors
