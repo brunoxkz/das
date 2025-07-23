@@ -11652,7 +11652,7 @@ const gameElementCategories = [
                       <div className="text-xs text-gray-600 mb-1">ID Gerado Automaticamente:</div>
                       <div className="flex items-center gap-2">
                         <div className="font-mono text-sm bg-gray-100 p-2 rounded border flex-1">
-                          {generateRemarketingId(currentPageIndex + 1, quiz?.name || 'quiz', selectedElementData.fieldId)}
+                          {generateRemarketingId(activePage + 1, 'quiz', selectedElementData.fieldId)}
                         </div>
                         <div className="group relative">
                           <span className="text-gray-400 cursor-help" title="Campo não editável - cite essa variável em outra etapa ou use em suas campanhas de remarketing">
@@ -11669,21 +11669,21 @@ const gameElementCategories = [
               )}
 
               {/* Painel Geral - Todos os IDs do Quiz */}
-              {quiz?.structure?.pages?.length > 0 && (
+              {pages?.length > 0 && (
                 <div className="mt-6 p-4 bg-gradient-to-r from-purple-50 to-pink-50 rounded-lg border border-purple-200">
                   <div className="flex items-center gap-2 mb-3">
                     <span className="text-purple-600">📊</span>
                     <h3 className="text-sm font-bold text-purple-800">IDs Disponíveis para Campanhas</h3>
                   </div>
                   <div className="space-y-2 max-h-40 overflow-y-auto">
-                    {quiz.structure.pages.map((page, pageIndex) =>
+                    {pages.map((page, pageIndex) =>
                       page.elements
                         ?.filter(el => el.fieldId)
                         .map((element, elementIndex) => (
                           <div key={`${pageIndex}-${elementIndex}`} className="bg-white p-2 rounded border text-xs">
                             <div className="flex items-center justify-between gap-2">
                               <div className="font-mono text-purple-700 flex-1">
-                                {generateRemarketingId(pageIndex + 1, quiz.name || 'quiz', element.fieldId)}
+                                {generateRemarketingId(pageIndex + 1, 'quiz', element.fieldId)}
                               </div>
                               <div className="group relative">
                                 <span className="text-gray-400 cursor-help">🔒</span>
@@ -11703,7 +11703,7 @@ const gameElementCategories = [
                           </div>
                         ))
                     ).flat()}
-                    {!quiz.structure.pages.some(page => page.elements?.some(el => el.fieldId)) && (
+                    {!pages.some(page => page.elements?.some(el => el.fieldId)) && (
                       <div className="text-center text-gray-500 text-xs py-4">
                         Nenhum campo de coleta configurado.
                         <br />
