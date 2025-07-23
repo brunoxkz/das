@@ -745,6 +745,10 @@ export function PageEditorHorizontal({
   const [dragOverPage, setDragOverPage] = useState<number | null>(null);
   const [globalTheme, setGlobalTheme] = useState<"light" | "dark" | "custom">(initialGlobalTheme);
   const [customBackgroundColor, setCustomBackgroundColor] = useState(initialCustomBackgroundColor);
+  const [expandedSections, setExpandedSections] = useState<{[key: string]: boolean}>({
+    globalBackground: false,
+    buttonColors: false
+  });
 
   // Função para calcular cor de fundo baseada no tema
   const getBackgroundColor = () => {
@@ -5048,6 +5052,167 @@ const gameElementCategories = [
               Páginas de Jogo
             </Button>
           </div>
+
+          {/* Seções Compactas e Expansíveis */}
+          <div className="space-y-2 pt-4 border-t">
+            {/* Fundo Global - Compacto */}
+            <div className="border border-gray-200 rounded-lg overflow-hidden">
+              <button
+                onClick={() => setExpandedSections(prev => ({
+                  ...prev,
+                  globalBackground: !prev.globalBackground
+                }))}
+                className="w-full p-3 bg-gray-50 hover:bg-gray-100 transition-colors flex items-center justify-between"
+              >
+                <div className="flex items-center gap-2">
+                  <div 
+                    className="w-4 h-4 rounded-full border border-gray-300"
+                    style={{backgroundColor: globalTheme === "custom" ? customBackgroundColor : globalTheme === "dark" ? "#000000" : "#ffffff"}}
+                  ></div>
+                  <span className="text-xs font-medium">🎨 Fundo Global</span>
+                </div>
+                <ChevronDown className={cn(
+                  "w-4 h-4 transition-transform",
+                  expandedSections.globalBackground && "rotate-180"
+                )} />
+              </button>
+              
+              {expandedSections.globalBackground && (
+                <div className="p-3 border-t bg-white space-y-3">
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="color"
+                      value={globalTheme === "custom" ? customBackgroundColor : globalTheme === "dark" ? "#000000" : "#ffffff"}
+                      onChange={(e) => {
+                        setGlobalTheme("custom");
+                        setCustomBackgroundColor(e.target.value);
+                        onThemeChange?.("custom", e.target.value);
+                      }}
+                      className="w-6 h-6 rounded-full border border-gray-300 cursor-pointer"
+                    />
+                    <input
+                      type="text"
+                      value={globalTheme === "custom" ? customBackgroundColor : globalTheme === "dark" ? "#000000" : "#ffffff"}
+                      onChange={(e) => {
+                        setGlobalTheme("custom");
+                        setCustomBackgroundColor(e.target.value);
+                        onThemeChange?.("custom", e.target.value);
+                      }}
+                      className="flex-1 px-2 py-1 text-xs border border-gray-300 rounded"
+                      placeholder="#ffffff"
+                    />
+                  </div>
+                  <div className="flex gap-1">
+                    <button
+                      onClick={() => {
+                        setGlobalTheme("light");
+                        onThemeChange?.("light", "#ffffff");
+                      }}
+                      className={cn(
+                        "flex-1 p-1 text-xs rounded border",
+                        globalTheme === "light" ? "bg-primary-100 border-primary-300" : "bg-gray-50 border-gray-200"
+                      )}
+                    >
+                      Light
+                    </button>
+                    <button
+                      onClick={() => {
+                        setGlobalTheme("dark");
+                        onThemeChange?.("dark", "#000000");
+                      }}
+                      className={cn(
+                        "flex-1 p-1 text-xs rounded border",
+                        globalTheme === "dark" ? "bg-primary-100 border-primary-300" : "bg-gray-50 border-gray-200"
+                      )}
+                    >
+                      Dark
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Cor Botão Global - Compacto */}
+            <div className="border border-gray-200 rounded-lg overflow-hidden">
+              <button
+                onClick={() => setExpandedSections(prev => ({
+                  ...prev,
+                  buttonColors: !prev.buttonColors
+                }))}
+                className="w-full p-3 bg-gray-50 hover:bg-gray-100 transition-colors flex items-center justify-between"
+              >
+                <div className="flex items-center gap-2">
+                  <div 
+                    className="w-4 h-4 rounded-full border border-gray-300"
+                    style={{backgroundColor: defaultButtonColor}}
+                  ></div>
+                  <span className="text-xs font-medium">🔘 Cor Botão</span>
+                </div>
+                <ChevronDown className={cn(
+                  "w-4 h-4 transition-transform",
+                  expandedSections.buttonColors && "rotate-180"
+                )} />
+              </button>
+              
+              {expandedSections.buttonColors && (
+                <div className="p-3 border-t bg-white space-y-3">
+                  {/* Cor de Fundo */}
+                  <div>
+                    <label className="text-xs font-medium mb-1 block">Fundo</label>
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="color"
+                        value={defaultButtonColor}
+                        onChange={(e) => onDefaultButtonColorChange?.(e.target.value)}
+                        className="w-6 h-6 rounded-full border border-gray-300 cursor-pointer"
+                      />
+                      <input
+                        type="text"
+                        value={defaultButtonColor}
+                        onChange={(e) => onDefaultButtonColorChange?.(e.target.value)}
+                        className="flex-1 px-2 py-1 text-xs border border-gray-300 rounded"
+                        placeholder="#10b981"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Cor do Texto */}
+                  <div>
+                    <label className="text-xs font-medium mb-1 block">Texto</label>
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="color"
+                        value={defaultButtonTextColor}
+                        onChange={(e) => onDefaultButtonTextColorChange?.(e.target.value)}
+                        className="w-6 h-6 rounded-full border border-gray-300 cursor-pointer"
+                      />
+                      <input
+                        type="text"
+                        value={defaultButtonTextColor}
+                        onChange={(e) => onDefaultButtonTextColorChange?.(e.target.value)}
+                        className="flex-1 px-2 py-1 text-xs border border-gray-300 rounded"
+                        placeholder="#ffffff"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Preview Compacto */}
+                  <div className="pt-2 border-t">
+                    <label className="text-xs font-medium mb-2 block">Preview</label>
+                    <button
+                      style={{
+                        backgroundColor: defaultButtonColor,
+                        color: defaultButtonTextColor
+                      }}
+                      className="w-full py-2 px-3 rounded text-xs font-medium cursor-pointer hover:opacity-90 transition-opacity"
+                    >
+                      Continuar
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
         </div>
       </div>
 
@@ -5063,181 +5228,7 @@ const gameElementCategories = [
           </h3>
         </div>
         
-        {/* Seletor Global de Cor de Fundo */}
-        <div className="p-4 border-b bg-gray-50">
-          <Label className="text-xs font-semibold text-gray-600 mb-2 block">
-            🎨 Fundo Global
-          </Label>
-          <div className="space-y-3">
-            <div className="flex gap-2">
-              <button
-                onClick={() => {
-                  setGlobalTheme("light");
-                  onThemeChange?.("light", "#ffffff");
-                }}
-                className={cn(
-                  "flex-1 p-3 rounded-xl border-2 transition-all",
-                  microInteractions.buttonPress,
-                  globalTheme === "light" 
-                    ? "border-primary-500 bg-primary-50 shadow-soft" 
-                    : "border-gray-200 hover:border-primary-200 hover:shadow-soft"
-                )}
-              >
-                <div className="w-full h-6 bg-white border rounded mb-2"></div>
-                <div className="text-xs font-medium">Light</div>
-                <div className="text-xs text-gray-500">Branco/Preto</div>
-              </button>
-              
-              <button
-                onClick={() => {
-                  setGlobalTheme("dark");
-                  onThemeChange?.("dark", "#000000");
-                }}
-                className={cn(
-                  "flex-1 p-3 rounded-xl border-2 transition-all",
-                  microInteractions.buttonPress,
-                  globalTheme === "dark" 
-                    ? "border-primary-500 bg-primary-50 shadow-soft" 
-                    : "border-gray-200 hover:border-primary-200 hover:shadow-soft"
-                )}
-              >
-                <div className="w-full h-6 bg-black border rounded mb-2"></div>
-                <div className="text-xs font-medium">Dark</div>
-                <div className="text-xs text-gray-500">Preto/Branco</div>
-              </button>
-              
-              <button
-                onClick={() => {
-                  setGlobalTheme("custom");
-                  onThemeChange?.("custom", customBackgroundColor);
-                }}
-                className={cn(
-                  "flex-1 p-3 rounded-xl border-2 transition-all",
-                  microInteractions.buttonPress,
-                  globalTheme === "custom" 
-                    ? "border-primary-500 bg-primary-50 shadow-soft" 
-                    : "border-gray-200 hover:border-primary-200 hover:shadow-soft"
-                )}
-              >
-                <div 
-                  className="w-full h-6 border rounded mb-2"
-                  style={{backgroundColor: customBackgroundColor}}
-                ></div>
-                <div className="text-xs font-medium">Custom</div>
-                <div className="text-xs text-gray-500">Personalizado</div>
-              </button>
-            </div>
-            
-            {globalTheme === "custom" && (
-              <div className="mt-3">
-                <Label className="text-xs font-medium mb-2 block">Cor Personalizada</Label>
-                <div className="flex items-center gap-2">
-                  <input
-                    type="color"
-                    value={customBackgroundColor}
-                    onChange={(e) => {
-                      setCustomBackgroundColor(e.target.value);
-                      onThemeChange?.("custom", e.target.value);
-                    }}
-                    className="w-8 h-8 rounded-full border-2 border-gray-300 cursor-pointer"
-                  />
-                  <Input
-                    type="text"
-                    value={customBackgroundColor}
-                    onChange={(e) => {
-                      setCustomBackgroundColor(e.target.value);
-                      onThemeChange?.("custom", e.target.value);
-                    }}
-                    className="flex-1 h-8 text-xs"
-                    placeholder="#000000"
-                  />
-                </div>
-                <div className="text-xs text-gray-500 mt-2">
-                  Auto Contraste
-                </div>
-              </div>
-            )}
-          </div>
-          <p className="text-xs text-gray-500 mt-1">
-            Aplicado a todas as páginas automaticamente
-          </p>
-        </div>
 
-        {/* Seção Cor Botão Global */}
-        <div className="p-4 border-b bg-gray-50">
-          <Label className="text-xs font-semibold text-gray-600 mb-2 block">
-            🔘 Cor Botão Global
-          </Label>
-          <div className="space-y-3">
-            {/* Cor de Fundo do Botão */}
-            <div>
-              <Label className="text-xs font-medium mb-2 block">Cor de Fundo</Label>
-              <div className="flex items-center gap-2">
-                <input
-                  type="color"
-                  value={defaultButtonColor}
-                  onChange={(e) => onDefaultButtonColorChange?.(e.target.value)}
-                  className="w-8 h-8 rounded-full border-2 border-gray-300 cursor-pointer"
-                />
-                <Input
-                  type="text"
-                  value={defaultButtonColor}
-                  onChange={(e) => onDefaultButtonColorChange?.(e.target.value)}
-                  className="flex-1 h-8 text-xs"
-                  placeholder="#10b981"
-                />
-              </div>
-            </div>
-
-            {/* Cor do Texto do Botão */}
-            <div>
-              <Label className="text-xs font-medium mb-2 block">Cor do Texto</Label>
-              <div className="flex items-center gap-2">
-                <input
-                  type="color"
-                  value={defaultButtonTextColor}
-                  onChange={(e) => onDefaultButtonTextColorChange?.(e.target.value)}
-                  className="w-8 h-8 rounded-full border-2 border-gray-300 cursor-pointer"
-                />
-                <Input
-                  type="text"
-                  value={defaultButtonTextColor}
-                  onChange={(e) => onDefaultButtonTextColorChange?.(e.target.value)}
-                  className="flex-1 h-8 text-xs"
-                  placeholder="#ffffff"
-                />
-              </div>
-            </div>
-
-            {/* Preview dos Botões */}
-            <div className="mt-3 p-3 bg-white rounded-lg border">
-              <Label className="text-xs font-medium mb-2 block">Preview</Label>
-              <div className="flex gap-2">
-                <button
-                  style={{
-                    backgroundColor: defaultButtonColor,
-                    color: defaultButtonTextColor
-                  }}
-                  className="px-4 py-2 rounded-lg text-xs font-medium cursor-pointer hover:opacity-90 transition-opacity"
-                >
-                  Continuar
-                </button>
-                <button
-                  style={{
-                    backgroundColor: defaultButtonColor,
-                    color: defaultButtonTextColor
-                  }}
-                  className="px-4 py-2 rounded-lg text-xs font-medium cursor-pointer hover:opacity-90 transition-opacity"
-                >
-                  Próximo
-                </button>
-              </div>
-            </div>
-          </div>
-          <p className="text-xs text-gray-500 mt-2">
-            Aplicado automaticamente aos novos botões criados
-          </p>
-        </div>
 
         <div className="flex-1 overflow-y-auto min-h-0" style={{maxHeight: 'calc(100vh - 73px)'}}>
           <div className="p-4">
