@@ -2303,48 +2303,83 @@ const gameElementCategories = [
         const showIcon = element.showIcon !== false;
         const unitSelectorStyle = element.unitSelectorStyle || "dropdown";
         
-        const inputClasses = {
-          minimal: "w-full p-3 border-0 border-b-2 bg-transparent focus:outline-none focus:border-purple-500",
-          bordered: "w-full p-3 border border-purple-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500",
-          filled: "w-full p-3 bg-purple-50 border-0 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500",
-          rounded: "w-full p-3 border border-purple-200 rounded-full focus:outline-none focus:ring-2 focus:ring-purple-500"
+        // Aplicar formatação de fonte
+        const heightLabelStyle = {
+          fontSize: element.fontSize === 'xs' ? '0.75rem' : 
+                   element.fontSize === 'sm' ? '0.875rem' : 
+                   element.fontSize === 'lg' ? '1.125rem' : 
+                   element.fontSize === 'xl' ? '1.25rem' : '1rem',
+          fontWeight: element.fontWeight === 'light' ? '300' :
+                     element.fontWeight === 'normal' ? '400' :
+                     element.fontWeight === 'medium' ? '500' :
+                     element.fontWeight === 'semibold' ? '600' :
+                     element.fontWeight === 'bold' ? '700' : '500',
+          textAlign: element.textAlign === 'left' ? 'left' :
+                    element.textAlign === 'center' ? 'center' :
+                    element.textAlign === 'right' ? 'right' : 'left'
         };
+
+        const heightFieldLabelStyle = {
+          fontSize: element.fontSize === 'xs' ? '0.75rem' : 
+                   element.fontSize === 'sm' ? '0.875rem' : 
+                   element.fontSize === 'lg' ? '1.125rem' : 
+                   element.fontSize === 'xl' ? '1.25rem' : '1rem',
+          fontWeight: element.fontWeight === 'light' ? '300' :
+                     element.fontWeight === 'normal' ? '400' :
+                     element.fontWeight === 'medium' ? '500' :
+                     element.fontWeight === 'semibold' ? '600' :
+                     element.fontWeight === 'bold' ? '700' : '500'
+        };
+        
+        const inputClasses = {
+          minimal: "w-full p-3 border-0 border-b-2 bg-transparent focus:outline-none focus:border-gray-500",
+          bordered: "w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-500",
+          filled: "w-full p-3 bg-gray-50 border-0 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-500",
+          rounded: "w-full p-3 border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-gray-500"
+        };
+        
+        // Calcular largura baseada na porcentagem
+        const widthClass = element.width === '25%' ? 'w-1/4' :
+                          element.width === '50%' ? 'w-1/2' :
+                          element.width === '75%' ? 'w-3/4' :
+                          'w-full';
         
         return (
           <div 
-            className="space-y-3 p-4 border-2 border-dashed rounded-lg"
-            style={{backgroundColor: element.inputBackgroundColor || "#faf5ff",
-              borderColor: element.inputBorderColor || "#e5e7eb"}}
+            className={`space-y-3 p-4 border-2 border-dashed rounded-lg bg-transparent ${widthClass}`}
+            style={{borderColor: element.inputBorderColor || "#e5e7eb"}}
           >
             <div className={`flex ${labelPosition === "left" ? "flex-row items-center space-x-3" : "flex-col"} gap-2`}>
               {showIcon && (
-                <div className="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center">
-                  <ArrowUpDown className="w-5 h-5" style={{color: element.iconColor || "#9333ea"}} />
+                <div className="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center">
+                  <ArrowUpDown className="w-5 h-5 text-gray-600" />
                 </div>
               )}
-              <div>
+              <div style={{ textAlign: heightLabelStyle.textAlign }}>
                 <h3 
-                  className="font-semibold text-purple-800"
-                  style={{color: element.labelColor || "#6b21a8"}}
+                  className="font-medium text-gray-800"
+                  style={heightLabelStyle}
                 >
                   {element.question || "Altura"}
                 </h3>
-                <p className="text-sm text-purple-600">
-                  {element.description || "Capture a altura do usuário"}
+                <p className="text-sm text-gray-600">
+                  {element.description || "Digite sua altura"}
                 </p>
               </div>
             </div>
             
-            <div className="bg-white rounded-lg p-4 shadow-sm">
+            <div className="bg-white rounded-lg p-4 shadow-sm border">
               <div className="space-y-3">
                 <div className="flex items-center space-x-2">
                   <input
                     type="number"
                     placeholder={heightUnit === "cm" ? "Ex: 175" : "Ex: 5.9"}
                     className={inputClasses[heightInputStyle]}
-                    style={{backgroundColor: element.inputBackgroundColor || (heightInputStyle === "filled" ? "#faf5ff" : "white"),
+                    style={{
+                      backgroundColor: element.inputBackgroundColor || "white",
                       borderColor: element.inputBorderColor || "#e5e7eb",
-                      fontSize: '18px'}}
+                      ...heightFieldLabelStyle
+                    }}
                     min={element.min || (heightUnit === "cm" ? 120 : 3)}
                     max={element.max || (heightUnit === "cm" ? 250 : 8)}
                     step={heightUnit === "cm" ? 1 : 0.1}
@@ -2354,8 +2389,11 @@ const gameElementCategories = [
                     <div className="flex-shrink-0">
                       {unitSelectorStyle === "dropdown" && (
                         <select 
-                          className="p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+                          className="p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-500"
                           value={heightUnit}
+                          onChange={(e) => {
+                            // Funcionalidade será implementada no handler
+                          }}
                         >
                           <option value="cm">cm</option>
                           <option value="ft">ft</option>
@@ -2364,10 +2402,10 @@ const gameElementCategories = [
                       
                       {unitSelectorStyle === "tabs" && (
                         <div className="flex bg-gray-100 rounded-lg p-1">
-                          <button className={`px-3 py-1 text-sm rounded ${heightUnit === "cm" ? "bg-purple-500 text-white" : "text-gray-600"}`}>
+                          <button className={`px-3 py-1 text-sm rounded ${heightUnit === "cm" ? "bg-gray-600 text-white" : "text-gray-600"}`}>
                             cm
                           </button>
-                          <button className={`px-3 py-1 text-sm rounded ${heightUnit === "ft" ? "bg-purple-500 text-white" : "text-gray-600"}`}>
+                          <button className={`px-3 py-1 text-sm rounded ${heightUnit === "ft" ? "bg-gray-600 text-white" : "text-gray-600"}`}>
                             ft
                           </button>
                         </div>
@@ -2375,10 +2413,10 @@ const gameElementCategories = [
                       
                       {unitSelectorStyle === "buttons" && (
                         <div className="flex space-x-2">
-                          <button className={`px-3 py-2 text-sm border rounded-lg ${heightUnit === "cm" ? "bg-purple-500 text-white border-purple-500" : "border-gray-300"}`}>
+                          <button className={`px-3 py-2 text-sm border rounded-lg ${heightUnit === "cm" ? "bg-gray-600 text-white border-gray-600" : "border-gray-300"}`}>
                             cm
                           </button>
-                          <button className={`px-3 py-2 text-sm border rounded-lg ${heightUnit === "ft" ? "bg-purple-500 text-white border-purple-500" : "border-gray-300"}`}>
+                          <button className={`px-3 py-2 text-sm border rounded-lg ${heightUnit === "ft" ? "bg-gray-600 text-white border-gray-600" : "border-gray-300"}`}>
                             ft
                           </button>
                         </div>
@@ -2387,22 +2425,10 @@ const gameElementCategories = [
                   )}
                 </div>
                 
-                {element.showBMICalculation && (
-                  <div className="mt-3 p-3 bg-purple-50 rounded-lg border border-purple-200">
-                    <div className="flex items-center gap-2 mb-2">
-                      <Activity className="w-4 h-4 text-purple-600" />
-                      <span className="text-sm font-medium text-purple-800">Integração com IMC</span>
-                    </div>
-                    <div className="text-xs text-purple-700">
-                      Será usado para calcular automaticamente o IMC quando combinado com o peso
-                    </div>
-                  </div>
-                )}
+                <div className="text-xs text-gray-500">
+                  Limite de 15 dígitos (altura em {heightUnit}) • Range: {heightUnit === "cm" ? "120-250cm" : "3.0-8.0ft"}
+                </div>
               </div>
-            </div>
-            
-            <div className="text-xs text-purple-600 text-center">
-              Elemento: Altura • Range: {heightUnit === "cm" ? "120-250cm" : "3-8ft"} • Unidade: {heightUnit.toUpperCase()}
             </div>
           </div>
         );
@@ -6946,16 +6972,32 @@ const gameElementCategories = [
                     <Label htmlFor="height-required">Campo obrigatório</Label>
                   </div>
 
-                  <div>
-                    <Label className="text-xs">Unidade</Label>
-                    <select 
-                      className="w-full px-2 py-1 border rounded text-xs mt-1"
-                      value={selectedElementData.unit || "cm"}
-                      onChange={(e) => updateElement(selectedElementData.id, { unit: e.target.value as "cm" | "m" })}
-                    >
-                      <option value="cm">Centímetros (cm)</option>
-                      <option value="m">Metros (m)</option>
-                    </select>
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <Label className="text-xs">Unidade de Medida</Label>
+                      <select 
+                        className="w-full px-2 py-1 border rounded text-xs mt-1"
+                        value={selectedElementData.heightUnit || "cm"}
+                        onChange={(e) => updateElement(selectedElementData.id, { heightUnit: e.target.value })}
+                      >
+                        <option value="cm">Centímetros (cm)</option>
+                        <option value="ft">Pés (ft)</option>
+                      </select>
+                    </div>
+
+                    <div>
+                      <Label className="text-xs">Largura do Elemento</Label>
+                      <select 
+                        className="w-full px-2 py-1 border rounded text-xs mt-1"
+                        value={selectedElementData.width || "100%"}
+                        onChange={(e) => updateElement(selectedElementData.id, { width: e.target.value })}
+                      >
+                        <option value="25%">25% da tela</option>
+                        <option value="50%">50% da tela</option>
+                        <option value="75%">75% da tela</option>
+                        <option value="100%">100% da tela</option>
+                      </select>
+                    </div>
                   </div>
 
                   <div>

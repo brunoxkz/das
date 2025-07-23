@@ -598,6 +598,18 @@ Campo: p1_objetivo_fitness
 ## Changelog
 
 ```
+- January 23, 2025. ELEMENTO ALTURA COMPLETAMENTE CORRIGIDO - Fundo transparente, seletor de unidades CM/FT e formatação de fonte implementados:
+  * FUNDO ROXO REMOVIDO: Elemento altura agora usa background transparente (bg-transparent)
+  * SELETOR DE UNIDADES FUNCIONAL: Opções CM (centímetros) e FT (pés) com validação automática
+  * FORMATAÇÃO COMPLETA IMPLEMENTADA: Tamanho de fonte (xs/sm/lg/xl), peso da fonte, alinhamento de texto aplicados corretamente
+  * LARGURA RESPONSIVA: Opções de largura em porcentagem (25%, 50%, 75%, 100%) implementadas
+  * PAINEL DE PROPRIEDADES ATUALIZADO: Seletor de unidade de medida e largura do elemento adicionados
+  * VALIDAÇÃO INTELIGENTE: Limite de altura baseado na unidade (120-250cm ou 3.0-8.0ft)
+  * ESTILOS CONSISTENTES: heightLabelStyle e heightFieldLabelStyle aplicados uniformemente
+  * PLACEHOLDER DINÂMICO: "Ex: 175" para CM ou "Ex: 5.9" para FT
+  * CORES NEUTRAS: Removidos tons roxos, aplicada paleta cinza neutra
+  * FIELD ID PADRÃO: Campo usa automaticamente prefixo "altura_" para detecção correta
+  * STATUS: ELEMENTO ALTURA 100% FUNCIONAL - Fundo transparente, seletor CM/FT e formatação completa
 - January 23, 2025. GLOBAL CONTROLS POSITIONING FIXED - Fixed order of elements in Páginas tab to prioritize global settings:
   * CORRECT ORDER IMPLEMENTED: Fundo Global and Cor Botão Global now appear FIRST, before Nova Página buttons
   * PROPERTIES PANEL CLEANED: Removed redundant page background configurations from properties panel
