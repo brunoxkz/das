@@ -2447,41 +2447,47 @@ const gameElementCategories = [
           rounded: "w-full p-3 border border-blue-200 rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500"
         };
         
+        const weightLabelStyle = `text-${element.fontSize || 'sm'} font-${element.fontWeight || 'normal'} text-${element.textAlign || 'left'}`;
+        const weightFieldLabelStyle = `text-${element.fontSize || 'sm'} font-${element.fontWeight || 'normal'} text-${element.textAlign || 'left'}`;
+        
         return (
           <div 
-            className="space-y-3 p-4 border-2 border-dashed rounded-lg"
-            style={{backgroundColor: element.inputBackgroundColor || "#eff6ff",
-              borderColor: element.inputBorderColor || "#e5e7eb"}}
+            className="space-y-3 p-4 border-2 border-dashed rounded-lg bg-transparent"
+            style={{
+              width: element.width || "100%",
+              borderColor: "#e5e7eb"
+            }}
           >
             <div className={`flex ${weightLabelPosition === "left" ? "flex-row items-center space-x-3" : "flex-col"} gap-2`}>
               {showWeightIcon && (
-                <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
-                  <Scale className="w-5 h-5" style={{color: element.iconColor || "#3b82f6"}} />
+                <div className="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center">
+                  <Scale className="w-5 h-5 text-gray-600" />
                 </div>
               )}
               <div>
-                <h3 
-                  className="font-semibold text-blue-800"
-                  style={{color: element.labelColor || "#1e40af"}}
-                >
+                <h3 className={weightLabelStyle}>
                   {element.question || "Peso Atual"}
                 </h3>
-                <p className="text-sm text-blue-600">
+                <p className={`text-xs text-gray-500 ${weightFieldLabelStyle}`}>
                   {element.description || "Capture o peso atual do usuário"}
                 </p>
               </div>
             </div>
             
-            <div className="bg-white rounded-lg p-4 shadow-sm">
+            <div className="bg-white rounded-lg p-4 shadow-sm" style={{ width: element.width || "100%" }}>
               <div className="space-y-3">
                 <div className="flex items-center space-x-2">
                   <input
                     type="number"
-                    placeholder={currentWeightUnit === "kg" ? "Ex: 70.5" : "Ex: 155"}
+                    placeholder={element.placeholder || (currentWeightUnit === "kg" ? "Ex: 70.5" : "Ex: 155")}
                     className={weightInputClasses[weightInputStyle]}
-                    style={{backgroundColor: element.inputBackgroundColor || (weightInputStyle === "filled" ? "#eff6ff" : "white"),
-                      borderColor: element.inputBorderColor || "#e5e7eb",
-                      fontSize: '18px'}}
+                    style={{
+                      backgroundColor: "white",
+                      borderColor: "#e5e7eb",
+                      fontSize: element.fontSize === 'xs' ? '12px' : element.fontSize === 'sm' ? '14px' : element.fontSize === 'lg' ? '18px' : element.fontSize === 'xl' ? '20px' : '16px',
+                      fontWeight: element.fontWeight || 'normal',
+                      textAlign: element.textAlign || 'left'
+                    }}
                     min={element.min || (currentWeightUnit === "kg" ? 30 : 66)}
                     max={element.max || (currentWeightUnit === "kg" ? 300 : 660)}
                     step={currentWeightUnit === "kg" ? 0.1 : 0.1}
@@ -2489,49 +2495,38 @@ const gameElementCategories = [
                   
                   {showWeightUnitSelector && (
                     <div className="flex-shrink-0">
-                      {weightUnitSelectorStyle === "dropdown" && (
-                        <select 
-                          className="p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                          value={currentWeightUnit}
-                        >
-                          <option value="kg">kg</option>
-                          <option value="lb">lb</option>
-                        </select>
-                      )}
-                      
-                      {weightUnitSelectorStyle === "tabs" && (
-                        <div className="flex bg-gray-100 rounded-lg p-1">
-                          <button className={`px-3 py-1 text-sm rounded ${currentWeightUnit === "kg" ? "bg-blue-500 text-white" : "text-gray-600"}`}>
-                            kg
-                          </button>
-                          <button className={`px-3 py-1 text-sm rounded ${currentWeightUnit === "lb" ? "bg-blue-500 text-white" : "text-gray-600"}`}>
-                            lb
-                          </button>
-                        </div>
-                      )}
-                      
-                      {weightUnitSelectorStyle === "buttons" && (
-                        <div className="flex space-x-2">
-                          <button className={`px-3 py-2 text-sm border rounded-lg ${currentWeightUnit === "kg" ? "bg-blue-500 text-white border-blue-500" : "border-gray-300"}`}>
-                            kg
-                          </button>
-                          <button className={`px-3 py-2 text-sm border rounded-lg ${currentWeightUnit === "lb" ? "bg-blue-500 text-white border-blue-500" : "border-gray-300"}`}>
-                            lb
-                          </button>
-                        </div>
-                      )}
+                      <div className="flex bg-gray-100 rounded-lg p-1">
+                        <button className={`px-3 py-1 text-sm rounded ${currentWeightUnit === "kg" ? "bg-gray-600 text-white" : "text-gray-600"}`}>
+                          kg
+                        </button>
+                        <button className={`px-3 py-1 text-sm rounded ${currentWeightUnit === "lb" ? "bg-gray-600 text-white" : "text-gray-600"}`}>
+                          lb
+                        </button>
+                      </div>
                     </div>
                   )}
                 </div>
                 
-                {element.showBMICalculation && (
-                  <div className="mt-3 p-3 bg-blue-50 rounded-lg border border-blue-200">
+                {element.showBMICalculation && element.heightFieldId && (
+                  <div className="mt-3 p-3 bg-green-50 rounded-lg border border-green-200">
                     <div className="flex items-center gap-2 mb-2">
-                      <Activity className="w-4 h-4 text-blue-600" />
-                      <span className="text-sm font-medium text-blue-800">Cálculo automático do IMC</span>
+                      <Activity className="w-4 h-4 text-green-600" />
+                      <span className="text-sm font-medium text-green-800">IMC será calculado automaticamente</span>
                     </div>
-                    <div className="text-xs text-blue-700">
-                      Será calculado automaticamente quando altura e peso forem preenchidos
+                    <div className="text-xs text-green-700">
+                      Sincronizado com campo altura: {element.heightFieldId}
+                    </div>
+                  </div>
+                )}
+                
+                {element.showBMICalculation && !element.heightFieldId && (
+                  <div className="mt-3 p-3 bg-red-50 rounded-lg border border-red-200">
+                    <div className="flex items-center gap-2 mb-2">
+                      <Activity className="w-4 h-4 text-red-600" />
+                      <span className="text-sm font-medium text-red-800">⚠️ ID do campo altura não configurado</span>
+                    </div>
+                    <div className="text-xs text-red-700">
+                      Configure o ID do campo altura nas propriedades para ativar o cálculo do IMC
                     </div>
                   </div>
                 )}
@@ -7081,15 +7076,22 @@ const gameElementCategories = [
                     </div>
 
                     {selectedElementData.showBMICalculation && (
-                      <div className="p-3 bg-green-50 border border-green-200 rounded-lg">
+                      <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
                         <div className="flex items-center gap-2 mb-2">
-                          <Activity className="w-4 h-4 text-green-600" />
-                          <span className="font-medium text-green-800">Sincronização IMC Ativa</span>
+                          <Activity className="w-4 h-4 text-red-600" />
+                          <span className="font-medium text-red-800">**IMPORTANTE**: ID do Campo ALTURA Obrigatório</span>
                         </div>
-                        <div className="text-xs text-green-700 space-y-1">
-                          <div>• IMC será calculado automaticamente quando altura e peso forem preenchidos</div>
-                          <div>• Certifique-se de ter um elemento "Altura" no seu formulário</div>
-                          <div>• O cálculo aparecerá em tempo real durante o preenchimento</div>
+                        <div className="text-xs text-red-700 space-y-2">
+                          <div>**Para calcular o IMC, você DEVE colar aqui o ID do campo ALTURA:**</div>
+                          <Input
+                            value={selectedElementData.heightFieldId || ""}
+                            onChange={(e) => updateElement(selectedElementData.id, { heightFieldId: e.target.value })}
+                            placeholder="**COLE AQUI O ID DO CAMPO ALTURA**"
+                            className="mt-1 border-red-300 focus:ring-red-500"
+                          />
+                          <div className="text-xs text-red-600">
+                            **SEM ESSE ID, O IMC NÃO SERÁ CALCULADO. Vá no elemento altura e copie o "ID do Campo"**
+                          </div>
                         </div>
                       </div>
                     )}
@@ -7109,17 +7111,90 @@ const gameElementCategories = [
                     </div>
                   </div>
 
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <Label className="text-xs">Unidade de Peso</Label>
+                      <select 
+                        className="w-full px-2 py-1 border rounded text-xs mt-1"
+                        value={selectedElementData.weightUnit || "kg"}
+                        onChange={(e) => updateElement(selectedElementData.id, { weightUnit: e.target.value })}
+                      >
+                        <option value="kg">Quilogramas (kg)</option>
+                        <option value="lb">Libras (lb)</option>
+                      </select>
+                    </div>
+
+                    <div>
+                      <Label className="text-xs">Largura do Elemento</Label>
+                      <select 
+                        className="w-full px-2 py-1 border rounded text-xs mt-1"
+                        value={selectedElementData.width || "100%"}
+                        onChange={(e) => updateElement(selectedElementData.id, { width: e.target.value })}
+                      >
+                        <option value="25%">25% da tela</option>
+                        <option value="50%">50% da tela</option>
+                        <option value="75%">75% da tela</option>
+                        <option value="100%">100% da tela</option>
+                      </select>
+                    </div>
+                  </div>
+
                   <div>
-                    <Label htmlFor="weight-response-id">ID da Resposta (para usar como variável)</Label>
+                    <Label className="text-xs">Placeholder do Campo</Label>
                     <Input
-                      id="weight-response-id"
-                      value={selectedElementData.responseId || ""}
-                      onChange={(e) => updateElement(selectedElementData.id, { responseId: e.target.value })}
+                      value={selectedElementData.placeholder || ""}
+                      onChange={(e) => updateElement(selectedElementData.id, { placeholder: e.target.value })}
                       className="mt-1"
-                      placeholder="peso_atual_resposta"
+                      placeholder="Ex: Digite seu peso"
                     />
-                    <div className="text-xs text-gray-500 mt-1">
-                      Use {`{peso_atual_resposta}`} em campanhas SMS/Email/WhatsApp
+                  </div>
+
+                  <div className="space-y-3">
+                    <Label className="text-xs font-semibold">Formatação de Texto</Label>
+                    
+                    <div className="grid grid-cols-3 gap-2">
+                      <div>
+                        <Label className="text-xs">Tamanho da Fonte</Label>
+                        <select 
+                          className="w-full px-2 py-1 border rounded text-xs mt-1"
+                          value={selectedElementData.fontSize || "md"}
+                          onChange={(e) => updateElement(selectedElementData.id, { fontSize: e.target.value })}
+                        >
+                          <option value="xs">Extra Pequeno</option>
+                          <option value="sm">Pequeno</option>
+                          <option value="md">Médio</option>
+                          <option value="lg">Grande</option>
+                          <option value="xl">Extra Grande</option>
+                        </select>
+                      </div>
+
+                      <div>
+                        <Label className="text-xs">Peso da Fonte</Label>
+                        <select 
+                          className="w-full px-2 py-1 border rounded text-xs mt-1"
+                          value={selectedElementData.fontWeight || "normal"}
+                          onChange={(e) => updateElement(selectedElementData.id, { fontWeight: e.target.value })}
+                        >
+                          <option value="light">Leve</option>
+                          <option value="normal">Normal</option>
+                          <option value="medium">Médio</option>
+                          <option value="semibold">Semi Negrito</option>
+                          <option value="bold">Negrito</option>
+                        </select>
+                      </div>
+
+                      <div>
+                        <Label className="text-xs">Alinhamento</Label>
+                        <select 
+                          className="w-full px-2 py-1 border rounded text-xs mt-1"
+                          value={selectedElementData.textAlign || "left"}
+                          onChange={(e) => updateElement(selectedElementData.id, { textAlign: e.target.value })}
+                        >
+                          <option value="left">Esquerda</option>
+                          <option value="center">Centro</option>
+                          <option value="right">Direita</option>
+                        </select>
+                      </div>
                     </div>
                   </div>
 

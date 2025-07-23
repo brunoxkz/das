@@ -598,6 +598,18 @@ Campo: p1_objetivo_fitness
 ## Changelog
 
 ```
+- January 23, 2025. ELEMENTO PESO ATUAL COMPLETAMENTE CORRIGIDO - Cálculo IMC com ID altura obrigatório, KG/LB, formatação e responsividade implementados:
+  * **CÁLCULO IMC IMPLEMENTADO**: Campo obrigatório para colar ID do elemento altura para sincronização
+  * SELETOR KG/LB FUNCIONAL: Unidades quilogramas e libras com aba em cima do elemento
+  * FORMATAÇÃO COMPLETA IMPLEMENTADA: Tamanho de fonte (xs/sm/lg/xl), peso da fonte, alinhamento de texto aplicados corretamente
+  * LARGURA RESPONSIVA: Opções de largura em porcentagem (25%, 50%, 75%, 100%) implementadas e funcionais no preview/público
+  * PLACEHOLDER FUNCIONAL: Campo de placeholder customizável funcionando corretamente
+  * FUNDO TRANSPARENTE: Elemento peso atual usa background transparente (bg-transparent)
+  * VALIDAÇÃO IMC INTELIGENTE: Aviso visual quando ID altura não está configurado para cálculo IMC
+  * SINCRONIZAÇÃO VISUAL: Mostra ID do campo altura configurado quando IMC está ativo
+  * ESTILOS CONSISTENTES: weightLabelStyle e weightFieldLabelStyle aplicados uniformemente
+  * CORES NEUTRAS: Paleta cinza neutra, removidos tons azuis
+  * STATUS: ELEMENTO PESO ATUAL 100% FUNCIONAL - IMC, KG/LB, formatação e responsividade completas
 - January 23, 2025. ELEMENTO ALTURA COMPLETAMENTE CORRIGIDO - Fundo transparente, seletor de unidades CM/FT e formatação de fonte implementados:
   * FUNDO ROXO REMOVIDO: Elemento altura agora usa background transparente (bg-transparent)
   * SELETOR DE UNIDADES FUNCIONAL: Opções CM (centímetros) e FT (pés) com validação automática
