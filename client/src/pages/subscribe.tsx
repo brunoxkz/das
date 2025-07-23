@@ -183,11 +183,16 @@ export default function Subscribe() {
     }
 
     setSelectedPlan(planId);
-    toast({
-      title: "Funcionalidade em desenvolvimento",
-      description: "A integração com pagamentos ainda está sendo implementada.",
-      variant: "default",
-    });
+    
+    // Redirecionar para a página de checkout correspondente
+    if (planId === 'premium') {
+      window.location.href = '/assinatura';
+    } else if (planId === 'enterprise') {
+      window.location.href = '/checkout-admin';
+    } else {
+      // Fallback para checkout geral
+      window.location.href = '/checkout-stripe-final';
+    }
   };
 
   const handleCreditPurchase = (type: string, packageId: string) => {
