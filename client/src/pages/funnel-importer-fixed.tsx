@@ -27,7 +27,7 @@ export default function FunnelImporter() {
 
   // Buscar dados do usuário e limites do plano
   const { data: userData } = useQuery({
-    queryKey: ['/api/auth/user']
+    queryKey: ['/api/auth/verify']
   });
 
   const { data: userQuizzes } = useQuery({
