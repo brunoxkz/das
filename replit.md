@@ -598,6 +598,15 @@ Campo: p1_objetivo_fitness
 ## Changelog
 
 ```
+- January 23, 2025. GLOBAL CONTROLS POSITIONING FIXED - Fixed order of elements in Páginas tab to prioritize global settings:
+  * CORRECT ORDER IMPLEMENTED: Fundo Global and Cor Botão Global now appear FIRST, before Nova Página buttons
+  * PROPERTIES PANEL CLEANED: Removed redundant page background configurations from properties panel
+  * NOMENCLATURE STANDARDIZED: "Cor Botão Global" maintained as consistent terminology
+  * UI CONSISTENCY: Applied text-xs font-semibold styling and compact p-2 padding throughout
+  * INTERFACE SEPARATION: Clean distinction between global settings (páginas tab) and element properties
+  * EXPANDABLE SECTIONS: Maintained proper ChevronDown icons and state management for collapsible sections
+  * USER INSTRUCTIONS: Updated guidance to reference "Páginas" tab for global configurations
+  * STATUS: Global controls now properly positioned as primary elements in páginas interface
 - January 23, 2025. LOADING QUESTION ELEMENT ENHANCEMENT COMPLETED - Text now fully editable and removable, silent response registration implemented:
   * EDITABLE LOADING TEXT: Loading text field now accepts empty string, shows placeholder "Deixe vazio para não mostrar texto"
   * CONDITIONAL TEXT RENDERING: Loading text only displays if provided, completely optional display 

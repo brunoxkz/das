@@ -5023,37 +5023,8 @@ const gameElementCategories = [
               </div>
             ))}
           </div>
-          <div className="space-y-3">
-            <ModernButton
-              onClick={addPage}
-              variant="secondary"
-              size="sm"
-              className="w-full"
-              leftIcon={<Plus className="w-4 h-4" />}
-            >
-              Nova Página
-            </ModernButton>
-            <ModernButton
-              onClick={addTransitionPage}
-              variant="secondary"
-              size="sm"
-              className="w-full bg-gradient-to-r from-purple-50 to-pink-50 border-purple-200 hover:border-purple-300 hover:from-purple-100 hover:to-pink-100"
-              leftIcon={<Sparkles className="w-4 h-4" />}
-            >
-              Nova Transição
-            </ModernButton>
-            <Button
-              onClick={addGamePage}
-              variant="outline"
-              size="sm"
-              className="w-full justify-center bg-gradient-to-r from-orange-50 to-red-50 border-orange-200 hover:border-orange-300"
-            >
-              <BarChart3 className="w-4 h-4 mr-2" />
-              Páginas de Jogo
-            </Button>
-          </div>
 
-          {/* Seções Compactas e Expansíveis - ORDEM CORRIGIDA */}
+          {/* PRIMEIRO: Seções Compactas e Expansíveis - Fundo Global e Cor Botão Global */}
           <div className="space-y-2 pt-4 border-t">
             {/* Fundo Global - PRIMEIRO */}
             <div className="border border-gray-200 rounded-lg overflow-hidden">
@@ -5212,6 +5183,37 @@ const gameElementCategories = [
                 </div>
               )}
             </div>
+          </div>
+
+          {/* APÓS as configurações globais: Botões de Nova Página */}
+          <div className="space-y-3 pt-4 border-t">
+            <ModernButton
+              onClick={addPage}
+              variant="secondary"
+              size="sm"
+              className="w-full"
+              leftIcon={<Plus className="w-4 h-4" />}
+            >
+              Nova Página
+            </ModernButton>
+            <ModernButton
+              onClick={addTransitionPage}
+              variant="secondary"
+              size="sm"
+              className="w-full bg-gradient-to-r from-purple-50 to-pink-50 border-purple-200 hover:border-purple-300 hover:from-purple-100 hover:to-pink-100"
+              leftIcon={<Sparkles className="w-4 h-4" />}
+            >
+              Nova Transição
+            </ModernButton>
+            <Button
+              onClick={addGamePage}
+              variant="outline"
+              size="sm"
+              className="w-full justify-center bg-gradient-to-r from-orange-50 to-red-50 border-orange-200 hover:border-orange-300"
+            >
+              <BarChart3 className="w-4 h-4 mr-2" />
+              Páginas de Jogo
+            </Button>
           </div>
         </div>
       </div>
