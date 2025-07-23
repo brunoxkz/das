@@ -703,6 +703,8 @@ interface PageEditorProps {
   onThemeChange?: (theme: "light" | "dark" | "custom", customColor?: string) => void;
   onActivePageChange?: (pageIndex: number) => void;
   activePageIndex?: number;
+  defaultButtonColor?: string;
+  defaultButtonTextColor?: string;
 }
 
 export function PageEditorHorizontal({ 
@@ -712,7 +714,9 @@ export function PageEditorHorizontal({
   customBackgroundColor: initialCustomBackgroundColor = "#ffffff",
   onThemeChange,
   onActivePageChange,
-  activePageIndex = 0
+  activePageIndex = 0,
+  defaultButtonColor = "#10b981",
+  defaultButtonTextColor = "#ffffff"
 }: PageEditorProps) {
 
   const [activePage, setActivePage] = useState(activePageIndex);
@@ -1356,9 +1360,9 @@ const gameElementCategories = [
         buttonAction: "next_page" as const,
         buttonSize: "medium" as const,
         buttonBorderRadius: "medium" as const,
-        buttonBackgroundColor: "#10B981",
-        buttonTextColor: "#FFFFFF",
-        buttonHoverColor: "#059669",
+        buttonBackgroundColor: defaultButtonColor, // 🎨 Usa cor padrão configurada no quiz
+        buttonTextColor: defaultButtonTextColor, // 🎨 Usa cor de texto padrão configurada no quiz
+        buttonHoverColor: defaultButtonColor === "#10b981" ? "#059669" : defaultButtonColor, // Hover inteligente
         isFixedFooter: false
       }),
       // 🔥 NOVA FUNCIONALIDADE: Configurações padrão para classificadores ultra personalizados
