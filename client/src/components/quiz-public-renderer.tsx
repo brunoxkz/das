@@ -998,25 +998,49 @@ export function QuizPublicRenderer({ quiz }: QuizPublicRendererProps) {
         );
 
       case 'number':
+        // Aplicar estilos de formatação de texto para número
+        const numberFieldLabelStyle = {
+          fontSize: properties?.fontSize === "xs" ? "12px" : 
+                   properties?.fontSize === "sm" ? "14px" : 
+                   properties?.fontSize === "lg" ? "18px" : 
+                   properties?.fontSize === "xl" ? "20px" : "16px",
+          fontWeight: properties?.fontWeight || "500",
+          color: properties?.textColor || "#374151",
+          textAlign: (properties?.textAlign || "left") as any,
+        };
+
+        // Largura em porcentagem da tela
+        const numberWidthPercentage = properties?.widthPercentage || 100;
+        const numberContainerWidth = `${Math.min(Math.max(numberWidthPercentage, 10), 100)}%`;
+
+        // Limite de dígitos (padrão 15, não editável)
+        const digitLimit = properties?.digitLimit || 15;
+
         return (
-          <div key={id} className="space-y-4">
-            {(properties?.question || properties?.label) && (
-              <h3 
-                className={`text-lg font-semibold${getElementClasses(properties)}`}
-                style={getElementStyles(properties)}
-              >
-                {properties?.question || properties?.label || 'Número'}
+          <div key={id} className="w-full" style={{ width: numberContainerWidth, maxWidth: numberContainerWidth }}>
+            <div className="space-y-4">
+              <h3 style={numberFieldLabelStyle}>
+                {properties?.question || 'Número'}
+                {properties?.required && <span className="text-red-500 ml-1">*</span>}
               </h3>
-            )}
-            <Input
-              type="number"
-              placeholder={properties?.placeholder || 'Digite um número'}
-              value={answer || ''}
-              onChange={(e) => handleElementAnswer(id, type, Number(e.target.value), properties?.fieldId)}
-              required={properties?.required}
-              min={properties?.min}
-              max={properties?.max}
-            />
+              <Input
+                type="text"
+                inputMode="numeric"
+                pattern="[0-9]*"
+                placeholder={properties?.placeholder || 'Digite um número'}
+                value={answer || ''}
+                onChange={(e) => {
+                  // Permitir apenas números e limitar ao número de dígitos configurado
+                  const value = e.target.value.replace(/\D/g, '').slice(0, digitLimit);
+                  handleElementAnswer(id, type, value, properties?.fieldId);
+                }}
+                maxLength={digitLimit}
+                required={properties?.required}
+              />
+              <div className="text-xs text-gray-500 text-right">
+                {(answer || '').toString().length}/{digitLimit} dígitos (limite fixo para números)
+              </div>
+            </div>
           </div>
         );
 

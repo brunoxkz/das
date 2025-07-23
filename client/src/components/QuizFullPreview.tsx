@@ -209,6 +209,55 @@ const ElementRenderer = ({ element }: { element: QuizElement }) => {
         </div>
       );
 
+    case 'number':
+      // Aplicar estilos de formatação de texto para número
+      const numberLabelStyle = {
+        fontSize: properties.fontSize === "xs" ? "12px" : 
+                 properties.fontSize === "sm" ? "14px" : 
+                 properties.fontSize === "lg" ? "18px" : 
+                 properties.fontSize === "xl" ? "20px" : "16px",
+        fontWeight: properties.fontWeight || "500",
+        color: properties.textColor || properties.color || "#374151",
+        textAlign: (properties.textAlign || "left") as any,
+      };
+
+      // Largura em porcentagem da tela
+      const numberWidthPercentage = properties.widthPercentage || 100;
+      const numberContainerWidth = `${Math.min(Math.max(numberWidthPercentage, 10), 100)}%`;
+
+      // Limite de dígitos (padrão 15, não editável)
+      const digitLimit = properties.digitLimit || 15;
+
+      return (
+        <div 
+          className={getElementStyle()}
+          style={{ width: numberContainerWidth, maxWidth: numberContainerWidth }}
+        >
+          {properties.question && (
+            <label className="block mb-2" style={numberLabelStyle}>
+              {properties.question.slice(0, 200)}
+              {properties.question && properties.question.length > 200 && '...'}
+            </label>
+          )}
+          <input
+            type="text"
+            inputMode="numeric"
+            pattern="[0-9]*"
+            placeholder={properties.placeholder || 'Digite um número'}
+            className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+            style={{ 
+              backgroundColor: properties.backgroundColor || '#ffffff',
+              borderColor: properties.borderColor || '#cccccc'
+            }}
+            maxLength={digitLimit}
+            disabled
+          />
+          <div className="text-xs text-gray-500 text-right mt-1">
+            0/{digitLimit} dígitos (limite fixo para números)
+          </div>
+        </div>
+      );
+
     case 'multiple_choice':
       return (
         <div className={getElementStyle()}>

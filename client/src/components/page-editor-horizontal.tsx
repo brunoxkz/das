@@ -6182,24 +6182,29 @@ const gameElementCategories = [
                   </div>
 
                   <div>
-                    <Label htmlFor="maxLength">Limite de Caracteres</Label>
+                    <Label htmlFor="maxLength">{selectedElementData.type === "number" ? "Limite de Dígitos" : "Limite de Caracteres"}</Label>
                     <Input
                       id="maxLength"
                       type="number"
-                      value={selectedElementData.maxLength || (selectedElementData.type === "text" ? "200" : selectedElementData.type === "email" ? "150" : selectedElementData.type === "phone" ? "20" : "")}
+                      value={selectedElementData.maxLength || selectedElementData.digitLimit || (selectedElementData.type === "text" ? "200" : selectedElementData.type === "email" ? "150" : selectedElementData.type === "phone" ? "20" : selectedElementData.type === "number" ? "15" : "")}
                       onChange={(e) => {
-                        const maxValue = selectedElementData.type === "text" ? 200 : selectedElementData.type === "email" ? 150 : selectedElementData.type === "phone" ? 20 : 500;
+                        const maxValue = selectedElementData.type === "text" ? 200 : selectedElementData.type === "email" ? 150 : selectedElementData.type === "phone" ? 20 : selectedElementData.type === "number" ? 15 : 500;
                         const value = Math.min(parseInt(e.target.value) || maxValue, maxValue);
-                        updateElement(selectedElementData.id, { maxLength: value });
+                        if (selectedElementData.type === "number") {
+                          updateElement(selectedElementData.id, { digitLimit: value });
+                        } else {
+                          updateElement(selectedElementData.id, { maxLength: value });
+                        }
                       }}
-                      max={selectedElementData.type === "text" ? "200" : selectedElementData.type === "email" ? "150" : selectedElementData.type === "phone" ? "20" : "500"}
+                      max={selectedElementData.type === "text" ? "200" : selectedElementData.type === "email" ? "150" : selectedElementData.type === "phone" ? "20" : selectedElementData.type === "number" ? "15" : "500"}
                       min="1"
                       className="mt-1"
-                      placeholder={selectedElementData.type === "text" ? "Máx: 200" : selectedElementData.type === "email" ? "Máx: 150" : selectedElementData.type === "phone" ? "Máx: 20" : "Ex: 100"}
+                      placeholder={selectedElementData.type === "text" ? "Máx: 200" : selectedElementData.type === "email" ? "Máx: 150" : selectedElementData.type === "phone" ? "Máx: 20" : selectedElementData.type === "number" ? "Máx: 15" : "Ex: 100"}
+                      readOnly={selectedElementData.type === "number"}
                     />
-                    {(selectedElementData.type === "text" || selectedElementData.type === "email" || selectedElementData.type === "phone") && (
+                    {(selectedElementData.type === "text" || selectedElementData.type === "email" || selectedElementData.type === "phone" || selectedElementData.type === "number") && (
                       <p className="text-xs text-orange-600 mt-1">
-                        ⚠️ Campos {selectedElementData.type === "text" ? "de texto limitados a 200" : selectedElementData.type === "email" ? "de email limitados a 150" : "de telefone limitados a 20"} caracteres por segurança
+                        ⚠️ Campos {selectedElementData.type === "text" ? "de texto limitados a 200 caracteres" : selectedElementData.type === "email" ? "de email limitados a 150 caracteres" : selectedElementData.type === "phone" ? "de telefone limitados a 20 caracteres" : selectedElementData.type === "number" ? "de número limitados a 15 dígitos (não editável)" : ""} por segurança
                       </p>
                     )}
                   </div>
@@ -6221,12 +6226,17 @@ const gameElementCategories = [
                       value={selectedElementData.fieldId || ""}
                       onChange={(e) => updateElement(selectedElementData.id, { fieldId: e.target.value })}
                       className="mt-1"
-                      placeholder={selectedElementData.type === "phone" ? "telefone_" : "campo_email"}
-                      readOnly={selectedElementData.type === "phone"}
+                      placeholder={selectedElementData.type === "phone" ? "telefone_" : selectedElementData.type === "number" ? "numero_" : "campo_email"}
+                      readOnly={selectedElementData.type === "phone" || selectedElementData.type === "number"}
                     />
                     {selectedElementData.type === "phone" && (
                       <p className="text-xs text-muted-foreground mt-1">
                         Campos de telefone usam automaticamente o prefixo "telefone_" para garantir a detecção correta.
+                      </p>
+                    )}
+                    {selectedElementData.type === "number" && (
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Campos de número usam automaticamente o prefixo "numero_" para garantir a detecção correta.
                       </p>
                     )}
                   </div>
