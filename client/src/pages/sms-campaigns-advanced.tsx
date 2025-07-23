@@ -697,6 +697,26 @@ export default function SMSCampaignsAdvanced() {
                             const isQuantum = type.isQuantum || type.id.includes('quantum');
                             const isSelected = form.type === type.id;
                             
+                            // ROI percentages for each campaign type
+                            const getROIPercentage = () => {
+                              // Remarketing campaigns: +12%, +28%, +34%
+                              if (type.id === 'remarketing') return '+12%';
+                              if (type.id === 'quantum_remarketing') return '+28%';
+                              if (type.id === 'advanced_remarketing') return '+34%';
+                              
+                              // Ao vivo (live) campaigns: +22%, +38%, +44% (10% more than remarketing)
+                              if (type.id === 'automation') return '+22%';
+                              if (type.id === 'quantum_live') return '+38%';
+                              if (type.id === 'intelligent_automation') return '+44%';
+                              
+                              // Other campaigns get base ROI
+                              if (type.id === 'mass') return '+15%';
+                              if (type.id === 'scheduled') return '+18%';
+                              if (type.id === 'personalized') return '+25%';
+                              
+                              return '+10%';
+                            };
+                            
                             return (
                               <Card 
                                 key={type.id}
@@ -719,6 +739,11 @@ export default function SMSCampaignsAdvanced() {
                                 }}
                               >
                                 <CardContent className="p-3 h-full xl:p-2">
+                                  {/* ROI Seal - Left Side */}
+                                  <div className="absolute top-0 left-0 bg-gradient-to-r from-green-600 to-emerald-600 text-white text-xs px-2 py-1 rounded-br-lg font-bold">
+                                    ROI {getROIPercentage()}
+                                  </div>
+                                  
                                   {isQuantum && (
                                     <div className="absolute top-0 right-0 bg-gradient-to-l from-purple-600 to-blue-600 text-white text-xs px-2 py-1 rounded-bl-lg font-medium">
                                       QUANTUM
@@ -727,7 +752,7 @@ export default function SMSCampaignsAdvanced() {
                                   
                                   {/* Indicador de seleção */}
                                   {isSelected && (
-                                    <div className="absolute top-2 left-2 w-3 h-3 bg-blue-500 rounded-full flex items-center justify-center">
+                                    <div className="absolute top-2 left-2 w-3 h-3 bg-blue-500 rounded-full flex items-center justify-center z-10">
                                       <CheckSquare className="w-2 h-2 text-white" />
                                     </div>
                                   )}
