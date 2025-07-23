@@ -699,17 +699,17 @@ export default function SMSCampaignsAdvanced() {
                             
                             // ROI percentages for each campaign type
                             const getROIPercentage = () => {
-                              // Remarketing campaigns: +12%, +28%, +34%
+                              // Remarketing campaigns
                               if (type.id === 'remarketing') return '+12%';
+                              if (type.id === 'remarketing_custom') return '+23%'; // Remarketing Inteligente
                               if (type.id === 'quantum_remarketing') return '+28%';
-                              if (type.id === 'advanced_remarketing') return '+34%';
                               
-                              // Ao vivo (live) campaigns: +22%, +38%, +32%
-                              if (type.id === 'automation') return '+22%';
+                              // Ao vivo (live) campaigns
+                              if (type.id === 'live') return '+22%'; // Disparo ao Vivo
+                              if (type.id === 'live_custom') return '+32%'; // Ao Vivo Inteligente  
                               if (type.id === 'quantum_live') return '+38%';
-                              if (type.id === 'intelligent_automation') return '+23%'; // Remarketing Inteligente
                               
-                              // Other campaigns get base ROI - removing mass and external_platform
+                              // Outras campanhas com ROI
                               if (type.id === 'scheduled') return '+18%';
                               if (type.id === 'personalized') return '+25%';
                               
