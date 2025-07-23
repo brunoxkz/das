@@ -768,49 +768,179 @@ export default function SuperAnalytics() {
               </div>
             ) : (
               <>
-                {/* Tabela de Leads */}
+                {/* Tabela de Leads - Layout Excel */}
                 <div className="overflow-x-auto">
-                  <table className="w-full border-collapse">
+                  <table className="w-full border-collapse border border-gray-300" style={{fontSize: '12px'}}>
                     <thead>
-                      <tr className="border-b bg-gray-50">
-                        <th className="text-left p-3 font-semibold min-w-[120px]">Submetido em</th>
-                        <th className="text-left p-3 font-semibold min-w-[100px]">Status</th>
-                        {allFields.map(field => (
-                          <th key={field} className="text-left p-3 font-semibold min-w-[150px]">
-                            {field.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                      {/* Linha de cabeçalho principal - Páginas */}
+                      <tr className="bg-gray-100 border-b-2 border-gray-400">
+                        <th className="border border-gray-300 p-2 font-bold min-w-[80px] bg-gray-200">Lead #</th>
+                        <th className="border border-gray-300 p-2 font-bold min-w-[100px] bg-gray-200">Data/Hora</th>
+                        <th className="border border-gray-300 p-2 font-bold min-w-[70px] bg-gray-200">Status</th>
+                        <th className="border border-gray-300 p-2 font-bold min-w-[120px] bg-blue-100">Dados Pessoais</th>
+                        {allFields.filter(field => field.startsWith('p')).sort((a, b) => {
+                          const aNum = parseInt(a.match(/^p(\d+)_/)?.[1] || '0');
+                          const bNum = parseInt(b.match(/^p(\d+)_/)?.[1] || '0');
+                          return aNum - bNum;
+                        }).map((field, index) => (
+                          <th key={field} className="border border-gray-300 p-2 font-bold min-w-[150px] bg-green-100">
+                            Página {index + 1}
+                            <div className="text-xs font-normal text-gray-600 mt-1">
+                              {field.replace(/^p\d+_/, '').replace(/_/g, ' ')}
+                            </div>
                           </th>
                         ))}
+                        <th className="border border-gray-300 p-2 font-bold min-w-[100px] bg-purple-100">Progresso</th>
+                      </tr>
+                      
+                      {/* Linha de sub-cabeçalho - Detalhes */}
+                      <tr className="bg-gray-50 border-b border-gray-300">
+                        <td className="border border-gray-300 p-1 text-xs text-center font-medium">ID</td>
+                        <td className="border border-gray-300 p-1 text-xs text-center font-medium">Submissão</td>
+                        <td className="border border-gray-300 p-1 text-xs text-center font-medium">Completo</td>
+                        <td className="border border-gray-300 p-1 text-xs text-center font-medium">Nome | Email | Telefone</td>
+                        {allFields.filter(field => field.startsWith('p')).sort((a, b) => {
+                          const aNum = parseInt(a.match(/^p(\d+)_/)?.[1] || '0');
+                          const bNum = parseInt(b.match(/^p(\d+)_/)?.[1] || '0');
+                          return aNum - bNum;
+                        }).map(field => (
+                          <td key={field} className="border border-gray-300 p-1 text-xs text-center font-medium">
+                            Resposta | Tempo na Página
+                          </td>
+                        ))}
+                        <td className="border border-gray-300 p-1 text-xs text-center font-medium">% Completo</td>
                       </tr>
                     </thead>
                     <tbody>
-                      {currentLeads.map((lead, index) => (
-                        <tr key={lead.id || index} className="border-b hover:bg-gray-50">
-                          <td className="p-3 text-sm">
+                      {currentLeads.map((lead, leadIndex) => (
+                        <tr key={lead.id || leadIndex} className="hover:bg-yellow-50 border-b border-gray-200">
+                          {/* ID do Lead */}
+                          <td className="border border-gray-300 p-2 text-center font-mono font-bold">
+                            #{leadIndex + startIndex + 1}
+                          </td>
+                          
+                          {/* Data/Hora */}
+                          <td className="border border-gray-300 p-2 text-xs">
                             <div className="font-mono">
-                              {formatDate(lead.submittedAt || new Date().toISOString())}
+                              {formatDate(lead.submittedAt || new Date().toISOString()).split(' ')[0]}
+                            </div>
+                            <div className="font-mono text-gray-500">
+                              {formatDate(lead.submittedAt || new Date().toISOString()).split(' ')[1]}
                             </div>
                           </td>
-                          <td className="p-3">
+                          
+                          {/* Status */}
+                          <td className="border border-gray-300 p-2 text-center">
                             <Badge 
                               variant={lead.isComplete ? "default" : "secondary"}
                               className="text-xs"
                             >
-                              {lead.isComplete ? "✅ Completo" : "⏸️ Parcial"}
+                              {lead.isComplete ? "✅" : "⏸️"}
                             </Badge>
                           </td>
-                          {allFields.map(field => {
+                          
+                          {/* Dados Pessoais Consolidados */}
+                          <td className="border border-gray-300 p-2 text-xs">
+                            <div className="space-y-1">
+                              <div className="font-semibold text-blue-700">
+                                {getFieldValue(lead, 'nome') || getFieldValue(lead, 'name') || getFieldValue(lead, 'firstName') || '-'}
+                              </div>
+                              <div className="text-gray-600">
+                                {getFieldValue(lead, 'email') || getFieldValue(lead, 'email_contato') || '-'}
+                              </div>
+                              <div className="text-gray-600">
+                                {getFieldValue(lead, 'telefone') || getFieldValue(lead, 'telefone_contato') || getFieldValue(lead, 'phone') || '-'}
+                              </div>
+                            </div>
+                          </td>
+                          
+                          {/* Páginas/Etapas */}
+                          {allFields.filter(field => field.startsWith('p')).sort((a, b) => {
+                            const aNum = parseInt(a.match(/^p(\d+)_/)?.[1] || '0');
+                            const bNum = parseInt(b.match(/^p(\d+)_/)?.[1] || '0');
+                            return aNum - bNum;
+                          }).map((field, pageIndex) => {
                             const value = getFieldValue(lead, field);
+                            const hasValue = value !== '-';
                             return (
-                              <td key={field} className="p-3 text-sm max-w-[200px]">
-                                <div className="truncate" title={value}>
-                                  {value}
+                              <td key={field} className={`border border-gray-300 p-2 text-xs ${hasValue ? 'bg-green-50' : 'bg-red-50'}`}>
+                                <div className="space-y-1">
+                                  <div className={`font-semibold ${hasValue ? 'text-green-700' : 'text-red-500'}`}>
+                                    {hasValue ? value : 'Não respondido'}
+                                  </div>
+                                  <div className="text-gray-500 text-xs">
+                                    {hasValue ? '✓ Completado' : '✗ Abandonado'}
+                                  </div>
                                 </div>
                               </td>
                             );
                           })}
+                          
+                          {/* Progresso Total */}
+                          <td className="border border-gray-300 p-2 text-center">
+                            <div className="space-y-1">
+                              <div className="font-bold text-lg">
+                                {Math.round(lead.completionPercentage || (lead.isComplete ? 100 : 0))}%
+                              </div>
+                              <div className="text-xs text-gray-500">
+                                {lead.timeSpent ? `${Math.round(lead.timeSpent / 60)}min` : '-'}
+                              </div>
+                            </div>
+                          </td>
                         </tr>
                       ))}
                     </tbody>
+                    
+                    {/* Linha de estatísticas no final - Como footer Excel */}
+                    <tfoot>
+                      <tr className="bg-blue-50 border-t-2 border-blue-300">
+                        <td className="border border-gray-300 p-2 font-bold text-center">TOTAL</td>
+                        <td className="border border-gray-300 p-2 text-center font-semibold">
+                          {leads.length} leads
+                        </td>
+                        <td className="border border-gray-300 p-2 text-center">
+                          <div className="text-xs">
+                            <div>✅ {leads.filter(l => l.isComplete).length}</div>
+                            <div>⏸️ {leads.filter(l => !l.isComplete).length}</div>
+                          </div>
+                        </td>
+                        <td className="border border-gray-300 p-2 text-center">
+                          <div className="text-xs font-semibold">
+                            <div>📧 {leads.filter(l => getFieldValue(l, 'email') !== '-' || getFieldValue(l, 'email_contato') !== '-').length}</div>
+                            <div>📱 {leads.filter(l => getFieldValue(l, 'telefone') !== '-' || getFieldValue(l, 'telefone_contato') !== '-' || getFieldValue(l, 'phone') !== '-').length}</div>
+                          </div>
+                        </td>
+                        {allFields.filter(field => field.startsWith('p')).sort((a, b) => {
+                          const aNum = parseInt(a.match(/^p(\d+)_/)?.[1] || '0');
+                          const bNum = parseInt(b.match(/^p(\d+)_/)?.[1] || '0');
+                          return aNum - bNum;
+                        }).map(field => {
+                          const totalLeads = leads.length;
+                          const completedLeads = leads.filter(lead => getFieldValue(lead, field) !== '-').length;
+                          const conversionRate = totalLeads > 0 ? Math.round((completedLeads / totalLeads) * 100) : 0;
+                          return (
+                            <td key={field} className="border border-gray-300 p-2 text-center bg-yellow-50">
+                              <div className="space-y-1">
+                                <div className="font-bold text-blue-600 text-lg">
+                                  {conversionRate}%
+                                </div>
+                                <div className="text-xs text-gray-600">
+                                  {completedLeads}/{totalLeads} responderam
+                                </div>
+                              </div>
+                            </td>
+                          );
+                        })}
+                        <td className="border border-gray-300 p-2 text-center">
+                          <div className="font-bold text-lg text-green-600">
+                            {leads.length > 0 ? Math.round(leads.reduce((sum, lead) => sum + (lead.completionPercentage || (lead.isComplete ? 100 : 0)), 0) / leads.length) : 0}%
+                          </div>
+                          <div className="text-xs text-gray-500">
+                            Média Geral
+                          </div>
+                        </td>
+                      </tr>
+                    </tfoot>
                   </table>
                 </div>
 
