@@ -525,6 +525,55 @@ export default function SuperAnalytics() {
   };
 
   const allFields = getAllResponseFields(leads);
+  
+  // Função para detectar quais páginas foram visitadas por um lead
+  const getPageProgression = (lead: any) => {
+    const pagesVisited: string[] = [];
+    const pageResponses: Record<string, any> = {};
+    
+    // Detectar páginas a partir dos campos p1_, p2_, etc.
+    allFields.filter(field => field.startsWith('p')).forEach(field => {
+      const value = getFieldValue(lead, field);
+      if (value !== '-') {
+        pagesVisited.push(field);
+        pageResponses[field] = value;
+      }
+    });
+    
+    // Ordenar páginas numericamente
+    pagesVisited.sort((a, b) => {
+      const aNum = parseInt(a.match(/^p(\d+)_/)?.[1] || '0');
+      const bNum = parseInt(b.match(/^p(\d+)_/)?.[1] || '0');
+      return aNum - bNum;
+    });
+    
+    return { pagesVisited, pageResponses };
+  };
+  
+  // Calcular estatísticas de progressão por página
+  const getPageStats = () => {
+    const pageFields = allFields.filter(field => field.startsWith('p')).sort((a, b) => {
+      const aNum = parseInt(a.match(/^p(\d+)_/)?.[1] || '0');
+      const bNum = parseInt(b.match(/^p(\d+)_/)?.[1] || '0');
+      return aNum - bNum;
+    });
+    
+    return pageFields.map(field => {
+      const totalLeads = leads.length;
+      const completedLeads = leads.filter(lead => getFieldValue(lead, field) !== '-').length;
+      const conversionRate = totalLeads > 0 ? Math.round((completedLeads / totalLeads) * 100) : 0;
+      
+      return {
+        field,
+        completedLeads,
+        totalLeads,
+        conversionRate,
+        pageNumber: parseInt(field.match(/^p(\d+)_/)?.[1] || '0')
+      };
+    });
+  };
+  
+  const pageStats = getPageStats();
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleString('pt-BR');
@@ -854,22 +903,62 @@ export default function SuperAnalytics() {
                             </div>
                           </td>
                           
-                          {/* Páginas/Etapas */}
-                          {allFields.filter(field => field.startsWith('p')).sort((a, b) => {
-                            const aNum = parseInt(a.match(/^p(\d+)_/)?.[1] || '0');
-                            const bNum = parseInt(b.match(/^p(\d+)_/)?.[1] || '0');
-                            return aNum - bNum;
-                          }).map((field, pageIndex) => {
-                            const value = getFieldValue(lead, field);
+                          {/* Páginas/Etapas - Progressão detalhada */}
+                          {pageStats.map((pageStat, pageIndex) => {
+                            const value = getFieldValue(lead, pageStat.field);
                             const hasValue = value !== '-';
+                            const { pagesVisited } = getPageProgression(lead);
+                            const wasVisited = pagesVisited.includes(pageStat.field);
+                            const pageNumber = pageStat.pageNumber;
+                            
+                            // Calcular se chegou até esta página baseado na sequência
+                            const maxPageReached = Math.max(...pagesVisited.map(p => parseInt(p.match(/^p(\d+)_/)?.[1] || '0')));
+                            const reachedThisPage = pageNumber <= maxPageReached;
+                            
                             return (
-                              <td key={field} className={`border border-gray-300 p-2 text-xs ${hasValue ? 'bg-green-50' : 'bg-red-50'}`}>
+                              <td key={pageStat.field} className={`border border-gray-300 p-2 text-xs ${
+                                hasValue ? 'bg-green-50' : 
+                                reachedThisPage ? 'bg-yellow-50' : 
+                                'bg-red-50'
+                              }`}>
                                 <div className="space-y-1">
-                                  <div className={`font-semibold ${hasValue ? 'text-green-700' : 'text-red-500'}`}>
-                                    {hasValue ? value : 'Não respondido'}
+                                  {/* Resposta dada */}
+                                  <div className={`font-semibold text-xs ${
+                                    hasValue ? 'text-green-700' : 
+                                    reachedThisPage ? 'text-orange-600' : 
+                                    'text-red-500'
+                                  }`}>
+                                    {hasValue ? (
+                                      <div className="truncate max-w-[120px]" title={value}>
+                                        {value}
+                                      </div>
+                                    ) : reachedThisPage ? (
+                                      'Visitou, não respondeu'
+                                    ) : (
+                                      'Não alcançou'
+                                    )}
                                   </div>
-                                  <div className="text-gray-500 text-xs">
-                                    {hasValue ? '✓ Completado' : '✗ Abandonado'}
+                                  
+                                  {/* Status da página */}
+                                  <div className="text-xs">
+                                    {hasValue ? (
+                                      <span className="text-green-600">✓ Respondeu</span>
+                                    ) : reachedThisPage ? (
+                                      <span className="text-orange-600">👁 Visitou</span>
+                                    ) : (
+                                      <span className="text-red-500">✗ Não chegou</span>
+                                    )}
+                                  </div>
+                                  
+                                  {/* Indicador de progressão */}
+                                  <div className="text-xs text-gray-500">
+                                    {maxPageReached > 0 && pageNumber <= maxPageReached ? (
+                                      <div className="bg-blue-200 rounded px-1">
+                                        Pág {pageNumber}
+                                      </div>
+                                    ) : (
+                                      <div className="text-gray-400">-</div>
+                                    )}
                                   </div>
                                 </div>
                               </td>
@@ -879,12 +968,30 @@ export default function SuperAnalytics() {
                           {/* Progresso Total */}
                           <td className="border border-gray-300 p-2 text-center">
                             <div className="space-y-1">
-                              <div className="font-bold text-lg">
-                                {Math.round(lead.completionPercentage || (lead.isComplete ? 100 : 0))}%
-                              </div>
-                              <div className="text-xs text-gray-500">
-                                {lead.timeSpent ? `${Math.round(lead.timeSpent / 60)}min` : '-'}
-                              </div>
+                              {(() => {
+                                const { pagesVisited } = getPageProgression(lead);
+                                const totalPages = pageStats.length;
+                                const completedPages = pagesVisited.length;
+                                const realCompletionRate = totalPages > 0 ? Math.round((completedPages / totalPages) * 100) : 0;
+                                const maxPageReached = Math.max(...pagesVisited.map(p => parseInt(p.match(/^p(\d+)_/)?.[1] || '0')), 0);
+                                
+                                return (
+                                  <>
+                                    <div className="font-bold text-lg">
+                                      {realCompletionRate}%
+                                    </div>
+                                    <div className="text-xs text-gray-500">
+                                      {completedPages}/{totalPages} páginas
+                                    </div>
+                                    <div className="text-xs text-blue-600">
+                                      Max: Pág {maxPageReached || 0}
+                                    </div>
+                                    <div className="text-xs text-gray-500">
+                                      {lead.timeSpent ? `${Math.round(lead.timeSpent / 60)}min` : '-'}
+                                    </div>
+                                  </>
+                                );
+                              })()}
                             </div>
                           </td>
                         </tr>
