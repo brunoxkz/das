@@ -3783,7 +3783,7 @@ export function registerSQLiteRoutes(app: Express): Server {
     try {
       const quiz = await storage.getQuiz(req.params.id);
       
-      if (!quiz || quiz.userId !== req.user.id) {
+      if (!quiz || quiz.userId !== req.user.id && req.user.role !== 'admin') {
         return res.status(403).json({ message: "Access denied" });
       }
 
@@ -3890,7 +3890,7 @@ export function registerSQLiteRoutes(app: Express): Server {
     try {
       const quiz = await storage.getQuiz(req.params.id);
       
-      if (!quiz || quiz.userId !== req.user.id) {
+      if (!quiz || quiz.userId !== req.user.id && req.user.role !== 'admin') {
         return res.status(403).json({ message: "Access denied" });
       }
 
@@ -3974,7 +3974,7 @@ export function registerSQLiteRoutes(app: Express): Server {
     try {
       const quiz = await storage.getQuiz(req.params.id);
       
-      if (!quiz || quiz.userId !== req.user.id) {
+      if (!quiz || quiz.userId !== req.user.id && req.user.role !== 'admin') {
         return res.status(403).json({ message: "Access denied" });
       }
 
@@ -4387,7 +4387,7 @@ export function registerSQLiteRoutes(app: Express): Server {
       const timeRange = req.query.timeRange || "30"; // default 30 days
       const quiz = await storage.getQuiz(quizId);
       
-      if (!quiz || quiz.userId !== req.user.id) {
+      if (!quiz || quiz.userId !== req.user.id && req.user.role !== 'admin') {
         return res.status(403).json({ message: "Access denied" });
       }
 
@@ -4492,7 +4492,7 @@ export function registerSQLiteRoutes(app: Express): Server {
       const quizId = req.params.quizId;
       const quiz = await storage.getQuiz(quizId);
       
-      if (!quiz || quiz.userId !== req.user.id) {
+      if (!quiz || quiz.userId !== req.user.id && req.user.role !== 'admin') {
         return res.status(403).json({ message: "Access denied" });
       }
 
@@ -4519,7 +4519,7 @@ export function registerSQLiteRoutes(app: Express): Server {
 
       const quiz = await storage.getQuiz(req.params.id);
       
-      if (!quiz || quiz.userId !== req.user.id) {
+      if (!quiz || quiz.userId !== req.user.id && req.user.role !== 'admin') {
         return res.status(403).json({ message: "Access denied" });
       }
 
@@ -4551,7 +4551,7 @@ export function registerSQLiteRoutes(app: Express): Server {
 
       const quiz = await storage.getQuiz(req.params.id);
       
-      if (!quiz || quiz.userId !== req.user.id) {
+      if (!quiz || quiz.userId !== req.user.id && req.user.role !== 'admin') {
         return res.status(403).json({ message: "Access denied" });
       }
 
@@ -4608,7 +4608,7 @@ export function registerSQLiteRoutes(app: Express): Server {
         return res.status(404).json({ message: "Quiz not found" });
       }
       
-      if (!quiz || (quiz.userId !== req.user.id && quiz.user_id !== req.user.id)) {
+      if (!quiz || (quiz.userId !== req.user.id && req.user.role !== 'admin' && quiz.user_id !== req.user.id)) {
         console.log(`🔍 ULTRA DEBUG: quiz.userId=${quiz?.userId}, quiz.user_id=${quiz?.user_id}, req.user.id=${req.user.id}`);
         return res.status(403).json({ message: "Access denied" });
       }
@@ -4754,7 +4754,7 @@ export function registerSQLiteRoutes(app: Express): Server {
 
       const quiz = await storage.getQuiz(req.params.id);
       
-      if (!quiz || (quiz.userId !== req.user.id && quiz.user_id !== req.user.id)) {
+      if (!quiz || (quiz.userId !== req.user.id && req.user.role !== 'admin' && quiz.user_id !== req.user.id)) {
         console.log(`🔍 LEADS BY RESPONSE DEBUG: quiz.userId=${quiz.userId}, quiz.user_id=${quiz.user_id}, req.user.id=${req.user.id}`);
         return res.status(403).json({ message: "Access denied" });
       }
@@ -5779,7 +5779,7 @@ export function registerSQLiteRoutes(app: Express): Server {
         return res.status(404).json({ message: "Quiz not found" });
       }
 
-      if (quiz.userId !== req.user.id) {
+      if (quiz.userId !== req.user.id && req.user.role !== 'admin') {
         return res.status(403).json({ message: "Access denied" });
       }
 
@@ -18775,7 +18775,7 @@ app.get("/api/whatsapp-extension/pending", verifyJWT, async (req: any, res: Resp
       }
       
       // Verificar se o usuário tem permissão para ver este quiz
-      if (quiz.userId !== req.user.id) {
+      if (quiz.userId !== req.user.id && req.user.role !== 'admin') {
         return res.status(403).json({ error: 'Acesso negado' });
       }
       
@@ -18856,7 +18856,7 @@ app.get("/api/whatsapp-extension/pending", verifyJWT, async (req: any, res: Resp
       }
       
       // Verificar se o usuário tem permissão para editar este quiz
-      if (quiz.userId !== req.user.id) {
+      if (quiz.userId !== req.user.id && req.user.role !== 'admin') {
         return res.status(403).json({ error: 'Acesso negado' });
       }
       

@@ -184,6 +184,7 @@ export function setupSQLiteAuth(app: Express) {
           role: user.role,
           plan: user.plan,
         },
+        token: accessToken, // Compatibilidade com testes
         accessToken,
         refreshToken,
         isPWA,
