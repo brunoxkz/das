@@ -798,20 +798,53 @@ export default function SMSCampaignsAdvanced() {
                                   </CardContent>
                                 </Card>
                                 
-                                {/* Descrição que aparece abaixo no hover */}
-                                <div className="group-hover:opacity-100 opacity-0 transition-all duration-300 absolute top-full left-0 right-0 mt-2 bg-white border border-gray-200 rounded-lg p-3 shadow-lg z-30">
-                                  <p className="text-xs text-gray-700 leading-tight mb-2 font-medium">
-                                    {type.description}
-                                  </p>
-                                  
-                                  {/* Features em lista */}
-                                  <div className="text-[10px] text-gray-500 space-y-1">
-                                    {type.features?.slice(0, 3).map((feature, idx) => (
-                                      <div key={idx} className="flex items-center gap-1">
-                                        <div className="w-1 h-1 bg-blue-400 rounded-full"></div>
-                                        <span>{feature}</span>
+                                {/* Descrição extensa única que aparece abaixo no hover */}
+                                <div className="group-hover:opacity-100 opacity-0 transition-all duration-300 absolute top-full left-0 right-0 mt-2 bg-white border border-gray-200 rounded-lg p-4 shadow-lg z-30">
+                                  <div className="space-y-3">
+                                    {/* Título e descrição principal */}
+                                    <div>
+                                      <h4 className="text-sm font-semibold text-gray-800 mb-1">{type.name}</h4>
+                                      <p className="text-sm text-gray-700 leading-relaxed">
+                                        {type.description}
+                                      </p>
+                                    </div>
+                                    
+                                    {/* Funcionalidades principais */}
+                                    <div>
+                                      <h5 className="text-xs font-semibold text-gray-600 mb-2">Funcionalidades:</h5>
+                                      <div className="grid grid-cols-1 gap-1">
+                                        {type.features?.map((feature, idx) => (
+                                          <div key={idx} className="flex items-center gap-2 text-xs text-gray-600">
+                                            <div className="w-1.5 h-1.5 bg-blue-500 rounded-full flex-shrink-0"></div>
+                                            <span>{feature}</span>
+                                          </div>
+                                        ))}
                                       </div>
-                                    ))}
+                                    </div>
+                                    
+                                    {/* ROI e conversão */}
+                                    {getROIPercentage() && (
+                                      <div className="bg-green-50 border border-green-200 rounded-lg p-2">
+                                        <div className="flex items-center gap-2">
+                                          <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                                          <span className="text-xs font-semibold text-green-700">
+                                            ROI Médio: {getROIPercentage()} de aumento na conversão
+                                          </span>
+                                        </div>
+                                      </div>
+                                    )}
+                                    
+                                    {/* Badge quantum */}
+                                    {isQuantum && (
+                                      <div className="bg-purple-50 border border-purple-200 rounded-lg p-2">
+                                        <div className="flex items-center gap-2">
+                                          <Sparkles className="w-3 h-3 text-purple-600" />
+                                          <span className="text-xs font-semibold text-purple-700">
+                                            Sistema Quantum: Segmentação ultra-granular com precisão máxima
+                                          </span>
+                                        </div>
+                                      </div>
+                                    )}
                                   </div>
                                 </div>
                               </div>
