@@ -19,7 +19,10 @@ import {
   MousePointer,
   UserMinus,
   Clock,
-  Percent
+  Percent,
+  ChevronLeft,
+  ChevronRight,
+  User
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth-jwt";
 import { useToast } from "@/hooks/use-toast";
@@ -77,6 +80,8 @@ export default function SuperAnalytics() {
   console.log("SUPER ANALYTICS - Quiz ID:", quizId);
   const [timeRange, setTimeRange] = useState('30');
   const [dateFilter, setDateFilter] = useState("30");
+  const [leadsCurrentPage, setLeadsCurrentPage] = useState(1);
+  const [leadsPerPage] = useState(10);
   
   // Sync timeRange with dateFilter
   useEffect(() => {
@@ -128,6 +133,28 @@ export default function SuperAnalytics() {
       return response.json();
     },
     enabled: !!quizId && !!quiz,
+    retry: false,
+  });
+
+  // Query para buscar leads do quiz
+  const { data: quizLeads, isLoading: leadsLoading } = useQuery({
+    queryKey: ["/api/quizzes", quizId, "leads"],
+    queryFn: async () => {
+      const token = localStorage.getItem("accessToken");
+      const response = await fetch(`/api/quizzes/${quizId}/leads`, {
+        headers: {
+          "Authorization": `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      });
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      return response.json();
+    },
+    enabled: !!quizId,
     retry: false,
   });
   
@@ -318,6 +345,31 @@ export default function SuperAnalytics() {
 
   const formatPercentage = (value: number) => {
     return `${value.toFixed(1)}%`;
+  };
+
+  // Lógica de paginação para leads
+  const leads = quizLeads?.leads || [];
+  const totalLeads = leads.length;
+  const totalLeadsPages = Math.ceil(totalLeads / leadsPerPage);
+  const startIndex = (leadsCurrentPage - 1) * leadsPerPage;
+  const endIndex = startIndex + leadsPerPage;
+  const currentLeads = leads.slice(startIndex, endIndex);
+
+  // Função para extrair todos os campos únicos das respostas
+  const getAllResponseFields = (leads: any[]) => {
+    const fieldSet = new Set<string>();
+    leads.forEach(lead => {
+      if (lead.responses && typeof lead.responses === 'object') {
+        Object.keys(lead.responses).forEach(field => fieldSet.add(field));
+      }
+    });
+    return Array.from(fieldSet).sort();
+  };
+
+  const allFields = getAllResponseFields(leads);
+
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleString('pt-BR');
   };
 
   return (
@@ -530,6 +582,136 @@ export default function SuperAnalytics() {
                 </tbody>
               </table>
             </div>
+          </CardContent>
+        </Card>
+
+        {/* Análise Detalhada de Leads */}
+        <Card className="mt-8">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <User className="w-5 h-5" />
+              Análise Detalhada de Leads
+            </CardTitle>
+            <p className="text-sm text-gray-600">
+              Cada lead e suas respostas completas - {totalLeads} leads encontrados
+            </p>
+          </CardHeader>
+          <CardContent>
+            {leadsLoading ? (
+              <div className="flex items-center justify-center p-8">
+                <div className="animate-spin w-6 h-6 border-2 border-vendzz-primary border-t-transparent rounded-full" />
+                <span className="ml-2">Carregando leads...</span>
+              </div>
+            ) : totalLeads === 0 ? (
+              <div className="text-center p-8 text-gray-500">
+                <User className="w-12 h-12 mx-auto mb-4 text-gray-300" />
+                <h3 className="text-lg font-semibold mb-2">Nenhum lead encontrado</h3>
+                <p>Este quiz ainda não possui respostas de usuários.</p>
+              </div>
+            ) : (
+              <>
+                {/* Tabela de Leads */}
+                <div className="overflow-x-auto">
+                  <table className="w-full border-collapse">
+                    <thead>
+                      <tr className="border-b bg-gray-50">
+                        <th className="text-left p-3 font-semibold min-w-[120px]">Submetido em</th>
+                        <th className="text-left p-3 font-semibold min-w-[100px]">Status</th>
+                        {allFields.map(field => (
+                          <th key={field} className="text-left p-3 font-semibold min-w-[150px]">
+                            {field.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                          </th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {currentLeads.map((lead, index) => (
+                        <tr key={lead.id || index} className="border-b hover:bg-gray-50">
+                          <td className="p-3 text-sm">
+                            <div className="font-mono">
+                              {formatDate(lead.submittedAt || new Date().toISOString())}
+                            </div>
+                          </td>
+                          <td className="p-3">
+                            <Badge 
+                              variant={lead.isComplete ? "default" : "secondary"}
+                              className="text-xs"
+                            >
+                              {lead.isComplete ? "✅ Completo" : "⏸️ Parcial"}
+                            </Badge>
+                          </td>
+                          {allFields.map(field => (
+                            <td key={field} className="p-3 text-sm max-w-[200px]">
+                              <div className="truncate" title={lead[field] || lead.responses?.[field] || '-'}>
+                                {lead[field] || lead.responses?.[field] || '-'}
+                              </div>
+                            </td>
+                          ))}
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+
+                {/* Controles de Paginação */}
+                {totalLeadsPages > 1 && (
+                  <div className="flex items-center justify-between mt-6 pt-4 border-t">
+                    <div className="flex items-center gap-2 text-sm text-gray-600">
+                      <span>
+                        Mostrando {startIndex + 1} - {Math.min(endIndex, totalLeads)} de {totalLeads} leads
+                      </span>
+                    </div>
+                    
+                    <div className="flex items-center gap-1">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setLeadsCurrentPage(Math.max(1, leadsCurrentPage - 1))}
+                        disabled={leadsCurrentPage === 1}
+                        className="h-8 px-2"
+                      >
+                        <ChevronLeft className="w-4 h-4" />
+                      </Button>
+                      
+                      <div className="flex items-center gap-1">
+                        {Array.from({ length: totalLeadsPages }, (_, i) => i + 1)
+                          .filter(page => 
+                            page === 1 || 
+                            page === totalLeadsPages || 
+                            Math.abs(page - leadsCurrentPage) <= 2
+                          )
+                          .map((page, index, array) => (
+                            <div key={page}>
+                              {index > 0 && array[index - 1] !== page - 1 && (
+                                <span className="px-2 text-gray-400">...</span>
+                              )}
+                              <Button
+                                variant={page === leadsCurrentPage ? "default" : "outline"}
+                                size="sm"
+                                onClick={() => setLeadsCurrentPage(page)}
+                                className="h-8 w-8 p-0 text-xs"
+                              >
+                                {page}
+                              </Button>
+                            </div>
+                          ))
+                        }
+                      </div>
+                      
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setLeadsCurrentPage(Math.min(totalLeadsPages, leadsCurrentPage + 1))}
+                        disabled={leadsCurrentPage === totalLeadsPages}
+                        className="h-8 px-2"
+                      >
+                        <ChevronRight className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  </div>
+                )}
+              </>
+            )}
           </CardContent>
         </Card>
 
