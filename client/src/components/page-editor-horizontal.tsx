@@ -5053,23 +5053,23 @@ const gameElementCategories = [
             </Button>
           </div>
 
-          {/* Seções Compactas e Expansíveis */}
+          {/* Seções Compactas e Expansíveis - ORDEM CORRIGIDA */}
           <div className="space-y-2 pt-4 border-t">
-            {/* Fundo Global - Compacto */}
+            {/* Fundo Global - PRIMEIRO */}
             <div className="border border-gray-200 rounded-lg overflow-hidden">
               <button
                 onClick={() => setExpandedSections(prev => ({
                   ...prev,
                   globalBackground: !prev.globalBackground
                 }))}
-                className="w-full p-3 bg-gray-50 hover:bg-gray-100 transition-colors flex items-center justify-between"
+                className="w-full p-2 bg-gray-50 hover:bg-gray-100 transition-colors flex items-center justify-between"
               >
                 <div className="flex items-center gap-2">
                   <div 
                     className="w-4 h-4 rounded-full border border-gray-300"
                     style={{backgroundColor: globalTheme === "custom" ? customBackgroundColor : globalTheme === "dark" ? "#000000" : "#ffffff"}}
                   ></div>
-                  <span className="text-xs font-medium">🎨 Fundo Global</span>
+                  <span className="text-xs font-semibold">🎨 Fundo Global</span>
                 </div>
                 <ChevronDown className={cn(
                   "w-4 h-4 transition-transform",
@@ -5132,21 +5132,21 @@ const gameElementCategories = [
               )}
             </div>
 
-            {/* Cor Botão Global - Compacto */}
+            {/* Cor Botão Global - SEGUNDO */}
             <div className="border border-gray-200 rounded-lg overflow-hidden">
               <button
                 onClick={() => setExpandedSections(prev => ({
                   ...prev,
                   buttonColors: !prev.buttonColors
                 }))}
-                className="w-full p-3 bg-gray-50 hover:bg-gray-100 transition-colors flex items-center justify-between"
+                className="w-full p-2 bg-gray-50 hover:bg-gray-100 transition-colors flex items-center justify-between"
               >
                 <div className="flex items-center gap-2">
                   <div 
                     className="w-4 h-4 rounded-full border border-gray-300"
                     style={{backgroundColor: defaultButtonColor}}
                   ></div>
-                  <span className="text-xs font-medium">🔘 Cor Botão</span>
+                  <span className="text-xs font-semibold">🔘 Cor Botão Global</span>
                 </div>
                 <ChevronDown className={cn(
                   "w-4 h-4 transition-transform",
@@ -12303,109 +12303,13 @@ const gameElementCategories = [
             </div>
           ) : (
             <div className="space-y-6">
-              {/* Configurações da Página */}
-              <div className="border rounded-lg p-4 bg-gradient-to-r from-blue-50 to-purple-50">
-                <div className="flex items-center gap-2 mb-4">
-                  <span className="text-blue-600">📄</span>
-                  <h3 className="text-lg font-semibold text-blue-800">Configurações da Página</h3>
-                </div>
-                
-                {/* Fundo da Página */}
-                <div className="space-y-4">
-                  <div>
-                    <Label className="text-sm font-medium text-gray-700">Fundo da Página</Label>
-                    <div className="mt-2 space-y-3">
-                      {/* Opções de Fundo */}
-                      <div className="grid grid-cols-3 gap-2">
-                        <div 
-                          className={`relative border-2 rounded-lg p-3 cursor-pointer transition-all ${
-                            (!pages[activePage]?.pageBackground || pages[activePage]?.pageBackground === 'white') 
-                              ? 'border-blue-500 bg-blue-50' 
-                              : 'border-gray-200 hover:border-gray-300'
-                          }`}
-                          onClick={() => updatePageBackground('white')}
-                        >
-                          <div className="w-full h-8 bg-white border border-gray-200 rounded"></div>
-                          <p className="text-xs text-center mt-1 font-medium">Branco</p>
-                        </div>
-                        
-                        <div 
-                          className={`relative border-2 rounded-lg p-3 cursor-pointer transition-all ${
-                            pages[activePage]?.pageBackground === 'black' 
-                              ? 'border-blue-500 bg-blue-50' 
-                              : 'border-gray-200 hover:border-gray-300'
-                          }`}
-                          onClick={() => updatePageBackground('black')}
-                        >
-                          <div className="w-full h-8 bg-black border border-gray-200 rounded"></div>
-                          <p className="text-xs text-center mt-1 font-medium">Preto</p>
-                        </div>
-                        
-                        <div 
-                          className={`relative border-2 rounded-lg p-3 cursor-pointer transition-all ${
-                            pages[activePage]?.pageBackground === 'custom' 
-                              ? 'border-blue-500 bg-blue-50' 
-                              : 'border-gray-200 hover:border-gray-300'
-                          }`}
-                          onClick={() => updatePageBackground('custom')}
-                        >
-                          <div 
-                            className="w-full h-8 border border-gray-200 rounded"
-                            style={{
-                              background: pages[activePage]?.customBackgroundColor || '#f3f4f6'
-                            }}
-                          ></div>
-                          <p className="text-xs text-center mt-1 font-medium">Personalizado</p>
-                        </div>
-                      </div>
-                      
-                      {/* Seletor de Cor Personalizada */}
-                      {pages[activePage]?.pageBackground === 'custom' && (
-                        <div className="mt-3">
-                          <Label className="text-xs">Cor Personalizada</Label>
-                          <div className="flex items-center gap-2 mt-1">
-                            <input
-                              type="color"
-                              value={pages[activePage]?.customBackgroundColor || '#f3f4f6'}
-                              onChange={(e) => updateCustomBackgroundColor(e.target.value)}
-                              className="w-12 h-8 border rounded cursor-pointer"
-                            />
-                            <Input
-                              value={pages[activePage]?.customBackgroundColor || '#f3f4f6'}
-                              onChange={(e) => updateCustomBackgroundColor(e.target.value)}
-                              placeholder="#f3f4f6"
-                              className="text-xs flex-1"
-                            />
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                  
-                  {/* Preview do Fundo Atual */}
-                  <div className="border rounded-lg p-3 bg-gray-50">
-                    <Label className="text-xs font-medium text-gray-600">Preview do Fundo:</Label>
-                    <div 
-                      className="w-full h-16 border rounded mt-2 flex items-center justify-center text-sm"
-                      style={{
-                        backgroundColor: 
-                          pages[activePage]?.pageBackground === 'black' ? '#000000' :
-                          pages[activePage]?.pageBackground === 'custom' ? (pages[activePage]?.customBackgroundColor || '#f3f4f6') :
-                          '#ffffff',
-                        color: pages[activePage]?.pageBackground === 'black' ? '#ffffff' : '#374151'
-                      }}
-                    >
-                      Exemplo de Página
-                    </div>
-                  </div>
-                </div>
-              </div>
+              {/* Configurações removidas - agora disponíveis na aba "Páginas" */}
               
               {/* Instruções */}
               <div className="text-center text-gray-500">
                 <Settings className="w-16 h-16 mx-auto mb-4 opacity-30" />
                 <h3 className="text-lg font-semibold mb-2">Configurações da Página</h3>
-                <p className="text-sm">Configure o fundo da página acima ou clique em um elemento para editar suas propriedades.</p>
+                <p className="text-sm">Clique em um elemento para editar suas propriedades ou use a aba "Páginas" para configurações globais.</p>
               </div>
             </div>
           )}
