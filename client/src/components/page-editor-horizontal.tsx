@@ -74,6 +74,24 @@ import {
   Timer
 } from "lucide-react";
 
+// Função utilitária para gerar IDs de remarketing estruturados
+function generateRemarketingId(pageIndex: number, quizName: string, fieldId?: string): string {
+  // Limpa o nome do quiz removendo caracteres especiais e espaços
+  const cleanQuizName = quizName
+    .toLowerCase()
+    .replace(/[^a-z0-9]/g, '_')
+    .replace(/_+/g, '_')
+    .replace(/^_|_$/g, '');
+  
+  // Se tem fieldId customizado, usa ele, senão usa padrão baseado na página
+  if (fieldId && fieldId !== '') {
+    return fieldId;
+  }
+  
+  // Formato padrão: p{pageNumber}_{quizName}
+  return `p${pageIndex}_${cleanQuizName}`;
+}
+
 interface Element {
   id: number;
   type: "multiple_choice" | "text" | "rating" | "email" | "checkbox" | "date" | "phone" | "number" | "textarea" | "image_upload" | "animated_transition" | "heading" | "paragraph" | "image" | "divider" | "video" | "audio" | "birth_date" | "height" | "current_weight" | "target_weight" | "transition_background" | "transition_text" | "transition_counter" | "transition_loader" | "transition_redirect" | "transition_button" | "spacer" | "game_wheel" | "game_scratch" | "game_color_pick" | "game_brick_break" | "game_memory_cards" | "game_slot_machine" | "continue_button" | "loading_question" | "share_quiz" | "price" | "icon_list" | "testimonials" | "guarantee" | "paypal" | "image_with_text" | "chart" | "metrics" | "before_after" | "pricing_plans" | "stripe_embed" | "hotmart_upsell" | "faq" | "image_carousel" | "body_type_classifier" | "age_classifier" | "fitness_goal_classifier" | "experience_classifier" | "progress_bar" | "loading_with_question";
