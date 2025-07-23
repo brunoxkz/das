@@ -65,8 +65,8 @@ export default function CheckoutSubscription({ onSuccess, onCancel }: CheckoutSu
   useEffect(() => {
     if (userData) {
       setCustomerData({
-        email: userData.email || '',
-        name: userData.name || userData.firstName || userData.username || '',
+        email: (userData as any).email || '',
+        name: (userData as any).name || (userData as any).firstName || (userData as any).username || '',
       });
     }
   }, [userData]);
@@ -80,7 +80,7 @@ export default function CheckoutSubscription({ onSuccess, onCancel }: CheckoutSu
     onSuccess: (data) => {
       toast({
         title: "Assinatura Criada com Sucesso!",
-        description: `Taxa de ativação cobrada. Trial de 7 dias iniciado. ID: ${data.subscription.id}`,
+        description: `Taxa de ativação cobrada. Trial de 3 dias iniciado. ID: ${data.subscription.id}`,
         variant: "default",
       });
       
@@ -247,7 +247,7 @@ export default function CheckoutSubscription({ onSuccess, onCancel }: CheckoutSu
                     <Calendar className="h-4 w-4" />
                     Trial Gratuito
                   </span>
-                  <Badge variant="secondary">7 dias</Badge>
+                  <Badge variant="secondary">3 dias</Badge>
                 </div>
                 
                 <Separator />
@@ -263,7 +263,7 @@ export default function CheckoutSubscription({ onSuccess, onCancel }: CheckoutSu
               
               <div className="text-sm text-gray-600 space-y-2">
                 <p>• Cobrança única de R$ 1,00 para ativação</p>
-                <p>• 7 dias de trial gratuito</p>
+                <p>• 3 dias de trial gratuito</p>
                 <p>• Após trial: R$ 29,90/mês (pode cancelar a qualquer momento)</p>
                 <p>• Seu cartão será salvo para cobranças futuras</p>
               </div>
@@ -327,7 +327,7 @@ export default function CheckoutSubscription({ onSuccess, onCancel }: CheckoutSu
             <div className="space-y-4">
               <div className="bg-green-50 p-4 rounded-lg">
                 <p className="text-green-800 font-medium">✅ Taxa de ativação de R$ 1,00 cobrada</p>
-                <p className="text-green-800 font-medium">✅ Trial de 7 dias iniciado</p>
+                <p className="text-green-800 font-medium">✅ Trial de 3 dias iniciado</p>
                 <p className="text-green-800 font-medium">✅ Cartão salvo para cobranças futuras</p>
               </div>
               

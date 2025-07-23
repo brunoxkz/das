@@ -237,7 +237,7 @@ export function registerSQLiteRoutes(app: Express): Server {
           price: 69.90,
           currency: 'brl',
           interval: 'month',
-          trial_days: 7
+          trial_days: 3
         },
         'plan_enterprise': {
           id: 'plan_enterprise',
@@ -7316,7 +7316,7 @@ export function registerSQLiteRoutes(app: Express): Server {
         return res.status(400).json({ error: "Falha na cobrança de ativação" });
       }
 
-      // 2. Criar assinatura com trial de 7 dias
+      // 2. Criar assinatura com trial de 3 dias
       try {
         const subscription = await stripeService.stripe.subscriptions.create({
           customer: customer.id,
@@ -7333,7 +7333,7 @@ export function registerSQLiteRoutes(app: Express): Server {
             save_default_payment_method: 'on_subscription'
           },
           expand: ['latest_invoice.payment_intent'],
-          trial_period_days: 7,
+          trial_period_days: 3,
           metadata: {
             userId: userId,
             activationFee: 'paid',
@@ -23948,7 +23948,7 @@ export function registerCheckoutRoutes(app: Express) {
         });
       }
       
-      // PASSO 4: Criar assinatura com trial de 7 dias
+      // PASSO 4: Criar assinatura com trial de 3 dias
       try {
         // Price ID fixo para R$29,90/mês (deve ser configurado no Stripe Dashboard)
         const PRICE_ID = 'price_1234567890abcdef'; // ⚠️ ALTERE ESTE VALOR NO STRIPE DASHBOARD
@@ -23958,7 +23958,7 @@ export function registerCheckoutRoutes(app: Express) {
           items: [{
             price: PRICE_ID
           }],
-          trial_period_days: 7,
+          trial_period_days: 3,
           default_payment_method: payment_method_id,
           collection_method: 'charge_automatically',
           billing_cycle_anchor: 'unchanged',
@@ -24035,7 +24035,7 @@ export function registerCheckoutRoutes(app: Express) {
           pricing: {
             setup_fee: 100, // R$ 1,00 em centavos
             monthly_fee: 2990, // R$ 29,90 em centavos
-            trial_days: 7,
+            trial_days: 3,
             currency: "BRL"
           },
           description: "Gateway internacional com suporte a múltiplas moedas e países"
@@ -24054,7 +24054,7 @@ export function registerCheckoutRoutes(app: Express) {
           pricing: {
             setup_fee: 100, // R$ 1,00 em centavos
             monthly_fee: 2990, // R$ 29,90 em centavos
-            trial_days: 7,
+            trial_days: 3,
             currency: "BRL"
           },
           description: "Gateway brasileiro com suporte a PIX, boleto e cartões nacionais"
