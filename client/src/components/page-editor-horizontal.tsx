@@ -782,7 +782,7 @@ export function PageEditorHorizontal({
       image: "Imagem",
       video: "Vídeo",
       divider: "Divisor",
-      multiple_choice: "Múltipla Escolha",
+      multiple_choice: "Perguntas",
       text: "Texto",
       email: "E-mail",
       phone: "Telefone/Whats",
@@ -5773,6 +5773,26 @@ const gameElementCategories = [
                           : "✅ Usuário será redirecionado automaticamente ao clicar na opção."
                         }
                       </p>
+                      
+                      {selectedElementData.requireContinueButton && (
+                        <div className="mt-2">
+                          <Button
+                            onClick={() => {
+                              const currentPage = quiz.structure.pages[activePageIndex];
+                              const hasButtonContinue = currentPage.elements.some(el => el.type === 'continue_button');
+                              
+                              if (!hasButtonContinue) {
+                                addElement('continue_button');
+                              }
+                            }}
+                            size="sm"
+                            className="w-full bg-green-600 hover:bg-green-700 text-white"
+                          >
+                            <Plus className="w-3 h-3 mr-1" />
+                            Adicionar Botão Continuar
+                          </Button>
+                        </div>
+                      )}
                     </div>
                   </div>
 
@@ -5864,14 +5884,36 @@ const gameElementCategories = [
                         </div>
                       </div>
 
-                      <div className="flex items-center space-x-2">
-                        <input
-                          type="checkbox"
-                          id="requireContinue"
-                          checked={selectedElementData.requireContinueButton || false}
-                          onChange={(e) => updateElement(selectedElementData.id, { requireContinueButton: e.target.checked })}
-                        />
-                        <Label htmlFor="requireContinue" className="text-xs">Aguardar botão "Continuar"</Label>
+                      <div className="space-y-2">
+                        <div className="flex items-center space-x-2">
+                          <input
+                            type="checkbox"
+                            id="requireContinue"
+                            checked={selectedElementData.requireContinueButton || false}
+                            onChange={(e) => updateElement(selectedElementData.id, { requireContinueButton: e.target.checked })}
+                          />
+                          <Label htmlFor="requireContinue" className="text-xs">Aguardar botão "Continuar"</Label>
+                        </div>
+                        
+                        {selectedElementData.requireContinueButton && (
+                          <div className="pl-6">
+                            <Button
+                              onClick={() => {
+                                const currentPage = quiz.structure.pages[activePageIndex];
+                                const hasButtonContinue = currentPage.elements.some(el => el.type === 'continue_button');
+                                
+                                if (!hasButtonContinue) {
+                                  addElement('continue_button');
+                                }
+                              }}
+                              size="sm"
+                              className="w-full bg-green-600 hover:bg-green-700 text-white"
+                            >
+                              <Plus className="w-3 h-3 mr-1" />
+                              Adicionar Botão Continuar
+                            </Button>
+                          </div>
+                        )}
                       </div>
 
                       {/* ID de Remarketing */}
