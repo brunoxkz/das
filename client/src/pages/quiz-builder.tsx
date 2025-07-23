@@ -1001,6 +1001,24 @@ export default function QuizBuilder() {
               onActivePageChange={(pageIndex) => {
                 setCurrentPageIndex(pageIndex);
               }}
+              onDefaultButtonColorChange={(color) => {
+                setQuizData(prev => ({ 
+                  ...prev, 
+                  design: { 
+                    ...prev.design, 
+                    defaultButtonColor: color
+                  }
+                }));
+              }}
+              onDefaultButtonTextColorChange={(color) => {
+                setQuizData(prev => ({ 
+                  ...prev, 
+                  design: { 
+                    ...prev.design, 
+                    defaultButtonTextColor: color
+                  }
+                }));
+              }}
             />
           </div>
         )}
@@ -1218,138 +1236,7 @@ export default function QuizBuilder() {
                 </CardContent>
               </Card>
 
-              {/* Cores Padrão para Novos Elementos */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Palette className="w-5 h-5" />
-                    Cores Padrão para Novos Elementos
-                  </CardTitle>
-                  <p className="text-sm text-gray-600">Configure as cores que serão aplicadas automaticamente aos novos elementos criados</p>
-                </CardHeader>
-                <CardContent className="space-y-6">
-                  {/* Seção de Cores dos Botões */}
-                  <div className="border-b pb-4">
-                    <h4 className="font-semibold text-sm mb-3 text-blue-600">🔘 Botões de Continuar</h4>
-                    
-                    {/* Cor do Fundo do Botão */}
-                    <div className="mb-4">
-                      <Label htmlFor="defaultButtonColor">Cor de Fundo (Novos Botões)</Label>
-                      <div className="flex items-center space-x-3 mt-2">
-                        <input
-                          type="color"
-                          id="defaultButtonColor"
-                          value={quizData.design?.defaultButtonColor || "#10b981"}
-                          onChange={(e) => {
-                            setQuizData(prev => ({ 
-                              ...prev, 
-                              design: { 
-                                ...prev.design, 
-                                defaultButtonColor: e.target.value
-                              }
-                            }));
-                          }}
-                          className="w-10 h-10 rounded-lg border-2 border-gray-300 cursor-pointer"
-                        />
-                        <div className="flex-1">
-                          <Input
-                            type="text"
-                            value={quizData.design?.defaultButtonColor || "#10b981"}
-                            onChange={(e) => {
-                              setQuizData(prev => ({ 
-                                ...prev, 
-                                design: { 
-                                  ...prev.design, 
-                                  defaultButtonColor: e.target.value
-                                }
-                              }));
-                            }}
-                            placeholder="#10b981"
-                            className="text-sm"
-                          />
-                        </div>
-                      </div>
-                      <p className="text-xs text-gray-500 mt-1">Cor aplicada automaticamente aos novos botões "Continuar"</p>
-                    </div>
 
-                    {/* Cor do Texto do Botão */}
-                    <div>
-                      <Label htmlFor="defaultButtonTextColor">Cor do Texto (Novos Botões)</Label>
-                      <div className="flex items-center space-x-3 mt-2">
-                        <input
-                          type="color"
-                          id="defaultButtonTextColor"
-                          value={quizData.design?.defaultButtonTextColor || "#ffffff"}
-                          onChange={(e) => {
-                            setQuizData(prev => ({ 
-                              ...prev, 
-                              design: { 
-                                ...prev.design, 
-                                defaultButtonTextColor: e.target.value
-                              }
-                            }));
-                          }}
-                          className="w-10 h-10 rounded-lg border-2 border-gray-300 cursor-pointer"
-                        />
-                        <div className="flex-1">
-                          <Input
-                            type="text"
-                            value={quizData.design?.defaultButtonTextColor || "#ffffff"}
-                            onChange={(e) => {
-                              setQuizData(prev => ({ 
-                                ...prev, 
-                                design: { 
-                                  ...prev.design, 
-                                  defaultButtonTextColor: e.target.value
-                                }
-                              }));
-                            }}
-                            placeholder="#ffffff"
-                            className="text-sm"
-                          />
-                        </div>
-                      </div>
-                      <p className="text-xs text-gray-500 mt-1">Cor do texto aplicada automaticamente aos novos botões</p>
-                    </div>
-                  </div>
-
-                  {/* Preview dos Novos Botões */}
-                  <div className="bg-gray-50 rounded-lg p-4">
-                    <Label className="text-sm font-medium mb-2 block">Preview dos Novos Botões</Label>
-                    <div className="flex gap-3">
-                      <button
-                        style={{
-                          backgroundColor: quizData.design?.defaultButtonColor || "#10b981",
-                          color: quizData.design?.defaultButtonTextColor || "#ffffff"
-                        }}
-                        className="px-6 py-2 rounded-lg font-medium text-sm cursor-pointer hover:opacity-90 transition-opacity"
-                      >
-                        Continuar
-                      </button>
-                      <button
-                        style={{
-                          backgroundColor: quizData.design?.defaultButtonColor || "#10b981",
-                          color: quizData.design?.defaultButtonTextColor || "#ffffff"
-                        }}
-                        className="px-8 py-3 rounded-lg font-semibold cursor-pointer hover:opacity-90 transition-opacity"
-                      >
-                        Próxima Pergunta
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* Aviso Importante */}
-                  <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
-                    <h5 className="font-semibold text-blue-800 mb-2">💡 Como Funciona</h5>
-                    <ul className="text-sm text-blue-700 space-y-1">
-                      <li>• <strong>Novos elementos:</strong> Herdam automaticamente estas cores padrão</li>
-                      <li>• <strong>Elementos existentes:</strong> Mantêm suas cores personalizadas</li>
-                      <li>• <strong>Customização:</strong> Você pode alterar a cor individual de cada elemento no editor</li>
-                      <li>• <strong>Responsive:</strong> Mudanças aqui não afetam elementos já criados</li>
-                    </ul>
-                  </div>
-                </CardContent>
-              </Card>
 
               {/* Configurações da Barra de Progresso */}
               <Card>

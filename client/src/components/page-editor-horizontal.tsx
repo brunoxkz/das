@@ -705,6 +705,8 @@ interface PageEditorProps {
   activePageIndex?: number;
   defaultButtonColor?: string;
   defaultButtonTextColor?: string;
+  onDefaultButtonColorChange?: (color: string) => void;
+  onDefaultButtonTextColorChange?: (color: string) => void;
 }
 
 export function PageEditorHorizontal({ 
@@ -716,7 +718,9 @@ export function PageEditorHorizontal({
   onActivePageChange,
   activePageIndex = 0,
   defaultButtonColor = "#10b981",
-  defaultButtonTextColor = "#ffffff"
+  defaultButtonTextColor = "#ffffff",
+  onDefaultButtonColorChange,
+  onDefaultButtonTextColorChange
 }: PageEditorProps) {
 
   const [activePage, setActivePage] = useState(activePageIndex);
@@ -5158,6 +5162,83 @@ const gameElementCategories = [
             Aplicado a todas as páginas automaticamente
           </p>
         </div>
+
+        {/* Seção Cor Botão Global */}
+        <div className="p-4 border-b bg-gray-50">
+          <Label className="text-xs font-semibold text-gray-600 mb-2 block">
+            🔘 Cor Botão Global
+          </Label>
+          <div className="space-y-3">
+            {/* Cor de Fundo do Botão */}
+            <div>
+              <Label className="text-xs font-medium mb-2 block">Cor de Fundo</Label>
+              <div className="flex items-center gap-2">
+                <input
+                  type="color"
+                  value={defaultButtonColor}
+                  onChange={(e) => onDefaultButtonColorChange?.(e.target.value)}
+                  className="w-8 h-8 rounded-full border-2 border-gray-300 cursor-pointer"
+                />
+                <Input
+                  type="text"
+                  value={defaultButtonColor}
+                  onChange={(e) => onDefaultButtonColorChange?.(e.target.value)}
+                  className="flex-1 h-8 text-xs"
+                  placeholder="#10b981"
+                />
+              </div>
+            </div>
+
+            {/* Cor do Texto do Botão */}
+            <div>
+              <Label className="text-xs font-medium mb-2 block">Cor do Texto</Label>
+              <div className="flex items-center gap-2">
+                <input
+                  type="color"
+                  value={defaultButtonTextColor}
+                  onChange={(e) => onDefaultButtonTextColorChange?.(e.target.value)}
+                  className="w-8 h-8 rounded-full border-2 border-gray-300 cursor-pointer"
+                />
+                <Input
+                  type="text"
+                  value={defaultButtonTextColor}
+                  onChange={(e) => onDefaultButtonTextColorChange?.(e.target.value)}
+                  className="flex-1 h-8 text-xs"
+                  placeholder="#ffffff"
+                />
+              </div>
+            </div>
+
+            {/* Preview dos Botões */}
+            <div className="mt-3 p-3 bg-white rounded-lg border">
+              <Label className="text-xs font-medium mb-2 block">Preview</Label>
+              <div className="flex gap-2">
+                <button
+                  style={{
+                    backgroundColor: defaultButtonColor,
+                    color: defaultButtonTextColor
+                  }}
+                  className="px-4 py-2 rounded-lg text-xs font-medium cursor-pointer hover:opacity-90 transition-opacity"
+                >
+                  Continuar
+                </button>
+                <button
+                  style={{
+                    backgroundColor: defaultButtonColor,
+                    color: defaultButtonTextColor
+                  }}
+                  className="px-4 py-2 rounded-lg text-xs font-medium cursor-pointer hover:opacity-90 transition-opacity"
+                >
+                  Próximo
+                </button>
+              </div>
+            </div>
+          </div>
+          <p className="text-xs text-gray-500 mt-2">
+            Aplicado automaticamente aos novos botões criados
+          </p>
+        </div>
+
         <div className="flex-1 overflow-y-auto min-h-0" style={{maxHeight: 'calc(100vh - 73px)'}}>
           <div className="p-4">
             <div className="space-y-4 pb-4">
