@@ -4075,8 +4075,8 @@ export function registerSQLiteRoutes(app: Express): Server {
 
   // Submit final quiz response (ULTRA-OTIMIZADO para alto volume)
   app.post("/api/quizzes/:id/submit", 
-    // 🔒 RATE LIMITING ESPECÍFICO PARA QUIZ SUBMISSIONS (ATIVADO PARA PRODUÇÃO)
-    quizSubmissionRateLimit,
+    // 🔒 RATE LIMITING ESPECÍFICO PARA QUIZ SUBMISSIONS (TEMPORARIAMENTE DESABILITADO PARA DEBUG)
+    // quizSubmissionRateLimit,
     async (req, res, next) => {
       const startTime = Date.now();
       
@@ -4086,8 +4086,16 @@ export function registerSQLiteRoutes(app: Express): Server {
           return res.status(400).json({ error: 'Invalid request body' });
         }
 
-        if (!req.body.responses || !Array.isArray(req.body.responses)) {
-          return res.status(400).json({ error: 'Invalid responses format' });
+        console.log('🔍 DEBUG RESPONSES:', {
+          hasResponses: !!req.body.responses,
+          responsesType: typeof req.body.responses,
+          responsesValue: req.body.responses,
+          isObject: typeof req.body.responses === 'object',
+          isNull: req.body.responses === null
+        });
+        
+        if (!req.body.responses) {
+          return res.status(400).json({ error: 'Responses are required' });
         }
 
         // Headers de resposta otimizada
