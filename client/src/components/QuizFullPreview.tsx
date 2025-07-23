@@ -214,6 +214,33 @@ const ElementRenderer = ({ element }: { element: QuizElement }) => {
         </div>
       );
 
+    case 'spacer':
+      const spacerSize = properties.spacerSize || "medium";
+      const customSize = properties.customSpacerSize || "2rem";
+      
+      // Mapeamento responsivo dos tamanhos de spacer
+      const spacerSizeMap = {
+        small: "1rem",
+        medium: "2rem", 
+        large: "4rem"
+      };
+      
+      // Usar tamanho personalizado se definido
+      const finalSize = spacerSize === "custom" && customSize ? customSize : spacerSizeMap[spacerSize];
+      
+      return (
+        <div 
+          className="w-full"
+          style={{ 
+            height: finalSize,
+            minHeight: "0.5rem"
+          }}
+          aria-hidden="true"
+        >
+          {/* Spacer invisível no preview final */}
+        </div>
+      );
+
     default:
       return (
         <div className={`${getElementStyle()} p-3 border border-dashed border-gray-300 rounded-lg bg-gray-50`}>

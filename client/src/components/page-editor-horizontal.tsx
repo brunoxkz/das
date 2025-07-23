@@ -196,6 +196,9 @@ interface Element {
   visualEffect?: "fade" | "slide" | "zoom" | "bounce" | "none";
   effectDuration?: number;
   spacerSize?: "small" | "medium" | "large";
+  customSpacerSize?: string;
+  dividerThickness?: "thin" | "medium" | "thick";
+  dividerColor?: string;
   
   // Propriedades específicas dos jogos
   wheelSegments?: string[];
@@ -2099,9 +2102,24 @@ const gameElementCategories = [
           </div>
         );
       case "divider":
+        const dividerThickness = element.dividerThickness || "medium";
+        const dividerColor = element.dividerColor || "#d1d5db";
+        
+        const thicknessMap = {
+          thin: "1px",
+          medium: "2px", 
+          thick: "4px"
+        };
+        
         return (
           <div className="my-4">
-            <hr className="border-gray-300" />
+            <hr 
+              style={{
+                borderColor: dividerColor,
+                borderWidth: thicknessMap[dividerThickness],
+                borderStyle: "solid"
+              }}
+            />
           </div>
         );
       case "image_upload":
@@ -4744,6 +4762,39 @@ const gameElementCategories = [
             
             <div className="text-xs text-red-700 text-center bg-red-100 p-2 rounded-lg">
               🎥 <strong>Status:</strong> Animação Netflix completa • <strong>Duração:</strong> {element.netflixDuration || 4}s • <strong>Modo:</strong> Transição cinematográfica
+            </div>
+          </div>
+        );
+
+      case "spacer":
+        const spacerSize = element.spacerSize || "medium";
+        const customSize = element.customSpacerSize || "2rem";
+        
+        // Mapeamento responsivo dos tamanhos de spacer
+        const spacerSizeMap = {
+          small: "1rem",
+          medium: "2rem", 
+          large: "4rem"
+        };
+        
+        // Usar tamanho personalizado se definido e maior que 0.5rem
+        const finalSize = spacerSize === "custom" && customSize ? customSize : spacerSizeMap[spacerSize];
+        
+        return (
+          <div 
+            className="w-full"
+            style={{ 
+              height: finalSize,
+              minHeight: "0.5rem",
+              maxHeight: "10rem"
+            }}
+            aria-hidden="true"
+          >
+            {/* Indicador visual apenas no editor */}
+            <div className="w-full h-full border-2 border-dashed border-gray-200 bg-gray-50 rounded-lg flex items-center justify-center opacity-40 hover:opacity-60 transition-opacity">
+              <span className="text-xs text-gray-400 font-mono">
+                Espaçador ({finalSize})
+              </span>
             </div>
           </div>
         );
@@ -8173,6 +8224,42 @@ const gameElementCategories = [
                 </div>
               )}
 
+              {/* Propriedades para Divisor */}
+              {selectedElementData.type === "divider" && (
+                <div className="space-y-4">
+                  <div>
+                    <Label>Espessura da Linha</Label>
+                    <select 
+                      className="w-full px-3 py-2 border rounded-md mt-1"
+                      value={selectedElementData.dividerThickness || "medium"}
+                      onChange={(e) => updateElement(selectedElementData.id, { dividerThickness: e.target.value as "thin" | "medium" | "thick" })}
+                    >
+                      <option value="thin">Fino (1px)</option>
+                      <option value="medium">Médio (2px)</option>
+                      <option value="thick">Grosso (4px)</option>
+                    </select>
+                  </div>
+                  
+                  <div>
+                    <Label>Cor da Linha</Label>
+                    <div className="flex gap-2 mt-1">
+                      <Input
+                        type="color"
+                        value={selectedElementData.dividerColor || "#d1d5db"}
+                        onChange={(e) => updateElement(selectedElementData.id, { dividerColor: e.target.value })}
+                        className="w-16 h-10 p-1"
+                      />
+                      <Input
+                        value={selectedElementData.dividerColor || "#d1d5db"}
+                        onChange={(e) => updateElement(selectedElementData.id, { dividerColor: e.target.value })}
+                        placeholder="#d1d5db"
+                        className="flex-1"
+                      />
+                    </div>
+                  </div>
+                </div>
+              )}
+
               {/* Propriedades para Espaço */}
               {selectedElementData.type === "spacer" && (
                 <div className="space-y-4">
@@ -8181,12 +8268,58 @@ const gameElementCategories = [
                     <select 
                       className="w-full px-3 py-2 border rounded-md mt-1"
                       value={selectedElementData.spacerSize || "medium"}
-                      onChange={(e) => updateElement(selectedElementData.id, { spacerSize: e.target.value as "small" | "medium" | "large" })}
+                      onChange={(e) => updateElement(selectedElementData.id, { spacerSize: e.target.value as "small" | "medium" | "large" | "custom" })}
                     >
-                      <option value="small">Pequeno (20px)</option>
-                      <option value="medium">Médio (40px)</option>
-                      <option value="large">Grande (80px)</option>
+                      <option value="small">Pequeno (1rem)</option>
+                      <option value="medium">Médio (2rem)</option>
+                      <option value="large">Grande (4rem)</option>
+                      <option value="custom">Personalizado</option>
                     </select>
+                  </div>
+                  
+                  {/* Campo de tamanho personalizado */}
+                  {selectedElementData.spacerSize === "custom" && (
+                    <div>
+                      <Label>Tamanho Personalizado</Label>
+                      <div className="flex items-center gap-2 mt-1">
+                        <Input
+                          type="number"
+                          min="0.5"
+                          max="10"
+                          step="0.1"
+                          value={parseFloat(selectedElementData.customSpacerSize?.replace('rem', '') || '2')}
+                          onChange={(e) => updateElement(selectedElementData.id, { customSpacerSize: `${e.target.value}rem` })}
+                          className="flex-1"
+                          placeholder="2.0"
+                        />
+                        <span className="text-sm text-gray-500">rem</span>
+                      </div>
+                      <div className="text-xs text-gray-500 mt-1">
+                        Entre 0.5rem e 10rem (1rem ≈ 16px)
+                      </div>
+                    </div>
+                  )}
+                  
+                  {/* Preview visual do espaçamento */}
+                  <div className="border rounded-lg p-3 bg-gray-50">
+                    <Label className="text-xs text-gray-600">Preview do Espaçamento:</Label>
+                    <div className="mt-2 border-2 border-dashed border-gray-300 rounded flex items-center justify-center"
+                         style={{ 
+                           height: selectedElementData.spacerSize === "custom" && selectedElementData.customSpacerSize 
+                             ? selectedElementData.customSpacerSize 
+                             : selectedElementData.spacerSize === "small" ? "1rem" 
+                             : selectedElementData.spacerSize === "large" ? "4rem" 
+                             : "2rem"
+                         }}
+                    >
+                      <span className="text-xs text-gray-400">
+                        {selectedElementData.spacerSize === "custom" && selectedElementData.customSpacerSize 
+                          ? selectedElementData.customSpacerSize 
+                          : selectedElementData.spacerSize === "small" ? "1rem" 
+                          : selectedElementData.spacerSize === "large" ? "4rem" 
+                          : "2rem"}
+                      </span>
+                    </div>
                   </div>
                 </div>
               )}

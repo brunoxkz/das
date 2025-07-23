@@ -1630,6 +1630,34 @@ export function QuizPublicRenderer({ quiz }: QuizPublicRendererProps) {
           </div>
         );
 
+      case 'spacer':
+        const spacerSize = properties.spacerSize || "medium";
+        const customSize = properties.customSpacerSize || "2rem";
+        
+        // Mapeamento responsivo dos tamanhos de spacer
+        const spacerSizeMap = {
+          small: "1rem",
+          medium: "2rem", 
+          large: "4rem"
+        };
+        
+        // Usar tamanho personalizado se definido
+        const finalSize = spacerSize === "custom" && customSize ? customSize : spacerSizeMap[spacerSize];
+        
+        return (
+          <div 
+            key={id}
+            className="w-full"
+            style={{ 
+              height: finalSize,
+              minHeight: "0.5rem"
+            }}
+            aria-hidden="true"
+          >
+            {/* Spacer invisível no quiz público */}
+          </div>
+        );
+
       default:
         return (
           <div key={id} className="p-4 bg-gray-100 rounded-md">
