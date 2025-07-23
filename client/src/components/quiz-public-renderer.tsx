@@ -78,12 +78,51 @@ interface QuizPublicRendererProps {
       seoDescription: string;
       seoKeywords: string;
       globalBackgroundColor: string;
+      pageBackground?: string;
+      customBackgroundColor?: string;
     };
     backRedirectEnabled?: boolean;
     backRedirectUrl?: string;
     backRedirectDelay?: number;
   };
 }
+
+// Funções para aplicar fundo de página
+const getPageBackgroundStyle = (quiz: QuizPublicRendererProps['quiz']) => {
+  if (!quiz?.design?.pageBackground) {
+    return { backgroundColor: '#ffffff', color: '#000000' };
+  }
+
+  const { pageBackground, customBackgroundColor } = quiz.design;
+  
+  switch (pageBackground) {
+    case 'white':
+      return { backgroundColor: '#ffffff', color: '#000000' };
+    case 'black':
+      return { backgroundColor: '#000000', color: '#ffffff' };
+    case 'custom':
+      if (customBackgroundColor) {
+        const isLight = isLightColor(customBackgroundColor);
+        return { 
+          backgroundColor: customBackgroundColor, 
+          color: isLight ? '#000000' : '#ffffff' 
+        };
+      }
+      return { backgroundColor: '#ffffff', color: '#000000' };
+    default:
+      return { backgroundColor: '#ffffff', color: '#000000' };
+  }
+};
+
+// Função para determinar se uma cor é clara
+const isLightColor = (color: string): boolean => {
+  const hex = color.replace('#', '');
+  const r = parseInt(hex.substr(0, 2), 16);
+  const g = parseInt(hex.substr(2, 2), 16);
+  const b = parseInt(hex.substr(4, 2), 16);
+  const brightness = ((r * 299) + (g * 587) + (b * 114)) / 1000;
+  return brightness > 128;
+};
 
 // Tipos para sistema de respostas
 interface QuizResponse {
@@ -1825,7 +1864,14 @@ export function QuizPublicRenderer({ quiz }: QuizPublicRendererProps) {
 
   if (showResults) {
     return (
-      <div className="min-h-screen flex items-center justify-center p-4" style={{ backgroundColor: backgroundColor, color: textColor }}>
+      <div 
+        className="min-h-screen flex items-center justify-center p-4" 
+        style={{
+          ...getPageBackgroundStyle(quiz),
+          backgroundColor: backgroundColor || getPageBackgroundStyle(quiz).backgroundColor,
+          color: textColor || getPageBackgroundStyle(quiz).color
+        }}
+      >
         <Card className="w-full max-w-2xl" style={{ backgroundColor: cardBgColor, border: `1px solid ${borderColor}` }}>
           <CardHeader className="text-center">
             <div className="mx-auto w-16 h-16 rounded-full flex items-center justify-center mb-4" style={{ backgroundColor: isDarkMode ? '#047857' : '#dcfce7' }}>
@@ -1850,7 +1896,14 @@ export function QuizPublicRenderer({ quiz }: QuizPublicRendererProps) {
 
   if (!currentPage) {
     return (
-      <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: backgroundColor, color: textColor }}>
+      <div 
+        className="min-h-screen flex items-center justify-center" 
+        style={{
+          ...getPageBackgroundStyle(quiz),
+          backgroundColor: backgroundColor || getPageBackgroundStyle(quiz).backgroundColor,
+          color: textColor || getPageBackgroundStyle(quiz).color
+        }}
+      >
         <p style={{ color: isDarkMode ? '#9ca3af' : '#6b7280' }}>Nenhuma página encontrada</p>
       </div>
     );
@@ -1860,8 +1913,9 @@ export function QuizPublicRenderer({ quiz }: QuizPublicRendererProps) {
     <div 
       className="min-h-screen p-4"
       style={{ 
-        backgroundColor: backgroundColor,
-        color: textColor,
+        ...getPageBackgroundStyle(quiz),
+        backgroundColor: backgroundColor || getPageBackgroundStyle(quiz).backgroundColor,
+        color: textColor || getPageBackgroundStyle(quiz).color,
         transition: 'background-color 0.3s ease, color 0.3s ease'
       }}
     >

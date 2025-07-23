@@ -34,6 +34,43 @@ interface QuizFullPreviewProps {
   onClose: () => void;
 }
 
+// Funções para aplicar fundo de página
+const getPageBackgroundStyle = (quiz: Quiz | null) => {
+  if (!quiz?.design?.pageBackground) {
+    return { backgroundColor: '#ffffff', color: '#000000' };
+  }
+
+  const { pageBackground, customBackgroundColor } = quiz.design;
+  
+  switch (pageBackground) {
+    case 'white':
+      return { backgroundColor: '#ffffff', color: '#000000' };
+    case 'black':
+      return { backgroundColor: '#000000', color: '#ffffff' };
+    case 'custom':
+      if (customBackgroundColor) {
+        const isLight = isLightColor(customBackgroundColor);
+        return { 
+          backgroundColor: customBackgroundColor, 
+          color: isLight ? '#000000' : '#ffffff' 
+        };
+      }
+      return { backgroundColor: '#ffffff', color: '#000000' };
+    default:
+      return { backgroundColor: '#ffffff', color: '#000000' };
+  }
+};
+
+// Função para determinar se uma cor é clara
+const isLightColor = (color: string): boolean => {
+  const hex = color.replace('#', '');
+  const r = parseInt(hex.substr(0, 2), 16);
+  const g = parseInt(hex.substr(2, 2), 16);
+  const b = parseInt(hex.substr(4, 2), 16);
+  const brightness = ((r * 299) + (g * 587) + (b * 114)) / 1000;
+  return brightness > 128;
+};
+
 // Componente para renderizar elementos individuais
 const ElementRenderer = ({ element }: { element: QuizElement }) => {
   const { type, properties } = element;
@@ -456,7 +493,7 @@ const ElementRenderer = ({ element }: { element: QuizElement }) => {
 };
 
 // Componente para renderizar uma página completa
-const PageRenderer = ({ page, isLast }: { page: QuizPage; isLast: boolean }) => {
+const PageRenderer = ({ page, isLast, quiz }: { page: QuizPage; isLast: boolean; quiz: Quiz | null }) => {
   const getPageTypeColor = (title: string) => {
     if (title.includes('Captura')) return 'bg-blue-100 text-blue-800';
     if (title.includes('Qualificação')) return 'bg-purple-100 text-purple-800';
@@ -469,7 +506,10 @@ const PageRenderer = ({ page, isLast }: { page: QuizPage; isLast: boolean }) => 
   const sortedElements = [...page.elements].sort((a, b) => a.position - b.position);
 
   return (
-    <Card className="p-6 mb-6 border-2 border-gray-200 hover:border-gray-300 transition-all duration-200">
+    <Card 
+      className="p-6 mb-6 border-2 border-gray-200 hover:border-gray-300 transition-all duration-200"
+      style={getPageBackgroundStyle(quiz)}
+    >
       {/* Cabeçalho da página */}
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center space-x-3">
@@ -570,6 +610,7 @@ export default function QuizFullPreview({ quiz, isOpen, onClose }: QuizFullPrevi
                   key={page.id} 
                   page={page} 
                   isLast={index === filteredPages.length - 1}
+                  quiz={quiz}
                 />
               ))}
 
