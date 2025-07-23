@@ -778,7 +778,7 @@ export function PageEditorHorizontal({
       multiple_choice: "Múltipla Escolha",
       text: "Texto",
       email: "E-mail",
-      phone: "Telefone",
+      phone: "Telefone/Whats",
       number: "Número",
       rating: "Avaliação",
       animated_transition: "Transição Animada",
@@ -1988,7 +1988,7 @@ const gameElementCategories = [
                   type={element.type === "email" ? "email" : element.type === "phone" ? "tel" : element.type === "number" ? "number" : "text"}
                   placeholder={element.placeholder || `Digite aqui ${element.type === "email" ? "seu email" : element.type === "phone" ? "seu telefone" : ""}`}
                   className={`w-full px-3 py-3 ${element.showInlineIcon ? "pl-10" : ""} ${inputStyle} transition-all duration-200`}
-                  maxLength={element.type === "text" ? 200 : element.type === "email" ? 150 : undefined}
+                  maxLength={element.type === "text" ? 200 : element.type === "email" ? 150 : element.type === "phone" ? 20 : undefined}
                   {...(element.type === "email" && element.emailValidation && {
                     pattern: "[a-z0-9._%+-]+@[a-z0-9.-]+\\.[a-z]{2,}$"
                   })}
@@ -2002,10 +2002,10 @@ const gameElementCategories = [
                   })}
                 />
                 
-                {/* Contador de caracteres para campo texto e email */}
-                {(element.type === "text" || element.type === "email") && (
+                {/* Contador de caracteres para campo texto, email e telefone */}
+                {(element.type === "text" || element.type === "email" || element.type === "phone") && (
                   <div className="absolute bottom-1 right-2 text-xs text-gray-400">
-                    {element.type === "text" ? "200" : "150"} caracteres máx.
+                    {element.type === "text" ? "200" : element.type === "email" ? "150" : "20"} caracteres máx.
                   </div>
                 )}
                 
@@ -6186,20 +6186,20 @@ const gameElementCategories = [
                     <Input
                       id="maxLength"
                       type="number"
-                      value={selectedElementData.maxLength || (selectedElementData.type === "text" ? "200" : "")}
+                      value={selectedElementData.maxLength || (selectedElementData.type === "text" ? "200" : selectedElementData.type === "email" ? "150" : selectedElementData.type === "phone" ? "20" : "")}
                       onChange={(e) => {
-                        const maxValue = selectedElementData.type === "text" ? 200 : 500;
+                        const maxValue = selectedElementData.type === "text" ? 200 : selectedElementData.type === "email" ? 150 : selectedElementData.type === "phone" ? 20 : 500;
                         const value = Math.min(parseInt(e.target.value) || maxValue, maxValue);
                         updateElement(selectedElementData.id, { maxLength: value });
                       }}
-                      max={selectedElementData.type === "text" ? "200" : "500"}
+                      max={selectedElementData.type === "text" ? "200" : selectedElementData.type === "email" ? "150" : selectedElementData.type === "phone" ? "20" : "500"}
                       min="1"
                       className="mt-1"
-                      placeholder={selectedElementData.type === "text" ? "Máx: 200" : "Ex: 100"}
+                      placeholder={selectedElementData.type === "text" ? "Máx: 200" : selectedElementData.type === "email" ? "Máx: 150" : selectedElementData.type === "phone" ? "Máx: 20" : "Ex: 100"}
                     />
-                    {selectedElementData.type === "text" && (
+                    {(selectedElementData.type === "text" || selectedElementData.type === "email" || selectedElementData.type === "phone") && (
                       <p className="text-xs text-orange-600 mt-1">
-                        ⚠️ Campos de texto limitados a 200 caracteres por segurança
+                        ⚠️ Campos {selectedElementData.type === "text" ? "de texto limitados a 200" : selectedElementData.type === "email" ? "de email limitados a 150" : "de telefone limitados a 20"} caracteres por segurança
                       </p>
                     )}
                   </div>

@@ -957,23 +957,43 @@ export function QuizPublicRenderer({ quiz }: QuizPublicRendererProps) {
         );
 
       case 'phone':
+        // Aplicar estilos de formatação de texto para telefone
+        const phoneFieldLabelStyle = {
+          fontSize: properties?.fontSize === "xs" ? "12px" : 
+                   properties?.fontSize === "sm" ? "14px" : 
+                   properties?.fontSize === "lg" ? "18px" : 
+                   properties?.fontSize === "xl" ? "20px" : "16px",
+          fontWeight: properties?.fontWeight || "500",
+          color: properties?.textColor || "#374151",
+          textAlign: (properties?.textAlign || "left") as any,
+        };
+
+        // Largura em porcentagem da tela
+        const phoneWidthPercentage = properties?.widthPercentage || 100;
+        const phoneContainerWidth = `${Math.min(Math.max(phoneWidthPercentage, 10), 100)}%`;
+
         return (
-          <div key={id} className="space-y-4">
-            {(properties?.question || properties?.label) && (
-              <h3 
-                className={`text-lg font-semibold${getElementClasses(properties)}`}
-                style={getElementStyles(properties)}
-              >
-                {properties?.question || properties?.label || 'Telefone'}
+          <div key={id} className="w-full" style={{ width: phoneContainerWidth, maxWidth: phoneContainerWidth }}>
+            <div className="space-y-4">
+              <h3 style={phoneFieldLabelStyle}>
+                {properties?.question || 'Telefone/WhatsApp'}
+                {properties?.required && <span className="text-red-500 ml-1">*</span>}
               </h3>
-            )}
-            <Input
-              type="tel"
-              placeholder={properties?.placeholder || 'Digite seu telefone'}
-              value={answer || ''}
-              onChange={(e) => handleElementAnswer(id, type, e.target.value, properties?.fieldId || 'telefone_principal')}
-              required={properties?.required}
-            />
+              <Input
+                type="tel"
+                placeholder={properties?.placeholder || 'Digite seu telefone/WhatsApp'}
+                value={answer || ''}
+                onChange={(e) => {
+                  const value = e.target.value.slice(0, 20); // Limite de 20 caracteres para telefone
+                  handleElementAnswer(id, type, value, properties?.fieldId || 'telefone_principal');
+                }}
+                maxLength={20}
+                required={properties?.required}
+              />
+              <div className="text-xs text-gray-500 text-right">
+                {(answer || '').length}/20 caracteres (limite fixo para telefone)
+              </div>
+            </div>
           </div>
         );
 

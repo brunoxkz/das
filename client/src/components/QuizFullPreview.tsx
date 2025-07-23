@@ -165,6 +165,50 @@ const ElementRenderer = ({ element }: { element: QuizElement }) => {
         </div>
       );
 
+    case 'phone':
+      // Aplicar estilos de formatação de texto para telefone
+      const phoneLabelStyle = {
+        fontSize: properties.fontSize === "xs" ? "12px" : 
+                 properties.fontSize === "sm" ? "14px" : 
+                 properties.fontSize === "lg" ? "18px" : 
+                 properties.fontSize === "xl" ? "20px" : "16px",
+        fontWeight: properties.fontWeight || "500",
+        color: properties.textColor || properties.color || "#374151",
+        textAlign: (properties.textAlign || "left") as any,
+      };
+
+      // Largura em porcentagem da tela
+      const phoneWidthPercentage = properties.widthPercentage || 100;
+      const phoneContainerWidth = `${Math.min(Math.max(phoneWidthPercentage, 10), 100)}%`;
+
+      return (
+        <div 
+          className={getElementStyle()}
+          style={{ width: phoneContainerWidth, maxWidth: phoneContainerWidth }}
+        >
+          {properties.question && (
+            <label className="block mb-2" style={phoneLabelStyle}>
+              {properties.question.slice(0, 200)}
+              {properties.question && properties.question.length > 200 && '...'}
+            </label>
+          )}
+          <input
+            type="tel"
+            placeholder={properties.placeholder || 'Digite seu telefone/WhatsApp'}
+            className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+            style={{ 
+              backgroundColor: properties.backgroundColor || '#ffffff',
+              borderColor: properties.borderColor || '#cccccc'
+            }}
+            maxLength={20}
+            disabled
+          />
+          <div className="text-xs text-gray-500 text-right mt-1">
+            0/20 caracteres (limite fixo para telefone)
+          </div>
+        </div>
+      );
+
     case 'multiple_choice':
       return (
         <div className={getElementStyle()}>
@@ -209,7 +253,7 @@ const ElementRenderer = ({ element }: { element: QuizElement }) => {
           <div className="flex justify-center mb-4">
             <div className="relative w-32 h-32">
               <svg viewBox="0 0 200 200" className="w-full h-full drop-shadow-lg">
-                {wheelSegments.map((segment, index) => {
+                {wheelSegments.map((segment: string, index: number) => {
                   const angle = 360 / wheelSegments.length;
                   const startAngle = index * angle;
                   const endAngle = (index + 1) * angle;
@@ -272,7 +316,7 @@ const ElementRenderer = ({ element }: { element: QuizElement }) => {
       };
       
       // Usar tamanho personalizado se definido
-      const finalSize = spacerSize === "custom" && customSize ? customSize : spacerSizeMap[spacerSize];
+      const finalSize = spacerSize === "custom" && customSize ? customSize : spacerSizeMap[spacerSize as keyof typeof spacerSizeMap];
       
       return (
         <div 
