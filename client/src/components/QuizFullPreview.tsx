@@ -124,6 +124,70 @@ const ElementRenderer = ({ element }: { element: QuizElement }) => {
         </div>
       );
 
+    case 'game_wheel':
+      const wheelSegments = properties.wheelSegments || ["Prêmio 1", "Prêmio 2", "Prêmio 3", "Prêmio 4"];
+      const wheelColors = properties.wheelColors || ["#FF6B6B", "#4ECDC4", "#45B7D1", "#96CEB4"];
+      
+      return (
+        <div className={`${getElementStyle()} p-4 border-2 border-dashed border-orange-200 rounded-lg bg-gradient-to-br from-orange-50 to-yellow-50`}>
+          <div className="flex items-center justify-center mb-4">
+            <span className="font-bold text-orange-800">🎰 Roleta da Sorte</span>
+          </div>
+          
+          <div className="flex justify-center mb-4">
+            <div className="relative w-32 h-32">
+              <svg viewBox="0 0 200 200" className="w-full h-full drop-shadow-lg">
+                {wheelSegments.map((segment, index) => {
+                  const angle = 360 / wheelSegments.length;
+                  const startAngle = index * angle;
+                  const endAngle = (index + 1) * angle;
+                  
+                  const x1 = 100 + 70 * Math.cos((startAngle * Math.PI) / 180);
+                  const y1 = 100 + 70 * Math.sin((startAngle * Math.PI) / 180);
+                  const x2 = 100 + 70 * Math.cos((endAngle * Math.PI) / 180);
+                  const y2 = 100 + 70 * Math.sin((endAngle * Math.PI) / 180);
+                  
+                  const largeArcFlag = angle > 180 ? 1 : 0;
+                  
+                  return (
+                    <g key={index}>
+                      <path
+                        d={`M 100 100 L ${x1} ${y1} A 70 70 0 ${largeArcFlag} 1 ${x2} ${y2} Z`}
+                        fill={wheelColors[index % wheelColors.length]}
+                        stroke="#ffffff"
+                        strokeWidth="2"
+                      />
+                      <text
+                        x={100 + 45 * Math.cos(((startAngle + endAngle) / 2 * Math.PI) / 180)}
+                        y={100 + 45 * Math.sin(((startAngle + endAngle) / 2 * Math.PI) / 180)}
+                        textAnchor="middle"
+                        dominantBaseline="middle"
+                        fontSize="10"
+                        fill="#ffffff"
+                        fontWeight="bold"
+                      >
+                        {segment.length > 8 ? segment.substring(0, 8) + '...' : segment}
+                      </text>
+                    </g>
+                  );
+                })}
+                <circle cx="100" cy="100" r="8" fill="#ffffff" stroke="#333" strokeWidth="2" />
+              </svg>
+            </div>
+          </div>
+          
+          <div className="text-center">
+            <Button className="bg-orange-500 hover:bg-orange-600 text-white px-6 py-2 rounded-lg" disabled>
+              Girar Roleta
+            </Button>
+          </div>
+          
+          <div className="text-xs text-orange-600 text-center mt-2">
+            Preview: Roleta interativa • {wheelSegments.length} opções
+          </div>
+        </div>
+      );
+
     default:
       return (
         <div className={`${getElementStyle()} p-3 border border-dashed border-gray-300 rounded-lg bg-gray-50`}>
