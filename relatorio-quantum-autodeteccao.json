@@ -1,0 +1,54 @@
+{
+  "timestamp": "2025-07-23T03:47:09.340Z",
+  "systemVersion": "Vendzz Quantum v1.0",
+  "testType": "Auto-Detection + Quantum Compatibility",
+  "results": {
+    "total": 8,
+    "passed": 4,
+    "failed": 4,
+    "details": [
+      {
+        "testName": "Endpoint variables-ultra",
+        "passed": true,
+        "details": "4 variáveis detectadas"
+      },
+      {
+        "testName": "Busca de leads",
+        "passed": true,
+        "details": "6 leads encontrados"
+      },
+      {
+        "testName": "Auto-detecção de campos",
+        "passed": false,
+        "details": "40.0% campos detectados"
+      },
+      {
+        "testName": "Extração de telefones",
+        "passed": true,
+        "details": "3 telefones extraídos"
+      },
+      {
+        "testName": "Criação Quantum Remarketing",
+        "passed": false,
+        "details": "Status: 400, Error: {\"error\":\"Nenhum telefone válido encontrado para envio\"}"
+      },
+      {
+        "testName": "Criação Quantum Live",
+        "passed": false,
+        "details": "Status: 400, Error: {\"error\":\"Nenhum telefone válido encontrado para envio\"}"
+      },
+      {
+        "testName": "Detecção Ultra Variables",
+        "passed": true,
+        "details": "4 variáveis ultra detectadas"
+      },
+      {
+        "testName": "Integração Completa Sistema",
+        "passed": false,
+        "details": "Cannot read properties of undefined (reading 'includes')"
+      }
+    ]
+  },
+  "successRate": 50,
+  "recommendation": "CRITICAL_FIXES_NEEDED"
+}
