@@ -1297,64 +1297,97 @@ export function QuizPublicRenderer({ quiz }: QuizPublicRendererProps) {
         );
 
       case 'target_weight':
+        const targetWeightUnit = properties?.weightUnit || "kg";
+        const targetLabelStyle = properties?.fontSize === 'xs' ? 'text-xs' : 
+                                properties?.fontSize === 'sm' ? 'text-sm' : 
+                                properties?.fontSize === 'lg' ? 'text-lg' : 
+                                properties?.fontSize === 'xl' ? 'text-xl' : 'text-base';
+        const targetFontWeight = properties?.fontWeight === 'light' ? 'font-light' :
+                                properties?.fontWeight === 'medium' ? 'font-medium' :
+                                properties?.fontWeight === 'semibold' ? 'font-semibold' :
+                                properties?.fontWeight === 'bold' ? 'font-bold' : 'font-normal';
+        const targetTextAlign = properties?.textAlign === 'center' ? 'text-center' :
+                               properties?.textAlign === 'right' ? 'text-right' : 'text-left';
+        
         return (
-          <div key={id} className="space-y-4">
-            <div className="p-4 bg-orange-50 border border-orange-200 rounded-lg">
-              <div className="flex items-center space-x-2 mb-2">
-                <Target className="w-5 h-5 text-orange-600" />
-                <h3 className={`${properties?.fontSize || 'text-lg'} ${properties?.fontWeight || 'font-semibold'} ${properties?.textAlign || 'text-left'} text-orange-800`}>{properties?.question || 'Peso Meta'}</h3>
-              </div>
-              {properties?.description && (
-                <p className="text-sm text-orange-700 mb-3">{properties.description}</p>
-              )}
-              <div className={`${
-                properties?.fieldWidth === 'small' ? 'max-w-xs' :
-                properties?.fieldWidth === 'medium' ? 'max-w-sm' :
-                properties?.fieldWidth === 'large' ? 'max-w-md' :
-                'max-w-full'
-              } ${
-                properties?.fieldAlign === 'left' ? 'mr-auto' :
-                properties?.fieldAlign === 'right' ? 'ml-auto' :
-                'mx-auto'
-              }`}>
-                <Input
-                  type="number"
-                  placeholder={properties?.placeholder || '65'}
-                  value={answer || ''}
-                  onChange={(e) => handleElementAnswer(id, type, Number(e.target.value), properties?.fieldId || 'peso_meta')}
-                  required={properties?.required}
-                  min={properties?.min || 30}
-                  max={properties?.max || 300}
-                  className={`${
-                    properties?.fieldStyle === 'rounded' ? 'rounded-full' :
-                    properties?.fieldStyle === 'square' ? 'rounded-none' :
-                    'rounded-md'
-                  }`}
-                />
-                <div className="flex justify-between items-center mt-2">
-                  <span className="text-xs text-orange-600">{properties?.unit || 'kg'}</span>
-                  {properties?.showTargetProgress && (
-                    <span className="text-xs text-orange-600">
-                      Meta: {properties?.min || 30} - {properties?.max || 300} {properties?.unit || 'kg'}
-                    </span>
-                  )}
+          <div 
+            key={id} 
+            className="space-y-4"
+            style={{ width: properties?.width || "100%" }}
+          >
+            <div className="bg-white rounded-lg p-4 shadow-sm" style={{ width: properties?.width || "100%" }}>
+              <label className={`block mb-2 ${targetLabelStyle} ${targetFontWeight} ${targetTextAlign} text-gray-700`}>
+                {properties?.question || "Qual é seu peso objetivo?"}
+              </label>
+              
+              <div className="flex items-center gap-3">
+                <div className="flex-1 relative">
+                  <Input
+                    type="number"
+                    step={targetWeightUnit === "kg" ? 0.1 : 0.1}
+                    min={properties?.min || (targetWeightUnit === "kg" ? 30 : 66)}
+                    max={properties?.max || (targetWeightUnit === "kg" ? 300 : 660)}
+                    placeholder={properties?.placeholder || (targetWeightUnit === "kg" ? "Ex: 65.0" : "Ex: 143")}
+                    value={answer || ''}
+                    onChange={(e) => handleElementAnswer(id, type, e.target.value, properties?.fieldId || 'peso_objetivo')}
+                    required={properties?.required}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg"
+                    style={{
+                      fontSize: properties?.fontSize === 'xs' ? '12px' : 
+                              properties?.fontSize === 'sm' ? '14px' : 
+                              properties?.fontSize === 'lg' ? '18px' : 
+                              properties?.fontSize === 'xl' ? '20px' : '16px',
+                      fontWeight: properties?.fontWeight || 'normal',
+                      textAlign: properties?.textAlign || 'left'
+                    }}
+                  />
+                  
+                  <div className="absolute right-2 top-1/2 transform -translate-y-1/2">
+                    <div className="flex bg-gray-100 rounded-lg p-1">
+                      <button 
+                        type="button" 
+                        className={`px-3 py-1 text-sm rounded ${targetWeightUnit === "kg" ? "bg-gray-600 text-white" : "text-gray-600"}`}
+                      >
+                        kg
+                      </button>
+                      <button 
+                        type="button" 
+                        className={`px-3 py-1 text-sm rounded ${targetWeightUnit === "lb" ? "bg-gray-600 text-white" : "text-gray-600"}`}
+                      >
+                        lb
+                      </button>
+                    </div>
+                  </div>
                 </div>
               </div>
-              {properties?.showTargetProgress && answer && (
-                <div className="mt-3">
-                  <div className="w-full bg-orange-200 rounded-full h-2">
-                    <div 
-                      className="bg-gradient-to-r from-orange-500 to-orange-600 h-2 rounded-full transition-all duration-300"
-                      style={{ 
-                        width: `${((answer - (properties?.min || 30)) / ((properties?.max || 300) - (properties?.min || 30))) * 100}%` 
-                      }}
-                    />
+              
+              {properties?.showDifferenceCalculation && properties?.currentWeightFieldId && (
+                <div className="mt-3 p-3 bg-green-50 rounded-lg border border-green-200">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Target className="w-4 h-4 text-green-600" />
+                    <span className="text-sm font-medium text-green-800">Cálculo de diferença ativo</span>
                   </div>
-                  <div className="text-center mt-2">
-                    <span className="text-xs text-orange-600 font-medium">
-                      Meta: {answer}{properties?.unit || 'kg'}
-                    </span>
+                  <div className="text-xs text-green-700">
+                    Vinculado com peso atual: {properties.currentWeightFieldId}
                   </div>
+                </div>
+              )}
+              
+              {properties?.showProgressCalculation && properties?.currentWeightFieldId && (
+                <div className="mt-3 p-3 bg-blue-50 rounded-lg border border-blue-200">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Target className="w-4 h-4 text-blue-600" />
+                    <span className="text-sm font-medium text-blue-800">Progresso será calculado automaticamente</span>
+                  </div>
+                  <div className="text-xs text-blue-700">
+                    Baseado na diferença entre peso atual e peso objetivo
+                  </div>
+                </div>
+              )}
+              
+              {properties?.description && (
+                <div className={`mt-3 text-gray-600 bg-gray-50 p-2 rounded ${targetLabelStyle} ${targetFontWeight} ${targetTextAlign}`}>
+                  {properties.description}
                 </div>
               )}
             </div>

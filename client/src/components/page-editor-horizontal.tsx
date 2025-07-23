@@ -2539,72 +2539,105 @@ const gameElementCategories = [
           </div>
         );
       case "target_weight":
+        const targetWeightUnit = element.weightUnit || "kg";
+        const showTargetUnitSelector = element.showUnitSelector !== false;
+        const targetLabelStyle = `text-${element.fontSize || 'sm'} font-${element.fontWeight || 'normal'} text-${element.textAlign || 'left'}`;
+        const targetFieldLabelStyle = `text-${element.fontSize || 'sm'} font-${element.fontWeight || 'normal'} text-${element.textAlign || 'left'}`;
+        
         return (
-          <div className="space-y-3 p-4 border-2 border-dashed border-orange-200 rounded-lg bg-orange-50">
+          <div 
+            className="space-y-3 p-4 border-2 border-dashed rounded-lg bg-transparent"
+            style={{
+              width: element.width || "100%",
+              borderColor: "#e5e7eb"
+            }}
+          >
             <div className="flex items-center gap-2">
-              <Target className="w-4 h-4 text-orange-600" />
-              <span className="font-medium text-orange-800">Peso Objetivo</span>
+              <Target className="w-4 h-4 text-gray-600" />
+              <span className="font-medium text-gray-800">Peso Objetivo</span>
             </div>
             
-            <div className="bg-white rounded-lg p-4 shadow-sm">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+            <div className="bg-white rounded-lg p-4 shadow-sm" style={{ width: element.width || "100%" }}>
+              <label className={`block mb-2 ${targetLabelStyle}`}>
                 {element.question || "Qual é seu peso objetivo?"}
-                
               </label>
               
               <div className="flex items-center gap-3">
                 <div className="flex-1 relative">
                   <input
                     type="number"
-                    step="0.1"
-                    min="30"
-                    max="300"
-                    className="w-full px-4 py-3 text-lg border border-gray-300 rounded-lg text-center font-semibold"
-                    placeholder="65.0"
-                    style={{fontSize: '18px'}}
+                    step={targetWeightUnit === "kg" ? 0.1 : 0.1}
+                    min={element.min || (targetWeightUnit === "kg" ? 30 : 66)}
+                    max={element.max || (targetWeightUnit === "kg" ? 300 : 660)}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg"
+                    placeholder={element.placeholder || (targetWeightUnit === "kg" ? "Ex: 65.0" : "Ex: 143")}
+                    style={{
+                      fontSize: element.fontSize === 'xs' ? '12px' : element.fontSize === 'sm' ? '14px' : element.fontSize === 'lg' ? '18px' : element.fontSize === 'xl' ? '20px' : '16px',
+                      fontWeight: element.fontWeight || 'normal',
+                      textAlign: element.textAlign || 'left'
+                    }}
                   />
-                  <span className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 font-medium">
-                    kg
-                  </span>
-                </div>
-                
-                <div className="w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center">
-                  <div className="text-center">
-                    <div className="text-xs text-orange-600 font-semibold">META</div>
-                    <Target className="w-6 h-6 text-orange-700 mx-auto" />
-                  </div>
+                  
+                  {showTargetUnitSelector && (
+                    <div className="absolute right-2 top-1/2 transform -translate-y-1/2">
+                      <div className="flex bg-gray-100 rounded-lg p-1">
+                        <button className={`px-3 py-1 text-sm rounded ${targetWeightUnit === "kg" ? "bg-gray-600 text-white" : "text-gray-600"}`}>
+                          kg
+                        </button>
+                        <button className={`px-3 py-1 text-sm rounded ${targetWeightUnit === "lb" ? "bg-gray-600 text-white" : "text-gray-600"}`}>
+                          lb
+                        </button>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
               
-              <div className="mt-3 p-3 bg-gradient-to-r from-orange-50 to-yellow-50 rounded-lg border border-orange-200">
-                <div className="flex items-center gap-2 mb-2">
-                  <Calculator className="w-4 h-4 text-orange-600" />
-                  <span className="text-sm font-medium text-orange-800">Cálculo automático de diferença</span>
-                </div>
-                <div className="grid grid-cols-2 gap-3 text-xs">
-                  <div className="bg-white p-2 rounded border">
-                    <div className="text-orange-600 font-semibold">Diferença</div>
-                    <div className="text-orange-700 font-bold">-- kg</div>
+              {element.showDifferenceCalculation && element.currentWeightFieldId && (
+                <div className="mt-3 p-3 bg-green-50 rounded-lg border border-green-200">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Calculator className="w-4 h-4 text-green-600" />
+                    <span className="text-sm font-medium text-green-800">Cálculo de diferença ativo</span>
                   </div>
-                  <div className="bg-white p-2 rounded border">
-                    <div className="text-orange-600 font-semibold">Progresso</div>
-                    <div className="text-orange-700 font-bold">--%</div>
+                  <div className="text-xs text-green-700">
+                    Vinculado com peso atual: {element.currentWeightFieldId}
                   </div>
                 </div>
-                <div className="text-xs text-orange-700 mt-2">
-                  Calculado automaticamente com base no peso atual
+              )}
+              
+              {element.showDifferenceCalculation && !element.currentWeightFieldId && (
+                <div className="mt-3 p-3 bg-red-50 rounded-lg border border-red-200">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Calculator className="w-4 h-4 text-red-600" />
+                    <span className="text-sm font-medium text-red-800">⚠️ ID do peso atual não configurado</span>
+                  </div>
+                  <div className="text-xs text-red-700">
+                    Configure o ID do campo peso atual nas propriedades para ativar o cálculo
+                  </div>
                 </div>
-              </div>
+              )}
+              
+              {element.showProgressCalculation && element.currentWeightFieldId && (
+                <div className="mt-3 p-3 bg-blue-50 rounded-lg border border-blue-200">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Activity className="w-4 h-4 text-blue-600" />
+                    <span className="text-sm font-medium text-blue-800">Progresso será calculado automaticamente</span>
+                  </div>
+                  <div className="text-xs text-blue-700">
+                    Baseado na diferença entre peso atual e peso objetivo
+                  </div>
+                </div>
+              )}
               
               {element.description && (
-                <div className="mt-3 text-sm text-gray-600 bg-gray-50 p-2 rounded">
+                <div className={`mt-3 text-gray-600 bg-gray-50 p-2 rounded ${targetFieldLabelStyle}`}>
                   {element.description}
                 </div>
               )}
             </div>
             
-            <div className="text-xs text-orange-600 text-center">
-              Elemento: Peso Objetivo • Range: 30-300kg • Cálculo de diferença automático
+            <div className="text-xs text-gray-600 text-center">
+              Elemento: Peso Objetivo • Range: {targetWeightUnit === "kg" ? "30-300kg" : "66-660lb"} • Unidade: {targetWeightUnit.toUpperCase()}
             </div>
           </div>
         );
@@ -7352,12 +7385,12 @@ const gameElementCategories = [
               {/* Propriedades para Peso Desejado */}
               {selectedElementData.type === "target_weight" && (
                 <div className="space-y-4">
-                  <div className="p-3 bg-orange-50 border border-orange-200 rounded-lg">
+                  <div className="p-3 bg-gray-50 border border-gray-200 rounded-lg">
                     <div className="flex items-center gap-2 mb-2">
-                      <Target className="w-4 h-4 text-orange-600" />
-                      <span className="font-medium text-orange-800">Peso Objetivo - Configurações</span>
+                      <Target className="w-4 h-4 text-gray-600" />
+                      <span className="font-medium text-gray-800">Peso Objetivo - Configurações</span>
                     </div>
-                    <div className="text-xs text-orange-700">
+                    <div className="text-xs text-gray-700">
                       Este elemento captura o peso desejado e calcula automaticamente a diferença com o peso atual
                     </div>
                   </div>
@@ -7394,19 +7427,6 @@ const gameElementCategories = [
                     <Label htmlFor="target-required">Campo obrigatório</Label>
                   </div>
 
-                  <div className="p-3 bg-gradient-to-r from-orange-50 to-yellow-50 border border-orange-200 rounded-lg">
-                    <div className="flex items-center gap-2 mb-2">
-                      <Calculator className="w-4 h-4 text-orange-600" />
-                      <span className="font-medium text-orange-800">Cálculo Automático Ativo</span>
-                    </div>
-                    <div className="text-xs text-orange-700 space-y-1">
-                      <div>• Diferença será calculada automaticamente com base no peso atual</div>
-                      <div>• Mostra percentual de progresso e quanto falta para atingir a meta</div>
-                      <div>• Certifique-se de ter um elemento "Peso Atual" no seu formulário</div>
-                      <div>• Cálculos aparecem em tempo real durante o preenchimento</div>
-                    </div>
-                  </div>
-
                   <div>
                     <Label htmlFor="target-field-id">ID do Campo (para captura de leads)</Label>
                     <Input
@@ -7421,120 +7441,161 @@ const gameElementCategories = [
                     </div>
                   </div>
 
-                  <div>
-                    <Label htmlFor="target-response-id">ID da Resposta (para usar como variável)</Label>
-                    <Input
-                      id="target-response-id"
-                      value={selectedElementData.responseId || ""}
-                      onChange={(e) => updateElement(selectedElementData.id, { responseId: e.target.value })}
-                      className="mt-1"
-                      placeholder="peso_objetivo_resposta"
-                    />
-                    <div className="text-xs text-gray-500 mt-1">
-                      Use {`{peso_objetivo_resposta}`} em campanhas SMS/Email/WhatsApp
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <Label className="text-xs">Unidade de Peso</Label>
+                      <select 
+                        className="w-full px-2 py-1 border rounded text-xs mt-1"
+                        value={selectedElementData.weightUnit || "kg"}
+                        onChange={(e) => updateElement(selectedElementData.id, { weightUnit: e.target.value })}
+                      >
+                        <option value="kg">Quilogramas (kg)</option>
+                        <option value="lb">Libras (lb)</option>
+                      </select>
+                    </div>
+
+                    <div>
+                      <Label className="text-xs">Largura do Elemento</Label>
+                      <select 
+                        className="w-full px-2 py-1 border rounded text-xs mt-1"
+                        value={selectedElementData.width || "100%"}
+                        onChange={(e) => updateElement(selectedElementData.id, { width: e.target.value })}
+                      >
+                        <option value="25%">25% da tela</option>
+                        <option value="50%">50% da tela</option>
+                        <option value="75%">75% da tela</option>
+                        <option value="100%">100% da tela</option>
+                      </select>
                     </div>
                   </div>
 
                   <div>
-                    <Label htmlFor="target-placeholder">Placeholder</Label>
+                    <Label className="text-xs">Placeholder do Campo</Label>
                     <Input
-                      id="target-placeholder"
                       value={selectedElementData.placeholder || ""}
                       onChange={(e) => updateElement(selectedElementData.id, { placeholder: e.target.value })}
                       className="mt-1"
-                      placeholder="Ex: 65"
+                      placeholder="Ex: Digite seu peso objetivo"
                     />
                   </div>
 
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-2 gap-2">
                     <div>
-                      <Label htmlFor="target-min">Peso Mínimo</Label>
+                      <Label className="text-xs">Peso Mínimo (kg)</Label>
                       <Input
-                        id="target-min"
                         type="number"
-                        value={selectedElementData.min || ""}
+                        value={selectedElementData.min || "30"}
                         onChange={(e) => updateElement(selectedElementData.id, { min: Number(e.target.value) })}
                         className="mt-1"
                         placeholder="30"
                       />
                     </div>
                     <div>
-                      <Label htmlFor="target-max">Peso Máximo</Label>
+                      <Label className="text-xs">Peso Máximo (kg)</Label>
                       <Input
-                        id="target-max"
                         type="number"
-                        value={selectedElementData.max || ""}
+                        value={selectedElementData.max || "300"}
                         onChange={(e) => updateElement(selectedElementData.id, { max: Number(e.target.value) })}
                         className="mt-1"
-                        placeholder="200"
+                        placeholder="300"
                       />
                     </div>
                   </div>
 
-                  <div>
-                    <Label htmlFor="target-unit">Unidade</Label>
-                    <select
-                      id="target-unit"
-                      value={selectedElementData.unit || "kg"}
-                      onChange={(e) => updateElement(selectedElementData.id, { unit: e.target.value })}
-                      className="w-full mt-1 p-2 border border-gray-300 rounded-md"
-                    >
-                      <option value="kg">Quilogramas (kg)</option>
-                      <option value="lb">Libras (lb)</option>
-                    </select>
+                  <div className="space-y-3">
+                    <Label className="text-xs font-semibold">Formatação de Texto</Label>
+                    
+                    <div className="grid grid-cols-3 gap-2">
+                      <div>
+                        <Label className="text-xs">Tamanho da Fonte</Label>
+                        <select 
+                          className="w-full px-2 py-1 border rounded text-xs mt-1"
+                          value={selectedElementData.fontSize || "md"}
+                          onChange={(e) => updateElement(selectedElementData.id, { fontSize: e.target.value })}
+                        >
+                          <option value="xs">Extra Pequeno</option>
+                          <option value="sm">Pequeno</option>
+                          <option value="md">Médio</option>
+                          <option value="lg">Grande</option>
+                          <option value="xl">Extra Grande</option>
+                        </select>
+                      </div>
+
+                      <div>
+                        <Label className="text-xs">Peso da Fonte</Label>
+                        <select 
+                          className="w-full px-2 py-1 border rounded text-xs mt-1"
+                          value={selectedElementData.fontWeight || "normal"}
+                          onChange={(e) => updateElement(selectedElementData.id, { fontWeight: e.target.value })}
+                        >
+                          <option value="light">Leve</option>
+                          <option value="normal">Normal</option>
+                          <option value="medium">Médio</option>
+                          <option value="semibold">Semi Negrito</option>
+                          <option value="bold">Negrito</option>
+                        </select>
+                      </div>
+
+                      <div>
+                        <Label className="text-xs">Alinhamento</Label>
+                        <select 
+                          className="w-full px-2 py-1 border rounded text-xs mt-1"
+                          value={selectedElementData.textAlign || "left"}
+                          onChange={(e) => updateElement(selectedElementData.id, { textAlign: e.target.value })}
+                        >
+                          <option value="left">Esquerda</option>
+                          <option value="center">Centro</option>
+                          <option value="right">Direita</option>
+                        </select>
+                      </div>
+                    </div>
                   </div>
 
-                  <div>
-                    <Label htmlFor="target-field-width">Largura do Campo</Label>
-                    <select
-                      id="target-field-width"
-                      value={selectedElementData.fieldWidth || "medium"}
-                      onChange={(e) => updateElement(selectedElementData.id, { fieldWidth: e.target.value })}
-                      className="w-full mt-1 p-2 border border-gray-300 rounded-md"
-                    >
-                      <option value="small">Pequeno</option>
-                      <option value="medium">Médio</option>
-                      <option value="large">Grande</option>
-                      <option value="full">Largura Total</option>
-                    </select>
-                  </div>
+                  <div className="space-y-3">
+                    <Label className="text-xs font-semibold">⚙️ Recursos Avançados Opcionais</Label>
+                    
+                    <div className="space-y-2">
+                      <div className="flex items-center space-x-2">
+                        <input
+                          type="checkbox"
+                          id="show-difference-calc"
+                          checked={selectedElementData.showDifferenceCalculation || false}
+                          onChange={(e) => updateElement(selectedElementData.id, { showDifferenceCalculation: e.target.checked })}
+                        />
+                        <Label htmlFor="show-difference-calc" className="text-xs">Cálculo de diferença automático</Label>
+                      </div>
 
-                  <div>
-                    <Label htmlFor="target-field-align">Alinhamento</Label>
-                    <select
-                      id="target-field-align"
-                      value={selectedElementData.fieldAlign || "center"}
-                      onChange={(e) => updateElement(selectedElementData.id, { fieldAlign: e.target.value })}
-                      className="w-full mt-1 p-2 border border-gray-300 rounded-md"
-                    >
-                      <option value="left">Esquerda</option>
-                      <option value="center">Centro</option>
-                      <option value="right">Direita</option>
-                    </select>
-                  </div>
+                      {selectedElementData.showDifferenceCalculation && (
+                        <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
+                          <div className="flex items-center gap-2 mb-2">
+                            <Calculator className="w-4 h-4 text-red-600" />
+                            <span className="font-medium text-red-800">**IMPORTANTE**: ID do Peso Atual Obrigatório</span>
+                          </div>
+                          <div className="text-xs text-red-700 space-y-2">
+                            <div>**Para calcular a diferença, você DEVE colar aqui o ID do campo PESO ATUAL:**</div>
+                            <Input
+                              value={selectedElementData.currentWeightFieldId || ""}
+                              onChange={(e) => updateElement(selectedElementData.id, { currentWeightFieldId: e.target.value })}
+                              placeholder="**COLE AQUI O ID DO CAMPO PESO ATUAL**"
+                              className="mt-1 border-red-300 focus:ring-red-500"
+                            />
+                            <div className="text-xs text-red-600">
+                              **SEM ESSE ID, A DIFERENÇA NÃO SERÁ CALCULADA. Vá no elemento peso atual e copie o "ID do Campo"**
+                            </div>
+                          </div>
+                        </div>
+                      )}
 
-                  <div>
-                    <Label htmlFor="target-field-style">Estilo do Campo</Label>
-                    <select
-                      id="target-field-style"
-                      value={selectedElementData.fieldStyle || "default"}
-                      onChange={(e) => updateElement(selectedElementData.id, { fieldStyle: e.target.value })}
-                      className="w-full mt-1 p-2 border border-gray-300 rounded-md"
-                    >
-                      <option value="default">Padrão</option>
-                      <option value="rounded">Arredondado</option>
-                      <option value="square">Quadrado</option>
-                    </select>
-                  </div>
-
-                  <div className="flex items-center space-x-2">
-                    <input
-                      type="checkbox"
-                      id="target-show-progress"
-                      checked={selectedElementData.showTargetProgress || false}
-                      onChange={(e) => updateElement(selectedElementData.id, { showTargetProgress: e.target.checked })}
-                    />
-                    <Label htmlFor="target-show-progress">Mostrar progresso da meta</Label>
+                      <div className="flex items-center space-x-2">
+                        <input
+                          type="checkbox"
+                          id="show-progress-calc"
+                          checked={selectedElementData.showProgressCalculation || false}
+                          onChange={(e) => updateElement(selectedElementData.id, { showProgressCalculation: e.target.checked })}
+                        />
+                        <Label htmlFor="show-progress-calc" className="text-xs">Cálculo de progresso automático</Label>
+                      </div>
+                    </div>
                   </div>
 
                   <div className="grid grid-cols-2 gap-4">

@@ -598,6 +598,22 @@ Campo: p1_objetivo_fitness
 ## Changelog
 
 ```
+- January 23, 2025. ELEMENTO PESO OBJETIVO COMPLETAMENTE REESCRITO - Reescrita completa com fundo transparente, seletor KG/LB, formatação de texto e recursos avançados implementados:
+  * REESCRITA COMPLETA DO ELEMENTO: Elemento peso objetivo totalmente refeito seguindo padrão dos outros elementos de peso
+  * FUNDO TRANSPARENTE: Removido fundo laranja, aplicado bg-transparent como nos outros elementos  
+  * SELETOR KG/LB FUNCIONAL: Unidades quilogramas e libras com validação automática baseada na unidade selecionada
+  * FORMATAÇÃO COMPLETA: Tamanho de fonte (xs/sm/lg/xl), peso da fonte, alinhamento de texto aplicados uniformemente
+  * LARGURA RESPONSIVA: Opções de largura em porcentagem (25%, 50%, 75%, 100%) implementadas
+  * LIMITES INTELIGENTES: Peso mínimo/máximo adaptáveis (30-300kg ou 66-660lb) baseado na unidade
+  * PLACEHOLDER DINÂMICO: Placeholder automático baseado na unidade ("Ex: 65.0" para kg ou "Ex: 143" para lb)
+  * RECURSOS AVANÇADOS OPCIONAIS: Cálculo de diferença e progresso automático com vinculação ao peso atual
+  * VINCULAÇÃO COM PESO ATUAL: Campo obrigatório para colar ID do elemento peso atual para cálculos
+  * PAINEL DE PROPRIEDADES COMPLETO: Interface completa com configurações de unidade, largura, formatação e recursos avançados
+  * IMPLEMENTAÇÃO NO PÚBLICO: Atualizada implementação no quiz-public-renderer.tsx para aplicar todas as configurações
+  * VALIDAÇÃO VISUAL: Avisos visuais quando ID do peso atual não está configurado para cálculos
+  * CORES NEUTRAS: Paleta cinza neutra substituindo tons laranja/amarelo
+  * FIELD ID PADRÃO: Campo usa automaticamente prefixo "peso_objetivo" para detecção correta
+  * STATUS: ELEMENTO PESO OBJETIVO 100% FUNCIONAL - Fundo transparente, seletor KG/LB, formatação e recursos avançados completos
 - January 23, 2025. ELEMENTO PESO ATUAL COMPLETAMENTE CORRIGIDO - Cálculo IMC com ID altura obrigatório, KG/LB, formatação e responsividade implementados:
   * **CÁLCULO IMC IMPLEMENTADO**: Campo obrigatório para colar ID do elemento altura para sincronização
   * SELETOR KG/LB FUNCIONAL: Unidades quilogramas e libras com aba em cima do elemento
