@@ -704,115 +704,117 @@ export default function SMSCampaignsAdvanced() {
                               if (type.id === 'quantum_remarketing') return '+28%';
                               if (type.id === 'advanced_remarketing') return '+34%';
                               
-                              // Ao vivo (live) campaigns: +22%, +38%, +44% (10% more than remarketing)
+                              // Ao vivo (live) campaigns: +22%, +38%, +32%
                               if (type.id === 'automation') return '+22%';
                               if (type.id === 'quantum_live') return '+38%';
-                              if (type.id === 'intelligent_automation') return '+44%';
+                              if (type.id === 'intelligent_automation') return '+23%'; // Remarketing Inteligente
                               
-                              // Other campaigns get base ROI
-                              if (type.id === 'mass') return '+15%';
+                              // Other campaigns get base ROI - removing mass and external_platform
                               if (type.id === 'scheduled') return '+18%';
                               if (type.id === 'personalized') return '+25%';
                               
-                              return '+10%';
+                              return null; // No ROI for mass and external_platform
                             };
                             
                             return (
-                              <Card 
-                                key={type.id}
-                                className={`group cursor-pointer transition-all duration-300 hover:shadow-xl hover:-translate-y-1 transform ${
-                                  isSelected 
-                                    ? 'ring-2 ring-blue-500 bg-gradient-to-br from-blue-50 to-indigo-50 shadow-lg' 
-                                    : 'hover:bg-gray-50'
-                                } ${isQuantum ? 'relative overflow-hidden border-purple-200' : ''}`}
-                                onClick={() => {
-                                  setOpenPopup(type.id);
-                                  setPopupForm({
-                                    type: type.id,
-                                    name: '',
-                                    funnelId: '',
-                                    segment: 'all',
-                                    message: '',
-                                    scheduleType: 'now'
-                                  });
-                                  setPopupStep(1);
-                                }}
-                              >
-                                <CardContent className="p-3 h-full xl:p-2">
-                                  {/* ROI Seal - Left Side */}
-                                  <div className="absolute top-0 left-0 bg-gradient-to-r from-green-600 to-emerald-600 text-white text-xs px-2 py-1 rounded-br-lg font-bold">
-                                    ROI {getROIPercentage()}
-                                  </div>
-                                  
-                                  {isQuantum && (
-                                    <div className="absolute top-0 right-0 bg-gradient-to-l from-purple-600 to-blue-600 text-white text-xs px-2 py-1 rounded-bl-lg font-medium">
-                                      QUANTUM
-                                    </div>
-                                  )}
-                                  
-                                  {/* Indicador de seleção */}
-                                  {isSelected && (
-                                    <div className="absolute top-2 left-2 w-3 h-3 bg-blue-500 rounded-full flex items-center justify-center z-10">
-                                      <CheckSquare className="w-2 h-2 text-white" />
-                                    </div>
-                                  )}
-                                  
-                                  <div className="flex flex-col items-center text-center space-y-2 xl:space-y-1 mt-2">
-                                    {/* Ícone centralizado e responsivo */}
-                                    <div className={`p-3 xl:p-2 rounded-xl ${
-                                      isQuantum 
-                                        ? type.color + ' shadow-lg' 
-                                        : type.color + ' text-white shadow-md'
-                                    } ${isSelected ? 'scale-110' : ''} transition-transform duration-300`}>
-                                      <Icon className={`w-6 h-6 xl:w-5 xl:h-5 ${isQuantum ? 'text-white' : ''}`} />
-                                    </div>
+                              <div key={type.id} className="group relative">
+                                <Card 
+                                  className={`cursor-pointer transition-all duration-300 hover:shadow-xl hover:-translate-y-1 transform ${
+                                    isSelected 
+                                      ? 'ring-2 ring-blue-500 bg-gradient-to-br from-blue-50 to-indigo-50 shadow-lg' 
+                                      : 'hover:bg-gray-50'
+                                  } ${isQuantum ? 'relative overflow-hidden border-purple-200' : ''}`}
+                                  onClick={() => {
+                                    setOpenPopup(type.id);
+                                    setPopupForm({
+                                      type: type.id,
+                                      name: '',
+                                      funnelId: '',
+                                      segment: 'all',
+                                      message: '',
+                                      scheduleType: 'now'
+                                    });
+                                    setPopupStep(1);
+                                  }}
+                                >
+                                  <CardContent className="p-3 h-full xl:p-2 relative">
+                                    {/* ROI Seal - Left Side - Only show if ROI exists */}
+                                    {getROIPercentage() && (
+                                      <div className="absolute top-0 left-0 bg-gradient-to-r from-green-600 to-emerald-600 text-white text-xs px-2 py-1 rounded-br-lg font-bold z-20">
+                                        ROI {getROIPercentage()}
+                                      </div>
+                                    )}
                                     
-                                    {/* Nome e badge quantum */}
-                                    <div className="space-y-1">
-                                      <div className="flex items-center justify-center gap-1">
-                                        <h3 className={`font-semibold text-sm xl:text-xs ${
-                                          isSelected ? 'text-blue-700' : 'text-gray-800'
-                                        }`}>
-                                          {type.name}
-                                        </h3>
-                                        {isQuantum && <Sparkles className="w-3 h-3 xl:w-2 xl:h-2 text-purple-600" />}
+                                    {isQuantum && (
+                                      <div className="absolute top-0 right-0 bg-gradient-to-l from-purple-600 to-blue-600 text-white text-xs px-2 py-1 rounded-bl-lg font-medium">
+                                        QUANTUM
+                                      </div>
+                                    )}
+                                    
+                                    {/* Indicador de seleção */}
+                                    {isSelected && (
+                                      <div className="absolute top-2 left-2 w-3 h-3 bg-blue-500 rounded-full flex items-center justify-center z-10">
+                                        <CheckSquare className="w-2 h-2 text-white" />
+                                      </div>
+                                    )}
+                                    
+                                    <div className="flex flex-col items-center text-center space-y-2 xl:space-y-1 mt-2">
+                                      {/* Ícone centralizado e responsivo */}
+                                      <div className={`p-3 xl:p-2 rounded-xl ${
+                                        isQuantum 
+                                          ? type.color + ' shadow-lg' 
+                                          : type.color + ' text-white shadow-md'
+                                      } ${isSelected ? 'scale-110' : ''} transition-transform duration-300`}>
+                                        <Icon className={`w-6 h-6 xl:w-5 xl:h-5 ${isQuantum ? 'text-white' : ''}`} />
                                       </div>
                                       
-                                      {isQuantum && (
-                                        <div className="text-xs xl:text-[10px] text-purple-600 font-medium bg-purple-100 px-2 py-1 xl:px-1 xl:py-0.5 rounded-full">
-                                          Ultra-Granular ⚡
+                                      {/* Nome e badge quantum */}
+                                      <div className="space-y-1">
+                                        <div className="flex items-center justify-center gap-1">
+                                          <h3 className={`font-semibold text-sm xl:text-xs ${
+                                            isSelected ? 'text-blue-700' : 'text-gray-800'
+                                          }`}>
+                                            {type.name}
+                                          </h3>
+                                          {isQuantum && <Sparkles className="w-3 h-3 xl:w-2 xl:h-2 text-purple-600" />}
                                         </div>
-                                      )}
-                                    </div>
-                                    
-                                    {/* Descrição expansível no hover */}
-                                    <div className="group-hover:opacity-100 opacity-0 transition-all duration-300 absolute inset-0 bg-white/95 backdrop-blur-sm rounded-lg p-3 flex flex-col justify-center items-center text-center">
-                                      <p className="text-xs text-gray-700 leading-tight mb-2">
-                                        {type.description}
-                                      </p>
-                                      
-                                      {/* Features em lista no hover */}
-                                      <div className="text-[10px] text-gray-500 space-y-0.5">
-                                        {type.features?.slice(0, 3).map((feature, idx) => (
-                                          <div key={idx} className="flex items-center justify-center gap-1">
-                                            <div className="w-1 h-1 bg-blue-400 rounded-full"></div>
-                                            <span>{feature}</span>
+                                        
+                                        {isQuantum && (
+                                          <div className="text-xs xl:text-[10px] text-purple-600 font-medium bg-purple-100 px-2 py-1 xl:px-1 xl:py-0.5 rounded-full">
+                                            Ultra-Granular ⚡
                                           </div>
-                                        ))}
+                                        )}
+                                      </div>
+                                      
+                                      {/* Botão visual de seleção */}
+                                      <div className={`w-full py-2 xl:py-1 px-3 xl:px-2 rounded-lg text-xs xl:text-[10px] font-medium transition-all ${
+                                        isSelected 
+                                          ? 'bg-blue-500 text-white' 
+                                          : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                                      }`}>
+                                        {isSelected ? '✓ Selecionado' : 'Selecionar'}
                                       </div>
                                     </div>
-                                    
-                                    {/* Botão visual de seleção */}
-                                    <div className={`w-full py-2 xl:py-1 px-3 xl:px-2 rounded-lg text-xs xl:text-[10px] font-medium transition-all ${
-                                      isSelected 
-                                        ? 'bg-blue-500 text-white' 
-                                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                                    }`}>
-                                      {isSelected ? '✓ Selecionado' : 'Selecionar'}
-                                    </div>
+                                  </CardContent>
+                                </Card>
+                                
+                                {/* Descrição que aparece abaixo no hover */}
+                                <div className="group-hover:opacity-100 opacity-0 transition-all duration-300 absolute top-full left-0 right-0 mt-2 bg-white border border-gray-200 rounded-lg p-3 shadow-lg z-30">
+                                  <p className="text-xs text-gray-700 leading-tight mb-2 font-medium">
+                                    {type.description}
+                                  </p>
+                                  
+                                  {/* Features em lista */}
+                                  <div className="text-[10px] text-gray-500 space-y-1">
+                                    {type.features?.slice(0, 3).map((feature, idx) => (
+                                      <div key={idx} className="flex items-center gap-1">
+                                        <div className="w-1 h-1 bg-blue-400 rounded-full"></div>
+                                        <span>{feature}</span>
+                                      </div>
+                                    ))}
                                   </div>
-                                </CardContent>
-                              </Card>
+                                </div>
+                              </div>
                             );
                           })}
                         </div>
