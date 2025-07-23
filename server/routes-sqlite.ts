@@ -4156,9 +4156,9 @@ export function registerSQLiteRoutes(app: Express): Server {
           console.log(`🎯 QUIZ COMPLETADO: ${req.params.id} - Iniciando notificação automática`);
           
           // Buscar o dono do quiz para notificar
-          const quizOwner = await storage.getUser(quiz.user_id);
+          const quizOwner = await storage.getUser(quiz.userId);
           if (quizOwner) {
-            console.log(`📧 Quiz Owner encontrado: ${quizOwner.email} (ID: ${quiz.user_id})`);
+            console.log(`📧 Quiz Owner encontrado: ${quizOwner.email} (ID: ${quiz.userId})`);
             
             // Sistema de notificação automática - MENSAGEM ROTATIVA por quiz completion
             console.log(`📧 ENVIANDO NOTIFICAÇÃO AUTOMÁTICA para quiz: "${quiz.title}"`);
@@ -4206,7 +4206,7 @@ export function registerSQLiteRoutes(app: Express): Server {
               console.error('❌ Falha ao enviar notificação automática:', await pushResponse.text());
             }
           } else {
-            console.warn(`⚠️ Quiz owner não encontrado para user_id: ${quiz.user_id}`);
+            console.warn(`⚠️ Quiz owner não encontrado para user_id: ${quiz.userId}`);
           }
         } catch (autoNotifyError) {
           console.error('⚠️ Erro no sistema de notificação automática (não crítico):', autoNotifyError);
@@ -4277,7 +4277,7 @@ export function registerSQLiteRoutes(app: Express): Server {
                   const adminMessage = `🔥 AO VIVO: Lead respondeu "${userResponse}" no quiz "${quiz.title}"!`;
                   
                   // Buscar telefone do admin se configurado
-                  const quizOwner = await storage.getUser(quiz.user_id);
+                  const quizOwner = await storage.getUser(quiz.userId);
                   if (quizOwner?.whatsapp) {
                     try {
                       await sendSms(quizOwner.whatsapp, adminMessage);
