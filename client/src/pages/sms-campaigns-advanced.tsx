@@ -678,10 +678,7 @@ export default function SMSCampaignsAdvanced() {
               {/* Seleção de Tipo de Campanha - sempre visível */}
               {true && (
                 <div className="space-y-4">
-                  <div className="text-center mb-8">
-                    <h3 className="text-xl font-bold mb-3">Escolha o Tipo de Campanha SMS</h3>
-                    <p className="text-gray-600">Selecione a categoria e tipo de campanha que melhor atende aos seus objetivos de marketing.</p>
-                  </div>
+
                   
                   {/* Exibição por categorias */}
                   <div className="space-y-8">
