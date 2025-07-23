@@ -2801,7 +2801,7 @@ export function registerSQLiteRoutes(app: Express): Server {
     }
   });
 
-  app.post("/api/auth/2fa/verify", verifyJWT, async (req: any, res) => {
+  app.post("/api/auth/2fa/verify", verifyJWT, async (req: express.Request & { user?: any }, res: express.Response) => {
     try {
       const { token } = req.body;
       const userId = req.user.id;
@@ -2832,7 +2832,7 @@ export function registerSQLiteRoutes(app: Express): Server {
     }
   });
 
-  app.post("/api/auth/2fa/disable", verifyJWT, async (req: any, res) => {
+  app.post("/api/auth/2fa/disable", verifyJWT, async (req: express.Request & { user?: any }, res: express.Response) => {
     try {
       const { token } = req.body;
       const userId = req.user.id;
@@ -2877,7 +2877,7 @@ export function registerSQLiteRoutes(app: Express): Server {
   });
 
   // Gerenciamento de Planos - Admin apenas
-  app.get("/api/admin/users", verifyJWT, async (req: any, res) => {
+  app.get("/api/admin/users", verifyJWT, async (req: express.Request & { user?: any }, res: express.Response) => {
     try {
       if (req.user.role !== 'admin') {
         return res.status(403).json({ error: 'Acesso negado' });
@@ -2944,7 +2944,7 @@ export function registerSQLiteRoutes(app: Express): Server {
   });
 
   // Get top funnels with high traffic - Admin only
-  app.get('/api/admin/top-funnels', verifyJWT, async (req: any, res) => {
+  app.get('/api/admin/top-funnels', verifyJWT, async (req: express.Request & { user?: any }, res: express.Response) => {
     try {
       if (req.user.role !== 'admin') {
         return res.status(403).json({ error: 'Acesso negado' });
@@ -2959,7 +2959,7 @@ export function registerSQLiteRoutes(app: Express): Server {
   });
 
   // Update user profile - Admin only
-  app.put("/api/admin/users/:id", verifyJWT, async (req: any, res) => {
+  app.put("/api/admin/users/:id", verifyJWT, async (req: express.Request & { user?: any }, res: express.Response) => {
     try {
       if (req.user.role !== 'admin') {
         return res.status(403).json({ error: 'Acesso negado' });
@@ -2996,7 +2996,7 @@ export function registerSQLiteRoutes(app: Express): Server {
   });
 
   // Manage user credits - Admin only
-  app.post("/api/admin/users/:id/credits", verifyJWT, async (req: any, res) => {
+  app.post("/api/admin/users/:id/credits", verifyJWT, async (req: express.Request & { user?: any }, res: express.Response) => {
     try {
       if (req.user.role !== 'admin') {
         return res.status(403).json({ error: 'Acesso negado' });
@@ -3077,7 +3077,7 @@ export function registerSQLiteRoutes(app: Express): Server {
   });
 
   // Get user credit history
-  app.get("/api/admin/users/:id/credit-history", verifyJWT, async (req: any, res) => {
+  app.get("/api/admin/users/:id/credit-history", verifyJWT, async (req: express.Request & { user?: any }, res: express.Response) => {
     try {
       if (req.user.role !== 'admin') {
         return res.status(403).json({ error: 'Acesso negado' });
@@ -3093,7 +3093,7 @@ export function registerSQLiteRoutes(app: Express): Server {
   });
 
   // Update user data (new endpoint)
-  app.put("/api/admin/users/:id/update", verifyJWT, async (req: any, res) => {
+  app.put("/api/admin/users/:id/update", verifyJWT, async (req: express.Request & { user?: any }, res: express.Response) => {
     try {
       if (req.user.role !== 'admin') {
         return res.status(403).json({ error: 'Acesso negado' });
@@ -3136,7 +3136,7 @@ export function registerSQLiteRoutes(app: Express): Server {
     }
   });
 
-  app.put("/api/admin/users/:id/plan", verifyJWT, async (req: any, res) => {
+  app.put("/api/admin/users/:id/plan", verifyJWT, async (req: express.Request & { user?: any }, res: express.Response) => {
     try {
       if (req.user.role !== 'admin') {
         return res.status(403).json({ error: 'Acesso negado' });
@@ -3171,7 +3171,7 @@ export function registerSQLiteRoutes(app: Express): Server {
     }
   });
 
-  app.post("/api/admin/users/:id/block", verifyJWT, async (req: any, res) => {
+  app.post("/api/admin/users/:id/block", verifyJWT, async (req: express.Request & { user?: any }, res: express.Response) => {
     try {
       if (req.user.role !== 'admin') {
         return res.status(403).json({ error: 'Acesso negado' });
@@ -3722,7 +3722,7 @@ export function registerSQLiteRoutes(app: Express): Server {
   });
 
   // Delete quiz
-  app.delete("/api/quizzes/:id", verifyJWT, async (req: any, res) => {
+  app.delete("/api/quizzes/:id", verifyJWT, async (req: express.Request & { user?: any }, res: express.Response) => {
     try {
 
       const existingQuiz = await storage.getQuiz(req.params.id);
@@ -3749,7 +3749,7 @@ export function registerSQLiteRoutes(app: Express): Server {
   });
 
   // Duplicate quiz
-  app.post("/api/quizzes/:id/duplicate", verifyJWT, async (req: any, res) => {
+  app.post("/api/quizzes/:id/duplicate", verifyJWT, async (req: express.Request & { user?: any }, res: express.Response) => {
     try {
       const quizId = req.params.id;
       const userId = req.user.id;
@@ -3789,7 +3789,7 @@ export function registerSQLiteRoutes(app: Express): Server {
   });
 
   // Get quiz responses with advanced filtering
-  app.get("/api/quizzes/:id/responses", verifyJWT, async (req: any, res) => {
+  app.get("/api/quizzes/:id/responses", verifyJWT, async (req: express.Request & { user?: any }, res: express.Response) => {
     try {
       const quiz = await storage.getQuiz(req.params.id);
       
@@ -3896,7 +3896,7 @@ export function registerSQLiteRoutes(app: Express): Server {
   });
 
   // Get quiz leads (extracted data from responses)
-  app.get("/api/quizzes/:id/leads", verifyJWT, async (req: any, res) => {
+  app.get("/api/quizzes/:id/leads", verifyJWT, async (req: express.Request & { user?: any }, res: express.Response) => {
     try {
       const quiz = await storage.getQuiz(req.params.id);
       
@@ -3980,7 +3980,7 @@ export function registerSQLiteRoutes(app: Express): Server {
   });
 
   // Get phones specifically for SMS campaigns
-  app.get("/api/quizzes/:id/phones", verifyJWT, async (req: any, res) => {
+  app.get("/api/quizzes/:id/phones", verifyJWT, async (req: express.Request & { user?: any }, res: express.Response) => {
     try {
       const quiz = await storage.getQuiz(req.params.id);
       
@@ -4371,7 +4371,7 @@ export function registerSQLiteRoutes(app: Express): Server {
   });
 
   // Submit quiz response - endpoint geral para administradores
-  app.post("/api/quiz-responses", verifyJWT, async (req: any, res) => {
+  app.post("/api/quiz-responses", verifyJWT, async (req: express.Request & { user?: any }, res: express.Response) => {
     try {
       const responseData = insertQuizResponseSchema.parse(req.body);
       const response = await storage.createQuizResponse(responseData);
@@ -4387,7 +4387,7 @@ export function registerSQLiteRoutes(app: Express): Server {
   });
 
   // Get quiz analytics
-  app.get("/api/analytics/:quizId", verifyJWT, async (req: any, res) => {
+  app.get("/api/analytics/:quizId", verifyJWT, async (req: express.Request & { user?: any }, res: express.Response) => {
     try {
       if (!req.user) {
         return res.status(401).json({ message: "Unauthorized" });
@@ -4493,7 +4493,7 @@ export function registerSQLiteRoutes(app: Express): Server {
   });
 
   // Reset quiz analytics data
-  app.delete("/api/analytics/:quizId/reset", verifyJWT, async (req: any, res) => {
+  app.delete("/api/analytics/:quizId/reset", verifyJWT, async (req: express.Request & { user?: any }, res: express.Response) => {
     try {
       if (!req.user) {
         return res.status(401).json({ message: "Unauthorized" });
@@ -4521,7 +4521,7 @@ export function registerSQLiteRoutes(app: Express): Server {
   });
 
   // Get quiz analytics (padrão alternativo)
-  app.get("/api/quizzes/:id/analytics", verifyJWT, async (req: any, res) => {
+  app.get("/api/quizzes/:id/analytics", verifyJWT, async (req: express.Request & { user?: any }, res: express.Response) => {
     try {
       if (!req.user) {
         return res.status(401).json({ message: "Unauthorized" });
@@ -4553,7 +4553,7 @@ export function registerSQLiteRoutes(app: Express): Server {
   });
 
   // Get quiz variables
-  app.get("/api/quizzes/:id/variables", verifyJWT, async (req: any, res) => {
+  app.get("/api/quizzes/:id/variables", verifyJWT, async (req: express.Request & { user?: any }, res: express.Response) => {
     try {
       if (!req.user) {
         return res.status(401).json({ message: "Unauthorized" });
@@ -4602,7 +4602,7 @@ export function registerSQLiteRoutes(app: Express): Server {
   });
 
   // 🎯 MODO ULTRA: Get quiz variables with all possible response values
-  app.get("/api/quizzes/:id/variables-ultra", verifyJWT, async (req: any, res) => {
+  app.get("/api/quizzes/:id/variables-ultra", verifyJWT, async (req: express.Request & { user?: any }, res: express.Response) => {
     try {
       if (!req.user) {
         return res.status(401).json({ message: "Unauthorized" });
@@ -4756,7 +4756,7 @@ export function registerSQLiteRoutes(app: Express): Server {
   });
 
   // 🎯 MODO ULTRA: Filter leads by specific response value
-  app.post("/api/quizzes/:id/leads-by-response", verifyJWT, async (req: any, res) => {
+  app.post("/api/quizzes/:id/leads-by-response", verifyJWT, async (req: express.Request & { user?: any }, res: express.Response) => {
     try {
       if (!req.user) {
         return res.status(401).json({ message: "Unauthorized" });
@@ -5365,7 +5365,7 @@ export function registerSQLiteRoutes(app: Express): Server {
   });
 
   // Get analytics data with insights and recommendations
-  app.get("/api/analytics", verifyJWT, async (req: any, res) => {
+  app.get("/api/analytics", verifyJWT, async (req: express.Request & { user?: any }, res: express.Response) => {
     try {
       const userId = req.user.id;
       
@@ -5601,7 +5601,7 @@ export function registerSQLiteRoutes(app: Express): Server {
   });
 
   // Publish quiz
-  app.post("/api/quizzes/:id/publish", verifyJWT, async (req: any, res) => {
+  app.post("/api/quizzes/:id/publish", verifyJWT, async (req: express.Request & { user?: any }, res: express.Response) => {
     try {
       const userId = req.user.id;
       
@@ -5674,7 +5674,7 @@ export function registerSQLiteRoutes(app: Express): Server {
   });
 
   // Unpublish quiz
-  app.post("/api/quizzes/:id/unpublish", verifyJWT, async (req: any, res) => {
+  app.post("/api/quizzes/:id/unpublish", verifyJWT, async (req: express.Request & { user?: any }, res: express.Response) => {
     try {
       const existingQuiz = await storage.getQuiz(req.params.id);
       
