@@ -298,11 +298,7 @@ const LoadingWithQuestionElementPublic = ({ element, handleAnswer }: { element: 
             </button>
           </div>
           
-          {answer && (
-            <div className="text-center text-gray-600 text-sm mt-2">
-              Resposta registrada: {answer === 'yes' ? 'Sim' : 'Não'}
-            </div>
-          )}
+
         </div>
       )}
     </div>

@@ -4727,9 +4727,11 @@ const gameElementCategories = [
             {/* Fase 1: Carregamento */}
             <div className="space-y-3">
               <div className="flex items-center justify-between">
-                <h4 className="font-semibold text-gray-800">
-                  {element.loadingText || "Processando..."}
-                </h4>
+                {element.loadingText && (
+                  <h4 className="font-semibold text-gray-800">
+                    {element.loadingText}
+                  </h4>
+                )}
                 {element.loadingShowPercentage && (
                   <span className="text-sm font-mono text-gray-600">0%</span>
                 )}
@@ -12099,9 +12101,12 @@ const gameElementCategories = [
                         <Input
                           value={selectedElementData.loadingText || ""}
                           onChange={(e) => updateElement(selectedElementData.id, { loadingText: e.target.value })}
-                          placeholder="Ex: Processando..."
+                          placeholder="Deixe vazio para não mostrar texto"
                           className="text-xs mt-1"
                         />
+                        <div className="text-xs text-gray-500 mt-1">
+                          💡 Deixe vazio para ocultar o texto de carregamento
+                        </div>
                       </div>
 
                       <div className="grid grid-cols-2 gap-3">

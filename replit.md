@@ -611,7 +611,7 @@ Campo: p1_objetivo_fitness
   * EDITABLE LOADING TEXT: Loading text field now accepts empty string, shows placeholder "Deixe vazio para não mostrar texto"
   * CONDITIONAL TEXT RENDERING: Loading text only displays if provided, completely optional display 
   * SILENT RESPONSE REGISTRATION: Removed "resposta registrada" confirmation messages - responses register silently
-  * CROSS-COMPONENT IMPLEMENTATION: Applied improvements across PageEditorHorizontal, quiz-preview.tsx, and quiz-public-renderer.tsx
+  * CROSS-COMPONENT IMPLEMENTATION: Applied improvements across PageEditorHorizontal and quiz-public-renderer.tsx
   * INTELLIGENT INTERFACE: Added helpful tooltip "💡 Deixe vazio para ocultar o texto de carregamento"
   * USER EXPERIENCE: Cleaner interface without forced "Processando..." text and no disruptive confirmation messages
   * DEFAULT BEHAVIOR: Loading text defaults to empty string, no forced text display unless user explicitly adds it
