@@ -120,9 +120,6 @@ import { useAuth } from "@/hooks/useAuth-jwt";
 import { isUnauthorizedError } from "@/lib/authUtils";
 import { SidebarProvider } from "@/hooks/useSidebar";
 import { useTheme } from "@/hooks/useTheme";
-import SistemaUltraDemo from "@/pages/sistema-ultra-demo";
-import RemarketingQuantum from "@/pages/remarketing-quantum";
-import AoVivoQuantum from "@/pages/ao-vivo-quantum";
 
 
 function App() {
@@ -220,11 +217,6 @@ function App() {
             <QuizIA />
           </Layout>
         </Route>
-        <Route path="/sistema-ultra-demo">
-          <Layout>
-            <SistemaUltraDemo />
-          </Layout>
-        </Route>
         <Route path="/seus-afiliados">
           <Layout>
             <SeusAfiliados />
@@ -291,16 +283,6 @@ function App() {
         <Route path="/sms-campaigns-advanced">
           <Layout>
             <SMSCampaignsAdvanced />
-          </Layout>
-        </Route>
-        <Route path="/remarketing-quantum">
-          <Layout>
-            <RemarketingQuantum />
-          </Layout>
-        </Route>
-        <Route path="/ao-vivo-quantum">
-          <Layout>
-            <AoVivoQuantum />
           </Layout>
         </Route>
         <Route path="/email-marketing">

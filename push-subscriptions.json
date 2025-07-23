@@ -34,14 +34,5 @@
     },
     "userId": "ios-pwa-user",
     "createdAt": "2025-07-22T03:30:47.259Z"
-  },
-  {
-    "endpoint": "https://web.push.apple.com/QIfJT8WUnnuy4qyf3Nyk98-m3XlW7GmyQE7L0grCWbU3Hazqfjd81P5M-fs90jRFEScgWINhuu4fZVxPevz44aUf0BZgeeOeVVNdNELqYa2zU2CSt1s67V2_NmOufwqG5V5EeCHK8oubZdKaQascrTsKHaHTZTF81O-ZEtP7OeQ",
-    "keys": {
-      "p256dh": "BKzRBK7GBzwjI7zCv47RkCaa33Mg54qYoxh-QpajInYyQpfCC_unQktxjxmgm_lw0Z9n304C-F1CIrKDBNLQTHY",
-      "auth": "GUAEWArz7PEqYEf_TsuUkw"
-    },
-    "userId": "ios-pwa-user",
-    "createdAt": "2025-07-23T01:57:42.694Z"
   }
 ]

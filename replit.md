@@ -125,9 +125,9 @@ No additional files or separate projects are maintained in this repository.
 
 ## Sistema de Notificações Push - VENDZZ
 
-### 📱 SISTEMA ÚNICO INTEGRADO E FUNCIONANDO PERFEITAMENTE (July 23, 2025)
+### 📱 SISTEMA ÚNICO INTEGRADO E FUNCIONANDO PERFEITAMENTE (July 22, 2025)
 
-#### Status: ✅ 100% APROVADO PARA PRODUÇÃO - SISTEMA ÚNICO LIMPO + RENOVAÇÃO AUTOMÁTICA
+#### Status: ✅ 100% APROVADO PARA PRODUÇÃO - SISTEMA ÚNICO LIMPO
 - **Sistema Único**: Apenas um sistema de push notifications ativo, integrado no fluxo natural de quiz
 - **Notificação Padrão**: "🎉 Novo Quiz Completado!" disparada automaticamente
 - **Detecção Automática**: Funciona automaticamente ao completar qualquer quiz
@@ -137,7 +137,6 @@ No additional files or separate projects are maintained in this repository.
 - **Performance**: Notificações entregues em <500ms (integrado na submissão)
 - **Compatibilidade**: iOS PWA, Android PWA, Desktop (Chrome/Firefox)
 - **Escalabilidade**: Suporte para 100k+ usuários simultâneos
-- **RENOVAÇÃO AUTOMÁTICA**: Push subscriptions renovadas automaticamente - NUNCA EXPIRAM
 
 #### Arquivos Ativos (Sistema Único):
 - `server/routes-sqlite.ts` (linhas 4148-4208) - **SISTEMA PRINCIPAL INTEGRADO**
@@ -168,50 +167,12 @@ Placeholder Funcional: {quizTitle} substituído automaticamente
 Conflitos: ✅ ZERO - Sistemas duplicados removidos
 ```
 
-#### Funcionamento do Sistema Único + Renovação Automática:
+#### Funcionamento do Sistema Único:
 - **Trigger Automático**: Toda submissão de quiz (`POST /api/quizzes/:id/submit`) dispara notificação
 - **Fluxo Integrado**: Notificação enviada como parte do processo de submissão (sem delays)
 - **Fallback Inteligente**: Se sistema de rotação falhar, usa mensagem padrão
 - **Performance Otimizada**: ~500ms total (submissão + notificação)
 - **Zero Conflitos**: Apenas um sistema ativo, sem duplicações ou interferências
-- **Renovação Automática**: Service Worker verifica subscriptions a cada 10 minutos e renova automaticamente quando próximas do vencimento (24h)
-- **Re-registro Inteligente**: Sistema detecta subscriptions expiradas e cria novas automaticamente
-- **Zero Manutenção**: Funciona perpetuamente sem intervenção manual
-
-## 📊 ANÁLISE COMPLETA DO SISTEMA (Janeiro 2025)
-
-Realizei uma análise arquitetural profunda do sistema Vendzz. Documento completo criado em: `DOCUMENTACAO-SISTEMA-COMPLETO-VENDZZ.md`
-
-### 🏗️ DESCOBERTAS PRINCIPAIS:
-- **Database Principal**: `vendzz-database.db` (26.9MB) - SQLite com 43+ tabelas
-- **Backend Massivo**: `server/routes-sqlite.ts` (27.282 linhas!)
-- **5 Canais Marketing**: SMS, Email, WhatsApp, Voice, Telegram integrados
-- **Sistema Quantum/Ultra**: Segmentação ultra-granular única (93.3% QA rate)
-- **PWA Completo**: Push notifications reais iOS/Android funcionando
-- **Multi-Gateway Payment**: Stripe + Pagar.me + PayPal
-- **IA Integrado**: Quiz creation e conversion optimization
-
-### 🚨 PROBLEMAS CRÍTICOS IDENTIFICADOS:
-1. **Schema Inconsistente**: `userId` vs `user_id` causando "Quiz not found" errors
-2. **SQLite Limitation**: Máximo ~1000 usuários simultâneos (precisa PostgreSQL para escalar)
-3. **Fragmentação Código**: 27K linhas em arquivo único
-4. **306 LSP Errors**: Detectados em 3 arquivos principais
-5. **Múltiplos Databases**: 10+ arquivos .db/.sqlite (precisa consolidar)
-
-### 💡 MELHORIAS RECOMENDADAS:
-- **Arquiteturais**: Modularização backend, migração PostgreSQL, microserviços graduais
-- **Técnicas**: Schema alignment, performance optimization, code quality  
-- **Funcionais**: Remarketing Quantum completion, IA enhancement, analytics real-time
-- **Segurança**: OAuth2, 2FA obrigatório, audit trail completo
-
-### ✅ PONTOS FORTES:
-- Sistema extremamente robusto e completo
-- Funcionalidades enterprise-grade
-- Performance otimizada para 100k+ usuários
-- Security layers avançados
-- Business logic sólido
-
-**Status**: Sistema em produção funcionando perfeitamente, problemas são de refinamento/otimização.
 
 ## Testing Documentation
 
@@ -519,111 +480,9 @@ function extractLeadDataFromResponses(responses: any, leadData: any = {}): Recor
 - ✅ **Campanhas Integradas**: SMS, WhatsApp e Email utilizam dados detectados
 - ✅ **Metadata Completa**: Tracking de progresso, IP, user agent, tempo gasto
 
-## Sistema ULTRA - Ultra-Granular Lead Segmentation
-
-### Status: 🔥 APROVADO PARA PRODUÇÃO - Taxa QA: 93.3% (July 22, 2025)
-
-O Sistema ULTRA permite segmentação ultra-granular de leads por resposta específica, transformando uma única pergunta com múltiplas respostas em segmentos filtráveis independentes.
-
-#### Arquitetura Técnica:
-- **Endpoint Ultra Variables**: `GET /api/quizzes/:id/variables-ultra` - Análise granular de todas as variáveis
-- **Endpoint Filtro Ultra**: `POST /api/quizzes/:id/leads-by-response` - Filtro por resposta específica
-- **Interface Demo**: `/sistema-ultra-demo` - Demonstração completa funcional
-- **Localização**: server/routes-sqlite.ts (linhas 4497-4759)
-
-#### Funcionalidades Core:
-- **Ultra Requirement**: Uma pergunta com 4 respostas cria 4 segmentos filtráveis distintos
-- **Formatos Multi-Canal**: leads (completo), phones (WhatsApp/SMS), emails (Email Marketing)
-- **Performance**: <200ms para processar 1000+ respostas
-- **Segurança**: JWT + verificação de proprietário obrigatória
-
-#### Exemplo Prático:
-```
-Campo: p1_objetivo_fitness
-├── "Emagrecer" → 150 leads → Campanha específica
-├── "Ganhar Massa" → 89 leads → Campanha específica  
-├── "Definir" → 76 leads → Campanha específica
-└── "Manter Peso" → 45 leads → Campanha específica
-```
-
-#### Integração com Campanhas:
-- SMS/WhatsApp podem filtrar telefones por resposta específica
-- Email Marketing pode segmentar emails por valor de resposta
-- Analytics granular por segmento de resposta
-- Personalização automática baseada em resposta
-
 ## Changelog
 
 ```
-- July 23, 2025. SISTEMA DE RENOVAÇÃO AUTOMÁTICA DE PUSH SUBSCRIPTIONS IMPLEMENTADO - Solução definitiva para expiração de push subscriptions:
-  * RENOVAÇÃO AUTOMÁTICA COMPLETA: Push subscriptions renovadas automaticamente quando próximas do vencimento (24h restantes)
-  * SERVICE WORKER INTELIGENTE: Verificação a cada 10 minutos + re-registro automático em caso de expiração
-  * TESTE DE CONECTIVIDADE: Sistema testa subscriptions automaticamente e renova quando necessário  
-  * ENDPOINT DE TESTE: /api/push-simple/test-subscription para validação de subscriptions
-  * ZERO MANUTENÇÃO: Sistema funciona perpetuamente sem intervenção manual
-  * BACKGROUND PROCESSING: Funciona mesmo com app fechado (PWA em background)
-  * INTERFACE ATUALIZADA: Painel administrativo mostra status "ATIVO + AUTO-RENEW" com explicações detalhadas
-  * LOGS DETALHADOS: Sistema registra todas as renovações automáticas para monitoramento
-  * FALLBACK ROBUSTO: Em caso de falha, tenta re-registro completo automaticamente
-  * COMPATIBILIDADE TOTAL: iOS PWA, Android PWA, Desktop mantendo máxima compatibilidade
-  * STATUS: PUSH SUBSCRIPTIONS NUNCA MAIS EXPIRAM - Sistema 100% autônomo e funcional
-  * Arquivos modificados: public/sw.js (sistema principal), server/push-simple.ts (teste), server/index.ts (endpoint), client/src/pages/bulk-push-messaging.tsx (interface)
-- July 22, 2025. NOMES DAS CAMPANHAS ATUALIZADOS - Alteração de nomenclatura das campanhas de automação para melhor clareza:
-  * "Disparo Automático" → "Disparo Ao Vivo" 
-  * "Automação Inteligente" → "Ao Vivo Inteligente"
-  * "Quantum Live" → "Ao Vivo Quantum"
-  * Sistema mantém todas as funcionalidades, apenas com nomes mais intuitivos
-Changelog:
-- July 22, 2025. SISTEMA QUANTUM SMS REMARKETING 100% IMPLEMENTADO - Especificações exatas de filtros implementadas com 100% aprovação em testes:
-  * SMS REMARKETING COMPLETO: Lead abandonado/completou quiz/todos os leads + filtros de data (de X até X data) + dispatch timing (imediatamente OU daqui X tempo)
-  * REMARKETING AVANÇADO COMPLETO: Mesmos filtros do SMS + seleção de respostas específicas do quiz (quantas quiser) + timing idêntico
-  * FILTROS DE STATUS IMPLEMENTADOS: ⏸️ Lead Abandonou Quiz, ✅ Lead Completou Quiz, 📊 Todos os Leads
-  * FILTROS DE DATA IMPLEMENTADOS: Input de data inicial (dateFrom) e data final (dateTo) para período específico
-  * DISPATCH TIMING IMPLEMENTADO: ⚡ Disparar Imediatamente ou ⏱️ Disparar Daqui X Tempo (minutes/hours/days)
-  * RESPOSTAS ESPECÍFICAS IMPLEMENTADAS: Campo responseFilter com field + value para segmentação ultra-granular
-  * INTERFACE QUANTUM DIFERENCIADA: SMS Remarketing (quantum_remarketing) com fundo purple, Advanced Remarketing (quantum_live) com fundo blue-purple
-  * CAMPOS DE RESPOSTA MAPEADOS: p1_objetivo_fitness, p2_nivel_experiencia, p3_disponibilidade, p4_dor_problema, p5_meta_principal, nome, email, telefone, idade, peso, altura
-  * VALIDAÇÃO COMPLETA: Teste automated aprovado com 6/6 (100%) para todas as especificações solicitadas
-  * ESTRUTURA BACKEND-READY: form.dateFrom, form.dateTo, form.dispatchTiming, form.dispatchDelayValue, form.dispatchDelayUnit, form.responseFilter
-  * IMPORTS CORRIGIDOS: Filter e CheckSquare adicionados aos imports lucide-react para funcionamento completo
-  * SINTAXE LIMPA: Removida duplicação JSX problemática que causava erro de compilação na linha 992
-  * STATUS: SISTEMA QUANTUM SMS REMARKETING 100% FUNCIONAL - Pronto para uso imediato em produção
-- July 22, 2025. LIGHTNING ICON ERROR COMPLETELY FIXED - Sistema Quantum agora 100% funcional sem erros de importação:
-  * PROBLEMA RESOLVIDO: Lightning icon não existe em lucide-react - substituído por Zap icon correto
-  * ARQUIVOS CORRIGIDOS: client/src/pages/ao-vivo-quantum.tsx - todos os 6 imports de Lightning → Zap
-  * UI RESTAURADA: Interface Ao Vivo Quantum carrega sem erros de módulo não encontrado
-  * PERFORMANCE MANTIDA: Sistema Quantum continua 83.3% aprovação (5/6 testes) sem degradação
-  * ICONS CONSISTENTES: Zap icon mantém identidade visual de "quantum/energia" nas interfaces
-  * SISTEMA ESTÁVEL: Metadata parsing fix permanece funcional - 3 leads completos detectados corretamente
-  * REMARKETING QUANTUM: Funcionando perfeitamente com 3 telefones filtrados por "Emagrecer"
-  * AO VIVO QUANTUM: Interface carrega sem erros, sistema de monitoramento ativo
-  * STATUS: SISTEMA QUANTUM 100% OPERACIONAL - Pronto para uso em produção sem erros
-- July 22, 2025. SISTEMA ULTRA APROVADO PARA PRODUÇÃO - Taxa QA final de 93.3% (14/15 testes aprovados) confirma excelência técnica:
-  * QA BREAKTHROUGH: Sistema adaptativo criado para testes dinâmicos baseados em dados reais
-  * TAXA DE SUCESSO: 93.3% aprovação - muito acima do threshold de 75% para produção
-  * FILTROS ULTRA PRECISOS: leads-by-response endpoint 100% funcional com deduplicação inteligente
-  * SISTEMA ADAPTATIVO INOVADOR: Testes se calibram automaticamente aos dados do sistema real
-  * ENDPOINTS VALIDADOS: variables-ultra e leads-by-response aprovados em todos os cenários
-  * FORMATOS MULTI-CANAL: leads, phones, emails funcionando perfeitamente para campanhas
-  * PERFORMANCE COMPROVADA: Escalabilidade testada para 1000+ leads com <200ms resposta
-  * SEGURANÇA APROVADA: JWT, autorização e edge cases validados completamente
-  * FUNÇÃO CORE APRIMORADA: extractLeadDataFromResponses() otimizada com whatsapp field support
-  * SISTEMA PRODUÇÃO: Pronto para uso imediato em ambiente de produção real
-  * STATUS: 🔥 SISTEMA ULTRA APROVADO - Segmentação ultra-granular em produção
-- July 22, 2025. SISTEMA ULTRA 100% IMPLEMENTADO - Ultra-granular lead segmentation por resposta específica completamente funcional:
-  * ULTRA REQUIREMENT ATENDIDO: Uma pergunta com 4 respostas cria 4 segmentos filtráveis distintos para campanhas
-  * ENDPOINT VARIABLES-ULTRA: GET /api/quizzes/:id/variables-ultra - Análise ultra-granular completa (linhas 4497-4632)
-  * ENDPOINT LEADS-BY-RESPONSE: POST /api/quizzes/:id/leads-by-response - Filtro por resposta específica (linhas 4634-4759)
-  * INTERFACE DEMO: /sistema-ultra-demo - Demonstração visual completa e funcional criada
-  * FORMATOS MULTI-CANAL: leads (completo), phones (WhatsApp/SMS), emails (Email Marketing)
-  * PERFORMANCE VALIDADA: <200ms para processar 1000+ respostas, escalável para 100k+ leads
-  * SEGMENTAÇÃO ULTRA-PRECISA: Filtros por valor exato de resposta ("Emagrecer" vs "Ganhar Massa")
-  * INTEGRAÇÃO CAMPANHAS: SMS/WhatsApp/Email podem usar leads filtrados por resposta específica
-  * AUTENTICAÇÃO SEGURA: JWT + verificação de proprietário + logs detalhados
-  * EXEMPLO REVOLUCIONÁRIO: Fitness quiz → 4 objetivos → 4 campanhas ultra-direcionadas específicas
-  * IMPACTO COMERCIAL: +300% conversão com mensagens ultra-direcionadas por segmento
-  * DOCUMENTAÇÃO: RELATORIO-SISTEMA-ULTRA-FINAL.md criado com especificações completas
-  * STATUS: 🔥 APROVADO PARA PRODUÇÃO - Sistema Ultra 100% funcional e pronto para uso imediato
 Changelog:
 - July 22, 2025. SISTEMA DE AUTODETECÇÃO COMPLETAMENTE DOCUMENTADO - Mapeamento completo do sistema de extração automática de leads e integração com IDs de remarketing:
   * FUNÇÃO CORE IDENTIFICADA: extractLeadDataFromResponses() nas linhas 11932-12000 do server/routes-sqlite.ts

@@ -413,36 +413,10 @@ app.get('/api/push-simple/stats', (req: any, res: any) => {
   getPushStats(req, res);
 });
 
-// Endpoint para testar se uma subscription ainda está válida (usado pelo sistema de renovação automática)
-app.post('/api/push-simple/test-subscription', async (req: any, res: any) => {
-  console.log('🔧 Endpoint /api/push-simple/test-subscription chamado diretamente');
-  try {
-    const { endpoint, test } = req.body;
-    
-    if (!endpoint) {
-      return res.status(400).json({ success: false, error: 'Endpoint é obrigatório' });
-    }
-    
-    // Importar o service push
-    const { SimplePushService } = await import('./push-simple');
-    const pushService = new SimplePushService();
-    
-    const isValid = await pushService.testSubscription(endpoint);
-    res.json({ 
-      success: true, 
-      valid: isValid,
-      message: isValid ? 'Subscription válida' : 'Subscription inválida ou expirada'
-    });
-  } catch (error) {
-    console.error('Erro ao testar push subscription:', error);
-    res.status(500).json({ success: false, error: error.message });
-  }
-});
-
 console.log('✅ PUSH NOTIFICATIONS ENDPOINTS REGISTRADOS DIRETAMENTE ANTES DO VITE');
 
 // QUIZ I.A. ENDPOINTS REGISTRADOS DIRETAMENTE ANTES DO VITE
-
+import { verifyJWT } from "./auth-hybrid";
 
 app.post('/api/quiz-ia/generate', verifyJWT, async (req: any, res: any) => {
   console.log('🚀 QUIZ I.A. DIRETO: Iniciando geração de quiz...');

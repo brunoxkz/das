@@ -748,37 +748,11 @@ export default function BulkPushMessaging() {
                   <p className="text-sm text-green-700 dark:text-green-300">
                     🎉 SEMPRE ATIVO - Sistema monitora quiz completions em tempo real 24/7
                   </p>
-                  <p className="text-xs text-green-600 dark:text-green-400 mt-1">
-                    🔄 Renovação automática: Push subscriptions renovadas automaticamente quando próximas do vencimento
-                  </p>
                 </div>
               </div>
               <div className="flex items-center gap-2">
                 <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-                <span className="text-sm font-bold text-green-600">✓ ATIVO + AUTO-RENEW</span>
-              </div>
-            </div>
-            
-            {/* Informações sobre renovação automática */}
-            <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg border border-blue-200 dark:border-blue-800">
-              <div className="flex items-start space-x-3">
-                <div className="w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
-                  <span className="text-white text-xs font-bold">🔄</span>
-                </div>
-                <div>
-                  <h4 className="font-medium text-blue-900 dark:text-blue-100 mb-1">Sistema de Renovação Automática Ativo</h4>
-                  <p className="text-blue-700 dark:text-blue-300 text-sm">
-                    As push subscriptions são renovadas automaticamente quando próximas do vencimento (24h). 
-                    O Service Worker verifica a cada 10 minutos e renova automaticamente para garantir que nunca expirem.
-                  </p>
-                  <ul className="text-blue-700 dark:text-blue-300 text-sm mt-2 space-y-1">
-                    <li>• Verificação automática a cada 10 minutos</li>
-                    <li>• Renovação quando restam menos de 24h para expirar</li>
-                    <li>• Re-registro automático em caso de falha de conectividade</li>
-                    <li>• Funciona mesmo com app fechado (PWA em background)</li>
-                    <li>• Zero intervenção manual necessária</li>
-                  </ul>
-                </div>
+                <span className="text-sm font-bold text-green-600">✓ ATIVO</span>
               </div>
             </div>
 
