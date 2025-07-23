@@ -180,6 +180,11 @@ export const smsCampaigns = sqliteTable("sms_campaigns", {
   // 🚀 CAMPOS PARA CAMPANHAS ULTRA PERSONALIZADAS
   campaignType: text("campaignType").default("standard"), // "standard" ou "ultra_personalized"
   conditionalRules: text("conditionalRules", { mode: 'json' }), // JSON com regras SE > ENTÃO
+  // 🔥 CAMPOS QUANTUM - EVOLUÇÃO DO SISTEMA ULTRA
+  quantumType: text("quantumType").default("standard"), // "standard", "remarketing", "live"
+  quantumConfig: text("quantumConfig", { mode: 'json' }), // Configurações avançadas Quantum
+  quantumFilters: text("quantumFilters", { mode: 'json' }), // Filtros Ultra granulares
+  triggerConditions: text("triggerConditions", { mode: 'json' }), // Condições de disparo automático
   createdAt: integer("createdAt").notNull().$defaultFn(() => Math.floor(Date.now() / 1000)),
   updatedAt: integer("updatedAt").notNull().$defaultFn(() => Math.floor(Date.now() / 1000)),
 });

@@ -5777,7 +5777,7 @@ const gameElementCategories = [
                         </div>
                         <div className="text-xs text-blue-700 space-y-1">
                           <div className="font-mono bg-blue-100 px-2 py-1 rounded text-blue-900">
-                            p{activePageIndex + 1}_r_{(quizData?.name || quizData?.title || 'quiz').toLowerCase().replace(/[^a-z0-9]/g, '').substring(0, 10)}
+                            p{activePageIndex + 1}_r_quiz
                           </div>
                           <p className="text-blue-600">
                             Este ID será usado automaticamente para segmentação em campanhas de SMS, Email e WhatsApp

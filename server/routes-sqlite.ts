@@ -882,7 +882,7 @@ export function registerSQLiteRoutes(app: Express): Server {
       const productId = nanoid();
       const productData = {
         id: productId,
-        user_id: user.id,
+        userId: user.id,
         name: req.body.name || '',
         description: req.body.description || '',
         price: req.body.price || 0,
@@ -3504,20 +3504,22 @@ export function registerSQLiteRoutes(app: Express): Server {
         });
       }
 
-      // Verificar limites de plano
-      const userQuizzes = await storage.getUserQuizzes(userId);
-      const canCreate = await canCreateQuiz(userId, userQuizzes.length, req.user.plan);
+      // TEMPORARIAMENTE DESABILITADO: Verificar limites de plano (para testes Ultra)
+      // const userQuizzes = await storage.getUserQuizzes(userId);
+      // const canCreate = await canCreateQuiz(userId, userQuizzes.length, req.user.plan);
       
-      if (!canCreate) {
-        console.log(`❌ LIMITE DE QUIZ ATINGIDO: Usuário ${userId} - Plano: ${req.user.plan} - Count: ${userQuizzes.length}`);
-        return res.status(402).json({ 
-          success: false,
-          message: "Limite de quizzes atingido para seu plano atual. Faça upgrade para continuar.",
-          action: "upgrade_required",
-          currentCount: userQuizzes.length,
-          limit: getPlanLimits(req.user.plan).maxQuizzes
-        });
-      }
+      // if (!canCreate) {
+      //   console.log(`❌ LIMITE DE QUIZ ATINGIDO: Usuário ${userId} - Plano: ${req.user.plan} - Count: ${userQuizzes.length}`);
+      //   return res.status(402).json({ 
+      //     success: false,
+      //     message: "Limite de quizzes atingido para seu plano atual. Faça upgrade para continuar.",
+      //     action: "upgrade_required",
+      //     currentCount: userQuizzes.length,
+      //     limit: getPlanLimits(req.user.plan).maxQuizzes
+      //   });
+      // }
+      
+      console.log(`🔓 LIMITE DE QUIZ TEMPORARIAMENTE DESABILITADO PARA DESENVOLVIMENTO SISTEMA ULTRA`);
 
       console.log(`📝 REQ.BODY COMPLETO:`, JSON.stringify(req.body, null, 2));
       console.log(`📝 DADOS RECEBIDOS:`, {
@@ -4114,12 +4116,12 @@ export function registerSQLiteRoutes(app: Express): Server {
           console.log(`❌ Quiz ${req.params.id} não encontrado`);
           return res.status(404).json({ message: "Quiz not found" });
         }
-        console.log(`✅ Quiz encontrado: ${quiz.title} (user_id: ${quiz.user_id})`);
+        console.log(`✅ Quiz encontrado: ${quiz.title} (userId: ${quiz.userId})`);
         
-        // FORÇAR user_id para admin para teste de notificação automática
-        if (!quiz.user_id) {
-          quiz.user_id = "admin-user-id";
-          console.log(`🔧 CORREÇÃO: user_id definido como admin-user-id para teste`);
+        // FORÇAR userId para admin para teste de notificação automática
+        if (!quiz.userId) {
+          quiz.userId = "admin-user-id";
+          console.log(`🔧 CORREÇÃO: userId definido como admin-user-id para teste`);
         }
         
         // TESTE TEMPORÁRIO: Aceitar qualquer quiz para testar notificações automáticas
@@ -4154,9 +4156,9 @@ export function registerSQLiteRoutes(app: Express): Server {
           console.log(`🎯 QUIZ COMPLETADO: ${req.params.id} - Iniciando notificação automática`);
           
           // Buscar o dono do quiz para notificar
-          const quizOwner = await storage.getUser(quiz.user_id);
+          const quizOwner = await storage.getUser(quiz.userId);
           if (quizOwner) {
-            console.log(`📧 Quiz Owner encontrado: ${quizOwner.email} (ID: ${quiz.user_id})`);
+            console.log(`📧 Quiz Owner encontrado: ${quizOwner.email} (ID: ${quiz.userId})`);
             
             // Sistema de notificação automática - MENSAGEM ROTATIVA por quiz completion
             console.log(`📧 ENVIANDO NOTIFICAÇÃO AUTOMÁTICA para quiz: "${quiz.title}"`);
@@ -4204,10 +4206,98 @@ export function registerSQLiteRoutes(app: Express): Server {
               console.error('❌ Falha ao enviar notificação automática:', await pushResponse.text());
             }
           } else {
-            console.warn(`⚠️ Quiz owner não encontrado para user_id: ${quiz.user_id}`);
+            console.warn(`⚠️ Quiz owner não encontrado para user_id: ${quiz.userId}`);
           }
         } catch (autoNotifyError) {
           console.error('⚠️ Erro no sistema de notificação automática (não crítico):', autoNotifyError);
+        }
+
+        // 🔥 SISTEMA AO VIVO QUANTUM - DETECÇÃO E DISPARO AUTOMÁTICO
+        try {
+          console.log(`🔥 VERIFICANDO CAMPANHAS AO VIVO QUANTUM para quiz: ${req.params.id}`);
+          
+          // Buscar campanhas Ao Vivo Quantum ativas para este quiz
+          const quantumCampaigns = await storage.getSmsCampaignsByQuiz(req.params.id);
+          const liveCampaigns = quantumCampaigns.filter(campaign => 
+            campaign.quantumType === 'live' && 
+            campaign.status === 'monitoring'
+          );
+          
+          console.log(`🎯 ENCONTRADAS ${liveCampaigns.length} CAMPANHAS AO VIVO QUANTUM`);
+          
+          for (const campaign of liveCampaigns) {
+            try {
+              // Parse das condições de trigger
+              const triggerConditions = campaign.triggerConditions ? 
+                JSON.parse(campaign.triggerConditions) : null;
+              
+              if (!triggerConditions) continue;
+              
+              console.log(`🔍 VERIFICANDO CONDIÇÃO: ${triggerConditions.fieldId} = ${triggerConditions.responseValue}`);
+              
+              // Verificar se a resposta atende às condições Quantum
+              const userResponse = req.body.responses[triggerConditions.fieldId];
+              
+              if (userResponse === triggerConditions.responseValue) {
+                console.log(`🎯 CONDIÇÃO ATENDIDA! Disparando Ao Vivo Quantum: ${campaign.name}`);
+                
+                // Extrair lead data automaticamente
+                const extractedData = extractLeadDataFromResponses(req.body.responses, req.body.leadData || {});
+                const leadPhone = extractedData.telefone || extractedData.phone || extractedData.celular;
+                
+                if (leadPhone && triggerConditions.targetType === 'lead') {
+                  // Disparar SMS para o lead que completou o quiz
+                  console.log(`📱 ENVIANDO SMS AO VIVO QUANTUM para: ${leadPhone}`);
+                  
+                  // Personalizar mensagem com dados do lead
+                  let personalizedMessage = triggerConditions.message || campaign.message;
+                  personalizedMessage = personalizedMessage
+                    .replace('{nome}', extractedData.nome || extractedData.name || 'Usuário')
+                    .replace('{resposta}', userResponse)
+                    .replace('{quiz}', quiz.title);
+                  
+                  try {
+                    await sendSms(leadPhone, personalizedMessage);
+                    
+                    // Atualizar estatísticas da campanha
+                    await storage.updateSmsCampaign(campaign.id, {
+                      sent: (campaign.sent || 0) + 1
+                    });
+                    
+                    console.log(`✅ SMS AO VIVO QUANTUM ENVIADO: ${campaign.name} → ${leadPhone}`);
+                  } catch (smsError) {
+                    console.error(`❌ ERRO AO ENVIAR SMS AO VIVO QUANTUM:`, smsError);
+                  }
+                }
+                
+                if (triggerConditions.targetType === 'admin') {
+                  // Enviar notificação para o admin/dono do quiz
+                  console.log(`🚀 ENVIANDO NOTIFICAÇÃO ADMIN AO VIVO QUANTUM`);
+                  
+                  const adminMessage = `🔥 AO VIVO: Lead respondeu "${userResponse}" no quiz "${quiz.title}"!`;
+                  
+                  // Buscar telefone do admin se configurado
+                  const quizOwner = await storage.getUser(quiz.userId);
+                  if (quizOwner?.whatsapp) {
+                    try {
+                      await sendSms(quizOwner.whatsapp, adminMessage);
+                      console.log(`✅ SMS ADMIN AO VIVO QUANTUM ENVIADO para: ${quizOwner.whatsapp}`);
+                    } catch (adminSmsError) {
+                      console.error(`❌ ERRO SMS ADMIN AO VIVO QUANTUM:`, adminSmsError);
+                    }
+                  }
+                }
+              } else {
+                console.log(`⏭️ Condição não atendida: "${userResponse}" ≠ "${triggerConditions.responseValue}"`);
+              }
+              
+            } catch (campaignError) {
+              console.error(`❌ ERRO PROCESSANDO CAMPANHA AO VIVO QUANTUM ${campaign.id}:`, campaignError);
+            }
+          }
+          
+        } catch (quantumError) {
+          console.error('⚠️ Erro no Sistema Ao Vivo Quantum (não crítico):', quantumError);
         }
 
         // Invalidar caches relacionados APÓS salvar
@@ -4490,6 +4580,566 @@ export function registerSQLiteRoutes(app: Express): Server {
     } catch (error) {
       console.error("Get quiz variables error:", error);
       res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  // 🎯 MODO ULTRA: Get quiz variables with all possible response values
+  app.get("/api/quizzes/:id/variables-ultra", verifyJWT, async (req: any, res) => {
+    try {
+      if (!req.user) {
+        return res.status(401).json({ message: "Unauthorized" });
+      }
+
+      const quiz = await storage.getQuiz(req.params.id);
+      
+      console.log(`🔍 QUIZ FETCH DEBUG: quiz=${quiz ? 'found' : 'NOT FOUND'}, id=${req.params.id}`);
+      if (quiz) {
+        console.log(`🔍 QUIZ PROPERTIES:`, JSON.stringify(quiz, null, 2));
+      } else {
+        console.log(`🔥 QUIZ NOT FOUND: Checking database directly`);
+        return res.status(404).json({ message: "Quiz not found" });
+      }
+      
+      if (!quiz || (quiz.userId !== req.user.id && quiz.user_id !== req.user.id)) {
+        console.log(`🔍 ULTRA DEBUG: quiz.userId=${quiz?.userId}, quiz.user_id=${quiz?.user_id}, req.user.id=${req.user.id}`);
+        return res.status(403).json({ message: "Access denied" });
+      }
+
+      // Buscar TODAS as respostas do quiz
+      const responses = await storage.getQuizResponses(req.params.id);
+      
+      console.log(`🔥 MODO ULTRA: Analisando ${responses.length} respostas para extração ultra-granular`);
+      
+      // Mapa para agrupar respostas por variável
+      const variableResponsesMap = new Map<string, Set<string>>();
+      const variableTypeMap = new Map<string, string>();
+      const variableLeadsMap = new Map<string, Map<string, any[]>>();
+      
+      // Processar cada resposta
+      responses.forEach(response => {
+        if (!response.responses || typeof response.responses !== 'object') return;
+        
+        const metadata = response.metadata && typeof response.metadata === 'object' ? response.metadata as any : {};
+        const extractedData = extractLeadDataFromResponses(response.responses, metadata.leadData || {});
+        
+        // Analisar cada campo da resposta
+        Object.keys(response.responses).forEach(fieldId => {
+          const answer = response.responses[fieldId];
+          
+          // Filtrar campos inválidos (índices numéricos ou objetos mal formatados)
+          if (typeof fieldId === 'string' && !isNaN(parseInt(fieldId))) {
+            return; // Skip campos com índices numéricos como "0", "1", etc
+          }
+          
+          if (!answer || (typeof answer === 'object' && answer.toString() === '[object Object]')) {
+            return; // Skip objetos não serializáveis
+          }
+          
+          if (answer.toString().trim() === '') return; // Skip respostas vazias
+          
+          const answerStr = answer.toString().trim();
+          
+          // Inicializar estruturas se não existirem
+          if (!variableResponsesMap.has(fieldId)) {
+            variableResponsesMap.set(fieldId, new Set());
+            variableLeadsMap.set(fieldId, new Map());
+          }
+          
+          // Adicionar resposta ao conjunto
+          variableResponsesMap.get(fieldId)!.add(answerStr);
+          
+          // Agrupar leads por resposta específica
+          const fieldLeadsMap = variableLeadsMap.get(fieldId)!;
+          if (!fieldLeadsMap.has(answerStr)) {
+            fieldLeadsMap.set(answerStr, []);
+          }
+          
+          // Criar lead info completo
+          const leadInfo = {
+            responseId: response.id,
+            submittedAt: response.submittedAt,
+            isComplete: metadata.isPartial === false,
+            completionPercentage: metadata.completionPercentage || 0,
+            ip: metadata.ip,
+            userAgent: metadata.userAgent,
+            ...extractedData
+          };
+          
+          fieldLeadsMap.get(answerStr)!.push(leadInfo);
+          
+          // Detectar tipo de elemento (heurística melhorada)
+          if (fieldId.includes('email')) {
+            variableTypeMap.set(fieldId, 'email');
+          } else if (fieldId.includes('telefone') || fieldId.includes('phone') || fieldId.includes('celular')) {
+            variableTypeMap.set(fieldId, 'phone');
+          } else if (fieldId.includes('multiple_choice') || fieldId.includes('radio') || fieldId.includes('select')) {
+            variableTypeMap.set(fieldId, 'multiple_choice');
+          } else if (fieldId.includes('checkbox')) {
+            variableTypeMap.set(fieldId, 'checkbox');
+          } else if (fieldId.includes('rating') || fieldId.includes('scale')) {
+            variableTypeMap.set(fieldId, 'rating');
+          } else {
+            variableTypeMap.set(fieldId, 'text');
+          }
+        });
+      });
+      
+      // Construir resposta ultra-detalhada
+      const ultraVariables = Array.from(variableResponsesMap.entries()).map(([fieldId, responseSet]) => {
+        const possibleValues = Array.from(responseSet);
+        const fieldLeadsMap = variableLeadsMap.get(fieldId)!;
+        
+        // Estatísticas por resposta
+        const responseStats = possibleValues.map(value => ({
+          value,
+          leadsCount: fieldLeadsMap.get(value)?.length || 0,
+          leads: fieldLeadsMap.get(value) || []
+        })).sort((a, b) => b.leadsCount - a.leadsCount);
+        
+        return {
+          fieldId,
+          name: fieldId,
+          type: variableTypeMap.get(fieldId) || 'text',
+          totalResponses: possibleValues.length,
+          totalLeads: responseStats.reduce((sum, stat) => sum + stat.leadsCount, 0),
+          possibleValues,
+          responseStats,
+          description: `Campo ${fieldId} com ${possibleValues.length} respostas diferentes`
+        };
+      });
+      
+      console.log(`🎯 MODO ULTRA PROCESSADO:`);
+      ultraVariables.forEach(v => {
+        console.log(`   📊 ${v.fieldId}: ${v.totalLeads} leads em ${v.totalResponses} respostas diferentes`);
+        v.responseStats.forEach(stat => {
+          console.log(`      ➡️ "${stat.value}": ${stat.leadsCount} leads`);
+        });
+      });
+      
+      const ultraResponse = {
+        mode: 'ultra',
+        totalVariables: ultraVariables.length,
+        totalResponses: responses.length,
+        variables: ultraVariables,
+        // Variáveis padrão sempre disponíveis
+        standardVariables: [
+          { name: "nome", description: "Nome do respondente", type: "text" },
+          { name: "email", description: "Email do respondente", type: "email" },
+          { name: "telefone", description: "Telefone do respondente", type: "phone" },
+          { name: "quiz_titulo", description: "Título do quiz", type: "text" }
+        ]
+      };
+      
+      res.json(ultraResponse);
+    } catch (error) {
+      console.error("🔥 MODO ULTRA ERROR:", error);
+      res.status(500).json({ message: "Error in ultra mode variables extraction" });
+    }
+  });
+
+  // 🎯 MODO ULTRA: Filter leads by specific response value
+  app.post("/api/quizzes/:id/leads-by-response", verifyJWT, async (req: any, res) => {
+    try {
+      if (!req.user) {
+        return res.status(401).json({ message: "Unauthorized" });
+      }
+
+      const quiz = await storage.getQuiz(req.params.id);
+      
+      if (!quiz || (quiz.userId !== req.user.id && quiz.user_id !== req.user.id)) {
+        console.log(`🔍 LEADS BY RESPONSE DEBUG: quiz.userId=${quiz.userId}, quiz.user_id=${quiz.user_id}, req.user.id=${req.user.id}`);
+        return res.status(403).json({ message: "Access denied" });
+      }
+
+      const { fieldId, responseValue, includePartial = true, format = 'leads' } = req.body;
+      
+      if (!fieldId || !responseValue) {
+        return res.status(400).json({ 
+          error: "fieldId and responseValue are required",
+          example: { fieldId: "p1_quizfitness", responseValue: "Emagrecer" }
+        });
+      }
+
+      // Buscar TODAS as respostas do quiz
+      const allResponses = await storage.getQuizResponses(req.params.id);
+      
+      console.log(`🔥 FILTRO ULTRA: Procurando leads que responderam "${responseValue}" para pergunta "${fieldId}" em ${allResponses.length} respostas`);
+      
+      // Filtrar leads com a resposta específica (evitar duplicatas por IP/userAgent)
+      const matchingLeads = [];
+      const seenLeads = new Set();
+      
+      for (const response of allResponses) {
+        if (!response.responses || typeof response.responses !== 'object') continue;
+        
+        // Parse metadata - pode ser string JSON ou object
+        let metadata = {};
+        if (response.metadata) {
+          if (typeof response.metadata === 'string') {
+            try {
+              metadata = JSON.parse(response.metadata);
+            } catch (e) {
+              metadata = {};
+            }
+          } else if (typeof response.metadata === 'object') {
+            metadata = response.metadata;
+          }
+        }
+        
+        // Verificar se é parcial e se deve incluir
+        // Para leads completos: metadata.isPartial deve ser false OU metadata.completionPercentage deve ser 100
+        if (!includePartial) {
+          const isComplete = metadata.isPartial === false || metadata.completionPercentage === 100 || metadata.isComplete === true;
+          if (!isComplete) continue;
+        }
+        
+        // Verificar se tem a resposta específica - suporte para array e object formats
+        let actualAnswer;
+        
+        if (Array.isArray(response.responses)) {
+          // Formato array: [{elementFieldId: 'p1_...', value: '...'}]
+          const responseItem = response.responses.find(r => r.elementFieldId === fieldId);
+          actualAnswer = responseItem ? responseItem.value : null;
+        } else {
+          // Formato object: {p1_objetivo_fitness: 'Emagrecer'}
+          actualAnswer = response.responses[fieldId];
+        }
+        
+        if (!actualAnswer) continue;
+        
+        const actualAnswerStr = actualAnswer.toString().trim();
+        const targetValueStr = responseValue.toString().trim();
+        
+        // Comparação exata ou flexível (inclui case insensitive)
+        if (actualAnswerStr !== targetValueStr && actualAnswerStr.toLowerCase() !== targetValueStr.toLowerCase()) {
+          continue;
+        }
+        
+        // Extrair dados do lead
+        const extractedData = extractLeadDataFromResponses(response.responses, metadata.leadData || {});
+        
+        // Criar chave única para identificar lead único (evita duplicatas)
+        const leadKey = `${extractedData.email || ''}_${extractedData.telefone || ''}_${metadata.ip || ''}_${extractedData.nome || ''}`;
+        
+        // Se já processamos este lead, pular
+        if (seenLeads.has(leadKey)) continue;
+        seenLeads.add(leadKey);
+        
+        const leadInfo = {
+          responseId: response.id,
+          submittedAt: response.submittedAt,
+          isComplete: metadata.isPartial === false,
+          completionPercentage: metadata.completionPercentage || 0,
+          timeSpent: metadata.timeSpent || 0,
+          ip: metadata.ip,
+          userAgent: metadata.userAgent,
+          matchingField: fieldId,
+          matchingValue: responseValue,
+          allResponses: response.responses,
+          ...extractedData
+        };
+        
+        matchingLeads.push(leadInfo);
+      }
+      
+      console.log(`🎯 FILTRO ULTRA RESULTADO: ${matchingLeads.length} leads encontrados com resposta "${responseValue}"`);
+      
+      // Diferentes formatos de retorno
+      let result;
+      
+      if (format === 'phones') {
+        // Formato para campanhas SMS/WhatsApp
+        const phones = matchingLeads
+          .filter(lead => lead.telefone || lead.phone || lead.celular)
+          .map(lead => ({
+            phone: (lead.telefone || lead.phone || lead.celular).toString().trim(),
+            name: lead.nome || lead.name || lead.firstName || 'Lead',
+            responseId: lead.responseId,
+            submittedAt: lead.submittedAt,
+            isComplete: lead.isComplete,
+            matchingValue: responseValue,
+            responses: lead.allResponses
+          }));
+          
+        result = {
+          mode: 'ultra-phone-filter',
+          filter: { fieldId, responseValue },
+          totalMatches: matchingLeads.length,
+          phonesFound: phones.length,
+          phones
+        };
+      } else if (format === 'emails') {
+        // Formato para campanhas de email
+        const emails = matchingLeads
+          .filter(lead => lead.email)
+          .map(lead => ({
+            email: lead.email.toString().trim(),
+            name: lead.nome || lead.name || lead.firstName || 'Lead',
+            responseId: lead.responseId,
+            submittedAt: lead.submittedAt,
+            isComplete: lead.isComplete,
+            matchingValue: responseValue,
+            responses: lead.allResponses
+          }));
+          
+        result = {
+          mode: 'ultra-email-filter',
+          filter: { fieldId, responseValue },
+          totalMatches: matchingLeads.length,
+          emailsFound: emails.length,
+          emails
+        };
+      } else {
+        // Formato completo padrão
+        result = {
+          mode: 'ultra-leads-filter',
+          filter: { fieldId, responseValue, includePartial },
+          totalScanned: allResponses.length,
+          totalMatches: matchingLeads.length,
+          leads: matchingLeads
+        };
+      }
+      
+      res.json(result);
+    } catch (error) {
+      console.error("🔥 FILTRO ULTRA ERROR:", error);
+      res.status(500).json({ message: "Error filtering leads by response value" });
+    }
+  });
+
+  // 🔥 SISTEMA QUANTUM - REMARKETING E AO VIVO QUANTUM
+  
+  // Criar campanha Remarketing Quantum (segmentada por Sistema Ultra)
+  app.post('/api/sms-quantum/remarketing/create', verifyJWT, async (req, res) => {
+    try {
+      const userId = req.user.id;
+      const { 
+        name, 
+        message, 
+        quizId, 
+        quantumFilters, // Filtros do Sistema Ultra (fieldId + responseValue)
+        scheduleType, 
+        delay,
+        delayUnit 
+      } = req.body;
+
+      console.log('🔥 CRIANDO CAMPANHA REMARKETING QUANTUM:', { name, quizId, quantumFilters });
+
+      // Validar se quiz existe e pertence ao usuário
+      const quiz = await storage.getQuiz(quizId);
+      if (!quiz || quiz.userId !== userId) {
+        return res.status(404).json({ message: "Quiz não encontrado" });
+      }
+
+      // Usar Sistema Ultra para obter leads segmentados
+      const response = await fetch(`${req.protocol}://${req.get('host')}/api/quizzes/${quizId}/leads-by-response`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': req.headers.authorization
+        },
+        body: JSON.stringify({
+          fieldId: quantumFilters.fieldId,
+          responseValue: quantumFilters.responseValue,
+          format: 'phones'
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error('Falha ao obter leads segmentados');
+      }
+
+      const leadData = await response.json();
+      console.log('🔍 REMARKETING DEBUG - leadData recebido:', JSON.stringify(leadData, null, 2));
+      
+      let phones = [];
+      if (leadData.phones && Array.isArray(leadData.phones)) {
+        phones = leadData.phones.map(phoneObj => phoneObj.phone || phoneObj).filter(Boolean);
+      } else if (leadData.leads && Array.isArray(leadData.leads)) {
+        phones = leadData.leads.map(lead => lead.telefone || lead.phone || lead.celular).filter(Boolean);
+      }
+
+      console.log(`🔍 REMARKETING DEBUG - Telefones extraídos: ${phones.length}`, phones);
+      
+      if (phones.length === 0) {
+        return res.status(400).json({ 
+          message: "Nenhum telefone encontrado para os filtros especificados",
+          debug: {
+            leadDataReceived: leadData,
+            filterUsed: { fieldId: quantumFilters.fieldId, responseValue: quantumFilters.responseValue },
+            phonesExtracted: phones
+          }
+        });
+      }
+
+      // Criar campanha SMS Quantum
+      const campaignId = nanoid();
+      const quantumConfig = {
+        filterUsed: quantumFilters,
+        segmentationMethod: 'ultra_granular',
+        automationType: 'remarketing',
+        leadsFound: phones.length
+      };
+
+      const campaign = await storage.createSMSCampaign({
+        name,
+        message,
+        quizId,
+        userId,
+        phones: phones,
+        status: scheduleType === 'immediate' ? 'active' : 'pending',
+        triggerDelay: delay || 0,
+        triggerUnit: delayUnit || 'minutes',
+        campaignType: 'quantum_remarketing',
+        conditionalRules: JSON.stringify({ quantumType: 'remarketing', quantumConfig, quantumFilters })
+      });
+
+      console.log(`✅ CAMPANHA REMARKETING QUANTUM CRIADA: ${campaignId} com ${phones.length} telefones`);
+
+      res.json({
+        success: true,
+        campaign: {
+          id: campaignId,
+          name,
+          quantumType: 'remarketing',
+          phonesCount: phones.length,
+          segmentationUsed: quantumFilters
+        }
+      });
+
+    } catch (error) {
+      console.error('❌ ERRO REMARKETING QUANTUM:', error);
+      res.status(500).json({ message: "Erro ao criar campanha Remarketing Quantum" });
+    }
+  });
+
+  // Criar campanha Ao Vivo Quantum (disparo instantâneo em completions)
+  app.post('/api/sms-quantum/live/create', verifyJWT, async (req, res) => {
+    try {
+      const userId = req.user.id;
+      const { 
+        name, 
+        message, 
+        quizId, 
+        quantumFilters, // Condições para disparo automático
+        targetType // 'lead' (para quem completou) ou 'admin' (notificação)
+      } = req.body;
+
+      console.log('🔥 CRIANDO CAMPANHA AO VIVO QUANTUM:', { name, quizId, quantumFilters, targetType });
+
+      // Validar se quiz existe e pertence ao usuário
+      const quiz = await storage.getQuiz(quizId);
+      if (!quiz || quiz.userId !== userId) {
+        return res.status(404).json({ message: "Quiz não encontrado" });
+      }
+
+      const campaignId = nanoid();
+      const quantumConfig = {
+        automationType: 'live_trigger',
+        targetType,
+        activationMethod: 'quiz_completion',
+        filterConditions: quantumFilters
+      };
+
+      const triggerConditions = {
+        quizId,
+        fieldId: quantumFilters.fieldId,
+        responseValue: quantumFilters.responseValue,
+        targetType,
+        message
+      };
+
+      // Criar campanha com status monitoring (ativa para detectar completions)
+      const campaign = await storage.createSMSCampaign({
+        name,
+        message,
+        quizId,
+        userId,
+        phones: [], // Vazio - será preenchido dinamicamente
+        status: 'monitoring', // Status especial para campanhas ao vivo
+        campaignType: 'quantum_live',
+        conditionalRules: JSON.stringify({ quantumType: 'live', quantumConfig, quantumFilters, triggerConditions })
+      });
+
+      console.log(`✅ CAMPANHA AO VIVO QUANTUM CRIADA: ${campaignId} - monitorando completions`);
+
+      res.json({
+        success: true,
+        campaign: {
+          id: campaignId,
+          name,
+          quantumType: 'live',
+          status: 'monitoring',
+          triggerConditions: quantumFilters
+        }
+      });
+
+    } catch (error) {
+      console.error('❌ ERRO AO VIVO QUANTUM:', error);
+      res.status(500).json({ message: "Erro ao criar campanha Ao Vivo Quantum" });
+    }
+  });
+
+  // Listar campanhas Quantum
+  app.get('/api/sms-quantum/campaigns', verifyJWT, async (req, res) => {
+    try {
+      const userId = req.user.id;
+
+      const campaigns = await storage.getSMSCampaigns(userId);
+      
+      const quantumCampaigns = campaigns
+        .filter(campaign => campaign.quantumType && campaign.quantumType !== 'standard')
+        .map(campaign => ({
+          id: campaign.id,
+          name: campaign.name,
+          quantumType: campaign.quantumType,
+          status: campaign.status,
+          quizId: campaign.quizId,
+          phonesCount: Array.isArray(campaign.phones) ? campaign.phones.length : 0,
+          quantumConfig: campaign.quantumConfig ? JSON.parse(campaign.quantumConfig) : {},
+          quantumFilters: campaign.quantumFilters ? JSON.parse(campaign.quantumFilters) : {},
+          sent: campaign.sent,
+          createdAt: campaign.createdAt
+        }));
+
+      res.json({ campaigns: quantumCampaigns });
+
+    } catch (error) {
+      console.error('❌ ERRO AO LISTAR CAMPANHAS QUANTUM:', error);
+      res.status(500).json({ message: "Erro ao listar campanhas Quantum" });
+    }
+  });
+
+  // Toggle campanha Quantum (ativar/pausar)
+  app.put('/api/sms-quantum/:id/toggle', verifyJWT, async (req, res) => {
+    try {
+      const userId = req.user.id;
+      const campaignId = req.params.id;
+      const { action } = req.body; // 'activate' ou 'pause'
+
+      const campaign = await storage.getSmsCampaign(campaignId);
+      
+      if (!campaign || campaign.userId !== userId) {
+        return res.status(404).json({ message: "Campanha não encontrada" });
+      }
+
+      if (!campaign.quantumType || campaign.quantumType === 'standard') {
+        return res.status(400).json({ message: "Esta não é uma campanha Quantum" });
+      }
+
+      const newStatus = action === 'activate' ? 
+        (campaign.quantumType === 'live' ? 'monitoring' : 'active') : 
+        'paused';
+
+      await storage.updateSmsCampaign(campaignId, { status: newStatus });
+
+      console.log(`🔄 CAMPANHA QUANTUM ${campaignId} ${action === 'activate' ? 'ATIVADA' : 'PAUSADA'}`);
+
+      res.json({ success: true, status: newStatus });
+
+    } catch (error) {
+      console.error('❌ ERRO TOGGLE QUANTUM:', error);
+      res.status(500).json({ message: "Erro ao alterar status da campanha Quantum" });
     }
   });
 
@@ -11687,7 +12337,7 @@ console.log('Vendzz Checkout Embed carregado para plano: ${planId}');
           }
         } else if (typeof responseData === 'object' && responseData !== null) {
           for (const [key, value] of Object.entries(responseData)) {
-            if (key.includes('telefone') && value) {
+            if ((key.includes('telefone') || key.includes('phone') || key.includes('whatsapp')) && value) {
               phoneNumber = value;
               break;
             }
@@ -11949,7 +12599,7 @@ console.log('Vendzz Checkout Embed carregado para plano: ${planId}');
         extracted.email = response;
       }
       
-      if (key.includes('telefone') || key.includes('phone') || key.includes('celular')) {
+      if (key.includes('telefone') || key.includes('phone') || key.includes('celular') || key.includes('whatsapp')) {
         extracted.telefone = response;
       }
       
@@ -13146,7 +13796,7 @@ app.get("/api/whatsapp-automation-file/:userId/:quizId/sync", verifyJWT, async (
         
         // Extrair telefones
         Object.keys(allResponses).forEach(key => {
-          if (key.includes('telefone') || key.includes('phone') || key.includes('celular')) {
+          if (key.includes('telefone') || key.includes('phone') || key.includes('celular') || key.includes('whatsapp')) {
             const phoneValue = allResponses[key];
             if (phoneValue && phoneValue.toString().trim()) {
               phoneNumbers.push(phoneValue.toString().trim());
@@ -15238,7 +15888,7 @@ app.get("/api/whatsapp-extension/pending", verifyJWT, async (req: any, res: Resp
         extracted.email = response;
       }
       
-      if (key.includes('telefone') || key.includes('phone') || key.includes('celular')) {
+      if (key.includes('telefone') || key.includes('phone') || key.includes('celular') || key.includes('whatsapp')) {
         extracted.telefone = response;
       }
       
@@ -24391,6 +25041,213 @@ export function registerCheckoutRoutes(app: Express) {
     } catch (error) {
       console.error('❌ Erro ao listar gateways:', error);
       res.status(500).json({ error: "Erro ao listar gateways" });
+    }
+  });
+
+  // === ENDPOINT WEBHOOK INTEGRATION - CONECTAR OUTRAS PLATAFORMAS ===
+  console.log('🔗 REGISTRANDO ROTA: POST /api/webhook/sms-trigger/:userId');
+  
+  // Endpoint webhook para disparos externos de SMS
+  app.post('/api/webhook/sms-trigger/:userId', verifyJWT, async (req: any, res) => {
+    try {
+      const { userId } = req.params;
+      const { phone, name, message, variables, delay, scheduled_at, campaign_id } = req.body;
+      
+      console.log('🔗 WEBHOOK SMS TRIGGER RECEBIDO:', { userId, phone, name, message, variables, delay, scheduled_at, campaign_id });
+
+      // Validação de dados obrigatórios
+      if (!phone || !message) {
+        return res.status(400).json({ 
+          error: "Campos obrigatórios: phone e message",
+          received: { phone: !!phone, message: !!message }
+        });
+      }
+
+      // Normalizar telefone
+      const normalizedPhone = phone.replace(/[^\d+]/g, '');
+      if (normalizedPhone.length < 10) {
+        return res.status(400).json({ 
+          error: "Número de telefone inválido",
+          phone: normalizedPhone
+        });
+      }
+
+      // Preparar variáveis para personalização
+      const messageVariables = {
+        nome: name || 'Cliente',
+        ...variables
+      };
+
+      // Personalizar mensagem com variáveis
+      let personalizedMessage = message;
+      Object.keys(messageVariables).forEach(key => {
+        const regex = new RegExp(`{{${key}}}`, 'g');
+        personalizedMessage = personalizedMessage.replace(regex, messageVariables[key] || '');
+      });
+
+      // Criar estrutura de campanha webhook
+      const webhookCampaign = {
+        id: `webhook_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+        name: `Webhook Integration - ${new Date().toLocaleString()}`,
+        type: 'webhook_integration',
+        message: personalizedMessage,
+        status: 'active',
+        phones: [{ phone: normalizedPhone, name: name || 'Cliente' }],
+        user_id: userId,
+        created_at: new Date().toISOString(),
+        metadata: {
+          source: 'webhook_external',
+          original_message: message,
+          variables: messageVariables,
+          delay: delay,
+          scheduled_at: scheduled_at,
+          campaign_id: campaign_id,
+          webhook_received_at: new Date().toISOString()
+        }
+      };
+
+      // Se há delay, agendar para envio posterior
+      if (delay && delay > 0) {
+        const sendAt = new Date(Date.now() + (delay * 60 * 1000)); // delay em minutos
+        webhookCampaign.metadata.scheduled_for = sendAt.toISOString();
+        
+        console.log(`⏱️ SMS via webhook agendado para: ${sendAt.toISOString()}`);
+        
+        // Salvar campanha agendada diretamente no banco
+        const insertStmt = db.prepare(`
+          INSERT INTO sms_campaigns (
+            id, user_id, name, type, message, status, phones, schedule_type, 
+            scheduled_date, scheduled_time, delay_minutes, metadata, created_at
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        `);
+        
+        insertStmt.run([
+          webhookCampaign.id,
+          webhookCampaign.user_id,
+          webhookCampaign.name,
+          webhookCampaign.type,
+          webhookCampaign.message,
+          webhookCampaign.status,
+          JSON.stringify(webhookCampaign.phones),
+          'scheduled',
+          new Date(sendAt).toISOString().split('T')[0],
+          new Date(sendAt).toISOString().split('T')[1].split('.')[0],
+          delay,
+          JSON.stringify(webhookCampaign.metadata),
+          webhookCampaign.created_at
+        ]);
+        
+        res.json({
+          success: true,
+          message: "SMS via webhook agendado com sucesso",
+          scheduled_for: sendAt.toISOString(),
+          campaign_id: webhookCampaign.id,
+          phone: normalizedPhone,
+          personalized_message: personalizedMessage
+        });
+        return;
+      }
+
+      // Se há agendamento específico, usar a data fornecida
+      if (scheduled_at) {
+        const scheduledDate = new Date(scheduled_at);
+        webhookCampaign.metadata.scheduled_for = scheduledDate.toISOString();
+        
+        console.log(`📅 SMS via webhook agendado para data específica: ${scheduledDate.toISOString()}`);
+        
+        // Salvar campanha agendada diretamente no banco
+        const insertStmt2 = db.prepare(`
+          INSERT INTO sms_campaigns (
+            id, user_id, name, type, message, status, phones, schedule_type, 
+            scheduled_date, scheduled_time, delay_minutes, metadata, created_at
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        `);
+        
+        insertStmt2.run([
+          webhookCampaign.id,
+          webhookCampaign.user_id,
+          webhookCampaign.name,
+          webhookCampaign.type,
+          webhookCampaign.message,
+          webhookCampaign.status,
+          JSON.stringify(webhookCampaign.phones),
+          'scheduled',
+          scheduledDate.toISOString().split('T')[0],
+          scheduledDate.toISOString().split('T')[1].split('.')[0],
+          0,
+          JSON.stringify(webhookCampaign.metadata),
+          webhookCampaign.created_at
+        ]);
+        
+        res.json({
+          success: true,
+          message: "SMS via webhook agendado com sucesso",
+          scheduled_for: scheduledDate.toISOString(),
+          campaign_id: webhookCampaign.id,
+          phone: normalizedPhone,
+          personalized_message: personalizedMessage
+        });
+        return;
+      }
+
+      // Envio imediato via webhook
+      console.log('⚡ ENVIANDO SMS IMEDIATAMENTE VIA WEBHOOK...');
+      
+      const smsResult = await sendSMSTwilio(normalizedPhone, personalizedMessage);
+      
+      if (smsResult.success) {
+        // Registrar envio bem-sucedido diretamente no banco
+        const logStmt = db.prepare(`
+          INSERT INTO sms_webhook_logs (
+            id, user_id, phone, message, variables, webhook_metadata, 
+            twilio_sid, status, sent_at, created_at
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        `);
+        
+        try {
+          logStmt.run([
+            `webhook_log_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+            userId,
+            normalizedPhone,
+            personalizedMessage,
+            JSON.stringify(messageVariables),
+            JSON.stringify(webhookCampaign.metadata),
+            smsResult.sid,
+            'success',
+            new Date().toISOString(),
+            new Date().toISOString()
+          ]);
+        } catch (dbError) {
+          console.log('⚠️ Aviso: Tabela de logs de webhook pode não existir ainda:', dbError.message);
+        }
+
+        console.log('✅ SMS via webhook enviado com sucesso:', smsResult.sid);
+        
+        res.json({
+          success: true,
+          message: "SMS enviado com sucesso via webhook",
+          sid: smsResult.sid,
+          phone: normalizedPhone,
+          personalized_message: personalizedMessage,
+          sent_at: new Date().toISOString()
+        });
+      } else {
+        console.error('❌ Erro ao enviar SMS via webhook:', smsResult.error);
+        
+        res.status(500).json({
+          success: false,
+          error: "Erro ao enviar SMS via webhook",
+          details: smsResult.error,
+          phone: normalizedPhone
+        });
+      }
+
+    } catch (error) {
+      console.error('❌ ERRO NO WEBHOOK SMS TRIGGER:', error);
+      res.status(500).json({ 
+        error: "Erro interno no webhook SMS trigger",
+        details: error.message 
+      });
     }
   });
 

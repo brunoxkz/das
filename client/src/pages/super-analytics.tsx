@@ -19,7 +19,10 @@ import {
   MousePointer,
   UserMinus,
   Clock,
-  Percent
+  Percent,
+  ChevronLeft,
+  ChevronRight,
+  User
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth-jwt";
 import { useToast } from "@/hooks/use-toast";
@@ -77,6 +80,8 @@ export default function SuperAnalytics() {
   console.log("SUPER ANALYTICS - Quiz ID:", quizId);
   const [timeRange, setTimeRange] = useState('30');
   const [dateFilter, setDateFilter] = useState("30");
+  const [leadsCurrentPage, setLeadsCurrentPage] = useState(1);
+  const [leadsPerPage] = useState(10);
   
   // Sync timeRange with dateFilter
   useEffect(() => {
@@ -128,6 +133,28 @@ export default function SuperAnalytics() {
       return response.json();
     },
     enabled: !!quizId && !!quiz,
+    retry: false,
+  });
+
+  // Query para buscar leads do quiz
+  const { data: quizLeads, isLoading: leadsLoading } = useQuery({
+    queryKey: ["/api/quizzes", quizId, "leads"],
+    queryFn: async () => {
+      const token = localStorage.getItem("accessToken");
+      const response = await fetch(`/api/quizzes/${quizId}/leads`, {
+        headers: {
+          "Authorization": `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      });
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      return response.json();
+    },
+    enabled: !!quizId,
     retry: false,
   });
   
@@ -318,6 +345,238 @@ export default function SuperAnalytics() {
 
   const formatPercentage = (value: number) => {
     return `${value.toFixed(1)}%`;
+  };
+
+  // Lógica de paginação para leads
+  const leads = quizLeads?.leads || [];
+  const totalLeads = leads.length;
+  const totalLeadsPages = Math.ceil(totalLeads / leadsPerPage);
+  const startIndex = (leadsCurrentPage - 1) * leadsPerPage;
+  const endIndex = startIndex + leadsPerPage;
+  const currentLeads = leads.slice(startIndex, endIndex);
+
+  // Função para extrair TODOS os campos únicos de forma ultra-dinâmica (detecta qualquer estrutura atual ou futura)
+  const getAllResponseFields = (leads: any[]) => {
+    const fieldSet = new Set<string>();
+    
+    leads.forEach(lead => {
+      // SCAN COMPLETO: Percorrer recursivamente toda a estrutura do lead
+      const scanObjectRecursively = (obj: any, prefix: string = '') => {
+        if (obj && typeof obj === 'object') {
+          Object.entries(obj).forEach(([key, value]) => {
+            const fullKey = prefix ? `${prefix}.${key}` : key;
+            
+            // Adicionar o campo se tiver valor não vazio
+            if (value !== null && value !== undefined && value !== '') {
+              fieldSet.add(fullKey);
+            }
+            
+            // Se for objeto/array, continuar escaneando
+            if (typeof value === 'object' && value !== null) {
+              scanObjectRecursively(value, fullKey);
+            }
+          });
+        }
+      };
+      
+      // 1. DETECTAR campos nas respostas diretas (formato array)
+      if (Array.isArray(lead.responses)) {
+        lead.responses.forEach((response: any) => {
+          if (response.field) {
+            fieldSet.add(response.field);
+          }
+          // Escanear qualquer estrutura aninhada na resposta
+          scanObjectRecursively(response, 'response');
+        });
+      }
+      
+      // 2. DETECTAR campos nas respostas em formato objeto
+      if (lead.responses && typeof lead.responses === 'object' && !Array.isArray(lead.responses)) {
+        Object.keys(lead.responses).forEach(field => {
+          if (lead.responses[field] !== null && lead.responses[field] !== undefined && lead.responses[field] !== '') {
+            fieldSet.add(field);
+          }
+        });
+      }
+      
+      // 3. DETECTAR campos extraídos automaticamente no lead (qualquer propriedade futura)
+      Object.keys(lead).forEach(key => {
+        // Lista de campos sistema que devem ser ignorados
+        const systemFields = ['id', 'submittedAt', 'isComplete', 'completionPercentage', 'timeSpent', 'ip', 'userAgent', 'responses', 'metadata'];
+        if (!systemFields.includes(key) && lead[key] !== null && lead[key] !== undefined && lead[key] !== '') {
+          fieldSet.add(key);
+        }
+      });
+      
+      // 4. DETECTAR campos em metadata (se houver estruturas futuras)
+      if (lead.metadata && typeof lead.metadata === 'object') {
+        scanObjectRecursively(lead.metadata, 'metadata');
+      }
+    });
+    
+    // Filtrar apenas campos principais (ignorar sub-objetos como response.field)
+    const mainFields = Array.from(fieldSet).filter(field => !field.includes('.'));
+    
+    return mainFields.sort((a, b) => {
+      // Priorizar campos de contato primeiro
+      const priority = ['nome', 'name', 'firstName', 'email', 'telefone', 'phone', 'celular', 'telefone_contato', 'email_contato'];
+      const aIndex = priority.indexOf(a);
+      const bIndex = priority.indexOf(b);
+      
+      if (aIndex !== -1 && bIndex !== -1) return aIndex - bIndex;
+      if (aIndex !== -1) return -1;
+      if (bIndex !== -1) return 1;
+      
+      // Ordenar campos p1_, p2_, p3_... numericamente
+      const aMatch = a.match(/^p(\d+)_/);
+      const bMatch = b.match(/^p(\d+)_/);
+      if (aMatch && bMatch) {
+        return parseInt(aMatch[1]) - parseInt(bMatch[1]);
+      }
+      
+      // Ordenar campos page1_, page2_... numericamente
+      const aPageMatch = a.match(/^page(\d+)_/);
+      const bPageMatch = b.match(/^page(\d+)_/);
+      if (aPageMatch && bPageMatch) {
+        return parseInt(aPageMatch[1]) - parseInt(bPageMatch[1]);
+      }
+      
+      return a.localeCompare(b);
+    });
+  };
+
+  // Função ULTRA-DINÂMICA para extrair valor de qualquer campo (atual ou futuro)
+  const getFieldValue = (lead: any, field: string) => {
+    // Helper para buscar recursivamente em objetos
+    const searchRecursively = (obj: any, targetKey: string): any => {
+      if (!obj || typeof obj !== 'object') return null;
+      
+      // Busca direta pela chave
+      if (obj[targetKey] !== undefined && obj[targetKey] !== null && obj[targetKey] !== '') {
+        return obj[targetKey];
+      }
+      
+      // Busca recursiva em sub-objetos
+      for (const [key, value] of Object.entries(obj)) {
+        if (typeof value === 'object' && value !== null) {
+          const found = searchRecursively(value, targetKey);
+          if (found !== null) return found;
+        }
+      }
+      
+      return null;
+    };
+
+    // 1. PRIORIDADE 1: Verificar no lead diretamente (dados extraídos pelo sistema)
+    if (lead[field] !== undefined && lead[field] !== null && lead[field] !== '') {
+      return lead[field];
+    }
+    
+    // 2. PRIORIDADE 2: Verificar nas respostas em formato array (padrão atual)
+    if (Array.isArray(lead.responses)) {
+      const response = lead.responses.find((r: any) => r.field === field);
+      if (response) {
+        // Verificar value primeiro
+        if (response.value !== undefined && response.value !== null && response.value !== '') {
+          return response.value;
+        }
+        // Se não tem value, verificar outras propriedades
+        const found = searchRecursively(response, field);
+        if (found !== null) return found;
+      }
+    }
+    
+    // 3. PRIORIDADE 3: Verificar nas respostas em formato objeto
+    if (lead.responses && typeof lead.responses === 'object' && !Array.isArray(lead.responses)) {
+      if (lead.responses[field] !== undefined && lead.responses[field] !== null && lead.responses[field] !== '') {
+        return lead.responses[field];
+      }
+    }
+    
+    // 4. PRIORIDADE 4: Busca recursiva completa em toda estrutura do lead
+    const foundRecursively = searchRecursively(lead, field);
+    if (foundRecursively !== null) {
+      return foundRecursively;
+    }
+    
+    // 5. FALLBACK: Verificar variações de nome diretamente (sem recursão)
+    const fieldVariations = {
+      'telefone': ['telefone', 'phone', 'celular', 'telefone_contato', 'whatsapp'],
+      'phone': ['telefone', 'phone', 'celular', 'telefone_contato', 'whatsapp'],
+      'celular': ['telefone', 'phone', 'celular', 'telefone_contato', 'whatsapp'],
+      'email': ['email', 'email_contato', 'e_mail', 'e-mail'],
+      'nome': ['nome', 'name', 'firstName', 'first_name', 'nome_completo']
+    };
+    
+    const variations = fieldVariations[field as keyof typeof fieldVariations];
+    if (variations) {
+      for (const variation of variations) {
+        // Verificar diretamente sem recursão para evitar loops
+        if (lead[variation] !== undefined && lead[variation] !== null && lead[variation] !== '') {
+          return lead[variation];
+        }
+        if (lead.responses?.[variation] !== undefined && lead.responses[variation] !== null && lead.responses[variation] !== '') {
+          return lead.responses[variation];
+        }
+      }
+    }
+    
+    return '-';
+  };
+
+  const allFields = getAllResponseFields(leads);
+  
+  // Função para detectar quais páginas foram visitadas por um lead
+  const getPageProgression = (lead: any) => {
+    const pagesVisited: string[] = [];
+    const pageResponses: Record<string, any> = {};
+    
+    // Detectar páginas a partir dos campos p1_, p2_, etc.
+    allFields.filter(field => field.startsWith('p')).forEach(field => {
+      const value = getFieldValue(lead, field);
+      if (value !== '-') {
+        pagesVisited.push(field);
+        pageResponses[field] = value;
+      }
+    });
+    
+    // Ordenar páginas numericamente
+    pagesVisited.sort((a, b) => {
+      const aNum = parseInt(a.match(/^p(\d+)_/)?.[1] || '0');
+      const bNum = parseInt(b.match(/^p(\d+)_/)?.[1] || '0');
+      return aNum - bNum;
+    });
+    
+    return { pagesVisited, pageResponses };
+  };
+  
+  // Calcular estatísticas de progressão por página
+  const getPageStats = () => {
+    const pageFields = allFields.filter(field => field.startsWith('p')).sort((a, b) => {
+      const aNum = parseInt(a.match(/^p(\d+)_/)?.[1] || '0');
+      const bNum = parseInt(b.match(/^p(\d+)_/)?.[1] || '0');
+      return aNum - bNum;
+    });
+    
+    return pageFields.map(field => {
+      const totalLeads = leads.length;
+      const completedLeads = leads.filter(lead => getFieldValue(lead, field) !== '-').length;
+      const conversionRate = totalLeads > 0 ? Math.round((completedLeads / totalLeads) * 100) : 0;
+      
+      return {
+        field,
+        completedLeads,
+        totalLeads,
+        conversionRate,
+        pageNumber: parseInt(field.match(/^p(\d+)_/)?.[1] || '0')
+      };
+    });
+  };
+  
+  const pageStats = getPageStats();
+
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleString('pt-BR');
   };
 
   return (
@@ -530,6 +789,327 @@ export default function SuperAnalytics() {
                 </tbody>
               </table>
             </div>
+          </CardContent>
+        </Card>
+
+        {/* Análise Detalhada de Leads */}
+        <Card className="mt-8">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <User className="w-5 h-5" />
+              Análise Detalhada de Leads
+            </CardTitle>
+            <p className="text-sm text-gray-600">
+              Cada lead e suas respostas completas - {totalLeads} leads encontrados
+            </p>
+          </CardHeader>
+          <CardContent>
+            {leadsLoading ? (
+              <div className="flex items-center justify-center p-8">
+                <div className="animate-spin w-6 h-6 border-2 border-vendzz-primary border-t-transparent rounded-full" />
+                <span className="ml-2">Carregando leads...</span>
+              </div>
+            ) : totalLeads === 0 ? (
+              <div className="text-center p-8 text-gray-500">
+                <User className="w-12 h-12 mx-auto mb-4 text-gray-300" />
+                <h3 className="text-lg font-semibold mb-2">Nenhum lead encontrado</h3>
+                <p>Este quiz ainda não possui respostas de usuários.</p>
+              </div>
+            ) : (
+              <>
+                {/* Tabela de Leads - Layout Excel */}
+                <div className="overflow-x-auto">
+                  <table className="w-full border-collapse border border-gray-300" style={{fontSize: '12px'}}>
+                    <thead>
+                      {/* Linha de cabeçalho principal - Páginas */}
+                      <tr className="bg-gray-100 border-b-2 border-gray-400">
+                        <th className="border border-gray-300 p-2 font-bold min-w-[80px] bg-gray-200">Lead #</th>
+                        <th className="border border-gray-300 p-2 font-bold min-w-[100px] bg-gray-200">Data/Hora</th>
+                        <th className="border border-gray-300 p-2 font-bold min-w-[70px] bg-gray-200">Status</th>
+                        <th className="border border-gray-300 p-2 font-bold min-w-[120px] bg-blue-100">Dados Pessoais</th>
+                        {allFields.filter(field => field.startsWith('p')).sort((a, b) => {
+                          const aNum = parseInt(a.match(/^p(\d+)_/)?.[1] || '0');
+                          const bNum = parseInt(b.match(/^p(\d+)_/)?.[1] || '0');
+                          return aNum - bNum;
+                        }).map((field, index) => (
+                          <th key={field} className="border border-gray-300 p-2 font-bold min-w-[150px] bg-green-100">
+                            Página {index + 1}
+                            <div className="text-xs font-normal text-gray-600 mt-1">
+                              {field.replace(/^p\d+_/, '').replace(/_/g, ' ')}
+                            </div>
+                          </th>
+                        ))}
+                        <th className="border border-gray-300 p-2 font-bold min-w-[100px] bg-purple-100">Progresso</th>
+                      </tr>
+                      
+                      {/* Linha de sub-cabeçalho - Detalhes */}
+                      <tr className="bg-gray-50 border-b border-gray-300">
+                        <td className="border border-gray-300 p-1 text-xs text-center font-medium">ID</td>
+                        <td className="border border-gray-300 p-1 text-xs text-center font-medium">Submissão</td>
+                        <td className="border border-gray-300 p-1 text-xs text-center font-medium">Completo</td>
+                        <td className="border border-gray-300 p-1 text-xs text-center font-medium">Nome | Email | Telefone</td>
+                        {allFields.filter(field => field.startsWith('p')).sort((a, b) => {
+                          const aNum = parseInt(a.match(/^p(\d+)_/)?.[1] || '0');
+                          const bNum = parseInt(b.match(/^p(\d+)_/)?.[1] || '0');
+                          return aNum - bNum;
+                        }).map(field => (
+                          <td key={field} className="border border-gray-300 p-1 text-xs text-center font-medium">
+                            Resposta | Tempo na Página
+                          </td>
+                        ))}
+                        <td className="border border-gray-300 p-1 text-xs text-center font-medium">% Completo</td>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {currentLeads.map((lead, leadIndex) => (
+                        <tr key={lead.id || leadIndex} className="hover:bg-yellow-50 border-b border-gray-200">
+                          {/* ID do Lead */}
+                          <td className="border border-gray-300 p-2 text-center font-mono font-bold">
+                            #{leadIndex + startIndex + 1}
+                          </td>
+                          
+                          {/* Data/Hora */}
+                          <td className="border border-gray-300 p-2 text-xs">
+                            <div className="font-mono">
+                              {formatDate(lead.submittedAt || new Date().toISOString()).split(' ')[0]}
+                            </div>
+                            <div className="font-mono text-gray-500">
+                              {formatDate(lead.submittedAt || new Date().toISOString()).split(' ')[1]}
+                            </div>
+                          </td>
+                          
+                          {/* Status */}
+                          <td className="border border-gray-300 p-2 text-center">
+                            <Badge 
+                              variant={lead.isComplete ? "default" : "secondary"}
+                              className="text-xs"
+                            >
+                              {lead.isComplete ? "✅" : "⏸️"}
+                            </Badge>
+                          </td>
+                          
+                          {/* Dados Pessoais Consolidados */}
+                          <td className="border border-gray-300 p-2 text-xs">
+                            <div className="space-y-1">
+                              <div className="font-semibold text-blue-700">
+                                {getFieldValue(lead, 'nome') || getFieldValue(lead, 'name') || getFieldValue(lead, 'firstName') || '-'}
+                              </div>
+                              <div className="text-gray-600">
+                                {getFieldValue(lead, 'email') || getFieldValue(lead, 'email_contato') || '-'}
+                              </div>
+                              <div className="text-gray-600">
+                                {getFieldValue(lead, 'telefone') || getFieldValue(lead, 'telefone_contato') || getFieldValue(lead, 'phone') || '-'}
+                              </div>
+                            </div>
+                          </td>
+                          
+                          {/* Páginas/Etapas - Progressão detalhada */}
+                          {pageStats.map((pageStat, pageIndex) => {
+                            const value = getFieldValue(lead, pageStat.field);
+                            const hasValue = value !== '-';
+                            const { pagesVisited } = getPageProgression(lead);
+                            const wasVisited = pagesVisited.includes(pageStat.field);
+                            const pageNumber = pageStat.pageNumber;
+                            
+                            // Calcular se chegou até esta página baseado na sequência
+                            const maxPageReached = Math.max(...pagesVisited.map(p => parseInt(p.match(/^p(\d+)_/)?.[1] || '0')));
+                            const reachedThisPage = pageNumber <= maxPageReached;
+                            
+                            return (
+                              <td key={pageStat.field} className={`border border-gray-300 p-2 text-xs ${
+                                hasValue ? 'bg-green-50' : 
+                                reachedThisPage ? 'bg-yellow-50' : 
+                                'bg-red-50'
+                              }`}>
+                                <div className="space-y-1">
+                                  {/* Resposta dada */}
+                                  <div className={`font-semibold text-xs ${
+                                    hasValue ? 'text-green-700' : 
+                                    reachedThisPage ? 'text-orange-600' : 
+                                    'text-red-500'
+                                  }`}>
+                                    {hasValue ? (
+                                      <div className="truncate max-w-[120px]" title={value}>
+                                        {value}
+                                      </div>
+                                    ) : reachedThisPage ? (
+                                      'Visitou, não respondeu'
+                                    ) : (
+                                      'Não alcançou'
+                                    )}
+                                  </div>
+                                  
+                                  {/* Status da página */}
+                                  <div className="text-xs">
+                                    {hasValue ? (
+                                      <span className="text-green-600">✓ Respondeu</span>
+                                    ) : reachedThisPage ? (
+                                      <span className="text-orange-600">👁 Visitou</span>
+                                    ) : (
+                                      <span className="text-red-500">✗ Não chegou</span>
+                                    )}
+                                  </div>
+                                  
+                                  {/* Indicador de progressão */}
+                                  <div className="text-xs text-gray-500">
+                                    {maxPageReached > 0 && pageNumber <= maxPageReached ? (
+                                      <div className="bg-blue-200 rounded px-1">
+                                        Pág {pageNumber}
+                                      </div>
+                                    ) : (
+                                      <div className="text-gray-400">-</div>
+                                    )}
+                                  </div>
+                                </div>
+                              </td>
+                            );
+                          })}
+                          
+                          {/* Progresso Total */}
+                          <td className="border border-gray-300 p-2 text-center">
+                            <div className="space-y-1">
+                              {(() => {
+                                const { pagesVisited } = getPageProgression(lead);
+                                const totalPages = pageStats.length;
+                                const completedPages = pagesVisited.length;
+                                const realCompletionRate = totalPages > 0 ? Math.round((completedPages / totalPages) * 100) : 0;
+                                const maxPageReached = Math.max(...pagesVisited.map(p => parseInt(p.match(/^p(\d+)_/)?.[1] || '0')), 0);
+                                
+                                return (
+                                  <>
+                                    <div className="font-bold text-lg">
+                                      {realCompletionRate}%
+                                    </div>
+                                    <div className="text-xs text-gray-500">
+                                      {completedPages}/{totalPages} páginas
+                                    </div>
+                                    <div className="text-xs text-blue-600">
+                                      Max: Pág {maxPageReached || 0}
+                                    </div>
+                                    <div className="text-xs text-gray-500">
+                                      {lead.timeSpent ? `${Math.round(lead.timeSpent / 60)}min` : '-'}
+                                    </div>
+                                  </>
+                                );
+                              })()}
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                    
+                    {/* Linha de estatísticas no final - Como footer Excel */}
+                    <tfoot>
+                      <tr className="bg-blue-50 border-t-2 border-blue-300">
+                        <td className="border border-gray-300 p-2 font-bold text-center">TOTAL</td>
+                        <td className="border border-gray-300 p-2 text-center font-semibold">
+                          {leads.length} leads
+                        </td>
+                        <td className="border border-gray-300 p-2 text-center">
+                          <div className="text-xs">
+                            <div>✅ {leads.filter(l => l.isComplete).length}</div>
+                            <div>⏸️ {leads.filter(l => !l.isComplete).length}</div>
+                          </div>
+                        </td>
+                        <td className="border border-gray-300 p-2 text-center">
+                          <div className="text-xs font-semibold">
+                            <div>📧 {leads.filter(l => getFieldValue(l, 'email') !== '-' || getFieldValue(l, 'email_contato') !== '-').length}</div>
+                            <div>📱 {leads.filter(l => getFieldValue(l, 'telefone') !== '-' || getFieldValue(l, 'telefone_contato') !== '-' || getFieldValue(l, 'phone') !== '-').length}</div>
+                          </div>
+                        </td>
+                        {allFields.filter(field => field.startsWith('p')).sort((a, b) => {
+                          const aNum = parseInt(a.match(/^p(\d+)_/)?.[1] || '0');
+                          const bNum = parseInt(b.match(/^p(\d+)_/)?.[1] || '0');
+                          return aNum - bNum;
+                        }).map(field => {
+                          const totalLeads = leads.length;
+                          const completedLeads = leads.filter(lead => getFieldValue(lead, field) !== '-').length;
+                          const conversionRate = totalLeads > 0 ? Math.round((completedLeads / totalLeads) * 100) : 0;
+                          return (
+                            <td key={field} className="border border-gray-300 p-2 text-center bg-yellow-50">
+                              <div className="space-y-1">
+                                <div className="font-bold text-blue-600 text-lg">
+                                  {conversionRate}%
+                                </div>
+                                <div className="text-xs text-gray-600">
+                                  {completedLeads}/{totalLeads} responderam
+                                </div>
+                              </div>
+                            </td>
+                          );
+                        })}
+                        <td className="border border-gray-300 p-2 text-center">
+                          <div className="font-bold text-lg text-green-600">
+                            {leads.length > 0 ? Math.round(leads.reduce((sum, lead) => sum + (lead.completionPercentage || (lead.isComplete ? 100 : 0)), 0) / leads.length) : 0}%
+                          </div>
+                          <div className="text-xs text-gray-500">
+                            Média Geral
+                          </div>
+                        </td>
+                      </tr>
+                    </tfoot>
+                  </table>
+                </div>
+
+                {/* Controles de Paginação */}
+                {totalLeadsPages > 1 && (
+                  <div className="flex items-center justify-between mt-6 pt-4 border-t">
+                    <div className="flex items-center gap-2 text-sm text-gray-600">
+                      <span>
+                        Mostrando {startIndex + 1} - {Math.min(endIndex, totalLeads)} de {totalLeads} leads
+                      </span>
+                    </div>
+                    
+                    <div className="flex items-center gap-1">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setLeadsCurrentPage(Math.max(1, leadsCurrentPage - 1))}
+                        disabled={leadsCurrentPage === 1}
+                        className="h-8 px-2"
+                      >
+                        <ChevronLeft className="w-4 h-4" />
+                      </Button>
+                      
+                      <div className="flex items-center gap-1">
+                        {Array.from({ length: totalLeadsPages }, (_, i) => i + 1)
+                          .filter(page => 
+                            page === 1 || 
+                            page === totalLeadsPages || 
+                            Math.abs(page - leadsCurrentPage) <= 2
+                          )
+                          .map((page, index, array) => (
+                            <div key={page}>
+                              {index > 0 && array[index - 1] !== page - 1 && (
+                                <span className="px-2 text-gray-400">...</span>
+                              )}
+                              <Button
+                                variant={page === leadsCurrentPage ? "default" : "outline"}
+                                size="sm"
+                                onClick={() => setLeadsCurrentPage(page)}
+                                className="h-8 w-8 p-0 text-xs"
+                              >
+                                {page}
+                              </Button>
+                            </div>
+                          ))
+                        }
+                      </div>
+                      
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setLeadsCurrentPage(Math.min(totalLeadsPages, leadsCurrentPage + 1))}
+                        disabled={leadsCurrentPage === totalLeadsPages}
+                        className="h-8 px-2"
+                      >
+                        <ChevronRight className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  </div>
+                )}
+              </>
+            )}
           </CardContent>
         </Card>
 

@@ -47,21 +47,61 @@ class SimplePushService {
     await fs.writeFile(SUBSCRIPTIONS_FILE, JSON.stringify(subscriptions, null, 2));
   }
 
+  // Testar se uma subscription ainda está válida
+  async testSubscription(endpoint: string): Promise<boolean> {
+    try {
+      const subscriptions = await this.loadSubscriptions();
+      const subscription = subscriptions.find(sub => sub.endpoint === endpoint);
+      
+      if (!subscription) {
+        console.log('⚠️ Subscription não encontrada para teste:', endpoint.substring(0, 30) + '...');
+        return false;
+      }
+      
+      // Tentar enviar notificação de teste silenciosa
+      const testPayload = JSON.stringify({
+        title: 'Test',
+        body: 'Teste de conectividade',
+        silent: true,
+        tag: 'connectivity-test'
+      });
+      
+      await webpush.sendNotification(subscription, testPayload);
+      console.log('✅ Subscription testada com sucesso:', endpoint.substring(0, 30) + '...');
+      return true;
+      
+    } catch (error) {
+      console.log('❌ Subscription falhou no teste:', endpoint.substring(0, 30) + '...', error.message);
+      return false;
+    }
+  }
+
   // Adicionar nova subscription com debug completo para iOS
   async addSubscription(subscription: any, userId?: string): Promise<boolean> {
     try {
-      console.log('🔧 RECEBENDO SUBSCRIPTION iOS:', {
+      const autoRenewed = subscription.autoRenewed || false;
+      
+      console.log(`🔧 ${autoRenewed ? 'RENOVAÇÃO AUTOMÁTICA' : 'RECEBENDO SUBSCRIPTION iOS'}:`, {
         endpoint: subscription.endpoint?.substring(0, 50) + '...',
         keys: subscription.keys ? Object.keys(subscription.keys) : 'sem keys',
         userId: userId || 'anonymous',
-        fullSubscription: JSON.stringify(subscription, null, 2)
+        autoRenewed: autoRenewed,
+        timestamp: subscription.timestamp || new Date().toISOString()
       });
 
       const subscriptions = await this.loadSubscriptions();
       
-      // Verificar se já existe
-      const exists = subscriptions.find(sub => sub.endpoint === subscription.endpoint);
-      if (exists) {
+      // Se for renovação automática, remover a antiga primeiro
+      if (autoRenewed) {
+        const filteredSubscriptions = subscriptions.filter(sub => sub.endpoint !== subscription.endpoint);
+        console.log(`🔄 Removendo subscription antiga para renovação: ${subscriptions.length} → ${filteredSubscriptions.length}`);
+        await this.saveSubscriptions(filteredSubscriptions);
+      }
+      
+      // Verificar se já existe (para não duplicar)
+      const updatedSubscriptions = await this.loadSubscriptions();
+      const exists = updatedSubscriptions.find(sub => sub.endpoint === subscription.endpoint);
+      if (exists && !autoRenewed) {
         console.log('📱 Subscription já existe para endpoint:', subscription.endpoint?.substring(0, 30) + '...');
         return true;
       }

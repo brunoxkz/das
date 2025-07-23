@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { MessageSquare, Send, Clock, Users, Target, Upload, FileText, Eye, ArrowRight, CheckCircle, AlertCircle, Calendar, Zap, Crown, Package, Brain, Flame, FolderOpen, ChevronDown, ChevronUp, Play, Pause, Trash2, BarChart3, X } from "lucide-react";
+import { MessageSquare, Send, Clock, Users, Target, Upload, FileText, Eye, ArrowRight, CheckCircle, AlertCircle, Calendar, Zap, Crown, Package, Brain, Flame, FolderOpen, ChevronDown, ChevronUp, Play, Pause, Trash2, BarChart3, X, Sparkles, Layers, Filter, CheckSquare } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Progress } from "@/components/ui/progress";
 import { useToast } from "@/hooks/use-toast";
@@ -15,7 +15,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { useLanguage } from "@/hooks/useLanguage";
+
 import SMSCampaignModal from "@/components/SMSCampaignModal";
 
 // Componente para exibir logs da campanha
@@ -148,44 +148,104 @@ const CampaignAnalytics = ({ campaignId }: { campaignId: string }) => {
   );
 };
 
-// Tipos de campanha conforme especificação
-const CAMPAIGN_TYPES = {
+// Categorias organizadas de campanhas SMS
+const CAMPAIGN_CATEGORIES = {
   remarketing: {
-    id: 'remarketing',
-    name: 'Remarketing',
-    icon: Package,
-    description: 'Envie SMS para quem já respondeu ou abandonou o quiz',
-    color: 'bg-blue-500'
+    title: 'Remarketing & Reativação',
+    description: 'Reconquiste leads que já interagiram com seus quizzes',
+    campaigns: {
+      remarketing: {
+        id: 'remarketing',
+        name: 'Remarketing Básico',
+        icon: Package,
+        description: 'Reative leads que abandonaram ou completaram o quiz com mensagens direcionadas',
+        features: ['Filtro por status', 'Mensagens personalizadas', 'Agendamento flexível'],
+        color: 'bg-blue-500'
+      },
+      remarketing_custom: {
+        id: 'remarketing_custom',
+        name: 'Remarketing Inteligente',
+        icon: Brain,
+        description: 'Segmentação avançada por idade, gênero e respostas específicas do quiz',
+        features: ['Filtros demográficos', 'Segmentação por respostas', 'Targeting preciso'],
+        color: 'bg-purple-500'
+      },
+      quantum_remarketing: {
+        id: 'quantum_remarketing',
+        name: 'Quantum Remarketing',
+        icon: Zap,
+        description: 'Sistema ultra-granular com filtros de data e timing personalizado',
+        features: ['Filtros de período', 'Disparo programado', 'Segmentação quantum'],
+        color: 'bg-gradient-to-r from-purple-600 to-blue-600',
+        isQuantum: true
+      }
+    }
   },
-  remarketing_custom: {
-    id: 'remarketing_custom',
-    name: 'Remarketing Avançado',
-    icon: Brain,
-    description: 'Envie SMS ultra segmentado (idade, gênero, respostas)',
-    color: 'bg-purple-500'
+  automation: {
+    title: 'Automação & Tempo Real',
+    description: 'Capture leads no momento exato em que completam seus quizzes',
+    campaigns: {
+      live: {
+        id: 'live',
+        name: 'Disparo Ao Vivo',
+        icon: Layers,
+        description: 'Envio automático imediato quando um novo lead completa o quiz',
+        features: ['Disparo instantâneo', 'Zero configuração', 'Alta conversão'],
+        color: 'bg-green-500'
+      },
+      live_custom: {
+        id: 'live_custom',
+        name: 'Ao Vivo Inteligente',
+        icon: Flame,
+        description: 'Automação com segmentação por resposta específica do quiz em tempo real',
+        features: ['Segmentação automática', 'Respostas específicas', 'Targeting dinâmico'],
+        color: 'bg-orange-500'
+      },
+      quantum_live: {
+        id: 'quantum_live',
+        name: 'Ao Vivo Quantum',
+        icon: Sparkles,
+        description: 'Monitoramento quantum em tempo real com segmentação ultra-precisa',
+        features: ['Tempo real', 'Segmentação quantum', 'Máxima eficiência'],
+        color: 'bg-gradient-to-r from-emerald-500 to-teal-500',
+        isQuantum: true
+      }
+    }
   },
-  live: {
-    id: 'live',
-    name: 'Ao Vivo',
-    icon: Zap,
-    description: 'Envie automaticamente após novos leads responderem o quiz',
-    color: 'bg-green-500'
-  },
-  live_custom: {
-    id: 'live_custom',
-    name: 'Ao Vivo Avançado',
-    icon: Flame,
-    description: 'Envie para novos leads com segmentação por resposta do quiz',
-    color: 'bg-orange-500'
-  },
-  mass: {
-    id: 'mass',
-    name: 'Disparo em Massa',
-    icon: FolderOpen,
-    description: 'Suba um CSV e envie SMS em lote com variáveis simples',
-    color: 'bg-gray-500'
+  bulk: {
+    title: 'Envio em Massa',
+    description: 'Campanhas para grandes volumes usando listas personalizadas',
+    campaigns: {
+      mass: {
+        id: 'mass',
+        name: 'Disparo em Massa',
+        icon: FolderOpen,
+        description: 'Upload de CSV para envio em lote com personalização por variáveis',
+        features: ['Upload CSV', 'Variáveis personalizadas', 'Processamento em lote'],
+        color: 'bg-gray-500'
+      },
+      webhook_integration: {
+        id: 'webhook_integration',
+        name: 'Conectar Outra Plataforma',
+        icon: CheckSquare,
+        description: 'Integre sua plataforma via webhook para disparos automáticos de SMS',
+        features: ['Integração webhook', 'API personalizada', 'Disparos externos'],
+        color: 'bg-indigo-500'
+      }
+    }
   }
 };
+
+// Função para obter todos os tipos de campanha em formato flat
+const getAllCampaignTypes = () => {
+  const allTypes = {};
+  Object.values(CAMPAIGN_CATEGORIES).forEach(category => {
+    Object.assign(allTypes, category.campaigns);
+  });
+  return allTypes;
+};
+
+const CAMPAIGN_TYPES = getAllCampaignTypes();
 
 interface Quiz {
   id: string;
@@ -221,7 +281,6 @@ export default function SMSCampaignsAdvanced() {
   const { user } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const { t } = useLanguage();
   
   // Estados do formulário
   const [currentStep, setCurrentStep] = useState(1);
@@ -242,12 +301,49 @@ export default function SMSCampaignsAdvanced() {
   const [showLeadsList, setShowLeadsList] = useState(false);
   const [leadsCount, setLeadsCount] = useState({ completed: 0, abandoned: 0, all: 0 });
   const [scheduleUnit, setScheduleUnit] = useState<'minutes' | 'hours'>('minutes');
+  const [uniqueResponses, setUniqueResponses] = useState<string[]>([]);
+  const [loadingResponses, setLoadingResponses] = useState(false);
+  
+  // Estados para popups específicas de cada tipo
+  const [openPopup, setOpenPopup] = useState<string | null>(null);
+  const [popupForm, setPopupForm] = useState<any>({});
+  const [popupStep, setPopupStep] = useState(1);
+  const [quizVariables, setQuizVariables] = useState<string[]>([]);
   
   // Queries
-  const { data: quizzes = [], isLoading: loadingQuizzes } = useQuery({
+  const { data: quizzes = [], isLoading: loadingQuizzes, error: quizzesError } = useQuery({
     queryKey: ['/api/quizzes'],
-    enabled: !!user
+    enabled: !!user,
+    retry: (failureCount, error) => {
+      console.error(`❌ QUIZ LOADING FAILED (Attempt ${failureCount + 1}):`, error);
+      console.log("📋 Debug Info:", {
+        user: user ? { id: user.id, email: user.email } : null,
+        accessToken: localStorage.getItem("accessToken") ? "Present" : "Missing",
+        refreshToken: localStorage.getItem("refreshToken") ? "Present" : "Missing",
+        error: error.message
+      });
+      return failureCount < 2;
+    },
+    onError: (error) => {
+      console.error("❌ QUIZ QUERY ERROR:", error);
+      toast({
+        title: "Erro ao carregar quizzes",
+        description: `Falha na autenticação: ${error.message}`,
+        variant: "destructive",
+      });
+    },
+    onSuccess: (data) => {
+      console.log("✅ QUIZZES LOADED SUCCESSFULLY:", data.length, "quizzes found");
+    }
   });
+
+  // Debug para verificar quizzes
+  useEffect(() => {
+    if (quizzes) {
+      console.log('🎯 Quizzes carregados:', quizzes.length, 'publicados:', quizzes.filter((q: any) => q.published)?.length);
+      console.log('🎯 Lista de quizzes:', quizzes);
+    }
+  }, [quizzes]);
   
   const { data: credits = { remaining: 0 } } = useQuery({
     queryKey: ['/api/sms-credits'],
@@ -280,6 +376,25 @@ export default function SMSCampaignsAdvanced() {
     queryKey: ['/api/sms-campaigns'],
     enabled: !!user
   });
+
+  // Buscar variáveis do quiz para remarketing inteligente
+  useEffect(() => {
+    if (openPopup === 'remarketing_custom' && popupForm.funnelId) {
+      const fetchQuizVariables = async () => {
+        try {
+          const response = await fetch(`/api/quizzes/${popupForm.funnelId}/variables-ultra`);
+          if (response.ok) {
+            const data = await response.json();
+            const variables = Object.keys(data.variablesByField || {});
+            setQuizVariables(variables);
+          }
+        } catch (error) {
+          console.error('Erro ao carregar variáveis do quiz:', error);
+        }
+      };
+      fetchQuizVariables();
+    }
+  }, [openPopup, popupForm.funnelId]);
   
   // Variáveis disponíveis para personalização
   const availableVariables = [
@@ -296,6 +411,15 @@ export default function SMSCampaignsAdvanced() {
     setMessageCount(form.message.length);
     generatePreview();
   }, [form.message]);
+
+  // Buscar respostas únicas quando o campo for selecionado (Sistema Ultra)
+  useEffect(() => {
+    if (form.type?.includes('quantum') && form.responseFilter?.field) {
+      fetchUniqueResponses(form.responseFilter.field);
+    } else {
+      setUniqueResponses([]);
+    }
+  }, [form.responseFilter?.field, form.funnelId]);
   
   // Funções auxiliares
   const generatePreview = () => {
@@ -351,18 +475,42 @@ export default function SMSCampaignsAdvanced() {
   const isAdvancedType = () => {
     return form.type === 'remarketing_custom' || form.type === 'live_custom';
   };
-  
-  const canProceedToNext = () => {
-    switch (currentStep) {
-      case 1: return form.type;
-      case 2: return form.type === 'mass' ? form.csvFile : form.funnelId;
-      case 3: return form.message.trim() && form.message.length <= 160;
-      case 4: return form.scheduleType === 'now' || 
-                    (form.scheduleType === 'scheduled' && form.scheduledDate && form.scheduledTime) ||
-                    (form.scheduleType === 'delayed' && form.delayMinutes);
-      default: return true;
+
+  // Função para buscar respostas únicas de um campo específico (Sistema Ultra)
+  const fetchUniqueResponses = async (fieldName: string) => {
+    if (!form.funnelId || !fieldName) {
+      setUniqueResponses([]);
+      return;
+    }
+
+    setLoadingResponses(true);
+    try {
+      const response = await fetch(`/api/quizzes/${form.funnelId}/variables-ultra`, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        const fieldData = data.variables.find((v: any) => v.field === fieldName);
+        if (fieldData && fieldData.values) {
+          setUniqueResponses(fieldData.values);
+        } else {
+          setUniqueResponses([]);
+        }
+      } else {
+        setUniqueResponses([]);
+      }
+    } catch (error) {
+      console.error('Erro ao buscar respostas únicas:', error);
+      setUniqueResponses([]);
+    } finally {
+      setLoadingResponses(false);
     }
   };
+  
+  // canProceedToNext removida - usar apenas popups
   
   const createCampaign = async () => {
     setIsCreating(true);
@@ -413,7 +561,7 @@ export default function SMSCampaignsAdvanced() {
       // Atualizar queries
       queryClient.invalidateQueries({ queryKey: ['/api/sms-campaigns'] });
       
-      // Reset form
+      // Reset form (sem currentStep)
       setForm({
         type: '',
         name: '',
@@ -422,7 +570,61 @@ export default function SMSCampaignsAdvanced() {
         message: '',
         scheduleType: 'now'
       });
-      setCurrentStep(1);
+      
+    } catch (error: any) {
+      toast({
+        title: "Erro ao criar campanha",
+        description: error.message || "Verifique os dados e tente novamente.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsCreating(false);
+    }
+  };
+
+  // Função para criar campanha via popup
+  const createPopupCampaign = async () => {
+    setIsCreating(true);
+    try {
+      if (credits.remaining <= 0) {
+        toast({
+          title: "Créditos insuficientes",
+          description: "Você não possui créditos SMS suficientes para criar esta campanha.",
+          variant: "destructive"
+        });
+        setIsCreating(false);
+        return;
+      }
+
+      const response = await fetch('/api/sms-campaigns', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        },
+        body: JSON.stringify({
+          ...popupForm,
+          delayMinutes: scheduleUnit === 'hours' ? (popupForm.delayMinutes || 0) * 60 : popupForm.delayMinutes
+        })
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Erro ao criar campanha');
+      }
+      
+      toast({
+        title: "Campanha criada com sucesso!",
+        description: "Sua campanha SMS foi criada e está sendo processada.",
+      });
+      
+      // Atualizar queries
+      queryClient.invalidateQueries({ queryKey: ['/api/sms-campaigns'] });
+      
+      // Fechar popup e resetar
+      setOpenPopup(null);
+      setPopupForm({});
+      setPopupStep(1);
       
     } catch (error: any) {
       toast({
@@ -443,15 +645,7 @@ export default function SMSCampaignsAdvanced() {
           <h1 className="text-3xl font-bold">Criar Campanha SMS</h1>
         </div>
         
-        {/* Progress Bar */}
-        <div className="flex items-center gap-4 mb-6">
-          <div className="flex-1">
-            <Progress value={(currentStep / 5) * 100} className="h-2" />
-          </div>
-          <span className="text-sm text-gray-500 font-medium">
-            Passo {currentStep} de 5
-          </span>
-        </div>
+        {/* Progress Bar removido - usar apenas popups */}
         
         {/* Credits Info */}
         <div className="bg-gradient-to-r from-green-50 to-blue-50 p-4 rounded-lg border border-green-200">
@@ -474,182 +668,654 @@ export default function SMSCampaignsAdvanced() {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Target className="w-5 h-5" />
-                {currentStep === 1 && t("sms.selectCampaignType")}
-                {currentStep === 2 && t("sms.leadSegmentation")}
-                {currentStep === 3 && t("sms.messageCreation")}
-                {currentStep === 4 && t("sms.scheduling")}
-                {currentStep === 5 && t("sms.campaignSummary")}
+                Selecionar Tipo de Campanha SMS
               </CardTitle>
+              <CardDescription>
+                Escolha o tipo de campanha que melhor atende aos seus objetivos. Configure tudo através dos popups de criação rápida.
+              </CardDescription>
             </CardHeader>
             <CardContent>
-              {/* Step 1: Tipo de Campanha */}
-              {currentStep === 1 && (
+              {/* Seleção de Tipo de Campanha - sempre visível */}
+              {true && (
                 <div className="space-y-4">
-                  <div className="text-center mb-6">
-                    <h3 className="text-lg font-semibold mb-2">Escolha o Tipo de Campanha SMS</h3>
-                    <p className="text-gray-600">Selecione o tipo de campanha que deseja criar. Cada tipo abrirá um assistente personalizado.</p>
+                  <div className="text-center mb-8">
+                    <h3 className="text-xl font-bold mb-3">Escolha o Tipo de Campanha SMS</h3>
+                    <p className="text-gray-600">Selecione a categoria e tipo de campanha que melhor atende aos seus objetivos de marketing.</p>
                   </div>
                   
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {Object.values(CAMPAIGN_TYPES).map((type) => {
-                      const Icon = type.icon;
-                      return (
-                        <SMSCampaignModal
-                          key={type.id}
-                          onCampaignCreated={() => {
-                            queryClient.invalidateQueries({ queryKey: ['/api/sms-campaigns'] });
-                            toast({
-                              title: "Campanha Criada",
-                              description: "Sua campanha SMS foi criada com sucesso!",
-                            });
-                          }}
-                        >
-                          <Card className="cursor-pointer transition-all hover:shadow-md hover:scale-105">
-                            <CardContent className="p-4">
-                              <div className="flex items-start gap-3">
-                                <div className={`p-2 rounded-lg ${type.color} text-white`}>
-                                  <Icon className="w-5 h-5" />
-                                </div>
-                                <div>
-                                  <h3 className="font-medium">{type.name}</h3>
-                                  <p className="text-sm text-gray-600 mt-1">
-                                    {type.description}
-                                  </p>
-                                </div>
-                              </div>
-                            </CardContent>
-                          </Card>
-                        </SMSCampaignModal>
-                      );
-                    })}
+                  {/* Exibição por categorias */}
+                  <div className="space-y-8">
+                    {Object.entries(CAMPAIGN_CATEGORIES).map(([categoryKey, category]) => (
+                      <div key={categoryKey} className="space-y-4">
+                        {/* Header da categoria */}
+                        <div className="text-center">
+                          <h4 className="text-lg font-semibold text-gray-800 mb-1">{category.title}</h4>
+                          <p className="text-sm text-gray-600 mb-4">{category.description}</p>
+                        </div>
+                        
+                        {/* Grid de campanhas da categoria */}
+                        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                          {Object.values(category.campaigns).map((type) => {
+                            const Icon = type.icon;
+                            const isQuantum = type.isQuantum || type.id.includes('quantum');
+                            const isSelected = form.type === type.id;
+                            
+                            return (
+                              <Card 
+                                key={type.id}
+                                className={`cursor-pointer transition-all duration-300 hover:shadow-xl hover:-translate-y-1 transform ${
+                                  isSelected 
+                                    ? 'ring-2 ring-blue-500 bg-gradient-to-br from-blue-50 to-indigo-50 shadow-lg' 
+                                    : 'hover:bg-gray-50'
+                                } ${isQuantum ? 'relative overflow-hidden border-purple-200' : ''}`}
+                                onClick={() => {
+                                  setOpenPopup(type.id);
+                                  setPopupForm({
+                                    type: type.id,
+                                    name: '',
+                                    funnelId: '',
+                                    segment: 'all',
+                                    message: '',
+                                    scheduleType: 'now'
+                                  });
+                                  setPopupStep(1);
+                                }}
+                              >
+                                <CardContent className="p-3 h-full xl:p-2">
+                                  {isQuantum && (
+                                    <div className="absolute top-0 right-0 bg-gradient-to-l from-purple-600 to-blue-600 text-white text-xs px-2 py-1 rounded-bl-lg font-medium">
+                                      QUANTUM
+                                    </div>
+                                  )}
+                                  
+                                  {/* Indicador de seleção */}
+                                  {isSelected && (
+                                    <div className="absolute top-2 left-2 w-3 h-3 bg-blue-500 rounded-full flex items-center justify-center">
+                                      <CheckSquare className="w-2 h-2 text-white" />
+                                    </div>
+                                  )}
+                                  
+                                  <div className="flex flex-col items-center text-center space-y-2 xl:space-y-1 mt-2">
+                                    {/* Ícone centralizado e responsivo */}
+                                    <div className={`p-3 xl:p-2 rounded-xl ${
+                                      isQuantum 
+                                        ? type.color + ' shadow-lg' 
+                                        : type.color + ' text-white shadow-md'
+                                    } ${isSelected ? 'scale-110' : ''} transition-transform duration-300`}>
+                                      <Icon className={`w-6 h-6 xl:w-5 xl:h-5 ${isQuantum ? 'text-white' : ''}`} />
+                                    </div>
+                                    
+                                    {/* Nome e badge quantum */}
+                                    <div className="space-y-1">
+                                      <div className="flex items-center justify-center gap-1">
+                                        <h3 className={`font-semibold text-sm xl:text-xs ${
+                                          isSelected ? 'text-blue-700' : 'text-gray-800'
+                                        }`}>
+                                          {type.name}
+                                        </h3>
+                                        {isQuantum && <Sparkles className="w-3 h-3 xl:w-2 xl:h-2 text-purple-600" />}
+                                      </div>
+                                      
+                                      {isQuantum && (
+                                        <div className="text-xs xl:text-[10px] text-purple-600 font-medium bg-purple-100 px-2 py-1 xl:px-1 xl:py-0.5 rounded-full">
+                                          Ultra-Granular ⚡
+                                        </div>
+                                      )}
+                                    </div>
+                                    
+                                    {/* Descrição compacta */}
+                                    <p className="text-xs xl:text-[10px] text-gray-600 leading-tight h-9 xl:h-6 overflow-hidden">
+                                      {type.description}
+                                    </p>
+                                    
+                                    {/* Features em lista */}
+                                    <div className="text-[10px] text-gray-500 space-y-0.5">
+                                      {type.features?.slice(0, 2).map((feature, idx) => (
+                                        <div key={idx} className="flex items-center justify-center gap-1">
+                                          <div className="w-1 h-1 bg-blue-400 rounded-full"></div>
+                                          <span>{feature}</span>
+                                        </div>
+                                      ))}
+                                    </div>
+                                    
+                                    {/* Botão visual de seleção */}
+                                    <div className={`w-full py-2 xl:py-1 px-3 xl:px-2 rounded-lg text-xs xl:text-[10px] font-medium transition-all ${
+                                      isSelected 
+                                        ? 'bg-blue-500 text-white' 
+                                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                                    }`}>
+                                      {isSelected ? '✓ Selecionado' : 'Selecionar'}
+                                    </div>
+                                  </div>
+                                </CardContent>
+                              </Card>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    ))}
                   </div>
+                  
+                  {/* Quantum Info Alert */}
+                  {form.type && (form.type === 'quantum_remarketing' || form.type === 'quantum_live') && (
+                    <Alert className="bg-gradient-to-r from-purple-50 to-blue-50 border-purple-200">
+                      <Sparkles className="h-4 w-4 text-purple-600" />
+                      <AlertDescription className="text-purple-800">
+                        <strong>Sistema Quantum Selecionado!</strong> {' '}
+                        {form.type === 'quantum_remarketing' 
+                          ? 'Este sistema permite segmentação ultra-granular por respostas específicas para remarketing avançado.'
+                          : 'Este sistema monitora leads em tempo real e aplica segmentação quantum automática para máxima eficiência.'
+                        }
+                      </AlertDescription>
+                    </Alert>
+                  )}
                 </div>
               )}
               
-              {/* Step 2: Segmentação */}
-              {currentStep === 2 && (
+              {/* Steps desabilitados - usar apenas popups */}
+              {false && currentStep === 2 && (
                 <div className="space-y-6">
                   {form.type !== 'mass' ? (
                     <>
                       <div>
-                        <Label htmlFor="funnel">{t("sms.quizFunnel")}</Label>
+                        <Label htmlFor="funnel">
+                          {form.type?.includes('quantum') ? 'Quiz/Funil para Sistema Quantum' : 'Quiz/Funil'}
+                        </Label>
                         <Select 
                           value={form.funnelId} 
                           onValueChange={(value) => setForm(prev => ({ ...prev, funnelId: value }))}
                         >
                           <SelectTrigger>
-                            <SelectValue placeholder={t("sms.selectQuiz")} />
+                            <SelectValue placeholder={
+                              form.type?.includes('quantum') 
+                                ? "Selecione quiz para análise ultra-granular" 
+                                : "Selecione o quiz"
+                            } />
                           </SelectTrigger>
                           <SelectContent>
                             {quizzes.map((quiz: Quiz) => (
                               <SelectItem key={quiz.id} value={quiz.id}>
-                                {quiz.title} ({quiz.responses} respostas)
+                                <div className="flex items-center justify-between w-full">
+                                  <span>{quiz.title}</span>
+                                  <div className="flex items-center gap-2 ml-2">
+                                    <Badge variant="secondary" className="text-xs">
+                                      {quiz.responses} respostas
+                                    </Badge>
+                                    {form.type?.includes('quantum') && quiz.responses > 10 && (
+                                      <Badge variant="outline" className="text-xs bg-purple-50 text-purple-600">
+                                        QUANTUM OK
+                                      </Badge>
+                                    )}
+                                  </div>
+                                </div>
                               </SelectItem>
                             ))}
                           </SelectContent>
                         </Select>
-                      </div>
-                      
-                      <div>
-                        <Label htmlFor="segment">{t("sms.segment")}</Label>
-                        <Select 
-                          value={form.segment} 
-                          onValueChange={(value: 'completed' | 'abandoned' | 'all') => 
-                            setForm(prev => ({ ...prev, segment: value }))}
-                        >
-                          <SelectTrigger>
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="completed">
-                              ✅ {t("sms.completedQuiz")} 
-                              {leadsBySegment && (
-                                <Badge variant="secondary" className="ml-2">
-                                  {leadsBySegment.counts.completed} leads
-                                </Badge>
-                              )}
-                            </SelectItem>
-                            <SelectItem value="abandoned">
-                              ❌ {t("sms.abandonedQuiz")}
-                              {leadsBySegment && (
-                                <Badge variant="secondary" className="ml-2">
-                                  {leadsBySegment.counts.abandoned} leads
-                                </Badge>
-                              )}
-                            </SelectItem>
-                            <SelectItem value="all">
-                              👥 {t("sms.allLeads")}
-                              {leadsBySegment && (
-                                <Badge variant="secondary" className="ml-2">
-                                  {leadsBySegment.counts.all} leads
-                                </Badge>
-                              )}
-                            </SelectItem>
-                          </SelectContent>
-                        </Select>
-                        
-                        {/* Mostrar contagem e botão para ver lista */}
-                        {leadsBySegment && form.funnelId && (
-                          <div className="mt-3 p-3 bg-gray-50 rounded-lg">
-                            <div className="flex items-center justify-between">
-                              <div className="flex items-center gap-2">
-                                <Users className="w-4 h-4 text-blue-600" />
-                                <span className="text-sm font-medium">
-                                  {leadsBySegment.counts[form.segment]} {t("sms.leadsFound")}
-                                </span>
-                              </div>
-                              {leadsBySegment.counts[form.segment] > 0 && (
-                                <Dialog>
-                                  <DialogTrigger asChild>
-                                    <Button variant="outline" size="sm">
-                                      <Eye className="w-4 h-4 mr-1" />
-                                      {t("sms.viewList")}
-                                    </Button>
-                                  </DialogTrigger>
-                                  <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
-                                    <DialogHeader>
-                                      <DialogTitle className="flex items-center gap-2">
-                                        <Users className="w-5 h-5" />
-                                        {t("sms.leadsList")} - {form.segment === 'completed' ? t("sms.completed") : form.segment === 'abandoned' ? t("sms.abandoned") : t("sms.all")}
-                                      </DialogTitle>
-                                    </DialogHeader>
-                                    <div className="space-y-2">
-                                      {leadsBySegment[form.segment].slice(0, 100).map((lead: any, index: number) => (
-                                        <div key={index} className="p-3 border rounded-lg bg-white">
-                                          <div className="flex items-start justify-between">
-                                            <div>
-                                              <p className="font-medium">
-                                                {lead.responses?.nome || lead.responses?.email || `Lead ${index + 1}`}
-                                              </p>
-                                              <p className="text-sm text-gray-600">
-                                                {lead.responses?.telefone || lead.responses?.phone || 'Telefone não informado'}
-                                              </p>
-                                              <p className="text-sm text-gray-500">
-                                                {lead.submittedAt ? format(new Date(lead.submittedAt), 'dd/MM/yyyy HH:mm', { locale: ptBR }) : 'Em progresso'}
-                                              </p>
-                                            </div>
-                                            <Badge variant={lead.submittedAt ? 'default' : 'secondary'}>
-                                              {lead.submittedAt ? t("sms.complete") : t("sms.abandoned")}
-                                            </Badge>
-                                          </div>
-                                        </div>
-                                      ))}
-                                      {leadsBySegment[form.segment].length > 100 && (
-                                        <div className="text-center text-gray-500 text-sm">
-                                          Mostrando primeiros 100 leads de {leadsBySegment[form.segment].length} total
-                                        </div>
-                                      )}
-                                    </div>
-                                  </DialogContent>
-                                </Dialog>
-                              )}
+                        {form.type?.includes('quantum') && form.funnelId && (
+                          <div className="mt-2 p-3 bg-purple-50 rounded-lg border border-purple-200">
+                            <div className="flex items-center gap-2 text-purple-800 text-sm">
+                              <Sparkles className="w-4 h-4" />
+                              <span className="font-medium">Sistema Quantum Ativo</span>
                             </div>
+                            <p className="text-purple-700 text-xs mt-1">
+                              Este quiz será analisado com segmentação ultra-granular por resposta específica
+                            </p>
                           </div>
                         )}
                       </div>
                       
-                      {/* Filtros Avançados */}
-                      {isAdvancedType() && (
+                      {/* SMS Remarketing - Filtros Específicos */}
+                      {form.type === 'quantum_remarketing' && (
+                        <div className="space-y-4 border p-4 rounded-lg bg-gradient-to-r from-purple-50 to-white border-purple-200">
+                          <div className="flex items-center gap-2 mb-3">
+                            <Target className="w-5 h-5 text-purple-600" />
+                            <h3 className="font-medium text-purple-800">SMS Remarketing - Filtros de Data</h3>
+                            <Badge className="bg-purple-600 text-white">QUANTUM</Badge>
+                          </div>
+                          
+                          <div>
+                            <Label className="flex items-center gap-2">
+                              <Filter className="w-4 h-4" />
+                              Status do Lead
+                            </Label>
+                            <Select 
+                              value={form.segment} 
+                              onValueChange={(value: 'completed' | 'abandoned' | 'all') => 
+                                setForm(prev => ({ ...prev, segment: value }))}
+                            >
+                              <SelectTrigger>
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="abandoned">⏸️ Lead Abandonou Quiz</SelectItem>
+                                <SelectItem value="completed">✅ Lead Completou Quiz</SelectItem>
+                                <SelectItem value="all">📊 Todos os Leads</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+                          
+                          <div>
+                            <Label className="flex items-center gap-2">
+                              <Calendar className="w-4 h-4" />
+                              Período de Leads (Data X até Data X)
+                            </Label>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                              <Input 
+                                type="date"
+                                value={form.dateFrom || ''} 
+                                onChange={(e) => setForm(prev => ({ ...prev, dateFrom: e.target.value }))}
+                                placeholder="Data inicial"
+                                className="border-purple-200"
+                              />
+                              <Input 
+                                type="date"
+                                value={form.dateTo || ''} 
+                                onChange={(e) => setForm(prev => ({ ...prev, dateTo: e.target.value }))}
+                                placeholder="Data final"
+                                className="border-purple-200"
+                              />
+                            </div>
+                          </div>
+                          
+                          <div>
+                            <Label className="flex items-center gap-2">
+                              <Clock className="w-4 h-4" />
+                              Quando Disparar
+                            </Label>
+                            <Select 
+                              value={form.dispatchTiming || 'immediate'} 
+                              onValueChange={(value: 'immediate' | 'delayed') => 
+                                setForm(prev => ({ ...prev, dispatchTiming: value }))}
+                            >
+                              <SelectTrigger>
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="immediate">⚡ Disparar Imediatamente</SelectItem>
+                                <SelectItem value="delayed">⏱️ Disparar Daqui X Tempo</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+                          
+                          {form.dispatchTiming === 'delayed' && (
+                            <div className="ml-4 p-3 bg-blue-50 rounded border border-blue-200">
+                              <Label className="text-sm">Delay para Disparo</Label>
+                              <div className="flex gap-2 mt-1">
+                                <Input 
+                                  type="number"
+                                  placeholder="30"
+                                  value={form.dispatchDelayValue || ''}
+                                  onChange={(e) => setForm(prev => ({ ...prev, dispatchDelayValue: Number(e.target.value) }))}
+                                  className="w-24"
+                                />
+                                <Select 
+                                  value={form.dispatchDelayUnit || 'minutes'} 
+                                  onValueChange={(value: 'minutes' | 'hours' | 'days') => 
+                                    setForm(prev => ({ ...prev, dispatchDelayUnit: value }))}
+                                >
+                                  <SelectTrigger className="w-32">
+                                    <SelectValue />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="minutes">Minutos</SelectItem>
+                                    <SelectItem value="hours">Horas</SelectItem>
+                                    <SelectItem value="days">Dias</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      )}
+                      
+                      {/* Remarketing Avançado - Filtros + Respostas Específicas */}
+                      {form.type === 'quantum_live' && (
+                        <div className="space-y-4 border p-4 rounded-lg bg-gradient-to-r from-blue-50 to-purple-50 border-blue-200">
+                          <div className="flex items-center gap-2 mb-3">
+                            <Layers className="w-5 h-5 text-blue-600" />
+                            <h3 className="font-medium text-blue-800">Remarketing Avançado - Filtros + Respostas</h3>
+                            <Badge className="bg-gradient-to-r from-blue-600 to-purple-600 text-white">ADVANCED</Badge>
+                          </div>
+                          
+                          <div>
+                            <Label className="flex items-center gap-2">
+                              <Filter className="w-4 h-4" />
+                              Status do Lead
+                            </Label>
+                            <Select 
+                              value={form.segment} 
+                              onValueChange={(value: 'completed' | 'abandoned' | 'all') => 
+                                setForm(prev => ({ ...prev, segment: value }))}
+                            >
+                              <SelectTrigger>
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="abandoned">⏸️ Lead Abandonou Quiz</SelectItem>
+                                <SelectItem value="completed">✅ Lead Completou Quiz</SelectItem>
+                                <SelectItem value="all">📊 Todos os Leads</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+                          
+                          <div>
+                            <Label className="flex items-center gap-2">
+                              <Calendar className="w-4 h-4" />
+                              Período de Leads (Data X até Data X)
+                            </Label>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                              <Input 
+                                type="date"
+                                value={form.dateFrom || ''} 
+                                onChange={(e) => setForm(prev => ({ ...prev, dateFrom: e.target.value }))}
+                                placeholder="Data inicial"
+                                className="border-blue-200"
+                              />
+                              <Input 
+                                type="date"
+                                value={form.dateTo || ''} 
+                                onChange={(e) => setForm(prev => ({ ...prev, dateTo: e.target.value }))}
+                                placeholder="Data final"
+                                className="border-blue-200"
+                              />
+                            </div>
+                          </div>
+                          
+                          <div className="border-t pt-4">
+                            <Label className="flex items-center gap-2 mb-3">
+                              <CheckSquare className="w-4 h-4 text-purple-600" />
+                              Respostas Específicas do Quiz (Escolha quantas quiser)
+                            </Label>
+                            
+                            <div className="space-y-3">
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                <div>
+                                  <Label className="text-sm">Campo da Resposta</Label>
+                                  <Select 
+                                    value={form.responseFilter?.field || ''} 
+                                    onValueChange={(value) => setForm(prev => ({ 
+                                      ...prev, 
+                                      responseFilter: { ...prev.responseFilter, field: value } 
+                                    }))}
+                                  >
+                                    <SelectTrigger>
+                                      <SelectValue placeholder="Selecione campo" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                      <SelectItem value="p1_objetivo_fitness">p1_objetivo_fitness</SelectItem>
+                                      <SelectItem value="p2_nivel_experiencia">p2_nivel_experiencia</SelectItem>
+                                      <SelectItem value="p3_disponibilidade">p3_disponibilidade</SelectItem>
+                                      <SelectItem value="p4_dor_problema">p4_dor_problema</SelectItem>
+                                      <SelectItem value="p5_meta_principal">p5_meta_principal</SelectItem>
+                                      <SelectItem value="nome">nome</SelectItem>
+                                      <SelectItem value="email">email</SelectItem>
+                                      <SelectItem value="telefone">telefone</SelectItem>
+                                      <SelectItem value="idade">idade</SelectItem>
+                                      <SelectItem value="peso">peso</SelectItem>
+                                      <SelectItem value="altura">altura</SelectItem>
+                                    </SelectContent>
+                                  </Select>
+                                </div>
+                                
+                                <div>
+                                  <Label className="text-sm">Valor da Resposta</Label>
+                                  <Input 
+                                    placeholder="Ex: Emagrecer, Ganhar Massa, etc." 
+                                    value={form.responseFilter?.value || ''}
+                                    onChange={(e) => setForm(prev => ({ 
+                                      ...prev, 
+                                      responseFilter: { ...prev.responseFilter, value: e.target.value } 
+                                    }))}
+                                  />
+                                </div>
+                              </div>
+                              
+                              {form.responseFilter?.field && form.responseFilter?.value && (
+                                <div className="p-3 bg-green-50 rounded border border-green-200">
+                                  <div className="flex items-center gap-2 text-green-800">
+                                    <CheckCircle className="w-4 h-4" />
+                                    <span className="font-medium text-sm">
+                                      Filtro: {form.responseFilter.field} = "{form.responseFilter.value}"
+                                    </span>
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                          
+                          <div>
+                            <Label className="flex items-center gap-2">
+                              <Clock className="w-4 h-4" />
+                              Quando Disparar
+                            </Label>
+                            <Select 
+                              value={form.dispatchTiming || 'immediate'} 
+                              onValueChange={(value: 'immediate' | 'delayed') => 
+                                setForm(prev => ({ ...prev, dispatchTiming: value }))}
+                            >
+                              <SelectTrigger>
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="immediate">⚡ Disparar Imediatamente</SelectItem>
+                                <SelectItem value="delayed">⏱️ Disparar Daqui X Tempo</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+                          
+                          {form.dispatchTiming === 'delayed' && (
+                            <div className="ml-4 p-3 bg-purple-50 rounded border border-purple-200">
+                              <Label className="text-sm">Delay para Disparo</Label>
+                              <div className="flex gap-2 mt-1">
+                                <Input 
+                                  type="number"
+                                  placeholder="30"
+                                  value={form.dispatchDelayValue || ''}
+                                  onChange={(e) => setForm(prev => ({ ...prev, dispatchDelayValue: Number(e.target.value) }))}
+                                  className="w-24"
+                                />
+                                <Select 
+                                  value={form.dispatchDelayUnit || 'minutes'} 
+                                  onValueChange={(value: 'minutes' | 'hours' | 'days') => 
+                                    setForm(prev => ({ ...prev, dispatchDelayUnit: value }))}
+                                >
+                                  <SelectTrigger className="w-32">
+                                    <SelectValue />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="minutes">Minutos</SelectItem>
+                                    <SelectItem value="hours">Horas</SelectItem>
+                                    <SelectItem value="days">Dias</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      )}
+                      
+                      {/* Campanhas Tradicionais - Filtros Padrão */}
+                      {!form.type?.includes('quantum') && (
+                        <div>
+                          <Label htmlFor="segment">{t("sms.segment")}</Label>
+                          <Select 
+                            value={form.segment} 
+                            onValueChange={(value: 'completed' | 'abandoned' | 'all') => 
+                              setForm(prev => ({ ...prev, segment: value }))}
+                          >
+                            <SelectTrigger>
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="completed">
+                                ✅ {t("sms.completedQuiz")} 
+                                {leadsBySegment && (
+                                  <Badge variant="secondary" className="ml-2">
+                                    {leadsBySegment.counts.completed} leads
+                                  </Badge>
+                                )}
+                              </SelectItem>
+                              <SelectItem value="abandoned">
+                                ❌ {t("sms.abandonedQuiz")}
+                                {leadsBySegment && (
+                                  <Badge variant="secondary" className="ml-2">
+                                    {leadsBySegment.counts.abandoned} leads
+                                  </Badge>
+                                )}
+                              </SelectItem>
+                              <SelectItem value="all">
+                                👥 {t("sms.allLeads")}
+                                {leadsBySegment && (
+                                  <Badge variant="secondary" className="ml-2">
+                                    {leadsBySegment.counts.all} leads
+                                  </Badge>
+                                )}
+                              </SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      )}
+                      
+                      {/* Filtros Quantum Ultra-Granulares */}
+                      {form.type?.includes('quantum') && form.funnelId && (
+                        <div className="border-t pt-6">
+                          <div className="flex items-center gap-2 mb-4">
+                            <Zap className="w-5 h-5 text-purple-600" />
+                            <h3 className="font-medium text-purple-600">Filtros Quantum Ultra-Granulares</h3>
+                            <Badge className="bg-gradient-to-r from-purple-600 to-blue-600 text-white text-xs">
+                              ADVANCED
+                            </Badge>
+                          </div>
+                          
+                          <div className="space-y-4">
+                            <Alert className="border-purple-200 bg-purple-50">
+                              <Sparkles className="h-4 w-4 text-purple-600" />
+                              <AlertDescription className="text-purple-800">
+                                <strong>Sistema Ultra Ativo:</strong> Configure filtros ultra-específicos baseados nas respostas exatas dos leads. 
+                                {form.type === 'quantum_remarketing' 
+                                  ? ' Ideal para remarketing preciso por comportamento.'
+                                  : ' Monitora automaticamente novos leads com estas características.'
+                                }
+                              </AlertDescription>
+                            </Alert>
+                            
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                              <div>
+                                <Label className="flex items-center gap-2">
+                                  <Target className="w-4 h-4 text-purple-600" />
+                                  Campo Ultra-Específico
+                                </Label>
+                                <Select 
+                                  value={form.responseFilter?.field || ''} 
+                                  onValueChange={(value) => setForm(prev => ({ 
+                                    ...prev, 
+                                    responseFilter: { ...prev.responseFilter, field: value } 
+                                  }))}
+                                >
+                                  <SelectTrigger>
+                                    <SelectValue placeholder="Selecione campo para filtro quantum" />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="p1_objetivo_fitness">p1_objetivo_fitness</SelectItem>
+                                    <SelectItem value="p2_nivel_experiencia">p2_nivel_experiencia</SelectItem>
+                                    <SelectItem value="p3_disponibilidade">p3_disponibilidade</SelectItem>
+                                    <SelectItem value="p4_dor_problema">p4_dor_problema</SelectItem>
+                                    <SelectItem value="p5_meta_principal">p5_meta_principal</SelectItem>
+                                    <SelectItem value="nome">nome</SelectItem>
+                                    <SelectItem value="email">email</SelectItem>
+                                    <SelectItem value="telefone">telefone</SelectItem>
+                                    <SelectItem value="idade">idade</SelectItem>
+                                    <SelectItem value="peso">peso</SelectItem>
+                                    <SelectItem value="altura">altura</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                              </div>
+                              
+                              <div>
+                                <Label className="flex items-center gap-2">
+                                  <Layers className="w-4 h-4 text-purple-600" />
+                                  Resposta Ultra-Específica
+                                  {loadingResponses && (
+                                    <div className="w-4 h-4 border-2 border-purple-500 border-t-transparent rounded-full animate-spin"></div>
+                                  )}
+                                </Label>
+                                {form.responseFilter?.field ? (
+                                  <Select 
+                                    value={form.responseFilter?.value || ''}
+                                    onValueChange={(value) => setForm(prev => ({ 
+                                      ...prev, 
+                                      responseFilter: { ...prev.responseFilter, value } 
+                                    }))}
+                                    disabled={loadingResponses || uniqueResponses.length === 0}
+                                  >
+                                    <SelectTrigger className="border-purple-200 focus:ring-purple-500">
+                                      <SelectValue placeholder={
+                                        loadingResponses 
+                                          ? "Carregando respostas..." 
+                                          : uniqueResponses.length === 0 
+                                            ? "Nenhuma resposta encontrada"
+                                            : "Selecione uma resposta específica"
+                                      } />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                      {uniqueResponses.map((response, index) => (
+                                        <SelectItem key={index} value={response}>
+                                          <div className="flex items-center gap-2">
+                                            <span className="font-medium">"{response}"</span>
+                                            <Badge variant="outline" className="text-xs">
+                                              Ultra
+                                            </Badge>
+                                          </div>
+                                        </SelectItem>
+                                      ))}
+                                    </SelectContent>
+                                  </Select>
+                                ) : (
+                                  <div className="p-3 border border-dashed border-purple-300 rounded-lg bg-purple-50">
+                                    <p className="text-purple-600 text-sm">
+                                      Primeiro selecione um campo para ver as respostas específicas disponíveis
+                                    </p>
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                            
+                            {form.responseFilter?.field && form.responseFilter?.value && (
+                              <div className="p-4 bg-gradient-to-r from-purple-50 to-blue-50 rounded-lg border border-purple-200">
+                                <div className="flex items-center gap-2 mb-2">
+                                  <CheckCircle className="w-4 h-4 text-green-600" />
+                                  <span className="font-medium text-purple-800">Filtro Ultra Configurado</span>
+                                  <Badge className="bg-gradient-to-r from-purple-600 to-blue-600 text-white text-xs">
+                                    ULTRA PRECISÃO
+                                  </Badge>
+                                </div>
+                                <div className="space-y-2">
+                                  <p className="text-purple-700 text-sm">
+                                    <span className="font-medium">Campo:</span> {form.responseFilter.field}
+                                  </p>
+                                  <p className="text-purple-700 text-sm">
+                                    <span className="font-medium">Resposta Ultra-específica:</span> 
+                                    <span className="ml-2 px-2 py-1 bg-purple-100 rounded-md font-bold">
+                                      "{form.responseFilter.value}"
+                                    </span>
+                                  </p>
+                                  <p className="text-purple-600 text-xs mt-2">
+                                    Apenas leads que responderam EXATAMENTE isso serão segmentados
+                                  </p>
+                                </div>
+                                <div className="mt-3 flex items-center gap-2 text-xs text-purple-600">
+                                  <Zap className="w-3 h-3" />
+                                  <span>Sistema Ultra ativo - Segmentação ultra-granular</span>
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      )}
+                      
+                      {/* Filtros Avançados Tradicionais */}
+                      {(isAdvancedType() && !form.type?.includes('quantum')) && (
                         <div className="border-t pt-4">
                           <h3 className="font-medium mb-4 text-purple-600">Filtros Avançados</h3>
                           
@@ -748,22 +1414,212 @@ export default function SMSCampaignsAdvanced() {
                 </div>
               )}
               
-              {/* Step 3: Mensagem */}
-              {currentStep === 3 && (
-                <div className="space-y-4">
-                  <div>
-                    <Label htmlFor="name">Nome da Campanha</Label>
-                    <Input 
-                      id="name"
-                      value={form.name}
-                      onChange={(e) => setForm(prev => ({ ...prev, name: e.target.value }))}
-                      placeholder="Ex: Remarketing Dor nas Costas"
-                    />
-                  </div>
+              {/* Step 3 desabilitado - usar apenas popups */}
+              {false && currentStep === 3 && (
+                <div className="space-y-6">
+                  {/* Tutorial Webhook Integration */}
+                  {form.type === 'webhook_integration' && (
+                    <div className="space-y-6">
+                      <Alert className="border-indigo-200 bg-gradient-to-r from-indigo-50 to-blue-50">
+                        <CheckSquare className="h-4 w-4 text-indigo-600" />
+                        <AlertDescription className="text-indigo-800">
+                          <strong>Integração com Plataformas Externas Ativada!</strong> Configure webhooks para disparos automáticos de SMS quando eventos ocorrerem em sua plataforma.
+                        </AlertDescription>
+                      </Alert>
+
+                      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        {/* Tutorial Webhook */}
+                        <Card className="border-indigo-200">
+                          <CardHeader>
+                            <CardTitle className="flex items-center gap-2 text-indigo-700">
+                              <CheckSquare className="w-5 h-5" />
+                              Como Conectar Sua Plataforma
+                            </CardTitle>
+                          </CardHeader>
+                          <CardContent className="space-y-4">
+                            <div className="space-y-3">
+                              <h4 className="font-medium text-gray-800">1. URL do Webhook:</h4>
+                              <div className="p-3 bg-gray-100 rounded-lg border">
+                                <code className="text-sm font-mono">
+                                  https://vendzz.com/api/webhook/sms-trigger/{user?.id || 'USER_ID'}
+                                </code>
+                              </div>
+                              <Button 
+                                variant="outline" 
+                                size="sm"
+                                onClick={() => {
+                                  navigator.clipboard.writeText(`https://vendzz.com/api/webhook/sms-trigger/${user?.id || 'USER_ID'}`);
+                                  toast({
+                                    title: "URL copiada!",
+                                    description: "URL do webhook foi copiada para o clipboard."
+                                  });
+                                }}
+                                className="w-full"
+                              >
+                                📋 Copiar URL
+                              </Button>
+                            </div>
+
+                            <div className="space-y-3">
+                              <h4 className="font-medium text-gray-800">2. Método HTTP:</h4>
+                              <div className="p-2 bg-green-100 text-green-800 rounded text-center font-bold">
+                                POST
+                              </div>
+                            </div>
+
+                            <div className="space-y-3">
+                              <h4 className="font-medium text-gray-800">3. Headers Obrigatórios:</h4>
+                              <div className="p-3 bg-gray-100 rounded-lg space-y-1 text-sm font-mono">
+                                <div>Content-Type: application/json</div>
+                                <div>Authorization: Bearer SEU_TOKEN_JWT</div>
+                              </div>
+                            </div>
+                          </CardContent>
+                        </Card>
+
+                        {/* Exemplo Payload */}
+                        <Card className="border-indigo-200">
+                          <CardHeader>
+                            <CardTitle className="flex items-center gap-2 text-indigo-700">
+                              <MessageSquare className="w-5 h-5" />
+                              Exemplo de Payload
+                            </CardTitle>
+                          </CardHeader>
+                          <CardContent className="space-y-4">
+                            <div className="space-y-3">
+                              <h4 className="font-medium text-gray-800">Body JSON:</h4>
+                              <div className="p-3 bg-gray-900 text-green-400 rounded-lg text-xs font-mono overflow-x-auto">
+                                <pre>{JSON.stringify({
+                                  "phone": "+5511999999999",
+                                  "name": "João Silva", 
+                                  "message": "Parabéns! Sua compra foi aprovada.",
+                                  "variables": {
+                                    "nome": "João Silva",
+                                    "produto": "Curso de Marketing",
+                                    "valor": "R$ 297,00"
+                                  }
+                                }, null, 2)}</pre>
+                              </div>
+                            </div>
+
+                            <div className="space-y-2">
+                              <h4 className="font-medium text-gray-800">Campos Opcionais:</h4>
+                              <div className="text-sm space-y-1">
+                                <div><strong>delay:</strong> Atraso em minutos (ex: 30)</div>
+                                <div><strong>scheduled_at:</strong> Data/hora específica</div>
+                                <div><strong>campaign_id:</strong> ID de campanha existente</div>
+                              </div>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      </div>
+
+                      {/* Exemplos de Integração */}
+                      <Card className="border-indigo-200">
+                        <CardHeader>
+                          <CardTitle className="flex items-center gap-2 text-indigo-700">
+                            <Target className="w-5 h-5" />
+                            Exemplos de Integração
+                          </CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                            {[
+                              {
+                                platform: "WordPress",
+                                trigger: "Novo lead capturado",
+                                message: "Obrigado {{nome}} por se inscrever! Acesse seu conteúdo agora.",
+                                color: "bg-blue-100 text-blue-800"
+                              },
+                              {
+                                platform: "Shopify",
+                                trigger: "Compra aprovada",
+                                message: "{{nome}}, parabéns! Seu pedido {{produto}} foi aprovado. Valor: {{valor}}",
+                                color: "bg-green-100 text-green-800"
+                              },
+                              {
+                                platform: "Hotmart",
+                                trigger: "Venda realizada",
+                                message: "Bem-vindo {{nome}}! Seu acesso ao {{produto}} está liberado.",
+                                color: "bg-orange-100 text-orange-800"
+                              },
+                              {
+                                platform: "Custom API",
+                                trigger: "Evento personalizado",
+                                message: "{{nome}}, evento {{evento}} detectado. Próximos passos: {{acao}}",
+                                color: "bg-purple-100 text-purple-800"
+                              }
+                            ].map((example, index) => (
+                              <div key={index} className={`p-4 rounded-lg ${example.color}`}>
+                                <div className="space-y-2">
+                                  <h5 className="font-bold">{example.platform}</h5>
+                                  <div className="text-sm">
+                                    <div><strong>Trigger:</strong> {example.trigger}</div>
+                                  </div>
+                                  <div className="text-xs bg-white/50 p-2 rounded">
+                                    <strong>SMS:</strong> "{example.message}"
+                                  </div>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </CardContent>
+                      </Card>
+
+                      {/* Status da Configuração */}
+                      <Card className="border-green-200 bg-green-50">
+                        <CardContent className="pt-6">
+                          <div className="flex items-center gap-3">
+                            <div className="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center">
+                              <CheckCircle className="w-5 h-5 text-white" />
+                            </div>
+                            <div>
+                              <h4 className="font-medium text-green-800">Webhook Configurado com Sucesso!</h4>
+                              <p className="text-sm text-green-600">
+                                Sua plataforma agora pode disparar SMS automaticamente. Configure os webhooks usando a URL e exemplos acima.
+                              </p>
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    </div>
+                  )}
+                  
+                  {form.type !== 'webhook_integration' && (
+                    <>
+                      <div>
+                        <Label htmlFor="name">
+                          {form.type?.includes('quantum') ? 'Nome da Campanha Quantum' : 'Nome da Campanha'}
+                        </Label>
+                        <Input 
+                          id="name"
+                          value={form.name}
+                          onChange={(e) => setForm(prev => ({ ...prev, name: e.target.value }))}
+                          placeholder={form.type?.includes('quantum') 
+                            ? "Ex: Quantum Remarketing - Emagrecer Ultra-Específico" 
+                            : "Ex: Remarketing Dor nas Costas"
+                          }
+                          className={form.type?.includes('quantum') ? 'border-purple-200 focus:ring-purple-500' : ''}
+                        />
+                      </div>
+                      
+                      {form.type?.includes('quantum') && (
+                    <Alert className="border-purple-200 bg-gradient-to-r from-purple-50 to-blue-50">
+                      <Sparkles className="h-4 w-4 text-purple-600" />
+                      <AlertDescription className="text-purple-800">
+                        <strong>Personalização Quantum Ativada!</strong> Use as variáveis ultra-específicas abaixo para criar mensagens com 300% mais engajamento. 
+                        O sistema automaticamente personalizará cada mensagem com as respostas exatas do lead.
+                      </AlertDescription>
+                    </Alert>
+                  )}
                   
                   <div>
                     <div className="flex items-center justify-between mb-2">
-                      <Label htmlFor="message">Mensagem SMS</Label>
+                      <Label htmlFor="message" className="flex items-center gap-2">
+                        <MessageSquare className="w-4 h-4" />
+                        {form.type?.includes('quantum') ? 'Mensagem Quantum Personalizada' : 'Mensagem SMS'}
+                        {form.type?.includes('quantum') && <Badge className="bg-gradient-to-r from-purple-600 to-blue-600 text-white">ULTRA</Badge>}
+                      </Label>
                       <Badge variant={messageCount > 160 ? "destructive" : "outline"}>
                         {messageCount}/160
                       </Badge>
@@ -772,45 +1628,131 @@ export default function SMSCampaignsAdvanced() {
                       id="message"
                       value={form.message}
                       onChange={(e) => setForm(prev => ({ ...prev, message: e.target.value }))}
-                      placeholder="Olá {{nome}}, vimos que você respondeu '{{resposta_dor}}'. Temos algo especial pra você."
-                      className="min-h-[100px]"
+                      placeholder={form.type?.includes('quantum')
+                        ? "Oi {{nome}}! Vi que seu objetivo é {{p1_objetivo_fitness}} e sua dor é {{p4_dor_problema}}. Tenho uma solução ultra-específica pra você! 🎯"
+                        : "Olá {{nome}}, vimos que você respondeu '{{resposta_dor}}'. Temos algo especial pra você."
+                      }
+                      className={`min-h-[120px] ${form.type?.includes('quantum') ? 'border-purple-200 focus:ring-purple-500' : ''}`}
                       maxLength={160}
                     />
                   </div>
                   
-                  <div className="flex flex-wrap gap-2">
-                    {availableVariables.map((variable) => (
-                      <Button 
-                        key={variable.key}
-                        variant="outline" 
-                        size="sm"
-                        onClick={() => insertVariable(variable.key)}
-                      >
-                        {variable.key}
-                      </Button>
-                    ))}
-                  </div>
+                  {/* Variáveis Quantum Ultra-Específicas */}
+                  {form.type?.includes('quantum') && (
+                    <div className="space-y-4">
+                      <div className="border-t pt-4">
+                        <h4 className="font-medium flex items-center gap-2 mb-3 text-purple-600">
+                          <Zap className="w-4 h-4" />
+                          Variáveis Quantum Ultra-Específicas
+                        </h4>
+                        <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                          {[
+                            { key: '{{nome}}', desc: 'Nome do lead', color: 'bg-green-100 text-green-800' },
+                            { key: '{{p1_objetivo_fitness}}', desc: 'Objetivo específico', color: 'bg-purple-100 text-purple-800' },
+                            { key: '{{p4_dor_problema}}', desc: 'Dor/problema exato', color: 'bg-red-100 text-red-800' },
+                            { key: '{{p2_nivel_experiencia}}', desc: 'Nível de experiência', color: 'bg-blue-100 text-blue-800' },
+                            { key: '{{peso}}', desc: 'Peso atual', color: 'bg-orange-100 text-orange-800' },
+                            { key: '{{idade}}', desc: 'Idade', color: 'bg-yellow-100 text-yellow-800' }
+                          ].map((variable) => (
+                            <Button 
+                              key={variable.key}
+                              variant="outline" 
+                              size="sm"
+                              onClick={() => insertVariable(variable.key)}
+                              className={`${variable.color} border-0 hover:scale-105 transition-all`}
+                            >
+                              <div className="text-center">
+                                <div className="font-mono text-xs">{variable.key}</div>
+                                <div className="text-xs opacity-75">{variable.desc}</div>
+                              </div>
+                            </Button>
+                          ))}
+                        </div>
+                      </div>
+                      
+                      <div className="bg-gradient-to-r from-purple-50 to-blue-50 p-4 rounded-lg border border-purple-200">
+                        <h5 className="font-medium text-purple-800 mb-2">💡 Exemplos de Mensagens Quantum:</h5>
+                        <div className="space-y-2 text-sm text-purple-700">
+                          <div className="bg-white p-2 rounded border">
+                            "Oi {{nome}}! Seu objetivo {{p1_objetivo_fitness}} + problema {{p4_dor_problema}} = solução perfeita que criei! 🎯"
+                          </div>
+                          <div className="bg-white p-2 rounded border">
+                            "{{nome}}, {{peso}}kg → meta {{p1_objetivo_fitness}}? Método específico para {{p4_dor_problema}} pronto!"
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                  
+                      {/* Variáveis Tradicionais para outras campanhas */}
+                      {!form.type?.includes('quantum') && (
+                        <div className="flex flex-wrap gap-2">
+                          {availableVariables.map((variable) => (
+                            <Button 
+                              key={variable.key}
+                              variant="outline" 
+                              size="sm"
+                              onClick={() => insertVariable(variable.key)}
+                            >
+                              {variable.key}
+                            </Button>
+                          ))}
+                        </div>
+                      )}
+                    </>
+                  )}
                 </div>
               )}
               
-              {/* Step 4: Agendamento */}
+              {/* Step 4: Agendamento Quantum */}
               {currentStep === 4 && (
-                <div className="space-y-4">
+                <div className="space-y-6">
+                  {form.type?.includes('quantum') && (
+                    <Alert className="border-purple-200 bg-gradient-to-r from-purple-50 to-blue-50">
+                      <Zap className="h-4 w-4 text-purple-600" />
+                      <AlertDescription className="text-purple-800">
+                        <strong>Sistema Quantum de Agendamento Ativo!</strong> {' '}
+                        {form.type === 'quantum_live' 
+                          ? 'Monitoramento automático 24/7 para novos leads com suas características ultra-específicas.'
+                          : 'Remarketing inteligente com timing otimizado por padrões comportamentais.'
+                        }
+                      </AlertDescription>
+                    </Alert>
+                  )}
+                  
                   <div>
-                    <Label>Quando enviar?</Label>
+                    <Label className="flex items-center gap-2">
+                      <Calendar className="w-4 h-4" />
+                      {form.type?.includes('quantum') ? 'Estratégia de Timing Quantum' : 'Quando enviar?'}
+                    </Label>
                     <Select 
                       value={form.scheduleType} 
                       onValueChange={(value: 'now' | 'scheduled' | 'delayed') => 
                         setForm(prev => ({ ...prev, scheduleType: value }))}
                     >
-                      <SelectTrigger>
+                      <SelectTrigger className={form.type?.includes('quantum') ? 'border-purple-200' : ''}>
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="now">⚡ Enviar agora</SelectItem>
-                        <SelectItem value="scheduled">📅 Agendar para data/hora</SelectItem>
-                        {(form.type === 'live' || form.type === 'live_custom') && (
-                          <SelectItem value="delayed">⏱️ Enviar X minutos após lead responder</SelectItem>
+                        <SelectItem value="now">
+                          <div className="flex items-center gap-2">
+                            <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                            <span>⚡ Enviar agora{form.type?.includes('quantum') ? ' (Quantum Imediato)' : ''}</span>
+                          </div>
+                        </SelectItem>
+                        <SelectItem value="scheduled">
+                          <div className="flex items-center gap-2">
+                            <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                            <span>📅 Agendar data/hora{form.type?.includes('quantum') ? ' (Quantum Programado)' : ''}</span>
+                          </div>
+                        </SelectItem>
+                        {(form.type === 'live' || form.type === 'live_custom' || form.type?.includes('quantum')) && (
+                          <SelectItem value="delayed">
+                            <div className="flex items-center gap-2">
+                              <div className="w-2 h-2 bg-orange-500 rounded-full"></div>
+                              <span>⏱️ Delay após resposta{form.type?.includes('quantum') ? ' (Quantum Inteligente)' : ''}</span>
+                            </div>
+                          </SelectItem>
                         )}
                       </SelectContent>
                     </Select>
@@ -839,14 +1781,17 @@ export default function SMSCampaignsAdvanced() {
                   
                   {form.scheduleType === 'delayed' && (
                     <div className="space-y-3">
-                      <Label>Atraso após resposta</Label>
+                      <Label className="flex items-center gap-2">
+                        <Clock className="w-4 h-4" />
+                        {form.type?.includes('quantum') ? 'Delay Quantum Inteligente' : 'Atraso após resposta'}
+                      </Label>
                       <div className="flex gap-2">
                         <Input 
                           type="number"
                           value={form.delayMinutes || ''}
                           onChange={(e) => setForm(prev => ({ ...prev, delayMinutes: Number(e.target.value) }))}
                           placeholder="Ex: 30"
-                          className="flex-1"
+                          className={`flex-1 ${form.type?.includes('quantum') ? 'border-purple-200' : ''}`}
                         />
                         <Select 
                           value={scheduleUnit} 
@@ -861,93 +1806,167 @@ export default function SMSCampaignsAdvanced() {
                           </SelectContent>
                         </Select>
                       </div>
-                      <div className="text-sm text-gray-500 bg-blue-50 p-2 rounded">
-                        <Clock className="w-4 h-4 inline mr-1" />
-                        Será enviado {form.delayMinutes || 0} {scheduleUnit === 'hours' ? 'horas' : 'minutos'} após o lead responder o quiz
+                      <div className={`text-sm p-3 rounded-lg ${
+                        form.type?.includes('quantum') 
+                          ? 'text-purple-700 bg-gradient-to-r from-purple-50 to-blue-50 border border-purple-200' 
+                          : 'text-gray-500 bg-blue-50'
+                      }`}>
+                        <div className="flex items-center gap-2 mb-1">
+                          <Clock className="w-4 h-4" />
+                          <span className="font-medium">
+                            {form.type?.includes('quantum') ? 'Sistema Quantum de Timing:' : 'Agendamento:'}
+                          </span>
+                        </div>
+                        <p>
+                          Será enviado {form.delayMinutes || 0} {scheduleUnit === 'hours' ? 'horas' : 'minutos'} após o lead responder o quiz
+                          {form.type?.includes('quantum') && ' com personalização ultra-específica baseada nas respostas'}
+                        </p>
+                        {form.type?.includes('quantum') && (
+                          <div className="mt-2 flex items-center gap-2 text-purple-600 text-xs">
+                            <Zap className="w-3 h-3" />
+                            <span>Otimização automática por padrões comportamentais</span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                  
+                  {/* Configurações Avançadas Quantum */}
+                  {form.type?.includes('quantum') && (
+                    <div className="border-t pt-4 space-y-4">
+                      <h4 className="font-medium flex items-center gap-2 text-purple-600">
+                        <Settings className="w-4 h-4" />
+                        Configurações Quantum Avançadas
+                      </h4>
+                      
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="bg-gradient-to-r from-purple-50 to-blue-50 p-3 rounded-lg border border-purple-200">
+                          <div className="flex items-center gap-2 mb-2">
+                            <Target className="w-4 h-4 text-purple-600" />
+                            <span className="font-medium text-purple-800">Ultra-Precisão</span>
+                          </div>
+                          <p className="text-purple-700 text-sm">
+                            Apenas leads com características exatas definidas no filtro receberão as mensagens
+                          </p>
+                        </div>
+                        
+                        <div className="bg-gradient-to-r from-blue-50 to-green-50 p-3 rounded-lg border border-blue-200">
+                          <div className="flex items-center gap-2 mb-2">
+                            <BarChart3 className="w-4 h-4 text-blue-600" />
+                            <span className="font-medium text-blue-800">Análise em Tempo Real</span>
+                          </div>
+                          <p className="text-blue-700 text-sm">
+                            Sistema monitora e otimiza automaticamente baseado no engajamento
+                          </p>
+                        </div>
                       </div>
                     </div>
                   )}
                 </div>
               )}
               
-              {/* Step 5: Resumo */}
-              {currentStep === 5 && (
+              {/* Step 5 desabilitado - usar apenas popups */}
+              {false && currentStep === 5 && (
                 <div className="space-y-6">
+                  {form.type?.includes('quantum') && (
+                    <Alert className="border-purple-200 bg-gradient-to-r from-purple-50 to-blue-50">
+                      <Sparkles className="h-4 w-4 text-purple-600" />
+                      <AlertDescription className="text-purple-800">
+                        <strong>Campanha Quantum Configurada!</strong> Sistema ultra-granular pronto para ativação com personalização máxima e segmentação por respostas específicas.
+                      </AlertDescription>
+                    </Alert>
+                  )}
+                  
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <h3 className="font-medium mb-2">Tipo de Campanha</h3>
-                      <p className="text-sm text-gray-600">
+                    <div className={form.type?.includes('quantum') ? 'bg-gradient-to-r from-purple-50 to-white p-3 rounded-lg border border-purple-200' : ''}>
+                      <h3 className="font-medium mb-2 flex items-center gap-2">
+                        {form.type?.includes('quantum') && <Zap className="w-4 h-4 text-purple-600" />}
+                        Tipo de Campanha
+                      </h3>
+                      <p className={`text-sm ${form.type?.includes('quantum') ? 'text-purple-800 font-medium' : 'text-gray-600'}`}>
                         {CAMPAIGN_TYPES[form.type as keyof typeof CAMPAIGN_TYPES]?.name}
+                        {form.type?.includes('quantum') && <Badge className="ml-2 bg-purple-600 text-white">QUANTUM</Badge>}
                       </p>
                     </div>
                     <div>
-                      <h3 className="font-medium mb-2">Nome</h3>
+                      <h3 className="font-medium mb-2">Nome da Campanha</h3>
                       <p className="text-sm text-gray-600">{form.name}</p>
                     </div>
                     <div>
-                      <h3 className="font-medium mb-2">Segmento</h3>
+                      <h3 className="font-medium mb-2">Segmentação</h3>
                       <p className="text-sm text-gray-600">
-                        {form.segment === 'completed' ? 'Completou o quiz' : 
-                         form.segment === 'abandoned' ? 'Abandonou o quiz' : 'Todos os leads'}
+                        {form.segment === 'completed' ? 'Leads que completaram o quiz' : 
+                         form.segment === 'abandoned' ? 'Leads que abandonaram o quiz' : 'Todos os leads do quiz'}
                       </p>
+                      {form.type?.includes('quantum') && form.responseFilter?.field && form.responseFilter?.value && (
+                        <div className="mt-2 p-2 bg-purple-50 rounded border border-purple-200">
+                          <p className="text-xs text-purple-700">
+                            <strong>Filtro Quantum:</strong> {form.responseFilter.field} = "{form.responseFilter.value}"
+                          </p>
+                        </div>
+                      )}
                     </div>
                     <div>
-                      <h3 className="font-medium mb-2">Agendamento</h3>
+                      <h3 className="font-medium mb-2">Timing</h3>
                       <p className="text-sm text-gray-600">
-                        {form.scheduleType === 'now' ? 'Enviar agora' : 
+                        {form.scheduleType === 'now' ? (form.type?.includes('quantum') ? 'Quantum Imediato' : 'Enviar agora') : 
                          form.scheduleType === 'scheduled' ? `${form.scheduledDate} às ${form.scheduledTime}` :
-                         `${form.delayMinutes} minutos após resposta`}
+                         `${form.delayMinutes} ${scheduleUnit === 'hours' ? 'horas' : 'minutos'} após resposta`}
                       </p>
+                      {form.type?.includes('quantum') && (
+                        <div className="mt-1 text-xs text-purple-600 flex items-center gap-1">
+                          <Target className="w-3 h-3" />
+                          <span>Com otimização comportamental automática</span>
+                        </div>
+                      )}
                     </div>
                   </div>
                   
                   <div>
-                    <h3 className="font-medium mb-2">Mensagem</h3>
-                    <div className="bg-gray-50 p-3 rounded-lg border">
-                      <p className="text-sm">{form.message}</p>
+                    <h3 className="font-medium mb-2 flex items-center gap-2">
+                      <MessageSquare className="w-4 h-4" />
+                      {form.type?.includes('quantum') ? 'Mensagem Quantum Personalizada' : 'Mensagem'}
+                    </h3>
+                    <div className={`p-4 rounded-lg border ${
+                      form.type?.includes('quantum') 
+                        ? 'bg-gradient-to-r from-purple-50 to-blue-50 border-purple-200' 
+                        : 'bg-gray-50'
+                    }`}>
+                      <p className={`text-sm ${form.type?.includes('quantum') ? 'text-purple-800' : 'text-gray-800'}`}>
+                        {form.message}
+                      </p>
+                      {form.type?.includes('quantum') && (
+                        <div className="mt-3 flex items-center gap-2 text-purple-600 text-xs">
+                          <Sparkles className="w-3 h-3" />
+                          <span>Variáveis será substituídas automaticamente com dados ultra-específicos de cada lead</span>
+                        </div>
+                      )}
                     </div>
                   </div>
+                  
+                  {form.type?.includes('quantum') && (
+                    <div className="border-t pt-4">
+                      <h4 className="font-medium text-purple-600 mb-3">🚀 Recursos Quantum Ativados:</h4>
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                        <div className="bg-green-50 p-3 rounded-lg border border-green-200">
+                          <div className="text-green-800 font-medium text-sm">✓ Ultra-Segmentação</div>
+                          <div className="text-green-600 text-xs">Filtros por resposta específica</div>
+                        </div>
+                        <div className="bg-blue-50 p-3 rounded-lg border border-blue-200">
+                          <div className="text-blue-800 font-medium text-sm">✓ Personalização Max</div>
+                          <div className="text-blue-600 text-xs">Variáveis ultra-específicas</div>
+                        </div>
+                        <div className="bg-purple-50 p-3 rounded-lg border border-purple-200">
+                          <div className="text-purple-800 font-medium text-sm">✓ IA Comportamental</div>
+                          <div className="text-purple-600 text-xs">Otimização automática</div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
               
-              {/* Navigation Buttons */}
-              <div className="flex justify-end gap-2 mt-8">
-                <Button 
-                  variant="outline" 
-                  onClick={() => setCurrentStep(Math.max(1, currentStep - 1))}
-                  disabled={currentStep === 1}
-                >
-                  Voltar
-                </Button>
-                
-                {currentStep < 5 ? (
-                  <Button 
-                    onClick={() => setCurrentStep(currentStep + 1)}
-                    disabled={!canProceedToNext()}
-                  >
-                    Próximo
-                    <ArrowRight className="w-4 h-4 ml-2" />
-                  </Button>
-                ) : (
-                  <Button 
-                    onClick={createCampaign}
-                    disabled={isCreating}
-                    className="bg-green-600 hover:bg-green-700"
-                  >
-                    {isCreating ? (
-                      <>
-                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
-                        Criando...
-                      </>
-                    ) : (
-                      <>
-                        <Send className="w-4 h-4 mr-2" />
-                        Criar Campanha
-                      </>
-                    )}
-                  </Button>
-                )}
-              </div>
+              {/* Navigation Buttons removidos - usar apenas popups */}
             </CardContent>
           </Card>
         </div>
@@ -975,8 +1994,8 @@ export default function SMSCampaignsAdvanced() {
             </Card>
           )}
           
-          {/* Variáveis Disponíveis */}
-          {currentStep === 3 && (
+          {/* Variáveis Disponíveis - sempre visível */}
+          {form.message && (
             <Card>
               <CardHeader>
                 <CardTitle className="text-lg">Variáveis Disponíveis</CardTitle>
@@ -1247,6 +2266,376 @@ export default function SMSCampaignsAdvanced() {
             </CardContent>
           </Card>
         </div>
+      )}
+
+      {/* Popups Específicas para cada Tipo de Campanha */}
+      {openPopup && (
+        <Dialog open={!!openPopup} onOpenChange={() => setOpenPopup(null)}>
+          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                {(() => {
+                  const type = CAMPAIGN_TYPES[openPopup as keyof typeof CAMPAIGN_TYPES];
+                  if (type) {
+                    const Icon = type.icon;
+                    return (
+                      <>
+                        <Icon className="w-5 h-5" />
+                        Criar {type.name}
+                        {type.isQuantum && <Badge className="bg-gradient-to-r from-purple-600 to-blue-600 text-white ml-2">QUANTUM</Badge>}
+                      </>
+                    );
+                  }
+                  return 'Criar Campanha SMS';
+                })()}
+              </DialogTitle>
+            </DialogHeader>
+            
+            <div className="space-y-6">
+              {/* Formulário Básico para Todos os Tipos */}
+              <div className="space-y-4">
+                <div>
+                  <Label htmlFor="popup-name">Nome da Campanha</Label>
+                  <Input 
+                    id="popup-name"
+                    value={popupForm.name || ''}
+                    onChange={(e) => setPopupForm(prev => ({ ...prev, name: e.target.value }))}
+                    placeholder="Ex: Remarketing Fitness - Janeiro 2025"
+                    className={openPopup?.includes('quantum') ? 'border-purple-200 focus:ring-purple-500' : ''}
+                  />
+                </div>
+
+                {/* Seleção de Quiz (para todos exceto mass e webhook_integration) */}
+                {openPopup !== 'mass' && openPopup !== 'webhook_integration' && (
+                  <div>
+                    <Label htmlFor="popup-funnel">Quiz/Funil</Label>
+                    <Select 
+                      value={popupForm.funnelId || ''} 
+                      onValueChange={(value) => setPopupForm(prev => ({ ...prev, funnelId: value }))}
+                    >
+                      <SelectTrigger className={openPopup?.includes('quantum') ? 'border-purple-200 focus:ring-purple-500' : ''}>
+                        <SelectValue placeholder={loadingQuizzes ? "Carregando quizzes..." : "Selecione um quiz"} />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {loadingQuizzes ? (
+                          <SelectItem value="loading" disabled>
+                            <div className="flex items-center gap-2">
+                              <div className="w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+                              Carregando...
+                            </div>
+                          </SelectItem>
+                        ) : quizzes.filter((quiz: Quiz) => quiz.published).length > 0 ? (
+                          quizzes.filter((quiz: Quiz) => quiz.published).map((quiz: Quiz) => (
+                            <SelectItem key={quiz.id} value={quiz.id}>
+                              {quiz.title} ({quiz.responses || 0} respostas)
+                            </SelectItem>
+                          ))
+                        ) : (
+                          <SelectItem value="no-quizzes" disabled>
+                            <div className="text-gray-500 text-center py-2">
+                              Nenhum quiz publicado encontrado
+                            </div>
+                          </SelectItem>
+                        )}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
+
+                {/* Segmentação (para tipos de remarketing) */}
+                {(openPopup?.includes('remarketing') || openPopup?.includes('live')) && (
+                  <div>
+                    <Label>Segmento de Leads</Label>
+                    <div className="grid grid-cols-3 gap-3">
+                      {[
+                        { value: 'completed', label: '✅ Completou Quiz', desc: 'Leads que finalizaram' },
+                        { value: 'abandoned', label: '⏸️ Abandonou Quiz', desc: 'Leads que pararam no meio' },
+                        { value: 'all', label: '📊 Todos os Leads', desc: 'Todos os leads do quiz' }
+                      ].map((option) => (
+                        <Card 
+                          key={option.value}
+                          className={`cursor-pointer transition-all ${
+                            popupForm.segment === option.value 
+                              ? 'ring-2 ring-blue-500 bg-blue-50' 
+                              : 'hover:bg-gray-50'
+                          }`}
+                          onClick={() => setPopupForm(prev => ({ ...prev, segment: option.value }))}
+                        >
+                          <CardContent className="p-3 text-center">
+                            <div className="text-sm font-medium">{option.label}</div>
+                            <div className="text-xs text-gray-500 mt-1">{option.desc}</div>
+                          </CardContent>
+                        </Card>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Filtros Avançados - Remarketing Básico e Quantum */}
+                {(openPopup === 'remarketing' || openPopup?.includes('quantum')) && (
+                  <div className="space-y-4 border-t pt-4">
+                    <Alert className="bg-gradient-to-r from-blue-50 to-purple-50 border-blue-200">
+                      <Sparkles className="h-4 w-4 text-blue-600" />
+                      <AlertDescription className="text-blue-800">
+                        <strong>Filtros Avançados {openPopup?.includes('quantum') ? 'Quantum' : 'de Remarketing'} Ativados!</strong> {' '}
+                        Configure filtros de data e timing para {openPopup?.includes('quantum') ? 'segmentação ultra-específica' : 'campanhas direcionadas'}.
+                      </AlertDescription>
+                    </Alert>
+
+                    {/* Filtros de Data para Remarketing e Quantum */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <Label>Filtro de Data (De)</Label>
+                        <Input 
+                          type="date"
+                          value={popupForm.dateFrom || ''}
+                          onChange={(e) => setPopupForm(prev => ({ ...prev, dateFrom: e.target.value }))}
+                          className={openPopup?.includes('quantum') ? 'border-purple-200 focus:ring-purple-500' : 'border-blue-200 focus:ring-blue-500'}
+                        />
+                        <div className="text-xs text-gray-500 mt-1">Leads a partir desta data</div>
+                      </div>
+                      <div>
+                        <Label>Filtro de Data (Até)</Label>
+                        <Input 
+                          type="date"
+                          value={popupForm.dateTo || ''}
+                          onChange={(e) => setPopupForm(prev => ({ ...prev, dateTo: e.target.value }))}
+                          className={openPopup?.includes('quantum') ? 'border-purple-200 focus:ring-purple-500' : 'border-blue-200 focus:ring-blue-500'}
+                        />
+                        <div className="text-xs text-gray-500 mt-1">Leads até esta data</div>
+                      </div>
+                    </div>
+
+                    <div>
+                      <Label>Timing de Disparo</Label>
+                      <Select 
+                        value={popupForm.dispatchTiming || 'immediate'} 
+                        onValueChange={(value) => setPopupForm(prev => ({ ...prev, dispatchTiming: value }))}
+                      >
+                        <SelectTrigger className={openPopup?.includes('quantum') ? 'border-purple-200 focus:ring-purple-500' : 'border-blue-200 focus:ring-blue-500'}>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="immediate">⚡ Disparar Imediatamente</SelectItem>
+                          <SelectItem value="delayed">⏱️ Disparar Daqui X Tempo</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    {popupForm.dispatchTiming === 'delayed' && (
+                      <div className="grid grid-cols-2 gap-3">
+                        <div>
+                          <Label>Valor do Atraso</Label>
+                          <Input 
+                            type="number"
+                            value={popupForm.dispatchDelayValue || ''}
+                            onChange={(e) => setPopupForm(prev => ({ ...prev, dispatchDelayValue: e.target.value }))}
+                            placeholder="30"
+                            className={openPopup?.includes('quantum') ? 'border-purple-200 focus:ring-purple-500' : 'border-blue-200 focus:ring-blue-500'}
+                          />
+                        </div>
+                        <div>
+                          <Label>Unidade</Label>
+                          <Select 
+                            value={popupForm.dispatchDelayUnit || 'minutes'} 
+                            onValueChange={(value) => setPopupForm(prev => ({ ...prev, dispatchDelayUnit: value }))}
+                          >
+                            <SelectTrigger className={openPopup?.includes('quantum') ? 'border-purple-200' : 'border-blue-200'}>
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="minutes">Minutos</SelectItem>
+                              <SelectItem value="hours">Horas</SelectItem>
+                              <SelectItem value="days">Dias</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Variáveis do Quiz - apenas para remarketing inteligente */}
+                {openPopup === 'remarketing_custom' && popupForm.funnelId && popupForm.segment && quizVariables.length > 0 && (
+                  <div className="border-t pt-4">
+                    <Alert className="bg-gradient-to-r from-purple-50 to-blue-50 border-purple-200 mb-4">
+                      <Brain className="h-4 w-4 text-purple-600" />
+                      <AlertDescription className="text-purple-800">
+                        <strong>Variáveis do Quiz Detectadas!</strong> Use essas variáveis para personalizar sua mensagem com base nas respostas específicas do quiz.
+                      </AlertDescription>
+                    </Alert>
+                    
+                    <div>
+                      <Label className="mb-3 block">Variáveis Disponíveis do Quiz Selecionado</Label>
+                      <div className="grid grid-cols-2 md:grid-cols-3 gap-2 mb-4">
+                        {quizVariables.map((variable) => (
+                          <div 
+                            key={variable}
+                            className="p-2 bg-purple-50 border border-purple-200 rounded-lg cursor-pointer hover:bg-purple-100 transition-colors"
+                            onClick={() => {
+                              const currentMessage = popupForm.message || '';
+                              const variableTag = `{{${variable}}}`;
+                              setPopupForm(prev => ({ 
+                                ...prev, 
+                                message: currentMessage + variableTag 
+                              }));
+                            }}
+                          >
+                            <code className="text-sm font-mono text-purple-700 block">{`{{${variable}}}`}</code>
+                            <div className="text-xs text-purple-600 mt-1">Clique para inserir</div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Mensagem SMS */}
+                <div>
+                  <div className="flex items-center justify-between mb-2">
+                    <Label htmlFor="popup-message" className="flex items-center gap-2">
+                      <MessageSquare className="w-4 h-4" />
+                      Mensagem SMS
+                      {openPopup?.includes('quantum') && <Badge className="bg-gradient-to-r from-purple-600 to-blue-600 text-white">ULTRA</Badge>}
+                    </Label>
+                    <Badge variant={messageCount > 160 ? "destructive" : "outline"}>
+                      {popupForm.message?.length || 0}/160
+                    </Badge>
+                  </div>
+                  <Textarea 
+                    id="popup-message"
+                    value={popupForm.message || ''}
+                    onChange={(e) => setPopupForm(prev => ({ ...prev, message: e.target.value }))}
+                    placeholder={openPopup?.includes('quantum')
+                      ? "Oi {{nome}}! Vi que seu objetivo é {{p1_objetivo_fitness}} e sua dor é {{p4_dor_problema}}. Tenho uma solução ultra-específica pra você! 🎯"
+                      : "Olá {{nome}}, vimos que você respondeu ao nosso quiz. Temos algo especial pra você."
+                    }
+                    className={`min-h-[120px] ${openPopup?.includes('quantum') ? 'border-purple-200 focus:ring-purple-500' : ''}`}
+                    maxLength={160}
+                  />
+                </div>
+
+                {/* Upload CSV - apenas para mass */}
+                {openPopup === 'mass' && (
+                  <div>
+                    <Label>Upload de Lista CSV</Label>
+                    <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
+                      <Upload className="w-8 h-8 mx-auto mb-2 text-gray-400" />
+                      <p className="text-sm text-gray-600">
+                        Arraste seu arquivo CSV aqui ou clique para selecionar
+                      </p>
+                      <Input 
+                        type="file" 
+                        accept=".csv" 
+                        className="mt-3"
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          if (file) {
+                            setPopupForm(prev => ({ ...prev, csvFile: file }));
+                          }
+                        }}
+                      />
+                    </div>
+                  </div>
+                )}
+
+                {/* Webhook Integration - apenas para webhook_integration */}
+                {openPopup === 'webhook_integration' && (
+                  <div className="space-y-4">
+                    <Alert className="bg-indigo-50 border-indigo-200">
+                      <CheckSquare className="h-4 w-4 text-indigo-600" />
+                      <AlertDescription className="text-indigo-800">
+                        <strong>Webhook Configurado!</strong> Sua plataforma pode disparar SMS usando a URL abaixo.
+                      </AlertDescription>
+                    </Alert>
+                    
+                    <div>
+                      <Label>URL do Webhook</Label>
+                      <div className="flex gap-2">
+                        <Input 
+                          value={`${window.location.origin}/api/webhook/sms-trigger/${user?.id || 'USER_ID'}`}
+                          readOnly
+                          className="bg-gray-50"
+                        />
+                        <Button 
+                          variant="outline"
+                          onClick={() => {
+                            navigator.clipboard.writeText(`${window.location.origin}/api/webhook/sms-trigger/${user?.id || 'USER_ID'}`);
+                            toast({ title: "URL copiada!", description: "URL do webhook copiada para a área de transferência." });
+                          }}
+                        >
+                          Copiar
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Variáveis Disponíveis */}
+                {openPopup?.includes('quantum') && (
+                  <div className="border-t pt-4">
+                    <h4 className="font-medium flex items-center gap-2 mb-3 text-purple-600">
+                      <Zap className="w-4 h-4" />
+                      Variáveis Quantum Ultra-Específicas
+                    </h4>
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                      {[
+                        { key: '{{nome}}', desc: 'Nome do lead', color: 'bg-green-100 text-green-800' },
+                        { key: '{{p1_objetivo_fitness}}', desc: 'Objetivo específico', color: 'bg-purple-100 text-purple-800' },
+                        { key: '{{p4_dor_problema}}', desc: 'Dor/problema exato', color: 'bg-red-100 text-red-800' },
+                        { key: '{{p2_nivel_experiencia}}', desc: 'Nível de experiência', color: 'bg-blue-100 text-blue-800' },
+                        { key: '{{peso}}', desc: 'Peso atual', color: 'bg-orange-100 text-orange-800' },
+                        { key: '{{telefone}}', desc: 'Telefone do lead', color: 'bg-gray-100 text-gray-800' }
+                      ].map((variable) => (
+                        <div 
+                          key={variable.key}
+                          className={`p-2 rounded text-xs font-mono cursor-pointer hover:shadow-sm transition-all ${variable.color}`}
+                          onClick={() => {
+                            const currentMessage = popupForm.message || '';
+                            setPopupForm(prev => ({ 
+                              ...prev, 
+                              message: currentMessage + variable.key 
+                            }));
+                          }}
+                        >
+                          <div className="font-bold">{variable.key}</div>
+                          <div className="text-[10px] opacity-80">{variable.desc}</div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Botões de Ação */}
+              <div className="flex justify-between items-center pt-4 border-t">
+                <Button variant="outline" onClick={() => setOpenPopup(null)}>
+                  Cancelar
+                </Button>
+                
+                <div className="flex gap-2">
+                  <Button 
+                    onClick={createPopupCampaign}
+                    disabled={isCreating || !popupForm.name || (!popupForm.funnelId && openPopup !== 'mass' && openPopup !== 'webhook_integration')}
+                    className={openPopup?.includes('quantum') ? 'bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700' : ''}
+                  >
+                    {isCreating ? (
+                      <>
+                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
+                        Criando...
+                      </>
+                    ) : (
+                      <>
+                        <Send className="w-4 h-4 mr-2" />
+                        Criar {openPopup?.includes('quantum') ? 'Quantum' : ''} Campanha
+                      </>
+                    )}
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
       )}
     </div>
   );
