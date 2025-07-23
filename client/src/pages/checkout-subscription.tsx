@@ -57,16 +57,17 @@ export default function CheckoutSubscription({ onSuccess, onCancel }: CheckoutSu
 
   // Query para buscar dados do usuário logado
   const { data: userData, isLoading: userLoading } = useQuery({
-    queryKey: ['/api/auth/user'],
+    queryKey: ['/api/auth/verify'],
     retry: false,
   });
 
   // Pré-preencher os campos com dados do usuário
   useEffect(() => {
-    if (userData) {
+    if (userData && (userData as any).user) {
+      const user = (userData as any).user;
       setCustomerData({
-        email: (userData as any).email || '',
-        name: (userData as any).name || (userData as any).firstName || (userData as any).username || '',
+        email: user.email || '',
+        name: user.firstName ? `${user.firstName} ${user.lastName || ''}`.trim() : user.email?.split('@')[0] || '',
       });
     }
   }, [userData]);
