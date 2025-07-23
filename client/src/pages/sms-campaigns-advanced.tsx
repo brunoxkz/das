@@ -313,14 +313,16 @@ export default function SMSCampaignsAdvanced() {
   // Queries
   const { data: quizzes = [], isLoading: loadingQuizzes } = useQuery({
     queryKey: ['/api/quizzes'],
-    enabled: !!user,
-    onSuccess: (data) => {
-      console.log('🎯 Quizzes carregados:', data?.length, 'publicados:', data?.filter((q: Quiz) => q.published)?.length);
-    },
-    onError: (error) => {
-      console.error('❌ Erro ao carregar quizzes:', error);
-    }
+    enabled: !!user
   });
+
+  // Debug para verificar quizzes
+  useEffect(() => {
+    if (quizzes) {
+      console.log('🎯 Quizzes carregados:', quizzes.length, 'publicados:', quizzes.filter((q: any) => q.published)?.length);
+      console.log('🎯 Lista de quizzes:', quizzes);
+    }
+  }, [quizzes]);
   
   const { data: credits = { remaining: 0 } } = useQuery({
     queryKey: ['/api/sms-credits'],
