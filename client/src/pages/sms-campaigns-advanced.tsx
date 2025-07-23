@@ -700,7 +700,7 @@ export default function SMSCampaignsAdvanced() {
                             return (
                               <Card 
                                 key={type.id}
-                                className={`cursor-pointer transition-all duration-300 hover:shadow-xl hover:-translate-y-1 transform ${
+                                className={`group cursor-pointer transition-all duration-300 hover:shadow-xl hover:-translate-y-1 transform ${
                                   isSelected 
                                     ? 'ring-2 ring-blue-500 bg-gradient-to-br from-blue-50 to-indigo-50 shadow-lg' 
                                     : 'hover:bg-gray-50'
@@ -760,19 +760,21 @@ export default function SMSCampaignsAdvanced() {
                                       )}
                                     </div>
                                     
-                                    {/* Descrição compacta */}
-                                    <p className="text-xs xl:text-[10px] text-gray-600 leading-tight h-9 xl:h-6 overflow-hidden">
-                                      {type.description}
-                                    </p>
-                                    
-                                    {/* Features em lista */}
-                                    <div className="text-[10px] text-gray-500 space-y-0.5">
-                                      {type.features?.slice(0, 2).map((feature, idx) => (
-                                        <div key={idx} className="flex items-center justify-center gap-1">
-                                          <div className="w-1 h-1 bg-blue-400 rounded-full"></div>
-                                          <span>{feature}</span>
-                                        </div>
-                                      ))}
+                                    {/* Descrição expansível no hover */}
+                                    <div className="group-hover:opacity-100 opacity-0 transition-all duration-300 absolute inset-0 bg-white/95 backdrop-blur-sm rounded-lg p-3 flex flex-col justify-center items-center text-center">
+                                      <p className="text-xs text-gray-700 leading-tight mb-2">
+                                        {type.description}
+                                      </p>
+                                      
+                                      {/* Features em lista no hover */}
+                                      <div className="text-[10px] text-gray-500 space-y-0.5">
+                                        {type.features?.slice(0, 3).map((feature, idx) => (
+                                          <div key={idx} className="flex items-center justify-center gap-1">
+                                            <div className="w-1 h-1 bg-blue-400 rounded-full"></div>
+                                            <span>{feature}</span>
+                                          </div>
+                                        ))}
+                                      </div>
                                     </div>
                                     
                                     {/* Botão visual de seleção */}
