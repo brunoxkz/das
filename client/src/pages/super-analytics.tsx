@@ -355,15 +355,173 @@ export default function SuperAnalytics() {
   const endIndex = startIndex + leadsPerPage;
   const currentLeads = leads.slice(startIndex, endIndex);
 
-  // Função para extrair todos os campos únicos das respostas
+  // Função para extrair TODOS os campos únicos de forma ultra-dinâmica (detecta qualquer estrutura atual ou futura)
   const getAllResponseFields = (leads: any[]) => {
     const fieldSet = new Set<string>();
+    
     leads.forEach(lead => {
-      if (lead.responses && typeof lead.responses === 'object') {
-        Object.keys(lead.responses).forEach(field => fieldSet.add(field));
+      // SCAN COMPLETO: Percorrer recursivamente toda a estrutura do lead
+      const scanObjectRecursively = (obj: any, prefix: string = '') => {
+        if (obj && typeof obj === 'object') {
+          Object.entries(obj).forEach(([key, value]) => {
+            const fullKey = prefix ? `${prefix}.${key}` : key;
+            
+            // Adicionar o campo se tiver valor não vazio
+            if (value !== null && value !== undefined && value !== '') {
+              fieldSet.add(fullKey);
+            }
+            
+            // Se for objeto/array, continuar escaneando
+            if (typeof value === 'object' && value !== null) {
+              scanObjectRecursively(value, fullKey);
+            }
+          });
+        }
+      };
+      
+      // 1. DETECTAR campos nas respostas diretas (formato array)
+      if (Array.isArray(lead.responses)) {
+        lead.responses.forEach((response: any) => {
+          if (response.field) {
+            fieldSet.add(response.field);
+          }
+          // Escanear qualquer estrutura aninhada na resposta
+          scanObjectRecursively(response, 'response');
+        });
+      }
+      
+      // 2. DETECTAR campos nas respostas em formato objeto
+      if (lead.responses && typeof lead.responses === 'object' && !Array.isArray(lead.responses)) {
+        Object.keys(lead.responses).forEach(field => {
+          if (lead.responses[field] !== null && lead.responses[field] !== undefined && lead.responses[field] !== '') {
+            fieldSet.add(field);
+          }
+        });
+      }
+      
+      // 3. DETECTAR campos extraídos automaticamente no lead (qualquer propriedade futura)
+      Object.keys(lead).forEach(key => {
+        // Lista de campos sistema que devem ser ignorados
+        const systemFields = ['id', 'submittedAt', 'isComplete', 'completionPercentage', 'timeSpent', 'ip', 'userAgent', 'responses', 'metadata'];
+        if (!systemFields.includes(key) && lead[key] !== null && lead[key] !== undefined && lead[key] !== '') {
+          fieldSet.add(key);
+        }
+      });
+      
+      // 4. DETECTAR campos em metadata (se houver estruturas futuras)
+      if (lead.metadata && typeof lead.metadata === 'object') {
+        scanObjectRecursively(lead.metadata, 'metadata');
       }
     });
-    return Array.from(fieldSet).sort();
+    
+    // Filtrar apenas campos principais (ignorar sub-objetos como response.field)
+    const mainFields = Array.from(fieldSet).filter(field => !field.includes('.'));
+    
+    return mainFields.sort((a, b) => {
+      // Priorizar campos de contato primeiro
+      const priority = ['nome', 'name', 'firstName', 'email', 'telefone', 'phone', 'celular', 'telefone_contato', 'email_contato'];
+      const aIndex = priority.indexOf(a);
+      const bIndex = priority.indexOf(b);
+      
+      if (aIndex !== -1 && bIndex !== -1) return aIndex - bIndex;
+      if (aIndex !== -1) return -1;
+      if (bIndex !== -1) return 1;
+      
+      // Ordenar campos p1_, p2_, p3_... numericamente
+      const aMatch = a.match(/^p(\d+)_/);
+      const bMatch = b.match(/^p(\d+)_/);
+      if (aMatch && bMatch) {
+        return parseInt(aMatch[1]) - parseInt(bMatch[1]);
+      }
+      
+      // Ordenar campos page1_, page2_... numericamente
+      const aPageMatch = a.match(/^page(\d+)_/);
+      const bPageMatch = b.match(/^page(\d+)_/);
+      if (aPageMatch && bPageMatch) {
+        return parseInt(aPageMatch[1]) - parseInt(bPageMatch[1]);
+      }
+      
+      return a.localeCompare(b);
+    });
+  };
+
+  // Função ULTRA-DINÂMICA para extrair valor de qualquer campo (atual ou futuro)
+  const getFieldValue = (lead: any, field: string) => {
+    // Helper para buscar recursivamente em objetos
+    const searchRecursively = (obj: any, targetKey: string): any => {
+      if (!obj || typeof obj !== 'object') return null;
+      
+      // Busca direta pela chave
+      if (obj[targetKey] !== undefined && obj[targetKey] !== null && obj[targetKey] !== '') {
+        return obj[targetKey];
+      }
+      
+      // Busca recursiva em sub-objetos
+      for (const [key, value] of Object.entries(obj)) {
+        if (typeof value === 'object' && value !== null) {
+          const found = searchRecursively(value, targetKey);
+          if (found !== null) return found;
+        }
+      }
+      
+      return null;
+    };
+
+    // 1. PRIORIDADE 1: Verificar no lead diretamente (dados extraídos pelo sistema)
+    if (lead[field] !== undefined && lead[field] !== null && lead[field] !== '') {
+      return lead[field];
+    }
+    
+    // 2. PRIORIDADE 2: Verificar nas respostas em formato array (padrão atual)
+    if (Array.isArray(lead.responses)) {
+      const response = lead.responses.find((r: any) => r.field === field);
+      if (response) {
+        // Verificar value primeiro
+        if (response.value !== undefined && response.value !== null && response.value !== '') {
+          return response.value;
+        }
+        // Se não tem value, verificar outras propriedades
+        const found = searchRecursively(response, field);
+        if (found !== null) return found;
+      }
+    }
+    
+    // 3. PRIORIDADE 3: Verificar nas respostas em formato objeto
+    if (lead.responses && typeof lead.responses === 'object' && !Array.isArray(lead.responses)) {
+      if (lead.responses[field] !== undefined && lead.responses[field] !== null && lead.responses[field] !== '') {
+        return lead.responses[field];
+      }
+    }
+    
+    // 4. PRIORIDADE 4: Busca recursiva completa em toda estrutura do lead
+    const foundRecursively = searchRecursively(lead, field);
+    if (foundRecursively !== null) {
+      return foundRecursively;
+    }
+    
+    // 5. FALLBACK: Verificar variações de nome diretamente (sem recursão)
+    const fieldVariations = {
+      'telefone': ['telefone', 'phone', 'celular', 'telefone_contato', 'whatsapp'],
+      'phone': ['telefone', 'phone', 'celular', 'telefone_contato', 'whatsapp'],
+      'celular': ['telefone', 'phone', 'celular', 'telefone_contato', 'whatsapp'],
+      'email': ['email', 'email_contato', 'e_mail', 'e-mail'],
+      'nome': ['nome', 'name', 'firstName', 'first_name', 'nome_completo']
+    };
+    
+    const variations = fieldVariations[field as keyof typeof fieldVariations];
+    if (variations) {
+      for (const variation of variations) {
+        // Verificar diretamente sem recursão para evitar loops
+        if (lead[variation] !== undefined && lead[variation] !== null && lead[variation] !== '') {
+          return lead[variation];
+        }
+        if (lead.responses?.[variation] !== undefined && lead.responses[variation] !== null && lead.responses[variation] !== '') {
+          return lead.responses[variation];
+        }
+      }
+    }
+    
+    return '-';
   };
 
   const allFields = getAllResponseFields(leads);
@@ -640,13 +798,16 @@ export default function SuperAnalytics() {
                               {lead.isComplete ? "✅ Completo" : "⏸️ Parcial"}
                             </Badge>
                           </td>
-                          {allFields.map(field => (
-                            <td key={field} className="p-3 text-sm max-w-[200px]">
-                              <div className="truncate" title={lead[field] || lead.responses?.[field] || '-'}>
-                                {lead[field] || lead.responses?.[field] || '-'}
-                              </div>
-                            </td>
-                          ))}
+                          {allFields.map(field => {
+                            const value = getFieldValue(lead, field);
+                            return (
+                              <td key={field} className="p-3 text-sm max-w-[200px]">
+                                <div className="truncate" title={value}>
+                                  {value}
+                                </div>
+                              </td>
+                            );
+                          })}
                         </tr>
                       ))}
                     </tbody>
