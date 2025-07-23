@@ -101,6 +101,122 @@ export const quizzes = sqliteTable("quizzes", {
   updatedAt: integer("updatedAt").notNull().$defaultFn(() => Math.floor(Date.now() / 1000)),
 });
 
+// ÁREA DE MEMBROS - SISTEMA DE CURSOS
+export const courses = sqliteTable("courses", {
+  id: text("id").primaryKey().$defaultFn(() => nanoid()),
+  title: text("title").notNull(),
+  description: text("description"),
+  thumbnail: text("thumbnail"),
+  creatorId: text("creatorId").notNull().references(() => users.id),
+  category: text("category"),
+  price: real("price").default(0),
+  currency: text("currency").default("BRL"),
+  isPublished: integer("isPublished", { mode: 'boolean' }).default(false),
+  isPWA: integer("isPWA", { mode: 'boolean' }).default(false), // Se foi transformado em App
+  pwaConfig: text("pwaConfig", { mode: 'json' }), // Configurações PWA (logo, cores, manifest)
+  pushConfig: text("pushConfig", { mode: 'json' }), // Configurações de push notifications
+  branding: text("branding", { mode: 'json' }), // Logo, cores, estilo
+  settings: text("settings", { mode: 'json' }), // Configurações gerais
+  domain: text("domain"), // Domínio personalizado quando é PWA
+  totalLessons: integer("totalLessons").default(0),
+  totalDuration: integer("totalDuration").default(0), // Em minutos
+  enrollmentCount: integer("enrollmentCount").default(0),
+  rating: real("rating").default(0),
+  status: text("status").default("draft"), // draft, published, archived
+  createdAt: integer("createdAt", { mode: 'timestamp' }).notNull().$defaultFn(() => new Date()),
+  updatedAt: integer("updatedAt", { mode: 'timestamp' }).notNull().$defaultFn(() => new Date()),
+});
+
+export const lessons = sqliteTable("lessons", {
+  id: text("id").primaryKey().$defaultFn(() => nanoid()),
+  courseId: text("courseId").notNull().references(() => courses.id),
+  title: text("title").notNull(),
+  description: text("description"),
+  videoUrl: text("videoUrl"),
+  videoId: text("videoId"), // ID do vídeo se hospedado externamente
+  videoProvider: text("videoProvider").default("upload"), // upload, youtube, vimeo
+  duration: integer("duration").default(0), // Em segundos
+  order: integer("order").notNull(),
+  isFree: integer("isFree", { mode: 'boolean' }).default(false),
+  resources: text("resources", { mode: 'json' }), // Links, arquivos adicionais
+  quiz: text("quiz", { mode: 'json' }), // Quiz opcional da aula
+  notes: text("notes"), // Anotações da aula
+  isPublished: integer("isPublished", { mode: 'boolean' }).default(false),
+  createdAt: integer("createdAt", { mode: 'timestamp' }).notNull().$defaultFn(() => new Date()),
+  updatedAt: integer("updatedAt", { mode: 'timestamp' }).notNull().$defaultFn(() => new Date()),
+});
+
+export const enrollments = sqliteTable("enrollments", {
+  id: text("id").primaryKey().$defaultFn(() => nanoid()),
+  courseId: text("courseId").notNull().references(() => courses.id),
+  userId: text("userId").notNull().references(() => users.id),
+  progress: real("progress").default(0), // 0-100%
+  currentLessonId: text("currentLessonId").references(() => lessons.id),
+  completedLessons: text("completedLessons", { mode: 'json' }).default("[]"), // Array de IDs das aulas concluídas
+  enrolledAt: integer("enrolledAt", { mode: 'timestamp' }).notNull().$defaultFn(() => new Date()),
+  lastAccessedAt: integer("lastAccessedAt", { mode: 'timestamp' }),
+  completedAt: integer("completedAt", { mode: 'timestamp' }),
+  status: text("status").default("active"), // active, paused, completed, expired
+  paymentId: text("paymentId"), // ID do pagamento se aplicável
+  notes: text("notes", { mode: 'json' }), // Anotações do aluno
+});
+
+export const lessonProgress = sqliteTable("lesson_progress", {
+  id: text("id").primaryKey().$defaultFn(() => nanoid()),
+  enrollmentId: text("enrollmentId").notNull().references(() => enrollments.id),
+  lessonId: text("lessonId").notNull().references(() => lessons.id),
+  progress: real("progress").default(0), // 0-100%
+  timeWatched: integer("timeWatched").default(0), // Em segundos
+  isCompleted: integer("isCompleted", { mode: 'boolean' }).default(false),
+  lastPosition: integer("lastPosition").default(0), // Posição em segundos onde parou
+  watchedAt: integer("watchedAt", { mode: 'timestamp' }).notNull().$defaultFn(() => new Date()),
+  completedAt: integer("completedAt", { mode: 'timestamp' }),
+});
+
+// PUSH NOTIFICATIONS ESPECÍFICAS PARA CURSOS
+export const coursePushSubscriptions = sqliteTable("course_push_subscriptions", {
+  id: text("id").primaryKey().$defaultFn(() => nanoid()),
+  courseId: text("courseId").notNull().references(() => courses.id),
+  userId: text("userId").notNull().references(() => users.id),
+  subscription: text("subscription", { mode: 'json' }).notNull(), // PushSubscription object
+  isActive: integer("isActive", { mode: 'boolean' }).default(true),
+  createdAt: integer("createdAt", { mode: 'timestamp' }).notNull().$defaultFn(() => new Date()),
+  lastNotificationAt: integer("lastNotificationAt", { mode: 'timestamp' }),
+});
+
+export const scheduledCourseNotifications = sqliteTable("scheduled_course_notifications", {
+  id: text("id").primaryKey().$defaultFn(() => nanoid()),
+  courseId: text("courseId").notNull().references(() => courses.id),
+  creatorId: text("creatorId").notNull().references(() => users.id),
+  title: text("title").notNull(),
+  message: text("message").notNull(),
+  icon: text("icon"),
+  url: text("url"),
+  targetAudience: text("targetAudience").default("all"), // all, specific_users, progress_based
+  targetUserIds: text("targetUserIds", { mode: 'json' }), // Array de IDs específicos
+  progressFilter: text("progressFilter", { mode: 'json' }), // Filtros por progresso
+  scheduledFor: integer("scheduledFor", { mode: 'timestamp' }).notNull(),
+  status: text("status").default("scheduled"), // scheduled, sent, failed, cancelled
+  sentAt: integer("sentAt", { mode: 'timestamp' }),
+  sentCount: integer("sentCount").default(0),
+  failedCount: integer("failedCount").default(0),
+  createdAt: integer("createdAt", { mode: 'timestamp' }).notNull().$defaultFn(() => new Date()),
+});
+
+export const courseNotificationTemplates = sqliteTable("course_notification_templates", {
+  id: text("id").primaryKey().$defaultFn(() => nanoid()),
+  courseId: text("courseId").notNull().references(() => courses.id),
+  name: text("name").notNull(),
+  title: text("title").notNull(),
+  message: text("message").notNull(),
+  icon: text("icon"),
+  url: text("url"),
+  type: text("type").notNull(), // welcome, reminder, new_lesson, completion, custom
+  isActive: integer("isActive", { mode: 'boolean' }).default(true),
+  triggerCondition: text("triggerCondition", { mode: 'json' }), // Condições para disparo automático
+  createdAt: integer("createdAt", { mode: 'timestamp' }).notNull().$defaultFn(() => new Date()),
+});
+
 export const quizTemplates = sqliteTable("quiz_templates", {
   id: integer("id").primaryKey({ autoIncrement: true }),
   name: text("name").notNull(),
@@ -1334,228 +1450,6 @@ export type InsertCreditTransaction = z.infer<typeof insertCreditTransactionSche
 export type CreditTransaction = typeof creditTransactions.$inferSelect;
 
 // =============================================
-// ÁREA DE MEMBROS - MEMBERS AREA SYSTEM
-// =============================================
-
-// Cursos
-export const courses = sqliteTable("courses", {
-  id: text("id").primaryKey(),
-  title: text("title").notNull(),
-  description: text("description"),
-  shortDescription: text("shortDescription"),
-  thumbnailUrl: text("thumbnailUrl"),
-  introVideoUrl: text("introVideoUrl"),
-  category: text("category"),
-  level: text("level").default("beginner"), // beginner, intermediate, advanced
-  duration: integer("duration"), // em minutos
-  price: real("price").default(0),
-  currency: text("currency").default("BRL"),
-  isPublished: integer("isPublished", { mode: 'boolean' }).default(false),
-  isFeatured: integer("isFeatured", { mode: 'boolean' }).default(false),
-  tags: text("tags", { mode: 'json' }),
-  requirements: text("requirements", { mode: 'json' }),
-  objectives: text("objectives", { mode: 'json' }),
-  instructorId: text("instructorId").notNull().references(() => users.id),
-  totalStudents: integer("totalStudents").default(0),
-  averageRating: real("averageRating").default(0),
-  totalReviews: integer("totalReviews").default(0),
-  settings: text("settings", { mode: 'json' }),
-  createdAt: integer("createdAt", { mode: 'timestamp' }).notNull().$defaultFn(() => new Date()),
-  updatedAt: integer("updatedAt", { mode: 'timestamp' }).notNull().$defaultFn(() => new Date()),
-});
-
-// Módulos dos Cursos
-export const courseModules = sqliteTable("course_modules", {
-  id: text("id").primaryKey(),
-  courseId: text("courseId").notNull().references(() => courses.id, { onDelete: 'cascade' }),
-  title: text("title").notNull(),
-  description: text("description"),
-  orderIndex: integer("orderIndex").notNull(),
-  isPublished: integer("isPublished", { mode: 'boolean' }).default(false),
-  createdAt: integer("createdAt", { mode: 'timestamp' }).notNull().$defaultFn(() => new Date()),
-  updatedAt: integer("updatedAt", { mode: 'timestamp' }).notNull().$defaultFn(() => new Date()),
-});
-
-// Aulas dos Módulos
-export const courseLessons = sqliteTable("course_lessons", {
-  id: text("id").primaryKey(),
-  moduleId: text("moduleId").notNull().references(() => courseModules.id, { onDelete: 'cascade' }),
-  title: text("title").notNull(),
-  description: text("description"),
-  content: text("content"), // HTML content for text lessons
-  videoUrl: text("videoUrl"),
-  videoDuration: integer("videoDuration"), // em segundos
-  audioUrl: text("audioUrl"),
-  audioDuration: integer("audioDuration"), // em segundos
-  attachments: text("attachments", { mode: 'json' }), // Array de URLs de PDFs, arquivos, etc
-  lessonType: text("lessonType").notNull().default("text"), // text, video, audio, quiz, assignment
-  orderIndex: integer("orderIndex").notNull(),
-  isPublished: integer("isPublished", { mode: 'boolean' }).default(false),
-  isFree: integer("isFree", { mode: 'boolean' }).default(false), // aula gratuita
-  estimatedDuration: integer("estimatedDuration"), // em minutos
-  resources: text("resources", { mode: 'json' }), // links, materiais extras
-  notes: text("notes"), // anotações do instrutor
-  createdAt: integer("createdAt", { mode: 'timestamp' }).notNull().$defaultFn(() => new Date()),
-  updatedAt: integer("updatedAt", { mode: 'timestamp' }).notNull().$defaultFn(() => new Date()),
-});
-
-// Matrículas dos Estudantes
-export const courseEnrollments = sqliteTable("course_enrollments", {
-  id: text("id").primaryKey(),
-  courseId: text("courseId").notNull().references(() => courses.id, { onDelete: 'cascade' }),
-  studentId: text("studentId").notNull().references(() => users.id, { onDelete: 'cascade' }),
-  enrolledAt: integer("enrolledAt", { mode: 'timestamp' }).notNull().$defaultFn(() => new Date()),
-  completedAt: integer("completedAt", { mode: 'timestamp' }),
-  lastAccessedAt: integer("lastAccessedAt", { mode: 'timestamp' }),
-  progress: real("progress").default(0), // 0-100
-  status: text("status").default("active"), // active, completed, suspended, cancelled
-  certificateIssued: integer("certificateIssued", { mode: 'boolean' }).default(false),
-  certificateUrl: text("certificateUrl"),
-  accessLevel: text("accessLevel").default("full"), // full, preview, limited
-  expiresAt: integer("expiresAt", { mode: 'timestamp' }), // para cursos com tempo limitado
-});
-
-// Progresso das Aulas
-export const lessonProgress = sqliteTable("lesson_progress", {
-  id: text("id").primaryKey(),
-  enrollmentId: text("enrollmentId").notNull().references(() => courseEnrollments.id, { onDelete: 'cascade' }),
-  lessonId: text("lessonId").notNull().references(() => courseLessons.id, { onDelete: 'cascade' }),
-  studentId: text("studentId").notNull().references(() => users.id, { onDelete: 'cascade' }),
-  isCompleted: integer("isCompleted", { mode: 'boolean' }).default(false),
-  completedAt: integer("completedAt", { mode: 'timestamp' }),
-  timeSpent: integer("timeSpent").default(0), // em segundos
-  lastPosition: integer("lastPosition").default(0), // posição no vídeo/áudio em segundos
-  notes: text("notes"), // anotações do estudante
-  rating: integer("rating"), // 1-5
-  createdAt: integer("createdAt", { mode: 'timestamp' }).notNull().$defaultFn(() => new Date()),
-  updatedAt: integer("updatedAt", { mode: 'timestamp' }).notNull().$defaultFn(() => new Date()),
-});
-
-// Avaliações e Reviews dos Cursos
-export const courseReviews = sqliteTable("course_reviews", {
-  id: text("id").primaryKey(),
-  courseId: text("courseId").notNull().references(() => courses.id, { onDelete: 'cascade' }),
-  studentId: text("studentId").notNull().references(() => users.id, { onDelete: 'cascade' }),
-  rating: integer("rating").notNull(), // 1-5
-  title: text("title"),
-  comment: text("comment"),
-  isPublished: integer("isPublished", { mode: 'boolean' }).default(true),
-  isVerified: integer("isVerified", { mode: 'boolean' }).default(false),
-  helpfulVotes: integer("helpfulVotes").default(0),
-  createdAt: integer("createdAt", { mode: 'timestamp' }).notNull().$defaultFn(() => new Date()),
-  updatedAt: integer("updatedAt", { mode: 'timestamp' }).notNull().$defaultFn(() => new Date()),
-});
-
-// Categorias de Cursos
-export const courseCategories = sqliteTable("course_categories", {
-  id: text("id").primaryKey(),
-  name: text("name").notNull(),
-  slug: text("slug").notNull().unique(),
-  description: text("description"),
-  iconUrl: text("iconUrl"),
-  color: text("color"),
-  parentId: text("parentId").references(() => courseCategories.id),
-  orderIndex: integer("orderIndex").default(0),
-  isActive: integer("isActive", { mode: 'boolean' }).default(true),
-  createdAt: integer("createdAt", { mode: 'timestamp' }).notNull().$defaultFn(() => new Date()),
-});
-
-// Certificados
-export const courseCertificates = sqliteTable("course_certificates", {
-  id: text("id").primaryKey(),
-  courseId: text("courseId").notNull().references(() => courses.id, { onDelete: 'cascade' }),
-  studentId: text("studentId").notNull().references(() => users.id, { onDelete: 'cascade' }),
-  enrollmentId: text("enrollmentId").notNull().references(() => courseEnrollments.id, { onDelete: 'cascade' }),
-  certificateCode: text("certificateCode").notNull().unique(),
-  issuedAt: integer("issuedAt", { mode: 'timestamp' }).notNull().$defaultFn(() => new Date()),
-  certificateUrl: text("certificateUrl"),
-  verificationUrl: text("verificationUrl"),
-  templateId: text("templateId"),
-  metadata: text("metadata", { mode: 'json' }),
-});
-
-// Templates de Certificados
-export const certificateTemplates = sqliteTable("certificate_templates", {
-  id: text("id").primaryKey(),
-  name: text("name").notNull(),
-  description: text("description"),
-  htmlTemplate: text("htmlTemplate").notNull(),
-  cssStyles: text("cssStyles"),
-  defaultSettings: text("defaultSettings", { mode: 'json' }),
-  previewUrl: text("previewUrl"),
-  isActive: integer("isActive", { mode: 'boolean' }).default(true),
-  createdAt: integer("createdAt", { mode: 'timestamp' }).notNull().$defaultFn(() => new Date()),
-});
-
-// Discussões/Fóruns dos Cursos
-export const courseDiscussions = sqliteTable("course_discussions", {
-  id: text("id").primaryKey(),
-  courseId: text("courseId").notNull().references(() => courses.id, { onDelete: 'cascade' }),
-  lessonId: text("lessonId").references(() => courseLessons.id, { onDelete: 'cascade' }),
-  authorId: text("authorId").notNull().references(() => users.id, { onDelete: 'cascade' }),
-  parentId: text("parentId").references(() => courseDiscussions.id), // para replies
-  title: text("title"),
-  content: text("content").notNull(),
-  type: text("type").default("discussion"), // discussion, question, announcement
-  isResolved: integer("isResolved", { mode: 'boolean' }).default(false),
-  isPinned: integer("isPinned", { mode: 'boolean' }).default(false),
-  votesUp: integer("votesUp").default(0),
-  votesDown: integer("votesDown").default(0),
-  createdAt: integer("createdAt", { mode: 'timestamp' }).notNull().$defaultFn(() => new Date()),
-  updatedAt: integer("updatedAt", { mode: 'timestamp' }).notNull().$defaultFn(() => new Date()),
-});
-
-// Analytics da Área de Membros
-export const membersAreaAnalytics = sqliteTable("members_area_analytics", {
-  id: text("id").primaryKey(),
-  courseId: text("courseId").references(() => courses.id, { onDelete: 'cascade' }),
-  lessonId: text("lessonId").references(() => courseLessons.id, { onDelete: 'cascade' }),
-  studentId: text("studentId").references(() => users.id, { onDelete: 'cascade' }),
-  event: text("event").notNull(), // lesson_start, lesson_complete, course_complete, etc
-  data: text("data", { mode: 'json' }),
-  timestamp: integer("timestamp", { mode: 'timestamp' }).notNull().$defaultFn(() => new Date()),
-  ipAddress: text("ipAddress"),
-  userAgent: text("userAgent"),
-});
-
-// Área de Membros Zod Schemas
-export const insertCourseSchema = createInsertSchema(courses);
-export const insertCourseModuleSchema = createInsertSchema(courseModules);
-export const insertCourseLessonSchema = createInsertSchema(courseLessons);
-export const insertCourseEnrollmentSchema = createInsertSchema(courseEnrollments);
-export const insertLessonProgressSchema = createInsertSchema(lessonProgress);
-export const insertCourseReviewSchema = createInsertSchema(courseReviews);
-export const insertCourseCategorySchema = createInsertSchema(courseCategories);
-export const insertCourseCertificateSchema = createInsertSchema(courseCertificates);
-export const insertCertificateTemplateSchema = createInsertSchema(certificateTemplates);
-export const insertCourseDiscussionSchema = createInsertSchema(courseDiscussions);
-export const insertMembersAreaAnalyticsSchema = createInsertSchema(membersAreaAnalytics);
-
-// Área de Membros Types
-export type InsertCourse = z.infer<typeof insertCourseSchema>;
-export type Course = typeof courses.$inferSelect;
-export type InsertCourseModule = z.infer<typeof insertCourseModuleSchema>;
-export type CourseModule = typeof courseModules.$inferSelect;
-export type InsertCourseLesson = z.infer<typeof insertCourseLessonSchema>;
-export type CourseLesson = typeof courseLessons.$inferSelect;
-export type InsertCourseEnrollment = z.infer<typeof insertCourseEnrollmentSchema>;
-export type CourseEnrollment = typeof courseEnrollments.$inferSelect;
-export type InsertLessonProgress = z.infer<typeof insertLessonProgressSchema>;
-export type LessonProgress = typeof lessonProgress.$inferSelect;
-export type InsertCourseReview = z.infer<typeof insertCourseReviewSchema>;
-export type CourseReview = typeof courseReviews.$inferSelect;
-export type InsertCourseCategory = z.infer<typeof insertCourseCategorySchema>;
-export type CourseCategory = typeof courseCategories.$inferSelect;
-export type InsertCourseCertificate = z.infer<typeof insertCourseCertificateSchema>;
-export type CourseCertificate = typeof courseCertificates.$inferSelect;
-export type InsertCertificateTemplate = z.infer<typeof insertCertificateTemplateSchema>;
-export type CertificateTemplate = typeof certificateTemplates.$inferSelect;
-export type InsertCourseDiscussion = z.infer<typeof insertCourseDiscussionSchema>;
-export type CourseDiscussion = typeof courseDiscussions.$inferSelect;
-export type InsertMembersAreaAnalytics = z.infer<typeof insertMembersAreaAnalyticsSchema>;
-export type MembersAreaAnalytics = typeof membersAreaAnalytics.$inferSelect;
-
-// =============================================
 // FORUM SYSTEM TABLES
 // =============================================
 
@@ -1628,3 +1522,28 @@ export type ForumReply = typeof forumRepliesTable.$inferSelect;
 export type InsertForumReply = typeof forumRepliesTable.$inferInsert;
 export type ForumLike = typeof forumLikesTable.$inferSelect;
 export type InsertForumLike = typeof forumLikesTable.$inferInsert;
+
+// COURSES TYPES
+export type Course = typeof courses.$inferSelect;
+export type InsertCourse = typeof courses.$inferInsert;
+export type Lesson = typeof lessons.$inferSelect;
+export type InsertLesson = typeof lessons.$inferInsert;
+export type Enrollment = typeof enrollments.$inferSelect;
+export type InsertEnrollment = typeof enrollments.$inferInsert;
+export type LessonProgress = typeof lessonProgress.$inferSelect;
+export type InsertLessonProgress = typeof lessonProgress.$inferInsert;
+export type CoursePushSubscription = typeof coursePushSubscriptions.$inferSelect;
+export type InsertCoursePushSubscription = typeof coursePushSubscriptions.$inferInsert;
+export type ScheduledCourseNotification = typeof scheduledCourseNotifications.$inferSelect;
+export type InsertScheduledCourseNotification = typeof scheduledCourseNotifications.$inferInsert;
+export type CourseNotificationTemplate = typeof courseNotificationTemplates.$inferSelect;
+export type InsertCourseNotificationTemplate = typeof courseNotificationTemplates.$inferInsert;
+
+// COURSES ZOD SCHEMAS
+export const insertCourseSchema = createInsertSchema(courses);
+export const insertLessonSchema = createInsertSchema(lessons);
+export const insertEnrollmentSchema = createInsertSchema(enrollments);
+export const insertLessonProgressSchema = createInsertSchema(lessonProgress);
+export const insertCoursePushSubscriptionSchema = createInsertSchema(coursePushSubscriptions);
+export const insertScheduledCourseNotificationSchema = createInsertSchema(scheduledCourseNotifications);
+export const insertCourseNotificationTemplateSchema = createInsertSchema(courseNotificationTemplates);

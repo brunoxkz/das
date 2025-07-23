@@ -123,6 +123,8 @@ import { useTheme } from "@/hooks/useTheme";
 import SistemaUltraDemo from "@/pages/sistema-ultra-demo";
 import RemarketingQuantum from "@/pages/remarketing-quantum";
 import AoVivoQuantum from "@/pages/ao-vivo-quantum";
+import QuantumMembers from "@/pages/quantum-members";
+import QuantumCourseManage from "@/pages/quantum-course-manage";
 
 
 function App() {
@@ -301,6 +303,16 @@ function App() {
         <Route path="/ao-vivo-quantum">
           <Layout>
             <AoVivoQuantum />
+          </Layout>
+        </Route>
+        <Route path="/quantum-members">
+          <Layout>
+            <QuantumMembers />
+          </Layout>
+        </Route>
+        <Route path="/quantum/courses/:courseId/manage">
+          <Layout>
+            <QuantumCourseManage />
           </Layout>
         </Route>
         <Route path="/email-marketing">

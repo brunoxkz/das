@@ -8,6 +8,13 @@ import { z } from "zod";
 import { verifyJWT } from "./auth-sqlite";
 import { creditProtection } from "./credit-protection";
 import { db } from "./db-sqlite";
+import { coursePushService } from './course-push-service';
+import {
+  users, courses, lessons, enrollments, lessonProgress, coursePushSubscriptions,
+  scheduledCourseNotifications, courseNotificationTemplates,
+  insertCourseSchema, insertLessonSchema, insertEnrollmentSchema
+} from '@shared/schema-sqlite';
+import { eq, and, desc, asc, sql } from 'drizzle-orm';
 // 🔒 IMPORTAÇÃO DOS RATE LIMITS ESPECÍFICOS
 import {
   quizSubmissionRateLimit,
@@ -27494,6 +27501,1129 @@ export function registerCheckoutRoutes(app: Express) {
   // Inicializar sistema automático de regressão de planos
   console.log('🚀 INICIANDO PLAN MANAGER...');
   planManager.startAutomaticPlanRegression();
+
+  // ============================================================================
+  // ÁREA DE MEMBROS - SISTEMA QUANTUM DE CURSOS COM PUSH NOTIFICATIONS
+  // ============================================================================
+  
+
+
+  console.log('🎓 REGISTRANDO ENDPOINTS DA ÁREA DE MEMBROS QUANTUM...');
+
+  // ===== CURSOS - GERENCIAMENTO COMPLETO =====
+
+  // ===== ENDPOINTS QUANTUM - COMPATIBILIDADE FRONTEND =====
+  
+  // Estatísticas da área de membros
+  app.get('/api/quantum/stats', verifyJWT, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      
+      // Total de cursos
+      const totalCourses = await db
+        .select({ count: sql`COUNT(*)` })
+        .from(courses)
+        .where(eq(courses.creatorId, userId));
+      
+      // Total de alunos (matrículas únicas)
+      const totalStudents = await db
+        .select({ count: sql`COUNT(DISTINCT ${enrollments.studentId})` })
+        .from(enrollments)
+        .leftJoin(courses, eq(courses.id, enrollments.courseId))
+        .where(eq(courses.creatorId, userId));
+      
+      // Total de PWAs
+      const totalPWAs = await db
+        .select({ count: sql`COUNT(*)` })
+        .from(courses)
+        .where(and(
+          eq(courses.creatorId, userId),
+          eq(courses.isPWA, true)
+        ));
+      
+      // Push notifications enviadas (simulado)
+      const totalPushSent = 0; // Integrar com sistema real de push
+      
+      const stats = {
+        totalCourses: totalCourses[0]?.count || 0,
+        totalStudents: totalStudents[0]?.count || 0,
+        totalPWAs: totalPWAs[0]?.count || 0,
+        totalPushSent
+      };
+      
+      res.json(stats);
+    } catch (error) {
+      console.error('❌ Erro ao buscar estatísticas:', error);
+      res.status(500).json({ error: 'Erro ao buscar estatísticas' });
+    }
+  });
+
+  // Listar cursos (endpoint Quantum)
+  app.get('/api/quantum/courses', verifyJWT, async (req: any, res) => {
+    try {
+      const userCourses = await db
+        .select()
+        .from(courses)
+        .where(eq(courses.creatorId, req.user.id))
+        .orderBy(desc(courses.updatedAt));
+
+      res.json(userCourses);
+    } catch (error) {
+      console.error('❌ Erro ao buscar cursos:', error);
+      res.status(500).json({ error: 'Erro ao buscar cursos' });
+    }
+  });
+
+  // Criar curso (endpoint Quantum)
+  app.post('/api/quantum/courses', verifyJWT, async (req: any, res) => {
+    try {
+      const courseData = {
+        id: nanoid(),
+        title: req.body.title,
+        description: req.body.description || '',
+        category: req.body.category || '',
+        creatorId: req.user.id,
+        isPublished: false,
+        isPWA: false,
+        totalLessons: 0,
+        totalDuration: 0,
+        enrollmentCount: 0,
+        rating: 0,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      };
+
+      const newCourse = await db.insert(courses).values(courseData).returning();
+      
+      console.log(`✅ Curso Quantum criado: ${newCourse[0].title} por ${req.user.id}`);
+      res.json(newCourse[0]);
+    } catch (error) {
+      console.error('❌ Erro ao criar curso Quantum:', error);
+      res.status(500).json({ error: 'Erro ao criar curso' });
+    }
+  });
+
+  // Transformar em PWA (endpoint Quantum)
+  app.post('/api/quantum/courses/:id/transform-to-pwa', verifyJWT, async (req: any, res) => {
+    try {
+      const courseId = req.params.id;
+      
+      // Verificar propriedade
+      const course = await db
+        .select()
+        .from(courses)
+        .where(and(
+          eq(courses.id, courseId),
+          eq(courses.creatorId, req.user.id)
+        ))
+        .limit(1);
+
+      if (course.length === 0) {
+        return res.status(404).json({ error: 'Curso não encontrado' });
+      }
+
+      // Gerar domínio único
+      const domain = `${course[0].title.toLowerCase().replace(/[^a-z0-9]/g, '-')}-${nanoid(6)}.vendzz.app`;
+
+      const updatedCourse = await db
+        .update(courses)
+        .set({
+          isPWA: true,
+          domain,
+          updatedAt: new Date()
+        })
+        .where(eq(courses.id, courseId))
+        .returning();
+
+      console.log(`🚀 Curso transformado em PWA: ${courseId} → ${domain}`);
+      res.json({ 
+        ...updatedCourse[0],
+        domain
+      });
+    } catch (error) {
+      console.error('❌ Erro ao transformar em PWA:', error);
+      res.status(500).json({ error: 'Erro ao transformar em PWA' });
+    }
+  });
+
+  // Gerenciar curso específico (endpoint Quantum)
+  app.get('/api/quantum/courses/:id', verifyJWT, async (req: any, res) => {
+    try {
+      const courseId = req.params.id;
+      
+      const course = await db
+        .select()
+        .from(courses)
+        .where(and(
+          eq(courses.id, courseId),
+          eq(courses.creatorId, req.user.id)
+        ))
+        .limit(1);
+
+      if (course.length === 0) {
+        return res.status(404).json({ error: 'Curso não encontrado' });
+      }
+
+      res.json(course[0]);
+    } catch (error) {
+      console.error('❌ Erro ao buscar curso:', error);
+      res.status(500).json({ error: 'Erro ao buscar curso' });
+    }
+  });
+
+  // Aulas do curso (endpoint Quantum)
+  app.get('/api/quantum/courses/:id/lessons', verifyJWT, async (req: any, res) => {
+    try {
+      const courseId = req.params.id;
+      
+      // Verificar propriedade do curso
+      const course = await db
+        .select()
+        .from(courses)
+        .where(and(
+          eq(courses.id, courseId),
+          eq(courses.creatorId, req.user.id)
+        ))
+        .limit(1);
+
+      if (course.length === 0) {
+        return res.status(404).json({ error: 'Curso não encontrado' });
+      }
+
+      const courseLessons = await db
+        .select()
+        .from(lessons)
+        .where(eq(lessons.courseId, courseId))
+        .orderBy(asc(lessons.order));
+
+      res.json(courseLessons);
+    } catch (error) {
+      console.error('❌ Erro ao buscar aulas:', error);
+      res.status(500).json({ error: 'Erro ao buscar aulas' });
+    }
+  });
+
+  // Matrículas do curso (endpoint Quantum)
+  app.get('/api/quantum/courses/:id/enrollments', verifyJWT, async (req: any, res) => {
+    try {
+      const courseId = req.params.id;
+      
+      // Verificar propriedade do curso
+      const course = await db
+        .select()
+        .from(courses)
+        .where(and(
+          eq(courses.id, courseId),
+          eq(courses.creatorId, req.user.id)
+        ))
+        .limit(1);
+
+      if (course.length === 0) {
+        return res.status(404).json({ error: 'Curso não encontrado' });
+      }
+
+      const courseEnrollments = await db
+        .select()
+        .from(enrollments)
+        .where(eq(enrollments.courseId, courseId))
+        .orderBy(desc(enrollments.enrolledAt));
+
+      res.json(courseEnrollments);
+    } catch (error) {
+      console.error('❌ Erro ao buscar matrículas:', error);
+      res.status(500).json({ error: 'Erro ao buscar matrículas' });
+    }
+  });
+
+  // Criar aula (endpoint Quantum)
+  app.post('/api/quantum/courses/:courseId/lessons', verifyJWT, async (req: any, res) => {
+    try {
+      const courseId = req.params.courseId;
+      
+      // Verificar propriedade do curso
+      const course = await db
+        .select()
+        .from(courses)
+        .where(and(
+          eq(courses.id, courseId),
+          eq(courses.creatorId, req.user.id)
+        ))
+        .limit(1);
+
+      if (course.length === 0) {
+        return res.status(404).json({ error: 'Curso não encontrado' });
+      }
+
+      // Obter próxima ordem
+      const lastLesson = await db
+        .select()
+        .from(lessons)
+        .where(eq(lessons.courseId, courseId))
+        .orderBy(desc(lessons.order))
+        .limit(1);
+
+      const nextOrder = lastLesson[0]?.order ? lastLesson[0].order + 1 : 1;
+
+      const lessonData = {
+        id: nanoid(),
+        title: req.body.title,
+        description: req.body.description || '',
+        videoUrl: req.body.videoUrl || null,
+        duration: req.body.duration || 0,
+        order: nextOrder,
+        isFree: req.body.isFree || false,
+        isPublished: true,
+        courseId,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      };
+
+      const newLesson = await db.insert(lessons).values(lessonData).returning();
+
+      // Atualizar contador do curso
+      const totalLessons = await db
+        .select()
+        .from(lessons)
+        .where(eq(lessons.courseId, courseId));
+
+      await db
+        .update(courses)
+        .set({ 
+          totalLessons: totalLessons.length,
+          updatedAt: new Date()
+        })
+        .where(eq(courses.id, courseId));
+
+      console.log(`✅ Aula criada: ${newLesson[0].title} no curso ${courseId}`);
+      res.json(newLesson[0]);
+    } catch (error) {
+      console.error('❌ Erro ao criar aula:', error);
+      res.status(500).json({ error: 'Erro ao criar aula' });
+    }
+  });
+
+  // Atualizar aula (endpoint Quantum)
+  app.put('/api/quantum/courses/:courseId/lessons/:lessonId', verifyJWT, async (req: any, res) => {
+    try {
+      const { courseId, lessonId } = req.params;
+      
+      // Verificar propriedade do curso
+      const course = await db
+        .select()
+        .from(courses)
+        .where(and(
+          eq(courses.id, courseId),
+          eq(courses.creatorId, req.user.id)
+        ))
+        .limit(1);
+
+      if (course.length === 0) {
+        return res.status(404).json({ error: 'Curso não encontrado' });
+      }
+
+      const updateData = {
+        title: req.body.title,
+        description: req.body.description || '',
+        videoUrl: req.body.videoUrl || null,
+        isFree: req.body.isFree || false,
+        updatedAt: new Date()
+      };
+
+      const updatedLesson = await db
+        .update(lessons)
+        .set(updateData)
+        .where(and(
+          eq(lessons.id, lessonId),
+          eq(lessons.courseId, courseId)
+        ))
+        .returning();
+
+      if (updatedLesson.length === 0) {
+        return res.status(404).json({ error: 'Aula não encontrada' });
+      }
+
+      console.log(`✅ Aula atualizada: ${lessonId}`);
+      res.json(updatedLesson[0]);
+    } catch (error) {
+      console.error('❌ Erro ao atualizar aula:', error);
+      res.status(500).json({ error: 'Erro ao atualizar aula' });
+    }
+  });
+
+  // Deletar aula (endpoint Quantum)
+  app.delete('/api/quantum/courses/:courseId/lessons/:lessonId', verifyJWT, async (req: any, res) => {
+    try {
+      const { courseId, lessonId } = req.params;
+      
+      // Verificar propriedade do curso
+      const course = await db
+        .select()
+        .from(courses)
+        .where(and(
+          eq(courses.id, courseId),
+          eq(courses.creatorId, req.user.id)
+        ))
+        .limit(1);
+
+      if (course.length === 0) {
+        return res.status(404).json({ error: 'Curso não encontrado' });
+      }
+
+      await db
+        .delete(lessons)
+        .where(and(
+          eq(lessons.id, lessonId),
+          eq(lessons.courseId, courseId)
+        ));
+
+      // Atualizar contador do curso
+      const remainingLessons = await db
+        .select()
+        .from(lessons)
+        .where(eq(lessons.courseId, courseId));
+
+      await db
+        .update(courses)
+        .set({ 
+          totalLessons: remainingLessons.length,
+          updatedAt: new Date()
+        })
+        .where(eq(courses.id, courseId));
+
+      console.log(`🗑️ Aula deletada: ${lessonId}`);
+      res.json({ success: true });
+    } catch (error) {
+      console.error('❌ Erro ao deletar aula:', error);
+      res.status(500).json({ error: 'Erro ao deletar aula' });
+    }
+  });
+
+  // Atualizar status do curso (endpoint Quantum)
+  app.put('/api/quantum/courses/:id', verifyJWT, async (req: any, res) => {
+    try {
+      const courseId = req.params.id;
+      
+      // Verificar propriedade
+      const course = await db
+        .select()
+        .from(courses)
+        .where(and(
+          eq(courses.id, courseId),
+          eq(courses.creatorId, req.user.id)
+        ))
+        .limit(1);
+
+      if (course.length === 0) {
+        return res.status(404).json({ error: 'Curso não encontrado' });
+      }
+
+      const updateData = {
+        ...req.body,
+        updatedAt: new Date()
+      };
+
+      const updatedCourse = await db
+        .update(courses)
+        .set(updateData)
+        .where(eq(courses.id, courseId))
+        .returning();
+
+      console.log(`✅ Curso atualizado: ${courseId}`);
+      res.json(updatedCourse[0]);
+    } catch (error) {
+      console.error('❌ Erro ao atualizar curso:', error);
+      res.status(500).json({ error: 'Erro ao atualizar curso' });
+    }
+  });
+
+  // ===== ENDPOINTS LEGADOS - MANTER COMPATIBILIDADE =====
+
+  // Listar todos os cursos do usuário
+  app.get('/api/courses', verifyJWT, async (req: any, res) => {
+    try {
+      const userCourses = await db
+        .select()
+        .from(courses)
+        .where(eq(courses.creatorId, req.user.id))
+        .orderBy(desc(courses.updatedAt));
+
+      res.json({ success: true, courses: userCourses });
+    } catch (error) {
+      console.error('❌ Erro ao buscar cursos:', error);
+      res.status(500).json({ success: false, error: 'Erro ao buscar cursos' });
+    }
+  });
+
+  // Criar novo curso
+  app.post('/api/courses', verifyJWT, async (req: any, res) => {
+    try {
+      const validatedData = insertCourseSchema.parse({
+        ...req.body,
+        creatorId: req.user.id
+      });
+
+      const newCourse = await db.insert(courses).values(validatedData).returning();
+      
+      console.log(`✅ Curso criado: ${newCourse[0].title} por ${req.user.id}`);
+      res.json({ success: true, course: newCourse[0] });
+    } catch (error) {
+      console.error('❌ Erro ao criar curso:', error);
+      res.status(500).json({ success: false, error: 'Erro ao criar curso' });
+    }
+  });
+
+  // Buscar curso específico
+  app.get('/api/courses/:id', verifyJWT, async (req: any, res) => {
+    try {
+      const courseId = req.params.id;
+      
+      const course = await db
+        .select()
+        .from(courses)
+        .where(and(
+          eq(courses.id, courseId),
+          eq(courses.creatorId, req.user.id)
+        ))
+        .limit(1);
+
+      if (course.length === 0) {
+        return res.status(404).json({ success: false, error: 'Curso não encontrado' });
+      }
+
+      // Buscar aulas do curso
+      const courseLessons = await db
+        .select()
+        .from(lessons)
+        .where(eq(lessons.courseId, courseId))
+        .orderBy(asc(lessons.order));
+
+      res.json({ 
+        success: true, 
+        course: {
+          ...course[0],
+          lessons: courseLessons
+        }
+      });
+    } catch (error) {
+      console.error('❌ Erro ao buscar curso:', error);
+      res.status(500).json({ success: false, error: 'Erro ao buscar curso' });
+    }
+  });
+
+  // Atualizar curso
+  app.put('/api/courses/:id', verifyJWT, async (req: any, res) => {
+    try {
+      const courseId = req.params.id;
+      
+      // Verificar propriedade
+      const course = await db
+        .select()
+        .from(courses)
+        .where(and(
+          eq(courses.id, courseId),
+          eq(courses.creatorId, req.user.id)
+        ))
+        .limit(1);
+
+      if (course.length === 0) {
+        return res.status(404).json({ success: false, error: 'Curso não encontrado' });
+      }
+
+      const updatedData = {
+        ...req.body,
+        updatedAt: new Date()
+      };
+
+      const updatedCourse = await db
+        .update(courses)
+        .set(updatedData)
+        .where(eq(courses.id, courseId))
+        .returning();
+
+      console.log(`✅ Curso atualizado: ${courseId}`);
+      res.json({ success: true, course: updatedCourse[0] });
+    } catch (error) {
+      console.error('❌ Erro ao atualizar curso:', error);
+      res.status(500).json({ success: false, error: 'Erro ao atualizar curso' });
+    }
+  });
+
+  // Transformar curso em PWA
+  app.post('/api/courses/:id/transform-to-pwa', verifyJWT, async (req: any, res) => {
+    try {
+      const courseId = req.params.id;
+      const { pwaConfig, branding, domain } = req.body;
+
+      // Verificar propriedade
+      const course = await db
+        .select()
+        .from(courses)
+        .where(and(
+          eq(courses.id, courseId),
+          eq(courses.creatorId, req.user.id)
+        ))
+        .limit(1);
+
+      if (course.length === 0) {
+        return res.status(404).json({ success: false, error: 'Curso não encontrado' });
+      }
+
+      // Configuração PWA padrão
+      const defaultPWAConfig = {
+        name: course[0].title,
+        shortName: course[0].title.substring(0, 12),
+        description: course[0].description || 'Curso criado no Vendzz',
+        themeColor: '#10b981',
+        backgroundColor: '#ffffff',
+        display: 'standalone',
+        orientation: 'portrait',
+        icons: [
+          { src: '/android-chrome-192x192.png', sizes: '192x192', type: 'image/png' },
+          { src: '/android-chrome-512x512.png', sizes: '512x512', type: 'image/png' }
+        ]
+      };
+
+      const updatedCourse = await db
+        .update(courses)
+        .set({
+          isPWA: true,
+          pwaConfig: JSON.stringify({ ...defaultPWAConfig, ...pwaConfig }),
+          branding: JSON.stringify(branding || {}),
+          domain: domain || null,
+          updatedAt: new Date()
+        })
+        .where(eq(courses.id, courseId))
+        .returning();
+
+      console.log(`🚀 Curso transformado em PWA: ${courseId}`);
+      res.json({ 
+        success: true, 
+        course: updatedCourse[0],
+        pwaUrl: domain ? `https://${domain}` : `/curso-pwa/${courseId}`
+      });
+    } catch (error) {
+      console.error('❌ Erro ao transformar em PWA:', error);
+      res.status(500).json({ success: false, error: 'Erro ao transformar em PWA' });
+    }
+  });
+
+  // ===== AULAS - GERENCIAMENTO COMPLETO =====
+
+  // Criar nova aula
+  app.post('/api/courses/:courseId/lessons', verifyJWT, async (req: any, res) => {
+    try {
+      const courseId = req.params.courseId;
+      
+      // Verificar propriedade do curso
+      const course = await db
+        .select()
+        .from(courses)
+        .where(and(
+          eq(courses.id, courseId),
+          eq(courses.creatorId, req.user.id)
+        ))
+        .limit(1);
+
+      if (course.length === 0) {
+        return res.status(404).json({ success: false, error: 'Curso não encontrado' });
+      }
+
+      const validatedData = insertLessonSchema.parse({
+        ...req.body,
+        courseId
+      });
+
+      const newLesson = await db.insert(lessons).values(validatedData).returning();
+
+      // Atualizar contadores do curso
+      const totalLessons = await db
+        .select()
+        .from(lessons)
+        .where(eq(lessons.courseId, courseId));
+
+      await db
+        .update(courses)
+        .set({ 
+          totalLessons: totalLessons.length,
+          updatedAt: new Date()
+        })
+        .where(eq(courses.id, courseId));
+
+      console.log(`✅ Aula criada: ${newLesson[0].title} no curso ${courseId}`);
+      res.json({ success: true, lesson: newLesson[0] });
+    } catch (error) {
+      console.error('❌ Erro ao criar aula:', error);
+      res.status(500).json({ success: false, error: 'Erro ao criar aula' });
+    }
+  });
+
+  // Atualizar aula
+  app.put('/api/lessons/:id', verifyJWT, async (req: any, res) => {
+    try {
+      const lessonId = req.params.id;
+      
+      // Verificar propriedade através do curso
+      const lesson = await db
+        .select()
+        .from(lessons)
+        .innerJoin(courses, eq(lessons.courseId, courses.id))
+        .where(and(
+          eq(lessons.id, lessonId),
+          eq(courses.creatorId, req.user.id)
+        ))
+        .limit(1);
+
+      if (lesson.length === 0) {
+        return res.status(404).json({ success: false, error: 'Aula não encontrada' });
+      }
+
+      const updatedData = {
+        ...req.body,
+        updatedAt: new Date()
+      };
+
+      const updatedLesson = await db
+        .update(lessons)
+        .set(updatedData)
+        .where(eq(lessons.id, lessonId))
+        .returning();
+
+      console.log(`✅ Aula atualizada: ${lessonId}`);
+      res.json({ success: true, lesson: updatedLesson[0] });
+    } catch (error) {
+      console.error('❌ Erro ao atualizar aula:', error);
+      res.status(500).json({ success: false, error: 'Erro ao atualizar aula' });
+    }
+  });
+
+  // ===== PUSH NOTIFICATIONS ESPECÍFICAS PARA CURSOS =====
+
+  // Inscrever usuário para push notifications do curso
+  app.post('/api/courses/:courseId/subscribe-push', verifyJWT, async (req: any, res) => {
+    try {
+      const courseId = req.params.courseId;
+      const { subscription } = req.body;
+      
+      if (!subscription || !subscription.endpoint) {
+        return res.status(400).json({ success: false, error: 'Subscription inválida' });
+      }
+
+      const subscriptionId = await coursePushService.subscribeToCourse(
+        courseId, 
+        req.user.id, 
+        subscription
+      );
+
+      console.log(`✅ Push subscription criada para curso ${courseId}: ${subscriptionId}`);
+      res.json({ 
+        success: true, 
+        message: 'Inscrito para notificações do curso',
+        subscriptionId 
+      });
+    } catch (error) {
+      console.error('❌ Erro ao inscrever para push do curso:', error);
+      res.status(500).json({ success: false, error: 'Erro ao inscrever para push' });
+    }
+  });
+
+  // Cancelar inscrição de push notifications do curso
+  app.post('/api/courses/:courseId/unsubscribe-push', verifyJWT, async (req: any, res) => {
+    try {
+      const courseId = req.params.courseId;
+      
+      await coursePushService.unsubscribeFromCourse(courseId, req.user.id);
+
+      console.log(`✅ Push subscription cancelada para curso ${courseId} - usuário ${req.user.id}`);
+      res.json({ 
+        success: true, 
+        message: 'Inscrição de notificações cancelada' 
+      });
+    } catch (error) {
+      console.error('❌ Erro ao cancelar push do curso:', error);
+      res.status(500).json({ success: false, error: 'Erro ao cancelar push' });
+    }
+  });
+
+  // Enviar notificação para curso (criador apenas)
+  app.post('/api/courses/:courseId/send-notification', verifyJWT, async (req: any, res) => {
+    try {
+      const courseId = req.params.courseId;
+      
+      // Verificar propriedade do curso
+      const course = await db
+        .select()
+        .from(courses)
+        .where(and(
+          eq(courses.id, courseId),
+          eq(courses.creatorId, req.user.id)
+        ))
+        .limit(1);
+
+      if (course.length === 0) {
+        return res.status(404).json({ success: false, error: 'Curso não encontrado' });
+      }
+
+      const { title, message, icon, url, targetAudience, targetUserIds, progressFilter } = req.body;
+
+      if (!title || !message) {
+        return res.status(400).json({ success: false, error: 'Título e mensagem são obrigatórios' });
+      }
+
+      const result = await coursePushService.sendToCourse(courseId, {
+        title,
+        message,
+        icon,
+        url,
+        targetAudience: targetAudience || 'all',
+        targetUserIds,
+        progressFilter
+      });
+
+      console.log(`✅ Notificação enviada para curso ${courseId}: ${result.sentCount} enviadas`);
+      res.json({ 
+        success: true, 
+        message: `Notificação enviada para ${result.sentCount} usuários`,
+        stats: result
+      });
+    } catch (error) {
+      console.error('❌ Erro ao enviar notificação do curso:', error);
+      res.status(500).json({ success: false, error: 'Erro ao enviar notificação' });
+    }
+  });
+
+  // Agendar notificação para o futuro
+  app.post('/api/courses/:courseId/schedule-notification', verifyJWT, async (req: any, res) => {
+    try {
+      const courseId = req.params.courseId;
+      
+      // Verificar propriedade do curso
+      const course = await db
+        .select()
+        .from(courses)
+        .where(and(
+          eq(courses.id, courseId),
+          eq(courses.creatorId, req.user.id)
+        ))
+        .limit(1);
+
+      if (course.length === 0) {
+        return res.status(404).json({ success: false, error: 'Curso não encontrado' });
+      }
+
+      const { 
+        title, message, icon, url, targetAudience, targetUserIds, 
+        progressFilter, scheduledFor 
+      } = req.body;
+
+      if (!title || !message || !scheduledFor) {
+        return res.status(400).json({ 
+          success: false, 
+          error: 'Título, mensagem e data são obrigatórios' 
+        });
+      }
+
+      const scheduleId = await coursePushService.scheduleNotification(
+        courseId,
+        req.user.id,
+        {
+          title,
+          message,
+          icon,
+          url,
+          targetAudience: targetAudience || 'all',
+          targetUserIds,
+          progressFilter,
+          scheduledFor: new Date(scheduledFor)
+        }
+      );
+
+      console.log(`✅ Notificação agendada para curso ${courseId}: ${scheduleId}`);
+      res.json({ 
+        success: true, 
+        message: 'Notificação agendada com sucesso',
+        scheduleId
+      });
+    } catch (error) {
+      console.error('❌ Erro ao agendar notificação:', error);
+      res.status(500).json({ success: false, error: 'Erro ao agendar notificação' });
+    }
+  });
+
+  // Criar template de notificação
+  app.post('/api/courses/:courseId/notification-templates', verifyJWT, async (req: any, res) => {
+    try {
+      const courseId = req.params.courseId;
+      
+      // Verificar propriedade do curso
+      const course = await db
+        .select()
+        .from(courses)
+        .where(and(
+          eq(courses.id, courseId),
+          eq(courses.creatorId, req.user.id)
+        ))
+        .limit(1);
+
+      if (course.length === 0) {
+        return res.status(404).json({ success: false, error: 'Curso não encontrado' });
+      }
+
+      const { name, title, message, icon, url, type, triggerCondition } = req.body;
+
+      if (!name || !title || !message || !type) {
+        return res.status(400).json({ 
+          success: false, 
+          error: 'Nome, título, mensagem e tipo são obrigatórios' 
+        });
+      }
+
+      const templateId = await coursePushService.createTemplate(courseId, {
+        name,
+        title,
+        message,
+        icon,
+        url,
+        type,
+        triggerCondition
+      });
+
+      console.log(`✅ Template criado para curso ${courseId}: ${templateId}`);
+      res.json({ 
+        success: true, 
+        message: 'Template criado com sucesso',
+        templateId
+      });
+    } catch (error) {
+      console.error('❌ Erro ao criar template:', error);
+      res.status(500).json({ success: false, error: 'Erro ao criar template' });
+    }
+  });
+
+  // Obter estatísticas das notificações do curso
+  app.get('/api/courses/:courseId/notification-stats', verifyJWT, async (req: any, res) => {
+    try {
+      const courseId = req.params.courseId;
+      
+      // Verificar propriedade do curso
+      const course = await db
+        .select()
+        .from(courses)
+        .where(and(
+          eq(courses.id, courseId),
+          eq(courses.creatorId, req.user.id)
+        ))
+        .limit(1);
+
+      if (course.length === 0) {
+        return res.status(404).json({ success: false, error: 'Curso não encontrado' });
+      }
+
+      const stats = await coursePushService.getCourseStats(courseId);
+
+      res.json({ 
+        success: true, 
+        stats: {
+          ...stats,
+          courseName: course[0].title
+        }
+      });
+    } catch (error) {
+      console.error('❌ Erro ao buscar estatísticas:', error);
+      res.status(500).json({ success: false, error: 'Erro ao buscar estatísticas' });
+    }
+  });
+
+  // ===== MATRÍCULAS E PROGRESSO DE ALUNOS =====
+
+  // Matricular aluno no curso (endpoint público)
+  app.post('/api/courses/:courseId/enroll', async (req, res) => {
+    try {
+      const courseId = req.params.courseId;
+      const { userId, paymentId } = req.body;
+
+      if (!userId) {
+        return res.status(400).json({ success: false, error: 'ID do usuário é obrigatório' });
+      }
+
+      // Verificar se curso existe e está publicado
+      const course = await db
+        .select()
+        .from(courses)
+        .where(and(
+          eq(courses.id, courseId),
+          eq(courses.isPublished, true)
+        ))
+        .limit(1);
+
+      if (course.length === 0) {
+        return res.status(404).json({ success: false, error: 'Curso não encontrado ou não publicado' });
+      }
+
+      // Verificar se já está matriculado
+      const existingEnrollment = await db
+        .select()
+        .from(enrollments)
+        .where(and(
+          eq(enrollments.courseId, courseId),
+          eq(enrollments.userId, userId)
+        ))
+        .limit(1);
+
+      if (existingEnrollment.length > 0) {
+        return res.status(400).json({ success: false, error: 'Usuário já matriculado neste curso' });
+      }
+
+      const validatedData = insertEnrollmentSchema.parse({
+        courseId,
+        userId,
+        paymentId: paymentId || null,
+        progress: 0,
+        status: 'active'
+      });
+
+      const newEnrollment = await db.insert(enrollments).values(validatedData).returning();
+
+      // Atualizar contador de matrículas no curso
+      await db
+        .update(courses)
+        .set({ 
+          enrollmentCount: course[0].enrollmentCount + 1,
+          updatedAt: new Date()
+        })
+        .where(eq(courses.id, courseId));
+
+      // Disparar notificação de boas-vindas automática
+      await coursePushService.triggerAutoNotification(courseId, 'welcome', {
+        userId,
+        userName: 'Novo Aluno',
+        courseName: course[0].title
+      });
+
+      console.log(`✅ Matrícula criada: usuário ${userId} no curso ${courseId}`);
+      res.json({ 
+        success: true, 
+        enrollment: newEnrollment[0],
+        message: 'Matrícula realizada com sucesso'
+      });
+    } catch (error) {
+      console.error('❌ Erro ao criar matrícula:', error);
+      res.status(500).json({ success: false, error: 'Erro ao criar matrícula' });
+    }
+  });
+
+  // Buscar cursos do aluno
+  app.get('/api/my-courses', verifyJWT, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+
+      const myCourses = await db
+        .select()
+        .from(enrollments)
+        .innerJoin(courses, eq(enrollments.courseId, courses.id))
+        .where(eq(enrollments.userId, userId))
+        .orderBy(desc(enrollments.lastAccessedAt));
+
+      res.json({ 
+        success: true, 
+        courses: myCourses.map(item => ({
+          ...item.courses,
+          enrollment: item.enrollments
+        }))
+      });
+    } catch (error) {
+      console.error('❌ Erro ao buscar meus cursos:', error);
+      res.status(500).json({ success: false, error: 'Erro ao buscar cursos' });
+    }
+  });
+
+  // Atualizar progresso de aula
+  app.post('/api/lessons/:lessonId/progress', verifyJWT, async (req: any, res) => {
+    try {
+      const lessonId = req.params.lessonId;
+      const { progress, timeWatched, isCompleted, lastPosition } = req.body;
+
+      // Buscar aula e verificar matrícula
+      const lessonData = await db
+        .select()
+        .from(lessons)
+        .innerJoin(courses, eq(lessons.courseId, courses.id))
+        .innerJoin(enrollments, and(
+          eq(enrollments.courseId, courses.id),
+          eq(enrollments.userId, req.user.id)
+        ))
+        .where(eq(lessons.id, lessonId))
+        .limit(1);
+
+      if (lessonData.length === 0) {
+        return res.status(404).json({ success: false, error: 'Aula não encontrada ou acesso negado' });
+      }
+
+      const enrollment = lessonData[0].enrollments;
+      
+      // Verificar se já existe progresso para esta aula
+      const existingProgress = await db
+        .select()
+        .from(lessonProgress)
+        .where(and(
+          eq(lessonProgress.enrollmentId, enrollment.id),
+          eq(lessonProgress.lessonId, lessonId)
+        ))
+        .limit(1);
+
+      if (existingProgress.length > 0) {
+        // Atualizar progresso existente
+        await db
+          .update(lessonProgress)
+          .set({
+            progress: progress || existingProgress[0].progress,
+            timeWatched: timeWatched || existingProgress[0].timeWatched,
+            isCompleted: isCompleted !== undefined ? isCompleted : existingProgress[0].isCompleted,
+            lastPosition: lastPosition || existingProgress[0].lastPosition,
+            watchedAt: new Date(),
+            completedAt: isCompleted ? new Date() : existingProgress[0].completedAt
+          })
+          .where(eq(lessonProgress.id, existingProgress[0].id));
+      } else {
+        // Criar novo progresso
+        await db.insert(lessonProgress).values({
+          enrollmentId: enrollment.id,
+          lessonId,
+          progress: progress || 0,
+          timeWatched: timeWatched || 0,
+          isCompleted: isCompleted || false,
+          lastPosition: lastPosition || 0,
+          watchedAt: new Date(),
+          completedAt: isCompleted ? new Date() : null
+        });
+      }
+
+      // Atualizar último acesso na matrícula
+      await db
+        .update(enrollments)
+        .set({ lastAccessedAt: new Date() })
+        .where(eq(enrollments.id, enrollment.id));
+
+      // Se completou a aula, disparar notificação de parabéns
+      if (isCompleted) {
+        await coursePushService.triggerAutoNotification(enrollment.courseId, 'completion', {
+          userId: req.user.id,
+          userName: req.user.username || 'Aluno',
+          courseName: lessonData[0].courses.title
+        });
+      }
+
+      console.log(`✅ Progresso atualizado: aula ${lessonId} usuário ${req.user.id}`);
+      res.json({ 
+        success: true, 
+        message: 'Progresso atualizado com sucesso'
+      });
+    } catch (error) {
+      console.error('❌ Erro ao atualizar progresso:', error);
+      res.status(500).json({ success: false, error: 'Erro ao atualizar progresso' });
+    }
+  });
+
+  console.log('✅ ENDPOINTS DA ÁREA DE MEMBROS QUANTUM REGISTRADOS COM SUCESSO');
 
   // System routes registration complete
   

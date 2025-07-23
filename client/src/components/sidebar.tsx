@@ -169,6 +169,13 @@ export function Sidebar() {
       icon: <Plus className="w-3 h-3" />,
       items: [
         {
+          title: "Quantum",
+          href: "/quantum-members",
+          icon: <BookOpen className="w-4 h-4" />,
+          active: location.startsWith("/quantum"),
+          badge: "NEW"
+        },
+        {
           title: "Meus Quizzes",
           href: "/quizzes",
           icon: <BarChart3 className="w-4 h-4" />,
