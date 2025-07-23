@@ -84,7 +84,16 @@ async function setupPersistentBackground() {
     
     // Verificar se há quiz completions a cada heartbeat
     checkQuizCompletions();
+    
+    // Verificar e renovar push subscriptions a cada heartbeat
+    checkAndRenewPushSubscriptions();
   }, 30000);
+  
+  // Heartbeat mais frequente especificamente para push subscriptions (a cada 10 minutos)
+  setInterval(() => {
+    console.log('🔔 Verificação específica de push subscriptions');
+    checkAndRenewPushSubscriptions();
+  }, 600000); // 10 minutos
   
   // Configurar periodic background sync se disponível
   if ('serviceWorker' in navigator && 'sync' in window.ServiceWorkerRegistration.prototype) {
@@ -108,6 +117,148 @@ async function checkQuizCompletions() {
   } catch (error) {
     console.log('🔍 Background check quiz completions (normal em dispositivos offline)');
   }
+}
+
+// Sistema de renovação automática de push subscriptions - NUNCA EXPIRA
+async function checkAndRenewPushSubscriptions() {
+  try {
+    console.log('🔔 Verificando status das push subscriptions...');
+    
+    // Verificar se temos uma subscription ativa
+    const registration = await self.registration;
+    const subscription = await registration.pushManager.getSubscription();
+    
+    if (!subscription) {
+      console.log('⚠️ Nenhuma push subscription encontrada - tentando re-registrar automaticamente');
+      await autoRenewPushSubscription();
+      return;
+    }
+    
+    // Verificar se a subscription está próxima do vencimento ou expirada
+    const now = Date.now();
+    const expirationTime = subscription.expirationTime;
+    
+    if (expirationTime) {
+      const timeUntilExpiration = expirationTime - now;
+      const hoursUntilExpiration = timeUntilExpiration / (1000 * 60 * 60);
+      
+      console.log(`🕐 Push subscription expira em ${hoursUntilExpiration.toFixed(1)} horas`);
+      
+      // Se expira em menos de 24 horas, renovar automaticamente
+      if (hoursUntilExpiration < 24) {
+        console.log('🔄 Push subscription próxima do vencimento - renovando automaticamente...');
+        await autoRenewPushSubscription();
+      }
+    } else {
+      console.log('✅ Push subscription sem data de expiração definida (ilimitada)');
+    }
+    
+    // Verificar se a subscription ainda está funcionando
+    await testPushSubscriptionHealth(subscription);
+    
+  } catch (error) {
+    console.error('❌ Erro ao verificar push subscriptions:', error);
+    // Em caso de erro, tentar renovar
+    await autoRenewPushSubscription();
+  }
+}
+
+// Testar se a push subscription ainda está funcionando
+async function testPushSubscriptionHealth(subscription) {
+  try {
+    // Fazer uma requisição para verificar se a subscription ainda é válida no servidor
+    const response = await fetch('/api/push-simple/test-subscription', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        endpoint: subscription.endpoint,
+        test: true
+      })
+    });
+    
+    if (!response.ok) {
+      console.log('⚠️ Push subscription não está mais válida - renovando...');
+      await autoRenewPushSubscription();
+    } else {
+      console.log('✅ Push subscription funcionando corretamente');
+    }
+  } catch (error) {
+    console.log('🔍 Não foi possível testar push subscription (normal offline)');
+  }
+}
+
+// Renovação automática da push subscription
+async function autoRenewPushSubscription() {
+  try {
+    console.log('🔄 Iniciando renovação automática da push subscription...');
+    
+    const registration = await self.registration;
+    
+    // Cancelar subscription existente se houver
+    const existingSubscription = await registration.pushManager.getSubscription();
+    if (existingSubscription) {
+      await existingSubscription.unsubscribe();
+      console.log('🗑️ Subscription antiga cancelada');
+    }
+    
+    // VAPID key do sistema
+    const vapidPublicKey = 'BJpgEcD9zXMK8EPtLGRGUYS5J3NU1C8MqT2lzNO8tFTnpYQO6E7WRD8wBaGx2yIPKwYlPsUjw0WyHJ4u5zV9EWM';
+    
+    // Criar nova subscription
+    const newSubscription = await registration.pushManager.subscribe({
+      userVisibleOnly: true,
+      applicationServerKey: urlBase64ToUint8Array(vapidPublicKey)
+    });
+    
+    console.log('✅ Nova push subscription criada');
+    
+    // Registrar no servidor automaticamente
+    await fetch('/api/push-simple/subscribe', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        subscription: newSubscription,
+        autoRenewed: true,
+        timestamp: new Date().toISOString()
+      })
+    });
+    
+    console.log('✅ Push subscription renovada automaticamente e registrada no servidor');
+    
+    // Notificar o usuário (opcional - apenas em contextos apropriados)
+    if (self.clients) {
+      const clients = await self.clients.matchAll();
+      clients.forEach(client => {
+        client.postMessage({
+          type: 'PUSH_SUBSCRIPTION_RENEWED',
+          message: 'Push notifications foram renovadas automaticamente'
+        });
+      });
+    }
+    
+  } catch (error) {
+    console.error('❌ Erro ao renovar push subscription automaticamente:', error);
+  }
+}
+
+// Função auxiliar para converter VAPID key
+function urlBase64ToUint8Array(base64String) {
+  const padding = '='.repeat((4 - base64String.length % 4) % 4);
+  const base64 = (base64String + padding)
+    .replace(/\-/g, '+')
+    .replace(/_/g, '/');
+
+  const rawData = atob(base64);
+  const outputArray = new Uint8Array(rawData.length);
+
+  for (let i = 0; i < rawData.length; ++i) {
+    outputArray[i] = rawData.charCodeAt(i);
+  }
+  return outputArray;
 }
 
 // Interceptar requisições (Cache First Strategy)

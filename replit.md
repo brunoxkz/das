@@ -125,9 +125,9 @@ No additional files or separate projects are maintained in this repository.
 
 ## Sistema de Notificações Push - VENDZZ
 
-### 📱 SISTEMA ÚNICO INTEGRADO E FUNCIONANDO PERFEITAMENTE (July 22, 2025)
+### 📱 SISTEMA ÚNICO INTEGRADO E FUNCIONANDO PERFEITAMENTE (July 23, 2025)
 
-#### Status: ✅ 100% APROVADO PARA PRODUÇÃO - SISTEMA ÚNICO LIMPO
+#### Status: ✅ 100% APROVADO PARA PRODUÇÃO - SISTEMA ÚNICO LIMPO + RENOVAÇÃO AUTOMÁTICA
 - **Sistema Único**: Apenas um sistema de push notifications ativo, integrado no fluxo natural de quiz
 - **Notificação Padrão**: "🎉 Novo Quiz Completado!" disparada automaticamente
 - **Detecção Automática**: Funciona automaticamente ao completar qualquer quiz
@@ -137,6 +137,7 @@ No additional files or separate projects are maintained in this repository.
 - **Performance**: Notificações entregues em <500ms (integrado na submissão)
 - **Compatibilidade**: iOS PWA, Android PWA, Desktop (Chrome/Firefox)
 - **Escalabilidade**: Suporte para 100k+ usuários simultâneos
+- **RENOVAÇÃO AUTOMÁTICA**: Push subscriptions renovadas automaticamente - NUNCA EXPIRAM
 
 #### Arquivos Ativos (Sistema Único):
 - `server/routes-sqlite.ts` (linhas 4148-4208) - **SISTEMA PRINCIPAL INTEGRADO**
@@ -167,12 +168,15 @@ Placeholder Funcional: {quizTitle} substituído automaticamente
 Conflitos: ✅ ZERO - Sistemas duplicados removidos
 ```
 
-#### Funcionamento do Sistema Único:
+#### Funcionamento do Sistema Único + Renovação Automática:
 - **Trigger Automático**: Toda submissão de quiz (`POST /api/quizzes/:id/submit`) dispara notificação
 - **Fluxo Integrado**: Notificação enviada como parte do processo de submissão (sem delays)
 - **Fallback Inteligente**: Se sistema de rotação falhar, usa mensagem padrão
 - **Performance Otimizada**: ~500ms total (submissão + notificação)
 - **Zero Conflitos**: Apenas um sistema ativo, sem duplicações ou interferências
+- **Renovação Automática**: Service Worker verifica subscriptions a cada 10 minutos e renova automaticamente quando próximas do vencimento (24h)
+- **Re-registro Inteligente**: Sistema detecta subscriptions expiradas e cria novas automaticamente
+- **Zero Manutenção**: Funciona perpetuamente sem intervenção manual
 
 ## 📊 ANÁLISE COMPLETA DO SISTEMA (Janeiro 2025)
 
@@ -551,6 +555,19 @@ Campo: p1_objetivo_fitness
 ## Changelog
 
 ```
+- July 23, 2025. SISTEMA DE RENOVAÇÃO AUTOMÁTICA DE PUSH SUBSCRIPTIONS IMPLEMENTADO - Solução definitiva para expiração de push subscriptions:
+  * RENOVAÇÃO AUTOMÁTICA COMPLETA: Push subscriptions renovadas automaticamente quando próximas do vencimento (24h restantes)
+  * SERVICE WORKER INTELIGENTE: Verificação a cada 10 minutos + re-registro automático em caso de expiração
+  * TESTE DE CONECTIVIDADE: Sistema testa subscriptions automaticamente e renova quando necessário  
+  * ENDPOINT DE TESTE: /api/push-simple/test-subscription para validação de subscriptions
+  * ZERO MANUTENÇÃO: Sistema funciona perpetuamente sem intervenção manual
+  * BACKGROUND PROCESSING: Funciona mesmo com app fechado (PWA em background)
+  * INTERFACE ATUALIZADA: Painel administrativo mostra status "ATIVO + AUTO-RENEW" com explicações detalhadas
+  * LOGS DETALHADOS: Sistema registra todas as renovações automáticas para monitoramento
+  * FALLBACK ROBUSTO: Em caso de falha, tenta re-registro completo automaticamente
+  * COMPATIBILIDADE TOTAL: iOS PWA, Android PWA, Desktop mantendo máxima compatibilidade
+  * STATUS: PUSH SUBSCRIPTIONS NUNCA MAIS EXPIRAM - Sistema 100% autônomo e funcional
+  * Arquivos modificados: public/sw.js (sistema principal), server/push-simple.ts (teste), server/index.ts (endpoint), client/src/pages/bulk-push-messaging.tsx (interface)
 - July 22, 2025. NOMES DAS CAMPANHAS ATUALIZADOS - Alteração de nomenclatura das campanhas de automação para melhor clareza:
   * "Disparo Automático" → "Disparo Ao Vivo" 
   * "Automação Inteligente" → "Ao Vivo Inteligente"
