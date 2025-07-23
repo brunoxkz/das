@@ -113,8 +113,8 @@ export const quizTemplates = sqliteTable("quiz_templates", {
 
 export const quizResponses = sqliteTable("quiz_responses", {
   id: text("id").primaryKey(),
-  quizId: text("quiz_id").notNull().references(() => quizzes.id),
-  userId: text("user_id").references(() => users.id), // Campo opcional para respostas de usuários logados
+  quizId: text("quizId").notNull().references(() => quizzes.id),
+  userId: text("userId").references(() => users.id), // Campo opcional para respostas de usuários logados
   responses: text("responses", { mode: 'json' }).notNull(),
   metadata: text("metadata", { mode: 'json' }),
   submittedAt: integer("submittedAt", { mode: 'timestamp' }).notNull().$defaultFn(() => new Date()),
