@@ -4387,7 +4387,7 @@ const gameElementCategories = [
         );
 
       case "loading_question":
-        const loadingMessage = element.loadingText || "Processando...";
+        const loadingMessage = element.loadingText;
         const loadingDuration = element.loadingDuration || 3;
         const showProgressPercentage = element.showPercentage !== false;
         const enableShineEffect = element.enableShine || false;
@@ -4398,8 +4398,12 @@ const gameElementCategories = [
         
         return (
           <div className="space-y-4 py-6 px-4 bg-white rounded-lg border border-gray-200 shadow-sm">
+            {loadingMessage && (
+              <div className="text-center mb-4">
+                <h3 className="text-lg font-semibold text-gray-800 mb-2">{loadingMessage}</h3>
+              </div>
+            )}
             <div className="text-center mb-4">
-              <h3 className="text-lg font-semibold text-gray-800 mb-2">{loadingMessage}</h3>
               <p className="text-sm text-gray-600">Tempo: {loadingDuration}s</p>
             </div>
             
@@ -8707,11 +8711,12 @@ const gameElementCategories = [
                   <div>
                     <Label>Texto do Carregamento</Label>
                     <Input
-                      value={selectedElementData.loadingText || "Processando..."}
+                      value={selectedElementData.loadingText || ""}
                       onChange={(e) => updateElement(selectedElementData.id, { loadingText: e.target.value })}
-                      placeholder="Processando..."
+                      placeholder="Deixe vazio para não mostrar texto"
                       className="mt-1"
                     />
+                    <p className="text-xs text-gray-500 mt-1">💡 Deixe vazio para ocultar o texto de carregamento</p>
                   </div>
 
                   <div>

@@ -1194,16 +1194,21 @@ export default function QuizPreview({ quiz, onClose, onSave, initialPage = 0 }: 
           [element.fieldId]: value
         }));
       }
+      // 🔥 SILENT RESPONSE - Não mostrar "resposta registrada"
     };
     
     return (
       <div className="w-full space-y-4 p-4 border border-gray-200 rounded-lg bg-white">
         {!showQuestion && (
           <div className="space-y-3">
+            {element.loadingText && (
+              <div className="flex items-center justify-between">
+                <h4 className="font-semibold text-gray-800">
+                  {element.loadingText}
+                </h4>
+              </div>
+            )}
             <div className="flex items-center justify-between">
-              <h4 className="font-semibold text-gray-800">
-                {element.loadingText || "Processando..."}
-              </h4>
               {element.loadingShowPercentage && (
                 <span className="text-sm font-mono text-gray-600">{progress}%</span>
               )}

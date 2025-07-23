@@ -598,6 +598,16 @@ Campo: p1_objetivo_fitness
 ## Changelog
 
 ```
+- January 23, 2025. LOADING QUESTION ELEMENT ENHANCEMENT COMPLETED - Text now fully editable and removable, silent response registration implemented:
+  * EDITABLE LOADING TEXT: Loading text field now accepts empty string, shows placeholder "Deixe vazio para não mostrar texto"
+  * CONDITIONAL TEXT RENDERING: Loading text only displays if provided, completely optional display 
+  * SILENT RESPONSE REGISTRATION: Removed "resposta registrada" confirmation messages - responses register silently
+  * CROSS-COMPONENT IMPLEMENTATION: Applied improvements across PageEditorHorizontal, quiz-preview.tsx, and quiz-public-renderer.tsx
+  * INTELLIGENT INTERFACE: Added helpful tooltip "💡 Deixe vazio para ocultar o texto de carregamento"
+  * USER EXPERIENCE: Cleaner interface without forced "Processando..." text and no disruptive confirmation messages
+  * DEFAULT BEHAVIOR: Loading text defaults to empty string, no forced text display unless user explicitly adds it
+  * TECHNICAL IMPLEMENTATION: Conditional rendering with `{element.loadingText && (...)}` pattern for clean UI
+  * STATUS: LOADING QUESTION ELEMENT 100% ENHANCED - Text fully customizable, responses register silently
 - January 23, 2025. ELEMENTO 'NÚMERO' COMPLETAMENTE IMPLEMENTADO - Formatação completa aplicada com consistência em todos os componentes:
   * FORMATAÇÃO COMPLETA IMPLEMENTADA: Tamanho de fonte (xs/sm/lg/xl), peso da fonte, alinhamento de texto aplicados corretamente
   * LARGURA RESPONSIVA: Opções de largura em porcentagem (25%, 50%, 75%, 100%) implementadas

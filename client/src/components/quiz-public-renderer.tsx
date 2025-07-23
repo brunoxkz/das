@@ -228,16 +228,21 @@ const LoadingWithQuestionElementPublic = ({ element, handleAnswer }: { element: 
   const handleQuestionAnswer = (value: string) => {
     setAnswer(value);
     handleAnswer(element.id, element.type, value, element.fieldId || properties.fieldId);
+    // 🔥 SILENT RESPONSE - Não mostrar "resposta registrada"
   };
   
   return (
     <div className="w-full space-y-4 p-4 border border-gray-200 rounded-lg bg-white">
       {!showQuestion && (
         <div className="space-y-3">
+          {properties.loadingText && (
+            <div className="flex items-center justify-between">
+              <h4 className="font-semibold text-gray-800">
+                {properties.loadingText}
+              </h4>
+            </div>
+          )}
           <div className="flex items-center justify-between">
-            <h4 className="font-semibold text-gray-800">
-              {properties.loadingText || "Processando..."}
-            </h4>
             {properties.loadingShowPercentage && (
               <span className="text-sm font-mono text-gray-600">{progress}%</span>
             )}
