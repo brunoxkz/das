@@ -5781,7 +5781,7 @@ export function registerSQLiteRoutes(app: Express): Server {
   );
 
   // Get quiz stats
-  app.get("/api/quizzes/:id/stats", verifyJWT, async (req: any, res) => {
+  app.get("/api/quizzes/:id/stats", verifyJWT, async (req: express.Request & { user?: any }, res: express.Response) => {
     try {
       const quiz = await storage.getQuiz(req.params.id);
       
@@ -5840,7 +5840,7 @@ export function registerSQLiteRoutes(app: Express): Server {
 
   // Health check
   // Auth verification endpoint - MUST use application/json content type
-  app.get("/api/auth/verify", verifyJWT, async (req: any, res) => {
+  app.get("/api/auth/verify", verifyJWT, async (req: express.Request & { user?: any }, res: express.Response) => {
     try {
       res.setHeader('Content-Type', 'application/json');
       
@@ -5963,7 +5963,7 @@ export function registerSQLiteRoutes(app: Express): Server {
   // ⚠️ ROTA DUPLICADA REMOVIDA - Usar apenas o endpoint otimizado com push notifications (linha 4073)
 
   // SMS Quiz Phone Numbers endpoint
-  app.get("/api/quiz-phones/:quizId", verifyJWT, async (req: any, res) => {
+  app.get("/api/quiz-phones/:quizId", verifyJWT, async (req: express.Request & { user?: any }, res: express.Response) => {
     try {
       const { quizId } = req.params;
       const userId = req.user.id;
@@ -6242,7 +6242,7 @@ export function registerSQLiteRoutes(app: Express): Server {
   });
 
   // SMS Credits endpoint COM PROTEÇÃO ANTI-BURLA
-  app.get("/api/sms-credits", verifyJWT, async (req: any, res) => {
+  app.get("/api/sms-credits", verifyJWT, async (req: express.Request & { user?: any }, res: express.Response) => {
     try {
       const userId = req.user.id;
       const validation = await creditProtection.validateCreditsBeforeUse(
@@ -6268,7 +6268,7 @@ export function registerSQLiteRoutes(app: Express): Server {
   });
 
   // User Credits endpoint COM VALIDAÇÃO RIGOROSA
-  app.get("/api/user/credits", verifyJWT, async (req: any, res) => {
+  app.get("/api/user/credits", verifyJWT, async (req: express.Request & { user?: any }, res: express.Response) => {
     try {
       const userId = req.user.id;
       
@@ -6309,7 +6309,7 @@ export function registerSQLiteRoutes(app: Express): Server {
   });
 
   // Unified Credits Purchase endpoint
-  app.post("/api/credits/purchase", verifyJWT, async (req: any, res) => {
+  app.post("/api/credits/purchase", verifyJWT, async (req: express.Request & { user?: any }, res: express.Response) => {
     try {
       const { type, packageId } = req.body;
       const userId = req.user.id;
@@ -6404,7 +6404,7 @@ export function registerSQLiteRoutes(app: Express): Server {
   });
 
   // SMS Credits History endpoint
-  app.get("/api/sms-credits/history", verifyJWT, async (req: any, res) => {
+  app.get("/api/sms-credits/history", verifyJWT, async (req: express.Request & { user?: any }, res: express.Response) => {
     try {
       const userId = req.user.id;
       const transactions = await storage.getSmsTransactions(userId);
@@ -6417,7 +6417,7 @@ export function registerSQLiteRoutes(app: Express): Server {
   });
 
   // STRIPE INTEGRATION - CRIAR CUSTOMER
-  app.post("/api/stripe/customer", verifyJWT, async (req: any, res) => {
+  app.post("/api/stripe/customer", verifyJWT, async (req: express.Request & { user?: any }, res: express.Response) => {
     try {
       const userId = req.user.id;
       const user = await storage.getUser(userId);
@@ -6440,7 +6440,7 @@ export function registerSQLiteRoutes(app: Express): Server {
   });
 
   // STRIPE INTEGRATION - CRIAR CUSTOMER (TESTE)
-  app.post("/api/stripe/create-customer", verifyJWT, async (req: any, res) => {
+  app.post("/api/stripe/create-customer", verifyJWT, async (req: express.Request & { user?: any }, res: express.Response) => {
     try {
       const { email, name, phone } = req.body;
       
@@ -6463,7 +6463,7 @@ export function registerSQLiteRoutes(app: Express): Server {
   });
 
   // STRIPE INTEGRATION - CRIAR TOKEN DE CARTÃO
-  app.post("/api/stripe/create-token", verifyJWT, async (req: any, res) => {
+  app.post("/api/stripe/create-token", verifyJWT, async (req: express.Request & { user?: any }, res: express.Response) => {
     try {
       const { card } = req.body;
       
@@ -7194,7 +7194,7 @@ export function registerSQLiteRoutes(app: Express): Server {
   });
 
   // STRIPE INTEGRATION - CRIAR ASSINATURA
-  app.post("/api/stripe/subscription", verifyJWT, async (req: any, res) => {
+  app.post("/api/stripe/subscription", verifyJWT, async (req: express.Request & { user?: any }, res: express.Response) => {
     try {
       const { planId, paymentMethodId } = req.body;
       const userId = req.user.id;
@@ -7242,7 +7242,7 @@ export function registerSQLiteRoutes(app: Express): Server {
   });
 
   // Rota para assinatura paga com cobrança combinada (R$1.00 + R$29.90/mês)
-  app.post("/api/assinatura-paga", verifyJWT, async (req: any, res) => {
+  app.post("/api/assinatura-paga", verifyJWT, async (req: express.Request & { user?: any }, res: express.Response) => {
     try {
       const { paymentMethodId } = req.body;
       const userId = req.user.id;
@@ -7391,7 +7391,7 @@ export function registerSQLiteRoutes(app: Express): Server {
   });
 
   // STRIPE INTEGRATION - CANCELAR ASSINATURA
-  app.post("/api/stripe/subscription/cancel", verifyJWT, async (req: any, res) => {
+  app.post("/api/stripe/subscription/cancel", verifyJWT, async (req: express.Request & { user?: any }, res: express.Response) => {
     try {
       const userId = req.user.id;
       if (!stripeService) {
@@ -7416,7 +7416,7 @@ export function registerSQLiteRoutes(app: Express): Server {
   });
 
   // STRIPE INTEGRATION - COMPRAR CRÉDITOS
-  app.post("/api/stripe/credits", verifyJWT, async (req: any, res) => {
+  app.post("/api/stripe/credits", verifyJWT, async (req: express.Request & { user?: any }, res: express.Response) => {
     try {
       const { type, packageId, paymentMethodId } = req.body;
       const userId = req.user.id;
@@ -7500,7 +7500,7 @@ export function registerSQLiteRoutes(app: Express): Server {
   });
 
   // STRIPE INTEGRATION - SOLUÇÃO TÉCNICA CORRETA: R$1 IMEDIATO + ASSINATURA R$29.90 APÓS 3 DIAS
-  app.post("/api/stripe/create-checkout-session", verifyJWT, async (req: any, res) => {
+  app.post("/api/stripe/create-checkout-session", verifyJWT, async (req: express.Request & { user?: any }, res: express.Response) => {
     try {
       const { trial_period_days = 3, trial_price = 1.00, regular_price = 29.90, currency = "BRL" } = req.body;
       const userId = req.user.id;
@@ -7599,7 +7599,7 @@ export function registerSQLiteRoutes(app: Express): Server {
   });
 
   // STRIPE CHECKOUT CUSTOMIZADO - MODELO CORRETO R$1 + R$29,90/MÊS
-  app.post("/api/stripe/create-custom-checkout", verifyJWT, async (req: any, res) => {
+  app.post("/api/stripe/create-custom-checkout", verifyJWT, async (req: express.Request & { user?: any }, res: express.Response) => {
     try {
       const { name, description, trialAmount, trialDays, recurringAmount, recurringInterval, currency } = req.body;
       const userEmail = req.user.email;
@@ -7646,7 +7646,7 @@ export function registerSQLiteRoutes(app: Express): Server {
   });
 
   // STRIPE ELEMENTS - FLUXO CORRETO COM INVOICE + SUBSCRIPTION
-  app.post("/api/stripe/create-elements-checkout", verifyJWT, async (req: any, res) => {
+  app.post("/api/stripe/create-elements-checkout", verifyJWT, async (req: express.Request & { user?: any }, res: express.Response) => {
     try {
       const { name, description, immediateAmount, trialDays, recurringAmount, currency } = req.body;
       const userEmail = req.user.email;
@@ -7697,7 +7697,7 @@ export function registerSQLiteRoutes(app: Express): Server {
   });
 
   // PROCESSAR PAGAMENTO APÓS CONFIRMAÇÃO DO CARTÃO
-  app.post("/api/stripe/process-elements-payment", verifyJWT, async (req: any, res) => {
+  app.post("/api/stripe/process-elements-payment", verifyJWT, async (req: express.Request & { user?: any }, res: express.Response) => {
     try {
       const { setupIntentId } = req.body;
 
@@ -7729,7 +7729,7 @@ export function registerSQLiteRoutes(app: Express): Server {
   });
 
   // VERIFICAR STATUS DO PAGAMENTO
-  app.get("/api/stripe/payment-status/:setupIntentId", verifyJWT, async (req: any, res) => {
+  app.get("/api/stripe/payment-status/:setupIntentId", verifyJWT, async (req: express.Request & { user?: any }, res: express.Response) => {
     try {
       const { setupIntentId } = req.params;
 
@@ -7781,7 +7781,7 @@ export function registerSQLiteRoutes(app: Express): Server {
   });
 
   // CRIAR LINK DIRETO PARA STRIPE ELEMENTS CHECKOUT
-  app.post("/api/stripe/create-checkout-link", verifyJWT, async (req: any, res) => {
+  app.post("/api/stripe/create-checkout-link", verifyJWT, async (req: express.Request & { user?: any }, res: express.Response) => {
     try {
       const { name, description, immediateAmount, trialDays, recurringAmount, currency, expiresInHours, recurringInterval } = req.body;
       
