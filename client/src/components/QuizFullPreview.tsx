@@ -357,7 +357,8 @@ const ElementRenderer = ({ element }: { element: QuizElement }) => {
       const starCount = properties.starCount || 5;
       const starSize = properties.starSize || "medium";
       const starColor = properties.starColor || "#FBBF24";
-      const starFilled = properties.starFilled || false;
+      const isInteractive = properties.isInteractive || false;
+      const filledStars = properties.filledStars || 0;
       
       const starSizeClass = {
         small: "w-4 h-4",
@@ -370,26 +371,46 @@ const ElementRenderer = ({ element }: { element: QuizElement }) => {
           {properties.question && (
             <label className="block mb-3 font-medium text-gray-700">
               {properties.question}
+              {isInteractive && properties.required && <span className="text-red-500 ml-1">*</span>}
             </label>
           )}
           <div className="flex space-x-1 mb-2">
-            {Array.from({ length: starCount }, (_, index) => (
-              <Star
-                key={index}
-                className={`${starSizeClass[starSize]} cursor-pointer hover:opacity-80 transition-all`}
-                style={{ color: starColor }}
-                fill={starFilled ? starColor : 'none'}
-                strokeWidth={2}
-              />
-            ))}
+            {Array.from({ length: starCount }, (_, index) => {
+              // Lógica para preenchimento baseada no modo
+              const shouldFill = isInteractive ? 
+                false : // No modo interativo, mostra vazio no preview
+                index < filledStars; // No modo visualização, usa filledStars
+              
+              return (
+                <Star
+                  key={index}
+                  className={`${starSizeClass[starSize]} transition-all ${
+                    isInteractive ? 'cursor-pointer hover:scale-110 hover:opacity-80' : ''
+                  }`}
+                  style={{ color: starColor }}
+                  fill={shouldFill ? starColor : 'none'}
+                  strokeWidth={2}
+                />
+              );
+            })}
           </div>
           <div className="text-xs text-gray-500">
-            Configuração: {starCount} estrelas • 
-            Cor: {starColor} • 
-            {starFilled ? 'Preenchidas' : 'Contorno'} • 
-            Tamanho: {starSize}
+            {isInteractive ? (
+              <>
+                Modo Interativo: {starCount} estrelas • 
+                Cor: {starColor} • 
+                Tamanho: {starSize} • 
+                Usuário pode clicar para avaliar
+              </>
+            ) : (
+              <>
+                Modo Visualização: {filledStars}/{starCount} estrelas • 
+                Cor: {starColor} • 
+                Tamanho: {starSize}
+              </>
+            )}
           </div>
-          {properties.required && (
+          {isInteractive && properties.required && (
             <div className="text-xs text-red-500 mt-1">* Campo obrigatório</div>
           )}
         </div>

@@ -6277,7 +6277,7 @@ const gameElementCategories = [
                       <span className="font-medium text-yellow-800">Configurações de Avaliação</span>
                     </div>
                     <div className="text-xs text-yellow-700">
-                      Configure quantidade de estrelas, cor e estilo de preenchimento
+                      Configure modo (visualização/interativo), quantidade de estrelas e aparência
                     </div>
                   </div>
 
@@ -6292,9 +6292,46 @@ const gameElementCategories = [
                     />
                   </div>
 
+                  {/* Modo de funcionamento */}
+                  <div className="space-y-3">
+                    <Label className="text-sm font-medium">Modo de Funcionamento</Label>
+                    <div className="space-y-2">
+                      <label className="flex items-start space-x-3 cursor-pointer p-3 border rounded-lg hover:bg-gray-50 transition-colors">
+                        <input
+                          type="radio"
+                          name={`ratingMode-${selectedElementData.id}`}
+                          checked={!selectedElementData.isInteractive}
+                          onChange={() => updateElement(selectedElementData.id, { isInteractive: false })}
+                          className="mt-1 text-green-600 focus:ring-green-500"
+                        />
+                        <div className="flex-1">
+                          <span className="text-sm font-medium text-gray-900">📊 Apenas Visualização</span>
+                          <div className="text-xs text-gray-500 mt-1">
+                            Criador define quantas estrelas aparecem preenchidas. Usuário não pode interagir.
+                          </div>
+                        </div>
+                      </label>
+                      <label className="flex items-start space-x-3 cursor-pointer p-3 border rounded-lg hover:bg-gray-50 transition-colors">
+                        <input
+                          type="radio"
+                          name={`ratingMode-${selectedElementData.id}`}
+                          checked={selectedElementData.isInteractive === true}
+                          onChange={() => updateElement(selectedElementData.id, { isInteractive: true })}
+                          className="mt-1 text-green-600 focus:ring-green-500"
+                        />
+                        <div className="flex-1">
+                          <span className="text-sm font-medium text-gray-900">⭐ Interativo</span>
+                          <div className="text-xs text-gray-500 mt-1">
+                            Usuário pode clicar nas estrelas para dar nota. Preenchimento dinâmico em tempo real.
+                          </div>
+                        </div>
+                      </label>
+                    </div>
+                  </div>
+
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <Label htmlFor="star-count">Quantidade de Estrelas</Label>
+                      <Label htmlFor="star-count">Quantidade Total de Estrelas</Label>
                       <select
                         id="star-count"
                         value={selectedElementData.starCount || 5}
@@ -6322,6 +6359,28 @@ const gameElementCategories = [
                     </div>
                   </div>
 
+                  {/* Estrelas preenchidas (apenas no modo visualização) */}
+                  {!selectedElementData.isInteractive && (
+                    <div>
+                      <Label htmlFor="filled-stars">Estrelas Preenchidas (Visualização)</Label>
+                      <select
+                        id="filled-stars"
+                        value={selectedElementData.filledStars || 0}
+                        onChange={(e) => updateElement(selectedElementData.id, { filledStars: Number(e.target.value) })}
+                        className="w-full mt-1 p-2 border border-gray-300 rounded-md"
+                      >
+                        {Array.from({ length: (selectedElementData.starCount || 5) + 1 }, (_, i) => (
+                          <option key={i} value={i}>
+                            {i} de {selectedElementData.starCount || 5} estrelas preenchidas
+                          </option>
+                        ))}
+                      </select>
+                      <p className="text-xs text-gray-500 mt-1">
+                        Defina quantas estrelas aparecerão preenchidas no modo visualização
+                      </p>
+                    </div>
+                  )}
+
                   <div>
                     <Label htmlFor="star-color">Cor das Estrelas</Label>
                     <div className="flex gap-2 mt-1">
@@ -6341,57 +6400,55 @@ const gameElementCategories = [
                     </div>
                   </div>
 
-                  <div className="flex items-center space-x-2">
-                    <input
-                      type="checkbox"
-                      id="star-filled"
-                      checked={selectedElementData.starFilled || false}
-                      onChange={(e) => updateElement(selectedElementData.id, { starFilled: e.target.checked })}
-                    />
-                    <Label htmlFor="star-filled">Estrelas preenchidas (ao invés de apenas contorno)</Label>
-                  </div>
+                  {selectedElementData.isInteractive && (
+                    <div className="flex items-center space-x-2">
+                      <input
+                        type="checkbox"
+                        id="rating-required"
+                        checked={selectedElementData.required || false}
+                        onChange={(e) => updateElement(selectedElementData.id, { required: e.target.checked })}
+                      />
+                      <Label htmlFor="rating-required">Campo obrigatório</Label>
+                    </div>
+                  )}
 
-                  <div className="flex items-center space-x-2">
-                    <input
-                      type="checkbox"
-                      id="rating-required"
-                      checked={selectedElementData.required || false}
-                      onChange={(e) => updateElement(selectedElementData.id, { required: e.target.checked })}
-                    />
-                    <Label htmlFor="rating-required">Campo obrigatório</Label>
-                  </div>
+                  {selectedElementData.isInteractive && (
+                    <>
+                      <div>
+                        <Label htmlFor="rating-field-id">ID do Campo (para captura de leads)</Label>
+                        <Input
+                          id="rating-field-id"
+                          value={selectedElementData.fieldId || ""}
+                          onChange={(e) => updateElement(selectedElementData.id, { fieldId: e.target.value })}
+                          className="mt-1"
+                          placeholder="avaliacao_produto"
+                        />
+                        <p className="text-xs text-gray-500 mt-1">
+                          Identificador único para capturar essa avaliação na geração de leads
+                        </p>
+                      </div>
 
-                  <div>
-                    <Label htmlFor="rating-field-id">ID do Campo (para captura de leads)</Label>
-                    <Input
-                      id="rating-field-id"
-                      value={selectedElementData.fieldId || ""}
-                      onChange={(e) => updateElement(selectedElementData.id, { fieldId: e.target.value })}
-                      className="mt-1"
-                      placeholder="avaliacao_produto"
-                    />
-                    <p className="text-xs text-gray-500 mt-1">
-                      Identificador único para capturar essa avaliação na geração de leads
-                    </p>
-                  </div>
-
-                  <div>
-                    <Label htmlFor="rating-response-id">ID da Resposta (para usar como variável)</Label>
-                    <Input
-                      id="rating-response-id"
-                      value={selectedElementData.responseId || ""}
-                      onChange={(e) => updateElement(selectedElementData.id, { responseId: e.target.value })}
-                      className="mt-1"
-                      placeholder="avaliacao"
-                    />
-                    <p className="text-xs text-gray-500 mt-1">
-                      Use &#123;avaliacao&#125; em campanhas SMS/Email/WhatsApp
-                    </p>
-                  </div>
+                      <div>
+                        <Label htmlFor="rating-response-id">ID da Resposta (para usar como variável)</Label>
+                        <Input
+                          id="rating-response-id"
+                          value={selectedElementData.responseId || ""}
+                          onChange={(e) => updateElement(selectedElementData.id, { responseId: e.target.value })}
+                          className="mt-1"
+                          placeholder="avaliacao"
+                        />
+                        <p className="text-xs text-gray-500 mt-1">
+                          Use &#123;avaliacao&#125; em campanhas SMS/Email/WhatsApp
+                        </p>
+                      </div>
+                    </>
+                  )}
 
                   {/* Preview das estrelas configuradas */}
                   <div className="p-3 bg-gray-50 border border-gray-200 rounded-lg">
-                    <Label className="text-xs font-medium text-gray-700 mb-2 block">Preview da Configuração:</Label>
+                    <Label className="text-xs font-medium text-gray-700 mb-2 block">
+                      Preview da Configuração {selectedElementData.isInteractive ? '(Interativo)' : '(Visualização)'}:
+                    </Label>
                     <div className="flex space-x-1">
                       {Array.from({ length: selectedElementData.starCount || 5 }, (_, index) => {
                         const starSizeClass = {
@@ -6401,12 +6458,20 @@ const gameElementCategories = [
                         };
                         const starSize = starSizeClass[selectedElementData.starSize || "medium"];
                         
+                        // Lógica para preenchimento baseada no modo
+                        const shouldFill = selectedElementData.isInteractive ? 
+                          false : // No modo interativo, mostra vazio no preview
+                          index < (selectedElementData.filledStars || 0); // No modo visualização, usa filledStars
+                        
                         return (
                           <Star 
                             key={index} 
-                            className={`${starSize} cursor-pointer hover:opacity-80 transition-all`}
+                            className={`${starSize} transition-all ${
+                              selectedElementData.isInteractive ? 'cursor-pointer hover:scale-110' : ''
+                            }`}
                             style={{ color: selectedElementData.starColor || "#FBBF24" }}
-                            fill={selectedElementData.starFilled ? (selectedElementData.starColor || "#FBBF24") : 'none'}
+                            fill={shouldFill ? (selectedElementData.starColor || "#FBBF24") : 'none'}
+                            strokeWidth={2}
                           />
                         );
                       })}
@@ -6414,8 +6479,11 @@ const gameElementCategories = [
                     <div className="text-xs text-gray-500 mt-2">
                       {selectedElementData.starCount || 5} estrelas • 
                       Cor: {selectedElementData.starColor || "#FBBF24"} • 
-                      {selectedElementData.starFilled ? 'Preenchidas' : 'Contorno apenas'} • 
-                      Tamanho: {selectedElementData.starSize || "medium"}
+                      Tamanho: {selectedElementData.starSize || "medium"} • 
+                      {selectedElementData.isInteractive ? 
+                        'Modo Interativo (usuário pode clicar)' : 
+                        `Modo Visualização (${selectedElementData.filledStars || 0}/${selectedElementData.starCount || 5} preenchidas)`
+                      }
                     </div>
                   </div>
                 </div>
