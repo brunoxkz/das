@@ -416,7 +416,7 @@ app.get('/api/push-simple/stats', (req: any, res: any) => {
 console.log('✅ PUSH NOTIFICATIONS ENDPOINTS REGISTRADOS DIRETAMENTE ANTES DO VITE');
 
 // QUIZ I.A. ENDPOINTS REGISTRADOS DIRETAMENTE ANTES DO VITE
-import { verifyJWT } from "./auth-hybrid";
+
 
 app.post('/api/quiz-ia/generate', verifyJWT, async (req: any, res: any) => {
   console.log('🚀 QUIZ I.A. DIRETO: Iniciando geração de quiz...');

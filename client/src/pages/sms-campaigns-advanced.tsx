@@ -311,9 +311,30 @@ export default function SMSCampaignsAdvanced() {
   const [quizVariables, setQuizVariables] = useState<string[]>([]);
   
   // Queries
-  const { data: quizzes = [], isLoading: loadingQuizzes } = useQuery({
+  const { data: quizzes = [], isLoading: loadingQuizzes, error: quizzesError } = useQuery({
     queryKey: ['/api/quizzes'],
-    enabled: !!user
+    enabled: !!user,
+    retry: (failureCount, error) => {
+      console.error(`❌ QUIZ LOADING FAILED (Attempt ${failureCount + 1}):`, error);
+      console.log("📋 Debug Info:", {
+        user: user ? { id: user.id, email: user.email } : null,
+        accessToken: localStorage.getItem("accessToken") ? "Present" : "Missing",
+        refreshToken: localStorage.getItem("refreshToken") ? "Present" : "Missing",
+        error: error.message
+      });
+      return failureCount < 2;
+    },
+    onError: (error) => {
+      console.error("❌ QUIZ QUERY ERROR:", error);
+      toast({
+        title: "Erro ao carregar quizzes",
+        description: `Falha na autenticação: ${error.message}`,
+        variant: "destructive",
+      });
+    },
+    onSuccess: (data) => {
+      console.log("✅ QUIZZES LOADED SUCCESSFULLY:", data.length, "quizzes found");
+    }
   });
 
   // Debug para verificar quizzes
