@@ -1,12 +1,10 @@
 import React from 'react';
 import { Elements } from '@stripe/react-stripe-js';
-// Stripe.js desabilitado para evitar erros CSP
-// import { loadStripe } from '@stripe/stripe-js';
+import { loadStripe } from '@stripe/stripe-js';
 import CheckoutSubscription from './checkout-subscription';
 
-// Inicializar Stripe
-// Stripe.js desabilitado para evitar erros CSP
-const stripePromise = Promise.resolve(null);
+// Inicializar Stripe com chave pública
+const stripePromise = loadStripe((import.meta as any).env.VITE_STRIPE_PUBLIC_KEY || '');
 
 interface CheckoutSubscriptionWrapperProps {
   onSuccess?: (subscriptionId: string) => void;
