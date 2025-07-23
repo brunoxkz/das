@@ -23,7 +23,15 @@ import { stripeTrialService } from "./stripe-subscription-trial";
 import Stripe from 'stripe';
 
 // Garantir que o Stripe está inicializado com a chave correta
-let activeStripeService: any = null;
+interface StripeServiceType {
+  stripe: Stripe;
+  createCustomer: (data: Stripe.CustomerCreateParams) => Promise<Stripe.Customer>;
+  createProduct: (data: Stripe.ProductCreateParams) => Promise<Stripe.Product>;
+  createPrice: (data: Stripe.PriceCreateParams) => Promise<Stripe.Price>;
+  createCheckoutSession: (data: Stripe.Checkout.SessionCreateParams) => Promise<Stripe.Checkout.Session>;
+}
+
+let activeStripeService: StripeServiceType | null = null;
 
 // Função para inicializar o Stripe com delay
 const initializeStripe = () => {
@@ -37,15 +45,16 @@ const initializeStripe = () => {
       
       activeStripeService = {
         stripe: stripe,
-        createCustomer: async (data: any) => stripe.customers.create(data),
-        createProduct: async (data: any) => stripe.products.create(data),
-        createPrice: async (data: any) => stripe.prices.create(data),
-        createCheckoutSession: async (data: any) => stripe.checkout.sessions.create(data)
+        createCustomer: async (data: Stripe.CustomerCreateParams) => stripe.customers.create(data),
+        createProduct: async (data: Stripe.ProductCreateParams) => stripe.products.create(data),
+        createPrice: async (data: Stripe.PriceCreateParams) => stripe.prices.create(data),
+        createCheckoutSession: async (data: Stripe.Checkout.SessionCreateParams) => stripe.checkout.sessions.create(data)
       };
       
       console.log('✅ StripeService inicializado com sucesso:', stripeKey.substring(0, 20) + '...');
-    } catch (error) {
-      console.log('⚠️ StripeService não pôde ser inicializado:', error.message);
+    } catch (error: unknown) {
+      const err = error as Error;
+      console.log('⚠️ StripeService não pôde ser inicializado:', err.message);
     }
   }
 };
@@ -91,7 +100,7 @@ import webpush from 'web-push';
 const JWT_SECRET = process.env.JWT_SECRET || 'vendzz-jwt-secret-key-2024';
 
 // Middleware para verificação rápida de plano expirado (adicional ao sistema existente)
-const quickPlanCheckMiddleware = async (req: any, res: any, next: any) => {
+const quickPlanCheckMiddleware = async (req: express.Request & { user?: any }, res: express.Response, next: express.NextFunction) => {
   try {
     if (req.user && req.user.id) {
       const userId = req.user.id;
@@ -117,7 +126,7 @@ const __filename = fileURLToPath(import.meta.url);
 // __dirname não disponível em ES modules, usar process.cwd()
 
 // Middleware para verificar expiração de plano (agora usando PlanManager)
-async function checkPlanExpiration(req: any, res: any, next: any) {
+async function checkPlanExpiration(req: express.Request & { user?: any }, res: express.Response, next: express.NextFunction) {
   try {
     // Pular verificação para rotas públicas e admin
     const publicRoutes = ['/api/auth/', '/api/quiz/', '/dummybytes', '/api/webhooks/', '/api/notifications'];
@@ -167,7 +176,7 @@ export function registerSQLiteRoutes(app: Express): Server {
 
   // 🔓 ROTAS PÚBLICAS - SEM MIDDLEWARES DE SEGURANÇA
   // CHECKOUT PÚBLICO - BUSCAR PLANO POR ID (SEM AUTENTICAÇÃO)
-  app.get("/api/public/checkout/plan/:planId", async (req: any, res) => {
+  app.get("/api/public/checkout/plan/:planId", async (req: express.Request, res: express.Response) => {
     try {
       const { planId } = req.params;
       
@@ -212,7 +221,7 @@ export function registerSQLiteRoutes(app: Express): Server {
   });
 
   // CRIAR CHECKOUT SESSION PARA PLANO ESPECÍFICO (SEM AUTENTICAÇÃO)
-  app.post("/api/public/checkout/create-session", async (req: any, res) => {
+  app.post("/api/public/checkout/create-session", async (req: express.Request, res: express.Response) => {
     try {
       const { planId, customerEmail, customerName, customerPhone, returnUrl, cancelUrl } = req.body;
       
@@ -320,7 +329,7 @@ export function registerSQLiteRoutes(app: Express): Server {
   });
 
   // BUSCAR TODOS OS PLANOS (SEM AUTENTICAÇÃO)
-  app.get("/api/public/checkout/plans", async (req: any, res) => {
+  app.get("/api/public/checkout/plans", async (req: express.Request, res: express.Response) => {
     try {
       console.log('🔍 BUSCANDO TODOS OS PLANOS PÚBLICOS');
       
@@ -1305,8 +1314,9 @@ export function registerSQLiteRoutes(app: Express): Server {
           await stripeSystem.stripe.paymentMethods.attach(paymentMethod as string, {
             customer: customerId,
           });
-        } catch (attachError) {
-          console.log('⚠️ Payment method já anexado ou erro:', attachError.message);
+        } catch (attachError: unknown) {
+          const err = attachError as Error;
+          console.log('⚠️ Payment method já anexado ou erro:', err.message);
         }
         
         // Definir como payment method padrão
@@ -1607,7 +1617,7 @@ export function registerSQLiteRoutes(app: Express): Server {
   });
 
   // 🔐 ENDPOINT PARA ALTERAR SENHA
-  app.post("/api/auth/change-password", authRateLimit, verifyJWT, async (req: any, res) => {
+  app.post("/api/auth/change-password", authRateLimit, verifyJWT, async (req: express.Request & { user?: any }, res: express.Response) => {
     try {
       const { currentPassword, newPassword } = req.body;
       const userId = req.user.id;
@@ -1650,7 +1660,7 @@ export function registerSQLiteRoutes(app: Express): Server {
   });
 
   // 🔐 ENDPOINT PARA HABILITAR 2FA
-  app.post("/api/auth/enable-2fa", authRateLimit, verifyJWT, async (req: any, res) => {
+  app.post("/api/auth/enable-2fa", authRateLimit, verifyJWT, async (req: express.Request & { user?: any }, res: express.Response) => {
     try {
       const userId = req.user.id;
 
@@ -1685,7 +1695,7 @@ export function registerSQLiteRoutes(app: Express): Server {
   });
 
   // 🔐 ENDPOINT PARA VERIFICAR E ATIVAR 2FA
-  app.post("/api/auth/verify-2fa", authRateLimit, verifyJWT, async (req: any, res) => {
+  app.post("/api/auth/verify-2fa", authRateLimit, verifyJWT, async (req: express.Request & { user?: any }, res: express.Response) => {
     try {
       const { secret, token } = req.body;
       const userId = req.user.id;
@@ -1720,7 +1730,7 @@ export function registerSQLiteRoutes(app: Express): Server {
   });
 
   // 🔐 ENDPOINT PARA DESABILITAR 2FA
-  app.post("/api/auth/disable-2fa", authRateLimit, verifyJWT, async (req: any, res) => {
+  app.post("/api/auth/disable-2fa", authRateLimit, verifyJWT, async (req: express.Request & { user?: any }, res: express.Response) => {
     try {
       const userId = req.user.id;
 
@@ -2162,7 +2172,7 @@ export function registerSQLiteRoutes(app: Express): Server {
 
   // 🔍 ENDPOINTS DE VERIFICAÇÃO DE PAGAMENTOS
   // Buscar transações recentes
-  app.get('/api/payment-verification/transactions', verifyJWT, async (req: any, res) => {
+  app.get('/api/payment-verification/transactions', verifyJWT, async (req: express.Request & { user?: any }, res: express.Response) => {
     try {
       const limit = parseInt(req.query.limit as string) || 10;
       const transactions = await storage.getRecentTransactions(limit);
@@ -2184,7 +2194,7 @@ export function registerSQLiteRoutes(app: Express): Server {
   });
 
   // Buscar assinaturas recentes
-  app.get('/api/payment-verification/subscriptions', verifyJWT, async (req: any, res) => {
+  app.get('/api/payment-verification/subscriptions', verifyJWT, async (req: express.Request & { user?: any }, res: express.Response) => {
     try {
       const limit = parseInt(req.query.limit as string) || 10;
       const subscriptions = await storage.getRecentSubscriptions(limit);
@@ -2701,7 +2711,7 @@ export function registerSQLiteRoutes(app: Express): Server {
       }
 
       // Verificar se é um token válido
-      const decoded: any = jwt.verify(refreshToken, process.env.JWT_REFRESH_SECRET || 'vendzz-jwt-refresh-secret-2024');
+      const decoded = jwt.verify(refreshToken, process.env.JWT_REFRESH_SECRET || 'vendzz-jwt-refresh-secret-2024') as jwt.JwtPayload & { id: string };
       
       const isValid = await storage.isValidRefreshToken(decoded.id, refreshToken);
       if (!isValid) {
@@ -2754,7 +2764,7 @@ export function registerSQLiteRoutes(app: Express): Server {
   });
 
   // 2FA Endpoints
-  app.post("/api/auth/2fa/setup", verifyJWT, async (req: any, res) => {
+  app.post("/api/auth/2fa/setup", verifyJWT, async (req: express.Request & { user?: any }, res: express.Response) => {
     try {
       const userId = req.user.id;
       
