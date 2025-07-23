@@ -67,6 +67,32 @@ const ElementRenderer = ({ element }: { element: QuizElement }) => {
         </div>
       );
 
+    case 'heading':
+    case 'title':
+      const headingStyle = {
+        fontSize: properties.fontSize === "lg" ? "18px" : 
+                 properties.fontSize === "xl" ? "20px" : 
+                 properties.fontSize === "2xl" ? "24px" : 
+                 properties.fontSize === "3xl" ? "30px" : 
+                 properties.fontSize === "4xl" ? "36px" : "20px",
+        fontWeight: properties.fontWeight || "bold",
+        fontStyle: properties.fontStyle || "normal",
+        textDecoration: properties.textDecoration || "none",
+        color: properties.textColor || properties.color || "#1f2937",
+        backgroundColor: properties.backgroundColor || "transparent",
+        textAlign: (properties.textAlign || "left") as any,
+        padding: properties.backgroundColor !== "transparent" ? "8px 12px" : "0",
+        borderRadius: properties.backgroundColor !== "transparent" ? "6px" : "0"
+      };
+
+      return (
+        <div className={getElementStyle()}>
+          <h2 style={headingStyle}>
+            {properties.content || properties.title || properties.text || 'Título'}
+          </h2>
+        </div>
+      );
+
     case 'text':
       return (
         <div 

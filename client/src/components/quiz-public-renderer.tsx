@@ -1253,6 +1253,7 @@ export function QuizPublicRenderer({ quiz }: QuizPublicRendererProps) {
         );
 
       case 'heading':
+      case 'title':
         return (
           <div key={id} className="space-y-2">
             <h2 

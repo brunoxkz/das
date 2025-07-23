@@ -1737,7 +1737,7 @@ const gameElementCategories = [
               </span>
             )}
             
-            <h2 style={{headingStyle}} className={`relative ${element.letterSpacing === "wide" ? "tracking-wide" : element.letterSpacing === "wider" ? "tracking-wider" : ""}`}>
+            <h2 style={headingStyle} className={`relative ${element.letterSpacing === "wide" ? "tracking-wide" : element.letterSpacing === "wider" ? "tracking-wider" : ""}`}>
               {/* 🔥 NOVA FUNCIONALIDADE: Destaque de palavras-chave */}
               {element.highlightKeywords ? 
                 element.content?.split(' ').map((word, index) => {
