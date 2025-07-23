@@ -3192,7 +3192,7 @@ export function registerSQLiteRoutes(app: Express): Server {
     }
   });
 
-  app.post("/api/admin/users/:id/unblock", verifyJWT, async (req: any, res) => {
+  app.post("/api/admin/users/:id/unblock", verifyJWT, async (req: express.Request & { user?: any }, res: express.Response) => {
     try {
       if (req.user.role !== 'admin') {
         return res.status(403).json({ error: 'Acesso negado' });
@@ -3257,7 +3257,7 @@ export function registerSQLiteRoutes(app: Express): Server {
   });
 
   // Endpoint para usuário verificar status do plano
-  app.get("/api/user/plan-status", verifyJWT, async (req: any, res) => {
+  app.get("/api/user/plan-status", verifyJWT, async (req: express.Request & { user?: any }, res: express.Response) => {
     try {
       const user = await storage.getUser(req.user.id);
       if (!user) {
@@ -3360,7 +3360,7 @@ export function registerSQLiteRoutes(app: Express): Server {
   });
 
   // Auth validate endpoint
-  app.get("/api/auth/validate", verifyJWT, async (req: any, res) => {
+  app.get("/api/auth/validate", verifyJWT, async (req: express.Request & { user?: any }, res: express.Response) => {
     try {
       res.json({ 
         valid: true, 
@@ -3374,7 +3374,7 @@ export function registerSQLiteRoutes(app: Express): Server {
   });
 
   // Dashboard recent activity endpoint
-  app.get("/api/dashboard/recent-activity", verifyJWT, async (req: any, res) => {
+  app.get("/api/dashboard/recent-activity", verifyJWT, async (req: express.Request & { user?: any }, res: express.Response) => {
     try {
       // Get recent quiz responses and activities
       const recentQuizzes = await storage.getUserQuizzes(req.user.id);
@@ -3403,7 +3403,7 @@ export function registerSQLiteRoutes(app: Express): Server {
   });
 
   // Dashboard Stats (with alias for compatibility)
-  const dashboardStatsHandler = async (req: any, res: any) => {
+  const dashboardStatsHandler = async (req: express.Request & { user?: any }, res: express.Response) => {
     try {
       console.log('📊 Dashboard Stats - User ID:', req.user.id);
       console.log('📊 Request URL:', req.url);
@@ -3458,7 +3458,7 @@ export function registerSQLiteRoutes(app: Express): Server {
   app.get("/api/dashboard", verifyJWT, dashboardStatsHandler);
 
   // Get user quizzes
-  app.get("/api/quizzes", verifyJWT, async (req: any, res) => {
+  app.get("/api/quizzes", verifyJWT, async (req: express.Request & { user?: any }, res: express.Response) => {
     try {
 
       // Verificar cache primeiro
@@ -3481,7 +3481,7 @@ export function registerSQLiteRoutes(app: Express): Server {
   });
 
   // Get specific quiz
-  app.get("/api/quizzes/:id", verifyJWT, async (req: any, res) => {
+  app.get("/api/quizzes/:id", verifyJWT, async (req: express.Request & { user?: any }, res: express.Response) => {
     try {
       const quiz = await storage.getQuiz(req.params.id);
       
@@ -3498,7 +3498,7 @@ export function registerSQLiteRoutes(app: Express): Server {
   });
 
   // Create quiz
-  app.post("/api/quizzes", verifyJWT, async (req: any, res) => {
+  app.post("/api/quizzes", verifyJWT, async (req: express.Request & { user?: any }, res: express.Response) => {
     try {
       const userId = req.user.id;
       console.log(`🔄 CRIANDO NOVO QUIZ - User: ${userId}`);
@@ -3579,7 +3579,7 @@ export function registerSQLiteRoutes(app: Express): Server {
   });
 
   // Update quiz
-  app.put("/api/quizzes/:id", verifyJWT, async (req: any, res) => {
+  app.put("/api/quizzes/:id", verifyJWT, async (req: express.Request & { user?: any }, res: express.Response) => {
     try {
       const quizId = req.params.id;
       const userId = req.user.id;
@@ -3659,7 +3659,7 @@ export function registerSQLiteRoutes(app: Express): Server {
   });
 
   // Update quiz with PATCH - used for design and partial updates
-  app.patch("/api/quizzes/:id", verifyJWT, async (req: any, res) => {
+  app.patch("/api/quizzes/:id", verifyJWT, async (req: express.Request & { user?: any }, res: express.Response) => {
     try {
       const quizId = req.params.id;
       const userId = req.user.id;
@@ -6481,7 +6481,7 @@ export function registerSQLiteRoutes(app: Express): Server {
   });
 
   // STRIPE INTEGRATION - CRIAR ASSINATURA COM TRIAL
-  app.post("/api/stripe/create-subscription", verifyJWT, async (req: any, res) => {
+  app.post("/api/stripe/create-subscription", verifyJWT, async (req: express.Request & { user?: any }, res: express.Response) => {
     try {
       const { customerId, productId, trialPeriodDays, trialPrice } = req.body;
       
@@ -6517,7 +6517,7 @@ export function registerSQLiteRoutes(app: Express): Server {
   });
 
   // STRIPE INTEGRATION - SALVAR MÉTODO DE PAGAMENTO
-  app.post("/api/stripe/save-payment-method", verifyJWT, async (req: any, res) => {
+  app.post("/api/stripe/save-payment-method", verifyJWT, async (req: express.Request & { user?: any }, res: express.Response) => {
     try {
       const { customerId, paymentMethodId } = req.body;
       
@@ -6535,7 +6535,7 @@ export function registerSQLiteRoutes(app: Express): Server {
   });
 
   // STRIPE INTEGRATION - PROCESSAR COBRANÇA RECORRENTE
-  app.post("/api/stripe/process-recurring-billing", verifyJWT, async (req: any, res) => {
+  app.post("/api/stripe/process-recurring-billing", verifyJWT, async (req: express.Request & { user?: any }, res: express.Response) => {
     try {
       const { subscriptionId, customerId } = req.body;
       
@@ -6561,7 +6561,7 @@ export function registerSQLiteRoutes(app: Express): Server {
   });
 
   // STRIPE INTEGRATION - ATUALIZAR ASSINATURA
-  app.put("/api/stripe/subscription/:id", verifyJWT, async (req: any, res) => {
+  app.put("/api/stripe/subscription/:id", verifyJWT, async (req: express.Request & { user?: any }, res: express.Response) => {
     try {
       const { id } = req.params;
       const { status, cancelAtPeriodEnd } = req.body;
@@ -6586,7 +6586,7 @@ export function registerSQLiteRoutes(app: Express): Server {
   });
 
   // STRIPE INTEGRATION - CRIAR PAYMENT INTENT COM SUBSCRIPTION
-  app.post("/api/stripe/create-payment-intent-subscription", verifyJWT, async (req: any, res) => {
+  app.post("/api/stripe/create-payment-intent-subscription", verifyJWT, async (req: express.Request & { user?: any }, res: express.Response) => {
     try {
       const { customerEmail, customerName, immediateAmount, trialDays, recurringAmount, recurringInterval } = req.body;
       
@@ -6703,7 +6703,7 @@ export function registerSQLiteRoutes(app: Express): Server {
   });
 
   // STRIPE INTEGRATION - ENDPOINT SIMPLIFICADO PARA PAYMENT INTENT
-  app.post("/api/stripe/payment-intent-simple", verifyJWT, async (req: any, res) => {
+  app.post("/api/stripe/payment-intent-simple", verifyJWT, async (req: express.Request & { user?: any }, res: express.Response) => {
     try {
       console.log('🔥 ENDPOINT SIMPLIFICADO - INICIANDO:', req.body);
       
@@ -6743,7 +6743,7 @@ export function registerSQLiteRoutes(app: Express): Server {
   });
 
   // ENDPOINT SIMULAÇÃO DE PAGAMENTO - SEM API REAL DO STRIPE
-  app.post("/api/stripe/simulate-payment", verifyJWT, async (req: any, res) => {
+  app.post("/api/stripe/simulate-payment", verifyJWT, async (req: express.Request & { user?: any }, res: express.Response) => {
     try {
       const {
         customerName,
@@ -6977,7 +6977,7 @@ export function registerSQLiteRoutes(app: Express): Server {
   });
 
   // STRIPE INTEGRATION - CRIAR SUBSCRIPTION APÓS PAGAMENTO
-  app.post("/api/stripe/create-subscription-after-payment", verifyJWT, async (req: any, res) => {
+  app.post("/api/stripe/create-subscription-after-payment", verifyJWT, async (req: express.Request & { user?: any }, res: express.Response) => {
     try {
       const { customerId, paymentMethodId, subscriptionPriceId, trialDays } = req.body;
       
@@ -7034,7 +7034,7 @@ export function registerSQLiteRoutes(app: Express): Server {
   });
 
   // STRIPE INTEGRATION - TESTE ACELERADO DE COBRANÇA
-  app.post("/api/stripe/test-accelerated-billing", verifyJWT, async (req: any, res) => {
+  app.post("/api/stripe/test-accelerated-billing", verifyJWT, async (req: express.Request & { user?: any }, res: express.Response) => {
     try {
       const { paymentMethodId, testMinutes = 2 } = req.body;
       const userId = req.user.id;
@@ -7173,7 +7173,7 @@ export function registerSQLiteRoutes(app: Express): Server {
   });
 
   // STRIPE INTEGRATION - TESTAR PAGAMENTO FALHO
-  app.post("/api/stripe/test-failed-payment", verifyJWT, async (req: any, res) => {
+  app.post("/api/stripe/test-failed-payment", verifyJWT, async (req: express.Request & { user?: any }, res: express.Response) => {
     try {
       const { customerId, paymentMethodId } = req.body;
       
