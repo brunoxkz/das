@@ -254,6 +254,13 @@ interface Element {
   buttonSize?: "small" | "medium" | "large";
   isFixedFooter?: boolean;
   
+  // Propriedades específicas para elemento rating
+  starCount?: number; // Quantidade de estrelas (1-10)
+  starColor?: string; // Cor das estrelas
+  starFilled?: boolean; // Se as estrelas devem estar preenchidas ou apenas contorno
+  starSize?: "small" | "medium" | "large"; // Tamanho das estrelas
+  ratingRequired?: boolean; // Se a avaliação é obrigatória
+  
   // Propriedades específicas para carregamento + pergunta
   loadingDuration?: number; // duração em segundos
   loadingBarColor?: string;
@@ -2072,16 +2079,35 @@ const gameElementCategories = [
           </div>
         );
       case "rating":
+        // Configurações do elemento rating
+        const starCount = element.starCount || 5;
+        const starColor = element.starColor || "#FBBF24";
+        const starFilled = element.starFilled || false;
+        const starSizeClass = {
+          small: "w-4 h-4",
+          medium: "w-6 h-6", 
+          large: "w-8 h-8"
+        };
+        const starSize = starSizeClass[element.starSize || "medium"];
+        
         return (
           <div className="space-y-2">
             <label className="block text-sm font-medium text-gray-700">
               {element.question || "Avaliação"}
-              
+              {element.required && <span className="text-red-500 ml-1">*</span>}
             </label>
             <div className="flex space-x-1">
-              {[1, 2, 3, 4, 5].map((rating) => (
-                <Star key={rating} className="w-6 h-6 text-yellow-400 cursor-pointer hover:text-yellow-500" />
+              {Array.from({ length: starCount }, (_, index) => (
+                <Star 
+                  key={index} 
+                  className={`${starSize} cursor-pointer hover:opacity-80 transition-all`}
+                  style={{ color: starColor }}
+                  fill={starFilled ? starColor : 'none'}
+                />
               ))}
+            </div>
+            <div className="text-xs text-gray-500">
+              {starCount} estrelas • Cor: {starColor} • {starFilled ? 'Preenchidas' : 'Contorno apenas'}
             </div>
           </div>
         );
@@ -6239,6 +6265,158 @@ const gameElementCategories = [
                         Campos de número usam automaticamente o prefixo "numero_" para garantir a detecção correta.
                       </p>
                     )}
+                  </div>
+                </div>
+              )}
+
+              {selectedElementData.type === "rating" && (
+                <div className="space-y-4">
+                  <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+                    <div className="flex items-center gap-2 mb-2">
+                      <Star className="w-4 h-4 text-yellow-600" />
+                      <span className="font-medium text-yellow-800">Configurações de Avaliação</span>
+                    </div>
+                    <div className="text-xs text-yellow-700">
+                      Configure quantidade de estrelas, cor e estilo de preenchimento
+                    </div>
+                  </div>
+
+                  <div>
+                    <Label htmlFor="rating-question">Pergunta/Label</Label>
+                    <Input
+                      id="rating-question"
+                      value={selectedElementData.question || ""}
+                      onChange={(e) => updateElement(selectedElementData.id, { question: e.target.value })}
+                      className="mt-1"
+                      placeholder="Como você avalia nosso produto?"
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="star-count">Quantidade de Estrelas</Label>
+                      <select
+                        id="star-count"
+                        value={selectedElementData.starCount || 5}
+                        onChange={(e) => updateElement(selectedElementData.id, { starCount: Number(e.target.value) })}
+                        className="w-full mt-1 p-2 border border-gray-300 rounded-md"
+                      >
+                        {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(num => (
+                          <option key={num} value={num}>{num} estrela{num > 1 ? 's' : ''}</option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div>
+                      <Label htmlFor="star-size">Tamanho das Estrelas</Label>
+                      <select
+                        id="star-size"
+                        value={selectedElementData.starSize || "medium"}
+                        onChange={(e) => updateElement(selectedElementData.id, { starSize: e.target.value })}
+                        className="w-full mt-1 p-2 border border-gray-300 rounded-md"
+                      >
+                        <option value="small">Pequeno</option>
+                        <option value="medium">Médio</option>
+                        <option value="large">Grande</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div>
+                    <Label htmlFor="star-color">Cor das Estrelas</Label>
+                    <div className="flex gap-2 mt-1">
+                      <input
+                        type="color"
+                        id="star-color"
+                        value={selectedElementData.starColor || "#FBBF24"}
+                        onChange={(e) => updateElement(selectedElementData.id, { starColor: e.target.value })}
+                        className="w-12 h-8 border border-gray-300 rounded"
+                      />
+                      <Input
+                        value={selectedElementData.starColor || "#FBBF24"}
+                        onChange={(e) => updateElement(selectedElementData.id, { starColor: e.target.value })}
+                        className="flex-1"
+                        placeholder="#FBBF24"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="flex items-center space-x-2">
+                    <input
+                      type="checkbox"
+                      id="star-filled"
+                      checked={selectedElementData.starFilled || false}
+                      onChange={(e) => updateElement(selectedElementData.id, { starFilled: e.target.checked })}
+                    />
+                    <Label htmlFor="star-filled">Estrelas preenchidas (ao invés de apenas contorno)</Label>
+                  </div>
+
+                  <div className="flex items-center space-x-2">
+                    <input
+                      type="checkbox"
+                      id="rating-required"
+                      checked={selectedElementData.required || false}
+                      onChange={(e) => updateElement(selectedElementData.id, { required: e.target.checked })}
+                    />
+                    <Label htmlFor="rating-required">Campo obrigatório</Label>
+                  </div>
+
+                  <div>
+                    <Label htmlFor="rating-field-id">ID do Campo (para captura de leads)</Label>
+                    <Input
+                      id="rating-field-id"
+                      value={selectedElementData.fieldId || ""}
+                      onChange={(e) => updateElement(selectedElementData.id, { fieldId: e.target.value })}
+                      className="mt-1"
+                      placeholder="avaliacao_produto"
+                    />
+                    <p className="text-xs text-gray-500 mt-1">
+                      Identificador único para capturar essa avaliação na geração de leads
+                    </p>
+                  </div>
+
+                  <div>
+                    <Label htmlFor="rating-response-id">ID da Resposta (para usar como variável)</Label>
+                    <Input
+                      id="rating-response-id"
+                      value={selectedElementData.responseId || ""}
+                      onChange={(e) => updateElement(selectedElementData.id, { responseId: e.target.value })}
+                      className="mt-1"
+                      placeholder="avaliacao"
+                    />
+                    <p className="text-xs text-gray-500 mt-1">
+                      Use &#123;avaliacao&#125; em campanhas SMS/Email/WhatsApp
+                    </p>
+                  </div>
+
+                  {/* Preview das estrelas configuradas */}
+                  <div className="p-3 bg-gray-50 border border-gray-200 rounded-lg">
+                    <Label className="text-xs font-medium text-gray-700 mb-2 block">Preview da Configuração:</Label>
+                    <div className="flex space-x-1">
+                      {Array.from({ length: selectedElementData.starCount || 5 }, (_, index) => {
+                        const starSizeClass = {
+                          small: "w-4 h-4",
+                          medium: "w-6 h-6",
+                          large: "w-8 h-8"
+                        };
+                        const starSize = starSizeClass[selectedElementData.starSize || "medium"];
+                        
+                        return (
+                          <Star 
+                            key={index} 
+                            className={`${starSize} cursor-pointer hover:opacity-80 transition-all`}
+                            style={{ color: selectedElementData.starColor || "#FBBF24" }}
+                            fill={selectedElementData.starFilled ? (selectedElementData.starColor || "#FBBF24") : 'none'}
+                          />
+                        );
+                      })}
+                    </div>
+                    <div className="text-xs text-gray-500 mt-2">
+                      {selectedElementData.starCount || 5} estrelas • 
+                      Cor: {selectedElementData.starColor || "#FBBF24"} • 
+                      {selectedElementData.starFilled ? 'Preenchidas' : 'Contorno apenas'} • 
+                      Tamanho: {selectedElementData.starSize || "medium"}
+                    </div>
                   </div>
                 </div>
               )}

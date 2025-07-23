@@ -1321,22 +1321,53 @@ export function QuizPublicRenderer({ quiz }: QuizPublicRendererProps) {
         );
 
       case 'rating':
+        const starCount = properties?.starCount || 5;
+        const starSize = properties?.starSize || "medium";
+        const starColor = properties?.starColor || "#FBBF24";
+        const starFilled = properties?.starFilled || false;
+        
+        const starSizeClass = {
+          small: "w-4 h-4",
+          medium: "w-6 h-6", 
+          large: "w-8 h-8"
+        };
+        
         return (
           <div key={id} className="space-y-4">
             {(properties?.question || properties?.label) && (
-              <h3 className="text-lg font-semibold">{properties?.question || properties?.label || 'Avaliação'}</h3>
+              <h3 className="text-lg font-semibold text-gray-800">
+                {properties?.question || properties?.label || 'Avaliação'}
+                {properties?.required && <span className="text-red-500 ml-1">*</span>}
+              </h3>
             )}
-            <div className="flex space-x-2">
-              {Array.from({ length: properties?.maxRating || 5 }, (_, i) => (
+            <div className="flex space-x-1">
+              {Array.from({ length: starCount }, (_, i) => (
                 <button
                   key={i}
+                  type="button"
                   onClick={() => handleElementAnswer(id, type, i + 1, properties?.fieldId)}
-                  className={`p-2 ${answer === i + 1 ? 'text-yellow-500' : 'text-gray-300'}`}
+                  className={`p-1 transition-all duration-200 hover:scale-110 ${
+                    answer === i + 1 ? 'opacity-100' : 'opacity-60 hover:opacity-80'
+                  }`}
+                  style={{ color: starColor }}
                 >
-                  <Star className="w-6 h-6" fill={answer === i + 1 ? 'currentColor' : 'none'} />
+                  <Star 
+                    className={starSizeClass[starSize]}
+                    fill={
+                      answer >= i + 1 
+                        ? (starFilled ? starColor : starColor)
+                        : (starFilled ? 'none' : 'none')
+                    }
+                    strokeWidth={2}
+                  />
                 </button>
               ))}
             </div>
+            {answer && (
+              <div className="text-sm text-gray-600">
+                Avaliação: {answer}/{starCount} estrelas
+              </div>
+            )}
           </div>
         );
 

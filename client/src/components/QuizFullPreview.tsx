@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
-import { X, Eye, ArrowDown } from "lucide-react";
+import { X, Eye, ArrowDown, Star } from "lucide-react";
 import { useState } from "react";
 
 interface QuizPage {
@@ -350,6 +350,48 @@ const ElementRenderer = ({ element }: { element: QuizElement }) => {
           <div className="text-xs text-orange-600 text-center mt-2">
             Preview: Roleta interativa • {wheelSegments.length} opções
           </div>
+        </div>
+      );
+
+    case 'rating':
+      const starCount = properties.starCount || 5;
+      const starSize = properties.starSize || "medium";
+      const starColor = properties.starColor || "#FBBF24";
+      const starFilled = properties.starFilled || false;
+      
+      const starSizeClass = {
+        small: "w-4 h-4",
+        medium: "w-6 h-6", 
+        large: "w-8 h-8"
+      };
+      
+      return (
+        <div className={getElementStyle()}>
+          {properties.question && (
+            <label className="block mb-3 font-medium text-gray-700">
+              {properties.question}
+            </label>
+          )}
+          <div className="flex space-x-1 mb-2">
+            {Array.from({ length: starCount }, (_, index) => (
+              <Star
+                key={index}
+                className={`${starSizeClass[starSize]} cursor-pointer hover:opacity-80 transition-all`}
+                style={{ color: starColor }}
+                fill={starFilled ? starColor : 'none'}
+                strokeWidth={2}
+              />
+            ))}
+          </div>
+          <div className="text-xs text-gray-500">
+            Configuração: {starCount} estrelas • 
+            Cor: {starColor} • 
+            {starFilled ? 'Preenchidas' : 'Contorno'} • 
+            Tamanho: {starSize}
+          </div>
+          {properties.required && (
+            <div className="text-xs text-red-500 mt-1">* Campo obrigatório</div>
+          )}
         </div>
       );
 
