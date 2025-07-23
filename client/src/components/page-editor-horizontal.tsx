@@ -1988,7 +1988,7 @@ const gameElementCategories = [
                   type={element.type === "email" ? "email" : element.type === "phone" ? "tel" : element.type === "number" ? "number" : "text"}
                   placeholder={element.placeholder || `Digite aqui ${element.type === "email" ? "seu email" : element.type === "phone" ? "seu telefone" : ""}`}
                   className={`w-full px-3 py-3 ${element.showInlineIcon ? "pl-10" : ""} ${inputStyle} transition-all duration-200`}
-                  maxLength={element.type === "text" ? 200 : undefined}
+                  maxLength={element.type === "text" ? 200 : element.type === "email" ? 150 : undefined}
                   {...(element.type === "email" && element.emailValidation && {
                     pattern: "[a-z0-9._%+-]+@[a-z0-9.-]+\\.[a-z]{2,}$"
                   })}
@@ -2002,10 +2002,10 @@ const gameElementCategories = [
                   })}
                 />
                 
-                {/* Contador de caracteres para campo texto */}
-                {element.type === "text" && (
+                {/* Contador de caracteres para campo texto e email */}
+                {(element.type === "text" || element.type === "email") && (
                   <div className="absolute bottom-1 right-2 text-xs text-gray-400">
-                    200 caracteres máx.
+                    {element.type === "text" ? "200" : "150"} caracteres máx.
                   </div>
                 )}
                 

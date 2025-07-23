@@ -122,8 +122,32 @@ const ElementRenderer = ({ element }: { element: QuizElement }) => {
       );
 
     case 'email':
+      // Aplicar estilos de formatação de texto para email
+      const emailLabelStyle = {
+        fontSize: properties.fontSize === "xs" ? "12px" : 
+                 properties.fontSize === "sm" ? "14px" : 
+                 properties.fontSize === "lg" ? "18px" : 
+                 properties.fontSize === "xl" ? "20px" : "16px",
+        fontWeight: properties.fontWeight || "500",
+        color: properties.textColor || properties.color || "#374151",
+        textAlign: (properties.textAlign || "left") as any,
+      };
+
+      // Largura em porcentagem da tela
+      const emailWidthPercentage = properties.widthPercentage || 100;
+      const emailContainerWidth = `${Math.min(Math.max(emailWidthPercentage, 10), 100)}%`;
+
       return (
-        <div className={getElementStyle()}>
+        <div 
+          className={getElementStyle()}
+          style={{ width: emailContainerWidth, maxWidth: emailContainerWidth }}
+        >
+          {properties.question && (
+            <label className="block mb-2" style={emailLabelStyle}>
+              {properties.question.slice(0, 150)}
+              {properties.question && properties.question.length > 150 && '...'}
+            </label>
+          )}
           <input
             type="email"
             placeholder={properties.placeholder || 'Digite seu email'}
@@ -132,8 +156,12 @@ const ElementRenderer = ({ element }: { element: QuizElement }) => {
               backgroundColor: properties.backgroundColor || '#ffffff',
               borderColor: properties.borderColor || '#cccccc'
             }}
+            maxLength={150}
             disabled
           />
+          <div className="text-xs text-gray-500 text-right mt-1">
+            0/150 caracteres (limite fixo para email)
+          </div>
         </div>
       );
 
