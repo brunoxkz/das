@@ -59,10 +59,11 @@ No additional files or separate projects are maintained in this repository.
 
 ### User Authentication Flow
 1. User accesses application
-2. Redirected to Replit OIDC provider
-3. Successful authentication creates/updates user record
-4. Session established with PostgreSQL storage
-5. User redirected to dashboard
+2. Custom JWT-based authentication (no external OIDC)
+3. Login via email/password with bcrypt verification
+4. JWT tokens stored in localStorage (access + refresh)
+5. Session managed via SQLite database
+6. User redirected to dashboard
 
 ### Quiz Creation Flow
 1. User selects template or creates from scratch
@@ -81,10 +82,10 @@ No additional files or separate projects are maintained in this repository.
 ## External Dependencies
 
 ### Core Dependencies
-- **@neondatabase/serverless**: PostgreSQL connection management
-- **drizzle-orm**: Type-safe database operations
+- **better-sqlite3**: SQLite database connection (CURRENT ACTIVE)
+- **drizzle-orm**: Type-safe database operations with SQLite dialect
 - **express**: Web server framework
-- **passport**: Authentication middleware
+- **jsonwebtoken**: JWT authentication (NO passport dependency)
 - **stripe**: Payment processing
 - **@tanstack/react-query**: Client-side state management
 
@@ -106,13 +107,13 @@ No additional files or separate projects are maintained in this repository.
 ### Development Environment
 - **Server**: Node.js with tsx for TypeScript execution
 - **Client**: Vite dev server with HMR
-- **Database**: Neon serverless PostgreSQL
+- **Database**: Local SQLite database (vendzz-database.db)
 - **Environment**: Replit with custom domains support
 
 ### Production Build
 - **Client**: Vite build to static assets
 - **Server**: esbuild bundle for Node.js deployment
-- **Database**: PostgreSQL with connection pooling
+- **Database**: SQLite with WAL mode and performance optimizations
 - **Assets**: Served from Express static middleware
 
 ### Environment Variables
@@ -190,12 +191,17 @@ Realizei uma análise arquitetural profunda do sistema Vendzz. Documento complet
 - **Multi-Gateway Payment**: Stripe + Pagar.me + PayPal
 - **IA Integrado**: Quiz creation e conversion optimization
 
-### 🚨 PROBLEMAS CRÍTICOS IDENTIFICADOS:
+### 🚨 PROBLEMAS CRÍTICOS IDENTIFICADOS (ATUALIZADO - Janeiro 2025):
 1. **Schema Inconsistente**: `userId` vs `user_id` causando "Quiz not found" errors
 2. **SQLite Limitation**: Máximo ~1000 usuários simultâneos (precisa PostgreSQL para escalar)
-3. **Fragmentação Código**: 27K linhas em arquivo único
-4. **306 LSP Errors**: Detectados em 3 arquivos principais
-5. **Múltiplos Databases**: 10+ arquivos .db/.sqlite (precisa consolidar)
+3. **Fragmentação Código**: 27.497 linhas em arquivo único (routes-sqlite.ts)
+4. **1.241 LSP Errors**: Detectados em 4 arquivos principais (server/routes-sqlite.ts: 1239, server/storage-sqlite.ts: 254)
+5. **Múltiplos Databases**: 13 arquivos .db/.sqlite (precisa consolidar)
+6. **Query Errors Frontend**: "Query error: {}" constantes no console (a cada 15 segundos)
+7. **Endpoints Inconsistentes**: /api/auth/user vs /api/auth/verify causando falhas de autenticação
+8. **Service Worker Failures**: Erros de registro PWA constantes
+9. **Sistema Duplo Auth**: auth-hybrid.ts e auth-sqlite.ts coexistindo
+10. **Documentação Desalinhada**: Menciona PostgreSQL/OIDC mas usa SQLite/JWT
 
 ### 💡 MELHORIAS RECOMENDADAS:
 - **Arquiteturais**: Modularização backend, migração PostgreSQL, microserviços graduais
@@ -210,7 +216,7 @@ Realizei uma análise arquitetural profunda do sistema Vendzz. Documento complet
 - Security layers avançados
 - Business logic sólido
 
-**Status**: Sistema em produção funcionando perfeitamente, problemas são de refinamento/otimização.
+**Status**: Sistema em produção com funcionalidades avançadas, mas problemas críticos de arquitetura e estabilidade identificados que precisam correção.
 
 ## Testing Documentation
 
@@ -550,6 +556,44 @@ Campo: p1_objetivo_fitness
 - Email Marketing pode segmentar emails por valor de resposta
 - Analytics granular por segmento de resposta
 - Personalização automática baseada em resposta
+
+## Problemas Críticos Identificados (Janeiro 23, 2025)
+
+### 🔍 ANÁLISE COMPLETA REALIZADA - FALHAS SISTÊMICAS DETECTADAS
+
+**PROBLEMAS DE ENDPOINT E AUTENTICAÇÃO:**
+- Inconsistência entre `/api/auth/user` (documentado) vs `/api/auth/verify` (implementado)
+- Arquivo `funnel-importer-fixed.tsx` ainda usa endpoint antigo
+- Query errors constantes no frontend indicam falhas de comunicação API
+
+**PROBLEMAS ARQUITETURAIS CRÍTICOS:**
+- Arquivo monolítico `server/routes-sqlite.ts` com 27.497 linhas impossível de manter
+- 1.241 erros LSP detectados comprometendo estabilidade do código
+- 13 arquivos de banco SQLite diferentes sem consolidação
+- Sistema de autenticação duplo (auth-hybrid.ts + auth-sqlite.ts) causando conflitos
+
+**LIMITAÇÕES DE ESCALABILIDADE:**
+- SQLite limitado a ~1000 usuários simultâneos conforme comentários no código
+- Objetivo de 100k+ usuários não atendível com arquitetura atual
+- Múltiplos databases fragmentados impedem performance otimizada
+
+**PROBLEMAS DE PWA E NOTIFICAÇÕES:**
+- Service Worker registration falhando constantemente
+- Push notifications com funcionamento instável
+- PWA não registrando corretamente conforme logs de erro
+
+**DOCUMENTAÇÃO DESALINHADA:**
+- Documentação menciona PostgreSQL mas sistema usa SQLite
+- Fluxo de autenticação documentado (OIDC) não corresponde à implementação (JWT)
+- Dependencies listadas não correspondem ao sistema atual
+
+**RECOMENDAÇÕES PRIORITÁRIAS:**
+1. Consolidar endpoint de autenticação para `/api/auth/verify`
+2. Modularizar `routes-sqlite.ts` em múltiplos arquivos
+3. Resolver 1.241 erros LSP para estabilizar código
+4. Consolidar múltiplos databases em um único
+5. Migrar para PostgreSQL para escalabilidade real
+6. Alinhar documentação com implementação atual
 
 ## Changelog
 
