@@ -2136,6 +2136,11 @@ export class SQLiteStorage implements IStorage {
     return stmt.all(campaignId);
   }
 
+  // Alias method for unified system compatibility
+  async getWhatsappLogsByCampaign(campaignId: string): Promise<any[]> {
+    return this.getWhatsappLogs(campaignId);
+  }
+
   // Get all WhatsApp campaigns for auto-detection
   async getAllWhatsappCampaigns(): Promise<any[]> {
     try {
