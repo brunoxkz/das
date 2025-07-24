@@ -122,6 +122,16 @@ export interface Quiz {
       collectPhone: boolean;
       resultTitle?: string;
       resultDescription?: string;
+      // MODO DINÂMICO - Profile Building System
+      dynamicMode?: boolean;
+      dynamicShowName?: boolean;
+      dynamicShowDate?: boolean;
+      dynamicShowAge?: boolean;
+      dynamicShowEmail?: boolean;
+      dynamicShowPhone?: boolean;
+      dynamicShowCity?: boolean;
+      dynamicShowProfession?: boolean;
+      dynamicShowGoal?: boolean;
     };
   };
   design?: {

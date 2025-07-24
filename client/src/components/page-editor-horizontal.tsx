@@ -723,6 +723,19 @@ interface PageEditorProps {
   defaultButtonColor?: string;
   defaultButtonTextColor?: string;
   onDefaultButtonColorChange?: (color: string) => void;
+  // MODO DINÂMICO Props
+  quizSettings?: {
+    dynamicMode?: boolean;
+    dynamicShowName?: boolean;
+    dynamicShowDate?: boolean;
+    dynamicShowAge?: boolean;
+    dynamicShowEmail?: boolean;
+    dynamicShowPhone?: boolean;
+    dynamicShowCity?: boolean;
+    dynamicShowProfession?: boolean;
+    dynamicShowGoal?: boolean;
+  };
+  onQuizSettingsChange?: (settings: any) => void;
   onDefaultButtonTextColorChange?: (color: string) => void;
 }
 
@@ -737,7 +750,9 @@ export function PageEditorHorizontal({
   defaultButtonColor = "#10b981",
   defaultButtonTextColor = "#ffffff",
   onDefaultButtonColorChange,
-  onDefaultButtonTextColorChange
+  onDefaultButtonTextColorChange,
+  quizSettings,
+  onQuizSettingsChange
 }: PageEditorProps) {
 
   const [activePage, setActivePage] = useState(activePageIndex);
@@ -764,6 +779,7 @@ export function PageEditorHorizontal({
   const [customBackgroundColor, setCustomBackgroundColor] = useState(initialCustomBackgroundColor);
   const [expandedSections, setExpandedSections] = useState<{[key: string]: boolean}>({
     globalBackground: false,
+    dynamicMode: false,
     buttonColors: false
   });
   const [previewDevice, setPreviewDevice] = useState<'mobile' | 'desktop'>('mobile'); // Mobile-first como solicitado
@@ -5802,7 +5818,196 @@ const gameElementCategories = [
               )}
             </div>
 
-            {/* Cor Botão Global - SEGUNDO */}
+            {/* MODO DINÂMICO - SEGUNDO */}
+            <div className="border border-gray-200 rounded-lg overflow-hidden">
+              <button
+                onClick={() => setExpandedSections(prev => ({
+                  ...prev,
+                  dynamicMode: !prev.dynamicMode
+                }))}
+                className="w-full p-2 bg-gray-50 hover:bg-gray-100 transition-colors flex items-center justify-between"
+              >
+                <div className="flex items-center gap-2">
+                  <div className="w-4 h-4 rounded-full bg-gradient-to-r from-purple-500 to-pink-500 flex items-center justify-center">
+                    <span className="text-white text-xs">⚡</span>
+                  </div>
+                  <span className="text-xs font-semibold">⚡ MODO DINÂMICO</span>
+                </div>
+                <ChevronDown className={cn(
+                  "w-4 h-4 transition-transform",
+                  expandedSections.dynamicMode && "rotate-180"
+                )} />
+              </button>
+              
+              {expandedSections.dynamicMode && (
+                <div className="p-3 border-t bg-white space-y-3">
+                  {/* Toggle Principal */}
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <span className="text-xs font-medium">Ativar Modo Dinâmico</span>
+                      <p className="text-xs text-gray-500 mt-1">
+                        Profile building fictício durante o quiz
+                      </p>
+                    </div>
+                    <input
+                      type="checkbox"
+                      checked={quizSettings?.dynamicMode || false}
+                      onChange={(e) => onQuizSettingsChange?.({
+                        ...quizSettings,
+                        dynamicMode: e.target.checked
+                      })}
+                      className="rounded border-gray-300 text-purple-600 focus:ring-purple-500"
+                    />
+                  </div>
+
+                  {/* Configurações individuais - apenas se modo dinâmico ativo */}
+                  {quizSettings?.dynamicMode && (
+                    <div className="space-y-2 pl-2 border-l-2 border-purple-200">
+                      <p className="text-xs font-medium text-purple-700">Campos para exibir:</p>
+                      
+                      {/* Nome */}
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs">👤 Nome</span>
+                        <input
+                          type="checkbox"
+                          checked={quizSettings?.dynamicShowName !== false}
+                          onChange={(e) => onQuizSettingsChange?.({
+                            ...quizSettings,
+                            dynamicShowName: e.target.checked
+                          })}
+                          className="rounded border-gray-300 text-purple-600 focus:ring-purple-500"
+                        />
+                      </div>
+
+                      {/* Data */}
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs">📅 Data</span>
+                        <input
+                          type="checkbox"
+                          checked={quizSettings?.dynamicShowDate !== false}
+                          onChange={(e) => onQuizSettingsChange?.({
+                            ...quizSettings,
+                            dynamicShowDate: e.target.checked
+                          })}
+                          className="rounded border-gray-300 text-purple-600 focus:ring-purple-500"
+                        />
+                      </div>
+
+                      {/* Idade - Opcional */}
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs">🎂 Idade</span>
+                        <input
+                          type="checkbox"
+                          checked={quizSettings?.dynamicShowAge || false}
+                          onChange={(e) => onQuizSettingsChange?.({
+                            ...quizSettings,
+                            dynamicShowAge: e.target.checked
+                          })}
+                          className="rounded border-gray-300 text-purple-600 focus:ring-purple-500"
+                        />
+                      </div>
+
+                      {/* Email - Opcional */}
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs">📧 Email</span>
+                        <input
+                          type="checkbox"
+                          checked={quizSettings?.dynamicShowEmail || false}
+                          onChange={(e) => onQuizSettingsChange?.({
+                            ...quizSettings,
+                            dynamicShowEmail: e.target.checked
+                          })}
+                          className="rounded border-gray-300 text-purple-600 focus:ring-purple-500"
+                        />
+                      </div>
+
+                      {/* Telefone - Opcional */}
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs">📱 Telefone</span>
+                        <input
+                          type="checkbox"
+                          checked={quizSettings?.dynamicShowPhone || false}
+                          onChange={(e) => onQuizSettingsChange?.({
+                            ...quizSettings,
+                            dynamicShowPhone: e.target.checked
+                          })}
+                          className="rounded border-gray-300 text-purple-600 focus:ring-purple-500"
+                        />
+                      </div>
+
+                      {/* Cidade - Opcional */}
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs">🏙️ Cidade</span>
+                        <input
+                          type="checkbox"
+                          checked={quizSettings?.dynamicShowCity || false}
+                          onChange={(e) => onQuizSettingsChange?.({
+                            ...quizSettings,
+                            dynamicShowCity: e.target.checked
+                          })}
+                          className="rounded border-gray-300 text-purple-600 focus:ring-purple-500"
+                        />
+                      </div>
+
+                      {/* Profissão - Opcional */}
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs">💼 Profissão</span>
+                        <input
+                          type="checkbox"
+                          checked={quizSettings?.dynamicShowProfession || false}
+                          onChange={(e) => onQuizSettingsChange?.({
+                            ...quizSettings,
+                            dynamicShowProfession: e.target.checked
+                          })}
+                          className="rounded border-gray-300 text-purple-600 focus:ring-purple-500"
+                        />
+                      </div>
+
+                      {/* Objetivo - Opcional */}
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs">🎯 Objetivo</span>
+                        <input
+                          type="checkbox"
+                          checked={quizSettings?.dynamicShowGoal || false}
+                          onChange={(e) => onQuizSettingsChange?.({
+                            ...quizSettings,
+                            dynamicShowGoal: e.target.checked
+                          })}
+                          className="rounded border-gray-300 text-purple-600 focus:ring-purple-500"
+                        />
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Demonstração Visual */}
+                  {quizSettings?.dynamicMode && (
+                    <div className="mt-3 p-2 bg-purple-50 rounded border border-purple-200">
+                      <p className="text-xs font-medium text-purple-700 mb-2">Preview:</p>
+                      <div className="flex items-center justify-between text-xs">
+                        <div className="flex items-center gap-1">
+                          {quizSettings?.dynamicShowName !== false && (
+                            <span className="bg-white px-2 py-1 rounded shadow-sm">👤 João Silva</span>
+                          )}
+                          {quizSettings?.dynamicShowAge && (
+                            <span className="bg-white px-2 py-1 rounded shadow-sm">🎂 25 anos</span>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-1">
+                          {quizSettings?.dynamicShowDate !== false && (
+                            <span className="bg-white px-2 py-1 rounded shadow-sm">📅 15/03/1990</span>
+                          )}
+                          {quizSettings?.dynamicShowCity && (
+                            <span className="bg-white px-2 py-1 rounded shadow-sm">🏙️ São Paulo</span>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+
+            {/* Cor Botão Global - TERCEIRO */}
             <div className="border border-gray-200 rounded-lg overflow-hidden">
               <button
                 onClick={() => setExpandedSections(prev => ({

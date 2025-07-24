@@ -1019,6 +1019,26 @@ export default function QuizBuilder() {
                   }
                 }));
               }}
+              quizSettings={{
+                dynamicMode: quizData.settings?.dynamicMode || false,
+                dynamicShowName: quizData.settings?.dynamicShowName !== false,
+                dynamicShowDate: quizData.settings?.dynamicShowDate !== false,
+                dynamicShowAge: quizData.settings?.dynamicShowAge || false,
+                dynamicShowEmail: quizData.settings?.dynamicShowEmail || false,
+                dynamicShowPhone: quizData.settings?.dynamicShowPhone || false,
+                dynamicShowCity: quizData.settings?.dynamicShowCity || false,
+                dynamicShowProfession: quizData.settings?.dynamicShowProfession || false,
+                dynamicShowGoal: quizData.settings?.dynamicShowGoal || false
+              }}
+              onQuizSettingsChange={(settings) => {
+                setQuizData(prev => ({
+                  ...prev,
+                  settings: {
+                    ...prev.settings,
+                    ...settings
+                  }
+                }));
+              }}
             />
           </div>
         )}
