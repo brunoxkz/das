@@ -4549,26 +4549,90 @@ const gameElementCategories = [
       case "guarantee":
         const guaranteeTitle = element.guaranteeTitle || "Garantia de 30 dias";
         const guaranteeDescription = element.guaranteeDescription || "Se você não ficar satisfeito, devolvemos seu dinheiro";
+        const guaranteeButtonText = element.guaranteeButtonText || "";
+        const guaranteeIcon = element.guaranteeIcon || "Shield";
+        const guaranteeBackgroundColor = element.guaranteeBackgroundColor || "transparent";
+        const guaranteeTextColor = element.guaranteeTextColor || "#374151";
+        const guaranteeTitleColor = element.guaranteeTitleColor || "#111827";
+        const guaranteeIconColor = element.guaranteeIconColor || "#10b981";
+        const guaranteeLayout = element.guaranteeLayout || "horizontal";
+        const guaranteeStyle = element.guaranteeStyle || "card";
+        const guaranteeTitleSize = element.guaranteeTitleSize || "lg";
+        const guaranteeTitleWeight = element.guaranteeTitleWeight || "semibold";
+        const guaranteeTitleAlign = element.guaranteeTitleAlign || "left";
+        const guaranteeWidth = element.guaranteeWidth || 100;
+        
+        // Ícone dinâmico
+        const IconComponent = guaranteeIcon === "Shield" ? Shield :
+                             guaranteeIcon === "CheckCircle" ? CheckCircle :
+                             guaranteeIcon === "Award" ? Award :
+                             guaranteeIcon === "Star" ? Star :
+                             guaranteeIcon === "Heart" ? Heart :
+                             guaranteeIcon === "Lock" ? Lock :
+                             guaranteeIcon === "Zap" ? Zap :
+                             guaranteeIcon === "Trophy" ? Trophy :
+                             guaranteeIcon === "Gift" ? Gift : Shield;
+        
+        // Estilos do título
+        const titleStyle = {
+          fontSize: guaranteeTitleSize === "xs" ? "14px" : 
+                   guaranteeTitleSize === "sm" ? "16px" : 
+                   guaranteeTitleSize === "base" ? "18px" :
+                   guaranteeTitleSize === "lg" ? "20px" : 
+                   guaranteeTitleSize === "xl" ? "24px" :
+                   guaranteeTitleSize === "2xl" ? "28px" : "20px",
+          fontWeight: guaranteeTitleWeight === "normal" ? "400" :
+                     guaranteeTitleWeight === "medium" ? "500" :
+                     guaranteeTitleWeight === "semibold" ? "600" :
+                     guaranteeTitleWeight === "bold" ? "700" : "600",
+          color: guaranteeTitleColor,
+          textAlign: guaranteeTitleAlign as any
+        };
+        
+        // Container width
+        const guaranteeContainerWidth = `${Math.min(Math.max(guaranteeWidth, 10), 100)}%`;
         
         return (
-          <div className="p-6 bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg border border-green-200">
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
-                <Shield className="w-6 h-6 text-green-600" />
-              </div>
-              <div className="flex-1">
-                <h3 className="text-lg font-semibold text-green-800">{guaranteeTitle}</h3>
-                <p className="text-green-700 mt-1">{guaranteeDescription}</p>
-                {element.guaranteeFeatures && (
-                  <ul className="mt-3 space-y-1">
-                    {element.guaranteeFeatures.map((feature, index) => (
-                      <li key={index} className="flex items-center gap-2 text-sm text-green-700">
-                        <CheckCircle className="w-3 h-3 text-green-600" />
-                        {feature}
-                      </li>
-                    ))}
-                  </ul>
-                )}
+          <div 
+            className="w-full"
+            style={{ width: guaranteeContainerWidth, maxWidth: guaranteeContainerWidth }}
+          >
+            <div 
+              className={`p-6 rounded-lg ${guaranteeStyle === "card" ? "border" : ""} ${guaranteeStyle === "shadow" ? "shadow-lg" : ""}`}
+              style={{ 
+                backgroundColor: guaranteeBackgroundColor,
+                borderColor: guaranteeStyle === "card" ? "rgba(0, 0, 0, 0.1)" : "transparent"
+              }}
+            >
+              <div className={`${guaranteeLayout === "vertical" ? "flex flex-col items-center text-center gap-4" : "flex items-center gap-4"}`}>
+                <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center flex-shrink-0">
+                  <IconComponent className="w-6 h-6" style={{ color: guaranteeIconColor }} />
+                </div>
+                <div className="flex-1">
+                  <h3 style={titleStyle}>{guaranteeTitle}</h3>
+                  <p className="mt-1" style={{ color: guaranteeTextColor }}>{guaranteeDescription}</p>
+                  {element.guaranteeFeatures && (
+                    <ul className="mt-3 space-y-1">
+                      {element.guaranteeFeatures.map((feature, index) => (
+                        <li key={index} className="flex items-center gap-2 text-sm" style={{ color: guaranteeTextColor }}>
+                          <CheckCircle className="w-3 h-3" style={{ color: guaranteeIconColor }} />
+                          {feature}
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                  {guaranteeButtonText && (
+                    <button 
+                      className="mt-4 px-4 py-2 rounded-lg font-medium transition-colors duration-200"
+                      style={{ 
+                        backgroundColor: guaranteeIconColor,
+                        color: "white"
+                      }}
+                    >
+                      {guaranteeButtonText}
+                    </button>
+                  )}
+                </div>
               </div>
             </div>
           </div>
@@ -12674,282 +12738,213 @@ const gameElementCategories = [
                   </div>
 
                   <div className="border-b pb-4">
-                    <h5 className="font-semibold text-sm mb-3">📝 Configurações</h5>
+                    <h5 className="font-semibold text-sm mb-3">📝 Conteúdo</h5>
                     
-                    <div>
-                      <Label>Tipo de Garantia</Label>
-                      <select 
-                        className="w-full px-2 py-1 border rounded text-xs mt-1"
-                        value={selectedElementData.guaranteeType || "days"}
-                        onChange={(e) => updateElement(selectedElementData.id, { guaranteeType: e.target.value })}
-                      >
-                        <option value="days">Dias</option>
-                        <option value="money_back">Dinheiro de Volta</option>
-                        <option value="satisfaction">Satisfação</option>
-                        <option value="lifetime">Vitalícia</option>
-                        <option value="custom">Personalizada</option>
-                      </select>
-                    </div>
-
-                    {selectedElementData.guaranteeType === "days" && (
-                      <div className="mt-3">
-                        <Label>Número de Dias</Label>
+                    <div className="space-y-3">
+                      <div>
+                        <Label>Título</Label>
                         <Input
-                          type="number"
-                          value={selectedElementData.guaranteeDays || 30}
-                          onChange={(e) => updateElement(selectedElementData.id, { guaranteeDays: parseInt(e.target.value) })}
-                          className="mt-1"
-                          min="1"
+                          value={selectedElementData.guaranteeTitle || ""}
+                          onChange={(e) => updateElement(selectedElementData.id, { guaranteeTitle: e.target.value })}
+                          placeholder="Garantia de 30 dias"
+                          className="mt-1 text-xs"
                         />
                       </div>
-                    )}
 
-                    <div className="mt-3">
-                      <Label>Título</Label>
-                      <Input
-                        value={selectedElementData.guaranteeTitle || ""}
-                        onChange={(e) => updateElement(selectedElementData.id, { guaranteeTitle: e.target.value })}
-                        placeholder="Garantia de Satisfação"
-                        className="mt-1"
-                      />
+                      <div>
+                        <Label>Descrição</Label>
+                        <Input
+                          value={selectedElementData.guaranteeDescription || ""}
+                          onChange={(e) => updateElement(selectedElementData.id, { guaranteeDescription: e.target.value })}
+                          placeholder="Se você não ficar satisfeito, devolvemos seu dinheiro"
+                          className="mt-1 text-xs"
+                        />
+                      </div>
+
+                      <div>
+                        <Label>Texto do Botão (opcional)</Label>
+                        <Input
+                          value={selectedElementData.guaranteeButtonText || ""}
+                          onChange={(e) => updateElement(selectedElementData.id, { guaranteeButtonText: e.target.value })}
+                          placeholder="Saiba Mais"
+                          className="mt-1 text-xs"
+                        />
+                      </div>
                     </div>
+                  </div>
 
-                    <div className="mt-3">
-                      <Label>Descrição</Label>
-                      <Input
-                        value={selectedElementData.guaranteeDescription || ""}
-                        onChange={(e) => updateElement(selectedElementData.id, { guaranteeDescription: e.target.value })}
-                        placeholder="100% seguro e confiável"
-                        className="mt-1"
-                      />
+                  <div className="border-b pb-4">
+                    <h5 className="font-semibold text-sm mb-3">🎨 Estilo</h5>
+                    
+                    <div className="space-y-3">
+                      <div className="grid grid-cols-2 gap-3">
+                        <div>
+                          <Label>Ícone</Label>
+                          <select 
+                            className="w-full px-2 py-1 border rounded text-xs mt-1"
+                            value={selectedElementData.guaranteeIcon || "Shield"}
+                            onChange={(e) => updateElement(selectedElementData.id, { guaranteeIcon: e.target.value })}
+                          >
+                            <option value="Shield">Escudo</option>
+                            <option value="CheckCircle">Check</option>
+                            <option value="Award">Prêmio</option>
+                            <option value="Star">Estrela</option>
+                            <option value="Heart">Coração</option>
+                            <option value="Lock">Cadeado</option>
+                            <option value="Zap">Raio</option>
+                            <option value="Trophy">Troféu</option>
+                            <option value="Gift">Presente</option>
+                          </select>
+                        </div>
+
+                        <div>
+                          <Label>Layout</Label>
+                          <select 
+                            className="w-full px-2 py-1 border rounded text-xs mt-1"
+                            value={selectedElementData.guaranteeLayout || "horizontal"}
+                            onChange={(e) => updateElement(selectedElementData.id, { guaranteeLayout: e.target.value })}
+                          >
+                            <option value="horizontal">Horizontal</option>
+                            <option value="vertical">Vertical</option>
+                          </select>
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-3">
+                        <div>
+                          <Label>Estilo</Label>
+                          <select 
+                            className="w-full px-2 py-1 border rounded text-xs mt-1"
+                            value={selectedElementData.guaranteeStyle || "card"}
+                            onChange={(e) => updateElement(selectedElementData.id, { guaranteeStyle: e.target.value })}
+                          >
+                            <option value="card">Card</option>
+                            <option value="minimal">Minimal</option>
+                            <option value="shadow">Sombra</option>
+                          </select>
+                        </div>
+
+                        <div>
+                          <Label>Largura (%)</Label>
+                          <select 
+                            className="w-full px-2 py-1 border rounded text-xs mt-1"
+                            value={selectedElementData.guaranteeWidth || 100}
+                            onChange={(e) => updateElement(selectedElementData.id, { guaranteeWidth: parseInt(e.target.value) })}
+                          >
+                            <option value={25}>25%</option>
+                            <option value={50}>50%</option>
+                            <option value={75}>75%</option>
+                            <option value={100}>100%</option>
+                          </select>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="border-b pb-4">
+                    <h5 className="font-semibold text-sm mb-3">🎨 Formatação do Título</h5>
+                    
+                    <div className="space-y-3">
+                      <div className="grid grid-cols-2 gap-3">
+                        <div>
+                          <Label>Tamanho</Label>
+                          <select 
+                            className="w-full px-2 py-1 border rounded text-xs mt-1"
+                            value={selectedElementData.guaranteeTitleSize || "lg"}
+                            onChange={(e) => updateElement(selectedElementData.id, { guaranteeTitleSize: e.target.value })}
+                          >
+                            <option value="xs">XS</option>
+                            <option value="sm">SM</option>
+                            <option value="base">Base</option>
+                            <option value="lg">LG</option>
+                            <option value="xl">XL</option>
+                            <option value="2xl">2XL</option>
+                          </select>
+                        </div>
+
+                        <div>
+                          <Label>Peso</Label>
+                          <select 
+                            className="w-full px-2 py-1 border rounded text-xs mt-1"
+                            value={selectedElementData.guaranteeTitleWeight || "semibold"}
+                            onChange={(e) => updateElement(selectedElementData.id, { guaranteeTitleWeight: e.target.value })}
+                          >
+                            <option value="normal">Normal</option>
+                            <option value="medium">Medium</option>
+                            <option value="semibold">Semibold</option>
+                            <option value="bold">Bold</option>
+                          </select>
+                        </div>
+                      </div>
+
+                      <div>
+                        <Label>Alinhamento</Label>
+                        <select 
+                          className="w-full px-2 py-1 border rounded text-xs mt-1"
+                          value={selectedElementData.guaranteeTitleAlign || "left"}
+                          onChange={(e) => updateElement(selectedElementData.id, { guaranteeTitleAlign: e.target.value })}
+                        >
+                          <option value="left">Esquerda</option>
+                          <option value="center">Centro</option>
+                          <option value="right">Direita</option>
+                        </select>
+                      </div>
                     </div>
                   </div>
 
                   <div>
-                    <h5 className="font-semibold text-sm mb-3">🎨 Estilo</h5>
+                    <h5 className="font-semibold text-sm mb-3">🎨 Cores</h5>
                     
-                    <div className="grid grid-cols-2 gap-3">
+                    <div className="space-y-3">
                       <div>
-                        <Label>Estilo</Label>
-                        <select 
-                          className="w-full px-2 py-1 border rounded text-xs mt-1"
-                          value={selectedElementData.guaranteeStyle || "badge"}
-                          onChange={(e) => updateElement(selectedElementData.id, { guaranteeStyle: e.target.value })}
-                        >
-                          <option value="badge">Badge</option>
-                          <option value="card">Card</option>
-                          <option value="banner">Banner</option>
-                          <option value="seal">Selo</option>
-                          <option value="modern">Moderno</option>
-                          <option value="minimal">Minimalista</option>
-                        </select>
-                      </div>
-                      <div>
-                        <Label>Tamanho</Label>
-                        <select 
-                          className="w-full px-2 py-1 border rounded text-xs mt-1"
-                          value={selectedElementData.guaranteeSize || "medium"}
-                          onChange={(e) => updateElement(selectedElementData.id, { guaranteeSize: e.target.value })}
-                        >
-                          <option value="small">Pequeno</option>
-                          <option value="medium">Médio</option>
-                          <option value="large">Grande</option>
-                        </select>
-                      </div>
-                    </div>
-
-                    {/* CORES PERSONALIZADAS */}
-                    <div className="mt-4 space-y-3 border-t pt-4">
-                      <h6 className="font-semibold text-sm text-blue-600">🎨 Cores</h6>
-                      
-                      <div className="grid grid-cols-2 gap-3">
-                        <div>
-                          <Label className="text-xs">Cor Principal</Label>
-                          <input
+                        <Label>Cor de Fundo</Label>
+                        <div className="flex gap-2 mt-1">
+                          <Input
                             type="color"
-                            value={selectedElementData.guaranteeColor || "#3b82f6"}
-                            onChange={(e) => updateElement(selectedElementData.id, { guaranteeColor: e.target.value })}
-                            className="w-full h-8 border rounded"
-                          />
-                        </div>
-                        
-                        <div>
-                          <Label className="text-xs">Cor do Texto</Label>
-                          <input
-                            type="color"
-                            value={selectedElementData.guaranteeTextColor || "#ffffff"}
-                            onChange={(e) => updateElement(selectedElementData.id, { guaranteeTextColor: e.target.value })}
-                            className="w-full h-8 border rounded"
-                          />
-                        </div>
-                      </div>
-
-                      <div className="grid grid-cols-2 gap-3">
-                        <div>
-                          <Label className="text-xs">Cor de Fundo</Label>
-                          <input
-                            type="color"
-                            value={selectedElementData.guaranteeBackgroundColor || "#f3f4f6"}
+                            value={selectedElementData.guaranteeBackgroundColor || "#ffffff"}
                             onChange={(e) => updateElement(selectedElementData.id, { guaranteeBackgroundColor: e.target.value })}
-                            className="w-full h-8 border rounded"
+                            className="w-12 h-8 p-0 border rounded"
                           />
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => updateElement(selectedElementData.id, { guaranteeBackgroundColor: "transparent" })}
+                            className="text-xs"
+                          >
+                            Transparente
+                          </Button>
                         </div>
-                        
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-3">
                         <div>
-                          <Label className="text-xs">Cor da Borda</Label>
-                          <input
+                          <Label>Cor do Título</Label>
+                          <Input
                             type="color"
-                            value={selectedElementData.guaranteeBorderColor || "#d1d5db"}
-                            onChange={(e) => updateElement(selectedElementData.id, { guaranteeBorderColor: e.target.value })}
-                            className="w-full h-8 border rounded"
+                            value={selectedElementData.guaranteeTitleColor || "#111827"}
+                            onChange={(e) => updateElement(selectedElementData.id, { guaranteeTitleColor: e.target.value })}
+                            className="w-full h-8 mt-1"
+                          />
+                        </div>
+
+                        <div>
+                          <Label>Cor do Texto</Label>
+                          <Input
+                            type="color"
+                            value={selectedElementData.guaranteeTextColor || "#374151"}
+                            onChange={(e) => updateElement(selectedElementData.id, { guaranteeTextColor: e.target.value })}
+                            className="w-full h-8 mt-1"
                           />
                         </div>
                       </div>
-                    </div>
-
-                    {/* LAYOUT E POSICIONAMENTO */}
-                    <div className="mt-4 space-y-3 border-t pt-4">
-                      <h6 className="font-semibold text-sm text-green-600">📐 Layout</h6>
-                      
-                      <div className="grid grid-cols-2 gap-3">
-                        <div>
-                          <Label className="text-xs">Alinhamento</Label>
-                          <select 
-                            className="w-full px-2 py-1 border rounded text-xs mt-1"
-                            value={selectedElementData.guaranteeAlignment || "center"}
-                            onChange={(e) => updateElement(selectedElementData.id, { guaranteeAlignment: e.target.value })}
-                          >
-                            <option value="left">Esquerda</option>
-                            <option value="center">Centro</option>
-                            <option value="right">Direita</option>
-                          </select>
-                        </div>
-                        
-                        <div>
-                          <Label className="text-xs">Posição do Ícone</Label>
-                          <select 
-                            className="w-full px-2 py-1 border rounded text-xs mt-1"
-                            value={selectedElementData.guaranteeIconPosition || "left"}
-                            onChange={(e) => updateElement(selectedElementData.id, { guaranteeIconPosition: e.target.value })}
-                          >
-                            <option value="left">Esquerda</option>
-                            <option value="top">Topo</option>
-                            <option value="right">Direita</option>
-                            <option value="none">Sem Ícone</option>
-                          </select>
-                        </div>
-                      </div>
-
-                      <div className="grid grid-cols-2 gap-3">
-                        <div>
-                          <Label className="text-xs">Espaçamento</Label>
-                          <select 
-                            className="w-full px-2 py-1 border rounded text-xs mt-1"
-                            value={selectedElementData.guaranteePadding || "medium"}
-                            onChange={(e) => updateElement(selectedElementData.id, { guaranteePadding: e.target.value })}
-                          >
-                            <option value="small">Pequeno</option>
-                            <option value="medium">Médio</option>
-                            <option value="large">Grande</option>
-                          </select>
-                        </div>
-                        
-                        <div>
-                          <Label className="text-xs">Raio da Borda</Label>
-                          <select 
-                            className="w-full px-2 py-1 border rounded text-xs mt-1"
-                            value={selectedElementData.guaranteeBorderRadius || "md"}
-                            onChange={(e) => updateElement(selectedElementData.id, { guaranteeBorderRadius: e.target.value })}
-                          >
-                            <option value="none">Sem Borda</option>
-                            <option value="sm">Pequeno</option>
-                            <option value="md">Médio</option>
-                            <option value="lg">Grande</option>
-                            <option value="xl">Extra Grande</option>
-                            <option value="full">Circular</option>
-                          </select>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* EFEITOS VISUAIS */}
-                    <div className="mt-4 space-y-3 border-t pt-4">
-                      <h6 className="font-semibold text-sm text-purple-600">✨ Efeitos</h6>
-                      
-                      <div className="grid grid-cols-2 gap-3">
-                        <div>
-                          <Label className="text-xs">Sombra</Label>
-                          <select 
-                            className="w-full px-2 py-1 border rounded text-xs mt-1"
-                            value={selectedElementData.guaranteeShadow || "medium"}
-                            onChange={(e) => updateElement(selectedElementData.id, { guaranteeShadow: e.target.value })}
-                          >
-                            <option value="none">Sem Sombra</option>
-                            <option value="small">Pequena</option>
-                            <option value="medium">Média</option>
-                            <option value="large">Grande</option>
-                            <option value="xl">Extra Grande</option>
-                          </select>
-                        </div>
-                        
-                        <div>
-                          <Label className="text-xs">Animação</Label>
-                          <select 
-                            className="w-full px-2 py-1 border rounded text-xs mt-1"
-                            value={selectedElementData.guaranteeAnimation || "none"}
-                            onChange={(e) => updateElement(selectedElementData.id, { guaranteeAnimation: e.target.value })}
-                          >
-                            <option value="none">Sem Animação</option>
-                            <option value="pulse">Pulsante</option>
-                            <option value="bounce">Saltitante</option>
-                            <option value="glow">Brilhante</option>
-                            <option value="shake">Tremulante</option>
-                          </select>
-                        </div>
-                      </div>
-
-                      <div className="flex items-center justify-between">
-                        <Label className="text-xs">Efeito Hover</Label>
-                        <input
-                          type="checkbox"
-                          checked={selectedElementData.guaranteeHoverEffect !== false}
-                          onChange={(e) => updateElement(selectedElementData.id, { guaranteeHoverEffect: e.target.checked })}
-                          className="h-4 w-4"
-                        />
-                      </div>
-                    </div>
-
-                    {/* CONTEÚDO ADICIONAL */}
-                    <div className="mt-4 space-y-3 border-t pt-4">
-                      <h6 className="font-semibold text-sm text-orange-600">📝 Conteúdo</h6>
-                      
-                      <div>
-                        <Label className="text-xs">Texto do Botão (Opcional)</Label>
-                        <Input
-                          value={selectedElementData.guaranteeButtonText || ""}
-                          onChange={(e) => updateElement(selectedElementData.id, { guaranteeButtonText: e.target.value })}
-                          placeholder="Ex: Saiba Mais"
-                          className="text-xs mt-1"
-                        />
-                      </div>
 
                       <div>
-                        <Label className="text-xs">Link do Botão (Opcional)</Label>
+                        <Label>Cor do Ícone</Label>
                         <Input
-                          value={selectedElementData.guaranteeButtonLink || ""}
-                          onChange={(e) => updateElement(selectedElementData.id, { guaranteeButtonLink: e.target.value })}
-                          placeholder="Ex: https://exemplo.com/garantia"
-                          className="text-xs mt-1"
-                        />
-                      </div>
-
-                      <div>
-                        <Label className="text-xs">Texto Adicional</Label>
-                        <Input
-                          value={selectedElementData.guaranteeSubtitle || ""}
-                          onChange={(e) => updateElement(selectedElementData.id, { guaranteeSubtitle: e.target.value })}
-                          placeholder="Ex: Sem riscos, total tranquilidade"
-                          className="text-xs mt-1"
+                          type="color"
+                          value={selectedElementData.guaranteeIconColor || "#10b981"}
+                          onChange={(e) => updateElement(selectedElementData.id, { guaranteeIconColor: e.target.value })}
+                          className="w-full h-8 mt-1"
                         />
                       </div>
                     </div>

@@ -7,7 +7,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
-import { ArrowRight, ArrowLeft, CheckCircle, Calendar, Star, Target, Scale, ArrowUpDown, Share2, Loader2, BarChart3, TrendingUp, PlayCircle } from "lucide-react";
+import { ArrowRight, ArrowLeft, CheckCircle, Calendar, Star, Target, Scale, ArrowUpDown, Share2, Loader2, BarChart3, TrendingUp, PlayCircle, Shield, Award, Heart, Lock, Zap, Trophy, Gift } from "lucide-react";
 import { nanoid } from "nanoid";
 import { backRedirectManager } from "@/utils/backRedirectManager";
 import Chart from "./Chart";
@@ -2150,6 +2150,99 @@ export function QuizPublicRenderer({ quiz }: QuizPublicRendererProps) {
                     </p>
                   </div>
                 ))}
+              </div>
+            </div>
+          </div>
+        );
+
+      case 'guarantee':
+        const guaranteeTitle = properties.guaranteeTitle || "Garantia de 30 dias";
+        const guaranteeDescription = properties.guaranteeDescription || "Se você não ficar satisfeito, devolvemos seu dinheiro";
+        const guaranteeButtonText = properties.guaranteeButtonText || "";
+        const guaranteeIcon = properties.guaranteeIcon || "Shield";
+        const guaranteeBackgroundColor = properties.guaranteeBackgroundColor || "transparent";
+        const guaranteeTextColor = properties.guaranteeTextColor || "#374151";
+        const guaranteeTitleColor = properties.guaranteeTitleColor || "#111827";
+        const guaranteeIconColor = properties.guaranteeIconColor || "#10b981";
+        const guaranteeLayout = properties.guaranteeLayout || "horizontal";
+        const guaranteeStyle = properties.guaranteeStyle || "card";
+        const guaranteeTitleSize = properties.guaranteeTitleSize || "lg";
+        const guaranteeTitleWeight = properties.guaranteeTitleWeight || "semibold";
+        const guaranteeTitleAlign = properties.guaranteeTitleAlign || "left";
+        const guaranteeWidth = properties.guaranteeWidth || 100;
+        
+        // Ícone dinâmico
+        const GuaranteeIconComponent = guaranteeIcon === "Shield" ? Shield :
+                             guaranteeIcon === "CheckCircle" ? CheckCircle :
+                             guaranteeIcon === "Award" ? Award :
+                             guaranteeIcon === "Star" ? Star :
+                             guaranteeIcon === "Heart" ? Heart :
+                             guaranteeIcon === "Lock" ? Lock :
+                             guaranteeIcon === "Zap" ? Zap :
+                             guaranteeIcon === "Trophy" ? Trophy :
+                             guaranteeIcon === "Gift" ? Gift : Shield;
+        
+        // Estilos do título
+        const guaranteeTitleStyle = {
+          fontSize: guaranteeTitleSize === "xs" ? "14px" : 
+                   guaranteeTitleSize === "sm" ? "16px" : 
+                   guaranteeTitleSize === "base" ? "18px" :
+                   guaranteeTitleSize === "lg" ? "20px" : 
+                   guaranteeTitleSize === "xl" ? "24px" :
+                   guaranteeTitleSize === "2xl" ? "28px" : "20px",
+          fontWeight: guaranteeTitleWeight === "normal" ? "400" :
+                     guaranteeTitleWeight === "medium" ? "500" :
+                     guaranteeTitleWeight === "semibold" ? "600" :
+                     guaranteeTitleWeight === "bold" ? "700" : "600",
+          color: guaranteeTitleColor,
+          textAlign: guaranteeTitleAlign as any
+        };
+        
+        // Container width
+        const guaranteeContainerWidth = `${Math.min(Math.max(guaranteeWidth, 10), 100)}%`;
+        
+        return (
+          <div 
+            key={id}
+            className="w-full"
+            style={{ width: guaranteeContainerWidth, maxWidth: guaranteeContainerWidth }}
+          >
+            <div 
+              className={`p-6 rounded-lg ${guaranteeStyle === "card" ? "border" : ""} ${guaranteeStyle === "shadow" ? "shadow-lg" : ""}`}
+              style={{ 
+                backgroundColor: guaranteeBackgroundColor,
+                borderColor: guaranteeStyle === "card" ? "rgba(0, 0, 0, 0.1)" : "transparent"
+              }}
+            >
+              <div className={`${guaranteeLayout === "vertical" ? "flex flex-col items-center text-center gap-4" : "flex items-center gap-4"}`}>
+                <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center flex-shrink-0">
+                  <GuaranteeIconComponent className="w-6 h-6" style={{ color: guaranteeIconColor }} />
+                </div>
+                <div className="flex-1">
+                  <h3 style={guaranteeTitleStyle}>{guaranteeTitle}</h3>
+                  <p className="mt-1" style={{ color: guaranteeTextColor }}>{guaranteeDescription}</p>
+                  {properties.guaranteeFeatures && (
+                    <ul className="mt-3 space-y-1">
+                      {properties.guaranteeFeatures.map((feature: string, index: number) => (
+                        <li key={index} className="flex items-center gap-2 text-sm" style={{ color: guaranteeTextColor }}>
+                          <CheckCircle className="w-3 h-3" style={{ color: guaranteeIconColor }} />
+                          {feature}
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                  {guaranteeButtonText && (
+                    <button 
+                      className="mt-4 px-4 py-2 rounded-lg font-medium transition-colors duration-200"
+                      style={{ 
+                        backgroundColor: guaranteeIconColor,
+                        color: "white"
+                      }}
+                    >
+                      {guaranteeButtonText}
+                    </button>
+                  )}
+                </div>
               </div>
             </div>
           </div>
