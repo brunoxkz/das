@@ -304,9 +304,6 @@ export default function SMSCampaignsAdvanced() {
   const [uniqueResponses, setUniqueResponses] = useState<string[]>([]);
   const [loadingResponses, setLoadingResponses] = useState(false);
   
-  // Estado para controlar expansão dos tooltips
-  const [expandedCard, setExpandedCard] = useState<string | null>(null);
-  
   // Estados para popups específicas de cada tipo
   const [openPopup, setOpenPopup] = useState<string | null>(null);
   const [popupForm, setPopupForm] = useState<any>({});
@@ -727,8 +724,6 @@ export default function SMSCampaignsAdvanced() {
                                       ? 'ring-2 ring-blue-500 bg-gradient-to-br from-blue-50 to-indigo-50 shadow-lg' 
                                       : 'hover:bg-gray-50'
                                   } ${isQuantum ? 'relative overflow-hidden border-purple-200' : ''}`}
-                                  onMouseEnter={() => setExpandedCard(type.id)}
-                                  onMouseLeave={() => setExpandedCard(null)}
                                   onClick={() => {
                                     setOpenPopup(type.id);
                                     setPopupForm({
@@ -803,57 +798,55 @@ export default function SMSCampaignsAdvanced() {
                                   </CardContent>
                                 </Card>
                                 
-                                {/* Descrição expandida que aparece abaixo do cartão */}
-                                {expandedCard === type.id && (
-                                  <div className="mt-3 bg-white border border-gray-200 rounded-lg p-4 shadow-lg animate-in slide-in-from-top-2 duration-300">
-                                    <div className="space-y-3">
-                                      {/* Título e descrição principal */}
-                                      <div>
-                                        <h4 className="text-sm font-semibold text-gray-800 mb-1">{type.name}</h4>
-                                        <p className="text-sm text-gray-700 leading-relaxed">
-                                          {type.description}
-                                        </p>
-                                      </div>
-                                      
-                                      {/* Funcionalidades principais */}
-                                      <div>
-                                        <h5 className="text-xs font-semibold text-gray-600 mb-2">Funcionalidades:</h5>
-                                        <div className="grid grid-cols-1 gap-1">
-                                          {type.features?.map((feature, idx) => (
-                                            <div key={idx} className="flex items-center gap-2 text-xs text-gray-600">
-                                              <div className="w-1.5 h-1.5 bg-blue-500 rounded-full flex-shrink-0"></div>
-                                              <span>{feature}</span>
-                                            </div>
-                                          ))}
-                                        </div>
-                                      </div>
-                                      
-                                      {/* ROI e conversão */}
-                                      {getROIPercentage() && (
-                                        <div className="bg-green-50 border border-green-200 rounded-lg p-2">
-                                          <div className="flex items-center gap-2">
-                                            <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                                            <span className="text-xs font-semibold text-green-700">
-                                              ROI Médio: {getROIPercentage()} de aumento na conversão
-                                            </span>
-                                          </div>
-                                        </div>
-                                      )}
-                                      
-                                      {/* Badge quantum */}
-                                      {isQuantum && (
-                                        <div className="bg-purple-50 border border-purple-200 rounded-lg p-2">
-                                          <div className="flex items-center gap-2">
-                                            <Sparkles className="w-3 h-3 text-purple-600" />
-                                            <span className="text-xs font-semibold text-purple-700">
-                                              Sistema Quantum: Segmentação ultra-granular com precisão máxima
-                                            </span>
-                                          </div>
-                                        </div>
-                                      )}
+                                {/* Descrição sempre visível abaixo do cartão */}
+                                <div className="mt-3 bg-white border border-gray-200 rounded-lg p-4 shadow-lg">
+                                  <div className="space-y-3">
+                                    {/* Título e descrição principal */}
+                                    <div>
+                                      <h4 className="text-sm font-semibold text-gray-800 mb-1">{type.name}</h4>
+                                      <p className="text-sm text-gray-700 leading-relaxed">
+                                        {type.description}
+                                      </p>
                                     </div>
+                                    
+                                    {/* Funcionalidades principais */}
+                                    <div>
+                                      <h5 className="text-xs font-semibold text-gray-600 mb-2">Funcionalidades:</h5>
+                                      <div className="grid grid-cols-1 gap-1">
+                                        {type.features?.map((feature, idx) => (
+                                          <div key={idx} className="flex items-center gap-2 text-xs text-gray-600">
+                                            <div className="w-1.5 h-1.5 bg-blue-500 rounded-full flex-shrink-0"></div>
+                                            <span>{feature}</span>
+                                          </div>
+                                        ))}
+                                      </div>
+                                    </div>
+                                    
+                                    {/* ROI e conversão */}
+                                    {getROIPercentage() && (
+                                      <div className="bg-green-50 border border-green-200 rounded-lg p-2">
+                                        <div className="flex items-center gap-2">
+                                          <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                                          <span className="text-xs font-semibold text-green-700">
+                                            ROI Médio: {getROIPercentage()} de aumento na conversão
+                                          </span>
+                                        </div>
+                                      </div>
+                                    )}
+                                    
+                                    {/* Badge quantum */}
+                                    {isQuantum && (
+                                      <div className="bg-purple-50 border border-purple-200 rounded-lg p-2">
+                                        <div className="flex items-center gap-2">
+                                          <Sparkles className="w-3 h-3 text-purple-600" />
+                                          <span className="text-xs font-semibold text-purple-700">
+                                            Sistema Quantum: Segmentação ultra-granular com precisão máxima
+                                          </span>
+                                        </div>
+                                      </div>
+                                    )}
                                   </div>
-                                )}
+                                </div>
                               </div>
                             );
                           })}
