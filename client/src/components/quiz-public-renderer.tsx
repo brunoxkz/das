@@ -2019,6 +2019,142 @@ export function QuizPublicRenderer({ quiz }: QuizPublicRendererProps) {
           </div>
         );
 
+      case 'testimonials':
+        // Dados padrão dos depoimentos
+        const testimonials = properties.testimonialsData || [
+          {
+            id: "1",
+            name: "Debi Macdonald",
+            testimonial: "É fácil de usar e seguir. Perdi 6 kg em 25 dias.",
+            rating: 5,
+            avatar: "/api/placeholder/40/40"
+          },
+          {
+            id: "2", 
+            name: "Theresa Hamilton",
+            testimonial: "Perdi 3 kg em uma semana. ❤️ Às vezes o estômago reclama da fome, mas é muito melhor do que o sofrimento que eu passava com os vigilantes do peso ou fazendo dietas 'low carb'.",
+            rating: 5,
+            avatar: "/api/placeholder/40/40"
+          },
+          {
+            id: "3",
+            name: "Alicia Wheeler Johnson", 
+            testimonial: "É um jeito mais fácil de introduzir a alimentação saudável e a perda de peso na sua rotina e no seu estilo de vida. 🚀",
+            rating: 5,
+            avatar: "/api/placeholder/40/40"
+          }
+        ];
+
+        // Configurações de layout e estilo
+        const testimonialsTitle = properties.testimonialsTitle || "O que nossos clientes dizem";
+        const titleSize = properties.testimonialsTitleSize || "lg";
+        const layout = properties.testimonialsLayout || "vertical";
+        const columns = properties.testimonialsColumns || 1;
+        const width = properties.testimonialsWidth || 100;
+        const backgroundColor = properties.testimonialsBackgroundColor || "#ffffff";
+        const textColor = properties.testimonialsTextColor || "#374151";
+        const nameColor = properties.testimonialsNameColor || "#111827";
+        const showStars = properties.testimonialsShowStars !== false;
+        const showPhotos = properties.testimonialsShowPhotos !== false;
+        const showShadow = properties.testimonialsShowShadow !== false;
+
+        // Estilos do título
+        const titleStyle = {
+          fontSize: titleSize === "xs" ? "14px" : 
+                   titleSize === "sm" ? "16px" : 
+                   titleSize === "base" ? "18px" :
+                   titleSize === "lg" ? "20px" : 
+                   titleSize === "xl" ? "24px" :
+                   titleSize === "2xl" ? "28px" : "20px",
+          fontWeight: "600",
+          color: nameColor,
+          textAlign: "center" as any,
+          marginBottom: "24px"
+        };
+
+        // Container width para testimonials
+        const testimonialsContainerWidth = `${Math.min(Math.max(width, 10), 100)}%`;
+
+        // Grid classes baseado no layout
+        const gridClasses = layout === "grid" 
+          ? `grid gap-6 ${columns === 1 ? 'grid-cols-1' : columns === 2 ? 'grid-cols-1 md:grid-cols-2' : 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3'}`
+          : "space-y-6";
+
+        // Função para renderizar estrelas
+        const renderStars = (rating: number) => {
+          return Array.from({ length: 5 }, (_, i) => (
+            <Star
+              key={i}
+              className={`w-4 h-4 ${i < rating ? 'text-yellow-400 fill-current' : 'text-gray-300'}`}
+            />
+          ));
+        };
+
+        return (
+          <div key={id} className="w-full" style={{ width: testimonialsContainerWidth, maxWidth: testimonialsContainerWidth }}>
+            <div 
+              className="p-6 rounded-lg"
+              style={{ 
+                backgroundColor: backgroundColor,
+                boxShadow: showShadow ? '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)' : 'none'
+              }}
+            >
+              {/* Título */}
+              {testimonialsTitle && (
+                <h3 style={titleStyle}>
+                  {testimonialsTitle}
+                </h3>
+              )}
+
+              {/* Grid/Lista de depoimentos */}
+              <div className={gridClasses}>
+                {testimonials.map((testimonial: any) => (
+                  <div 
+                    key={testimonial.id} 
+                    className="p-4 border border-gray-200 rounded-lg bg-white"
+                    style={{ borderColor: 'rgba(0, 0, 0, 0.1)' }}
+                  >
+                    {/* Header com foto e nome */}
+                    <div className="flex items-center mb-3">
+                      {showPhotos && (
+                        <img
+                          src={testimonial.avatar}
+                          alt={testimonial.name}
+                          className="w-10 h-10 rounded-full object-cover mr-3"
+                          onError={(e) => {
+                            e.currentTarget.src = "/api/placeholder/40/40";
+                          }}
+                        />
+                      )}
+                      <div>
+                        <h4 
+                          className="font-semibold text-sm"
+                          style={{ color: nameColor }}
+                        >
+                          {testimonial.name}
+                        </h4>
+                        {showStars && (
+                          <div className="flex mt-1">
+                            {renderStars(testimonial.rating)}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Texto do depoimento */}
+                    <p 
+                      className="text-sm leading-relaxed"
+                      style={{ color: textColor }}
+                    >
+                      "{testimonial.testimonial}"
+                    </p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        );
+
       default:
         return (
           <div key={id} className="p-4 bg-gray-100 rounded-md">

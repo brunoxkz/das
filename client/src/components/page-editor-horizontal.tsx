@@ -4455,40 +4455,94 @@ const gameElementCategories = [
             avatar: "/api/placeholder/40/40"
           }
         ];
-        
+
+        // Aplicar configurações de estilo do elemento
+        const testimonialsLayout = element.testimonialsLayout || "vertical";
+        const testimonialsColumns = element.testimonialsColumns || 1;
+        const testimonialsBackgroundColor = element.testimonialsBackgroundColor || "#ffffff";
+        const testimonialsTextColor = element.testimonialsTextColor || "#374151";
+        const testimonialsNameColor = element.testimonialsNameColor || "#111827";
+        const testimonialsShowStars = element.testimonialsShowStars !== false;
+        const testimonialsShowPhotos = element.testimonialsShowPhotos !== false;
+        const testimonialsShowShadow = element.testimonialsShowShadow !== false;
+        const testimonialsTitle = element.testimonialsTitle || "Avaliações de clientes";
+        const testimonialsTitleSize = element.testimonialsTitleSize || "lg";
+        const testimonialsWidth = element.testimonialsWidth || 100;
+
+        // Classes de tamanho do título
+        const titleSizeClasses = {
+          xs: "text-xs",
+          sm: "text-sm", 
+          base: "text-base",
+          lg: "text-lg",
+          xl: "text-xl",
+          "2xl": "text-2xl"
+        };
+
         return (
-          <div className="space-y-4 p-4">
-            <h3 className="text-lg font-semibold text-gray-800 mb-4">Avaliações de clientes</h3>
-            {testimonialsData.map((testimonial) => (
-              <div 
-                key={testimonial.id}
-                className="bg-white p-4 rounded-lg border border-gray-200 shadow-sm hover:shadow-md transition-shadow duration-200"
+          <div 
+            className="p-4"
+            style={{ width: `${testimonialsWidth}%` }}
+          >
+            {testimonialsTitle && (
+              <h3 
+                className={`${titleSizeClasses[testimonialsTitleSize]} font-semibold mb-4`}
+                style={{ color: testimonialsNameColor }}
               >
-                <div className="flex items-start gap-3">
-                  <div className="w-10 h-10 rounded-full bg-gray-200 flex-shrink-0 overflow-hidden">
-                    <img 
-                      src={testimonial.avatar} 
-                      alt={testimonial.name}
-                      className="w-full h-full object-cover"
-                    />
-                  </div>
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-2">
-                      <span className="font-medium text-gray-800">{testimonial.name}</span>
-                      <div className="flex">
-                        {[...Array(5)].map((_, i) => (
-                          <Star
-                            key={i}
-                            className={`w-4 h-4 ${i < testimonial.rating ? 'text-yellow-400 fill-current' : 'text-gray-300'}`}
-                          />
-                        ))}
+                {testimonialsTitle}
+              </h3>
+            )}
+            <div className={`
+              ${testimonialsLayout === "grid" ? `grid grid-cols-${testimonialsColumns} gap-4` : "space-y-4"}
+            `}>
+              {testimonialsData.map((testimonial) => (
+                <div 
+                  key={testimonial.id}
+                  className={`p-4 rounded-lg border transition-all duration-200 ${
+                    testimonialsShowShadow ? "shadow-sm hover:shadow-md" : ""
+                  }`}
+                  style={{ backgroundColor: testimonialsBackgroundColor }}
+                >
+                  <div className="flex items-start gap-3">
+                    {testimonialsShowPhotos && (
+                      <div className="w-10 h-10 rounded-full bg-gray-200 flex-shrink-0 overflow-hidden">
+                        <img 
+                          src={testimonial.avatar} 
+                          alt={testimonial.name}
+                          className="w-full h-full object-cover"
+                        />
                       </div>
+                    )}
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-2">
+                        <span 
+                          className="font-medium"
+                          style={{ color: testimonialsNameColor }}
+                        >
+                          {testimonial.name}
+                        </span>
+                        {testimonialsShowStars && (
+                          <div className="flex">
+                            {[...Array(5)].map((_, i) => (
+                              <Star
+                                key={i}
+                                className={`w-4 h-4 ${i < testimonial.rating ? 'text-yellow-400 fill-current' : 'text-gray-300'}`}
+                              />
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                      <p 
+                        className="text-sm leading-relaxed"
+                        style={{ color: testimonialsTextColor }}
+                      >
+                        {testimonial.testimonial}
+                      </p>
                     </div>
-                    <p className="text-gray-700 text-sm leading-relaxed">{testimonial.testimonial}</p>
                   </div>
                 </div>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
         );
 
@@ -7890,6 +7944,147 @@ const gameElementCategories = [
                       className="mt-1"
                       placeholder="Avaliações de clientes"
                     />
+                  </div>
+
+                  <div>
+                    <Label>Tamanho do Título</Label>
+                    <select
+                      className="w-full px-3 py-2 border rounded-md mt-1"
+                      value={selectedElementData.testimonialsTitleSize || "lg"}
+                      onChange={(e) => updateElement(selectedElementData.id, { testimonialsTitleSize: e.target.value })}
+                    >
+                      <option value="xs">Extra Pequeno (xs)</option>
+                      <option value="sm">Pequeno (sm)</option>
+                      <option value="base">Base</option>
+                      <option value="lg">Grande (lg)</option>
+                      <option value="xl">Extra Grande (xl)</option>
+                      <option value="2xl">2X Grande (2xl)</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <Label>Layout</Label>
+                    <select
+                      className="w-full px-3 py-2 border rounded-md mt-1"
+                      value={selectedElementData.testimonialsLayout || "vertical"}
+                      onChange={(e) => updateElement(selectedElementData.id, { testimonialsLayout: e.target.value })}
+                    >
+                      <option value="vertical">Vertical</option>
+                      <option value="grid">Grid</option>
+                    </select>
+                  </div>
+
+                  {selectedElementData.testimonialsLayout === "grid" && (
+                    <div>
+                      <Label>Número de Colunas</Label>
+                      <select
+                        className="w-full px-3 py-2 border rounded-md mt-1"
+                        value={selectedElementData.testimonialsColumns || 1}
+                        onChange={(e) => updateElement(selectedElementData.id, { testimonialsColumns: parseInt(e.target.value) })}
+                      >
+                        <option value={1}>1 Coluna</option>
+                        <option value={2}>2 Colunas</option>
+                        <option value={3}>3 Colunas</option>
+                      </select>
+                    </div>
+                  )}
+
+                  <div>
+                    <Label>Largura (%)</Label>
+                    <select
+                      className="w-full px-3 py-2 border rounded-md mt-1"
+                      value={selectedElementData.testimonialsWidth || 100}
+                      onChange={(e) => updateElement(selectedElementData.id, { testimonialsWidth: parseInt(e.target.value) })}
+                    >
+                      <option value={25}>25%</option>
+                      <option value={50}>50%</option>
+                      <option value={75}>75%</option>
+                      <option value={100}>100%</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <Label>Cor de Fundo</Label>
+                    <div className="flex gap-2 mt-1">
+                      <Input
+                        type="color"
+                        value={selectedElementData.testimonialsBackgroundColor || "#ffffff"}
+                        onChange={(e) => updateElement(selectedElementData.id, { testimonialsBackgroundColor: e.target.value })}
+                        className="w-16 h-10 p-1"
+                      />
+                      <Input
+                        value={selectedElementData.testimonialsBackgroundColor || "#ffffff"}
+                        onChange={(e) => updateElement(selectedElementData.id, { testimonialsBackgroundColor: e.target.value })}
+                        placeholder="#ffffff"
+                        className="flex-1"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <Label>Cor do Texto</Label>
+                    <div className="flex gap-2 mt-1">
+                      <Input
+                        type="color"
+                        value={selectedElementData.testimonialsTextColor || "#374151"}
+                        onChange={(e) => updateElement(selectedElementData.id, { testimonialsTextColor: e.target.value })}
+                        className="w-16 h-10 p-1"
+                      />
+                      <Input
+                        value={selectedElementData.testimonialsTextColor || "#374151"}
+                        onChange={(e) => updateElement(selectedElementData.id, { testimonialsTextColor: e.target.value })}
+                        placeholder="#374151"
+                        className="flex-1"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <Label>Cor do Nome</Label>
+                    <div className="flex gap-2 mt-1">
+                      <Input
+                        type="color"
+                        value={selectedElementData.testimonialsNameColor || "#111827"}
+                        onChange={(e) => updateElement(selectedElementData.id, { testimonialsNameColor: e.target.value })}
+                        className="w-16 h-10 p-1"
+                      />
+                      <Input
+                        value={selectedElementData.testimonialsNameColor || "#111827"}
+                        onChange={(e) => updateElement(selectedElementData.id, { testimonialsNameColor: e.target.value })}
+                        placeholder="#111827"
+                        className="flex-1"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="flex items-center space-x-2">
+                    <input
+                      type="checkbox"
+                      id="showStars"
+                      checked={selectedElementData.testimonialsShowStars !== false}
+                      onChange={(e) => updateElement(selectedElementData.id, { testimonialsShowStars: e.target.checked })}
+                    />
+                    <Label htmlFor="showStars">Mostrar Estrelas</Label>
+                  </div>
+
+                  <div className="flex items-center space-x-2">
+                    <input
+                      type="checkbox"
+                      id="showPhotos"
+                      checked={selectedElementData.testimonialsShowPhotos !== false}
+                      onChange={(e) => updateElement(selectedElementData.id, { testimonialsShowPhotos: e.target.checked })}
+                    />
+                    <Label htmlFor="showPhotos">Mostrar Fotos</Label>
+                  </div>
+
+                  <div className="flex items-center space-x-2">
+                    <input
+                      type="checkbox"
+                      id="showShadow"
+                      checked={selectedElementData.testimonialsShowShadow !== false}
+                      onChange={(e) => updateElement(selectedElementData.id, { testimonialsShowShadow: e.target.checked })}
+                    />
+                    <Label htmlFor="showShadow">Mostrar Sombra</Label>
                   </div>
 
                   <div>
@@ -11760,7 +11955,7 @@ const gameElementCategories = [
                   <div className="bg-purple-50 p-3 rounded-lg">
                     <h4 className="text-sm font-semibold text-purple-800 mb-2">💬 Depoimentos</h4>
                     <p className="text-xs text-purple-700">
-                      Avaliações e comentários de clientes satisfeitos
+                      Avaliações e comentários de clientes satisfeitos (3 exemplos editáveis)
                     </p>
                   </div>
 
@@ -11775,6 +11970,272 @@ const gameElementCategories = [
                         placeholder="O que nossos clientes dizem"
                         className="mt-1"
                       />
+                    </div>
+
+                    <div className="mt-4">
+                      <Label className="text-sm font-semibold mb-3 block">Editar Depoimentos:</Label>
+                      {(selectedElementData.testimonialsData || [
+                        {
+                          id: "1",
+                          name: "Debi Macdonald",
+                          testimonial: "É fácil de usar e seguir. Perdi 6 kg em 25 dias.",
+                          rating: 5,
+                          avatar: "/api/placeholder/40/40"
+                        },
+                        {
+                          id: "2", 
+                          name: "Theresa Hamilton",
+                          testimonial: "Perdi 3 kg em uma semana. ❤️ Às vezes o estômago reclama da fome, mas é muito melhor do que o sofrimento que eu passava com os vigilantes do peso ou fazendo dietas 'low carb'.",
+                          rating: 5,
+                          avatar: "/api/placeholder/40/40"
+                        },
+                        {
+                          id: "3",
+                          name: "Alicia Wheeler Johnson", 
+                          testimonial: "É um jeito mais fácil de introduzir a alimentação saudável e a perda de peso na sua rotina e no seu estilo de vida. 🚀",
+                          rating: 5,
+                          avatar: "/api/placeholder/40/40"
+                        }
+                      ]).map((testimonial, index) => (
+                        <div key={testimonial.id} className="border p-3 rounded-lg mb-3 bg-gray-50">
+                          <div className="flex items-center justify-between mb-2">
+                            <span className="font-medium text-sm">Depoimento {index + 1}</span>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => {
+                                const currentData = selectedElementData.testimonialsData || [
+                                  {
+                                    id: "1",
+                                    name: "Debi Macdonald",
+                                    testimonial: "É fácil de usar e seguir. Perdi 6 kg em 25 dias.",
+                                    rating: 5,
+                                    avatar: "/api/placeholder/40/40"
+                                  },
+                                  {
+                                    id: "2", 
+                                    name: "Theresa Hamilton",
+                                    testimonial: "Perdi 3 kg em uma semana. ❤️ Às vezes o estômago reclama da fome, mas é muito melhor do que o sofrimento que eu passava com os vigilantes do peso ou fazendo dietas 'low carb'.",
+                                    rating: 5,
+                                    avatar: "/api/placeholder/40/40"
+                                  },
+                                  {
+                                    id: "3",
+                                    name: "Alicia Wheeler Johnson", 
+                                    testimonial: "É um jeito mais fácil de introduzir a alimentação saudável e a perda de peso na sua rotina e no seu estilo de vida. 🚀",
+                                    rating: 5,
+                                    avatar: "/api/placeholder/40/40"
+                                  }
+                                ];
+                                const newData = currentData.filter((_, i) => i !== index);
+                                updateElement(selectedElementData.id, { testimonialsData: newData });
+                              }}
+                              className="text-red-600 hover:text-red-700"
+                            >
+                              ×
+                            </Button>
+                          </div>
+                          
+                          <div className="space-y-2">
+                            <div>
+                              <Label className="text-xs">Nome</Label>
+                              <Input
+                                value={testimonial.name}
+                                onChange={(e) => {
+                                  const currentData = selectedElementData.testimonialsData || [
+                                    {
+                                      id: "1",
+                                      name: "Debi Macdonald",
+                                      testimonial: "É fácil de usar e seguir. Perdi 6 kg em 25 dias.",
+                                      rating: 5,
+                                      avatar: "/api/placeholder/40/40"
+                                    },
+                                    {
+                                      id: "2", 
+                                      name: "Theresa Hamilton",
+                                      testimonial: "Perdi 3 kg em uma semana. ❤️ Às vezes o estômago reclama da fome, mas é muito melhor do que o sofrimento que eu passava com os vigilantes do peso ou fazendo dietas 'low carb'.",
+                                      rating: 5,
+                                      avatar: "/api/placeholder/40/40"
+                                    },
+                                    {
+                                      id: "3",
+                                      name: "Alicia Wheeler Johnson", 
+                                      testimonial: "É um jeito mais fácil de introduzir a alimentação saudável e a perda de peso na sua rotina e no seu estilo de vida. 🚀",
+                                      rating: 5,
+                                      avatar: "/api/placeholder/40/40"
+                                    }
+                                  ];
+                                  const newData = [...currentData];
+                                  newData[index] = { ...newData[index], name: e.target.value };
+                                  updateElement(selectedElementData.id, { testimonialsData: newData });
+                                }}
+                                placeholder="Nome do cliente"
+                                className="text-xs"
+                              />
+                            </div>
+                            
+                            <div>
+                              <Label className="text-xs">Depoimento</Label>
+                              <textarea
+                                value={testimonial.testimonial}
+                                onChange={(e) => {
+                                  const currentData = selectedElementData.testimonialsData || [
+                                    {
+                                      id: "1",
+                                      name: "Debi Macdonald",
+                                      testimonial: "É fácil de usar e seguir. Perdi 6 kg em 25 dias.",
+                                      rating: 5,
+                                      avatar: "/api/placeholder/40/40"
+                                    },
+                                    {
+                                      id: "2", 
+                                      name: "Theresa Hamilton",
+                                      testimonial: "Perdi 3 kg em uma semana. ❤️ Às vezes o estômago reclama da fome, mas é muito melhor do que o sofrimento que eu passava com os vigilantes do peso ou fazendo dietas 'low carb'.",
+                                      rating: 5,
+                                      avatar: "/api/placeholder/40/40"
+                                    },
+                                    {
+                                      id: "3",
+                                      name: "Alicia Wheeler Johnson", 
+                                      testimonial: "É um jeito mais fácil de introduzir a alimentação saudável e a perda de peso na sua rotina e no seu estilo de vida. 🚀",
+                                      rating: 5,
+                                      avatar: "/api/placeholder/40/40"
+                                    }
+                                  ];
+                                  const newData = [...currentData];
+                                  newData[index] = { ...newData[index], testimonial: e.target.value };
+                                  updateElement(selectedElementData.id, { testimonialsData: newData });
+                                }}
+                                placeholder="Comentário do cliente"
+                                className="w-full px-3 py-2 border rounded-md text-xs resize-none"
+                                rows={3}
+                              />
+                            </div>
+                            
+                            <div className="flex gap-2">
+                              <div className="flex-1">
+                                <Label className="text-xs">Estrelas</Label>
+                                <select
+                                  value={testimonial.rating}
+                                  onChange={(e) => {
+                                    const currentData = selectedElementData.testimonialsData || [
+                                      {
+                                        id: "1",
+                                        name: "Debi Macdonald",
+                                        testimonial: "É fácil de usar e seguir. Perdi 6 kg em 25 dias.",
+                                        rating: 5,
+                                        avatar: "/api/placeholder/40/40"
+                                      },
+                                      {
+                                        id: "2", 
+                                        name: "Theresa Hamilton",
+                                        testimonial: "Perdi 3 kg em uma semana. ❤️ Às vezes o estômago reclama da fome, mas é muito melhor do que o sofrimento que eu passava com os vigilantes do peso ou fazendo dietas 'low carb'.",
+                                        rating: 5,
+                                        avatar: "/api/placeholder/40/40"
+                                      },
+                                      {
+                                        id: "3",
+                                        name: "Alicia Wheeler Johnson", 
+                                        testimonial: "É um jeito mais fácil de introduzir a alimentação saudável e a perda de peso na sua rotina e no seu estilo de vida. 🚀",
+                                        rating: 5,
+                                        avatar: "/api/placeholder/40/40"
+                                      }
+                                    ];
+                                    const newData = [...currentData];
+                                    newData[index] = { ...newData[index], rating: parseInt(e.target.value) };
+                                    updateElement(selectedElementData.id, { testimonialsData: newData });
+                                  }}
+                                  className="w-full px-2 py-1 border rounded text-xs"
+                                >
+                                  <option value={1}>⭐ (1 estrela)</option>
+                                  <option value={2}>⭐⭐ (2 estrelas)</option>
+                                  <option value={3}>⭐⭐⭐ (3 estrelas)</option>
+                                  <option value={4}>⭐⭐⭐⭐ (4 estrelas)</option>
+                                  <option value={5}>⭐⭐⭐⭐⭐ (5 estrelas)</option>
+                                </select>
+                              </div>
+                              
+                              <div className="flex-1">
+                                <Label className="text-xs">URL Avatar</Label>
+                                <Input
+                                  value={testimonial.avatar}
+                                  onChange={(e) => {
+                                    const currentData = selectedElementData.testimonialsData || [
+                                      {
+                                        id: "1",
+                                        name: "Debi Macdonald",
+                                        testimonial: "É fácil de usar e seguir. Perdi 6 kg em 25 dias.",
+                                        rating: 5,
+                                        avatar: "/api/placeholder/40/40"
+                                      },
+                                      {
+                                        id: "2", 
+                                        name: "Theresa Hamilton",
+                                        testimonial: "Perdi 3 kg em uma semana. ❤️ Às vezes o estômago reclama da fome, mas é muito melhor do que o sofrimento que eu passava com os vigilantes do peso ou fazendo dietas 'low carb'.",
+                                        rating: 5,
+                                        avatar: "/api/placeholder/40/40"
+                                      },
+                                      {
+                                        id: "3",
+                                        name: "Alicia Wheeler Johnson", 
+                                        testimonial: "É um jeito mais fácil de introduzir a alimentação saudável e a perda de peso na sua rotina e no seu estilo de vida. 🚀",
+                                        rating: 5,
+                                        avatar: "/api/placeholder/40/40"
+                                      }
+                                    ];
+                                    const newData = [...currentData];
+                                    newData[index] = { ...newData[index], avatar: e.target.value };
+                                    updateElement(selectedElementData.id, { testimonialsData: newData });
+                                  }}
+                                  placeholder="URL da foto"
+                                  className="text-xs"
+                                />
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                      
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => {
+                          const currentData = selectedElementData.testimonialsData || [
+                            {
+                              id: "1",
+                              name: "Debi Macdonald",
+                              testimonial: "É fácil de usar e seguir. Perdi 6 kg em 25 dias.",
+                              rating: 5,
+                              avatar: "/api/placeholder/40/40"
+                            },
+                            {
+                              id: "2", 
+                              name: "Theresa Hamilton",
+                              testimonial: "Perdi 3 kg em uma semana. ❤️ Às vezes o estômago reclama da fome, mas é muito melhor do que o sofrimento que eu passava com os vigilantes do peso ou fazendo dietas 'low carb'.",
+                              rating: 5,
+                              avatar: "/api/placeholder/40/40"
+                            },
+                            {
+                              id: "3",
+                              name: "Alicia Wheeler Johnson", 
+                              testimonial: "É um jeito mais fácil de introduzir a alimentação saudável e a perda de peso na sua rotina e no seu estilo de vida. 🚀",
+                              rating: 5,
+                              avatar: "/api/placeholder/40/40"
+                            }
+                          ];
+                          const newData = [...currentData, {
+                            id: Date.now().toString(),
+                            name: "Novo Cliente",
+                            testimonial: "Adicione seu depoimento aqui...",
+                            rating: 5,
+                            avatar: "/api/placeholder/40/40"
+                          }];
+                          updateElement(selectedElementData.id, { testimonialsData: newData });
+                        }}
+                        className="w-full"
+                      >
+                        + Adicionar Depoimento
+                      </Button>
                     </div>
 
                     <div className="mt-3">
