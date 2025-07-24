@@ -4162,18 +4162,86 @@ const gameElementCategories = [
             answer: "Depende do seu plano. O plano básico tem 1000 respostas/mês, o profissional tem 10000 e o enterprise é ilimitado."
           }
         ];
+
+        // Aplicar configurações de estilo
+        const faqStyle = element.faqStyle || "accordion";
+        const faqWidth = element.faqWidth || 100;
+        const faqTitleSize = element.faqTitleSize || "base";
+        const faqTitleWeight = element.faqTitleWeight || "medium";
+        const faqTitleAlign = element.faqTitleAlign || "left";
+        const faqBackgroundColor = element.faqBackgroundColor || "#ffffff";
+        const faqHeaderColor = element.faqHeaderColor || "#111827";
+        const faqTextColor = element.faqTextColor || "#374151";
+        const faqBorderColor = element.faqBorderColor || "#e5e7eb";
+
+        // Classes de tamanho de fonte
+        const titleSizeClass = {
+          xs: "text-xs",
+          sm: "text-sm", 
+          base: "text-base",
+          lg: "text-lg",
+          xl: "text-xl",
+          "2xl": "text-2xl"
+        }[faqTitleSize];
+
+        // Classes de peso de fonte
+        const titleWeightClass = {
+          normal: "font-normal",
+          medium: "font-medium",
+          semibold: "font-semibold",
+          bold: "font-bold"
+        }[faqTitleWeight];
+
+        // Classes de alinhamento
+        const titleAlignClass = {
+          left: "text-left",
+          center: "text-center",
+          right: "text-right"
+        }[faqTitleAlign];
+
+        // Estilo do container
+        const containerStyle = {
+          width: `${faqWidth}%`,
+          backgroundColor: faqBackgroundColor === "transparent" ? "transparent" : faqBackgroundColor
+        };
+
+        // Estilo da borda
+        const borderStyle = {
+          borderColor: faqBorderColor
+        };
+
+        // Estilo do título
+        const faqTitleStyle = {
+          color: faqHeaderColor
+        };
+
+        // Estilo do texto
+        const faqTextStyle = {
+          color: faqTextColor
+        };
         
         return (
-          <div className="space-y-4 p-4 border border-gray-200 rounded-lg bg-white">
+          <div 
+            className="space-y-4 p-4 border rounded-lg"
+            style={containerStyle}
+          >
             <div className="space-y-3">
               {faqData.map((faq, index) => (
-                <div key={faq.id} className="border border-gray-200 rounded-lg">
-                  <button className="w-full px-4 py-3 text-left flex items-center justify-between hover:bg-gray-50">
-                    <span className="font-medium text-gray-800">{faq.question}</span>
-                    <ChevronDown className="w-4 h-4 text-gray-500" />
+                <div key={faq.id} className="border rounded-lg" style={borderStyle}>
+                  <button className="w-full px-4 py-3 text-left flex items-center justify-between hover:bg-gray-50 transition-colors">
+                    <span 
+                      className={`${titleSizeClass} ${titleWeightClass} ${titleAlignClass}`}
+                      style={faqTitleStyle}
+                    >
+                      {faq.question}
+                    </span>
+                    <ChevronDown className="w-4 h-4 text-gray-500 flex-shrink-0 ml-2" />
                   </button>
                   
-                  <div className="px-4 pb-3 text-sm text-gray-600 border-t border-gray-100">
+                  <div 
+                    className="px-4 pb-3 text-sm border-t border-gray-100"
+                    style={faqTextStyle}
+                  >
                     {faq.answer}
                   </div>
                 </div>
@@ -13100,6 +13168,314 @@ const gameElementCategories = [
                           onChange={(e) => updateElement(selectedElementData.id, { guaranteeIconColor: e.target.value })}
                           className="w-full h-8 mt-1"
                         />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Propriedades para FAQ */}
+              {selectedElementData.type === "faq" && (
+                <div className="space-y-4">
+                  <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
+                    <div className="flex items-center gap-2 mb-3">
+                      <HelpCircle className="w-5 h-5 text-blue-600" />
+                      <h4 className="font-semibold text-blue-800">FAQ</h4>
+                    </div>
+
+                    <div className="space-y-4">
+                      {/* Configurações Gerais */}
+                      <div className="border-b pb-4">
+                        <h5 className="font-semibold text-sm mb-3">⚙️ Configurações Gerais</h5>
+                        
+                        <div className="space-y-3">
+                          <div className="grid grid-cols-2 gap-3">
+                            <div>
+                              <Label>Estilo</Label>
+                              <select 
+                                className="w-full px-2 py-1 border rounded text-xs mt-1"
+                                value={selectedElementData.faqStyle || "accordion"}
+                                onChange={(e) => updateElement(selectedElementData.id, { faqStyle: e.target.value })}
+                              >
+                                <option value="accordion">Accordion</option>
+                                <option value="card">Card</option>
+                                <option value="simple">Simples</option>
+                                <option value="modern">Moderno</option>
+                              </select>
+                            </div>
+
+                            <div>
+                              <Label>Largura (%)</Label>
+                              <select 
+                                className="w-full px-2 py-1 border rounded text-xs mt-1"
+                                value={selectedElementData.faqWidth || 100}
+                                onChange={(e) => updateElement(selectedElementData.id, { faqWidth: parseInt(e.target.value) })}
+                              >
+                                <option value={25}>25%</option>
+                                <option value={50}>50%</option>
+                                <option value={75}>75%</option>
+                                <option value={100}>100%</option>
+                              </select>
+                            </div>
+                          </div>
+
+                          <div className="flex items-center justify-between">
+                            <Label className="text-xs">Múltiplas Abertas</Label>
+                            <input
+                              type="checkbox"
+                              checked={selectedElementData.faqOpenMultiple || false}
+                              onChange={(e) => updateElement(selectedElementData.id, { faqOpenMultiple: e.target.checked })}
+                              className="h-4 w-4"
+                            />
+                          </div>
+
+                          <div className="flex items-center justify-between">
+                            <Label className="text-xs">Animação</Label>
+                            <input
+                              type="checkbox"
+                              checked={selectedElementData.faqAnimation !== false}
+                              onChange={(e) => updateElement(selectedElementData.id, { faqAnimation: e.target.checked })}
+                              className="h-4 w-4"
+                            />
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Formatação do Título */}
+                      <div className="border-b pb-4">
+                        <h5 className="font-semibold text-sm mb-3">🎨 Formatação do Título</h5>
+                        
+                        <div className="space-y-3">
+                          <div className="grid grid-cols-2 gap-3">
+                            <div>
+                              <Label>Tamanho</Label>
+                              <select 
+                                className="w-full px-2 py-1 border rounded text-xs mt-1"
+                                value={selectedElementData.faqTitleSize || "base"}
+                                onChange={(e) => updateElement(selectedElementData.id, { faqTitleSize: e.target.value })}
+                              >
+                                <option value="xs">XS</option>
+                                <option value="sm">SM</option>
+                                <option value="base">Base</option>
+                                <option value="lg">LG</option>
+                                <option value="xl">XL</option>
+                                <option value="2xl">2XL</option>
+                              </select>
+                            </div>
+
+                            <div>
+                              <Label>Peso</Label>
+                              <select 
+                                className="w-full px-2 py-1 border rounded text-xs mt-1"
+                                value={selectedElementData.faqTitleWeight || "medium"}
+                                onChange={(e) => updateElement(selectedElementData.id, { faqTitleWeight: e.target.value })}
+                              >
+                                <option value="normal">Normal</option>
+                                <option value="medium">Medium</option>
+                                <option value="semibold">Semibold</option>
+                                <option value="bold">Bold</option>
+                              </select>
+                            </div>
+                          </div>
+
+                          <div>
+                            <Label>Alinhamento do Título</Label>
+                            <select 
+                              className="w-full px-2 py-1 border rounded text-xs mt-1"
+                              value={selectedElementData.faqTitleAlign || "left"}
+                              onChange={(e) => updateElement(selectedElementData.id, { faqTitleAlign: e.target.value })}
+                            >
+                              <option value="left">Esquerda</option>
+                              <option value="center">Centro</option>
+                              <option value="right">Direita</option>
+                            </select>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Cores */}
+                      <div className="border-b pb-4">
+                        <h5 className="font-semibold text-sm mb-3">🎨 Cores</h5>
+                        
+                        <div className="space-y-3">
+                          <div>
+                            <Label>Cor de Fundo</Label>
+                            <div className="flex gap-2 mt-1">
+                              <Input
+                                type="color"
+                                value={selectedElementData.faqBackgroundColor || "#ffffff"}
+                                onChange={(e) => updateElement(selectedElementData.id, { faqBackgroundColor: e.target.value })}
+                                className="w-12 h-8 p-0 border rounded"
+                              />
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => updateElement(selectedElementData.id, { faqBackgroundColor: "transparent" })}
+                                className="text-xs"
+                              >
+                                Transparente
+                              </Button>
+                            </div>
+                          </div>
+
+                          <div className="grid grid-cols-2 gap-3">
+                            <div>
+                              <Label>Cor do Título</Label>
+                              <Input
+                                type="color"
+                                value={selectedElementData.faqHeaderColor || "#111827"}
+                                onChange={(e) => updateElement(selectedElementData.id, { faqHeaderColor: e.target.value })}
+                                className="w-full h-8 mt-1"
+                              />
+                            </div>
+
+                            <div>
+                              <Label>Cor do Texto</Label>
+                              <Input
+                                type="color"
+                                value={selectedElementData.faqTextColor || "#374151"}
+                                onChange={(e) => updateElement(selectedElementData.id, { faqTextColor: e.target.value })}
+                                className="w-full h-8 mt-1"
+                              />
+                            </div>
+                          </div>
+
+                          <div>
+                            <Label>Cor da Borda</Label>
+                            <Input
+                              type="color"
+                              value={selectedElementData.faqBorderColor || "#e5e7eb"}
+                              onChange={(e) => updateElement(selectedElementData.id, { faqBorderColor: e.target.value })}
+                              className="w-full h-8 mt-1"
+                            />
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Edição Individual das Perguntas */}
+                      <div>
+                        <div className="flex items-center justify-between mb-3">
+                          <h5 className="font-semibold text-sm">✏️ Editar Perguntas</h5>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => {
+                              const currentFaqData = selectedElementData.faqData || [
+                                {
+                                  id: "faq-1",
+                                  question: "Como funciona o sistema?",
+                                  answer: "O sistema é muito simples de usar. Você cria seus quizzes, compartilha com sua audiência e acompanha os resultados em tempo real através do dashboard."
+                                },
+                                {
+                                  id: "faq-2", 
+                                  question: "Posso cancelar a qualquer momento?",
+                                  answer: "Sim, você pode cancelar sua assinatura a qualquer momento. Não há taxas de cancelamento ou multas."
+                                },
+                                {
+                                  id: "faq-3",
+                                  question: "Há limite de respostas?",
+                                  answer: "Depende do seu plano. O plano básico tem 1000 respostas/mês, o profissional tem 10000 e o enterprise é ilimitado."
+                                }
+                              ];
+
+                              const newFaq = {
+                                id: `faq-${Date.now()}`,
+                                question: "Nova pergunta",
+                                answer: "Nova resposta"
+                              };
+                              
+                              updateElement(selectedElementData.id, {
+                                faqData: [...currentFaqData, newFaq]
+                              });
+                            }}
+                            className="text-xs"
+                          >
+                            + Adicionar
+                          </Button>
+                        </div>
+
+                        <div className="max-h-80 overflow-y-auto space-y-3">
+                          {(selectedElementData.faqData || [
+                            {
+                              id: "faq-1",
+                              question: "Como funciona o sistema?",
+                              answer: "O sistema é muito simples de usar. Você cria seus quizzes, compartilha com sua audiência e acompanha os resultados em tempo real através do dashboard."
+                            },
+                            {
+                              id: "faq-2", 
+                              question: "Posso cancelar a qualquer momento?",
+                              answer: "Sim, você pode cancelar sua assinatura a qualquer momento. Não há taxas de cancelamento ou multas."
+                            },
+                            {
+                              id: "faq-3",
+                              question: "Há limite de respostas?",
+                              answer: "Depende do seu plano. O plano básico tem 1000 respostas/mês, o profissional tem 10000 e o enterprise é ilimitado."
+                            }
+                          ]).map((faq, index) => (
+                            <div key={faq.id} className="p-3 border rounded-lg bg-white">
+                              <div className="flex items-center justify-between mb-2">
+                                <span className="text-xs font-semibold text-gray-600">FAQ #{index + 1}</span>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => {
+                                    const currentFaqData = selectedElementData.faqData || [];
+                                    const updatedFaqData = currentFaqData.filter(item => item.id !== faq.id);
+                                    updateElement(selectedElementData.id, {
+                                      faqData: updatedFaqData
+                                    });
+                                  }}
+                                  className="text-xs text-red-600 hover:text-red-700 h-6 w-6 p-0"
+                                >
+                                  ×
+                                </Button>
+                              </div>
+
+                              <div className="space-y-2">
+                                <div>
+                                  <Label className="text-xs">Pergunta</Label>
+                                  <Input
+                                    value={faq.question}
+                                    onChange={(e) => {
+                                      const currentFaqData = selectedElementData.faqData || [];
+                                      const updatedFaqData = currentFaqData.map(item =>
+                                        item.id === faq.id
+                                          ? { ...item, question: e.target.value }
+                                          : item
+                                      );
+                                      updateElement(selectedElementData.id, {
+                                        faqData: updatedFaqData
+                                      });
+                                    }}
+                                    className="text-xs mt-1"
+                                    placeholder="Digite a pergunta"
+                                  />
+                                </div>
+
+                                <div>
+                                  <Label className="text-xs">Resposta</Label>
+                                  <textarea
+                                    value={faq.answer}
+                                    onChange={(e) => {
+                                      const currentFaqData = selectedElementData.faqData || [];
+                                      const updatedFaqData = currentFaqData.map(item =>
+                                        item.id === faq.id
+                                          ? { ...item, answer: e.target.value }
+                                          : item
+                                      );
+                                      updateElement(selectedElementData.id, {
+                                        faqData: updatedFaqData
+                                      });
+                                    }}
+                                    className="w-full px-2 py-1 border rounded text-xs mt-1 resize-none"
+                                    rows={3}
+                                    placeholder="Digite a resposta"
+                                  />
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
                       </div>
                     </div>
                   </div>

@@ -7,7 +7,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
-import { ArrowRight, ArrowLeft, CheckCircle, Calendar, Star, Target, Scale, ArrowUpDown, Share2, Loader2, BarChart3, TrendingUp, PlayCircle, Shield, Award, Heart, Lock, Zap, Trophy, Gift } from "lucide-react";
+import { ArrowRight, ArrowLeft, CheckCircle, Calendar, Star, Target, Scale, ArrowUpDown, Share2, Loader2, BarChart3, TrendingUp, PlayCircle, Shield, Award, Heart, Lock, Zap, Trophy, Gift, ChevronDown } from "lucide-react";
 import { nanoid } from "nanoid";
 import { backRedirectManager } from "@/utils/backRedirectManager";
 import Chart from "./Chart";
@@ -520,6 +520,7 @@ export function QuizPublicRenderer({ quiz }: QuizPublicRendererProps) {
   const [autoSaveEnabled] = useState(true);
   const autoSaveRef = useRef<NodeJS.Timeout | null>(null);
   const [hoveredStars, setHoveredStars] = useState<Record<string, number | null>>({});
+  const [expandedFaqs, setExpandedFaqs] = useState<Record<string, boolean>>({});
 
   const pages = quiz.structure.pages || [];
   const currentPage = pages[currentPageIndex];
@@ -2243,6 +2244,159 @@ export function QuizPublicRenderer({ quiz }: QuizPublicRendererProps) {
                     </button>
                   )}
                 </div>
+              </div>
+            </div>
+          </div>
+        );
+
+      case 'faq':
+        // Dados padrão do FAQ se não houver
+        const faqData = properties.faqData || [
+          {
+            id: "faq-1",
+            question: "Como funciona o sistema?",
+            answer: "O sistema é muito simples de usar. Você cria seus quizzes, compartilha com sua audiência e acompanha os resultados em tempo real através do dashboard."
+          },
+          {
+            id: "faq-2", 
+            question: "Posso cancelar a qualquer momento?",
+            answer: "Sim, você pode cancelar sua assinatura a qualquer momento. Não há taxas de cancelamento ou multas."
+          },
+          {
+            id: "faq-3",
+            question: "Há limite de respostas?",
+            answer: "Depende do seu plano. O plano básico tem 1000 respostas/mês, o profissional tem 10000 e o enterprise é ilimitado."
+          }
+        ];
+
+        // Configurações visuais com valores padrão
+        const faqTitle = properties.faqTitle || "Perguntas Frequentes";
+        const faqTitleSize = properties.faqTitleSize || "lg";
+        const faqTitleWeight = properties.faqTitleWeight || "semibold";
+        const faqTitleAlign = properties.faqTitleAlign || "center";
+        const faqTitleColor = properties.faqTitleColor || "#111827";
+        const faqBackgroundColor = properties.faqBackgroundColor || "#ffffff";
+        const faqBorderColor = properties.faqBorderColor || "#e5e7eb";
+        const faqHeaderColor = properties.faqHeaderColor || "#374151";
+        const faqTextColor = properties.faqTextColor || "#6b7280";
+        const faqIconColor = properties.faqIconColor || "#10b981";
+        const faqWidth = properties.faqWidth || 100;
+        const faqQuestionSize = properties.faqQuestionSize || "base";
+        const faqQuestionWeight = properties.faqQuestionWeight || "medium";
+        const faqAnswerSize = properties.faqAnswerSize || "sm";
+        const faqAnswerWeight = properties.faqAnswerWeight || "normal";
+
+        // Estilos do título principal
+        const faqMainTitleStyle = {
+          fontSize: faqTitleSize === "xs" ? "14px" : 
+                   faqTitleSize === "sm" ? "16px" : 
+                   faqTitleSize === "base" ? "18px" :
+                   faqTitleSize === "lg" ? "20px" : 
+                   faqTitleSize === "xl" ? "24px" :
+                   faqTitleSize === "2xl" ? "28px" : "20px",
+          fontWeight: faqTitleWeight === "light" ? "300" :
+                     faqTitleWeight === "normal" ? "400" :
+                     faqTitleWeight === "medium" ? "500" :
+                     faqTitleWeight === "semibold" ? "600" :
+                     faqTitleWeight === "bold" ? "700" : "600",
+          color: faqTitleColor,
+          textAlign: faqTitleAlign as any,
+          marginBottom: "24px"
+        };
+
+        // Estilos das perguntas
+        const faqQuestionStyle = {
+          fontSize: faqQuestionSize === "xs" ? "12px" : 
+                   faqQuestionSize === "sm" ? "14px" : 
+                   faqQuestionSize === "base" ? "16px" :
+                   faqQuestionSize === "lg" ? "18px" : 
+                   faqQuestionSize === "xl" ? "20px" : "16px",
+          fontWeight: faqQuestionWeight === "light" ? "300" :
+                     faqQuestionWeight === "normal" ? "400" :
+                     faqQuestionWeight === "medium" ? "500" :
+                     faqQuestionWeight === "semibold" ? "600" :
+                     faqQuestionWeight === "bold" ? "700" : "500",
+          color: faqHeaderColor
+        };
+
+        // Estilos das respostas
+        const faqAnswerStyle = {
+          fontSize: faqAnswerSize === "xs" ? "12px" : 
+                   faqAnswerSize === "sm" ? "14px" : 
+                   faqAnswerSize === "base" ? "16px" :
+                   faqAnswerSize === "lg" ? "18px" : 
+                   faqAnswerSize === "xl" ? "20px" : "14px",
+          fontWeight: faqAnswerWeight === "light" ? "300" :
+                     faqAnswerWeight === "normal" ? "400" :
+                     faqAnswerWeight === "medium" ? "500" :
+                     faqAnswerWeight === "semibold" ? "600" :
+                     faqAnswerWeight === "bold" ? "700" : "400",
+          color: faqTextColor
+        };
+
+        // Container width
+        const faqContainerWidth = `${Math.min(Math.max(faqWidth, 10), 100)}%`;
+
+        // Função para toggle do FAQ
+        const toggleFaq = (faqId: string) => {
+          setExpandedFaqs(prev => ({
+            ...prev,
+            [faqId]: !prev[faqId]
+          }));
+        };
+
+        return (
+          <div 
+            key={id}
+            className="w-full"
+            style={{ width: faqContainerWidth, maxWidth: faqContainerWidth }}
+          >
+            <div 
+              className="p-6 rounded-lg"
+              style={{ backgroundColor: faqBackgroundColor }}
+            >
+              {/* Título principal */}
+              {faqTitle && (
+                <h3 style={faqMainTitleStyle}>
+                  {faqTitle}
+                </h3>
+              )}
+
+              {/* Lista de FAQs */}
+              <div className="space-y-3">
+                {faqData.map((faq: any) => (
+                  <div 
+                    key={faq.id} 
+                    className="border rounded-lg overflow-hidden"
+                    style={{ borderColor: faqBorderColor }}
+                  >
+                    <button 
+                      className="w-full px-4 py-3 text-left flex items-center justify-between hover:bg-gray-50 transition-colors duration-200"
+                      onClick={() => toggleFaq(faq.id)}
+                      style={{ backgroundColor: expandedFaqs[faq.id] ? 'rgba(0, 0, 0, 0.02)' : 'transparent' }}
+                    >
+                      <span style={faqQuestionStyle}>
+                        {faq.question}
+                      </span>
+                      <ChevronDown 
+                        className={`w-5 h-5 transition-transform duration-200 ${expandedFaqs[faq.id] ? 'rotate-180' : ''}`}
+                        style={{ color: faqIconColor }}
+                      />
+                    </button>
+                    
+                    {/* Resposta expandível */}
+                    {expandedFaqs[faq.id] && (
+                      <div 
+                        className="px-4 pb-3 border-t"
+                        style={{ borderColor: faqBorderColor }}
+                      >
+                        <p style={faqAnswerStyle} className="mt-2">
+                          {faq.answer}
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                ))}
               </div>
             </div>
           </div>
