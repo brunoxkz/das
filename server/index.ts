@@ -947,6 +947,8 @@ campaignAutoPauseSystem.startMonitoring();
 const unifiedDetectionInterval = setInterval(async () => {
   detectionCount++;
   
+  console.log(`🔥 INICIANDO CICLO UNIFICADO ${detectionCount}/${MAX_DETECTION_CYCLES}`);
+  
   // Reset contador a cada hora
   if (detectionCount >= MAX_DETECTION_CYCLES) {
     detectionCount = 0;
@@ -955,13 +957,21 @@ const unifiedDetectionInterval = setInterval(async () => {
   
   try {
     // Importar storage local dentro do escopo
-    const { storage: localStorage } = await import('./storage-sqlite');
+    const { storage } = await import('./storage-sqlite');
+    
+    // 🔥 SISTEMA WHATSAPP: Detecção automática agora integrada no sistema unificado
     
     // Processa apenas campanhas ativas com limite inteligente
-    const activeCampaigns = await localStorage.getActiveCampaignsLimited(25); // Max 25 campanhas por ciclo
+    const activeCampaigns = await storage.getActiveCampaignsLimited(25); // Max 25 campanhas por ciclo
     
     if (activeCampaigns.length > 0) {
       console.log(`🔥 SISTEMA UNIFICADO: Processando ${activeCampaigns.length} campanhas ativas`);
+      
+      // DEBUG: Verificar tipos de campanhas
+      const campaignTypes = activeCampaigns.map(c => c.type || 'unknown');
+      const smsCampaigns = campaignTypes.filter(t => t === 'sms').length;
+      const whatsappCampaigns = campaignTypes.filter(t => t === 'whatsapp').length;
+      console.log(`📊 TIPOS DE CAMPANHA: SMS: ${smsCampaigns}, WhatsApp: ${whatsappCampaigns}, Total: ${activeCampaigns.length}`);
       
       // Processar em lotes de 3 campanhas com delay pequeno
       for (let i = 0; i < activeCampaigns.length; i += 3) {
@@ -970,7 +980,7 @@ const unifiedDetectionInterval = setInterval(async () => {
         await Promise.allSettled(batch.map(async (campaign) => {
           try {
             // Verificar se campanha ainda tem créditos antes de processar
-            const user = await localStorage.getUser(campaign.userId);
+            const user = await storage.getUser(campaign.userId);
             if (!user) return;
             
             const creditType = campaign.type === 'sms' ? 'sms' : 
@@ -984,17 +994,68 @@ const unifiedDetectionInterval = setInterval(async () => {
             // Se não tem créditos, pausar campanha imediatamente
             if (userCredits <= 0) {
               console.log(`⏸️ Pausando campanha ${campaign.id} - sem créditos ${creditType}`);
-              await localStorage.pauseCampaignsWithoutCredits(campaign.userId);
+              await storage.pauseCampaignsWithoutCredits(campaign.userId);
               return;
             }
             
-            const phones = await localStorage.getPhonesByCampaign(campaign.id, 100); // Max 100 phones por campanha
+            // 🔥 DETECÇÃO AUTOMÁTICA WHATSAPP: Buscar novos telefones ANTES de processar
+            if (campaign.type === 'whatsapp') {
+              console.log(`🔍 DETECÇÃO AUTOMÁTICA: Verificando novos telefones para campanha WhatsApp ${campaign.id}...`);
+              
+              // Buscar telefones do quiz vinculado à campanha
+              if (campaign.quizId || campaign.quiz_id) {
+                const quizId = campaign.quizId || campaign.quiz_id;
+                console.log(`📋 Buscando telefones do quiz ${quizId} para campanha ${campaign.id}...`);
+                
+                try {
+                  const currentPhones = await storage.getPhonesByQuiz(quizId);
+                  console.log(`📱 QUIZ ${quizId}: Encontrados ${currentPhones.length} telefones total`);
+                  
+                  // Verificar quais telefones já foram processados
+                  const processedPhones = new Map();
+                  const existingLogs = await storage.getWhatsappLogsByCampaign(campaign.id);
+                  existingLogs.forEach(log => processedPhones.set(log.phone, true));
+                  
+                  console.log(`🔄 CAMPANHA ${campaign.id}: ${existingLogs.length} telefones já processados`);
+                  
+                  // Processar apenas telefones novos
+                  let newPhonesCount = 0;
+                  for (const phoneData of currentPhones) {
+                    const processed = processedPhones.get(phoneData.phone);
+                    
+                    if (!processed) {
+                      // Telefone completamente novo - criar log agendado
+                      console.log(`🆕 NOVO TELEFONE DETECTADO: ${phoneData.phone} - AGENDANDO WHATSAPP...`);
+                      
+                      await storage.createWhatsappLog({
+                        campaignId: campaign.id,
+                        phone: phoneData.phone,
+                        message: campaign.messages?.[0] || 'Mensagem padrão WhatsApp',
+                        status: 'scheduled',
+                        scheduledAt: new Date(Date.now() + (campaign.triggerDelay * 60 * 1000))
+                      });
+                      
+                      newPhonesCount++;
+                      console.log(`✅ TELEFONE ${phoneData.phone} AGENDADO COM SUCESSO PARA WHATSAPP`);
+                    }
+                  }
+                  
+                  console.log(`🎯 DETECÇÃO COMPLETA: ${newPhonesCount} novos telefones detectados e agendados para campanha ${campaign.id}`);
+                } catch (error) {
+                  console.error(`❌ Erro na detecção automática da campanha ${campaign.id}:`, error);
+                }
+              }
+            }
+            
+            const phones = await storage.getPhonesByCampaign(campaign.id, 100); // Max 100 phones por campanha
             
             if (phones.length > 0) {
               console.log(`📱 Campanha ${campaign.id}: ${phones.length} telefones para processar`);
               
               // IMPLEMENTAÇÃO REAL DO ENVIO
-              const result = await localStorage.processScheduledWhatsAppMessages(campaign.id, phones);
+              console.log(`🔄 Processando mensagens WhatsApp - Campanha: ${campaign.id}, Telefones: ${phones.length}`);
+              const result = await storage.processScheduledWhatsAppMessages(campaign.id, phones);
+              console.log(`📊 Resultados campanha ${campaign.id}: ${result.processed} processados, ${result.sent} enviados, ${result.failed} falharam`);
               console.log(`✅ Processamento ${campaign.id}: ${result.processed}/${result.total} mensagens`);
             }
           } catch (error) {
