@@ -1933,6 +1933,48 @@ export default function QuizPreview({ quiz, onClose, onSave, initialPage = 0 }: 
           </div>
         );
 
+      case 'animated_transition':
+        const gradientStart = element.gradientStart || "#10B981";
+        const gradientEnd = element.gradientEnd || "#8B5CF6";
+        const animationType = element.animationType || "pulse";
+        const animationSpeed = element.animationSpeed || "normal";
+        
+        const animationClass = animationType === "pulse" ? "animate-pulse" :
+                              animationType === "glow" ? "animate-ping" :
+                              animationType === "wave" ? "animate-bounce" :
+                              animationType === "bounce" ? "animate-bounce" : "animate-pulse";
+        
+        const speedClass = animationSpeed === "slow" ? "duration-2000" :
+                          animationSpeed === "fast" ? "duration-500" : "duration-1000";
+
+        return (
+          <div className="mb-6 text-center">
+            <div className="relative">
+              <div 
+                className={`bg-gradient-to-r rounded-lg p-6 ${animationClass} ${speedClass}`}
+                style={{ 
+                  backgroundImage: `linear-gradient(to right, ${gradientStart}, #3B82F6, ${gradientEnd})`
+                }}
+              >
+                <div className="text-white">
+                  <div className="text-xl font-bold mb-2">
+                    {element.content || "Processando..."}
+                  </div>
+                  {element.description && (
+                    <p className="text-sm opacity-90">{element.description}</p>
+                  )}
+                  {element.enableRedirect && (
+                    <div className="text-xs mt-3 opacity-80">
+                      🔄 Redirecionamento em {element.redirectDelay || 5}s ({element.redirectType === "custom_url" ? "URL personalizada" : "Próxima página"})
+                    </div>
+                  )}
+                </div>
+              </div>
+              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white to-transparent opacity-10 animate-pulse rounded-lg"></div>
+            </div>
+          </div>
+        );
+
       case 'guarantee':
         return (
           <div className="mb-6">

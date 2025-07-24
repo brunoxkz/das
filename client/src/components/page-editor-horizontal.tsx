@@ -3706,11 +3706,21 @@ const gameElementCategories = [
                 {element.description && (
                   <p className="text-sm opacity-90">{element.description}</p>
                 )}
+                {element.enableRedirect && (
+                  <div className="text-xs mt-2 opacity-75">
+                    🔄 Redirecionamento em {element.redirectDelay || 5}s
+                  </div>
+                )}
               </div>
               <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white to-transparent opacity-10 animate-pulse rounded-lg"></div>
             </div>
             <p className="text-xs text-gray-500 text-center">
               Elemento de transição • {animationType} • {animationSpeed}
+              {element.enableRedirect && (
+                <span className="ml-2 text-purple-600">
+                  • Redirecionamento: {element.redirectType === "custom_url" ? "URL" : "Próxima página"}
+                </span>
+              )}
             </p>
           </div>
         );
@@ -9318,6 +9328,74 @@ const gameElementCategories = [
                         />
                       </div>
                     </div>
+                  </div>
+
+                  {/* Opções de Redirecionamento */}
+                  <div className="border-t pt-4">
+                    <div className="flex items-center justify-between mb-3">
+                      <Label className="text-sm font-semibold">Redirecionamento Automático</Label>
+                      <div className="flex items-center space-x-2">
+                        <Checkbox
+                          id={`redirect-${selectedElementData.id}`}
+                          checked={selectedElementData.enableRedirect || false}
+                          onCheckedChange={(checked) => updateElement(selectedElementData.id, { enableRedirect: checked })}
+                        />
+                        <label htmlFor={`redirect-${selectedElementData.id}`} className="text-xs text-gray-600">
+                          Ativar redirecionamento
+                        </label>
+                      </div>
+                    </div>
+
+                    {selectedElementData.enableRedirect && (
+                      <div className="space-y-3 pl-4 border-l-2 border-purple-200">
+                        <div>
+                          <Label className="text-xs">Tempo em segundos</Label>
+                          <Input
+                            type="number"
+                            min="1"
+                            max="60"
+                            value={selectedElementData.redirectDelay || 5}
+                            onChange={(e) => updateElement(selectedElementData.id, { redirectDelay: parseInt(e.target.value) || 5 })}
+                            placeholder="5"
+                            className="mt-1"
+                          />
+                          <p className="text-xs text-gray-500 mt-1">Aguardar X segundos antes de redirecionar</p>
+                        </div>
+
+                        <div>
+                          <Label className="text-xs">Tipo de Redirecionamento</Label>
+                          <select 
+                            className="w-full px-3 py-2 border rounded-md mt-1 text-sm"
+                            value={selectedElementData.redirectType || "next_page"}
+                            onChange={(e) => updateElement(selectedElementData.id, { redirectType: e.target.value })}
+                          >
+                            <option value="next_page">Próxima página do quiz</option>
+                            <option value="custom_url">URL personalizada</option>
+                          </select>
+                        </div>
+
+                        {selectedElementData.redirectType === "custom_url" && (
+                          <div>
+                            <Label className="text-xs">URL de Destino</Label>
+                            <Input
+                              value={selectedElementData.redirectUrl || ""}
+                              onChange={(e) => updateElement(selectedElementData.id, { redirectUrl: e.target.value })}
+                              placeholder="https://exemplo.com/destino"
+                              className="mt-1"
+                            />
+                            <p className="text-xs text-gray-500 mt-1">URL completa para redirecionamento</p>
+                          </div>
+                        )}
+
+                        <div className="bg-blue-50 p-2 rounded text-xs text-blue-700">
+                          <strong>💡 Preview:</strong> Após {selectedElementData.redirectDelay || 5}s → {
+                            selectedElementData.redirectType === "custom_url" 
+                              ? (selectedElementData.redirectUrl || "URL personalizada")
+                              : "Próxima página do quiz"
+                          }
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
               )}

@@ -598,6 +598,18 @@ Campo: p1_objetivo_fitness
 ## Changelog
 
 ```
+- January 25, 2025. ELEMENTO ANIMATED_TRANSITION COM REDIRECIONAMENTO OPCIONAL IMPLEMENTADO - Sistema completo de redirecionamento automático com opções para próxima página ou URL personalizada:
+  * REDIRECIONAMENTO OPCIONAL: Checkbox para ativar/desativar redirecionamento automático
+  * TEMPO CONFIGURÁVEL: Campo numérico para definir segundos de delay (1-60s, padrão 5s)
+  * DUAS OPÇÕES DE DESTINO: "Próxima página do quiz" ou "URL personalizada"
+  * INPUT URL CONDICIONAL: Campo de URL aparece apenas quando "URL personalizada" é selecionada
+  * PREVIEW VISUAL: Mostra configuração atual no painel de propriedades
+  * COUNTDOWN FUNCIONAL: No quiz público, mostra countdown em tempo real antes do redirecionamento
+  * LÓGICA INTELIGENTE: URL personalizada redireciona via window.location.href, próxima página usa handleNextPage()
+  * CROSS-COMPONENT: Implementado consistentemente em editor, preview e público
+  * FEEDBACK VISUAL: Indicadores visuais de status de redirecionamento em todos os modos
+  * CLEANUP AUTOMÁTICO: Timer é limpo automaticamente para evitar memory leaks
+  * STATUS: ANIMATED_TRANSITION 100% FUNCIONAL - Redirecionamento opcional completamente implementado
 - January 25, 2025. ELEMENTO SHARE_QUIZ COMPLETAMENTE CORRIGIDO - Ícones reais de plataformas sociais, transparência, compatibilidade cross-component e URL correta implementados:
   * ÍCONES REAIS IMPLEMENTADOS: Substituídos emojis por ícones SVG reais das plataformas (WhatsApp, Facebook, Twitter, Instagram, Email)
   * TRANSPARÊNCIA APLICADA: Elemento agora usa background transparente (bg-transparent) em todos os componentes

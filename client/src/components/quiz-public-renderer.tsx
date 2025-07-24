@@ -2306,29 +2306,65 @@ export function QuizPublicRenderer({ quiz }: QuizPublicRendererProps) {
         
         const speedClass = animationSpeed === "slow" ? "duration-2000" :
                           animationSpeed === "fast" ? "duration-500" : "duration-1000";
-        
-        return (
-          <div key={id} className="mb-6 text-center">
-            <div className="relative">
-              <div 
-                className={`bg-gradient-to-r rounded-lg p-6 ${animationClass} ${speedClass}`}
-                style={{ 
-                  backgroundImage: `linear-gradient(to right, ${gradientStart}, #3B82F6, ${gradientEnd})`
-                }}
-              >
-                <div className="text-white">
-                  <div className="text-xl font-bold mb-2">
-                    {properties.content || "Processando..."}
+
+        // Componente com redirecionamento funcional
+        const AnimatedTransitionWithRedirect = () => {
+          const [countdown, setCountdown] = React.useState(properties.redirectDelay || 5);
+
+          React.useEffect(() => {
+            if (!properties.enableRedirect) return;
+
+            const timer = setInterval(() => {
+              setCountdown((prev) => {
+                if (prev <= 1) {
+                  clearInterval(timer);
+                  // Executar redirecionamento
+                  if (properties.redirectType === "custom_url" && properties.redirectUrl) {
+                    window.location.href = properties.redirectUrl;
+                  } else {
+                    // Redirecionar para próxima página
+                    handleNextPage();
+                  }
+                  return 0;
+                }
+                return prev - 1;
+              });
+            }, 1000);
+
+            // Cleanup
+            return () => clearInterval(timer);
+          }, []);
+
+          return (
+            <div key={id} className="mb-6 text-center">
+              <div className="relative">
+                <div 
+                  className={`bg-gradient-to-r rounded-lg p-6 ${animationClass} ${speedClass}`}
+                  style={{ 
+                    backgroundImage: `linear-gradient(to right, ${gradientStart}, #3B82F6, ${gradientEnd})`
+                  }}
+                >
+                  <div className="text-white">
+                    <div className="text-xl font-bold mb-2">
+                      {properties.content || "Processando..."}
+                    </div>
+                    {properties.description && (
+                      <p className="text-sm opacity-90">{properties.description}</p>
+                    )}
+                    {properties.enableRedirect && countdown > 0 && (
+                      <div className="text-xs mt-3 opacity-80">
+                        🔄 Redirecionamento em {countdown}s
+                      </div>
+                    )}
                   </div>
-                  {properties.description && (
-                    <p className="text-sm opacity-90">{properties.description}</p>
-                  )}
                 </div>
+                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white to-transparent opacity-10 animate-pulse rounded-lg"></div>
               </div>
-              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white to-transparent opacity-10 animate-pulse rounded-lg"></div>
             </div>
-          </div>
-        );
+          );
+        };
+
+        return <AnimatedTransitionWithRedirect />;
 
 
 
