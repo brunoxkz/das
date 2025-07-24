@@ -1,47 +1,44 @@
-import React, { useState, useEffect, useCallback, lazy, Suspense } from "react";
+import React, { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { ThemeSelector } from "@/components/theme-selector";
-// Otimização: imports específicos para reduzir bundle size (70KB economizado)
-import Plus from "lucide-react/dist/esm/icons/plus";
-import BarChart3 from "lucide-react/dist/esm/icons/bar-chart-3";
-import Users from "lucide-react/dist/esm/icons/users";
-import Eye from "lucide-react/dist/esm/icons/eye";
-import TrendingUp from "lucide-react/dist/esm/icons/trending-up";
-import Edit from "lucide-react/dist/esm/icons/edit";
-import Copy from "lucide-react/dist/esm/icons/copy";
-import Trash2 from "lucide-react/dist/esm/icons/trash-2";
-import ExternalLink from "lucide-react/dist/esm/icons/external-link";
-import Calendar from "lucide-react/dist/esm/icons/calendar";
-import MessageSquare from "lucide-react/dist/esm/icons/message-square";
-import MessageCircle from "lucide-react/dist/esm/icons/message-circle";
-import Mail from "lucide-react/dist/esm/icons/mail";
-import FileText from "lucide-react/dist/esm/icons/file-text";
-import Shield from "lucide-react/dist/esm/icons/shield";
-import Palette from "lucide-react/dist/esm/icons/palette";
-import Coins from "lucide-react/dist/esm/icons/coins";
-import BookOpen from "lucide-react/dist/esm/icons/book-open";
-import Clock from "lucide-react/dist/esm/icons/clock";
-import CreditCard from "lucide-react/dist/esm/icons/credit-card";
-import X from "lucide-react/dist/esm/icons/x";
-import Zap from "lucide-react/dist/esm/icons/zap";
-import MapPin from "lucide-react/dist/esm/icons/map-pin";
-import Bell from "lucide-react/dist/esm/icons/bell";
-import Sparkles from "lucide-react/dist/esm/icons/sparkles";
+import { 
+  Plus, 
+  BarChart3, 
+  Users, 
+  Eye, 
+  TrendingUp,
+  Edit,
+  Copy,
+  Trash2,
+  ExternalLink,
+  Calendar,
+  MessageSquare,
+  MessageCircle,
+  Mail,
+  FileText,
+  Shield,
+  Palette,
+  Coins,
+  BookOpen,
+  Clock,
+  CreditCard,
+  X,
+  Zap,
+  MapPin,
+  Bell,
+  Sparkles
+} from "lucide-react";
 import { Link } from "wouter";
 import { useAuth } from "@/hooks/useAuth-jwt";
 import { useToast } from "@/hooks/use-toast";
+import { TutorialTour, dashboardTutorialSteps } from "@/components/tutorial-tour";
 import { queryClient, apiRequest } from "@/lib/queryClient";
+import QuizFullPreview from "@/components/QuizFullPreview";
 import { cn } from "@/lib/utils";
-
-// Lazy loading de componentes pesados para reduzir bundle inicial
-const TutorialTour = lazy(() => import("@/components/tutorial-tour").then(module => ({ 
-  default: module.TutorialTour 
-})));
-const QuizFullPreview = lazy(() => import("@/components/QuizFullPreview"));
 export default function Dashboard() {
   const { toast } = useToast();
   const { isAuthenticated, user } = useAuth();
@@ -330,10 +327,9 @@ export default function Dashboard() {
       }
     } catch (error) {
       console.error('❌ Erro no iOS push activation:', error);
-      const errorMessage = error instanceof Error ? error.message : 'Erro desconhecido';
       toast({
         title: "Erro",
-        description: `Falha: ${errorMessage}`,
+        description: `Falha: ${error.message}`,
         variant: "destructive"
       });
     }
@@ -397,13 +393,12 @@ export default function Dashboard() {
     retry: false,
   });
 
-  // Buscar status do plano (otimizado - reduzido intervalo de refetch)
+  // Buscar status do plano em tempo real
   const { data: planStatus, isLoading: planLoading } = useQuery({
     queryKey: ["/api/plan/status"],
     enabled: isAuthenticated,
     retry: false,
-    refetchInterval: 300000, // Atualizar a cada 5 minutos (otimizado de 1 minuto)
-    staleTime: 180000, // Cache por 3 minutos
+    refetchInterval: 60000, // Atualizar a cada minuto
   });
 
   // Buscar dados de campanhas
@@ -477,8 +472,8 @@ export default function Dashboard() {
     return map;
   }, [userQuizzes, allAnalytics]);
 
-  // OTIMIZAÇÃO: useCallback optimization em handlers para reduzir re-renderizações
-  const handleDuplicateQuiz = useCallback(async (quiz: any) => {
+  // Funções dos botões
+  const handleDuplicateQuiz = async (quiz: any) => {
     try {
       const response = await apiRequest(`/api/quizzes/${quiz.id}/duplicate`, {
         method: 'POST'
@@ -501,14 +496,14 @@ export default function Dashboard() {
         variant: "destructive",
       });
     }
-  }, [toast]);
+  };
 
-  const handlePreviewQuiz = useCallback((quiz: any) => {
+  const handlePreviewQuiz = (quiz: any) => {
     setPreviewQuiz(quiz);
     setShowQuizPreview(true);
-  }, []);
+  };
 
-  const handlePublicUrl = useCallback((quiz: any) => {
+  const handlePublicUrl = (quiz: any) => {
     if (!quiz.isPublished) {
       toast({
         title: "Quiz não publicado",
@@ -532,9 +527,9 @@ export default function Dashboard() {
         variant: "destructive",
       });
     });
-  }, [toast]);
+  };
 
-  const handleDeleteQuiz = useCallback(async (quiz: any) => {
+  const handleDeleteQuiz = async (quiz: any) => {
     if (!confirm(`Tem certeza que deseja excluir o quiz "${quiz.title}"?`)) {
       return;
     }
@@ -559,7 +554,7 @@ export default function Dashboard() {
         variant: "destructive",
       });
     }
-  }, [toast]);
+  };
 
   const dashboardStats = [
     {
@@ -906,10 +901,9 @@ export default function Dashboard() {
                     }
                   } catch (error) {
                     console.error('❌ Erro no teste push:', error);
-                    const errorMessage = error instanceof Error ? error.message : 'Erro desconhecido';
                     toast({
-                      title: "Erro", 
-                      description: `Falha: ${errorMessage}`,
+                      title: "Erro",
+                      description: `Falha: ${error.message}`,
                       variant: "destructive"
                     });
                   }
@@ -1379,19 +1373,19 @@ export default function Dashboard() {
                         <div className="flex justify-between items-center">
                           <span className="text-sm text-gray-600">Crescimento por Hora</span>
                           <Badge variant="secondary" className="bg-blue-100 text-blue-700">
-                            +{(onlineStats as any)?.growth?.hourly || 5} usuários
+                            +{onlineStats?.growth?.hourly || 5} usuários
                           </Badge>
                         </div>
                         <div className="flex justify-between items-center">
                           <span className="text-sm text-gray-600">Top Cidade</span>
                           <span className="text-sm font-medium">
-                            {((onlineStats as any)?.topCities?.[0]?.city || 'São Paulo')} ({(onlineStats as any)?.topCities?.[0]?.users || 12})
+                            {onlineStats?.topCities?.[0]?.city || 'São Paulo'} ({onlineStats?.topCities?.[0]?.users || 12})
                           </span>
                         </div>
                         <div className="flex justify-between items-center">
                           <span className="text-sm text-gray-600">Planos Premium</span>
                           <span className="text-sm font-medium text-green-600">
-                            {(onlineStats as any)?.planDistribution?.premium || 8} usuários
+                            {onlineStats?.planDistribution?.premium || 8} usuários
                           </span>
                         </div>
                       </div>
@@ -1455,29 +1449,25 @@ export default function Dashboard() {
 
           </div>
 
-          {/* Tutorial Component - Lazy Loaded */}
+          {/* Tutorial Component */}
           {showTutorial && (
-            <Suspense fallback={<div className="flex justify-center p-4">Carregando tutorial...</div>}>
-              <TutorialTour
-                steps={[]} // dashboardTutorialSteps will be loaded dynamically
-                isOpen={showTutorial}
-                onClose={() => setShowTutorial(false)}
-                onComplete={() => setShowTutorial(false)}
-              />
-            </Suspense>
+            <TutorialTour
+              steps={dashboardTutorialSteps}
+              isOpen={showTutorial}
+              onClose={() => setShowTutorial(false)}
+              onComplete={() => setShowTutorial(false)}
+            />
           )}
 
-          {/* Quiz Full Preview - Lazy Loaded */}
-          <Suspense fallback={<div className="flex justify-center p-4">Carregando preview...</div>}>
-            <QuizFullPreview
-              quiz={previewQuiz}
-              isOpen={showQuizPreview}
-              onClose={() => {
-                setShowQuizPreview(false);
-                setPreviewQuiz(null);
-              }}
-            />
-          </Suspense>
+          {/* Quiz Full Preview */}
+          <QuizFullPreview
+            quiz={previewQuiz}
+            isOpen={showQuizPreview}
+            onClose={() => {
+              setShowQuizPreview(false);
+              setPreviewQuiz(null);
+            }}
+          />
           </>
           )}
         </div>

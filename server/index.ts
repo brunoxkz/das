@@ -936,54 +936,32 @@ const ultraScaleDetectionSystem = async () => {
 };
 
 // SISTEMA UNIFICADO OTIMIZADO PARA 100.000+ USUÁRIOS - Performance massivamente melhorada
-const startUnifiedSystem = async () => {
-  console.log('🚀 STARTUNIFIEDSYSTEM EXECUTADO - Função chamada com sucesso');
-  let detectionCount = 0;
-  const MAX_DETECTION_CYCLES = 100; // 100 ciclos por hora (vs 3600)
-  const DETECTION_INTERVAL = 10000; // 10 segundos TESTE - para verificar se está executando
+let detectionCount = 0;
+const MAX_DETECTION_CYCLES = 100; // 100 ciclos por hora (vs 3600)
+const DETECTION_INTERVAL = 60000; // 60 segundos (vs 1 segundo) - 60x menos agressivo
 
-  console.log(`🔧 Configuração: ${MAX_DETECTION_CYCLES} ciclos, intervalo ${DETECTION_INTERVAL}ms`);
+// Inicializar sistema de pause automático
+const { campaignAutoPauseSystem } = await import('./campaign-auto-pause-system');
+campaignAutoPauseSystem.startMonitoring();
 
-  // Sistema de pause automático será inicializado posteriormente
-  // const { campaignAutoPauseSystem } = await import('./campaign-auto-pause-system');
-  // campaignAutoPauseSystem.startMonitoring();
-
-  console.log('🔥 INICIANDO SETUP DO setInterval - Configurando callback agora...');
+const unifiedDetectionInterval = setInterval(async () => {
+  detectionCount++;
   
-  const unifiedDetectionInterval = setInterval(async () => {
-    try {
-      detectionCount++;
-      
-      console.log(`🔥 INICIANDO CICLO UNIFICADO ${detectionCount}/${MAX_DETECTION_CYCLES}`);
-      console.log('🔥 CALLBACK DO setInterval EXECUTADO COM SUCESSO!');
-      
-      // Reset contador a cada hora
-      if (detectionCount >= MAX_DETECTION_CYCLES) {
-        detectionCount = 0;
-        console.log('🔄 Sistema Unificado: Reset contador - 1 hora completada (100 ciclos executados)');
-      }
-      
-      try {
-        console.log('🔥 Importando storage-sqlite...');
-        // Importar storage local dentro do escopo
-        const { storage } = await import('./storage-sqlite');
-        console.log('✅ Storage importado com sucesso!');
-    
-    // 🔥 SISTEMA WHATSAPP: Detecção automática agora integrada no sistema unificado
+  // Reset contador a cada hora
+  if (detectionCount >= MAX_DETECTION_CYCLES) {
+    detectionCount = 0;
+    console.log('🔄 Sistema Unificado: Reset contador - 1 hora completada (100 ciclos executados)');
+  }
+  
+  try {
+    // Importar storage local dentro do escopo
+    const { storage: localStorage } = await import('./storage-sqlite');
     
     // Processa apenas campanhas ativas com limite inteligente
-    const activeCampaigns = await storage.getActiveCampaignsLimited(25); // Max 25 campanhas por ciclo
-    
-    console.log(`🔍 DEBUG: ${activeCampaigns.length} campanhas encontradas pelo sistema unificado`);
+    const activeCampaigns = await localStorage.getActiveCampaignsLimited(25); // Max 25 campanhas por ciclo
     
     if (activeCampaigns.length > 0) {
       console.log(`🔥 SISTEMA UNIFICADO: Processando ${activeCampaigns.length} campanhas ativas`);
-      
-      // DEBUG: Verificar tipos de campanhas
-      const campaignTypes = activeCampaigns.map(c => c.type || 'unknown');
-      const smsCampaigns = campaignTypes.filter(t => t === 'sms').length;
-      const whatsappCampaigns = campaignTypes.filter(t => t === 'whatsapp').length;
-      console.log(`📊 TIPOS DE CAMPANHA: SMS: ${smsCampaigns}, WhatsApp: ${whatsappCampaigns}, Total: ${activeCampaigns.length}`);
       
       // Processar em lotes de 3 campanhas com delay pequeno
       for (let i = 0; i < activeCampaigns.length; i += 3) {
@@ -992,7 +970,7 @@ const startUnifiedSystem = async () => {
         await Promise.allSettled(batch.map(async (campaign) => {
           try {
             // Verificar se campanha ainda tem créditos antes de processar
-            const user = await storage.getUser(campaign.userId);
+            const user = await localStorage.getUser(campaign.userId);
             if (!user) return;
             
             const creditType = campaign.type === 'sms' ? 'sms' : 
@@ -1006,68 +984,17 @@ const startUnifiedSystem = async () => {
             // Se não tem créditos, pausar campanha imediatamente
             if (userCredits <= 0) {
               console.log(`⏸️ Pausando campanha ${campaign.id} - sem créditos ${creditType}`);
-              await storage.pauseCampaignsWithoutCredits(campaign.userId);
+              await localStorage.pauseCampaignsWithoutCredits(campaign.userId);
               return;
             }
             
-            // 🔥 DETECÇÃO AUTOMÁTICA WHATSAPP: Buscar novos telefones ANTES de processar
-            if (campaign.type === 'whatsapp') {
-              console.log(`🔍 DETECÇÃO AUTOMÁTICA: Verificando novos telefones para campanha WhatsApp ${campaign.id}...`);
-              
-              // Buscar telefones do quiz vinculado à campanha
-              if (campaign.quizId || campaign.quiz_id) {
-                const quizId = campaign.quizId || campaign.quiz_id;
-                console.log(`📋 Buscando telefones do quiz ${quizId} para campanha ${campaign.id}...`);
-                
-                try {
-                  const currentPhones = await storage.getQuizPhoneNumbers(quizId);
-                  console.log(`📱 QUIZ ${quizId}: Encontrados ${currentPhones.length} telefones total`);
-                  
-                  // Verificar quais telefones já foram processados
-                  const processedPhones = new Map();
-                  const existingLogs = await storage.getWhatsappLogsByCampaign(campaign.id);
-                  existingLogs.forEach(log => processedPhones.set(log.phone, true));
-                  
-                  console.log(`🔄 CAMPANHA ${campaign.id}: ${existingLogs.length} telefones já processados`);
-                  
-                  // Processar apenas telefones novos
-                  let newPhonesCount = 0;
-                  for (const phoneData of currentPhones) {
-                    const processed = processedPhones.get(phoneData.phone);
-                    
-                    if (!processed) {
-                      // Telefone completamente novo - criar log agendado
-                      console.log(`🆕 NOVO TELEFONE DETECTADO: ${phoneData.phone} - AGENDANDO WHATSAPP...`);
-                      
-                      await storage.createWhatsappLog({
-                        campaignId: campaign.id,
-                        phone: phoneData.phone,
-                        message: campaign.messages?.[0] || 'Mensagem padrão WhatsApp',
-                        status: 'scheduled',
-                        scheduledAt: new Date(Date.now() + (campaign.triggerDelay * 60 * 1000))
-                      });
-                      
-                      newPhonesCount++;
-                      console.log(`✅ TELEFONE ${phoneData.phone} AGENDADO COM SUCESSO PARA WHATSAPP`);
-                    }
-                  }
-                  
-                  console.log(`🎯 DETECÇÃO COMPLETA: ${newPhonesCount} novos telefones detectados e agendados para campanha ${campaign.id}`);
-                } catch (error) {
-                  console.error(`❌ Erro na detecção automática da campanha ${campaign.id}:`, error);
-                }
-              }
-            }
-            
-            const phones = await storage.getPhonesByCampaign(campaign.id, 100); // Max 100 phones por campanha
+            const phones = await localStorage.getPhonesByCampaign(campaign.id, 100); // Max 100 phones por campanha
             
             if (phones.length > 0) {
               console.log(`📱 Campanha ${campaign.id}: ${phones.length} telefones para processar`);
               
               // IMPLEMENTAÇÃO REAL DO ENVIO
-              console.log(`🔄 Processando mensagens WhatsApp - Campanha: ${campaign.id}, Telefones: ${phones.length}`);
-              const result = await storage.processScheduledWhatsAppMessages(campaign.id, phones);
-              console.log(`📊 Resultados campanha ${campaign.id}: ${result.processed} processados, ${result.sent} enviados, ${result.failed} falharam`);
+              const result = await localStorage.processScheduledWhatsAppMessages(campaign.id, phones);
               console.log(`✅ Processamento ${campaign.id}: ${result.processed}/${result.total} mensagens`);
             }
           } catch (error) {
@@ -1085,45 +1012,28 @@ const startUnifiedSystem = async () => {
     // Processar SMS agendados uma vez por ciclo
     await processSMSSystem();
     
-    } catch (error) {
-      console.error('❌ Erro no Sistema Unificado:', error);
-    }
-    
-    } catch (outerError) {
-      console.error('❌ ERRO CRÍTICO no ciclo do Sistema Unificado:', outerError);
-      console.error('❌ Stack trace:', outerError.stack);
-    }
-  }, DETECTION_INTERVAL);
-  
-  console.log('✅ setInterval criado com sucesso!');
-  console.log(`📊 Interval ID: ${unifiedDetectionInterval}`);
-  console.log(`⏰ Próxima execução em ${DETECTION_INTERVAL}ms (${DETECTION_INTERVAL/1000}s)`);
-  
-  // TEST: Verificar se setInterval básico funciona
-  const testInterval = setInterval(() => {
-    console.log('🧪 TESTE BÁSICO: setInterval funcionando!');
-  }, 5000);
-  
-  setTimeout(() => {
-    clearInterval(testInterval);
-    console.log('🧪 TESTE BÁSICO: Limpeza completa após 15s');
-  }, 15000);
-  
-  return unifiedDetectionInterval;
-};
+  } catch (error) {
+    console.error('❌ Erro no Sistema Unificado:', error);
+  }
+}, DETECTION_INTERVAL);
 
-// Sistema unificado será inicializado após o servidor estar online
-
-// Monitor de performance básico
+// Monitor avançado de performance com alertas inteligentes
 setInterval(() => {
   const memUsage = process.memoryUsage();
   const memMB = Math.round(memUsage.heapUsed / 1024 / 1024);
+  const startTime = Date.now();
   
   // Alertas apenas quando necessário
   if (memMB > 800) { // Aumentado limite para 800MB
     console.log(`🚨 ALERTA MEMÓRIA: ${memMB}MB - Sistema pode precisar de otimização`);
   }
-}, 120000); // A cada 2 minutos
+  
+  // Status resumido apenas a cada 10 minutos
+  const now = new Date();
+  if (now.getMinutes() % 10 === 0 && now.getSeconds() < 30) {
+    console.log(`📊 STATUS OTIMIZADO: ${memMB}MB RAM, Ciclos: ${detectionCount}/${MAX_DETECTION_CYCLES} (intervalo 60s)`);
+  }
+}, 120000); // A cada 2 minutos (vs 30 segundos)
 
 // Error handler para desenvolvimento
 if (process.env.NODE_ENV === 'development') {
@@ -1134,7 +1044,17 @@ if (process.env.NODE_ENV === 'development') {
 }
 
 // Graceful shutdown otimizado
-// Graceful shutdown será gerenciado dentro da função startUnifiedSystem
+process.on('SIGTERM', () => {
+  console.log('🔄 SIGTERM recebido, encerrando servidor...');
+  clearInterval(unifiedDetectionInterval);
+  process.exit(0);
+});
+
+process.on('SIGINT', () => {
+  console.log('🔄 SIGINT recebido, encerrando servidor...');
+  clearInterval(unifiedDetectionInterval);
+  process.exit(0);
+});
 
 const PORT = Number(process.env.PORT) || 5000;
 
@@ -1161,7 +1081,7 @@ async function startServer() {
     
     server.listen(PORT, "0.0.0.0", async () => {
       log(`🚀 Server running on port ${PORT}`);
-      log(`🚀 SISTEMA UNIFICADO OTIMIZADO: 100 ciclos/hora, intervalo 60s`);
+      log(`🚀 SISTEMA UNIFICADO OTIMIZADO: ${MAX_DETECTION_CYCLES} ciclos/hora, intervalo 60s`);
       log(`⚡ REDUÇÃO DE 70% NO USO DE RECURSOS - SUPORTE 100.000+ USUÁRIOS`);
       log(`🔥 Sistema inteligente: 25 campanhas/ciclo + 100 telefones/campanha + delay 200ms`);
       
@@ -1175,14 +1095,6 @@ async function startServer() {
       //   console.error('❌ Erro ao iniciar simulador de usuários:', error);
       // }
       log('👥 SIMULADOR DE USUÁRIOS DESABILITADO por solicitação do usuário');
-      
-      // Inicializar sistema unificado após servidor estar online
-      console.log('🔧 INICIANDO SISTEMA UNIFICADO - DEBUG MODE');
-      startUnifiedSystem().then(() => {
-        console.log('✅ Sistema Unificado inicializado com sucesso');
-      }).catch(error => {
-        console.error('❌ Erro ao inicializar Sistema Unificado:', error);
-      });
       
       log(`✅ Sistema Otimizado Inicializado - Performance Massivamente Melhorada`);
     });

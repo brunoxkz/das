@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback, useMemo } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -45,45 +45,42 @@ const AdvancedCarousel = ({ id, properties }: { id: string, properties: any }) =
   const touchStartX = useRef<number | null>(null);
   const touchEndX = useRef<number | null>(null);
 
-  // OTIMIZAÇÃO: Memoização das configurações do carrossel para evitar recálculos
-  const carouselConfig = useMemo(() => ({
-    height: properties.carouselHeight || "medium",
-    borderRadius: properties.carouselBorderRadius || "lg",
-    transition: properties.carouselTransition || "slide",
-    speed: properties.carouselSpeed || "normal",
-    autoplay: properties.carouselAutoplay || false,
-    autoplayInterval: properties.carouselAutoplayInterval || 3,
-    showArrows: properties.carouselShowArrows !== false,
-    showDots: properties.carouselShowDots !== false,
-    infinite: properties.carouselInfinite !== false,
-    theme: properties.carouselTheme || "default",
-    imageFit: properties.carouselImageFit || "cover",
-    arrowStyle: properties.carouselArrowStyle || "simple",
-    dotStyle: properties.carouselDotStyle || "dots",
-    showThumbnails: properties.carouselShowThumbnails || false,
-    showProgress: properties.carouselShowProgress || false,
-    pauseOnHover: properties.carouselPauseOnHover !== false,
-    swipeEnabled: properties.carouselSwipeEnabled !== false,
-    keyboardNav: properties.carouselKeyboardNav !== false,
-    slidesToShow: properties.carouselSlidesToShow || 1
-  }), [properties]);
+  // Configurações do carrossel
+  const carouselHeight = properties.carouselHeight || "medium";
+  const carouselBorderRadius = properties.carouselBorderRadius || "lg";
+  const carouselTransition = properties.carouselTransition || "slide";
+  const carouselSpeed = properties.carouselSpeed || "normal";
+  const carouselAutoplay = properties.carouselAutoplay || false;
+  const carouselAutoplayInterval = properties.carouselAutoplayInterval || 3;
+  const carouselShowArrows = properties.carouselShowArrows !== false;
+  const carouselShowDots = properties.carouselShowDots !== false;
+  const carouselInfinite = properties.carouselInfinite !== false;
+  const carouselTheme = properties.carouselTheme || "default";
+  const carouselImageFit = properties.carouselImageFit || "cover";
+  const carouselArrowStyle = properties.carouselArrowStyle || "simple";
+  const carouselDotStyle = properties.carouselDotStyle || "dots";
+  const carouselShowThumbnails = properties.carouselShowThumbnails || false;
+  const carouselShowProgress = properties.carouselShowProgress || false;
+  const carouselPauseOnHover = properties.carouselPauseOnHover !== false;
+  const carouselSwipeEnabled = properties.carouselSwipeEnabled !== false;
+  const carouselKeyboardNav = properties.carouselKeyboardNav !== false;
+  const carouselSlidesToShow = properties.carouselSlidesToShow || 1;
 
-  // OTIMIZAÇÃO: Memoização das classes CSS para evitar recálculos
-  const styleClasses = useMemo(() => ({
-    height: {
-      small: "h-48",
-      medium: "h-72", 
-      large: "h-96",
-      xlarge: "h-[500px]"
-    },
-    borderRadius: {
-      none: "rounded-none",
-      sm: "rounded-sm",
-      md: "rounded-md", 
-      lg: "rounded-lg",
-      xl: "rounded-xl"
-    }
-  }), []);
+  // Classes e estilos
+  const heightClasses = {
+    small: "h-48",
+    medium: "h-72", 
+    large: "h-96",
+    xlarge: "h-[500px]"
+  };
+
+  const borderRadiusClasses = {
+    none: "rounded-none",
+    sm: "rounded-sm",
+    md: "rounded-md", 
+    lg: "rounded-lg",
+    xl: "rounded-xl"
+  };
 
   const speedDurations = {
     slow: 1000,

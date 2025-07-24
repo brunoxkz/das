@@ -2136,11 +2136,6 @@ export class SQLiteStorage implements IStorage {
     return stmt.all(campaignId);
   }
 
-  // Alias method for unified system compatibility
-  async getWhatsappLogsByCampaign(campaignId: string): Promise<any[]> {
-    return this.getWhatsappLogs(campaignId);
-  }
-
   // Get all WhatsApp campaigns for auto-detection
   async getAllWhatsappCampaigns(): Promise<any[]> {
     try {
@@ -2376,44 +2371,16 @@ export class SQLiteStorage implements IStorage {
   // OTIMIZAÇÃO: Buscar campanhas ativas com limite para reduzir sobrecarga
   async getActiveCampaignsLimited(limit: number = 25): Promise<any[]> {
     try {
-      // Buscar campanhas SMS ativas
-      const smsCampaignsActive = await db.select()
+      const campaigns = await db.select()
         .from(smsCampaigns)
         .where(eq(smsCampaigns.status, 'active'))
         .orderBy(desc(smsCampaigns.createdAt))
-        .limit(Math.floor(limit / 2)); // Dividir limite entre SMS e WhatsApp
+        .limit(limit);
       
-      // Buscar campanhas WhatsApp ativas usando SQLite direto
-      const whatsappCampaignsStmt = sqlite.prepare(`
-        SELECT * FROM whatsapp_campaigns 
-        WHERE status = 'active' 
-        ORDER BY created_at DESC 
-        LIMIT ?
-      `);
-      const whatsappCampaignsActive = whatsappCampaignsStmt.all(Math.floor(limit / 2));
-      
-      // Processar campanhas SMS
-      const smsProcessed = smsCampaignsActive.map(campaign => ({
+      return campaigns.map(campaign => ({
         ...campaign,
-        type: 'sms',
         phones: JSON.parse(campaign.phones || '[]')
       }));
-      
-      // Processar campanhas WhatsApp
-      const whatsappProcessed = whatsappCampaignsActive.map(campaign => ({
-        ...campaign,
-        type: 'whatsapp',
-        userId: campaign.user_id, // Mapear user_id para userId
-        quizId: campaign.quiz_id,  // Mapear quiz_id para quizId
-        phones: JSON.parse(campaign.phones || '[]'),
-        messages: [campaign.message || 'Mensagem padrão WhatsApp']
-      }));
-      
-      // Combinar e ordenar por data de criação
-      const allCampaigns = [...smsProcessed, ...whatsappProcessed];
-      allCampaigns.sort((a, b) => (b.createdAt || b.created_at) - (a.createdAt || a.created_at));
-      
-      return allCampaigns.slice(0, limit);
     } catch (error) {
       console.error('Erro ao buscar campanhas ativas limitadas:', error);
       return [];

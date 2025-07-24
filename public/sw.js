@@ -1,36 +1,33 @@
 // Service Worker para Vendzz PWA - Sistema de Push Notifications PERSISTENTE
 // SEMPRE ATIVO EM SEGUNDO PLANO - DETECÇÃO AUTOMÁTICA iOS/Android
 
-const CACHE_NAME = 'vendzz-pwa-v3.1';
-const APP_VERSION = '3.1.0';
+const CACHE_NAME = 'vendzz-pwa-v3.0';
+const APP_VERSION = '3.0.0';
 
-// Detectar automaticamente iOS e Android (usando self no contexto do SW)
+// Detectar automaticamente iOS e Android
 const isIOSDevice = () => {
-  const userAgent = self.navigator?.userAgent || '';
-  return /iPad|iPhone|iPod/.test(userAgent) || 
-         (self.navigator?.platform === 'MacIntel' && self.navigator?.maxTouchPoints > 1);
+  return /iPad|iPhone|iPod/.test(navigator.userAgent) || 
+         (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
 };
 
 const isAndroidDevice = () => {
-  const userAgent = self.navigator?.userAgent || '';
-  return /Android/.test(userAgent);
+  return /Android/.test(navigator.userAgent);
 };
 
 const isPWAMode = () => {
-  // No contexto do Service Worker não temos acesso ao window
-  return self.clients && self.clients.matchAll;
+  return window.matchMedia('(display-mode: standalone)').matches ||
+         window.navigator.standalone === true ||
+         document.referrer.includes('android-app://');
 };
 
 console.log(`🚀 SW VENDZZ v${APP_VERSION} - Dispositivo: ${isIOSDevice() ? 'iOS' : isAndroidDevice() ? 'Android' : 'Desktop'}`);
-console.log(`📱 PWA Context: Service Worker ativo`);
-
+console.log(`📱 PWA Mode: ${isPWAMode() ? 'SIM' : 'NÃO'}`);
 const urlsToCache = [
   '/',
+  '/app-pwa-vendzz',
   '/dashboard',
   '/quiz-builder',
-  '/login',
-  '/manifest.json',
-  '/sw.js'
+  '/manifest.json'
 ];
 
 // Instalar Service Worker - SEMPRE ATIVO EM SEGUNDO PLANO
