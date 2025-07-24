@@ -60,7 +60,8 @@ export function useServiceWorker() {
 
       console.log('✅ Service Worker registrado com sucesso');
     } catch (error) {
-      console.warn('⚠️ Falha ao registrar Service Worker:', error);
+      console.error('⚠️ Falha ao registrar Service Worker:', error);
+      setState(prev => ({ ...prev, isRegistered: false }));
     }
   };
 

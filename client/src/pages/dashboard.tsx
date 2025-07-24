@@ -330,9 +330,10 @@ export default function Dashboard() {
       }
     } catch (error) {
       console.error('❌ Erro no iOS push activation:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Erro desconhecido';
       toast({
         title: "Erro",
-        description: `Falha: ${error.message}`,
+        description: `Falha: ${errorMessage}`,
         variant: "destructive"
       });
     }
@@ -905,9 +906,10 @@ export default function Dashboard() {
                     }
                   } catch (error) {
                     console.error('❌ Erro no teste push:', error);
+                    const errorMessage = error instanceof Error ? error.message : 'Erro desconhecido';
                     toast({
-                      title: "Erro",
-                      description: `Falha: ${error.message}`,
+                      title: "Erro", 
+                      description: `Falha: ${errorMessage}`,
                       variant: "destructive"
                     });
                   }
@@ -1377,19 +1379,19 @@ export default function Dashboard() {
                         <div className="flex justify-between items-center">
                           <span className="text-sm text-gray-600">Crescimento por Hora</span>
                           <Badge variant="secondary" className="bg-blue-100 text-blue-700">
-                            +{onlineStats?.growth?.hourly || 5} usuários
+                            +{(onlineStats as any)?.growth?.hourly || 5} usuários
                           </Badge>
                         </div>
                         <div className="flex justify-between items-center">
                           <span className="text-sm text-gray-600">Top Cidade</span>
                           <span className="text-sm font-medium">
-                            {onlineStats?.topCities?.[0]?.city || 'São Paulo'} ({onlineStats?.topCities?.[0]?.users || 12})
+                            {((onlineStats as any)?.topCities?.[0]?.city || 'São Paulo')} ({(onlineStats as any)?.topCities?.[0]?.users || 12})
                           </span>
                         </div>
                         <div className="flex justify-between items-center">
                           <span className="text-sm text-gray-600">Planos Premium</span>
                           <span className="text-sm font-medium text-green-600">
-                            {onlineStats?.planDistribution?.premium || 8} usuários
+                            {(onlineStats as any)?.planDistribution?.premium || 8} usuários
                           </span>
                         </div>
                       </div>
