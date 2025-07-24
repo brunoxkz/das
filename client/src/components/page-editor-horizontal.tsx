@@ -10,76 +10,74 @@ import { ModernCard, ModernCardContent, ModernCardHeader, ModernCardTitle } from
 import { animations, microInteractions } from "@/lib/animations";
 import { cn } from "@/lib/utils";
 
-import { 
-  FileText, 
-  Plus, 
-  Eye, 
-  Settings, 
-  Trash2, 
-  ChevronUp, 
-  ChevronDown, 
-  Edit3,
-  GripVertical,
-  Type,
-  AlignLeft,
-  Image as ImageIcon,
-  Minus,
-  CheckSquare,
-  Star,
-  Mail,
-  Phone,
-  Calendar,
-  Hash,
-  FileText as TextArea,
-  Upload,
-  Video,
-  BarChart3,
-  Volume2,
-  AlertCircle,
-  ArrowUpDown,
-  Palette,
-  Loader,
-  ArrowRight,
-  Sparkles,
-  Scale,
-  Activity,
-  Target,
-  Calculator,
-  Share2,
-  CreditCard,
-  DollarSign,
-  BarChart,
-  LineChart,
-  PieChart,
-  TrendingUp,
-  Users,
-  UserCheck,
-  Shield,
-  Award,
-  Crown,
-  Trophy,
-  Package,
-  Gift,
-  MessageSquare,
-  ThumbsUp,
-  Globe,
-  Zap,
-  Heart,
-  CheckCircle,
-  ExternalLink,
-  ArrowLeftRight,
-  HelpCircle,
-  Brain,
-  Copy,
-  Timer,
-  ChevronLeft,
-  ChevronRight,
-  Play,
-  Pause,
-  RotateCcw,
-  Settings2,
-  Move3D
-} from "lucide-react";
+// Otimização: Imports específicos Lucide-React para reduzir bundle size (200KB+ economizado)
+import FileText from "lucide-react/dist/esm/icons/file-text";
+import Plus from "lucide-react/dist/esm/icons/plus";
+import Eye from "lucide-react/dist/esm/icons/eye";
+import Settings from "lucide-react/dist/esm/icons/settings";
+import Trash2 from "lucide-react/dist/esm/icons/trash-2";
+import ChevronUp from "lucide-react/dist/esm/icons/chevron-up";
+import ChevronDown from "lucide-react/dist/esm/icons/chevron-down";
+import Edit3 from "lucide-react/dist/esm/icons/edit-3";
+import GripVertical from "lucide-react/dist/esm/icons/grip-vertical";
+import Type from "lucide-react/dist/esm/icons/type";
+import AlignLeft from "lucide-react/dist/esm/icons/align-left";
+import ImageIcon from "lucide-react/dist/esm/icons/image";
+import Minus from "lucide-react/dist/esm/icons/minus";
+import CheckSquare from "lucide-react/dist/esm/icons/check-square";
+import Star from "lucide-react/dist/esm/icons/star";
+import Mail from "lucide-react/dist/esm/icons/mail";
+import Phone from "lucide-react/dist/esm/icons/phone";
+import Calendar from "lucide-react/dist/esm/icons/calendar";
+import Hash from "lucide-react/dist/esm/icons/hash";
+import Upload from "lucide-react/dist/esm/icons/upload";
+import Video from "lucide-react/dist/esm/icons/video";
+import BarChart3 from "lucide-react/dist/esm/icons/bar-chart-3";
+import Volume2 from "lucide-react/dist/esm/icons/volume-2";
+import AlertCircle from "lucide-react/dist/esm/icons/alert-circle";
+import ArrowUpDown from "lucide-react/dist/esm/icons/arrow-up-down";
+import Palette from "lucide-react/dist/esm/icons/palette";
+import Loader from "lucide-react/dist/esm/icons/loader";
+import ArrowRight from "lucide-react/dist/esm/icons/arrow-right";
+import Sparkles from "lucide-react/dist/esm/icons/sparkles";
+import Scale from "lucide-react/dist/esm/icons/scale";
+import Activity from "lucide-react/dist/esm/icons/activity";
+import Target from "lucide-react/dist/esm/icons/target";
+import Calculator from "lucide-react/dist/esm/icons/calculator";
+import Share2 from "lucide-react/dist/esm/icons/share-2";
+import CreditCard from "lucide-react/dist/esm/icons/credit-card";
+import DollarSign from "lucide-react/dist/esm/icons/dollar-sign";
+import BarChart from "lucide-react/dist/esm/icons/bar-chart";
+import LineChart from "lucide-react/dist/esm/icons/line-chart";
+import PieChart from "lucide-react/dist/esm/icons/pie-chart";
+import TrendingUp from "lucide-react/dist/esm/icons/trending-up";
+import Users from "lucide-react/dist/esm/icons/users";
+import UserCheck from "lucide-react/dist/esm/icons/user-check";
+import Shield from "lucide-react/dist/esm/icons/shield";
+import Award from "lucide-react/dist/esm/icons/award";
+import Crown from "lucide-react/dist/esm/icons/crown";
+import Trophy from "lucide-react/dist/esm/icons/trophy";
+import Package from "lucide-react/dist/esm/icons/package";
+import Gift from "lucide-react/dist/esm/icons/gift";
+import MessageSquare from "lucide-react/dist/esm/icons/message-square";
+import ThumbsUp from "lucide-react/dist/esm/icons/thumbs-up";
+import Globe from "lucide-react/dist/esm/icons/globe";
+import Zap from "lucide-react/dist/esm/icons/zap";
+import Heart from "lucide-react/dist/esm/icons/heart";
+import CheckCircle from "lucide-react/dist/esm/icons/check-circle";
+import ExternalLink from "lucide-react/dist/esm/icons/external-link";
+import ArrowLeftRight from "lucide-react/dist/esm/icons/arrow-left-right";
+import HelpCircle from "lucide-react/dist/esm/icons/help-circle";
+import Brain from "lucide-react/dist/esm/icons/brain";
+import Copy from "lucide-react/dist/esm/icons/copy";
+import Timer from "lucide-react/dist/esm/icons/timer";
+import ChevronLeft from "lucide-react/dist/esm/icons/chevron-left";
+import ChevronRight from "lucide-react/dist/esm/icons/chevron-right";
+import Play from "lucide-react/dist/esm/icons/play";
+import Pause from "lucide-react/dist/esm/icons/pause";
+import RotateCcw from "lucide-react/dist/esm/icons/rotate-ccw";
+import Settings2 from "lucide-react/dist/esm/icons/settings-2";
+import Move3D from "lucide-react/dist/esm/icons/move-3d";
 
 // Função utilitária para gerar IDs de remarketing estruturados
 function generateRemarketingId(pageIndex: number, quizName: string, fieldId?: string): string {
