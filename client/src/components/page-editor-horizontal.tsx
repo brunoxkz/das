@@ -268,14 +268,12 @@ interface Element {
   starSize?: "small" | "medium" | "large"; // Tamanho das estrelas
   ratingRequired?: boolean; // Se a avaliação é obrigatória
   
-  // Propriedades específicas para carregamento + pergunta
-  loadingDuration?: number; // duração em segundos
+  // Propriedades específicas para carregamento + pergunta (segunda definição)
   loadingBarColor?: string;
   loadingBarBackgroundColor?: string;
   loadingBarWidth?: "thin" | "medium" | "thick";
   loadingBarHeight?: "thin" | "small" | "medium" | "large" | "extra_large";
   loadingBarStyle?: "square" | "slightly_rounded" | "rounded" | "very_rounded";
-  loadingText?: string;
   loadingTextSize?: "small" | "medium" | "large";
   loadingTextColor?: string;
   popupQuestion?: string;
@@ -566,26 +564,10 @@ interface Element {
   iconListAnimationType?: "fade" | "slide" | "zoom" | "bounce";
   iconListIconPosition?: "left" | "top" | "right";
   iconListBackgroundColor?: string;
-  iconListBorderRadius?: string;
   iconListPadding?: "small" | "medium" | "large";
   iconListMargin?: "small" | "medium" | "large";
   
-  // Testimonials Properties
-  testimonialsData?: {
-    id: string;
-    name: string;
-    role?: string;
-    company?: string;
-    testimonial: string;
-    rating?: number;
-    avatar?: string;
-    date?: string;
-    verified?: boolean;
-    featured?: boolean;
-  }[];
-  testimonialsLayout?: "single" | "grid" | "carousel" | "masonry";
-  testimonialsColumns?: number;
-  testimonialsStyle?: "card" | "quote" | "minimal" | "modern" | "elegant";
+  // Testimonials Properties (Extended)
   testimonialsShowRating?: boolean;
   testimonialsShowDate?: boolean;
   testimonialsShowAvatar?: boolean;
@@ -608,22 +590,13 @@ interface Element {
   testimonialsRoleColor?: string;
   testimonialsCompanyColor?: string;
   
-  // Guarantee Properties
-  guaranteeTitle?: string;
-  guaranteeDescription?: string;
+  // Guarantee Properties (Extended)
   guaranteePeriod?: string;
-  guaranteeIcon?: string;
-  guaranteeIconColor?: string;
-  guaranteeStyle?: "card" | "badge" | "minimal" | "modern" | "elegant";
-  guaranteeBackgroundColor?: string;
-  guaranteeBorderColor?: string;
-  guaranteeTextColor?: string;
   guaranteeAccentColor?: string;
   guaranteeBorderRadius?: string;
   guaranteePadding?: "small" | "medium" | "large";
   guaranteeMargin?: "small" | "medium" | "large";
   guaranteeShadow?: "none" | "small" | "medium" | "large";
-  guaranteeAnimation?: boolean;
   guaranteeAnimationType?: "fade" | "slide" | "zoom" | "bounce" | "pulse";
   guaranteeShowBadge?: boolean;
   guaranteeBadgeText?: string;
