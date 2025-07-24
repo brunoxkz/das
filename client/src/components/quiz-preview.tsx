@@ -2093,90 +2093,84 @@ export default function QuizPreview({ quiz, onClose, onSave, initialPage = 0 }: 
         );
 
       case 'chart':
-        const chartData = element.chartData || [
-          { label: "Semana 1", value: 45, color: "#ef4444" },
-          { label: "Semana 2", value: 65, color: "#f59e0b" },
-          { label: "Semana 3", value: 85, color: "#10b981" },
-          { label: "Semana 4", value: 92, color: "#3b82f6" }
+        const chartBars = element.chartBars || [
+          { label: "Resultado 1", value: 85, color: "#3b82f6" },
+          { label: "Resultado 2", value: 72, color: "#10b981" },
+          { label: "Resultado 3", value: 94, color: "#f59e0b" }
         ];
         
         return (
-          <div className="mb-6">
-            <Card className="p-6">
-              <CardHeader>
-                <CardTitle style={{ color: element.chartTitleColor || '#1F2937' }}>
-                  {element.chartTitle || 'Gráfico de Resultados'}
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="w-full h-64">
-                  <Chart
-                    type={element.chartType || 'bar'}
-                    data={chartData}
-                    title={element.chartTitle}
-                    showLegend={element.chartShowLegend !== false}
-                    backgroundColor={element.chartBackgroundColor || '#3b82f6'}
-                    borderColor={element.chartBorderColor || '#1d4ed8'}
-                    height={250}
-                  />
+          <div className="w-full bg-transparent p-4 mb-6">
+            {element.chartTitle && (
+              <h3 className="text-lg font-semibold mb-4 text-center" style={{ color: element.chartTitleColor || '#1f2937' }}>
+                {element.chartTitle}
+              </h3>
+            )}
+            
+            <div className="space-y-3">
+              {chartBars.map((bar, index) => (
+                <div key={index} className="space-y-1">
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm font-medium">{bar.label}</span>
+                    <span className="text-sm text-gray-600">{bar.value}%</span>
+                  </div>
+                  <div className="w-full bg-gray-200 rounded-full h-6">
+                    <div 
+                      className="h-6 rounded-full transition-all duration-300 flex items-center justify-end pr-2"
+                      style={{ 
+                        width: `${Math.min(100, Math.max(0, bar.value))}%`,
+                        backgroundColor: bar.color
+                      }}
+                    >
+                      <span className="text-xs text-white font-medium">
+                        {bar.value}%
+                      </span>
+                    </div>
+                  </div>
                 </div>
-                {element.chartDescription && (
-                  <p className="mt-4 text-sm text-gray-600 text-center">
-                    {element.chartDescription}
-                  </p>
-                )}
-              </CardContent>
-            </Card>
+              ))}
+            </div>
           </div>
         );
 
       case 'metrics':
         const metricsData = element.metricsData || [
-          { label: element.metric1Name || "Visualizações", value: element.metric1Value || 1250, color: "#3b82f6" },
-          { label: element.metric2Name || "Conversões", value: element.metric2Value || 89, color: "#10b981" },
-          { label: element.metric3Name || "Taxa", value: element.metric3Value || 7.1, color: "#f59e0b" }
+          { label: "Conversões", value: 85, color: "#3b82f6" },
+          { label: "Engajamento", value: 72, color: "#10b981" },
+          { label: "Retenção", value: 94, color: "#f59e0b" }
         ];
 
         return (
-          <div className="mb-6">
-            <Card className="p-6">
-              <CardHeader>
-                <CardTitle>
-                  {element.metricsTitle || 'Métricas de Performance'}
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="w-full h-64">
-                  <Chart
-                    type={element.metricsChartType || 'bar'}
-                    data={metricsData}
-                    title={element.metricsTitle}
-                    showLegend={element.metricsShowLegend !== false}
-                    backgroundColor={element.metricsBackgroundColor || '#3b82f6'}
-                    borderColor={element.metricsBorderColor || '#1d4ed8'}
-                    height={250}
-                  />
-                </div>
-                {element.metricsDescription && (
-                  <p className="mt-4 text-sm text-gray-600 text-center">
-                    {element.metricsDescription}
-                  </p>
-                )}
-                {element.metricsShowValues && (
-                  <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-4">
-                    {metricsData.map((metric, index) => (
-                      <div key={index} className="text-center p-3 bg-gray-50 rounded-lg">
-                        <div className="text-lg font-bold" style={{ color: metric.color }}>
-                          {metric.value}
-                          {element.metricsShowPercentage && '%'}
-                        </div>
-                        <div className="text-sm text-gray-600">{metric.label}</div>
-                      </div>
-                    ))}
+          <div className="w-full bg-transparent p-4 mb-6">
+            {element.metricsTitle && (
+              <h3 className="text-lg font-semibold mb-4 text-center">
+                {element.metricsTitle}
+              </h3>
+            )}
+            
+            <div className="space-y-3">
+              {metricsData.map((metric, index) => (
+                <div key={index} className="space-y-1">
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm font-medium">{metric.label}</span>
+                    <span className="text-sm text-gray-600">{metric.value}%</span>
                   </div>
-                )}
-              </CardContent>
-            </Card>
+                  <div className="w-full bg-gray-200 rounded-full h-6">
+                    <div 
+                      className="h-6 rounded-full transition-all duration-300 flex items-center justify-end pr-2"
+                      style={{ 
+                        width: `${Math.min(100, Math.max(0, metric.value))}%`,
+                        backgroundColor: metric.color
+                      }}
+                    >
+                      <span className="text-xs text-white font-medium">
+                        {metric.value}%
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
         );
 

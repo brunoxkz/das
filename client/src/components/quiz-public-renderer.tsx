@@ -2419,78 +2419,84 @@ export function QuizPublicRenderer({ quiz }: QuizPublicRendererProps) {
 
 
       case 'chart':
-        const chartData = properties.chartData || [
-          { label: "Semana 1", value: 45, color: "#ef4444" },
-          { label: "Semana 2", value: 65, color: "#f59e0b" },
-          { label: "Semana 3", value: 85, color: "#10b981" },
-          { label: "Semana 4", value: 92, color: "#3b82f6" }
+        const chartBars = properties.chartBars || [
+          { label: "Resultado 1", value: 85, color: "#3b82f6" },
+          { label: "Resultado 2", value: 72, color: "#10b981" },
+          { label: "Resultado 3", value: 94, color: "#f59e0b" }
         ];
         
         return (
-          <div key={id} className="mb-6">
-            <Card className="p-6">
-              <CardHeader>
-                <CardTitle style={{ color: properties.chartTitleColor || '#1F2937' }}>
-                  {properties.chartTitle || 'Gráfico de Resultados'}
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="w-full h-64">
-                  <Chart
-                    type={properties.chartType || 'bar'}
-                    data={chartData}
-                    title={properties.chartTitle}
-                    showLegend={properties.chartShowLegend !== false}
-                    backgroundColor={properties.chartBackgroundColor || '#3b82f6'}
-                    borderColor={properties.chartBorderColor || '#1d4ed8'}
-                    height={250}
-                  />
+          <div key={id} className="w-full bg-transparent p-4 mb-6">
+            {properties.chartTitle && (
+              <h3 className="text-lg font-semibold mb-4 text-center" style={{ color: properties.chartTitleColor || '#1f2937' }}>
+                {properties.chartTitle}
+              </h3>
+            )}
+            
+            <div className="space-y-3">
+              {chartBars.map((bar, index) => (
+                <div key={index} className="space-y-1">
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm font-medium">{bar.label}</span>
+                    <span className="text-sm text-gray-600">{bar.value}%</span>
+                  </div>
+                  <div className="w-full bg-gray-200 rounded-full h-6">
+                    <div 
+                      className="h-6 rounded-full transition-all duration-300 flex items-center justify-end pr-2"
+                      style={{ 
+                        width: `${Math.min(100, Math.max(0, bar.value))}%`,
+                        backgroundColor: bar.color
+                      }}
+                    >
+                      <span className="text-xs text-white font-medium">
+                        {bar.value}%
+                      </span>
+                    </div>
+                  </div>
                 </div>
-                {properties.chartDescription && (
-                  <p className="mt-4 text-sm text-gray-600 text-center">
-                    {properties.chartDescription}
-                  </p>
-                )}
-              </CardContent>
-            </Card>
+              ))}
+            </div>
           </div>
         );
 
       case 'metrics':
         const metricsData = properties.metricsData || [
-          { label: "Conversões", value: 85, color: "#10b981", icon: "🎯" },
-          { label: "Engajamento", value: 72, color: "#3b82f6", icon: "💡" },
-          { label: "Retenção", value: 94, color: "#8b5cf6", icon: "🔄" },
-          { label: "Vendas", value: 158, color: "#f59e0b", icon: "💰" }
+          { label: "Conversões", value: 85, color: "#3b82f6" },
+          { label: "Engajamento", value: 72, color: "#10b981" },
+          { label: "Retenção", value: 94, color: "#f59e0b" }
         ];
         
         return (
-          <div key={id} className="mb-6">
-            <Card className="p-6">
-              <CardHeader>
-                <CardTitle>
-                  {properties.metricsTitle || 'Métricas de Performance'}
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="w-full h-64">
-                  <Chart
-                    type="bar"
-                    data={metricsData}
-                    title={properties.metricsTitle}
-                    showLegend={properties.metricsShowLegend !== false}
-                    backgroundColor="#8b5cf6"
-                    borderColor="#7c3aed"
-                    height={250}
-                  />
+          <div key={id} className="w-full bg-transparent p-4 mb-6">
+            {properties.metricsTitle && (
+              <h3 className="text-lg font-semibold mb-4 text-center">
+                {properties.metricsTitle}
+              </h3>
+            )}
+            
+            <div className="space-y-3">
+              {metricsData.map((metric, index) => (
+                <div key={index} className="space-y-1">
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm font-medium">{metric.label}</span>
+                    <span className="text-sm text-gray-600">{metric.value}%</span>
+                  </div>
+                  <div className="w-full bg-gray-200 rounded-full h-6">
+                    <div 
+                      className="h-6 rounded-full transition-all duration-300 flex items-center justify-end pr-2"
+                      style={{ 
+                        width: `${Math.min(100, Math.max(0, metric.value))}%`,
+                        backgroundColor: metric.color
+                      }}
+                    >
+                      <span className="text-xs text-white font-medium">
+                        {metric.value}%
+                      </span>
+                    </div>
+                  </div>
                 </div>
-                {properties.metricsDescription && (
-                  <p className="mt-4 text-sm text-gray-600 text-center">
-                    {properties.metricsDescription}
-                  </p>
-                )}
-              </CardContent>
-            </Card>
+              ))}
+            </div>
           </div>
         );
 

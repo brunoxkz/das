@@ -598,6 +598,16 @@ Campo: p1_objetivo_fitness
 ## Changelog
 
 ```
+- January 25, 2025. SISTEMA CHART/METRICS SIMPLIFICADO COMPLETADO - Atualização final dos elementos chart e metrics nos componentes quiz-public-renderer.tsx e quiz-preview.tsx:
+  * QUIZ-PUBLIC-RENDERER ATUALIZADO: Implementados elementos chart e metrics simplificados com barras horizontais animadas
+  * QUIZ-PREVIEW ATUALIZADO: Implementados elementos chart e metrics simplificados com barras horizontais animadas
+  * CONSISTÊNCIA CROSS-COMPONENT: Todos os três componentes (page-editor-horizontal, quiz-public-renderer, quiz-preview) agora usam o sistema unificado
+  * DESIGN LIMPO: Barras horizontais com percentuais, cores customizáveis, sem componentes complexos de gráfico
+  * PERFORMANCE OTIMIZADA: Removidas dependências pesadas, sistema simplificado roda em qualquer dispositivo
+  * RESPONSIVIDADE: Layout responsivo com espaçamento adequado e texto legível
+  * CONFIGURAÇÃO VISUAL: Títulos opcionais, cores personalizáveis por barra, percentuais sempre visíveis
+  * CÓDIGO LIMPO: Removidos todos os imports e componentes Chart complexos, sistema 100% nativo
+  * STATUS: SISTEMA CHART/METRICS 100% SIMPLIFICADO E CONSISTENTE - Funcionamento garantido em todos os modos de visualização
 - January 25, 2025. ELEMENTO ANIMATED_TRANSITION COM REDIRECIONAMENTO OPCIONAL IMPLEMENTADO - Sistema completo de redirecionamento automático com opções para próxima página ou URL personalizada:
   * REDIRECIONAMENTO OPCIONAL: Checkbox para ativar/desativar redirecionamento automático
   * TEMPO CONFIGURÁVEL: Campo numérico para definir segundos de delay (1-60s, padrão 5s)

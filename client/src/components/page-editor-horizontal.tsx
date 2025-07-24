@@ -11627,178 +11627,129 @@ const gameElementCategories = [
               {selectedElementData.type === "chart" && (
                 <div className="space-y-4 max-h-96 overflow-y-auto">
                   <div className="bg-blue-50 p-3 rounded-lg">
-                    <h4 className="text-sm font-semibold text-blue-800 mb-2">📊 Gráfico Avançado</h4>
+                    <h4 className="text-sm font-semibold text-blue-800 mb-2">📊 Gráfico Simples</h4>
                     <p className="text-xs text-blue-700">
-                      Gráficos interativos com barras, linhas, antes/depois e dados em tempo real
+                      Gráfico de barras simples e fácil de configurar
                     </p>
                   </div>
 
                   <div className="border-b pb-4">
-                    <h5 className="font-semibold text-sm mb-3">📝 Conteúdo</h5>
+                    <h5 className="font-semibold text-sm mb-3">📝 Configurações Básicas</h5>
                     
                     <div>
                       <Label>Título do Gráfico</Label>
                       <Input
                         value={selectedElementData.chartTitle || ""}
                         onChange={(e) => updateElement(selectedElementData.id, { chartTitle: e.target.value })}
-                        placeholder="Resultados da Sua Transformação"
+                        placeholder="Meus Resultados"
                         className="mt-1"
                       />
                     </div>
 
                     <div className="mt-3">
-                      <Label>Período dos Dados</Label>
-                      <Select 
-                        value={selectedElementData.timePeriod || "weeks"}
-                        onValueChange={(value) => updateElement(selectedElementData.id, { timePeriod: value })}
-                      >
-                        <SelectTrigger className="mt-1">
-                          <SelectValue placeholder="Selecione o período" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="days">Últimos 7 dias</SelectItem>
-                          <SelectItem value="weeks">Últimas 4 semanas</SelectItem>
-                          <SelectItem value="months">Últimos 6 meses</SelectItem>
-                          <SelectItem value="custom">Período personalizado</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </div>
-
-                  <div className="border-b pb-4">
-                    <h5 className="font-semibold text-sm mb-3">📊 Tipo de Gráfico</h5>
-                    
-                    <div className="grid grid-cols-2 gap-2">
-                      <Button
-                        variant={selectedElementData.chartType === "bar" ? "default" : "outline"}
-                        size="sm"
-                        onClick={() => updateElement(selectedElementData.id, { chartType: "bar" })}
-                      >
-                        📊 Barras
-                      </Button>
-                      <Button
-                        variant={selectedElementData.chartType === "line" ? "default" : "outline"}
-                        size="sm"
-                        onClick={() => updateElement(selectedElementData.id, { chartType: "line" })}
-                      >
-                        📈 Linha
-                      </Button>
-                      <Button
-                        variant={selectedElementData.chartType === "before_after" ? "default" : "outline"}
-                        size="sm"
-                        onClick={() => updateElement(selectedElementData.id, { chartType: "before_after" })}
-                      >
-                        ⚖️ Antes/Depois
-                      </Button>
-                      <Button
-                        variant={selectedElementData.chartType === "pie" ? "default" : "outline"}
-                        size="sm"
-                        onClick={() => updateElement(selectedElementData.id, { chartType: "pie" })}
-                      >
-                        🥧 Pizza
-                      </Button>
-                    </div>
-                  </div>
-
-                  <div className="border-b pb-4">
-                    <h5 className="font-semibold text-sm mb-3">📊 Dados</h5>
-                    
-                    <div>
-                      <Label>Valores (separados por vírgula)</Label>
-                      <Input
-                        value={(selectedElementData.chartData || [45, 65, 85, 92]).map(item => 
-                          typeof item === 'object' ? item.value : item
-                        ).join(", ")}
+                      <Label>Quantidade de Barras</Label>
+                      <select 
+                        className="w-full px-2 py-1 border rounded text-sm mt-1"
+                        value={selectedElementData.chartBarsCount || 3}
                         onChange={(e) => {
-                          const values = e.target.value.split(",").map((v, index) => ({
-                            label: `Semana ${index + 1}`,
-                            value: parseInt(v.trim()) || 0,
-                            color: ["#ef4444", "#f59e0b", "#10b981", "#3b82f6"][index] || "#10b981"
-                          }));
-                          updateElement(selectedElementData.id, { chartData: values });
+                          const count = parseInt(e.target.value);
+                          const currentBars = selectedElementData.chartBars || [];
+                          const newBars = [];
+                          
+                          for (let i = 0; i < count; i++) {
+                            newBars.push(currentBars[i] || {
+                              label: `Item ${i + 1}`,
+                              value: 50,
+                              color: ["#3b82f6", "#10b981", "#f59e0b", "#ef4444", "#8b5cf6"][i] || "#3b82f6"
+                            });
+                          }
+                          
+                          updateElement(selectedElementData.id, { 
+                            chartBarsCount: count,
+                            chartBars: newBars
+                          });
                         }}
-                        placeholder="45, 65, 85, 92"
-                        className="mt-1"
-                      />
-                    </div>
-
-                    <div className="mt-3">
-                      <Label>Cores (separadas por vírgula)</Label>
-                      <Input
-                        value={(selectedElementData.chartColors || ["#ef4444", "#f59e0b", "#10b981", "#3b82f6"]).join(", ")}
-                        onChange={(e) => {
-                          const colors = e.target.value.split(",").map(c => c.trim());
-                          updateElement(selectedElementData.id, { chartColors: colors });
-                        }}
-                        placeholder="#ef4444, #f59e0b, #10b981, #3b82f6"
-                        className="mt-1"
-                      />
+                      >
+                        <option value={1}>1 barra</option>
+                        <option value={2}>2 barras</option>
+                        <option value={3}>3 barras</option>
+                        <option value={4}>4 barras</option>
+                        <option value={5}>5 barras</option>
+                      </select>
                     </div>
                   </div>
 
                   <div className="border-b pb-4">
-                    <h5 className="font-semibold text-sm mb-3">⚖️ Dados Antes/Depois</h5>
+                    <h5 className="font-semibold text-sm mb-3">📊 Configuração das Barras</h5>
                     
-                    <div className="grid grid-cols-2 gap-3">
-                      <div>
-                        <Label>Valor Antes</Label>
-                        <Input
-                          type="number"
-                          value={selectedElementData.beforeAfterData?.before?.value || 25}
-                          onChange={(e) => updateElement(selectedElementData.id, { 
-                            beforeAfterData: {
-                              ...selectedElementData.beforeAfterData,
-                              before: { 
-                                value: parseInt(e.target.value) || 0, 
-                                label: "Antes" 
-                              }
-                            }
-                          })}
-                          className="mt-1"
-                        />
+                    {(selectedElementData.chartBars || [
+                      { label: "Item 1", value: 50, color: "#3b82f6" },
+                      { label: "Item 2", value: 75, color: "#10b981" },
+                      { label: "Item 3", value: 90, color: "#f59e0b" }
+                    ]).map((bar, index) => (
+                      <div key={index} className="p-3 border rounded-lg mb-2">
+                        <div className="flex items-center gap-2 mb-2">
+                          <div 
+                            className="w-4 h-4 rounded"
+                            style={{ backgroundColor: bar.color }}
+                          ></div>
+                          <span className="font-medium text-sm">Barra {index + 1}</span>
+                        </div>
+                        
+                        <div className="space-y-2">
+                          <div>
+                            <Label className="text-xs">Texto da Barra</Label>
+                            <Input
+                              value={bar.label}
+                              onChange={(e) => {
+                                const newBars = [...(selectedElementData.chartBars || [])];
+                                newBars[index] = { ...newBars[index], label: e.target.value };
+                                updateElement(selectedElementData.id, { chartBars: newBars });
+                              }}
+                              placeholder={`Item ${index + 1}`}
+                              className="mt-1 text-xs"
+                            />
+                          </div>
+                          
+                          <div className="grid grid-cols-2 gap-2">
+                            <div>
+                              <Label className="text-xs">Percentual (%)</Label>
+                              <Input
+                                type="number"
+                                min="0"
+                                max="100"
+                                value={bar.value}
+                                onChange={(e) => {
+                                  const newBars = [...(selectedElementData.chartBars || [])];
+                                  newBars[index] = { ...newBars[index], value: parseInt(e.target.value) || 0 };
+                                  updateElement(selectedElementData.id, { chartBars: newBars });
+                                }}
+                                className="mt-1 text-xs"
+                              />
+                            </div>
+                            
+                            <div>
+                              <Label className="text-xs">Cor da Barra</Label>
+                              <input
+                                type="color"
+                                value={bar.color}
+                                onChange={(e) => {
+                                  const newBars = [...(selectedElementData.chartBars || [])];
+                                  newBars[index] = { ...newBars[index], color: e.target.value };
+                                  updateElement(selectedElementData.id, { chartBars: newBars });
+                                }}
+                                className="mt-1 w-full h-8 border rounded"
+                              />
+                            </div>
+                          </div>
+                        </div>
                       </div>
-                      <div>
-                        <Label>Valor Depois</Label>
-                        <Input
-                          type="number"
-                          value={selectedElementData.beforeAfterData?.after?.value || 85}
-                          onChange={(e) => updateElement(selectedElementData.id, { 
-                            beforeAfterData: {
-                              ...selectedElementData.beforeAfterData,
-                              after: { 
-                                value: parseInt(e.target.value) || 0, 
-                                label: "Depois" 
-                              }
-                            }
-                          })}
-                          className="mt-1"
-                        />
-                      </div>
-                    </div>
+                    ))}
                   </div>
 
-                  <div>
-                    <h5 className="font-semibold text-sm mb-3">🎨 Estilo</h5>
-                    
-                    <div className="grid grid-cols-2 gap-3">
-                      <div>
-                        <Label>Cor do Título</Label>
-                        <Input
-                          type="color"
-                          value={selectedElementData.chartTitleColor || "#1f2937"}
-                          onChange={(e) => updateElement(selectedElementData.id, { chartTitleColor: e.target.value })}
-                          className="mt-1 h-10"
-                        />
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <input
-                          type="checkbox"
-                          checked={selectedElementData.chartShowLegend !== false}
-                          onChange={(e) => updateElement(selectedElementData.id, { chartShowLegend: e.target.checked })}
-                          className="rounded"
-                        />
-                        <Label>Mostrar Legenda</Label>
-                      </div>
+                  <div className="p-3 bg-gray-50 border rounded-lg">
+                    <div className="text-xs text-gray-600">
+                      💡 Configure quantas barras deseja e personalize cada uma com texto, percentual e cor
                     </div>
                   </div>
                 </div>
@@ -11807,195 +11758,129 @@ const gameElementCategories = [
               {selectedElementData.type === "metrics" && (
                 <div className="space-y-4 max-h-96 overflow-y-auto">
                   <div className="bg-purple-50 p-3 rounded-lg">
-                    <h4 className="text-sm font-semibold text-purple-800 mb-2">📈 Métricas Avançadas</h4>
+                    <h4 className="text-sm font-semibold text-purple-800 mb-2">📈 Métricas Simples</h4>
                     <p className="text-xs text-purple-700">
-                      Métricas de performance em tempo real com gráficos semanais e indicadores visuais
+                      Barras de métricas horizontais simples e fáceis de configurar
                     </p>
                   </div>
 
                   <div className="border-b pb-4">
-                    <h5 className="font-semibold text-sm mb-3">📝 Conteúdo</h5>
+                    <h5 className="font-semibold text-sm mb-3">📝 Configurações Básicas</h5>
                     
                     <div>
                       <Label>Título das Métricas</Label>
                       <Input
                         value={selectedElementData.metricsTitle || ""}
                         onChange={(e) => updateElement(selectedElementData.id, { metricsTitle: e.target.value })}
-                        placeholder="Seus Resultados em Tempo Real"
+                        placeholder="Minhas Métricas"
                         className="mt-1"
                       />
                     </div>
 
                     <div className="mt-3">
-                      <Label>Período dos Dados</Label>
-                      <Select 
-                        value={selectedElementData.timePeriod || "Últimas 7 dias"}
-                        onValueChange={(value) => updateElement(selectedElementData.id, { timePeriod: value })}
+                      <Label>Quantidade de Métricas</Label>
+                      <select 
+                        className="w-full px-2 py-1 border rounded text-sm mt-1"
+                        value={selectedElementData.metricsCount || 3}
+                        onChange={(e) => {
+                          const count = parseInt(e.target.value);
+                          const currentMetrics = selectedElementData.metricsData || [];
+                          const newMetrics = [];
+                          
+                          for (let i = 0; i < count; i++) {
+                            newMetrics.push(currentMetrics[i] || {
+                              label: `Métrica ${i + 1}`,
+                              value: 75,
+                              color: ["#3b82f6", "#10b981", "#f59e0b", "#ef4444", "#8b5cf6"][i] || "#3b82f6"
+                            });
+                          }
+                          
+                          updateElement(selectedElementData.id, { 
+                            metricsCount: count,
+                            metricsData: newMetrics
+                          });
+                        }}
                       >
-                        <SelectTrigger className="mt-1">
-                          <SelectValue placeholder="Selecione o período" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="Últimas 24 horas">Últimas 24 horas</SelectItem>
-                          <SelectItem value="Últimas 7 dias">Últimas 7 dias</SelectItem>
-                          <SelectItem value="Últimos 30 dias">Últimos 30 dias</SelectItem>
-                          <SelectItem value="Últimos 3 meses">Últimos 3 meses</SelectItem>
-                        </SelectContent>
-                      </Select>
+                        <option value={1}>1 métrica</option>
+                        <option value={2}>2 métricas</option>
+                        <option value={3}>3 métricas</option>
+                        <option value={4}>4 métricas</option>
+                        <option value={5}>5 métricas</option>
+                      </select>
                     </div>
                   </div>
 
                   <div className="border-b pb-4">
                     <h5 className="font-semibold text-sm mb-3">📊 Configuração das Métricas</h5>
                     
-                    <div>
-                      <Label>Métrica 1 - Nome</Label>
-                      <Input
-                        value={selectedElementData.metric1Name || "Conversões"}
-                        onChange={(e) => updateElement(selectedElementData.id, { metric1Name: e.target.value })}
-                        placeholder="Conversões"
-                        className="mt-1"
-                      />
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-3 mt-3">
-                      <div>
-                        <Label>Valor Atual</Label>
-                        <Input
-                          type="number"
-                          value={selectedElementData.metric1Value || 85}
-                          onChange={(e) => updateElement(selectedElementData.id, { metric1Value: parseInt(e.target.value) || 0 })}
-                          className="mt-1"
-                        />
-                      </div>
-                      <div>
-                        <Label>Valor Máximo</Label>
-                        <Input
-                          type="number"
-                          value={selectedElementData.metric1Max || 100}
-                          onChange={(e) => updateElement(selectedElementData.id, { metric1Max: parseInt(e.target.value) || 100 })}
-                          className="mt-1"
-                        />
-                      </div>
-                    </div>
-
-                    <div className="mt-3">
-                      <Label>Métrica 2 - Nome</Label>
-                      <Input
-                        value={selectedElementData.metric2Name || "Engajamento"}
-                        onChange={(e) => updateElement(selectedElementData.id, { metric2Name: e.target.value })}
-                        placeholder="Engajamento"
-                        className="mt-1"
-                      />
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-3 mt-3">
-                      <div>
-                        <Label>Valor Atual</Label>
-                        <Input
-                          type="number"
-                          value={selectedElementData.metric2Value || 72}
-                          onChange={(e) => updateElement(selectedElementData.id, { metric2Value: parseInt(e.target.value) || 0 })}
-                          className="mt-1"
-                        />
-                      </div>
-                      <div>
-                        <Label>Valor Máximo</Label>
-                        <Input
-                          type="number"
-                          value={selectedElementData.metric2Max || 100}
-                          onChange={(e) => updateElement(selectedElementData.id, { metric2Max: parseInt(e.target.value) || 100 })}
-                          className="mt-1"
-                        />
-                      </div>
-                    </div>
-
-                    <div className="mt-3">
-                      <Label>Métrica 3 - Nome</Label>
-                      <Input
-                        value={selectedElementData.metric3Name || "Retenção"}
-                        onChange={(e) => updateElement(selectedElementData.id, { metric3Name: e.target.value })}
-                        placeholder="Retenção"
-                        className="mt-1"
-                      />
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-3 mt-3">
-                      <div>
-                        <Label>Valor Atual</Label>
-                        <Input
-                          type="number"
-                          value={selectedElementData.metric3Value || 94}
-                          onChange={(e) => updateElement(selectedElementData.id, { metric3Value: parseInt(e.target.value) || 0 })}
-                          className="mt-1"
-                        />
-                      </div>
-                      <div>
-                        <Label>Valor Máximo</Label>
-                        <Input
-                          type="number"
-                          value={selectedElementData.metric3Max || 100}
-                          onChange={(e) => updateElement(selectedElementData.id, { metric3Max: parseInt(e.target.value) || 100 })}
-                          className="mt-1"
-                        />
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="border-b pb-4">
-                    <h5 className="font-semibold text-sm mb-3">📈 Gráfico Semanal</h5>
-                    
-                    <div>
-                      <Label>Valores da Semana (Seg-Dom, separados por vírgula)</Label>
-                      <Input
-                        value={(selectedElementData.weeklyData || [45, 52, 48, 67, 73, 85, 62]).join(", ")}
-                        onChange={(e) => {
-                          const values = e.target.value.split(",").map(v => parseInt(v.trim()) || 0);
-                          const weeklyData = values.map((value, index) => ({
-                            day: ["Seg", "Ter", "Qua", "Qui", "Sex", "Sab", "Dom"][index],
-                            value
-                          }));
-                          updateElement(selectedElementData.id, { weeklyData });
-                        }}
-                        placeholder="45, 52, 48, 67, 73, 85, 62"
-                        className="mt-1"
-                      />
-                    </div>
-                  </div>
-
-                  <div>
-                    <h5 className="font-semibold text-sm mb-3">🎨 Estilo</h5>
-                    
-                    <div className="grid grid-cols-2 gap-3">
-                      <div>
-                        <Label>Cor do Título</Label>
-                        <Input
-                          type="color"
-                          value={selectedElementData.metricsColor || "#1f2937"}
-                          onChange={(e) => updateElement(selectedElementData.id, { metricsColor: e.target.value })}
-                          className="mt-1 h-10"
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <div className="flex items-center space-x-2">
-                          <input
-                            type="checkbox"
-                            checked={selectedElementData.metricsShowValue !== false}
-                            onChange={(e) => updateElement(selectedElementData.id, { metricsShowValue: e.target.checked })}
-                            className="rounded"
-                          />
-                          <Label>Mostrar Valores</Label>
+                    {(selectedElementData.metricsData || [
+                      { label: "Conversões", value: 85, color: "#3b82f6" },
+                      { label: "Engajamento", value: 72, color: "#10b981" },
+                      { label: "Retenção", value: 94, color: "#f59e0b" }
+                    ]).map((metric, index) => (
+                      <div key={index} className="p-3 border rounded-lg mb-2">
+                        <div className="flex items-center gap-2 mb-2">
+                          <div 
+                            className="w-4 h-4 rounded"
+                            style={{ backgroundColor: metric.color }}
+                          ></div>
+                          <span className="font-medium text-sm">Métrica {index + 1}</span>
                         </div>
-                        <div className="flex items-center space-x-2">
-                          <input
-                            type="checkbox"
-                            checked={selectedElementData.metricsShowPercentage !== false}
-                            onChange={(e) => updateElement(selectedElementData.id, { metricsShowPercentage: e.target.checked })}
-                            className="rounded"
-                          />
-                          <Label>Mostrar Porcentagem</Label>
+                        
+                        <div className="space-y-2">
+                          <div>
+                            <Label className="text-xs">Nome da Métrica</Label>
+                            <Input
+                              value={metric.label}
+                              onChange={(e) => {
+                                const newMetrics = [...(selectedElementData.metricsData || [])];
+                                newMetrics[index] = { ...newMetrics[index], label: e.target.value };
+                                updateElement(selectedElementData.id, { metricsData: newMetrics });
+                              }}
+                              placeholder={`Métrica ${index + 1}`}
+                              className="mt-1 text-xs"
+                            />
+                          </div>
+                          
+                          <div className="grid grid-cols-2 gap-2">
+                            <div>
+                              <Label className="text-xs">Percentual (%)</Label>
+                              <Input
+                                type="number"
+                                min="0"
+                                max="100"
+                                value={metric.value}
+                                onChange={(e) => {
+                                  const newMetrics = [...(selectedElementData.metricsData || [])];
+                                  newMetrics[index] = { ...newMetrics[index], value: parseInt(e.target.value) || 0 };
+                                  updateElement(selectedElementData.id, { metricsData: newMetrics });
+                                }}
+                                className="mt-1 text-xs"
+                              />
+                            </div>
+                            
+                            <div>
+                              <Label className="text-xs">Cor da Barra</Label>
+                              <input
+                                type="color"
+                                value={metric.color}
+                                onChange={(e) => {
+                                  const newMetrics = [...(selectedElementData.metricsData || [])];
+                                  newMetrics[index] = { ...newMetrics[index], color: e.target.value };
+                                  updateElement(selectedElementData.id, { metricsData: newMetrics });
+                                }}
+                                className="mt-1 w-full h-8 border rounded"
+                              />
+                            </div>
+                          </div>
                         </div>
                       </div>
+                    ))}
+                  </div>
+
+                  <div className="p-3 bg-gray-50 border rounded-lg">
+                    <div className="text-xs text-gray-600">
+                      💡 Configure quantas métricas deseja e personalize cada uma com nome, percentual e cor
                     </div>
                   </div>
                 </div>
