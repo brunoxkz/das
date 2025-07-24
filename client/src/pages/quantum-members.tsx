@@ -66,15 +66,12 @@ export default function QuantumMembers() {
     retry: false,
   });
 
-  // Carregar estatísticas gerais
-  const { data: stats } = useQuery({
-    queryKey: ['/api/quantum/stats'],
-    retry: false,
-  });
+  // Garantir que courses sempre seja um array
+  const coursesData = Array.isArray(courses) ? courses : [];
 
   // Criar novo curso
   const createCourseMutation = useMutation({
-    mutationFn: async (courseData: any) => {
+    mutationFn: async (courseData: { title: string; description: string; category: string }) => {
       return await apiRequest('POST', '/api/quantum/courses', courseData);
     },
     onSuccess: () => {
@@ -83,14 +80,14 @@ export default function QuantumMembers() {
       setIsCreateDialogOpen(false);
       setNewCourse({ title: '', description: '', category: '' });
       toast({
-        title: "Curso criado com sucesso!",
-        description: "Seu novo curso foi criado na área de membros Quantum.",
+        title: "Sucesso!",
+        description: "Curso criado com sucesso!",
       });
     },
     onError: (error: any) => {
       toast({
-        title: "Erro ao criar curso",
-        description: error.message || "Ocorreu um erro inesperado.",
+        title: "Erro",
+        description: "Erro ao criar curso: " + error.message,
         variant: "destructive",
       });
     },
@@ -99,34 +96,49 @@ export default function QuantumMembers() {
   // Transformar curso em PWA
   const transformToPWAMutation = useMutation({
     mutationFn: async (courseId: string) => {
-      return await apiRequest('POST', `/api/quantum/courses/${courseId}/transform-to-pwa`);
+      return await apiRequest('POST', `/api/quantum/courses/${courseId}/transform-to-pwa`, {});
     },
-    onSuccess: (data) => {
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/quantum/courses'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/quantum/stats'] });
       toast({
-        title: "Curso transformado em App!",
-        description: `Seu app PWA foi criado: ${data.domain}`,
+        title: "Sucesso!",
+        description: "Curso transformado em PWA com sucesso!",
       });
     },
     onError: (error: any) => {
       toast({
-        title: "Erro ao transformar em App",
-        description: error.message || "Ocorreu um erro inesperado.",
+        title: "Erro",
+        description: "Erro ao transformar em PWA: " + error.message,
         variant: "destructive",
       });
     },
   });
 
   const handleCreateCourse = () => {
-    if (!newCourse.title) {
+    if (!newCourse.title.trim()) {
       toast({
-        title: "Título obrigatório",
-        description: "Por favor, insira um título para o curso.",
+        title: "Erro",
+        description: "Título do curso é obrigatório",
         variant: "destructive",
       });
       return;
     }
     createCourseMutation.mutate(newCourse);
+  };
+
+  // Carregar estatísticas gerais
+  const { data: stats } = useQuery({
+    queryKey: ['/api/quantum/stats'],
+    retry: false,
+  });
+
+  // Garantir que stats sempre seja um objeto válido
+  const statsData = stats || {
+    totalCourses: 0,
+    totalStudents: 0,
+    totalPWAs: 0,
+    totalPushSent: 0
   };
 
   if (coursesLoading) {
@@ -227,58 +239,56 @@ export default function QuantumMembers() {
         </div>
 
         {/* Stats Cards */}
-        {stats && (
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-            <Card className="bg-slate-800/50 border-slate-700">
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-slate-400 text-sm">Total de Cursos</p>
-                    <p className="text-2xl font-bold text-white">{stats.totalCourses || 0}</p>
-                  </div>
-                  <Book className="w-8 h-8 text-green-400" />
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+          <Card className="bg-slate-800/50 border-slate-700">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-slate-400 text-sm">Total de Cursos</p>
+                  <p className="text-2xl font-bold text-white">{statsData.totalCourses}</p>
                 </div>
-              </CardContent>
-            </Card>
-            <Card className="bg-slate-800/50 border-slate-700">
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-slate-400 text-sm">Total de Alunos</p>
-                    <p className="text-2xl font-bold text-white">{stats.totalStudents || 0}</p>
-                  </div>
-                  <Users className="w-8 h-8 text-blue-400" />
+                <Book className="w-8 h-8 text-green-400" />
+              </div>
+            </CardContent>
+          </Card>
+          <Card className="bg-slate-800/50 border-slate-700">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-slate-400 text-sm">Total de Alunos</p>
+                  <p className="text-2xl font-bold text-white">{statsData.totalStudents}</p>
                 </div>
-              </CardContent>
-            </Card>
-            <Card className="bg-slate-800/50 border-slate-700">
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-slate-400 text-sm">Apps PWA</p>
-                    <p className="text-2xl font-bold text-white">{stats.totalPWAs || 0}</p>
-                  </div>
-                  <Smartphone className="w-8 h-8 text-purple-400" />
+                <Users className="w-8 h-8 text-blue-400" />
+              </div>
+            </CardContent>
+          </Card>
+          <Card className="bg-slate-800/50 border-slate-700">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-slate-400 text-sm">Apps PWA</p>
+                  <p className="text-2xl font-bold text-white">{statsData.totalPWAs}</p>
                 </div>
-              </CardContent>
-            </Card>
-            <Card className="bg-slate-800/50 border-slate-700">
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-slate-400 text-sm">Push Enviadas</p>
-                    <p className="text-2xl font-bold text-white">{stats.totalPushSent || 0}</p>
-                  </div>
-                  <Bell className="w-8 h-8 text-yellow-400" />
+                <Smartphone className="w-8 h-8 text-purple-400" />
+              </div>
+            </CardContent>
+          </Card>
+          <Card className="bg-slate-800/50 border-slate-700">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-slate-400 text-sm">Push Enviadas</p>
+                  <p className="text-2xl font-bold text-white">{statsData.totalPushSent}</p>
                 </div>
-              </CardContent>
-            </Card>
-          </div>
-        )}
+                <Bell className="w-8 h-8 text-yellow-400" />
+              </div>
+            </CardContent>
+          </Card>
+        </div>
 
         {/* Courses Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {courses?.map((course: Course) => (
+          {coursesData.map((course: Course) => (
             <Card key={course.id} className="bg-slate-800/50 border-slate-700 hover:border-green-500 transition-colors">
               <CardHeader>
                 <div className="flex items-start justify-between">
@@ -384,7 +394,7 @@ export default function QuantumMembers() {
           ))}
 
           {/* Empty State */}
-          {(!courses || courses.length === 0) && (
+          {coursesData.length === 0 && (
             <div className="col-span-full">
               <Card className="bg-slate-800/50 border-slate-700 border-dashed">
                 <CardContent className="p-12 text-center">
