@@ -14205,7 +14205,10 @@ const gameElementCategories = [
                       <h4 className="font-semibold text-blue-800">Barra de Progresso</h4>
                     </div>
 
-                    <div className="space-y-3">
+                    {/* Seção 1: Conteúdo e Texto */}
+                    <div className="space-y-3 mb-4">
+                      <h6 className="font-semibold text-sm text-blue-600">📝 Conteúdo</h6>
+                      
                       <div>
                         <Label className="text-xs">Texto do Progresso</Label>
                         <Input
@@ -14216,45 +14219,84 @@ const gameElementCategories = [
                         />
                       </div>
 
-                      <div className="grid grid-cols-2 gap-3">
-                        <div>
-                          <Label className="text-xs">Duração (segundos)</Label>
-                          <Input
-                            type="number"
-                            min="1"
-                            max="30"
-                            value={selectedElementData.progressDuration || 5}
-                            onChange={(e) => updateElement(selectedElementData.id, { progressDuration: parseInt(e.target.value) || 5 })}
-                            className="text-xs mt-1"
-                          />
-                        </div>
+                      <div>
+                        <Label className="text-xs">Duração (segundos)</Label>
+                        <Input
+                          type="number"
+                          min="1"
+                          max="30"
+                          value={selectedElementData.progressDuration || 5}
+                          onChange={(e) => updateElement(selectedElementData.id, { progressDuration: parseInt(e.target.value) || 5 })}
+                          className="text-xs mt-1"
+                        />
+                      </div>
 
-                        <div>
-                          <Label className="text-xs">Altura (pixels)</Label>
+                      <div className="flex items-center justify-between">
+                        <Label className="text-xs">Mostrar Porcentagem</Label>
+                        <input
+                          type="checkbox"
+                          checked={selectedElementData.progressShowPercentage !== false}
+                          onChange={(e) => updateElement(selectedElementData.id, { progressShowPercentage: e.target.checked })}
+                          className="h-4 w-4"
+                        />
+                      </div>
+                    </div>
+
+                    {/* Seção 2: Visual e Cores */}
+                    <div className="space-y-3 mb-4 border-t pt-4">
+                      <h6 className="font-semibold text-sm text-blue-600">🎨 Aparência</h6>
+                      
+                      <div>
+                        <Label className="text-xs">Altura da Barra (pixels)</Label>
+                        <Input
+                          type="number"
+                          min="4"
+                          max="50"
+                          value={selectedElementData.progressHeight || 8}
+                          onChange={(e) => updateElement(selectedElementData.id, { progressHeight: parseInt(e.target.value) || 8 })}
+                          className="text-xs mt-1"
+                        />
+                      </div>
+
+                      <div>
+                        <Label className="text-xs">Cor da Barra</Label>
+                        <div className="flex gap-2 mt-1">
                           <Input
-                            type="number"
-                            min="4"
-                            max="50"
-                            value={selectedElementData.progressHeight || 8}
-                            onChange={(e) => updateElement(selectedElementData.id, { progressHeight: parseInt(e.target.value) || 8 })}
-                            className="text-xs mt-1"
+                            type="color"
+                            value={selectedElementData.progressColor || "#3b82f6"}
+                            onChange={(e) => updateElement(selectedElementData.id, { progressColor: e.target.value })}
+                            className="w-16 h-8 p-1"
+                          />
+                          <Input
+                            value={selectedElementData.progressColor || "#3b82f6"}
+                            onChange={(e) => updateElement(selectedElementData.id, { progressColor: e.target.value })}
+                            placeholder="#3b82f6"
+                            className="flex-1 text-xs"
                           />
                         </div>
                       </div>
 
                       <div>
-                        <Label className="text-xs">Cor da Barra</Label>
-                        <Input
-                          type="color"
-                          value={selectedElementData.progressColor || "#3b82f6"}
-                          onChange={(e) => updateElement(selectedElementData.id, { progressColor: e.target.value })}
-                          className="h-8 mt-1"
-                        />
+                        <Label className="text-xs">Cor de Fundo</Label>
+                        <div className="flex gap-2 mt-1">
+                          <Input
+                            type="color"
+                            value={selectedElementData.progressBackgroundColor || "#e5e7eb"}
+                            onChange={(e) => updateElement(selectedElementData.id, { progressBackgroundColor: e.target.value })}
+                            className="w-16 h-8 p-1"
+                          />
+                          <Input
+                            value={selectedElementData.progressBackgroundColor || "#e5e7eb"}
+                            onChange={(e) => updateElement(selectedElementData.id, { progressBackgroundColor: e.target.value })}
+                            placeholder="#e5e7eb"
+                            className="flex-1 text-xs"
+                          />
+                        </div>
                       </div>
 
                       <div className="grid grid-cols-2 gap-3">
                         <div>
-                          <Label className="text-xs">Estilo</Label>
+                          <Label className="text-xs">Estilo da Barra</Label>
                           <select 
                             className="w-full px-2 py-1 border rounded text-xs mt-1"
                             value={selectedElementData.progressStyle || "rounded"}
@@ -14267,7 +14309,7 @@ const gameElementCategories = [
                         </div>
 
                         <div>
-                          <Label className="text-xs">Animação</Label>
+                          <Label className="text-xs">Tipo de Animação</Label>
                           <select 
                             className="w-full px-2 py-1 border rounded text-xs mt-1"
                             value={selectedElementData.progressAnimation || "smooth"}
@@ -14279,16 +14321,65 @@ const gameElementCategories = [
                           </select>
                         </div>
                       </div>
+                    </div>
 
+                    {/* Seção 3: Redirecionamento */}
+                    <div className="space-y-3 border-t pt-4">
+                      <h6 className="font-semibold text-sm text-blue-600">🔄 Redirecionamento (Opcional)</h6>
+                      
                       <div className="flex items-center justify-between">
-                        <Label className="text-xs">Mostrar Porcentagem</Label>
+                        <Label className="text-xs">Ativar Redirecionamento</Label>
                         <input
                           type="checkbox"
-                          checked={selectedElementData.progressShowPercentage !== false}
-                          onChange={(e) => updateElement(selectedElementData.id, { progressShowPercentage: e.target.checked })}
+                          checked={selectedElementData.progressEnableRedirect || false}
+                          onChange={(e) => updateElement(selectedElementData.id, { progressEnableRedirect: e.target.checked })}
                           className="h-4 w-4"
                         />
                       </div>
+
+                      {selectedElementData.progressEnableRedirect && (
+                        <>
+                          <div>
+                            <Label className="text-xs">Tempo de Redirecionamento (segundos)</Label>
+                            <Input
+                              type="number"
+                              min="1"
+                              max="60"
+                              value={selectedElementData.progressRedirectDelay || 5}
+                              onChange={(e) => updateElement(selectedElementData.id, { progressRedirectDelay: parseInt(e.target.value) || 5 })}
+                              className="text-xs mt-1"
+                            />
+                          </div>
+
+                          <div>
+                            <Label className="text-xs">Tipo de Redirecionamento</Label>
+                            <select 
+                              className="w-full px-2 py-1 border rounded text-xs mt-1"
+                              value={selectedElementData.progressRedirectType || "next_page"}
+                              onChange={(e) => updateElement(selectedElementData.id, { progressRedirectType: e.target.value })}
+                            >
+                              <option value="next_page">Próxima página do quiz</option>
+                              <option value="custom_url">URL personalizada</option>
+                            </select>
+                          </div>
+
+                          {selectedElementData.progressRedirectType === "custom_url" && (
+                            <div>
+                              <Label className="text-xs">URL de Redirecionamento</Label>
+                              <Input
+                                value={selectedElementData.progressRedirectUrl || ""}
+                                onChange={(e) => updateElement(selectedElementData.id, { progressRedirectUrl: e.target.value })}
+                                placeholder="https://exemplo.com"
+                                className="text-xs mt-1"
+                              />
+                            </div>
+                          )}
+
+                          <div className="text-xs bg-yellow-50 p-2 rounded border border-yellow-200 text-yellow-700">
+                            🔄 Redirecionamento configurado: {selectedElementData.progressRedirectType === "custom_url" ? "URL personalizada" : "Próxima página"} em {selectedElementData.progressRedirectDelay || 5}s
+                          </div>
+                        </>
+                      )}
                     </div>
                   </div>
                 </div>

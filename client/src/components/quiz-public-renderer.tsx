@@ -601,6 +601,7 @@ interface SavedResponse {
 const ProgressBarElementPublic = ({ element }: { element: any }) => {
   const [progress, setProgress] = useState(0);
   const [isComplete, setIsComplete] = useState(false);
+  const [redirectCountdown, setRedirectCountdown] = useState<number | null>(null);
   const properties = element.properties || {};
   
   useEffect(() => {
@@ -613,6 +614,35 @@ const ProgressBarElementPublic = ({ element }: { element: any }) => {
         if (prev >= 100) {
           setIsComplete(true);
           clearInterval(timer);
+          
+          // Iniciar redirecionamento se habilitado
+          if (properties.progressEnableRedirect) {
+            const delay = properties.progressRedirectDelay || 5;
+            setRedirectCountdown(delay);
+            
+            const countdownTimer = setInterval(() => {
+              setRedirectCountdown((prev) => {
+                if (prev === null || prev <= 1) {
+                  clearInterval(countdownTimer);
+                  
+                  // Executar redirecionamento
+                  if (properties.progressRedirectType === "custom_url" && properties.progressRedirectUrl) {
+                    window.location.href = properties.progressRedirectUrl;
+                  } else {
+                    // Redirecionamento para próxima página
+                    const nextPageEvent = new CustomEvent('goToNextPage');
+                    window.dispatchEvent(nextPageEvent);
+                  }
+                  
+                  return 0;
+                }
+                return prev - 1;
+              });
+            }, 1000);
+            
+            return () => clearInterval(countdownTimer);
+          }
+          
           return 100;
         }
         return prev + 1;
@@ -620,7 +650,7 @@ const ProgressBarElementPublic = ({ element }: { element: any }) => {
     }, interval);
     
     return () => clearInterval(timer);
-  }, [properties.progressDuration]);
+  }, [properties.progressDuration, properties.progressEnableRedirect, properties.progressRedirectDelay, properties.progressRedirectType, properties.progressRedirectUrl]);
   
   return (
     <div className="w-full space-y-3 p-4 border border-gray-200 rounded-lg bg-white">
@@ -633,9 +663,15 @@ const ProgressBarElementPublic = ({ element }: { element: any }) => {
         )}
       </div>
       
-      <div className="w-full bg-gray-200 rounded-full" style={{ height: properties.progressHeight || 8 }}>
+      <div 
+        className="w-full rounded-full" 
+        style={{ 
+          height: properties.progressHeight || 8,
+          backgroundColor: properties.progressBackgroundColor || "#e5e7eb"
+        }}
+      >
         <div 
-          className="h-full rounded-full transition-all duration-100"
+          className="h-full transition-all duration-100"
           style={{ 
             width: `${progress}%`,
             backgroundColor: properties.progressColor || "#3b82f6",
@@ -645,9 +681,23 @@ const ProgressBarElementPublic = ({ element }: { element: any }) => {
         />
       </div>
       
-      {isComplete && (
+      {isComplete && !redirectCountdown && (
         <div className="text-center text-green-600 font-medium">
           ✓ Completo!
+        </div>
+      )}
+      
+      {redirectCountdown && redirectCountdown > 0 && (
+        <div className="text-center space-y-2">
+          <div className="text-green-600 font-medium">
+            ✓ Completo!
+          </div>
+          <div className="text-sm text-blue-600">
+            {properties.progressRedirectType === "custom_url" 
+              ? `Redirecionando para URL em ${redirectCountdown}s...`
+              : `Seguindo para próxima página em ${redirectCountdown}s...`
+            }
+          </div>
         </div>
       )}
     </div>

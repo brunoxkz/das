@@ -1051,6 +1051,7 @@ export default function QuizPreview({ quiz, onClose, onSave, initialPage = 0 }: 
   const ProgressBarElement = ({ element }: { element: any }) => {
     const [progress, setProgress] = useState(0);
     const [isComplete, setIsComplete] = useState(false);
+    const [redirectCountdown, setRedirectCountdown] = useState<number | null>(null);
     
     useEffect(() => {
       const duration = (element.progressDuration || 5) * 1000;
@@ -1062,6 +1063,25 @@ export default function QuizPreview({ quiz, onClose, onSave, initialPage = 0 }: 
           if (prev >= 100) {
             setIsComplete(true);
             clearInterval(timer);
+            
+            // Mostrar countdown no preview (simulação)
+            if (element.progressEnableRedirect) {
+              const delay = element.progressRedirectDelay || 5;
+              setRedirectCountdown(delay);
+              
+              const countdownTimer = setInterval(() => {
+                setRedirectCountdown((prev) => {
+                  if (prev === null || prev <= 1) {
+                    clearInterval(countdownTimer);
+                    return 0;
+                  }
+                  return prev - 1;
+                });
+              }, 1000);
+              
+              return () => clearInterval(countdownTimer);
+            }
+            
             return 100;
           }
           return prev + 1;
@@ -1069,7 +1089,7 @@ export default function QuizPreview({ quiz, onClose, onSave, initialPage = 0 }: 
       }, interval);
       
       return () => clearInterval(timer);
-    }, [element.progressDuration]);
+    }, [element.progressDuration, element.progressEnableRedirect, element.progressRedirectDelay]);
     
     return (
       <div className="w-full space-y-3 p-4 border border-gray-200 rounded-lg bg-white">
@@ -1082,9 +1102,15 @@ export default function QuizPreview({ quiz, onClose, onSave, initialPage = 0 }: 
           )}
         </div>
         
-        <div className="w-full bg-gray-200 rounded-full" style={{ height: element.progressHeight || 8 }}>
+        <div 
+          className="w-full rounded-full" 
+          style={{ 
+            height: element.progressHeight || 8,
+            backgroundColor: element.progressBackgroundColor || "#e5e7eb"
+          }}
+        >
           <div 
-            className="h-full rounded-full transition-all duration-100"
+            className="h-full transition-all duration-100"
             style={{ 
               width: `${progress}%`,
               backgroundColor: element.progressColor || "#3b82f6",
@@ -1094,9 +1120,23 @@ export default function QuizPreview({ quiz, onClose, onSave, initialPage = 0 }: 
           />
         </div>
         
-        {isComplete && (
+        {isComplete && !redirectCountdown && (
           <div className="text-center text-green-600 font-medium">
             ✓ Completo!
+          </div>
+        )}
+        
+        {redirectCountdown && redirectCountdown > 0 && (
+          <div className="text-center space-y-2">
+            <div className="text-green-600 font-medium">
+              ✓ Completo!
+            </div>
+            <div className="text-sm text-blue-600">
+              PREVIEW: {element.progressRedirectType === "custom_url" 
+                ? `Redirecionaria para URL em ${redirectCountdown}s`
+                : `Seguiria para próxima página em ${redirectCountdown}s`
+              }
+            </div>
           </div>
         )}
       </div>
