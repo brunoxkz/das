@@ -1232,14 +1232,22 @@ export function QuizPublicRenderer({ quiz }: QuizPublicRendererProps) {
           clearTimeout(autoSaveRef.current);
         }
         
+        // Delay diferenciado: telefones precisam de mais tempo para evitar fragmentação
+        const hasPhoneResponse = updated.some(r => r.elementType === 'phone');
+        const saveDelay = hasPhoneResponse ? 3500 : 2000; // 3.5s para telefones, 2s para outros
+        
         autoSaveRef.current = setTimeout(async () => {
           try {
             // Filtrar apenas campos completos/válidos para salvar
             const validResponses = updated.filter(r => {
-              // Para telefones, só salvar se tiver pelo menos 10 dígitos
+              // Para telefones, validação rigorosa para evitar fragmentação
               if (r.elementType === 'phone' && r.answer) {
                 const phoneNumber = r.answer.replace(/\D/g, '');
-                return phoneNumber.length >= 10;
+                // Só salvar se tiver entre 10-15 dígitos E não for fragmentado
+                return phoneNumber.length >= 10 && 
+                       phoneNumber.length <= 15 && 
+                       phoneNumber.length > 8 && // Evita números muito curtos
+                       /^\d+$/.test(phoneNumber); // Só números
               }
               // Para emails, só salvar se for válido
               if (r.elementType === 'email' && r.answer) {
@@ -1266,7 +1274,7 @@ export function QuizPublicRenderer({ quiz }: QuizPublicRendererProps) {
           } catch (error) {
             console.error('Erro ao salvar resposta automática:', error);
           }
-        }, 2000); // Salvar após 2 segundos de inatividade
+        }, saveDelay); // Delay diferenciado baseado no tipo de campo
         
         return updated;
       });
